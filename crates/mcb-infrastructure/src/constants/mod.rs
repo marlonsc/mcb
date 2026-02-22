@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Infrastructure layer constants. Domain-specific constants are in `mcb_domain::constants`.
 
 /// Abstract syntax tree (AST) related constants.
@@ -17,9 +20,6 @@ pub mod crypto;
 
 /// Database connection and operation constants.
 pub mod db;
-
-/// Vector embedding provider and dimension constants.
-pub mod embedding;
 
 /// Event system and messaging constants.
 pub mod events;
@@ -65,3 +65,9 @@ pub mod search;
 
 /// Synchronization and concurrency constants.
 pub mod sync;
+
+/// DI service display names.
+pub mod services;
+
+/// Provider name constants for fallback and resolution.
+pub mod providers;

@@ -1,12 +1,16 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::VcsProvider;
+use mcb_domain::ports::VcsProvider;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
 use super::responses::ListRepositoriesResponse;
 use crate::args::VcsArgs;
+use crate::error_mapping::to_opaque_mcp_error;
 use crate::formatter::ResponseFormatter;
 
 /// Lists all available repositories discovered by the VCS provider.
@@ -19,16 +23,26 @@ pub async fn list_repositories(
         .repo_path
         .as_ref()
         .map(PathBuf::from)
-        .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
+        .or_else(|| std::env::current_dir().ok())
+        .ok_or_else(|| {
+            mcb_domain::error!(
+                "list_repositories",
+                "no repo_path provided and current_dir() failed"
+            );
+            McpError::invalid_params(
+                "repo_path is required when working directory cannot be determined",
+                None,
+            )
+        })?;
 
-    let discovered_repos = vcs_provider.list_repositories(&root).await.map_err(|e| {
-        tracing::error!(error = %e, "failed to list repositories");
-        McpError::internal_error("internal server error", None)
-    })?;
+    let discovered_repos = vcs_provider
+        .list_repositories(&root)
+        .await
+        .map_err(|e| to_opaque_mcp_error(&e))?;
 
     let repositories: Vec<String> = discovered_repos
         .iter()
-        .map(|repo| repo.path().to_string_lossy().to_string())
+        .map(|repo| repo.path().to_str().unwrap_or_default().to_owned())
         .collect();
 
     let result = ListRepositoriesResponse {

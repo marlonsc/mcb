@@ -1,11 +1,13 @@
 //! Vector Store Provider Implementations
 //!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#vector-store-providers)
+//!
 //! Provides storage backends for vector embeddings.
 //!
 //! ## Available Providers
 //!
 //! | Provider | Type | Description |
-//! |----------|------|-------------|
+//! | ---------- | ------ | ------------- |
 //! | EdgeVecVectorStoreProvider | Embedded | High-performance HNSW vector store (local) |
 //! | EncryptedVectorStoreProvider | Secure | AES-256-GCM encryption wrapper |
 //! | MilvusVectorStoreProvider | Cloud | Production-scale cloud vector database |
@@ -18,9 +20,8 @@
 //! - **Production with encryption**: Use `EncryptedVectorStoreProvider` wrapper
 //! - **Cloud production**: Use `MilvusVectorStoreProvider` or `QdrantVectorStoreProvider`
 
-/// Shared helpers for vector store providers (DRY)
-pub mod helpers;
-
+#[macro_use]
+mod macros;
 pub mod edgevec;
 pub mod encrypted;
 pub mod milvus;

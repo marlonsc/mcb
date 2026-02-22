@@ -21,25 +21,23 @@ internal_dep_prefix = ""
 [rules.architecture]
 enabled = true
 severity = "Error"
-
-[rules.architecture.layer_boundaries]
-domain_internal_deps = []
-application_internal_deps = []
-providers_internal_deps = []
-infrastructure_internal_deps = []
-server_internal_deps = []
+layer_boundaries.application_internal_deps = []
+layer_boundaries.domain_internal_deps = []
+layer_boundaries.infrastructure_internal_deps = []
+layer_boundaries.providers_internal_deps = []
+layer_boundaries.server_internal_deps = []
 
 # ==============================================================================
 # Code Quality Rules
 # ==============================================================================
 [rules.quality]
 enabled = true
+excluded_paths = []
+exempt_patterns = []
+allow_expect_with_message = true
+allow_unwrap_in_tests = true
 max_file_lines = 500
 max_function_lines = 50
-allow_unwrap_in_tests = true
-allow_expect_with_message = true
-exempt_patterns = []
-excluded_paths = []
 
 # ==============================================================================
 # Organization Rules
@@ -61,6 +59,7 @@ magic_number_allowlist = [
     60,
 ]
 strict_directory_structure = true
+server_exempt_files = []
 
 # ==============================================================================
 # SOLID Principles Rules
@@ -89,8 +88,7 @@ scan_crates = []
 [rules.layer_flow]
 enabled = true
 circular_dependency_check_crates = []
-
-[rules.layer_flow.forbidden_dependencies]
+forbidden_dependencies = {}
 
 # ==============================================================================
 # Port/Adapter Rules
@@ -120,6 +118,13 @@ allowed_mutable_prefixes = ["set_", "add_", "remove_", "clear_", "reset_"]
 composition_root_skip_patterns = ["/di/"]
 
 # ==============================================================================
+# Dependency Rules
+# ==============================================================================
+[rules.dependency]
+enabled = true
+bypass_boundaries = []
+
+# ==============================================================================
 # Naming Rules
 # ==============================================================================
 [rules.naming]
@@ -130,8 +135,6 @@ infrastructure_crate = ""
 application_crate = ""
 providers_crate = ""
 validate_crate = ""
-language_support_crate = ""
-ast_utils_crate = ""
 
 # ==============================================================================
 # KISS Rules
@@ -139,6 +142,7 @@ ast_utils_crate = ""
 [rules.kiss]
 enabled = true
 excluded_crates = []
+skip_file_patterns = []
 
 # ==============================================================================
 # Refactoring Rules
@@ -209,20 +213,20 @@ excluded_crates = []
 # Validator Enable/Disable Flags
 # ==============================================================================
 [validators]
-dependency = true
-organization = true
-quality = true
-solid = true
 architecture = true
-refactoring = true
-naming = true
-documentation = true
-patterns = true
-kiss = true
-tests = true
 async_patterns = true
-error_boundary = true
-performance = true
-implementation = true
-pmat = true
 clean_architecture = true
+dependency = true
+documentation = true
+error_boundary = true
+implementation = true
+kiss = true
+naming = true
+organization = true
+patterns = true
+performance = true
+pmat = true
+quality = true
+refactoring = true
+solid = true
+tests = true

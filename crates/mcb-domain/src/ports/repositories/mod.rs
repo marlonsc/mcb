@@ -1,19 +1,34 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
+//!
 //! Repository ports for data persistence.
 
-pub mod agent_repository;
-pub mod file_hash_repository;
-pub mod issue_entity_repository;
-pub mod memory_repository;
-pub mod org_entity_repository;
-pub mod plan_entity_repository;
-pub mod project_repository;
-pub mod vcs_entity_repository;
+pub mod agent;
+pub mod chunk;
+pub mod file_hash;
+pub mod issue;
+pub mod memory;
+pub mod org;
+pub mod plan;
+pub mod project;
+pub mod search;
+pub mod vcs;
 
-pub use agent_repository::AgentRepository;
-pub use file_hash_repository::FileHashRepository;
-pub use issue_entity_repository::IssueEntityRepository;
-pub use memory_repository::MemoryRepository;
-pub use org_entity_repository::OrgEntityRepository;
-pub use plan_entity_repository::PlanEntityRepository;
-pub use project_repository::ProjectRepository;
-pub use vcs_entity_repository::VcsEntityRepository;
+pub use agent::{
+    AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
+    AgentSessionRepository,
+};
+pub use chunk::{ChunkRepository, RepositoryStats};
+pub use file_hash::FileHashRepository;
+pub use issue::{
+    IssueCommentRegistry, IssueEntityRepository, IssueLabelAssignmentManager, IssueLabelRegistry,
+    IssueRegistry,
+};
+pub use memory::{FtsSearchResult, MemoryRepository};
+pub use org::{
+    ApiKeyRegistry, OrgEntityRepository, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
+};
+pub use plan::{PlanEntityRepository, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry};
+pub use project::ProjectRepository;
+pub use search::{SearchRepository, SearchStats};
+pub use vcs::VcsEntityRepository;

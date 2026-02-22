@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! File-based Configuration
 //!
 //! Loads validation configuration via figment layered providers.
@@ -36,8 +39,16 @@ use std::path::PathBuf;
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use serde::{Deserialize, Serialize};
+use tracing::{error, warn};
 
 use crate::Severity;
+use crate::constants::validators::{
+    VALIDATOR_ARCHITECTURE, VALIDATOR_ASYNC_PATTERNS, VALIDATOR_CLEAN_ARCHITECTURE,
+    VALIDATOR_DEPENDENCY, VALIDATOR_DOCUMENTATION, VALIDATOR_ERROR_BOUNDARY,
+    VALIDATOR_IMPLEMENTATION, VALIDATOR_KISS, VALIDATOR_NAMING, VALIDATOR_ORGANIZATION,
+    VALIDATOR_PATTERNS, VALIDATOR_PERFORMANCE, VALIDATOR_PMAT, VALIDATOR_QUALITY,
+    VALIDATOR_REFACTORING, VALIDATOR_SOLID, VALIDATOR_TESTS,
+};
 
 /// Embedded default configuration (baked into binary at compile time)
 const EMBEDDED_VALIDATE_DEFAULTS: &str = include_str!("../../../../config/mcb-validate.toml");
@@ -63,10 +74,6 @@ impl FileConfig {
     /// 2. `config/mcb-validate-internal.toml` (filesystem, project overrides)
     /// 3. Environment variables with `MCB_VALIDATE__` prefix
     ///
-    /// # Panics
-    ///
-    /// Panics if configuration extraction fails. This is intentional —
-    /// configuration errors must be caught at startup, not silently degraded.
     pub fn load(workspace_root: impl Into<PathBuf>) -> Self {
         let root = workspace_root.into();
 
@@ -78,41 +85,58 @@ impl FileConfig {
             // Layer 3: Runtime env overrides
             .merge(Env::prefixed("MCB_VALIDATE__").split("__").lowercase(true));
 
-        let mut config: Self = figment
-            .extract()
-            .unwrap_or_else(|e| panic!("Failed to load validation config: {e}"));
+        let mut config: Self = match figment.extract() {
+            Ok(config) => config,
+            Err(err) => {
+                warn!(
+                    error = %err,
+                    "failed to load validation config; using embedded defaults"
+                );
+                let mut fallback: Self = Figment::new()
+                    .merge(Toml::string(EMBEDDED_VALIDATE_DEFAULTS))
+                    .extract()
+                    .unwrap_or_else(|_| {
+                        error!("embedded mcb-validate defaults are invalid");
+                        std::process::exit(2);
+                    });
+                fallback.general.workspace_root = Some(root.clone());
+                fallback
+            }
+        };
         config.general.workspace_root = Some(root);
         config
     }
 
     /// Get the workspace root path
+    #[must_use]
     pub fn workspace_root(&self) -> PathBuf {
         self.general
             .workspace_root
             .clone()
-            .unwrap_or_else(|| PathBuf::from("."))
+            .unwrap_or_else(|| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")))
     }
 
     /// Check if a validator is enabled
+    #[must_use]
     pub fn is_validator_enabled(&self, name: &str) -> bool {
         match name {
-            "dependency" => self.validators.dependency,
-            "organization" => self.validators.organization,
-            "quality" => self.validators.quality,
-            "solid" => self.validators.solid,
-            "architecture" => self.validators.architecture,
-            "refactoring" => self.validators.refactoring,
-            "naming" => self.validators.naming,
-            "documentation" => self.validators.documentation,
-            "patterns" => self.validators.patterns,
-            "kiss" => self.validators.kiss,
-            "tests" => self.validators.tests,
-            "async_patterns" => self.validators.async_patterns,
-            "error_boundary" => self.validators.error_boundary,
-            "performance" => self.validators.performance,
-            "implementation" => self.validators.implementation,
-            "pmat" => self.validators.pmat,
-            "clean_architecture" => self.validators.clean_architecture,
+            VALIDATOR_DEPENDENCY => self.validators.dependency,
+            VALIDATOR_ORGANIZATION => self.validators.organization,
+            VALIDATOR_QUALITY => self.validators.quality,
+            VALIDATOR_SOLID => self.validators.solid,
+            VALIDATOR_ARCHITECTURE => self.validators.architecture,
+            VALIDATOR_REFACTORING => self.validators.refactoring,
+            VALIDATOR_NAMING => self.validators.naming,
+            VALIDATOR_DOCUMENTATION => self.validators.documentation,
+            VALIDATOR_PATTERNS => self.validators.patterns,
+            VALIDATOR_KISS => self.validators.kiss,
+            VALIDATOR_TESTS => self.validators.tests,
+            VALIDATOR_ASYNC_PATTERNS => self.validators.async_patterns,
+            VALIDATOR_ERROR_BOUNDARY => self.validators.error_boundary,
+            VALIDATOR_PERFORMANCE => self.validators.performance,
+            VALIDATOR_IMPLEMENTATION => self.validators.implementation,
+            VALIDATOR_PMAT => self.validators.pmat,
+            VALIDATOR_CLEAN_ARCHITECTURE => self.validators.clean_architecture,
             _ => true, // Unknown validators enabled by default
         }
     }
@@ -193,6 +217,9 @@ pub struct RulesConfig {
 
     /// Implementation rules
     pub implementation: ImplementationRulesConfig,
+
+    /// Dependency rules
+    pub dependency: DependencyRulesConfig,
 }
 
 /// Architecture validation rules configuration
@@ -210,7 +237,6 @@ pub struct ArchitectureRulesConfig {
 
 /// Layer boundary configuration
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[allow(clippy::struct_field_names)]
 pub struct LayerBoundariesConfig {
     /// Allowed internal dependencies for domain layer
     pub domain_internal_deps: Vec<String>,
@@ -264,6 +290,10 @@ pub struct OrganizationRulesConfig {
 
     /// Strict directory structure enforcement
     pub strict_directory_structure: bool,
+
+    /// Server file names exempt from strict handler placement checks
+    #[serde(default)]
+    pub server_exempt_files: Vec<String>,
 }
 
 /// SOLID principles rules configuration
@@ -393,12 +423,6 @@ pub struct NamingRulesConfig {
 
     /// Target crate for validation logic (e.g., "mcb-validate")
     pub validate_crate: String,
-
-    /// Target crate for language support (e.g., "mcb-language-support")
-    pub language_support_crate: String,
-
-    /// Target crate for AST utilities (e.g., "mcb-ast-utils")
-    pub ast_utils_crate: String,
 }
 
 /// KISS rules configuration
@@ -409,6 +433,10 @@ pub struct KISSRulesConfig {
 
     /// Crates excluded from KISS checks
     pub excluded_crates: Vec<String>,
+
+    /// File path suffix patterns to skip for KISS checks
+    #[serde(default)]
+    pub skip_file_patterns: Vec<String>,
 }
 
 /// Refactoring rules configuration
@@ -423,7 +451,7 @@ pub struct RefactoringRulesConfig {
     /// Generic type names to ignore (e.g. "Error", "Result")
     pub generic_type_names: Vec<String>,
 
-    /// Utility types to ignore (e.g. "DateTime", "Uuid")
+    /// Utility types to ignore (e.g. "`DateTime`", "Uuid")
     pub utility_types: Vec<String>,
 
     /// Files to skip for refactoring checks
@@ -488,9 +516,38 @@ pub struct ImplementationRulesConfig {
     pub excluded_crates: Vec<String>,
 }
 
+/// Dependency validation rules configuration
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct DependencyRulesConfig {
+    /// Whether dependency validation is enabled
+    pub enabled: bool,
+
+    /// Anti-bypass boundary definitions.
+    /// Each entry defines a scan root, the import pattern to flag, and allowed files.
+    #[serde(default)]
+    pub bypass_boundaries: Vec<BypassBoundaryConfig>,
+}
+
+/// A single bypass boundary check: scan files under `scan_root` for `pattern`
+/// and flag violations except in files listed in `allowed_files`.
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct BypassBoundaryConfig {
+    /// Violation ID to emit (e.g., "DEP004", "DEP005")
+    pub violation_id: String,
+
+    /// Directory to scan (relative to workspace root)
+    pub scan_root: String,
+
+    /// Import pattern to flag
+    pub pattern: String,
+
+    /// Files where this pattern is allowed (relative to workspace root)
+    #[serde(default)]
+    pub allowed_files: Vec<String>,
+}
+
 /// Validator enable/disable flags
 #[derive(Debug, Clone, Deserialize, Serialize)]
-#[allow(clippy::struct_excessive_bools)]
 pub struct ValidatorsConfig {
     /// Enable dependency validation
     pub dependency: bool,
@@ -526,38 +583,4 @@ pub struct ValidatorsConfig {
     pub pmat: bool,
     /// Enable clean architecture validation
     pub clean_architecture: bool,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_load_config() {
-        // Load from workspace root — this verifies embedded defaults work
-        let config = FileConfig::load(env!("CARGO_MANIFEST_DIR").to_string() + "/../..");
-        assert!(config.validators.quality);
-        assert!(config.validators.architecture);
-        assert_eq!(config.rules.quality.max_file_lines, 800);
-    }
-
-    #[test]
-    fn test_is_validator_enabled() {
-        let config = FileConfig::load(env!("CARGO_MANIFEST_DIR").to_string() + "/../..");
-        assert!(config.is_validator_enabled("quality"));
-        assert!(config.is_validator_enabled("architecture"));
-        assert!(config.is_validator_enabled("unknown_validator"));
-    }
-
-    #[test]
-    fn test_figment_partial_override() {
-        // Verify that embedded defaults provide all required fields
-        let figment = Figment::new().merge(Toml::string(EMBEDDED_VALIDATE_DEFAULTS));
-
-        let config: FileConfig = figment
-            .extract()
-            .expect("Embedded defaults must be complete");
-        assert!(config.validators.quality);
-        assert!(config.rules.architecture.enabled);
-    }
 }

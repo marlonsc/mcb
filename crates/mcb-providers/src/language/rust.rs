@@ -1,25 +1,18 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Rust language processor for AST-based code chunking.
 
-use mcb_domain::entities::CodeChunk;
-use mcb_domain::value_objects::Language;
-
-use crate::language::common::{
-    BaseProcessor, CHUNK_SIZE_RUST, LanguageConfig, LanguageProcessor, NodeExtractionRule,
-};
+use crate::language::common::{BaseProcessor, CHUNK_SIZE_RUST, LanguageConfig, NodeExtractionRule};
 
 /// Rust language processor with comprehensive AST extraction rules.
 pub struct RustProcessor {
     processor: BaseProcessor,
 }
 
-impl Default for RustProcessor {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 impl RustProcessor {
     /// Create a new Rust language processor
+    #[must_use]
     pub fn new() -> Self {
         let config = LanguageConfig::new(tree_sitter_rust::LANGUAGE.into())
             .with_rules(Self::extraction_rules())
@@ -50,19 +43,4 @@ impl RustProcessor {
     }
 }
 
-impl LanguageProcessor for RustProcessor {
-    fn config(&self) -> &LanguageConfig {
-        self.processor.config()
-    }
-
-    fn extract_chunks_with_tree_sitter(
-        &self,
-        tree: &tree_sitter::Tree,
-        content: &str,
-        file_name: &str,
-        language: &Language,
-    ) -> Vec<CodeChunk> {
-        self.processor
-            .extract_chunks_with_tree_sitter(tree, content, file_name, language)
-    }
-}
+crate::impl_delegating_language_processor!(RustProcessor, processor);

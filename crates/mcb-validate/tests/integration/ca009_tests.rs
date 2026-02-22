@@ -25,14 +25,13 @@ fn test_ca009_infrastructure_imports_application() {
         &config,
         &file_config.rules.clean_architecture,
         &NamingRulesConfig {
-            domain_crate: "mcb-domain".to_string(),
-            application_crate: "mcb-application".to_string(),
-            providers_crate: "mcb-providers".to_string(),
-            infrastructure_crate: "mcb-infrastructure".to_string(),
-            server_crate: "mcb-server".to_string(),
-            validate_crate: "mcb-validate".to_string(),
-            language_support_crate: "mcb-language-support".to_string(),
-            ast_utils_crate: "mcb-ast-utils".to_string(),
+            domain_crate: "mcb-domain".to_owned(),
+            application_crate: "mcb-application".to_owned(),
+            providers_crate: "mcb-providers".to_owned(),
+            infrastructure_crate: "mcb-infrastructure".to_owned(),
+            server_crate: "mcb-server".to_owned(),
+            validate_crate: "mcb-validate".to_owned(),
+
             enabled: true,
         },
     );

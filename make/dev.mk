@@ -24,7 +24,7 @@ test: ## Run tests (SCOPE=unit|doc|golden|startup|integration|e2e|all, THREADS=N
 	  unit)        RUST_TEST_THREADS=$$THREADS cargo test --workspace --lib ;; \
 	  doc)         cargo test --workspace --doc ;; \
 	  golden)      RUST_TEST_THREADS=$$THREADS cargo test --workspace --tests golden ;; \
-	  startup)     cargo test -p mcb --test startup_smoke_integration -- --nocapture ;; \
+	  startup)     cargo test -p mcb --test integration startup_smoke -- --nocapture ;; \
 	  integration) RUST_TEST_THREADS=$$THREADS cargo test --workspace --test '*integration*' ;; \
 	  e2e)         make _test-e2e ;; \
 	  all)         RUST_TEST_THREADS=$$THREADS cargo test --workspace --all-targets && make _test-e2e ;; \

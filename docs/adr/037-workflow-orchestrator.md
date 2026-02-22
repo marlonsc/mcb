@@ -21,7 +21,7 @@ implementation_status: Complete
 
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout), [ADR-036](./036-enforcement-policies.md) (Enforcement Policies)
-- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-033](./033-mcp-handler-consolidation.md) (Handler Consolidation), [ADR-025](./025-figment-configuration.md) (Figment)
+- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-033](./033-mcp-handler-consolidation.md) (Handler Consolidation), [ADR-025](./025-figment-configuration.md) (Figment)
 - **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) →**ADR-037**
 
 ## Context
@@ -41,7 +41,7 @@ Each provider has a clean port trait, a linkme-registered implementation, and is
 1. `WorkflowService` — an application service (in `mcb-application`) that orchestrates all three providers
 2. A `workflow` MCP tool (following ADR-033 action-based pattern) exposed via `mcb-server`
 3. An event system for workflow state changes
-4. DI registration integrating all workflow components into the existing `build_catalog()`
+4. DI registration integrating all workflow components into the existing `init_app()` composition root
 
 ### Requirements
 
@@ -49,7 +49,7 @@ Each provider has a clean port trait, a linkme-registered implementation, and is
 - Session lifecycle: create → discover context → evaluate policies → transition → repeat
 - MCP tool with action-based API (ADR-033 pattern)
 - Event broadcasting for workflow state changes
-- Integration with existing `AppContext` and dill `Catalog` (ADR-029)
+- Integration with existing `AppContext` manual composition root (ADR-050; ADR-029 superseded)
 - Session management (concurrent sessions, cleanup, crash recovery)
 - **Multi-tier execution model** (Project → Plan → Task → Session → Agent → Operator)
 - **Event broadcasting** across 3 channels (Message Queue, Database, Webhooks)
@@ -1335,7 +1335,7 @@ fn require_session_id(args: &WorkflowArgs) -> Result<String, WorkflowError> {
 }
 ```
 
-### 8. DI Integration (dill Catalog)
+### 8. DI Integration (AppContext Manual Composition Root)
 
 ```rust
 // mcb-infrastructure/src/di/workflow_catalog.rs
@@ -1403,10 +1403,10 @@ impl PolicyGuardHandle {
     }
 }
 
-/// Build workflow components and register in Catalog.
+/// Build workflow components and register in AppContext bootstrap.
 pub async fn register_workflow(
     config: &figment::Figment,
-    catalog_builder: &mut dill::CatalogBuilder,
+    app_context: &mut AppContextBuilder,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
     // 1. Resolve providers from linkme registries
     let engine: Arc<dyn WorkflowEngine> = WORKFLOW_PROVIDERS
@@ -1440,12 +1440,12 @@ pub async fn register_workflow(
         engine, scout, guard, event_tx,
     ));
 
-    // 5. Register in catalog
-    catalog_builder
-        .add_value(engine_handle)
-        .add_value(scout_handle)
-        .add_value(guard_handle)
-        .add_value(service);
+    // 5. Register in AppContext builder
+    app_context
+        .with_workflow_engine_handle(engine_handle)
+        .with_context_scout_handle(scout_handle)
+        .with_policy_guard_handle(guard_handle)
+        .with_workflow_service(service);
 
     Ok(())
 }
@@ -1608,7 +1608,7 @@ fn default_channel_capacity() -> usize { 256 }
 - **Guarded transitions**: Every transition passes through policy evaluation — no way to bypass guards.
 - **Event-driven**: `broadcast::Sender` allows any consumer to subscribe to workflow state changes without coupling.
 - **ADR-033 compliant**: Single `workflow` tool with 9 Actions replaces what would be 9 separate MCP tools.
-- **Clean DI**: Handles + dill Catalog follow the exact pattern of existing providers (embedding, vector store, cache).
+- **Clean DI**: Handles + AppContext composition root follow the exact pattern of existing providers (embedding, vector store, cache).
 - **Session management**: Max sessions, timeout, and cleanup prevent resource leaks.
 - **Zero new crates**: Service in `mcb-application`, handler in `mcb-server`, DI in `mcb-infrastructure`.
 
@@ -1659,7 +1659,7 @@ fn default_channel_capacity() -> usize { 256 }
 ### Migration
 
 - No existing code modified (additive only).
-- `register_workflow()` called in `build_catalog()` after existing provider registration.
+- `register_workflow()` called in `init_app()` bootstrap after existing provider registration.
 - `workflow` tool added to MCP tool registry alongside existing tools.
 
 ### Testing
@@ -1697,5 +1697,5 @@ fn default_channel_capacity() -> usize { 256 }
 - [ADR-035: Context Scout](./035-context-scout.md) — `ContextScoutProvider` trait
 - [ADR-036: Enforcement Policies](./036-enforcement-policies.md) — `PolicyGuardProvider` trait
 - [ADR-033: MCP Handler Consolidation](./033-mcp-handler-consolidation.md) — Action-based tool pattern
-- [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — DI pattern
+- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) — DI pattern (superseded by ADR-050)
 - [ADR-025: Figment Configuration](./025-figment-configuration.md) — Config pattern

@@ -89,8 +89,8 @@ impl HybridAnalysisCache {
 
 Current cache implementation in `crates/mcb-providers/src/cache/`:
 
-- `moka.rs` - Moka async cache provider
-- `null.rs` - Null cache for testing
+- `moka.rs` - Moka async cache provider (default)
+- `redis.rs` - Redis distributed cache
 
 The hybrid cache will extend this foundation in v0.3.0.
 

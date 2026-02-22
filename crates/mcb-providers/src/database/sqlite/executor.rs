@@ -1,4 +1,7 @@
-//! SQLite implementation of the database executor port.
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md#database)
+//!
+//! `SQLite` implementation of the database executor port.
 //!
 //! Uses the domain port [`DatabaseExecutor`] and [`SqlRow`]; repositories depend
 //! on these traits and do not use sqlx directly.
@@ -8,27 +11,27 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::database::{DatabaseExecutor, SqlParam, SqlRow};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
 use sqlx::Column;
 use sqlx::Row;
 use sqlx::sqlite::SqliteRow;
 
-/// Row adapter that copies column values from a SQLite row so it can be returned
+/// Row adapter that copies column values from a `SQLite` row so it can be returned
 /// as `Arc<dyn SqlRow>` without holding a reference to the connection.
 #[derive(Debug)]
-pub struct MapRow {
+struct SqliteMappedRow {
     strings: HashMap<String, Option<String>>,
     i64s: HashMap<String, Option<i64>>,
     f64s: HashMap<String, Option<f64>>,
 }
 
-impl MapRow {
+impl SqliteMappedRow {
     fn from_sqlite_row(row: &SqliteRow) -> Result<Self> {
         let mut strings = HashMap::new();
         let mut i64s = HashMap::new();
         let mut f64s = HashMap::new();
         for (i, col) in row.columns().iter().enumerate() {
-            let name = col.name().to_string();
+            let name = col.name().to_owned();
             if let Ok(v) = row.try_get::<String, _>(i) {
                 strings.insert(name.clone(), Some(v));
             } else if let Ok(v) = row.try_get::<i64, _>(i) {
@@ -53,7 +56,7 @@ impl MapRow {
     }
 }
 
-impl SqlRow for MapRow {
+impl SqlRow for SqliteMappedRow {
     fn try_get_string(&self, name: &str) -> Result<Option<String>> {
         Ok(self
             .strings
@@ -80,13 +83,14 @@ impl SqlRow for MapRow {
     }
 }
 
-/// SQLite implementation of the database executor port.
+/// `SQLite` implementation of the database executor port.
 pub struct SqliteExecutor {
     pool: sqlx::SqlitePool,
 }
 
 impl SqliteExecutor {
     /// Create an executor that uses the given pool.
+    #[must_use]
     pub fn new(pool: sqlx::SqlitePool) -> Self {
         Self { pool }
     }
@@ -103,7 +107,7 @@ impl SqliteExecutor {
         }
         q.execute(&self.pool)
             .await
-            .map_err(|e| Error::memory_with_source("SQL execute failed", e))?;
+            .map_err(|e| Error::memory_with_source(format!("SQL execute failed: {sql}"), e))?;
         Ok(())
     }
 
@@ -124,10 +128,10 @@ impl SqliteExecutor {
         let row = q
             .fetch_optional(&self.pool)
             .await
-            .map_err(|e| Error::memory_with_source("SQL query_one failed", e))?;
+            .map_err(|e| Error::memory_with_source(format!("SQL query_one failed: {sql}"), e))?;
         match row {
             Some(r) => {
-                let map_row = MapRow::from_sqlite_row(&r)
+                let map_row = SqliteMappedRow::from_sqlite_row(&r)
                     .map_err(|e| Error::memory_with_source("Failed to map row", e))?;
                 Ok(Some(Arc::new(map_row) as Arc<dyn SqlRow>))
             }
@@ -148,10 +152,10 @@ impl SqliteExecutor {
         let rows = q
             .fetch_all(&self.pool)
             .await
-            .map_err(|e| Error::memory_with_source("SQL query_all failed", e))?;
+            .map_err(|e| Error::memory_with_source(format!("SQL query_all failed: {sql}"), e))?;
         let mut out = Vec::with_capacity(rows.len());
         for r in rows {
-            let map_row = MapRow::from_sqlite_row(&r)
+            let map_row = SqliteMappedRow::from_sqlite_row(&r)
                 .map_err(|e| Error::memory_with_source("Failed to map row", e))?;
             out.push(Arc::new(map_row) as Arc<dyn SqlRow>);
         }
@@ -180,6 +184,7 @@ impl DatabaseExecutor for SqliteExecutor {
 
 impl SqliteExecutor {
     /// Get reference to inner pool
+    #[must_use]
     pub fn pool(&self) -> &sqlx::SqlitePool {
         &self.pool
     }

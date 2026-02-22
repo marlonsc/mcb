@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 //! Configuration Provider Port
 //!
 //! Port for configuration management of providers.
@@ -13,7 +16,7 @@ use crate::value_objects::{EmbeddingConfig, VectorStoreConfig};
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::providers::config::ProviderConfigManagerInterface;
+/// use mcb_domain::ports::ProviderConfigManagerInterface;
 /// use std::sync::Arc;
 ///
 /// fn list_providers(config_manager: Arc<dyn ProviderConfigManagerInterface>) {
@@ -32,9 +35,15 @@ use crate::value_objects::{EmbeddingConfig, VectorStoreConfig};
 #[async_trait::async_trait]
 pub trait ProviderConfigManagerInterface: Send + Sync {
     /// Get embedding provider configuration by name
+    ///
+    /// # Errors
+    /// Returns an error if the provider is not found or configuration is invalid.
     fn get_embedding_config(&self, name: &str) -> Result<&EmbeddingConfig>;
 
     /// Get vector store provider configuration by name
+    ///
+    /// # Errors
+    /// Returns an error if the provider is not found or configuration is invalid.
     fn get_vector_store_config(&self, name: &str) -> Result<&VectorStoreConfig>;
 
     /// List all embedding provider names
@@ -45,13 +54,13 @@ pub trait ProviderConfigManagerInterface: Send + Sync {
 
     /// Check if an embedding provider is configured
     fn has_embedding_provider(&self, name: &str) -> bool {
-        self.list_embedding_providers().contains(&name.to_string())
+        self.list_embedding_providers().contains(&name.to_owned())
     }
 
     /// Check if a vector store provider is configured
     fn has_vector_store_provider(&self, name: &str) -> bool {
         self.list_vector_store_providers()
-            .contains(&name.to_string())
+            .contains(&name.to_owned())
     }
 
     /// Get default embedding provider configuration

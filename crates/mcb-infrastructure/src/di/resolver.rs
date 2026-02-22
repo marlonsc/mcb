@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Dynamic Provider Resolver
 //!
 //! Resolves providers by name using the linkme distributed slice registry.
@@ -34,11 +37,11 @@
 //! ## Usage
 //!
 //! ```no_run
-//! use mcb_infrastructure::config::AppConfig;
+//! use mcb_infrastructure::config::ConfigLoader;
 //! use mcb_infrastructure::di::resolve_providers;
 //!
 //! # fn main() -> Result<(), Box<dyn std::error::Error>> {
-//! let config = AppConfig::default();
+//! let config = ConfigLoader::new().load()?;
 //! let providers = resolve_providers(&config)?;
 //!
 //! // Use providers for embedding operations
@@ -49,7 +52,7 @@
 use std::sync::Arc;
 
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{
+use mcb_domain::ports::{
     CacheProvider as CacheProviderTrait, EmbeddingProvider, LanguageChunkingProvider,
     VectorStoreProvider,
 };
@@ -59,9 +62,11 @@ use mcb_domain::registry::language::{LanguageProviderConfig, resolve_language_pr
 use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
-use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 
 use crate::config::AppConfig;
+use crate::di::provider_resolvers::{
+    embedding_config_to_registry, vector_store_config_to_registry,
+};
 
 /// Resolved providers from configuration
 ///
@@ -98,9 +103,9 @@ impl std::fmt::Debug for ResolvedProviders {
 /// # Arguments
 /// * `config` - Application configuration containing provider names
 ///
-/// # Returns
-/// * `Ok(ResolvedProviders)` - All providers successfully resolved
-/// * `Err(Error)` - Provider not found or creation failed
+/// # Errors
+///
+/// Returns an error if any provider cannot be found or instantiated from config.
 pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
     // Get embedding config: prefer direct config (env vars), fallback to named config
     let embedding_config = if config.providers.embedding.provider.is_some() {
@@ -116,7 +121,7 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
             api_key: config.providers.embedding.api_key.clone(),
             base_url: config.providers.embedding.base_url.clone(),
             dimensions: config.providers.embedding.dimensions,
-            cache_dir: None,
+            cache_dir: config.providers.embedding.cache_dir.clone(),
             extra: Default::default(),
         }
     } else {
@@ -128,7 +133,11 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
             .values()
             .next()
             .map(embedding_config_to_registry)
-            .unwrap_or_else(default_embedding_config)
+            .ok_or_else(|| {
+                Error::configuration(
+                    "No embedding provider configured; set [providers.embedding.configs.default] in config",
+                )
+            })?
     };
 
     // Get vector store config: prefer direct config (env vars), fallback to named config
@@ -158,7 +167,11 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
             .values()
             .next()
             .map(vector_store_config_to_registry)
-            .unwrap_or_else(default_vector_store_config)
+            .ok_or_else(|| {
+                Error::configuration(
+                    "No vector store provider configured; set [providers.vector_store.configs.default] in config",
+                )
+            })?
     };
 
     // Cache config from system.infrastructure.cache
@@ -166,7 +179,7 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
     let cache_provider_name = config.system.infrastructure.cache.provider.as_str();
 
     let cache_config = CacheProviderConfig {
-        provider: cache_provider_name.to_string(),
+        provider: cache_provider_name.to_owned(),
         uri: config.system.infrastructure.cache.redis_url.clone(),
         max_size: Some(config.system.infrastructure.cache.max_size),
         ttl_secs: Some(config.system.infrastructure.cache.default_ttl_secs),
@@ -178,19 +191,18 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
     let language_config = LanguageProviderConfig::new("universal");
 
     // Resolve each provider from registry
-    let embedding = resolve_embedding_provider(&embedding_config).map_err(|e| {
-        Error::configuration(format!("Failed to resolve embedding provider: {}", e))
-    })?;
+    let embedding = resolve_embedding_provider(&embedding_config)
+        .map_err(|e| Error::configuration(format!("Failed to resolve embedding provider: {e}")))?;
 
     let vector_store = resolve_vector_store_provider(&vector_store_config).map_err(|e| {
-        Error::configuration(format!("Failed to resolve vector store provider: {}", e))
+        Error::configuration(format!("Failed to resolve vector store provider: {e}"))
     })?;
 
     let cache = resolve_cache_provider(&cache_config)
-        .map_err(|e| Error::configuration(format!("Failed to resolve cache provider: {}", e)))?;
+        .map_err(|e| Error::configuration(format!("Failed to resolve cache provider: {e}")))?;
 
     let language = resolve_language_provider(&language_config)
-        .map_err(|e| Error::configuration(format!("Failed to resolve language provider: {}", e)))?;
+        .map_err(|e| Error::configuration(format!("Failed to resolve language provider: {e}")))?;
 
     Ok(ResolvedProviders {
         embedding,
@@ -200,49 +212,13 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
     })
 }
 
-/// Convert domain EmbeddingConfig to registry EmbeddingProviderConfig
-fn embedding_config_to_registry(config: &EmbeddingConfig) -> EmbeddingProviderConfig {
-    EmbeddingProviderConfig {
-        provider: config.provider.to_string(),
-        model: Some(config.model.clone()),
-        api_key: config.api_key.clone(),
-        base_url: config.base_url.clone(),
-        dimensions: config.dimensions,
-        cache_dir: None,
-        extra: Default::default(),
-    }
-}
-
-/// Convert domain VectorStoreConfig to registry VectorStoreProviderConfig
-fn vector_store_config_to_registry(config: &VectorStoreConfig) -> VectorStoreProviderConfig {
-    VectorStoreProviderConfig {
-        provider: config.provider.to_string(),
-        uri: config.address.clone(),
-        collection: config.collection.clone(),
-        dimensions: config.dimensions,
-        api_key: config.token.clone(),
-        encrypted: None,
-        encryption_key: None,
-        extra: Default::default(),
-    }
-}
-
-/// Default embedding config for testing (uses local FastEmbed)
-fn default_embedding_config() -> EmbeddingProviderConfig {
-    EmbeddingProviderConfig::new("fastembed")
-}
-
-/// Default vector store config for testing (local EdgeVec HNSW)
-fn default_vector_store_config() -> VectorStoreProviderConfig {
-    VectorStoreProviderConfig::new("edgevec")
-}
-
 /// List all available providers across all categories
 ///
 /// Useful for CLI help, admin UI, and configuration validation.
 ///
 /// # Returns
 /// Struct containing lists of available providers by category
+#[must_use]
 pub fn list_available_providers() -> AvailableProviders {
     AvailableProviders {
         embedding: mcb_domain::registry::embedding::list_embedding_providers(),
@@ -265,33 +241,35 @@ pub struct AvailableProviders {
     pub language: Vec<(&'static str, &'static str)>,
 }
 
+impl AvailableProviders {
+    fn write_section(
+        f: &mut std::fmt::Formatter<'_>,
+        title: &str,
+        providers: &[(&'static str, &'static str)],
+    ) -> std::fmt::Result {
+        writeln!(f, "{title}:")?;
+        for (name, desc) in providers {
+            writeln!(f, "  - {name}: {desc}")?;
+        }
+        Ok(())
+    }
+}
+
 impl std::fmt::Display for AvailableProviders {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Available Providers:")?;
         writeln!(f)?;
 
-        writeln!(f, "Embedding Providers:")?;
-        for (name, desc) in &self.embedding {
-            writeln!(f, "  - {}: {}", name, desc)?;
-        }
+        Self::write_section(f, "Embedding Providers", &self.embedding)?;
         writeln!(f)?;
 
-        writeln!(f, "Vector Store Providers:")?;
-        for (name, desc) in &self.vector_store {
-            writeln!(f, "  - {}: {}", name, desc)?;
-        }
+        Self::write_section(f, "Vector Store Providers", &self.vector_store)?;
         writeln!(f)?;
 
-        writeln!(f, "Cache Providers:")?;
-        for (name, desc) in &self.cache {
-            writeln!(f, "  - {}: {}", name, desc)?;
-        }
+        Self::write_section(f, "Cache Providers", &self.cache)?;
         writeln!(f)?;
 
-        writeln!(f, "Language Providers:")?;
-        for (name, desc) in &self.language {
-            writeln!(f, "  - {}: {}", name, desc)?;
-        }
+        Self::write_section(f, "Language Providers", &self.language)?;
 
         Ok(())
     }

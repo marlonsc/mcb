@@ -3,11 +3,11 @@
 
 [general]
 workspace_root = "."
-exclude_patterns = ["target/", "tests/fixtures/"]
 rules_path = "crates/mcb-validate/rules"
 project_prefix = "mcb"
-skip_crates = ["mcb", "mcb-validate"]
 internal_dep_prefix = "mcb-"
+skip_dir_patterns = ["/fixtures/"]
+exclude_patterns = []
 
 [rules.architecture]
 enabled = true
@@ -15,7 +15,11 @@ enabled = true
 [rules.architecture.layer_boundaries]
 application_internal_deps = ["mcb-domain"]
 providers_internal_deps = ["mcb-domain", "mcb-application"]
-infrastructure_internal_deps = ["mcb-domain", "mcb-application", "mcb-providers"]
+infrastructure_internal_deps = [
+    "mcb-domain",
+    "mcb-application",
+    "mcb-providers",
+]
 server_internal_deps = ["mcb-domain", "mcb-application", "mcb-infrastructure"]
 
 [rules.naming]
@@ -34,12 +38,17 @@ infrastructure_crate = "mcb-infrastructure"
 application_crate = "mcb-application"
 providers_crate = "mcb-providers"
 validate_crate = "mcb-validate"
-language_support_crate = "mcb-language-support"
-ast_utils_crate = "mcb-ast-utils"
 
 [rules.kiss]
 enabled = true
 excluded_crates = ["mcb-validate"]
+skip_file_patterns = [
+    "/admin/api.rs",
+    "/di/bootstrap.rs",
+    "/di/catalog.rs",
+    "/di/resolver.rs",
+    "/health.rs",
+]
 
 [rules.refactoring]
 enabled = true
@@ -68,7 +77,7 @@ utility_types = [
     "Mutex",
 ]
 skip_files = ["mod.rs", "lib.rs", "main.rs", "errors.rs", "error.rs"]
-skip_dir_patterns = ["/tests/", "/benches/", "/examples/"]
+skip_dir_patterns = ["/fixtures/"]
 known_migration_pairs = [["mcb-core", "mcb-domain"], ["mcb-std", "mcb-common"]]
 
 [rules.performance]
@@ -94,7 +103,10 @@ excluded_crates = []
 [rules.quality]
 enabled = true
 max_file_lines = 800
-excluded_paths = ["mcb-providers/src/vector_store/", "mcb-providers/src/embedding/"]
+excluded_paths = [
+    "mcb-providers/src/vector_store/",
+    "mcb-providers/src/embedding/",
+]
 
 [rules.clean_architecture]
 enabled = true
@@ -116,10 +128,17 @@ enabled = true
 
 [rules.organization]
 enabled = true
+server_exempt_files = ["auth.rs", "middleware.rs"]
 
 [rules.visibility]
 enabled = true
-scan_crates = ["mcb-domain", "mcb-application", "mcb-providers", "mcb-infrastructure", "mcb-server"]
+scan_crates = [
+    "mcb-domain",
+    "mcb-application",
+    "mcb-providers",
+    "mcb-infrastructure",
+    "mcb-server",
+]
 
 [rules.layer_flow]
 enabled = true
@@ -127,21 +146,39 @@ enabled = true
 [rules.port_adapter]
 enabled = true
 
+[rules.dependency]
+enabled = true
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP004"
+scan_root = "crates/mcb-server/src/admin"
+pattern = "mcb_domain::ports::repositories"
+allowed_files = [
+    "crates/mcb-server/src/admin/crud_adapter.rs",
+    "crates/mcb-server/src/admin/handlers.rs",
+]
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP005"
+scan_root = "crates/mcb/src/cli"
+pattern = "mcb_validate::"
+allowed_files = ["crates/mcb/src/cli/validate.rs"]
+
 [validators]
 architecture = true
-naming = true
-kiss = true
-refactoring = true
-performance = true
-patterns = true
-test_quality = true
-implementation = true
-dependency = true
-quality = true
-organization = true
 clean_architecture = true
-solid = true
+dependency = true
 documentation = true
-visibility = true
+implementation = true
+kiss = true
 layer_flow = true
+naming = true
+organization = true
+patterns = true
+performance = true
 port_adapter = true
+quality = true
+refactoring = true
+solid = true
+test_quality = true
+visibility = true

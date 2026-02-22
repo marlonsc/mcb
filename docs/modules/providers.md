@@ -4,15 +4,22 @@
 **Source**: `crates/mcb-providers/src/`
 **Crate**: `mcb-providers`
 
-**Project links**: See `docs/architecture/ARCHITECTURE.md` and `docs/developer/ROADMAP.md` for provider architecture and v0.2.1 roadmap alignment.
+## ↔ Code ↔ Docs cross-reference
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-providers/src/lib.rs`](../../crates/mcb-providers/src/lib.rs) links here |
+| Docs → Code | [`crates/mcb-providers/src/lib.rs`](../../crates/mcb-providers/src/lib.rs) — crate root |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-030`](../adr/030-multi-provider-strategy.md) · [`ADR-003`](../adr/003-unified-provider-architecture.md) |
+| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
 
 ## Overview
 
 The providers module implements a trait-based abstraction layer for AI and storage services. All integrations follow port/adapter — the domain defines traits, providers implement. This enables flexible deployment with multiple providers, intelligent routing, and automatic failover.
 
-All port traits are resolved via**dill Catalog** (ADR-029) for dependency injection.
+All port traits are resolved via the **AppContext composition root** (ADR-050) for dependency injection.
 
-## Embedding Providers (`embedding/`)
+## Embedding Providers
 
 Transform text into vector embeddings.
 
@@ -28,21 +35,18 @@ pub trait EmbeddingProvider: Send + Sync {
 }
 ```
 
-| Provider | Protocol | Auth | Models (dimensions) | Env Key Suffix | Use Case |
-| ---------- | ---------- | ------ | --------------------- | ---------------- | ---------- |
-| OpenAI | HTTP REST | Bearer | 3-small (1536), 3-large (3072), ada-002 (1536) | `OPENAI__API_KEY` | Production |
-| VoyageAI | HTTP REST | Bearer | voyage-code-3 (1024), voyage-3 (1024) | `VOYAGEAI__API_KEY` | Code-specialized |
-| Ollama | HTTP REST | None | nomic (768), minilm (384), mxbai (1024) | `OLLAMA__BASE_URL` | Self-hosted |
-| Gemini | HTTP REST | API key | text-embedding-004 (768) | `GEMINI__API_KEY` | Alternative |
-| FastEmbed | Local ONNX | None | AllMiniLML6V2 (384) — Actor pattern | Model enum | Privacy-first |
-| Anthropic | HTTP REST | x-api-key | claude-3-5-sonnet (optional) | `ANTHROPIC__API_KEY` | Optional |
-| Null | — | — | fixed vectors (128) | — | Testing |
+| Provider | Source | Protocol | Auth | Models (dimensions) | Env Key Suffix | Use Case |
+| ---------- | ------ | ---------- | ------ | --------------------- | ---------------- | ---------- |
+| OpenAI | [`openai.rs`](../../crates/mcb-providers/src/embedding/openai.rs) | HTTP REST | Bearer | 3-small (1536), 3-large (3072), ada-002 (1536) | `OPENAI__API_KEY` | Production |
+| VoyageAI | [`voyageai.rs`](../../crates/mcb-providers/src/embedding/voyageai.rs) | HTTP REST | Bearer | voyage-code-3 (1024), voyage-3 (1024) | `VOYAGEAI__API_KEY` | Code-specialized |
+| Ollama | [`ollama.rs`](../../crates/mcb-providers/src/embedding/ollama.rs) | HTTP REST | None | nomic (768), minilm (384), mxbai (1024) | `OLLAMA__BASE_URL` | Self-hosted |
+| Gemini | [`gemini.rs`](../../crates/mcb-providers/src/embedding/gemini.rs) | HTTP REST | API key | text-embedding-004 (768) | `GEMINI__API_KEY` | Alternative |
+| FastEmbed | [`fastembed.rs`](../../crates/mcb-providers/src/embedding/fastembed.rs) | Local ONNX | None | AllMiniLML6V2 (384) — Actor pattern | Model enum | Privacy-first |
+| Anthropic | [`anthropic.rs`](../../crates/mcb-providers/src/embedding/anthropic.rs) | HTTP REST | x-api-key | voyage-code-3 via VoyageAI (1024) | `ANTHROPIC__API_KEY` | Optional |
 
 All env keys are prefixed with `MCP__PROVIDERS__EMBEDDING__CONFIGS__`. Default timeout: 30s.
 
-## Vector Store Providers (`vector_store/`)
-
-Store and search vector embeddings.
+## Vector Store Providers
 
 **Port:** `VectorStoreProvider` + `VectorStoreAdmin` + `VectorStoreBrowser` (`Send + Sync`)
 
@@ -56,15 +60,15 @@ pub trait VectorStoreProvider: Send + Sync {
 }
 ```
 
-| Provider | Protocol | Auth | Algorithm | Use Case |
-| ---------- | ---------- | ------ | ----------- | ---------- |
-| EdgeVec | In-process | None | HNSW (M=16, EF=100) | Dev/test, single-instance |
-| Milvus | gRPC | Optional | IVF_FLAT (NLIST=128) | Production cloud |
-| Qdrant | HTTP REST | API key | HNSW configurable | Production cloud |
-| Pinecone | HTTP REST | API key | Pre-created index | Managed cloud |
-| Encrypted | Wraps any | N/A | AES-256-GCM decorator | Security-sensitive |
+| Provider | Source | Protocol | Auth | Algorithm | Use Case |
+| ---------- | ------ | ---------- | ------ | ----------- | ---------- |
+| EdgeVec | [`edgevec.rs`](../../crates/mcb-providers/src/vector_store/edgevec.rs) | In-process | None | HNSW (M=16, EF=100) | Dev/test, single-instance |
+| Milvus | [`milvus.rs`](../../crates/mcb-providers/src/vector_store/milvus.rs) | gRPC | Optional | IVF_FLAT (NLIST=128) | Production cloud |
+| Qdrant | [`qdrant.rs`](../../crates/mcb-providers/src/vector_store/qdrant.rs) | HTTP REST | API key | HNSW configurable | Production cloud |
+| Pinecone | [`pinecone.rs`](../../crates/mcb-providers/src/vector_store/pinecone.rs) | HTTP REST | API key | Pre-created index | Managed cloud |
+| Encrypted | [`encrypted.rs`](../../crates/mcb-providers/src/vector_store/encrypted.rs) | Wraps any | N/A | AES-256-GCM decorator | Security-sensitive |
 
-## Database (`database/sqlite/`)
+## Database
 
 - **Engine**: SQLite via sqlx v0.8 — primary persistence
 - **Full-text search**: FTS5 for lexical search
@@ -73,23 +77,23 @@ pub trait VectorStoreProvider: Send + Sync {
 
 **Repository implementations** (7 total):
 
-| Repository | Domain Port | Purpose |
-| ----------- | ------------- | --------- |
-| MemoryRepo | `MemoryRepository` | Observation storage + FTS search |
-| AgentRepo | `AgentRepository` | Agent session persistence + query |
-| OrgRepo | `OrgEntityRepository` | Multi-tenant org data |
-| VcsRepo | `VcsEntityRepository` | Repository/branch persistence |
-| PlanRepo | `PlanEntityRepository` | Plan version/review persistence |
-| IssueRepo | `IssueEntityRepository` | Issue tracking persistence |
-| ProjectRepo | `ProjectRepository` | Project CRUD |
+| Repository | Source | Domain Port | Purpose |
+| ----------- | ------ | ------------- | --------- |
+| MemoryRepo | [`memory_repository.rs`](../../crates/mcb-providers/src/database/sqlite/memory_repository.rs) | `MemoryRepository` | Observation storage + FTS search |
+| AgentRepo | [`agent_repository.rs`](../../crates/mcb-providers/src/database/sqlite/agent_repository.rs) | `AgentRepository` | Agent session persistence + query |
+| OrgRepo | [`org_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/org_entity_repository.rs) | `OrgEntityRepository` | Multi-tenant org data |
+| VcsRepo | [`vcs_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/vcs_entity_repository.rs) | `VcsEntityRepository` | Repository/branch persistence |
+| PlanRepo | [`plan_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/plan_entity_repository.rs) | `PlanEntityRepository` | Plan version/review persistence |
+| IssueRepo | [`issue_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/issue_entity_repository.rs) | `IssueEntityRepository` | Issue tracking persistence |
+| ProjectRepo | [`project_repository.rs`](../../crates/mcb-providers/src/database/sqlite/project_repository.rs) | `ProjectRepository` | Project CRUD |
 
-## Hybrid Search (`hybrid_search/`)
+## Hybrid Search
 
 Combines BM25 lexical search (via FTS5) with semantic vector search for improved recall and precision.
 
 **Port:** `HybridSearchProvider`
 
-## Cache Providers (`cache/`)
+## Cache Providers
 
 | Provider | Backend | Protocol | Use Case |
 | ---------- | --------- | ---------- | ---------- |
@@ -109,7 +113,7 @@ Combines BM25 lexical search (via FTS5) with semantic vector search for improved
 - **Project detection**: Cargo, npm, Python, Go, Maven manifest parsing
 - **Submodules**: list, initialize, update
 
-## Language Processors (`language/`)
+## Language Processors
 
 AST-based code chunking via**tree-sitter v0.26**for**13 languages (12 parsers; JavaScript handles both JS and TS)**. Language-specific processors with fallback to generic chunking. File extension → language detection.
 
@@ -129,16 +133,11 @@ AST-based code chunking via**tree-sitter v0.26**for**13 languages (12 parsers; J
 | Swift | tree-sitter-swift | Production |
 | Kotlin | tree-sitter-kotlin-ng | Production |
 
-## Routing System (`routing/`)
+## Analysis
 
-Intelligent provider selection and management.
+Native code analysis using Rust-code-analysis integration:
 
-- **CircuitBreaker** — Failure detection and recovery (per-provider)
-- **HealthMonitor** — Continuous health checking
-
-## Storage (`storage/`)
-
-File-system backed storage utilities for data persistence.
+- `native.rs` — RCA-based metrics analysis
 
 ## Workflow (`workflow/`)
 
@@ -179,33 +178,36 @@ MCP__INFRASTRUCTURE__CACHE__PROVIDER=moka
 
 ```text
 crates/mcb-providers/src/
+├── analysis/           # Code analysis
+│   ├── native.rs       # Rust-code-analysis integration
+│   └── mod.rs
+├── cache/
+│   ├── moka.rs         # Moka cache (feature-gated)
+│   ├── redis.rs        # Redis cache (feature-gated)
+│   └── mod.rs
+├── database/
+│   └── sqlite/         # SQLite + FTS5 repositories
 ├── embedding/
 │   ├── anthropic.rs    # Anthropic API
 │   ├── fastembed.rs    # Local ONNX embeddings (feature-gated)
 │   ├── gemini.rs       # Google Gemini
-│   ├── helpers.rs      # Shared embedding utilities
+│   ├── macros.rs       # Provider registration macros
 │   ├── ollama.rs       # Self-hosted
 │   ├── openai.rs       # OpenAI API
 │   ├── voyageai.rs     # VoyageAI
-│   └── mod.rs
-├── vector_store/
-│   ├── edgevec.rs      # In-process HNSW
-│   ├── encrypted.rs    # AES-GCM encrypted decorator (feature-gated)
-│   ├── helpers.rs      # Shared vector utilities
-│   ├── milvus.rs       # Milvus gRPC client
-│   ├── pinecone.rs     # Pinecone REST client
-│   ├── qdrant.rs       # Qdrant REST client
-│   └── mod.rs
-├── database/
-│   └── sqlite/         # SQLite + FTS5 repositories
-├── cache/
-│   ├── moka.rs         # Moka cache (feature-gated)
-│   ├── redis.rs        # Redis cache (feature-gated)
 │   └── mod.rs
 ├── events/             # Event bus implementations
 ├── git/                # git2 VCS provider
 ├── hybrid_search/      # BM25 + semantic combined search
 ├── language/
+│   ├── common/         # Shared language utilities
+│   │   ├── config.rs   # Language configuration
+│   │   ├── constants.rs # Language constants
+│   │   ├── processor.rs # Common processor logic
+│   │   ├── traverser.rs # AST traversal utilities
+│   │   └── mod.rs
+│   ├── detection.rs    # Language detection
+│   ├── engine.rs       # Chunking engine
 │   ├── rust.rs         # Rust processor
 │   ├── python.rs       # Python processor
 │   ├── javascript.rs   # JavaScript + TypeScript (mode)
@@ -219,15 +221,18 @@ crates/mcb-providers/src/
 │   ├── swift.rs        # Swift processor
 │   ├── kotlin.rs       # Kotlin processor
 │   └── mod.rs
-├── routing/
-│   ├── circuit_breaker.rs
-│   ├── health.rs
-│   └── mod.rs
-├── storage/            # File-system storage
 ├── utils/              # Shared utilities
-├── workflow/           # Workflow engine
-├── admin/
-│   └── metrics.rs      # AtomicPerformanceMetrics
+├── vector_store/
+│   ├── edgevec.rs      # In-process HNSW
+│   ├── encrypted.rs    # AES-GCM encrypted decorator (feature-gated)
+│   ├── macros.rs       # Provider registration macros
+│   ├── milvus.rs       # Milvus gRPC client
+│   ├── pinecone.rs     # Pinecone REST client
+│   ├── qdrant.rs       # Qdrant REST client
+│   └── mod.rs
+├── workflow/
+│   ├── mod.rs          # Workflow module
+│   └── transitions.rs  # State transitions
 ├── constants.rs        # Provider constants
 ├── provider_utils.rs   # Provider utilities
 └── lib.rs              # Crate root
@@ -239,4 +244,4 @@ Provider tests are located in `crates/mcb-providers/tests/`.
 
 ---
 
-### Updated 2026-02-12 — Enriched with Anthropic embedding, external vector stores (Milvus/Qdrant/Pinecone), SQLite/FTS5, hybrid search, git, events, config, and 13-language support via 12 parser implementations (v0.2.1)
+### Updated 2026-02-14 — Added analysis/, workflow/ (FSM transitions), language/common/ (config, constants, processor, traverser) + detection.rs + engine.rs; removed stale routing/, storage/, admin/ references (v0.2.1)

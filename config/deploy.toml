@@ -1,0 +1,58 @@
+# MCP Context Browser - Deployment Configuration
+# Location: ~/.config/mcb/mcb.toml
+#
+# This file is layered ON TOP of config/default.toml via Figment.
+# Only override values that differ from defaults for a production deploy.
+
+# ============================================================================
+# OPERATING MODE
+# ============================================================================
+[mode]
+type = "client"
+server_url = "http://127.0.0.1:8080"
+
+# ============================================================================
+# SERVER SETTINGS (used by mcb serve --server)
+# ============================================================================
+[server]
+transport_mode = "stdio"
+
+[server.network]
+host = "127.0.0.1"
+port = 8080
+
+# ============================================================================
+# AUTH
+# ============================================================================
+[auth]
+enabled = false
+
+[auth.admin]
+enabled = true
+
+# ============================================================================
+# DATABASE - SQLite (relative to WorkingDirectory in systemd service)
+# ============================================================================
+[providers.database]
+provider = "sqlite"
+
+[providers.database.configs.default]
+provider = "sqlite"
+path = "mcb.db"
+
+# ============================================================================
+# EMBEDDING PROVIDER - Ollama (local)
+# ============================================================================
+[providers.embedding]
+provider = "ollama"
+model = "nomic-embed-text"
+base_url = "http://localhost:11434"
+dimensions = 768
+
+# ============================================================================
+# VECTOR STORE - Milvus
+# ============================================================================
+[providers.vector_store]
+provider = "milvus"
+address = "http://localhost:29530"
+dimensions = 768

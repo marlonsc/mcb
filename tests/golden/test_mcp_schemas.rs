@@ -1,4 +1,4 @@
-use crate::test_utils::test_fixtures::{create_test_mcp_server, golden_content_to_string};
+use crate::utils::test_fixtures::{create_test_mcp_server, golden_content_to_string};
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
 

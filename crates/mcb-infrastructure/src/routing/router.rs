@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Provider Router Implementations
 //!
 //! Provides routing logic for selecting providers based on health and context.
@@ -7,9 +10,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::routing::{
-    ProviderContext, ProviderHealthStatus, ProviderRouter,
-};
+use mcb_domain::ports::{ProviderContext, ProviderHealthStatus, ProviderRouter};
 
 use super::health::HealthMonitor;
 
@@ -82,8 +83,9 @@ impl DefaultProviderRouter {
             let is_better = match (health, best_health) {
                 (ProviderHealthStatus::Healthy, _) => best_health != ProviderHealthStatus::Healthy,
                 (ProviderHealthStatus::Degraded, ProviderHealthStatus::Unhealthy) => true,
-                (ProviderHealthStatus::Degraded, _) => best_provider.is_none(),
-                (ProviderHealthStatus::Unhealthy, _) => best_provider.is_none(),
+                (ProviderHealthStatus::Degraded | ProviderHealthStatus::Unhealthy, _) => {
+                    best_provider.is_none()
+                }
             };
 
             if is_better {
@@ -128,17 +130,17 @@ impl ProviderRouter for DefaultProviderRouter {
 
     async fn get_stats(&self) -> HashMap<String, serde_json::Value> {
         let mut stats = HashMap::new();
-        stats.insert("provider".to_string(), serde_json::json!("default"));
+        stats.insert("provider".to_owned(), serde_json::json!("default"));
         stats.insert(
-            "embedding_providers".to_string(),
+            "embedding_providers".to_owned(),
             serde_json::json!(self.embedding_providers),
         );
         stats.insert(
-            "vector_store_providers".to_string(),
+            "vector_store_providers".to_owned(),
             serde_json::json!(self.vector_store_providers),
         );
         stats.insert(
-            "health_summary".to_string(),
+            "health_summary".to_owned(),
             serde_json::json!(self.health_monitor.get_all_health()),
         );
         stats

@@ -1,9 +1,15 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! Common utilities for language chunking providers
 //!
 //! This module contains shared code used by all language-specific processors.
 
 pub mod config;
 pub mod constants;
+pub mod detection;
+pub mod engine;
+pub mod macros;
 pub mod processor;
 pub mod traverser;
 

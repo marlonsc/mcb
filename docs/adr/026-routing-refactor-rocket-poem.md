@@ -2,12 +2,12 @@
 ---
 adr: 26
 title: API Routing Refactor (Rocket vs Poem)
-status: IMPLEMENTED
+status: SUPERSEDED
 created:
-updated: 2026-02-05
+updated: 2026-02-21
 related: [7, 11]
 supersedes: []
-superseded_by: []
+superseded_by: [49]
 implementation_status: Incomplete
 ---
 
@@ -17,10 +17,16 @@ implementation_status: Incomplete
 
 ## Status
 
-**Implemented** (v0.1.2)
+**Superseded by [ADR 049: Axum Return for rmcp Tower Compatibility]
+(049-axum-return-rmcp-tower-compatibility.md)** (v0.2.2)
 
-> Migration from Axum to Rocket completed as part of the infrastructure
-> modernization initiative.
+> Original migration from Axum to Rocket completed in v0.1.2 as part of the
+> infrastructure modernization initiative.
+>
+> **Update (2026-02-21)**: The Rocket migration is reversed due to rmcp's
+> `StreamableHttpService` requiring Tower compatibility, which Rocket does not
+> provide. See [ADR 049](049-axum-return-rmcp-tower-compatibility.md) for the
+> return to Axum.
 
 ## Context
 

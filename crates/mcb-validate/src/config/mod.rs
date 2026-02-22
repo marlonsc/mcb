@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Configuration Module
 //!
 //! Provides file-based configuration for mcb-validate via figment
@@ -6,9 +9,10 @@
 mod file_config;
 
 pub use file_config::{
-    ArchitectureRulesConfig, CleanArchitectureRulesConfig, FileConfig, GeneralConfig,
-    ImplementationRulesConfig, KISSRulesConfig, LayerBoundariesConfig, LayerFlowRulesConfig,
-    NamingRulesConfig, OrganizationRulesConfig, PatternRulesConfig, PerformanceRulesConfig,
-    PortAdapterRulesConfig, QualityRulesConfig, RefactoringRulesConfig, RulesConfig,
-    SolidRulesConfig, TestQualityRulesConfig, ValidatorsConfig, VisibilityRulesConfig,
+    ArchitectureRulesConfig, BypassBoundaryConfig, CleanArchitectureRulesConfig,
+    DependencyRulesConfig, FileConfig, GeneralConfig, ImplementationRulesConfig, KISSRulesConfig,
+    LayerBoundariesConfig, LayerFlowRulesConfig, NamingRulesConfig, OrganizationRulesConfig,
+    PatternRulesConfig, PerformanceRulesConfig, PortAdapterRulesConfig, QualityRulesConfig,
+    RefactoringRulesConfig, RulesConfig, SolidRulesConfig, TestQualityRulesConfig,
+    ValidatorsConfig, VisibilityRulesConfig,
 };

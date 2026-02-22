@@ -1,41 +1,18 @@
-//! SQLite-specific DDL generation from the generic schema.
 //!
-//! Implements [`MemorySchemaDdlGenerator`] (memory subset) and [`SchemaDdlGenerator`]
-//! (full project schema) for SQLite only. Other backends (PostgreSQL, MySQL)
-//! have their own modules with their own dialect.
-
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md#database)
+//!
 use mcb_domain::schema::{
-    ColumnType, ForeignKeyDef, FtsDef, IndexDef, MemorySchema, MemorySchemaDdlGenerator,
-    ProjectSchema, SchemaDdlGenerator, TableDef, UniqueConstraintDef,
+    ColumnType, ForeignKeyDef, FtsDef, IndexDef, Schema, SchemaDdlGenerator, TableDef,
+    UniqueConstraintDef,
 };
 
-/// Generates SQLite DDL from the generic memory schema (observations, session_summaries, FTS).
-#[derive(Debug, Clone, Default)]
-pub struct SqliteMemoryDdlGenerator;
-
-impl MemorySchemaDdlGenerator for SqliteMemoryDdlGenerator {
-    fn generate_ddl(&self, schema: &MemorySchema) -> Vec<String> {
-        let mut stmts = Vec::new();
-        for table in &schema.tables {
-            stmts.push(table_to_sqlite_ddl(table, &[]));
-        }
-        if let Some(fts) = &schema.fts {
-            stmts.extend(rebuild_fts_sqlite(fts));
-        }
-        for idx in &schema.indexes {
-            stmts.push(index_to_sqlite_ddl(idx));
-        }
-        stmts
-    }
-}
-
-/// Generates SQLite DDL from the full project schema (collections, observations,
-/// session_summaries, file_hashes, FTS, indexes, unique constraints).
+/// Generates `SQLite` DDL from the full project schema (collections, observations,
+/// `session_summaries`, `file_hashes`, FTS, indexes, unique constraints).
 #[derive(Debug, Clone, Default)]
 pub struct SqliteSchemaDdlGenerator;
 
 impl SchemaDdlGenerator for SqliteSchemaDdlGenerator {
-    fn generate_ddl(&self, schema: &ProjectSchema) -> Vec<String> {
+    fn generate_ddl(&self, schema: &Schema) -> Vec<String> {
         let mut stmts = Vec::new();
         for table in &schema.tables {
             let uniques: Vec<&UniqueConstraintDef> = schema
@@ -62,19 +39,11 @@ impl SchemaDdlGenerator for SqliteSchemaDdlGenerator {
 
 fn column_type_sqlite(ty: &ColumnType) -> &'static str {
     match ty {
-        ColumnType::Text => "TEXT",
-        ColumnType::Integer => "INTEGER",
+        ColumnType::Text | ColumnType::Json | ColumnType::Uuid => "TEXT",
+        ColumnType::Integer | ColumnType::Boolean | ColumnType::Timestamp => "INTEGER",
         ColumnType::Real => "REAL",
-        ColumnType::Boolean => "INTEGER",
         ColumnType::Blob => "BLOB",
-        ColumnType::Json => "TEXT",
-        ColumnType::Uuid => "TEXT",
-        ColumnType::Timestamp => "INTEGER",
     }
-}
-
-fn table_to_sqlite_ddl(table: &TableDef, unique_constraints: &[&UniqueConstraintDef]) -> String {
-    table_to_sqlite_ddl_with_fk(table, unique_constraints, &[])
 }
 
 fn table_to_sqlite_ddl_with_fk(
@@ -110,7 +79,8 @@ fn table_to_sqlite_ddl_with_fk(
                 s.push_str(" NOT NULL");
             }
             if let Some(fk) = foreign_keys.iter().find(|fk| fk.from_column == c.name) {
-                s.push_str(&format!(" REFERENCES {}({})", fk.to_table, fk.to_column));
+                use std::fmt::Write;
+                let _ = write!(s, " REFERENCES {}({})", fk.to_table, fk.to_column);
             }
             s
         })
@@ -141,9 +111,9 @@ fn rebuild_fts_sqlite(fts: &FtsDef) -> Vec<String> {
         .map_or("content", String::as_str);
 
     vec![
-        "DROP TRIGGER IF EXISTS obs_ai".to_string(),
-        "DROP TRIGGER IF EXISTS obs_ad".to_string(),
-        "DROP TRIGGER IF EXISTS obs_au".to_string(),
+        "DROP TRIGGER IF EXISTS obs_ai".to_owned(),
+        "DROP TRIGGER IF EXISTS obs_ad".to_owned(),
+        "DROP TRIGGER IF EXISTS obs_au".to_owned(),
         format!("DROP TABLE IF EXISTS {}", fts.virtual_table_name),
         format!(
             "CREATE VIRTUAL TABLE {} USING fts5({}, {} UNINDEXED)",
@@ -170,7 +140,7 @@ fn trigger_after_insert_sqlite(fts: &FtsDef) -> String {
         .first()
         .map_or("content", String::as_str);
     format!(
-        r"CREATE TRIGGER obs_ai AFTER INSERT ON {} BEGIN
+        "CREATE TRIGGER obs_ai AFTER INSERT ON {} BEGIN
   INSERT INTO {}({}, {}) VALUES (new.{}, new.{});
 END;",
         fts.content_table,
@@ -184,7 +154,7 @@ END;",
 
 fn trigger_after_delete_sqlite(fts: &FtsDef) -> String {
     format!(
-        r"CREATE TRIGGER obs_ad AFTER DELETE ON {} BEGIN
+        "CREATE TRIGGER obs_ad AFTER DELETE ON {} BEGIN
   DELETE FROM {} WHERE {} = old.{};
 END;",
         fts.content_table, fts.virtual_table_name, fts.id_column, fts.id_column
@@ -197,7 +167,7 @@ fn trigger_after_update_sqlite(fts: &FtsDef) -> String {
         .first()
         .map_or("content", String::as_str);
     format!(
-        r"CREATE TRIGGER obs_au AFTER UPDATE ON {} BEGIN
+        "CREATE TRIGGER obs_au AFTER UPDATE ON {} BEGIN
   DELETE FROM {} WHERE {} = old.{};
   INSERT INTO {}({}, {}) VALUES (new.{}, new.{});
 END;",
@@ -219,4 +189,16 @@ fn index_to_sqlite_ddl(idx: &IndexDef) -> String {
         "CREATE INDEX IF NOT EXISTS {} ON {}({})",
         idx.name, idx.table, cols
     )
+}
+
+/// Generate `ALTER TABLE ... ADD COLUMN` SQL for a single column.
+///
+/// `SQLite` `ADD COLUMN` requires the column to either be nullable or have a default.
+/// Since our schema evolution only adds nullable columns, this is safe.
+pub(crate) fn alter_table_add_column_sqlite(
+    table: &str,
+    col: &mcb_domain::schema::ColumnDef,
+) -> String {
+    let ty = column_type_sqlite(&col.type_);
+    format!("ALTER TABLE {table} ADD COLUMN {} {ty}", col.name)
 }

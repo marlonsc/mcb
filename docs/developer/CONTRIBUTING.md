@@ -3,13 +3,13 @@
 
 Thank you for your interest in contributing! This guide covers everything you need for MCB development.
 
-**Last updated:**2026-02-12 |**Version:** v0.2.1
+**Last updated:** 2026-02-14 | **Version:** v0.2.1
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Rust 1.89+**: Install from [rustup.rs](https://rustup.rs/)
+- **Rust 1.92+**: Install from [rustup.rs](https://rustup.rs/)
 - **Git**: Version control system
 
 ### Setup Development Environment
@@ -18,7 +18,7 @@ Thank you for your interest in contributing! This guide covers everything you ne
 git clone https://github.com/marlonsc/mcb.git
 cd mcb
 make build
-make test       # 10,000+ test functions
+make test       # 1700+ tests across 7 crates
 make check      # Full quality pipeline
 ```
 
@@ -60,7 +60,7 @@ crates/mcb-{name}/
     ├── unit.rs          ← Unit test module
     ├── integration.rs   ← Integration test module
     ├── unit/*_tests.rs  ← Individual test files
-    └── test_utils/      ← Shared test helpers
+    └── utils/      ← Shared test helpers
 ```
 
 ### Code Structure (v0.2.1 Clean Architecture)
@@ -71,7 +71,7 @@ crates/
 ├── mcb-domain/         # Core types, ports, entities (innermost)
 ├── mcb-application/    # Business services (use cases, domain services)
 ├── mcb-providers/      # External integrations (embedding, vector store, language)
-├── mcb-infrastructure/ # Shared systems (DI, config, null adapters)
+├── mcb-infrastructure/ # Shared systems (DI, config, cross-cutting services)
 ├── mcb-server/         # MCP protocol, HTTP transport, admin
 └── mcb-validate/       # Architecture validation
 ```
@@ -161,7 +161,7 @@ cargo test test_name -- --nocapture     # Specific test with output
 - **Test files**: `tests/unit/*_tests.rs`, `tests/integration/*_tests.rs`
 - **Test helpers**: `rstest` (params), `mockall` (mocks), `insta` (snapshots), `tempfile`
 - **Real providers**: `extern crate mcb_providers` forces linkme registration
-- **Mocks**: `Arc<Mutex<Vec<T>>>` state tracking in `test_utils/mock_services/`
+- **Mocks**: `Arc<Mutex<Vec<T>>>` state tracking in `utils/mock_services/`
 
 ## 🔨 Make-First Workflow
 
@@ -233,7 +233,7 @@ make docs-validate QUICK=1
 ## 🚀 Code References
 
 - **Config**: `mcb_infrastructure::config::ConfigLoader` — See [CONFIGURATION.md](../CONFIGURATION.md), [ADR-025](../adr/025-figment-configuration.md)
-- **DI**: `mcb_infrastructure::di::bootstrap::init_app(config)` — See [ADR-029](../adr/029-hexagonal-architecture-dill.md)
+- **DI**: `mcb_infrastructure::di::bootstrap::init_app(config)` — See [ADR-050](../adr/050-manual-composition-root-dill-removal.md) (ADR-029 superseded)
 - **Patterns**: See [PATTERNS.md](../architecture/PATTERNS.md) for implementation patterns
 - **Run server**: `cargo run --bin mcb` or `make build` then run the binary
 

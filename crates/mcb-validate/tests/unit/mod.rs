@@ -1,0 +1,16 @@
+//! Unit tests — `cargo test -p mcb-validate --test unit`
+
+#[path = "../utils/mod.rs"]
+pub mod utils;
+
+pub mod ast;
+pub mod common;
+pub mod engines;
+pub mod filters;
+pub mod linters;
+pub mod rules;
+pub mod scan;
+pub mod util_tests;
+pub mod validators;
+
+mod lib_tests;

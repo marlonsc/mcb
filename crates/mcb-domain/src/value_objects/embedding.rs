@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#value-objects)
+//!
 //! Semantic Embedding Value Objects
 //!
 //! Value objects representing semantic embeddings and related

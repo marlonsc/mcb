@@ -1,7 +1,13 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#value-objects)
+//!
+//! Code highlighting value objects and types.
+
 use serde::{Deserialize, Serialize};
 
 /// Highlight category for code tokens
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+// TODO(qlty): Found 22 lines of similar code in 2 locations (mass = 54)
 pub enum HighlightCategory {
     /// Language keyword (e.g., if, while, return)
     Keyword,
@@ -65,6 +71,7 @@ impl HighlightedCode {
     /// # Returns
     ///
     /// A new `HighlightedCode` instance with the provided values.
+    #[must_use]
     pub fn new(original: String, spans: Vec<HighlightSpan>, language: String) -> Self {
         Self {
             original,

@@ -1,4 +1,5 @@
 //! Validate command - runs architecture validation
+#![allow(clippy::print_stdout)]
 
 use std::path::PathBuf;
 
@@ -38,14 +39,19 @@ pub struct ValidateArgs {
 
 /// Validation result for exit code determination
 pub struct ValidationResult {
+    /// Number of error violations found
     pub errors: usize,
+    /// Number of warning violations found
     pub warnings: usize,
+    /// Number of info violations found
     pub infos: usize,
+    /// Whether strict mode was enabled
     pub strict_mode: bool,
 }
 
 impl ValidationResult {
     /// Returns true if validation failed based on mode
+    #[must_use]
     pub fn failed(&self) -> bool {
         if self.strict_mode {
             self.errors > 0 || self.warnings > 0
@@ -57,6 +63,8 @@ impl ValidationResult {
 
 impl ValidateArgs {
     /// Execute the validate command
+    /// # Errors
+    /// Returns an error if validation setup or execution fails.
     pub fn execute(self) -> Result<ValidationResult, Box<dyn std::error::Error>> {
         use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
 
@@ -85,7 +93,7 @@ impl ValidateArgs {
         // Format output
         match self.format.as_str() {
             "json" => {
-                self.print_json(&report)?;
+                Self::print_json(&report)?;
             }
             _ => {
                 self.print_text(&report);
@@ -102,10 +110,7 @@ impl ValidateArgs {
     }
 
     /// Print report as JSON
-    fn print_json(
-        &self,
-        report: &mcb_validate::GenericReport,
-    ) -> Result<(), Box<dyn std::error::Error>> {
+    fn print_json(report: &mcb_validate::GenericReport) -> Result<(), Box<dyn std::error::Error>> {
         let json = serde_json::to_string_pretty(report)?;
         println!("{json}");
         Ok(())
@@ -117,7 +122,7 @@ impl ValidateArgs {
 
         // Print violations (unless quick mode)
         if !self.quick {
-            self.print_violations(report, severity_threshold);
+            Self::print_violations(report, severity_threshold);
         }
 
         // Print summary
@@ -132,14 +137,14 @@ impl ValidateArgs {
         }
     }
 
-    fn print_violations(&self, report: &mcb_validate::GenericReport, threshold: u8) {
+    fn print_violations(report: &mcb_validate::GenericReport, threshold: u8) {
         let mut has_violations = false;
 
         for violations in report.violations_by_category.values() {
             for violation in violations {
-                if self.should_print_violation(violation, threshold) {
+                if Self::should_print_violation(violation, threshold) {
                     has_violations = true;
-                    self.print_single_violation(violation);
+                    Self::print_single_violation(violation);
                 }
             }
         }
@@ -149,11 +154,7 @@ impl ValidateArgs {
         }
     }
 
-    fn should_print_violation(
-        &self,
-        violation: &mcb_validate::ViolationEntry,
-        threshold: u8,
-    ) -> bool {
+    fn should_print_violation(violation: &mcb_validate::ViolationEntry, threshold: u8) -> bool {
         let sev_level = match violation.severity.as_str() {
             "ERROR" => 0,
             "WARNING" => 1,
@@ -162,12 +163,8 @@ impl ValidateArgs {
         sev_level <= threshold
     }
 
-    fn print_single_violation(&self, violation: &mcb_validate::ViolationEntry) {
-        let file_display = violation
-            .file
-            .as_ref()
-            .map(|p| p.display().to_string())
-            .unwrap_or_else(|| "-".to_string());
+    fn print_single_violation(violation: &mcb_validate::ViolationEntry) {
+        let file_display = violation.file.as_deref().unwrap_or("-");
         let line = violation.line.unwrap_or(0);
 
         println!(

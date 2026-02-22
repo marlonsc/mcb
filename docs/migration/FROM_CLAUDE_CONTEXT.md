@@ -10,8 +10,8 @@ This guide helps you migrate from [zilliztech/Claude-context](https://github.com
 | **Runtime** | Node.js 20-23 | Native Rust binary |
 | **MCP Tools** | 4 tools | 4 tools (same interface) |
 | **Hybrid Search** | BM25 + vector | BM25 + vector |
-| **Embedding Providers** | 4 | 6 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) |
-| **Vector Stores** | 2 (Milvus/Zilliz) | 6 (Milvus, EdgeVec, In-Memory, Filesystem, Encrypted, Null) |
+| **Embedding Providers** | 4 | 6 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic) |
+| **Vector Stores** | 2 (Milvus/Zilliz) | 5 (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted) |
 | **Languages** | 13+ | 13 (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin) |
 | **Performance** | Node.js interpreter | Native compiled |
 | **Dependencies** | npm packages | Single binary |
@@ -138,19 +138,19 @@ Set `VECTOR_STORE_PROVIDER` environment variable:
 
 ```bash
 
-# Milvus/Zilliz (default)
+# EdgeVec (default — in-process HNSW, no external deps)
+VECTOR_STORE_PROVIDER=edgevec
+
+# Milvus (production, large scale)
 VECTOR_STORE_PROVIDER=milvus
 MILVUS_ADDRESS=http://localhost:19530
 MILVUS_TOKEN=...  # optional
 
-# In-Memory (development)
-VECTOR_STORE_PROVIDER=in-memory
+# Qdrant (self-hosted, Rust-native)
+VECTOR_STORE_PROVIDER=qdrant
 
-# Filesystem (persistent, no external deps)
-VECTOR_STORE_PROVIDER=filesystem
-
-# EdgeVec (embedded vector store)
-VECTOR_STORE_PROVIDER=edgevec
+# Pinecone (managed cloud)
+VECTOR_STORE_PROVIDER=pinecone
 ```
 
 ## Language Support

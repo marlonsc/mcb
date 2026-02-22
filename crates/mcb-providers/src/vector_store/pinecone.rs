@@ -1,7 +1,9 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#vector-store-providers)
+//!
 //! Pinecone Vector Store Provider
 //!
-//! Implements the VectorStoreProvider, VectorStoreAdmin, and VectorStoreBrowser ports
-//! using Pinecone's cloud vector database REST API.
+//! Implements the `VectorStoreProvider` using Pinecone's cloud vector database REST API.
 //!
 //! Pinecone is a managed vector database optimized for machine learning applications.
 //! This provider communicates via Pinecone's REST API using the reqwest HTTP client.
@@ -12,41 +14,27 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::constants::CONTENT_TYPE_JSON;
-use crate::utils::{HttpResponseUtils, JsonExt};
-use crate::vector_store::helpers::handle_vector_request_error;
+use crate::constants::{
+    EDGEVEC_DEFAULT_DIMENSIONS, HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER,
+    STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS, STATS_FIELD_VECTORS_COUNT,
+    STATUS_ACTIVE, STATUS_UNKNOWN, VECTOR_FIELD_FILE_PATH, VECTOR_STORE_RETRY_BACKOFF_SECS,
+    VECTOR_STORE_RETRY_COUNT,
+};
+use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
+use crate::utils::vector_store::search_result_from_json_metadata;
 
 /// Pinecone vector store provider
 ///
 /// Implements the vector store domain ports using Pinecone's cloud REST API.
 /// Supports index management, vector upsert, search, and metadata filtering.
-///
-/// ## Example
-///
-/// ```rust,no_run
-/// use mcb_providers::vector_store::PineconeVectorStoreProvider;
-/// use reqwest::Client;
-/// use std::time::Duration;
-///
-/// fn example() -> Result<(), Box<dyn std::error::Error>> {
-///     let client = Client::builder()
-///         .timeout(Duration::from_secs(30))
-///         .build()?;
-///     let provider = PineconeVectorStoreProvider::new(
-///         "your-api-key".to_string(),
-///         "https://your-index-abcdef.svc.aped-1234.pinecone.io".to_string(),
-///         Duration::from_secs(30),
-///         client,
-///     );
-///     Ok(())
-/// }
-/// ```
 pub struct PineconeVectorStoreProvider {
     api_key: String,
     host: String,
@@ -64,10 +52,11 @@ impl PineconeVectorStoreProvider {
     /// * `host` - Pinecone index host URL
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
-    pub fn new(api_key: String, host: String, timeout: Duration, http_client: Client) -> Self {
+    #[must_use]
+    pub fn new(api_key: &str, host: &str, timeout: Duration, http_client: Client) -> Self {
         Self {
-            api_key: api_key.trim().to_string(),
-            host: host.trim_end_matches('/').to_string(),
+            api_key: api_key.trim().to_owned(),
+            host: host.trim_end_matches('/').to_owned(),
             timeout,
             http_client,
             collections: Arc::new(DashMap::new()),
@@ -86,54 +75,46 @@ impl PineconeVectorStoreProvider {
         path: &str,
         body: Option<Value>,
     ) -> Result<Value> {
-        let mut builder = self
-            .http_client
-            .request(method, self.api_url(path))
-            .header("Api-Key", &self.api_key)
-            .header("Content-Type", CONTENT_TYPE_JSON)
-            .timeout(self.timeout);
+        let headers = vec![
+            (PINECONE_API_KEY_HEADER, self.api_key.clone()),
+            (HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned()),
+        ];
 
-        if let Some(payload) = body {
-            builder = builder.json(&payload);
-        }
-
-        let response = builder
-            .send()
-            .await
-            .map_err(|e| handle_vector_request_error(e, self.timeout, "Pinecone", path))?;
-
-        HttpResponseUtils::check_and_parse(response, "Pinecone").await
+        send_vector_db_request(VectorDbRequestParams {
+            client: &self.http_client,
+            method,
+            url: self.api_url(path),
+            timeout: self.timeout,
+            provider: "Pinecone",
+            operation: path,
+            headers: &headers,
+            body: body.as_ref(),
+            retry_attempts: VECTOR_STORE_RETRY_COUNT,
+            retry_backoff_secs: VECTOR_STORE_RETRY_BACKOFF_SECS,
+        })
+        .await
     }
 
-    /// Convert Pinecone match result to domain SearchResult
+    /// Convert Pinecone match result to domain `SearchResult`
     fn match_to_search_result(item: &Value, score: f64) -> SearchResult {
-        let id = item["id"].as_str().unwrap_or("").to_string();
-        let metadata = item
-            .get("metadata")
-            .cloned()
-            .unwrap_or(serde_json::json!({}));
-
-        SearchResult {
-            id,
-            file_path: metadata.string_or("file_path", ""),
-            start_line: metadata
-                .opt_u64("start_line")
-                .or_else(|| metadata.opt_u64("line_number"))
-                .unwrap_or(0) as u32,
-            content: metadata.string_or("content", ""),
-            score,
-            language: metadata.string_or("language", "unknown"),
-        }
+        let id = item["id"].as_str().unwrap_or("").to_owned();
+        let default_metadata = serde_json::Value::Object(Default::default());
+        let metadata = item.get("metadata").unwrap_or(&default_metadata);
+        search_result_from_json_metadata(id, metadata, score)
     }
 }
 
 #[async_trait]
 impl VectorStoreAdmin for PineconeVectorStoreProvider {
+    // --- Admin Methods ---
+
     async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
-        Ok(self.collections.contains_key(name.as_str()))
+        let name_str = name.to_string();
+        Ok(self.collections.contains_key(&name_str))
     }
 
     async fn get_stats(&self, collection: &CollectionId) -> Result<HashMap<String, Value>> {
+        let collection_str = collection.to_string();
         let payload = serde_json::json!({
             "filter": {},
         });
@@ -148,27 +129,33 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
 
         let mut stats = HashMap::new();
         stats.insert(
-            "collection".to_string(),
-            serde_json::json!(collection.as_str()),
+            STATS_FIELD_COLLECTION.to_owned(),
+            serde_json::json!(collection.to_string()),
         );
         stats.insert(
-            "provider".to_string(),
+            STATS_FIELD_PROVIDER.to_owned(),
             serde_json::json!(self.provider_name()),
         );
 
         match response {
             Ok(data) => {
                 if let Some(namespaces) = data.get("namespaces")
-                    && let Some(ns) = namespaces.get(collection.as_str())
+                    && let Some(ns) = namespaces.get(&collection_str)
                     && let Some(count) = ns.get("vectorCount")
                 {
-                    stats.insert("vectors_count".to_string(), count.clone());
+                    stats.insert(STATS_FIELD_VECTORS_COUNT.to_owned(), count.clone());
                 }
-                stats.insert("status".to_string(), serde_json::json!("active"));
+                stats.insert(
+                    STATS_FIELD_STATUS.to_owned(),
+                    serde_json::json!(STATUS_ACTIVE),
+                );
             }
             Err(_) => {
-                stats.insert("status".to_string(), serde_json::json!("unknown"));
-                stats.insert("vectors_count".to_string(), serde_json::json!(0));
+                stats.insert(
+                    STATS_FIELD_STATUS.to_owned(),
+                    serde_json::json!(STATUS_UNKNOWN),
+                );
+                stats.insert(STATS_FIELD_VECTORS_COUNT.to_owned(), serde_json::json!(0));
             }
         }
 
@@ -186,203 +173,14 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
 }
 
 #[async_trait]
-impl VectorStoreProvider for PineconeVectorStoreProvider {
-    async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
-        if self.collections.contains_key(name.as_str()) {
-            return Err(Error::vector_db(format!(
-                "Collection '{}' already exists",
-                name
-            )));
-        }
-        // Pinecone uses namespaces within an index; creation is implicit on first upsert
-        self.collections.insert(name.to_string(), dimensions);
-        Ok(())
-    }
-
-    async fn delete_collection(&self, name: &CollectionId) -> Result<()> {
-        let payload = serde_json::json!({
-            "deleteAll": true,
-            "namespace": name.as_str()
-        });
-
-        self.request(reqwest::Method::POST, "/vectors/delete", Some(payload))
-            .await?;
-
-        self.collections.remove(name.as_str());
-        Ok(())
-    }
-
-    async fn insert_vectors(
-        &self,
-        collection: &CollectionId,
-        vectors: &[Embedding],
-        metadata: Vec<HashMap<String, Value>>,
-    ) -> Result<Vec<String>> {
-        if vectors.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let mut ids = Vec::with_capacity(vectors.len());
-        let mut pinecone_vectors = Vec::with_capacity(vectors.len());
-        let batch_size = 100;
-
-        for (i, (embedding, meta)) in vectors.iter().zip(metadata.iter()).enumerate() {
-            let id = format!("vec_{}", uuid::Uuid::new_v4());
-            pinecone_vectors.push(serde_json::json!({
-                "id": id,
-                "values": embedding.vector,
-                "metadata": meta
-            }));
-            ids.push(id);
-
-            // Pinecone has a batch size limit; upsert in chunks
-            if pinecone_vectors.len() >= batch_size || i == vectors.len() - 1 {
-                let payload = serde_json::json!({
-                    "vectors": pinecone_vectors,
-                    "namespace": collection.as_str()
-                });
-
-                self.request(reqwest::Method::POST, "/vectors/upsert", Some(payload))
-                    .await?;
-
-                pinecone_vectors.clear();
-            }
-        }
-
-        Ok(ids)
-    }
-
-    async fn search_similar(
-        &self,
-        collection: &CollectionId,
-        query_vector: &[f32],
-        limit: usize,
-        filter: Option<&str>,
-    ) -> Result<Vec<SearchResult>> {
-        let mut payload = serde_json::json!({
-            "vector": query_vector,
-            "topK": limit,
-            "namespace": collection.as_str(),
-            "includeMetadata": true
-        });
-
-        if let Some(filter_str) = filter
-            && let Ok(filter_val) = serde_json::from_str::<Value>(filter_str)
-        {
-            payload["filter"] = filter_val;
-        }
-
-        let response = self
-            .request(reqwest::Method::POST, "/query", Some(payload))
-            .await?;
-
-        let matches = response["matches"].as_array().ok_or_else(|| {
-            Error::vector_db("Invalid Pinecone response: missing matches array".to_string())
-        })?;
-
-        let results = matches
-            .iter()
-            .map(|m| {
-                let score = m["score"].as_f64().unwrap_or(0.0);
-                Self::match_to_search_result(m, score)
-            })
-            .collect();
-
-        Ok(results)
-    }
-
-    async fn delete_vectors(&self, collection: &CollectionId, ids: &[String]) -> Result<()> {
-        if ids.is_empty() {
-            return Ok(());
-        }
-
-        let payload = serde_json::json!({
-            "ids": ids,
-            "namespace": collection.as_str()
-        });
-
-        self.request(reqwest::Method::POST, "/vectors/delete", Some(payload))
-            .await?;
-
-        Ok(())
-    }
-
-    async fn get_vectors_by_ids(
-        &self,
-        collection: &CollectionId,
-        ids: &[String],
-    ) -> Result<Vec<SearchResult>> {
-        if ids.is_empty() {
-            return Ok(Vec::new());
-        }
-
-        let payload = serde_json::json!({
-            "ids": ids,
-            "namespace": collection.as_str()
-        });
-
-        let response = self
-            .request(reqwest::Method::GET, "/vectors/fetch", Some(payload))
-            .await?;
-
-        let results = response["vectors"]
-            .as_object()
-            .map(|obj| {
-                obj.iter()
-                    .map(|(id, data)| {
-                        let metadata = data
-                            .get("metadata")
-                            .cloned()
-                            .unwrap_or(serde_json::json!({}));
-                        SearchResult {
-                            id: id.clone(),
-                            file_path: metadata.string_or("file_path", ""),
-                            start_line: metadata.opt_u64("start_line").unwrap_or(0) as u32,
-                            content: metadata.string_or("content", ""),
-                            score: 1.0,
-                            language: metadata.string_or("language", "unknown"),
-                        }
-                    })
-                    .collect()
-            })
-            .unwrap_or_default();
-
-        Ok(results)
-    }
-
-    async fn list_vectors(
-        &self,
-        collection: &CollectionId,
-        limit: usize,
-    ) -> Result<Vec<SearchResult>> {
-        // Pinecone doesn't support listing; use zero vector search as workaround
-        let dimensions = self
-            .collections
-            .get(collection.as_str())
-            .map(|d| *d.value())
-            .unwrap_or(1536);
-
-        let zero_vector = vec![0.0f32; dimensions];
-        self.search_similar(collection, &zero_vector, limit, None)
-            .await
-    }
-}
-
-#[async_trait]
 impl VectorStoreBrowser for PineconeVectorStoreProvider {
+    // --- Browser Methods ---
+
     async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
         let collections: Vec<CollectionInfo> = self
             .collections
             .iter()
-            .map(|entry| {
-                CollectionInfo::new(
-                    CollectionId::new(entry.key().clone()),
-                    0,
-                    0,
-                    None,
-                    self.provider_name(),
-                )
-            })
+            .map(|entry| CollectionInfo::new(entry.key(), 0, 0, None, self.provider_name()))
             .collect();
         Ok(collections)
     }
@@ -393,7 +191,9 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         limit: usize,
     ) -> Result<Vec<FileInfo>> {
         let results = self.list_vectors(collection, limit).await?;
-        Ok(super::helpers::build_file_info_from_results(results))
+        Ok(crate::utils::vector_store::build_file_info_from_results(
+            results,
+        ))
     }
 
     async fn get_chunks_by_file(
@@ -402,21 +202,21 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
         let filter = serde_json::json!({
-            "file_path": { "$eq": file_path }
+            (VECTOR_FIELD_FILE_PATH): { "$eq": file_path }
         });
 
+        let collection_str = collection.to_string();
         let dimensions = self
             .collections
-            .get(collection.as_str())
-            .map(|d| *d.value())
-            .unwrap_or(1536);
+            .get(&collection_str)
+            .map_or(EDGEVEC_DEFAULT_DIMENSIONS, |d| *d.value());
 
         let zero_vector = vec![0.0f32; dimensions];
 
         let payload = serde_json::json!({
             "vector": zero_vector,
             "topK": 100,
-            "namespace": collection.as_str(),
+            "namespace": collection_str,
             "includeMetadata": true,
             "filter": filter
         });
@@ -442,6 +242,187 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
     }
 }
 
+#[async_trait]
+impl VectorStoreProvider for PineconeVectorStoreProvider {
+    // --- Provider Methods ---
+
+    async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
+        let name_str = name.to_string();
+        if self.collections.contains_key(&name_str) {
+            return Err(Error::vector_db(format!(
+                "Collection '{name}' already exists"
+            )));
+        }
+        // Pinecone uses namespaces within an index; creation is implicit on first upsert
+        self.collections.insert(name_str, dimensions);
+        Ok(())
+    }
+
+    async fn delete_collection(&self, name: &CollectionId) -> Result<()> {
+        let name_str = name.to_string();
+        let payload = serde_json::json!({
+            "deleteAll": true,
+            "namespace": name_str
+        });
+
+        self.request(reqwest::Method::POST, "/vectors/delete", Some(payload))
+            .await?;
+
+        self.collections.remove(&name.to_string());
+        Ok(())
+    }
+
+    async fn insert_vectors(
+        &self,
+        collection: &CollectionId,
+        vectors: &[Embedding],
+        metadata: Vec<HashMap<String, Value>>,
+    ) -> Result<Vec<String>> {
+        if vectors.is_empty() {
+            return Ok(Vec::new());
+        }
+        let collection_str = collection.to_string();
+
+        let mut ids = Vec::with_capacity(vectors.len());
+        let mut pinecone_vectors = Vec::with_capacity(vectors.len());
+        let batch_size = crate::constants::PINECONE_UPSERT_BATCH_SIZE;
+
+        for (i, (embedding, meta)) in vectors.iter().zip(metadata.iter()).enumerate() {
+            let id = format!("vec_{}", id::generate());
+            pinecone_vectors.push(serde_json::json!({
+                "id": id,
+                "values": embedding.vector,
+                "metadata": meta
+            }));
+            ids.push(id);
+
+            // Pinecone has a batch size limit; upsert in chunks
+            if pinecone_vectors.len() >= batch_size || i == vectors.len() - 1 {
+                let payload = serde_json::json!({
+                    "vectors": pinecone_vectors,
+                    "namespace": collection_str
+                });
+
+                self.request(reqwest::Method::POST, "/vectors/upsert", Some(payload))
+                    .await?;
+
+                pinecone_vectors.clear();
+            }
+        }
+
+        Ok(ids)
+    }
+
+    async fn search_similar(
+        &self,
+        collection: &CollectionId,
+        query_vector: &[f32],
+        limit: usize,
+        filter: Option<&str>,
+    ) -> Result<Vec<SearchResult>> {
+        let collection_str = collection.to_string();
+        let mut payload = serde_json::json!({
+            "vector": query_vector,
+            "topK": limit,
+            "namespace": collection_str,
+            "includeMetadata": true
+        });
+
+        if let Some(filter_str) = filter
+            && let Ok(filter_val) = serde_json::from_str::<Value>(filter_str)
+        {
+            payload["filter"] = filter_val;
+        }
+
+        let response = self
+            .request(reqwest::Method::POST, "/query", Some(payload))
+            .await?;
+
+        let matches = response["matches"].as_array().ok_or_else(|| {
+            Error::vector_db("Invalid Pinecone response: missing matches array".to_owned())
+        })?;
+
+        let results = matches
+            .iter()
+            .map(|m| {
+                let score = m["score"].as_f64().unwrap_or(0.0);
+                Self::match_to_search_result(m, score)
+            })
+            .collect();
+
+        Ok(results)
+    }
+
+    async fn delete_vectors(&self, collection: &CollectionId, ids: &[String]) -> Result<()> {
+        if ids.is_empty() {
+            return Ok(());
+        }
+        let collection_str = collection.to_string();
+
+        let payload = serde_json::json!({
+            "ids": ids,
+            "namespace": collection_str
+        });
+
+        self.request(reqwest::Method::POST, "/vectors/delete", Some(payload))
+            .await?;
+
+        Ok(())
+    }
+
+    async fn get_vectors_by_ids(
+        &self,
+        collection: &CollectionId,
+        ids: &[String],
+    ) -> Result<Vec<SearchResult>> {
+        if ids.is_empty() {
+            return Ok(Vec::new());
+        }
+        let collection_str = collection.to_string();
+
+        let payload = serde_json::json!({
+            "ids": ids,
+            "namespace": collection_str
+        });
+
+        let response = self
+            .request(reqwest::Method::GET, "/vectors/fetch", Some(payload))
+            .await?;
+
+        let empty_obj = serde_json::Value::Object(Default::default());
+        let results = response["vectors"]
+            .as_object()
+            .map(|obj| {
+                obj.iter()
+                    .map(|(id, data)| {
+                        let metadata = data.get("metadata").unwrap_or(&empty_obj);
+                        search_result_from_json_metadata(id.clone(), metadata, 1.0)
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        Ok(results)
+    }
+
+    async fn list_vectors(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<SearchResult>> {
+        // Pinecone doesn't support listing; use zero vector search as workaround
+        let collection_str = collection.to_string();
+        let dimensions = self
+            .collections
+            .get(&collection_str)
+            .map_or(EDGEVEC_DEFAULT_DIMENSIONS, |d| *d.value());
+
+        let zero_vector = vec![0.0f32; dimensions];
+        self.search_similar(collection, &zero_vector, limit, None)
+            .await
+    }
+}
+
 // ============================================================================
 // Auto-registration via linkme distributed slice
 // ============================================================================
@@ -459,16 +440,16 @@ fn pinecone_factory(
     let api_key = config
         .api_key
         .clone()
-        .ok_or_else(|| "Pinecone requires api_key".to_string())?;
+        .ok_or_else(|| "Pinecone requires api_key".to_owned())?;
     let host = config
         .uri
         .clone()
-        .ok_or_else(|| "Pinecone requires uri (index host URL)".to_string())?;
+        .ok_or_else(|| "Pinecone requires uri (index host URL)".to_owned())?;
     let http_client = create_default_client()?;
 
     Ok(Arc::new(PineconeVectorStoreProvider::new(
-        api_key,
-        host,
+        &api_key,
+        &host,
         DEFAULT_HTTP_TIMEOUT,
         http_client,
     )))
@@ -478,5 +459,5 @@ fn pinecone_factory(
 static PINECONE_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {
     name: "pinecone",
     description: "Pinecone cloud vector database (managed, serverless)",
-    factory: pinecone_factory,
+    build: pinecone_factory,
 };

@@ -1,10 +1,6 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Memory Context Browser - Comprehensive Architecture Documentation
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
-[![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
-[![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-
 ## Model Context Protocol Server for Semantic Code Analysis using Vector Embeddings
 
 ---
@@ -50,11 +46,11 @@ Memory Context Browser is a high-performance, extensible Model Context Protocol 
 
 ### Current Status
 
-**Version**: 0.2.0 (Memory, Session, Agent, VCS + Documentation Overhaul)
+**Version**: 0.2.1 (Memory, Session, Agent, VCS + Documentation Overhaul + rstest)
 **Architecture Maturity**: ✅ **100% Complete DI Implementation**
 **DI Status**: ✅ 20+ Port Traits, ✅ Provider Registry, ✅ Service Factory, ✅ Full Port/Adapter Wiring
 **Provider Registration**: ✅ Linkme distributed slices (compile-time), ✅ Inventory removed
-**Validation**: ✅ mcb-validate crate Phases 1–7 verified (750+ tests); 1634+ tests project-wide
+**Validation**: ✅ mcb-validate crate Phases 1–7 verified (349 tests); 1700+ tests project-wide
 **Port Traits**: `crates/mcb-domain/src/ports/` - Provider traits in domain layer (Clean Architecture compliant)
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
@@ -84,7 +80,7 @@ graph TB
         VDB[(Vector Database<br/>Milvus/Pinecone)]
         EMB[Embedding Service<br/>OpenAI/Ollama]
         CACHE[(Cache<br/>Redis)]
-        STORAGE[(Metadata Store<br/>PostgreSQL)]
+        STORAGE[(Metadata Store<br/>SQLite)]
     end
 
     AI --> MCP
@@ -177,7 +173,7 @@ graph TB
         end
 
         subgraph "Data Layer"
-            METADATA[(Metadata Store<br/>PostgreSQL)]
+            METADATA[(Metadata Store<br/>SQLite)]
             VECTORS[(Vector Database<br/>Milvus)]
             CACHE[(Cache Store<br/>Redis)]
         end
@@ -211,7 +207,7 @@ graph TB
 | Container | Technology | Responsibility | Interfaces |
 | ----------- | ------------ | ---------------- | ------------ |
 | **MCP Server** | Rust/Tokio | Protocol translation, request routing | MCP Protocol (stdio), Internal APIs |
-| **REST API** | Rust/Axum | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
+| **REST API** | Rust/Poem | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
 | **WebSocket** | Rust/Tokio | Real-time notifications, live updates | WebSocket protocol |
 
 #### Application Containers
@@ -234,7 +230,7 @@ graph TB
 
 | Container | Technology | Responsibility | Interfaces |
 | ----------- | ------------ | ---------------- | ------------ |
-| **Metadata Store** | PostgreSQL | Structured data, user management | SQL, connection pooling |
+| **Metadata Store** | SQLite | Structured data, session management | SQL |
 | **Vector Database** | Milvus/Qdrant | High-dimensional vector storage | gRPC/REST, bulk operations |
 | **Cache Store** | Redis | Fast data caching, sessions | Redis protocol, pub/sub |
 
@@ -485,8 +481,8 @@ pub trait EmbeddingProvider: Send + Sync {
 | **Ollama** | nomic-embed-text | 768 | Self-hosted | ✅ Production |
 | **Gemini** | text-embedding-004 | 768 | Pay-per-token | ✅ Production |
 | **VoyageAI** | voyage-3-lite | 512 | Pay-per-token | ✅ Production |
-| **Anthropic** | N/A | N/A | Pay-per-token | 🚧 Planned |
-| **Mock** | Fixed vectors | 128 | Free | ✅ Development |
+| **Anthropic** | voyage-code-3 | 1024 | Pay-per-token | ✅ Production |
+| **FastEmbed** | AllMiniLML6V2 | 384 | Local (free) | ✅ Default |
 
 ##### Vector Store Providers
 
@@ -510,7 +506,7 @@ pub trait VectorStoreProvider: Send + Sync {
 | **Milvus** | C++ + Go | IVF_FLAT, HNSW | 100M+ vectors | ✅ Production |
 | **Pinecone** | Cloud-native | HNSW | 1B+ vectors | 🚧 Planned |
 | **Qdrant** | Rust | HNSW | 10M+ vectors | 🚧 Planned |
-| **In-Memory** | Rust + DashMap | Brute force | <1M vectors | ✅ Development |
+| **EdgeVec** | Rust + HNSW | HNSW (M=16, EF=100) | <1M vectors | ✅ Development |
 
 ##### Additional Domain Ports
 
@@ -531,7 +527,7 @@ Beyond embedding and vector store providers, the system defines 12 additional po
 | `IndexingServiceInterface` | Codebase indexing | `IndexingService` |
 | `ChunkingOrchestratorInterface` | Batch chunking coordination | `ChunkingOrchestrator` |
 
-All 20+ port traits are defined in mcb-domain and registered in dill Catalog for DI container integration.
+All 20+ port traits are defined in mcb-domain and wired through the AppContext composition root for DI integration.
 
 ---
 
@@ -610,7 +606,7 @@ Provider port traits are defined in `mcb-domain/src/ports/providers/`:
 | `CryptoProvider` | Encryption services |
 | `ConfigProvider` | Configuration access |
 
-The `mcb-application` layer re-exports these traits for backward compatibility, but implementations in `mcb-providers` import directly from `mcb-domain`.
+All provider port traits are defined in `mcb-domain/src/ports/providers/` (single source of truth per ADR-029). Implementations in `mcb-providers` import directly from `mcb-domain`.
 
 ### Extensibility - Adding New Providers
 
@@ -707,43 +703,39 @@ pub static CONCRETE_NEW_SERVICE: ProviderRegistration = ProviderRegistration {
 
 ### Guidelines (2)
 
-- Define registry slice in `mcb-application/src/ports/registry/`
+- Define registry slice in `mcb-domain/src/ports/registry/` (all ports are in mcb-domain per ADR-029)
 - Register all implementations in provider module
 - Use async factory for initialization
 - Return `Arc<dyn Trait>` from factory
 
 This pattern enables compile-time provider discovery with zero runtime overhead while maintaining Clean Architecture boundaries.
 
-### DI Strategy (ADR-024 → ADR-029)
+### DI Strategy (ADR-024 → ADR-029 → ADR-050)
 
-The dependency injection system uses a**handle-based pattern with dill IoC Container** documented in [ADR-029: Hexagonal Architecture with dill](../adr/029-hexagonal-architecture-dill.md):
+The dependency injection system uses a handle-based pattern with a manual composition root documented in [ADR-050](../adr/050-manual-composition-root-dill-removal.md):
 
-#### dill Catalog (IoC Container)
+#### AppContext (Manual Composition Root)
 
-The dill `Catalog` manages service registration and resolution:
+`init_app()` wires service registration and resolution into `AppContext`:
 
 ```rust
-// Build catalog with all services (mcb-infrastructure/src/di/catalog.rs)
-pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
-    CatalogBuilder::new()
-        .add_value(config)
-        .add_value(embedding_provider)    // From linkme registry
-        .add_value(embedding_handle)      // RwLock wrapper
-        .add_value(embedding_admin)       // Runtime switching
-        .add_value(auth_service)          // Null implementation
-        .add_value(event_bus)             // TokioBroadcast
-        .build()
+// Build AppContext with all services (mcb-infrastructure/src/di/bootstrap.rs)
+pub async fn init_app(config: AppConfig) -> Result<AppContext> {
+    // Resolve providers from linkme registries
+    // Construct handles/admin services
+    // Return AppContext with typed fields
 }
 
-// Service retrieval
-pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>> {
-    catalog.get_one::<T>()
-}
+// Service retrieval via AppContext (bootstrap.rs)
+// AppContext holds all resolved providers as typed fields:
+//   app_context.embedding_handle()    → Arc<EmbeddingProviderHandle>
+//   app_context.vector_store_handle() → Arc<VectorStoreProviderHandle>
+//   app_context.cache_handle()        → Arc<CacheProviderHandle>
 ```
 
 **DI Components** (in `mcb-infrastructure/src/di/`):
 
-- `catalog.rs`: dill Catalog configuration and service resolution
+- `bootstrap.rs`: AppContext composition root and service wiring
 - `handles.rs`: RwLock wrappers for runtime provider switching
 - `provider_resolvers.rs`: linkme registry access
 - `admin.rs`: Admin services for API-based provider management
@@ -771,11 +763,11 @@ impl EmbeddingProviderHandle {
 
 ### Why This Pattern
 
-| Aspect | dill Catalog | Provider Handles |
+| Aspect | AppContext composition root | Provider Handles |
 | -------- | -------------- | ------------------ |
-| **When** | Runtime | Runtime |
-| **Purpose** | Service resolution | Provider switching |
-| **Configuration** | `add_value()` | Via admin API |
+| **When** | Startup/bootstrap | Runtime |
+| **Purpose** | Explicit service wiring | Provider switching |
+| **Configuration** | `init_app()` field assignment | Via admin API |
 | **Async Init** | Fully supported | Via resolvers |
 
 ### Port/Adapter Pattern
@@ -810,10 +802,10 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 | Category | Location | Examples |
 | ---------- | ---------- | ---------- |
 | Provider Ports | `mcb-domain/src/ports/providers/` | EmbeddingProvider, VectorStoreProvider, CacheProvider |
-| Infrastructure Ports | `mcb-application/src/ports/infrastructure/` | SyncProvider, SnapshotProvider, EventPublisher |
-| Admin Ports | `mcb-application/src/ports/admin.rs` | PerformanceMetrics, IndexingOperations |
+| Infrastructure Ports | `mcb-domain/src/ports/infrastructure/` | SyncProvider, SnapshotProvider, EventPublisher |
+| Admin Ports | `mcb-domain/src/ports/admin/` | PerformanceMetrics, IndexingOperations |
 
-> **Note**: Provider ports are defined in mcb-domain (single source of truth). Application layer re-exports for backward compatibility.
+> **Note**: All port traits are defined in mcb-domain (single source of truth per ADR-029).
 
 ### Testing with DI
 
@@ -829,11 +821,11 @@ async fn test_search_service() {
     // Test without infrastructure dependencies
 }
 
-// Integration testing - null providers via dill Catalog
+// Integration testing - default providers via AppContext composition root
 #[tokio::test]
 async fn test_full_flow() {
-    let catalog = build_catalog(AppConfig::default()).await?;
-    // Uses NullCacheProvider, NullEmbeddingProvider, etc.
+    let app_context = init_app(AppConfig::default()).await?;
+    // Uses MokaCacheProvider, FastEmbedProvider, etc.
     // Safe for CI/CD without external services
 }
 ```
@@ -844,7 +836,7 @@ async fn test_full_flow() {
 
 ### Crate Structure (Clean Architecture Monorepo)
 
-The system follows Clean Architecture principles with 8 crates organized as a Cargo workspace:
+The system follows Clean Architecture principles with 7 crates organized as a Cargo workspace:
 
 #### 📦 Domain Layer (`crates/mcb-domain/`)
 
@@ -860,7 +852,7 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 - `constants.rs`: Domain constants
 - `error.rs`: Domain error types
 
-> **Note**: All provider port traits are defined in mcb-domain (single source of truth). Application layer re-exports for backward compatibility.
+> **Note**: All port traits (providers, infrastructure, admin, repositories, services) are defined in mcb-domain (single source of truth per ADR-029).
 
 #### 🔧 Application Layer (`crates/mcb-application/`)
 
@@ -871,9 +863,8 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 - `use_cases/context_service.rs`: ContextService - embedding generation and vector storage coordination
 - `use_cases/indexing_service.rs`: IndexingService - codebase indexing workflow
 - `use_cases/search_service.rs`: SearchService - semantic search operations
-- `domain_services/chunking.rs`: ChunkingOrchestrator - batch chunking coordination
-- `ports/registry/`: linkme distributed slices for provider auto-registration
-- `ports/providers/`: Re-exports from mcb-domain (backward compatibility)
+- `decorators/`: Service decorators for cross-cutting concerns
+- `constants.rs`: Application-level constants
 
 #### 🔌 Providers Layer (`crates/mcb-providers/`)
 
@@ -881,12 +872,14 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 
 ### Submodules
 
-- `embedding/`: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null (6 providers)
-- `vector_store/`: InMemory, Encrypted, Null (3 providers)
-- `cache/`: Moka, Redis cache providers
+- `embedding/`: FastEmbed (default), Ollama, OpenAI, VoyageAI, Gemini, Anthropic (7 providers)
+- `vector_store/`: EdgeVec (default), Qdrant, Milvus, Pinecone, Encrypted (5 providers)
+- `cache/`: Moka (default), Redis cache providers
 - `language/`: 12 AST-based language processors (Rust, Python, JS, TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
-- `routing/`: Circuit breakers, health monitoring, failover
-- `admin/`: Performance metrics provider
+- `events/`: TokioEventBus (default), NATS event bus providers
+- `database/`: SQLite persistence
+- `vcs/`: Git repository operations
+- `hybrid_search/`: BM25 + semantic search
 
 #### 🏗️ Infrastructure Layer (`crates/mcb-infrastructure/`)
 
@@ -894,8 +887,8 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 
 ### Key Components (1)
 
-- `di/`: dill IoC Container with handle-based pattern (ADR-029)
-- `di/catalog.rs`: dill Catalog configuration
+- `di/`: AppContext manual composition root with handle-based pattern (ADR-050)
+- `di/bootstrap.rs`: AppContext composition root configuration
 - `di/handles.rs`: RwLock provider handles
 - `di/admin.rs`: Admin services for runtime switching
 - `config/`: Configuration management (Figment)
@@ -903,7 +896,7 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 - `crypto/`: Encryption and hashing utilities
 - `health/`: Health check infrastructure
 - `logging/`: Logging configuration
-- `infrastructure/`: Null adapters for DI testing
+- `infrastructure/`: Admin types (metrics, indexing ops)
 
 #### 🌐 Server Layer (`crates/mcb-server/`)
 
@@ -921,7 +914,7 @@ The system follows Clean Architecture principles with 8 crates organized as a Ca
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Status**: Phases 1–7 all VERIFIED (v0.2.0) - 750+ tests pass
+**Status**: Phases 1–7 all VERIFIED (v0.2.1) - 349+ tests pass
 
 ### Components (1)
 
@@ -978,40 +971,9 @@ make validate  # Run all architecture validation rules
 
 ### Advanced Features
 
-#### 🛡️ Provider Routing System (`crates/mcb-providers/src/routing/`)
+#### 🛡️ Infrastructure Routing (`crates/mcb-infrastructure/src/routing/`)
 
-**Purpose**: Intelligent provider management with resilience and optimization.
-
-### Submodules (1)
-
-### Health Monitoring (`health/`)
-
-- `HealthMonitor`: Continuous provider health checking
-- `ProviderHealthChecker`: Automated health assessment
-- `HealthCheckResult`: Structured health status reporting
-
-### Circuit Breaker (`circuit_breaker/`)
-
-- `CircuitBreaker`: Failure detection and recovery
-- `CircuitBreakerConfig`: Configurable failure thresholds
-- `CircuitBreakerState`: State management for resilience
-
-### Metrics Collection (`metrics/`)
-
-- `ProviderMetricsCollector`: Usage and performance tracking
-- `MetricsSummary`: Aggregated metrics reporting
-
-### Cost Tracking (`cost_tracker/`)
-
-- `CostTracker`: API usage and cost monitoring
-- `UsageMetrics`: Detailed usage statistics
-- `CostTrackerConfig`: Cost optimization settings
-
-### Failover Management (`failover/`)
-
-- `FailoverManager`: Automatic provider switching
-- `FailoverStrategy`: Priority-based and round-robin strategies
-- `PriorityBasedStrategy`: Cost and performance-aware selection
+**Purpose**: Request routing and dispatch helpers for provider selection.
 
 ### Router Core (`router/`)
 
@@ -1239,11 +1201,11 @@ impl VectorRecord {
 | **Milvus** | Production, large scale | High (HNSW index) | 100M+ vectors |
 | **Pinecone** | Cloud-native, managed | High (optimized) | 1B+ vectors |
 | **Qdrant** | Self-hosted, Rust-native | High (HNSW) | 10M+ vectors |
-| **In-Memory** | Development, testing | Fast (brute force) | <1M vectors |
+| **EdgeVec** | Development, testing | Fast (HNSW in-process) | <1M vectors |
 
 #### Metadata Storage
 
-**Primary Storage**: PostgreSQL for structured data and relationships
+**Primary Storage**: SQLite for structured data and relationships
 
 ```sql
 -- Optimized schema for code search metadata
@@ -1273,25 +1235,10 @@ CREATE INDEX idx_chunks_metadata ON code_chunks USING GIN(metadata);
 
 ### Multi-Level Caching
 
-1. **Application Cache**: Redis for search results and embeddings
-2. **Provider Cache**: In-memory LRU cache for frequently accessed data
-3. **CDN Cache**: For static assets and documentation
+1. **Default Cache**: Moka in-memory LRU cache (high-performance, single-node)
+2. **Distributed Cache**: Redis (optional, for multi-node deployments)
 
-```rust
-#[derive(Clone)]
-pub struct CacheConfig {
-    pub redis_url: String,
-    pub embedding_ttl: Duration,
-    pub search_ttl: Duration,
-    pub max_memory_mb: usize,
-}
-
-pub struct CacheManager {
-    redis: redis::Client,
-    in_memory: Arc<RwLock<LruCache<String, Vec<u8>>>>,
-    config: CacheConfig,
-}
-```
+Cache provider is resolved via DI (linkme registry → AppContext composition root → `CacheProviderHandle`).
 
 ### Data Lifecycle Management
 
@@ -1979,22 +1926,22 @@ impl QualityGateChecker {
 - ⚠️ Configuration complexity
 - ⚠️ Testing complexity across providers
 
-#### ADR-024 → ADR-029: Hexagonal Architecture with dill
+#### ADR-024 → ADR-029 → ADR-050: DI evolution
 
-**Status**: Accepted (ADR-024 superseded by ADR-029)
+**Status**: Accepted (ADR-024 superseded by ADR-029; ADR-029 superseded by ADR-050)
 
-**Context**: Handle-based DI pattern needed IoC container for proper service lifecycle management and architectural enforcement.
+**Context**: Handle-based DI pattern needed explicit composition root wiring for service lifecycle management and architectural enforcement.
 
-**Decision**: Use dill Catalog as IoC Container with handle-based pattern for runtime provider switching. Ports defined in mcb-domain.
+**Decision**: Use `init_app()` + `AppContext` as manual composition root with handle-based pattern for runtime provider switching. Ports remain defined in mcb-domain.
 
 ### Consequences (4)
 
 - ✅ Clear layer separation (hexagonal architecture)
-- ✅ dill Catalog manages service lifecycle
+- ✅ AppContext composition root manages service lifecycle
 - ✅ Runtime switching via admin API
 - ✅ Architecture enforced via mcb-validate (CA007–CA009)
 
-See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
+See [ADR-050](../adr/050-manual-composition-root-dill-removal.md) for full details.
 
 #### ADR-013: Clean Architecture Crate Separation
 
@@ -2009,7 +1956,7 @@ See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
 - ✅ Clear boundaries and responsibilities per crate
 - ✅ Testability without infrastructure dependencies
 - ✅ Parallel compilation, incremental builds
-- ⚠️ Eight crates require coordination
+- ⚠️ Seven crates require coordination
 - ⚠️ Learning curve for Clean Architecture concepts
 
 See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full details.
@@ -2076,8 +2023,8 @@ services:
     environment:
 -   RUST_LOG=debug
 -   MCP_MODE=development
--   EMBEDDING_PROVIDER=mock
--   VECTOR_STORE=memory
+-   EMBEDDING_PROVIDER=fastembed
+-   VECTOR_STORE=edgevec
     volumes:
 -   .:/app
 -   cargo-cache:/usr/local/cargo/registry
@@ -2308,7 +2255,7 @@ impl BackupManager {
 #### Delivered
 
 - ✅ Real embedding provider integrations (OpenAI, Ollama, Gemini, VoyageAI)
-- ✅ Production vector database integration (Milvus, In-Memory, Filesystem)
+- ✅ Production vector database integration (Milvus, EdgeVec, Qdrant, Pinecone)
 - ✅ Enhanced file processing with AST parsing
 - ✅ Performance optimization and caching
 - ✅ Complete DI system with provider registry and routing

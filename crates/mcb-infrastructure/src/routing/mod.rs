@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Provider Routing Infrastructure
 //!
 //! Provides intelligent routing and selection of backend providers

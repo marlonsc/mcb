@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#value-objects)
+//!
 //! Domain Type Definitions
 //!
 //! Type aliases and basic type definitions for dynamic domain concepts.
@@ -5,59 +8,54 @@
 
 use std::path::Path;
 
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
-/// Programming language identifier
-///
-/// A string-based identifier for programming languages that allows dynamic
-/// extension without modifying the domain layer. Language support is determined
-/// by the application and infrastructure layers.
+/// Programming language identifier.
 pub type Language = String;
 
-/// Supported programming languages with type-safe enumeration
-///
-/// This enum provides compile-time safety for language identification.
-/// It maps 1:1 with RCA (rust-code-analysis) LANG enum for metrics support.
-///
-/// # Example
-///
-/// ```
-/// use mcb_domain::value_objects::SupportedLanguage;
-///
-/// let lang = SupportedLanguage::from_extension("rs");
-/// assert_eq!(lang, Some(SupportedLanguage::Rust));
-///
-/// let display = SupportedLanguage::Rust.as_str();
-/// assert_eq!(display, "rust");
-/// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+/// Supported programming languages with compile-time safety.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, Display)]
 #[serde(rename_all = "lowercase")]
 pub enum SupportedLanguage {
     /// Rust programming language
+    #[display("rust")]
     Rust,
     /// Python programming language
+    #[display("python")]
     Python,
     /// JavaScript (including JSX)
+    #[display("javascript")]
     JavaScript,
     /// TypeScript (including TSX)
+    #[display("typescript")]
     TypeScript,
     /// Go programming language
+    #[display("go")]
     Go,
     /// Java programming language
+    #[display("java")]
     Java,
     /// C programming language
+    #[display("c")]
     C,
     /// C++ programming language
+    #[display("cpp")]
     Cpp,
     /// C# programming language
+    #[display("csharp")]
     CSharp,
     /// Ruby programming language
+    #[display("ruby")]
     Ruby,
     /// PHP programming language
+    #[display("php")]
     Php,
     /// Swift programming language
+    #[display("swift")]
     Swift,
     /// Kotlin programming language
+    #[display("kotlin")]
     Kotlin,
 }
 
@@ -69,6 +67,7 @@ impl SupportedLanguage {
     ///
     /// # Returns
     /// The corresponding language, or None if not supported
+    #[must_use]
     pub fn from_extension(ext: &str) -> Option<Self> {
         match ext.to_lowercase().as_str() {
             "rs" => Some(Self::Rust),
@@ -84,11 +83,7 @@ impl SupportedLanguage {
             "php" | "phtml" => Some(Self::Php),
             "swift" => Some(Self::Swift),
             "kt" | "kts" => Some(Self::Kotlin),
-            // Intentional: return None for unsupported extensions (not an error)
-            other => {
-                let _ = other; // Acknowledge all extensions are considered
-                None
-            }
+            _ => None,
         }
     }
 
@@ -106,6 +101,7 @@ impl SupportedLanguage {
     }
 
     /// Get the string representation of this language
+    #[must_use]
     pub fn as_str(&self) -> &'static str {
         match self {
             Self::Rust => "rust",
@@ -124,26 +120,8 @@ impl SupportedLanguage {
         }
     }
 
-    /// Get file extensions for this language
-    pub fn get_extensions(&self) -> &'static [&'static str] {
-        match self {
-            Self::Rust => &["rs"],
-            Self::Python => &["py", "pyi", "pyw"],
-            Self::JavaScript => &["js", "jsx", "mjs", "cjs"],
-            Self::TypeScript => &["ts", "tsx", "mts", "cts"],
-            Self::Go => &["go"],
-            Self::Java => &["java"],
-            Self::C => &["c", "h"],
-            Self::Cpp => &["cpp", "cc", "cxx", "hpp", "hxx", "hh"],
-            Self::CSharp => &["cs"],
-            Self::Ruby => &["rb", "rake", "gemspec"],
-            Self::Php => &["php", "phtml"],
-            Self::Swift => &["swift"],
-            Self::Kotlin => &["kt", "kts"],
-        }
-    }
-
     /// Get all supported languages
+    #[must_use]
     pub fn get_all() -> &'static [Self] {
         &[
             Self::Rust,
@@ -161,66 +139,43 @@ impl SupportedLanguage {
             Self::Kotlin,
         ]
     }
-
-    /// Check if this language supports metrics via RCA
-    pub fn is_metrics_supported(&self) -> bool {
-        // RCA supports all these languages
-        true
-    }
 }
 
-impl std::fmt::Display for SupportedLanguage {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.as_str())
-    }
-}
+impl_from_str!(SupportedLanguage, "Unsupported language: {}", {
+    "rust" => SupportedLanguage::Rust,
+    "rs" => SupportedLanguage::Rust,
+    "python" => SupportedLanguage::Python,
+    "py" => SupportedLanguage::Python,
+    "javascript" => SupportedLanguage::JavaScript,
+    "js" => SupportedLanguage::JavaScript,
+    "typescript" => SupportedLanguage::TypeScript,
+    "ts" => SupportedLanguage::TypeScript,
+    "go" => SupportedLanguage::Go,
+    "golang" => SupportedLanguage::Go,
+    "java" => SupportedLanguage::Java,
+    "c" => SupportedLanguage::C,
+    "cpp" => SupportedLanguage::Cpp,
+    "c++" => SupportedLanguage::Cpp,
+    "cxx" => SupportedLanguage::Cpp,
+    "csharp" => SupportedLanguage::CSharp,
+    "c#" => SupportedLanguage::CSharp,
+    "cs" => SupportedLanguage::CSharp,
+    "ruby" => SupportedLanguage::Ruby,
+    "rb" => SupportedLanguage::Ruby,
+    "php" => SupportedLanguage::Php,
+    "swift" => SupportedLanguage::Swift,
+    "kotlin" => SupportedLanguage::Kotlin,
+    "kt" => SupportedLanguage::Kotlin,
+});
 
-impl std::str::FromStr for SupportedLanguage {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "rust" | "rs" => Ok(Self::Rust),
-            "python" | "py" => Ok(Self::Python),
-            "javascript" | "js" => Ok(Self::JavaScript),
-            "typescript" | "ts" => Ok(Self::TypeScript),
-            "go" | "golang" => Ok(Self::Go),
-            "java" => Ok(Self::Java),
-            "c" => Ok(Self::C),
-            "cpp" | "c++" | "cxx" => Ok(Self::Cpp),
-            "csharp" | "c#" | "cs" => Ok(Self::CSharp),
-            "ruby" | "rb" => Ok(Self::Ruby),
-            "php" => Ok(Self::Php),
-            "swift" => Ok(Self::Swift),
-            "kotlin" | "kt" => Ok(Self::Kotlin),
-            _ => Err(format!("Unsupported language: {s}")),
-        }
-    }
-}
-
-/// System operation type identifier
-///
-/// A string-based identifier for operation types used in metrics and rate limiting.
-/// Allows dynamic extension of operation types without domain changes.
+/// System operation type identifier.
 pub type OperationType = String;
 
-/// Embedding provider identifier
-///
-/// A string-based identifier for embedding providers that allows dynamic
-/// extension without modifying the domain layer. Provider capabilities
-/// are determined by the application and infrastructure layers.
+/// Embedding provider identifier.
 pub type EmbeddingProviderKind = String;
 
-/// Vector store provider identifier
-///
-/// A string-based identifier for vector store providers that allows dynamic
-/// extension without modifying the domain layer. Provider capabilities
-/// are determined by the application and infrastructure layers.
+/// Vector store provider identifier.
 pub type VectorStoreProviderKind = String;
 
-/// Cache provider identifier
-///
-/// A string-based identifier for cache providers that allows dynamic
-/// extension without modifying the domain layer. Provider capabilities
-/// are determined by the application and infrastructure layers.
+/// Cache provider identifier.
 pub type CacheProviderKind = String;

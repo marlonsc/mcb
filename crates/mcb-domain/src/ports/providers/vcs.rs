@@ -1,4 +1,7 @@
 //! Version Control System provider port for repository operations.
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 
 use std::path::{Path, PathBuf};
 

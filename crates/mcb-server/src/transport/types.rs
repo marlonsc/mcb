@@ -1,8 +1,14 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Transport layer types
 //!
 //! Common types used across transport implementations for MCP protocol messages.
 
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
+
+use crate::constants::protocol::JSONRPC_VERSION;
 
 /// MCP request payload (JSON-RPC format)
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -16,23 +22,22 @@ pub struct McpRequest {
 }
 
 /// MCP response payload (JSON-RPC format)
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpResponse {
     /// JSON-RPC version
     #[serde(default = "default_jsonrpc")]
     pub jsonrpc: String,
     /// Response result (if successful)
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub result: Option<serde_json::Value>,
     /// Error (if failed)
-    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<McpError>,
     /// Request ID
     pub id: Option<serde_json::Value>,
 }
 
 fn default_jsonrpc() -> String {
-    "2.0".to_string()
+    JSONRPC_VERSION.to_owned()
 }
 
 /// MCP error response (JSON-RPC format)
@@ -46,9 +51,10 @@ pub struct McpError {
 
 impl McpResponse {
     /// Create a success response
+    #[must_use]
     pub fn success(id: Option<serde_json::Value>, result: serde_json::Value) -> Self {
         Self {
-            jsonrpc: "2.0".to_string(),
+            jsonrpc: JSONRPC_VERSION.to_owned(),
             result: Some(result),
             error: None,
             id,
@@ -58,7 +64,7 @@ impl McpResponse {
     /// Create an error response
     pub fn error(id: Option<serde_json::Value>, code: i32, message: impl Into<String>) -> Self {
         Self {
-            jsonrpc: "2.0".to_string(),
+            jsonrpc: JSONRPC_VERSION.to_owned(),
             result: None,
             error: Some(McpError {
                 code,

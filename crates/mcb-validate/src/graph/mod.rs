@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Dependency graph construction and analysis.
 //!
 //! Builds a directed graph from extracted code facts using `petgraph`,

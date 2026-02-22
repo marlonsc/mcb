@@ -1,289 +1,163 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Service Lifecycle HTTP Handlers
 //!
 //! HTTP handlers for service lifecycle management endpoints.
 //! These endpoints allow starting, stopping, and restarting
-//! services via the ServiceManager.
+//! services via the `ServiceManager`.
 //!
 //! ## Endpoints
 //!
 //! | Path | Method | Description |
-//! |------|--------|-------------|
+//! | ------ | -------- | ------------- |
 //! | `/services` | GET | List all registered services and their states (protected) |
 //! | `/services/{name}/start` | POST | Start a specific service (protected) |
 //! | `/services/{name}/stop` | POST | Stop a specific service (protected) |
 //! | `/services/{name}/restart` | POST | Restart a specific service (protected) |
 
-use rocket::http::Status;
-use rocket::serde::json::Json;
-use rocket::{State, get, post};
-use serde::Serialize;
+use std::sync::Arc;
+
+use axum::Json as AxumJson;
+use axum::extract::{Path, State as AxumState};
+use axum::http::StatusCode;
 use serde_json::json;
 
-use super::auth::AdminAuth;
+use mcb_domain::info;
+
+use super::auth::AxumAdminAuth;
 use super::handlers::AdminState;
+pub use super::lifecycle_models::{
+    ServiceActionResponse, ServiceErrorResponse, ServiceInfoResponse, ServiceListResponse,
+    ServicesHealthResponse,
+};
 
-/// Response for service list endpoint
-#[derive(Serialize)]
-pub struct ServiceListResponse {
-    /// Number of registered services
-    pub count: usize,
-    /// List of services with their states
-    pub services: Vec<ServiceInfoResponse>,
+enum ServiceAction {
+    Start,
+    Stop,
+    Restart,
 }
 
-/// Individual service info in the list
-#[derive(Serialize)]
-pub struct ServiceInfoResponse {
-    /// Service name
-    pub name: String,
-    /// Current state as string
-    pub state: String,
+impl ServiceAction {
+    fn label(&self) -> &'static str {
+        match self {
+            Self::Start => "started",
+            Self::Stop => "stopped",
+            Self::Restart => "restarted",
+        }
+    }
 }
 
-/// Service error response
-#[derive(Serialize)]
-pub struct ServiceErrorResponse {
-    /// Error message describing what went wrong
-    pub error: String,
-    /// Name of the service involved in the error (optional)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub service: Option<String>,
-    /// Number of services (optional, used in list responses)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub count: Option<usize>,
-    /// List of services (optional, used in list responses)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub services: Option<Vec<ServiceInfoResponse>>,
-}
+use crate::admin::error::{AdminError, AdminResult, AdminStatusResult};
 
-/// Service action response
-#[derive(Serialize)]
-pub struct ServiceActionResponse {
-    /// Status of the action (e.g., "started", "stopped", "restarted")
-    pub status: String,
-    /// Name of the service that was acted upon
-    pub service: String,
-}
+async fn execute_service_action_axum(
+    state: &AdminState,
+    name: &str,
+    action: ServiceAction,
+) -> AdminStatusResult<ServiceActionResponse> {
+    let service_manager = require_service!(state, service_manager, "Service manager not available");
 
-/// List all registered services and their states (protected)
-///
-/// GET /admin/services
-///
-/// # Authentication
-///
-/// Requires valid admin API key via `X-Admin-Key` header.
-#[get("/services")]
-pub fn list_services(
-    _auth: AdminAuth,
-    state: &State<AdminState>,
-) -> Result<Json<ServiceListResponse>, (Status, Json<ServiceErrorResponse>)> {
-    tracing::info!("list_services called");
-    let Some(service_manager) = &state.service_manager else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(ServiceErrorResponse {
-                error: "Service manager not available".to_string(),
-                service: None,
-                count: Some(0),
-                services: Some(vec![]),
-            }),
-        ));
+    let result = match action {
+        ServiceAction::Start => service_manager.start(name).await,
+        ServiceAction::Stop => service_manager.stop(name).await,
+        ServiceAction::Restart => service_manager.restart(name).await,
     };
 
-    let services: Vec<ServiceInfoResponse> = service_manager
+    match result {
+        Ok(()) => Ok((
+            StatusCode::OK,
+            AxumJson(ServiceActionResponse {
+                status: action.label().to_owned(),
+                service: name.to_owned(),
+            }),
+        )),
+        Err(error) => Err(AdminError::bad_request(error.to_string())),
+    }
+}
+
+/// Axum handler: list all registered services and their states (protected).
+///
+/// # Errors
+/// Returns `503` when service manager is unavailable.
+pub async fn list_services_axum(
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<AdminState>>,
+) -> AdminResult<ServiceListResponse> {
+    info!("lifecycle", "list_services called");
+    let service_manager = require_service!(state, service_manager, "Service manager not available");
+
+    let services = service_manager
         .list()
         .into_iter()
         .map(|info| ServiceInfoResponse {
             name: info.name,
             state: format!("{:?}", info.state),
         })
-        .collect();
+        .collect::<Vec<_>>();
 
-    Ok(Json(ServiceListResponse {
+    Ok(AxumJson(ServiceListResponse {
         count: services.len(),
         services,
     }))
 }
 
-/// Start a specific service (protected)
+/// Axum handler: start a specific service (protected).
 ///
-/// POST /admin/services/{name}/start
-///
-/// # Authentication
-///
-/// Requires valid admin API key via `X-Admin-Key` header.
-#[post("/services/<name>/start")]
-pub async fn start_service(
-    _auth: AdminAuth,
-    state: &State<AdminState>,
-    name: &str,
-) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
-    tracing::info!("start_service called");
-    let Some(service_manager) = &state.service_manager else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(ServiceErrorResponse {
-                error: "Service manager not available".to_string(),
-                service: None,
-                count: None,
-                services: None,
-            }),
-        ));
-    };
-
-    match service_manager.start(name).await {
-        Ok(()) => Ok((
-            Status::Ok,
-            Json(ServiceActionResponse {
-                status: "started".to_string(),
-                service: name.to_string(),
-            }),
-        )),
-        Err(e) => Err((
-            Status::BadRequest,
-            Json(ServiceErrorResponse {
-                error: e.to_string(),
-                service: Some(name.to_string()),
-                count: None,
-                services: None,
-            }),
-        )),
-    }
+/// # Errors
+/// Returns `503` when service manager is unavailable and `400` on action errors.
+pub async fn start_service_axum(
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<AdminState>>,
+    Path(name): Path<String>,
+) -> AdminStatusResult<ServiceActionResponse> {
+    info!("lifecycle", "start_service called");
+    execute_service_action_axum(&state, &name, ServiceAction::Start).await
 }
 
-/// Stop a specific service (protected)
+/// Axum handler: stop a specific service (protected).
 ///
-/// POST /admin/services/{name}/stop
-///
-/// # Authentication
-///
-/// Requires valid admin API key via `X-Admin-Key` header.
-#[post("/services/<name>/stop")]
-pub async fn stop_service(
-    _auth: AdminAuth,
-    state: &State<AdminState>,
-    name: &str,
-) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
-    tracing::info!("stop_service called");
-    let Some(service_manager) = &state.service_manager else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(ServiceErrorResponse {
-                error: "Service manager not available".to_string(),
-                service: None,
-                count: None,
-                services: None,
-            }),
-        ));
-    };
-
-    match service_manager.stop(name).await {
-        Ok(()) => Ok((
-            Status::Ok,
-            Json(ServiceActionResponse {
-                status: "stopped".to_string(),
-                service: name.to_string(),
-            }),
-        )),
-        Err(e) => Err((
-            Status::BadRequest,
-            Json(ServiceErrorResponse {
-                error: e.to_string(),
-                service: Some(name.to_string()),
-                count: None,
-                services: None,
-            }),
-        )),
-    }
+/// # Errors
+/// Returns `503` when service manager is unavailable and `400` on action errors.
+pub async fn stop_service_axum(
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<AdminState>>,
+    Path(name): Path<String>,
+) -> AdminStatusResult<ServiceActionResponse> {
+    info!("lifecycle", "stop_service called");
+    execute_service_action_axum(&state, &name, ServiceAction::Stop).await
 }
 
-/// Restart a specific service (protected)
+/// Axum handler: restart a specific service (protected).
 ///
-/// POST /admin/services/{name}/restart
-///
-/// # Authentication
-///
-/// Requires valid admin API key via `X-Admin-Key` header.
-#[post("/services/<name>/restart")]
-pub async fn restart_service(
-    _auth: AdminAuth,
-    state: &State<AdminState>,
-    name: &str,
-) -> Result<(Status, Json<ServiceActionResponse>), (Status, Json<ServiceErrorResponse>)> {
-    tracing::info!("restart_service called");
-    let Some(service_manager) = &state.service_manager else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(ServiceErrorResponse {
-                error: "Service manager not available".to_string(),
-                service: None,
-                count: None,
-                services: None,
-            }),
-        ));
-    };
-
-    match service_manager.restart(name).await {
-        Ok(()) => Ok((
-            Status::Ok,
-            Json(ServiceActionResponse {
-                status: "restarted".to_string(),
-                service: name.to_string(),
-            }),
-        )),
-        Err(e) => Err((
-            Status::BadRequest,
-            Json(ServiceErrorResponse {
-                error: e.to_string(),
-                service: Some(name.to_string()),
-                count: None,
-                services: None,
-            }),
-        )),
-    }
+/// # Errors
+/// Returns `503` when service manager is unavailable and `400` on action errors.
+pub async fn restart_service_axum(
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<AdminState>>,
+    Path(name): Path<String>,
+) -> AdminStatusResult<ServiceActionResponse> {
+    info!("lifecycle", "restart_service called");
+    execute_service_action_axum(&state, &name, ServiceAction::Restart).await
 }
 
-/// Services health response
-#[derive(Serialize)]
-pub struct ServicesHealthResponse {
-    /// Number of services checked
-    pub count: usize,
-    /// Health check results for each service
-    pub checks: Vec<serde_json::Value>,
-}
-
-/// Get health check for all services (protected)
+/// Axum handler: get health check for all services (protected).
 ///
-/// GET /admin/services/health
-///
-/// # Authentication
-///
-/// Requires valid admin API key via `X-Admin-Key` header.
-#[get("/services/health")]
-pub async fn services_health(
-    _auth: AdminAuth,
-    state: &State<AdminState>,
-) -> Result<Json<ServicesHealthResponse>, (Status, Json<ServiceErrorResponse>)> {
-    tracing::info!("services_health called");
-    let Some(service_manager) = &state.service_manager else {
-        return Err((
-            Status::ServiceUnavailable,
-            Json(ServiceErrorResponse {
-                error: "Service manager not available".to_string(),
-                service: None,
-                count: None,
-                services: None,
-            }),
-        ));
-    };
+/// # Errors
+/// Returns `503` when service manager is unavailable.
+pub async fn services_health_axum(
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<AdminState>>,
+) -> AdminResult<ServicesHealthResponse> {
+    info!("lifecycle", "services_health called");
+    let service_manager = require_service!(state, service_manager, "Service manager not available");
 
     let checks = service_manager.health_check_all().await;
-    let checks_json: Vec<serde_json::Value> = checks
+    let checks_json = checks
         .iter()
         .map(|c| serde_json::to_value(c).unwrap_or(json!({})))
-        .collect();
+        .collect::<Vec<_>>();
 
-    Ok(Json(ServicesHealthResponse {
+    Ok(AxumJson(ServicesHealthResponse {
         count: checks.len(),
         checks: checks_json,
     }))

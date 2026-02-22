@@ -1,11 +1,9 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Infrastructure utilities
 //!
-//! Reusable helpers for timing, file I/O, and common patterns.
-//!
-//! Note: JsonExt and HttpResponseUtils are in mcb_providers::utils.
-
-mod file;
+//! Reusable helpers for timing and common patterns.
 mod timing;
 
-pub use file::FileUtils;
 pub use timing::TimedOperation;

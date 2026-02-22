@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! AST Core Types Module
 //!
 //! Core data structures for representing AST nodes and parsing results.

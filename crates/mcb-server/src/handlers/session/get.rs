@@ -1,14 +1,20 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use std::sync::Arc;
 
 use mcb_domain::constants::keys as schema;
-use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::ports::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
 
+use mcb_domain::error;
+
+use super::common::require_session_id_str;
 use crate::args::SessionArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use tracing::error;
+use crate::utils::mcp::tool_error;
 
 /// Retrieves an agent session by ID.
 #[tracing::instrument(skip_all)]
@@ -16,15 +22,11 @@ pub async fn get_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
 ) -> Result<CallToolResult, McpError> {
-    let session_id = match args.session_id.as_ref() {
-        Some(id) => id.as_str(),
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing session_id",
-            )]));
-        }
+    let session_id = match require_session_id_str(args) {
+        Ok(id) => id,
+        Err(error_result) => return Ok(error_result),
     };
-    match agent_service.get_session(session_id).await {
+    match agent_service.get_session(&session_id).await {
         Ok(Some(session)) => ResponseFormatter::json_success(&serde_json::json!({
             schema::ID: session.id,
             schema::SESSION_SUMMARY_ID: session.session_summary_id,
@@ -41,12 +43,10 @@ pub async fn get_session(
             schema::TOOL_CALLS_COUNT: session.tool_calls_count,
             schema::DELEGATIONS_COUNT: session.delegations_count,
         })),
-        Ok(None) => Ok(CallToolResult::error(vec![Content::text(
-            "Agent session not found",
-        )])),
+        Ok(None) => Ok(tool_error("Agent session not found")),
         Err(e) => {
-            error!("Failed to get agent session: {:?}", e);
-            Ok(to_opaque_tool_error(e))
+            error!("get_session", "Failed to get agent session", &e);
+            Ok(to_contextual_tool_error(e))
         }
     }
 }

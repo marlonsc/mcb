@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! RETE Engine Wrapper
 //!
 //! Wrapper for rust-rule-engine crate implementing RETE-UL algorithm.
@@ -12,8 +15,12 @@ use rust_rule_engine::{Facts, GRLParser, KnowledgeBase, RustRuleEngine, Value as
 use serde_json::Value;
 
 use crate::Result;
+use crate::constants::rules::{
+    DEFAULT_GRL_RULE_ID, DEFAULT_RETE_MESSAGE, YAML_FIELD_GRL, YAML_FIELD_RULE,
+};
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
-use crate::violation_trait::{Severity, ViolationCategory};
+use crate::linters::constants::CARGO_TOML_FILENAME;
+use crate::traits::violation::{Severity, ViolationCategory};
 
 /// RETE Engine wrapper for rust-rule-engine library
 pub struct ReteEngine {
@@ -29,6 +36,7 @@ impl Default for ReteEngine {
 
 impl ReteEngine {
     /// Create a new RETE engine instance
+    #[must_use]
     pub fn new() -> Self {
         Self {
             kb: KnowledgeBase::new("mcb-validate"),
@@ -36,6 +44,10 @@ impl ReteEngine {
     }
 
     /// Load GRL rules into the knowledge base
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if GRL parsing or rule loading fails.
     pub fn load_grl(&mut self, grl_code: &str) -> Result<()> {
         let rules = GRLParser::parse_rules(grl_code)
             .map_err(|e| crate::ValidationError::Config(format!("Failed to parse GRL: {e}")))?;
@@ -56,8 +68,7 @@ impl ReteEngine {
     /// facts to be set with `facts.set("Facts.has_internal_dependencies", ...)`.
     ///
     /// Requires `cargo_metadata` to succeed. Fails fast if unavailable.
-    #[allow(clippy::unused_self)]
-    fn build_facts(&self, context: &RuleContext) -> Result<Facts> {
+    fn build_facts(context: &RuleContext) -> Result<Facts> {
         let facts = Facts::new();
 
         // Load file configuration to get internal_dep_prefix
@@ -65,7 +76,7 @@ impl ReteEngine {
         let internal_dep_prefix = &file_config.general.internal_dep_prefix;
 
         // Use cargo_metadata for reliable workspace/package parsing
-        let manifest_path = context.workspace_root.join("Cargo.toml");
+        let manifest_path = context.workspace_root.join(CARGO_TOML_FILENAME);
 
         // Try to get metadata from cargo
         let metadata_result = MetadataCommand::new()
@@ -82,7 +93,7 @@ impl ReteEngine {
                     .root_package()
                     .map(|p| p.name.to_string())
                     .or_else(|| metadata.packages.first().map(|p| p.name.to_string()))
-                    .unwrap_or_else(|| "unknown".to_string());
+                    .unwrap_or_else(|| "unknown".to_owned());
 
                 facts.set("Facts.crate_name", RreValue::String(root_name));
 
@@ -140,6 +151,10 @@ impl ReteEngine {
     }
 
     /// Execute GRL rules against context and return violations
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if rule loading or fact building fails.
     pub async fn execute_grl(
         &mut self,
         grl_code: &str,
@@ -149,7 +164,7 @@ impl ReteEngine {
         self.load_grl(grl_code)?;
 
         // Build facts from context
-        let facts = self.build_facts(context)?;
+        let facts = Self::build_facts(context)?;
 
         // Initialize violation markers in facts (rules will set these when triggered)
         // Use Facts. prefix for GRL compatibility
@@ -179,7 +194,7 @@ impl ReteEngine {
                             None
                         }
                     })
-                    .unwrap_or_else(|| "Rule violation detected".to_string());
+                    .unwrap_or_else(|| DEFAULT_RETE_MESSAGE.to_owned());
 
                 let rule_name = facts
                     .get("Facts.violation_rule_name")
@@ -190,7 +205,7 @@ impl ReteEngine {
                             None
                         }
                     })
-                    .unwrap_or_else(|| "GRL_RULE".to_string());
+                    .unwrap_or_else(|| DEFAULT_GRL_RULE_ID.to_owned());
 
                 violations.push(
                     RuleViolation::new(
@@ -220,8 +235,8 @@ impl RuleEngine for ReteEngine {
     ) -> Result<Vec<RuleViolation>> {
         // Extract GRL code from rule definition
         let grl_code = rule_definition
-            .get("rule")
-            .or_else(|| rule_definition.get("grl"))
+            .get(YAML_FIELD_RULE)
+            .or_else(|| rule_definition.get(YAML_FIELD_GRL))
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
                 crate::ValidationError::Config(

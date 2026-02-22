@@ -1,10 +1,24 @@
+//! Provides observation domain definitions.
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
+//!
+use super::memory::{ExecutionMetadata, OriginContext, QualityGateResult};
 use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-
-use super::memory::{ExecutionMetadata, QualityGateResult};
+use serde_with::skip_serializing_none;
 
 /// Categorizes the type of observation recorded.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
 pub enum ObservationType {
     /// Represents a code snippet or file content.
     Code,
@@ -22,65 +36,13 @@ pub enum ObservationType {
     QualityGate,
 }
 
-impl ObservationType {
-    /// Returns the string representation of the observation type.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use mcb_domain::ObservationType;
-    /// assert_eq!(ObservationType::Code.as_str(), "code");
-    /// assert_eq!(ObservationType::Decision.as_str(), "decision");
-    /// ```
-    #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Code => "code",
-            Self::Decision => "decision",
-            Self::Context => "context",
-            Self::Error => "error",
-            Self::Summary => "summary",
-            Self::Execution => "execution",
-            Self::QualityGate => "quality_gate",
-        }
-    }
-}
-
-impl std::str::FromStr for ObservationType {
-    type Err = String;
-
-    /// Parses a string into an `ObservationType`.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the string does not match any known observation type.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// # use std::str::FromStr;
-    /// # use mcb_domain::ObservationType;
-    /// assert!(ObservationType::from_str("code").is_ok());
-    /// assert!(ObservationType::from_str("invalid").is_err());
-    /// ```
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "code" => Ok(Self::Code),
-            "decision" => Ok(Self::Decision),
-            "context" => Ok(Self::Context),
-            "error" => Ok(Self::Error),
-            "summary" => Ok(Self::Summary),
-            "execution" => Ok(Self::Execution),
-            "quality_gate" => Ok(Self::QualityGate),
-            _ => Err(format!("Unknown observation type: {s}")),
-        }
-    }
-}
+crate::impl_as_str_from_as_ref!(ObservationType);
 
 /// Metadata associated with an observation.
 ///
 /// Contains contextual information about where and when an observation was recorded,
 /// including session, repository, file, and git information.
+#[skip_serializing_none]
 #[derive(Clone, Serialize, Deserialize)]
 pub struct ObservationMetadata {
     /// Unique identifier for the metadata.
@@ -96,24 +58,32 @@ pub struct ObservationMetadata {
     /// Git commit hash.
     pub commit: Option<String>,
     /// Details about the tool execution (if applicable).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub execution: Option<ExecutionMetadata>,
     /// Details about the quality gate result (if applicable).
-    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub quality_gate: Option<QualityGateResult>,
+    /// Contextual information about the origin of the observation.
+    pub origin_context: Option<OriginContext>,
 }
 
 impl std::fmt::Debug for ObservationMetadata {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("ObservationMetadata")
             .field("id", &self.id)
-            .field("session_id", &self.session_id.as_ref().map(|_| "REDACTED"))
+            .field(
+                "session_id",
+                &if self.session_id.is_some() {
+                    "REDACTED"
+                } else {
+                    "NONE"
+                },
+            )
             .field("repo_id", &self.repo_id)
             .field("file_path", &self.file_path)
             .field("branch", &self.branch)
             .field("commit", &self.commit)
             .field("execution", &self.execution)
             .field("quality_gate", &self.quality_gate)
+            .field("origin_context", &self.origin_context)
             .finish()
     }
 }
@@ -122,7 +92,7 @@ impl Default for ObservationMetadata {
     /// Creates a new `ObservationMetadata` with a generated UUID and all optional fields set to `None`.
     fn default() -> Self {
         Self {
-            id: Uuid::new_v4().to_string(),
+            id: crate::utils::id::generate().to_string(),
             session_id: None,
             repo_id: None,
             file_path: None,
@@ -130,6 +100,7 @@ impl Default for ObservationMetadata {
             commit: None,
             execution: None,
             quality_gate: None,
+            origin_context: None,
         }
     }
 }

@@ -1,42 +1,55 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Cache configuration utilities
 //!
 //! Infrastructure-specific cache utilities only.
-//! Type definitions (CacheEntryConfig, CacheStats) are in mcb-domain.
-//! Use mcb_domain::ports::providers::cache::{CacheEntryConfig, CacheStats} directly.
+//! Type definitions (`CacheEntryConfig`, `CacheStats`) are in mcb-domain.
+//! Use `mcb_domain::ports::{CacheEntryConfig`, `CacheStats`} directly.
 
 use mcb_domain::error::{Error, Result};
+
+/// Maximum allowed length for cache keys.
+const CACHE_KEY_MAX_LENGTH: usize = 250;
 
 /// Cache key utilities
 pub struct CacheKey;
 
 impl CacheKey {
     /// Create a namespaced cache key
+    #[must_use]
     pub fn namespaced(namespace: &str, key: &str) -> String {
-        format!("{}:{}", namespace, key)
+        format!("{namespace}:{key}")
     }
 
     /// Extract namespace from a namespaced key
+    #[must_use]
     pub fn extract_namespace(key: &str) -> Option<&str> {
         key.split(':').next()
     }
 
     /// Extract the key part from a namespaced key
+    #[must_use]
     pub fn extract_key(key: &str) -> &str {
-        key.split_once(':').map(|x| x.1).unwrap_or(key)
+        key.split_once(':').map_or(key, |x| x.1)
     }
 
     /// Validate cache key format
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the key is empty, too long, or contains invalid characters.
     pub fn validate_key(key: &str) -> Result<()> {
         if key.is_empty() {
             return Err(Error::Configuration {
-                message: "Cache key cannot be empty".to_string(),
+                message: "Cache key cannot be empty".to_owned(),
                 source: None,
             });
         }
 
-        if key.len() > 250 {
+        if key.len() > CACHE_KEY_MAX_LENGTH {
             return Err(Error::Configuration {
-                message: "Cache key too long (max 250 characters)".to_string(),
+                message: format!("Cache key too long (max {CACHE_KEY_MAX_LENGTH} characters)"),
                 source: None,
             });
         }
@@ -47,7 +60,7 @@ impl CacheKey {
             .any(|c| c.is_control() || c == '\n' || c == '\r')
         {
             return Err(Error::Configuration {
-                message: "Cache key contains invalid characters".to_string(),
+                message: "Cache key contains invalid characters".to_owned(),
                 source: None,
             });
         }
@@ -56,6 +69,7 @@ impl CacheKey {
     }
 
     /// Sanitize a cache key by removing/replacing invalid characters
+    #[must_use]
     pub fn sanitize_key(key: &str) -> String {
         key.chars()
             .map(|c| {
@@ -65,24 +79,7 @@ impl CacheKey {
                     c
                 }
             })
-            .take(250)
+            .take(CACHE_KEY_MAX_LENGTH)
             .collect()
-    }
-}
-
-/// Cache value serialization utilities
-pub struct CacheValue;
-
-impl CacheValue {
-    /// Estimate the size of a cache value in bytes
-    pub fn estimate_size<T: serde::Serialize>(value: &T) -> usize {
-        // Simple estimation: serialize to JSON and get byte length
-        // In production, you might want more sophisticated size estimation
-        serde_json::to_string(value).map(|s| s.len()).unwrap_or(0)
-    }
-
-    /// Check if a value exceeds the maximum cache entry size
-    pub fn exceeds_max_size<T: serde::Serialize>(value: &T, max_size: usize) -> bool {
-        Self::estimate_size(value) > max_size
     }
 }

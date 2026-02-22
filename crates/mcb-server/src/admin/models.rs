@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Admin data models
 //!
 //! Request and response models for the admin API.
@@ -18,7 +21,7 @@ pub struct ServerInfo {
 impl Default for ServerInfo {
     fn default() -> Self {
         Self {
-            version: env!("CARGO_PKG_VERSION").to_string(),
+            version: env!("CARGO_PKG_VERSION").to_owned(),
             build_time: option_env!("BUILD_TIME").map(String::from),
             git_hash: option_env!("GIT_HASH").map(String::from),
         }
@@ -65,6 +68,35 @@ impl AdminActionResponse {
     }
 }
 
+/// Health check response for admin API.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdminHealthResponse {
+    /// Server status.
+    pub status: &'static str,
+    /// Server uptime in seconds.
+    pub uptime_seconds: u64,
+    /// Number of active indexing operations.
+    pub active_indexing_operations: usize,
+}
+
+/// Readiness probe response.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReadinessResponse {
+    /// Whether the server is ready to accept requests.
+    pub ready: bool,
+    /// Server uptime in seconds.
+    pub uptime_seconds: u64,
+}
+
+/// Liveness probe response.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LivenessResponse {
+    /// Whether the server process is alive and responding.
+    pub alive: bool,
+    /// Server uptime in seconds.
+    pub uptime_seconds: u64,
+}
+
 // ============================================================================
 // Browse API Models
 // ============================================================================
@@ -81,6 +113,8 @@ pub struct CollectionListResponse {
 /// Collection information for browse API
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CollectionInfoResponse {
+    /// Stable collection identifier
+    pub id: String,
     /// Collection name
     pub name: String,
     /// Number of vectors in the collection

@@ -121,7 +121,7 @@ git commit --no-verify
 The `classify` job determines which jobs to run based on PR state:
 
 | Classification | Detection | Behavior |
-|----------------|-----------|----------|
+| ---------------- | ----------- | ---------- |
 | **Draft PR** | `github.event.pull_request.draft == true` | Skip all heavy jobs, gate passes immediately |
 | **Bot PR** | `github.event.pull_request.user.type == 'Bot'` | Run simplified suite (Linux+stable only) |
 | **Ready PR** | Non-draft, non-bot | Run full suite (cross-platform, coverage, golden, binaries) |
@@ -129,7 +129,7 @@ The `classify` job determines which jobs to run based on PR state:
 ### Job Execution Matrix
 
 | Job | Draft | Bot | Ready | Purpose |
-|-----|-------|-----|-------|---------|
+| ----- | ------- | ----- | ------- | --------- |
 | `classify` | ✅ | ✅ | ✅ | Detect PR type |
 | `changes` | ✅ | ✅ | ✅ | Path-based filtering |
 | `lint` | ❌ | ✅ | ✅ | Format + clippy (Rust 2024) |
@@ -180,7 +180,7 @@ The `rust-ci` job is the **required gate check** that enforces branch protection
 **Ready PRs** run a full cross-platform matrix:
 
 | Dimension | Values |
-|-----------|--------|
+| ----------- | -------- |
 | **OS** | ubuntu-latest, macos-latest, windows-latest |
 | **Rust** | stable, beta |
 
@@ -341,7 +341,7 @@ gh run watch \u003crun-id\u003e
 Each release includes pre-compiled binaries:
 
 | Platform | Binary Name | Target Triple |
-|----------|-------------|---------------|
+| ---------- | ------------- | --------------- |
 | **Linux** | `mcb-x86_64-unknown-linux-gnu` | x86_64-unknown-linux-gnu |
 | **macOS** | `mcb-x86_64-apple-darwin` | x86_64-apple-darwin |
 | **Windows** | `mcb-x86_64-pc-windows-msvc.exe` | x86_64-pc-windows-msvc |

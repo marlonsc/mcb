@@ -5,6 +5,10 @@
 
 use std::sync::Arc;
 
+use crate::cache::SampleCacheProvider;
+use crate::embedding::SampleEmbeddingProvider;
+use crate::vector_store::{InMemoryVectorStore, SampleVectorStoreProvider};
+
 /// Application context holding all registered services
 pub struct AppContext {
     embedding_handle: Arc<EmbeddingProviderHandle>,
@@ -62,7 +66,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog, Error> {
 /// Resolve embedding provider from configuration
 pub fn resolve_embedding_provider(
     config: &EmbeddingConfig,
-) -> Result<Arc<dyn EmbeddingProvider>, Error> {
+) -> Result<Arc<dyn SampleEmbeddingProvider>, Error> {
     // Provider resolution logic
     Ok(Arc::new(NullEmbeddingProvider::new()))
 }
@@ -70,13 +74,13 @@ pub fn resolve_embedding_provider(
 /// Resolve vector store provider from configuration
 pub fn resolve_vector_store_provider(
     config: &VectorStoreConfig,
-) -> Result<Arc<dyn VectorStoreProvider>, Error> {
+) -> Result<Arc<dyn SampleVectorStoreProvider>, Error> {
     // Provider resolution logic
     Ok(Arc::new(InMemoryVectorStore::new()))
 }
 
 /// Resolve cache provider from configuration
-pub fn resolve_cache_provider(config: &CacheConfig) -> Result<Arc<dyn CacheProvider>, Error> {
+pub fn resolve_cache_provider(config: &CacheConfig) -> Result<Arc<dyn SampleCacheProvider>, Error> {
     // Provider resolution logic
     Ok(Arc::new(NullCacheProvider::new()))
 }
@@ -95,30 +99,40 @@ pub struct CacheConfig;
 pub struct EmbeddingProviderHandle;
 pub struct VectorStoreProviderHandle;
 pub struct CacheProviderHandle;
-pub trait EmbeddingProvider: Send + Sync {}
-pub trait VectorStoreProvider: Send + Sync {}
-pub trait CacheProvider: Send + Sync {}
 pub struct NullEmbeddingProvider;
 impl NullEmbeddingProvider {
     pub fn new() -> Self {
         Self
     }
 }
-impl EmbeddingProvider for NullEmbeddingProvider {}
-pub struct InMemoryVectorStore;
-impl InMemoryVectorStore {
-    pub fn new() -> Self {
-        Self
+impl SampleEmbeddingProvider for NullEmbeddingProvider {
+    fn embed_batch(&self, texts: &[String]) -> Vec<Vec<f32>> {
+        texts.iter().map(|_| vec![0.0; 384]).collect()
+    }
+
+    fn dimensions(&self) -> usize {
+        384
     }
 }
-impl VectorStoreProvider for InMemoryVectorStore {}
 pub struct NullCacheProvider;
 impl NullCacheProvider {
     pub fn new() -> Self {
         Self
     }
 }
-impl CacheProvider for NullCacheProvider {}
+impl SampleCacheProvider for NullCacheProvider {
+    fn get(&self, _key: &str) -> Option<Vec<u8>> {
+        None
+    }
+
+    fn set(&self, _key: &str, _value: &[u8], _ttl: std::time::Duration) {}
+
+    fn delete(&self, _key: &str) {}
+
+    fn provider_name(&self) -> &str {
+        "null"
+    }
+}
 impl CatalogBuilder {
     pub fn new() -> Self {
         Self

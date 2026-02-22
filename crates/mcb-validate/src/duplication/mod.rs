@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Code Duplication Detection (Phase 5)
 //!
 //! Provides clone detection using a hybrid approach:
@@ -7,7 +10,7 @@
 //! ## Clone Types
 //!
 //! | Type | Rule ID | Description |
-//! |------|---------|-------------|
+//! | ------ | --------- | ------------- |
 //! | Type 1 | DUP001 | Exact clones (100% identical) |
 //! | Type 2 | DUP002 | Renamed clones (identifiers changed) |
 //! | Type 3 | DUP003 | Gapped clones (small modifications) |
@@ -29,15 +32,17 @@
 //! ```
 
 pub mod analyzer;
+pub mod constants;
 pub mod detector;
 pub mod fingerprint;
 pub mod thresholds;
+pub(crate) mod utils;
 pub mod violation;
 
-pub use analyzer::{DuplicationAnalyzer, DuplicationStats};
-pub use detector::{CloneCandidate, CloneDetector, tokenize_source};
-pub use fingerprint::{
+pub use self::analyzer::{DuplicationAnalyzer, DuplicationStats};
+pub use self::detector::{CloneCandidate, CloneDetector, tokenize_source};
+pub use self::fingerprint::{
     Fingerprint, FingerprintLocation, FingerprintMatch, Token, TokenFingerprinter,
 };
-pub use thresholds::{DuplicationThresholds, DuplicationType};
-pub use violation::DuplicationViolation;
+pub use self::thresholds::{DuplicationThresholds, DuplicationType};
+pub use self::violation::DuplicationViolation;

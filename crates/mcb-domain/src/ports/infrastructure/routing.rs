@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Provider Routing Port
 //!
 //! Defines the contract for provider routing and selection services.
@@ -46,53 +49,27 @@ pub struct ProviderContext {
 
 impl ProviderContext {
     /// Create a new provider context with default values
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Create a context optimized for low cost
-    pub fn cost_optimized() -> Self {
-        Self {
-            cost_sensitivity: 1.0,
-            quality_requirement: 0.3,
-            latency_sensitivity: 0.3,
-            ..Default::default()
-        }
-    }
-
-    /// Create a context optimized for high quality
-    pub fn quality_optimized() -> Self {
-        Self {
-            cost_sensitivity: 0.3,
-            quality_requirement: 1.0,
-            latency_sensitivity: 0.3,
-            ..Default::default()
-        }
-    }
-
-    /// Create a context optimized for low latency
-    pub fn latency_optimized() -> Self {
-        Self {
-            cost_sensitivity: 0.3,
-            quality_requirement: 0.3,
-            latency_sensitivity: 1.0,
-            ..Default::default()
-        }
-    }
-
     /// Set the operation type
+    #[must_use]
     pub fn with_operation(mut self, operation: impl Into<String>) -> Self {
         self.operation_type = operation.into();
         self
     }
 
     /// Add a preferred provider
+    #[must_use]
     pub fn prefer(mut self, provider: impl Into<String>) -> Self {
         self.preferred_providers.push(provider.into());
         self
     }
 
     /// Exclude a provider
+    #[must_use]
     pub fn exclude(mut self, provider: impl Into<String>) -> Self {
         self.excluded_providers.push(provider.into());
         self

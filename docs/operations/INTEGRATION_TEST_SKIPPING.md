@@ -80,8 +80,8 @@ Output when any service unavailable:
 
 ### NO - Don't use if
 
--   Test uses mock/null providers (default config)
--   Test uses in-memory implementations (InMemoryVectorStore)
+-   Test uses default in-memory providers (FastEmbed, EdgeVec)
+-   Test uses default local implementations (EdgeVec, FastEmbed)
 -   Test is critical and **must** run (no external dependencies)
 -   Test exercises local-only functionality
 
@@ -89,13 +89,13 @@ Output when any service unavailable:
 
 ### Category A: Always Run (No External Dependencies)
 
-These tests use mock/null providers and always pass:
+These tests use default in-memory providers and always pass:
 
 ```rust
 #[tokio::test]
 async fn test_init_app_with_default_config_succeeds() {
-    // Default config uses null/memory providers
-    let config = AppConfig::default();  // ← null providers
+    // Default config uses in-memory providers (FastEmbed, EdgeVec, Moka)
+    let config = AppConfig::default();  // ← default local providers
     let ctx = init_app(config).await.expect("init_app");
     assert!(ctx.embedding_handle().get().is_some());
 }

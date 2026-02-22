@@ -1,8 +1,11 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Service Lifecycle Management
 //!
-//! Provides centralized lifecycle management for all managed services.
-//! The ServiceManager coordinates start/stop/restart operations and
-//! publishes state change events via the EventBus.
+//! This module provides the `ServiceManager` which orchestrates the lifecycle
+//! (start, stop, restart) of all registered services. It ensures consistent
+//! state transitions and publishes domain events for system-wide observability.
 //!
 //! ## Architecture
 //!
@@ -52,14 +55,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use dashmap::DashMap;
 use mcb_domain::events::{DomainEvent, ServiceState as EventServiceState};
-use mcb_domain::ports::admin::{
-    DependencyHealthCheck, LifecycleManaged, PortServiceState, ShutdownCoordinator,
+use mcb_domain::ports::{
+    DependencyHealthCheck, EventBusProvider, LifecycleManaged, PortServiceState,
+    ShutdownCoordinator,
 };
-use mcb_domain::ports::infrastructure::EventBusProvider;
 use serde::Serialize;
 use tokio::sync::Notify;
-use tracing::{error, info, warn};
-
 /// Information about a registered service
 #[derive(Debug, Clone, Serialize)]
 pub struct ServiceInfo {
@@ -107,18 +108,28 @@ impl ServiceManager {
     ///
     /// The service will be tracked and can be controlled via this manager.
     pub fn register(&self, service: Arc<dyn LifecycleManaged>) {
-        let name = service.name().to_string();
-        info!(service = %name, "Registering service for lifecycle management");
+        let name = service.name().to_owned();
+        mcb_domain::info!(
+            "lifecycle",
+            "Registering service for lifecycle management",
+            &name
+        );
         self.services.insert(name, service);
     }
 
     /// Unregister a service from lifecycle management
+    #[must_use]
     pub fn unregister(&self, name: &str) -> Option<Arc<dyn LifecycleManaged>> {
-        info!(service = %name, "Unregistering service from lifecycle management");
+        mcb_domain::info!(
+            "lifecycle",
+            "Unregistering service from lifecycle management",
+            &name
+        );
         self.services.remove(name).map(|(_, v)| v)
     }
 
     /// Get information about all registered services
+    #[must_use]
     pub fn list(&self) -> Vec<ServiceInfo> {
         self.services
             .iter()
@@ -130,6 +141,7 @@ impl ServiceManager {
     }
 
     /// Get information about a specific service
+    #[must_use]
     pub fn get(&self, name: &str) -> Option<ServiceInfo> {
         self.services.get(name).map(|entry| ServiceInfo {
             name: entry.key().clone(),
@@ -138,72 +150,97 @@ impl ServiceManager {
     }
 
     /// Check if a service is registered
+    #[must_use]
     pub fn contains(&self, name: &str) -> bool {
         self.services.contains_key(name)
     }
 
     /// Get the number of registered services
+    #[must_use]
     pub fn count(&self) -> usize {
         self.services.len()
     }
 
-    /// Start a specific service
+    /// Start a specific service.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service is not found or fails to start.
     pub async fn start(&self, name: &str) -> Result<(), ServiceManagerError> {
-        let service = self
-            .services
-            .get(name)
-            .ok_or_else(|| ServiceManagerError::ServiceNotFound(name.to_string()))?;
-
-        let previous_state = service.state();
-        info!(service = %name, previous = ?previous_state, "Starting service");
-
-        service.start().await?;
-
-        let new_state = service.state();
-        self.emit_state_change(name, new_state, Some(previous_state))
-            .await;
-
-        info!(service = %name, state = ?new_state, "Service started");
-        Ok(())
+        self.execute_service_op(
+            name,
+            "starting",
+            "started",
+            |s| async move { s.start().await },
+        )
+        .await
     }
 
     /// Stop a specific service
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service is not found or fails to stop.
     pub async fn stop(&self, name: &str) -> Result<(), ServiceManagerError> {
-        let service = self
-            .services
-            .get(name)
-            .ok_or_else(|| ServiceManagerError::ServiceNotFound(name.to_string()))?;
-
-        let previous_state = service.state();
-        info!(service = %name, previous = ?previous_state, "Stopping service");
-
-        service.stop().await?;
-
-        let new_state = service.state();
-        self.emit_state_change(name, new_state, Some(previous_state))
-            .await;
-
-        info!(service = %name, state = ?new_state, "Service stopped");
-        Ok(())
+        self.execute_service_op(
+            name,
+            "stopping",
+            "stopped",
+            |s| async move { s.stop().await },
+        )
+        .await
     }
 
     /// Restart a specific service
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the service is not found or fails to restart.
     pub async fn restart(&self, name: &str) -> Result<(), ServiceManagerError> {
-        let service = self
-            .services
-            .get(name)
-            .ok_or_else(|| ServiceManagerError::ServiceNotFound(name.to_string()))?;
+        self.execute_service_op(name, "restarting", "restarted", |s| async move {
+            s.restart().await
+        })
+        .await
+    }
+
+    /// Internal helper to execute a service lifecycle operation with state tracking.
+    async fn execute_service_op<F, Fut>(
+        &self,
+        name: &str,
+        op_present: &str,
+        op_past: &str,
+        operation: F,
+    ) -> Result<(), ServiceManagerError>
+    where
+        F: FnOnce(Arc<dyn LifecycleManaged>) -> Fut,
+        Fut: std::future::Future<Output = mcb_domain::error::Result<()>>,
+    {
+        let service = {
+            let entry = self
+                .services
+                .get(name)
+                .ok_or_else(|| ServiceManagerError::ServiceNotFound(name.to_owned()))?;
+            Arc::clone(entry.value())
+        };
 
         let previous_state = service.state();
-        info!(service = %name, previous = ?previous_state, "Restarting service");
+        mcb_domain::info!(
+            "lifecycle",
+            "service op",
+            &format!("service = {name}, previous = {previous_state:?}, op = {op_present}")
+        );
 
-        service.restart().await?;
+        operation(Arc::clone(&service)).await?;
 
         let new_state = service.state();
         self.emit_state_change(name, new_state, Some(previous_state))
             .await;
 
-        info!(service = %name, state = ?new_state, "Service restarted");
+        mcb_domain::info!(
+            "lifecycle",
+            "Service state changed",
+            &format!("service = {name}, state = {new_state:?}, op_past = {op_past}")
+        );
         Ok(())
     }
 
@@ -260,7 +297,7 @@ impl ServiceManager {
         let event_previous = previous.map(port_to_event_state);
 
         let event = DomainEvent::ServiceStateChanged {
-            name: name.to_string(),
+            name: name.to_owned(),
             state: event_state,
             previous_state: event_previous,
         };
@@ -268,18 +305,26 @@ impl ServiceManager {
         let payload = match serde_json::to_vec(&event) {
             Ok(p) => p,
             Err(e) => {
-                warn!("Failed to serialize state change event: {}", e);
+                mcb_domain::warn!(
+                    "lifecycle",
+                    "Failed to serialize state change event",
+                    &e.to_string()
+                );
                 return;
             }
         };
 
         if let Err(e) = self.event_bus.publish("service.state", &payload).await {
-            error!("Failed to publish state change event: {}", e);
+            mcb_domain::error!(
+                "lifecycle",
+                "Failed to publish state change event",
+                &e.to_string()
+            );
         }
     }
 }
 
-/// Convert port ServiceState to domain event ServiceState
+/// Convert port `ServiceState` to domain event `ServiceState`
 fn port_to_event_state(state: PortServiceState) -> EventServiceState {
     match state {
         PortServiceState::Starting => EventServiceState::Starting,
@@ -309,10 +354,10 @@ impl std::fmt::Debug for ServiceManager {
 // Default Shutdown Coordinator
 // ============================================================================
 
-/// Default implementation of ShutdownCoordinator using atomics and Notify
+/// Default implementation of `ShutdownCoordinator` using atomics and Notify
 ///
 /// This coordinator uses Tokio's Notify for efficient async waiting
-/// and an AtomicBool for fast shutdown status checks.
+/// and an `AtomicBool` for fast shutdown status checks.
 pub struct DefaultShutdownCoordinator {
     /// Shutdown signal flag
     shutdown_signal: AtomicBool,
@@ -346,7 +391,7 @@ impl std::fmt::Debug for DefaultShutdownCoordinator {
 
 impl ShutdownCoordinator for DefaultShutdownCoordinator {
     fn signal_shutdown(&self) {
-        info!("Shutdown signal received");
+        mcb_domain::info!("lifecycle", "Shutdown signal received");
         self.shutdown_signal.store(true, Ordering::SeqCst);
         self.notify.notify_waiters();
     }

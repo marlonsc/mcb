@@ -23,7 +23,7 @@ implementation_status: Complete
 
 - **Deciders:** Project team
 - **Supersedes:** [ADR-032](./032-agent-quality-domain-extension.md) (Agent & Quality Domain Extension)
-- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
+- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
 - **Series:** ADR-034 → [ADR-035](./035-context-scout.md) →
   [ADR-036](./036-enforcement-policies.md) →
   [ADR-037](./037-workflow-orchestrator.md)
@@ -207,7 +207,7 @@ pub struct WorkflowSession {
 
 Rather than coupling directly to SQLite, the workflow engine depends on an abstract `DatabaseProvider` trait that enables multiple backend implementations (SQLite MVP → PostgreSQL Phase 2 → other backends).
 
-**Rationale:** Database independence allows migration between backends without refactoring the workflow domain. Using a provider trait aligns with ADR-029 (dill dependency injection) and ADR-023 (linkme provider registration), enabling compile-time discovery of database implementations.
+**Rationale:** Database independence allows migration between backends without refactoring the workflow domain. Using a provider trait aligns with ADR-050 (manual composition root, ADR-029 superseded) and ADR-023 (linkme provider registration), enabling compile-time discovery of database implementations.
 
 Port Trait Definition:
 
@@ -328,7 +328,7 @@ pub static DATABASE_PROVIDERS: [DatabaseProviderEntry] = [..];
 
 References:
 
-- [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md) — Handle-based DI pattern
+- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) — Handle-based DI pattern (superseded by ADR-050)
 - [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Compile-time plugin discovery
 
 ---
@@ -1104,7 +1104,7 @@ fn sqlite_workflow_factory(
 
 ### Refinement 1: Database Provider Pattern
 
-**Rationale**: Workflow state persistence requires abstraction to support multiple backends (SQLite for development, PostgreSQL for production). This refinement introduces a `DatabaseProvider` port following the established provider pattern (ADR-029, ADR-023).
+**Rationale**: Workflow state persistence requires abstraction to support multiple backends (SQLite for development, PostgreSQL for production). This refinement introduces a `DatabaseProvider` port following the established provider pattern (ADR-050, ADR-023; ADR-029 superseded).
 
 **Port Definition** (`mcb-domain/src/ports/providers/database.rs`):
 
@@ -1473,7 +1473,7 @@ impl SqliteWorkflowEngine {
 - [smlang-rs](https://docs.rs/smlang/latest/smlang/) — Declarative FSM macro
   (evaluated, not selected)
 - [sqlx](https://docs.rs/sqlx/latest/sqlx/) — Async SQLite driver
-- [ADR-029: Hexagonal Architecture with dill](./029-hexagonal-architecture-dill.md)
+- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) (superseded by ADR-050)
   — DI pattern
 - [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md)
   — Auto-registration

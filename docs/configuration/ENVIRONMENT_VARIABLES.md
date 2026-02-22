@@ -3,8 +3,8 @@
 
 Complete reference for all environment variables supported by Memory Context Browser.
 
-**Version**: 0.2.0
-**Last Updated**: 2026-01-28
+**Version**: 0.2.1
+**Last Updated**: 2026-02-14
 
 See also [CONFIGURATION.md](../CONFIGURATION.md) for Figment-based config (ADR-025) and `MCP__` env pattern.
 
@@ -207,11 +207,11 @@ export JWT_EXPIRATION="3600"  # 1 hour
 
 ## Database Configuration
 
-### PostgreSQL Connection
+### SQLite Connection
 
 | Variable | Default | Type | Description |
 | ---------- | --------- | ------ | ------------- |
-| `DATABASE_URL` | `` (empty) | String | PostgreSQL connection String; empty = disabled |
+| `DATABASE_URL` | `` (empty) | String | SQLite database path; empty = disabled |
 | `DATABASE_MAX_CONNECTIONS` | `20` | Integer | Connection pool size |
 | `DATABASE_MIN_IDLE` | `5` | Integer | Minimum idle connections |
 | `DATABASE_MAX_LIFETIME_SECS` | `1800` | Integer | Max connection lifetime (30 min) |
@@ -357,10 +357,10 @@ export MCP_PROVIDERS__EMBEDDING__API_KEY=...
 
 ### Vector Store Provider
 
-#### In-Memory (Default, Single-Node)
+#### EdgeVec (Default, Single-Node)
 
 ```bash
-export MCP_PROVIDERS__VECTOR_STORE__PROVIDER=in-memory
+export MCP_PROVIDERS__VECTOR_STORE__PROVIDER=edgevec
 export MCP_PROVIDERS__VECTOR_STORE__DIMENSIONS=768
 ```
 

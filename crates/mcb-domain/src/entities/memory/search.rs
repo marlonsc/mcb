@@ -1,4 +1,8 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 use crate::entities::observation::{Observation, ObservationType};
 
@@ -14,11 +18,12 @@ pub struct MemorySearchResult {
 }
 
 /// Index entry for a memory observation used in search operations.
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MemorySearchIndex {
     /// Unique identifier for the index entry.
     pub id: String,
-    /// Type of observation (e.g., "code_snippet", "error", "decision").
+    /// Type of observation (e.g., "`code_snippet`", "error", "decision").
     #[serde(rename = "type", alias = "observation_type")]
     pub r#type: String,
     /// Relevance score for ranking search results.
@@ -38,6 +43,7 @@ pub struct MemorySearchIndex {
 }
 
 /// Filter criteria for querying memory observations.
+#[skip_serializing_none]
 #[derive(Clone, Default, Serialize, Deserialize)]
 pub struct MemoryFilter {
     /// Filter by specific observation identifier.
@@ -51,9 +57,11 @@ pub struct MemoryFilter {
     pub r#type: Option<ObservationType>,
     /// Filter by session identifier.
     pub session_id: Option<String>,
+    /// Filter by parent session identifier.
+    pub parent_session_id: Option<String>,
     /// Filter by repository identifier.
     pub repo_id: Option<String>,
-    /// Filter by time range (start_ms, end_ms).
+    /// Filter by time range (`start_ms`, `end_ms`).
     pub time_range: Option<(i64, i64)>,
     /// Filter by git branch name.
     pub branch: Option<String>,
@@ -66,12 +74,86 @@ impl std::fmt::Debug for MemoryFilter {
         f.debug_struct("MemoryFilter")
             .field("id", &self.id)
             .field("tags", &self.tags)
-            .field("observation_type", &self.r#type)
-            .field("session_id", &self.session_id.as_ref().map(|_| "REDACTED"))
+            .field(crate::schema::COL_OBSERVATION_TYPE, &self.r#type)
+            .field(
+                "session_id_present",
+                &if self.session_id.is_some() {
+                    "REDACTED"
+                } else {
+                    "NONE"
+                },
+            )
+            .field(
+                "parent_session_id_present",
+                &if self.parent_session_id.is_some() {
+                    "REDACTED"
+                } else {
+                    "NONE"
+                },
+            )
             .field("repo_id", &self.repo_id)
             .field("time_range", &self.time_range)
             .field("branch", &self.branch)
             .field("commit", &self.commit)
             .finish()
+    }
+}
+
+impl MemoryFilter {
+    /// Returns true when the observation satisfies all populated filter fields.
+    #[must_use]
+    pub fn matches(&self, obs: &Observation) -> bool {
+        let project_ok = self
+            .project_id
+            .as_ref()
+            .is_none_or(|id| obs.project_id == *id);
+
+        let session_ok = self
+            .session_id
+            .as_ref()
+            .is_none_or(|id| obs.metadata.session_id.as_ref() == Some(id));
+
+        let parent_session_ok = self.parent_session_id.as_ref().is_none_or(|id| {
+            obs.metadata
+                .origin_context
+                .as_ref()
+                .and_then(|ctx| ctx.parent_session_id.as_ref())
+                == Some(id)
+        });
+
+        let repo_ok = self
+            .repo_id
+            .as_ref()
+            .is_none_or(|id| obs.metadata.repo_id.as_ref() == Some(id));
+
+        let type_ok = self.r#type.as_ref().is_none_or(|t| &obs.r#type == t);
+
+        let time_ok = self
+            .time_range
+            .as_ref()
+            .is_none_or(|(start, end)| obs.created_at >= *start && obs.created_at <= *end);
+
+        let branch_ok = self
+            .branch
+            .as_ref()
+            .is_none_or(|b| obs.metadata.branch.as_ref() == Some(b));
+
+        let commit_ok = self
+            .commit
+            .as_ref()
+            .is_none_or(|c| obs.metadata.commit.as_ref() == Some(c));
+
+        [
+            project_ok,
+            session_ok,
+            parent_session_ok,
+            repo_ok,
+            type_ok,
+            time_ok,
+            branch_ok,
+            commit_ok,
+        ]
+        .into_iter()
+        .all(std::convert::identity)
     }
 }

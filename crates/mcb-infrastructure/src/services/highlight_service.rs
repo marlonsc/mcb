@@ -1,13 +1,22 @@
-//! Highlight Service - Agnóstico code highlighting using tree-sitter
 //!
-//! Provides trait-based interface for syntax highlighting across multiple languages.
-//! Uses tree-sitter for accurate, efficient parsing and highlighting.
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
 //!
-//! Designed for multiple renderers: Web (Phase 8a), TUI (Phase 9), etc.
+//! Highlight Service Use Case
+//!
+//! # Overview
+//! The `HighlightService` provides backend-agnostic syntax highlighting capabilities using
+//! Tree-sitter. It parses source code into an abstract syntax tree (AST) to identify
+//! tokens and apply semantic highlighting rules, independent of the final output format.
+//!
+//! # Responsibilities
+//! - **Multi-Language Support**: Parsing and highlighting code for supported languages (Rust, Python, JS, etc.).
+//! - **Tree-Sitter Integration**: Leveraging widely-used grammars for accurate syntax analysis.
+//! - **Abstract Representation**: Producing a generic `HighlightedCode` structure (spans + categories)
+//!   that can be rendered to HTML, ANSI, or other formats.
 
 use std::sync::Arc;
 
-use mcb_domain::ports::browse::{HighlightError, HighlightServiceInterface};
+use mcb_domain::ports::{HighlightError, HighlightServiceInterface};
 use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, HighlightedCode};
 use tree_sitter::Language;
 use tree_sitter_highlight::{Highlight, HighlightConfiguration, HighlightEvent, Highlighter};
@@ -32,6 +41,7 @@ impl HighlightLanguageConfig {
 }
 
 /// Maps tree-sitter highlight names to our category enum.
+#[must_use]
 pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
     match name {
         "keyword" => HighlightCategory::Keyword,
@@ -47,12 +57,17 @@ pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
     }
 }
 
-/// Concrete highlight service implementation using tree-sitter
+/// Concrete highlight service implementation using tree-sitter.
+///
+/// Manages a thread-safe `Highlighter` instance and specific language configurations
+/// to perform efficient, on-demand syntax highlighting.
 pub struct HighlightServiceImpl {
     highlighter: Arc<tokio::sync::Mutex<Highlighter>>,
 }
 
 impl HighlightServiceImpl {
+    /// Creates a syntax highlight service with an internal tree-sitter highlighter.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             highlighter: Arc::new(tokio::sync::Mutex::new(Highlighter::new())),
@@ -124,7 +139,7 @@ impl HighlightServiceImpl {
                 tree_sitter_swift::LANGUAGE.into(),
                 tree_sitter_swift::HIGHLIGHTS_QUERY,
             )),
-            _ => Err(HighlightError::UnsupportedLanguage(language.to_string())),
+            _ => Err(HighlightError::UnsupportedLanguage(language.to_owned())),
         }
     }
 
@@ -153,9 +168,9 @@ impl HighlightServiceImpl {
     ) -> Result<HighlightedCode, HighlightError> {
         if code.is_empty() {
             return Ok(HighlightedCode {
-                original: code.to_string(),
+                original: code.to_owned(),
                 spans: vec![],
-                language: language.to_string(),
+                language: language.to_owned(),
             });
         }
 
@@ -205,9 +220,9 @@ impl HighlightServiceImpl {
         }
 
         Ok(HighlightedCode {
-            original: code.to_string(),
+            original: code.to_owned(),
             spans,
-            language: language.to_string(),
+            language: language.to_owned(),
         })
     }
 }
@@ -221,8 +236,8 @@ impl Default for HighlightServiceImpl {
 #[async_trait::async_trait]
 impl HighlightServiceInterface for HighlightServiceImpl {
     async fn highlight(&self, code: &str, language: &str) -> mcb_domain::Result<HighlightedCode> {
-        let code = code.to_string();
-        let language = language.to_string();
+        let code = code.to_owned();
+        let language = language.to_owned();
         let highlighter = Arc::clone(&self.highlighter);
 
         let result = tokio::task::spawn_blocking(move || {
@@ -230,68 +245,8 @@ impl HighlightServiceInterface for HighlightServiceImpl {
             service.highlight_code_internal(&code, &language)
         })
         .await
-        .map_err(|e| HighlightError::HighlightingFailed(format!("Blocking task failed: {}", e)))?;
+        .map_err(|e| HighlightError::HighlightingFailed(format!("Blocking task failed: {e}")))?;
 
         result.map_err(mcb_domain::Error::from)
     }
-}
-
-/// Convert HighlightedCode to HTML with CSS classes
-pub fn convert_highlighted_code_to_html(highlighted: &HighlightedCode) -> String {
-    if highlighted.original.is_empty() {
-        return String::new();
-    }
-
-    let mut html = String::new();
-    let mut last_end = 0;
-
-    let mut sorted_spans = highlighted.spans.clone();
-    sorted_spans.sort_by_key(|s| s.start);
-
-    for span in sorted_spans {
-        if last_end < span.start {
-            let text = &highlighted.original[last_end..span.start];
-            html.push_str(&html_escape(text));
-        }
-
-        let class = category_to_css_class(span.category);
-        let text = &highlighted.original[span.start..span.end];
-        html.push_str(&format!(
-            "<span class=\"{}\">{}</span>",
-            class,
-            html_escape(text)
-        ));
-
-        last_end = span.end;
-    }
-
-    if last_end < highlighted.original.len() {
-        let text = &highlighted.original[last_end..];
-        html.push_str(&html_escape(text));
-    }
-
-    html
-}
-
-fn category_to_css_class(category: HighlightCategory) -> &'static str {
-    match category {
-        HighlightCategory::Keyword => "hl-keyword",
-        HighlightCategory::String => "hl-string",
-        HighlightCategory::Comment => "hl-comment",
-        HighlightCategory::Function => "hl-function",
-        HighlightCategory::Variable => "hl-variable",
-        HighlightCategory::Type => "hl-type",
-        HighlightCategory::Number => "hl-number",
-        HighlightCategory::Operator => "hl-operator",
-        HighlightCategory::Punctuation => "hl-punctuation",
-        HighlightCategory::Other => "hl-other",
-    }
-}
-
-fn html_escape(text: &str) -> String {
-    text.replace('&', "&amp;")
-        .replace('<', "&lt;")
-        .replace('>', "&gt;")
-        .replace('"', "&quot;")
-        .replace('\'', "&#39;")
 }

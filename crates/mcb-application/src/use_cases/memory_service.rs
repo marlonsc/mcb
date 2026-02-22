@@ -1,29 +1,59 @@
+//!
+//! **Documentation**: [docs/modules/application.md](../../../../docs/modules/application.md#use-cases)
+//!
 //! Memory Service Use Case
 //!
-//! Application service for observation storage and semantic memory search.
+//! # Overview
+//! The `MemoryService` implements a comprehensive system for storing, retrieving, and analyzing
+//! observations and long-term memory. It acts as the "brain" of the system, allowing agents
+//! to recall past context, decisions, and error patterns.
+//!
+//! # Responsibilities
+//! - **Hybrid Storage**: Persisting observations in both a relational DB (`SQLite`) for metadata/FTS
+//!   and a Vector Store for semantic similarity.
+//! - **Hybrid Search**: Combining keyword-based (FTS) and semantic (Vector) search results using
+//!   Reciprocal Rank Fusion (RRF) for high-quality recall.
+//! - **Timeline Management**: Retrieving observations in chronological order to reconstruct context.
+//! - **Pattern Recognition**: Storing and retrieving error patterns to avoid repeating mistakes.
+//! - **Session Summarization**: Compiling and storing high-level summaries of agent sessions.
+//!
+//! # Architecture
+//! Implements `MemoryServiceInterface` and coordinates:
+//! - `MemoryRepository`: For precise storage and FTS.
+//! - `VectorStoreProvider`: For fuzzy semantic search.
+//! - `EmbeddingProvider`: For generating vector representations of memory content.
 
 use std::collections::HashMap;
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
+use mcb_domain::constants::keys::{
+    METADATA_KEY_CONTENT, METADATA_KEY_SESSION_ID, METADATA_KEY_TAGS, METADATA_KEY_TYPE,
+};
+use mcb_domain::constants::search::{
+    HYBRID_SEARCH_MULTIPLIER, RRF_K, RRF_MAX_SCORE_STREAMS, RRF_NORMALIZED_MAX, RRF_SCORE_NUMERATOR,
+};
 use mcb_domain::entities::memory::{
     ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
-    ObservationMetadata, ObservationType, SessionSummary,
+    ObservationMetadata, ObservationType, OriginContext, SessionSummary,
 };
 use mcb_domain::error::Result;
-use mcb_domain::ports::providers::EmbeddingProvider;
-use mcb_domain::ports::providers::VectorStoreProvider;
-use mcb_domain::ports::repositories::MemoryRepository;
-use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::compute_content_hash;
-use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
-use uuid::Uuid;
-
-use crate::constants::{
-    HYBRID_SEARCH_MULTIPLIER, MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH, RRF_K,
+use mcb_domain::ports::{
+    CreateSessionSummaryInput, EmbeddingProvider, MemoryRepository, MemoryServiceInterface,
+    VectorStoreProvider,
 };
+use mcb_domain::utils::compute_content_hash;
+use mcb_domain::utils::id;
+use mcb_domain::utils::time as domain_time;
+use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
+use std::str::FromStr;
 
-/// Hybrid memory service: SQLite for metadata/FTS + VectorStore for RAG embeddings.
+use crate::constants::{MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH};
+
+/// Hybrid memory service combining relational metadata with semantic vector search.
+///
+/// Implements a sophisticated RAG (Retrieval-Augmented Generation) pipeline using
+/// Reciprocal Rank Fusion (RRF) to merge lexically precise matches (`SQLite` FTS)
+/// with semantically relevant results (Vector Store).
 pub struct MemoryServiceImpl {
     project_id: String,
     repository: Arc<dyn MemoryRepository>,
@@ -56,90 +86,6 @@ impl MemoryServiceImpl {
             vector_store,
         }
     }
-
-    /// Returns the current Unix timestamp in seconds.
-    ///
-    /// Used to record observation creation times and session summary timestamps.
-    /// Falls back to 0 if the system clock is unavailable (extremely rare).
-    ///
-    /// # Returns
-    ///
-    /// Current Unix timestamp as seconds since UNIX_EPOCH, or 0 if unavailable.
-    #[must_use]
-    pub fn current_timestamp() -> i64 {
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0)
-    }
-
-    fn matches_filter(obs: &Observation, filter: &MemoryFilter) -> bool {
-        if !Self::check_project(obs, filter) {
-            return false;
-        }
-        if !Self::check_session(obs, filter) {
-            return false;
-        }
-        if !Self::check_repo(obs, filter) {
-            return false;
-        }
-        if !Self::check_type(obs, filter) {
-            return false;
-        }
-        if !Self::check_time(obs, filter) {
-            return false;
-        }
-        if !Self::check_branch(obs, filter) {
-            return false;
-        }
-        Self::check_commit(obs, filter)
-    }
-
-    fn check_project(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .project_id
-            .as_ref()
-            .is_none_or(|id| obs.project_id == *id)
-    }
-
-    fn check_session(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .session_id
-            .as_ref()
-            .is_none_or(|id| obs.metadata.session_id.as_ref() == Some(id))
-    }
-
-    fn check_repo(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .repo_id
-            .as_ref()
-            .is_none_or(|id| obs.metadata.repo_id.as_ref() == Some(id))
-    }
-
-    fn check_type(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter.r#type.as_ref().is_none_or(|t| &obs.r#type == t)
-    }
-
-    fn check_time(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .time_range
-            .as_ref()
-            .is_none_or(|(start, end)| obs.created_at >= *start && obs.created_at <= *end)
-    }
-
-    fn check_branch(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .branch
-            .as_ref()
-            .is_none_or(|b| obs.metadata.branch.as_ref() == Some(b))
-    }
-
-    fn check_commit(obs: &Observation, filter: &MemoryFilter) -> bool {
-        filter
-            .commit
-            .as_ref()
-            .is_none_or(|c| obs.metadata.commit.as_ref() == Some(c))
-    }
 }
 
 impl MemoryServiceImpl {
@@ -167,27 +113,30 @@ impl MemoryServiceImpl {
 
         let mut vector_metadata = HashMap::new();
         vector_metadata.insert(
-            "content".to_string(),
+            METADATA_KEY_CONTENT.to_owned(),
             serde_json::Value::String(content.clone()),
         );
         vector_metadata.insert(
-            "type".to_string(),
-            serde_json::Value::String(r#type.as_str().to_string()),
+            METADATA_KEY_TYPE.to_owned(),
+            serde_json::Value::String(r#type.as_str().to_owned()),
         );
-        vector_metadata.insert("tags".to_string(), serde_json::json!(tags));
+        vector_metadata.insert(METADATA_KEY_TAGS.to_owned(), serde_json::json!(tags));
         vector_metadata.insert(
-            "project_id".to_string(),
+            "project_id".to_owned(),
             serde_json::Value::String(project_id.clone()),
         );
 
         if let Some(session_id) = &metadata.session_id {
             vector_metadata.insert(
-                "session_id".to_string(),
+                METADATA_KEY_SESSION_ID.to_owned(),
                 serde_json::Value::String(session_id.clone()),
             );
         }
 
-        let collection_id = CollectionId::new(crate::constants::MEMORY_COLLECTION_NAME);
+        let collection_id = CollectionId::from_uuid(id::deterministic(
+            "collection",
+            crate::constants::MEMORY_COLLECTION_NAME,
+        ));
         let ids = self
             .vector_store
             .insert_vectors(&collection_id, &[embedding], vec![vector_metadata])
@@ -196,14 +145,14 @@ impl MemoryServiceImpl {
         let embedding_id = ids.first().cloned();
 
         let observation = Observation {
-            id: Uuid::new_v4().to_string(),
+            id: id::generate().to_string(),
             project_id,
             content,
             content_hash,
             tags,
             r#type,
             metadata,
-            created_at: Self::current_timestamp(),
+            created_at: domain_time::epoch_secs_i64()?,
             embedding_id,
         };
 
@@ -223,7 +172,8 @@ impl MemoryServiceImpl {
         let candidate_limit = limit * HYBRID_SEARCH_MULTIPLIER;
 
         let query_embedding = self.embedding_provider.embed(query).await?;
-        let collection_id = CollectionId::new(MEMORY_COLLECTION_NAME);
+        let collection_id =
+            CollectionId::from_uuid(id::deterministic("collection", MEMORY_COLLECTION_NAME));
 
         let (fts_result, vector_result) = tokio::join!(
             self.repository.search(query, candidate_limit),
@@ -235,12 +185,22 @@ impl MemoryServiceImpl {
             ),
         );
         let fts_results = fts_result?;
-        let vector_results = vector_result.unwrap_or_default();
+        let vector_results = match vector_result {
+            Ok(results) => results,
+            Err(e) => {
+                mcb_domain::warn!(
+                    "memory",
+                    "Vector search failed — falling back to FTS-only results"
+                );
+                let _ = e;
+                Vec::new()
+            }
+        };
 
         let mut rrf_scores: HashMap<String, f32> = HashMap::new();
 
         for (rank, fts_result) in fts_results.iter().enumerate() {
-            let score = 1.0 / (RRF_K + rank as f32 + 1.0);
+            let score = RRF_SCORE_NUMERATOR / (RRF_K + rank as f32 + 1.0);
             let key = fts_result.id.clone();
             *rrf_scores.entry(key).or_default() += score;
         }
@@ -248,7 +208,7 @@ impl MemoryServiceImpl {
         for (rank, vec_result) in vector_results.iter().enumerate() {
             let content_hash = compute_content_hash(&vec_result.content);
             if let Ok(Some(obs)) = self.repository.find_by_hash(&content_hash).await {
-                let score = 1.0 / (RRF_K + rank as f32 + 1.0);
+                let score = RRF_SCORE_NUMERATOR / (RRF_K + rank as f32 + 1.0);
                 let key = obs.id.clone();
                 *rrf_scores.entry(key).or_default() += score;
             }
@@ -269,7 +229,7 @@ impl MemoryServiceImpl {
     ) -> Result<Vec<MemorySearchResult>> {
         let top_ids: Vec<ObservationId> = ranked
             .iter()
-            .map(|(id, _)| ObservationId::new(id))
+            .filter_map(|(id, _)| ObservationId::from_str(id).ok())
             .collect();
         let observations = self.repository.get_observations_by_ids(&top_ids).await?;
 
@@ -281,11 +241,11 @@ impl MemoryServiceImpl {
         let mut results = Vec::new();
         for (id, rrf_score) in ranked {
             if let Some(obs) = obs_map.get(&id) {
-                if !Self::matches_filter(obs, filter) {
+                if !filter.matches(obs) {
                     continue;
                 }
-                let max_possible_rrf = 2.0 / (RRF_K + 1.0);
-                let normalized_score = (rrf_score / max_possible_rrf).min(1.0);
+                let max_possible_rrf = RRF_MAX_SCORE_STREAMS / (RRF_K + 1.0);
+                let normalized_score = (rrf_score / max_possible_rrf).min(RRF_NORMALIZED_MAX);
                 results.push(MemorySearchResult {
                     id: id.clone(),
                     observation: obs.clone(),
@@ -299,7 +259,7 @@ impl MemoryServiceImpl {
 }
 
 impl MemoryServiceImpl {
-    fn build_memory_index(&self, results: Vec<MemorySearchResult>) -> Vec<MemorySearchIndex> {
+    fn build_memory_index(results: Vec<MemorySearchResult>) -> Vec<MemorySearchIndex> {
         results
             .into_iter()
             .map(|r| {
@@ -314,7 +274,7 @@ impl MemoryServiceImpl {
 
                 MemorySearchIndex {
                     id: r.observation.id,
-                    r#type: r.observation.r#type.as_str().to_string(),
+                    r#type: r.observation.r#type.as_str().to_owned(),
                     relevance_score: r.similarity_score,
                     tags: r.observation.tags,
                     content_preview,
@@ -329,21 +289,34 @@ impl MemoryServiceImpl {
 
     async fn create_session_summary_impl(
         &self,
-        session_id: SessionId,
-        topics: Vec<String>,
-        decisions: Vec<String>,
-        next_steps: Vec<String>,
-        key_files: Vec<String>,
+        input: CreateSessionSummaryInput,
     ) -> Result<String> {
+        let session_id = input.session_id.to_string();
+        let timestamp = domain_time::epoch_secs_i64()?;
+        let project_id = if input.project_id.trim().is_empty() {
+            self.project_id.clone()
+        } else {
+            input.project_id
+        };
         let summary = SessionSummary {
-            id: Uuid::new_v4().to_string(),
-            project_id: self.project_id.clone(),
-            session_id: session_id.into_string(),
-            topics,
-            decisions,
-            next_steps,
-            key_files,
-            created_at: Self::current_timestamp(),
+            id: id::generate().to_string(),
+            project_id: project_id.clone(),
+            org_id: input.org_id,
+            session_id: session_id.clone(),
+            topics: input.topics,
+            decisions: input.decisions,
+            next_steps: input.next_steps,
+            key_files: input.key_files,
+            origin_context: Some(
+                input.origin_context.unwrap_or(
+                    OriginContext::builder()
+                        .project_id(Some(project_id))
+                        .session_id(Some(session_id))
+                        .timestamp(Some(timestamp))
+                        .build(),
+                ),
+            ),
+            created_at: timestamp,
         };
 
         self.repository.store_session_summary(&summary).await?;
@@ -380,12 +353,15 @@ impl MemoryServiceImpl {
         limit: usize,
     ) -> Result<Vec<MemorySearchIndex>> {
         let results = self.search_memories_impl(query, filter, limit).await?;
-        Ok(self.build_memory_index(results))
+        Ok(Self::build_memory_index(results))
     }
 }
 
 #[async_trait::async_trait]
 impl MemoryServiceInterface for MemoryServiceImpl {
+    /// # Errors
+    ///
+    /// Returns an error if embedding generation, vector storage, or repository persistence fails.
     async fn store_observation(
         &self,
         project_id: String,
@@ -397,15 +373,20 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         let (id, new) = self
             .store_observation_impl(project_id, content, r#type, tags, metadata)
             .await?;
-        Ok((ObservationId::new(id), new))
+        let obs_id = ObservationId::from_str(&id)
+            .map_err(|e| mcb_domain::error::Error::invalid_argument(e.to_string()))?;
+        Ok((obs_id, new))
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if serialization or observation storage fails.
     async fn store_error_pattern(&self, pattern: ErrorPattern) -> Result<String> {
         let content = serde_json::to_string(&pattern)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
 
         let metadata = ObservationMetadata {
-            id: Uuid::new_v4().to_string(),
+            id: id::generate().to_string(),
             ..Default::default()
         };
 
@@ -419,9 +400,12 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             )
             .await?;
 
-        Ok(id.into_string())
+        Ok(id.to_string())
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the memory search fails.
     async fn search_error_patterns(
         &self,
         query: &str,
@@ -445,6 +429,9 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         Ok(patterns)
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the hybrid search (FTS or vector) fails.
     async fn search_memories(
         &self,
         query: &str,
@@ -454,30 +441,37 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         self.search_memories_impl(query, filter, limit).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
     async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
         self.repository.get_session_summary(session_id).await
     }
 
-    async fn create_session_summary(
-        &self,
-        session_id: SessionId,
-        topics: Vec<String>,
-        decisions: Vec<String>,
-        next_steps: Vec<String>,
-        key_files: Vec<String>,
-    ) -> Result<String> {
-        self.create_session_summary_impl(session_id, topics, decisions, next_steps, key_files)
-            .await
+    /// # Errors
+    ///
+    /// Returns an error if the repository fails to persist the summary.
+    async fn create_session_summary(&self, input: CreateSessionSummaryInput) -> Result<String> {
+        self.create_session_summary_impl(input).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
         self.repository.get_observation(id).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the embedding provider fails.
     async fn embed_content(&self, content: &str) -> Result<Embedding> {
         self.embed_content_impl(content).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository timeline query fails.
     async fn get_timeline(
         &self,
         anchor_id: &ObservationId,
@@ -489,10 +483,16 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             .await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
     async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
         self.get_observations_by_ids_impl(ids).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the hybrid search fails.
     async fn memory_search(
         &self,
         query: &str,
@@ -502,6 +502,9 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         self.memory_search_impl(query, filter, limit).await
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository fails to delete the observation.
     async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
         self.repository.delete_observation(id).await
     }

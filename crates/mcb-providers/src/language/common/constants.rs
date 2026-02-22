@@ -1,6 +1,14 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! Constants for code chunking operations
 //!
 //! Language-specific chunk sizes and node extraction rule defaults.
+
+use mcb_domain::constants::lang::{
+    LANG_C, LANG_CPP, LANG_CSHARP, LANG_GO, LANG_JAVA, LANG_JAVASCRIPT, LANG_KOTLIN, LANG_PHP,
+    LANG_PYTHON, LANG_RUBY, LANG_RUST, LANG_SWIFT, LANG_TYPESCRIPT,
+};
 
 // ============================================================================
 // Default Chunk Size
@@ -69,72 +77,9 @@ pub const NODE_EXTRACTION_MAX_DEPTH: usize = 3;
 pub const NODE_EXTRACTION_DEFAULT_PRIORITY: i32 = 5;
 
 // ============================================================================
-// Language Identifiers (String constants for extensibility)
+// Tree-Sitter Node Types -- re-exported from mcb-domain (Single Source of Truth)
 // ============================================================================
-
-/// Rust language identifier
-pub const LANG_RUST: &str = "rust";
-
-/// Python language identifier
-pub const LANG_PYTHON: &str = "python";
-
-/// JavaScript language identifier
-pub const LANG_JAVASCRIPT: &str = "javascript";
-
-/// TypeScript language identifier
-pub const LANG_TYPESCRIPT: &str = "typescript";
-
-/// Go language identifier
-pub const LANG_GO: &str = "go";
-
-/// Java language identifier
-pub const LANG_JAVA: &str = "java";
-
-/// C language identifier
-pub const LANG_C: &str = "c";
-
-/// C++ language identifier
-pub const LANG_CPP: &str = "cpp";
-
-/// C# language identifier
-pub const LANG_CSHARP: &str = "csharp";
-
-/// Ruby language identifier
-pub const LANG_RUBY: &str = "ruby";
-
-/// PHP language identifier
-pub const LANG_PHP: &str = "php";
-
-/// Swift language identifier
-pub const LANG_SWIFT: &str = "swift";
-
-/// Kotlin language identifier
-pub const LANG_KOTLIN: &str = "kotlin";
-
-/// Unknown/unsupported language identifier
-pub const LANG_UNKNOWN: &str = "unknown";
-
-// ============================================================================
-// Tree-Sitter Node Types
-// ============================================================================
-
-/// Function declaration node type (for C-like languages)
-pub const TS_NODE_FUNCTION_DECLARATION: &str = "function_declaration";
-
-/// Function definition node type (for Python, etc.)
-pub const TS_NODE_FUNCTION_DEFINITION: &str = "function_definition";
-
-/// Method declaration node type (for OOP languages)
-pub const TS_NODE_METHOD_DECLARATION: &str = "method_declaration";
-
-/// Class declaration node type
-pub const TS_NODE_CLASS_DECLARATION: &str = "class_declaration";
-
-/// Interface declaration node type
-pub const AST_NODE_INTERFACE_DECLARATION: &str = "interface_declaration";
-
-/// Struct specifier node type (C/C++)
-pub const AST_NODE_STRUCT_SPECIFIER: &str = "struct_specifier";
+pub use mcb_domain::constants::ast::*;
 
 // ============================================================================
 // Extension and chunk size mapping tables

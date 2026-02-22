@@ -1,6 +1,5 @@
-pub const HYBRID_SEARCH_BM25_K1: f64 = 1.2;
-pub const HYBRID_SEARCH_BM25_B: f64 = 0.75;
-pub const BM25_TOKEN_MIN_LENGTH: usize = 2;
-pub const HYBRID_SEARCH_BM25_WEIGHT: f64 = 0.4;
-pub const HYBRID_SEARCH_SEMANTIC_WEIGHT: f64 = 0.6;
-pub const HYBRID_SEARCH_MAX_CANDIDATES: usize = 100;
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
+//! Search constants -- re-exported from mcb-domain (Single Source of Truth)
+pub use mcb_domain::constants::search::*;

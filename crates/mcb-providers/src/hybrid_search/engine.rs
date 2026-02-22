@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Hybrid search engine combining BM25 and semantic search
 //!
 //! This module provides the core engine that combines BM25 text-based ranking
@@ -28,13 +31,13 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
-use mcb_domain::ports::providers::HybridSearchProvider;
+use mcb_domain::constants::search::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
+use mcb_domain::ports::HybridSearchProvider;
 use mcb_domain::{entities::CodeChunk, error::Result, value_objects::SearchResult};
 use serde_json::Value;
 use tokio::sync::RwLock;
 
 use super::bm25::{BM25Params, BM25Scorer};
-use crate::constants::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
 
 /// Hybrid search engine combining BM25 and semantic search
 ///
@@ -42,10 +45,10 @@ use crate::constants::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT}
 /// BM25 scores with semantic similarity scores provided by a vector store.
 pub struct HybridSearchEngine {
     /// Weight for BM25 score in hybrid combination (0.0-1.0)
-    bm25_weight: f32,
+    bm25_weight: f64,
     /// Weight for semantic score in hybrid combination (0.0-1.0)
-    semantic_weight: f32,
-    /// Collection indexes: collection_name -> (documents, scorer, document_index)
+    semantic_weight: f64,
+    /// Collection indexes: `collection_name` -> (documents, scorer, `document_index`)
     collections: RwLock<HashMap<String, CollectionIndex>>,
 }
 
@@ -55,12 +58,13 @@ struct CollectionIndex {
     documents: Vec<CodeChunk>,
     /// BM25 scorer for this collection
     scorer: BM25Scorer,
-    /// Document index mapping (file_path:start_line -> document index)
+    /// Document index mapping (`file_path:start_line` -> document index)
     document_index: HashMap<String, usize>,
 }
 
 impl HybridSearchEngine {
     /// Create a new hybrid search engine with default weights
+    #[must_use]
     pub fn new() -> Self {
         Self::with_weights(HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT)
     }
@@ -76,7 +80,8 @@ impl HybridSearchEngine {
     ///
     /// Weights do not need to sum to 1.0, but the resulting scores will be
     /// more interpretable if they do.
-    pub fn with_weights(bm25_weight: f32, semantic_weight: f32) -> Self {
+    #[must_use]
+    pub fn with_weights(bm25_weight: f64, semantic_weight: f64) -> Self {
         Self {
             bm25_weight,
             semantic_weight,
@@ -85,17 +90,17 @@ impl HybridSearchEngine {
     }
 
     /// Get BM25 weight
-    pub fn bm25_weight(&self) -> f32 {
+    pub fn bm25_weight(&self) -> f64 {
         self.bm25_weight
     }
 
     /// Get semantic weight
-    pub fn semantic_weight(&self) -> f32 {
+    pub fn semantic_weight(&self) -> f64 {
         self.semantic_weight
     }
 
     /// Normalize BM25 score to 0-1 range using sigmoid
-    fn normalize_bm25_score(score: f32) -> f32 {
+    fn normalize_bm25_score(score: f64) -> f64 {
         if score > 0.0 {
             1.0 / (1.0 + (-score).exp())
         } else {
@@ -143,7 +148,7 @@ impl HybridSearchProvider for HybridSearchEngine {
         let scorer = BM25Scorer::new(&documents, BM25Params::default());
 
         collections.insert(
-            collection.to_string(),
+            collection.to_owned(),
             CollectionIndex {
                 documents,
                 scorer,
@@ -176,11 +181,11 @@ impl HybridSearchProvider for HybridSearchEngine {
         let query_terms = BM25Scorer::tokenize(query);
 
         // Calculate hybrid scores for semantic results
-        let mut scored_results: Vec<(SearchResult, f32)> = semantic_results
+        let mut scored_results: Vec<(SearchResult, f64)> = semantic_results
             .into_iter()
             .map(|result| {
                 let doc_key = format!("{}:{}", result.file_path, result.start_line);
-                let semantic_score = result.score as f32;
+                let semantic_score = result.score;
 
                 // Look up document in index for BM25 scoring
                 let hybrid_score = if let Some(&doc_idx) = index.document_index.get(&doc_key) {
@@ -207,7 +212,7 @@ impl HybridSearchProvider for HybridSearchEngine {
             .into_iter()
             .take(limit)
             .map(|(mut result, hybrid_score)| {
-                result.score = hybrid_score as f64;
+                result.score = hybrid_score;
                 result
             })
             .collect())
@@ -228,15 +233,15 @@ impl HybridSearchProvider for HybridSearchEngine {
 
         // Global stats
         stats.insert(
-            "bm25_weight".to_string(),
+            "bm25_weight".to_owned(),
             serde_json::json!(self.bm25_weight),
         );
         stats.insert(
-            "semantic_weight".to_string(),
+            "semantic_weight".to_owned(),
             serde_json::json!(self.semantic_weight),
         );
         stats.insert(
-            "collection_count".to_string(),
+            "collection_count".to_owned(),
             serde_json::json!(collections.len()),
         );
 
@@ -255,7 +260,7 @@ impl HybridSearchProvider for HybridSearchEngine {
             );
         }
         stats.insert(
-            "collections".to_string(),
+            "collections".to_owned(),
             serde_json::json!(collection_stats),
         );
 

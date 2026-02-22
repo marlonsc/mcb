@@ -2,7 +2,7 @@
 # Technical Patterns Reference
 
 **Last updated:** 2026-02-12
-**Source:** Codebase analysis across 9 crates (v0.2.1)
+**Source:** Codebase analysis across 7 crates (v0.2.1)
 
 This document captures the recurring implementation patterns used throughout MCB. For the full architecture overview, see [ARCHITECTURE.md](./ARCHITECTURE.md). For boundary rules, see [ARCHITECTURE_BOUNDARIES.md](./ARCHITECTURE_BOUNDARIES.md).
 
@@ -16,23 +16,23 @@ Providers (`mcb-providers`) implement domain ports — never depend upstream.
 ```text
 mcb-domain         → Entities, ports (traits), errors, value objects, macros, registry
 mcb-application    → Use cases, decorators, services (orchestration)
-mcb-infrastructure → DI (dill+Handle), config, crypto, logging, health, routing
+mcb-infrastructure → DI (linkme+Handle), config, crypto, logging, health, routing
 mcb-providers      → Embedding, vector store, cache, database, git, language, events
 mcb-server         → MCP handlers, admin UI (Handlebars), transport (stdio/HTTP), hooks
 mcb-validate       → Architecture rules, AST analysis, linters, metrics
 ```
 
-## Three-Layer DI: linkme → dill → Handle
+## Two-Layer DI: linkme → Handle (ADR-050)
 
-MCB uses a three-layer dependency injection pattern that combines compile-time discovery with runtime flexibility:
+MCB uses a two-layer dependency injection pattern that combines compile-time discovery with runtime flexibility:
 
 1. **linkme** — Compile-time discovery via `#[distributed_slice]`. Each provider registers itself at compile time, so the runtime can discover all available implementations without manual wiring.
 
-2. **dill** — Runtime IoC `Catalog` wiring (`mcb-infrastructure/src/di/catalog.rs`). The catalog assembles the full dependency graph at startup, resolving traits to concrete implementations based on configuration.
+2. **Handle\<T\>** — `RwLock<Arc<dyn T>>` for runtime provider switching (`di/handle.rs`). Handles allow hot-swapping provider implementations without restarting the server — useful for failover and configuration changes.
 
-3. **Handle\<T\>** — `RwLock<Arc<dyn T>>` for runtime provider switching (`di/handle.rs`). Handles allow hot-swapping provider implementations without restarting the server — useful for failover and configuration changes.
+Services are wired in `init_app()` (`bootstrap.rs`), which queries linkme registries via resolvers, resolves providers from config, and assembles the `AppContext` with explicit field assignment.
 
-**Why three layers?** linkme discovers *what's available*, dill wires *what's active*, and Handle enables *runtime switching*. This separation means adding a new provider requires only a `#[distributed_slice]` annotation — zero changes to wiring code.
+**Why two layers?** linkme discovers *what's available*, and Handle enables *runtime switching*. Adding a new provider requires only a `#[distributed_slice]` annotation — zero changes to wiring code.
 
 ## Provider Registration
 
@@ -124,11 +124,34 @@ MCP__INFRASTRUCTURE__CACHE__PROVIDER=moka
 
 MCB uses a layered testing approach:
 
-- **Mocks**: `Arc<Mutex<Vec<T>>>` state tracking in `test_utils/mock_services/`. Mocks record all calls for assertion. Used when you need to verify interaction patterns.
+- **Mocks**: `Arc<Mutex<Vec<T>>>` state tracking in `utils/mock_services/`. Mocks record all calls for assertion. Used when you need to verify interaction patterns.
 - **Real providers**: `extern crate mcb_providers` forces linkme registration in integration tests. This ensures the full provider discovery chain works end-to-end.
-- **Fixtures**: Shared data in `test_utils` modules per crate. Fixtures provide consistent test data across unit and integration tests.
+- **Fixtures**: Shared data in `utils` modules per crate. Fixtures provide consistent test data across unit and integration tests.
 - **Test layout**: Integration tests in `tests/` directory (not inline `#[cfg(test)]`). Test files follow `tests/unit/*_tests.rs`, `tests/integration/*_tests.rs` pattern.
 - **Tools**: `rstest` (parameterized), `mockall` (auto-mocks), `insta` (snapshots), `tempfile` (temp dirs)
+
+## v0.2.1 No-Feature Standardization Contract
+
+This cycle is architecture optimization only.
+
+### Allowed Changes
+
+- Deduplicate declarations and remove redundant conversions.
+- Normalize API naming (`id` is identifier; do not overload `name` as ID).
+- Tighten validation and fail early.
+
+### Disallowed Changes
+
+- New features (endpoints/commands/providers/config surface).
+- Compatibility shims and dual-path behavior.
+
+### Banned Patterns (fast-fail)
+
+- Raw `String`/`Uuid` as domain IDs where strong ID types exist.
+- Port traits declared outside `mcb-domain/src/ports/**`.
+- DTO-to-domain `From`/`Into` mapping inside domain modules.
+- API responses forwarding internal `.to_string()` errors directly.
+- Legacy alias modules kept only for backward compatibility.
 
 ## Key Patterns Summary
 
@@ -136,7 +159,7 @@ MCB uses a layered testing approach:
 | --------- | ------------- | ------------- |
 | Clean Architecture | `*/lib.rs` | All new features |
 | linkme registration | `mcb-domain/src/registry/` | New provider types |
-| Three-layer DI | `mcb-infrastructure/src/di/` | Service wiring |
+| Two-layer DI (linkme+Handle) | `mcb-infrastructure/src/di/` | Service wiring |
 | Error factories | `mcb-domain/src/error/mod.rs` | All error handling |
 | Handle\<T\> | `di/handle.rs` | Runtime-switchable providers |
 | define_id! | `value_objects/ids.rs` | New domain IDs |

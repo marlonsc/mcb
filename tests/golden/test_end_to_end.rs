@@ -1,6 +1,6 @@
 //! Included by mcb-server test binary; contract: docs/testing/GOLDEN_TESTS_CONTRACT.md.
 
-use crate::test_utils::test_fixtures::{
+use crate::utils::test_fixtures::{
     GOLDEN_COLLECTION, create_test_mcp_server, golden_content_to_string, sample_codebase_path,
 };
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};

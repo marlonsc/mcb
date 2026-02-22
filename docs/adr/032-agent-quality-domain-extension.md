@@ -19,7 +19,7 @@ implementation_status: Incomplete
 **Date:** 2026-02-03
 **Deciders:** Architecture Team
 **Supersedes:** None
-**Related:** ADR-009 (Memory), ADR-013 (Clean Architecture), ADR-029 (Hexagonal/dill)
+**Related:** ADR-009 (Memory), ADR-013 (Clean Architecture), ADR-029 (Hexagonal, superseded by ADR-050)
 
 ## Context
 
@@ -197,5 +197,5 @@ Rejected because:
 
 - [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
 - [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md)
+- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) (superseded by ADR-050)
 - [Planning Documents](../plans/archive/LEGACY_PLANNING_PROJECT.md)

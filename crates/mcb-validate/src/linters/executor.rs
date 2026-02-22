@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! YAML Rule Executor Module
 //!
 //! Executes YAML rules that use `lint_select` for linter-based validation.
@@ -5,6 +8,7 @@
 
 use std::path::{Path, PathBuf};
 
+use super::constants::CLIPPY_PREFIX;
 use super::engine::LinterEngine;
 use super::types::{LintViolation, LinterType};
 use crate::Result;
@@ -24,6 +28,9 @@ impl YamlRuleExecutor {
     ///
     /// # Returns
     /// Violations that match the rule's `lint_select` codes
+    /// # Errors
+    ///
+    /// Returns an error if the linter execution fails.
     pub async fn execute_rule(rule: &ValidatedRule, files: &[&Path]) -> Result<Vec<LintViolation>> {
         // Skip if no lint_select codes
         if rule.lint_select.is_empty() {
@@ -64,6 +71,10 @@ impl YamlRuleExecutor {
     }
 
     /// Execute a rule against a directory (scans for appropriate files)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if file collection or linter execution fails.
     pub async fn execute_rule_on_dir(
         rule: &ValidatedRule,
         dir: &Path,
@@ -71,19 +82,7 @@ impl YamlRuleExecutor {
         // Collect files based on linter type
         let linters = Self::detect_linters_from_codes(&rule.lint_select);
         let mut files: Vec<PathBuf> = Vec::new();
-
-        for entry in walkdir::WalkDir::new(dir)
-            .follow_links(false)
-            .into_iter()
-            .filter_map(std::result::Result::ok)
-            .filter(|e| e.file_type().is_file())
-        {
-            let path = entry.path();
-            let ext = path.extension().and_then(std::ffi::OsStr::to_str);
-            if linters.iter().any(|lt| lt.matches_extension(ext)) {
-                files.push(path.to_path_buf());
-            }
-        }
+        collect_matching_files(dir, &linters, &mut files)?;
 
         let file_refs: Vec<&Path> = files.iter().map(|p: &PathBuf| p.as_path()).collect();
         Self::execute_rule(rule, &file_refs).await
@@ -94,7 +93,7 @@ impl YamlRuleExecutor {
         let mut linters = Vec::new();
 
         for code in codes {
-            if code.starts_with("clippy::") {
+            if code.starts_with(CLIPPY_PREFIX) {
                 if !linters.contains(&LinterType::Clippy) {
                     linters.push(LinterType::Clippy);
                 }
@@ -108,4 +107,32 @@ impl YamlRuleExecutor {
 
         linters
     }
+}
+
+fn collect_matching_files(
+    dir: &Path,
+    linters: &[LinterType],
+    files: &mut Vec<PathBuf>,
+) -> Result<()> {
+    if !dir.exists() {
+        return Ok(());
+    }
+
+    for entry in std::fs::read_dir(dir).map_err(crate::ValidationError::Io)? {
+        let entry = entry.map_err(crate::ValidationError::Io)?;
+        let path = entry.path();
+        if path.is_dir() {
+            collect_matching_files(&path, linters, files)?;
+            continue;
+        }
+
+        if path.is_file() {
+            let ext = path.extension().and_then(std::ffi::OsStr::to_str);
+            if linters.iter().any(|lt| lt.matches_extension(ext)) {
+                files.push(path);
+            }
+        }
+    }
+
+    Ok(())
 }

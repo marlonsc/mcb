@@ -13,12 +13,13 @@ use mcb_validate::engines::{
     RuleEngineRouter, RuleEngineType,
 };
 use mcb_validate::{ValidationConfig, Violation};
+use rstest::*;
 use serde_json::json;
 
 /// Get the workspace root for tests (the actual project root)
 fn get_workspace_root() -> PathBuf {
     // Use CARGO_MANIFEST_DIR to find crate root, then go up to workspace root
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_string());
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_owned());
     PathBuf::from(manifest_dir)
         .parent() // crates/
         .and_then(|p| p.parent()) // workspace root
@@ -33,35 +34,35 @@ fn create_test_context() -> RuleContext {
 
     let mut file_contents = HashMap::new();
     file_contents.insert(
-        "src/main.rs".to_string(),
+        "src/main.rs".to_owned(),
         r#"
 fn main() {
     let x = get_value().unwrap(); // Violation
     println!("{}", x);
 }
 "#
-        .to_string(),
+        .to_owned(),
     );
     file_contents.insert(
-        "src/lib.rs".to_string(),
-        r"
+        "src/lib.rs".to_owned(),
+        "
 pub async fn process() -> Result<(), Error> {
     let data = fetch_data().await?;
     Ok(())
 }
 "
-        .to_string(),
+        .to_owned(),
     );
     file_contents.insert(
-        "tests/test_main.rs".to_string(),
-        r"
+        "tests/test_main.rs".to_owned(),
+        "
 #[test]
 fn test_main() {
     let x = get_value().unwrap(); // OK in tests
     assert!(x >= 0); // Basic assertion to ensure test has validation
 }
 "
-        .to_string(),
+        .to_owned(),
     );
 
     RuleContext {
@@ -81,6 +82,7 @@ fn test_main() {
 
 mod expression_engine_tests {
     use super::*;
+    use rstest::rstest;
 
     #[test]
     fn test_expression_engine_creation() {
@@ -89,56 +91,30 @@ mod expression_engine_tests {
         drop(engine);
     }
 
-    #[test]
-    fn test_simple_numeric_expression() {
+    #[rstest]
+    #[case("file_count == 3", true, "Should have 3 files")]
+    #[case("has_unwrap == true", true, "Should detect unwrap in files")]
+    #[case("has_async == true", true, "Should detect async fn in files")]
+    #[case("has_tests == true", true, "Should detect tests directory")]
+    fn expression_evaluation(
+        #[case] expression: &str,
+        #[case] expected: bool,
+        #[case] message: &str,
+    ) {
         let engine = ExpressionEngine::new();
         let context = create_test_context();
 
-        // file_count should be 3 (src/main.rs, src/lib.rs, tests/test_main.rs)
-        let result = engine.evaluate_expression("file_count == 3", &context);
+        let result = engine.evaluate_expression(expression, &context);
         assert!(result.is_ok());
-        assert!(result.unwrap(), "Should have 3 files");
-    }
-
-    #[test]
-    fn test_boolean_expression() {
-        let engine = ExpressionEngine::new();
-        let context = create_test_context();
-
-        // Check for unwrap pattern
-        let result = engine.evaluate_expression("has_unwrap == true", &context);
-        assert!(result.is_ok());
-        assert!(result.unwrap(), "Should detect unwrap in files");
-    }
-
-    #[test]
-    fn test_async_detection() {
-        let engine = ExpressionEngine::new();
-        let context = create_test_context();
-
-        // Check for async fn
-        let result = engine.evaluate_expression("has_async == true", &context);
-        assert!(result.is_ok());
-        assert!(result.unwrap(), "Should detect async fn in files");
-    }
-
-    #[test]
-    fn test_test_detection() {
-        let engine = ExpressionEngine::new();
-        let context = create_test_context();
-
-        // Check for tests directory
-        let result = engine.evaluate_expression("has_tests == true", &context);
-        assert!(result.is_ok());
-        assert!(result.unwrap(), "Should detect tests directory");
+        assert_eq!(result.unwrap(), expected, "{message}");
     }
 
     #[test]
     fn test_custom_variables() {
         let engine = ExpressionEngine::new();
         let mut vars = HashMap::new();
-        vars.insert("threshold".to_string(), json!(100));
-        vars.insert("count".to_string(), json!(50));
+        vars.insert("threshold".to_owned(), json!(100));
+        vars.insert("count".to_owned(), json!(50));
 
         let result = engine.evaluate_with_variables("count < threshold", &vars);
         assert!(result.is_ok());
@@ -251,6 +227,17 @@ rule "DomainIndependence" salience 10 {
 
 mod router_tests {
     use super::*;
+    use rstest::rstest;
+
+    #[fixture]
+    fn router() -> RuleEngineRouter {
+        RuleEngineRouter::new()
+    }
+
+    #[fixture]
+    fn context() -> RuleContext {
+        create_test_context()
+    }
 
     #[test]
     fn test_router_creation() {
@@ -259,23 +246,16 @@ mod router_tests {
         drop(router);
     }
 
-    #[test]
-    fn test_detect_rete_engine_explicit() {
-        let router = RuleEngineRouter::new();
-
-        let rule = json!({
+    #[rstest]
+    #[case(
+        json!({
             "engine": "rust-rule-engine",
             "rule": "rule Test { when true then Action(); }"
-        });
-
-        assert_eq!(router.detect_engine(&rule), RoutedEngine::Rete);
-    }
-
-    #[test]
-    fn test_detect_rete_engine_by_content() {
-        let router = RuleEngineRouter::new();
-
-        let rule = json!({
+        }),
+        RoutedEngine::Rete
+    )]
+    #[case(
+        json!({
             "rule": r#"
                 rule DomainCheck "Check domain" {
                     when
@@ -284,28 +264,18 @@ mod router_tests {
                         Violation("Error");
                 }
             "#
-        });
-
-        assert_eq!(router.detect_engine(&rule), RoutedEngine::Rete);
-    }
-
-    #[test]
-    fn test_detect_expression_engine() {
-        let router = RuleEngineRouter::new();
-
-        let rule = json!({
+        }),
+        RoutedEngine::Rete
+    )]
+    #[case(
+        json!({
             "expression": "file_count > 100",
             "message": "Too many files"
-        });
-
-        assert_eq!(router.detect_engine(&rule), RoutedEngine::Expression);
-    }
-
-    #[test]
-    fn test_detect_rusty_rules_engine() {
-        let router = RuleEngineRouter::new();
-
-        let rule = json!({
+        }),
+        RoutedEngine::Expression
+    )]
+    #[case(
+        json!({
             "condition": {
                 "all": [
                     { "fact_type": "file", "field": "path", "operator": "matches", "value": "*.rs" }
@@ -314,92 +284,74 @@ mod router_tests {
             "action": {
                 "violation": { "message": "Rule triggered" }
             }
-        });
-
-        assert_eq!(router.detect_engine(&rule), RoutedEngine::RustyRules);
-    }
-
-    #[test]
-    fn test_detect_default_engine() {
-        let router = RuleEngineRouter::new();
-
-        let rule = json!({
+        }),
+        RoutedEngine::RustyRules
+    )]
+    #[case(
+        json!({
             "type": "cargo_dependencies",
             "pattern": "mcb-*"
-        });
-
-        // Should default to RustyRules
-        assert_eq!(router.detect_engine(&rule), RoutedEngine::RustyRules);
+        }),
+        RoutedEngine::RustyRules
+    )]
+    fn detect_engine(#[case] rule: serde_json::Value, #[case] expected: RoutedEngine) {
+        assert_eq!(RuleEngineRouter::detect_engine(&rule), expected);
     }
 
-    #[test]
-    fn test_validate_rete_rule() {
-        let router = RuleEngineRouter::new();
-
-        // Valid RETE rule
-        let valid_rule = json!({
+    #[rstest]
+    #[case(
+        json!({
             "engine": "rete",
             "rule": "rule Test { when true then Action(); }"
-        });
-        assert!(router.validate_rule(&valid_rule).is_ok());
-
-        // Invalid RETE rule (missing 'rule' field)
-        let invalid_rule = json!({
+        }),
+        true
+    )]
+    #[case(
+        json!({
             "engine": "rete",
             "message": "Something"
-        });
-        assert!(router.validate_rule(&invalid_rule).is_err());
-    }
-
-    #[test]
-    fn test_validate_expression_rule() {
-        let router = RuleEngineRouter::new();
-
-        // Valid expression rule
-        let valid_rule = json!({
+        }),
+        false
+    )]
+    #[case(
+        json!({
             "engine": "expression",
             "expression": "x > 5"
-        });
-        assert!(router.validate_rule(&valid_rule).is_ok());
-
-        // Invalid expression rule (missing 'expression' field)
-        let invalid_rule = json!({
+        }),
+        true
+    )]
+    #[case(
+        json!({
             "engine": "expression",
             "message": "Something"
-        });
-        assert!(router.validate_rule(&invalid_rule).is_err());
+        }),
+        false
+    )]
+    fn validate_rule(#[case] rule: serde_json::Value, #[case] expected_ok: bool) {
+        assert_eq!(RuleEngineRouter::validate_rule(&rule).is_ok(), expected_ok);
     }
 
+    #[rstest]
+    #[case(json!({
+        "expression": "file_count > 0",
+        "message": "Has files"
+    }))]
+    #[case(json!({
+        "rule": r#"
+            rule TestRule "Test" {
+                when
+                    File(path matches "*.rs")
+                then
+                    Violation("Found Rust file");
+            }
+        "#
+    }))]
     #[tokio::test]
-    async fn test_router_execute_expression() {
-        let router = RuleEngineRouter::new();
-        let context = create_test_context();
-
-        let rule = json!({
-            "expression": "file_count > 0",
-            "message": "Has files"
-        });
-
-        let result = router.execute(&rule, &context).await;
-        assert!(result.is_ok());
-    }
-
-    #[tokio::test]
-    async fn test_router_execute_grl() {
-        let router = RuleEngineRouter::new();
-        let context = create_test_context();
-
-        let rule = json!({
-            "rule": r#"
-                rule TestRule "Test" {
-                    when
-                        File(path matches "*.rs")
-                    then
-                        Violation("Found Rust file");
-                }
-            "#
-        });
-
+    async fn router_execute(
+        router: RuleEngineRouter,
+        context: RuleContext,
+        #[case] rule: serde_json::Value,
+    ) {
         let result = router.execute(&rule, &context).await;
         assert!(result.is_ok());
     }
@@ -411,6 +363,17 @@ mod router_tests {
 
 mod hybrid_engine_tests {
     use super::*;
+    use rstest::rstest;
+
+    #[fixture]
+    fn engine() -> HybridRuleEngine {
+        HybridRuleEngine::new()
+    }
+
+    #[fixture]
+    fn context() -> RuleContext {
+        create_test_context()
+    }
 
     #[test]
     fn test_hybrid_engine_creation() {
@@ -435,35 +398,29 @@ mod hybrid_engine_tests {
         assert!(result.is_ok());
     }
 
+    #[rstest]
+    #[case("TEST001", json!({
+        "expression": "file_count > 0"
+    }))]
+    #[case("TEST002", json!({
+        "rule": r#"
+            rule Test "Test" {
+                when
+                    File(path matches "*.rs")
+                then
+                    Violation("Found");
+            }
+        "#
+    }))]
     #[tokio::test]
-    async fn test_execute_with_auto_detection() {
-        let engine = HybridRuleEngine::new();
-        let context = create_test_context();
-
-        // Expression-style rule
-        let expr_rule = json!({
-            "expression": "file_count > 0"
-        });
-
+    async fn execute_with_auto_detection(
+        engine: HybridRuleEngine,
+        context: RuleContext,
+        #[case] rule_id: &str,
+        #[case] rule: serde_json::Value,
+    ) {
         let result = engine
-            .execute_rule("TEST001", RuleEngineType::Auto, &expr_rule, &context)
-            .await;
-        assert!(result.is_ok());
-
-        // GRL-style rule
-        let grl_rule = json!({
-            "rule": r#"
-                rule Test "Test" {
-                    when
-                        File(path matches "*.rs")
-                    then
-                        Violation("Found");
-                }
-            "#
-        });
-
-        let result = engine
-            .execute_rule("TEST002", RuleEngineType::Auto, &grl_rule, &context)
+            .execute_rule(rule_id, RuleEngineType::Auto, &rule, &context)
             .await;
         assert!(result.is_ok());
     }
@@ -485,24 +442,16 @@ mod hybrid_engine_tests {
         assert!(!violations.is_empty());
     }
 
-    #[test]
-    fn test_detect_engine() {
-        let engine = HybridRuleEngine::new();
-
-        let expr_rule = json!({
-            "expression": "x > 0"
-        });
-        assert_eq!(engine.detect_engine(&expr_rule), "Expression");
-
-        let grl_rule = json!({
-            "rule": "rule X { when true then Action(); }"
-        });
-        assert_eq!(engine.detect_engine(&grl_rule), "RETE");
-
-        let json_rule = json!({
-            "condition": { "all": [] }
-        });
-        assert_eq!(engine.detect_engine(&json_rule), "RustyRules");
+    #[rstest]
+    #[case(json!({ "expression": "x > 0" }), "Expression")]
+    #[case(json!({ "rule": "rule X { when true then Action(); }" }), "RETE")]
+    #[case(json!({ "condition": { "all": [] } }), "RustyRules")]
+    fn detect_engine(
+        engine: HybridRuleEngine,
+        #[case] rule: serde_json::Value,
+        #[case] expected: &str,
+    ) {
+        assert_eq!(engine.detect_engine(&rule), expected);
     }
 
     #[tokio::test]
@@ -512,14 +461,14 @@ mod hybrid_engine_tests {
 
         let rules = vec![
             (
-                "EXPR001".to_string(),
+                "EXPR001".to_owned(),
                 RuleEngineType::Expression,
                 json!({
                     "expression": "file_count > 0"
                 }),
             ),
             (
-                "EXPR002".to_string(),
+                "EXPR002".to_owned(),
                 RuleEngineType::Expression,
                 json!({
                     "expression": "has_tests == true"
@@ -543,15 +492,15 @@ mod ca001_domain_independence_tests {
     fn create_domain_context() -> RuleContext {
         let mut file_contents = HashMap::new();
         file_contents.insert(
-            "crates/mcb-domain/src/lib.rs".to_string(),
-            r"
+            "crates/mcb-domain/src/lib.rs".to_owned(),
+            "
 //! Domain layer - pure business logic
 
 pub mod entities;
 pub mod ports;
 pub mod errors;
 "
-            .to_string(),
+            .to_owned(),
         );
 
         RuleContext {

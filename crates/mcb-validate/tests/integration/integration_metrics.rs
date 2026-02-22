@@ -5,10 +5,11 @@
 
 #[cfg(test)]
 mod integration_metrics_tests {
+    use rstest::rstest;
     use std::path::Path;
 
+    use mcb_validate::Severity;
     use mcb_validate::metrics::{MetricThresholds, MetricType, RcaAnalyzer};
-    use mcb_validate::violation_trait::Severity;
     use rust_code_analysis::LANG;
     use tempfile::TempDir;
 
@@ -18,7 +19,7 @@ mod integration_metrics_tests {
         let analyzer = RcaAnalyzer::new();
         let path = Path::new("simple.rs");
 
-        let content = br"
+        let content = b"
 fn add(a: i32, b: i32) -> i32 {
     a + b
 }
@@ -35,18 +36,13 @@ fn add(a: i32, b: i32) -> i32 {
         }
     }
 
-    /// Test detecting high cognitive complexity
-    #[test]
-    fn test_detects_high_cognitive_complexity() {
-        let thresholds = MetricThresholds::new().with_threshold(
-            MetricType::CognitiveComplexity,
-            5,
-            Severity::Warning,
-        );
-
-        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
-
-        let content = br"
+    /// Test detecting metric violations across different metric types
+    #[rstest]
+    #[case(
+        MetricType::CognitiveComplexity,
+        5,
+        Severity::Warning,
+        b"
 fn complex(x: i32) -> i32 {
     if x > 0 {
         if x > 10 {
@@ -61,40 +57,16 @@ fn complex(x: i32) -> i32 {
     }
     x
 }
-";
-
-        let temp_dir = TempDir::new().unwrap();
-        let file_path = temp_dir.path().join("complex.rs");
-        std::fs::write(&file_path, content).unwrap();
-
-        let violations = analyzer.find_violations(&file_path).unwrap();
-
-        assert!(
-            !violations.is_empty(),
-            "Should detect cognitive complexity violation"
-        );
-
-        let complexity_violations: Vec<_> = violations
-            .iter()
-            .filter(|v| v.metric_type == MetricType::CognitiveComplexity)
-            .collect();
-
-        assert!(!complexity_violations.is_empty());
-        assert_eq!(complexity_violations[0].item_name, "complex");
-    }
-
-    /// Test detecting high cyclomatic complexity
-    #[test]
-    fn test_detects_high_cyclomatic_complexity() {
-        let thresholds = MetricThresholds::new().with_threshold(
-            MetricType::CyclomaticComplexity,
-            3,
-            Severity::Error,
-        );
-
-        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
-
-        let content = br"
+" as &[u8],
+        "complex.rs",
+        Some("complex"),
+        None
+    )]
+    #[case(
+        MetricType::CyclomaticComplexity,
+        3,
+        Severity::Error,
+        b"
 fn branchy(x: i32) -> i32 {
     if x > 0 {
         match x {
@@ -107,38 +79,16 @@ fn branchy(x: i32) -> i32 {
         0
     }
 }
-";
-
-        let temp_dir = TempDir::new().unwrap();
-        let file_path = temp_dir.path().join("branchy.rs");
-        std::fs::write(&file_path, content).unwrap();
-
-        let violations = analyzer.find_violations(&file_path).unwrap();
-
-        let cyclomatic_violations: Vec<_> = violations
-            .iter()
-            .filter(|v| v.metric_type == MetricType::CyclomaticComplexity)
-            .collect();
-
-        assert!(
-            !cyclomatic_violations.is_empty(),
-            "Should detect cyclomatic complexity violation"
-        );
-        assert_eq!(cyclomatic_violations[0].severity, Severity::Error);
-    }
-
-    /// Test detecting long functions
-    #[test]
-    fn test_detects_long_function() {
-        let thresholds = MetricThresholds::new().with_threshold(
-            MetricType::FunctionLength,
-            5,
-            Severity::Warning,
-        );
-
-        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
-
-        let content = br"
+" as &[u8],
+        "branchy.rs",
+        Some("branchy"),
+        Some(Severity::Error)
+    )]
+    #[case(
+        MetricType::FunctionLength,
+        5,
+        Severity::Warning,
+        b"
 fn long_function() {
     let a = 1;
     let b = 2;
@@ -149,23 +99,41 @@ fn long_function() {
     let g = 7;
     let h = 8;
 }
-";
-
+" as &[u8],
+        "long.rs",
+        None,
+        None
+    )]
+    fn detects_metric_violations(
+        #[case] metric: MetricType,
+        #[case] max: u32,
+        #[case] severity: Severity,
+        #[case] content: &[u8],
+        #[case] file_name: &str,
+        #[case] expected_item_name: Option<&str>,
+        #[case] expected_violation_severity: Option<Severity>,
+    ) {
+        let thresholds = MetricThresholds::new().with_threshold(metric, max, severity);
+        let analyzer = RcaAnalyzer::with_thresholds(thresholds);
         let temp_dir = TempDir::new().unwrap();
-        let file_path = temp_dir.path().join("long.rs");
+        let file_path = temp_dir.path().join(file_name);
         std::fs::write(&file_path, content).unwrap();
-
         let violations = analyzer.find_violations(&file_path).unwrap();
-
-        let length_violations: Vec<_> = violations
+        let matching_violations: Vec<_> = violations
             .iter()
-            .filter(|v| v.metric_type == MetricType::FunctionLength)
+            .filter(|v| v.metric_type == metric)
             .collect();
 
         assert!(
-            !length_violations.is_empty(),
-            "Should detect function length violation"
+            !matching_violations.is_empty(),
+            "Should detect {metric:?} violation"
         );
+        if let Some(expected_item_name) = expected_item_name {
+            assert_eq!(matching_violations[0].item_name, expected_item_name);
+        }
+        if let Some(expected_violation_severity) = expected_violation_severity {
+            assert_eq!(matching_violations[0].severity, expected_violation_severity);
+        }
     }
 
     /// Test analyzing impl block methods
@@ -179,7 +147,7 @@ fn long_function() {
 
         let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
-        let content = br"
+        let content = b"
 struct Calculator;
 
 impl Calculator {
@@ -208,8 +176,8 @@ impl Calculator {
 
         // Should detect complex but not simple
         let names: Vec<_> = violations.iter().map(|v| &v.item_name).collect();
-        assert!(names.contains(&&"complex".to_string()));
-        assert!(!names.contains(&&"simple".to_string()));
+        assert!(names.contains(&&"complex".to_owned()));
+        assert!(!names.contains(&&"simple".to_owned()));
     }
 
     /// Test analyzing a real file
@@ -220,7 +188,7 @@ impl Calculator {
 
         std::fs::write(
             &file_path,
-            r"
+            "
 fn test_function(x: i32) -> i32 {
     match x {
         0 => 0,
@@ -355,7 +323,7 @@ fn with_if(x: i32) {
     /// Test suggestion text via Violation trait
     #[test]
     fn test_suggestion_text() {
-        use mcb_validate::violation_trait::Violation;
+        use mcb_validate::Violation;
 
         let thresholds = MetricThresholds::new().with_threshold(
             MetricType::CyclomaticComplexity,
@@ -392,32 +360,23 @@ fn nested(x: i32) {
     }
 
     /// Test multi-language support
-    #[test]
-    fn test_python_analysis() {
-        let analyzer = RcaAnalyzer::new();
-        let path = Path::new("test.py");
-
-        let content = br"
+    #[rstest]
+    #[case(
+        LANG::Python,
+        "test.py",
+        b"
 def complex_function(x):
     if x > 0:
         if x > 10:
             if x > 100:
                 return x * 2
     return x
-";
-
-        let functions = analyzer.analyze_code(content, &LANG::Python, path).unwrap();
-
-        assert!(!functions.is_empty(), "Should find Python functions");
-    }
-
-    /// Test JavaScript analysis
-    #[test]
-    fn test_javascript_analysis() {
-        let analyzer = RcaAnalyzer::new();
-        let path = Path::new("test.js");
-
-        let content = br"
+" as &[u8]
+    )]
+    #[case(
+        LANG::Mozjs,
+        "test.js",
+        b"
 function complexFunction(x) {
     if (x > 0) {
         if (x > 10) {
@@ -428,10 +387,13 @@ function complexFunction(x) {
     }
     return x;
 }
-";
-
-        let functions = analyzer.analyze_code(content, &LANG::Mozjs, path).unwrap();
-
-        assert!(!functions.is_empty(), "Should find JavaScript functions");
+" as &[u8]
+    )]
+    fn language_analysis(#[case] lang: LANG, #[case] file: &str, #[case] content: &[u8]) {
+        let analyzer = RcaAnalyzer::new();
+        let functions = analyzer
+            .analyze_code(content, &lang, Path::new(file))
+            .unwrap();
+        assert!(!functions.is_empty(), "Should find functions for {file}");
     }
 }

@@ -7,7 +7,7 @@
 //! ## Operating Modes
 //!
 //! | Mode | Command | Description |
-//! |------|---------|-------------|
+//! | ------ | --------- | ------------- |
 //! | **Standalone** | `mcb serve` (config: `mode.type = "standalone"`) | Local providers, stdio transport |
 //! | **Server** | `mcb serve --server` | HTTP daemon, accepts client connections |
 //! | **Client** | `mcb serve` (config: `mode.type = "client"`) | Connects to server via HTTP |

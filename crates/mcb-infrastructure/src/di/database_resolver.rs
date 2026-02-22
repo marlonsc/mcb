@@ -1,34 +1,41 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Resolver for database providers.
 //!
-//! Handles dynamic resolution of database providers (e.g. SQLite, Postgres)
+//! Handles dynamic resolution of database providers (e.g. `SQLite`, Postgres)
 //! based on configuration strings using the `linkme` registry.
 
 use std::path::Path;
 use std::sync::Arc;
 
 use mcb_domain::error::Result;
-use mcb_domain::ports::infrastructure::{DatabaseExecutor, DatabaseProvider};
+use mcb_domain::ports::{DatabaseExecutor, DatabaseProvider};
 use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
 
 use crate::config::AppConfig;
 
 /// Resolver for database providers
 pub struct DatabaseProviderResolver {
-    _config: Arc<AppConfig>,
+    config: Arc<AppConfig>,
 }
 
 impl DatabaseProviderResolver {
     /// Create a new resolver
+    #[must_use]
     pub fn new(config: Arc<AppConfig>) -> Self {
-        Self { _config: config }
+        Self { config }
     }
 
-    /// Resolve and connect to the database provider configured in AppConfig.
-    /// Uses "sqlite" as default if not specified.
+    /// Resolve and connect to the database provider configured in `AppConfig`.
+    ///
+    /// Reads the provider name from `config.providers.database.provider`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the provider resolution or database connection fails.
     pub async fn resolve_and_connect(&self, path: &Path) -> Result<Arc<dyn DatabaseExecutor>> {
-        // In the future, AppConfig might have `database.provider` field.
-        // For now, we default to "sqlite" to maintain backward compatibility and current requirements.
-        let provider_name = "sqlite";
+        let provider_name = self.config.providers.database.provider.as_str();
 
         let config = DatabaseProviderConfig::new(provider_name);
         let provider = self.resolve_from_override(&config)?;
@@ -37,6 +44,10 @@ impl DatabaseProviderResolver {
     }
 
     /// Resolve a provider from specific configuration
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database provider cannot be resolved.
     pub fn resolve_from_override(
         &self,
         config: &DatabaseProviderConfig,
@@ -46,6 +57,7 @@ impl DatabaseProviderResolver {
     }
 
     /// List all available database providers
+    #[must_use]
     pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
         mcb_domain::registry::database::list_database_providers()
     }

@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: [1, 2, 3, 6, 7, 11, 12, 27, 31]
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,8 +17,8 @@ implementation_status: Incomplete
 
 ## Status
 
-Implemented (v0.1.1) - Seven crates
-Updated (v0.1.2) - Added mcb-validate as 8th crate
+Implemented (v0.1.1) - Six crates
+Updated (v0.1.2) - Added mcb-validate as 7th crate
 
 ## Context
 
@@ -34,7 +34,7 @@ The Clean Architecture pattern, as described by Robert C. Martin, addresses thes
 
 ## Decision
 
-We organize the codebase into**eight Cargo workspace crates** following Clean Architecture principles:
+We organize the codebase into **seven Cargo workspace crates** following Clean Architecture principles:
 
 ### Layer 1: Domain (`mcb-domain`)
 
@@ -43,7 +43,7 @@ We organize the codebase into**eight Cargo workspace crates** following Clean Ar
 Characteristics:
 
 - Zero external dependencies (except `async_trait`, `thiserror`)
-- Defines port traits that extend `shaku::Interface` for DI compatibility
+- Defines port traits with `Send + Sync` bounds for async DI compatibility
 - Contains domain entities: `CodeChunk`, `Repository`, `Embedding`, `SearchResult`
 - Contains value objects: `Language`, `ChunkType`, `SearchQuery`
 - Defines domain errors with `thiserror`
@@ -99,28 +99,31 @@ Characteristics:
 
 - Depends on `mcb-domain` (implements port traits)
 - Feature-flagged providers for optional dependencies
-- Contains real implementations: OpenAI, Ollama, etc. (6 embedding, 3 vector store, 12 language)
-- Contains null implementations for testing
+- Contains real implementations: OpenAI, Ollama, etc. (7 embedding, 4 vector store, 12 language)
 - Organized by provider category
 
 Key Directories:
 
 ```text
 mcb-providers/src/
-├── embedding/          # 6 embedding providers
-│   ├── openai.rs
+├── embedding/          # 7 embedding providers
+│   ├── fastembed.rs    # Default (local)
 │   ├── ollama.rs
-│   ├── voyage.rs
+│   ├── openai.rs
+│   ├── voyageai.rs
 │   ├── gemini.rs
-│   ├── fastembed.rs
-│   └── null.rs
-├── vector_store/       # 3 vector store providers
-│   ├── in_memory.rs
-│   ├── encrypted.rs
-│   └── null.rs
+│   └── anthropic.rs
+├── vector_store/       # 4 vector store providers
+│   ├── edgevec.rs      # Default (local)
+│   ├── qdrant.rs
+│   ├── milvus.rs
+│   └── pinecone.rs
 ├── cache/              # Cache providers
-│   ├── moka.rs
-│   └── null.rs
+│   ├── moka.rs         # Default (in-memory)
+│   └── redis.rs
+├── events/             # Event bus providers
+│   ├── tokio.rs        # Default (in-process)
+│   └── nats.rs
 ├── language/           # 12 AST-based language processors
 │   ├── rust.rs
 │   ├── python.rs
@@ -138,9 +141,9 @@ mcb-providers/src/
 Characteristics:
 
 - Depends on `mcb-domain`, `mcb-application`, `mcb-providers`
-- Contains the Shaku-based DI system
-- Contains configuration management
-- Contains cross-cutting services (auth, metrics, events)
+- Contains the linkme + Handle DI system with AppContext composition root (ADR-050; ADR-029 superseded)
+- Contains configuration management (Figment)
+- Contains cross-cutting services (metrics, events)
 - Provides factories for production provider creation
 
 Key Directories:
@@ -148,23 +151,15 @@ Key Directories:
 ```text
 mcb-infrastructure/src/
 ├── di/
-│   ├── bootstrap.rs    # Container composition root
-│   ├── modules/        # Shaku modules (7 modules)
-│   │   ├── cache_module.rs
-│   │   ├── embedding_module.rs
-│   │   ├── data_module.rs
-│   │   ├── language_module.rs
-│   │   ├── infrastructure.rs
-│   │   ├── server.rs
-│   │   └── admin.rs
-│   └── factory/        # Provider factories
-│       ├── embedding.rs
-│       └── vector_store.rs
-├── config/             # Configuration types (13 modules)
-├── adapters/           # Null adapters for DI
+│   ├── bootstrap.rs    # Application init (init_app)
+│   ├── bootstrap.rs    # AppContext manual composition root
+│   ├── admin.rs        # Admin service wiring
+│   └── resolvers/      # Provider resolvers (from linkme registry)
+├── config/             # Configuration types (Figment)
+├── infrastructure/     # Admin types (metrics, indexing ops)
 ├── crypto/             # Encryption services
 ├── health/             # Health check infrastructure
-└── logging/            # Logging configuration
+└── logging/            # Logging configuration (tracing)
 ```
 
 **Dependencies**: `mcb-domain`, `mcb-application`, `mcb-providers`
@@ -210,7 +205,6 @@ Characteristics:
 Key Components:
 
 - `CleanArchitectureValidator`: Layer dependency rules
-- `ShakuValidator`: DI pattern compliance
 - `QualityValidator`: Code quality metrics
 - `OrganizationValidator`: File organization rules
 
@@ -283,8 +277,6 @@ cargo run -p mcb-validate
 
 # - CleanArchitectureValidator: Checks layer dependency violations
 
-# - ShakuValidator: Verifies DI patterns (SHAKU001-016 rules)
-
 # - DependencyValidator: Ensures crate dependencies follow rules
 ```
 
@@ -300,7 +292,7 @@ cargo run -p mcb-validate
 
 ### Negative
 
-- **Complexity**: Eight crates vs one requires coordination
+- **Complexity**: Seven crates vs one requires coordination
 - **Boilerplate**: Port traits need implementations in multiple places
 - **Learning Curve**: Clean Architecture concepts required
 
@@ -314,13 +306,13 @@ cargo run -p mcb-validate
 ### Adding a New Provider
 
 1. Create implementation in `mcb-providers/src/<category>/`
-2. Implement the port trait from `mcb-application/src/ports/`
-3. Add feature flag in `mcb-providers/Cargo.toml`
-4. Register in factory in `mcb-infrastructure/src/di/factory/`
+2. Implement the port trait from `mcb-domain/src/ports/`
+3. Register via `#[linkme::distributed_slice]` for auto-discovery
+4. Add feature flag in `mcb-providers/Cargo.toml` if needed
 
 ### Adding a New Use Case
 
-1. Define service interface in `mcb-application/src/ports/`
+1. Define service interface in `mcb-domain/src/ports/` (port traits are in domain per ADR-029, superseded by ADR-050)
 2. Implement service in `mcb-application/src/services/`
 3. Inject port dependencies via constructor
 4. Wire in `mcb-infrastructure/src/di/` if needed
@@ -337,13 +329,22 @@ async fn test_search_service() {
     // Test without infrastructure
 }
 
-// Integration test (mcb-server) — HISTORICAL; DI is now dill (ADR-029)
+// Integration test (mcb-server) — uses AppContext composition root (ADR-050)
 #[tokio::test]
 async fn test_full_indexing_flow() {
-    let container = DiContainerBuilder::new().build().await?;
-    // Uses null providers from Shaku modules
+    let app_context = init_app(config).await?;
+    let service: Arc<dyn IndexingService> = app_context.indexing_service().clone();
+    // Uses default providers resolved from config
 }
 ```
+
+## Canonical References
+
+> **Note**: This ADR is a historical decision record. For current architecture
+> details, consult the normative documents listed below.
+
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
 
 ## Related ADRs
 
@@ -355,11 +356,11 @@ async fn test_full_indexing_flow() {
 - [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Quality standards per layer
 - [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - mcb-server admin module
 - [ADR-011: HTTP Transport](011-http-transport-request-response-pattern.md) - mcb-server transport layer
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Shaku DI in mcb-infrastructure
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI in mcb-infrastructure
 - **Extended by**: [ADR-027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Introduces bounded contexts within layers
 
 ## References
 
 - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-- [Shaku Documentation](https://docs.rs/shaku) (historical; see ADR-029)
+- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI; see ADR-050)
 - Workspace-next refactoring plan (January 2026)

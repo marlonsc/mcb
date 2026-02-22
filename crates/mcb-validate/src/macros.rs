@@ -1,11 +1,14 @@
-/// Build a `ValidatorRegistry` from validator types that expose `new(&Path)`.
-#[macro_export]
-macro_rules! mk_validators {
-    ($root:expr; $( $validator:path ),+ $(,)?) => {{
-        let mut registry = $crate::validator_trait::ValidatorRegistry::new();
-        $(
-            registry = registry.with_validator(Box::new(<$validator>::new($root)));
-        )+
-        registry
-    }};
-}
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
+//!
+//! Violation runtime types (field formatting, file path extraction).
+//!
+//! The declarative macros (`define_violations!`, `impl_validator!`) live in
+//! `crate::validators::macros`; this module provides the runtime helper types
+//! that generated code references via `$crate::macros::*` paths.
+
+mod extract_file_path;
+/// Field-formatting traits used by violation message template expansion.
+pub mod violation_field_fmt;
+
+pub use extract_file_path::ExtractFilePath;

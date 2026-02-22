@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 //! Language Chunking Provider Port
 //!
 //! Port for language-specific code chunking providers. Each provider handles
@@ -29,7 +32,7 @@ use crate::value_objects::Language;
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::providers::LanguageChunkingProvider;
+/// use mcb_domain::ports::LanguageChunkingProvider;
 /// use std::sync::Arc;
 ///
 /// fn chunk_code(provider: Arc<dyn LanguageChunkingProvider>) {
@@ -73,7 +76,7 @@ pub trait LanguageChunkingProvider: Send + Sync {
 
     /// Check if this provider supports a given file extension
     ///
-    /// Default implementation checks against the extensions() slice.
+    /// Default implementation checks against the `extensions()` slice.
     ///
     /// # Arguments
     /// * `ext` - File extension without the dot (e.g., "rs", "py")

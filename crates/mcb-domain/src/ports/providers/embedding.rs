@@ -1,3 +1,10 @@
+//! Embedding Provider Port
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
+//! Defines the business contract for AI providers that transform text into
+//! semantic embeddings.
+
 use async_trait::async_trait;
 
 use crate::error::Result;
@@ -7,7 +14,7 @@ use crate::value_objects::Embedding;
 ///
 /// Defines the business contract for AI providers that transform text into
 /// semantic embeddings. This abstraction enables the platform to work with
-/// any AI service that can understand code semantics, from enterprise OpenAI
+/// any AI service that can understand code semantics, from enterprise `OpenAI`
 /// deployments to self-hosted Ollama instances.
 ///
 /// # Default Implementations
@@ -19,7 +26,7 @@ use crate::value_objects::Embedding;
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::providers::EmbeddingProvider;
+/// use mcb_domain::ports::EmbeddingProvider;
 /// use std::sync::Arc;
 ///
 /// async fn embed_code(provider: Arc<dyn EmbeddingProvider>) -> mcb_domain::Result<()> {
@@ -39,7 +46,7 @@ pub trait EmbeddingProvider: Send + Sync {
     /// Get embedding for a single text (default implementation provided)
     async fn embed(&self, text: &str) -> Result<Embedding> {
         // Default: delegate to embed_batch
-        let embeddings = self.embed_batch(&[text.to_string()]).await?;
+        let embeddings = self.embed_batch(&[text.to_owned()]).await?;
         embeddings
             .into_iter()
             .next()

@@ -1,7 +1,11 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
+//!
 //! Generic Reporter
 //!
-//! Generates reports from violations implementing the Violation trait.
-//! Supports multiple output formats: human-readable, JSON, and CI (GitHub Actions).
+//! This module provides the `GenericReporter` which facilitates the generation of
+//! validation reports in multiple formats. It centralizes the reporting logic
+//! for all types of architectural and code quality violations.
 
 use std::collections::HashMap;
 use std::fmt::Write;
@@ -10,7 +14,7 @@ use std::path::PathBuf;
 use serde::Serialize;
 
 use crate::Severity;
-use crate::violation_trait::{Violation, ViolationCategory};
+use crate::traits::violation::Violation;
 
 /// Report containing all violations with summary
 #[derive(Debug, Clone, Serialize)]
@@ -42,33 +46,16 @@ pub struct GenericSummary {
     pub passed: bool,
 }
 
-/// Serializable violation entry
-#[derive(Debug, Clone, Serialize)]
-pub struct ViolationEntry {
-    /// Unique violation ID
-    pub id: String,
-    /// Category
-    pub category: String,
-    /// Severity
-    pub severity: String,
-    /// File path (if applicable)
-    pub file: Option<PathBuf>,
-    /// Line number (if applicable)
-    pub line: Option<usize>,
-    /// Human-readable message
-    pub message: String,
-    /// Suggested fix (if applicable)
-    pub suggestion: Option<String>,
-}
+pub use mcb_domain::ports::ViolationEntry;
 
-impl ViolationEntry {
-    /// Create from a Violation trait object
-    pub fn from_violation(v: &dyn Violation) -> Self {
-        Self {
-            id: v.id().to_string(),
+impl GenericReporter {
+    /// Create a domain violation entry from a violation trait object
+    pub fn create_entry(v: &dyn Violation) -> ViolationEntry {
+        ViolationEntry {
+            id: v.id().to_owned(),
             category: v.category().to_string(),
             severity: v.severity().to_string(),
-            file: v.file().cloned(),
+            file: v.file().map(|p| p.display().to_string()),
             line: v.line(),
             message: v.message(),
             suggestion: v.suggestion(),
@@ -79,8 +66,38 @@ impl ViolationEntry {
 /// Generic reporter for violations
 pub struct GenericReporter;
 
+fn violation_location(v: &ViolationEntry) -> String {
+    match (&v.file, v.line) {
+        (Some(file), Some(line)) => format!("{file}:{line}"),
+        (Some(file), None) => file.clone(),
+        (None, _) => "unknown".to_owned(),
+    }
+}
+
+fn ci_line(v: &dyn Violation, level: &str) -> String {
+    match (v.file(), v.line()) {
+        (Some(file), Some(line)) => {
+            format!(
+                "::{level} file={},line={}::[{}] {}",
+                file.display(),
+                line,
+                v.id(),
+                v.message()
+            )
+        }
+        (Some(file), None) => format!(
+            "::{level} file={}::[{}] {}",
+            file.display(),
+            v.id(),
+            v.message()
+        ),
+        (None, _) => format!("::{level} ::[{}] {}", v.id(), v.message()),
+    }
+}
+
 impl GenericReporter {
     /// Create a report from violations
+    #[must_use]
     pub fn create_report(
         violations: &[Box<dyn Violation>],
         workspace_root: PathBuf,
@@ -90,18 +107,14 @@ impl GenericReporter {
             .to_string();
 
         // Count by severity
-        let errors = violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        let warnings = violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        let infos = violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Info)
-            .count();
+        let (errors, warnings, infos) =
+            violations
+                .iter()
+                .fold((0, 0, 0), |(e, w, i), v| match v.severity() {
+                    Severity::Error => (e + 1, w, i),
+                    Severity::Warning => (e, w + 1, i),
+                    Severity::Info => (e, w, i + 1),
+                });
 
         // Group by category
         let mut by_category: HashMap<String, Vec<ViolationEntry>> = HashMap::new();
@@ -109,7 +122,7 @@ impl GenericReporter {
 
         for v in violations {
             let category_name = v.category().to_string();
-            let entry = ViolationEntry::from_violation(v.as_ref());
+            let entry = Self::create_entry(v.as_ref());
 
             by_category
                 .entry(category_name.clone())
@@ -135,12 +148,16 @@ impl GenericReporter {
     }
 
     /// Generate JSON report
+    #[must_use]
     pub fn to_json(violations: &[Box<dyn Violation>], workspace_root: PathBuf) -> String {
         let report = Self::create_report(violations, workspace_root);
-        serde_json::to_string_pretty(&report).unwrap_or_else(|_| "{}".to_string())
+        serde_json::to_string_pretty(&report).unwrap_or_else(|_| "{}".to_owned())
     }
 
-    /// Generate human-readable report
+    /// Generate human-readable report.
+    ///
+    /// Generate human-readable report.
+    #[must_use]
     pub fn to_human_readable(violations: &[Box<dyn Violation>], workspace_root: PathBuf) -> String {
         let report = Self::create_report(violations, workspace_root);
         let mut output = String::new();
@@ -171,36 +188,33 @@ impl GenericReporter {
         );
         let _ = writeln!(output);
 
-        // By category
         if !report.violations_by_category.is_empty() {
             output.push_str("--- Violations by Category ---\n\n");
-
-            // Sort categories for consistent output
             let mut categories: Vec<_> = report.violations_by_category.keys().collect();
             categories.sort();
 
             for category in categories {
-                let violations = &report.violations_by_category[category];
-                if violations.is_empty() {
+                let category_violations = &report.violations_by_category[category];
+                if category_violations.is_empty() {
                     continue;
                 }
 
-                let _ = writeln!(output, "=== {} ({}) ===", category, violations.len());
-
-                for v in violations {
-                    let location = match (&v.file, v.line) {
-                        (Some(f), Some(l)) => format!("{}:{}", f.display(), l),
-                        (Some(f), None) => f.display().to_string(),
-                        _ => "unknown".to_string(),
-                    };
-
+                let _ = writeln!(
+                    output,
+                    "=== {} ({}) ===",
+                    category,
+                    category_violations.len()
+                );
+                for v in category_violations {
                     let _ = writeln!(
                         output,
                         "  [{:>7}] [{}] {} - {}",
-                        v.severity, v.id, location, v.message
+                        v.severity,
+                        v.id,
+                        violation_location(v),
+                        v.message
                     );
-
-                    if let Some(ref suggestion) = v.suggestion {
+                    if let Some(suggestion) = &v.suggestion {
                         let _ = writeln!(output, "            -> {suggestion}");
                     }
                 }
@@ -211,101 +225,21 @@ impl GenericReporter {
         output
     }
 
-    /// Generate CI summary (GitHub Actions format)
+    /// Generate CI summary (GitHub Actions format).
+    #[must_use]
     pub fn to_ci_summary(violations: &[Box<dyn Violation>]) -> String {
         let mut output = String::new();
 
         for v in violations {
-            match v.severity() {
-                Severity::Error => {
-                    if let (Some(file), Some(line)) = (v.file(), v.line()) {
-                        let _ = writeln!(
-                            output,
-                            "::error file={},line={}::[{}] {}",
-                            file.display(),
-                            line,
-                            v.id(),
-                            v.message()
-                        );
-                    } else if let Some(file) = v.file() {
-                        let _ = writeln!(
-                            output,
-                            "::error file={}::[{}] {}",
-                            file.display(),
-                            v.id(),
-                            v.message()
-                        );
-                    } else {
-                        let _ = writeln!(output, "::error ::[{}] {}", v.id(), v.message());
-                    }
-                }
-                Severity::Warning => {
-                    if let (Some(file), Some(line)) = (v.file(), v.line()) {
-                        let _ = writeln!(
-                            output,
-                            "::warning file={},line={}::[{}] {}",
-                            file.display(),
-                            line,
-                            v.id(),
-                            v.message()
-                        );
-                    } else if let Some(file) = v.file() {
-                        let _ = writeln!(
-                            output,
-                            "::warning file={}::[{}] {}",
-                            file.display(),
-                            v.id(),
-                            v.message()
-                        );
-                    } else {
-                        let _ = writeln!(output, "::warning ::[{}] {}", v.id(), v.message());
-                    }
-                }
-                Severity::Info => {
-                    // Info messages are not reported in CI
-                }
-            }
+            let level = match v.severity() {
+                Severity::Error => "error",
+                Severity::Warning => "warning",
+                Severity::Info => continue, // Info messages are not reported in CI
+            };
+
+            let _ = writeln!(output, "{}", ci_line(v.as_ref(), level));
         }
 
         output
-    }
-
-    /// Count violations by severity
-    pub fn count_by_severity(violations: &[Box<dyn Violation>]) -> (usize, usize, usize) {
-        let errors = violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Error)
-            .count();
-        let warnings = violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Warning)
-            .count();
-        let infos = violations
-            .iter()
-            .filter(|v| v.severity() == Severity::Info)
-            .count();
-        (errors, warnings, infos)
-    }
-
-    /// Filter violations by category
-    pub fn filter_by_category(
-        violations: Vec<Box<dyn Violation>>,
-        category: ViolationCategory,
-    ) -> Vec<Box<dyn Violation>> {
-        violations
-            .into_iter()
-            .filter(|v| v.category() == category)
-            .collect()
-    }
-
-    /// Filter violations by severity
-    pub fn filter_by_severity(
-        violations: Vec<Box<dyn Violation>>,
-        severity: Severity,
-    ) -> Vec<Box<dyn Violation>> {
-        violations
-            .into_iter()
-            .filter(|v| v.severity() == severity)
-            .collect()
     }
 }

@@ -2,13 +2,13 @@
 ---
 adr: 29
 title: Hexagonal Architecture with dill IoC
-status: IMPLEMENTED
+status: SUPERSEDED
 created:
-updated: 2026-02-05
+updated: 2026-02-22
 related: []
 supersedes: []
-superseded_by: []
-implementation_status: Incomplete
+superseded_by: [50]
+implementation_status: Superseded
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,11 +17,12 @@ implementation_status: Incomplete
 
 ## Status
 
-**Implemented** (v0.1.2)
+**Superseded** by [ADR 050: Manual Composition Root — dill Removal](050-manual-composition-root-dill-removal.md) (v0.2.1)
 
-> Evolution of [ADR 024: Simplified Dependency Injection]
+> Originally: Evolution of [ADR 024: Simplified Dependency Injection]
 > (024-simplified-dependency-injection.md), adding dill Catalog as IoC
-> container while maintaining the handle-based pattern.
+> container. dill was removed in v0.2.1 because `build_catalog()` was
+> never called in production and dill was the sole nightly Rust dependency.
 
 ## Context
 
@@ -61,12 +62,8 @@ pub trait VectorStoreProvider: Send + Sync {
 }
 ```
 
-Application layer re-exports for backward compatibility:
-
-```rust
-// mcb-application/src/ports/providers/mod.rs
-pub use mcb_domain::ports::providers::*;
-```
+Application layer does not own provider ports. Import provider traits directly from
+`mcb-domain/src/ports/providers/` to avoid duplicate declarations and compatibility shims.
 
 ### 2. dill Catalog as IoC Container
 
@@ -90,13 +87,11 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
         .build()
 }
 
-// Service retrieval
-pub fn get_embedding_provider(catalog: &Catalog) -> Result<Arc<dyn EmbeddingProvider>> {
-    catalog.get_one::<dyn EmbeddingProvider>()
-        .map_err(|e| {
-            Error::configuration(format!("Service not found: {e:?}"))
-        })
-}
+// Service retrieval via AppContext (bootstrap.rs)
+// AppContext holds all resolved providers as typed fields:
+//   app_context.embedding_handle()    → Arc<EmbeddingProviderHandle>
+//   app_context.vector_store_handle() → Arc<VectorStoreProviderHandle>
+//   app_context.cache_handle()        → Arc<CacheProviderHandle>
 ```
 
 ### 3. Architecture Layers
@@ -180,12 +175,21 @@ New mcb-validate rules enforce the architecture:
 1. **Bootstrap still exists**: `init_app()` wraps `build_catalog()`
 2. **AppContext unchanged**: Same public interface for consumers
 
+## Canonical References
+
+> **Note**: This ADR is a historical decision record. For current architecture
+> details, consult the normative documents below. The code paths in this ADR
+> reflect the state at the time of writing; the current single source of truth
+> for port trait locations is `mcb-domain/src/ports/providers/` (not
+> `mcb-application/src/ports/providers/`, which was removed as duplicated).
+
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
+- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Full system architecture (normative)
+
 ## References
 
 - [dill-rs Documentation](https://docs.rs/dill/latest/dill/)
-- [ADR 023: Inventory to linkme Migration]
-(023-inventory-to-linkme-migration.md)
-- [ADR 024: Simplified Dependency Injection]
-(024-simplified-dependency-injection.md)
-- [Clean Architecture]
-(<https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html>)
+- [ADR 023: Inventory to linkme Migration](023-inventory-to-linkme-migration.md)
+- [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md)
+- [Clean Architecture](<https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html>)

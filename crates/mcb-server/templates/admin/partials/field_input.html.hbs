@@ -1,14 +1,16 @@
-{{#if is_textarea}}
+{{#if is_foreign_key}}
+{{> admin/partials/lov_select}}
+{{else if is_json_field}}
+{{> admin/partials/json_editor}}
+{{else if is_textarea}}
 <textarea id="{{name}}" name="{{name}}" rows="4" {{#if readonly}}readonly{{/if}}>{{lookup ../record name}}</textarea>
 {{else if is_checkbox}}
-<div style="margin-bottom: 1rem;">
-    <input id="{{name}}" name="{{name}}" type="checkbox" style="width: auto; margin-right: 0.5rem;" {{#if readonly}}disabled{{/if}} />
-</div>
+{{> admin/partials/toggle_switch}}
 {{else if is_select}}
 <select id="{{name}}" name="{{name}}" {{#if readonly}}disabled{{/if}}>
     <option value="">Select...</option>
     {{#each enum_values}}
-    <option value="{{this}}">{{this}}</option>
+    <option value="{{this}}" {{#eq this (lookup ../../record ../name)}}selected{{/eq}}>{{this}}</option>
     {{/each}}
 </select>
 {{else}}

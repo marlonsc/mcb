@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Quickstart Guide
 
-Get Memory Context Browser v0.2.0 running in 5 minutes.
+Get Memory Context Browser v0.2.1 running in 5 minutes.
 
 ## 1. Download
 
@@ -69,7 +69,7 @@ Add to `~/.config/Claude/claude_desktop_config.json` (Linux) or
       "env": {
         "EMBEDDING_PROVIDER": "openai",
         "OPENAI_API_KEY": "sk-your-key-here",
-        "VECTOR_STORE_PROVIDER": "in-memory"
+        "VECTOR_STORE_PROVIDER": "edgevec"
       }
     }
   }
@@ -99,18 +99,18 @@ Claude will use `search (resource=code)` to find relevant code.
 | `index (action=status)` | Check indexing progress |
 | `index (action=clear)` | Remove indexed data |
 
-## Supported Languages (12)
+## Supported Languages (13)
 
-Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin
+Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin (13 languages via 12 tree-sitter parsers; JavaScript handles both JS and TS)
 
 ## Vector Store Options
 
 | Provider | Best for | Setup |
 | ---------- | ---------- | ------- |
-| `in-memory` | Development, testing | None |
-| `filesystem` | Persistent storage | None |
-| `milvus` | Production scale | Docker/Kubernetes |
-| `edgevec` | Embedded use | None |
+| `edgevec` | Development, testing (default) | None |
+| `milvus` | Production, large scale | Docker/Kubernetes |
+| `qdrant` | Self-hosted, Rust-native | Docker |
+| `pinecone` | Managed cloud | API key |
 
 ### Using Milvus
 

@@ -1,0 +1,89 @@
+<div style="position: relative; margin-bottom: 1rem;"
+     x-data="{
+        open: false,
+        search: '',
+        options: [],
+        selected: {{#if (lookup ../record name)}}'{{lookup ../record name}}'{{else}}null{{/if}},
+        selectedLabel: '',
+        loading: false,
+        _timer: null,
+        fetchOptions() {
+            clearTimeout(this._timer);
+            this.loading = true;
+            this._timer = setTimeout(() => {
+                fetch('/ui/lov/{{fk_target_slug}}?q=' + encodeURIComponent(this.search))
+                    .then(r => r.json())
+                    .then(data => {
+                        this.options = data;
+                        this.loading = false;
+                    })
+                    .catch(() => {
+                        this.options = [];
+                        this.loading = false;
+                    });
+            }, 300);
+        },
+        selectOption(id, label) {
+            this.selected = id;
+            this.selectedLabel = label;
+            this.search = label;
+            this.open = false;
+        },
+        init() {
+            if (this.selected) {
+                fetch('/ui/lov/{{fk_target_slug}}?q=')
+                    .then(r => r.json())
+                    .then(data => {
+                        let match = data.find(o => o.id === this.selected);
+                        if (match) {
+                            this.selectedLabel = match.label;
+                            this.search = match.label;
+                        } else {
+                            this.search = this.selected;
+                        }
+                    })
+                    .catch(() => { this.search = this.selected; });
+            }
+        }
+     }"
+     @click.away="open = false"
+     @keydown.escape="open = false">
+
+    <input type="hidden" name="{{name}}" :value="selected">
+
+    <input type="text"
+           id="{{name}}"
+           x-model="search"
+           {{#if readonly}}disabled{{/if}}
+           placeholder="Search..."
+           style="margin-bottom: 0;"
+           @focus="if (!$el.disabled) { open = true; fetchOptions(); }"
+           @input="if (!$el.disabled) { open = true; fetchOptions(); }">
+
+    <div x-show="open"
+         x-cloak
+         style="position: absolute; z-index: 50; width: 100%; max-height: 12rem; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 0.375rem; background: var(--bg-primary); box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-top: 0.125rem;">
+
+        <template x-if="loading">
+            <div style="padding: 0.5rem 0.75rem; color: var(--text-muted); font-size: 0.875rem;">Loading...</div>
+        </template>
+
+        <template x-if="!loading && options.length === 0">
+            <div style="padding: 0.5rem 0.75rem; color: var(--text-muted); font-size: 0.875rem;">No results found</div>
+        </template>
+
+        <template x-if="!loading && options.length > 0">
+            <div>
+                <template x-for="opt in options" :key="opt.id">
+                    <div @click="selectOption(opt.id, opt.label)"
+                         style="padding: 0.5rem 0.75rem; cursor: pointer; font-size: 0.875rem; color: var(--text-primary);"
+                         @mouseenter="$el.style.background = 'var(--bg-secondary)'"
+                         @mouseleave="$el.style.background = 'transparent'"
+                         :style="opt.id === selected ? 'background: var(--bg-secondary); font-weight: 600;' : ''">
+                        <span x-text="opt.label"></span>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+</div>

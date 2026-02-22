@@ -1,28 +1,59 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Architecture Boundaries - Layer Rules and Module Ownership
 
-**Version**: v0.2.0
+**Version**: v0.2.1
 **Status**: Baseline Documentation
-**Last Updated**: 2026-01-28
+**Last Updated**: 2026-02-14
 
-This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 8 workspace crates.
+This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 7 workspace crates.
 
 ---
 
 ## Table of Contents
 
-1. [Crate Structure](#crate-structure)
-2. [Layer Dependency Rules](#layer-dependency-rules)
-3. [Port/Adapter Pattern](#portadapter-pattern)
-4. [Module Ownership](#module-ownership)
-5. [Boundary Violations](#boundary-violations)
-6. [Validation Rules](#validation-rules)
+1. [v0.2.1 Standardization Contract](#v021-standardization-contract)
+2. [Crate Structure](#crate-structure)
+3. [Layer Dependency Rules](#layer-dependency-rules)
+4. [Port/Adapter Pattern](#portadapter-pattern)
+5. [Module Ownership](#module-ownership)
+6. [Boundary Violations](#boundary-violations)
+7. [Validation Rules](#validation-rules)
+
+---
+
+## v0.2.1 Standardization Contract
+
+This release applies architecture optimization only (no net-new features).
+
+### Scope Guardrails
+
+- Allowed:
+  - deduplication, refactoring, schema tightening, naming unification
+  - removal of legacy/duplicate pathways
+  - stricter validation and fast-fail enforcement
+- Not allowed:
+  - new endpoints, new commands, new providers, new env/config surfaces
+  - compatibility shims or dual-path implementations
+
+### Canonical Ownership
+
+- IDs: `mcb-domain/src/value_objects/ids.rs` via `define_id!`.
+- Port traits: `mcb-domain/src/ports/**` only.
+- Domain entities/value objects: `mcb-domain/src/entities/**`, `mcb-domain/src/value_objects/**`.
+- DTO-to-domain mapping: boundary layers only (`mcb-server`, provider adapters), never in domain.
+
+### Fast-Fail Rules
+
+- Reject raw `String` or `Uuid` IDs in domain entities/value objects.
+- Reject duplicate port trait declarations outside `mcb-domain/src/ports/**`.
+- Reject leaking internal error strings across API boundaries.
+- Reject compatibility wrappers that keep old pathways alive.
 
 ---
 
 ## Crate Structure
 
-MCB follows a layered architecture across 8 Cargo workspace crates:
+MCB follows a layered architecture across 7 Cargo workspace crates:
 
 ```text
 crates/
@@ -159,23 +190,29 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 #### Exports
 
-- Embedding providers: `OllamaProvider`, `OpenAIProvider`, `VoyageAIProvider`, etc.
-- Vector store providers: `MilvusProvider`, `InMemoryProvider`, `EncryptedProvider`, etc.
-- Cache providers: `MokaProvider`, `RedisProvider`, `NullProvider`
-- Language parsers: `RustChunker`, `PythonChunker`, etc.
+- Embedding providers: `FastEmbedProvider` (default), `OllamaEmbeddingProvider`, `OpenAIEmbeddingProvider`, `VoyageAIEmbeddingProvider`, `GeminiEmbeddingProvider`, `AnthropicEmbeddingProvider`
+- Vector store providers: `EdgeVecVectorStoreProvider` (default), `QdrantVectorStoreProvider`, `MilvusVectorStoreProvider`, `PineconeVectorStoreProvider`, `EncryptedVectorStoreProvider`
+- Cache providers: `MokaCacheProvider` (default), `RedisCacheProvider`
+- Event bus providers: `TokioEventBusProvider` (default), `NatsEventBusProvider`
+- Language parsers: 12 AST-based language processors
 
 #### Module Structure
 
 ```text
 mcb-providers/src/
 ├── embedding/          # Embedding provider implementations
+│   ├── fastembed.rs    # Local ONNX (default)
 │   ├── ollama.rs
 │   ├── openai.rs
-│   └── voyageai.rs
+│   ├── voyageai.rs
+│   ├── gemini.rs
+│   └── anthropic.rs
 ├── vector_store/       # Vector store implementations
+│   ├── edgevec.rs      # In-process HNSW (default)
 │   ├── milvus.rs
-│   ├── in_memory.rs
-│   └── encrypted.rs
+│   ├── qdrant.rs
+│   ├── pinecone.rs
+│   └── encrypted.rs    # AES-GCM decorator
 ├── cache/              # Cache implementations
 └── language/           # Language-specific chunkers
 ```
@@ -197,7 +234,7 @@ mcb-providers/src/
 - `mcb-domain` (port traits for DI)
 - `mcb-application` (services for DI composition)
 - `mcb-providers` (concrete implementations for DI)
-- `dill` for IoC container (ADR-029)
+- manual composition root via `AppContext` + `init_app()` with `linkme` discovery (ADR-050)
 - `figment` for configuration (ADR-025)
 - Infrastructure libraries (tracing, metrics, etc.)
 
@@ -207,48 +244,45 @@ mcb-providers/src/
 
 #### Exports
 
-- DI: `Catalog`, `build_catalog()`, `get_service<T>()`
+- DI: `AppContext`, `init_app()`, typed accessors
 - Config: `AppConfig`, `load_config()`
 - Handles: `EmbeddingProviderHandle`, `VectorStoreProviderHandle`
 - Admin services: `EmbeddingAdminService`, `VectorStoreAdminService`
 - Health: `HealthChecker`
 - Metrics: `MetricsCollector`
-- Lifecycle: `ServiceManager`, `ShutdownCoordinator`
+- Lifecycle: `init_app()`, `AppContext`
 
 #### Module Structure
 
 ```text
 mcb-infrastructure/src/
-├── di/                 # Dependency injection (dill)
-│   ├── catalog.rs      # IoC container
+├── di/                 # Dependency injection (manual composition root)
+│   ├── bootstrap.rs    # AppContext composition root
 │   └── resolvers.rs    # Service resolution
 ├── config/             # Configuration (Figment)
 │   ├── loader.rs
 │   └── types/
-├── handles/            # RwLock wrappers for runtime switching
-├── admin/              # Admin services (runtime provider switching)
+├── infrastructure/     # Admin types (metrics, indexing ops)
+├── services/           # Infrastructure services
 ├── health/             # Health checking
-├── metrics/            # Prometheus metrics
-└── lifecycle/          # Service lifecycle management
+├── crypto/             # Encryption services
+└── logging/            # Logging configuration (tracing)
 ```
 
-**DI Pattern** (ADR-029):
+**DI Pattern** (ADR-050):
 
 ```rust
-// Build catalog
-pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
-    CatalogBuilder::new()
-        .add_value(config)
-        .add_value(embedding_provider)    // From linkme registry
-        .add_value(embedding_handle)      // RwLock wrapper
-        .add_value(embedding_admin)       // Runtime switching
-        .build()
+// Build AppContext (manual composition root)
+pub async fn init_app(config: AppConfig) -> Result<AppContext> {
+    // resolve providers from linkme registry
+    // construct handles and admin services
+    // return explicit AppContext fields
 }
 
-// Retrieve service
-pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>> {
-    catalog.get_one::<T>()
-}
+// Service retrieval via AppContext (bootstrap.rs)
+// AppContext holds all resolved providers as typed fields:
+//   app_context.embedding_handle()    → Arc<EmbeddingProviderHandle>
+//   app_context.vector_store_handle() → Arc<VectorStoreProviderHandle>
 ```
 
 ---
@@ -261,9 +295,9 @@ pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>>
 
 - `mcb-domain` (entities, errors)
 - `mcb-application` (services via DI)
-- `mcb-infrastructure` (DI catalog, config, health)
+- `mcb-infrastructure` (AppContext bootstrap, config, health)
 - MCP libraries
-- HTTP libraries (Rocket)
+- HTTP libraries (Poem)
 
 #### Prohibited Dependencies
 
@@ -281,7 +315,7 @@ pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>>
 mcb-server/src/
 ├── mcp_server.rs       # MCP server core
 ├── transport/          # Transport implementations
-│   ├── http.rs         # HTTP transport (Rocket)
+│   ├── http.rs         # HTTP transport (Poem)
 │   └── stdio.rs        # Stdio transport
 ├── handlers/           # MCP tool handlers
 │   ├── index.rs
@@ -395,7 +429,7 @@ impl ContextService {
 | Domain entities | `mcb-domain` | All layers |
 | Services | `mcb-application` | `mcb-infrastructure`, `mcb-server` |
 | Providers | `mcb-providers` | `mcb-infrastructure` (via DI) |
-| DI container | `mcb-infrastructure` | `mcb-server` |
+| AppContext composition root | `mcb-infrastructure` | `mcb-server` |
 | Config types | `mcb-infrastructure` | `mcb-server` |
 | MCP handlers | `mcb-server` | None (entry point) |
 
@@ -478,7 +512,7 @@ Architecture validation: 0 violations
 **Phase 5**: Integration Validation
 
 - Verify linkme registration
-- Check DI catalog composition
+- Check AppContext composition
 - Validate config loading
 
 **Phase 6**: Metrics Validation
@@ -527,10 +561,10 @@ make validate QUICK=1  # Fast validation
 - **ADR-002**: Async-First Architecture
 - **ADR-013**: Clean Architecture Crate Separation
 - **ADR-023**: Inventory to Linkme Migration
-- **ADR-024**: Handle-Based Dependency Injection (deprecated → ADR-029)
+- **ADR-024**: Handle-Based Dependency Injection (deprecated → ADR-029, superseded by ADR-050)
 - **ADR-025**: Figment Configuration Loading
 - **ADR-027**: Architecture Evolution v0.1.3
-- **ADR-029**: Hexagonal Architecture with dill
+- **ADR-029**: Hexagonal Architecture (superseded by ADR-050)
 
 ---
 
@@ -539,6 +573,7 @@ make validate QUICK=1  # Fast validation
 | Version | Date | Changes |
 | --------- | ------ | --------- |
 | v0.2.0 | 2026-01-28 | Baseline documentation for architecture boundaries |
+| v0.2.1 | 2026-02-15 | Fixed crate count to 7, removed non-existent mcb-ast-utils and mcb-language-support |
 
 ---
 

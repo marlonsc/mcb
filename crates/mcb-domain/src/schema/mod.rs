@@ -1,15 +1,35 @@
-//! Generic schema definitions for persistence models.
 //!
-//! Describes tables, columns, indexes, FKs, and FTS in a database-agnostic way so
-//! that multiple backends (SQLite, PostgreSQL, MySQL, etc.) can apply the same
-//! model. Use [`ProjectSchema`] for the full project (memory + collections + file_hashes);
-//! each backend implements [`SchemaDdlGenerator`] to produce dialect-specific DDL.
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
+mod agent_sessions;
+mod agent_worktree_assignments;
+mod api_keys;
+mod branches;
+mod checkpoints;
+mod collections;
+mod definition;
+mod delegations;
+mod error_pattern_matches;
+mod error_patterns;
+mod file_hashes;
+mod issue_comments;
+mod issue_label_assignments;
+mod issue_labels;
+mod observations;
+mod organizations;
+mod plan_reviews;
+mod plan_versions;
+mod plans;
+mod project_issues;
+mod projects;
+mod repositories;
+mod session_summaries;
+mod team_members;
+mod teams;
+mod tool_calls;
+/// Canonical schema model types and DDL generation traits.
+pub mod types;
+mod users;
+mod worktrees;
 
-pub mod memory;
-pub mod project;
-
-pub use memory::{
-    COL_OBSERVATION_TYPE, ColumnDef, ColumnType, FtsDef, IndexDef, MemorySchema,
-    MemorySchemaDdlGenerator, TableDef,
-};
-pub use project::{ForeignKeyDef, ProjectSchema, SchemaDdlGenerator, UniqueConstraintDef};
+pub use types::*;

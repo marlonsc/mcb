@@ -2,30 +2,43 @@
     <script src="https://unpkg.com/htmx-ext-sse@2.2.2/sse.js"></script>
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
     <style>
-        .status-healthy { color: #16a34a; }
-        .status-degraded { color: #ca8a04; }
-        .status-unhealthy { color: #dc2626; }
-        .status-running { color: #16a34a; }
-        .status-stopped { color: #6b7280; }
-        .status-starting { color: #2563eb; }
-        .status-stopping { color: #ca8a04; }
+        .status-healthy { color: var(--color-success); }
+        .status-degraded { color: var(--color-warning); }
+        .status-unhealthy { color: var(--color-error); }
+        .status-running { color: var(--color-success); }
+        .status-stopped { color: var(--color-gray); }
+        .status-starting { color: var(--color-info); }
+        .status-stopping { color: var(--color-warning); }
         .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-        .btn-success { background: #16a34a; color: white; }
-        .btn-success:hover:not(:disabled) { background: #15803d; }
-        .btn-warning { background: #ca8a04; color: white; }
-        .btn-warning:hover:not(:disabled) { background: #a16207; }
-        .btn-danger:hover:not(:disabled) { background: #b91c1c; }
+        .btn-success { background: var(--color-success); color: white; }
+        .btn-success:hover:not(:disabled) { background: var(--color-success-hover); }
+        .btn-warning { background: var(--color-warning); color: white; }
+        .btn-warning:hover:not(:disabled) { background: var(--color-warning-hover); }
+        .btn-danger:hover:not(:disabled) { background: var(--color-error-hover); }
         .sse-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 0.5rem; }
-        .sse-connected { background: #16a34a; animation: pulse 2s infinite; }
-        .sse-disconnected { background: #dc2626; }
+        .sse-connected { background: var(--color-success); animation: pulse 2s infinite; }
+        .sse-disconnected { background: var(--color-error); }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         .event-log { max-height: 300px; overflow-y: auto; }
-        .event-item { border-left: 3px solid; padding: 0.5rem 1rem; margin-bottom: 0.5rem; font-size: 0.875rem; }
-        .event-indexing { border-color: #2563eb; background: #eff6ff; }
-        .event-service { border-color: #16a34a; background: #f0fdf4; }
-        .event-config { border-color: #ca8a04; background: #fefce8; }
-        .event-health { border-color: #8b5cf6; background: #f5f3ff; }
-        .event-error { border-color: #dc2626; background: #fef2f2; }
+        .event-item { border-left: 3px solid; padding: 0.5rem 1rem; margin-bottom: 0.5rem; font-size: 0.875rem; border-radius: 0.375rem; background: var(--bg-secondary); color: var(--text-primary); }
+        .event-indexing { border-color: var(--accent); }
+        .event-service { border-color: var(--color-success); }
+        .event-config { border-color: var(--color-warning); }
+        .event-health { border-color: var(--color-purple); }
+        .event-error { border-color: var(--color-error); }
+        .event-system { border-color: var(--text-muted); }
+        .event-log-error { border-color: var(--log-error); }
+        .event-log-warn { border-color: var(--log-warn); }
+        .event-log-info { border-color: var(--accent); }
+        .event-log-debug { border-color: var(--text-muted); }
+        .event-log-trace { border-color: var(--border-color); }
+        .event-validation { border-color: var(--color-purple); }
+        .log-level { font-weight: 600; font-size: 0.75rem; padding: 0.1rem 0.4rem; border-radius: 0.25rem; }
+        .log-level-error { background: var(--log-error-bg); color: var(--log-error); }
+        .log-level-warn { background: var(--log-warn-bg); color: var(--log-warn); }
+        .log-level-info { background: var(--color-info-bg); color: var(--accent); }
+        .log-level-debug { background: var(--bg-tertiary); color: var(--text-secondary); }
+        .log-level-trace { background: var(--bg-tertiary); color: var(--text-muted); }
     </style>
 {{/inline}}
 
@@ -64,12 +77,12 @@
     </div>
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {{#each entity_cards}}
-        <div class="rounded-lg border p-4" style="border-color: var(--border-color, #e5e7eb)">
+        <div class="rounded-lg border p-4" style="border-color: var(--border-color)">
             <div class="flex items-center justify-between">
                 <h3 class="font-semibold">{{title}}</h3>
                 <span class="badge badge-blue">{{group}}</span>
             </div>
-            <p class="text-sm text-secondary mt-2">{{summary}}</p>
+            <p class="text-sm text-secondary mt-2">{{field_count}} visible {{pluralize field_count "field" "fields"}}</p>
             <p class="text-sm mt-2"><strong>{{record_count}}</strong> records indexed</p>
             <a class="btn btn-primary btn-sm mt-3" href="/ui/entities/{{slug}}">Manage</a>
         </div>
@@ -83,12 +96,12 @@
     <h2 class="text-lg font-semibold mb-4">Recent Entity Activity</h2>
     <div class="space-y-3">
         {{#each recent_activity}}
-        <div class="flex items-start justify-between gap-4 pb-3 border-b" style="border-color: var(--border-color, #e5e7eb)">
+        <div class="flex items-start justify-between gap-4 pb-3 border-b" style="border-color: var(--border-color)">
             <div>
                 <p class="font-medium">{{entity_title}}</p>
-                <p class="text-sm text-secondary">{{detail}}</p>
+                <p class="text-sm text-secondary">{{record_count}} {{pluralize record_count "record" "records"}} currently indexed</p>
             </div>
-            <span class="text-xs text-secondary whitespace-nowrap">{{timestamp}}</span>
+            <span class="text-xs text-secondary whitespace-nowrap">{{timestamp timestamp}}</span>
         </div>
         {{/each}}
     </div>
@@ -203,7 +216,8 @@
         ['IndexRebuild','IndexingStarted','IndexingProgress','IndexingCompleted',
          'SyncCompleted','CacheInvalidate','SnapshotCreated','FileChangesDetected',
          'ServiceStateChanged','ConfigReloaded','HealthCheckCompleted',
-         'MetricsSnapshot','SearchExecuted'].forEach(function(eventType) {
+         'MetricsSnapshot','SearchExecuted','LogEvent',
+         'ValidationStarted','ValidationProgress','ValidationCompleted'].forEach(function(eventType) {
             eventSource.addEventListener(eventType, function(e) {
                 handleEvent(eventType, parseJsonSafe(e.data, {}));
             });
@@ -225,6 +239,8 @@
     }
 
     function handleEvent(eventType, data) {
+        // Unwrap serde enum variant: {"EventType": {fields}} → {fields}
+        if (data[eventType]) { data = data[eventType]; }
         switch (eventType) {
             case 'ServiceStateChanged':
                 refreshServices();
@@ -243,7 +259,7 @@
                 addEventToLog('indexing', 'Indexing completed: ' + (data.collection||'unknown') + ' - ' + toIntegerSafe(data.chunks,0) + ' chunks indexed');
                 break;
             case 'ConfigReloaded':
-                addEventToLog('config', 'Configuration reloaded' + (data.changes ? ': ' + data.changes.join(', ') : ''));
+                addEventToLog('config', 'Configuration reloaded: ' + (data.section||'all'));
                 break;
             case 'HealthCheckCompleted':
                 if (data.status) {
@@ -260,7 +276,30 @@
                 addEventToLog('indexing', 'Search executed: "' + ((data.query||'').toString().substring(0,30)) + '..." - ' + toIntegerSafe(data.results,0) + ' results');
                 break;
             case 'CacheInvalidate':
-                addEventToLog('config', 'Cache invalidated: ' + (data.collection||'all'));
+                addEventToLog('config', 'Cache invalidated: ' + (data.namespace||'all'));
+                break;
+            case 'LogEvent':
+                var lvl = (data.level||'info').toLowerCase();
+                var tgt = data.target || '';
+                var shortTarget = tgt.split('::').slice(-2).join('::');
+                var ts = data.timestamp ? new Date(data.timestamp).toLocaleTimeString() : '';
+                addLogEventToLog(lvl, (data.message||''), shortTarget, ts);
+                break;
+            case 'ValidationStarted':
+                addEventToLog('validation', 'Validation started: ' + (data.workspace||'') + ' (' + toIntegerSafe(data.total_files,0) + ' files)');
+                break;
+            case 'ValidationProgress':
+                var vTotal = toIntegerSafe(data.total, 0);
+                var vDone = toIntegerSafe(data.processed, 0);
+                var vPct = vTotal > 0 ? Math.round((vDone / vTotal) * 100) : 0;
+                addEventToLog('validation', 'Validation progress: ' + vPct + '% (' + vDone + '/' + vTotal + ')');
+                break;
+            case 'ValidationCompleted':
+                var violations = toIntegerSafe(data.total_violations, 0);
+                var vErrors = toIntegerSafe(data.errors, 0);
+                var vWarnings = toIntegerSafe(data.warnings, 0);
+                var passed = data.passed ? 'PASSED' : 'FAILED';
+                addEventToLog('validation', 'Validation ' + passed + ': ' + violations + ' violation' + (violations !== 1 ? 's' : '') + ' (' + vErrors + ' errors, ' + vWarnings + ' warnings)');
                 break;
             default:
                 addEventToLog('system', 'Event: ' + eventType);
@@ -297,6 +336,21 @@
         el.innerHTML = '<span class="font-medium">' + new Date().toLocaleTimeString() + '</span><span class="ml-2">' + escapeHtml(message) + '</span>';
         log.insertBefore(el, log.firstChild);
         while (log.children.length > 50) log.removeChild(log.lastChild);
+    }
+
+    function addLogEventToLog(level, message, target, timestamp) {
+        var log = document.getElementById('event-log');
+        var empty = log.querySelector('.text-secondary');
+        if (empty) empty.remove();
+        var el = document.createElement('div');
+        el.className = 'event-item event-log-' + level;
+        var time = timestamp || new Date().toLocaleTimeString();
+        el.innerHTML = '<span class="font-medium">' + escapeHtml(time) + '</span>' +
+            '<span class="log-level log-level-' + level + ' ml-2">' + level.toUpperCase() + '</span>' +
+            (target ? '<span class="ml-2" style="font-size:0.75rem;color:var(--text-muted)">' + escapeHtml(target) + '</span>' : '') +
+            '<span class="ml-2">' + escapeHtml(message) + '</span>';
+        log.insertBefore(el, log.firstChild);
+        while (log.children.length > 100) log.removeChild(log.lastChild);
     }
 
     function clearEventLog() {

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#value-objects)
+//!
 //! Search-Related Value Objects
 //!
 //! Value objects representing search results and related concepts

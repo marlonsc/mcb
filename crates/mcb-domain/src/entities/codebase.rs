@@ -1,5 +1,7 @@
 //! Codebase State Entities
 //!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
+//!
 //! Entities for managing codebase state, snapshots, and change tracking.
 //! These entities enable the system to track changes over time and
 //! maintain consistency across indexing operations.
@@ -69,6 +71,7 @@ impl SnapshotChanges {
     ///
     /// # Returns
     /// true if there are added, modified, or removed files, false otherwise
+    #[must_use]
     pub fn has_changes(&self) -> bool {
         !self.added.is_empty() || !self.modified.is_empty() || !self.removed.is_empty()
     }
@@ -77,6 +80,7 @@ impl SnapshotChanges {
     ///
     /// # Returns
     /// The sum of added, modified, and removed files
+    #[must_use]
     pub fn total_changes(&self) -> usize {
         self.added.len() + self.modified.len() + self.removed.len()
     }

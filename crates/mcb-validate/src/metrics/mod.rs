@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Code Metrics Module
 //!
 //! Provides code complexity metrics analysis using rust-code-analysis (RCA).
@@ -19,6 +22,6 @@ mod rca_analyzer;
 mod thresholds;
 mod violation;
 
+pub use self::violation::MetricViolation;
 pub use rca_analyzer::{RcaAnalyzer, RcaFunctionMetrics, RcaMetrics};
 pub use thresholds::{MetricThreshold, MetricThresholds, MetricType};
-pub use violation::MetricViolation;

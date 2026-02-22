@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#vector-store-providers)
+//!
 //! Encrypted vector store wrapper
 //!
 //! Provides encryption at rest for any vector store provider.
@@ -9,14 +12,6 @@
 //! - Wraps any `VectorStoreProvider` implementation
 //! - Encrypts metadata before storage
 //! - Vectors remain unencrypted for searchability
-//!
-//! ## Usage
-//!
-//! ```no_run
-//! use mcb_providers::vector_store::EncryptedVectorStoreProvider;
-//! // use mcb_domain::ports::providers::CryptoProvider;
-//!
-//! // let encrypted = EncryptedVectorStoreProvider::new(inner_provider, crypto_service);
 //! ```
 
 use std::collections::HashMap;
@@ -24,14 +19,20 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
-use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::ports::{
+    CryptoProvider, EncryptedData, VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider,
+};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use serde_json::Value;
 
+use crate::constants::{
+    VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_LINE_NUMBER,
+    VECTOR_FIELD_START_LINE,
+};
+
 /// Encrypted vector store provider
 ///
-/// Wraps any VectorStoreProvider implementation to provide encryption at rest.
+/// Wraps any `VectorStoreProvider` implementation to provide encryption at rest.
 /// Vectors are stored unencrypted for searchability, but metadata is encrypted
 /// using AES-256-GCM.
 ///
@@ -77,7 +78,7 @@ impl<P: VectorStoreProvider> EncryptedVectorStoreProvider<P> {
     fn encrypt_metadata(&self, meta: &HashMap<String, Value>) -> Result<HashMap<String, Value>> {
         // Serialize and encrypt sensitive metadata
         let metadata_json = serde_json::to_string(meta).map_err(|e| Error::Infrastructure {
-            message: format!("Failed to serialize metadata: {}", e),
+            message: format!("Failed to serialize metadata: {e}"),
             source: Some(Box::new(e)),
         })?;
 
@@ -85,21 +86,28 @@ impl<P: VectorStoreProvider> EncryptedVectorStoreProvider<P> {
 
         let mut processed = HashMap::new();
         processed.insert(
-            "encrypted_metadata".to_string(),
+            "encrypted_metadata".to_owned(),
             serde_json::to_value(&encrypted_data).map_err(|e| Error::Infrastructure {
-                message: format!("Failed to serialize encrypted data: {}", e),
+                message: format!("Failed to serialize encrypted data: {e}"),
                 source: Some(Box::new(e)),
             })?,
         );
 
         // Preserve unencrypted fields for filtering and SearchResult construction
-        for key in ["content", "file_path", "language"] {
+        for key in [
+            VECTOR_FIELD_CONTENT,
+            VECTOR_FIELD_FILE_PATH,
+            VECTOR_FIELD_LANGUAGE,
+        ] {
             if let Some(val) = meta.get(key) {
-                processed.insert(key.to_string(), val.clone());
+                processed.insert(key.to_owned(), val.clone());
             }
         }
-        if let Some(val) = meta.get("start_line").or_else(|| meta.get("line_number")) {
-            processed.insert("start_line".to_string(), val.clone());
+        if let Some(val) = meta
+            .get(VECTOR_FIELD_START_LINE)
+            .or_else(|| meta.get(VECTOR_FIELD_LINE_NUMBER))
+        {
+            processed.insert(VECTOR_FIELD_START_LINE.to_owned(), val.clone());
         }
 
         Ok(processed)
@@ -114,9 +122,9 @@ impl<P: VectorStoreProvider> VectorStoreAdmin for EncryptedVectorStoreProvider<P
 
     async fn get_stats(&self, collection: &CollectionId) -> Result<HashMap<String, Value>> {
         let mut stats = self.inner.get_stats(collection).await?;
-        stats.insert("encryption_enabled".to_string(), serde_json::json!(true));
+        stats.insert("encryption_enabled".to_owned(), serde_json::json!(true));
         stats.insert(
-            "encryption_algorithm".to_string(),
+            "encryption_algorithm".to_owned(),
             serde_json::json!("AES-256-GCM"),
         );
         Ok(stats)
@@ -128,6 +136,29 @@ impl<P: VectorStoreProvider> VectorStoreAdmin for EncryptedVectorStoreProvider<P
 
     fn provider_name(&self) -> &str {
         "encrypted"
+    }
+}
+
+#[async_trait]
+impl<P: VectorStoreProvider> VectorStoreBrowser for EncryptedVectorStoreProvider<P> {
+    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
+        self.inner.list_collections().await
+    }
+
+    async fn list_file_paths(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<FileInfo>> {
+        self.inner.list_file_paths(collection, limit).await
+    }
+
+    async fn get_chunks_by_file(
+        &self,
+        collection: &CollectionId,
+        file_path: &str,
+    ) -> Result<Vec<SearchResult>> {
+        self.inner.get_chunks_by_file(collection, file_path).await
     }
 }
 
@@ -202,51 +233,11 @@ impl<P: VectorStoreProvider> VectorStoreProvider for EncryptedVectorStoreProvide
     }
 }
 
-/// VectorStoreBrowser implementation for encrypted provider
+/// Decrypts metadata payloads stored under `encrypted_metadata`.
 ///
-/// Delegates all browse operations to the inner provider.
-/// Only available when the inner provider also implements VectorStoreBrowser.
-#[async_trait]
-impl<P: VectorStoreProvider + VectorStoreBrowser> VectorStoreBrowser
-    for EncryptedVectorStoreProvider<P>
-{
-    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
-        // Delegate to inner provider
-        self.inner.list_collections().await
-    }
-
-    async fn list_file_paths(
-        &self,
-        collection: &CollectionId,
-        limit: usize,
-    ) -> Result<Vec<FileInfo>> {
-        // Delegate to inner provider
-        self.inner.list_file_paths(collection, limit).await
-    }
-
-    async fn get_chunks_by_file(
-        &self,
-        collection: &CollectionId,
-        file_path: &str,
-    ) -> Result<Vec<SearchResult>> {
-        // Delegate to inner provider
-        self.inner.get_chunks_by_file(collection, file_path).await
-    }
-}
-
-/// Decrypt metadata from an encrypted search result
+/// # Errors
 ///
-/// This function is useful when you need to access the full encrypted metadata
-/// from a search result.
-///
-/// # Arguments
-///
-/// * `crypto` - The crypto provider to use for decryption
-/// * `metadata` - The metadata map containing encrypted_metadata field
-///
-/// # Returns
-///
-/// The decrypted metadata as a HashMap
+/// Returns an error if decryption or deserialization of the metadata fails.
 pub fn decrypt_metadata(
     crypto: &dyn CryptoProvider,
     metadata: &HashMap<String, Value>,
@@ -258,19 +249,19 @@ pub fn decrypt_metadata(
     let encrypted_value_owned = encrypted_value.clone();
     let encrypted_data: EncryptedData =
         serde_json::from_value(encrypted_value_owned).map_err(|e| Error::Infrastructure {
-            message: format!("Failed to deserialize encrypted data: {}", e),
+            message: format!("Failed to deserialize encrypted data: {e}"),
             source: Some(Box::new(e)),
         })?;
 
     let decrypted_bytes = crypto.decrypt(&encrypted_data)?;
 
     let decrypted_str = String::from_utf8(decrypted_bytes).map_err(|e| Error::Infrastructure {
-        message: format!("Failed to decode decrypted data as UTF-8: {}", e),
+        message: format!("Failed to decode decrypted data as UTF-8: {e}"),
         source: Some(Box::new(e)),
     })?;
 
     serde_json::from_str(&decrypted_str).map_err(|e| Error::Infrastructure {
-        message: format!("Failed to parse decrypted metadata: {}", e),
+        message: format!("Failed to parse decrypted metadata: {e}"),
         source: Some(Box::new(e)),
     })
 }

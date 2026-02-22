@@ -1,55 +1,44 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
-# application Module
+# Application Layer (Use Cases)
 
 **Source**: `crates/mcb-application/src/`
 **Crate**: `mcb-application`
-**Files**: 11 files
-**Lines of Code**: ~2,000
 
-**Project links**: See `docs/architecture/ARCHITECTURE.md`, `docs/modules/domain.md`, `docs/developer/ROADMAP.md`.
+## ↔ Code ↔ Docs cross-reference
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-application/src/lib.rs`](../../crates/mcb-application/src/lib.rs) links here |
+| Docs → Code | [`crates/mcb-application/src/lib.rs`](../../crates/mcb-application/src/lib.rs) — crate root |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) · [`ADR-050`](../adr/050-manual-composition-root-dill-removal.md) |
+| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
 
 ## Overview
 
-The application module implements use-case services and decorators following Clean Architecture. The crate uses `use_cases/` and `decorators/` as its service organization.
+The application layer orchestrates the flow of data between the user-facing gateways and the domain layer. It contains the business use cases, ensuring that domain entities and ports are used correctly to fulfill system requirements.
 
-### Key Components
+---
 
-### Use Cases (`use_cases/`)
+## Use Cases
 
-- `agent_session_service.rs` - Agent session lifecycle use cases
-- `context_service.rs` - Embedding and vector operations
-- `indexing_service.rs` - Codebase indexing and processing
-- `memory_service.rs` - Observation/memory use cases
-- `search_service.rs` - Query processing and ranking
-- `validation_service.rs` - Validation orchestration
+These services implement the business logic defined in the domain ports.
 
-### Decorators (`decorators/`)
+- **IndexingService** ([`indexing_service.rs`](../../crates/mcb-application/src/use_cases/indexing_service.rs)): Coordinates codebase analysis, chunking, and storage into vector/lexical indexes.
+- **SearchService** ([`search_service.rs`](../../crates/mcb-application/src/use_cases/search_service.rs)): Implements semantic, hybrid, and lexical search workflows.
+- **ContextService** ([`context_service.rs`](../../crates/mcb-application/src/use_cases/context_service.rs)): Aggregates embeddings and vector data for query enrichment.
+- **MemoryService** ([`memory_service.rs`](../../crates/mcb-application/src/use_cases/memory_service.rs)): Manages observation capture and session awareness.
+- **AgentSessionService** ([`agent_session_service.rs`](../../crates/mcb-application/src/use_cases/agent_session_service.rs)): Orchestrates agent lifecycle, checkpoints, and tool call history.
+- **ValidationService** ([`validation_service.rs`](../../crates/mcb-application/src/use_cases/validation_service.rs)): Runs multi-phase validation pipelines across the codebase.
 
-- `instrumented_embedding.rs` - Embedding provider metrics instrumentation
+---
 
-### Root Files
+## Decorators
 
-- `constants.rs` - Shared application constants
-- `lib.rs` - Crate root and exports
+The application layer uses decorators to add cross-cutting concerns (like metrics or logging) to service implementations without bloating the core logic.
 
-## File Structure
+- **InstrumentedEmbedding** ([`instrumented_embedding.rs`](../../crates/mcb-application/src/decorators/instrumented_embedding.rs)): Adds OpenTelemetry metrics to embedding generations.
 
-```text
-crates/mcb-application/src/
-├── constants.rs
-├── decorators/
-│   ├── instrumented_embedding.rs
-│   └── mod.rs
-├── use_cases/
-│   ├── agent_session_service.rs
-│   ├── context_service.rs
-│   ├── indexing_service.rs
-│   ├── memory_service.rs
-│   ├── search_service.rs
-│   ├── validation_service.rs
-│   └── mod.rs
-└── lib.rs
-```
+---
 
 ## Key Exports
 
@@ -62,10 +51,16 @@ pub use use_cases::search_service::SearchServiceImpl;
 pub use use_cases::validation_service::ValidationServiceImpl;
 ```
 
-## Testing
+## File Structure
 
-Application tests are located in `crates/mcb-application/tests/`.
+```text
+crates/mcb-application/src/
+├── decorators/          # Service decorators (Metrics, Logging)
+├── use_cases/           # Implementation of domain port traits
+├── constants.rs         # Shared app-layer constants
+└── lib.rs               # Crate root
+```
 
 ---
 
-### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)
+### Updated 2026-02-20 - Consolidated services.md into application.md for SSOT

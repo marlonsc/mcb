@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Re-exports metadata constants from domain layer.
 
 pub use mcb_domain::constants::keys::{

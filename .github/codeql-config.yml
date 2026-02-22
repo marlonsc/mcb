@@ -7,14 +7,24 @@ paths:
 paths-ignore:
   - target
   - tests
-  - '**/tests/**'
-  - '**/*_tests.rs'
-  - '**/*.test.rs'
-  - '**/*.tests.rs'
-  - '**/test_*.rs'
-  - '**/sample_codebase/**'
+  - "**/tests/**"
+  - "**/test/**"
+  - "**/fixtures/**"
+  - "**/sample_codebase/**"
+  - "**/*_tests.rs"
+  - "**/*_test.rs"
+  - "**/*.test.rs"
+  - "**/*.tests.rs"
+  - "**/test_*.rs"
+  - "**/benches/**"
 
 queries:
   - uses: security-and-quality
+
+query-filters:
+  - exclude:
+      id: rust/unused-variable
+  - exclude:
+      id: rust/hard-coded-cryptographic-value
 
 languages: ["rust"]

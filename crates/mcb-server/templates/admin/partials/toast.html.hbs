@@ -1,0 +1,94 @@
+{{!-- Toast notification system - included once in layout.html.hbs --}}
+<div
+  x-data="toastManager()"
+  x-init="checkToastParam()"
+  x-cloak
+  style="position: fixed; top: 1rem; right: 1rem; z-index: 100; display: flex; flex-direction: column; gap: 0.5rem;"
+>
+  <template x-for="toast in toasts" :key="toast.id">
+    <div
+      role="alert"
+      x-transition:enter="transition ease-out duration-300"
+      x-transition:enter-start="opacity: 0; transform: translateX(1rem);"
+      x-transition:enter-end="opacity: 1; transform: translateX(0);"
+      x-transition:leave="transition ease-in duration-200"
+      x-transition:leave-start="opacity: 1; transform: translateX(0);"
+      x-transition:leave-end="opacity: 0; transform: translateX(1rem);"
+      :style="`
+        padding: 0.75rem 1rem;
+        border-radius: 0.5rem;
+        min-width: 280px;
+        max-width: 400px;
+        color: white;
+        display: flex;
+        align-items: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        background: ${
+          toast.type === 'success' ? 'var(--color-success)' :
+          toast.type === 'error'   ? 'var(--color-error)' :
+          'var(--accent)'
+        };
+      `"
+    >
+      <span
+        style="margin-right: 0.5rem; font-weight: bold;"
+        x-text="toast.type === 'success' ? '✓' : toast.type === 'error' ? '✗' : 'ℹ'"
+      ></span>
+      <span x-text="toast.message" style="flex: 1;"></span>
+      <span
+        @click="removeToast(toast.id)"
+        style="cursor: pointer; margin-left: auto; padding-left: 0.75rem; opacity: 0.7;"
+      >&times;</span>
+    </div>
+  </template>
+</div>
+
+<script>
+  function toastManager() {
+    return {
+      toasts: [],
+
+      addToast(message, type = 'success') {
+        const id = Date.now();
+        this.toasts.push({ id, message, type });
+        setTimeout(() => this.removeToast(id), 4000);
+      },
+
+      removeToast(id) {
+        this.toasts = this.toasts.filter(t => t.id !== id);
+      },
+
+      checkToastParam() {
+        const params = new URLSearchParams(window.location.search);
+        const toast = params.get('toast');
+        if (!toast) return;
+
+        const count = params.get('count') || '0';
+        const success = params.get('success') || '0';
+        const failed = params.get('failed') || '0';
+
+        const messages = {
+          created: ['Record created successfully', 'success'],
+          updated: ['Record updated successfully', 'success'],
+          deleted: ['Record deleted successfully', 'success'],
+          bulk_deleted: [`${count} record(s) deleted successfully`, 'success'],
+          bulk_error: [`Failed to delete ${count} record(s)`, 'error'],
+          bulk_partial: [`${success} deleted, ${failed} failed`, 'error'],
+        };
+
+        if (messages[toast]) {
+          this.addToast(messages[toast][0], messages[toast][1]);
+        }
+
+        params.delete('toast');
+        params.delete('count');
+        params.delete('success');
+        params.delete('failed');
+        const newUrl = params.toString()
+          ? `${window.location.pathname}?${params.toString()}`
+          : window.location.pathname;
+        history.replaceState(null, '', newUrl);
+      },
+    };
+  }
+</script>

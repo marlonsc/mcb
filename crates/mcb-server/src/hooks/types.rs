@@ -1,44 +1,35 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Type definitions for the hook system.
 //!
 //! Includes hook event types, contexts, and errors.
 
 use std::collections::HashMap;
-use std::time::{SystemTime, UNIX_EPOCH};
 
+use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::ids::SessionId;
-use rmcp::model::CallToolResult;
+use thiserror::Error;
 
 /// Result type for hook operations.
 pub type HookResult<T> = Result<T, HookError>;
 
 /// Errors that can occur during hook execution.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Error)]
 pub enum HookError {
     /// The memory service is not available.
+    #[error("Memory service unavailable")]
     MemoryServiceUnavailable,
     /// Failed to store an observation in memory.
+    #[error("Failed to store observation: {0}")]
     FailedToStoreObservation(String),
     /// Failed to inject context into the session.
+    #[error("Failed to inject context: {0}")]
     FailedToInjectContext(String),
     /// The tool output provided is invalid.
+    #[error("Invalid tool output: {0}")]
     InvalidToolOutput(String),
 }
-
-impl std::fmt::Display for HookError {
-    /// Formats the error message.
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            HookError::MemoryServiceUnavailable => write!(f, "Memory service unavailable"),
-            HookError::FailedToStoreObservation(msg) => {
-                write!(f, "Failed to store observation: {}", msg)
-            }
-            HookError::FailedToInjectContext(msg) => write!(f, "Failed to inject context: {}", msg),
-            HookError::InvalidToolOutput(msg) => write!(f, "Invalid tool output: {}", msg),
-        }
-    }
-}
-
-impl std::error::Error for HookError {}
 
 /// Represents the type of hook event being triggered.
 #[derive(Debug, Clone)]
@@ -54,8 +45,6 @@ pub enum Hook {
 pub struct PostToolUseContext {
     /// Name of the tool that was executed.
     pub tool_name: String,
-    /// The result output from the tool execution.
-    pub tool_output: CallToolResult,
     /// The execution status (success, error, partial).
     pub status: ToolExecutionStatus,
     /// Timestamp when the execution finished (Unix epoch).
@@ -94,24 +83,22 @@ pub struct HookContext {
 }
 
 impl PostToolUseContext {
-    /// Creates a new `PostToolUseContext` from a tool name and output.
+    /// Creates a new `PostToolUseContext` from a tool name and error status.
     ///
-    /// Automatically determines the status based on `tool_output.is_error`.
-    pub fn new(tool_name: String, tool_output: CallToolResult) -> Self {
-        let status = if tool_output.is_error.unwrap_or(false) {
+    /// This avoids cloning the entire `CallToolResult` — only the `is_error`
+    /// flag is needed by the hook processor.
+    #[must_use]
+    pub fn new(tool_name: String, is_error: bool) -> Self {
+        let status = if is_error {
             ToolExecutionStatus::Error
         } else {
             ToolExecutionStatus::Success
         };
 
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs())
-            .unwrap_or(0);
+        let timestamp = domain_time::epoch_secs_u64().unwrap_or(0);
 
         Self {
             tool_name,
-            tool_output,
             status,
             timestamp,
             session_id: None,
@@ -128,19 +115,17 @@ impl PostToolUseContext {
 
     /// Adds a key-value pair to the metadata.
     #[must_use]
-    pub fn with_metadata(mut self, key: String, value: String) -> Self {
-        self.metadata.insert(key, value);
+    pub fn with_metadata(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.metadata.insert(key.into(), value.into());
         self
     }
 }
 
 impl SessionStartContext {
     /// Creates a new `SessionStartContext` for a given session ID.
+    #[must_use]
     pub fn new(session_id: SessionId) -> Self {
-        let timestamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs())
-            .unwrap_or(0);
+        let timestamp = domain_time::epoch_secs_u64().unwrap_or(0);
 
         Self {
             session_id,

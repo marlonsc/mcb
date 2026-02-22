@@ -1,3 +1,7 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
+//!
+//! Provides chunking domain definitions.
 use std::path::Path;
 
 use async_trait::async_trait;
@@ -58,12 +62,14 @@ pub trait ChunkingOrchestratorInterface: Send + Sync {
 /// Domain Port for Code Chunking Operations
 #[async_trait]
 pub trait CodeChunker: Send + Sync {
+    /// Performs the chunk file operation.
     async fn chunk_file(
         &self,
         file_path: &Path,
         options: ChunkingOptions,
     ) -> Result<ChunkingResult>;
 
+    /// Performs the chunk content operation.
     async fn chunk_content(
         &self,
         content: &str,
@@ -72,14 +78,17 @@ pub trait CodeChunker: Send + Sync {
         options: ChunkingOptions,
     ) -> Result<ChunkingResult>;
 
+    /// Performs the chunk batch operation.
     async fn chunk_batch(
         &self,
         file_paths: &[&Path],
         options: ChunkingOptions,
     ) -> Result<Vec<ChunkingResult>>;
 
+    /// Performs the supported languages operation.
     fn supported_languages(&self) -> Vec<Language>;
 
+    /// Performs the is language supported operation.
     fn is_language_supported(&self, language: &Language) -> bool {
         self.supported_languages().contains(language)
     }

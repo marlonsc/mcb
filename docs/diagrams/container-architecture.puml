@@ -10,9 +10,9 @@ System_Boundary(mcp_system, "Memory Context Browser") {
     Container(mcp_server, "MCP Server", "Rust/Tokio", "Protocol handler, tool dispatcher")
     Container(core_services, "Core Services", "Rust", "Business logic, orchestration")
     Container(provider_layer, "Provider Layer", "Rust + SDKs", "AI and storage provider abstractions")
-    Container(routing_layer, "Routing Layer", "Rust", "Circuit breakers, failover, health checks")
-    Container(metrics_api, "Metrics API", "Axum/Prometheus", "Health endpoints, monitoring")
-    Container(metadata_store, "Metadata Store", "PostgreSQL", "Structured data, search history")
+    Container(routing_layer, "Infrastructure Layer", "Rust", "Routing, health checks, DI composition")
+    Container(metrics_api, "Metrics API", "Rocket", "Health endpoints, monitoring")
+    Container(metadata_store, "Metadata Store", "SQLite", "Structured data, search history")
     Container(vector_db, "Vector Database", "Milvus/Qdrant", "High-dimensional vector storage")
     Container(cache, "Cache Layer", "Redis", "Fast data caching and sessions")
 }

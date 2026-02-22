@@ -1,0 +1,21 @@
+{{!-- Toggle switch for boolean fields --}}
+{{!-- Context: name, label, readonly, ../record (parent record for edit mode) --}}
+<div x-data="{ on: {{#if (lookup ../record name)}}true{{else}}false{{/if}} }"
+     class="toggle-switch"
+     {{#if readonly}}data-readonly{{/if}}
+     style="margin-bottom: 1rem;">
+  {{!-- Hidden field ensures "false" is submitted when unchecked --}}
+  <input type="hidden" name="{{name}}" value="false">
+  {{!-- Visually hidden checkbox for accessibility and form submission --}}
+  <input type="checkbox"
+         name="{{name}}"
+         value="true"
+         x-model="on"
+         style="position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0;">
+  {{!-- Visual toggle --}}
+  <div class="toggle-switch-track"
+       :class="on && 'active'"
+       @click="on = !on">
+    <div class="toggle-switch-thumb"></div>
+  </div>
+</div>

@@ -6,7 +6,7 @@
 use std::sync::Arc;
 
 /// Trait for embedding providers that generate vectors
-pub trait EmbeddingProvider: Send + Sync {
+pub trait SampleEmbeddingProvider: Send + Sync {
     /// Generate embeddings for batch of texts
     fn embed_batch(&self, texts: &[String]) -> Vec<Vec<f32>>;
 
@@ -29,7 +29,7 @@ impl OllamaEmbeddingProvider {
     }
 }
 
-impl EmbeddingProvider for OllamaEmbeddingProvider {
+impl SampleEmbeddingProvider for OllamaEmbeddingProvider {
     fn embed_batch(&self, texts: &[String]) -> Vec<Vec<f32>> {
         // Ollama embedding implementation
         texts.iter().map(|_| vec![0.0; 384]).collect()
@@ -55,7 +55,7 @@ impl OpenAIEmbeddingProvider {
     }
 }
 
-impl EmbeddingProvider for OpenAIEmbeddingProvider {
+impl SampleEmbeddingProvider for OpenAIEmbeddingProvider {
     fn embed_batch(&self, texts: &[String]) -> Vec<Vec<f32>> {
         // OpenAI embedding implementation
         texts.iter().map(|_| vec![0.0; 1536]).collect()

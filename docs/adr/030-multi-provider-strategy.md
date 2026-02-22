@@ -26,29 +26,22 @@ implementation_status: N/A
 > failover, and health monitoring strategies are now documented in ADR-003. This
 > document is retained for historical reference only.
 >
-> Full multi-provider routing implemented in `crates/mcb-providers/src/routing/`:
+> Routing infrastructure in `crates/mcb-infrastructure/src/routing/`:
 >
-> **Routing Components** (`crates/mcb-providers/src/routing/`):
->
-> - `circuit_breaker.rs` - Circuit breaker with state transitions
 > - `health.rs` - Health monitoring for providers
-> - `cost_tracker.rs` - Cost tracking and budget management
-> - `failover.rs` - Automatic failover logic
-> - `metrics.rs` - Metrics collection
 > - `router.rs` - Provider router with selection strategies
 >
 > **Provider Implementations** (`crates/mcb-providers/src/`):
 >
-> - `embedding/` - 6 providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed,
->   Null)
-> - `vector_store/` - 6 providers (In-Memory, Encrypted, Filesystem,
->   Milvus, EdgeVec, Null)
-> - `cache/` - Cache providers (Moka, Null)
+> - `embedding/` - 6 providers (FastEmbed, OpenAI, VoyageAI, Ollama, Gemini,
+>   Anthropic)
+> - `vector_store/` - 5 providers (EdgeVec, Milvus, Qdrant, Pinecone,
+>   Encrypted)
+> - `cache/` - Cache providers (Moka, Redis)
 > - `language/` - 12 language processors with
 >   `UniversalLanguageChunkingProvider`
 >
-> All providers implement port traits from `mcb-domain`; DI is dill-based
-> (ADR-029).
+> All providers implement port traits from `mcb-domain`; DI uses an AppContext manual composition root with linkme + handles (ADR-050; ADR-029 superseded).
 
 ## Context
 
@@ -143,7 +136,7 @@ significant operational complexity.
 ### Provider Selection Strategy (mcb-providers)
 
 ```rust
-// crates/mcb-providers/src/routing/router.rs
+// crates/mcb-infrastructure/src/routing/router.rs
 #[derive(Clone)]
 pub enum ProviderSelectionStrategy {
     /// Always use the fastest available provider
@@ -192,7 +185,7 @@ impl<P: Provider> ProviderRouter<P> {
 
 ### Provider Factory (mcb-infrastructure)
 
-**Note:** DI has migrated to dill (ADR-029). The following describes the factory
+**Note:** DI has migrated to `init_app()` + AppContext composition root (ADR-050; ADR-029 superseded). The following describes the factory
 pattern; Shaku is no longer used.
 
 Production providers are created via factories (e.g. resolvers + linkme registry):
@@ -215,7 +208,7 @@ impl EmbeddingProviderFactory {
                 VoyageAIEmbeddingProvider::new(&config.voyage)?)),
             "gemini" => Ok(Arc::new(
                 GeminiEmbeddingProvider::new(&config.gemini)?)),
-            "null" | "test" => Ok(Arc::new(NullEmbeddingProvider)),
+            "fastembed" | "test" => Ok(Arc::new(FastEmbedProvider::default())),
             _ => Err(Error::config(format!(
                 "Unknown embedding provider: {}", config.provider))),
         }
@@ -224,12 +217,8 @@ impl EmbeddingProviderFactory {
 
 // Usage in DI bootstrap
 // crates/mcb-infrastructure/src/di/bootstrap.rs
-pub async fn create_services(config: &Config) -> Result<DomainServices> {
-    let embedding = EmbeddingProviderFactory::create(&config.embedding, None)?;
-    let vector_store = VectorStoreProviderFactory::create(
-        &config.vector_store, None)?;
-    // ... wire into services
-}
+// DomainServicesFactory::create_services(deps) wires everything via init_app()/AppContext
+
 ```
 
 ### Health Monitoring and Failover
@@ -354,7 +343,7 @@ impl CostTracker {
 
 [providers.embedding]
 default_provider = "openai"
-fallback_providers = ["ollama", "mock"]
+fallback_providers = ["ollama", "fastembed"]
 
 [providers.embedding.openai]
 api_key = "${OPENAI_API_KEY}"
@@ -385,7 +374,7 @@ high_quality = "openai"     # For quality-critical tasks, use OpenAI
 cost_optimized = "ollama"   # For bulk processing, use free tier
 
 [routing.contextual.vector_store]
-development = "memory"      # Use in-memory for development
+development = "edgevec"     # Use EdgeVec for development
 production = "milvus"       # Use Milvus for production
 ```
 
@@ -464,11 +453,12 @@ types beyond embedding providers:
 
 ### Extended Provider Types
 
-Current (v0.1.2):
+Current (v0.2.1):
 
-- Embedding Providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null) - 6
+- Embedding Providers (FastEmbed, OpenAI, VoyageAI, Ollama, Gemini, Anthropic) -
+  6 total
+- Vector Store Providers (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted) - 5
   total
-- Vector Store Providers (In-Memory, Encrypted, Null) - 3 total
 
 Future (v0.3.0+):
 
@@ -537,5 +527,5 @@ The existing router pattern extends to new provider types:
 - [Circuit Breaker Pattern](https://microservices.io/patterns/reliability/circuit-breaker.html)
 - [Provider Selection Strategies](https://aws.amazon.com/blogs/architecture/)
 - [Multicloud on AWS](https://aws.amazon.com/multicloud/)
-- [ADR-029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) - Current DI
-- [Shaku Documentation](https://docs.rs/shaku) (historical)
+- [ADR-029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) - Historical DI (superseded by ADR-050)
+- [linkme Documentation](https://docs.rs/linkme) - Compile-time provider discovery

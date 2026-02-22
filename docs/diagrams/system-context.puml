@@ -10,7 +10,7 @@ System(mcp_server, "Memory Context Browser", "Provides semantic code search and 
 System(codebase, "Code Repository", "Git repositories with source code files")
 System_Ext(ai_provider, "AI Provider", "OpenAI, Anthropic, Ollama for embeddings")
 System_Ext(vector_db, "Vector Database", "Milvus, Pinecone, Qdrant for vector storage")
-System_Ext(metadata_store, "Metadata Store", "PostgreSQL for structured data")
+System_Ext(metadata_store, "Metadata Store", "SQLite for structured data")
 
 Rel(ai_user, mcp_server, "Queries code using natural language", "MCP Protocol")
 Rel(developer, mcp_server, "Indexes and searches code", "MCP Protocol")

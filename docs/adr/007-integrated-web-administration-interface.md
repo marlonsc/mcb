@@ -435,4 +435,4 @@ templates/
 
 - [Admin Module](../../crates/mcb-server/src/admin/) - Admin routes, handlers, and web UI
 - [HTTP Transport](../../crates/mcb-server/src/transport/http.rs) - HTTP server implementation
-- [dill Documentation](https://docs.rs/dill) - Current DI framework (ADR-029)
+- [linkme Documentation](https://docs.rs/linkme) - Compile-time provider discovery (current DI pattern; ADR-050)

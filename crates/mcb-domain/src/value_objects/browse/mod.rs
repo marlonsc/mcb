@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#value-objects)
+//!
 //! Browse value objects for code navigation and file tree representation.
 
 mod collection;

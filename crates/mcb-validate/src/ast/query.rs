@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! AST Query Engine
 //!
 //! Provides querying capabilities over unified AST format for rule validation.
@@ -14,7 +17,7 @@
 //! // let violations = query.execute(&root_node);
 //! ```
 
-use regex::Regex;
+use crate::pattern_registry::compile_regex;
 
 use super::{AstNode, AstViolation};
 
@@ -79,13 +82,14 @@ pub enum QueryCondition {
 
 impl AstQuery {
     /// Create a new AST query
+    #[must_use]
     pub fn new(language: &str, node_type: &str, message: &str, severity: &str) -> Self {
         Self {
-            language: language.to_string(),
-            node_type: node_type.to_string(),
+            language: language.to_owned(),
+            node_type: node_type.to_owned(),
             conditions: Vec::new(),
-            message: message.to_string(),
-            severity: severity.to_string(),
+            message: message.to_owned(),
+            severity: severity.to_owned(),
         }
     }
 
@@ -97,13 +101,14 @@ impl AstQuery {
     }
 
     /// Execute query on AST node
+    #[must_use]
     pub fn execute(&self, node: &AstNode) -> Vec<AstViolation> {
         let mut violations = Vec::new();
 
         if self.matches_node(node) {
             violations.push(AstViolation {
                 rule_id: format!("AST_{}_{}", self.language, self.node_type),
-                file: "unknown".to_string(), // Would be set by caller
+                file: "unknown".to_owned(), // Would be set by caller
                 node: node.clone(),
                 message: self.message.clone(),
                 severity: self.severity.clone(),
@@ -127,7 +132,7 @@ impl AstQuery {
 
         // Check all conditions
         for condition in &self.conditions {
-            if !self.check_condition(condition, node) {
+            if !Self::check_condition(condition, node) {
                 return false;
             }
         }
@@ -136,7 +141,7 @@ impl AstQuery {
     }
 
     /// Check individual condition
-    fn check_condition(&self, condition: &QueryCondition, node: &AstNode) -> bool {
+    fn check_condition(condition: &QueryCondition, node: &AstNode) -> bool {
         match condition {
             QueryCondition::HasField { field, value } => node
                 .metadata
@@ -145,7 +150,9 @@ impl AstQuery {
                 .is_some_and(|s| s == value),
             QueryCondition::NotHasField { field } => !node.metadata.contains_key(field),
             QueryCondition::NameMatches { pattern } => match &node.name {
-                Some(name) => Regex::new(pattern).ok().is_some_and(|re| re.is_match(name)),
+                Some(name) => compile_regex(pattern)
+                    .ok()
+                    .is_some_and(|re| re.is_match(name)),
                 None => false,
             },
             QueryCondition::HasChild { child_type } => {
@@ -157,14 +164,14 @@ impl AstQuery {
             QueryCondition::MetadataEquals { key, value } => {
                 node.metadata.get(key).is_some_and(|v| v == value)
             }
-            QueryCondition::Custom { name } => self.check_custom_condition(name, node),
+            QueryCondition::Custom { name } => Self::check_custom_condition(name, node),
         }
     }
 
     /// Check custom conditions
-    fn check_custom_condition(&self, name: &str, node: &AstNode) -> bool {
+    fn check_custom_condition(name: &str, node: &AstNode) -> bool {
         match name {
-            "has_no_docstring" => self.has_no_docstring(node),
+            "has_no_docstring" => Self::has_no_docstring(node),
             "is_async" => node
                 .metadata
                 .get("is_async")
@@ -184,7 +191,7 @@ impl AstQuery {
     }
 
     /// Check if function has docstring/documentation
-    fn has_no_docstring(&self, node: &AstNode) -> bool {
+    fn has_no_docstring(node: &AstNode) -> bool {
         // Look for documentation comments before the function
         // This is a simplified check - real implementation would
         // need to check source code around the node
@@ -207,13 +214,14 @@ pub struct AstQueryBuilder {
 
 impl AstQueryBuilder {
     /// Create a new query builder
+    #[must_use]
     pub fn new(language: &str, node_type: &str) -> Self {
         Self {
-            language: language.to_string(),
-            node_type: node_type.to_string(),
+            language: language.to_owned(),
+            node_type: node_type.to_owned(),
             conditions: Vec::new(),
             message: String::new(),
-            severity: "warning".to_string(),
+            severity: "warning".to_owned(),
         }
     }
 
@@ -227,14 +235,14 @@ impl AstQueryBuilder {
     /// Set the violation message
     #[must_use]
     pub fn message(mut self, message: &str) -> Self {
-        self.message = message.to_string();
+        self.message = message.to_owned();
         self
     }
 
     /// Set the violation severity
     #[must_use]
     pub fn severity(mut self, severity: &str) -> Self {
-        self.severity = severity.to_string();
+        self.severity = severity.to_owned();
         self
     }
 
@@ -274,12 +282,13 @@ pub struct AstQueryPatterns;
 
 impl AstQueryPatterns {
     /// Query for functions without documentation
+    #[must_use]
     pub fn undocumented_functions(language: &str) -> AstQuery {
         let node_type = function_node_type(language);
 
         AstQueryBuilder::new(language, node_type)
             .with_condition(QueryCondition::Custom {
-                name: "has_no_docstring".to_string(),
+                name: "has_no_docstring".to_owned(),
             })
             .message("Functions must be documented")
             .severity("warning")
@@ -287,16 +296,17 @@ impl AstQueryPatterns {
     }
 
     /// Query for `unwrap()` usage in non-test code
+    #[must_use]
     pub fn unwrap_usage(language: &str) -> AstQuery {
         let node_type = call_node_type(language);
 
         AstQueryBuilder::new(language, node_type)
             .with_condition(QueryCondition::HasField {
-                field: "function_name".to_string(),
-                value: "unwrap".to_string(),
+                field: "function_name".to_owned(),
+                value: "unwrap".to_owned(),
             })
             .with_condition(QueryCondition::Custom {
-                name: "is_test_function".to_string(),
+                name: "is_test_function".to_owned(),
             })
             .message("Avoid unwrap() in production code")
             .severity("error")
@@ -304,12 +314,13 @@ impl AstQueryPatterns {
     }
 
     /// Query for async functions
+    #[must_use]
     pub fn async_functions(language: &str) -> AstQuery {
         let node_type = function_node_type(language);
 
         AstQueryBuilder::new(language, node_type)
             .with_condition(QueryCondition::Custom {
-                name: "is_async".to_string(),
+                name: "is_async".to_owned(),
             })
             .message("Async function detected")
             .severity("info")

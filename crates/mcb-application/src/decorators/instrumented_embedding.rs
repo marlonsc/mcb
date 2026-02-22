@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/application.md](../../../../docs/modules/application.md#decorators)
+//!
 //! Instrumented Embedding Provider Decorator
 //!
 //! Wraps an `EmbeddingProvider` to record timing metrics for all operations.
@@ -20,9 +23,9 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use async_trait::async_trait;
+use delegate::delegate;
 use mcb_domain::error::Result;
-use mcb_domain::ports::admin::PerformanceMetricsInterface;
-use mcb_domain::ports::providers::EmbeddingProvider;
+use mcb_domain::ports::{EmbeddingProvider, PerformanceMetricsInterface};
 use mcb_domain::value_objects::Embedding;
 
 /// Instrumented embedding provider decorator
@@ -56,6 +59,7 @@ impl InstrumentedEmbeddingProvider {
     }
 
     /// Get the wrapped provider name for logging/debugging
+    #[must_use]
     pub fn inner_provider_name(&self) -> &str {
         self.inner.provider_name()
     }
@@ -63,6 +67,9 @@ impl InstrumentedEmbeddingProvider {
 
 #[async_trait]
 impl EmbeddingProvider for InstrumentedEmbeddingProvider {
+    /// # Errors
+    ///
+    /// Returns an error if the underlying embedding provider fails.
     async fn embed(&self, text: &str) -> Result<Embedding> {
         let start = Instant::now();
         let result = self.inner.embed(text).await;
@@ -75,6 +82,9 @@ impl EmbeddingProvider for InstrumentedEmbeddingProvider {
         result
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the underlying embedding provider fails.
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
         let start = Instant::now();
         let result = self.inner.embed_batch(texts).await;
@@ -87,13 +97,11 @@ impl EmbeddingProvider for InstrumentedEmbeddingProvider {
         result
     }
 
-    fn dimensions(&self) -> usize {
-        self.inner.dimensions()
-    }
-
-    fn provider_name(&self) -> &str {
-        // Return inner provider name for transparency
-        self.inner.provider_name()
+    delegate! {
+        to self.inner {
+            fn dimensions(&self) -> usize;
+            fn provider_name(&self) -> &str;
+        }
     }
 }
 

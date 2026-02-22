@@ -21,6 +21,8 @@ provider = "edgevec"
 [system.infrastructure.cache]
 enabled = false
 
+# Parsed directly by test harnesses (not loaded by the config loader).
+# Do NOT add new top-level sections — AppConfig uses deny_unknown_fields.
 [test_services]
 api_mock_url = "http://127.0.0.1:21080"
 redis_url = "redis://127.0.0.1:26379"

@@ -1,6 +1,9 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! AST traverser for extracting code chunks based on rules
 //!
-//! This module provides the AstTraverser that walks tree-sitter ASTs
+//! This module provides the `AstTraverser` that walks tree-sitter ASTs
 //! and extracts code chunks according to configurable rules.
 
 use std::collections::HashMap;
@@ -40,6 +43,7 @@ pub struct AstTraverser<'a> {
 
 impl<'a> AstTraverser<'a> {
     /// Create a new AST traverser with extraction rules and language configuration
+    #[must_use]
     pub fn new(rules: &'a [NodeExtractionRule], language: &'a Language) -> Self {
         Self {
             rules,
@@ -49,6 +53,7 @@ impl<'a> AstTraverser<'a> {
     }
 
     /// Configure the maximum number of chunks to extract
+    #[must_use]
     pub fn with_max_chunks(mut self, max_chunks: usize) -> Self {
         self.max_chunks = max_chunks;
         self
@@ -74,7 +79,7 @@ impl<'a> AstTraverser<'a> {
 
             // Check if this node matches any extraction rule
             for rule in self.rules {
-                if !rule.node_types.contains(&node_type.to_string()) {
+                if !rule.node_types.contains(&node_type.to_owned()) {
                     continue;
                 }
                 let ctx = ExtractionContext {
@@ -84,7 +89,7 @@ impl<'a> AstTraverser<'a> {
                     rule,
                     chunk_index: chunks.len(),
                 };
-                if let Some(chunk) = self.try_extract_chunk(node, ctx) {
+                if let Some(chunk) = self.try_extract_chunk(node, &ctx) {
                     chunks.push(chunk);
                     if chunks.len() >= self.max_chunks {
                         return;
@@ -116,15 +121,15 @@ impl<'a> AstTraverser<'a> {
         let end = node.end_byte();
 
         if start >= content.len() || end > content.len() || start >= end {
-            return Err(Error::internal("Invalid node range".to_string()));
+            return Err(Error::internal("Invalid node range".to_owned()));
         }
 
         let code = content[start..end].trim();
         if code.is_empty() {
-            return Err(Error::internal("Empty node content".to_string()));
+            return Err(Error::internal("Empty node content".to_owned()));
         }
 
-        Ok(code.to_string())
+        Ok(code.to_owned())
     }
 
     fn extract_node_with_context(
@@ -160,7 +165,7 @@ impl<'a> AstTraverser<'a> {
     fn try_extract_chunk(
         &self,
         node: tree_sitter::Node,
-        ctx: ExtractionContext,
+        ctx: &ExtractionContext,
     ) -> Option<CodeChunk> {
         let (code, context) = if ctx.rule.include_context {
             Self::extract_node_with_context(node, ctx.content, 3)
@@ -187,10 +192,7 @@ impl<'a> AstTraverser<'a> {
         if let Some(context_lines) = context
             && let Some(metadata) = chunk.metadata.as_object_mut()
         {
-            metadata.insert(
-                "context_lines".to_string(),
-                serde_json::json!(context_lines),
-            );
+            metadata.insert("context_lines".to_owned(), serde_json::json!(context_lines));
         }
 
         Some(chunk)
@@ -211,16 +213,16 @@ impl<'a> AstTraverser<'a> {
                 params.chunk_index
             ),
             content: params.content,
-            file_path: params.file_name.to_string(),
+            file_path: params.file_name.to_owned(),
             start_line: start_line as u32,
             end_line: end_line as u32,
             language: self.language.clone(),
             metadata: {
                 let mut meta = HashMap::new();
-                meta.insert("file".to_string(), serde_json::json!(params.file_name));
-                meta.insert("node_type".to_string(), serde_json::json!(params.node_type));
-                meta.insert("depth".to_string(), serde_json::json!(params.depth));
-                meta.insert("priority".to_string(), serde_json::json!(params.priority));
+                meta.insert("file".to_owned(), serde_json::json!(params.file_name));
+                meta.insert("node_type".to_owned(), serde_json::json!(params.node_type));
+                meta.insert("depth".to_owned(), serde_json::json!(params.depth));
+                meta.insert("priority".to_owned(), serde_json::json!(params.priority));
                 serde_json::to_value(meta).unwrap_or(serde_json::json!({}))
             },
         }

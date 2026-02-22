@@ -1,7 +1,10 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Generic Provider Handle - Runtime-swappable provider wrapper
 //!
 //! A single generic implementation replacing four specific handle types.
-//! Wraps providers in RwLock to allow runtime reconfiguration via admin API.
+//! Wraps providers in `RwLock` to allow runtime reconfiguration via admin API.
 //!
 //! ## Pattern
 //!
@@ -15,7 +18,7 @@ use std::sync::{Arc, RwLock};
 
 /// Generic handle for runtime-swappable providers
 ///
-/// Wraps any provider type in a RwLock, allowing admin API to switch
+/// Wraps any provider type in a `RwLock`, allowing admin API to switch
 /// providers without restarting the application.
 ///
 /// # Type Parameters
@@ -63,7 +66,14 @@ impl<T: ?Sized + Send + Sync> Handle<T> {
     pub fn get(&self) -> Arc<T> {
         self.inner
             .read()
-            .expect("Handle lock poisoned") // mcb-validate-ignore: lock_poisoning_recovery
+            .unwrap_or_else(|poisoned| {
+                mcb_domain::error!(
+                    "handle",
+                    "lock poisoned, recovering with poisoned value",
+                    &"action = get"
+                );
+                poisoned.into_inner()
+            })
             .clone()
     }
 
@@ -72,7 +82,14 @@ impl<T: ?Sized + Send + Sync> Handle<T> {
     /// Replaces the current provider with a new one. Existing references
     /// to the old provider remain valid until dropped.
     pub fn set(&self, new_provider: Arc<T>) {
-        *self.inner.write().expect("Handle lock poisoned") = new_provider; // mcb-validate-ignore: lock_poisoning_recovery
+        *self.inner.write().unwrap_or_else(|poisoned| {
+            mcb_domain::error!(
+                "handle",
+                "lock poisoned during set, recovering",
+                &"action = set"
+            );
+            poisoned.into_inner()
+        }) = new_provider;
     }
 }
 

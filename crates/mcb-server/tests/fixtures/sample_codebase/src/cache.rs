@@ -7,7 +7,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 /// Trait for cache providers
-pub trait CacheProvider: Send + Sync {
+pub trait SampleCacheProvider: Send + Sync {
     /// Get value from cache
     fn get(&self, key: &str) -> Option<Vec<u8>>;
 
@@ -41,7 +41,7 @@ impl RedisCacheProvider {
     }
 }
 
-impl CacheProvider for RedisCacheProvider {
+impl SampleCacheProvider for RedisCacheProvider {
     fn get(&self, key: &str) -> Option<Vec<u8>> {
         // Redis GET implementation
         None
@@ -79,7 +79,7 @@ impl MokaCacheProvider {
     }
 }
 
-impl CacheProvider for MokaCacheProvider {
+impl SampleCacheProvider for MokaCacheProvider {
     fn get(&self, key: &str) -> Option<Vec<u8>> {
         // Moka cache GET implementation
         self.cache.get(key).map(|(v, _)| v.clone())

@@ -1,12 +1,25 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! `DuplicationViolation` implementation.
 
 use std::path::PathBuf;
 
 use super::{CloneCandidate, DuplicationType};
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::traits::violation::{Severity, Violation, ViolationCategory};
+use derive_more::Display;
 
 /// A duplication violation representing a detected code clone
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Display)]
+#[display(
+    "{} at {}:{}: {} lines duplicated from {}:{}",
+    duplication_type.name(),
+    file.display(),
+    line,
+    duplicated_lines,
+    duplicate_file.display(),
+    duplicate_line
+)]
 pub struct DuplicationViolation {
     /// File containing the original code
     pub file: PathBuf,
@@ -28,6 +41,7 @@ pub struct DuplicationViolation {
 
 impl DuplicationViolation {
     /// Create a new duplication violation from a clone candidate
+    #[must_use]
     pub fn from_candidate(candidate: &CloneCandidate) -> Self {
         let severity = match candidate.clone_type {
             DuplicationType::ExactClone | DuplicationType::RenamedClone => Severity::Warning,
@@ -43,21 +57,6 @@ impl DuplicationViolation {
             duplicated_lines: candidate.duplicated_lines,
             severity,
         }
-    }
-}
-
-impl std::fmt::Display for DuplicationViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{} at {}:{}: {} lines duplicated from {}:{}",
-            self.duplication_type.name(),
-            self.file.display(),
-            self.line,
-            self.duplicated_lines,
-            self.duplicate_file.display(),
-            self.duplicate_line
-        )
     }
 }
 
@@ -91,16 +90,16 @@ impl Violation for DuplicationViolation {
     fn suggestion(&self) -> Option<String> {
         match self.duplication_type {
             DuplicationType::ExactClone => Some(
-                "Extract the duplicated code into a shared function or module".to_string(),
+                "Extract the duplicated code into a shared function or module".to_owned(),
             ),
             DuplicationType::RenamedClone => Some(
-                "The code structure is identical with only renamed identifiers. Consider extracting with generics or parameters".to_string(),
+                "The code structure is identical with only renamed identifiers. Consider extracting with generics or parameters".to_owned(),
             ),
             DuplicationType::GappedClone => Some(
-                "Near-duplicate code detected. Consider refactoring into a common abstraction with small differences parameterized".to_string(),
+                "Near-duplicate code detected. Consider refactoring into a common abstraction with small differences parameterized".to_owned(),
             ),
             DuplicationType::SemanticClone => Some(
-                "Functionally similar code detected. Review if a common interface or trait could reduce duplication".to_string(),
+                "Functionally similar code detected. Review if a common interface or trait could reduce duplication".to_owned(),
             ),
         }
     }

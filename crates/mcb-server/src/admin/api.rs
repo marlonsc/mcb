@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Admin API server
 //!
 //! HTTP server builder for admin API routes.
@@ -12,20 +15,49 @@
 //! - **Browse (GET /collections, ...)**: Call `.with_browse_state(browse_state)` so browse routes
 //!   are mounted; otherwise /collections returns 404.
 
-use std::net::IpAddr;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use mcb_domain::ports::admin::{IndexingOperationsInterface, PerformanceMetricsInterface};
-use mcb_domain::ports::infrastructure::EventBusProvider;
-use mcb_infrastructure::config::ConfigLoader;
+use mcb_domain::ports::EventBusProvider;
+use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
 use mcb_infrastructure::config::watcher::ConfigWatcher;
-use rocket::config::{Config as RocketConfig, LogLevel};
 
 use super::auth::AdminAuthConfig;
 use super::browse_handlers::BrowseState;
 use super::handlers::AdminState;
-use super::routes::admin_rocket;
+use crate::constants::limits::DEFAULT_SHUTDOWN_TIMEOUT_SECS;
+use crate::utils::config::load_startup_config_or_default;
+
+fn load_current_config() -> mcb_infrastructure::config::AppConfig {
+    load_startup_config_or_default()
+}
+
+fn build_admin_state(
+    metrics: Arc<dyn PerformanceMetricsInterface>,
+    indexing: Arc<dyn IndexingOperationsInterface>,
+    event_bus: Arc<dyn EventBusProvider>,
+    config_watcher: Option<Arc<ConfigWatcher>>,
+    config_path: Option<PathBuf>,
+) -> AdminState {
+    AdminState {
+        metrics,
+        indexing,
+        config_watcher,
+        current_config: load_current_config(),
+        config_path,
+        shutdown_coordinator: None,
+        shutdown_timeout_secs: DEFAULT_SHUTDOWN_TIMEOUT_SECS,
+        event_bus,
+        service_manager: None,
+        cache: None,
+        project_workflow: None,
+        vcs_entity: None,
+        plan_entity: None,
+        issue_entity: None,
+        org_entity: None,
+        tool_handlers: None,
+    }
+}
 
 /// Admin API server configuration
 #[derive(Debug, Clone)]
@@ -38,9 +70,7 @@ pub struct AdminApiConfig {
 
 impl Default for AdminApiConfig {
     fn default() -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("AdminApiConfig::default requires loadable configuration file");
+        let config = load_startup_config_or_default();
         Self {
             host: config.server.network.host,
             port: config.server.network.port,
@@ -50,37 +80,40 @@ impl Default for AdminApiConfig {
 
 impl AdminApiConfig {
     /// Create config for localhost with specified port
+    #[must_use]
     pub fn localhost(port: u16) -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("AdminApiConfig::localhost requires loadable configuration file");
+        let config = load_startup_config_or_default();
         Self {
             host: config.server.network.host,
             port,
-        }
-    }
-
-    /// Get the Rocket configuration
-    pub fn rocket_config(&self) -> RocketConfig {
-        let address: IpAddr = self
-            .host
-            .parse()
-            .expect("Invalid admin host in configuration");
-        RocketConfig {
-            address,
-            port: self.port,
-            log_level: LogLevel::Normal,
-            ..RocketConfig::default()
         }
     }
 }
 
 /// Admin API server
 pub struct AdminApi {
-    config: AdminApiConfig,
-    state: AdminState,
-    auth_config: Arc<AdminAuthConfig>,
-    browse_state: Option<BrowseState>,
+    pub(super) config: AdminApiConfig,
+    pub(super) state: AdminState,
+    pub(super) auth_config: Arc<AdminAuthConfig>,
+    pub(super) browse_state: Option<BrowseState>,
+}
+
+/// Core service dependencies needed by `AdminApi` builders.
+pub struct AdminApiServices {
+    /// Metrics service used by admin endpoints.
+    pub metrics: Arc<dyn PerformanceMetricsInterface>,
+    /// Indexing operations used by admin indexing endpoints.
+    pub indexing: Arc<dyn IndexingOperationsInterface>,
+    /// Event bus used for lifecycle and integration events.
+    pub event_bus: Arc<dyn EventBusProvider>,
+}
+
+/// Configuration watcher wiring for admin config endpoints.
+pub struct AdminConfigWatcherConfig {
+    /// Shared config watcher instance.
+    pub watcher: Arc<ConfigWatcher>,
+    /// Path to the loaded configuration file.
+    pub config_path: PathBuf,
 }
 
 impl AdminApi {
@@ -93,23 +126,7 @@ impl AdminApi {
     ) -> Self {
         Self {
             config,
-            state: AdminState {
-                metrics,
-                indexing,
-                config_watcher: None,
-                current_config: mcb_infrastructure::config::AppConfig::default(),
-                config_path: None,
-                shutdown_coordinator: None,
-                shutdown_timeout_secs: 30,
-                event_bus,
-                service_manager: None,
-                cache: None,
-                project_workflow: None,
-                vcs_entity: None,
-                plan_entity: None,
-                issue_entity: None,
-                org_entity: None,
-            },
+            state: build_admin_state(metrics, indexing, event_bus, None, None),
             auth_config: Arc::new(AdminAuthConfig::default()),
             browse_state: None,
         }
@@ -125,57 +142,29 @@ impl AdminApi {
     ) -> Self {
         Self {
             config,
-            state: AdminState {
-                metrics,
-                indexing,
-                config_watcher: None,
-                current_config: mcb_infrastructure::config::AppConfig::default(),
-                config_path: None,
-                shutdown_coordinator: None,
-                shutdown_timeout_secs: 30,
-                event_bus,
-                service_manager: None,
-                cache: None,
-                project_workflow: None,
-                vcs_entity: None,
-                plan_entity: None,
-                issue_entity: None,
-                org_entity: None,
-            },
+            state: build_admin_state(metrics, indexing, event_bus, None, None),
             auth_config: Arc::new(auth_config),
             browse_state: None,
         }
     }
 
     /// Create a new admin API server with configuration watcher support
+    #[must_use]
     pub fn with_config_watcher(
         config: AdminApiConfig,
-        metrics: Arc<dyn PerformanceMetricsInterface>,
-        indexing: Arc<dyn IndexingOperationsInterface>,
-        config_watcher: Arc<ConfigWatcher>,
-        config_path: PathBuf,
-        event_bus: Arc<dyn EventBusProvider>,
+        services: AdminApiServices,
+        watcher_config: AdminConfigWatcherConfig,
         auth_config: AdminAuthConfig,
     ) -> Self {
         Self {
             config,
-            state: AdminState {
-                metrics,
-                indexing,
-                config_watcher: Some(config_watcher),
-                current_config: mcb_infrastructure::config::AppConfig::default(),
-                config_path: Some(config_path),
-                shutdown_coordinator: None,
-                shutdown_timeout_secs: 30,
-                event_bus,
-                service_manager: None,
-                cache: None,
-                project_workflow: None,
-                vcs_entity: None,
-                plan_entity: None,
-                issue_entity: None,
-                org_entity: None,
-            },
+            state: build_admin_state(
+                services.metrics,
+                services.indexing,
+                services.event_bus,
+                Some(watcher_config.watcher),
+                Some(watcher_config.config_path),
+            ),
             auth_config: Arc::new(auth_config),
             browse_state: None,
         }
@@ -185,76 +174,9 @@ impl AdminApi {
     ///
     /// When set, enables the browse API endpoints for navigating
     /// indexed collections, files, and code chunks.
+    #[must_use]
     pub fn with_browse_state(mut self, browse_state: BrowseState) -> Self {
         self.browse_state = Some(browse_state);
         self
-    }
-
-    /// Start the admin API server
-    ///
-    /// Returns a handle that can be used to gracefully shutdown the server.
-    pub async fn start(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let rocket_config = self.config.rocket_config();
-
-        tracing::info!(
-            "Admin API server listening on {}:{}",
-            rocket_config.address,
-            rocket_config.port
-        );
-
-        let rocket =
-            admin_rocket(self.state, self.auth_config, self.browse_state).configure(rocket_config);
-
-        rocket.launch().await.map_err(|e| {
-            Box::new(std::io::Error::other(format!(
-                "Rocket launch failed: {}",
-                e
-            ))) as Box<dyn std::error::Error + Send + Sync>
-        })?;
-
-        Ok(())
-    }
-
-    /// Start the admin API server with graceful shutdown
-    ///
-    /// Note: Rocket handles graceful shutdown internally via Ctrl+C or SIGTERM.
-    pub async fn start_with_shutdown(
-        self,
-        shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let rocket_config = self.config.rocket_config();
-
-        tracing::info!(
-            "Admin API server listening on {}:{}",
-            rocket_config.address,
-            rocket_config.port
-        );
-
-        let rocket = admin_rocket(self.state, self.auth_config, self.browse_state)
-            .configure(rocket_config)
-            .ignite()
-            .await
-            .map_err(|e| {
-                Box::new(std::io::Error::other(format!(
-                    "Rocket ignite failed: {}",
-                    e
-                ))) as Box<dyn std::error::Error + Send + Sync>
-            })?;
-
-        // Spawn a task to handle the external shutdown signal
-        let shutdown_handle = rocket.shutdown();
-        tokio::spawn(async move {
-            shutdown_signal.await;
-            shutdown_handle.notify();
-        });
-
-        rocket.launch().await.map_err(|e| {
-            Box::new(std::io::Error::other(format!(
-                "Rocket launch failed: {}",
-                e
-            ))) as Box<dyn std::error::Error + Send + Sync>
-        })?;
-
-        Ok(())
     }
 }

@@ -1,10 +1,13 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Rust-specific AST fact extractor.
 //!
 //! Uses `rust-code-analysis` (which wraps `tree-sitter`) to parse Rust source
 //! files and extract [`Fact`]s for modules, imports, structs, and functions.
 
 use super::fact::{Fact, FactType, Location};
-use anyhow::Result;
+use crate::Result;
 use rust_code_analysis::{Node, ParserTrait, RustParser};
 use std::fs;
 use std::path::Path;
@@ -13,6 +16,16 @@ use std::path::Path;
 pub struct RustExtractor;
 
 impl RustExtractor {
+    fn location_for(path: &Path, node: &Node<'_>) -> Location {
+        Location {
+            file_path: path.to_path_buf(),
+            start_line: node.start_row() + 1,
+            end_line: node.end_row() + 1,
+            start_column: node.start_position().1 + 1,
+            end_column: node.end_position().1 + 1,
+        }
+    }
+
     /// Parse a Rust file at `path` and return all extracted [`Fact`]s.
     ///
     /// Currently extracts:
@@ -20,6 +33,9 @@ impl RustExtractor {
     /// - `Import` facts for every `use` declaration.
     /// - `Struct` facts for every `struct` item.
     /// - `Function` facts for every `fn` item.
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be read or parsed.
     pub fn extract_facts(&self, path: &Path) -> Result<Vec<Fact>> {
         let code = fs::read(path)?;
         // Use RustParser which is a public type alias for Parser<RustCode>
@@ -34,21 +50,15 @@ impl RustExtractor {
             .file_stem()
             .and_then(|s| s.to_str())
             .unwrap_or("unknown")
-            .to_string();
+            .to_owned();
 
-        let module_id = format!("module::{}", module_name);
+        let module_id = format!("module::{module_name}");
 
         // Add Module Fact
         facts.push(Fact::new(
             module_name.clone(),
             FactType::Module,
-            Location {
-                file_path: path.to_path_buf(),
-                start_line: root.start_row() + 1,
-                end_line: root.end_row() + 1,
-                start_column: root.start_position().1 + 1,
-                end_column: root.end_position().1 + 1,
-            },
+            Self::location_for(path, &root),
             None,
         ));
 
@@ -78,15 +88,9 @@ impl RustExtractor {
                 let import_path = text.trim_start_matches("use ").trim_end_matches(';').trim();
 
                 facts.push(Fact::new(
-                    import_path.to_string(),
+                    import_path.to_owned(),
                     FactType::Import,
-                    Location {
-                        file_path: path.to_path_buf(),
-                        start_line: import.start_row() + 1,
-                        end_line: import.end_row() + 1,
-                        start_column: import.start_position().1 + 1,
-                        end_column: import.end_position().1 + 1,
-                    },
+                    Self::location_for(path, &import),
                     Some(module_id.clone()),
                 ));
             }
@@ -99,15 +103,9 @@ impl RustExtractor {
                 && let Ok(name) = name_node.utf8_text(code_ref)
             {
                 facts.push(Fact::new(
-                    name.to_string(),
+                    name.to_owned(),
                     FactType::Struct,
-                    Location {
-                        file_path: path.to_path_buf(),
-                        start_line: st.start_row() + 1,
-                        end_line: st.end_row() + 1,
-                        start_column: st.start_position().1 + 1,
-                        end_column: st.end_position().1 + 1,
-                    },
+                    Self::location_for(path, &st),
                     Some(module_id.clone()),
                 ));
             }
@@ -120,15 +118,9 @@ impl RustExtractor {
                 && let Ok(name) = name_node.utf8_text(code_ref)
             {
                 facts.push(Fact::new(
-                    name.to_string(),
+                    name.to_owned(),
                     FactType::Function,
-                    Location {
-                        file_path: path.to_path_buf(),
-                        start_line: func.start_row() + 1,
-                        end_line: func.end_row() + 1,
-                        start_column: func.start_position().1 + 1,
-                        end_column: func.end_position().1 + 1,
-                    },
+                    Self::location_for(path, &func),
                     Some(module_id.clone()),
                 ));
             }

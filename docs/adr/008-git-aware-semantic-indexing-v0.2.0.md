@@ -29,9 +29,14 @@ implementation_status: Incomplete
 > **Target crate structure (v0.2.0)**:
 >
 > - `crates/mcb-domain/src/git.rs` - Git domain types
-> - `crates/mcb-application/src/ports/providers/git.rs` - GitProvider trait
+> - `crates/mcb-domain/src/ports/providers/vcs.rs` - VCS port trait (see ADR-029, superseded by ADR-050)
 > - `crates/mcb-providers/src/git/` - git2 implementation
 > - `crates/mcb-application/src/use_cases/git_indexing.rs` - Git-aware indexing service
+>
+> **⚠ Architecture note (2026-02-20)**: Code paths referencing
+> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029 (superseded by ADR-050),
+> all port traits are defined in `mcb-domain/src/ports/providers/`. When
+> implementing, use the corrected locations.
 
 ## Context
 
@@ -199,7 +204,7 @@ pub struct GitChunkMetadata {
 
 ### Phase 2: Git Provider Port/Adapter
 
-**Create**: `crates/mcb-application/src/ports/providers/git.rs`
+**Create/Use**: `crates/mcb-domain/src/ports/providers/vcs.rs` (canonical provider port location)
 
 ```rust
 use async_trait::async_trait;
@@ -594,7 +599,7 @@ git2 = "0.20"
 | File | Purpose |
 | ------ | --------- |
 | `crates/mcb-domain/src/git.rs` | Git domain types |
-| `crates/mcb-application/src/ports/providers/git.rs` | GitProvider trait |
+| `crates/mcb-domain/src/ports/providers/vcs.rs` | VcsProvider trait (canonical) |
 | `crates/mcb-providers/src/git/mod.rs` | Git module |
 | `crates/mcb-providers/src/git/git2_provider.rs` | git2 implementation |
 | `crates/mcb-application/src/use_cases/repository.rs` | Repository manager |
@@ -610,7 +615,7 @@ git2 = "0.20"
 | ------ | -------- |
 | `crates/mcb-providers/Cargo.toml` | Add `git2 = "0.20"` dependency |
 | `crates/mcb-domain/src/entities/code_chunk.rs` | Add `git_metadata` field to CodeChunk |
-| `crates/mcb-application/src/ports/providers/mod.rs` | Export GitProvider |
+| `crates/mcb-domain/src/ports/providers/mod.rs` | Export VcsProvider |
 | `crates/mcb-domain/src/mod.rs` | Export git module |
 | `crates/mcb-providers/src/lib.rs` | Export git provider |
 | `crates/mcb-application/src/use_cases/mod.rs` | Export repository, git_indexing, impact |
@@ -637,6 +642,17 @@ git2 = "0.20"
 | History depth | 50 commits | Per-repo |
 | Submodules | Recursive indexing | Per-repo |
 
+## Canonical References
+
+> **Note**: This ADR is a historical decision record. For current architecture
+> details, consult the normative documents below. Code paths referencing
+> `mcb-application/src/ports/providers/` are outdated; per ADR-029 (superseded by ADR-050), all port
+> traits now reside in `mcb-domain/src/ports/providers/`.
+
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
+- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Full system architecture (normative)
+
 ## Related ADRs
 
 - [ADR-001: Provider Pattern Architecture](001-modular-crates-architecture.md) - Provider patterns for GitProvider
@@ -650,4 +666,4 @@ git2 = "0.20"
 
 - [git2 crate](https://docs.rs/git2/)
 - [libgit2](https://libgit2.org/)
-- [Shaku Documentation](https://docs.rs/shaku) (historical; DI is now dill, ADR-029)
+- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI; see ADR-050)
