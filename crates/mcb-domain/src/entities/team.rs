@@ -6,12 +6,12 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-crate::define_entity_org_created! {
+crate::define_entity! {
     /// A team groups users within an organization for access control and
     /// project assignment. Teams are used in the GitHub-like RBAC model:
     /// Organization → Teams → Projects.
     #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-    pub struct Team {
+    pub struct Team { id, org_id, created_at } {
         /// Display name of the team.
         pub name: String,
     }

@@ -6,10 +6,10 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-crate::define_entity_org_project_audited! {
+crate::define_entity! {
     /// A plan definition owned by an organization and project.
     #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-    pub struct Plan {
+    pub struct Plan { id, org_id, project_id, created_at, updated_at } {
         /// Title of the strategic plan.
         pub title: String,
         /// Detailed description of the plan.

@@ -5,12 +5,12 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-crate::define_entity_id_audited! {
+crate::define_entity! {
     /// An organization is the top-level tenant. Every user, team, project,
     /// and piece of data belongs to exactly one organization. Row-level
     /// isolation in the database is enforced via `org_id` foreign keys.
     #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-    pub struct Organization {
+    pub struct Organization { id, created_at, updated_at } {
         /// Readable name of the organization.
         pub name: String,
         /// URL-friendly identifier for the organization.
