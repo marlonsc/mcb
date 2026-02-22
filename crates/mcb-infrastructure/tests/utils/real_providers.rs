@@ -283,8 +283,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "ort-2.0.0-rc.11 Mutex poisoned panic in CI (GitHub Actions runner)"]
     async fn test_create_test_app_context() {
+        if std::env::var("CI").is_ok() {
+            eprintln!("Skipping: ort-2.0.0-rc.11 Mutex poisoned panic in CI (GitHub Actions)");
+            return;
+        }
         let ctx = match create_test_app_context().await {
             Ok(ctx) => ctx,
             Err(err) if fastembed_unavailable(&err) => {
@@ -309,8 +312,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "ort-2.0.0-rc.11 Mutex poisoned panic in CI (GitHub Actions runner)"]
     async fn test_full_stack_context_embeds_text() {
+        if std::env::var("CI").is_ok() {
+            eprintln!("Skipping: ort-2.0.0-rc.11 Mutex poisoned panic in CI (GitHub Actions)");
+            return;
+        }
         let ctx = match FullStackTestContext::new().await {
             Ok(ctx) => ctx,
             Err(err) if fastembed_unavailable(&err) => {
@@ -329,8 +335,11 @@ mod tests {
     }
 
     #[tokio::test]
-    #[ignore = "ort-2.0.0-rc.11 Mutex poisoned panic in CI (GitHub Actions runner)"]
     async fn test_full_stack_context_indexes_and_searches() {
+        if std::env::var("CI").is_ok() {
+            eprintln!("Skipping: ort-2.0.0-rc.11 Mutex poisoned panic in CI (GitHub Actions)");
+            return;
+        }
         let ctx = match FullStackTestContext::new().await {
             Ok(ctx) => ctx,
             Err(err) if fastembed_unavailable(&err) => {

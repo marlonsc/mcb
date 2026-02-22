@@ -64,8 +64,11 @@ mod embedding_registry_tests {
     }
 
     #[tokio::test]
-    #[ignore = "ort-2.0.0-rc.11 Mutex poisoned panic in CI (GitHub Actions runner)"]
     async fn test_resolve_fastembed_provider() {
+        if std::env::var("CI").is_ok() {
+            eprintln!("Skipping: ort-2.0.0-rc.11 Mutex poisoned panic in CI (GitHub Actions)");
+            return;
+        }
         let config = EmbeddingProviderConfig::new("fastembed")
             .with_cache_dir(crate::utils::shared_context::shared_fastembed_test_cache_dir());
 
@@ -333,8 +336,11 @@ mod integration_tests {
     }
 
     #[tokio::test]
-    #[ignore = "ort-2.0.0-rc.11 Mutex poisoned panic in CI (GitHub Actions runner)"]
     async fn test_local_providers_available_for_testing() {
+        if std::env::var("CI").is_ok() {
+            eprintln!("Skipping: ort-2.0.0-rc.11 Mutex poisoned panic in CI (GitHub Actions)");
+            return;
+        }
         let embedding = resolve_embedding_provider(
             &EmbeddingProviderConfig::new("fastembed")
                 .with_cache_dir(crate::utils::shared_context::shared_fastembed_test_cache_dir()),
