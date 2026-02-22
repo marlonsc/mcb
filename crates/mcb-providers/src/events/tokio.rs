@@ -37,11 +37,33 @@ use futures::stream;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::{DomainEventStream, EventBusProvider};
+use mcb_domain::registry::event_bus::{
+    EVENT_BUS_PROVIDERS, EventBusProviderConfig, EventBusProviderEntry,
+};
 use mcb_domain::utils::id;
 use tokio::sync::broadcast;
 use tracing::{debug, warn};
 
 use crate::constants::EVENTS_TOKIO_DEFAULT_CAPACITY;
+
+fn create_tokio_event_bus_provider(
+    config: &EventBusProviderConfig,
+) -> std::result::Result<Arc<dyn EventBusProvider>, String> {
+    let capacity = config
+        .extra
+        .get("capacity")
+        .and_then(|v| v.parse::<usize>().ok())
+        .unwrap_or(EVENTS_TOKIO_DEFAULT_CAPACITY);
+
+    Ok(Arc::new(TokioEventBusProvider::with_capacity(capacity)))
+}
+
+#[linkme::distributed_slice(EVENT_BUS_PROVIDERS)]
+static TOKIO_EVENT_BUS_PROVIDER: EventBusProviderEntry = EventBusProviderEntry {
+    name: "tokio",
+    description: "Tokio broadcast event bus",
+    build: create_tokio_event_bus_provider,
+};
 
 /// Event bus provider using tokio broadcast channels
 ///

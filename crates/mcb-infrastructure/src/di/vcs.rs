@@ -9,12 +9,15 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::VcsProvider;
-use mcb_providers::vcs;
+use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
 
 /// Returns the default VCS provider for standalone and server modes.
 ///
 /// Centralizes provider instantiation in the infrastructure layer.
-#[must_use]
-pub fn default_vcs_provider() -> Arc<dyn VcsProvider> {
-    vcs::default_vcs_provider()
+///
+/// # Errors
+///
+/// Returns an error if the configured/default VCS provider cannot be resolved.
+pub fn default_vcs_provider() -> mcb_domain::error::Result<Arc<dyn VcsProvider>> {
+    resolve_vcs_provider(&VcsProviderConfig::new("git2"))
 }

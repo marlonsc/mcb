@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use git2::{BranchType, Repository, Sort};
+use mcb_domain::registry::vcs::{VCS_PROVIDERS, VcsProviderConfig, VcsProviderEntry};
 use mcb_domain::utils::id;
 use mcb_domain::{
     entities::vcs::{
@@ -15,6 +16,20 @@ use mcb_domain::{
     },
     error::{Error, Result},
     ports::VcsProvider,
+};
+use std::sync::Arc;
+
+fn create_git2_provider(
+    _config: &VcsProviderConfig,
+) -> std::result::Result<Arc<dyn VcsProvider>, String> {
+    Ok(Arc::new(Git2Provider::new()))
+}
+
+#[linkme::distributed_slice(VCS_PROVIDERS)]
+static GIT2_VCS_PROVIDER: VcsProviderEntry = VcsProviderEntry {
+    name: "git2",
+    description: "libgit2-based VCS provider",
+    build: create_git2_provider,
 };
 
 /// Git implementation of `VcsProvider` using libgit2.

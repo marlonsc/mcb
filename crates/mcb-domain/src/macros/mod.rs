@@ -19,3 +19,5 @@ mod ports;
 mod schema;
 #[macro_use]
 mod registry;
+#[macro_use]
+mod di;

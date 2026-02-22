@@ -88,6 +88,12 @@ pub mod language;
 /// Provides BM25 text ranking algorithm and hybrid score fusion.
 pub mod hybrid_search;
 
+#[allow(missing_docs)]
+pub mod fs;
+
+#[allow(missing_docs)]
+pub mod task;
+
 // Re-export hybrid search providers
 pub use hybrid_search::HybridSearchEngine;
 

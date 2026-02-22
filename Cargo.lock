@@ -3240,7 +3240,6 @@ dependencies = [
  "linkme",
  "mockall",
  "regex",
- "reqwest 0.13.2",
  "rstest",
  "schemars 1.2.1",
  "serde",

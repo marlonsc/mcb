@@ -24,11 +24,12 @@ use mcb_application::use_cases::{
 use mcb_domain::error::Result;
 use mcb_domain::ports::{
     AgentRepository, AgentSessionServiceInterface, ContextServiceInterface, CryptoProvider,
-    EmbeddingProvider, EventBusProvider, FileHashRepository, IndexingOperationsInterface,
-    IndexingServiceInterface, IssueEntityRepository, LanguageChunkingProvider, MemoryRepository,
-    MemoryServiceInterface, OrgEntityRepository, PlanEntityRepository, ProjectDetectorService,
-    ProjectRepository, SearchServiceInterface, ValidationServiceInterface, VcsEntityRepository,
-    VcsProvider, VectorStoreProvider,
+    EmbeddingProvider, EventBusProvider, FileHashRepository, FileSystemProvider,
+    IndexingOperationsInterface, IndexingServiceInterface, IssueEntityRepository,
+    LanguageChunkingProvider, MemoryRepository, MemoryServiceInterface, OrgEntityRepository,
+    PlanEntityRepository, ProjectDetectorService, ProjectRepository, SearchServiceInterface,
+    TaskRunnerProvider, ValidationServiceInterface, VcsEntityRepository, VcsProvider,
+    VectorStoreProvider,
 };
 
 use super::super::bootstrap::AppContext;
@@ -96,6 +97,7 @@ pub struct DomainServicesContainer {
 /// * `agent_repository` - Repository for agent session data
 /// * `vcs_provider` - Version control system provider
 /// * `project_service` - Service for project detection and management
+#[allow(missing_docs)]
 pub struct ServiceDependencies {
     /// Unique identifier for the current project
     pub project_id: String,
@@ -115,6 +117,8 @@ pub struct ServiceDependencies {
     pub indexing_ops: Arc<dyn IndexingOperationsInterface>,
     /// Event bus for domain events
     pub event_bus: Arc<dyn EventBusProvider>,
+    pub file_system_provider: Arc<dyn FileSystemProvider>,
+    pub task_runner_provider: Arc<dyn TaskRunnerProvider>,
     /// Repository for memory persistence
     pub memory_repository: Arc<dyn MemoryRepository>,
     /// Repository for agent session data
@@ -145,6 +149,8 @@ struct IndexingServiceInputs {
     language_chunker: Arc<dyn LanguageChunkingProvider>,
     indexing_ops: Arc<dyn IndexingOperationsInterface>,
     event_bus: Arc<dyn EventBusProvider>,
+    file_system_provider: Arc<dyn FileSystemProvider>,
+    task_runner_provider: Arc<dyn TaskRunnerProvider>,
     file_hash_repository: Arc<dyn FileHashRepository>,
     supported_extensions: Vec<String>,
 }
@@ -170,6 +176,8 @@ impl DomainServicesFactory {
                     language_chunker: inputs.language_chunker,
                     indexing_ops: inputs.indexing_ops,
                     event_bus: inputs.event_bus,
+                    file_system_provider: inputs.file_system_provider,
+                    task_runner_provider: inputs.task_runner_provider,
                     supported_extensions: inputs.supported_extensions,
                 },
                 file_hash_repository: inputs.file_hash_repository,
@@ -209,6 +217,8 @@ impl DomainServicesFactory {
             language_chunker: deps.language_chunker,
             indexing_ops: deps.indexing_ops,
             event_bus: deps.event_bus,
+            file_system_provider: deps.file_system_provider,
+            task_runner_provider: deps.task_runner_provider,
             file_hash_repository: deps.file_hash_repository,
             supported_extensions: deps.config.mcp.indexing.supported_extensions.clone(),
         });
@@ -253,6 +263,8 @@ impl DomainServicesFactory {
     ) -> Result<Arc<dyn IndexingServiceInterface>> {
         let indexing_ops = app_context.indexing();
         let event_bus = app_context.event_bus();
+        let file_system_provider = app_context.file_system_provider();
+        let task_runner_provider = app_context.task_runner_provider();
         let language_chunker = app_context.language_handle().get();
         let context_service = Self::create_context_service(app_context).await?;
         let file_hash_repository = app_context.file_hash_repository();
@@ -263,6 +275,8 @@ impl DomainServicesFactory {
             language_chunker,
             indexing_ops,
             event_bus,
+            file_system_provider,
+            task_runner_provider,
             file_hash_repository,
             supported_extensions,
         }))

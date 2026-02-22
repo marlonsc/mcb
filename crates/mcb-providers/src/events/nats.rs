@@ -37,11 +37,45 @@ use futures::{StreamExt, stream};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::{DomainEventStream, EventBusProvider};
+use mcb_domain::registry::event_bus::{
+    EVENT_BUS_PROVIDERS, EventBusProviderConfig, EventBusProviderEntry,
+};
 use mcb_domain::utils::id;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
 
 use crate::constants::NATS_DEFAULT_SUBJECT;
+
+fn create_nats_event_bus_provider(
+    config: &EventBusProviderConfig,
+) -> std::result::Result<Arc<dyn EventBusProvider>, String> {
+    let url = config
+        .extra
+        .get("url")
+        .cloned()
+        .unwrap_or_else(|| "nats://127.0.0.1:4222".to_owned());
+    let subject = config
+        .extra
+        .get("subject")
+        .cloned()
+        .unwrap_or_else(|| NATS_DEFAULT_SUBJECT.to_owned());
+    let client_name = config.extra.get("client_name").cloned();
+
+    let rt = tokio::runtime::Handle::try_current().map_err(|e| e.to_string())?;
+    rt.block_on(async move {
+        NatsEventBusProvider::with_options(&url, &subject, client_name.as_deref())
+            .await
+            .map(|provider| Arc::new(provider) as Arc<dyn EventBusProvider>)
+            .map_err(|e| e.to_string())
+    })
+}
+
+#[linkme::distributed_slice(EVENT_BUS_PROVIDERS)]
+static NATS_EVENT_BUS_PROVIDER: EventBusProviderEntry = EventBusProviderEntry {
+    name: "nats",
+    description: "NATS distributed event bus",
+    build: create_nats_event_bus_provider,
+};
 
 /// Event bus provider using NATS for distributed systems
 ///

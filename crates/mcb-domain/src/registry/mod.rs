@@ -56,6 +56,10 @@
 pub mod cache;
 pub mod database;
 pub mod embedding;
+pub mod event_bus;
+pub mod fs;
 pub mod language;
+pub mod task_runner;
 pub mod validation;
+pub mod vcs;
 pub mod vector_store;

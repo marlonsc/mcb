@@ -31,14 +31,17 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{
-    AgentRepository, MemoryRepository, ProjectRepository, VcsEntityRepository,
+    AgentRepository, FileHashRepository, IssueEntityRepository, MemoryRepository,
+    OrgEntityRepository, PlanEntityRepository, ProjectRepository, VcsEntityRepository,
 };
 use mcb_domain::ports::{DatabaseExecutor, DatabaseProvider};
 use mcb_domain::schema::{Schema, SchemaDdlGenerator};
 
 use super::{
-    SqliteAgentRepository, SqliteExecutor, SqliteMemoryRepository, SqliteProjectRepository,
-    SqliteSchemaDdlGenerator, SqliteVcsEntityRepository,
+    SqliteAgentRepository, SqliteExecutor, SqliteFileHashConfig, SqliteFileHashRepository,
+    SqliteIssueEntityRepository, SqliteMemoryRepository, SqliteOrgEntityRepository,
+    SqlitePlanEntityRepository, SqliteProjectRepository, SqliteSchemaDdlGenerator,
+    SqliteVcsEntityRepository,
 };
 use mcb_domain::registry::database::{
     DATABASE_PROVIDERS, DatabaseProviderConfig, DatabaseProviderEntry,
@@ -68,6 +71,67 @@ impl DatabaseProvider for SqliteDatabaseProvider {
     async fn connect(&self, path: &Path) -> Result<Arc<dyn DatabaseExecutor>> {
         let pool = connect_and_init(path.to_path_buf()).await?;
         Ok(Arc::new(SqliteExecutor::new(pool)))
+    }
+
+    fn create_memory_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn MemoryRepository> {
+        Arc::new(SqliteMemoryRepository::new(executor))
+    }
+
+    fn create_agent_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn AgentRepository> {
+        Arc::new(SqliteAgentRepository::new(executor))
+    }
+
+    fn create_project_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn ProjectRepository> {
+        Arc::new(SqliteProjectRepository::new(executor))
+    }
+
+    fn create_file_hash_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+        project_id: String,
+    ) -> Arc<dyn FileHashRepository> {
+        Arc::new(SqliteFileHashRepository::new(
+            executor,
+            SqliteFileHashConfig::default(),
+            project_id,
+        ))
+    }
+
+    fn create_vcs_entity_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn VcsEntityRepository> {
+        Arc::new(SqliteVcsEntityRepository::new(executor))
+    }
+
+    fn create_plan_entity_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn PlanEntityRepository> {
+        Arc::new(SqlitePlanEntityRepository::new(executor))
+    }
+
+    fn create_issue_entity_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn IssueEntityRepository> {
+        Arc::new(SqliteIssueEntityRepository::new(executor))
+    }
+
+    fn create_org_entity_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn OrgEntityRepository> {
+        Arc::new(SqliteOrgEntityRepository::new(executor))
     }
 }
 

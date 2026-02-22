@@ -60,8 +60,9 @@ pub use handles::{
 };
 pub use modules::{DomainServicesContainer, DomainServicesFactory, ServiceDependencies};
 pub use provider_resolvers::{
-    CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
-    VectorStoreProviderResolver,
+    CacheProviderResolver, EmbeddingProviderResolver, EventBusProviderResolver,
+    FileSystemProviderResolver, LanguageProviderResolver, TaskRunnerProviderResolver,
+    VcsProviderResolver, VectorStoreProviderResolver,
 };
 pub use repositories::{
     create_memory_repository, create_memory_repository_with_executor, create_vcs_entity_repository,

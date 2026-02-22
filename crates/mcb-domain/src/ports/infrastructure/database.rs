@@ -12,6 +12,10 @@ use std::sync::Arc;
 use async_trait::async_trait;
 
 use crate::error::Result;
+use crate::ports::{
+    AgentRepository, FileHashRepository, IssueEntityRepository, MemoryRepository,
+    OrgEntityRepository, PlanEntityRepository, ProjectRepository, VcsEntityRepository,
+};
 
 /// Parameter for prepared statement binding (driver-agnostic).
 #[derive(Debug, Clone)]
@@ -75,7 +79,49 @@ pub trait DatabaseExecutor: Send + Sync {
 
 /// Provider factory for database connections with schema initialization.
 #[async_trait]
+#[allow(missing_docs)]
 pub trait DatabaseProvider: Send + Sync {
     /// Performs the connect operation.
     async fn connect(&self, path: &std::path::Path) -> Result<Arc<dyn DatabaseExecutor>>;
+
+    fn create_memory_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn MemoryRepository>;
+
+    fn create_agent_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn AgentRepository>;
+
+    fn create_project_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn ProjectRepository>;
+
+    fn create_file_hash_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+        project_id: String,
+    ) -> Arc<dyn FileHashRepository>;
+
+    fn create_vcs_entity_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn VcsEntityRepository>;
+
+    fn create_plan_entity_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn PlanEntityRepository>;
+
+    fn create_issue_entity_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn IssueEntityRepository>;
+
+    fn create_org_entity_repository(
+        &self,
+        executor: Arc<dyn DatabaseExecutor>,
+    ) -> Arc<dyn OrgEntityRepository>;
 }
