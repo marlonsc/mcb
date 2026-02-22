@@ -121,6 +121,9 @@ jobs:
     needs: [changes, classify]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
+    # Beta Rust is informational-only: pre-existing ort/fastembed panics on beta
+    # should not block the PR gate. Stable + macOS + Windows failures still block.
+    continue-on-error: ${{ matrix.rust == 'beta' }}
     strategy:
       fail-fast: false
       matrix:
