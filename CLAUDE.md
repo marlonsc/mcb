@@ -165,7 +165,7 @@ CI adds: `-D clippy::multiple_unsafe_ops_per_block`, `-D clippy::undocumented_un
 - [Architecture](docs/architecture/ARCHITECTURE.md) — layers, crate map, dependency flow
 - [Clean Architecture](docs/architecture/CLEAN_ARCHITECTURE.md) — layer rules, extension guide
 - [Architecture Boundaries](docs/architecture/ARCHITECTURE_BOUNDARIES.md) — dependency rules, violations
- [ADRs](docs/adr/) — 52 Architecture Decision Records
+- [ADRs](docs/adr/) — 52 Architecture Decision Records
 - [Contributing](docs/developer/CONTRIBUTING.md) — dev setup, coding standards, PR process
 - [MCP Tools](docs/MCP_TOOLS.md) — full tool API schemas
 - [Configuration](docs/CONFIGURATION.md) — all environment variables and config options

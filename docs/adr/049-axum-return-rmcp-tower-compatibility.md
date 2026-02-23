@@ -217,4 +217,4 @@ We will migrate back to Axum (v0.8) from Rocket to enable rmcp's
 - [Tower Service trait](https://docs.rs/tower/latest/tower/trait.Service.html) —
   Core abstraction
 - [Axum documentation](https://docs.rs/axum/latest/axum/) — Web framework
- [ADR 026](archive/superseded-026-routing-refactor-rocket-poem.md) — Original Rocket migration
+- [ADR 026](archive/superseded-026-routing-refactor-rocket-poem.md) — Original Rocket migration
