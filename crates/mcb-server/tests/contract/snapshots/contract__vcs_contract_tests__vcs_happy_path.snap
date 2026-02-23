@@ -1,0 +1,32 @@
+---
+source: crates/mcb-server/tests/contract/vcs_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "action": "list_repositories",
+        "limit": 5,
+        "repo_path": "/home/marlonsc/mcb-v030-seaql-loco-rebuild"
+      },
+      "name": "vcs"
+    }
+  },
+  "response": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\n  \"repositories\": [\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild\"\n  ],\n  \"count\": 1\n}",
+          "type": "text"
+        }
+      ],
+      "isError": false
+    }
+  },
+  "status": 200
+}

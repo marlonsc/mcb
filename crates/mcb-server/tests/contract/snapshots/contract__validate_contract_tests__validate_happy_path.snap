@@ -1,0 +1,30 @@
+---
+source: crates/mcb-server/tests/contract/validate_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "action": "list_rules"
+      },
+      "name": "validate"
+    }
+  },
+  "response": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\n  \"count\": 18,\n  \"description\": \"Available validation rules\",\n  \"validators\": [\n    \"clean_architecture\",\n    \"layer_flow\",\n    \"port_adapter\",\n    \"visibility\",\n    \"dependency\",\n    \"quality\",\n    \"solid\",\n    \"naming\",\n    \"patterns\",\n    \"documentation\",\n    \"hygiene\",\n    \"performance\",\n    \"async_patterns\",\n    \"kiss\",\n    \"organization\",\n    \"implementation\",\n    \"refactoring\",\n    \"error_boundary\"\n  ]\n}",
+          "type": "text"
+        }
+      ],
+      "isError": false
+    }
+  },
+  "status": 200
+}

@@ -1,0 +1,36 @@
+---
+source: crates/mcb-server/tests/contract/agent_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "action": "log_tool",
+        "data": {
+          "duration_ms": 5,
+          "success": true,
+          "tool_name": "search"
+        },
+        "session_id": "00000000-0000-0000-0000-000000000001"
+      },
+      "name": "agent"
+    }
+  },
+  "response": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "Memory storage error: SQL execute failed: \n                INSERT INTO tool_calls (\n                    id,\n                    session_id,\n                    tool_name,\n                    params_summary,\n                    success,\n                    error_message,\n                    duration_ms,\n                    created_at\n                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)\n                : error returned from database: (code: 787) FOREIGN KEY constraint failed",
+          "type": "text"
+        }
+      ],
+      "isError": true
+    }
+  },
+  "status": 200
+}

@@ -1,0 +1,26 @@
+---
+source: crates/mcb-server/tests/contract/search_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "query": 999,
+        "resource": "code"
+      },
+      "name": "search"
+    }
+  },
+  "response": {
+    "error": {
+      "code": -32602,
+      "message": "Tool call failed: ErrorData { code: ErrorCode(-32602), message: \"Failed to parse arguments: invalid type: integer `999`, expected a string\", data: None }"
+    },
+    "id": 1,
+    "jsonrpc": "2.0"
+  },
+  "status": 200
+}
