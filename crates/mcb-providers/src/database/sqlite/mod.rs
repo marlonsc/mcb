@@ -8,7 +8,10 @@
 //! (port `MemoryRepository`), and factory functions for DI.
 
 mod agent_repository;
+mod backend;
 mod ddl;
+#[macro_use]
+mod macros;
 pub(crate) mod ensure_parent;
 pub mod executor;
 mod file_hash_repository;
@@ -19,9 +22,11 @@ mod plan_entity_repository;
 mod project_repository;
 mod provider;
 mod row_convert;
+mod sea_entities;
 mod vcs_entity_repository;
 
 pub use agent_repository::SqliteAgentRepository;
+pub use backend::SqliteBackend;
 pub use ddl::SqliteSchemaDdlGenerator;
 pub use executor::SqliteExecutor;
 pub use file_hash_repository::{SqliteFileHashConfig, SqliteFileHashRepository};

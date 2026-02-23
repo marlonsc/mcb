@@ -38,10 +38,10 @@ use mcb_domain::ports::{DatabaseExecutor, DatabaseProvider};
 use mcb_domain::schema::{Schema, SchemaDdlGenerator};
 
 use super::{
-    SqliteAgentRepository, SqliteExecutor, SqliteFileHashConfig, SqliteFileHashRepository,
-    SqliteIssueEntityRepository, SqliteMemoryRepository, SqliteOrgEntityRepository,
-    SqlitePlanEntityRepository, SqliteProjectRepository, SqliteSchemaDdlGenerator,
-    SqliteVcsEntityRepository,
+    SqliteAgentRepository, SqliteBackend, SqliteExecutor, SqliteFileHashConfig,
+    SqliteFileHashRepository, SqliteIssueEntityRepository, SqliteMemoryRepository,
+    SqliteOrgEntityRepository, SqlitePlanEntityRepository, SqliteProjectRepository,
+    SqliteSchemaDdlGenerator, SqliteVcsEntityRepository,
 };
 use mcb_domain::registry::database::{
     DATABASE_PROVIDERS, DatabaseProviderConfig, DatabaseProviderEntry,
@@ -70,7 +70,12 @@ static SQLITE_DATABASE_PROVIDER: DatabaseProviderEntry = DatabaseProviderEntry {
 impl DatabaseProvider for SqliteDatabaseProvider {
     async fn connect(&self, path: &Path) -> Result<Arc<dyn DatabaseExecutor>> {
         let pool = connect_and_init(path.to_path_buf()).await?;
-        Ok(Arc::new(SqliteExecutor::new(pool)))
+        let db_url = format!("sqlite:{}?mode=rwc", path.display());
+        let sea_conn = sea_orm::Database::connect(&db_url)
+            .await
+            .map_err(|e| mcb_domain::error::Error::memory_with_source("SeaORM connect", e))?;
+        let backend = SqliteBackend::new(SqliteExecutor::new(pool), sea_conn);
+        Ok(Arc::new(backend))
     }
 
     fn create_memory_repository(
@@ -131,7 +136,14 @@ impl DatabaseProvider for SqliteDatabaseProvider {
         &self,
         executor: Arc<dyn DatabaseExecutor>,
     ) -> Arc<dyn OrgEntityRepository> {
-        Arc::new(SqliteOrgEntityRepository::new(executor))
+        let sea_conn = executor
+            .as_any()
+            .downcast_ref::<SqliteBackend>()
+            .map(|b| b.sea_conn().clone());
+        match sea_conn {
+            Some(conn) => Arc::new(SqliteOrgEntityRepository::new_with_sea(executor, conn)),
+            None => Arc::new(SqliteOrgEntityRepository::new(executor)),
+        }
     }
 }
 

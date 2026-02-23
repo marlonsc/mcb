@@ -116,6 +116,28 @@ pub struct Schema {
     pub unique_constraints: Vec<UniqueConstraintDef>,
 }
 
+/// Trait for entities that carry their own table schema definition.
+///
+/// Implementors provide the canonical DDL metadata for their corresponding
+/// database table. The [`Schema::definition`] aggregator collects all
+/// implementations to build the full canonical schema.
+pub trait HasTableSchema {
+    /// Returns the canonical table definition (columns, types, PK, nullable).
+    fn table_def() -> TableDef;
+    /// Returns secondary indexes for this table.
+    fn indexes() -> Vec<IndexDef> {
+        Vec::new()
+    }
+    /// Returns foreign key relationships for this table.
+    fn foreign_keys() -> Vec<ForeignKeyDef> {
+        Vec::new()
+    }
+    /// Returns multi-column uniqueness constraints for this table.
+    fn unique_constraints() -> Vec<UniqueConstraintDef> {
+        Vec::new()
+    }
+}
+
 /// Port for generating DDL from the canonical schema.
 pub trait SchemaDdlGenerator: Send + Sync {
     /// Generates backend-specific DDL statements from the canonical schema.

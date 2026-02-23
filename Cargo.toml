@@ -319,6 +319,9 @@ jsonpath-rust = "1.0.4"
 # Lazy static values
 once_cell = "1.19"
 
+# ORM
+sea-orm = { version = "1", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
+
 # ============================================
 # Build Profiles
 # ============================================

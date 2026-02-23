@@ -127,6 +127,9 @@ async-nats = { workspace = true }
 
 # SQLite for memory repository (uses generic schema from domain)
 sqlx = { workspace = true }
+
+# SeaORM for SQLite CRUD (simplifies repositories and row mapping)
+sea-orm = { workspace = true }
 sha2.workspace = true
 walkdir.workspace = true
 

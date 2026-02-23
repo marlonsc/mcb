@@ -50,3 +50,27 @@ pub enum UserRole {
 }
 
 crate::impl_as_str_from_as_ref!(UserRole);
+
+crate::impl_table_schema!(User, "users",
+    columns: [
+        ("id", Text, pk),
+        ("org_id", Text),
+        ("email", Text),
+        ("display_name", Text),
+        ("role", Text),
+        ("api_key_hash", Text, nullable),
+        ("created_at", Integer),
+        ("updated_at", Integer),
+    ],
+    indexes: [
+        "idx_users_org" => ["org_id"],
+        "idx_users_email" => ["email"],
+        "idx_users_api_key_hash" => ["api_key_hash"],
+    ],
+    foreign_keys: [
+        ("org_id", "organizations", "id"),
+    ],
+    unique_constraints: [
+        ["org_id", "email"],
+    ],
+);

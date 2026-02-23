@@ -44,3 +44,17 @@ pub enum OrgStatus {
 }
 
 crate::impl_as_str_from_as_ref!(OrgStatus);
+
+crate::impl_table_schema!(Organization, "organizations",
+    columns: [
+        ("id", Text, pk),
+        ("name", Text),
+        ("slug", Text, unique),
+        ("settings_json", Text),
+        ("created_at", Integer),
+        ("updated_at", Integer),
+    ],
+    indexes: [
+        "idx_organizations_name" => ["name"],
+    ],
+);

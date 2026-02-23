@@ -58,3 +58,41 @@ pub enum TeamMemberRole {
 }
 
 crate::impl_as_str_from_as_ref!(TeamMemberRole);
+
+crate::impl_table_schema!(Team, "teams",
+    columns: [
+        ("id", Text, pk),
+        ("org_id", Text),
+        ("name", Text),
+        ("created_at", Integer),
+    ],
+    indexes: [
+        "idx_teams_org" => ["org_id"],
+    ],
+    foreign_keys: [
+        ("org_id", "organizations", "id"),
+    ],
+    unique_constraints: [
+        ["org_id", "name"],
+    ],
+);
+
+crate::impl_table_schema!(TeamMember, "team_members",
+    columns: [
+        ("team_id", Text, pk),
+        ("user_id", Text, pk),
+        ("role", Text),
+        ("joined_at", Integer),
+    ],
+    indexes: [
+        "idx_team_members_team" => ["team_id"],
+        "idx_team_members_user" => ["user_id"],
+    ],
+    foreign_keys: [
+        ("team_id", "teams", "id"),
+        ("user_id", "users", "id"),
+    ],
+    unique_constraints: [
+        ["team_id", "user_id"],
+    ],
+);

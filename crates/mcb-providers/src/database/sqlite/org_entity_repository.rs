@@ -9,19 +9,26 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{
     ApiKeyRegistry, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
 };
-use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
+use sea_orm::ActiveValue::Set;
+use sea_orm::{ActiveModelTrait, EntityTrait};
 
+use crate::database::sqlite::row_convert::FromRow;
+use crate::database::sqlite::sea_entities::organization;
 use crate::utils::sqlite::query as query_helpers;
-use crate::utils::sqlite::row::{
-    opt_i64, opt_i64_param, opt_str, opt_str_param, req_i64, req_parsed, req_str,
-};
+use crate::utils::sqlite::row::{opt_i64_param, opt_str_param};
 
 /// SQLite-backed repository for organization, user, team, and API key entities.
+///
+/// When constructed with [`Self::new_with_sea`], organization CRUD uses SeaORM;
+/// otherwise it uses the executor port. Other entities (users, teams, etc.) always use the executor.
 pub struct SqliteOrgEntityRepository {
     executor: Arc<dyn DatabaseExecutor>,
+    sea_conn: Option<sea_orm::DatabaseConnection>,
 }
 
-const INSERT_ORG_SQL: &str = "INSERT INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
+const INSERT_ORG_SQL: &str =
+    "INSERT INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
 
 fn org_insert_params(org: &Organization) -> [SqlParam; 6] {
     [
@@ -34,82 +41,48 @@ fn org_insert_params(org: &Organization) -> [SqlParam; 6] {
     ]
 }
 
-impl SqliteOrgEntityRepository {
-    /// Creates a new repository using the provided database executor.
-    pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
-        Self { executor }
+fn org_to_model(org: &Organization) -> organization::ActiveModel {
+    organization::ActiveModel {
+        id: Set(org.id.clone()),
+        name: Set(org.name.clone()),
+        slug: Set(org.slug.clone()),
+        settings_json: Set(org.settings_json.clone()),
+        created_at: Set(org.created_at),
+        updated_at: Set(org.updated_at),
+        ..Default::default()
     }
 }
 
-/// Converts a SQL row to an Organization.
-fn row_to_org(row: &dyn SqlRow) -> Result<Organization> {
-    Ok(Organization {
-        id: req_str(row, "id")?,
-        name: req_str(row, "name")?,
-        slug: req_str(row, "slug")?,
-        settings_json: req_str(row, "settings_json")?,
-        created_at: req_i64(row, "created_at")?,
-        updated_at: req_i64(row, "updated_at")?,
-    })
+fn model_to_org(m: organization::Model) -> Organization {
+    Organization {
+        id: m.id,
+        name: m.name,
+        slug: m.slug,
+        settings_json: m.settings_json,
+        created_at: m.created_at,
+        updated_at: m.updated_at,
+    }
 }
 
-/// Converts a SQL row to a User.
-fn row_to_user(row: &dyn SqlRow) -> Result<User> {
-    Ok(User {
-        id: req_str(row, "id")?,
-        org_id: req_str(row, "org_id")?,
-        email: req_str(row, "email")?,
-        display_name: req_str(row, "display_name")?,
-        role: req_parsed(row, "role")?,
-        api_key_hash: opt_str(row, "api_key_hash")?,
-        created_at: req_i64(row, "created_at")?,
-        updated_at: req_i64(row, "updated_at")?,
-    })
-}
+impl SqliteOrgEntityRepository {
+    /// Creates a new repository using the provided database executor (no SeaORM).
+    pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
+        Self {
+            executor,
+            sea_conn: None,
+        }
+    }
 
-/// Converts a SQL row to a Team.
-fn row_to_team(row: &dyn SqlRow) -> Result<Team> {
-    Ok(Team {
-        id: req_str(row, "id")?,
-        org_id: req_str(row, "org_id")?,
-        name: req_str(row, "name")?,
-        created_at: req_i64(row, "created_at")?,
-    })
-}
-
-use mcb_domain::utils::id;
-use mcb_domain::value_objects::ids::TeamMemberId;
-
-// ...
-
-/// Converts a SQL row to a `TeamMember`.
-fn row_to_team_member(row: &dyn SqlRow) -> Result<TeamMember> {
-    let team_id = req_str(row, "team_id")?;
-    let user_id = req_str(row, "user_id")?;
-    let id_uuid = id::deterministic("team_member", &format!("{team_id}:{user_id}"));
-
-    Ok(TeamMember {
-        id: TeamMemberId::from_uuid(id_uuid),
-        team_id,
-        user_id,
-        role: req_parsed(row, "role")?,
-        joined_at: req_i64(row, "joined_at")?,
-    })
-}
-
-/// Converts a SQL row to an `ApiKey`.
-fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
-    Ok(ApiKey {
-        id: req_str(row, "id")?,
-        user_id: req_str(row, "user_id")?,
-        org_id: req_str(row, "org_id")?,
-        key_hash: req_str(row, "key_hash")?,
-        name: req_str(row, "name")?,
-        scopes_json: req_str(row, "scopes_json")?,
-        expires_at: opt_i64(row, "expires_at")?,
-        created_at: req_i64(row, "created_at")?,
-        revoked_at: opt_i64(row, "revoked_at")?,
-    })
+    /// Creates a repository with a SeaORM connection for organization CRUD.
+    pub fn new_with_sea(
+        executor: Arc<dyn DatabaseExecutor>,
+        sea_conn: sea_orm::DatabaseConnection,
+    ) -> Self {
+        Self {
+            executor,
+            sea_conn: Some(sea_conn),
+        }
+    }
 }
 
 #[async_trait]
@@ -117,17 +90,31 @@ fn row_to_api_key(row: &dyn SqlRow) -> Result<ApiKey> {
 impl OrgRegistry for SqliteOrgEntityRepository {
     /// Creates a new organization.
     async fn create_org(&self, org: &Organization) -> Result<()> {
+        if let Some(ref db) = self.sea_conn {
+            let am = org_to_model(org);
+            am.insert(db)
+                .await
+                .map_err(|e| Error::memory_with_source("SeaORM insert organization", e))?;
+            return Ok(());
+        }
         let params = org_insert_params(org);
         query_helpers::execute(&self.executor, INSERT_ORG_SQL, &params).await
     }
 
     /// Retrieves an organization by ID.
     async fn get_org(&self, id: &str) -> Result<Organization> {
+        if let Some(ref db) = self.sea_conn {
+            let opt = organization::Entity::find_by_id(id.to_string())
+                .one(db)
+                .await
+                .map_err(|e| Error::memory_with_source("SeaORM find organization", e))?;
+            return Error::not_found_or(opt.map(model_to_org), "Organization", id);
+        }
         let org = query_helpers::query_one(
             &self.executor,
             "SELECT * FROM organizations WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
-            row_to_org,
+            Organization::from_row,
         )
         .await?;
         Error::not_found_or(org, "Organization", id)
@@ -135,11 +122,18 @@ impl OrgRegistry for SqliteOrgEntityRepository {
 
     /// Lists all organizations.
     async fn list_orgs(&self) -> Result<Vec<Organization>> {
+        if let Some(ref db) = self.sea_conn {
+            let models = organization::Entity::find()
+                .all(db)
+                .await
+                .map_err(|e| Error::memory_with_source("SeaORM list organizations", e))?;
+            return Ok(models.into_iter().map(model_to_org).collect());
+        }
         query_helpers::query_all(
             &self.executor,
             "SELECT * FROM organizations",
             &[],
-            row_to_org,
+            Organization::from_row,
             "org entity",
         )
         .await
@@ -147,6 +141,13 @@ impl OrgRegistry for SqliteOrgEntityRepository {
 
     /// Updates an existing organization.
     async fn update_org(&self, org: &Organization) -> Result<()> {
+        if let Some(ref db) = self.sea_conn {
+            let am = org_to_model(org);
+            am.update(db)
+                .await
+                .map_err(|e| Error::memory_with_source("SeaORM update organization", e))?;
+            return Ok(());
+        }
         self.executor
             .execute(
                 "UPDATE organizations SET name = ?, slug = ?, settings_json = ?, updated_at = ? WHERE id = ?",
@@ -163,6 +164,20 @@ impl OrgRegistry for SqliteOrgEntityRepository {
 
     /// Deletes an organization.
     async fn delete_org(&self, id: &str) -> Result<()> {
+        if let Some(ref db) = self.sea_conn {
+            if let Some(active) = organization::Entity::find_by_id(id.to_string())
+                .one(db)
+                .await
+                .map_err(|e| Error::memory_with_source("SeaORM find for delete", e))?
+                .map(organization::ActiveModel::from)
+            {
+                active
+                    .delete(db)
+                    .await
+                    .map_err(|e| Error::memory_with_source("SeaORM delete organization", e))?;
+            }
+            return Ok(());
+        }
         self.executor
             .execute(
                 "DELETE FROM organizations WHERE id = ?",
@@ -200,7 +215,7 @@ impl UserRegistry for SqliteOrgEntityRepository {
             &self.executor,
             "SELECT * FROM users WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
-            row_to_user,
+            User::from_row,
         )
         .await?;
         Error::not_found_or(user, "User", id)
@@ -215,7 +230,7 @@ impl UserRegistry for SqliteOrgEntityRepository {
                 SqlParam::String(org_id.to_owned()),
                 SqlParam::String(email.to_owned()),
             ],
-            row_to_user,
+            User::from_row,
         )
         .await?;
         Error::not_found_or(user, "User", email)
@@ -227,7 +242,7 @@ impl UserRegistry for SqliteOrgEntityRepository {
             &self.executor,
             "SELECT * FROM users WHERE org_id = ?",
             &[SqlParam::String(org_id.to_owned())],
-            row_to_user,
+            User::from_row,
             "org entity",
         )
         .await
@@ -286,7 +301,7 @@ impl TeamRegistry for SqliteOrgEntityRepository {
             &self.executor,
             "SELECT * FROM teams WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
-            row_to_team,
+            Team::from_row,
         )
         .await?;
         Error::not_found_or(team, "Team", id)
@@ -298,7 +313,7 @@ impl TeamRegistry for SqliteOrgEntityRepository {
             &self.executor,
             "SELECT * FROM teams WHERE org_id = ?",
             &[SqlParam::String(org_id.to_owned())],
-            row_to_team,
+            Team::from_row,
             "org entity",
         )
         .await
@@ -352,7 +367,7 @@ impl TeamMemberManager for SqliteOrgEntityRepository {
             &self.executor,
             "SELECT * FROM team_members WHERE team_id = ?",
             &[SqlParam::String(team_id.to_owned())],
-            row_to_team_member,
+            TeamMember::from_row,
             "org entity",
         )
         .await
@@ -388,7 +403,7 @@ impl ApiKeyRegistry for SqliteOrgEntityRepository {
             &self.executor,
             "SELECT * FROM api_keys WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
-            row_to_api_key,
+            ApiKey::from_row,
         )
         .await?;
         Error::not_found_or(key, "ApiKey", id)
@@ -400,7 +415,7 @@ impl ApiKeyRegistry for SqliteOrgEntityRepository {
             &self.executor,
             "SELECT * FROM api_keys WHERE org_id = ?",
             &[SqlParam::String(org_id.to_owned())],
-            row_to_api_key,
+            ApiKey::from_row,
             "org entity",
         )
         .await

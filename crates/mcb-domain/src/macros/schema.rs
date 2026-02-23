@@ -119,3 +119,99 @@ macro_rules! unique {
         }
     };
 }
+
+/// Implement [`HasTableSchema`] for an entity type using compact column specs.
+///
+/// Co-locate this invocation in the entity file so the schema lives next to
+/// the struct it describes. The macro reuses the existing `col!`, `table!`,
+/// `index!`, `fk!` and `unique!` helpers internally.
+///
+/// # Example
+///
+/// ```ignore
+/// impl_table_schema!(Organization, "organizations",
+///     columns: [
+///         ("id", Text, pk),
+///         ("name", Text),
+///         ("slug", Text, unique),
+///         ("settings_json", Text),
+///         ("created_at", Integer),
+///         ("updated_at", Integer),
+///     ],
+///     indexes: [
+///         "idx_organizations_name" => ["name"],
+///     ],
+/// );
+/// ```
+#[macro_export]
+macro_rules! impl_table_schema {
+    // Full form: columns + indexes + foreign_keys + unique_constraints
+    ($entity:ty, $table_name:expr,
+        columns: [ $( ($col_name:expr, $col_type:ident $(, $flag:ident)?) ),* $(,)? ],
+        indexes: [ $( $idx_name:expr => [ $($idx_col:expr),* $(,)? ] ),* $(,)? ],
+        foreign_keys: [ $( ($fk_col:expr, $fk_table:expr, $fk_ref:expr) ),* $(,)? ],
+        unique_constraints: [ $( [ $($uc_col:expr),* $(,)? ] ),* $(,)? ],
+    ) => {
+        impl $crate::schema::types::HasTableSchema for $entity {
+            fn table_def() -> $crate::schema::types::TableDef {
+                $crate::table!($table_name, [
+                    $( $crate::col!($col_name, $col_type $(, $flag)?) ),*
+                ])
+            }
+
+            fn indexes() -> Vec<$crate::schema::types::IndexDef> {
+                vec![
+                    $( $crate::index!($idx_name, $table_name, [ $($idx_col),* ]) ),*
+                ]
+            }
+
+            fn foreign_keys() -> Vec<$crate::schema::types::ForeignKeyDef> {
+                vec![
+                    $( $crate::fk!($table_name, $fk_col, $fk_table, $fk_ref) ),*
+                ]
+            }
+
+            fn unique_constraints() -> Vec<$crate::schema::types::UniqueConstraintDef> {
+                vec![
+                    $( $crate::unique!($table_name, [ $($uc_col),* ]) ),*
+                ]
+            }
+        }
+    };
+    // Shorthand: columns only (no indexes, no FKs, no UCs)
+    ($entity:ty, $table_name:expr,
+        columns: [ $( ($col_name:expr, $col_type:ident $(, $flag:ident)?) ),* $(,)? ],
+    ) => {
+        $crate::impl_table_schema!($entity, $table_name,
+            columns: [ $( ($col_name, $col_type $(, $flag)?) ),* ],
+            indexes: [],
+            foreign_keys: [],
+            unique_constraints: [],
+        );
+    };
+    // Shorthand: columns + indexes (no FKs, no UCs)
+    ($entity:ty, $table_name:expr,
+        columns: [ $( ($col_name:expr, $col_type:ident $(, $flag:ident)?) ),* $(,)? ],
+        indexes: [ $( $idx_name:expr => [ $($idx_col:expr),* $(,)? ] ),* $(,)? ],
+    ) => {
+        $crate::impl_table_schema!($entity, $table_name,
+            columns: [ $( ($col_name, $col_type $(, $flag)?) ),* ],
+            indexes: [ $( $idx_name => [ $($idx_col),* ] ),* ],
+            foreign_keys: [],
+            unique_constraints: [],
+        );
+    };
+    // Shorthand: columns + foreign_keys (no indexes, no UCs)
+    ($entity:ty, $table_name:expr,
+        columns: [ $( ($col_name:expr, $col_type:ident $(, $flag:ident)?) ),* $(,)? ],
+        foreign_keys: [ $( ($fk_col:expr, $fk_table:expr, $fk_ref:expr) ),* $(,)? ],
+    ) => {
+        $crate::impl_table_schema!($entity, $table_name,
+            columns: [ $( ($col_name, $col_type $(, $flag)?) ),* ],
+            indexes: [],
+            foreign_keys: [ $( ($fk_col, $fk_table, $fk_ref) ),* ],
+            unique_constraints: [],
+        );
+    };
+    // Shorthand: columns + indexes + foreign_keys (no UCs)
+}

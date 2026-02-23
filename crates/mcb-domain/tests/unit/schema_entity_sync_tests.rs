@@ -151,6 +151,49 @@ mod tests {
     }
 
     #[test]
+    fn test_org_has_table_schema_matches_definition() {
+        use mcb_domain::entities::Organization;
+        use mcb_domain::schema::HasTableSchema;
+
+        let trait_table = Organization::table_def();
+        let schema = Schema::definition();
+        let def_table = schema
+            .tables
+            .iter()
+            .find(|t| t.name == "organizations")
+            .expect("organizations table not found in definition");
+
+        assert_eq!(trait_table.name, def_table.name);
+        assert_eq!(trait_table.columns.len(), def_table.columns.len());
+
+        for (t_col, d_col) in trait_table.columns.iter().zip(def_table.columns.iter()) {
+            assert_eq!(t_col.name, d_col.name, "column name mismatch");
+            assert_eq!(t_col.type_, d_col.type_, "type mismatch for {}", t_col.name);
+            assert_eq!(
+                t_col.primary_key, d_col.primary_key,
+                "pk mismatch for {}", t_col.name
+            );
+            assert_eq!(
+                t_col.not_null, d_col.not_null,
+                "not_null mismatch for {}", t_col.name
+            );
+            assert_eq!(
+                t_col.unique, d_col.unique,
+                "unique mismatch for {}", t_col.name
+            );
+        }
+
+        let trait_indexes = Organization::indexes();
+        let def_indexes: Vec<_> = schema
+            .indexes
+            .iter()
+            .filter(|i| i.table == "organizations")
+            .collect();
+        assert_eq!(trait_indexes.len(), def_indexes.len());
+        println!("✓ Organization HasTableSchema matches Schema::definition() exactly");
+    }
+
+    #[test]
     fn report_divergence_mitigation() {
         println!("\n=== DIVERGENCE MITIGATION STRATEGY ===");
         println!("\nFor each schema-only field:");

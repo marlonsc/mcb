@@ -6,15 +6,15 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use mcb_domain::entities::repository::{Branch, Repository, VcsType};
-use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
+use mcb_domain::entities::repository::{Branch, Repository};
+use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::VcsEntityRepository;
-use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 use serde_json::json;
 
+use crate::database::sqlite::row_convert::FromRow;
 use crate::utils::sqlite::query as query_helpers;
-use crate::utils::sqlite::row::{req_i64, req_parsed, req_str};
 
 /// SQLite-backed repository for VCS repositories, branches, worktrees, and assignments.
 pub struct SqliteVcsEntityRepository {
@@ -26,65 +26,6 @@ impl SqliteVcsEntityRepository {
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
-}
-
-/// Converts a SQL row to a Repository.
-fn row_to_repository(row: &dyn SqlRow) -> Result<Repository> {
-    let vcs_type: VcsType = req_parsed(row, "vcs_type")?;
-
-    Ok(Repository {
-        id: req_str(row, "id")?,
-        org_id: req_str(row, "org_id")?,
-        project_id: req_str(row, "project_id")?,
-        name: req_str(row, "name")?,
-        url: req_str(row, "url")?,
-        local_path: req_str(row, "local_path")?,
-        vcs_type,
-        created_at: req_i64(row, "created_at")?,
-        updated_at: req_i64(row, "updated_at")?,
-    })
-}
-
-/// Converts a SQL row to a Branch.
-fn row_to_branch(row: &dyn SqlRow) -> Result<Branch> {
-    let is_default_i = req_i64(row, "is_default")?;
-    Ok(Branch {
-        id: req_str(row, "id")?,
-        org_id: req_str(row, "org_id")?,
-        repository_id: req_str(row, "repository_id")?,
-        name: req_str(row, "name")?,
-        is_default: is_default_i != 0,
-        head_commit: req_str(row, "head_commit")?,
-        upstream: row.try_get_string("upstream")?,
-        created_at: req_i64(row, "created_at")?,
-    })
-}
-
-/// Converts a SQL row to a Worktree.
-fn row_to_worktree(row: &dyn SqlRow) -> Result<Worktree> {
-    let status: WorktreeStatus = req_parsed(row, "status")?;
-
-    Ok(Worktree {
-        id: req_str(row, "id")?,
-        repository_id: req_str(row, "repository_id")?,
-        branch_id: req_str(row, "branch_id")?,
-        path: req_str(row, "path")?,
-        status,
-        assigned_agent_id: row.try_get_string("assigned_agent_id")?,
-        created_at: req_i64(row, "created_at")?,
-        updated_at: req_i64(row, "updated_at")?,
-    })
-}
-
-/// Converts a SQL row to an `AgentWorktreeAssignment`.
-fn row_to_assignment(row: &dyn SqlRow) -> Result<AgentWorktreeAssignment> {
-    Ok(AgentWorktreeAssignment {
-        id: req_str(row, "id")?,
-        agent_session_id: req_str(row, "agent_session_id")?,
-        worktree_id: req_str(row, "worktree_id")?,
-        assigned_at: req_i64(row, "assigned_at")?,
-        released_at: row.try_get_i64("released_at")?,
-    })
 }
 
 #[async_trait]
@@ -131,7 +72,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                 SqlParam::String(org_id.to_owned()),
                 SqlParam::String(id.to_owned()),
             ],
-            row_to_repository,
+            Repository::from_row,
         )
         .await?;
         Error::not_found_or(repo, "Repository", id)
@@ -146,7 +87,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
                 SqlParam::String(org_id.to_owned()),
                 SqlParam::String(project_id.to_owned()),
             ],
-            row_to_repository,
+            Repository::from_row,
             "vcs entity",
         )
         .await
@@ -229,7 +170,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             &self.executor,
             "SELECT * FROM branches WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
-            row_to_branch,
+            Branch::from_row,
         )
         .await?;
         Error::not_found_or(branch, "Branch", id)
@@ -241,7 +182,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             &self.executor,
             "SELECT * FROM branches WHERE repository_id = ?",
             &[SqlParam::String(repository_id.to_owned())],
-            row_to_branch,
+            Branch::from_row,
             "vcs entity",
         )
         .await
@@ -321,7 +262,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             &self.executor,
             "SELECT * FROM worktrees WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
-            row_to_worktree,
+            Worktree::from_row,
         )
         .await?;
         Error::not_found_or(wt, "Worktree", id)
@@ -333,7 +274,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             &self.executor,
             "SELECT * FROM worktrees WHERE repository_id = ?",
             &[SqlParam::String(repository_id.to_owned())],
-            row_to_worktree,
+            Worktree::from_row,
             "vcs entity",
         )
         .await
@@ -410,7 +351,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             &self.executor,
             "SELECT * FROM agent_worktree_assignments WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
-            row_to_assignment,
+            AgentWorktreeAssignment::from_row,
         )
         .await?;
         Error::not_found_or(asgn, "Assignment", id)
@@ -425,7 +366,7 @@ impl VcsEntityRepository for SqliteVcsEntityRepository {
             &self.executor,
             "SELECT * FROM agent_worktree_assignments WHERE worktree_id = ?",
             &[SqlParam::String(worktree_id.to_owned())],
-            row_to_assignment,
+            AgentWorktreeAssignment::from_row,
             "vcs entity",
         )
         .await

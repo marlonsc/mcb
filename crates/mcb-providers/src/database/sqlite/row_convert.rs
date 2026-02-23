@@ -3,15 +3,21 @@
 //!
 //! Row-to-entity conversion using the domain port [`SqlRow`].
 
-use crate::utils::sqlite::row::{json_opt, json_vec, req_i64, req_parsed, req_str};
+use crate::utils::sqlite::row::{json_opt, json_vec, opt_i64, opt_str, req_i64, req_parsed, req_str};
 use mcb_domain::constants::keys as schema;
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, CheckpointType};
 use mcb_domain::entities::issue::{IssueComment, IssueLabel};
 use mcb_domain::entities::memory::{Observation, ObservationMetadata, SessionSummary};
+use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
 use mcb_domain::entities::project::{Project, ProjectIssue};
+use mcb_domain::entities::repository::{Branch, Repository, VcsType};
+use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
+use mcb_domain::entities::{ApiKey, Organization, Team, TeamMember, User};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::SqlRow;
 use mcb_domain::schema::COL_OBSERVATION_TYPE;
+use mcb_domain::utils::id;
+use mcb_domain::value_objects::ids::TeamMemberId;
 
 /// Trait for converting a database row to an entity type.
 #[allow(dead_code)]
@@ -231,5 +237,171 @@ impl FromRow for IssueComment {
 impl FromRow for IssueLabel {
     fn from_row(row: &dyn SqlRow) -> Result<Self> {
         row_to_label(row)
+    }
+}
+
+from_row_simple!(Organization, {
+    id: req_str,
+    name: req_str,
+    slug: req_str,
+    settings_json: req_str,
+    created_at: req_i64,
+    updated_at: req_i64,
+});
+
+from_row_simple!(User, {
+    id: req_str,
+    org_id: req_str,
+    email: req_str,
+    display_name: req_str,
+    role: req_parsed,
+    api_key_hash: opt_str,
+    created_at: req_i64,
+    updated_at: req_i64,
+});
+
+from_row_simple!(Team, {
+    id: req_str,
+    org_id: req_str,
+    name: req_str,
+    created_at: req_i64,
+});
+
+impl FromRow for TeamMember {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        let team_id = req_str(row, "team_id")?;
+        let user_id = req_str(row, "user_id")?;
+        let id_uuid = id::deterministic("team_member", &format!("{team_id}:{user_id}"));
+        Ok(TeamMember {
+            id: TeamMemberId::from_uuid(id_uuid),
+            team_id,
+            user_id,
+            role: req_parsed(row, "role")?,
+            joined_at: req_i64(row, "joined_at")?,
+        })
+    }
+}
+
+impl FromRow for ApiKey {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        Ok(ApiKey {
+            id: req_str(row, "id")?,
+            user_id: req_str(row, "user_id")?,
+            org_id: req_str(row, "org_id")?,
+            key_hash: req_str(row, "key_hash")?,
+            name: req_str(row, "name")?,
+            scopes_json: req_str(row, "scopes_json")?,
+            expires_at: opt_i64(row, "expires_at")?,
+            created_at: req_i64(row, "created_at")?,
+            revoked_at: opt_i64(row, "revoked_at")?,
+        })
+    }
+}
+
+impl FromRow for Plan {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        let status: PlanStatus = req_parsed(row, "status")?;
+        Ok(Plan {
+            id: req_str(row, "id")?,
+            org_id: req_str(row, "org_id")?,
+            project_id: req_str(row, "project_id")?,
+            title: req_str(row, "title")?,
+            description: req_str(row, "description")?,
+            status,
+            created_by: req_str(row, "created_by")?,
+            created_at: req_i64(row, "created_at")?,
+            updated_at: req_i64(row, "updated_at")?,
+        })
+    }
+}
+
+impl FromRow for PlanVersion {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        Ok(PlanVersion {
+            id: req_str(row, "id")?,
+            org_id: req_str(row, "org_id")?,
+            plan_id: req_str(row, "plan_id")?,
+            version_number: req_i64(row, "version_number")?,
+            content_json: req_str(row, "content_json")?,
+            change_summary: req_str(row, "change_summary")?,
+            created_by: req_str(row, "created_by")?,
+            created_at: req_i64(row, "created_at")?,
+        })
+    }
+}
+
+impl FromRow for PlanReview {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        let verdict: ReviewVerdict = req_parsed(row, "verdict")?;
+        Ok(PlanReview {
+            id: req_str(row, "id")?,
+            org_id: req_str(row, "org_id")?,
+            plan_version_id: req_str(row, "plan_version_id")?,
+            reviewer_id: req_str(row, "reviewer_id")?,
+            verdict,
+            feedback: req_str(row, "feedback")?,
+            created_at: req_i64(row, "created_at")?,
+        })
+    }
+}
+
+impl FromRow for Repository {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        let vcs_type: VcsType = req_parsed(row, "vcs_type")?;
+        Ok(Repository {
+            id: req_str(row, "id")?,
+            org_id: req_str(row, "org_id")?,
+            project_id: req_str(row, "project_id")?,
+            name: req_str(row, "name")?,
+            url: req_str(row, "url")?,
+            local_path: req_str(row, "local_path")?,
+            vcs_type,
+            created_at: req_i64(row, "created_at")?,
+            updated_at: req_i64(row, "updated_at")?,
+        })
+    }
+}
+
+impl FromRow for Branch {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        let is_default_i = req_i64(row, "is_default")?;
+        Ok(Branch {
+            id: req_str(row, "id")?,
+            org_id: req_str(row, "org_id")?,
+            repository_id: req_str(row, "repository_id")?,
+            name: req_str(row, "name")?,
+            is_default: is_default_i != 0,
+            head_commit: req_str(row, "head_commit")?,
+            upstream: row.try_get_string("upstream")?,
+            created_at: req_i64(row, "created_at")?,
+        })
+    }
+}
+
+impl FromRow for Worktree {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        let status: WorktreeStatus = req_parsed(row, "status")?;
+        Ok(Worktree {
+            id: req_str(row, "id")?,
+            repository_id: req_str(row, "repository_id")?,
+            branch_id: req_str(row, "branch_id")?,
+            path: req_str(row, "path")?,
+            status,
+            assigned_agent_id: row.try_get_string("assigned_agent_id")?,
+            created_at: req_i64(row, "created_at")?,
+            updated_at: req_i64(row, "updated_at")?,
+        })
+    }
+}
+
+impl FromRow for AgentWorktreeAssignment {
+    fn from_row(row: &dyn SqlRow) -> Result<Self> {
+        Ok(AgentWorktreeAssignment {
+            id: req_str(row, "id")?,
+            agent_session_id: req_str(row, "agent_session_id")?,
+            worktree_id: req_str(row, "worktree_id")?,
+            assigned_at: req_i64(row, "assigned_at")?,
+            released_at: row.try_get_i64("released_at")?,
+        })
     }
 }

@@ -4,13 +4,13 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
+use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::{DatabaseExecutor, SqlParam, SqlRow};
+use mcb_domain::ports::{DatabaseExecutor, SqlParam};
 use mcb_domain::ports::{PlanRegistry, PlanReviewRegistry, PlanVersionRegistry};
 
+use crate::database::sqlite::row_convert::FromRow;
 use crate::utils::sqlite::query as query_helpers;
-use crate::utils::sqlite::row::{req_i64, req_parsed, req_str};
 
 /// SQLite-backed repository for plan, version, and review entities.
 pub struct SqlitePlanEntityRepository {
@@ -22,52 +22,6 @@ impl SqlitePlanEntityRepository {
     pub fn new(executor: Arc<dyn DatabaseExecutor>) -> Self {
         Self { executor }
     }
-}
-
-/// Converts a SQL row to a Plan.
-fn row_to_plan(row: &dyn SqlRow) -> Result<Plan> {
-    let status: PlanStatus = req_parsed(row, "status")?;
-
-    Ok(Plan {
-        id: req_str(row, "id")?,
-        org_id: req_str(row, "org_id")?,
-        project_id: req_str(row, "project_id")?,
-        title: req_str(row, "title")?,
-        description: req_str(row, "description")?,
-        status,
-        created_by: req_str(row, "created_by")?,
-        created_at: req_i64(row, "created_at")?,
-        updated_at: req_i64(row, "updated_at")?,
-    })
-}
-
-/// Converts a SQL row to a `PlanVersion`.
-fn row_to_plan_version(row: &dyn SqlRow) -> Result<PlanVersion> {
-    Ok(PlanVersion {
-        id: req_str(row, "id")?,
-        org_id: req_str(row, "org_id")?,
-        plan_id: req_str(row, "plan_id")?,
-        version_number: req_i64(row, "version_number")?,
-        content_json: req_str(row, "content_json")?,
-        change_summary: req_str(row, "change_summary")?,
-        created_by: req_str(row, "created_by")?,
-        created_at: req_i64(row, "created_at")?,
-    })
-}
-
-/// Converts a SQL row to a `PlanReview`.
-fn row_to_plan_review(row: &dyn SqlRow) -> Result<PlanReview> {
-    let verdict: ReviewVerdict = req_parsed(row, "verdict")?;
-
-    Ok(PlanReview {
-        id: req_str(row, "id")?,
-        org_id: req_str(row, "org_id")?,
-        plan_version_id: req_str(row, "plan_version_id")?,
-        reviewer_id: req_str(row, "reviewer_id")?,
-        verdict,
-        feedback: req_str(row, "feedback")?,
-        created_at: req_i64(row, "created_at")?,
-    })
 }
 
 #[async_trait]
@@ -102,7 +56,7 @@ impl PlanRegistry for SqlitePlanEntityRepository {
                 SqlParam::String(org_id.to_owned()),
                 SqlParam::String(id.to_owned()),
             ],
-            row_to_plan,
+            Plan::from_row,
         )
         .await?;
         Error::not_found_or(plan, "Plan", id)
@@ -117,7 +71,7 @@ impl PlanRegistry for SqlitePlanEntityRepository {
                 SqlParam::String(org_id.to_owned()),
                 SqlParam::String(project_id.to_owned()),
             ],
-            row_to_plan,
+            Plan::from_row,
             "plan entity",
         )
         .await
@@ -182,7 +136,7 @@ impl PlanVersionRegistry for SqlitePlanEntityRepository {
             &self.executor,
             "SELECT * FROM plan_versions WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
-            row_to_plan_version,
+            PlanVersion::from_row,
         )
         .await?;
         Error::not_found_or(version, "PlanVersion", id)
@@ -194,7 +148,7 @@ impl PlanVersionRegistry for SqlitePlanEntityRepository {
             &self.executor,
             "SELECT * FROM plan_versions WHERE plan_id = ?",
             &[SqlParam::String(plan_id.to_owned())],
-            row_to_plan_version,
+            PlanVersion::from_row,
             "plan entity",
         )
         .await
@@ -228,7 +182,7 @@ impl PlanReviewRegistry for SqlitePlanEntityRepository {
             &self.executor,
             "SELECT * FROM plan_reviews WHERE id = ?",
             &[SqlParam::String(id.to_owned())],
-            row_to_plan_review,
+            PlanReview::from_row,
         )
         .await?;
         Error::not_found_or(review, "PlanReview", id)
@@ -240,7 +194,7 @@ impl PlanReviewRegistry for SqlitePlanEntityRepository {
             &self.executor,
             "SELECT * FROM plan_reviews WHERE plan_version_id = ?",
             &[SqlParam::String(plan_version_id.to_owned())],
-            row_to_plan_review,
+            PlanReview::from_row,
             "plan entity",
         )
         .await

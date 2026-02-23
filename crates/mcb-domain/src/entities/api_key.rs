@@ -26,3 +26,27 @@ crate::define_entity! {
         pub revoked_at: Option<i64>,
     }
 }
+
+crate::impl_table_schema!(ApiKey, "api_keys",
+    columns: [
+        ("id", Text, pk),
+        ("user_id", Text),
+        ("org_id", Text),
+        ("key_hash", Text),
+        ("name", Text),
+        ("scopes_json", Text),
+        ("expires_at", Integer, nullable),
+        ("created_at", Integer),
+        ("revoked_at", Integer, nullable),
+    ],
+    indexes: [
+        "idx_api_keys_user" => ["user_id"],
+        "idx_api_keys_org" => ["org_id"],
+        "idx_api_keys_key_hash" => ["key_hash"],
+    ],
+    foreign_keys: [
+        ("user_id", "users", "id"),
+        ("org_id", "organizations", "id"),
+    ],
+    unique_constraints: [],
+);
