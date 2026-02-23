@@ -128,7 +128,11 @@ hmac = { workspace = true }
 # Logging appenders
 tracing-appender = { workspace = true }
 
-# SQLite for file hash storage (Phase 3: Incremental indexing)
+# SeaORM (database layer)
+sea-orm = { workspace = true }
+sea-orm-migration = { workspace = true }
+
+# SQLite for legacy/direct queries
 sqlx = { workspace = true }
 
 # Syntax highlighting

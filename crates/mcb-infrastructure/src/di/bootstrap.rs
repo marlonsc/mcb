@@ -27,7 +27,6 @@ use crate::crypto::CryptoService;
 use crate::di::admin::{
     CacheAdminService, EmbeddingAdminService, LanguageAdminService, VectorStoreAdminService,
 };
-use crate::di::database_resolver::DatabaseProviderResolver;
 use crate::di::handles::{
     CacheProviderHandle, EmbeddingProviderHandle, LanguageProviderHandle, VectorStoreProviderHandle,
 };
@@ -39,11 +38,12 @@ use crate::infrastructure::admin::{AtomicPerformanceMetrics, DefaultIndexingOper
 use crate::infrastructure::lifecycle::DefaultShutdownCoordinator;
 use crate::project::ProjectService;
 use crate::services::HighlightServiceImpl;
-use mcb_providers::database::{
-    SqliteFileHashConfig, SqliteFileHashRepository, SqliteMemoryRepository,
-    create_agent_repository_from_executor, create_project_repository_from_executor,
+use mcb_providers::database::seaorm::repos::{
+    SeaOrmAgentRepository, SeaOrmEntityRepository, SeaOrmIndexRepository,
+    SeaOrmObservationRepository, SeaOrmProjectRepository,
 };
 use mcb_providers::events::TokioEventBusProvider;
+use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 
 /// Application context with provider handles and infrastructure services
 pub struct AppContext {
@@ -449,6 +449,10 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
     // Create Domain Services & Repositories
     // ========================================================================
 
+    // ========================================================================
+    // SeaORM Database Connection
+    // ========================================================================
+
     let db_config = config.providers.database.configs.get(DEFAULT_DB_CONFIG_NAME).ok_or_else(|| {
         mcb_domain::error::Error::config(
             "providers.database.configs.default is required; set path in config/default.toml under [providers.database.configs.default]",
@@ -460,41 +464,64 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
         )
     })?;
 
-    let db_resolver = DatabaseProviderResolver::new(Arc::clone(&config));
-    let db_executor = db_resolver
-        .resolve_and_connect(memory_db_path.as_path())
+    // Ensure parent directory exists
+    if let Some(parent) = memory_db_path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| {
+            mcb_domain::error::Error::internal(format!(
+                "Failed to create database directory {}: {e}",
+                parent.display()
+            ))
+        })?;
+    }
+
+    let db_url = format!("sqlite://{}?mode=rwc", memory_db_path.display());
+    let mut connect_opts = ConnectOptions::new(db_url);
+    connect_opts
+        .max_connections(5)
+        .min_connections(1)
+        .sqlx_logging(false);
+
+    let db: DatabaseConnection = Database::connect(connect_opts).await.map_err(|e| {
+        mcb_domain::error::Error::internal(format!("Failed to connect to database: {e}"))
+    })?;
+
+    // Run migrations
+    use sea_orm_migration::MigratorTrait;
+    mcb_providers::database::seaorm::migration::Migrator::up(&db, None)
         .await
         .map_err(|e| {
-            mcb_domain::error::Error::internal(format!("Failed to create database executor: {e}"))
+            mcb_domain::error::Error::internal(format!("Failed to run migrations: {e}"))
         })?;
 
-    let memory_repository: Arc<dyn MemoryRepository> =
-        Arc::new(SqliteMemoryRepository::new(Arc::clone(&db_executor)));
-    let agent_repository = create_agent_repository_from_executor(Arc::clone(&db_executor));
-    let project_repository = create_project_repository_from_executor(Arc::clone(&db_executor));
+    let db = Arc::new(db);
+
     let project_id = current_project_id()?;
-    let file_hash_repository: Arc<dyn FileHashRepository> =
-        Arc::new(SqliteFileHashRepository::new(
-            Arc::clone(&db_executor),
-            SqliteFileHashConfig::default(),
-            project_id,
-        ));
+
+    // ========================================================================
+    // SeaORM Repositories (single Arc<DatabaseConnection> shared by all)
+    // ========================================================================
+
+    let memory_repository: Arc<dyn MemoryRepository> =
+        Arc::new(SeaOrmObservationRepository::new((*db).clone()));
+    let agent_repository: Arc<dyn AgentRepository> =
+        Arc::new(SeaOrmAgentRepository::new(Arc::clone(&db)));
+    let project_repository: Arc<dyn ProjectRepository> =
+        Arc::new(SeaOrmProjectRepository::new((*db).clone()));
+
+    // Unified entity repository handles VCS, Plan, Issue, Org entities
+    let entity_repo = Arc::new(SeaOrmEntityRepository::new(Arc::clone(&db)));
+    let vcs_entity_repository: Arc<dyn VcsEntityRepository> = Arc::clone(&entity_repo) as _;
+    let plan_entity_repository: Arc<dyn PlanEntityRepository> = Arc::clone(&entity_repo) as _;
+    let issue_entity_repository: Arc<dyn IssueEntityRepository> = Arc::clone(&entity_repo) as _;
+    let org_entity_repository: Arc<dyn OrgEntityRepository> = Arc::clone(&entity_repo) as _;
+
+    let file_hash_repository: Arc<dyn FileHashRepository> = Arc::new(SeaOrmIndexRepository::new(
+        Arc::clone(&db),
+        project_id.clone(),
+    ));
 
     let vcs_provider = crate::di::vcs::default_vcs_provider();
     let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new());
-
-    let vcs_entity_repository: Arc<dyn VcsEntityRepository> = Arc::new(
-        mcb_providers::database::SqliteVcsEntityRepository::new(Arc::clone(&db_executor)),
-    );
-    let plan_entity_repository: Arc<dyn PlanEntityRepository> = Arc::new(
-        mcb_providers::database::SqlitePlanEntityRepository::new(Arc::clone(&db_executor)),
-    );
-    let issue_entity_repository: Arc<dyn IssueEntityRepository> = Arc::new(
-        mcb_providers::database::SqliteIssueEntityRepository::new(Arc::clone(&db_executor)),
-    );
-    let org_entity_repository: Arc<dyn OrgEntityRepository> = Arc::new(
-        mcb_providers::database::SqliteOrgEntityRepository::new(Arc::clone(&db_executor)),
-    );
 
     let highlight_service: Arc<dyn HighlightServiceInterface> =
         Arc::new(HighlightServiceImpl::new());

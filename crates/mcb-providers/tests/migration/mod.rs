@@ -37,6 +37,7 @@ async fn migration_creates_all_tables() {
         "error_pattern_matches",
         "error_patterns",
         "file_hashes",
+        "index_operations",
         "issue_comments",
         "issue_label_assignments",
         "issue_labels",

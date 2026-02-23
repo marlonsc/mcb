@@ -4,10 +4,10 @@
 use super::types::{ForeignKeyDef, FtsDef, IndexDef, Schema, TableDef, UniqueConstraintDef};
 use super::{
     agent_sessions, agent_worktree_assignments, api_keys, branches, checkpoints, collections,
-    delegations, error_pattern_matches, error_patterns, file_hashes, issue_comments,
-    issue_label_assignments, issue_labels, observations, organizations, plan_reviews,
-    plan_versions, plans, project_issues, projects, repositories, session_summaries, team_members,
-    teams, tool_calls, users, worktrees,
+    delegations, error_pattern_matches, error_patterns, file_hashes, index_operations,
+    issue_comments, issue_label_assignments, issue_labels, observations, organizations,
+    plan_reviews, plan_versions, plans, project_issues, projects, repositories, session_summaries,
+    team_members, teams, tool_calls, users, worktrees,
 };
 
 struct SchemaModule {
@@ -60,6 +60,7 @@ const SCHEMA_MODULES: &[SchemaModule] = schema_modules![
     branches,
     worktrees,
     agent_worktree_assignments,
+    index_operations,
 ];
 
 impl Schema {

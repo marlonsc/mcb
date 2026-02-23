@@ -91,13 +91,11 @@ pub mod hybrid_search;
 // Re-export hybrid search providers
 pub use hybrid_search::HybridSearchEngine;
 
-/// Database providers (memory repository backends)
-///
-/// Each backend (SQLite, PostgreSQL, MySQL) has its own submodule and
-/// implements the generic schema DDL in its dialect.
+/// Database providers — SeaORM repositories for structured persistence.
+/// Database-agnostic (SQLite + PostgreSQL via connection string).
 pub mod database;
 
-pub use database::SqliteSchemaDdlGenerator;
+pub use database::seaorm::migration;
 
 /// Project type detection providers
 pub mod project_detection;

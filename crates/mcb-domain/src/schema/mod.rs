@@ -12,6 +12,7 @@ mod delegations;
 mod error_pattern_matches;
 mod error_patterns;
 mod file_hashes;
+mod index_operations;
 mod issue_comments;
 mod issue_label_assignments;
 mod issue_labels;

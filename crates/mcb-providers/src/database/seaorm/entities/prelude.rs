@@ -12,6 +12,7 @@ pub use super::delegation::Entity as Delegation;
 pub use super::error_pattern::Entity as ErrorPattern;
 pub use super::error_pattern_match::Entity as ErrorPatternMatch;
 pub use super::file_hash::Entity as FileHash;
+pub use super::index_operation::Entity as IndexOperation;
 pub use super::issue_comment::Entity as IssueComment;
 pub use super::issue_label::Entity as IssueLabel;
 pub use super::issue_label_assignment::Entity as IssueLabelAssignment;

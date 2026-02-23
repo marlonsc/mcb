@@ -1,50 +1,38 @@
-//!
-//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
-//!
-//! Repository factories for standalone/server composition.
-//!
-//! Provides default repository implementations so that the server layer does not
-//! import concrete providers directly (CA006).
-//!
-//! Consumer crates (mcb-server tests, golden tests, etc.) MUST use these
-//! wrappers instead of importing from `mcb-providers` directly.
-
 use std::path::PathBuf;
 use std::sync::Arc;
 
 use mcb_domain::error::Result;
-use mcb_domain::ports::{DatabaseExecutor, MemoryRepository, VcsEntityRepository};
-use mcb_providers::database;
+use mcb_domain::ports::MemoryRepository;
+use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 
-/// Creates a VCS entity repository backed by the provided database executor.
-///
-/// Centralizes repository instantiation in the infrastructure layer.
-pub fn create_vcs_entity_repository(
-    executor: Arc<dyn DatabaseExecutor>,
-) -> Arc<dyn VcsEntityRepository> {
-    database::create_vcs_entity_repository_from_executor(executor)
-}
+use mcb_providers::database::seaorm::repos::SeaOrmObservationRepository;
 
-/// Create a file-backed memory repository.
-///
-/// Wraps the provider factory so consumer crates never import `mcb_providers`.
-///
-/// # Errors
-///
-/// Returns an error if the database connection or schema initialization fails.
 pub async fn create_memory_repository(path: PathBuf) -> Result<Arc<dyn MemoryRepository>> {
-    database::create_memory_repository(path).await
+    let db = connect_sqlite(&path).await?;
+    Ok(Arc::new(SeaOrmObservationRepository::new(db)))
 }
 
-/// Create a file-backed memory repository and its database executor.
-///
-/// Wraps the provider factory so consumer crates never import `mcb_providers`.
-///
-/// # Errors
-///
-/// Returns an error if the database connection or schema initialization fails.
-pub async fn create_memory_repository_with_executor(
+pub async fn create_memory_repository_with_db(
     path: PathBuf,
-) -> Result<(Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>)> {
-    database::create_memory_repository_with_executor(path).await
+) -> Result<(Arc<dyn MemoryRepository>, Arc<DatabaseConnection>)> {
+    let db = connect_sqlite(&path).await?;
+    let db = Arc::new(db);
+    let repo = Arc::new(SeaOrmObservationRepository::new((*db).clone()));
+    Ok((repo, db))
+}
+
+async fn connect_sqlite(path: &std::path::Path) -> Result<DatabaseConnection> {
+    if let Some(parent) = path.parent() {
+        std::fs::create_dir_all(parent).map_err(|e| {
+            mcb_domain::error::Error::internal(format!("Failed to create database directory: {e}"))
+        })?;
+    }
+    let url = format!("sqlite://{}?mode=rwc", path.display());
+    let mut opts = ConnectOptions::new(url);
+    opts.max_connections(5)
+        .min_connections(1)
+        .sqlx_logging(false);
+    Database::connect(opts)
+        .await
+        .map_err(|e| mcb_domain::error::Error::internal(format!("Database connect: {e}")))
 }

@@ -63,9 +63,7 @@ pub use provider_resolvers::{
     CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
     VectorStoreProviderResolver,
 };
-pub use repositories::{
-    create_memory_repository, create_memory_repository_with_executor, create_vcs_entity_repository,
-};
+pub use repositories::{create_memory_repository, create_memory_repository_with_db};
 pub use resolver::{
     AvailableProviders, ResolvedProviders, list_available_providers, resolve_providers,
 };

@@ -18,6 +18,7 @@ pub mod delegation;
 pub mod error_pattern;
 pub mod error_pattern_match;
 pub mod file_hash;
+pub mod index_operation;
 pub mod issue_comment;
 pub mod issue_label;
 pub mod issue_label_assignment;

@@ -6,6 +6,7 @@
 pub mod agent;
 pub mod chunk;
 pub mod file_hash;
+pub mod index;
 pub mod issue;
 pub mod memory;
 pub mod org;
@@ -20,6 +21,7 @@ pub use agent::{
 };
 pub use chunk::{ChunkRepository, RepositoryStats};
 pub use file_hash::FileHashRepository;
+pub use index::{IndexRepository, IndexStats};
 pub use issue::{
     IssueCommentRegistry, IssueEntityRepository, IssueLabelAssignmentManager, IssueLabelRegistry,
     IssueRegistry,

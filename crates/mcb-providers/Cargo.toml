@@ -133,6 +133,7 @@ walkdir.workspace = true
 # SeaORM: Entity-first ORM (entities + migrations)
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
+sea-query = { workspace = true }
 
 [features]
 default = []
@@ -158,3 +159,27 @@ path = "tests/unit/mod.rs"
 [[test]]
 name = "migration"
 path = "tests/migration/mod.rs"
+
+[[test]]
+name = "observation_repo"
+path = "tests/observation_repo.rs"
+
+[[test]]
+name = "session_repo"
+path = "tests/session_repo.rs"
+
+[[test]]
+name = "agent_repo"
+path = "tests/agent_repo.rs"
+
+[[test]]
+name = "project_repo"
+path = "tests/project_repo.rs"
+
+[[test]]
+name = "entity_repo"
+path = "tests/entity_repo/mod.rs"
+
+[[test]]
+name = "index_repo"
+path = "tests/index_repo.rs"
