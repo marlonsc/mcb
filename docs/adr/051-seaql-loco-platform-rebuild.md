@@ -66,7 +66,7 @@ MCB v0.2.1 is **alpha quality with critical infrastructure failures**:
 
 The user explicitly stated:
 > "Product is completely alpha with broken tools — nothing worth 'preserving' from broken infra"
-> 
+>
 > "Focus on REAL product functionality, not creating a framework, but keeping project organization at the highest level"
 
 This is not a conservative refactor. This is a **platform rebuild** to establish a maintainable foundation.

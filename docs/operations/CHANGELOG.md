@@ -42,7 +42,7 @@ using Loco.rs for structured API development.
 
 ---
 
-## [0.2.1] - 2026-02-XX
+## [0.2.1] - 2026-02-23
 
 ### Summary
 

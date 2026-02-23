@@ -2,7 +2,9 @@
 # =============================================================================
 # GitHub Pages Deployment
 # =============================================================================
-# Minimal workflow: triggered only on push to main branch
+# Manual workflow: triggered via workflow_dispatch only
+# Superseded by release.yml for tag-triggered deployment.
+# This workflow is kept as a manual emergency fallback only.
 # Builds and deploys documentation (mdBook + Rust API docs) to GitHub Pages
 # =============================================================================
 
@@ -12,9 +14,7 @@ permissions:
   contents: read
 
 on: # yamllint disable-line rule:truthy
-  push:
-    branches:
-      - main
+  workflow_dispatch:
 
 concurrency:
   group: pages-${{ github.ref }}
@@ -24,41 +24,10 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  changes:
-    name: Detect Changes
-    timeout-minutes: 5
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      src: ${{ steps.filter.outputs.src }}
-      docs: ${{ steps.filter.outputs.docs }}
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
-          persist-credentials: false
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
-        id: filter
-        with:
-          filters: |
-            src:
-              - 'src/**'
-              - 'crates/**'
-              - 'Cargo.toml'
-              - 'Cargo.lock'
-            docs:
-              - 'docs/**'
-              - 'scripts/docs/**'
-              - 'book/**'
-
   validate-docs:
     name: Validate Documentation
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    needs: [changes]
-    if: needs.changes.outputs.docs == 'true'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -78,10 +47,6 @@ jobs:
     name: Build Rust API Docs
     timeout-minutes: 15
     runs-on: ubuntu-latest
-    needs: [changes]
-    if: |
-      needs.changes.outputs.src == 'true' ||
-      needs.changes.outputs.docs == 'true'
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -106,13 +71,11 @@ jobs:
     name: Build mdBook
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    needs: [changes, validate-docs]
+    needs: [validate-docs]
     if: |
       always() &&
       (needs.validate-docs.result == 'success' ||
-       needs.validate-docs.result == 'skipped') &&
-      (needs.changes.outputs.docs == 'true' ||
-       needs.changes.outputs.src == 'true')
+       needs.validate-docs.result == 'skipped')
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:

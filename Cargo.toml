@@ -15,7 +15,7 @@ repository = "https://github.com/marlonsc/mcb"
 authors = ["Marlon Costa <marlonsc@gmail.com>"]
 homepage = "https://github.com/marlonsc/mcb"
 license = "MIT"
-version = "0.2.1-dev"
+version = "0.2.1"
 rust-version = "1.92"
 edition = "2024"
 
