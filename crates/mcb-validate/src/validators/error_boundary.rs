@@ -99,8 +99,11 @@ impl ErrorBoundaryValidator {
             let Some(path_str) = path.to_str() else {
                 return Ok(());
             };
+            let normalized_path = path_str.replace('\\', "/");
 
-            if path_str.contains(TEST_DIR_FRAGMENT) || !file_filter(path, path_str) {
+            if normalized_path.contains(TEST_DIR_FRAGMENT)
+                || !file_filter(path, normalized_path.as_str())
+            {
                 return Ok(());
             }
 
