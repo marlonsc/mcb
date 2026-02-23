@@ -12,7 +12,7 @@ server:
   host: http://localhost
 
 database:
-  uri: sqlite://mcb-test.db?mode=rwc
+  uri: "{{ get_env(name='DATABASE_URL', default='sqlite://mcb-test.db?mode=rwc') }}"
   enable_logging: false
   min_connections: 1
   max_connections: 1

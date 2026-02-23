@@ -24,7 +24,9 @@ fn test_config() -> Result<(AppConfig, tempfile::TempDir), Box<dyn std::error::E
     let db_path = temp_dir.path().join("test.db");
     let test_yaml_path =
         std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../config/development.yaml");
-    let mut config = ConfigLoader::new().with_config_path(test_yaml_path).load()?;
+    let mut config = ConfigLoader::new()
+        .with_config_path(test_yaml_path)
+        .load()?;
     config.server.network.port = 3000;
     config.providers.database.configs.insert(
         "default".to_owned(),

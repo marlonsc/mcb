@@ -48,10 +48,6 @@ fn unique_temp_path(name: &str) -> PathBuf {
     std::env::temp_dir().join(format!("mcb-startup-smoke-{name}-{stamp}"))
 }
 
-fn config_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/smoke-test.toml")
-}
-
 /// Spawn the MCB server process for testing.
 ///
 /// # Panics
@@ -61,12 +57,12 @@ fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
     Command::new(get_mcb_path())
         .arg("serve")
         .arg("--server")
-        .arg("--config")
-        .arg(config_path())
-        .env("MCP__SERVER__TRANSPORT_MODE", "hybrid")
-        .env("MCP__PROVIDERS__DATABASE__CONFIGS__DEFAULT__PATH", db_path)
-        .env("MCP__PROVIDERS__EMBEDDING__PROVIDER", "openai")
-        .env("MCP__PROVIDERS__EMBEDDING__API_KEY", "test-key")
+        // Use Loco test environment (config/test.yaml with Tera template for DATABASE_URL)
+        .env("LOCO_ENV", "test")
+        .env(
+            "DATABASE_URL",
+            format!("sqlite://{}?mode=rwc", db_path.display()),
+        )
         .env("RUST_LOG", "info")
         .stderr(Stdio::piped())
         .stdout(Stdio::piped())
