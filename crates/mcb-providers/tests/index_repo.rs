@@ -1,4 +1,4 @@
-//! Integration tests for SeaORM Index Repository.
+//! Integration tests for `SeaORM` Index Repository.
 //!
 //! Tests the full index lifecycle: start, progress, complete, fail, clear, stats.
 

@@ -25,6 +25,7 @@ pub struct SeaOrmAgentRepository {
 }
 
 impl SeaOrmAgentRepository {
+    #[must_use]
     pub fn new(db: Arc<DatabaseConnection>) -> Self {
         Self { db }
     }

@@ -20,32 +20,10 @@ use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 use rstest::rstest;
 
 use crate::utils::collection::unique_collection;
-use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, safe_init_app};
-
-fn unique_test_config() -> Result<AppConfig, Box<dyn std::error::Error>> {
-    let mut config = ConfigLoader::new().load()?;
-    let stamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)?
-        .as_nanos();
-    let thread_id = std::thread::current().id();
-    let db_path =
-        std::env::temp_dir().join(format!("mcb-errrecovery-test-{stamp}-{thread_id:?}.db"));
-    config.providers.database.configs.insert(
-        "default".to_owned(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_owned(),
-            path: Some(db_path),
-        },
-    );
-    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-    Ok(config)
-}
-
-use crate::utils::test_fixtures::shared_fastembed_test_cache_dir;
+use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
 
 // ============================================================================
 // Provider Resolution Error Handling
@@ -98,8 +76,7 @@ fn test_unknown_provider_error_message(
 #[tokio::test]
 async fn test_search_empty_collection_returns_empty_not_error()
 -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
@@ -139,15 +116,14 @@ async fn test_search_empty_collection_returns_empty_not_error()
 
 #[tokio::test]
 async fn test_init_app_with_default_config_succeeds() -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    safe_init_app(config).await?;
+    // Verify the shared (OnceLock) AppContext initialised successfully.
+    let _ = shared_app_context();
     Ok(())
 }
 
 #[tokio::test]
 async fn test_provider_handles_return_valid_instances() -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     // All handles should return valid providers
     let embedding = ctx.embedding_handle().get();
@@ -176,8 +152,7 @@ async fn test_provider_handles_return_valid_instances() -> Result<(), Box<dyn st
 
 #[tokio::test]
 async fn test_failed_search_doesnt_corrupt_state() -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
@@ -276,8 +251,7 @@ fn test_resolve_with_empty_config_values() {
 
 #[tokio::test]
 async fn test_concurrent_handle_access() -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     let handle = ctx.embedding_handle();
 

@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc)]
+
 use async_trait::async_trait;
 use mcb_domain::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
 use mcb_domain::entities::memory::{MemoryFilter, Observation, SessionSummary};
@@ -5,10 +7,10 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{FtsSearchResult, MemoryRepository};
 use mcb_domain::value_objects::{ObservationId, SessionId};
 use sea_orm::entity::prelude::*;
-use sea_orm::sea_query::{Expr, ExprTrait, OnConflict, Order, Query, SqliteQueryBuilder};
+use sea_orm::sea_query::{Expr, ExprTrait, OnConflict, Order, Query};
 use sea_orm::{
-    ActiveValue::Set, ColumnTrait, ConnectionTrait, DatabaseBackend, DatabaseConnection,
-    EntityTrait, QueryFilter, QueryOrder, Statement, Value,
+    ActiveValue::Set, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, QueryFilter,
+    QueryOrder, Statement, Value,
 };
 
 use crate::database::seaorm::entities::{observation, organization, project, session_summary};
@@ -18,6 +20,7 @@ pub struct SeaOrmObservationRepository {
 }
 
 impl SeaOrmObservationRepository {
+    #[must_use]
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
@@ -81,7 +84,7 @@ impl SeaOrmObservationRepository {
         Ok(())
     }
 
-    fn build_list_sql(filter: Option<&MemoryFilter>, limit: usize) -> Statement {
+    fn build_list_sql(&self, filter: Option<&MemoryFilter>, limit: usize) -> Statement {
         let mut query = Query::select();
         query
             .columns([
@@ -155,8 +158,7 @@ impl SeaOrmObservationRepository {
             }
         }
 
-        let (sql, values) = query.build(SqliteQueryBuilder);
-        Statement::from_sql_and_values(DatabaseBackend::Sqlite, sql, values)
+        self.db.get_database_backend().build(&query)
     }
 
     async fn list_by_filter(
@@ -166,7 +168,7 @@ impl SeaOrmObservationRepository {
     ) -> Result<Vec<Observation>> {
         let rows = self
             .db
-            .query_all_raw(Self::build_list_sql(filter, limit))
+            .query_all_raw(self.build_list_sql(filter, limit))
             .await
             .map_err(|e| Self::db_err("list observations", e))?;
 
@@ -271,22 +273,14 @@ impl MemoryRepository for SeaOrmObservationRepository {
 
         let escaped = query.replace('\'', "''");
         let sql = format!(
-            "CREATE TEMP TABLE IF NOT EXISTS mcb_fts_tmp(id TEXT PRIMARY KEY, rank REAL);\nDELETE FROM mcb_fts_tmp;\nINSERT INTO mcb_fts_tmp(id, rank) SELECT id, bm25(observations_fts) FROM observations_fts WHERE observations_fts MATCH '{escaped}' ORDER BY bm25(observations_fts) LIMIT {limit};"
+            "SELECT id, bm25(observations_fts) AS rank FROM observations_fts WHERE observations_fts MATCH '{escaped}' ORDER BY bm25(observations_fts) LIMIT {limit}"
         );
-
-        self.db
-            .execute_unprepared(&sql)
-            .await
-            .map_err(|e| Self::db_err("search observations using FTS5", e))?;
 
         let rows = self
             .db
-            .query_all_raw(Statement::from_string(
-                DatabaseBackend::Sqlite,
-                "SELECT id, rank FROM mcb_fts_tmp ORDER BY rank".to_owned(),
-            ))
+            .query_all_raw(Statement::from_string(self.db.get_database_backend(), sql))
             .await
-            .map_err(|e| Self::db_err("load FTS5 results", e))?;
+            .map_err(|e| Self::db_err("search observations using FTS5", e))?;
 
         rows.into_iter()
             .map(|row| {

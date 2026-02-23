@@ -1,3 +1,5 @@
+#![allow(clippy::must_use_candidate, missing_docs)]
+
 use std::sync::Arc;
 
 use sea_orm::DatabaseConnection;

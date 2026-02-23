@@ -21,11 +21,11 @@ expression: "snapshot_payload(&request, status, &response)"
     "result": {
       "content": [
         {
-          "text": "Memory storage error: SQL query_all failed: SELECT id, rank FROM observations_fts WHERE observations_fts MATCH ? ORDER BY rank LIMIT ?: error returned from database: (code: 1) fts5: syntax error near \"\"",
+          "text": "{\n  \"count\": 0,\n  \"hint\": \"Use memory action=timeline or memory action=get for details\",\n  \"query\": \"\",\n  \"results\": []\n}",
           "type": "text"
         }
       ],
-      "isError": true
+      "isError": false
     }
   },
   "status": 200

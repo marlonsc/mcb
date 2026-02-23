@@ -21,7 +21,7 @@ expression: "snapshot_payload(&request, status, &response)"
     "result": {
       "content": [
         {
-          "text": "{\n  \"repositories\": [\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild\"\n  ],\n  \"count\": 1\n}",
+          "text": "{\n  \"repositories\": [\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild\",\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild/third-party/edgevec\",\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild/third-party/loco\",\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild/third-party/milvus-sdk-rust\",\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild/third-party/milvus-sdk-rust/milvus-proto\",\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild/third-party/rust-code-analysis\",\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild/third-party/seaography\",\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild/third-party/sea-orm\",\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild/third-party/sea-orm-pro\",\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild/third-party/sea-query\",\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild/third-party/sea-schema\",\n    \"/home/marlonsc/mcb-v030-seaql-loco-rebuild/third-party/sea-streamer\"\n  ],\n  \"count\": 12\n}",
           "type": "text"
         }
       ],

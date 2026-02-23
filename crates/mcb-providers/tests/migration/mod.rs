@@ -1,4 +1,4 @@
-#![allow(missing_docs)]
+#![allow(clippy::expect_used, clippy::unwrap_used, missing_docs)]
 
 use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 use sea_orm_migration::MigratorTrait;

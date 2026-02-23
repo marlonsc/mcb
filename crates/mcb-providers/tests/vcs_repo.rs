@@ -1,8 +1,10 @@
+#![allow(clippy::expect_used, missing_docs)]
+
 use mcb_domain::entities::repository::{Branch, Repository, VcsType};
 use mcb_domain::ports::VcsEntityRepository;
 use mcb_providers::database::seaorm::entities::{organization, project};
 use mcb_providers::database::seaorm::migration::Migrator;
-use mcb_providers::database::seaorm::vcs_repo::SeaOrmVcsEntityRepository;
+use mcb_providers::database::seaorm::repos::SeaOrmVcsEntityRepository;
 use sea_orm::ActiveModelTrait;
 use sea_orm::ActiveValue::Set;
 use sea_orm::Database;

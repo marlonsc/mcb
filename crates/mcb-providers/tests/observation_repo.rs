@@ -1,10 +1,12 @@
+#![allow(clippy::expect_used, missing_docs)]
+
 use mcb_domain::entities::memory::{
     MemoryFilter, Observation, ObservationMetadata, ObservationType,
 };
 use mcb_domain::ports::MemoryRepository;
 use mcb_domain::utils::compute_content_hash;
 use mcb_domain::value_objects::ObservationId;
-use mcb_providers::database::seaorm::observation_repo::SeaOrmObservationRepository;
+use mcb_providers::database::seaorm::repos::SeaOrmObservationRepository;
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection};
 
 fn make_observation(

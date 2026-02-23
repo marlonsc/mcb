@@ -12,7 +12,5 @@ pub mod http;
 pub(crate) mod http_response;
 /// Retry utilities with exponential backoff.
 pub mod retry;
-/// SQLite row mapping and query helpers.
-pub mod sqlite;
 /// Vector store shared utilities.
 pub mod vector_store;

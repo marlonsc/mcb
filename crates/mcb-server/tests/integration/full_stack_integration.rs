@@ -20,29 +20,11 @@ use std::sync::Arc;
 
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 use rstest::rstest;
 use serde_json::json;
 
 use crate::utils::collection::unique_collection;
-use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, safe_init_app};
-
-fn test_config() -> Result<(AppConfig, tempfile::TempDir), Box<dyn std::error::Error>> {
-    let temp_dir = tempfile::tempdir()?;
-    let db_path = temp_dir.path().join("test.db");
-    let mut config = ConfigLoader::new().load()?;
-    config.providers.database.configs.insert(
-        "default".to_owned(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_owned(),
-            path: Some(db_path),
-        },
-    );
-    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-    Ok((config, temp_dir))
-}
-
-use crate::utils::test_fixtures::shared_fastembed_test_cache_dir;
+use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
 
 /// Create test code chunks for full-stack testing
 fn create_test_chunks() -> Vec<CodeChunk> {
@@ -103,8 +85,7 @@ async fn assert_embedding_batch_shape(
 
 #[tokio::test]
 async fn test_init_app_creates_working_context() -> Result<(), Box<dyn std::error::Error>> {
-    let (config, _temp) = test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     // Verify embedding handle returns a real provider
     let embedding = ctx.embedding_handle().get();
@@ -136,8 +117,7 @@ async fn test_init_app_creates_working_context() -> Result<(), Box<dyn std::erro
 async fn test_embedding_generates_real_vectors(
     #[case] texts: Vec<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let (config, _temp) = test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     let embedding = ctx.embedding_handle().get();
     assert_embedding_batch_shape(&embedding, &texts).await?;
@@ -146,8 +126,7 @@ async fn test_embedding_generates_real_vectors(
 
 #[tokio::test]
 async fn test_full_index_and_search_flow() -> Result<(), Box<dyn std::error::Error>> {
-    let (config, _temp) = test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();
@@ -218,8 +197,7 @@ async fn test_full_index_and_search_flow() -> Result<(), Box<dyn std::error::Err
 
 #[tokio::test]
 async fn test_provider_handles_return_same_instance() -> Result<(), Box<dyn std::error::Error>> {
-    let (config, _temp) = test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     // Get embedding provider twice via handle
     let handle = ctx.embedding_handle();
@@ -236,8 +214,7 @@ async fn test_provider_handles_return_same_instance() -> Result<(), Box<dyn std:
 
 #[tokio::test]
 async fn test_multiple_collections_isolated() -> Result<(), Box<dyn std::error::Error>> {
-    let (config, _temp) = test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     let embedding = ctx.embedding_handle().get();
     let vector_store = ctx.vector_store_handle().get();

@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc)]
+
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -25,6 +27,7 @@ pub struct SessionSummaryView {
 }
 
 impl SeaOrmAgentSessionRepository {
+    #[must_use]
     pub fn new(db: Arc<DatabaseConnection>) -> Self {
         Self { db }
     }
@@ -51,6 +54,7 @@ impl SeaOrmAgentSessionRepository {
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn map_db_err(error: sea_orm::DbErr) -> Error {
     Error::database(format!("SeaORM agent session repository failure: {error}"))
 }

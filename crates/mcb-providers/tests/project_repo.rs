@@ -1,3 +1,5 @@
+#![allow(clippy::expect_used, missing_docs)]
+
 use mcb_domain::entities::Project;
 use mcb_domain::entities::project::{
     DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus, ProjectDecision,
@@ -6,7 +8,7 @@ use mcb_domain::entities::project::{
 use mcb_domain::ports::ProjectRepository;
 use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::project::SeaOrmProjectRepository;
-use sea_orm::{ConnectionTrait, Database, DatabaseConnection, DbBackend, Statement};
+use sea_orm::{ConnectionTrait, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
 
 type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
@@ -19,69 +21,14 @@ async fn setup() -> TestResult<(DatabaseConnection, SeaOrmProjectRepository)> {
     let db = Database::connect("sqlite::memory:").await?;
     Migrator::up(&db, None).await?;
 
-    db.execute(&Statement::from_string(
-        DbBackend::Sqlite,
-        "
-        CREATE TABLE IF NOT EXISTS project_phases (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            name TEXT NOT NULL,
-            description TEXT NOT NULL,
-            sequence INTEGER NOT NULL,
-            status TEXT NOT NULL,
-            started_at INTEGER NULL,
-            completed_at INTEGER NULL,
-            created_at INTEGER NOT NULL,
-            updated_at INTEGER NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS project_dependencies (
-            id TEXT PRIMARY KEY,
-            from_issue_id TEXT NOT NULL,
-            to_issue_id TEXT NOT NULL,
-            dependency_type TEXT NOT NULL,
-            created_at INTEGER NOT NULL
-        );
-        CREATE TABLE IF NOT EXISTS project_decisions (
-            id TEXT PRIMARY KEY,
-            project_id TEXT NOT NULL,
-            issue_id TEXT NULL,
-            title TEXT NOT NULL,
-            context TEXT NOT NULL,
-            decision TEXT NOT NULL,
-            consequences TEXT NOT NULL,
-            created_at INTEGER NOT NULL
-        );
-        ",
-    ))
+    db.execute_unprepared(
+        "INSERT INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES ('org-test', 'Org Test', 'org-test', '{}', 1, 1)",
+    )
     .await?;
 
-    db.execute(&Statement::from_sql_and_values(
-        DbBackend::Sqlite,
-        "INSERT INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-        vec![
-            ORG_ID.into(),
-            "Org Test".into(),
-            "org-test".into(),
-            "{}".into(),
-            1_i64.into(),
-            1_i64.into(),
-        ],
-    ))
-    .await?;
-
-    db.execute(&Statement::from_sql_and_values(
-        DbBackend::Sqlite,
-        "INSERT INTO users (id, org_id, email, display_name, role, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        vec![
-            USER_ID.into(),
-            ORG_ID.into(),
-            "user@example.com".into(),
-            "User Test".into(),
-            "member".into(),
-            1_i64.into(),
-            1_i64.into(),
-        ],
-    ))
+    db.execute_unprepared(
+        "INSERT INTO users (id, org_id, email, display_name, role, created_at, updated_at) VALUES ('user-1', 'org-test', 'user@example.com', 'User Test', 'member', 1, 1)",
+    )
     .await?;
 
     let repo = SeaOrmProjectRepository::new(db.clone());

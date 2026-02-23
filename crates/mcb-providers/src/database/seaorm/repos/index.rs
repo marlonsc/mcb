@@ -5,10 +5,13 @@
 //! that survives process restarts.
 
 use std::sync::Arc;
+use std::time::Duration;
 
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::{IndexRepository, IndexStats, IndexingOperation, IndexingOperationStatus};
+use mcb_domain::ports::{
+    FileHashRepository, IndexRepository, IndexStats, IndexingOperation, IndexingOperationStatus,
+};
 use mcb_domain::value_objects::{CollectionId, OperationId};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
@@ -16,7 +19,7 @@ use sea_orm::{
 
 use crate::database::seaorm::entities::{collection, file_hash, index_operation};
 
-/// SeaORM implementation of `IndexRepository`.
+/// `SeaORM` implementation of `IndexRepository`.
 ///
 /// Uses three tables:
 /// - `index_operations`: Tracks active/completed indexing operations
@@ -29,6 +32,7 @@ pub struct SeaOrmIndexRepository {
 
 impl SeaOrmIndexRepository {
     /// Create a new `SeaOrmIndexRepository`.
+    #[must_use]
     pub fn new(db: Arc<DatabaseConnection>, project_id: String) -> Self {
         Self { db, project_id }
     }
@@ -156,7 +160,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .await
             .map_err(|e| Self::db_err("find operation for progress update", e))?
             .ok_or_else(|| Error::NotFound {
-                resource: format!("IndexOperation:{}", operation_id),
+                resource: format!("IndexOperation:{operation_id}"),
             })?;
 
         let mut active: index_operation::ActiveModel = existing.into();
@@ -180,7 +184,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .await
             .map_err(|e| Self::db_err("find operation for completion", e))?
             .ok_or_else(|| Error::NotFound {
-                resource: format!("IndexOperation:{}", operation_id),
+                resource: format!("IndexOperation:{operation_id}"),
             })?;
 
         let mut active: index_operation::ActiveModel = existing.into();
@@ -203,7 +207,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .await
             .map_err(|e| Self::db_err("find operation for failure", e))?
             .ok_or_else(|| Error::NotFound {
-                resource: format!("IndexOperation:{}", operation_id),
+                resource: format!("IndexOperation:{operation_id}"),
             })?;
 
         let mut active: index_operation::ActiveModel = existing.into();
@@ -276,7 +280,6 @@ impl IndexRepository for SeaOrmIndexRepository {
     async fn get_index_stats(&self, collection_id: &CollectionId) -> Result<IndexStats> {
         let collection_str = collection_id.as_str();
 
-        // Count active (non-tombstoned) file hashes
         let indexed_files = file_hash::Entity::find()
             .filter(file_hash::Column::ProjectId.eq(&self.project_id))
             .filter(file_hash::Column::Collection.eq(&collection_str))
@@ -285,7 +288,6 @@ impl IndexRepository for SeaOrmIndexRepository {
             .await
             .map_err(|e| Self::db_err("count indexed files", e))?;
 
-        // Get last completed operation
         let last_op = index_operation::Entity::find()
             .filter(index_operation::Column::CollectionId.eq(&collection_str))
             .filter(index_operation::Column::Status.eq("completed"))
@@ -294,7 +296,6 @@ impl IndexRepository for SeaOrmIndexRepository {
             .await
             .map_err(|e| Self::db_err("get last completed operation", e))?;
 
-        // Check if currently indexing
         let active_op = index_operation::Entity::find()
             .filter(index_operation::Column::CollectionId.eq(&collection_str))
             .filter(index_operation::Column::Status.is_in(["starting", "in_progress"]))
@@ -307,5 +308,163 @@ impl IndexRepository for SeaOrmIndexRepository {
             last_indexed_at: last_op.and_then(|op| op.completed_at),
             is_indexing: active_op.is_some(),
         })
+    }
+}
+
+#[async_trait]
+impl FileHashRepository for SeaOrmIndexRepository {
+    async fn get_hash(&self, collection: &str, file_path: &str) -> Result<Option<String>> {
+        let result = file_hash::Entity::find()
+            .filter(file_hash::Column::ProjectId.eq(&self.project_id))
+            .filter(file_hash::Column::Collection.eq(collection))
+            .filter(file_hash::Column::FilePath.eq(file_path))
+            .filter(file_hash::Column::DeletedAt.is_null())
+            .one(self.db.as_ref())
+            .await
+            .map_err(|e| Self::db_err("get file hash", e))?;
+
+        Ok(result.map(|m| m.content_hash))
+    }
+
+    async fn has_changed(
+        &self,
+        collection: &str,
+        file_path: &str,
+        current_hash: &str,
+    ) -> Result<bool> {
+        match self.get_hash(collection, file_path).await? {
+            Some(stored) => Ok(stored != current_hash),
+            None => Ok(true),
+        }
+    }
+
+    async fn upsert_hash(&self, collection: &str, file_path: &str, hash: &str) -> Result<()> {
+        let now = Self::now()?;
+
+        let existing = file_hash::Entity::find()
+            .filter(file_hash::Column::ProjectId.eq(&self.project_id))
+            .filter(file_hash::Column::Collection.eq(collection))
+            .filter(file_hash::Column::FilePath.eq(file_path))
+            .one(self.db.as_ref())
+            .await
+            .map_err(|e| Self::db_err("find file hash for upsert", e))?;
+
+        if let Some(model) = existing {
+            let mut active: file_hash::ActiveModel = model.into();
+            active.content_hash = Set(hash.to_owned());
+            active.indexed_at = Set(now);
+            active.deleted_at = Set(None);
+            active
+                .update(self.db.as_ref())
+                .await
+                .map_err(|e| Self::db_err("update file hash", e))?;
+        } else {
+            let active = file_hash::ActiveModel {
+                id: sea_orm::ActiveValue::NotSet,
+                project_id: Set(self.project_id.clone()),
+                collection: Set(collection.to_owned()),
+                file_path: Set(file_path.to_owned()),
+                content_hash: Set(hash.to_owned()),
+                indexed_at: Set(now),
+                deleted_at: Set(None),
+                origin_context: Set(None),
+            };
+            file_hash::Entity::insert(active)
+                .exec(self.db.as_ref())
+                .await
+                .map_err(|e| Self::db_err("insert file hash", e))?;
+        }
+
+        Ok(())
+    }
+
+    async fn mark_deleted(&self, collection: &str, file_path: &str) -> Result<()> {
+        let now = Self::now()?;
+
+        let existing = file_hash::Entity::find()
+            .filter(file_hash::Column::ProjectId.eq(&self.project_id))
+            .filter(file_hash::Column::Collection.eq(collection))
+            .filter(file_hash::Column::FilePath.eq(file_path))
+            .filter(file_hash::Column::DeletedAt.is_null())
+            .one(self.db.as_ref())
+            .await
+            .map_err(|e| Self::db_err("find file hash for tombstone", e))?;
+
+        if let Some(model) = existing {
+            let mut active: file_hash::ActiveModel = model.into();
+            active.deleted_at = Set(Some(now));
+            active
+                .update(self.db.as_ref())
+                .await
+                .map_err(|e| Self::db_err("mark file hash deleted", e))?;
+        }
+
+        Ok(())
+    }
+
+    async fn get_indexed_files(&self, collection: &str) -> Result<Vec<String>> {
+        let results = file_hash::Entity::find()
+            .filter(file_hash::Column::ProjectId.eq(&self.project_id))
+            .filter(file_hash::Column::Collection.eq(collection))
+            .filter(file_hash::Column::DeletedAt.is_null())
+            .all(self.db.as_ref())
+            .await
+            .map_err(|e| Self::db_err("get indexed files", e))?;
+
+        Ok(results.into_iter().map(|m| m.file_path).collect())
+    }
+
+    async fn cleanup_tombstones(&self) -> Result<u64> {
+        self.cleanup_tombstones_with_ttl(Duration::from_secs(7 * 24 * 3600))
+            .await
+    }
+
+    async fn cleanup_tombstones_with_ttl(&self, ttl: Duration) -> Result<u64> {
+        let now = Self::now()?;
+        let cutoff = now - ttl.as_secs() as i64;
+
+        let result = file_hash::Entity::delete_many()
+            .filter(file_hash::Column::ProjectId.eq(&self.project_id))
+            .filter(file_hash::Column::DeletedAt.is_not_null())
+            .filter(file_hash::Column::DeletedAt.lt(cutoff))
+            .exec(self.db.as_ref())
+            .await
+            .map_err(|e| Self::db_err("cleanup tombstones", e))?;
+
+        Ok(result.rows_affected)
+    }
+
+    async fn tombstone_count(&self, collection: &str) -> Result<i64> {
+        let results = file_hash::Entity::find()
+            .filter(file_hash::Column::ProjectId.eq(&self.project_id))
+            .filter(file_hash::Column::Collection.eq(collection))
+            .filter(file_hash::Column::DeletedAt.is_not_null())
+            .all(self.db.as_ref())
+            .await
+            .map_err(|e| Self::db_err("count tombstones", e))?;
+
+        Ok(results.len() as i64)
+    }
+
+    async fn clear_collection(&self, collection: &str) -> Result<u64> {
+        let result = file_hash::Entity::delete_many()
+            .filter(file_hash::Column::ProjectId.eq(&self.project_id))
+            .filter(file_hash::Column::Collection.eq(collection))
+            .exec(self.db.as_ref())
+            .await
+            .map_err(|e| Self::db_err("clear collection file hashes", e))?;
+
+        Ok(result.rows_affected)
+    }
+
+    fn compute_hash(&self, path: &std::path::Path) -> Result<String> {
+        use sha2::{Digest, Sha256};
+
+        let contents = std::fs::read(path).map_err(|e| Error::Database {
+            message: format!("read file for hashing: {}", path.display()),
+            source: Some(Box::new(e)),
+        })?;
+        let hash = Sha256::digest(&contents);
+        Ok(format!("{hash:x}"))
     }
 }

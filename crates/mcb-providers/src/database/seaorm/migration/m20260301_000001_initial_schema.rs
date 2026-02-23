@@ -213,6 +213,47 @@ impl MigrationTrait for Migration {
         .await?;
 
         db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS project_phases (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                description TEXT NOT NULL,
+                sequence INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                started_at INTEGER,
+                completed_at INTEGER,
+                created_at INTEGER NOT NULL,
+                updated_at INTEGER NOT NULL
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS project_dependencies (
+                id TEXT PRIMARY KEY,
+                from_issue_id TEXT NOT NULL,
+                to_issue_id TEXT NOT NULL,
+                dependency_type TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS project_decisions (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                issue_id TEXT,
+                title TEXT NOT NULL,
+                context TEXT NOT NULL,
+                decision TEXT NOT NULL,
+                consequences TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
             "CREATE TABLE IF NOT EXISTS issue_comments (
                 id TEXT PRIMARY KEY,
                 issue_id TEXT NOT NULL,
@@ -267,16 +308,230 @@ impl MigrationTrait for Migration {
         )
         .await?;
 
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS observations (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                content TEXT NOT NULL,
+                content_hash TEXT NOT NULL UNIQUE,
+                tags TEXT,
+                observation_type TEXT,
+                metadata TEXT,
+                created_at INTEGER NOT NULL,
+                embedding_id TEXT
+            )",
+        )
+        .await?;
+
+        // FTS5 virtual table for full-text search on observations
+        db.execute_unprepared(
+            "CREATE VIRTUAL TABLE IF NOT EXISTS observations_fts USING fts5(id UNINDEXED, content)",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TRIGGER IF NOT EXISTS obs_ai AFTER INSERT ON observations BEGIN INSERT INTO observations_fts(rowid, id, content) VALUES (new.rowid, new.id, new.content); END;",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TRIGGER IF NOT EXISTS obs_ad AFTER DELETE ON observations BEGIN DELETE FROM observations_fts WHERE rowid = old.rowid; END;",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TRIGGER IF NOT EXISTS obs_au AFTER UPDATE ON observations BEGIN DELETE FROM observations_fts WHERE rowid = old.rowid; INSERT INTO observations_fts(rowid, id, content) VALUES (new.rowid, new.id, new.content); END;",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS collections (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                name TEXT NOT NULL,
+                vector_name TEXT NOT NULL,
+                created_at INTEGER NOT NULL
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS file_hashes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                project_id TEXT NOT NULL,
+                collection TEXT NOT NULL,
+                file_path TEXT NOT NULL,
+                content_hash TEXT NOT NULL,
+                indexed_at INTEGER NOT NULL,
+                deleted_at INTEGER,
+                origin_context TEXT
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS index_operations (
+                id TEXT PRIMARY KEY,
+                collection_id TEXT NOT NULL,
+                status TEXT NOT NULL,
+                total_files INTEGER NOT NULL,
+                processed_files INTEGER NOT NULL,
+                current_file TEXT,
+                error_message TEXT,
+                started_at INTEGER NOT NULL,
+                completed_at INTEGER
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS session_summaries (
+                id TEXT PRIMARY KEY,
+                org_id TEXT,
+                project_id TEXT NOT NULL,
+                repo_id TEXT,
+                session_id TEXT NOT NULL,
+                topics TEXT,
+                decisions TEXT,
+                next_steps TEXT,
+                key_files TEXT,
+                origin_context TEXT,
+                created_at INTEGER NOT NULL
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS checkpoints (
+                id TEXT PRIMARY KEY,
+                session_id TEXT NOT NULL,
+                checkpoint_type TEXT NOT NULL,
+                description TEXT NOT NULL,
+                snapshot_data TEXT NOT NULL,
+                created_at INTEGER NOT NULL,
+                restored_at INTEGER,
+                expired INTEGER
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS delegations (
+                id TEXT PRIMARY KEY,
+                parent_session_id TEXT NOT NULL,
+                child_session_id TEXT NOT NULL,
+                prompt TEXT NOT NULL,
+                prompt_embedding_id TEXT,
+                result TEXT,
+                success INTEGER NOT NULL,
+                created_at INTEGER NOT NULL,
+                completed_at INTEGER,
+                duration_ms INTEGER
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS tool_calls (
+                id TEXT PRIMARY KEY,
+                org_id TEXT,
+                project_id TEXT,
+                repo_id TEXT,
+                session_id TEXT NOT NULL,
+                tool_name TEXT NOT NULL,
+                params_summary TEXT,
+                success INTEGER NOT NULL,
+                error_message TEXT,
+                duration_ms INTEGER,
+                created_at INTEGER NOT NULL
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS error_patterns (
+                id TEXT PRIMARY KEY,
+                project_id TEXT NOT NULL,
+                pattern_signature TEXT NOT NULL,
+                description TEXT NOT NULL,
+                category TEXT NOT NULL,
+                solutions TEXT,
+                affected_files TEXT,
+                tags TEXT,
+                occurrence_count INTEGER NOT NULL,
+                first_seen_at INTEGER NOT NULL,
+                last_seen_at INTEGER NOT NULL,
+                embedding_id TEXT
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE TABLE IF NOT EXISTS error_pattern_matches (
+                id TEXT PRIMARY KEY,
+                pattern_id TEXT NOT NULL,
+                observation_id TEXT NOT NULL,
+                confidence INTEGER NOT NULL,
+                solution_applied INTEGER,
+                resolution_successful INTEGER,
+                matched_at INTEGER NOT NULL,
+                resolved_at INTEGER
+            )",
+        )
+        .await?;
+
+        db.execute_unprepared(
+            "CREATE INDEX IF NOT EXISTS idx_obs_project ON observations(project_id)",
+        )
+        .await?;
+        db.execute_unprepared(
+            "CREATE INDEX IF NOT EXISTS idx_organizations_name ON organizations(name)",
+        )
+        .await?;
+        db.execute_unprepared(
+            "CREATE INDEX IF NOT EXISTS idx_branches_repo ON branches(repository_id)",
+        )
+        .await?;
+
         Ok(())
     }
 
     async fn down(&self, manager: &SchemaManager) -> Result<(), DbErr> {
         let db = manager.get_connection();
+        for trigger in ["obs_au", "obs_ad", "obs_ai"] {
+            db.execute_unprepared(&format!("DROP TRIGGER IF EXISTS {trigger}"))
+                .await?;
+        }
+        for shadow in [
+            "observations_fts_config",
+            "observations_fts_docsize",
+            "observations_fts_content",
+            "observations_fts_idx",
+            "observations_fts_data",
+            "observations_fts",
+        ] {
+            db.execute_unprepared(&format!("DROP TABLE IF EXISTS {shadow}"))
+                .await?;
+        }
+
         for table in [
+            "error_pattern_matches",
+            "error_patterns",
+            "tool_calls",
+            "delegations",
+            "checkpoints",
+            "session_summaries",
+            "index_operations",
+            "file_hashes",
+            "collections",
+            "observations",
             "agent_sessions",
             "issue_label_assignments",
             "issue_labels",
             "issue_comments",
+            "project_decisions",
+            "project_dependencies",
+            "project_phases",
             "project_issues",
             "plan_reviews",
             "plan_versions",

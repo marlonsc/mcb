@@ -1,3 +1,5 @@
+#![allow(clippy::expect_used, missing_docs)]
+
 use std::sync::Arc;
 
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;

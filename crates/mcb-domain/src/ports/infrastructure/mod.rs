@@ -18,12 +18,10 @@
 //! | [`SystemMetricsCollectorInterface`] | System metrics collection |
 //! | [`StateStoreProvider`] | Key-value state persistence |
 //! | [`ProviderRouter`] | Provider routing and selection services |
-//! | [`DatabaseExecutor`] | SQL execution (repositories use via DI, no direct driver) |
+//!
 
 /// Authentication service port
 pub mod auth;
-/// Database executor port (SQL execution abstraction)
-pub mod database;
 /// Event bus provider port
 pub mod events;
 pub mod lifecycle;
@@ -42,7 +40,6 @@ pub mod sync;
 
 // Re-export infrastructure ports
 pub use auth::AuthServiceInterface;
-pub use database::{DatabaseExecutor, DatabaseProvider, SqlParam, SqlRow};
 pub use events::{DomainEventStream, EventBusProvider};
 pub use lifecycle::{
     DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, LifecycleManaged,

@@ -1,7 +1,7 @@
 //! Test utilities for mcb-infrastructure
 //!
 //! ALL shared test helpers live here. No helpers outside this directory.
-#![allow(dead_code)]
+#![allow(dead_code, clippy::missing_errors_doc, missing_docs)]
 
 #[allow(missing_docs)]
 pub mod env_vars;
@@ -12,47 +12,25 @@ pub mod shared_context;
 #[allow(missing_docs)]
 pub mod workspace;
 
-use mcb_domain::ports::{DatabaseExecutor, SqlParam};
+use sea_orm::{ConnectionTrait, DatabaseConnection};
 
-/// Creates a test project row in the in-memory database.
-///
-/// This is a shared helper used by memory-related tests that need
-/// a project to exist before storing observations.
-///
-/// # Errors
-///
-/// Returns an error if the database INSERT statements fail.
 pub async fn create_test_project(
-    executor: &dyn DatabaseExecutor,
+    db: &DatabaseConnection,
     project_id: &str,
-) -> mcb_domain::error::Result<()> {
+) -> Result<(), sea_orm::DbErr> {
     let now = chrono::Utc::now().timestamp();
-    // Ensure default organization exists (FK: projects.org_id → organizations.id)
-    executor
-        .execute(
-            "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-            &[
-                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_owned()),
-                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_NAME.to_owned()),
-                SqlParam::String("default".to_owned()),
-                SqlParam::String("{}".to_owned()),
-                SqlParam::I64(now),
-                SqlParam::I64(now),
-            ],
-        )
-        .await?;
-    executor
-        .execute(
-            "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
-            &[
-                SqlParam::String(project_id.to_owned()),
-                SqlParam::String(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_owned()),
-                SqlParam::String(project_id.to_owned()),
-                SqlParam::String("/test".to_owned()),
-                SqlParam::I64(now),
-                SqlParam::I64(now),
-            ],
-        )
-        .await?;
+    db.execute_unprepared(&format!(
+        "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) \
+         VALUES ('{org}', '{name}', 'default', '{{}}', {now}, {now})",
+        org = mcb_domain::constants::keys::DEFAULT_ORG_ID,
+        name = mcb_domain::constants::keys::DEFAULT_ORG_NAME,
+    ))
+    .await?;
+    db.execute_unprepared(&format!(
+        "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) \
+         VALUES ('{project_id}', '{org}', '{project_id}', '/test', {now}, {now})",
+        org = mcb_domain::constants::keys::DEFAULT_ORG_ID,
+    ))
+    .await?;
     Ok(())
 }

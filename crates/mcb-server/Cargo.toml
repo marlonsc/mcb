@@ -118,6 +118,14 @@ async-stream = { workspace = true }
 # Plugin registration
 linkme = { workspace = true }
 
+# SeaQL + Loco ecosystem (v0.3.0)
+loco-rs = { workspace = true }
+sea-streamer = { workspace = true }
+seaography = { workspace = true }
+sea-orm = { workspace = true }
+sea-orm-pro = { workspace = true }
+sea-schema = { workspace = true }
+
 # Providers - MUST be in dependencies for linkme inventory registration
 mcb-providers = { path = "../mcb-providers" }
 

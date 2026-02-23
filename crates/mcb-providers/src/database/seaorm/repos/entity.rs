@@ -1,6 +1,6 @@
-//! Unified Entity CRUD Repository using SeaORM.
+//! Unified Entity CRUD Repository using `SeaORM`.
 //!
-//! Implements all entity repository port traits from `mcb-domain` using SeaORM
+//! Implements all entity repository port traits from `mcb-domain` using `SeaORM`
 //! for type-safe database access. Covers VCS, Plan, Issue, and Org entity groups.
 
 use std::sync::Arc;
@@ -34,18 +34,20 @@ use crate::database::seaorm::entities::{
 ///
 /// This single struct implements `VcsEntityRepository`, `OrgEntityRepository`,
 /// `PlanEntityRepository`, and `IssueEntityRepository` — providing a unified
-/// persistence layer for all entity types through SeaORM.
+/// persistence layer for all entity types through `SeaORM`.
 pub struct SeaOrmEntityRepository {
     db: Arc<DatabaseConnection>,
 }
 
 impl SeaOrmEntityRepository {
     /// Creates a new entity repository backed by the given database connection.
+    #[must_use]
     pub fn new(db: Arc<DatabaseConnection>) -> Self {
         Self { db }
     }
 
     /// Returns a reference to the underlying database connection.
+    #[must_use]
     pub fn db(&self) -> &DatabaseConnection {
         self.db.as_ref()
     }

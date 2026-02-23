@@ -28,7 +28,7 @@ use mcb_server::transport::http_client::HttpClientTransport;
 use mcb_server::transport::types::{McpRequest, McpResponse};
 
 use crate::utils::http_mcp::get_free_port;
-use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, safe_init_app};
+use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
 use crate::utils::timeouts::TEST_TIMEOUT;
 
 fn create_test_config() -> Result<(AppConfig, tempfile::TempDir), Box<dyn std::error::Error>> {
@@ -472,10 +472,7 @@ fn test_get_free_port_returns_different_ports() {
 
 #[tokio::test]
 async fn test_standalone_mode_initializes_providers() -> Result<(), Box<dyn std::error::Error>> {
-    let (config, _temp_dir) = create_test_config()?;
-
-    // In standalone mode, init_app creates local providers
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     // Verify embedding provider
     let embedding = ctx.embedding_handle().get();
@@ -491,12 +488,7 @@ async fn test_standalone_mode_initializes_providers() -> Result<(), Box<dyn std:
 #[tokio::test]
 async fn test_mode_selection_affects_nothing_in_standalone()
 -> Result<(), Box<dyn std::error::Error>> {
-    // In standalone mode, we don't connect to any server
-    // Everything runs locally
-    let (mut config, _temp_dir) = create_test_config()?;
-    config.mode.mode_type = OperatingMode::Standalone;
-
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     // Verify we have working providers
     let embedding = ctx.embedding_handle().get();
@@ -512,8 +504,7 @@ async fn test_mode_selection_affects_nothing_in_standalone()
 
 #[tokio::test]
 async fn test_session_isolation_with_vector_store() -> Result<(), Box<dyn std::error::Error>> {
-    let (config, _temp_dir) = create_test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context();
 
     let manager = SessionManager::new();
     let vector_store = ctx.vector_store_handle().get();

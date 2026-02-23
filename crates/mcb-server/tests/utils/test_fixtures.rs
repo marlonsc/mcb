@@ -14,7 +14,6 @@ use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::ports::IndexingResult;
-use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
 use mcb_domain::value_objects::Embedding;
 use mcb_infrastructure::config::{AppConfig, ConfigLoader, DatabaseConfig};
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
@@ -476,23 +475,11 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
     };
     let db_path = temp_dir.path().join("test.db");
 
-    let db_provider_result = resolve_database_provider(&DatabaseProviderConfig::new("sqlite"));
-    assert!(db_provider_result.is_ok(), "resolve sqlite provider");
-    let db_provider = match db_provider_result {
-        Ok(value) => value,
-        Err(_) => {
-            return (
-                McpServerBuilder::new()
-                    .build()
-                    .unwrap_or_else(|_| unreachable!()),
-                temp_dir,
-            );
-        }
-    };
-    let db_executor_result = db_provider.connect(&db_path).await;
-    assert!(db_executor_result.is_ok(), "connect fresh test database");
-    let db_executor = match db_executor_result {
-        Ok(value) => value,
+    let db_result =
+        mcb_infrastructure::di::repositories::connect_sqlite_with_migrations(&db_path).await;
+    assert!(db_result.is_ok(), "connect fresh test database");
+    let db = match db_result {
+        Ok(value) => Arc::new(value),
         Err(_) => {
             return (
                 McpServerBuilder::new()
@@ -505,11 +492,7 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
 
     let project_id = TEST_PROJECT_ID.to_owned();
 
-    let deps = mcb_infrastructure::di::test_factory::create_test_dependencies(
-        project_id,
-        &db_executor,
-        ctx,
-    );
+    let deps = mcb_infrastructure::di::test_factory::create_test_dependencies(project_id, &db, ctx);
 
     let services_result = DomainServicesFactory::create_services(deps).await;
     assert!(services_result.is_ok(), "build domain services");

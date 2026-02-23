@@ -1,16 +1,16 @@
-//! Integration tests for the unified SeaORM Entity CRUD Repository.
+//! Integration tests for the unified `SeaORM` Entity CRUD Repository.
 //!
 //! Run with: `cargo test -p mcb-providers --test entity_repo`
 //!
-//! These tests exercise the `SeaOrmEntityRepository` against an in-memory SQLite
+//! These tests exercise the `SeaOrmEntityRepository` against an in-memory `SQLite`
 //! database with full migrations applied, covering all 16 entity types:
 //!
-//! VCS: repository, branch, worktree, assignment
-//! Org: organization, user, team, team_member, api_key
-//! Plan: plan, plan_version, plan_review
-//! Issue: project_issue, issue_comment, issue_label, issue_label_assignment
+//! VCS: `repository`, `branch`, `worktree`, `assignment`
+//! Org: `organization`, `user`, `team`, `team_member`, `api_key`
+//! Plan: `plan`, `plan_version`, `plan_review`
+//! Issue: `project_issue`, `issue_comment`, `issue_label`, `issue_label_assignment`
 
-#![allow(missing_docs)]
+#![allow(clippy::expect_used, missing_docs)]
 
 use std::sync::Arc;
 

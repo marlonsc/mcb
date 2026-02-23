@@ -27,7 +27,7 @@
 //! ## For Consumer Crates (mcb-server tests, golden tests, etc.)
 //!
 //! - `create_test_dependencies()` — isolated repos + shared providers from `AppContext`
-//! - `create_memory_repository()` / `create_memory_repository_with_executor()` — standalone repos
+//! - `create_memory_repository()` / `create_memory_repository_with_db()` — standalone repos
 //! - `create_vcs_entity_repository()` — standalone VCS repo
 //!
 //! ## Config-Driven Initialization
@@ -38,7 +38,6 @@
 
 pub mod admin;
 pub mod bootstrap;
-pub mod database_resolver;
 pub mod handle;
 pub mod handles;
 pub mod modules;

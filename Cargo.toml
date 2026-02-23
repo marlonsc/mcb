@@ -127,7 +127,7 @@ regex = "1.12"
 chrono = { version = "0.4", features = ["serde"] }
 
 # Mozilla Rust Code Analysis (fork with tree-sitter 0.26.3 + Kotlin)
-rust-code-analysis = { path = "third-party/rust-code-analysis" }
+rust-code-analysis = "0.0.25"
 
 # Template engines
 handlebars = "6.0"
@@ -221,9 +221,9 @@ dashmap = "6.0"
 health = "0.2"
 
 # EdgeVec high-performance vector database (fork)
-edgevec = { path = "third-party/edgevec" }
+edgevec = "0.8.0"
 
-milvus-sdk-rust = { path = "third-party/milvus-sdk-rust" }
+milvus-sdk-rust = "0.1.0"
 
 # Graph algorithms
 petgraph = "0.8"
@@ -326,7 +326,10 @@ once_cell = "1.19"
 # SeaORM: Entity-first ORM with schema-sync and dense format
 # Pinned to exact RC version per v0.3.0 guardrails (not caret)
 # Both sqlx-sqlite and sqlx-postgres enabled — runtime selection via connection string
-sea-orm = { version = "=2.0.0-rc.34", features = ["sqlx-sqlite", "sqlx-postgres", "runtime-tokio-rustls"] }
+sea-orm = { version = "=2.0.0-rc.34", features = [
+    "sqlx-sqlite", "sqlx-postgres", "runtime-tokio-rustls",
+    "entity-registry", "schema-sync",
+] }
 
 # SeaORM migrations
 sea-orm-migration = "=2.0.0-rc.34"
@@ -344,7 +347,7 @@ async-graphql = "7"
 
 loco-rs = "0.16"
 
-sea-schema = "0.17"
+sea-schema = "=0.17.0-rc.17"
 
 sea-orm-pro = "0.1"
 
@@ -368,55 +371,47 @@ incremental = true
 
 [patch.crates-io]
 
-# --- sea-orm (9 crates) ---
+# --- sea-orm ---
 sea-orm                  = { path = "third-party/sea-orm" }
 sea-orm-macros           = { path = "third-party/sea-orm/sea-orm-macros" }
-sea-orm-codegen          = { path = "third-party/sea-orm/sea-orm-codegen" }
 sea-orm-arrow            = { path = "third-party/sea-orm/sea-orm-arrow" }
 sea-orm-cli              = { path = "third-party/sea-orm/sea-orm-cli" }
 sea-orm-migration        = { path = "third-party/sea-orm/sea-orm-migration" }
-sea-orm-sync             = { path = "third-party/sea-orm/sea-orm-sync" }
-sea-orm-rocket           = { path = "third-party/sea-orm/sea-orm-rocket/lib" }
-sea-orm-rocket-codegen   = { path = "third-party/sea-orm/sea-orm-rocket/codegen" }
 
-# --- sea-query (8 crates) ---
+# --- sea-query ---
 sea-query                = { path = "third-party/sea-query" }
 sea-query-derive         = { path = "third-party/sea-query/sea-query-derive" }
-sea-query-diesel         = { path = "third-party/sea-query/sea-query-diesel" }
-sea-query-postgres       = { path = "third-party/sea-query/sea-query-postgres" }
-sea-query-postgres-types = { path = "third-party/sea-query/sea-query-postgres-types" }
-sea-query-rbatis         = { path = "third-party/sea-query/sea-query-rbatis" }
-sea-query-rusqlite       = { path = "third-party/sea-query/sea-query-rusqlite" }
 sea-query-sqlx           = { path = "third-party/sea-query/sea-query-sqlx" }
 
-# --- sea-schema (3 crates) ---
+# --- sea-schema ---
 sea-schema               = { path = "third-party/sea-schema" }
 sea-schema-derive        = { path = "third-party/sea-schema/sea-schema-derive" }
-sea-schema-sync          = { path = "third-party/sea-schema/sea-schema-sync" }
 
-# --- sea-streamer (10 crates) ---
+# --- sea-streamer ---
 sea-streamer             = { path = "third-party/sea-streamer" }
 sea-streamer-types       = { path = "third-party/sea-streamer/sea-streamer-types" }
 sea-streamer-socket      = { path = "third-party/sea-streamer/sea-streamer-socket" }
 sea-streamer-runtime     = { path = "third-party/sea-streamer/sea-streamer-runtime" }
 sea-streamer-file        = { path = "third-party/sea-streamer/sea-streamer-file" }
 sea-streamer-redis       = { path = "third-party/sea-streamer/sea-streamer-redis" }
-sea-streamer-kafka       = { path = "third-party/sea-streamer/sea-streamer-kafka" }
 sea-streamer-stdio       = { path = "third-party/sea-streamer/sea-streamer-stdio" }
-sea-streamer-fuse        = { path = "third-party/sea-streamer/sea-streamer-fuse" }
-redis-streams-dump       = { path = "third-party/sea-streamer/sea-streamer-redis/redis-streams-dump" }
 
-# --- seaography (4 crates) ---
+# --- seaography ---
 seaography               = { path = "third-party/seaography" }
-seaography-cli           = { path = "third-party/seaography/cli" }
-seaography-generator     = { path = "third-party/seaography/generator" }
 seaography-macros        = { path = "third-party/seaography/macros" }
 
-# --- loco (4 crates) ---
+# --- loco ---
 loco-rs                  = { path = "third-party/loco" }
 loco-gen                 = { path = "third-party/loco/loco-gen" }
-loco-cli                 = { path = "third-party/loco/loco-cli" }
-loco                     = { path = "third-party/loco/loco-new" }
 
 # --- sea-orm-pro (1 crate) ---
 sea-orm-pro              = { path = "third-party/sea-orm-pro/sea-orm-pro" }
+
+# --- rust-code-analysis (1 crate) ---
+rust-code-analysis       = { path = "third-party/rust-code-analysis" }
+
+# --- edgevec (1 crate) ---
+edgevec                  = { path = "third-party/edgevec" }
+
+# --- milvus-sdk-rust (1 crate) ---
+milvus-sdk-rust          = { path = "third-party/milvus-sdk-rust" }

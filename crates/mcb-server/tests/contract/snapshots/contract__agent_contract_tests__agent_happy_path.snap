@@ -1,6 +1,6 @@
 ---
 source: crates/mcb-server/tests/contract/agent_contract_tests.rs
-expression: "snapshot_payload(&request, status, &response)"
+expression: "normalize_tool_call_ids(snapshot_payload(&request, status, &response))"
 ---
 {
   "request": {
@@ -25,11 +25,11 @@ expression: "snapshot_payload(&request, status, &response)"
     "result": {
       "content": [
         {
-          "text": "Memory storage error: SQL execute failed: \n                INSERT INTO tool_calls (\n                    id,\n                    session_id,\n                    tool_name,\n                    params_summary,\n                    success,\n                    error_message,\n                    duration_ms,\n                    created_at\n                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)\n                : error returned from database: (code: 787) FOREIGN KEY constraint failed",
+          "text": "{\n  \"session_id\": \"00000000-0000-0000-0000-000000000001\",\n  \"tool_call_id\": \"tc_00000000-0000-0000-0000-000000000000\",\n  \"tool_name\": \"search\"\n}",
           "type": "text"
         }
       ],
-      "isError": true
+      "isError": false
     }
   },
   "status": 200

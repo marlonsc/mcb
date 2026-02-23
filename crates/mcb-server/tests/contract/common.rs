@@ -23,6 +23,7 @@ pub fn bridge_headers() -> [(&'static str, &'static str); 12] {
     ]
 }
 
+#[allow(clippy::needless_pass_by_value)]
 pub fn tool_call_request(tool_name: &str, arguments: Value) -> McpRequest {
     McpRequest {
         method: "tools/call".to_owned(),

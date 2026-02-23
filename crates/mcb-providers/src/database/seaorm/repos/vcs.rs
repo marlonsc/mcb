@@ -1,3 +1,5 @@
+#![allow(clippy::missing_errors_doc)]
+
 use std::collections::HashMap;
 
 use async_trait::async_trait;
@@ -6,10 +8,10 @@ use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::VcsEntityRepository;
 use sea_orm::ActiveValue::Set;
-use sea_orm::sea_query::{Alias, Expr, ExprTrait, JoinType, Order, Query, SqliteQueryBuilder};
+use sea_orm::sea_query::{Alias, Expr, ExprTrait, JoinType, Order, Query};
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseBackend, DatabaseConnection,
-    EntityTrait, IntoActiveModel, QueryFilter, Statement,
+    ActiveModelTrait, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait,
+    IntoActiveModel, QueryFilter,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::json;
@@ -38,6 +40,7 @@ pub struct ImpactAnalysis {
 }
 
 impl SeaOrmVcsEntityRepository {
+    #[must_use]
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
@@ -67,7 +70,7 @@ impl SeaOrmVcsEntityRepository {
     ) -> Result<Vec<Branch>> {
         let like_pattern = format!("%{query}%");
         let branches = Alias::new("branches");
-        let (sql, values) = Query::select()
+        let select = Query::select()
             .columns([
                 Alias::new("id"),
                 Alias::new("org_id"),
@@ -83,9 +86,9 @@ impl SeaOrmVcsEntityRepository {
             .and_where(Expr::col((branches.clone(), Alias::new("name"))).like(like_pattern))
             .order_by((branches, Alias::new("name")), Order::Asc)
             .limit(limit)
-            .build(SqliteQueryBuilder);
+            .to_owned();
 
-        let stmt = Statement::from_sql_and_values(DatabaseBackend::Sqlite, sql, values);
+        let stmt = self.db.get_database_backend().build(&select);
         let rows = self
             .db
             .query_all_raw(stmt)
@@ -133,7 +136,7 @@ impl SeaOrmVcsEntityRepository {
         target_branch: &str,
     ) -> Result<BranchComparison> {
         let branches = Alias::new("branches");
-        let (sql, values) = Query::select()
+        let select = Query::select()
             .columns([Alias::new("name"), Alias::new("head_commit")])
             .from(branches.clone())
             .and_where(Expr::col((branches.clone(), Alias::new("repository_id"))).eq(repository_id))
@@ -142,9 +145,9 @@ impl SeaOrmVcsEntityRepository {
                     .eq(base_branch)
                     .or(Expr::col((branches, Alias::new("name"))).eq(target_branch)),
             )
-            .build(SqliteQueryBuilder);
+            .to_owned();
 
-        let stmt = Statement::from_sql_and_values(DatabaseBackend::Sqlite, sql, values);
+        let stmt = self.db.get_database_backend().build(&select);
         let rows = self
             .db
             .query_all_raw(stmt)
@@ -189,7 +192,7 @@ impl SeaOrmVcsEntityRepository {
     ) -> Result<ImpactAnalysis> {
         let branches = Alias::new("branches");
         let worktrees = Alias::new("worktrees");
-        let (sql, values) = Query::select()
+        let select = Query::select()
             .expr_as(
                 Expr::col((branches.clone(), Alias::new("name"))),
                 Alias::new("branch_name"),
@@ -212,9 +215,9 @@ impl SeaOrmVcsEntityRepository {
                     .or(Expr::col((branches, Alias::new("name"))).eq(target_branch)),
             )
             .group_by_col((Alias::new("branches"), Alias::new("name")))
-            .build(SqliteQueryBuilder);
+            .to_owned();
 
-        let stmt = Statement::from_sql_and_values(DatabaseBackend::Sqlite, sql, values);
+        let stmt = self.db.get_database_backend().build(&select);
         let rows = self
             .db
             .query_all_raw(stmt)
