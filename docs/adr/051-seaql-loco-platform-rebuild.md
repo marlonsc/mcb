@@ -368,7 +368,7 @@ Phase 6: Cleanup (Delete old code, final validation)
 - [ROADMAP.md](../developer/ROADMAP.md) — Version roadmap with bumped versions (normative)
 - [CHANGELOG.md](../operations/CHANGELOG.md) — v0.3.0 release notes (normative)
 - [PLAN: v030-seaql-loco-rebuild.md](../../../.sisyphus/plans/v030-seaql-loco-rebuild.md) — Detailed execution plan
-- [ADR 049: Schema Resolution](049-axum-return-rmcp-tower-compatibility.md) — Schema model decisions
+- [ADR 049: Axum Return for rmcp Tower Compatibility](049-axum-return-rmcp-tower-compatibility.md) — Reversion to Axum for Tower compatibility
 
 ## References
 
