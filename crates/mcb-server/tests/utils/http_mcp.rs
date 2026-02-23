@@ -1,4 +1,3 @@
-use std::net::TcpListener;
 use std::sync::Arc;
 
 use axum::Router;
@@ -6,7 +5,7 @@ use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use http_body_util::BodyExt;
 use mcb_server::McpServer;
-use mcb_server::transport::http::{HttpTransport, HttpTransportConfig};
+use mcb_server::transport::http::{HttpTransportState, handle_mcp_request};
 use mcb_server::transport::types::{McpRequest, McpResponse};
 use tempfile::TempDir;
 use tower::ServiceExt;
@@ -14,13 +13,6 @@ use tower::ServiceExt;
 use crate::utils::test_fixtures::create_test_mcp_server;
 
 pub type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
-
-pub fn get_free_port() -> std::io::Result<u16> {
-    let listener = TcpListener::bind("127.0.0.1:0")?;
-    let port = listener.local_addr()?.port();
-    drop(listener);
-    Ok(port)
-}
 
 pub struct McpTestContext {
     pub client: Router,
@@ -30,14 +22,15 @@ pub struct McpTestContext {
 
 impl McpTestContext {
     pub async fn new() -> TestResult<Self> {
-        let port = get_free_port()?;
         let (server_instance, temp) = create_test_mcp_server().await;
         let server = Arc::new(server_instance);
 
-        let http_config = HttpTransportConfig::localhost(port);
-        let transport = HttpTransport::new(http_config, Arc::clone(&server));
-
-        let client = transport.router();
+        let state = Arc::new(HttpTransportState {
+            server: Arc::clone(&server),
+        });
+        let client = Router::new()
+            .route("/mcp", axum::routing::post(handle_mcp_request))
+            .with_state(state);
 
         Ok(Self {
             client,
@@ -88,26 +81,5 @@ pub fn tools_call_request(tool_name: &str) -> McpRequest {
             "arguments": {}
         })),
         id: Some(serde_json::json!(1)),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::{McpTestContext, get_free_port, post_mcp, tools_call_request, tools_list_request};
-    use std::sync::Arc;
-
-    fn server_ref(ctx: &McpTestContext) -> &Arc<mcb_server::McpServer> {
-        &ctx.server
-    }
-
-    #[test]
-    fn http_mcp_symbols_are_linked() {
-        let _ = std::mem::size_of::<McpTestContext>();
-        let _ = server_ref as for<'a> fn(&'a McpTestContext) -> &'a Arc<mcb_server::McpServer>;
-        let _ = get_free_port as fn() -> std::io::Result<u16>;
-        let _ = tools_list_request as fn() -> mcb_server::transport::types::McpRequest;
-        let _ = tools_call_request as fn(&str) -> mcb_server::transport::types::McpRequest;
-        let _ = post_mcp;
-        let _ = McpTestContext::new;
     }
 }

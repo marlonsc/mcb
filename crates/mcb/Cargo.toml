@@ -49,6 +49,9 @@ tokio = { workspace = true }
 # CLI
 clap = { workspace = true }
 
+# Loco framework - boot, config, server lifecycle
+loco-rs = { workspace = true }
+
 # Re-export for doc examples
 serde_json = { workspace = true }
 

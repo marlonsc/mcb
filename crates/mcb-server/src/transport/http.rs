@@ -1,28 +1,15 @@
 use std::sync::Arc;
 
+use axum::Json;
 use axum::extract::State;
-use axum::http::{HeaderMap, Method};
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use axum::http::HeaderMap;
 use rmcp::ServerHandler;
 use rmcp::model::CallToolRequestParams;
-use tower_http::cors::{Any, CorsLayer};
-use tower_http::trace::TraceLayer;
-
-use mcb_domain::info;
 
 use crate::McpServer;
-use crate::admin::auth::AdminAuthConfig;
-use crate::admin::browse_handlers::BrowseState;
-use crate::admin::handlers::AdminState;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
 use crate::tools::{ToolExecutionContext, ToolHandlers, route_tool_call};
-use crate::transport::axum_http::{AppState, build_router};
 use crate::transport::types::{McpRequest, McpResponse};
-
-#[path = "http/http_config.rs"]
-mod http_config;
-pub use http_config::HttpTransportConfig;
 
 #[derive(Clone)]
 struct BridgeProvenance {
@@ -68,126 +55,12 @@ impl BridgeProvenance {
     }
 }
 
-/// Shared state for the HTTP transport (MCP server handle).
 #[derive(Clone)]
 pub struct HttpTransportState {
-    /// MCP server instance used for tools and protocol.
     pub server: Arc<McpServer>,
 }
 
-#[allow(missing_docs)]
-pub struct HttpTransport {
-    config: HttpTransportConfig,
-    state: HttpTransportState,
-    admin_state: Option<AdminState>,
-    auth_config: Option<Arc<AdminAuthConfig>>,
-    browse_state: Option<BrowseState>,
-}
-
-impl HttpTransport {
-    /// Creates a new HTTP transport bound to the given config and server.
-    #[must_use]
-    pub fn new(config: HttpTransportConfig, server: Arc<McpServer>) -> Self {
-        Self {
-            config,
-            state: HttpTransportState { server },
-            admin_state: None,
-            auth_config: None,
-            browse_state: None,
-        }
-    }
-
-    /// Attaches admin state, auth config, and optional browse state so the router serves admin UI and API.
-    #[must_use]
-    pub fn with_admin(
-        mut self,
-        admin_state: AdminState,
-        auth_config: Arc<AdminAuthConfig>,
-        browse_state: Option<BrowseState>,
-    ) -> Self {
-        self.admin_state = Some(admin_state);
-        self.auth_config = Some(auth_config);
-        self.browse_state = browse_state;
-        self
-    }
-
-    /// Builds the Axum router (MCP + optional admin UI routes).
-    pub fn router(&self) -> Router {
-        let mut app = Router::new()
-            .route("/mcp", post(handle_mcp_request))
-            .route("/healthz", get(healthz))
-            .route("/readyz", get(readyz))
-            .with_state(Arc::new(self.state.clone()));
-
-        if let Some(admin_state) = self.admin_state.clone() {
-            let app_state = Arc::new(AppState {
-                metrics: Arc::clone(&admin_state.metrics),
-                indexing: Arc::clone(&admin_state.indexing),
-                browser: self.browse_state.as_ref().map(|b| Arc::clone(&b.browser)),
-                browse_state: self.browse_state.clone().map(Arc::new),
-                mcp_server: Some(Arc::clone(&self.state.server)),
-                admin_state: Some(Arc::new(admin_state)),
-                auth_config: Some(
-                    self.auth_config
-                        .clone()
-                        .unwrap_or_else(|| Arc::new(AdminAuthConfig::default())),
-                ),
-            });
-            app = app.merge(build_router(&app_state));
-        }
-
-        if self.config.enable_cors {
-            let cors = CorsLayer::new()
-                .allow_origin(Any)
-                .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::OPTIONS])
-                .allow_headers(Any);
-            app = app.layer(cors);
-        }
-
-        app.layer(TraceLayer::new_for_http())
-    }
-
-    /// Binds and serves the HTTP transport until the process exits.
-    ///
-    /// # Errors
-    /// Returns an error if socket address is invalid or bind/serve fails.
-    pub async fn start(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let addr = self.config.socket_addr()?;
-        info!("HttpTransport", "HTTP transport listening", &addr);
-
-        let listener = tokio::net::TcpListener::bind(addr).await?;
-        axum::serve(listener, self.router()).await?;
-        Ok(())
-    }
-
-    /// Serves the HTTP transport until the given shutdown future completes.
-    ///
-    /// # Errors
-    /// Returns an error if socket address is invalid or bind/serve fails.
-    pub async fn start_with_shutdown(
-        self,
-        shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let addr = self.config.socket_addr()?;
-        info!("HttpTransport", "HTTP transport listening", &addr);
-
-        let listener = tokio::net::TcpListener::bind(addr).await?;
-        axum::serve(listener, self.router())
-            .with_graceful_shutdown(shutdown_signal)
-            .await?;
-        Ok(())
-    }
-}
-
-async fn healthz() -> &'static str {
-    "OK"
-}
-
-async fn readyz(State(_state): State<Arc<HttpTransportState>>) -> &'static str {
-    "OK"
-}
-
-async fn handle_mcp_request(
+pub async fn handle_mcp_request(
     State(state): State<Arc<HttpTransportState>>,
     headers: HeaderMap,
     Json(request): Json<McpRequest>,

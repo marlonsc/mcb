@@ -12,13 +12,11 @@ pub mod fixtures;
 pub mod formatter;
 pub mod handlers;
 pub mod hooks;
-pub mod init;
 pub mod macros;
 pub mod mcp_server;
 /// Tests for rmcp transport-streamable-http-server feature availability
 pub mod rmcp_http_feature;
 pub mod services;
-pub mod templates;
 pub mod tools;
 pub mod transport;
 pub mod util_tests;
