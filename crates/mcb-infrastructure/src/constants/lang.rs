@@ -1,4 +1,5 @@
-pub const LANG_JAVASCRIPT: &str = "javascript";
-pub const LANG_TYPESCRIPT: &str = "typescript";
-pub const LANG_PYTHON: &str = "python";
-pub const LANG_RUST: &str = "rust";
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
+//! Language constants -- re-exported from mcb-domain (Single Source of Truth)
+pub use mcb_domain::constants::lang::*;

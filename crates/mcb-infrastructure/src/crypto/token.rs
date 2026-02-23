@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Secure token generation
 
 use aes_gcm::aead::{OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore};
@@ -9,6 +12,7 @@ pub struct TokenGenerator;
 
 impl TokenGenerator {
     /// Generate a cryptographically secure random token
+    #[must_use]
     pub fn generate_secure_token(length: usize) -> String {
         let mut bytes = vec![0u8; length];
         AeadOsRng.fill_bytes(&mut bytes);
@@ -16,15 +20,11 @@ impl TokenGenerator {
     }
 
     /// Generate a URL-safe secure token
+    #[must_use]
     pub fn generate_url_safe_token(length: usize) -> String {
         let mut bytes = vec![0u8; length];
         AeadOsRng.fill_bytes(&mut bytes);
         use base64::{Engine as _, engine::general_purpose};
         general_purpose::URL_SAFE_NO_PAD.encode(bytes)
-    }
-
-    /// Generate a UUID v4
-    pub fn generate_uuid() -> String {
-        uuid::Uuid::new_v4().to_string()
     }
 }

@@ -1,12 +1,14 @@
 //! Embedding Provider Implementations
 //!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#embedding-providers)
+//!
 //! Converts text into dense vector embeddings for semantic search.
 //! Each provider offers different tradeoffs between quality, cost, and privacy.
 //!
 //! ## Available Providers
 //!
 //! | Provider | Type | Status |
-//! |----------|------|--------|
+//! | ---------- | ------ | -------- |
 //! | OllamaEmbeddingProvider | Local | Complete |
 //! | OpenAIEmbeddingProvider | Cloud | Complete |
 //! | VoyageAIEmbeddingProvider | Cloud | Complete |
@@ -31,7 +33,8 @@
 pub mod anthropic;
 pub mod fastembed;
 pub mod gemini;
-pub(crate) mod helpers;
+/// Macros for embedding provider implementation
+pub mod macros;
 pub mod ollama;
 pub mod openai;
 pub mod voyageai;

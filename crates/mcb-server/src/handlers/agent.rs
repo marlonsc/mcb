@@ -1,21 +1,24 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Agent handler for tool call and delegation logging.
 
 use std::sync::Arc;
-use std::time::{SystemTime, UNIX_EPOCH};
 
 use mcb_domain::entities::agent::{Delegation, ToolCall};
-use mcb_domain::ports::services::AgentSessionServiceInterface;
-use mcb_domain::value_objects::OrgContext;
+use mcb_domain::ports::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
+use serde_json::Value;
 
-use uuid::Uuid;
+use mcb_domain::utils::id as domain_id;
 use validator::Validate;
 
 use crate::args::{AgentAction, AgentArgs};
+use crate::error_mapping::{safe_internal_error, to_contextual_tool_error};
 use crate::formatter::ResponseFormatter;
-use crate::utils::json::{get_bool, get_i64, get_str};
+use crate::utils::mcp::tool_error;
 
 /// Handler for agent tool call and delegation logging operations.
 #[derive(Clone)]
@@ -23,13 +26,15 @@ pub struct AgentHandler {
     agent_service: Arc<dyn AgentSessionServiceInterface>,
 }
 
-impl AgentHandler {
-    /// Create a new AgentHandler.
-    pub fn new(agent_service: Arc<dyn AgentSessionServiceInterface>) -> Self {
-        Self { agent_service }
-    }
+handler_new!(AgentHandler {
+    agent_service: Arc<dyn AgentSessionServiceInterface>,
+});
 
+impl AgentHandler {
     /// Handle an agent tool request.
+    ///
+    /// # Errors
+    /// Returns an error when input validation fails or `session_id` is missing.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
@@ -38,87 +43,100 @@ impl AgentHandler {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
-        let org_ctx = OrgContext::default();
-        let _org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
-
-        if args.session_id.to_string().is_empty() {
+        let session_id = args.session_id.as_str();
+        if session_id.is_empty()
+            || args.session_id.inner() == uuid::Uuid::nil()
+            || args.session_id == mcb_domain::value_objects::SessionId::from_name("")
+        {
             return Err(McpError::invalid_params("session_id is required", None));
         }
 
         let data = match args.data.as_object() {
             Some(data) => data,
             None => {
-                return Ok(CallToolResult::error(vec![Content::text(
-                    "Data must be a JSON object",
-                )]));
+                return Ok(tool_error("Data must be a JSON object"));
             }
         };
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map(|d| d.as_secs() as i64)
-            .unwrap_or(0);
+        let now = mcb_domain::utils::time::epoch_secs_i64()
+            .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
 
         match args.action {
             AgentAction::LogTool => {
-                let tool_name = match get_str(data, "tool_name") {
+                let tool_name = match data
+                    .get("tool_name")
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
+                {
                     Some(value) => value,
                     None => {
-                        return Ok(CallToolResult::error(vec![Content::text(
-                            "Missing tool_name",
-                        )]));
+                        return Ok(tool_error("Missing tool_name"));
                     }
                 };
                 let tool_call = ToolCall {
-                    id: format!("tc_{}", Uuid::new_v4()),
-                    session_id: args.session_id.to_string(),
+                    id: format!("tc_{}", domain_id::generate()),
+                    session_id: session_id.clone(),
                     tool_name: tool_name.clone(),
-                    params_summary: get_str(data, "params_summary"),
-                    success: get_bool(data, "success").unwrap_or(true),
-                    error_message: get_str(data, "error_message"),
-                    duration_ms: get_i64(data, "duration_ms"),
+                    params_summary: data
+                        .get("params_summary")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned),
+                    success: data.get("success").and_then(Value::as_bool).unwrap_or(true),
+                    error_message: data
+                        .get("error_message")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned),
+                    duration_ms: data.get("duration_ms").and_then(Value::as_i64),
                     created_at: now,
                 };
                 match self.agent_service.store_tool_call(tool_call).await {
                     Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                         "tool_call_id": id,
-                        "session_id": args.session_id.to_string(),
+                        "session_id": session_id,
                         "tool_name": tool_name,
                     })),
-                    Err(_) => Ok(CallToolResult::error(vec![Content::text(
-                        "Failed to store tool call",
-                    )])),
+                    Err(e) => Ok(to_contextual_tool_error(e)),
                 }
             }
             AgentAction::LogDelegation => {
-                let child_session_id = match get_str(data, "child_session_id") {
+                let child_session_id = match data
+                    .get("child_session_id")
+                    .and_then(Value::as_str)
+                    .map(str::to_owned)
+                {
                     Some(value) => value,
                     None => {
-                        return Ok(CallToolResult::error(vec![Content::text(
-                            "Missing child_session_id",
-                        )]));
+                        return Ok(tool_error("Missing child_session_id"));
                     }
                 };
                 let delegation = Delegation {
-                    id: format!("del_{}", Uuid::new_v4()),
-                    parent_session_id: args.session_id.to_string(),
+                    id: format!("del_{}", domain_id::generate()),
+                    parent_session_id: session_id.clone(),
                     child_session_id: child_session_id.clone(),
-                    prompt: get_str(data, "prompt").unwrap_or_default(),
-                    prompt_embedding_id: get_str(data, "prompt_embedding_id"),
-                    result: get_str(data, "result"),
-                    success: get_bool(data, "success").unwrap_or(true),
+                    prompt: data
+                        .get("prompt")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned)
+                        .unwrap_or_default(),
+                    prompt_embedding_id: data
+                        .get("prompt_embedding_id")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned),
+                    result: data
+                        .get("result")
+                        .and_then(Value::as_str)
+                        .map(str::to_owned),
+                    success: data.get("success").and_then(Value::as_bool).unwrap_or(true),
                     created_at: now,
                     completed_at: None,
-                    duration_ms: get_i64(data, "duration_ms"),
+                    duration_ms: data.get("duration_ms").and_then(Value::as_i64),
                 };
                 match self.agent_service.store_delegation(delegation).await {
                     Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                         "delegation_id": id,
-                        "parent_session_id": args.session_id.to_string(),
+                        "parent_session_id": session_id,
                         "child_session_id": child_session_id,
                     })),
-                    Err(_) => Ok(CallToolResult::error(vec![Content::text(
-                        "Failed to store delegation",
-                    )])),
+                    Err(e) => Ok(to_contextual_tool_error(e)),
                 }
             }
         }

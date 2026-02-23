@@ -43,6 +43,7 @@ async-trait = { workspace = true }
 # Serialization
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_with = { workspace = true }
 toml = { workspace = true }
 
 # Date/time
@@ -59,9 +60,11 @@ tracing-subscriber = { workspace = true }
 # CLI
 clap = { workspace = true }
 
-# HTTP server - migrated from Axum to Rocket in v0.1.2 (ADR-026)
-rocket = { workspace = true }
-rocket_dyn_templates = { workspace = true , features = ["handlebars", "tera"] }
+# HTTP server (Axum)
+axum = { workspace = true }
+tower-http = { workspace = true }
+walkdir = { workspace = true }
+normpath = { workspace = true }
 
 # HTTP client - for client mode connecting to remote server
 reqwest = { workspace = true }
@@ -71,7 +74,6 @@ rmcp = { workspace = true }
 
 # Template engines
 handlebars = { workspace = true }
-tera = { workspace = true }
 
 # Markdown processing
 pulldown-cmark = { workspace = true }
@@ -85,6 +87,9 @@ base64 = { workspace = true }
 # System metrics
 sysinfo = { workspace = true }
 
+# Hostname detection
+hostname = { workspace = true }
+
 # Utilities
 uuid = { workspace = true }
 
@@ -94,17 +99,11 @@ schemars = { workspace = true }
 validator = { workspace = true }
 
 # Advanced Multi-Provider Strategy
-prometheus = { workspace = true }
-metrics = { workspace = true }
-metrics-exporter-prometheus = { workspace = true }
 dashmap = { workspace = true }
 health = { workspace = true }
 
 # Hashing for simple embeddings
 sha2 = { workspace = true }
-
-# Event bus
-async-nats = { workspace = true }
 
 # Configuration watching
 notify = { workspace = true }
@@ -112,17 +111,15 @@ notify = { workspace = true }
 # Directory paths
 dirs = { workspace = true }
 
-# Compression
-flate2 = { workspace = true }
-tar = { workspace = true }
-
 # Async streaming for HTTP SSE
 futures = { workspace = true }
 async-stream = { workspace = true }
 
+# Plugin registration
+linkme = { workspace = true }
+
 # Providers - MUST be in dependencies for linkme inventory registration
 mcb-providers = { path = "../mcb-providers" }
-fs2 = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
@@ -130,4 +127,19 @@ fastembed = { workspace = true }
 rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
+tower = { workspace = true }
+http-body-util = { workspace = true }
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+mcb-infrastructure = { path = "../mcb-infrastructure", features = ["test-utils"] }
+
+[[test]]
+name = "unit"
+path = "tests/unit/mod.rs"
+
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"
+
+[[test]]
+name = "e2e"
+path = "tests/e2e/mod.rs"

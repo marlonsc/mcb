@@ -114,9 +114,9 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 ## Implementation Status
 
-- [x] All embedding providers (6): Ollama, OpenAI, VoyageAI, Gemini, FastEmbed, null
-- [x] All cache providers (3): Moka, Redis, null
-- [x] All vector store providers (5): Milvus, filesystem, in_memory, EdgeVec, null
+- [x] All embedding providers (6): FastEmbed, OpenAI, VoyageAI, Ollama, Gemini, Anthropic
+- [x] All cache providers (2): Moka, Redis
+- [x] All vector store providers (5): EdgeVec, Milvus, Qdrant, Pinecone, Encrypted
 - [x] All language providers (1): universal
 - [x] Pure linkme registries (no inventory fallback)
 - [x] All provider entry structs use `#[linkme::distributed_slice]`
@@ -133,6 +133,6 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 ## Related ADRs
 
-- [ADR 029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) - Current DI strategy (supersedes Shaku)
+- [ADR 029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) - Historical DI strategy (superseded by ADR-050)
 - [ADR 003: Unified Provider Architecture](003-unified-provider-architecture.md) - Provider registration system
 - [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Multi-crate organization

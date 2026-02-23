@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
+//!
 //! Configuration file watcher for hot-reloading
 //!
 //! Provides automatic configuration reloading when the configuration file changes.
@@ -5,19 +8,16 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use chrono::Utc;
-use mcb_domain::error::{Error, Result};
-use mcb_domain::events::DomainEvent;
-use mcb_domain::ports::infrastructure::EventBusProvider;
-use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
-use tokio::runtime::Handle;
-use tokio::sync::RwLock;
-use tracing::warn;
-
 use crate::config::AppConfig;
 use crate::config::loader::ConfigLoader;
 use crate::error_ext::ErrorContext;
 use crate::logging::log_config_loaded;
+use mcb_domain::error::{Error, Result};
+use mcb_domain::events::DomainEvent;
+use mcb_domain::ports::EventBusProvider;
+use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
+use tokio::runtime::Handle;
+use tokio::sync::RwLock;
 
 /// Configuration watcher for hot-reloading
 pub struct ConfigWatcher {
@@ -30,6 +30,10 @@ pub struct ConfigWatcher {
 
 impl ConfigWatcher {
     /// Create a new configuration watcher
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file watcher cannot be created.
     pub async fn new(
         config_path: PathBuf,
         initial_config: AppConfig,
@@ -67,6 +71,10 @@ impl ConfigWatcher {
     }
 
     /// Manually trigger a configuration reload
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the configuration file cannot be loaded.
     pub async fn reload(&self) -> Result<AppConfig> {
         let new_config = self.loader.load()?;
 
@@ -81,6 +89,7 @@ impl ConfigWatcher {
     }
 
     /// Get the configuration file path
+    #[must_use]
     pub fn config_path(&self) -> &PathBuf {
         &self.config_path
     }
@@ -118,7 +127,7 @@ impl ConfigWatcher {
                             }
                         }
                         Err(e) => {
-                            warn!(error = %e, "File watch error");
+                            mcb_domain::warn!("config_watcher", "File watch error", &e.to_string());
                         }
                     }
                 });
@@ -160,7 +169,11 @@ impl ConfigWatcher {
                 log_config_loaded(&config_path, true);
             }
             Err(e) => {
-                warn!(error = %e, "Failed to reload configuration");
+                mcb_domain::warn!(
+                    "config_watcher",
+                    "Failed to reload configuration",
+                    &e.to_string()
+                );
 
                 log_config_loaded(&config_path, false);
             }
@@ -170,12 +183,16 @@ impl ConfigWatcher {
     async fn publish_config_reloaded(event_bus: &dyn EventBusProvider) {
         if let Err(e) = event_bus
             .publish_event(DomainEvent::ConfigReloaded {
-                section: "all".to_string(),
-                timestamp: Utc::now(),
+                section: "all".to_owned(),
+                timestamp: chrono::Utc::now().timestamp(),
             })
             .await
         {
-            warn!(error = %e, "Failed to publish config reload event");
+            mcb_domain::warn!(
+                "config_watcher",
+                "Failed to publish config reload event",
+                &e.to_string()
+            );
         }
     }
 }
@@ -189,6 +206,7 @@ pub struct ConfigWatcherBuilder {
 
 impl ConfigWatcherBuilder {
     /// Create a new configuration watcher builder
+    #[must_use]
     pub fn new() -> Self {
         Self {
             config_path: None,
@@ -198,37 +216,44 @@ impl ConfigWatcherBuilder {
     }
 
     /// Set the configuration file path
+    #[must_use]
     pub fn with_config_path<P: AsRef<std::path::Path>>(mut self, path: P) -> Self {
         self.config_path = Some(path.as_ref().to_path_buf());
         self
     }
 
     /// Set the initial configuration
+    #[must_use]
     pub fn with_initial_config(mut self, config: AppConfig) -> Self {
         self.initial_config = Some(config);
         self
     }
 
     /// Set the event bus provider used for config notifications
+    #[must_use]
     pub fn with_event_bus(mut self, event_bus: Arc<dyn EventBusProvider>) -> Self {
         self.event_bus = Some(event_bus);
         self
     }
 
     /// Build the configuration watcher
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if required fields are missing or watcher initialization fails.
     pub async fn build(self) -> Result<ConfigWatcher> {
         let config_path = self.config_path.ok_or_else(|| Error::Configuration {
-            message: "Configuration file path is required".to_string(),
+            message: "Configuration file path is required".to_owned(),
             source: None,
         })?;
 
         let initial_config = self.initial_config.ok_or_else(|| Error::Configuration {
-            message: "Initial configuration is required".to_string(),
+            message: "Initial configuration is required".to_owned(),
             source: None,
         })?;
 
         let event_bus = self.event_bus.ok_or_else(|| Error::Configuration {
-            message: "Event bus is required".to_string(),
+            message: "Event bus is required".to_owned(),
             source: None,
         })?;
 
@@ -236,7 +261,7 @@ impl ConfigWatcherBuilder {
     }
 }
 
-/// Returns default ConfigWatcherBuilder for creating config file watchers
+/// Returns default `ConfigWatcherBuilder` for creating config file watchers
 impl Default for ConfigWatcherBuilder {
     fn default() -> Self {
         Self::new()
@@ -252,6 +277,10 @@ impl ConfigWatcherUtils {
     /// Before calling this, check if watching is enabled via
     /// `config.system.data.sync.watching_enabled`. This method
     /// assumes the caller has already verified watching should proceed.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file watcher cannot be initialized.
     pub async fn watch_config_file(
         config_path: PathBuf,
         initial_config: AppConfig,

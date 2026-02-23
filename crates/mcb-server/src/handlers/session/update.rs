@@ -1,15 +1,24 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use std::sync::Arc;
 
 use mcb_domain::constants::keys as schema;
-use mcb_domain::ports::services::AgentSessionServiceInterface;
+use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus};
+use mcb_domain::ports::AgentSessionServiceInterface;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
+use serde_json::Map;
+use serde_json::Value;
 
-use super::helpers::SessionHelpers;
+use mcb_domain::error;
+
+use super::common::{json_map, opt_str, require_session_id_str};
 use crate::args::SessionArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::constants::fields::FIELD_UPDATED;
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use tracing::error;
+use crate::utils::mcp::{resolve_identifier_precedence, tool_error};
 
 /// Updates an existing agent session.
 #[tracing::instrument(skip_all)]
@@ -17,57 +26,119 @@ pub async fn update_session(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
     args: &SessionArgs,
 ) -> Result<CallToolResult, McpError> {
-    let session_id = match args.session_id.as_ref() {
-        Some(id) => id.as_str(),
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing session_id",
-            )]));
-        }
+    let session_id = match require_session_id_str(args) {
+        Ok(id) => id,
+        Err(error_result) => return Ok(error_result),
     };
-    let data = SessionHelpers::json_map(&args.data);
-    let status = match args.status.as_ref() {
-        Some(status) => Some(SessionHelpers::parse_status(status)?),
-        None => data
-            .and_then(|d| SessionHelpers::get_str(d, schema::STATUS))
-            .map(|status| SessionHelpers::parse_status(&status))
-            .transpose()?,
-    };
-    match agent_service.get_session(session_id).await {
+    let data = json_map(&args.data);
+    let status = parse_status(args, data)?;
+    match agent_service.get_session(&session_id).await {
         Ok(Some(mut session)) => {
+            apply_resolved_identifier(
+                &mut session.project_id,
+                schema::PROJECT_ID,
+                args.project_id.as_deref(),
+                payload_str(data, schema::PROJECT_ID).as_deref(),
+            )?;
+            apply_resolved_identifier(
+                &mut session.worktree_id,
+                schema::WORKTREE_ID,
+                args.worktree_id.as_deref(),
+                payload_str(data, schema::WORKTREE_ID).as_deref(),
+            )?;
+
             if let Some(status) = status {
                 session.status = status;
             }
             if let Some(data) = data {
-                session.result_summary = SessionHelpers::get_str(data, schema::RESULT_SUMMARY)
-                    .or(session.result_summary);
-                session.token_count =
-                    SessionHelpers::get_i64(data, schema::TOKEN_COUNT).or(session.token_count);
-                session.tool_calls_count = SessionHelpers::get_i64(data, schema::TOOL_CALLS_COUNT)
-                    .or(session.tool_calls_count);
-                session.delegations_count =
-                    SessionHelpers::get_i64(data, schema::DELEGATIONS_COUNT)
-                        .or(session.delegations_count);
+                apply_session_updates(&mut session, data);
             }
-            let status_str = session.status.as_str().to_string();
+            let status = session.status.as_str().to_owned();
             match agent_service.update_session(session).await {
                 Ok(_) => ResponseFormatter::json_success(&serde_json::json!({
                     schema::ID: session_id,
-                    schema::STATUS: &status_str,
-                    "updated": true,
+                    schema::STATUS: status,
+                    (FIELD_UPDATED): true,
                 })),
                 Err(e) => {
-                    error!("Failed to update agent session: {:?}", e);
-                    Ok(to_opaque_tool_error(e))
+                    error!("update_session", "Failed to update agent session", &e);
+                    Ok(to_contextual_tool_error(e))
                 }
             }
         }
-        Ok(None) => Ok(CallToolResult::error(vec![Content::text(
-            "Agent session not found",
-        )])),
+        Ok(None) => Ok(tool_error("Agent session not found")),
         Err(e) => {
-            error!("Failed to update agent session (get failed): {:?}", e);
-            Ok(to_opaque_tool_error(e))
+            error!(
+                "update_session",
+                "Failed to update agent session (get failed)", &e
+            );
+            Ok(to_contextual_tool_error(e))
         }
     }
+}
+
+fn parse_status(
+    args: &SessionArgs,
+    data: Option<&Map<String, Value>>,
+) -> Result<Option<AgentSessionStatus>, McpError> {
+    let status_value = args.status.clone().or_else(|| {
+        data.and_then(|d| {
+            d.get(schema::STATUS)
+                .and_then(Value::as_str)
+                .map(str::to_owned)
+        })
+    });
+
+    status_value
+        .map(|status| {
+            status
+                .parse()
+                .map_err(|e: String| McpError::invalid_params(e, None))
+        })
+        .transpose()
+}
+
+fn payload_str(data: Option<&Map<String, Value>>, key: &str) -> Option<String> {
+    data.and_then(|d| opt_str(d, key))
+}
+
+fn apply_resolved_identifier(
+    session_value: &mut Option<String>,
+    field_name: &str,
+    args_value: Option<&str>,
+    payload_value: Option<&str>,
+) -> Result<(), McpError> {
+    let resolved = resolve_identifier_precedence(field_name, args_value, payload_value)?;
+    if let Some(value) = resolved {
+        if let Some(existing) = session_value.as_deref()
+            && existing != value
+        {
+            return Err(McpError::invalid_params(
+                format!("conflicting {field_name}: args/data='{value}', session='{existing}'"),
+                None,
+            ));
+        }
+        *session_value = Some(value);
+    }
+    Ok(())
+}
+
+fn apply_session_updates(session: &mut AgentSession, data: &Map<String, Value>) {
+    session.result_summary = data
+        .get(schema::RESULT_SUMMARY)
+        .and_then(Value::as_str)
+        .map(str::to_owned)
+        .or(session.result_summary.clone());
+    session.token_count = data
+        .get(schema::TOKEN_COUNT)
+        .and_then(Value::as_i64)
+        .or(session.token_count);
+    session.tool_calls_count = data
+        .get(schema::TOOL_CALLS_COUNT)
+        .and_then(Value::as_i64)
+        .or(session.tool_calls_count);
+    session.delegations_count = data
+        .get(schema::DELEGATIONS_COUNT)
+        .and_then(Value::as_i64)
+        .or(session.delegations_count);
 }

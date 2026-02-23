@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! NATS Event Bus Provider
 //!
 //! Event bus implementation using NATS for distributed event distribution.
@@ -33,7 +36,8 @@ use async_trait::async_trait;
 use futures::{StreamExt, stream};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::events::DomainEvent;
-use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
+use mcb_domain::ports::{DomainEventStream, EventBusProvider};
+use mcb_domain::utils::id;
 use tokio::sync::RwLock;
 use tracing::{debug, info, warn};
 
@@ -62,7 +66,7 @@ impl NatsEventBusProvider {
     ///
     /// # Arguments
     ///
-    /// * `url` - NATS server URL (e.g., "nats://localhost:4222")
+    /// * `url` - NATS server URL (e.g., "<nats://localhost:4222>")
     ///
     /// # Errors
     ///
@@ -77,13 +81,17 @@ impl NatsEventBusProvider {
     ///
     /// * `url` - NATS server URL
     /// * `subject` - Subject for publishing events
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if connection to the NATS server fails.
     pub async fn with_subject(url: &str, subject: &str) -> Result<Self> {
         info!("Connecting to NATS server at {}", url);
 
         let client = async_nats::connect(url)
             .await
             .map_err(|e| Error::Infrastructure {
-                message: format!("Failed to connect to NATS server at {}: {}", url, e),
+                message: format!("Failed to connect to NATS server at {url}: {e}"),
                 source: None,
             })?;
 
@@ -91,7 +99,7 @@ impl NatsEventBusProvider {
 
         Ok(Self {
             client: Arc::new(client),
-            subject: subject.to_string(),
+            subject: subject.to_owned(),
             subscriber_count: Arc::new(RwLock::new(0)),
         })
     }
@@ -103,6 +111,10 @@ impl NatsEventBusProvider {
     /// * `url` - NATS server URL
     /// * `subject` - Subject for publishing events
     /// * `client_name` - Optional client name for server-side identification
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the NATS connection fails.
     pub async fn with_options(url: &str, subject: &str, client_name: Option<&str>) -> Result<Self> {
         info!("Connecting to NATS server at {} with options", url);
 
@@ -116,7 +128,7 @@ impl NatsEventBusProvider {
             .connect(url)
             .await
             .map_err(|e| Error::Infrastructure {
-                message: format!("Failed to connect to NATS server at {}: {}", url, e),
+                message: format!("Failed to connect to NATS server at {url}: {e}"),
                 source: None,
             })?;
 
@@ -124,17 +136,22 @@ impl NatsEventBusProvider {
 
         Ok(Self {
             client: Arc::new(client),
-            subject: subject.to_string(),
+            subject: subject.to_owned(),
             subscriber_count: Arc::new(RwLock::new(0)),
         })
     }
 
     /// Create as Arc for sharing
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the NATS connection fails.
     pub async fn new_shared(url: &str) -> Result<Arc<Self>> {
         Ok(Arc::new(Self::new(url).await?))
     }
 
     /// Get the configured subject
+    #[must_use]
     pub fn subject(&self) -> &str {
         &self.subject
     }
@@ -152,7 +169,7 @@ impl std::fmt::Debug for NatsEventBusProvider {
 impl EventBusProvider for NatsEventBusProvider {
     async fn publish_event(&self, event: DomainEvent) -> Result<()> {
         let payload = serde_json::to_vec(&event).map_err(|e| Error::Infrastructure {
-            message: format!("Failed to serialize event: {}", e),
+            message: format!("Failed to serialize event: {e}"),
             source: None,
         })?;
 
@@ -160,7 +177,7 @@ impl EventBusProvider for NatsEventBusProvider {
             .publish(self.subject.clone(), payload.into())
             .await
             .map_err(|e| Error::Infrastructure {
-                message: format!("Failed to publish event to NATS: {}", e),
+                message: format!("Failed to publish event to NATS: {e}"),
                 source: None,
             })?;
 
@@ -202,7 +219,7 @@ impl EventBusProvider for NatsEventBusProvider {
                                 // Skip bad messages and continue
                                 Some((
                                     DomainEvent::MetricsSnapshot {
-                                        timestamp: chrono::Utc::now(),
+                                        timestamp: chrono::Utc::now().timestamp(),
                                     },
                                     (sub, count),
                                 ))
@@ -240,7 +257,7 @@ impl EventBusProvider for NatsEventBusProvider {
             .publish(subject.clone(), payload.to_vec().into())
             .await
             .map_err(|e| Error::Infrastructure {
-                message: format!("Failed to publish to NATS subject '{}': {}", subject, e),
+                message: format!("Failed to publish to NATS subject '{subject}': {e}"),
                 source: None,
             })?;
 
@@ -260,11 +277,11 @@ impl EventBusProvider for NatsEventBusProvider {
                 .subscribe(subject.clone())
                 .await
                 .map_err(|e| Error::Infrastructure {
-                    message: format!("Failed to subscribe to NATS subject '{}': {}", subject, e),
+                    message: format!("Failed to subscribe to NATS subject '{subject}': {e}"),
                     source: None,
                 })?;
 
-        let sub_id = format!("nats-{}-{}", subject, uuid::Uuid::new_v4());
+        let sub_id = format!("nats-{}-{}", subject, id::generate());
         debug!("Created NATS subscription: {}", sub_id);
 
         Ok(sub_id)

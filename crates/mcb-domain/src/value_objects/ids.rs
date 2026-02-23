@@ -1,72 +1,7 @@
-use std::fmt;
-
-use serde::{Deserialize, Serialize};
-
-macro_rules! define_id {
-    ($name:ident, $doc:expr) => {
-        #[doc = $doc]
-        #[derive(
-            Debug,
-            Clone,
-            PartialEq,
-            Eq,
-            PartialOrd,
-            Ord,
-            Hash,
-            Serialize,
-            Deserialize,
-            schemars::JsonSchema,
-        )]
-        pub struct $name(String);
-
-        impl $name {
-            /// Create a new instance
-            pub fn new<S: Into<String>>(id: S) -> Self {
-                Self(id.into())
-            }
-
-            /// Get the string representation
-            pub fn as_str(&self) -> &str {
-                &self.0
-            }
-
-            /// Convert into string
-            pub fn into_string(self) -> String {
-                self.0
-            }
-        }
-
-        impl fmt::Display for $name {
-            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-                write!(f, "{}", self.0)
-            }
-        }
-
-        impl From<String> for $name {
-            fn from(s: String) -> Self {
-                Self::new(s)
-            }
-        }
-
-        impl From<&str> for $name {
-            fn from(s: &str) -> Self {
-                Self::new(s)
-            }
-        }
-
-        impl AsRef<str> for $name {
-            fn as_ref(&self) -> &str {
-                self.as_str()
-            }
-        }
-
-        impl From<$name> for String {
-            fn from(id: $name) -> Self {
-                id.0
-            }
-        }
-    };
-}
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#value-objects)
+//!
+//! Strong-typed UUID identifiers for all domain entities.
 
 define_id!(CollectionId, "Strong typed identifier for a collection");
 define_id!(ChunkId, "Strong typed identifier for a code chunk");
@@ -105,3 +40,69 @@ define_id!(
     "Strong typed identifier for an issue comment"
 );
 define_id!(IssueLabelId, "Strong typed identifier for an issue label");
+
+define_id!(CodebaseId, "Strong typed identifier for a codebase");
+define_id!(FileId, "Strong typed identifier for a file");
+define_id!(FunctionId, "Strong typed identifier for a function");
+define_id!(ClassId, "Strong typed identifier for a class");
+
+define_id!(TeamMemberId, "Strong typed identifier for a team member");
+define_id!(
+    IssueLabelAssignmentId,
+    "Strong typed identifier for an issue label assignment"
+);
+
+define_id!(ProjectId, "Strong typed identifier for a project");
+define_id!(PhaseId, "Strong typed identifier for a project phase");
+define_id!(
+    DependencyId,
+    "Strong typed identifier for a project dependency"
+);
+define_id!(DecisionId, "Strong typed identifier for a project decision");
+define_id!(
+    TransitionId,
+    "Strong typed identifier for a workflow transition"
+);
+define_id!(SubmoduleId, "Strong typed identifier for a submodule");
+define_id!(
+    DelegationId,
+    "Strong typed identifier for an agent delegation"
+);
+define_id!(ToolCallId, "Strong typed identifier for a tool call");
+define_id!(
+    CheckpointId,
+    "Strong typed identifier for an agent checkpoint"
+);
+define_id!(
+    ErrorPatternId,
+    "Strong typed identifier for an error pattern"
+);
+define_id!(
+    ErrorPatternMatchId,
+    "Strong typed identifier for an error pattern match"
+);
+define_id!(
+    ExecutionId,
+    "Strong typed identifier for an execution record"
+);
+define_id!(
+    QualityGateId,
+    "Strong typed identifier for a quality gate result"
+);
+define_id!(DiffId, "Strong typed identifier for a file or ref diff");
+define_id!(
+    SnapshotId,
+    "Strong typed identifier for a codebase snapshot"
+);
+define_id!(
+    SessionSummaryId,
+    "Strong typed identifier for a session summary"
+);
+define_id!(
+    OriginContextId,
+    "Strong typed identifier for an origin context"
+);
+define_id!(
+    MemorySearchId,
+    "Strong typed identifier for a memory search entry"
+);

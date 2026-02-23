@@ -1,17 +1,24 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../docs/modules/server.md)
+//!
 //! Response formatting utilities for MCP server
 //!
 //! This module contains utilities for formatting tool responses in a consistent,
 //! user-friendly way. It handles the presentation of search results, indexing status,
 //! and error messages.
 
+use std::fmt::Write;
 use std::path::Path;
 use std::time::Duration;
 
 use mcb_domain::SearchResult;
-use mcb_domain::ports::services::ValidationReport;
-use mcb_domain::ports::services::{IndexingResult, IndexingStatus};
+use mcb_domain::ports::ValidationReport;
+use mcb_domain::ports::{IndexingResult, IndexingStatus};
+use mcb_domain::{error, info};
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
+
+use crate::constants::display::{CODE_PREVIEW_MAX_LINES, SEARCH_SLOW_THRESHOLD_MS};
 use serde::Serialize;
 
 /// Response formatter for MCP server tools
@@ -19,6 +26,9 @@ pub struct ResponseFormatter;
 
 impl ResponseFormatter {
     /// Format search response for display
+    ///
+    /// # Errors
+    /// Returns an error if response content serialization fails.
     pub fn format_search_response(
         query: &str,
         results: &[SearchResult],
@@ -26,37 +36,41 @@ impl ResponseFormatter {
         limit: usize,
     ) -> Result<CallToolResult, McpError> {
         let message = build_search_response_message(query, results, duration, limit);
-        tracing::info!(
-            "Search completed: found {} results in {:?}",
-            results.len(),
-            duration
+        info!(
+            "ResponseFormatter",
+            "search completed",
+            &format!("results={} duration={:?}", results.len(), duration)
         );
         Ok(CallToolResult::success(vec![Content::text(message)]))
     }
 
     /// Format indexing completion response
+    #[must_use]
     pub fn format_indexing_success(
         result: &IndexingResult,
         path: &Path,
         duration: Duration,
     ) -> CallToolResult {
         let message = build_indexing_success_message(result, path, duration);
-        tracing::info!(
-            "Indexing completed successfully: {} chunks in {:?}",
-            result.chunks_created,
-            duration
+        info!(
+            "ResponseFormatter",
+            "indexing completed",
+            &format!("chunks={} duration={:?}", result.chunks_created, duration)
         );
         CallToolResult::success(vec![Content::text(message)])
     }
 
     /// Format indexing error response
+    #[must_use]
     pub fn format_indexing_error(error: &str, path: &Path) -> CallToolResult {
         let message = build_indexing_error_message(error, path);
-        tracing::error!("Indexing failed for path {}: {}", path.display(), error);
+        let detail = format!("path={} error={error}", path.display());
+        error!("ResponseFormatter", "indexing failed", &detail);
         CallToolResult::error(vec![Content::text(message)])
     }
 
     /// Format indexing status response
+    #[must_use]
     pub fn format_indexing_status(status: &IndexingStatus) -> CallToolResult {
         let message = build_indexing_status_message(status);
         CallToolResult::success(vec![Content::text(message)])
@@ -65,32 +79,37 @@ impl ResponseFormatter {
     /// Build a successful MCP tool result from a JSON-serializable value.
     ///
     /// Use this to avoid repeating serialization and `CallToolResult::success` in handlers.
+    ///
+    /// # Errors
+    /// Returns an error if the serialized payload cannot be encoded as MCP content.
     pub fn json_success<T: Serialize>(value: &T) -> Result<CallToolResult, McpError> {
-        let json = serde_json::to_string_pretty(value)
-            .unwrap_or_else(|_| String::from("Failed to serialize result"));
-        Ok(CallToolResult::success(vec![Content::text(json)]))
+        crate::utils::mcp::ok_json(value)
     }
 
     /// Format clear index response
+    #[must_use]
     pub fn format_clear_index(collection: &str) -> CallToolResult {
         let message = format!(
-            "✅ **Index Cleared**\n\nCollection `{}` has been cleared successfully.",
-            collection
+            "✅ **Index Cleared**\n\nCollection `{collection}` has been cleared successfully."
         );
         CallToolResult::success(vec![Content::text(message)])
     }
 
     /// Format validation success response
+    #[must_use]
     pub fn format_validation_success(
         report: &ValidationReport,
         path: &Path,
         duration: Duration,
     ) -> CallToolResult {
         let message = build_validation_message(report, path, duration);
-        tracing::info!(
-            "Validation completed: {} violations in {:?}",
-            report.total_violations,
-            duration
+        info!(
+            "ResponseFormatter",
+            "validation completed",
+            &format!(
+                "violations={} duration={:?}",
+                report.total_violations, duration
+            )
         );
         if report.passed {
             CallToolResult::success(vec![Content::text(message)])
@@ -100,9 +119,11 @@ impl ResponseFormatter {
     }
 
     /// Format validation error response
+    #[must_use]
     pub fn format_validation_error(error: &str, path: &Path) -> CallToolResult {
         let message = build_validation_error_message(error, path);
-        tracing::error!("Validation failed for path {}: {}", path.display(), error);
+        let detail = format!("path={} error={error}", path.display());
+        error!("ResponseFormatter", "validation failed", &detail);
         CallToolResult::error(vec![Content::text(message)])
     }
 }
@@ -117,13 +138,14 @@ fn build_search_response_message(
     duration: Duration,
     limit: usize,
 ) -> String {
-    let mut message = "🔍 **Semantic Code Search Results**\n\n".to_string();
-    message.push_str(&format!("**Query:** \"{}\" \n", query));
-    message.push_str(&format!(
-        "**Search completed in:** {:.2}s\n",
+    let mut message = "🔍 **Semantic Code Search Results**\n\n".to_owned();
+    let _ = writeln!(message, "**Query:** \"{query}\" ");
+    let _ = writeln!(
+        message,
+        "**Search completed in:** {:.2}s",
         duration.as_secs_f64()
-    ));
-    message.push_str(&format!("**Results found:** {}\n\n", results.len()));
+    );
+    let _ = write!(message, "**Results found:** {}\n\n", results.len());
 
     if results.is_empty() {
         append_empty_search_response(&mut message);
@@ -156,42 +178,43 @@ fn append_search_results(
     message.push_str("📊 **Search Results:**\n\n");
 
     for (i, result) in results.iter().enumerate() {
-        message.push_str(&format!(
-            "**{}.** 📁 `{}` (line {})\n",
+        let _ = writeln!(
+            message,
+            "**{}.** 📁 `{}` (line {})",
             i + 1,
             result.file_path,
             result.start_line
-        ));
+        );
 
         append_code_preview(message, result);
-        message.push_str(&format!("🎯 **Relevance Score:** {:.3}\n\n", result.score));
+        let _ = write!(message, "🎯 **Relevance Score:** {:.3}\n\n", result.score);
     }
 
     if results.len() == limit {
-        message.push_str(&format!(
-            "💡 **Showing top {} results.** For more results, try:\n",
-            limit
-        ));
+        let _ = writeln!(
+            message,
+            "💡 **Showing top {limit} results.** For more results, try:"
+        );
         message.push_str("• More specific search terms\n");
         message.push_str("• Different query formulations\n");
         message.push_str("• Breaking complex queries into simpler ones\n");
     }
 
-    if duration.as_millis() > 1000 {
-        message.push_str(&format!(
-            "\n⚠️ **Performance Note:** Search took {:.2}s. \
-            Consider using more specific queries for faster results.\n",
+    if duration.as_millis() > SEARCH_SLOW_THRESHOLD_MS {
+        let _ = write!(
+            message,
+            "\n⚠️ **Performance Note:** Search took {:.2}s. Consider using more specific queries for faster results.\n",
             duration.as_secs_f64()
-        ));
+        );
     }
 }
 
 fn append_code_preview(message: &mut String, result: &SearchResult) {
     let lines: Vec<&str> = result.content.lines().collect();
-    let preview_lines = if lines.len() > 10 {
+    let preview_lines = if lines.len() > CODE_PREVIEW_MAX_LINES {
         lines
             .iter()
-            .take(10)
+            .take(CODE_PREVIEW_MAX_LINES)
             .cloned()
             .collect::<Vec<_>>()
             .join("\n")
@@ -207,9 +230,9 @@ fn append_code_preview(message: &mut String, result: &SearchResult) {
     let lang_hint = get_language_hint(file_ext, &result.language);
 
     if lang_hint.is_empty() {
-        message.push_str(&format!("```\n{}\n```\n", preview_lines));
+        let _ = write!(message, "```\n{preview_lines}\n```\n");
     } else {
-        message.push_str(&format!("``` {}\n{}\n```\n", lang_hint, preview_lines));
+        let _ = write!(message, "``` {lang_hint}\n{preview_lines}\n```\n");
     }
 }
 
@@ -267,12 +290,13 @@ fn build_indexing_success_message(
     );
 
     if !result.errors.is_empty() {
-        message.push_str(&format!(
+        let _ = write!(
+            message,
             "\n⚠️ **Errors encountered:** {}\n",
             result.errors.len()
-        ));
+        );
         for error in &result.errors {
-            message.push_str(&format!("• {}\n", error));
+            let _ = writeln!(message, "• {error}");
         }
     } else {
         message.push_str("\n🎯 **Next Steps:**\n");
@@ -289,8 +313,7 @@ fn build_indexing_started_message(result: &IndexingResult, path: &Path) -> Strin
     let operation_id = result
         .operation_id
         .as_ref()
-        .map(|id| id.as_str())
-        .unwrap_or("unknown");
+        .map_or_else(|| "N/A".to_owned(), mcb_domain::OperationId::as_str);
 
     format!(
         "🚀 **Indexing Started**\n\n\
@@ -327,21 +350,23 @@ fn build_indexing_status_message(status: &IndexingStatus) -> String {
 
     if status.is_indexing {
         message.push_str("🔄 **Indexing Status: In Progress**\n");
-        message.push_str(&format!("Progress: {:.1}%\n", status.progress * 100.0));
+        let _ = writeln!(message, "Progress: {:.1}%", status.progress * 100.0);
         if let Some(current_file) = &status.current_file {
-            message.push_str(&format!("Current file: `{}`\n", current_file));
+            let _ = writeln!(message, "Current file: `{current_file}`");
         }
-        message.push_str(&format!(
-            "Files processed: {}/{}\n",
+        let _ = writeln!(
+            message,
+            "Files processed: {}/{}",
             status.processed_files, status.total_files
-        ));
+        );
     } else {
         message.push_str("📋 **Indexing Status: Idle**\n");
         if status.total_files > 0 {
-            message.push_str(&format!(
-                "Last run processed {}/{} files\n",
+            let _ = writeln!(
+                message,
+                "Last run processed {}/{} files",
                 status.processed_files, status.total_files
-            ));
+            );
         } else {
             message.push_str("No indexing operation is currently running.\n");
         }

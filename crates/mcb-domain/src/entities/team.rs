@@ -1,27 +1,31 @@
 //! Team and TeamMember entities — groups of users within an organization.
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
+//!
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// A team groups users within an organization for access control and
-/// project assignment. Teams are used in the GitHub-like RBAC model:
-/// Organization → Teams → Projects.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct Team {
-    /// Unique identifier (UUID).
-    pub id: String,
-    /// Organization this team belongs to (tenant isolation).
-    pub org_id: String,
-    /// Human-readable team name (unique within an org).
-    pub name: String,
-    /// Timestamp when the team was created (Unix epoch).
-    pub created_at: i64,
+crate::define_entity! {
+    /// A team groups users within an organization for access control and
+    /// project assignment. Teams are used in the GitHub-like RBAC model:
+    /// Organization → Teams → Projects.
+    #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+    pub struct Team { id, org_id, created_at } {
+        /// Display name of the team.
+        pub name: String,
+    }
 }
+
+use crate::value_objects::ids::TeamMemberId;
 
 /// A membership link between a user and a team, with a role describing
 /// the user's authority within that team.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema, PartialEq, Eq)]
 pub struct TeamMember {
+    /// Unique identifier for the membership (composite of `team_id:user_id`).
+    #[serde(default)]
+    pub id: TeamMemberId,
     /// Team the user belongs to.
     pub team_id: String,
     /// User who is a member.
@@ -33,7 +37,19 @@ pub struct TeamMember {
 }
 
 /// Role a user holds within a specific team.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum TeamMemberRole {
     /// Team lead with management capabilities.
     Lead,
@@ -41,25 +57,4 @@ pub enum TeamMemberRole {
     Member,
 }
 
-impl TeamMemberRole {
-    /// Returns the string representation of the team member role.
-    #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Lead => "lead",
-            Self::Member => "member",
-        }
-    }
-}
-
-impl std::str::FromStr for TeamMemberRole {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "lead" => Ok(Self::Lead),
-            "member" => Ok(Self::Member),
-            _ => Err(format!("Unknown team member role: {s}")),
-        }
-    }
-}
+crate::impl_as_str_from_as_ref!(TeamMemberRole);

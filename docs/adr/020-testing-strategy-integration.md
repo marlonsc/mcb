@@ -35,16 +35,15 @@ Three-tier testing strategy:
 Pattern:
 
 ```rust
-// crates/mcb-application/tests/search_service_test.rs — HISTORICAL; DI is now dill (ADR-029)
+// crates/mcb-application/tests/search_service_test.rs — uses AppContext composition root (ADR-050)
 
 #[tokio::test]
 async fn test_search_returns_relevant_results() {
-    // Use null providers from mcb-infrastructure
-    let container = DiContainerBuilder::new().build().await.unwrap();
-    let service = SearchService::new(
-        container.resolve::<Arc<dyn EmbeddingProvider>>(),
-        container.resolve::<Arc<dyn VectorStoreProvider>>(),
-    );
+    // Use default providers via init_app()/AppContext
+    let app_context = init_app(config).await.unwrap();
+    let embedding: Arc<dyn EmbeddingProvider> = app_context.embedding_handle().get();
+    let vector_store: Arc<dyn VectorStoreProvider> = app_context.vector_store_handle().get();
+    let service = SearchService::new(embedding, vector_store);
 
     // Test with mock data
     let results = service.search("query").await.unwrap();
@@ -95,7 +94,7 @@ proptest! {
 
 ## v0.1.1 Test Organization
 
-Current test structure in eight-crate workspace:
+Current test structure in seven-crate workspace:
 
 ```text
 crates/
@@ -106,7 +105,7 @@ crates/
 ├── mcb-server/tests/           # Server and integration tests
 │   ├── admin/                  # Admin API tests
 │   ├── handlers/               # MCP handler tests
-│   └── test_utils/             # Test fixtures
+│   └── utils/             # Test fixtures
 └── mcb-validate/tests/         # Validator tests
 ```
 

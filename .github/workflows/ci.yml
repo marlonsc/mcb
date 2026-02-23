@@ -1,8 +1,13 @@
 ---
 # =============================================================================
-# CI Pipeline
+# CI Pipeline — 3-Stage with Shared Compilation Cache
 # =============================================================================
-# Uses same Makefile verbs as local development
+# Stage 1: Fast checks (lint, audit, docs) — parallel. Lint SAVES rust cache.
+# Stage 2a: Test + Validate (parallel, both after lint, REUSE lint cache)
+# Stage 2b: Cross-platform + golden + coverage — gated by test-linux
+# Stage 3: Release builds — gated by tests + validate + audit
+# Gate: rust-ci consolidated check
+# Post-gate: CodeQL analysis (most expensive, runs last)
 # =============================================================================
 
 name: CI
@@ -25,6 +30,10 @@ env:
   MCB_RUN_DOCKER_INTEGRATION_TESTS: "0"
 
 jobs:
+  # ===========================================================================
+  # Stage 0 — Classification
+  # ===========================================================================
+
   changes:
     name: Detect Changes
     timeout-minutes: 5
@@ -80,19 +89,20 @@ jobs:
             echo "is_fork=${IS_FORK}"
           } >> "$GITHUB_OUTPUT"
 
-          # Full suite: non-draft human PRs targeting main
           if [[ "${IS_DRAFT}" == "false" && "${IS_BOT}" == "false" ]]; then
             echo "run_full=true" >> "$GITHUB_OUTPUT"
             echo "run_simplified=false" >> "$GITHUB_OUTPUT"
           elif [[ "${IS_BOT}" == "true" ]]; then
-            # Simplified bot policy: Linux + stable only
             echo "run_full=false" >> "$GITHUB_OUTPUT"
             echo "run_simplified=true" >> "$GITHUB_OUTPUT"
           else
-            # Draft or other: skip heavy jobs
             echo "run_full=false" >> "$GITHUB_OUTPUT"
             echo "run_simplified=false" >> "$GITHUB_OUTPUT"
           fi
+
+  # ===========================================================================
+  # Stage 1 — Fast Checks (all parallel, ~5 min)
+  # ===========================================================================
 
   lint:
     name: Lint (Rust 2024)
@@ -113,131 +123,14 @@ jobs:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          save-if: false
+          shared-key: ci-ubuntu-stable
+          save-if: true
       - run: make lint MCB_CI=1
-
-  test:
-    name: Test (${{ matrix.os }}, Rust ${{ matrix.rust }})
-    needs: [changes, classify]
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        rust: [stable]
-        # Full matrix: add macOS, Windows, and beta for non-draft human PRs
-        include:
-          - os: ubuntu-latest
-            rust: beta
-            if_key: ${{ needs.classify.outputs.run_full == 'true' }}
-          - os: macos-latest
-            rust: stable
-            if_key: ${{ needs.classify.outputs.run_full == 'true' }}
-          - os: windows-latest
-            rust: stable
-            if_key: ${{ needs.classify.outputs.run_full == 'true' }}
-    steps:
-      - name: Enable long paths (Windows)
-        if: runner.os == 'Windows'
-        run: git config --system core.longpaths true
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - name: Install dependencies (Unix)
-        if: runner.os != 'Windows'
-        run: bash .github/setup-ci.sh
-      - name: Install protoc (Windows)
-        if: runner.os == 'Windows'
-        run: choco install protoc -y
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: ${{ matrix.rust }}
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-        with:
-          save-if: false
-      - name: Run tests
-        run: make test THREADS=4
-
-  startup-smoke:
-    name: Startup Smoke (DDL/Init)
-    needs: [changes, classify, lint]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-        with:
-          save-if: false
-      - run: make test SCOPE=startup
-
-  validate:
-    name: Architecture Validation
-    needs: [changes, classify, lint, startup-smoke]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-        with:
-          save-if: false
-      - run: make validate
-        env:
-          RUST_MIN_STACK: 16777216
-      - name: Check Provider Traits Location
-        run: |
-          VIOLATIONS=$(
-            grep -r "use mcb_application::ports::providers" \
-              crates/mcb-providers/src/ 2>/dev/null || true
-          )
-          if [ -n "$VIOLATIONS" ]; then
-            echo "VIOLATION: Provider traits should be imported from mcb-domain"
-            echo "$VIOLATIONS"
-            exit 1
-          fi
-
-  golden-tests:
-    name: Golden Acceptance Tests
-    needs: [changes, classify, test]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      needs.classify.outputs.run_full == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-        with:
-          save-if: false
-      - run: make test SCOPE=golden THREADS=2
 
   audit:
     name: Security Audit
     timeout-minutes: 10
-    needs: [changes]
+    needs: [changes, classify]
     if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && needs.classify.outputs.run_full == 'true'
     runs-on: ubuntu-latest
     steps:
@@ -250,48 +143,9 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          save-if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop' }}
+          shared-key: ci-ubuntu-stable
+          save-if: false
       - run: make audit
-
-  analyze:
-    name: Analyze (${{ matrix.language }})
-    timeout-minutes: 15
-    needs: [changes, classify, rust-ci]
-    if: |
-      always() &&
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      needs.classify.outputs.run_full == 'true' &&
-      github.event.pull_request.head.repo.fork == false
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [rust]
-    env:
-      CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
-        with:
-          languages: ${{ matrix.language }}
-          config-file: ./.github/codeql-config.yml
-      - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: stable
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
-        with:
-          category: "/language:${{ matrix.language }}"
 
   validate-docs:
     name: Validate Documentation
@@ -338,112 +192,145 @@ jobs:
           retention-days: 30
           include-hidden-files: false
 
-  rust-ci:
-    name: Rust CI (PR consolidated)
-    timeout-minutes: 40
+  # ===========================================================================
+  # Stage 2a — Primary Test Gate (reuses lint cache, ~8 min)
+  # ===========================================================================
+
+  test-linux:
+    name: Test (ubuntu-latest, Rust stable)
+    needs: [changes, classify, lint]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
-    needs: [changes, classify, lint, test, startup-smoke, validate, audit, golden-tests, coverage, release-build]
-    if: always()
+    timeout-minutes: 30
     steps:
-      - name: Evaluate Required Checks
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - name: Startup Smoke (DDL/Init)
+        run: make test SCOPE=startup THREADS=4
+      - name: Full Test Suite
+        run: make test THREADS=4
+
+  # ===========================================================================
+  # Stage 2b — Extended Testing (after linux stable, all parallel)
+  # ===========================================================================
+
+  test-cross:
+    name: Test (${{ matrix.os }}, Rust ${{ matrix.rust }})
+    needs: [changes, classify, test-linux]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      needs.classify.outputs.run_full == 'true'
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    continue-on-error: ${{ matrix.rust == 'beta' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rust: beta
+          - os: macos-latest
+            rust: stable
+          - os: windows-latest
+            rust: stable
+    steps:
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
         env:
-          IS_DRAFT: ${{ needs.classify.outputs.is_draft }}
-          IS_BOT: ${{ needs.classify.outputs.is_bot }}
-          RUN_FULL: ${{ needs.classify.outputs.run_full }}
-          RUN_SIMPLIFIED: ${{ needs.classify.outputs.run_simplified }}
-          LINT_RESULT: ${{ needs.lint.result }}
-          TEST_RESULT: ${{ needs.test.result }}
-          STARTUP_RESULT: ${{ needs.startup-smoke.result }}
-          VALIDATE_RESULT: ${{ needs.validate.result }}
-          AUDIT_RESULT: ${{ needs.audit.result }}
-          GOLDEN_RESULT: ${{ needs.golden-tests.result }}
-          COVERAGE_RESULT: ${{ needs.coverage.result }}
-          RELEASE_BUILD_RESULT: ${{ needs.release-build.result }}
+          PROTOC_VERSION: "29.3"
         run: |
-          echo "=== PR Classification ==="
-          echo "Is Draft: $IS_DRAFT"
-          echo "Is Bot: $IS_BOT"
-          echo "Run Full Suite: $RUN_FULL"
-          echo "Run Simplified Suite: $RUN_SIMPLIFIED"
-          echo ""
-          echo "=== Job Results ==="
-          echo "Lint: $LINT_RESULT"
-          echo "Test: $TEST_RESULT"
-          echo "Startup Smoke: $STARTUP_RESULT"
-          echo "Validate: $VALIDATE_RESULT"
-          echo "Audit: $AUDIT_RESULT"
-          echo "Golden: $GOLDEN_RESULT"
-          echo "Coverage: $COVERAGE_RESULT"
-          echo "Release Build: $RELEASE_BUILD_RESULT"
-          echo ""
-          
-          # Draft PRs: all heavy jobs should be skipped, gate succeeds
-          if [[ "$IS_DRAFT" == "true" ]]; then
-            echo "✓ Draft PR - gate check passed (no heavy jobs required)"
-            exit 0
+          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\protoc.zip"
+          Expand-Archive "$env:TEMP\protoc.zip" -DestinationPath "$env:TEMP\protoc" -Force
+          "$env:TEMP\protoc\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          save-if: false
+      - run: make test THREADS=4
+
+  validate:
+    name: Architecture Validation
+    needs: [changes, classify, lint]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - run: make validate
+        env:
+          RUST_MIN_STACK: 16777216
+      - name: Check Provider Traits Location
+        run: |
+          VIOLATIONS=$(
+            grep -r "use mcb_application::ports::providers" \
+              crates/mcb-providers/src/ 2>/dev/null || true
+          )
+          if [ -n "$VIOLATIONS" ]; then
+            echo "VIOLATION: Provider traits should be imported from mcb-domain"
+            echo "$VIOLATIONS"
+            exit 1
           fi
-          
-          # Simplified bot policy: require lint + test + startup + validate
-          if [[ "$RUN_SIMPLIFIED" == "true" ]]; then
-            echo "=== Bot PR Policy (Simplified) ==="
-            if [[ "$LINT_RESULT" != "success" ]]; then
-              echo "✗ Lint failed"
-              exit 1
-            fi
-            if [[ "$TEST_RESULT" != "success" ]]; then
-              echo "✗ Test failed"
-              exit 1
-            fi
-            if [[ "$STARTUP_RESULT" != "success" ]]; then
-              echo "✗ Startup smoke failed"
-              exit 1
-            fi
-            if [[ "$VALIDATE_RESULT" != "success" ]]; then
-              echo "✗ Validate failed"
-              exit 1
-            fi
-            echo "✓ Bot PR - simplified checks passed"
-            exit 0
-          fi
-          
-          # Full suite for human ready PRs
-          if [[ "$RUN_FULL" == "true" ]]; then
-            echo "=== Full Suite Policy (Human Ready PR) ==="
-            REQUIRED_JOBS=(
-              "LINT_RESULT"
-              "TEST_RESULT"
-              "STARTUP_RESULT"
-              "VALIDATE_RESULT"
-              "AUDIT_RESULT"
-              "GOLDEN_RESULT"
-              "COVERAGE_RESULT"
-              "RELEASE_BUILD_RESULT"
-            )
-            
-            FAILED=0
-            for job in "${REQUIRED_JOBS[@]}"; do
-              result="${!job}"
-              if [[ "$result" != "success" && "$result" != "skipped" ]]; then
-                echo "✗ $job failed or was cancelled: $result"
-                FAILED=1
-              fi
-            done
-            
-            if [[ $FAILED -eq 1 ]]; then
-              echo "✗ Full suite check failed"
-              exit 1
-            fi
-            
-            echo "✓ Full suite - all required checks passed"
-            exit 0
-          fi
-          
-          echo "✗ Unexpected classification state"
-          exit 1
+
+  golden-tests:
+    name: Golden Acceptance Tests
+    needs: [changes, classify, test-linux]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      needs.classify.outputs.run_full == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - run: make test SCOPE=golden THREADS=2
 
   coverage:
     name: Coverage
-    needs: [changes, classify, test]
+    needs: [changes, classify, test-linux]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
       needs.classify.outputs.run_full == 'true' &&
@@ -460,6 +347,7 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
+          shared-key: ci-ubuntu-stable
           save-if: false
       - run: make coverage MCB_CI=1 THREADS=4
       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
@@ -467,10 +355,14 @@ jobs:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
 
+  # ===========================================================================
+  # Stage 3 — Release Artifacts
+  # ===========================================================================
+
   release-build:
     name: Build Release Binaries (${{ matrix.target }})
     timeout-minutes: 30
-    needs: [changes, classify, test, validate, audit]
+    needs: [changes, classify, test-linux, validate, audit]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
       needs.classify.outputs.run_full == 'true'
@@ -505,7 +397,14 @@ jobs:
         run: bash .github/setup-ci.sh
       - name: Install protoc (Windows)
         if: runner.os == 'Windows'
-        run: choco install protoc -y
+        shell: pwsh
+        env:
+          PROTOC_VERSION: "29.3"
+        run: |
+          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\protoc.zip"
+          Expand-Archive "$env:TEMP\protoc.zip" -DestinationPath "$env:TEMP\protoc" -Force
+          "$env:TEMP\protoc\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
@@ -530,6 +429,149 @@ jobs:
           path: dist/${{ matrix.asset_name }}
           retention-days: 7
           include-hidden-files: false
+
+  # ===========================================================================
+  # Gate — Consolidated PR Check (required status check)
+  # ===========================================================================
+
+  rust-ci:
+    name: Rust CI (PR consolidated)
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    needs:
+      - changes
+      - classify
+      - lint
+      - test-linux
+      - test-cross
+      - validate
+      - audit
+      - golden-tests
+      - coverage
+      - release-build
+    if: always()
+    steps:
+      - name: Evaluate Required Checks
+        env:
+          IS_DRAFT: ${{ needs.classify.outputs.is_draft }}
+          IS_BOT: ${{ needs.classify.outputs.is_bot }}
+          RUN_FULL: ${{ needs.classify.outputs.run_full }}
+          RUN_SIMPLIFIED: ${{ needs.classify.outputs.run_simplified }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          TEST_LINUX_RESULT: ${{ needs.test-linux.result }}
+          TEST_CROSS_RESULT: ${{ needs.test-cross.result }}
+          VALIDATE_RESULT: ${{ needs.validate.result }}
+          AUDIT_RESULT: ${{ needs.audit.result }}
+          GOLDEN_RESULT: ${{ needs.golden-tests.result }}
+          COVERAGE_RESULT: ${{ needs.coverage.result }}
+          RELEASE_BUILD_RESULT: ${{ needs.release-build.result }}
+        run: |
+          echo "=== PR Classification ==="
+          echo "Is Draft: $IS_DRAFT | Is Bot: $IS_BOT"
+          echo "Run Full: $RUN_FULL | Run Simplified: $RUN_SIMPLIFIED"
+          echo ""
+          echo "=== Job Results ==="
+          echo "Lint:          $LINT_RESULT"
+          echo "Test Linux:    $TEST_LINUX_RESULT"
+          echo "Test Cross:    $TEST_CROSS_RESULT"
+          echo "Validate:      $VALIDATE_RESULT"
+          echo "Audit:         $AUDIT_RESULT"
+          echo "Golden:        $GOLDEN_RESULT"
+          echo "Coverage:      $COVERAGE_RESULT"
+          echo "Release Build: $RELEASE_BUILD_RESULT"
+          echo ""
+
+          if [[ "$IS_DRAFT" == "true" ]]; then
+            echo "✓ Draft PR — gate passed (no heavy jobs required)"
+            exit 0
+          fi
+
+          if [[ "$RUN_SIMPLIFIED" == "true" ]]; then
+            echo "=== Bot PR Policy (Simplified) ==="
+            for job in LINT_RESULT TEST_LINUX_RESULT VALIDATE_RESULT; do
+              result="${!job}"
+              if [[ "$result" != "success" ]]; then
+                echo "✗ $job: $result"
+                exit 1
+              fi
+            done
+            echo "✓ Bot PR — simplified checks passed"
+            exit 0
+          fi
+
+          if [[ "$RUN_FULL" == "true" ]]; then
+            echo "=== Full Suite Policy (Human Ready PR) ==="
+            FAILED=0
+            for job in LINT_RESULT TEST_LINUX_RESULT TEST_CROSS_RESULT \
+                       VALIDATE_RESULT AUDIT_RESULT GOLDEN_RESULT COVERAGE_RESULT \
+                       RELEASE_BUILD_RESULT; do
+              result="${!job}"
+              if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+                echo "✗ $job: $result"
+                FAILED=1
+              fi
+            done
+
+            if [[ $FAILED -eq 1 ]]; then
+              echo "✗ Full suite check failed"
+              exit 1
+            fi
+
+            echo "✓ Full suite — all required checks passed"
+            exit 0
+          fi
+
+          echo "✗ Unexpected classification state"
+          exit 1
+
+  # ===========================================================================
+  # Post-Gate — CodeQL (most expensive, runs only after gate passes)
+  # ===========================================================================
+
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    timeout-minutes: 15
+    needs: [changes, classify, rust-ci]
+    if: |
+      always() &&
+      needs.rust-ci.result == 'success' &&
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      needs.classify.outputs.run_full == 'true' &&
+      github.event.pull_request.head.repo.fork == false
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [rust]
+    env:
+      CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql-config.yml
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  # ===========================================================================
+  # Dependabot Auto-Merge (independent)
+  # ===========================================================================
 
   auto-merge-dependabot:
     name: Auto-Merge Dependabot

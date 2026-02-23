@@ -27,13 +27,13 @@ This directory contains all Architecture Decision Records (ADRs) for the Memory 
 ### Infrastructure ADRs (v0.1.2)
 
 - [ADR 011: HTTP Transport Request/Response Pattern](011-http-transport-request-response-pattern.md)
-- [ADR 012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI strategy; see ADR-029 for current dill-based implementation
-- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate workspace organization
+- [ADR 012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Historical DI strategy; see ADR-050 for current AppContext composition root
+- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Seven-crate workspace organization
 
 ### v0.1.2 Refatoracao & Simplification
 
 - [ADR 023: Inventory to Linkme Migration](023-inventory-to-linkme-migration.md) - Plugin registration simplification
-- [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md) - Supersedes former Shaku-based DI; see [ADR 029](029-hexagonal-architecture-dill.md)
+- [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md) - Supersedes former Shaku-based DI; see [ADR 029](029-hexagonal-architecture-dill.md) (superseded by ADR-050)
 - [ADR 025: Figment Configuration Migration](025-figment-configuration.md) - Unified configuration loading
 - [ADR 026: API Routing Refactor (Rocket vs Poem)](026-routing-refactor-rocket-poem.md) - HTTP framework evaluation and migration
 
@@ -41,7 +41,7 @@ This directory contains all Architecture Decision Records (ADRs) for the Memory 
 
 - [ADR 027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Onion/Clean enhancement with bounded contexts, engine contracts, incremental indexing - **Proposed**
 - [ADR 028: Advanced Code Browser v0.2.0](028-advanced-code-browser-v020.md)
-- [ADR 029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) - Current DI IoC container; handle-based pattern
+- [ADR 029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) - Superseded by ADR-050 (manual composition root + linkme + Handle)
 - [ADR 030: Multi-Provider Strategy](030-multi-provider-strategy.md) - **into ADR-003** (see [ADR 003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md))
 - [ADR 031: Documentation Excellence](031-documentation-excellence.md) - Documentation standards and automation
 

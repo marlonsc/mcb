@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Encryption/decryption service using AES-GCM
 
 use aes_gcm::{
@@ -5,15 +8,13 @@ use aes_gcm::{
     aead::{Aead, AeadCore, KeyInit, OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore},
 };
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
-use sha2::{Digest, Sha256};
+use mcb_domain::ports::{CryptoProvider, EncryptedData};
 
-use super::utils::bytes_to_hex;
 use crate::constants::crypto::{AES_GCM_KEY_SIZE, AES_GCM_NONCE_SIZE};
 
 /// Encryption/decryption service
 ///
-/// Implements the CryptoProvider port from mcb-domain.
+/// Implements the `CryptoProvider` port from mcb-domain.
 #[derive(Clone)]
 pub struct CryptoService {
     /// Master key for encryption operations
@@ -22,6 +23,10 @@ pub struct CryptoService {
 
 impl CryptoService {
     /// Create a new crypto service with the provided master key
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the master key size is not exactly 32 bytes.
     pub fn new(master_key: Vec<u8>) -> Result<Self> {
         if master_key.len() != AES_GCM_KEY_SIZE {
             return Err(Error::Configuration {
@@ -38,6 +43,7 @@ impl CryptoService {
     }
 
     /// Generate a random master key
+    #[must_use]
     pub fn generate_master_key() -> Vec<u8> {
         let mut key = vec![0u8; AES_GCM_KEY_SIZE];
         AeadOsRng.fill_bytes(&mut key);
@@ -45,6 +51,10 @@ impl CryptoService {
     }
 
     /// Encrypt data using AES-GCM
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the AES-GCM encryption operation fails.
     pub fn encrypt(&self, plaintext: &[u8]) -> Result<EncryptedData> {
         let key = Key::<Aes256Gcm>::from_slice(&self.master_key);
         let cipher = Aes256Gcm::new(key);
@@ -53,7 +63,7 @@ impl CryptoService {
         let ciphertext = cipher
             .encrypt(&nonce, plaintext)
             .map_err(|e| Error::Infrastructure {
-                message: format!("Encryption failed: {}", e),
+                message: format!("Encryption failed: {e}"),
                 source: None,
             })?;
 
@@ -61,6 +71,10 @@ impl CryptoService {
     }
 
     /// Decrypt data using AES-GCM
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the AES-GCM decryption operation fails.
     pub fn decrypt(&self, encrypted_data: &EncryptedData) -> Result<Vec<u8>> {
         let key = Key::<Aes256Gcm>::from_slice(&self.master_key);
         let cipher = Aes256Gcm::new(key);
@@ -69,28 +83,17 @@ impl CryptoService {
         cipher
             .decrypt(nonce, encrypted_data.ciphertext.as_ref())
             .map_err(|e| Error::Infrastructure {
-                message: format!("Decryption failed: {}", e),
+                message: format!("Decryption failed: {e}"),
                 source: None,
             })
     }
 
     /// Generate a secure random nonce
+    #[must_use]
     pub fn generate_nonce() -> Vec<u8> {
         let mut nonce = vec![0u8; AES_GCM_NONCE_SIZE];
         AeadOsRng.fill_bytes(&mut nonce);
         nonce
-    }
-
-    /// Compute SHA-256 hash of data
-    pub fn sha256(data: &[u8]) -> Vec<u8> {
-        let mut hasher = Sha256::new();
-        hasher.update(data);
-        hasher.finalize().to_vec()
-    }
-
-    /// Compute SHA-256 hash of data as hex string
-    pub fn sha256_hex(data: &[u8]) -> String {
-        bytes_to_hex(&Self::sha256(data))
     }
 }
 

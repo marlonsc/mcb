@@ -4,14 +4,14 @@ This documentation describes how to deploy Memory Context Browser in a Kubernete
 
 ## 📋 Prerequisites
 
--   Kubernetes 1.24+
--   Helm 3.x (optional, for dependencies)
--   Cert-Manager (for automatic TLS)
--   NGINX Ingress Controller
--   Prometheus Operator (for metrics and custom HPA)
--   Redis (for distributed cache)
--   PostgreSQL (for metadata)
--   Milvus (for vector store)
+- Kubernetes 1.24+
+- Helm 3.x (optional, for dependencies)
+- Cert-Manager (for automatic TLS)
+- NGINX Ingress Controller
+- Prometheus Operator (for metrics and custom HPA)
+- Redis (for distributed cache)
+- PostgreSQL (for metadata)
+- Milvus (for vector store)
 
 ## 🏗️ Architecture
 
@@ -25,15 +25,15 @@ Internet → Ingress → Service → Pods (2-10 replicas) → Dependencies
 
 ### Components
 
--   **Deployment**: Main application with health checks
--   **HPA**: Auto-scaling based on CPU, memory and custom metrics
--   **Service**: Internal load balancing
--   **Ingress**: External exposure with TLS
--   **ConfigMap**: Application configurations
--   **Secrets**: Sensitive credentials
--   **RBAC**: Access control
--   **NetworkPolicy**: Network security
--   **PodDisruptionBudget**: High availability
+- **Deployment**: Main application with health checks
+- **HPA**: Auto-scaling based on CPU, memory and custom metrics
+- **Service**: Internal load balancing
+- **Ingress**: External exposure with TLS
+- **ConfigMap**: Application configurations
+- **Secrets**: Sensitive credentials
+- **RBAC**: Access control
+- **NetworkPolicy**: Network security
+- **PodDisruptionBudget**: High availability
 
 ## 🚀 Deploy
 
@@ -99,13 +99,13 @@ curl http://your-domain.com:3001/api/context/metrics
 
 The HPA is configured for:
 
--   **Minimum**: 2 replicas
--   **Maximum**: 10 replicas
--   **Metrics**:
-    -   CPU: 70% average utilization
-    -   Memory: 80% average utilization
-    -   Requests/s: 100 requests per pod
-    -   Active connections: 50 connections per pod
+- **Minimum**: 2 replicas
+- **Maximum**: 10 replicas
+- **Metrics**:
+  - CPU: 70% average utilization
+  - Memory: 80% average utilization
+  - Requests/s: 100 requests per pod
+  - Active connections: 50 connections per pod
 
 ### Resource Limits
 
@@ -120,9 +120,9 @@ limits:
 
 ### Health Checks
 
--   **Liveness**: `/api/health` every 10s
--   **Readiness**: `/api/health` every 5s
--   **Startup**: `/api/health` with timeout of 6 attempts
+- **Liveness**: `/api/health` every 10s
+- **Readiness**: `/api/health` every 5s
+- **Startup**: `/api/health` with timeout of 6 attempts
 
 ## 📊 Monitoring
 
@@ -130,11 +130,11 @@ limits:
 
 The ServiceMonitor exposes metrics at `/api/context/metrics`:
 
--   `mcp_http_requests_total`: Total HTTP requests
--   `mcp_http_request_duration_seconds`: Request duration
--   `mcp_active_connections`: Active connections
--   `mcp_cache_hit_ratio`: Cache hit ratio
--   `mcp_resource_limits_*`: Resource limits
+- `mcp_http_requests_total`: Total HTTP requests
+- `mcp_http_request_duration_seconds`: Request duration
+- `mcp_active_connections`: Active connections
+- `mcp_cache_hit_ratio`: Cache hit ratio
+- `mcp_resource_limits_*`: Resource limits
 
 ### Grafana Dashboards
 
@@ -144,10 +144,10 @@ Import the dashboard provided in `docs/diagrams/grafana-dashboard.json`.
 
 ### Common Issues
 
-1.  **Pods don't start**: Check secrets and configmaps
-2.  **HPA doesn't scale**: Check Prometheus metrics
-3.  **Timeouts**: Adjust resource limits
-4.  **Cache errors**: Check Redis connection
+1. **Pods don't start**: Check secrets and configmaps
+2. **HPA doesn't scale**: Check Prometheus metrics
+3. **Timeouts**: Adjust resource limits
+4. **Cache errors**: Check Redis connection
 
 ### Debug Commands
 
@@ -183,11 +183,11 @@ kubectl rollout status deployment/mcb
 
 ## 🛡️ Security
 
--   **RBAC**: ServiceAccount with minimal permissions
--   **NetworkPolicy**: Network traffic control
--   **Secrets**: Base64 encoded credentials
--   **TLS**: Automatic certificates via cert-manager
--   **SecurityContext**: Run as non-root
+- **RBAC**: ServiceAccount with minimal permissions
+- **NetworkPolicy**: Network traffic control
+- **Secrets**: Base64 encoded credentials
+- **TLS**: Automatic certificates via cert-manager
+- **SecurityContext**: Run as non-root
 
 ## 📈 Performance Tuning
 
@@ -221,6 +221,6 @@ kubectl edit deployment mcb
 
 For issues, consult:
 
--   [GitHub Issues](https://github.com/mcb/issues)
--   [Documentation](https://docs.mcb.com)
--   [Kubernetes Best Practices](https://kubernetes.io/docs/concepts/)
+- [GitHub Issues](https://github.com/mcb/issues)
+- [Documentation](https://docs.mcb.com)
+- [Kubernetes Best Practices](https://kubernetes.io/docs/concepts/)

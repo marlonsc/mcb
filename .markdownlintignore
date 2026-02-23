@@ -1,0 +1,10 @@
+LICENSE
+target/
+node_modules/
+**/node_modules/
+**/.git/
+crates/mcb-validate/tests/fixtures/
+tests/fixtures/
+tests/node_modules
+context/
+book/

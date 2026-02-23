@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Admin Service Implementations
 //!
 //! Real and null implementations of admin port traits.
@@ -8,12 +11,11 @@ use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
 use std::time::Instant;
 
 use dashmap::DashMap;
-use mcb_domain::ports::admin::{
-    IndexingOperation, IndexingOperationsInterface, PerformanceMetricsData,
-    PerformanceMetricsInterface,
+use mcb_domain::ports::{
+    IndexingOperation, IndexingOperationStatus, IndexingOperationsInterface,
+    PerformanceMetricsData, PerformanceMetricsInterface,
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
-use uuid::Uuid;
 
 // ============================================================================
 // Performance Metrics - Real Implementation
@@ -21,7 +23,7 @@ use uuid::Uuid;
 
 /// Atomic performance metrics tracker
 ///
-/// Thread-safe implementation of PerformanceMetricsInterface using atomic operations.
+/// Thread-safe implementation of `PerformanceMetricsInterface` using atomic operations.
 /// Tracks queries, response times, cache hits, and active connections.
 pub struct AtomicPerformanceMetrics {
     /// Server start time for uptime calculation
@@ -48,6 +50,7 @@ pub struct AtomicPerformanceMetrics {
 
 impl AtomicPerformanceMetrics {
     /// Create a new performance metrics tracker
+    #[must_use]
     pub fn new() -> Self {
         Self {
             start_time: Instant::now(),
@@ -61,6 +64,7 @@ impl AtomicPerformanceMetrics {
     }
 
     /// Create as Arc for sharing
+    #[must_use]
     pub fn new_shared() -> Arc<Self> {
         Arc::new(Self::new())
     }
@@ -143,7 +147,7 @@ impl PerformanceMetricsInterface for AtomicPerformanceMetrics {
 
 /// Default indexing operations tracker
 ///
-/// Thread-safe implementation using DashMap for concurrent access.
+/// Thread-safe implementation using `DashMap` for concurrent access.
 pub struct DefaultIndexingOperations {
     /// Active indexing operations by ID
     operations: Arc<DashMap<OperationId, IndexingOperation>>,
@@ -151,6 +155,7 @@ pub struct DefaultIndexingOperations {
 
 impl DefaultIndexingOperations {
     /// Create a new indexing operations tracker
+    #[must_use]
     pub fn new() -> Self {
         Self {
             operations: Arc::new(DashMap::new()),
@@ -158,27 +163,29 @@ impl DefaultIndexingOperations {
     }
 
     /// Create as Arc for sharing
+    #[must_use]
     pub fn new_shared() -> Arc<Self> {
         Arc::new(Self::new())
     }
 
     /// Start tracking a new indexing operation (inherent impl; trait delegates here).
+    #[must_use]
     pub fn start_operation_internal(
         &self,
         collection: &CollectionId,
         total_files: usize,
     ) -> OperationId {
-        let id = OperationId::new(Uuid::new_v4().to_string());
+        let id = OperationId::new();
         let operation = IndexingOperation {
-            id: id.clone(),
-            collection: collection.clone(),
+            id,
+            collection: *collection,
             current_file: None,
-            status: mcb_domain::ports::admin::IndexingOperationStatus::Starting,
+            status: IndexingOperationStatus::Starting,
             total_files,
             processed_files: 0,
             started_at: chrono::Utc::now().timestamp(),
         };
-        self.operations.insert(id.clone(), operation);
+        self.operations.insert(id, operation);
         id
     }
 
@@ -201,11 +208,13 @@ impl DefaultIndexingOperations {
     }
 
     /// Check if any operations are in progress
+    #[must_use]
     pub fn has_active_operations(&self) -> bool {
         !self.operations.is_empty()
     }
 
     /// Get count of active operations
+    #[must_use]
     pub fn active_count(&self) -> usize {
         self.operations.len()
     }
@@ -221,7 +230,7 @@ impl IndexingOperationsInterface for DefaultIndexingOperations {
     fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
         self.operations
             .iter()
-            .map(|entry| (entry.key().clone(), entry.value().clone()))
+            .map(|entry| (*entry.key(), entry.value().clone()))
             .collect()
     }
 

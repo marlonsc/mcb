@@ -1,6 +1,8 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! View-model helpers for the admin web UI.
 
-use chrono::{DateTime, Utc};
 use serde::Serialize;
 
 use crate::admin::AdminRegistry;
@@ -36,8 +38,6 @@ pub struct DashboardEntityCard {
     pub field_count: usize,
     /// Live record count from the database.
     pub record_count: usize,
-    /// Short description of the entity.
-    pub summary: String,
 }
 
 /// Build navigation groups from the [`AdminRegistry`], sorted alphabetically.
@@ -47,11 +47,11 @@ pub fn nav_groups() -> Vec<NavGroup> {
 
     for entity in AdminRegistry::all() {
         groups
-            .entry(entity.group.to_string())
+            .entry(entity.group.to_owned())
             .or_default()
             .push(NavEntityLink {
-                slug: entity.slug.to_string(),
-                title: entity.title.to_string(),
+                slug: entity.slug.to_owned(),
+                title: entity.title.to_owned(),
             });
     }
 
@@ -59,37 +59,4 @@ pub fn nav_groups() -> Vec<NavGroup> {
         .into_iter()
         .map(|(name, entities)| NavGroup { name, entities })
         .collect()
-}
-
-/// Truncate `input` to `max_len` characters, appending `…` when shortened.
-#[must_use]
-pub fn truncate_text(input: &str, max_len: usize) -> String {
-    if input.chars().count() <= max_len {
-        return input.to_string();
-    }
-
-    let mut out = input
-        .chars()
-        .take(max_len.saturating_sub(1))
-        .collect::<String>();
-    out.push('…');
-    out
-}
-
-/// Return `singular` when `count == 1`, otherwise `plural`.
-#[must_use]
-pub fn pluralize(count: usize, singular: &str, plural: &str) -> String {
-    if count == 1 {
-        singular.to_string()
-    } else {
-        plural.to_string()
-    }
-}
-
-/// Format a Unix-epoch timestamp as `YYYY-MM-DD HH:MM:SS UTC`.
-#[must_use]
-pub fn format_timestamp(unix_seconds: i64) -> String {
-    DateTime::<Utc>::from_timestamp(unix_seconds, 0)
-        .map(|ts| ts.format("%Y-%m-%d %H:%M:%S UTC").to_string())
-        .unwrap_or_else(|| "unknown".to_string())
 }

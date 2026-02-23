@@ -1,10 +1,13 @@
 //! Architecture Validation for MCP Context Browser
 //!
+//! **Documentation**: [`docs/modules/validate.md`](../../../docs/modules/validate.md) |
+//! **Strategy**: [`ADR-020`](../../../docs/adr/020-testing-strategy-integration.md)
+//!
 //! This crate provides comprehensive validation of workspace crates against:
 //! - Clean Architecture principles (dependency direction)
 //! - Code quality standards (no unwrap/expect in production)
 //! - Professional patterns (DI, async traits, error types)
-//! - Test organization (no inline tests)
+//! - Test hygiene (no inline tests)
 //! - Documentation completeness
 //! - Naming conventions
 //! - SOLID principles (SRP, OCP, LSP, ISP, DIP)
@@ -17,8 +20,8 @@
 //! ```
 //! use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
 //!
-//! let config = ValidationConfig::new("/workspace")
-//!     .with_additional_path("../extra-src")
+//! let tmp = tempfile::tempdir().unwrap();
+//! let config = ValidationConfig::new(tmp.path())
 //!     .with_exclude_pattern("target/");
 //!
 //! let registry = ValidatorRegistry::standard_for(&config.workspace_root);
@@ -33,16 +36,18 @@ pub mod constants;
 // === Centralized Thresholds (Phase 2 DRY) ===
 pub mod thresholds;
 
-// === New DRY Violation System (Phase 3 Refactoring) ===
-pub mod violation_trait;
-#[macro_use]
-pub mod violation_macro;
-pub mod declarative_validator;
-pub mod generic_reporter;
-/// Declarative registration macros used by validator composition.
+// Traits
+/// Core traits for the validation system
+pub mod traits;
+
+/// Violation runtime types (field formatting, file path extraction).
 pub mod macros;
+
+pub mod generic_reporter;
 pub mod reporter;
-pub mod validator_trait;
+pub mod run_context;
+/// Validator implementations
+pub mod validators;
 
 // === Configuration System (Phase 5) ===
 pub mod config;
@@ -55,6 +60,8 @@ pub mod rules;
 
 // === Pattern Registry (YAML-driven patterns) ===
 pub mod pattern_registry;
+/// Validation provider adapter that exposes this crate through domain ports.
+pub mod provider;
 
 // === Rule Filtering System (Phase 6) ===
 pub mod filters;
@@ -75,30 +82,14 @@ pub mod metrics;
 // === Duplication Detection (Phase 5 - Clone Detection) ===
 pub mod duplication;
 
+// === Centralized Utilities ===
+pub mod utils;
+
 // === New Validators (using new system) ===
-pub mod clean_architecture;
-pub mod config_quality;
-pub mod layer_flow;
-pub mod port_adapter;
-pub mod test_quality;
-pub mod visibility;
+// Moved to validators module
 
 // === Validators ===
-pub mod async_patterns;
-pub mod dependency;
-pub mod documentation;
-pub mod error_boundary;
-pub mod implementation;
-pub mod kiss;
-pub mod naming;
-pub mod organization;
-pub mod pattern_validator;
-pub mod performance;
-pub mod pmat;
-pub mod quality;
-pub mod refactoring;
-pub mod solid;
-pub mod tests_org;
+// Moved to validators module
 
 use std::path::{Path, PathBuf};
 
@@ -110,27 +101,28 @@ pub use ast::{
 // Re-export RCA types for direct usage (NO wrappers)
 pub use ast::{Callback, LANG, Node, ParserTrait, Search, action, find, guess_language};
 // New validators for PMAT integration
-pub use async_patterns::{AsyncPatternValidator, AsyncViolation};
+pub use validators::async_patterns::{AsyncPatternValidator, AsyncViolation};
 // Re-export new validators
-pub use clean_architecture::{CleanArchitectureValidator, CleanArchitectureViolation};
+pub use validators::clean_architecture::{CleanArchitectureValidator, CleanArchitectureViolation};
 // Re-export configuration system
 pub use config::{
     ArchitectureRulesConfig, FileConfig, GeneralConfig, OrganizationRulesConfig,
     QualityRulesConfig, RulesConfig, SolidRulesConfig, ValidatorsConfig,
 };
-pub use config_quality::{ConfigQualityValidator, ConfigQualityViolation};
+pub use validators::config_quality::{ConfigQualityValidator, ConfigQualityViolation};
 // Re-export validators
-pub use dependency::{DependencyValidator, DependencyViolation};
-pub use documentation::{DocumentationValidator, DocumentationViolation};
 pub use embedded_rules::EmbeddedRules;
+pub use validators::dependency::{DependencyValidator, DependencyViolation};
+pub use validators::documentation::{DocumentationValidator, DocumentationViolation};
 // Re-export rule registry and YAML system
 pub use engines::{HybridRuleEngine, RuleEngineType};
-pub use error_boundary::{ErrorBoundaryValidator, ErrorBoundaryViolation};
+pub use validators::error_boundary::{ErrorBoundaryValidator, ErrorBoundaryViolation};
 // Re-export new DRY violation system
-pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary, ViolationEntry};
-pub use implementation::{ImplementationQualityValidator, ImplementationViolation};
-pub use kiss::{KissValidator, KissViolation};
-pub use layer_flow::{LayerFlowValidator, LayerFlowViolation};
+pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary};
+pub use mcb_domain::ports::ViolationEntry;
+pub use validators::implementation::{ImplementationQualityValidator, ImplementationViolation};
+pub use validators::kiss::{KissValidator, KissViolation};
+pub use validators::layer_flow::{LayerFlowValidator, LayerFlowViolation};
 // Re-export linter integration
 pub use linters::{
     ClippyLinter, LintViolation, LinterEngine, LinterType, RuffLinter, YamlRuleExecutor,
@@ -140,15 +132,16 @@ pub use metrics::{
     MetricThreshold, MetricThresholds, MetricType, MetricViolation, RcaAnalyzer,
     RcaFunctionMetrics, RcaMetrics,
 };
-pub use naming::{NamingValidator, NamingViolation};
-pub use organization::{OrganizationValidator, OrganizationViolation};
-pub use pattern_validator::{PatternValidator, PatternViolation};
-pub use performance::{PerformanceValidator, PerformanceViolation};
-pub use pmat::{PmatValidator, PmatViolation};
-pub use port_adapter::{PortAdapterValidator, PortAdapterViolation};
-pub use quality::{QualityValidator, QualityViolation};
+pub use validators::naming::{NamingValidator, NamingViolation};
+pub use validators::organization::{OrganizationValidator, OrganizationViolation};
+pub use validators::pattern_validator::{PatternValidator, PatternViolation};
+pub use validators::performance::{PerformanceValidator, PerformanceViolation};
+pub use validators::pmat::{PmatValidator, PmatViolation};
+pub use validators::port_adapter::{PortAdapterValidator, PortAdapterViolation};
+pub use validators::quality::{QualityValidator, QualityViolation};
 // Re-export ComponentType for strict directory validation
-pub use refactoring::{RefactoringValidator, RefactoringViolation};
+pub use run_context::{FileInventorySource, InventoryEntry, ValidationRunContext};
+pub use validators::refactoring::{RefactoringValidator, RefactoringViolation};
 
 pub use rules::templates::TemplateEngine;
 pub use rules::yaml_loader::{
@@ -156,16 +149,21 @@ pub use rules::yaml_loader::{
 };
 pub use rules::yaml_validator::YamlRuleValidator;
 
-pub use solid::{SolidValidator, SolidViolation};
-pub use test_quality::{TestQualityValidator, TestQualityViolation};
-pub use tests_org::{TestValidator, TestViolation};
+use derive_more::Display;
 use thiserror::Error;
+
+use crate::linters::constants::CARGO_TOML_FILENAME;
+pub use validators::hygiene::{HygieneValidator, HygieneViolation};
+pub use validators::solid::{SolidValidator, SolidViolation};
+pub use validators::ssot::{SsotValidator, SsotViolation};
+pub use validators::test_quality::{TestQualityValidator, TestQualityViolation};
 // Re-export centralized thresholds
-pub use declarative_validator::DeclarativeValidator;
 pub use thresholds::{ValidationThresholds, thresholds};
-pub use validator_trait::{Validator, ValidatorRegistry};
-pub use violation_trait::{Violation, ViolationCategory};
-pub use visibility::{VisibilityValidator, VisibilityViolation};
+pub use validators::declarative_validator::DeclarativeValidator;
+
+pub use traits::{Validator, ValidatorRegistry};
+pub use traits::{Violation, ViolationCategory};
+pub use validators::visibility::{VisibilityValidator, VisibilityViolation};
 
 // Re-export ValidationConfig for multi-directory support
 // ValidationConfig is defined in this module
@@ -199,10 +197,17 @@ pub struct ValidationConfig {
 }
 
 impl ValidationConfig {
-    /// Create a new validation config for the given workspace root
+    /// Create a new validation config for the given workspace root.
+    ///
+    /// The workspace root is canonicalized so that all downstream path
+    /// comparisons (inventory `starts_with`, `strip_prefix`, etc.) work
+    /// correctly on platforms where temp-dir symlinks differ from the
+    /// canonical form (macOS `/tmp` → `/private/tmp`, Windows `\\?\`).
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
+        let raw: PathBuf = workspace_root.into();
+        let canonical = std::fs::canonicalize(&raw).unwrap_or(raw);
         Self {
-            workspace_root: workspace_root.into(),
+            workspace_root: canonical,
             additional_src_paths: Vec::new(),
             exclude_patterns: Vec::new(),
         }
@@ -225,8 +230,11 @@ impl ValidationConfig {
     }
 
     /// Check if a path should be excluded based on patterns
+    #[must_use]
     pub fn should_exclude(&self, path: &Path) -> bool {
-        let path_str = path.to_string_lossy();
+        let Some(path_str) = path.to_str() else {
+            return false;
+        };
         self.exclude_patterns
             .iter()
             .any(|pattern| path_str.contains(pattern))
@@ -235,6 +243,10 @@ impl ValidationConfig {
     /// Get all source directories to validate
     ///
     /// Returns crates/ subdirectories plus any additional paths.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the crates directory cannot be read.
     pub fn get_source_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut dirs = Vec::new();
 
@@ -283,6 +295,10 @@ impl ValidationConfig {
     /// Get actual source directories to scan for Rust files
     ///
     /// For crate directories (containing `src/` subdirectory), returns `<dir>/src/`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if source directory enumeration fails.
     pub fn get_scan_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut scan_dirs = Vec::new();
 
@@ -329,90 +345,105 @@ pub enum ValidationError {
 
     /// Invalid regex pattern
     #[error("Invalid regex pattern: {0}")]
-    InvalidRegex(String),
+    InvalidRegex(#[from] regex::Error),
 
     /// Pattern not found
     #[error("Pattern not found: {0}")]
     PatternNotFound(String),
+
+    /// Validation run context must be active
+    #[error("Validation run context must be active")]
+    ContextNotActive,
+
+    /// Unknown validator name requested
+    #[error("Unknown validator(s): {names}. Available: {available}")]
+    UnknownValidator {
+        /// Validator names that were not found
+        names: String,
+        /// Available validator names
+        available: String,
+    },
+
+    /// Validator execution failed
+    #[error("Validator '{name}' failed: {message}")]
+    ValidatorFailed {
+        /// Validator name
+        name: String,
+        /// Failure description
+        message: String,
+        /// Original error
+        #[source]
+        source: Option<Box<dyn std::error::Error + Send + Sync>>,
+    },
 }
 
 /// Severity level for violations
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, Display,
+)]
 pub enum Severity {
     /// Error severity
+    #[display("ERROR")]
     Error,
     /// Warning severity
+    #[display("WARNING")]
     Warning,
     /// Info severity
+    #[display("INFO")]
     Info,
-}
-
-impl std::fmt::Display for Severity {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Error => write!(f, "ERROR"),
-            Self::Warning => write!(f, "WARNING"),
-            Self::Info => write!(f, "INFO"),
-        }
-    }
 }
 
 /// Component type for strict directory validation
 ///
 /// Used to categorize code components by their architectural role,
 /// enabling strict enforcement of where each type should reside.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize, Display)]
 pub enum ComponentType {
     /// Domain port trait (interface definition)
+    #[display("Port")]
     Port,
     /// Domain entity with identity
+    #[display("Entity")]
     Entity,
     /// Domain value object (immutable)
+    #[display("ValueObject")]
     ValueObject,
     /// Domain service interface
+    #[display("DomainService")]
     DomainService,
     /// Infrastructure adapter implementation
+    #[display("Adapter")]
     Adapter,
     /// Repository implementation
+    #[display("Repository")]
     Repository,
     /// Server/transport layer handler
+    #[display("Handler")]
     Handler,
     /// Configuration type
+    #[display("Config")]
     Config,
     /// Factory for creating components
+    #[display("Factory")]
     Factory,
     /// DI module definition
+    #[display("DiModule")]
     DiModule,
 }
 
-impl std::fmt::Display for ComponentType {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Port => write!(f, "Port"),
-            Self::Entity => write!(f, "Entity"),
-            Self::ValueObject => write!(f, "ValueObject"),
-            Self::DomainService => write!(f, "DomainService"),
-            Self::Adapter => write!(f, "Adapter"),
-            Self::Repository => write!(f, "Repository"),
-            Self::Handler => write!(f, "Handler"),
-            Self::Config => write!(f, "Config"),
-            Self::Factory => write!(f, "Factory"),
-            Self::DiModule => write!(f, "DiModule"),
-        }
-    }
-}
-
 /// Get the workspace root from the current directory
+#[must_use]
 pub fn find_workspace_root() -> Option<PathBuf> {
     let current = std::env::current_dir().ok()?;
     find_workspace_root_from(&current)
 }
 
 /// Find workspace root starting from a given path
+#[must_use]
 pub fn find_workspace_root_from(start: &Path) -> Option<PathBuf> {
     let mut current = start.to_path_buf();
     loop {
-        let cargo_toml = current.join("Cargo.toml");
+        let cargo_toml = current.join(CARGO_TOML_FILENAME);
         if cargo_toml.exists()
             && let Ok(content) = std::fs::read_to_string(&cargo_toml)
             && content.contains("[workspace]")

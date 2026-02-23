@@ -1,26 +1,32 @@
-//! EdgeVec Vector Store Provider
 //!
-//! High-performance embedded vector database implementation using EdgeVec.
-//! EdgeVec provides sub-millisecond vector similarity search with HNSW algorithm.
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#vector-store-providers)
+//!
+//! `EdgeVec` Vector Store Provider
+//!
+//! High-performance embedded vector database implementation using `EdgeVec`.
+//! `EdgeVec` provides sub-millisecond vector similarity search with HNSW algorithm.
 //! This implementation uses the Actor pattern to eliminate locks and ensure non-blocking operation.
 
 use std::collections::HashMap;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use dashmap::DashMap;
 use edgevec::hnsw::VectorId;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use tokio::sync::{mpsc, oneshot};
 
 use crate::constants::{
     EDGEVEC_DEFAULT_DIMENSIONS, EDGEVEC_HNSW_EF_CONSTRUCTION, EDGEVEC_HNSW_EF_SEARCH,
-    EDGEVEC_HNSW_M, EDGEVEC_HNSW_M0,
+    EDGEVEC_HNSW_M, EDGEVEC_HNSW_M0, EDGEVEC_QUANTIZATION_TYPE, STATS_FIELD_COLLECTION,
+    STATS_FIELD_VECTORS_COUNT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE,
 };
-use crate::utils::JsonExt;
+use crate::utils::vector_store::search_result_from_json_metadata;
 
-/// EdgeVec vector store configuration
+/// `EdgeVec` vector store configuration
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
 pub struct EdgeVecConfig {
     /// Vector dimensionality
@@ -48,7 +54,7 @@ fn default_dimensions() -> usize {
     EDGEVEC_DEFAULT_DIMENSIONS
 }
 
-/// HNSW configuration for EdgeVec
+/// HNSW configuration for `EdgeVec`
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
 pub struct HnswConfig {
     /// Maximum connections per node in layers > 0
@@ -92,7 +98,7 @@ impl Default for HnswConfig {
     }
 }
 
-/// Distance metrics supported by EdgeVec
+/// Distance metrics supported by `EdgeVec`
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema, Default)]
 pub enum MetricType {
     /// L2 Squared (Euclidean) distance
@@ -107,7 +113,7 @@ pub enum MetricType {
 /// Quantization configuration for memory optimization
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]
 pub struct QuantizerConfig {
-    /// Quantization type - only ScalarQuantization is available in v0.6.0
+    /// `EdgeVec` quantization type for scalar quantization.
     #[serde(default)]
     pub quantization_type: String,
 }
@@ -115,7 +121,7 @@ pub struct QuantizerConfig {
 impl Default for QuantizerConfig {
     fn default() -> Self {
         Self {
-            quantization_type: "scalar".to_string(),
+            quantization_type: EDGEVEC_QUANTIZATION_TYPE.to_owned(),
         }
     }
 }
@@ -200,22 +206,48 @@ enum BrowseMessage {
     },
 }
 
-/// Messages for the EdgeVec actor - categorized for OCP compliance
+/// Messages for the `EdgeVec` actor - categorized for OCP compliance
 enum EdgeVecMessage {
     Core(CoreMessage),
     Query(QueryMessage),
     Browse(BrowseMessage),
 }
 
-/// EdgeVec vector store provider implementation using Actor pattern
+/// `EdgeVec` vector store provider implementation using Actor pattern
 pub struct EdgeVecVectorStoreProvider {
     sender: mpsc::Sender<EdgeVecMessage>,
-    collection: CollectionId,
+    _collection: CollectionId,
 }
 
 impl EdgeVecVectorStoreProvider {
-    /// Create a new EdgeVec vector store provider
-    pub fn new(config: EdgeVecConfig) -> Result<Self> {
+    /// Create a new `EdgeVec` vector store provider
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the `EdgeVec` actor fails to initialize.
+    pub fn new(config: &EdgeVecConfig) -> Result<Self> {
+        let (tx, rx) = mpsc::channel(100);
+        let config_clone = config.clone();
+
+        let actor = EdgeVecActor::new(rx, config_clone)?;
+        tokio::spawn(async move {
+            actor.run().await;
+        });
+
+        let generated_collection = CollectionId::from_name(&format!("edgevec-{}", id::generate()));
+
+        Ok(Self {
+            sender: tx,
+            _collection: generated_collection,
+        })
+    }
+
+    /// Create a new `EdgeVec` provider with custom collection
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the `EdgeVec` actor fails to initialize.
+    pub fn with_collection(config: &EdgeVecConfig, collection: CollectionId) -> Result<Self> {
         let (tx, rx) = mpsc::channel(100);
         let config_clone = config.clone();
 
@@ -226,47 +258,32 @@ impl EdgeVecVectorStoreProvider {
 
         Ok(Self {
             sender: tx,
-            collection: CollectionId::new("default"),
+            _collection: collection,
         })
-    }
-
-    /// Create a new EdgeVec provider with custom collection
-    pub fn with_collection(config: EdgeVecConfig, collection: CollectionId) -> Result<Self> {
-        let mut provider = Self::new(config)?;
-        provider.collection = collection;
-        Ok(provider)
     }
 }
 
 #[async_trait]
 impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
     async fn collection_exists(&self, collection: &CollectionId) -> Result<bool> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Query(QueryMessage::CollectionExists {
-                name: collection.to_string(),
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+        send_actor_msg!(
+            self,
+            Query(QueryMessage::CollectionExists {
+                name: collection.to_string()
+            })
+        )
     }
 
     async fn get_stats(
         &self,
         collection: &CollectionId,
     ) -> Result<HashMap<String, serde_json::Value>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Query(QueryMessage::GetStats {
-                collection: collection.to_string(),
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+        send_actor_msg!(
+            self,
+            Query(QueryMessage::GetStats {
+                collection: collection.to_string()
+            })
+        )
     }
 
     async fn flush(&self, _collection: &CollectionId) -> Result<()> {
@@ -279,31 +296,58 @@ impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
 }
 
 #[async_trait]
+impl VectorStoreBrowser for EdgeVecVectorStoreProvider {
+    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
+        send_actor_msg!(self, Browse(BrowseMessage::ListCollections {}))
+    }
+
+    async fn list_file_paths(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<FileInfo>> {
+        send_actor_msg!(
+            self,
+            Browse(BrowseMessage::ListFilePaths {
+                collection: collection.to_string(),
+                limit: limit
+            })
+        )
+    }
+
+    async fn get_chunks_by_file(
+        &self,
+        collection: &CollectionId,
+        file_path: &str,
+    ) -> Result<Vec<SearchResult>> {
+        send_actor_msg!(
+            self,
+            Browse(BrowseMessage::GetChunksByFile {
+                collection: collection.to_string(),
+                file_path: file_path.to_owned()
+            })
+        )
+    }
+}
+
+#[async_trait]
 impl VectorStoreProvider for EdgeVecVectorStoreProvider {
     async fn create_collection(&self, collection: &CollectionId, _dimensions: usize) -> Result<()> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Core(CoreMessage::CreateCollection {
-                name: collection.to_string(),
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+        send_actor_msg!(
+            self,
+            Core(CoreMessage::CreateCollection {
+                name: collection.to_string()
+            })
+        )
     }
 
     async fn delete_collection(&self, collection: &CollectionId) -> Result<()> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Core(CoreMessage::DeleteCollection {
-                name: collection.to_string(),
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+        send_actor_msg!(
+            self,
+            Core(CoreMessage::DeleteCollection {
+                name: collection.to_string()
+            })
+        )
     }
 
     async fn insert_vectors(
@@ -312,18 +356,14 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         vectors: &[Embedding],
         metadata: Vec<HashMap<String, serde_json::Value>>,
     ) -> Result<Vec<String>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Core(CoreMessage::InsertVectors {
+        send_actor_msg!(
+            self,
+            Core(CoreMessage::InsertVectors {
                 collection: collection.to_string(),
                 vectors: vectors.to_vec(),
-                metadata,
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+                metadata: metadata
+            })
+        )
     }
 
     async fn search_similar(
@@ -333,32 +373,24 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         limit: usize,
         _filter: Option<&str>,
     ) -> Result<Vec<SearchResult>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Core(CoreMessage::SearchSimilar {
+        send_actor_msg!(
+            self,
+            Core(CoreMessage::SearchSimilar {
                 collection: collection.to_string(),
                 query_vector: query_vector.to_vec(),
-                limit,
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+                limit: limit
+            })
+        )
     }
 
     async fn delete_vectors(&self, collection: &CollectionId, ids: &[String]) -> Result<()> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Core(CoreMessage::DeleteVectors {
+        send_actor_msg!(
+            self,
+            Core(CoreMessage::DeleteVectors {
                 collection: collection.to_string(),
-                ids: ids.to_vec(),
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+                ids: ids.to_vec()
+            })
+        )
     }
 
     async fn get_vectors_by_ids(
@@ -366,17 +398,13 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         collection: &CollectionId,
         ids: &[String],
     ) -> Result<Vec<SearchResult>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Query(QueryMessage::GetVectorsByIds {
+        send_actor_msg!(
+            self,
+            Query(QueryMessage::GetVectorsByIds {
                 collection: collection.to_string(),
-                ids: ids.to_vec(),
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+                ids: ids.to_vec()
+            })
+        )
     }
 
     async fn list_vectors(
@@ -384,68 +412,13 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         collection: &CollectionId,
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Query(QueryMessage::ListVectors {
+        send_actor_msg!(
+            self,
+            Query(QueryMessage::ListVectors {
                 collection: collection.to_string(),
-                limit,
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
-    }
-}
-
-#[async_trait]
-impl VectorStoreBrowser for EdgeVecVectorStoreProvider {
-    async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Browse(BrowseMessage::ListCollections {
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
-    }
-
-    async fn list_file_paths(
-        &self,
-        collection: &CollectionId,
-        limit: usize,
-    ) -> Result<Vec<FileInfo>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Browse(BrowseMessage::ListFilePaths {
-                collection: collection.to_string(),
-                limit,
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
-    }
-
-    async fn get_chunks_by_file(
-        &self,
-        collection: &CollectionId,
-        file_path: &str,
-    ) -> Result<Vec<SearchResult>> {
-        let (tx, rx) = oneshot::channel();
-        let _ = self
-            .sender
-            .send(EdgeVecMessage::Browse(BrowseMessage::GetChunksByFile {
-                collection: collection.to_string(),
-                file_path: file_path.to_string(),
-                tx,
-            }))
-            .await;
-        rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+                limit: limit
+            })
+        )
     }
 }
 
@@ -480,7 +453,7 @@ impl EdgeVecActor {
 
         let storage = edgevec::VectorStorage::new(&hnsw_config, None);
         let index = edgevec::HnswIndex::new(hnsw_config, &storage)
-            .map_err(|e| Error::internal(format!("Failed to create EdgeVec HNSW index: {}", e)))?;
+            .map_err(|e| Error::internal(format!("Failed to create EdgeVec HNSW index: {e}")))?;
 
         Ok(Self {
             receiver,
@@ -503,8 +476,8 @@ impl EdgeVecActor {
         Ok(())
     }
 
-    fn handle_delete_collection(&mut self, name: String) -> Result<()> {
-        if let Some((_, collection_metadata)) = self.metadata_store.remove(&name) {
+    fn handle_delete_collection(&mut self, name: &str) -> Result<()> {
+        if let Some((_, collection_metadata)) = self.metadata_store.remove(name) {
             for external_id in collection_metadata.keys() {
                 if let Some(vector_id) = self.id_map.remove(external_id) {
                     let _ = self.index.soft_delete(vector_id.1);
@@ -526,27 +499,30 @@ impl EdgeVecActor {
 impl EdgeVecActor {
     fn handle_insert_vectors(
         &mut self,
-        collection: String,
+        collection: &str,
         vectors: Vec<Embedding>,
         metadata: Vec<HashMap<String, serde_json::Value>>,
     ) -> Result<Vec<String>> {
         let mut ids = Vec::with_capacity(vectors.len());
-        let mut collection_metadata = self.metadata_store.entry(collection.clone()).or_default();
+        let mut collection_metadata = self
+            .metadata_store
+            .entry(collection.to_owned())
+            .or_default();
 
         for (vector, meta) in vectors.into_iter().zip(metadata.into_iter()) {
-            let external_id = format!("{}_{}", collection, uuid::Uuid::new_v4());
+            let external_id = format!("{}_{}", collection, id::generate());
 
             match self.index.insert(&vector.vector, &mut self.storage) {
                 Ok(vector_id) => {
                     self.id_map.insert(external_id.clone(), vector_id);
                     let mut enriched_metadata = meta.clone();
-                    enriched_metadata.insert("id".to_string(), serde_json::json!(external_id));
+                    enriched_metadata.insert("id".to_owned(), serde_json::json!(external_id));
                     collection_metadata
                         .insert(external_id.clone(), serde_json::json!(enriched_metadata));
                     ids.push(external_id);
                 }
                 Err(e) => {
-                    return Err(Error::internal(format!("Failed to insert vector: {}", e)));
+                    return Err(Error::internal(format!("Failed to insert vector: {e}")));
                 }
             }
         }
@@ -570,18 +546,7 @@ impl EdgeVecActor {
         if let Some(collection_metadata) = self.metadata_store.get(collection) {
             for id in ids {
                 if let Some(meta_val) = collection_metadata.get(&id) {
-                    let meta = meta_val.as_object().cloned().unwrap_or_default();
-                    final_results.push(SearchResult {
-                        id: id.clone(),
-                        file_path: meta.string_or("file_path", "unknown"),
-                        start_line: meta
-                            .opt_u64("start_line")
-                            .or_else(|| meta.opt_u64("line_number"))
-                            .unwrap_or(0) as u32,
-                        content: meta.string_or("content", ""),
-                        score: 1.0,
-                        language: meta.string_or("language", "unknown"),
-                    });
+                    final_results.push(search_result_from_json_metadata(id.clone(), meta_val, 1.0));
                 }
             }
         }
@@ -592,18 +557,11 @@ impl EdgeVecActor {
         let mut final_results = Vec::new();
         if let Some(collection_metadata) = self.metadata_store.get(collection) {
             for (ext_id, meta_val) in collection_metadata.iter().take(limit) {
-                let meta = meta_val.as_object().cloned().unwrap_or_default();
-                final_results.push(SearchResult {
-                    id: ext_id.clone(),
-                    file_path: meta.string_or("file_path", "unknown"),
-                    start_line: meta
-                        .opt_u64("start_line")
-                        .or_else(|| meta.opt_u64("line_number"))
-                        .unwrap_or(0) as u32,
-                    content: meta.string_or("content", ""),
-                    score: 1.0,
-                    language: meta.string_or("language", "unknown"),
-                });
+                final_results.push(search_result_from_json_metadata(
+                    ext_id.clone(),
+                    meta_val,
+                    1.0,
+                ));
             }
         }
         final_results
@@ -635,25 +593,17 @@ impl EdgeVecActor {
                         if let Some(ext_id) = external_id
                             && let Some(meta_val) = collection_metadata.get(&ext_id)
                         {
-                            let meta = meta_val.as_object().cloned().unwrap_or_default();
-                            let start_line = meta
-                                .opt_u64("start_line")
-                                .or_else(|| meta.opt_u64("line_number"))
-                                .unwrap_or(0) as u32;
-                            final_results.push(SearchResult {
-                                id: ext_id,
-                                file_path: meta.string_or("file_path", "unknown"),
-                                start_line,
-                                content: meta.string_or("content", ""),
-                                score: res.distance as f64,
-                                language: meta.string_or("language", "unknown"),
-                            });
+                            final_results.push(search_result_from_json_metadata(
+                                ext_id,
+                                meta_val,
+                                res.distance as f64,
+                            ));
                         }
                     }
                 }
                 Ok(final_results)
             }
-            Err(e) => Err(Error::internal(format!("Search failed: {}", e))),
+            Err(e) => Err(Error::internal(format!("Search failed: {e}"))),
         }
     }
 }
@@ -664,20 +614,22 @@ impl EdgeVecActor {
 
 impl EdgeVecActor {
     fn handle_get_stats(&self, collection: &str) -> HashMap<String, serde_json::Value> {
-        let vector_count = self
-            .metadata_store
-            .get(collection)
-            .map(|m| m.len())
-            .unwrap_or(0);
+        let vector_count = self.metadata_store.get(collection).map_or(0, |m| m.len());
         let mut stats = HashMap::new();
-        stats.insert("collection".to_string(), serde_json::json!(collection));
-        stats.insert("vector_count".to_string(), serde_json::json!(vector_count));
         stats.insert(
-            "total_indexed_vectors".to_string(),
+            STATS_FIELD_COLLECTION.to_owned(),
+            serde_json::json!(collection),
+        );
+        stats.insert(
+            STATS_FIELD_VECTORS_COUNT.to_owned(),
+            serde_json::json!(vector_count),
+        );
+        stats.insert(
+            "total_indexed_vectors".to_owned(),
             serde_json::json!(self.index.len()),
         );
         stats.insert(
-            "dimensions".to_string(),
+            "dimensions".to_owned(),
             serde_json::json!(self.config.dimensions),
         );
         stats
@@ -702,19 +654,13 @@ impl EdgeVecActor {
                     .values()
                     .filter_map(|v| {
                         v.as_object()
-                            .and_then(|o| o.get("file_path"))
+                            .and_then(|o| o.get(VECTOR_FIELD_FILE_PATH))
                             .and_then(|v| v.as_str())
                     })
                     .collect();
                 let file_count = file_paths.len() as u64;
 
-                CollectionInfo::new(
-                    CollectionId::new(name),
-                    vector_count,
-                    file_count,
-                    None,
-                    "edgevec",
-                )
+                CollectionInfo::new(name, vector_count, file_count, None, "edgevec")
             })
             .collect()
     }
@@ -723,22 +669,22 @@ impl EdgeVecActor {
         let collection_metadata = self
             .metadata_store
             .get(collection)
-            .ok_or_else(|| Error::internal(format!("Collection '{}' not found", collection)))?;
+            .ok_or_else(|| Error::internal(format!("Collection '{collection}' not found")))?;
 
         let mut file_map: HashMap<String, (u32, String)> = HashMap::new();
 
         for meta_val in collection_metadata.values() {
             if let Some(meta) = meta_val.as_object()
-                && let Some(file_path) = meta.get("file_path").and_then(|v| v.as_str())
+                && let Some(file_path) = meta.get(VECTOR_FIELD_FILE_PATH).and_then(|v| v.as_str())
             {
                 let language = meta
-                    .get("language")
+                    .get(VECTOR_FIELD_LANGUAGE)
                     .and_then(|v| v.as_str())
                     .unwrap_or("unknown")
-                    .to_string();
+                    .to_owned();
 
                 let entry = file_map
-                    .entry(file_path.to_string())
+                    .entry(file_path.to_owned())
                     .or_insert((0, language));
                 entry.0 += 1;
             }
@@ -758,27 +704,20 @@ impl EdgeVecActor {
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
         let mut results = Vec::new();
+        // Normalize to forward slashes for cross-platform path matching
+        let normalized_query = file_path.replace('\\', "/");
         if let Some(collection_metadata) = self.metadata_store.get(collection) {
             for (ext_id, meta_val) in collection_metadata.iter() {
                 if let Some(meta) = meta_val.as_object()
                     && meta
-                        .get("file_path")
+                        .get(VECTOR_FIELD_FILE_PATH)
                         .and_then(|v| v.as_str())
-                        .is_some_and(|p| p == file_path)
+                        .is_some_and(|p| p.replace('\\', "/") == normalized_query)
                 {
-                    let start_line = meta
-                        .opt_u64("start_line")
-                        .or_else(|| meta.opt_u64("line_number"))
-                        .unwrap_or(0) as u32;
-
-                    results.push(SearchResult {
-                        id: ext_id.clone(),
-                        file_path: file_path.to_string(),
-                        start_line,
-                        content: meta.string_or("content", ""),
-                        score: 1.0,
-                        language: meta.string_or("language", "unknown"),
-                    });
+                    let mut result =
+                        search_result_from_json_metadata(ext_id.clone(), meta_val, 1.0);
+                    result.file_path = file_path.to_owned();
+                    results.push(result);
                 }
             }
         }
@@ -809,7 +748,7 @@ impl EdgeVecActor {
                 let _ = tx.send(self.handle_create_collection(name));
             }
             CoreMessage::DeleteCollection { name, tx } => {
-                let _ = tx.send(self.handle_delete_collection(name));
+                let _ = tx.send(self.handle_delete_collection(&name));
             }
             CoreMessage::InsertVectors {
                 collection,
@@ -817,7 +756,7 @@ impl EdgeVecActor {
                 metadata,
                 tx,
             } => {
-                let _ = tx.send(self.handle_insert_vectors(collection, vectors, metadata));
+                let _ = tx.send(self.handle_insert_vectors(&collection, vectors, metadata));
             }
             CoreMessage::SearchSimilar {
                 collection,
@@ -889,23 +828,27 @@ impl EdgeVecActor {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use std::sync::Arc;
-
 use mcb_domain::registry::vector_store::{
     VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };
 
-/// Factory function for creating EdgeVec vector store provider instances.
+/// Factory function for creating `EdgeVec` vector store provider instances.
 fn edgevec_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
     let dimensions = config.dimensions.unwrap_or(384);
+    let collection_name = config.collection.clone().ok_or_else(|| {
+        "EdgeVec provider requires a collection name in vector_store config".to_owned()
+    })?;
     let edgevec_config = EdgeVecConfig {
         dimensions,
         ..Default::default()
     };
-    let provider = EdgeVecVectorStoreProvider::new(edgevec_config)
-        .map_err(|e| format!("Failed to create EdgeVec provider: {e}"))?;
+    let provider = EdgeVecVectorStoreProvider::with_collection(
+        &edgevec_config,
+        CollectionId::from_name(&collection_name),
+    )
+    .map_err(|e| format!("Failed to create EdgeVec provider: {e}"))?;
     Ok(Arc::new(provider))
 }
 
@@ -913,5 +856,5 @@ fn edgevec_factory(
 static EDGEVEC_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {
     name: "edgevec",
     description: "EdgeVec in-memory HNSW vector store (high-performance)",
-    factory: edgevec_factory,
+    build: edgevec_factory,
 };

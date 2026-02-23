@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Rule Engine Router
 //!
 //! Routes rules to the appropriate engine based on complexity detection.
@@ -8,39 +11,40 @@
 //! - Rules with "condition"/"action" -> Rusty Rules engine (JSON DSL)
 //! - Default fallback -> Rusty Rules engine
 
+use derive_more::Display;
 use serde_json::Value;
 
 use crate::Result;
+use crate::constants::engines::{
+    ENGINE_TYPE_EVALEXPR, ENGINE_TYPE_EXPRESSION, ENGINE_TYPE_GRL, ENGINE_TYPE_JSON_DSL,
+    ENGINE_TYPE_RETE, ENGINE_TYPE_RUST_RULE, ENGINE_TYPE_RUSTY_RULES,
+};
+use crate::constants::rules::{
+    YAML_FIELD_ACTION, YAML_FIELD_CONDITION, YAML_FIELD_ENGINE, YAML_FIELD_EXPRESSION,
+    YAML_FIELD_GRL, YAML_FIELD_RULE, YAML_FIELD_RULE_DEFINITION,
+};
 use crate::engines::expression_engine::ExpressionEngine;
 use crate::engines::hybrid_engine::{RuleContext, RuleViolation};
 use crate::engines::rete_engine::ReteEngine;
 use crate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
 
 /// Engine type determined by router
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
 pub enum RoutedEngine {
     /// RETE engine for GRL rules with when/then
+    #[display("RETE")]
     Rete,
     /// Expression engine for simple boolean expressions
+    #[display("Expression")]
     Expression,
     /// Rusty Rules engine for JSON DSL rules
+    #[display("RustyRules")]
     RustyRules,
-}
-
-impl std::fmt::Display for RoutedEngine {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Rete => write!(f, "RETE"),
-            Self::Expression => write!(f, "Expression"),
-            Self::RustyRules => write!(f, "RustyRules"),
-        }
-    }
 }
 
 /// Rule Engine Router
 ///
 /// Analyzes rule definitions and routes them to the appropriate engine.
-#[allow(clippy::struct_field_names)]
 pub struct RuleEngineRouter {
     /// Engine for processing complex rules using RETE algorithm
     rete_engine: ReteEngine,
@@ -58,6 +62,7 @@ impl Default for RuleEngineRouter {
 
 impl RuleEngineRouter {
     /// Create a new rule engine router with all available engines.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             rete_engine: ReteEngine::new(),
@@ -67,34 +72,40 @@ impl RuleEngineRouter {
     }
 
     /// Detect which engine should handle the rule
-    pub fn detect_engine(&self, rule_definition: &Value) -> RoutedEngine {
+    #[must_use]
+    pub fn detect_engine(rule_definition: &Value) -> RoutedEngine {
         // Check for explicit engine specification
-        if let Some(engine) = rule_definition.get("engine").and_then(|v| v.as_str()) {
+        if let Some(engine) = rule_definition
+            .get(YAML_FIELD_ENGINE)
+            .and_then(|v| v.as_str())
+        {
             return match engine {
-                "rete" | "rust-rule-engine" | "grl" => RoutedEngine::Rete,
-                "expression" | "evalexpr" => RoutedEngine::Expression,
-                "rusty-rules" | "json-dsl" => RoutedEngine::RustyRules,
-                _ => self.detect_by_content(rule_definition),
+                ENGINE_TYPE_RETE | ENGINE_TYPE_RUST_RULE | ENGINE_TYPE_GRL => RoutedEngine::Rete,
+                ENGINE_TYPE_EXPRESSION | ENGINE_TYPE_EVALEXPR => RoutedEngine::Expression,
+                ENGINE_TYPE_RUSTY_RULES | ENGINE_TYPE_JSON_DSL => RoutedEngine::RustyRules,
+                _ => Self::detect_by_content(rule_definition),
             };
         }
 
-        self.detect_by_content(rule_definition)
+        Self::detect_by_content(rule_definition)
     }
 
     /// Detect engine based on rule content
-    fn detect_by_content(&self, rule_definition: &Value) -> RoutedEngine {
+    fn detect_by_content(rule_definition: &Value) -> RoutedEngine {
         // Check for GRL syntax (when/then keywords)
-        if self.has_grl_syntax(rule_definition) {
+        if Self::has_grl_syntax(rule_definition) {
             return RoutedEngine::Rete;
         }
 
         // Check for expression field
-        if rule_definition.get("expression").is_some() {
+        if rule_definition.get(YAML_FIELD_EXPRESSION).is_some() {
             return RoutedEngine::Expression;
         }
 
         // Check for JSON DSL structure
-        if rule_definition.get("condition").is_some() || rule_definition.get("action").is_some() {
+        if rule_definition.get(YAML_FIELD_CONDITION).is_some()
+            || rule_definition.get(YAML_FIELD_ACTION).is_some()
+        {
             return RoutedEngine::RustyRules;
         }
 
@@ -103,11 +114,11 @@ impl RuleEngineRouter {
     }
 
     /// Check if rule contains GRL syntax (when/then)
-    fn has_grl_syntax(&self, rule_definition: &Value) -> bool {
+    fn has_grl_syntax(rule_definition: &Value) -> bool {
         // Check "rule" or "grl" field for when/then keywords
         if let Some(rule_str) = rule_definition
-            .get("rule")
-            .or_else(|| rule_definition.get("grl"))
+            .get(YAML_FIELD_RULE)
+            .or_else(|| rule_definition.get(YAML_FIELD_GRL))
             .and_then(|v| v.as_str())
         {
             let lower = rule_str.to_lowercase();
@@ -116,7 +127,7 @@ impl RuleEngineRouter {
 
         // Check if there's a rule definition with GRL markers
         if let Some(rule_str) = rule_definition
-            .get("rule_definition")
+            .get(YAML_FIELD_RULE_DEFINITION)
             .and_then(|v| v.as_str())
         {
             let lower = rule_str.to_lowercase();
@@ -126,14 +137,32 @@ impl RuleEngineRouter {
         false
     }
 
-    /// Route and execute rule
+    /// Route and execute rule (auto-detects engine from rule content)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if engine detection or rule execution fails.
     pub async fn execute(
         &self,
         rule_definition: &Value,
         context: &RuleContext,
     ) -> Result<Vec<RuleViolation>> {
-        let engine = self.detect_engine(rule_definition);
+        let engine = Self::detect_engine(rule_definition);
+        self.execute_with_engine(engine, rule_definition, context)
+            .await
+    }
 
+    /// Execute rule with a specific engine (bypasses auto-detection)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the specified engine fails to execute the rule.
+    pub async fn execute_with_engine(
+        &self,
+        engine: RoutedEngine,
+        rule_definition: &Value,
+        context: &RuleContext,
+    ) -> Result<Vec<RuleViolation>> {
         match engine {
             RoutedEngine::Rete => self.execute_with_rete(rule_definition, context).await,
             RoutedEngine::Expression => {
@@ -181,18 +210,25 @@ impl RuleEngineRouter {
     }
 
     /// Get the engine type for a rule (for logging/debugging)
-    pub fn get_engine_type(&self, rule_definition: &Value) -> String {
-        self.detect_engine(rule_definition).to_string()
+    #[must_use]
+    pub fn get_engine_type(rule_definition: &Value) -> String {
+        Self::detect_engine(rule_definition).to_string()
     }
 
     /// Check if a rule is valid for routing
-    pub fn validate_rule(&self, rule_definition: &Value) -> Result<()> {
-        let engine = self.detect_engine(rule_definition);
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the rule definition is invalid for the detected engine.
+    pub fn validate_rule(rule_definition: &Value) -> Result<()> {
+        let engine = Self::detect_engine(rule_definition);
 
         match engine {
             RoutedEngine::Rete => {
                 // Validate GRL syntax
-                if rule_definition.get("rule").is_none() && rule_definition.get("grl").is_none() {
+                if rule_definition.get(YAML_FIELD_RULE).is_none()
+                    && rule_definition.get(YAML_FIELD_GRL).is_none()
+                {
                     return Err(crate::ValidationError::Config(
                         "RETE rule must have 'rule' or 'grl' field".into(),
                     ));
@@ -200,7 +236,7 @@ impl RuleEngineRouter {
             }
             RoutedEngine::Expression => {
                 // Validate expression
-                if rule_definition.get("expression").is_none() {
+                if rule_definition.get(YAML_FIELD_EXPRESSION).is_none() {
                     return Err(crate::ValidationError::Config(
                         "Expression rule must have 'expression' field".into(),
                     ));

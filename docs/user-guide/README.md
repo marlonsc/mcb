@@ -2,7 +2,7 @@
 # Memory Context Browser
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
+[![Rust](https://img.shields.io/badge/rust-1.92%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue)](https://github.com/marlonsc/mcb/releases)
 
@@ -14,8 +14,8 @@ analysis capabilities to AI assistants through a standardized MCP interface.
 ### Core Features
 
 - **🔍 Vector-Based Search**: Semantic similarity search using embeddings
-- **💾 In-Memory Storage**: Fast vector storage for development and testing
-- **🎭 Mock Embeddings**: Fixed-dimension embedding generation for testing
+- **💾 EdgeVec Storage**: In-process HNSW vector storage (default, zero-config)
+- **🧠 FastEmbed**: Local ONNX embedding generation (default, no API key needed)
 - **🔧 MCP Protocol**: Basic MCP server implementation with stdio transport
 - **📁 File Processing**: Simple text-based code file reading and chunking
 
@@ -41,7 +41,7 @@ See the [**QUICKSTART.md**](./QUICKSTART.md) guide for detailed setup instructio
 
 ```bash
 
-# Install Rust 1.89+ and clone
+# Install Rust 1.92+ and clone
 git clone https://github.com/marlonsc/mcb.git
 cd mcb
 

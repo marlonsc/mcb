@@ -1,206 +1,131 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Web Handlers Module
 //!
 //! HTTP handlers for the admin web interface.
 
-use rocket::State;
-use rocket::get;
-use rocket::http::ContentType;
-use rocket_dyn_templates::{Template, context};
+use axum::extract::State;
+use axum::http::header;
+use axum::response::IntoResponse;
+use mcb_domain::{info, warn};
 use serde::Serialize;
 
 use crate::admin::AdminRegistry;
 use crate::admin::crud_adapter::resolve_adapter;
 use crate::admin::handlers::AdminState;
-use crate::admin::web::view_model::{
-    DashboardEntityCard, format_timestamp, nav_groups, pluralize, truncate_text,
-};
+use crate::admin::web::view_model::{DashboardEntityCard, nav_groups};
+use crate::templates::Template;
 
 // Static assets remain as compile-time embeds (not Handlebars templates)
 const SHARED_JS: &str = include_str!("templates/shared.js");
 const THEME_CSS: &str = include_str!("templates/theme.css");
 
 /// Dashboard page handler
-#[get("/")]
-pub async fn dashboard(state: Option<&State<AdminState>>) -> Template {
-    tracing::info!("dashboard called");
-    render_dashboard_template("Dashboard", state).await
+pub async fn dashboard(State(state): State<AdminState>) -> Template {
+    info!("web", "dashboard called");
+    render_dashboard_template("Dashboard", Some(&state)).await
 }
 
 /// Dashboard page handler (alias)
-#[get("/ui")]
-pub async fn dashboard_ui(state: Option<&State<AdminState>>) -> Template {
-    tracing::info!("dashboard_ui called");
-    render_dashboard_template("Dashboard", state).await
+pub async fn dashboard_ui(State(state): State<AdminState>) -> Template {
+    info!("web", "dashboard_ui called");
+    render_dashboard_template("Dashboard", Some(&state)).await
 }
 
-/// Configuration page handler
-#[get("/ui/config")]
-pub fn config_page() -> Template {
-    tracing::info!("config_page called");
-    Template::render(
-        "admin/config",
-        context! {
-            title: "Configuration",
-            current_page: "config",
-            nav_groups: nav_groups(),
-        },
-    )
-}
-
-/// Health status page handler
-#[get("/ui/health")]
-pub fn health_page() -> Template {
-    tracing::info!("health_page called");
-    Template::render(
-        "admin/health",
-        context! {
-            title: "Health Status",
-            current_page: "health",
-            nav_groups: nav_groups(),
-        },
-    )
-}
-
-/// Jobs page handler
-#[get("/ui/jobs")]
-pub fn jobs_page() -> Template {
-    tracing::info!("jobs_page called");
-    Template::render(
-        "admin/jobs",
-        context! {
-            title: "Jobs",
-            current_page: "jobs",
-            nav_groups: nav_groups(),
-        },
-    )
-}
+template_page!(config_page, "admin/config", "Configuration", "config");
+template_page!(health_page, "admin/health", "Health Status", "health");
+template_page!(jobs_page, "admin/jobs", "Jobs", "jobs");
 
 /// Favicon handler - returns a simple SVG icon
-#[get("/favicon.ico")]
-pub fn favicon() -> (ContentType, &'static str) {
-    tracing::info!("favicon called");
+pub async fn favicon() -> impl IntoResponse {
+    info!("web", "favicon called");
     (
-        ContentType::SVG,
+        [(header::CONTENT_TYPE, "image/svg+xml")],
         r#"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📊</text></svg>"#,
     )
 }
 
 /// Theme CSS handler
-#[get("/ui/theme.css")]
-pub fn theme_css() -> (ContentType, &'static str) {
-    tracing::info!("theme_css called");
-    (ContentType::CSS, THEME_CSS)
+pub async fn theme_css() -> impl IntoResponse {
+    info!("web", "theme_css called");
+    ([(header::CONTENT_TYPE, "text/css")], THEME_CSS)
 }
 
 /// Shared JavaScript utilities for admin UI
-#[get("/ui/shared.js")]
-pub fn shared_js() -> (ContentType, &'static str) {
-    tracing::info!("shared_js called");
-    (ContentType::JavaScript, SHARED_JS)
-}
-
-/// Browse collections page handler
-#[get("/ui/browse")]
-pub fn browse_page() -> Template {
-    tracing::info!("browse_page called");
-    Template::render(
-        "admin/browse",
-        context! {
-            title: "Browse Indexed Code",
-            current_page: "browse",
-            nav_groups: nav_groups(),
-        },
+pub async fn shared_js() -> impl IntoResponse {
+    info!("web", "shared_js called");
+    (
+        [(header::CONTENT_TYPE, "application/javascript")],
+        SHARED_JS,
     )
 }
 
-/// Browse collection files page handler
-#[get("/ui/browse/<_collection>")]
-pub fn browse_collection_page(_collection: &str) -> Template {
-    tracing::info!("browse_collection_page called");
-    Template::render(
-        "admin/browse_collection",
-        context! {
-            title: "Browse Files",
-            current_page: "browse",
-            nav_groups: nav_groups(),
-        },
-    )
-}
+template_page!(browse_page, "admin/browse", "Browse Indexed Code", "browse");
 
-/// Browse file chunks page handler
-#[get("/ui/browse/<_collection>/file")]
-pub fn browse_file_page(_collection: &str) -> Template {
-    tracing::info!("browse_file_page called");
-    Template::render(
-        "admin/browse_file",
-        context! {
-            title: "View Code",
-            current_page: "browse",
-            nav_groups: nav_groups(),
-        },
-    )
-}
+template_page_with_path!(
+    browse_collection_page,
+    collection: String,
+    "admin/browse_collection",
+    "Browse Files",
+    "browse"
+);
 
-/// Browse tree view page handler (Phase 8b Wave 3)
-#[get("/ui/browse/tree")]
-pub fn browse_tree_page() -> Template {
-    tracing::info!("browse_tree_page called");
-    Template::render(
-        "admin/browse_tree",
-        context! {
-            title: "Browse Collection Tree",
-            current_page: "browse-tree",
-            nav_groups: nav_groups(),
-        },
-    )
-}
+template_page_with_path!(
+    browse_file_page,
+    collection: String,
+    "admin/browse_file",
+    "View Code",
+    "browse"
+);
+
+template_page!(
+    browse_tree_page,
+    "admin/browse_tree",
+    "Browse Collection Tree",
+    "browse-tree"
+);
 
 #[derive(Debug, Clone, Serialize)]
 struct RecentActivityItem {
     entity_title: String,
-    detail: String,
-    timestamp: String,
+    record_count: usize,
+    timestamp: i64,
 }
 
-async fn render_dashboard_template(title: &str, state: Option<&State<AdminState>>) -> Template {
+async fn render_dashboard_template(title: &str, state: Option<&AdminState>) -> Template {
     let mut cards = Vec::<DashboardEntityCard>::new();
     let mut recent_activity = Vec::<RecentActivityItem>::new();
-    let timestamp = format_timestamp(chrono::Utc::now().timestamp());
+    let now_ts = chrono::Utc::now().timestamp();
     let mut total_records = 0usize;
 
     for entity in AdminRegistry::all() {
-        let record_count = match state.and_then(|s| resolve_adapter(entity.slug, s.inner())) {
-            Some(adapter) => adapter.list_all().await.map(|rows| rows.len()).unwrap_or(0),
+        let record_count = match state.and_then(|s| resolve_adapter(entity.slug, s)) {
+            Some(adapter) => match adapter.list_all().await {
+                Ok(rows) => rows.len(),
+                Err(e) => {
+                    warn!("AdminWeb", "list_all failed", &e);
+                    0
+                }
+            },
             None => 0,
         };
         total_records += record_count;
 
         let field_count = entity.fields().iter().filter(|field| !field.hidden).count();
         cards.push(DashboardEntityCard {
-            slug: entity.slug.to_string(),
-            title: entity.title.to_string(),
-            group: entity.group.to_string(),
+            slug: entity.slug.to_owned(),
+            title: entity.title.to_owned(),
+            group: entity.group.to_owned(),
             field_count,
             record_count,
-            summary: format!(
-                "{} visible {}",
-                field_count,
-                pluralize(field_count, "field", "fields")
-            ),
         });
 
         if record_count > 0 {
             recent_activity.push(RecentActivityItem {
-                entity_title: entity.title.to_string(),
-                detail: truncate_text(
-                    &format!(
-                        "{} {} currently indexed",
-                        record_count,
-                        pluralize(record_count, "record", "records")
-                    ),
-                    64,
-                ),
-                timestamp: timestamp.clone(),
+                entity_title: entity.title.to_owned(),
+                record_count,
+                timestamp: now_ts,
             });
         }
     }

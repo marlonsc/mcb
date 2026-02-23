@@ -1,3 +1,7 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
+//!
+//! Provides hash domain definitions.
 use std::path::Path;
 
 use async_trait::async_trait;
@@ -24,6 +28,10 @@ pub trait FileHashService: Send + Sync {
     /// Mark a file as deleted so it will be re-indexed later
     async fn mark_deleted(&self, collection: &str, file_path: &str) -> Result<()>;
 
-    /// Compute the hash value for a file path
+    /// Compute the hash value for a file path.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be opened or read.
     fn compute_hash(path: &Path) -> Result<String>;
 }

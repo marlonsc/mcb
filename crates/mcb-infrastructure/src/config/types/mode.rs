@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../../docs/modules/infrastructure.md#configuration)
+//!
 //! Operating mode configuration
 //!
 //! Defines how MCB operates: standalone (local providers), client (connects to server),
@@ -5,26 +8,21 @@
 
 use serde::{Deserialize, Serialize};
 
-/// Default server URL for client mode
-fn default_server_url() -> String {
-    "http://127.0.0.1:3000".to_string()
-}
-
 /// Operating mode for MCB
 ///
 /// Determines how MCB behaves when started without the `--server` flag:
-/// - `Standalone`: Run with local providers (default, backwards compatible)
+/// - `Standalone`: Run with local providers (default)
 /// - `Client`: Connect to a remote MCB server via HTTP
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum OperatingMode {
     /// Standalone mode: run with local providers
-    /// This is the default for backwards compatibility
+    /// This is the default mode
     #[default]
     Standalone,
 
     /// Client mode: connect to remote MCB server
-    /// Requires server_url to be configured
+    /// Requires `server_url` to be configured
     Client,
 }
 
@@ -40,83 +38,49 @@ pub enum OperatingMode {
 /// ```
 ///
 /// When `--server` flag is used, mode configuration is ignored and MCB runs as server.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(deny_unknown_fields)]
 pub struct ModeConfig {
-    /// Operating mode type
-    #[serde(default, rename = "type")]
+    /// Operating mode type (`standalone` or `client`).
+    #[serde(rename = "type")]
     pub mode_type: OperatingMode,
-
-    /// Server URL for client mode
-    /// Only used when mode_type = Client
-    #[serde(default = "default_server_url")]
+    /// Server URL for client mode.
     pub server_url: String,
-
-    /// Session prefix for context isolation
-    /// Optional: if set, collections will be prefixed with this value
+    /// Optional prefix for session isolation.
     pub session_prefix: Option<String>,
-
-    /// Connection timeout in seconds for client mode
-    #[serde(default = "default_timeout_secs")]
+    /// Request timeout in seconds (client mode).
     pub timeout_secs: u64,
-
-    /// Enable automatic reconnection on connection loss
-    #[serde(default = "default_auto_reconnect")]
+    /// Whether to auto-reconnect on connection loss (client mode).
     pub auto_reconnect: bool,
-
-    /// Maximum reconnection attempts (0 = unlimited)
-    #[serde(default = "default_max_reconnect_attempts")]
+    /// Maximum reconnection attempts before giving up.
     pub max_reconnect_attempts: u32,
-}
-
-fn default_timeout_secs() -> u64 {
-    30
-}
-
-fn default_auto_reconnect() -> bool {
-    true
-}
-
-fn default_max_reconnect_attempts() -> u32 {
-    5
-}
-
-/// Default configuration for standalone mode operation.
-///
-/// Provides sensible defaults for local development and backwards compatibility:
-/// - Mode: Standalone (local providers)
-/// - Server URL: http://127.0.0.1:3000 (used only in client mode)
-/// - Timeout: 30 seconds
-/// - Auto-reconnect: enabled with 5 max attempts
-impl Default for ModeConfig {
-    fn default() -> Self {
-        Self {
-            mode_type: OperatingMode::default(),
-            server_url: default_server_url(),
-            session_prefix: None,
-            timeout_secs: default_timeout_secs(),
-            auto_reconnect: default_auto_reconnect(),
-            max_reconnect_attempts: default_max_reconnect_attempts(),
-        }
-    }
+    /// Active session identifier for session resumption.
+    pub session_id: Option<String>,
+    /// Path to session state file for persistence.
+    pub session_file: Option<String>,
 }
 
 impl ModeConfig {
     /// Check if running in client mode
+    #[must_use]
     pub fn is_client(&self) -> bool {
         self.mode_type == OperatingMode::Client
     }
 
     /// Check if running in standalone mode
+    #[must_use]
     pub fn is_standalone(&self) -> bool {
         self.mode_type == OperatingMode::Standalone
     }
 
     /// Get the server URL (only meaningful in client mode)
+    #[must_use]
     pub fn server_url(&self) -> &str {
         &self.server_url
     }
 
     /// Get session prefix if configured
+    #[must_use]
     pub fn session_prefix(&self) -> Option<&str> {
         self.session_prefix.as_deref()
     }

@@ -1,9 +1,11 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! VCS handler implementation.
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::VcsProvider;
-use mcb_domain::value_objects::OrgContext;
+use mcb_domain::ports::VcsProvider;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
@@ -20,13 +22,15 @@ pub struct VcsHandler {
     vcs_provider: Arc<dyn VcsProvider>,
 }
 
-impl VcsHandler {
-    /// Create a new VcsHandler.
-    pub fn new(vcs_provider: Arc<dyn VcsProvider>) -> Self {
-        Self { vcs_provider }
-    }
+handler_new!(VcsHandler {
+    vcs_provider: Arc<dyn VcsProvider>,
+});
 
+impl VcsHandler {
     /// Handle a VCS tool request.
+    ///
+    /// # Errors
+    /// Returns an error when argument validation fails.
     #[tracing::instrument(skip_all)]
     pub async fn handle(
         &self,
@@ -34,9 +38,6 @@ impl VcsHandler {
     ) -> Result<CallToolResult, McpError> {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
-
-        let org_ctx = OrgContext::default();
-        let _org_id = args.org_id.as_deref().unwrap_or(org_ctx.org_id.as_str());
 
         match args.action {
             VcsAction::ListRepositories => {

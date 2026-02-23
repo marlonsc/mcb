@@ -36,10 +36,10 @@ Restart=on-failure
 RestartSec=5
 
 # Environment
-# IMPORTANT: Override transport_mode to HTTP for server daemon
-# Without this, stdio mode would fail (no client connected)
+# IMPORTANT: Override transport_mode to HYBRID for server daemon
+# Use hybrid mode (stdio bridge to local daemon) instead of deprecated HTTP
 Environment=RUST_LOG=info
-Environment=MCP__SERVER__TRANSPORT_MODE=http
+Environment=MCP__SERVER__TRANSPORT_MODE=hybrid
 
 # Working directory for data storage
 WorkingDirectory=%h/.local/share/mcb

@@ -1,3 +1,11 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
+//!
+//! Provides validation domain definitions.
+//!
+//! This module defines the core data structures and service interfaces for
+//! architecture and code quality validation within the MCB domain.
+//! It includes reports for violations, rules, and code complexity metrics.
 use std::path::Path;
 
 use async_trait::async_trait;
@@ -21,12 +29,15 @@ pub struct ValidationReport {
     pub passed: bool,
 }
 
-/// A single violation entry
+/// A single violation entry.
+///
+/// # Code Smells
+/// TODO(qlty): Found 16 lines of similar code with `crates/mcb-validate/src/generic_reporter.rs`.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ViolationEntry {
     /// Unique violation ID (e.g., "CA001", "SOLID002")
     pub id: String,
-    /// Category (e.g., "clean_architecture", "solid", "quality")
+    /// Category (e.g., "`clean_architecture`", "solid", "quality")
     pub category: String,
     /// Severity level: "ERROR", "WARNING", or "INFO"
     pub severity: String,
@@ -90,6 +101,7 @@ pub struct FunctionComplexity {
 /// Architecture Validation Service Interface
 #[async_trait]
 pub trait ValidationServiceInterface: Send + Sync {
+    /// Performs the validate operation.
     async fn validate(
         &self,
         workspace_root: &Path,
@@ -97,16 +109,20 @@ pub trait ValidationServiceInterface: Send + Sync {
         severity_filter: Option<&str>,
     ) -> Result<ValidationReport>;
 
+    /// Performs the list validators operation.
     async fn list_validators(&self) -> Result<Vec<String>>;
 
+    /// Performs the validate file operation.
     async fn validate_file(
         &self,
         file_path: &Path,
         validators: Option<&[String]>,
     ) -> Result<ValidationReport>;
 
+    /// Performs the get rules operation.
     async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>>;
 
+    /// Performs the analyze complexity operation.
     async fn analyze_complexity(
         &self,
         file_path: &Path,

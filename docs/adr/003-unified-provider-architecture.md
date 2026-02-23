@@ -23,7 +23,7 @@ implementation_status: Complete
 > (Embedding: 6 providers, Vector Store: 3 providers, Cache: 3 providers,
 > Language: 12 processors, Events: 2 providers). Multi-provider routing,
 > failover, and health monitoring implemented in
-> `crates/mcb-providers/src/routing/`.
+> `crates/mcb-infrastructure/src/routing/`.
 
 ## Context
 
@@ -33,7 +33,7 @@ memory, external providers, etc.), originally handled in different ways. Each
 increased complexity in adding new providers and maintaining consistency. We
 identified the opportunity to unify how providers are defined and loaded by the
 system, standardizing the interface and lifecycle. In addition, integrating
-providers into the DI container (Shaku, later dill) would bring consistency in
+providers into a unified composition root (Shaku first, then manual AppContext) would bring consistency in
 dependency resolution.
 
 Additionally, the system depends on external AI and storage services that have
@@ -56,7 +56,7 @@ We defined a unified interface for context providers, so that all providers
 implement the same basic trait (for example, ContextProvider) with standard
 operations (such as init, shutdown, and search/storage methods). We unified the
 registration of these providers in the system as well: now, all providers are
-registered via ServiceManager/dill during initialization, instead of ad-hoc
+registered via AppContext composition root (ADR-050; ADR-029 superseded) during initialization, instead of ad-hoc
 initializations scattered around. This means that to add a new provider, simply
 create an implementation of the trait and register it in the project's DI
 module - the lifecycle (initialization, use, and termination) will be managed
@@ -113,7 +113,7 @@ Multi-provider strategy provides excellent resilience and flexibility but adds s
 ### Provider Selection Strategy (mcb-providers)
 
 ```rust
-// crates/mcb-providers/src/routing/router.rs
+// crates/mcb-infrastructure/src/routing/router.rs
 #[derive(Clone)]
 pub enum ProviderSelectionStrategy {
     /// Always use the fastest available provider
@@ -160,7 +160,7 @@ impl<P: Provider> ProviderRouter<P> {
 }
 ```
 
-### Routing Components (mcb-providers/src/routing/)
+### Routing Components (mcb-infrastructure/src/routing/)
 
 - `circuit_breaker.rs` - Circuit breaker with state transitions
 - `health.rs` - Health monitoring for providers
@@ -318,7 +318,7 @@ impl CostTracker {
 
 [providers.embedding]
 default_provider = "openai"
-fallback_providers = ["ollama", "mock"]
+fallback_providers = ["ollama", "fastembed"]
 
 [providers.embedding.openai]
 api_key = "${OPENAI_API_KEY}"
@@ -333,7 +333,7 @@ cost_per_1k_tokens = 0.0
 
 [providers.vector_store]
 default_provider = "milvus"
-fallback_providers = ["memory"]
+fallback_providers = ["edgevec"]
 
 [providers.vector_store.milvus]
 uri = "localhost:19530"
@@ -349,7 +349,7 @@ high_quality = "openai"     # For quality-critical tasks, use OpenAI
 cost_optimized = "ollama"   # For bulk processing, use free tier
 
 [routing.contextual.vector_store]
-development = "memory"      # Use in-memory for development
+development = "edgevec"     # Use EdgeVec for development
 production = "milvus"       # Use Milvus for production
 ```
 
@@ -388,8 +388,8 @@ production = "milvus"       # Use Milvus for production
   Provider creation via factories
 - [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
   Provider crate organization
-- [ADR-029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) -
-  Current DI implementation
+- [ADR-029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) -
+  Historical DI implementation (superseded by ADR-050)
 
 ## References
 

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 //! Cryptographic Provider Port
 //!
 //! Defines the interface for cryptographic operations used by providers
@@ -10,9 +13,8 @@
 //! - Implementations live in mcb-infrastructure (CryptoService)
 //! - Providers depend on the abstraction, not the concrete implementation
 
-use std::fmt;
-
 use async_trait::async_trait;
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
@@ -25,7 +27,7 @@ use crate::error::Result;
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::providers::crypto::{CryptoProvider, EncryptedData};
+/// use mcb_domain::ports::{CryptoProvider, EncryptedData};
 /// use std::sync::Arc;
 ///
 /// fn encrypt_metadata(crypto: Arc<dyn CryptoProvider>, data: &[u8]) -> mcb_domain::Result<EncryptedData> {
@@ -43,6 +45,9 @@ pub trait CryptoProvider: Send + Sync {
     /// # Returns
     ///
     /// Encrypted data container with ciphertext and nonce
+    ///
+    /// # Errors
+    /// Returns an error if encryption primitive fails.
     fn encrypt(&self, plaintext: &[u8]) -> Result<EncryptedData>;
 
     /// Decrypt encrypted data
@@ -54,6 +59,9 @@ pub trait CryptoProvider: Send + Sync {
     /// # Returns
     ///
     /// The decrypted plaintext
+    ///
+    /// # Errors
+    /// Returns an error if decryption primitive fails.
     fn decrypt(&self, encrypted_data: &EncryptedData) -> Result<Vec<u8>>;
 
     /// Get the name/identifier of this provider implementation
@@ -64,7 +72,12 @@ pub trait CryptoProvider: Send + Sync {
 ///
 /// Holds the ciphertext and nonce produced by encryption.
 /// Can be serialized for storage in vector store metadata.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Display)]
+#[display(
+    "EncryptedData {{ ciphertext: {} bytes, nonce: {} bytes }}",
+    ciphertext.len(),
+    nonce.len()
+)]
 pub struct EncryptedData {
     /// The encrypted ciphertext
     pub ciphertext: Vec<u8>,
@@ -74,18 +87,8 @@ pub struct EncryptedData {
 
 impl EncryptedData {
     /// Create a new encrypted data container
+    #[must_use]
     pub fn new(ciphertext: Vec<u8>, nonce: Vec<u8>) -> Self {
         Self { ciphertext, nonce }
-    }
-}
-
-impl fmt::Display for EncryptedData {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "EncryptedData {{ ciphertext: {} bytes, nonce: {} bytes }}",
-            self.ciphertext.len(),
-            self.nonce.len()
-        )
     }
 }

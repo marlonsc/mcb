@@ -1,0 +1,3 @@
+//! Unit tests.
+
+mod sqlite;

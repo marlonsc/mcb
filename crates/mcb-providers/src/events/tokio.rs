@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Tokio Broadcast Event Bus Provider
 //!
 //! Event bus implementation using tokio broadcast channels for
@@ -33,7 +36,8 @@ use async_trait::async_trait;
 use futures::stream;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
-use mcb_domain::ports::infrastructure::{DomainEventStream, EventBusProvider};
+use mcb_domain::ports::{DomainEventStream, EventBusProvider};
+use mcb_domain::utils::id;
 use tokio::sync::broadcast;
 use tracing::{debug, warn};
 
@@ -58,6 +62,7 @@ pub struct TokioEventBusProvider {
 
 impl TokioEventBusProvider {
     /// Create a new tokio event bus with default capacity (1024)
+    #[must_use]
     pub fn new() -> Self {
         Self::with_capacity(EVENTS_TOKIO_DEFAULT_CAPACITY)
     }
@@ -67,6 +72,7 @@ impl TokioEventBusProvider {
     /// # Arguments
     ///
     /// * `capacity` - Maximum number of events in the channel buffer
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> Self {
         let (sender, _) = broadcast::channel(capacity);
         Self {
@@ -76,11 +82,13 @@ impl TokioEventBusProvider {
     }
 
     /// Create as Arc for sharing
+    #[must_use]
     pub fn new_shared() -> Arc<Self> {
         Arc::new(Self::new())
     }
 
     /// Get the current number of subscribers
+    #[must_use]
     pub fn subscriber_count(&self) -> usize {
         self.sender.receiver_count()
     }
@@ -159,7 +167,7 @@ impl EventBusProvider for TokioEventBusProvider {
     }
 
     async fn subscribe(&self, topic: &str) -> Result<String> {
-        let id = format!("tokio-broadcast-{}-{}", topic, uuid::Uuid::new_v4());
+        let id = format!("tokio-broadcast-{}-{}", topic, id::generate());
         debug!("Created subscription: {}", id);
         Ok(id)
     }

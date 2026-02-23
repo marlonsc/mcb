@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#dependency-injection)
+//!
 //! Provider Admin Services - Runtime provider switching via API
 //!
 //! These components allow switching providers at runtime without restarting
@@ -11,12 +14,12 @@
 
 use std::sync::Arc;
 
-pub use mcb_domain::ports::admin::{
+pub use mcb_domain::ports::{
     CacheAdminInterface, DependencyHealth, DependencyHealthCheck, EmbeddingAdminInterface,
     LanguageAdminInterface, LifecycleManaged, PortServiceState, ProviderInfo,
     VectorStoreAdminInterface,
 };
-use mcb_domain::ports::providers::{
+use mcb_domain::ports::{
     CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
 };
 use mcb_domain::registry::cache::CacheProviderConfig;
@@ -25,7 +28,6 @@ use mcb_domain::registry::language::LanguageProviderConfig;
 use mcb_domain::registry::vector_store::VectorStoreProviderConfig;
 
 use super::handle::Handle;
-use super::handles::{CacheHandleExt, EmbeddingHandleExt};
 use super::provider_resolvers::{
     CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
     VectorStoreProviderResolver,
@@ -37,7 +39,7 @@ use super::provider_resolvers::{
 
 /// Common interface for provider resolvers
 ///
-/// This trait abstracts the resolution logic so AdminService can work
+/// This trait abstracts the resolution logic so `AdminService` can work
 /// with any resolver type generically.
 ///
 /// # Example
@@ -58,8 +60,16 @@ use super::provider_resolvers::{
 /// ```
 pub trait ProviderResolver<P: ?Sized + Send + Sync, C>: Send + Sync {
     /// Resolve provider from current application config
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the provider cannot be resolved from config.
     fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<P>>;
     /// Resolve provider from override config (for admin API)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the provider cannot be resolved from the override config.
     fn resolve_from_override(&self, config: &C) -> mcb_domain::error::Result<Arc<P>>;
     /// List available providers
     fn list_available(&self) -> Vec<(&'static str, &'static str)>;
@@ -68,27 +78,6 @@ pub trait ProviderResolver<P: ?Sized + Send + Sync, C>: Send + Sync {
 // ============================================================================
 // Resolver Trait Implementations
 // ============================================================================
-
-macro_rules! impl_provider_resolver {
-    ($resolver:ty, $provider:ty, $config:ty) => {
-        impl ProviderResolver<$provider, $config> for $resolver {
-            fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<$provider>> {
-                <$resolver>::resolve_from_config(self)
-            }
-
-            fn resolve_from_override(
-                &self,
-                config: &$config,
-            ) -> mcb_domain::error::Result<Arc<$provider>> {
-                <$resolver>::resolve_from_override(self, config)
-            }
-
-            fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-                <$resolver>::list_available(self)
-            }
-        }
-    };
-}
 
 impl_provider_resolver!(
     EmbeddingProviderResolver,
@@ -149,13 +138,14 @@ where
     }
 
     /// List all available providers
+    #[must_use]
     pub fn list_providers(&self) -> Vec<ProviderInfo> {
         self.resolver
             .list_available()
             .into_iter()
             .map(|(name, description)| ProviderInfo {
-                name: name.to_string(),
-                description: description.to_string(),
+                name: name.to_owned(),
+                description: description.to_owned(),
             })
             .collect()
     }
@@ -165,9 +155,9 @@ where
     /// # Arguments
     /// * `config` - Configuration for the new provider
     ///
-    /// # Returns
-    /// * `Ok(())` - Provider switched successfully
-    /// * `Err(String)` - Failed to switch (provider not found, config invalid, etc.)
+    /// # Errors
+    ///
+    /// Returns an error string if the provider cannot be resolved from the given config.
     pub fn switch_provider(&self, config: &C) -> Result<(), String> {
         let new_provider = self
             .resolver
@@ -178,6 +168,10 @@ where
     }
 
     /// Reload provider from current application config
+    ///
+    /// # Errors
+    ///
+    /// Returns an error string if provider resolution fails.
     pub fn reload_from_config(&self) -> Result<(), String> {
         let provider = self
             .resolver
@@ -220,10 +214,7 @@ where
             status: DependencyHealth::Healthy,
             message: Some(format!("Service active: {}", self.name)),
             latency_ms: None,
-            last_check: std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_secs(),
+            last_check: mcb_domain::utils::time::epoch_secs_u64().unwrap_or(0),
         }
     }
 }
@@ -260,43 +251,6 @@ pub type LanguageAdminService =
 // ============================================================================
 // Trait Implementations for Specific Admin Services
 // ============================================================================
-
-macro_rules! impl_admin_interface {
-    ($service:ty, $trait:ty, $config:ty) => {
-        impl $trait for $service {
-            fn list_providers(&self) -> Vec<ProviderInfo> {
-                AdminService::list_providers(self)
-            }
-
-            fn switch_provider(&self, config: $config) -> Result<(), String> {
-                AdminService::switch_provider(self, &config)
-            }
-
-            fn reload_from_config(&self) -> Result<(), String> {
-                AdminService::reload_from_config(self)
-            }
-        }
-    };
-    ($service:ty, $trait:ty, $config:ty, with_current_provider) => {
-        impl $trait for $service {
-            fn list_providers(&self) -> Vec<ProviderInfo> {
-                AdminService::list_providers(self)
-            }
-
-            fn current_provider(&self) -> String {
-                self.handle.provider_name()
-            }
-
-            fn switch_provider(&self, config: $config) -> Result<(), String> {
-                AdminService::switch_provider(self, &config)
-            }
-
-            fn reload_from_config(&self) -> Result<(), String> {
-                AdminService::reload_from_config(self)
-            }
-        }
-    };
-}
 
 impl_admin_interface!(
     EmbeddingAdminService,

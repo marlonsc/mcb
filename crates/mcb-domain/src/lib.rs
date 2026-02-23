@@ -1,13 +1,16 @@
-//! # Domain Layer
+//! # MCP Context Browser - Domain Layer
 //!
-//! Core business logic and domain types for semantic code analysis.
-//! Contains only pure domain entities, value objects, and business rules.
-#![allow(missing_docs)]
+//! **Documentation**: [`docs/modules/domain.md`](../../../docs/modules/domain.md)
+//!
+//! Canonical business logic and domain entities.
+//! This crate is the single source of truth for domain concepts.
+//!
+//! **Strategy**: [`ADR-013`](../../../docs/adr/013-clean-architecture-crate-separation.md)
 //!
 //! ## Architecture
 //!
 //! | Component | Description |
-//! |-----------|-------------|
+//! | ----------- | ------------- |
 //! | [`entities`] | Core business entities with identity |
 //! | [`value_objects`] | Immutable value objects |
 //! | [`ports`] | External provider port interfaces |
@@ -54,32 +57,30 @@ pub mod entities;
 pub mod error;
 /// Domain event interfaces
 pub mod events;
+/// Domain surface for infrastructure (plug points; infra registers at startup).
+pub mod infra;
 /// External provider port interfaces
 pub mod ports;
 /// Provider auto-registration registry
 pub mod registry;
-/// Repository interfaces
-pub mod repositories;
+
 /// Generic schema definitions for persistence (backend-agnostic model)
 pub mod schema;
 #[cfg(any(test, feature = "test-utils"))]
+/// Test-only configuration helpers for external service endpoints.
 pub mod test_services_config;
+#[cfg(any(test, feature = "test-utils"))]
+/// Shared test fixtures and utilities.
+pub mod test_utils;
 /// Common utilities
 pub mod utils;
 /// Immutable value objects
 pub mod value_objects;
 
-#[cfg(test)]
-mod config_tests;
-
 // Re-export commonly used types for convenience
-pub use constants::*;
+pub use constants::values::*;
 pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};
-pub use schema::{
-    ForeignKeyDef, MemorySchema, MemorySchemaDdlGenerator, ProjectSchema, SchemaDdlGenerator,
-    UniqueConstraintDef,
-};
 pub use utils::{compute_content_hash, project_type, vcs_context};
 pub use value_objects::*;

@@ -29,8 +29,8 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 - 4 MCP tools (index, search, clear, status)
 - 308+ tests (100% pass rate)
-- Eight-crate Clean Architecture
-- Two-layer DI strategy (Shaku + factories)
+- Seven-crate Clean Architecture
+- Two-layer DI strategy (linkme + handles; ADR-050, ADR-029 superseded)
 
 **PMAT** (Code Analysis):
 
@@ -46,14 +46,14 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 ### Phase 1: v0.1.1 - Foundation (RELEASED)
 
-**Focus**: Eight-Crate Clean Architecture
+**Focus**: Seven-Crate Clean Architecture
 
 Deliverables:
 
 - [x] mcb-domain: Core entities, repositories, events, value objects
 - [x] mcb-application: Port traits (~20+) + Context, Search, Indexing services
-- [x] mcb-providers: 6 embedding + 3 vector store providers
-- [x] mcb-infrastructure: Shaku DI + config management
+- [x] mcb-providers: 7 embedding + 4 vector store providers
+- [x] mcb-infrastructure: linkme + Handle DI + config management
 - [x] mcb-server: MCP protocol + Admin API
 - [x] mcb-validate: Architecture enforcement
 - [x] mcb: Facade crate with re-exports

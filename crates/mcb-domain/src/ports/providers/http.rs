@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 use std::time::Duration;
 
 use reqwest::Client;
@@ -28,17 +31,7 @@ impl Default for HttpClientConfig {
             idle_timeout: Duration::from_secs(90),
             keepalive: Duration::from_secs(60),
             timeout: Duration::from_secs(30),
-            user_agent: "mcb/domain-client".to_string(),
-        }
-    }
-}
-
-impl HttpClientConfig {
-    /// Create configuration with custom timeout only
-    pub fn with_timeout(timeout: Duration) -> Self {
-        Self {
-            timeout,
-            ..Default::default()
+            user_agent: "mcb/domain-client".to_owned(),
         }
     }
 }
@@ -53,7 +46,12 @@ pub trait HttpClientProvider: Send + Sync {
     /// Get the configuration
     fn config(&self) -> &HttpClientConfig;
 
-    /// Create a new client with custom timeout for specific operations
+    /// Create a new client with custom timeout for specific operations.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the HTTP client cannot be constructed with the
+    /// given timeout configuration.
     fn client_with_timeout(
         &self,
         timeout: Duration,

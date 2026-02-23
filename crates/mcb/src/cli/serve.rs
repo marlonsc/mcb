@@ -22,6 +22,8 @@ pub struct ServeArgs {
 
 impl ServeArgs {
     /// Execute the serve command
+    /// # Errors
+    /// Returns an error if server startup fails.
     pub async fn execute(self) -> Result<(), Box<dyn std::error::Error>> {
         mcb_server::run(self.config.as_deref(), self.server).await
     }

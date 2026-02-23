@@ -19,17 +19,22 @@ path = "src/lib.rs"
 # Serialization - pure lib acceptable for domain
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_with = { workspace = true }
 
 # Error handling - pure lib acceptable for domain
 thiserror = { workspace = true }
+derive_more = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
+typed-builder = { workspace = true }
 
 # Async traits - needed for port definitions
 async-trait = { workspace = true }
 
-# Dependency injection interfaces - port traits for dill IoC
+# Dependency injection interfaces - port traits (linkme + AppContext)
 
 # Schema generation for MCP - pure lib acceptable for domain
-schemars = { workspace = true }
+schemars = { workspace = true, features = ["uuid1"] }
 
 # Text processing
 unicode-segmentation = { workspace = true }
@@ -76,3 +81,13 @@ rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
 toml = { workspace = true }
+
+[[test]]
+name = "unit"
+path = "tests/unit/mod.rs"
+required-features = ["test-utils"]
+
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"
+required-features = ["test-utils"]

@@ -2,7 +2,7 @@
 # Golden Tests Contract
 
 Golden tests validate**real** MCP tool behaviour: indexing, search, status, and
-clear. They run with the real DI stack (NullEmbedding + InMemoryVectorStore) and
+clear. They run with the real DI stack (FastEmbedProvider + EdgeVecVectorStoreProvider) and
 assert on handler responses and content.
 
 **Locations:** `crates/mcb-server/tests/integration/`
@@ -59,7 +59,7 @@ assert on handler responses and content.
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Test | Contract |
 | ------ | ---------- |
-| `golden_search_returns_relevant_results` | After indexing sample_codebase into collection, search (resource=code)(collection, "embedding vector") succeeds, not error. (With null embedding, results may be empty; at least the handler must succeed.) |
+| `golden_search_returns_relevant_results` | After indexing sample_codebase into collection, search (resource=code)(collection, "embedding vector") succeeds, not error. (With FastEmbed, results may vary; at least the handler must succeed.) |
 | `golden_search_ranking_is_correct` | search (resource=code)(collection, query) succeeds. |
 | `golden_search_handles_empty_query` | search (resource=code) with query "" or whitespace-only yields Err. |
 | `golden_search_respects_limit_parameter` | search (resource=code) with limit=2 succeeds; response should reflect limit (e.g. "Results found: N" with N ≤ 2, or "Showing top 2 results"). |
@@ -74,13 +74,13 @@ assert on handler responses and content.
 | ------ | ---------- |
 | `golden_e2e_golden_queries_setup` | index (action=clear), index (action=start), then poll index (action=status) until Idle/processed (bounded wait: 20 × 50ms). |
 | `golden_e2e_golden_queries_one_query` | After clear + index, one search (resource=code) call succeeds and response is not error. |
-| `golden_e2e_golden_queries_all_handlers_succeed` | After clear + index, run all queries from golden_queries.JSON; every search (resource=code) must succeed (no error). With null embedding, Result counts may be 0. |
+| `golden_e2e_golden_queries_all_handlers_succeed` | After clear + index, run all queries from golden_queries.JSON; every search (resource=code) must succeed (no error). Result counts may vary by embedding provider. |
 
 ---
 
 ## Implementation notes
 
-- All tests use `create_test_mcp_server()` (null embedding + in-memory vector store).
+- All tests use `create_test_mcp_server()` (FastEmbed + EdgeVec vector store).
 - Indexing may return "Indexing Started" (async) or "Indexing Completed"
   (sync); assertions accept both.
 - Search Result format: "**Results found:** N", "**1.** 📁 `path` (line L)",

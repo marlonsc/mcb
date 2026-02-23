@@ -1,35 +1,45 @@
-//! User entity — a human or service account within an organization.
-
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
+//!
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// A user belongs to exactly one organization and can be a member of
-/// multiple teams. Users authenticate via API keys (Phase 1) and
-/// external IdP / OAuth in later phases.
-#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
-pub struct User {
-    /// Unique identifier (UUID).
-    pub id: String,
-    /// Organization this user belongs to (tenant isolation).
-    pub org_id: String,
-    /// Email address (unique within an org).
-    pub email: String,
-    /// Human-readable display name.
-    pub display_name: String,
-    /// Role within the organization (e.g. "admin", "member", "viewer").
-    pub role: UserRole,
-    /// Bcrypt/Argon2 hash of the user's primary API key (nullable — set on first key creation).
-    pub api_key_hash: Option<String>,
-    /// Timestamp when the user was created (Unix epoch).
-    pub created_at: i64,
-    /// Timestamp when the user was last updated (Unix epoch).
-    pub updated_at: i64,
+crate::define_entity! {
+    /// Represents a user within the system.
+    ///
+    /// Users are associated with an organization and have specific roles that
+    /// determine their permissions.
+    #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+    pub struct User { id, org_id, created_at, updated_at } {
+        /// Email address of the user.
+        pub email: String,
+        /// Name to be displayed for the user.
+        pub display_name: String,
+        /// Role assigned to the user within the organization.
+        pub role: UserRole,
+        /// Hashed API key for the user, if applicable.
+        pub api_key_hash: Option<String>,
+    }
 }
 
 /// Role a user holds within an organization.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum UserRole {
     /// Full administrative access.
+    #[default]
     Admin,
     /// Standard member with read/write access.
     Member,
@@ -39,29 +49,4 @@ pub enum UserRole {
     Service,
 }
 
-impl UserRole {
-    /// Returns the string representation of the user role.
-    #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Admin => "admin",
-            Self::Member => "member",
-            Self::Viewer => "viewer",
-            Self::Service => "service",
-        }
-    }
-}
-
-impl std::str::FromStr for UserRole {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "admin" => Ok(Self::Admin),
-            "member" => Ok(Self::Member),
-            "viewer" => Ok(Self::Viewer),
-            "service" => Ok(Self::Service),
-            _ => Err(format!("Unknown user role: {s}")),
-        }
-    }
-}
+crate::impl_as_str_from_as_ref!(UserRole);

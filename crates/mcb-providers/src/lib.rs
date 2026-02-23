@@ -3,18 +3,20 @@
 //! This crate contains all user-selectable provider implementations following
 //! Clean Architecture principles. Each provider implements a port (trait)
 //! defined in `mcb-domain`.
-#![allow(missing_docs)]
-#![allow(unsafe_code)]
+//!
+//! **Documentation**: [`docs/modules/providers.md`](../../../docs/modules/providers.md) |
+//! **Strategy**: [`ADR-030`](../../../docs/adr/030-multi-provider-strategy.md),
+//! [`ADR-003`](../../../docs/adr/003-unified-provider-architecture.md)
 //!
 //! ## Provider Categories
 //!
 //! | Category | Port | Implementations |
-//! |----------|------|-----------------|
-//! | Embedding | `EmbeddingProvider` | OpenAI, Ollama, VoyageAI, Gemini, FastEmbed |
-//! | Vector Store | `VectorStoreProvider` | EdgeVec, Encrypted, Milvus, Pinecone, Qdrant |
+//! | ---------- | ------ | ----------------- |
+//! | Embedding | `EmbeddingProvider` | `OpenAI`, Ollama, `VoyageAI`, Gemini, `FastEmbed` |
+//! | Vector Store | `VectorStoreProvider` | `EdgeVec`, Encrypted, Milvus, Pinecone, Qdrant |
 //! | Cache | `CacheProvider` | Moka, Redis |
 //! | Events | `EventPublisher` | Tokio, Nats |
-//! | Hybrid Search | `HybridSearchProvider` | HybridSearchEngine |
+//! | Hybrid Search | `HybridSearchProvider` | `HybridSearchEngine` |
 //! | Language | `LanguageChunkingProvider` | Rust, Python, Go, Java, etc. |
 //!
 //! ## Feature Flags
@@ -38,16 +40,16 @@
 
 // Re-export mcb-domain types commonly used with providers
 pub use mcb_domain::error::{Error, Result};
-pub use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider, VcsProvider,
-    VectorStoreProvider,
+pub use mcb_domain::ports::CryptoProvider;
+pub use mcb_domain::ports::{
+    CacheProvider, ComplexityAnalyzer, DeadCodeDetector, EmbeddingProvider, HybridSearchProvider,
+    LanguageChunkingProvider, TdgScorer, VcsProvider, VectorStoreProvider,
 };
-// Re-export CryptoProvider from domain (for encrypted vector store)
-pub use mcb_domain::ports::providers::{CryptoProvider, EncryptedData};
 
 /// Provider-specific constants
 pub mod constants;
 
+/// Common macros for providers layer
 /// Shared utilities for provider implementations
 pub mod utils;
 
@@ -65,6 +67,9 @@ pub mod vector_store;
 ///
 /// Implements `CacheProvider` trait for caching backends.
 pub mod cache;
+
+/// Native PMAT-style analysis provider implementations.
+pub mod analysis;
 
 /// Event publisher implementations (simple EventPublisher trait)
 ///
@@ -92,19 +97,16 @@ pub use hybrid_search::HybridSearchEngine;
 /// implements the generic schema DDL in its dialect.
 pub mod database;
 
-pub use database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
+pub use database::SqliteSchemaDdlGenerator;
+
+/// Project type detection providers
+pub mod project_detection;
 
 /// Git-related providers for repository operations
 ///
-/// Provides project type detection (Cargo, npm, Python, Go, Maven) and
-/// submodule discovery with recursive traversal.
-pub mod git;
+/// Provides submodule discovery with recursive traversal.
+pub mod vcs;
 /// Workflow FSM provider for ADR-034
 ///
 /// Implements state machine transitions and session management
 pub mod workflow;
-
-/// Storage provider implementations
-///
-/// Implements repository ports for storage backends (FileHash).
-pub mod storage;

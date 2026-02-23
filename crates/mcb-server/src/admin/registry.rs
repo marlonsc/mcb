@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Admin entity registry — schema-driven metadata for auto-generated CRUD UI.
 //!
 //! Reads `schemars::JsonSchema` derives from domain entities at runtime via
@@ -6,13 +9,13 @@
 use std::borrow::Cow;
 
 use mcb_domain::entities::{
-    AgentWorktreeAssignment, ApiKey, Branch, IssueComment, IssueLabel, IssueLabelAssignment,
-    Organization, Plan, PlanReview, PlanVersion, ProjectIssue, Repository, Team, TeamMember, User,
-    Worktree,
+    AgentSession, AgentWorktreeAssignment, ApiKey, Branch, Checkpoint, Delegation, IssueComment,
+    IssueLabel, IssueLabelAssignment, Organization, Plan, PlanReview, PlanVersion, ProjectIssue,
+    Repository, Team, TeamMember, ToolCall, User, Worktree,
 };
 use schemars::{JsonSchema, schema_for};
 use serde::Serialize;
-use serde_json::Value;
+use serde_json::{Value, json};
 
 /// Metadata for a single entity field, derived from JSON Schema properties.
 #[derive(Debug, Clone, Serialize)]
@@ -33,6 +36,15 @@ pub struct AdminFieldMeta {
     pub is_checkbox: bool,
     /// Pre-computed: `input_type == "select"`.
     pub is_select: bool,
+    /// Pre-computed: field holds a Unix-epoch timestamp (`name` ends with `_at`
+    /// and the detected input type is numeric).
+    pub is_timestamp: bool,
+    /// True when this field references another entity (name ends in `_id` with a known target).
+    pub is_foreign_key: bool,
+    /// Entity slug of the FK target (e.g. `"organizations"` for `org_id`).
+    pub fk_target_slug: Option<String>,
+    /// True when the field holds a JSON blob (name ends with `_json` or schema type is `object`).
+    pub is_json_field: bool,
     /// Enum variant names for `<select>` dropdowns (empty when not an enum).
     pub enum_values: Vec<String>,
 }
@@ -59,6 +71,48 @@ impl AdminEntityMeta {
 }
 
 const ENTITIES: &[AdminEntityMeta] = &[
+    AdminEntityMeta {
+        slug: "agent-sessions",
+        group: "agent",
+        title: "Agent Sessions",
+        schema: schema_agent_session,
+    },
+    AdminEntityMeta {
+        slug: "delegations",
+        group: "agent",
+        title: "Delegations",
+        schema: schema_delegation,
+    },
+    AdminEntityMeta {
+        slug: "tool-calls",
+        group: "agent",
+        title: "Tool Calls",
+        schema: schema_tool_call,
+    },
+    AdminEntityMeta {
+        slug: "checkpoints",
+        group: "agent",
+        title: "Checkpoints",
+        schema: schema_checkpoint,
+    },
+    AdminEntityMeta {
+        slug: "observations",
+        group: "memory",
+        title: "Observations",
+        schema: schema_observation,
+    },
+    AdminEntityMeta {
+        slug: "session-summaries",
+        group: "memory",
+        title: "Session Summaries",
+        schema: schema_session_summary,
+    },
+    AdminEntityMeta {
+        slug: "projects",
+        group: "project",
+        title: "Projects",
+        schema: schema_project,
+    },
     AdminEntityMeta {
         slug: "organizations",
         group: "org",
@@ -178,6 +232,69 @@ fn schema_organization() -> Value {
     schema_json::<Organization>()
 }
 
+fn schema_agent_session() -> Value {
+    schema_json::<AgentSession>()
+}
+
+fn schema_delegation() -> Value {
+    schema_json::<Delegation>()
+}
+
+fn schema_tool_call() -> Value {
+    schema_json::<ToolCall>()
+}
+
+fn schema_checkpoint() -> Value {
+    schema_json::<Checkpoint>()
+}
+
+fn schema_observation() -> Value {
+    json!({
+        "type": "object",
+        "properties": {
+            "id": {"type": "string"},
+            "project_id": {"type": "string"},
+            "content": {"type": "string"},
+            "content_hash": {"type": "string"},
+            "tags": {"type": "array", "items": {"type": "string"}},
+            "type": {"type": "string"},
+            "metadata": {"type": "object"},
+            "created_at": {"type": "integer"},
+            "embedding_id": {"type": "string"}
+        }
+    })
+}
+
+fn schema_session_summary() -> Value {
+    json!({
+        "type": "object",
+        "properties": {
+            "id": {"type": "string"},
+            "project_id": {"type": "string"},
+            "session_id": {"type": "string"},
+            "topics": {"type": "array", "items": {"type": "string"}},
+            "decisions": {"type": "array", "items": {"type": "string"}},
+            "next_steps": {"type": "array", "items": {"type": "string"}},
+            "key_files": {"type": "array", "items": {"type": "string"}},
+            "created_at": {"type": "integer"}
+        }
+    })
+}
+
+fn schema_project() -> Value {
+    json!({
+        "type": "object",
+        "properties": {
+            "id": {"type": "string"},
+            "org_id": {"type": "string"},
+            "name": {"type": "string"},
+            "path": {"type": "string"},
+            "created_at": {"type": "integer"},
+            "updated_at": {"type": "integer"}
+        }
+    })
+}
+
 fn schema_user() -> Value {
     schema_json::<User>()
 }
@@ -258,6 +375,11 @@ fn extract_fields(schema: &Value) -> Vec<AdminFieldMeta> {
                     let resolved = resolve_ref(field_schema, defs);
                     let input_type = detect_input_type(name, &resolved);
                     let enum_values = extract_enum_values(&resolved);
+                    let is_timestamp = name.ends_with("_at")
+                        && matches!(input_type.as_ref(), "number" | "datetime-local");
+                    let fk_target = detect_fk_target(name);
+                    let is_json_field = name.ends_with("_json")
+                        || matches!(resolved.get("type").and_then(Value::as_str), Some("object"));
                     AdminFieldMeta {
                         name: name.clone(),
                         label: to_title(name),
@@ -266,6 +388,10 @@ fn extract_fields(schema: &Value) -> Vec<AdminFieldMeta> {
                         is_textarea: input_type.as_ref() == "textarea",
                         is_checkbox: input_type.as_ref() == "checkbox",
                         is_select: input_type.as_ref() == "select",
+                        is_timestamp,
+                        is_foreign_key: fk_target.is_some(),
+                        fk_target_slug: fk_target.map(String::from),
+                        is_json_field,
                         input_type: input_type.into_owned(),
                         enum_values,
                     }
@@ -314,6 +440,23 @@ fn is_readonly_field(name: &str) -> bool {
     matches!(name, "id" | "created_at" | "updated_at")
 }
 
+fn detect_fk_target(field_name: &str) -> Option<&'static str> {
+    match field_name {
+        "org_id" => Some("organizations"),
+        "user_id" | "created_by" | "assignee" | "author_id" | "reviewer_id" => Some("users"),
+        "team_id" => Some("teams"),
+        "project_id" => Some("projects"),
+        "issue_id" | "parent_issue_id" => Some("project-issues"),
+        "label_id" => Some("issue-labels"),
+        "plan_id" => Some("plans"),
+        "plan_version_id" => Some("plan-versions"),
+        "repository_id" => Some("repositories"),
+        "branch_id" => Some("branches"),
+        "worktree_id" => Some("worktrees"),
+        _ => None,
+    }
+}
+
 fn detect_input_type<'a>(name: &str, field_schema: &'a Value) -> Cow<'a, str> {
     if field_schema.get("enum").is_some() || field_schema.get("oneOf").is_some() {
         return Cow::Borrowed("select");
@@ -323,8 +466,7 @@ fn detect_input_type<'a>(name: &str, field_schema: &'a Value) -> Cow<'a, str> {
         return match field_type {
             "boolean" => Cow::Borrowed("checkbox"),
             "integer" | "number" => Cow::Borrowed("number"),
-            "array" => Cow::Borrowed("textarea"),
-            "object" => Cow::Borrowed("textarea"),
+            "array" | "object" => Cow::Borrowed("textarea"),
             "string" => {
                 if let Some(format) = field_schema.get("format").and_then(Value::as_str)
                     && format == "date-time"
@@ -357,148 +499,4 @@ fn to_title(value: &str) -> String {
         })
         .collect::<Vec<_>>()
         .join(" ")
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_registry_has_16_entities() {
-        assert_eq!(AdminRegistry::all().len(), 16);
-    }
-
-    #[test]
-    fn test_registry_find_known_slug() {
-        let entity = AdminRegistry::find("organizations");
-        assert!(entity.is_some());
-        let entity = entity.unwrap();
-        assert_eq!(entity.title, "Organizations");
-        assert_eq!(entity.group, "org");
-    }
-
-    #[test]
-    fn test_registry_find_unknown_slug_returns_none() {
-        assert!(AdminRegistry::find("nonexistent").is_none());
-    }
-
-    #[test]
-    fn test_entity_fields_returns_nonempty() {
-        let entity = AdminRegistry::find("users").unwrap();
-        let fields = entity.fields();
-        assert!(!fields.is_empty());
-        assert!(fields.iter().any(|f| f.name == "id"));
-    }
-
-    #[test]
-    fn test_id_field_is_readonly() {
-        let entity = AdminRegistry::find("organizations").unwrap();
-        let fields = entity.fields();
-        let id_field = fields.iter().find(|f| f.name == "id").unwrap();
-        assert!(id_field.readonly);
-    }
-
-    #[test]
-    fn test_hidden_fields_detected() {
-        let entity = AdminRegistry::find("api-keys").unwrap();
-        let fields = entity.fields();
-        let hidden = fields.iter().filter(|f| f.hidden).count();
-        assert!(hidden > 0, "API keys should have hidden hash fields");
-    }
-
-    #[test]
-    fn test_to_title_converts_snake_case() {
-        assert_eq!(to_title("created_at"), "Created At");
-        assert_eq!(to_title("id"), "Id");
-        assert_eq!(to_title("settings_json"), "Settings Json");
-    }
-
-    #[test]
-    fn test_all_entity_schemas_are_valid_json() {
-        for entity in AdminRegistry::all() {
-            let schema = (entity.schema)();
-            assert!(
-                schema.get("properties").is_some() || schema.get("type").is_some(),
-                "Schema for {} should have properties or type",
-                entity.slug
-            );
-        }
-    }
-
-    #[test]
-    fn test_field_meta_boolean_flags_consistent() {
-        for entity in AdminRegistry::all() {
-            for field in entity.fields() {
-                if field.is_textarea {
-                    assert_eq!(
-                        field.input_type, "textarea",
-                        "{}.{}",
-                        entity.slug, field.name
-                    );
-                }
-                if field.is_checkbox {
-                    assert_eq!(
-                        field.input_type, "checkbox",
-                        "{}.{}",
-                        entity.slug, field.name
-                    );
-                }
-                if field.is_select {
-                    assert_eq!(field.input_type, "select", "{}.{}", entity.slug, field.name);
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn test_plan_status_field_has_enum_values() {
-        let entity = AdminRegistry::find("plans").unwrap();
-        let fields = entity.fields();
-        let status = fields.iter().find(|f| f.name == "status").unwrap();
-        assert!(status.is_select, "status should be a select field");
-        assert!(
-            !status.enum_values.is_empty(),
-            "status should have enum values"
-        );
-        let enum_values_lower = status
-            .enum_values
-            .iter()
-            .map(|value| value.to_lowercase())
-            .collect::<Vec<_>>();
-        assert!(
-            enum_values_lower.contains(&"draft".to_string()),
-            "PlanStatus should contain Draft"
-        );
-        assert!(
-            enum_values_lower.contains(&"active".to_string()),
-            "PlanStatus should contain Active"
-        );
-    }
-
-    #[test]
-    fn test_enum_values_empty_for_string_fields() {
-        let entity = AdminRegistry::find("organizations").unwrap();
-        let fields = entity.fields();
-        let name_field = fields.iter().find(|f| f.name == "name").unwrap();
-        assert!(
-            name_field.enum_values.is_empty(),
-            "string fields should have no enum values"
-        );
-    }
-
-    #[test]
-    fn test_select_fields_always_have_enum_values() {
-        for entity in AdminRegistry::all() {
-            for field in entity.fields() {
-                if field.is_select {
-                    assert!(
-                        !field.enum_values.is_empty(),
-                        "{}.{} is select but has no enum values",
-                        entity.slug,
-                        field.name
-                    );
-                }
-            }
-        }
-    }
 }

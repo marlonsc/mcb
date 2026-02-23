@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Language Chunking Provider Registry
 //!
 //! Auto-registration system for language chunking providers using linkme distributed slices.
@@ -24,42 +27,17 @@ pub struct LanguageProviderConfig {
     pub extra: HashMap<String, String>,
 }
 
-impl LanguageProviderConfig {
-    /// Create a new config with the given provider name
-    pub fn new(provider: impl Into<String>) -> Self {
-        Self {
-            provider: provider.into(),
-            ..Default::default()
-        }
-    }
-
-    /// Set the max chunk size
-    pub fn with_max_chunk_size(mut self, size: usize) -> Self {
-        self.max_chunk_size = Some(size);
-        self
-    }
-
-    /// Set the min chunk size
-    pub fn with_min_chunk_size(mut self, size: usize) -> Self {
-        self.min_chunk_size = Some(size);
-        self
-    }
-
-    /// Set the overlap
-    pub fn with_overlap(mut self, overlap: usize) -> Self {
-        self.overlap = Some(overlap);
-        self
-    }
-
-    /// Add extra configuration
-    pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.extra.insert(key.into(), value.into());
-        self
-    }
-}
+crate::impl_config_builder!(LanguageProviderConfig {
+    /// Set the maximum chunk size in characters
+    max_chunk_size: with_max_chunk_size(usize),
+    /// Set the minimum chunk size in characters
+    min_chunk_size: with_min_chunk_size(usize),
+    /// Set the chunk overlap in characters
+    overlap: with_overlap(usize),
+});
 
 crate::impl_registry!(
-    provider_trait: crate::ports::providers::LanguageChunkingProvider,
+    provider_trait: crate::ports::LanguageChunkingProvider,
     config_type: LanguageProviderConfig,
     entry_type: LanguageProviderEntry,
     slice_name: LANGUAGE_PROVIDERS,

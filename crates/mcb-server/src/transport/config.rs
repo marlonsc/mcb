@@ -1,9 +1,13 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Transport Configuration Module
 //!
 //! Configuration types and utilities for MCP server transports.
 
-use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::{ServerConfig, TransportMode};
+
+use crate::utils::config::load_startup_config_or_default;
 
 /// Transport configuration for MCP server
 ///
@@ -11,7 +15,7 @@ use mcb_infrastructure::config::{ServerConfig, TransportMode};
 /// The canonical `TransportMode` is defined in `mcb_infrastructure::config`.
 #[derive(Debug, Clone)]
 pub struct TransportConfig {
-    /// Transport mode (from mcb_infrastructure)
+    /// Transport mode (from `mcb_infrastructure`)
     pub mode: TransportMode,
     /// HTTP port (if applicable)
     pub http_port: Option<u16>,
@@ -19,12 +23,10 @@ pub struct TransportConfig {
     pub http_host: Option<String>,
 }
 
-/// Returns default TransportConfig with Stdio mode and no HTTP configuration
+/// Returns default `TransportConfig` with Stdio mode and no HTTP configuration
 impl Default for TransportConfig {
     fn default() -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("TransportConfig::default requires loadable configuration file");
+        let config = load_startup_config_or_default();
         Self {
             mode: config.server.transport_mode,
             http_port: Some(config.server.network.port),
@@ -35,6 +37,7 @@ impl Default for TransportConfig {
 
 impl TransportConfig {
     /// Create stdio-only transport config
+    #[must_use]
     pub fn stdio() -> Self {
         Self {
             mode: TransportMode::Stdio,
@@ -44,10 +47,9 @@ impl TransportConfig {
     }
 
     /// Create HTTP-only transport config
+    #[must_use]
     pub fn http(port: u16) -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("TransportConfig::http requires loadable configuration file");
+        let config = load_startup_config_or_default();
         Self {
             mode: TransportMode::Http,
             http_port: Some(port),
@@ -56,10 +58,9 @@ impl TransportConfig {
     }
 
     /// Create hybrid transport config (both stdio and HTTP)
+    #[must_use]
     pub fn hybrid(http_port: u16) -> Self {
-        let config = ConfigLoader::new()
-            .load()
-            .expect("TransportConfig::hybrid requires loadable configuration file");
+        let config = load_startup_config_or_default();
         Self {
             mode: TransportMode::Hybrid,
             http_port: Some(http_port),
@@ -68,6 +69,7 @@ impl TransportConfig {
     }
 
     /// Create transport config from server configuration
+    #[must_use]
     pub fn from_server_config(config: &ServerConfig) -> Self {
         Self {
             mode: config.transport_mode,

@@ -1,5 +1,7 @@
 //! Validation Provider Port
 //!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 //! Port for pluggable code validation providers. Implementations can be
 //! different validation engines (mcb-validate, clippy, ESLint, etc.) that
 //! analyze code for architecture violations, code quality issues, and more.
@@ -32,9 +34,7 @@ use crate::error::Result;
 
 // Note: ValidationReport and ViolationEntry are defined in ports/services.rs
 // We re-export them here for convenience when implementing ValidationProvider
-pub use crate::ports::services::{
-    ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ViolationEntry,
-};
+pub use crate::ports::{RuleInfo, ValidationReport};
 
 // ============================================================================
 // Provider-specific types
@@ -43,7 +43,7 @@ pub use crate::ports::services::{
 /// Information about a validator available in a provider
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ValidatorInfo {
-    /// Validator ID (e.g., "clean_architecture", "solid", "quality")
+    /// Validator ID (e.g., "`clean_architecture`", "solid", "quality")
     pub id: String,
     /// Human-readable name
     pub name: String,

@@ -1,9 +1,10 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
+//!
 //! Configuration loader
 //!
 //! Handles loading configuration from various sources including
 //! TOML files, environment variables, and default values.
-//!
-//! Uses Figment for configuration management (migrated from config crate in v0.1.2).
 
 use std::env;
 use std::path::{Path, PathBuf};
@@ -13,10 +14,13 @@ use figment::providers::{Env, Format, Toml};
 use mcb_domain::error::{Error, Result};
 
 use crate::config::AppConfig;
+use crate::config::TransportMode;
 use crate::constants::auth::*;
 use crate::constants::config::*;
 use crate::error_ext::ErrorContext;
 use crate::logging::log_config_loaded;
+use mcb_domain::value_objects::ProjectSettings;
+use mcb_validate::find_workspace_root_from;
 
 /// Configuration loader service
 #[derive(Clone)]
@@ -30,20 +34,23 @@ pub struct ConfigLoader {
 
 impl ConfigLoader {
     /// Create a new configuration loader with default settings
+    #[must_use]
     pub fn new() -> Self {
         Self {
             config_path: None,
-            env_prefix: CONFIG_ENV_PREFIX.to_string(),
+            env_prefix: CONFIG_ENV_PREFIX.to_owned(),
         }
     }
 
     /// Set the configuration file path
+    #[must_use]
     pub fn with_config_path<P: AsRef<Path>>(mut self, path: P) -> Self {
         self.config_path = Some(path.as_ref().to_path_buf());
         self
     }
 
     /// Set the environment variable prefix
+    #[must_use]
     pub fn with_env_prefix<S: Into<String>>(mut self, prefix: S) -> Self {
         self.env_prefix = prefix.into();
         self
@@ -55,10 +62,15 @@ impl ConfigLoader {
     /// 1. Default TOML configuration file (`config/default.toml`) (required)
     /// 2. Optional TOML override file (`--config`) (if provided)
     /// 3. Environment variables with `MCP__` prefix (e.g., `MCP__SERVER__NETWORK__PORT`)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the default config file is missing, extraction fails,
+    /// or validation detects invalid values.
     pub fn load(&self) -> Result<AppConfig> {
         let default_path = Self::find_defaults_file_path().ok_or_else(|| {
             Error::ConfigMissing(
-                "Default configuration file not found. Expected config/default.toml".to_string(),
+                "Default configuration file not found. Expected config/default.toml".to_owned(),
             )
         })?;
         log_config_loaded(&default_path, true);
@@ -98,17 +110,32 @@ impl ConfigLoader {
             .context("Failed to extract configuration")?;
 
         // Validate configuration
-        self.validate_config(&app_config)?;
+        Self::validate_config(&app_config)?;
+
+        // Apply project settings if available
+        let mut app_config = app_config;
+        if let Some(settings) = Self::load_project_settings() {
+            app_config = resolve_config_with_project_settings(app_config, &settings);
+            app_config.project_settings = Some(settings);
+        }
 
         Ok(app_config)
     }
 
     /// Reload configuration (useful for hot-reloading)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if configuration loading fails.
     pub fn reload(&self) -> Result<AppConfig> {
         self.load()
     }
 
     /// Save configuration to file
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if serialization or file writing fails.
     pub fn save_to_file<P: AsRef<Path>>(&self, config: &AppConfig, path: P) -> Result<()> {
         let toml_string =
             toml::to_string_pretty(config).context("Failed to serialize config to TOML")?;
@@ -119,6 +146,7 @@ impl ConfigLoader {
     }
 
     /// Get the current configuration file path
+    #[must_use]
     pub fn config_path(&self) -> Option<&Path> {
         self.config_path.as_deref()
     }
@@ -151,9 +179,92 @@ impl ConfigLoader {
     }
 
     /// Validate configuration values
-    fn validate_config(&self, config: &AppConfig) -> Result<()> {
+    fn validate_config(config: &AppConfig) -> Result<()> {
         validate_app_config(config)
     }
+
+    /// Validate an `AppConfig` that was built or mutated outside the loader.
+    ///
+    /// Used by [`TestConfigBuilder`](super::test_builder::TestConfigBuilder)
+    /// to re-validate after applying test overrides (fail-fast).
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any config value is invalid.
+    pub fn validate_for_test(config: &AppConfig) -> Result<()> {
+        validate_app_config(config)
+    }
+
+    /// Load project-specific settings from workspace root
+    fn load_project_settings() -> Option<ProjectSettings> {
+        let current_dir = env::current_dir().ok()?;
+        // Try to find workspace root using mcb-validate logic (cargo workspace or git root)
+        let root = find_workspace_root_from(&current_dir).unwrap_or(current_dir);
+
+        let possible_paths = vec![
+            root.join("mcb.yaml"),
+            root.join(".mcb/config.yaml"),
+            root.join("mcb.yml"),
+            root.join(".mcb/config.yml"),
+        ];
+
+        for path in possible_paths {
+            if path.exists() {
+                match std::fs::read_to_string(&path) {
+                    Ok(content) => match serde_yaml::from_str(&content) {
+                        Ok(settings) => {
+                            log_config_loaded(&path, true);
+                            return Some(settings);
+                        }
+                        Err(e) => {
+                            mcb_domain::warn!(
+                                "config_loader",
+                                "Failed to parse project settings",
+                                &format!("path = {}, error = {}", path.display(), e)
+                            );
+                        }
+                    },
+                    Err(e) => {
+                        mcb_domain::warn!(
+                            "config_loader",
+                            "Failed to read project settings",
+                            &format!("path = {}, error = {}", path.display(), e)
+                        );
+                    }
+                }
+            }
+        }
+        None
+    }
+}
+
+/// Helper to merge defaults, project settings, and env vars (though env vars are already merged).
+/// This function overrides `AppConfig` values with `ProjectSettings` if present.
+fn resolve_config_with_project_settings(
+    mut config: AppConfig,
+    settings: &ProjectSettings,
+) -> AppConfig {
+    if let Some(providers) = &settings.providers {
+        // Override Embedding Provider
+        if let Some(embedding) = &providers.embedding {
+            if let Some(provider) = &embedding.provider {
+                config.providers.embedding.provider = Some(provider.clone());
+            }
+            if let Some(model) = &embedding.model {
+                config.providers.embedding.model = Some(model.clone());
+            }
+        }
+        // Override Vector Store Provider
+        if let Some(vector_store) = &providers.vector_store {
+            if let Some(provider) = &vector_store.provider {
+                config.providers.vector_store.provider = Some(provider.clone());
+            }
+            if let Some(collection) = &vector_store.collection {
+                config.providers.vector_store.collection = Some(collection.clone());
+            }
+        }
+    }
+    config
 }
 
 /// Validate application configuration
@@ -173,16 +284,22 @@ fn validate_app_config(config: &AppConfig) -> Result<()> {
 fn validate_server_config(config: &AppConfig) -> Result<()> {
     if config.server.network.port == 0 {
         return Err(Error::ConfigInvalid {
-            key: "server.network.port".to_string(),
-            message: "Server port cannot be 0".to_string(),
+            key: "server.network.port".to_owned(),
+            message: "Server port cannot be 0".to_owned(),
+        });
+    }
+    if matches!(config.server.transport_mode, TransportMode::Http) {
+        return Err(Error::ConfigInvalid {
+            key: "server.transport_mode".to_owned(),
+            message: "transport_mode=http is not supported. Use stdio or hybrid (stdio bridge to local daemon).".to_owned(),
         });
     }
     if config.server.ssl.https
         && (config.server.ssl.ssl_cert_path.is_none() || config.server.ssl.ssl_key_path.is_none())
     {
         return Err(Error::ConfigInvalid {
-            key: "server.ssl".to_string(),
-            message: "SSL certificate and key paths are required when HTTPS is enabled".to_string(),
+            key: "server.ssl".to_owned(),
+            message: "SSL certificate and key paths are required when HTTPS is enabled".to_owned(),
         });
     }
     Ok(())
@@ -192,15 +309,14 @@ fn validate_auth_config(config: &AppConfig) -> Result<()> {
     if config.auth.enabled {
         if config.auth.jwt.secret.is_empty() {
             return Err(Error::ConfigInvalid {
-                key: "auth.jwt.secret".to_string(),
-                message: "JWT secret cannot be empty when authentication is enabled".to_string(),
+                key: "auth.jwt.secret".to_owned(),
+                message: "JWT secret cannot be empty when authentication is enabled".to_owned(),
             });
         }
         if config.auth.jwt.secret.len() < MIN_JWT_SECRET_LENGTH {
             return Err(Error::Configuration {
                 message: format!(
-                    "JWT secret should be at least {} characters long",
-                    MIN_JWT_SECRET_LENGTH
+                    "JWT secret should be at least {MIN_JWT_SECRET_LENGTH} characters long"
                 ),
                 source: None,
             });
@@ -214,7 +330,7 @@ fn validate_cache_config(config: &AppConfig) -> Result<()> {
         && config.system.infrastructure.cache.default_ttl_secs == 0
     {
         return Err(Error::Configuration {
-            message: "Cache TTL cannot be 0 when cache is enabled".to_string(),
+            message: "Cache TTL cannot be 0 when cache is enabled".to_owned(),
             source: None,
         });
     }
@@ -224,13 +340,13 @@ fn validate_cache_config(config: &AppConfig) -> Result<()> {
 fn validate_limits_config(config: &AppConfig) -> Result<()> {
     if config.system.infrastructure.limits.memory_limit == 0 {
         return Err(Error::Configuration {
-            message: "Memory limit cannot be 0".to_string(),
+            message: "Memory limit cannot be 0".to_owned(),
             source: None,
         });
     }
     if config.system.infrastructure.limits.cpu_limit == 0 {
         return Err(Error::Configuration {
-            message: "CPU limit cannot be 0".to_string(),
+            message: "CPU limit cannot be 0".to_owned(),
             source: None,
         });
     }
@@ -242,7 +358,7 @@ fn validate_daemon_config(config: &AppConfig) -> Result<()> {
         && config.operations_daemon.daemon.max_restart_attempts == 0
     {
         return Err(Error::Configuration {
-            message: "Maximum restart attempts cannot be 0 when daemon is enabled".to_string(),
+            message: "Maximum restart attempts cannot be 0 when daemon is enabled".to_owned(),
             source: None,
         });
     }
@@ -252,7 +368,7 @@ fn validate_daemon_config(config: &AppConfig) -> Result<()> {
 fn validate_backup_config(config: &AppConfig) -> Result<()> {
     if config.system.data.backup.enabled && config.system.data.backup.interval_secs == 0 {
         return Err(Error::Configuration {
-            message: "Backup interval cannot be 0 when backup is enabled".to_string(),
+            message: "Backup interval cannot be 0 when backup is enabled".to_owned(),
             source: None,
         });
     }
@@ -264,14 +380,14 @@ fn validate_operations_config(config: &AppConfig) -> Result<()> {
         if config.operations_daemon.operations.cleanup_interval_secs == 0 {
             return Err(Error::Configuration {
                 message: "Operations cleanup interval cannot be 0 when tracking is enabled"
-                    .to_string(),
+                    .to_owned(),
                 source: None,
             });
         }
         if config.operations_daemon.operations.retention_secs == 0 {
             return Err(Error::Configuration {
                 message: "Operations retention period cannot be 0 when tracking is enabled"
-                    .to_string(),
+                    .to_owned(),
                 source: None,
             });
         }
@@ -279,7 +395,7 @@ fn validate_operations_config(config: &AppConfig) -> Result<()> {
     Ok(())
 }
 
-/// Returns default ConfigLoader for loading application configuration from files
+/// Returns default `ConfigLoader` for loading application configuration from files
 impl Default for ConfigLoader {
     fn default() -> Self {
         Self::new()

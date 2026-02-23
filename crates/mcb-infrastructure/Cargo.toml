@@ -28,6 +28,7 @@ tokio = { workspace = true }
 # Serialization
 serde = { workspace = true }
 serde_json = { workspace = true }
+serde_yaml = { workspace = true }
 
 # Error handling
 anyhow = { workspace = true }
@@ -60,10 +61,6 @@ chrono = { workspace = true }
 
 # Template engines
 handlebars = { workspace = true }
-tera = { workspace = true }
-
-# Markdown processing
-pulldown-cmark = { workspace = true }
 
 # Cryptography
 aes-gcm = { workspace = true }
@@ -73,13 +70,6 @@ rand = { workspace = true }
 bcrypt = { workspace = true }
 argon2 = { workspace = true }
 base64 = { workspace = true }
-
-# Database
-r2d2 = { workspace = true }
-r2d2_postgres = { workspace = true }
-
-# Hostname
-hostname = { workspace = true }
 
 # Hashing
 sha2 = { workspace = true }
@@ -91,7 +81,6 @@ dirs = { workspace = true }
 
 # System metrics
 sysinfo = { workspace = true }
-nix = { workspace = true }
 
 # Fast globbing
 glob = { workspace = true }
@@ -116,9 +105,6 @@ validator = { workspace = true }
 rmcp = { workspace = true }
 
 # Advanced Multi-Provider Strategy
-prometheus = { workspace = true }
-metrics = { workspace = true }
-metrics-exporter-prometheus = { workspace = true }
 tokio-util = { workspace = true }
 dashmap = { workspace = true }
 health = { workspace = true }
@@ -127,21 +113,13 @@ health = { workspace = true }
 async-trait = { workspace = true }
 downcast-rs = { workspace = true }
 futures-util = { workspace = true }
-
-# Dependency Injection (IoC Container)
-dill = { workspace = true }
+delegate = { workspace = true }
 
 # Service layer improvements
 itertools = { workspace = true }
 humantime = { workspace = true }
 
-# Shell expansion
-shellexpand = { workspace = true }
-
-# Compression
-flate2 = { workspace = true }
-tar = { workspace = true }
-seahash = { workspace = true }
+tempfile = { workspace = true }
 
 # Additional crypto
 pbkdf2 = { workspace = true }
@@ -156,7 +134,6 @@ sqlx = { workspace = true }
 # Syntax highlighting
 tree-sitter = { workspace = true }
 tree-sitter-highlight = { workspace = true }
-html-escape = { workspace = true }
 tree-sitter-rust = { workspace = true }
 tree-sitter-python = { workspace = true }
 tree-sitter-javascript = { workspace = true }
@@ -165,14 +142,9 @@ tree-sitter-go = { workspace = true }
 tree-sitter-java = { workspace = true }
 tree-sitter-c = { workspace = true }
 tree-sitter-cpp = { workspace = true }
-tree-sitter-c-sharp = { workspace = true }
 tree-sitter-ruby = { workspace = true }
 tree-sitter-php = { workspace = true }
 tree-sitter-swift = { workspace = true }
-tree-sitter-kotlin-ng = { workspace = true }
-
-# Benchmarking
-criterion = { workspace = true }
 
 # Links providers into linkme distributed slices
 mcb-providers = { path = "../mcb-providers" }
@@ -180,14 +152,26 @@ mcb-providers = { path = "../mcb-providers" }
 # Architecture validation (for MCP tool integration)
 mcb-validate = { path = "../mcb-validate" }
 
+[features]
+default = []
+test-utils = []
+
 [lints]
 workspace = true
 
 [dev-dependencies]
+mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 serial_test = { workspace = true }
 rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
-mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+
+[[test]]
+name = "unit"
+path = "tests/unit/mod.rs"
+
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"

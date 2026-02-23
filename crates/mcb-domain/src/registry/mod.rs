@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Provider Registry System
 //!
 //! Defines the auto-registration infrastructure for plugin providers.
@@ -30,7 +33,7 @@
 //!
 //! ```no_run
 //! use mcb_domain::registry::embedding::{EmbeddingProviderEntry, EMBEDDING_PROVIDERS};
-//! use mcb_domain::ports::providers::EmbeddingProvider;
+//! use mcb_domain::ports::EmbeddingProvider;
 //! use std::sync::Arc;
 //!
 //! // Providers register via #[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
@@ -54,4 +57,5 @@ pub mod cache;
 pub mod database;
 pub mod embedding;
 pub mod language;
+pub mod validation;
 pub mod vector_store;

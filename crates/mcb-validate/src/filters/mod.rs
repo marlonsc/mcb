@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Rule Filtering System
 //!
 //! Provides intelligent filtering of validation rules based on:
@@ -18,4 +21,4 @@ pub use dependency_parser::{
 };
 pub use file_matcher::FilePatternMatcher;
 pub use language_detector::{LanguageDetector, LanguageId};
-pub use rule_filters::{RuleFilterExecutor, RuleFilters};
+pub use rule_filters::{ApplicabilityFilter, RuleFilterExecutor, RuleFilters};

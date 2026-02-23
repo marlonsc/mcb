@@ -37,7 +37,7 @@ impl fmt::Display for DomainError {
 impl std::error::Error for DomainError {}
 
 /// Error context trait for adding context to errors
-pub trait ErrorContext<T> {
+pub trait SampleErrorContext<T> {
     /// Add context to an error
     fn with_context<F, S>(self, f: F) -> Result<T, DomainError>
     where
@@ -45,7 +45,7 @@ pub trait ErrorContext<T> {
         S: Into<String>;
 }
 
-impl<T, E: std::error::Error> ErrorContext<T> for Result<T, E> {
+impl<T, E: std::error::Error> SampleErrorContext<T> for Result<T, E> {
     fn with_context<F, S>(self, f: F) -> Result<T, DomainError>
     where
         F: FnOnce() -> S,

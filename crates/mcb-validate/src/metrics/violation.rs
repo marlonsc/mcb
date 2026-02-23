@@ -1,12 +1,27 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! `MetricViolation` implementation.
 
 use std::path::PathBuf;
 
+use derive_more::Display;
+
 use super::MetricType;
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use crate::traits::violation::{Severity, Violation, ViolationCategory};
 
 /// A metric violation when a threshold is exceeded
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Display)]
+#[display(
+    "[{}] {} `{}` has {} of {} (threshold: {}) in {}",
+    self.metric_rule_id(),
+    metric_type.name(),
+    item_name,
+    metric_type.description(),
+    actual_value,
+    threshold,
+    file.display()
+)]
 pub struct MetricViolation {
     /// File path
     pub file: PathBuf,
@@ -24,30 +39,20 @@ pub struct MetricViolation {
     pub severity: Severity,
 }
 
-impl std::fmt::Display for MetricViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "[{}] {} `{}` has {} of {} (threshold: {}) in {}",
-            self.id(),
-            self.metric_type.name(),
-            self.item_name,
-            self.metric_type.description(),
-            self.actual_value,
-            self.threshold,
-            self.file.display()
-        )
-    }
-}
-
-impl Violation for MetricViolation {
-    fn id(&self) -> &str {
+impl MetricViolation {
+    fn metric_rule_id(&self) -> &'static str {
         match self.metric_type {
             MetricType::CognitiveComplexity => "METRIC001",
             MetricType::CyclomaticComplexity => "METRIC004",
             MetricType::FunctionLength => "METRIC002",
             MetricType::NestingDepth => "METRIC003",
         }
+    }
+}
+
+impl Violation for MetricViolation {
+    fn id(&self) -> &str {
+        self.metric_rule_id()
     }
 
     fn category(&self) -> ViolationCategory {

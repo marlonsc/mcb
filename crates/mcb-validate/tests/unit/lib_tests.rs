@@ -1,5 +1,6 @@
 //! Unit tests for `mcb_validate::lib` module
 
+use rstest::rstest;
 use std::path::PathBuf;
 
 use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry};
@@ -31,15 +32,16 @@ fn test_validation_config_builder() {
     assert_eq!(config.exclude_patterns.len(), 2);
 }
 
-#[test]
-fn test_validation_config_should_exclude() {
+#[rstest]
+#[case("/workspace/target/debug", true)]
+#[case("/workspace/tests/fixtures/data.json", true)]
+#[case("/workspace/src/lib.rs", false)]
+fn validation_config_should_exclude(#[case] file: &str, #[case] expected: bool) {
     let config = ValidationConfig::new("/workspace")
         .with_exclude_pattern("target/")
         .with_exclude_pattern("fixtures/");
 
-    assert!(config.should_exclude(&PathBuf::from("/workspace/target/debug")));
-    assert!(config.should_exclude(&PathBuf::from("/workspace/tests/fixtures/data.json")));
-    assert!(!config.should_exclude(&PathBuf::from("/workspace/src/lib.rs")));
+    assert_eq!(config.should_exclude(&PathBuf::from(file)), expected);
 }
 
 #[test]

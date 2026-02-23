@@ -241,7 +241,7 @@ pub async fn ready(ctx: &State<AppContext>) -> Status {
 }
 
 #[get("/metrics")]
-pub fn metrics() -> String { /* Prometheus format */ }
+pub fn metrics() -> String { /* JSON metrics */ }
 ```
 
 Deployment Artifacts:

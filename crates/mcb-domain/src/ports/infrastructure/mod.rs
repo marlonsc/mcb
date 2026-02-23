@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Infrastructure Ports
 //!
 //! Ports for infrastructure services that provide technical capabilities
@@ -7,14 +10,12 @@
 //! ## Infrastructure Ports
 //!
 //! | Port | Description |
-//! |------|-------------|
+//! | ------ | ------------- |
 //! | [`SyncCoordinator`] | File system synchronization services |
 //! | [`SnapshotProvider`] | Codebase snapshot management |
 //! | [`AuthServiceInterface`] | Authentication and token services |
 //! | [`EventBusProvider`] | Event publish/subscribe services |
 //! | [`SystemMetricsCollectorInterface`] | System metrics collection |
-//! | [`PerformanceMetricsCollector`](crate::ports::infrastructure::performance::PerformanceMetricsCollector) | Provider performance metrics (Prometheus) |
-//! | [`LockProvider`] | Distributed lock coordination |
 //! | [`StateStoreProvider`] | Key-value state persistence |
 //! | [`ProviderRouter`] | Provider routing and selection services |
 //! | [`DatabaseExecutor`] | SQL execution (repositories use via DI, no direct driver) |
@@ -25,18 +26,17 @@ pub mod auth;
 pub mod database;
 /// Event bus provider port
 pub mod events;
-/// Distributed lock provider port
-pub mod lock;
+pub mod lifecycle;
+/// Operation logging port (level + context + message + optional detail).
+pub mod logging;
 /// System metrics collector port
 pub mod metrics;
-/// Performance metrics collector port (Prometheus histograms/counters)
-pub mod performance;
 /// Provider routing and selection port
 pub mod routing;
 /// Snapshot management infrastructure port
 pub mod snapshot;
 /// Key-value state store port
-pub mod state_store;
+mod state_store;
 /// File synchronization infrastructure port
 pub mod sync;
 
@@ -44,9 +44,12 @@ pub mod sync;
 pub use auth::AuthServiceInterface;
 pub use database::{DatabaseExecutor, DatabaseProvider, SqlParam, SqlRow};
 pub use events::{DomainEventStream, EventBusProvider};
-pub use lock::{LockGuard, LockProvider};
+pub use lifecycle::{
+    DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, LifecycleManaged,
+    PortServiceState, ShutdownCoordinator,
+};
+pub use logging::{LogLevel, OperationLogger};
 pub use metrics::{SystemMetrics, SystemMetricsCollectorInterface};
-pub use performance::PerformanceMetricsCollector;
 pub use routing::{ProviderContext, ProviderHealthStatus, ProviderRouter};
 pub use snapshot::{SnapshotProvider, SyncProvider};
 pub use state_store::StateStoreProvider;

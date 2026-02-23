@@ -1,10 +1,15 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Metric thresholds configuration
 //!
 //! Defines threshold values for various code metrics and how they map to violations.
 
 use std::collections::HashMap;
 
-use crate::violation_trait::Severity;
+use crate::constants::rules::{METRICS_FIELD_MAX, METRICS_FIELD_SEVERITY};
+use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO};
+use crate::traits::violation::Severity;
 
 /// Types of metrics we can measure
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -21,6 +26,7 @@ pub enum MetricType {
 
 impl MetricType {
     /// Get the human-readable name
+    #[must_use]
     pub fn name(&self) -> &'static str {
         match self {
             Self::CognitiveComplexity
@@ -31,6 +37,7 @@ impl MetricType {
     }
 
     /// Get metric description
+    #[must_use]
     pub fn description(&self) -> &'static str {
         match self {
             Self::CognitiveComplexity => "cognitive complexity",
@@ -41,27 +48,28 @@ impl MetricType {
     }
 
     /// Get suggestion for fixing
+    #[must_use]
     pub fn suggestion(&self) -> String {
         match self {
             Self::CognitiveComplexity => {
                 "Consider breaking this function into smaller, focused functions. \
                  Extract complex conditions into named functions or early returns."
-                    .to_string()
+                    .to_owned()
             }
             Self::CyclomaticComplexity => {
                 "Reduce the number of decision points (if/else, switch, loops). \
                  Consider using polymorphism or strategy pattern instead of conditionals."
-                    .to_string()
+                    .to_owned()
             }
             Self::FunctionLength => {
                 "Consider extracting helper functions or using the Extract Method refactoring. \
                  Functions should ideally do one thing well."
-                    .to_string()
+                    .to_owned()
             }
             Self::NestingDepth => {
                 "Consider using early returns, guard clauses, or extracting nested logic \
                  into separate functions to reduce nesting."
-                    .to_string()
+                    .to_owned()
             }
         }
     }
@@ -95,6 +103,7 @@ impl Default for MetricThresholds {
 
 impl MetricThresholds {
     /// Create empty thresholds
+    #[must_use]
     pub fn new() -> Self {
         Self {
             thresholds: HashMap::new(),
@@ -120,14 +129,15 @@ impl MetricThresholds {
     }
 
     /// Get threshold for a metric type
+    #[must_use]
     pub fn get(&self, metric: MetricType) -> Option<&MetricThreshold> {
         self.thresholds.get(&metric)
     }
 
     fn severity_from_str(s: Option<&str>) -> Severity {
         match s {
-            Some("error") => Severity::Error,
-            Some("info") => Severity::Info,
+            Some(SEVERITY_ERROR) => Severity::Error,
+            Some(SEVERITY_INFO) => Severity::Info,
             _ => Severity::Warning,
         }
     }
@@ -141,8 +151,8 @@ impl MetricThresholds {
         key: &str,
     ) -> Option<(u32, Severity)> {
         let section = obj.get(key)?;
-        let max = section.get("max")?.as_u64()?;
-        let severity_str = section.get("severity").and_then(|v| v.as_str());
+        let max = section.get(METRICS_FIELD_MAX)?.as_u64()?;
+        let severity_str = section.get(METRICS_FIELD_SEVERITY).and_then(|v| v.as_str());
         Some((Self::to_u32(max), Self::severity_from_str(severity_str)))
     }
 
@@ -163,6 +173,7 @@ impl MetricThresholds {
     }
 
     /// Parse thresholds from YAML rule config
+    #[must_use]
     pub fn from_yaml(config: &serde_json::Value) -> Self {
         let mut thresholds = Self::new();
 
@@ -185,6 +196,7 @@ impl MetricThresholds {
     }
 
     /// Create thresholds from a `MetricsConfig` struct (from `ValidatedRule`)
+    #[must_use]
     pub fn from_metrics_config(config: &crate::rules::yaml_loader::MetricsConfig) -> Self {
         let mut thresholds = Self::new();
 
@@ -212,62 +224,5 @@ impl MetricThresholds {
         }
 
         thresholds
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_default_thresholds() {
-        let thresholds = MetricThresholds::default();
-
-        let cc = thresholds.get(MetricType::CognitiveComplexity).unwrap();
-        assert_eq!(cc.max_value, 15);
-
-        let fl = thresholds.get(MetricType::FunctionLength).unwrap();
-        assert_eq!(fl.max_value, 50);
-
-        let nd = thresholds.get(MetricType::NestingDepth).unwrap();
-        assert_eq!(nd.max_value, 4);
-    }
-
-    #[test]
-    fn test_custom_thresholds() {
-        let thresholds = MetricThresholds::new()
-            .with_threshold(MetricType::CognitiveComplexity, 10, Severity::Error)
-            .with_threshold(MetricType::FunctionLength, 30, Severity::Warning);
-
-        let cc = thresholds.get(MetricType::CognitiveComplexity).unwrap();
-        assert_eq!(cc.max_value, 10);
-        assert_eq!(cc.severity, Severity::Error);
-
-        let fl = thresholds.get(MetricType::FunctionLength).unwrap();
-        assert_eq!(fl.max_value, 30);
-        assert_eq!(fl.severity, Severity::Warning);
-    }
-
-    #[test]
-    fn test_from_yaml() {
-        let yaml = serde_json::json!({
-            "cognitive_complexity": {
-                "max": 20,
-                "severity": "error"
-            },
-            "function_length": {
-                "max": 100
-            }
-        });
-
-        let thresholds = MetricThresholds::from_yaml(&yaml);
-
-        let cc = thresholds.get(MetricType::CognitiveComplexity).unwrap();
-        assert_eq!(cc.max_value, 20);
-        assert_eq!(cc.severity, Severity::Error);
-
-        let fl = thresholds.get(MetricType::FunctionLength).unwrap();
-        assert_eq!(fl.max_value, 100);
-        assert_eq!(fl.severity, Severity::Warning); // Default
     }
 }

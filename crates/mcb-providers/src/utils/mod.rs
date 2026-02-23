@@ -1,11 +1,18 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Provider Utilities
 //!
 //! Shared utilities used by provider implementations.
 
-pub(crate) mod http;
-mod http_response;
-mod json;
-
-pub(crate) use http::{handle_request_error, parse_embedding_vector};
-pub use http_response::HttpResponseUtils;
-pub use json::JsonExt;
+/// Shared embedding provider utilities (HTTP client, batch processing, parsing).
+pub mod embedding;
+/// HTTP request utilities for provider implementations.
+pub mod http;
+pub(crate) mod http_response;
+/// Retry utilities with exponential backoff.
+pub mod retry;
+/// SQLite row mapping and query helpers.
+pub mod sqlite;
+/// Vector store shared utilities.
+pub mod vector_store;

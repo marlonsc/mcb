@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Database Provider Registry
 //!
 //! Auto-registration system for database providers using linkme distributed slices.
@@ -18,24 +21,10 @@ pub struct DatabaseProviderConfig {
     pub extra: HashMap<String, String>,
 }
 
-impl DatabaseProviderConfig {
-    /// Create a new config with the given provider name
-    pub fn new(provider: impl Into<String>) -> Self {
-        Self {
-            provider: provider.into(),
-            ..Default::default()
-        }
-    }
-
-    /// Add extra configuration
-    pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
-        self.extra.insert(key.into(), value.into());
-        self
-    }
-}
+crate::impl_config_builder!(DatabaseProviderConfig {});
 
 crate::impl_registry!(
-    provider_trait: crate::ports::infrastructure::DatabaseProvider,
+    provider_trait: crate::ports::DatabaseProvider,
     config_type: DatabaseProviderConfig,
     entry_type: DatabaseProviderEntry,
     slice_name: DATABASE_PROVIDERS,

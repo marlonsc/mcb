@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! AST Analysis Module
 //!
 //! Provides unified AST parsing and querying across multiple programming languages.

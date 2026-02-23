@@ -2,59 +2,59 @@
 
 #[cfg(test)]
 mod phase7_integration_tests {
+    use rstest::rstest;
     use mcb_domain::entities::memory::{MemoryFilter, ObservationMetadata, ObservationType};
     use uuid::Uuid;
 
-    #[test]
-    fn test_mem06_observation_metadata_includes_commit() {
-        let metadata = ObservationMetadata {
+    fn metadata_with_context(branch: Option<&str>, commit: Option<&str>) -> ObservationMetadata {
+        ObservationMetadata {
             id: Uuid::new_v4().to_string(),
             session_id: Some("sess-123".to_string()),
             repo_id: Some("repo-abc".to_string()),
             file_path: Some("src/main.rs".to_string()),
-            branch: Some("feature/memory".to_string()),
-            commit: Some("abc123def456".to_string()),
+            branch: branch.map(str::to_string),
+            commit: commit.map(str::to_string),
             execution: None,
             quality_gate: None,
-        };
-
-        assert_eq!(metadata.session_id, Some("sess-123".to_string()));
-        assert_eq!(metadata.branch, Some("feature/memory".to_string()));
-        assert_eq!(metadata.commit, Some("abc123def456".to_string()));
+            origin_context: None,
+        }
     }
 
-    #[test]
-    fn test_mem06_memory_filter_supports_vcs_context() {
+    #[rstest]
+    #[case(Some("feature/memory"), Some("abc123def456"))]
+    #[case(None, None)]
+    fn mem06_observation_metadata_vcs_fields(
+        #[case] branch: Option<&str>,
+        #[case] commit: Option<&str>,
+    ) {
+        let metadata = metadata_with_context(branch, commit);
+        assert_eq!(metadata.branch.as_deref(), branch);
+        assert_eq!(metadata.commit.as_deref(), commit);
+    }
+
+    #[rstest]
+    #[case(Some(ObservationType::Decision), Some("main"), Some("xyz789"))]
+    #[case(None, Some("feature/x"), Some("abc123"))]
+    fn memory_filter_supports_vcs_context(
+        #[case] observation_type: Option<ObservationType>,
+        #[case] branch: Option<&str>,
+        #[case] commit: Option<&str>,
+    ) {
         let filter = MemoryFilter {
             id: None,
+            project_id: None,
             tags: None,
-            r#type: Some(ObservationType::Decision),
+            r#type: observation_type,
             session_id: Some("sess-123".to_string()),
-            repo_id: None,
+            parent_session_id: None,
+            repo_id: Some("repo-abc".to_string()),
             time_range: None,
-            branch: Some("main".to_string()),
-            commit: Some("xyz789".to_string()),
+            branch: branch.map(str::to_string),
+            commit: commit.map(str::to_string),
         };
 
-        assert_eq!(filter.branch, Some("main".to_string()));
-        assert_eq!(filter.commit, Some("xyz789".to_string()));
-    }
-
-    #[test]
-    fn test_mem06_vcs_context_fields_are_optional() {
-        let metadata = ObservationMetadata {
-            id: Uuid::new_v4().to_string(),
-            session_id: Some("sess-123".to_string()),
-            repo_id: None,
-            file_path: None,
-            branch: None,
-            commit: None,
-            execution: None,
-            quality_gate: None,
-        };
-
-        assert!(metadata.branch.is_none());
-        assert!(metadata.commit.is_none());
+        assert_eq!(filter.branch.as_deref(), branch);
+        assert_eq!(filter.commit.as_deref(), commit);
     }
 
     #[test]
@@ -68,6 +68,7 @@ mod phase7_integration_tests {
             commit: Some("commit1".to_string()),
             execution: None,
             quality_gate: None,
+            origin_context: None,
         };
 
         let metadata2 = ObservationMetadata {
@@ -79,6 +80,7 @@ mod phase7_integration_tests {
             commit: Some("commit2".to_string()),
             execution: None,
             quality_gate: None,
+            origin_context: None,
         };
 
         assert_eq!(metadata1.branch, metadata2.branch);
@@ -89,9 +91,11 @@ mod phase7_integration_tests {
     fn test_memory_filter_creates_vcs_aware_queries() {
         let filter = MemoryFilter {
             id: None,
+            project_id: None,
             tags: None,
             r#type: None,
             session_id: Some("sess-123".to_string()),
+            parent_session_id: None,
             repo_id: Some("repo-abc".to_string()),
             time_range: None,
             branch: Some("feature/x".to_string()),
@@ -115,6 +119,7 @@ mod phase7_integration_tests {
             commit: Some("abc123".to_string()),
             execution: None,
             quality_gate: None,
+            origin_context: None,
         };
 
         let json = serde_json::to_value(&metadata).expect("Serialization failed");

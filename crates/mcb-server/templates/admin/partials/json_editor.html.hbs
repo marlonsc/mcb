@@ -1,0 +1,80 @@
+{{!-- JSON editor partial — Alpine.js enhanced textarea with validation + formatting --}}
+{{!-- Context: name, label, readonly, ../record (parent record for edit mode) --}}
+<div x-data="{
+    rawJson: {{#if (lookup ../record name)}}JSON.stringify({{lookup ../record name}}, null, 2){{else}}''{{/if}},
+    isValid: true,
+    error: '',
+    validate() {
+        if (!this.rawJson || this.rawJson.trim() === '') {
+            this.isValid = true;
+            this.error = '';
+            return;
+        }
+        try {
+            JSON.parse(this.rawJson);
+            this.isValid = true;
+            this.error = '';
+        } catch (e) {
+            this.isValid = false;
+            this.error = e.message;
+        }
+    },
+    format() {
+        if (!this.rawJson || this.rawJson.trim() === '') return;
+        try {
+            let parsed = JSON.parse(this.rawJson);
+            this.rawJson = JSON.stringify(parsed, null, 2);
+            this.isValid = true;
+            this.error = '';
+        } catch (e) {
+            this.isValid = false;
+            this.error = e.message;
+        }
+    },
+    compact() {
+        if (!this.rawJson || this.rawJson.trim() === '') return;
+        try {
+            let parsed = JSON.parse(this.rawJson);
+            this.rawJson = JSON.stringify(parsed);
+            this.isValid = true;
+            this.error = '';
+        } catch (e) {
+            this.isValid = false;
+            this.error = e.message;
+        }
+    },
+    init() {
+        this.validate();
+    }
+}"
+style="margin-bottom: 1rem;">
+
+    <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.375rem;">
+        {{#unless readonly}}
+        <button type="button" @click="format()"
+                style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.25rem; padding: 0.1875rem 0.5rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary);"
+                @mouseenter="$el.style.borderColor='var(--accent)'"
+                @mouseleave="$el.style.borderColor='var(--border-color)'"
+                title="Pretty-print JSON">&#123;&#125; Format</button>
+        <button type="button" @click="compact()"
+                style="background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 0.25rem; padding: 0.1875rem 0.5rem; font-size: 0.75rem; cursor: pointer; color: var(--text-secondary);"
+                @mouseenter="$el.style.borderColor='var(--accent)'"
+                @mouseleave="$el.style.borderColor='var(--border-color)'"
+                title="Minify JSON">Compact</button>
+        {{/unless}}
+        <span x-show="isValid && rawJson.trim() !== ''"
+              x-cloak
+              style="font-size: 0.75rem; color: var(--color-success);">&#10003; Valid</span>
+        <span x-show="!isValid"
+              x-cloak
+              style="font-size: 0.75rem; color: var(--color-error);" x-text="error"></span>
+    </div>
+
+    <textarea id="{{name}}" name="{{name}}" rows="8"
+              x-model="rawJson"
+              @input="validate()"
+              {{#if readonly}}readonly{{/if}}
+              style="font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace; font-size: 0.8125rem; tab-size: 2; resize: vertical; width: 100%; padding: 0.5rem; border-radius: 0.375rem; background: var(--bg-code); color: var(--text-primary); line-height: 1.5;"
+              :style="!isValid ? 'border: 2px solid var(--color-error);' : 'border: 1px solid var(--border-color);'"
+              placeholder='{"key": "value"}'></textarea>
+</div>

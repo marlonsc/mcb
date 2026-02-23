@@ -1,38 +1,49 @@
 //! Integration tests for browse API endpoints
 //!
 //! Tests the REST API for browsing indexed collections, files, and chunks.
+//! Uses mock `VectorStoreBrowser` for isolation.
+//!
+//! E2E tests with real `EdgeVec` stores live in `tests/e2e/browse_e2e.rs`.
+#![allow(
+    clippy::expect_used,
+    clippy::str_to_string,
+    clippy::doc_markdown,
+    clippy::uninlined_format_args,
+    clippy::panic
+)]
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use mcb_domain::ports::admin::{
-    IndexingOperation, IndexingOperationsInterface, PerformanceMetricsData,
-    PerformanceMetricsInterface,
+use axum::Router;
+use axum::body::Body;
+use axum::http::{Method, Request, StatusCode};
+use http_body_util::BodyExt;
+use mcb_domain::Result as DomainResult;
+use mcb_domain::ports::HighlightServiceInterface;
+use mcb_domain::ports::VectorStoreBrowser;
+use mcb_domain::ports::{IndexingOperationsInterface, PerformanceMetricsInterface};
+use mcb_domain::value_objects::{CollectionId, CollectionInfo, FileInfo, SearchResult};
+use mcb_infrastructure::infrastructure::{
+    AtomicPerformanceMetrics, DefaultIndexingOperations, default_event_bus,
 };
-use mcb_domain::ports::browse::HighlightServiceInterface;
-use mcb_domain::ports::infrastructure::events::{DomainEventStream, EventBusProvider};
-use mcb_domain::ports::providers::VectorStoreBrowser;
-use mcb_domain::value_objects::browse::HighlightedCode;
-use mcb_domain::value_objects::{
-    CollectionId, CollectionInfo, FileInfo, OperationId, SearchResult,
-};
-use mcb_domain::{DomainEvent, Result as DomainResult};
+use mcb_infrastructure::services::highlight_service::HighlightServiceImpl;
+
 use mcb_server::admin::auth::AdminAuthConfig;
 use mcb_server::admin::browse_handlers::BrowseState;
 use mcb_server::admin::handlers::AdminState;
-use mcb_server::admin::routes::admin_rocket;
-use rocket::http::{Header, Status};
-use rocket::local::asynchronous::Client;
+use mcb_server::transport::axum_http::{AppState, build_router};
+use rstest::rstest;
+use tower::ServiceExt;
 
-/// Mock VectorStoreBrowser for testing
-pub struct MockVectorStoreBrowser {
+/// Mock `VectorStoreBrowser` for testing
+pub struct TestVectorStoreBrowser {
     collections: Vec<CollectionInfo>,
     files: Vec<FileInfo>,
     chunks: Vec<SearchResult>,
 }
 
-impl MockVectorStoreBrowser {
+impl TestVectorStoreBrowser {
     pub fn new() -> Self {
         Self {
             collections: Vec::new(),
@@ -58,7 +69,7 @@ impl MockVectorStoreBrowser {
 }
 
 #[async_trait]
-impl VectorStoreBrowser for MockVectorStoreBrowser {
+impl VectorStoreBrowser for TestVectorStoreBrowser {
     async fn list_collections(&self) -> DomainResult<Vec<CollectionInfo>> {
         Ok(self.collections.clone())
     }
@@ -80,117 +91,21 @@ impl VectorStoreBrowser for MockVectorStoreBrowser {
     }
 }
 
-/// Mock HighlightService for testing
-pub struct MockHighlightService;
-
-#[async_trait]
-impl HighlightServiceInterface for MockHighlightService {
-    async fn highlight(
-        &self,
-        code: &str,
-        language: &str,
-    ) -> std::result::Result<HighlightedCode, mcb_domain::error::Error> {
-        Ok(HighlightedCode {
-            original: code.to_string(),
-            spans: Vec::new(),
-            language: language.to_string(),
-        })
-    }
-}
-
-// ============================================================================
-// Mock Implementations
-// ============================================================================
-
-/// Mock performance metrics
-struct MockMetrics;
-
-impl PerformanceMetricsInterface for MockMetrics {
-    fn uptime_secs(&self) -> u64 {
-        0
-    }
-
-    fn record_query(&self, _response_time_ms: u64, _success: bool, _cache_hit: bool) {}
-
-    fn update_active_connections(&self, _delta: i64) {}
-
-    fn get_performance_metrics(&self) -> PerformanceMetricsData {
-        PerformanceMetricsData {
-            total_queries: 0,
-            successful_queries: 0,
-            failed_queries: 0,
-            average_response_time_ms: 0.0,
-            cache_hit_rate: 0.0,
-            active_connections: 0,
-            uptime_seconds: 0,
-        }
-    }
-}
-
-/// Mock indexing operations
-struct MockIndexing;
-
-impl IndexingOperationsInterface for MockIndexing {
-    fn get_operations(&self) -> HashMap<OperationId, IndexingOperation> {
-        HashMap::new()
-    }
-
-    fn start_operation(&self, _collection: &CollectionId, _total_files: usize) -> OperationId {
-        OperationId::new("mock-operation-id")
-    }
-
-    fn update_progress(
-        &self,
-        _operation_id: &OperationId,
-        _current_file: Option<String>,
-        _processed: usize,
-    ) {
-        // No-op for mock
-    }
-
-    fn complete_operation(&self, _operation_id: &OperationId) {
-        // No-op for mock
-    }
-}
-
-/// Mock event bus
-struct MockEventBus;
-
-#[async_trait]
-impl EventBusProvider for MockEventBus {
-    async fn publish_event(&self, _event: DomainEvent) -> DomainResult<()> {
-        Ok(())
-    }
-
-    async fn subscribe_events(&self) -> DomainResult<DomainEventStream> {
-        // Return an empty stream
-        Ok(Box::pin(futures::stream::empty()))
-    }
-
-    fn has_subscribers(&self) -> bool {
-        false
-    }
-
-    async fn publish(&self, _topic: &str, _payload: &[u8]) -> DomainResult<()> {
-        Ok(())
-    }
-
-    async fn subscribe(&self, _topic: &str) -> DomainResult<String> {
-        Ok("mock-subscription".to_string())
-    }
+fn create_test_highlight_service() -> Arc<dyn HighlightServiceInterface> {
+    Arc::new(HighlightServiceImpl::new())
 }
 
 /// Create test admin state with minimal dependencies
-fn create_test_admin_state() -> AdminState {
-    AdminState {
-        metrics: Arc::new(MockMetrics),
-        indexing: Arc::new(MockIndexing),
+fn create_test_admin_state() -> Result<AdminState, Box<dyn std::error::Error>> {
+    Ok(AdminState {
+        metrics: AtomicPerformanceMetrics::new_shared(),
+        indexing: DefaultIndexingOperations::new_shared(),
         config_watcher: None,
-        current_config: mcb_infrastructure::config::types::AppConfig::default(),
+        current_config: mcb_infrastructure::config::ConfigLoader::new().load()?,
         config_path: None,
         shutdown_coordinator: None,
         shutdown_timeout_secs: 30,
-        event_bus: Arc::new(MockEventBus),
+        event_bus: default_event_bus(),
         service_manager: None,
         cache: None,
         project_workflow: None,
@@ -198,88 +113,185 @@ fn create_test_admin_state() -> AdminState {
         plan_entity: None,
         issue_entity: None,
         org_entity: None,
+        tool_handlers: None,
+    })
+}
+
+#[derive(Clone)]
+struct TestClient {
+    app: Router,
+}
+
+struct Header {
+    name: String,
+    value: String,
+}
+
+impl Header {
+    fn new(name: impl Into<String>, value: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            value: value.into(),
+        }
     }
 }
 
-/// Create a test Rocket client with browse state
-async fn create_test_client(browse_state: BrowseState) -> Client {
-    let admin_state = create_test_admin_state();
+struct TestResponse {
+    status: StatusCode,
+    body: String,
+}
+
+impl TestResponse {
+    fn status(&self) -> StatusCode {
+        self.status
+    }
+
+    async fn into_string(self) -> Option<String> {
+        Some(self.body)
+    }
+}
+
+struct RequestBuilder {
+    app: Router,
+    method: Method,
+    path: String,
+    headers: Vec<(String, String)>,
+}
+
+impl RequestBuilder {
+    fn header(mut self, header: Header) -> Self {
+        self.headers.push((header.name, header.value));
+        self
+    }
+
+    async fn dispatch(self) -> TestResponse {
+        let mut builder = Request::builder().method(self.method).uri(self.path);
+        for (name, value) in &self.headers {
+            builder = builder.header(name, value);
+        }
+        let req = builder.body(Body::empty()).expect("valid request");
+        let resp = self
+            .app
+            .oneshot(req)
+            .await
+            .expect("router should handle request");
+        let status = resp.status();
+        let body = resp
+            .into_body()
+            .collect()
+            .await
+            .expect("collect body")
+            .to_bytes();
+        TestResponse {
+            status,
+            body: String::from_utf8(body.to_vec()).unwrap_or_default(),
+        }
+    }
+}
+
+impl TestClient {
+    fn get(&self, path: &str) -> RequestBuilder {
+        RequestBuilder {
+            app: self.app.clone(),
+            method: Method::GET,
+            path: path.to_owned(),
+            headers: Vec::new(),
+        }
+    }
+}
+
+async fn create_test_client(
+    browse_state: BrowseState,
+) -> Result<TestClient, Box<dyn std::error::Error>> {
+    let admin_state = create_test_admin_state()?;
     let auth_config = Arc::new(AdminAuthConfig {
         enabled: true,
-        header_name: "X-Admin-Key".to_string(),
-        api_key: Some("test-key".to_string()),
+        header_name: "X-Admin-Key".to_owned(),
+        api_key: Some("test-key".to_owned()),
     });
 
-    let rocket = admin_rocket(admin_state, auth_config, Some(browse_state));
-    Client::tracked(rocket)
+    let app_state = Arc::new(AppState {
+        metrics: Arc::clone(&admin_state.metrics) as Arc<dyn PerformanceMetricsInterface>,
+        indexing: Arc::clone(&admin_state.indexing) as Arc<dyn IndexingOperationsInterface>,
+        browser: Some(Arc::clone(&browse_state.browser)),
+        browse_state: Some(Arc::new(browse_state)),
+        mcp_server: None,
+        admin_state: Some(Arc::new(admin_state)),
+        auth_config: Some(auth_config),
+    });
+    Ok(TestClient {
+        app: build_router(&app_state),
+    })
+}
+
+fn create_test_browse_state(browser: TestVectorStoreBrowser) -> BrowseState {
+    BrowseState {
+        browser: Arc::new(browser),
+        highlight_service: create_test_highlight_service(),
+    }
+}
+
+#[rstest]
+#[case(vec![], 0, None, None)]
+#[case(
+    vec![
+        CollectionInfo::new("test_collection", 100, 10, None, "memory"),
+        CollectionInfo::new("another_collection", 50, 5, None, "memory"),
+    ],
+    2,
+    Some("test_collection"),
+    Some("another_collection")
+)]
+#[tokio::test]
+async fn test_list_collections(
+    #[case] collections: Vec<CollectionInfo>,
+    #[case] expected_total: usize,
+    #[case] expected_name_a: Option<&str>,
+    #[case] expected_name_b: Option<&str>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let browser = TestVectorStoreBrowser::new().with_collections(collections);
+    let browse_state = create_test_browse_state(browser);
+    let client = create_test_client(browse_state).await?;
+
+    let response = client
+        .get("/collections")
+        .header(Header::new("X-Admin-Key", "test-key"))
+        .dispatch()
+        .await;
+
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response
+        .into_string()
         .await
-        .expect("valid rocket instance")
+        .ok_or("response body missing")?;
+    assert!(body.contains(&format!("\"total\":{expected_total}")));
+    if expected_total == 0 {
+        assert!(body.contains("\"collections\":[]"));
+        return Ok(());
+    }
+    if let Some(name) = expected_name_a {
+        assert!(body.contains(name));
+    }
+    if let Some(name) = expected_name_b {
+        assert!(body.contains(name));
+    }
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_list_collections_empty() {
-    let browser = MockVectorStoreBrowser::new();
-    let browse_state = BrowseState {
-        browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
-    };
-
-    let client = create_test_client(browse_state).await;
-
-    let response = client
-        .get("/collections")
-        .header(Header::new("X-Admin-Key", "test-key"))
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
-    assert!(body.contains("\"collections\":[]"));
-    assert!(body.contains("\"total\":0"));
-}
-
-#[tokio::test]
-async fn test_list_collections_with_data() {
-    let collections = vec![
-        CollectionInfo::new("test_collection".to_string(), 100, 10, None, "memory"),
-        CollectionInfo::new("another_collection".to_string(), 50, 5, None, "memory"),
-    ];
-
-    let browser = MockVectorStoreBrowser::new().with_collections(collections);
-    let browse_state = BrowseState {
-        browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
-    };
-
-    let client = create_test_client(browse_state).await;
-
-    let response = client
-        .get("/collections")
-        .header(Header::new("X-Admin-Key", "test-key"))
-        .dispatch()
-        .await;
-
-    assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
-    assert!(body.contains("test_collection"));
-    assert!(body.contains("another_collection"));
-    assert!(body.contains("\"total\":2"));
-}
-
-#[tokio::test]
-async fn test_list_files_in_collection() {
+async fn test_list_files_in_collection() -> Result<(), Box<dyn std::error::Error>> {
     let files = vec![
-        FileInfo::new("src/main.rs".to_string(), 5, "rust", None),
-        FileInfo::new("src/lib.rs".to_string(), 3, "rust", None),
+        FileInfo::new("src/main.rs".to_owned(), 5, "rust", None),
+        FileInfo::new("src/lib.rs".to_owned(), 3, "rust", None),
     ];
 
-    let browser = MockVectorStoreBrowser::new().with_files(files);
+    let browser = TestVectorStoreBrowser::new().with_files(files);
     let browse_state = BrowseState {
         browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     let response = client
         .get("/collections/test_collection/files")
@@ -287,41 +299,45 @@ async fn test_list_files_in_collection() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
     assert!(body.contains("src/main.rs"));
     assert!(body.contains("src/lib.rs"));
     assert!(body.contains("\"total\":2"));
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_get_file_chunks() {
+async fn test_get_file_chunks() -> Result<(), Box<dyn std::error::Error>> {
     let chunks = vec![
         SearchResult {
-            id: "chunk_1".to_string(),
-            file_path: "src/main.rs".to_string(),
-            content: "fn main() { }".to_string(),
+            id: "chunk_1".to_owned(),
+            file_path: "src/main.rs".to_owned(),
+            content: "fn main() { }".to_owned(),
             start_line: 1,
             score: 1.0,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         },
         SearchResult {
-            id: "chunk_2".to_string(),
-            file_path: "src/main.rs".to_string(),
-            content: "fn helper() { }".to_string(),
+            id: "chunk_2".to_owned(),
+            file_path: "src/main.rs".to_owned(),
+            content: "fn helper() { }".to_owned(),
             start_line: 5,
             score: 1.0,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
         },
     ];
 
-    let browser = MockVectorStoreBrowser::new().with_chunks(chunks);
+    let browser = TestVectorStoreBrowser::new().with_chunks(chunks);
     let browse_state = BrowseState {
         browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state).await?;
 
     let response = client
         .get("/collections/test_collection/chunks/src/main.rs")
@@ -329,66 +345,49 @@ async fn test_get_file_chunks() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
-    let body = response.into_string().await.expect("response body");
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = response
+        .into_string()
+        .await
+        .ok_or("response body missing")?;
     assert!(body.contains("fn main()"));
     assert!(body.contains("fn helper()"));
     assert!(body.contains("\"total\":2"));
+    Ok(())
 }
 
+#[rstest]
+#[case(None)]
+#[case(Some("invalid-key".to_owned()))]
 #[tokio::test]
-async fn test_browse_requires_auth() {
-    let browser = MockVectorStoreBrowser::new();
-    let browse_state = BrowseState {
-        browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
-    };
+async fn test_browse_auth_validation(
+    #[case] admin_key: Option<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let browse_state = create_test_browse_state(TestVectorStoreBrowser::new());
+    let client = create_test_client(browse_state).await?;
 
-    let client = create_test_client(browse_state).await;
+    let mut request = client.get("/collections");
+    if let Some(key) = admin_key {
+        request = request.header(Header::new("X-Admin-Key", key));
+    }
+    let response = request.dispatch().await;
 
-    // Request without auth header
-    let response = client.get("/collections").dispatch().await;
-
-    // Should return unauthorized (401) or forbidden (403)
     assert!(
-        response.status() == Status::Unauthorized || response.status() == Status::Forbidden,
+        response.status() == StatusCode::UNAUTHORIZED || response.status() == StatusCode::FORBIDDEN,
         "Expected 401 or 403, got {:?}",
         response.status()
     );
-}
-
-#[tokio::test]
-async fn test_browse_invalid_auth() {
-    let browser = MockVectorStoreBrowser::new();
-    let browse_state = BrowseState {
-        browser: Arc::new(browser),
-        highlight_service: Arc::new(MockHighlightService),
-    };
-
-    let client = create_test_client(browse_state).await;
-
-    // Request with invalid auth key
-    let response = client
-        .get("/collections")
-        .header(Header::new("X-Admin-Key", "invalid-key"))
-        .dispatch()
-        .await;
-
-    // Should return unauthorized (401) or forbidden (403)
-    assert!(
-        response.status() == Status::Unauthorized || response.status() == Status::Forbidden,
-        "Expected 401 or 403, got {:?}",
-        response.status()
-    );
+    Ok(())
 }
 
 // ============================================================================
 // Real End-to-End Tests with EdgeVecVectorStore
 // ============================================================================
 
-use mcb_domain::ports::providers::VectorStoreProvider;
+use mcb_domain::ports::VectorStoreProvider;
 use mcb_domain::value_objects::Embedding;
 use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
+use std::collections::HashMap;
 
 /// Creates a test vector store instance (EdgeVec in-memory)
 fn create_test_vector_store() -> EdgeVecVectorStoreProvider {
@@ -396,7 +395,7 @@ fn create_test_vector_store() -> EdgeVecVectorStoreProvider {
         dimensions: 384,
         ..Default::default()
     };
-    EdgeVecVectorStoreProvider::new(config).expect("Failed to create test vector store")
+    EdgeVecVectorStoreProvider::new(&config).expect("Failed to create test vector store")
 }
 
 /// Helper to create metadata for a code chunk
@@ -429,7 +428,7 @@ fn create_dummy_embedding(dimensions: usize) -> Embedding {
 
 /// Populate vector store with test data simulating real indexed code
 async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) {
-    let collection_id = CollectionId::new(collection);
+    let collection_id = CollectionId::from_name(collection);
     // Create collection
     store
         .create_collection(&collection_id, 384)
@@ -516,10 +515,12 @@ async fn test_e2e_real_store_list_collections() {
     // Create browse state with real store
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // List collections
     let response = client
@@ -528,24 +529,21 @@ async fn test_e2e_real_store_list_collections() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
 
     // Parse and validate JSON response
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
 
-    // Validate collection exists
-    assert!(
-        body.contains("test_project"),
-        "Should contain collection name"
-    );
+    let expected_collection_id = CollectionId::from_name("test_project").to_string();
 
     // Validate counts
     let collections = json["collections"].as_array().expect("collections array");
     assert_eq!(collections.len(), 1, "Should have 1 collection");
 
     let collection = &collections[0];
-    assert_eq!(collection["name"], "test_project");
+    assert_eq!(collection["id"], expected_collection_id);
+    assert_eq!(collection["name"], expected_collection_id);
     assert_eq!(collection["vector_count"], 8, "Should have 8 chunks total");
     assert_eq!(collection["file_count"], 4, "Should have 4 unique files");
     assert_eq!(collection["provider"], "edgevec");
@@ -558,10 +556,12 @@ async fn test_e2e_real_store_list_files() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // List files in collection
     let response = client
@@ -570,7 +570,7 @@ async fn test_e2e_real_store_list_files() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
 
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
@@ -622,10 +622,12 @@ async fn test_e2e_real_store_get_file_chunks() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // Get chunks for lib.rs
     let response = client
@@ -634,7 +636,7 @@ async fn test_e2e_real_store_get_file_chunks() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
 
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
@@ -698,10 +700,12 @@ async fn test_e2e_real_store_navigate_full_flow() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // Step 1: List collections
     let response = client
@@ -710,7 +714,7 @@ async fn test_e2e_real_store_navigate_full_flow() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
 
@@ -720,18 +724,21 @@ async fn test_e2e_real_store_navigate_full_flow() {
         "Should have at least one collection"
     );
 
-    let collection_name = collections[0]["name"].as_str().expect("collection name");
-    assert_eq!(collection_name, "my_rust_project");
+    let collection_id = collections[0]["id"].as_str().expect("collection id");
+    assert_eq!(
+        collection_id,
+        CollectionId::from_name("my_rust_project").to_string()
+    );
 
     // Step 2: List files in the collection
-    let files_url = format!("/collections/{}/files", collection_name);
+    let files_url = format!("/collections/{}/files", collection_id);
     let response = client
         .get(&files_url)
         .header(Header::new("X-Admin-Key", "test-key"))
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
 
@@ -748,14 +755,14 @@ async fn test_e2e_real_store_navigate_full_flow() {
     assert_eq!(chunk_count, 2, "config.rs should have 2 chunks");
 
     // Step 3: Get chunks for config.rs
-    let chunks_url = format!("/collections/{}/chunks/src/config.rs", collection_name);
+    let chunks_url = format!("/collections/{}/chunks/src/config.rs", collection_id);
     let response = client
         .get(&chunks_url)
         .header(Header::new("X-Admin-Key", "test-key"))
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
 
@@ -785,10 +792,12 @@ async fn test_e2e_real_store_collection_not_found() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // Try to list files in non-existent collection
     let response = client
@@ -799,7 +808,8 @@ async fn test_e2e_real_store_collection_not_found() {
 
     // Should return error status
     assert!(
-        response.status() == Status::NotFound || response.status() == Status::InternalServerError,
+        response.status() == StatusCode::NOT_FOUND
+            || response.status() == StatusCode::INTERNAL_SERVER_ERROR,
         "Expected 404 or 500 for non-existent collection, got {:?}",
         response.status()
     );
@@ -815,10 +825,12 @@ async fn test_e2e_real_store_multiple_collections() {
 
     let browse_state = BrowseState {
         browser: Arc::new(store),
-        highlight_service: Arc::new(MockHighlightService),
+        highlight_service: create_test_highlight_service(),
     };
 
-    let client = create_test_client(browse_state).await;
+    let client = create_test_client(browse_state)
+        .await
+        .expect("failed to create test client");
 
     // List all collections
     let response = client
@@ -827,23 +839,29 @@ async fn test_e2e_real_store_multiple_collections() {
         .dispatch()
         .await;
 
-    assert_eq!(response.status(), Status::Ok);
+    assert_eq!(response.status(), StatusCode::OK);
     let body = response.into_string().await.expect("response body");
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
 
     let collections = json["collections"].as_array().expect("collections array");
     assert_eq!(collections.len(), 2, "Should have 2 collections");
 
-    let names: Vec<&str> = collections
+    let ids: Vec<&str> = collections
         .iter()
-        .filter_map(|c| c["name"].as_str())
+        .filter_map(|c| c["id"].as_str())
         .collect();
 
+    let alpha_id = CollectionId::from_name("project_alpha").to_string();
+    let beta_id = CollectionId::from_name("project_beta").to_string();
+
     assert!(
-        names.contains(&"project_alpha"),
-        "Should have project_alpha"
+        ids.contains(&alpha_id.as_str()),
+        "Should have project_alpha id"
     );
-    assert!(names.contains(&"project_beta"), "Should have project_beta");
+    assert!(
+        ids.contains(&beta_id.as_str()),
+        "Should have project_beta id"
+    );
 
     // Validate total count
     assert_eq!(json["total"], 2);

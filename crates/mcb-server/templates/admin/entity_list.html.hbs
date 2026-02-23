@@ -13,26 +13,52 @@
     <a class="btn btn-primary" href="/ui/entities/{{entity_slug}}/new">+ New {{title}}</a>
 </div>
 
+<div style="display: flex; gap: 0.75rem; align-items: flex-start; margin-bottom: 1rem; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 200px;">
+        {{> admin/partials/search_bar}}
+    </div>
+    {{> admin/partials/date_range}}
+</div>
+
 <div class="card">
     <table>
         <thead>
             <tr>
+                <th style="width: 2.5rem; text-align: center;">
+                    <input type="checkbox"
+                           @change="$dispatch('bulk-toggle-all')"
+                           :checked="$root.querySelector && document.querySelectorAll('input[data-bulk-row]:checked').length === document.querySelectorAll('input[data-bulk-row]').length && document.querySelectorAll('input[data-bulk-row]').length > 0"
+                           style="cursor: pointer;">
+                </th>
                 {{#each fields}}
-                <th>{{label}}</th>
+                {{> admin/partials/sortable_header}}
                 {{/each}}
                 <th>Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody id="entity-table-body">
             {{#if has_records}}
                 {{#each records}}
                 <tr>
+                    <td style="text-align: center;">
+                        <input type="checkbox"
+                               data-bulk-row
+                               value="{{lookup this "id"}}"
+                               @change="$dispatch('bulk-select-row', { id: '{{lookup this "id"}}' })"
+                               style="cursor: pointer;">
+                    </td>
                     {{#each ../field_names}}
                     <td>{{lookup ../this this}}</td>
                     {{/each}}
                     <td class="flex gap-2">
                         <a class="btn btn-secondary btn-sm" href="/ui/entities/{{../../entity_slug}}/{{lookup this "id"}}">View</a>
                         <a class="btn btn-primary btn-sm" href="/ui/entities/{{../../entity_slug}}/{{lookup this "id"}}/edit">Edit</a>
+                        <button class="btn btn-danger btn-sm"
+                                @click="$dispatch('confirm-delete', {
+                                    title: 'Delete Record',
+                                    message: 'Are you sure you want to delete this record? This action cannot be undone.',
+                                    action: '/ui/entities/{{../../entity_slug}}/{{lookup this "id"}}/delete'
+                                })">Delete</button>
                     </td>
                 </tr>
                 {{/each}}
@@ -45,6 +71,11 @@
             {{/if}}
         </tbody>
     </table>
+
+    {{> admin/partials/pagination}}
 </div>
+
+{{> admin/partials/bulk_actions}}
+{{> admin/partials/confirm_dialog}}
 {{/inline}}
 {{> admin/layout}}

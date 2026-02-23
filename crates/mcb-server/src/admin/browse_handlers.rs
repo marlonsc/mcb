@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Browse handlers for Admin UI
 //!
 //! REST API handlers for browsing indexed collections, files, and code chunks.
@@ -6,27 +9,36 @@
 //! ## Endpoints
 //!
 //! | Path | Method | Description |
-//! |------|--------|-------------|
+//! | ------ | -------- | ------------- |
 //! | `/collections` | GET | List all indexed collections |
 //! | `/collections/:name/files` | GET | List files in a collection |
 //! | `/collections/:name/files/*path/chunks` | GET | Get chunks for a file |
 
 use std::sync::Arc;
 
-use mcb_domain::ports::browse::HighlightServiceInterface;
-use mcb_domain::ports::providers::VectorStoreBrowser;
+use crate::constants::limits::DEFAULT_BROWSE_FILES_LIMIT;
+use axum::Json as AxumJson;
+use axum::extract::{Path, Query, State as AxumState};
+use mcb_domain::info;
+use mcb_domain::ports::HighlightServiceInterface;
+use mcb_domain::ports::VectorStoreBrowser;
 use mcb_domain::value_objects::CollectionId;
 use mcb_domain::value_objects::FileTreeNode;
-use rocket::http::Status;
-use rocket::serde::json::Json;
-use rocket::{State, get};
 
-use super::auth::AdminAuth;
 use super::models::{
     ChunkDetailResponse, ChunkListResponse, CollectionInfoResponse, CollectionListResponse,
     FileInfoResponse, FileListResponse,
 };
+use crate::admin::auth::AxumAdminAuth;
+use crate::admin::error::{AdminError, AdminResult};
 use crate::constants::LIST_FILE_PATHS_LIMIT;
+
+/// Query parameters for browse collection file listing (Axum).
+#[derive(Debug, serde::Deserialize)]
+pub struct BrowseFilesQuery {
+    /// Maximum number of files to return (default: 100).
+    pub limit: Option<usize>,
+}
 
 /// Browse handler state containing the vector store browser
 #[derive(Clone)]
@@ -55,8 +67,9 @@ impl BrowseErrorResponse {
     }
 
     /// Creates a not found error response
+    #[must_use]
     pub fn not_found(resource: &str) -> Self {
-        Self::new(format!("{} not found", resource), "NOT_FOUND")
+        Self::new(format!("{resource} not found"), "NOT_FOUND")
     }
 
     /// Creates an internal error response
@@ -65,90 +78,68 @@ impl BrowseErrorResponse {
     }
 }
 
-/// List all indexed collections
+/// Axum handler: list all indexed collections.
 ///
-/// Returns a list of all collections with their statistics including
-/// vector count, file count, and provider information.
-///
-/// # Authentication
-///
-/// Requires valid admin API key via `X-Admin-Key` header.
-#[get("/collections")]
-pub async fn list_collections(
-    _auth: AdminAuth,
-    state: &State<BrowseState>,
-) -> Result<Json<CollectionListResponse>, (Status, Json<BrowseErrorResponse>)> {
-    tracing::info!("list_collections called");
-    let collections = state.browser.list_collections().await.map_err(|e| {
-        (
-            Status::InternalServerError,
-            Json(BrowseErrorResponse::internal(e.to_string())),
-        )
-    })?;
+/// # Errors
+/// Returns `500` for backend failures.
+pub async fn list_collections_axum(
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<BrowseState>>,
+) -> AdminResult<CollectionListResponse> {
+    info!("browse", "list_collections called");
+    let collections = state
+        .browser
+        .list_collections()
+        .await
+        .map_err(|e| AdminError::internal(e.to_string()))?;
 
-    let collection_responses: Vec<CollectionInfoResponse> = collections
+    let collection_responses = collections
         .into_iter()
         .map(|c| CollectionInfoResponse {
-            name: c.id.into_string(),
+            id: c.id.to_string(),
+            name: c.name,
             vector_count: c.vector_count,
             file_count: c.file_count,
             last_indexed: c.last_indexed,
             provider: c.provider,
         })
-        .collect();
+        .collect::<Vec<_>>();
 
     let total = collection_responses.len();
-    Ok(Json(CollectionListResponse {
+    Ok(AxumJson(CollectionListResponse {
         collections: collection_responses,
         total,
     }))
 }
 
-/// List files in a collection
+/// Axum handler: list files in a collection.
 ///
-/// Returns a list of all indexed files in the specified collection,
-/// including chunk counts and language information.
-///
-/// # Arguments
-///
-/// * `name` - Collection name
-/// * `limit` - Maximum number of files to return (default: 100)
-///
-/// # Authentication
-///
-/// Requires valid admin API key via `X-Admin-Key` header.
-#[get("/collections/<name>/files?<limit>")]
-pub async fn list_collection_files(
-    _auth: AdminAuth,
-    state: &State<BrowseState>,
-    name: &str,
-    limit: Option<usize>,
-) -> Result<Json<FileListResponse>, (Status, Json<BrowseErrorResponse>)> {
-    tracing::info!("list_collection_files called");
-    let limit = limit.unwrap_or(100);
-    let collection = CollectionId::new(name);
+/// # Errors
+/// Returns `404` for unknown collections and `500` for backend failures.
+pub async fn list_collection_files_axum(
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<BrowseState>>,
+    Path(name): Path<String>,
+    Query(params): Query<BrowseFilesQuery>,
+) -> AdminResult<FileListResponse> {
+    info!("browse", "list_collection_files called");
+    let limit = params.limit.unwrap_or(DEFAULT_BROWSE_FILES_LIMIT);
+    let collection = CollectionId::from_string(&name);
 
     let files = state
         .browser
         .list_file_paths(&collection, limit)
         .await
         .map_err(|e| {
-            // Check if it's a collection not found error
             let error_msg = e.to_string();
             if error_msg.contains("not found") || error_msg.contains("does not exist") {
-                (
-                    Status::NotFound,
-                    Json(BrowseErrorResponse::not_found("Collection")),
-                )
+                AdminError::not_found("Collection not found")
             } else {
-                (
-                    Status::InternalServerError,
-                    Json(BrowseErrorResponse::internal(error_msg)),
-                )
+                AdminError::internal(error_msg)
             }
         })?;
 
-    let file_responses: Vec<FileInfoResponse> = files
+    let file_responses = files
         .into_iter()
         .map(|f| FileInfoResponse {
             path: f.path,
@@ -156,40 +147,28 @@ pub async fn list_collection_files(
             language: f.language,
             size_bytes: f.size_bytes,
         })
-        .collect();
+        .collect::<Vec<_>>();
 
     let total = file_responses.len();
-    Ok(Json(FileListResponse {
+    Ok(AxumJson(FileListResponse {
         files: file_responses,
         total,
-        collection: name.to_string(),
+        collection: name,
     }))
 }
 
-/// Get code chunks for a specific file
+/// Returns chunk list for a file in a collection (Axum).
 ///
-/// Returns all code chunks that were extracted from a specific file,
-/// ordered by line number. Useful for displaying the full indexed
-/// content of a file.
-///
-/// # Arguments
-///
-/// * `name` - Collection name
-/// * `path` - File path (URL-encoded, can contain slashes)
-///
-/// # Authentication
-///
-/// Requires valid admin API key via `X-Admin-Key` header.
-#[get("/collections/<name>/chunks/<path..>")]
-pub async fn get_file_chunks(
-    _auth: AdminAuth,
-    state: &State<BrowseState>,
-    name: &str,
-    path: std::path::PathBuf,
-) -> Result<Json<ChunkListResponse>, (Status, Json<BrowseErrorResponse>)> {
-    tracing::info!("get_file_chunks called");
-    let file_path = path.to_string_lossy().to_string();
-    let collection_id = CollectionId::new(name);
+/// # Errors
+/// Returns `404` when file or collection is not found, `500` on browser or highlight errors.
+pub async fn get_file_chunks_axum(
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<BrowseState>>,
+    Path((name, path)): Path<(String, String)>,
+) -> AdminResult<ChunkListResponse> {
+    info!("browse", "get_file_chunks called");
+    let file_path = path.replace('\\', "/");
+    let collection_id = CollectionId::from_string(&name);
 
     let chunks = state
         .browser
@@ -198,25 +177,17 @@ pub async fn get_file_chunks(
         .map_err(|e| {
             let error_msg = e.to_string();
             if error_msg.contains("not found") || error_msg.contains("does not exist") {
-                (
-                    Status::NotFound,
-                    Json(BrowseErrorResponse::not_found("File or collection")),
-                )
+                AdminError::not_found("File or collection")
             } else {
-                (
-                    Status::InternalServerError,
-                    Json(BrowseErrorResponse::internal(error_msg)),
-                )
+                AdminError::internal(error_msg)
             }
         })?;
 
     let mut chunk_responses = Vec::with_capacity(chunks.len());
     for c in chunks {
-        // Estimate end line from content
         let line_count = c.content.lines().count() as u32;
         let end_line = c.start_line.saturating_add(line_count.saturating_sub(1));
 
-        // Generate server-side highlighting via injected service
         let (highlighted_html, content, language) = match state
             .highlight_service
             .highlight(&c.content, &c.language)
@@ -224,18 +195,18 @@ pub async fn get_file_chunks(
         {
             Ok(h) => {
                 let html =
-                    mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(&h);
+                    mcb_infrastructure::services::highlight_renderer::HtmlRenderer::render(&h);
                 (html, c.content, c.language)
             }
             Err(_) => {
-                // Move content/language into fallback HighlightedCode to avoid cloning
                 let fallback = mcb_domain::value_objects::browse::HighlightedCode::new(
                     c.content,
                     vec![],
                     c.language,
                 );
-                let html =
-                    mcb_infrastructure::services::highlight_service::convert_highlighted_code_to_html(&fallback);
+                let html = mcb_infrastructure::services::highlight_renderer::HtmlRenderer::render(
+                    &fallback,
+                );
                 (html, fallback.original, fallback.language)
             }
         };
@@ -253,26 +224,25 @@ pub async fn get_file_chunks(
     }
 
     let total = chunk_responses.len();
-    Ok(Json(ChunkListResponse {
+    Ok(AxumJson(ChunkListResponse {
         chunks: chunk_responses,
         file_path,
-        collection: name.to_string(),
+        collection: name,
         total,
     }))
 }
 
-/// Get file tree for a collection
+/// Returns file tree for a collection (Axum).
 ///
-/// Returns a hierarchical tree structure of all indexed files in the
-/// collection, organized by directory. Useful for tree view navigation.
-#[get("/collections/<name>/tree")]
-pub async fn get_collection_tree(
-    _auth: AdminAuth,
-    state: &State<BrowseState>,
-    name: &str,
-) -> Result<Json<FileTreeNode>, (Status, Json<BrowseErrorResponse>)> {
-    tracing::info!("get_collection_tree called");
-    let collection_id = CollectionId::new(name);
+/// # Errors
+/// Returns `404` when collection is not found, `500` on browser errors.
+pub async fn get_collection_tree_axum(
+    _auth: AxumAdminAuth,
+    AxumState(state): AxumState<Arc<BrowseState>>,
+    Path(name): Path<String>,
+) -> AdminResult<FileTreeNode> {
+    info!("browse", "get_collection_tree called");
+    let collection_id = CollectionId::from_string(&name);
     let files = state
         .browser
         .list_file_paths(&collection_id, LIST_FILE_PATHS_LIMIT)
@@ -280,27 +250,20 @@ pub async fn get_collection_tree(
         .map_err(|e| {
             let error_msg = e.to_string();
             if error_msg.contains("not found") || error_msg.contains("does not exist") {
-                (
-                    Status::NotFound,
-                    Json(BrowseErrorResponse::not_found("Collection")),
-                )
+                AdminError::not_found("Collection")
             } else {
-                (
-                    Status::InternalServerError,
-                    Json(BrowseErrorResponse::internal(error_msg)),
-                )
+                AdminError::internal(error_msg)
             }
         })?;
 
-    let mut root = FileTreeNode::directory(name, "");
-
+    let mut root = FileTreeNode::directory(&name, "");
     for file in files {
-        let parts: Vec<&str> = file.path.split('/').collect();
+        let parts = file.path.split('/').collect::<Vec<_>>();
         insert_into_tree(&mut root, &parts, &file);
     }
 
     root.sort_children();
-    Ok(Json(root))
+    Ok(AxumJson(root))
 }
 
 fn insert_into_tree(
@@ -324,7 +287,7 @@ fn insert_into_tree(
             insert_into_tree(&mut node.children[idx], &parts[1..], file);
         } else {
             let current_path = if node.path.is_empty() {
-                name.to_string()
+                name.to_owned()
             } else {
                 format!("{}/{}", node.path, name)
             };

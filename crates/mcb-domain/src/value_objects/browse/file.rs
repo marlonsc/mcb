@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#value-objects)
+//!
 use serde::{Deserialize, Serialize};
 
 /// Summary information about an indexed file
@@ -14,7 +17,7 @@ pub struct FileInfo {
 }
 
 impl FileInfo {
-    /// Create a new FileInfo instance
+    /// Create a new `FileInfo` instance
     pub fn new(
         path: impl Into<String>,
         chunk_count: u32,

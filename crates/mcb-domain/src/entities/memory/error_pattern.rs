@@ -1,7 +1,22 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 /// Categories for error patterns to classify the type of error encountered.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
 pub enum ErrorPatternCategory {
     /// Compilation errors.
     Compilation,
@@ -21,47 +36,13 @@ pub enum ErrorPatternCategory {
     Other,
 }
 
-impl ErrorPatternCategory {
-    /// Returns the string representation of the error pattern category.
-    #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Compilation => "compilation",
-            Self::Runtime => "runtime",
-            Self::Test => "test",
-            Self::Lint => "lint",
-            Self::Build => "build",
-            Self::Config => "config",
-            Self::Network => "network",
-            Self::Other => "other",
-        }
-    }
-}
-
-impl std::str::FromStr for ErrorPatternCategory {
-    /// Error type for parsing failures.
-    type Err = String;
-
-    /// Parses a string into an `ErrorPatternCategory`.
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "compilation" => Ok(Self::Compilation),
-            "runtime" => Ok(Self::Runtime),
-            "test" => Ok(Self::Test),
-            "lint" => Ok(Self::Lint),
-            "build" => Ok(Self::Build),
-            "config" => Ok(Self::Config),
-            "network" => Ok(Self::Network),
-            "other" => Ok(Self::Other),
-            _ => Err(format!("Unknown error pattern category: {s}")),
-        }
-    }
-}
+crate::impl_as_str_from_as_ref!(ErrorPatternCategory);
 
 /// Represents a recurring error pattern detected in a project.
 ///
 /// An error pattern captures the signature, category, and metadata of errors
 /// that occur repeatedly, enabling pattern recognition and solution tracking.
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorPattern {
     /// Unique identifier for this error pattern.
@@ -94,6 +75,7 @@ pub struct ErrorPattern {
 ///
 /// Tracks when an error pattern is detected, the confidence level, and whether
 /// a solution was applied and successful.
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ErrorPatternMatch {
     /// Unique identifier for this match record.

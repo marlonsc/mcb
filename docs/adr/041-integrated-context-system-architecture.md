@@ -206,7 +206,7 @@ mcb-providers/
 mcb-infrastructure/
 ├── context_handles.rs           [NEW] (ContextRepositoryHandle + ContextServiceHandle)
 └── di/
-    └── catalog.rs               [MODIFY] (add context providers)
+    └── bootstrap.rs             [MODIFY] (add context providers)
 
 mcb-server/
 └── handlers/

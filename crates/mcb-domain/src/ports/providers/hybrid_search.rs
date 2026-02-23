@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
+//!
 //! Hybrid Search Port
 //!
 //! Defines the interface for hybrid search capabilities that combine
@@ -32,7 +35,7 @@ pub struct HybridSearchResult {
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::providers::hybrid_search::HybridSearchProvider;
+/// use mcb_domain::ports::HybridSearchProvider;
 /// use std::sync::Arc;
 ///
 /// async fn search_hybrid(provider: Arc<dyn HybridSearchProvider>) -> mcb_domain::Result<()> {

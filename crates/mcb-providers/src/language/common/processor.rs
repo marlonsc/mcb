@@ -1,6 +1,9 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! Language processor trait and base implementation
 //!
-//! Defines the LanguageProcessor trait that provides a common interface
+//! Defines the `LanguageProcessor` trait that provides a common interface
 //! for language-specific chunking logic.
 
 use mcb_domain::entities::CodeChunk;
@@ -8,6 +11,7 @@ use mcb_domain::value_objects::Language;
 
 use super::config::LanguageConfig;
 use super::traverser::AstTraverser;
+use crate::constants::{LANGUAGE_MAX_CHUNKS_PER_FILE, LANGUAGE_PRIORITY_THRESHOLD};
 
 /// Trait for language-specific processing
 ///
@@ -52,11 +56,13 @@ pub struct BaseProcessor {
 
 impl BaseProcessor {
     /// Create a new base processor with configuration
+    #[must_use]
     pub fn new(config: LanguageConfig) -> Self {
         Self { config }
     }
 
     /// Get the configuration
+    #[must_use]
     pub fn config(&self) -> &LanguageConfig {
         &self.config
     }
@@ -78,8 +84,8 @@ impl LanguageProcessor for BaseProcessor {
         let mut cursor = tree.walk();
 
         if cursor.goto_first_child() {
-            let traverser =
-                AstTraverser::new(&self.config().extraction_rules, language).with_max_chunks(75);
+            let traverser = AstTraverser::new(&self.config().extraction_rules, language)
+                .with_max_chunks(LANGUAGE_MAX_CHUNKS_PER_FILE);
             traverser.traverse_and_extract(&mut cursor, content, file_name, 0, &mut chunks);
         }
 
@@ -88,12 +94,12 @@ impl LanguageProcessor for BaseProcessor {
             let a_priority = a
                 .metadata
                 .get("priority")
-                .and_then(|p| p.as_i64())
+                .and_then(serde_json::Value::as_i64)
                 .unwrap_or(0);
             let b_priority = b
                 .metadata
                 .get("priority")
-                .and_then(|p| p.as_i64())
+                .and_then(serde_json::Value::as_i64)
                 .unwrap_or(0);
 
             b_priority
@@ -102,8 +108,8 @@ impl LanguageProcessor for BaseProcessor {
         });
 
         // Keep only top priority chunks if we have too many
-        if chunks.len() > 50 {
-            chunks.truncate(50);
+        if chunks.len() > LANGUAGE_PRIORITY_THRESHOLD {
+            chunks.truncate(LANGUAGE_PRIORITY_THRESHOLD);
         }
 
         chunks

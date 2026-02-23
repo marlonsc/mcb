@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 /// Default HTTP server port.
 pub const DEFAULT_HTTP_PORT: u16 = 8080;
 
@@ -43,8 +46,7 @@ pub const HTTP_HEADER_ACCEPT: &str = "Accept";
 /// HTTP header name for User-Agent.
 pub const HTTP_HEADER_USER_AGENT: &str = "User-Agent";
 
-/// MIME type for JSON content.
-pub const CONTENT_TYPE_JSON: &str = "application/json";
+pub use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
 /// Default CORS origin (allow all).
 pub const DEFAULT_CORS_ORIGIN: &str = "*";

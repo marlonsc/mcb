@@ -1,82 +1,38 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! JSON utilities for MCP server tool handlers.
 //!
-//! Provides common functions for extracting typed values from JSON objects.
-
-use rmcp::model::{CallToolResult, Content};
 use serde_json::{Map, Value};
 
 /// Extracts a JSON object map from an optional JSON value.
 ///
 /// Returns a reference to the underlying map if the value is an object, or `None` otherwise.
+#[must_use]
 pub fn json_map(data: &Option<Value>) -> Option<&Map<String, Value>> {
     data.as_ref().and_then(|value| value.as_object())
 }
 
-/// Extracts a string value from a JSON object by key.
-///
-/// Returns the string value if the key exists and contains a string, or `None` otherwise.
-pub fn get_str(data: &Map<String, Value>, key: &str) -> Option<String> {
-    data.get(key)
-        .and_then(|value| value.as_str())
-        .map(str::to_string)
-}
-
-/// Extracts a required string value from a JSON object by key.
-///
-/// Returns the string value if the key exists and contains a string.
-/// Returns an error result if the key is missing or does not contain a string.
-pub fn get_required_str(data: &Map<String, Value>, key: &str) -> Result<String, CallToolResult> {
-    get_str(data, key).ok_or_else(|| {
-        CallToolResult::error(vec![Content::text(format!(
-            "Missing required field: {key}"
-        ))])
-    })
-}
-
-/// Extracts an i64 integer value from a JSON object by key.
-///
-/// Returns the integer value if the key exists and contains an i64, or `None` otherwise.
-pub fn get_i64(data: &Map<String, Value>, key: &str) -> Option<i64> {
-    data.get(key).and_then(|value| value.as_i64())
-}
-
-/// Extracts an i32 integer value from a JSON object by key.
-///
-/// Returns the integer value if the key exists and can be converted to i32, or `None` otherwise.
-pub fn get_i32(data: &Map<String, Value>, key: &str) -> Option<i32> {
-    data.get(key)
-        .and_then(|value| value.as_i64())
-        .and_then(|v| v.try_into().ok())
-}
-
-/// Extracts an f32 floating-point value from a JSON object by key.
-///
-/// Returns the floating-point value if the key exists and contains a number, or `None` otherwise.
-pub fn get_f32(data: &Map<String, Value>, key: &str) -> Option<f32> {
-    data.get(key)
-        .and_then(|value| value.as_f64())
-        .map(|v| v as f32)
-}
-
-/// Extracts a boolean value from a JSON object by key.
-///
-/// Returns the boolean value if the key exists and contains a boolean, or `None` otherwise.
-pub fn get_bool(data: &Map<String, Value>, key: &str) -> Option<bool> {
-    data.get(key).and_then(|value| value.as_bool())
-}
-
-/// Extracts a list of strings from a JSON object by key.
-///
-/// Returns a vector of strings extracted from a JSON array. Non-string items are filtered out.
-/// Returns an empty vector if the key doesn't exist or is not an array.
-pub fn get_string_list(data: &Map<String, Value>, key: &str) -> Vec<String> {
-    data.get(key)
-        .and_then(|value| value.as_array())
-        .map(|items| {
-            items
-                .iter()
-                .filter_map(|item| item.as_str().map(str::to_string))
-                .collect()
-        })
-        .unwrap_or_default()
+/// Convert a JSON value to a TOML value
+pub fn json_to_toml(json: &serde_json::Value) -> Option<toml::Value> {
+    match json {
+        serde_json::Value::Null => Some(toml::Value::String(String::new())),
+        serde_json::Value::Bool(b) => Some(toml::Value::Boolean(*b)),
+        serde_json::Value::Number(n) => n
+            .as_i64()
+            .map(toml::Value::Integer)
+            .or_else(|| n.as_f64().map(toml::Value::Float)),
+        serde_json::Value::String(s) => Some(toml::Value::String(s.clone())),
+        serde_json::Value::Array(arr) => {
+            let toml_arr: Option<Vec<toml::Value>> = arr.iter().map(json_to_toml).collect();
+            toml_arr.map(toml::Value::Array)
+        }
+        serde_json::Value::Object(obj) => {
+            let mut table = toml::map::Map::new();
+            for (k, v) in obj {
+                table.insert(k.clone(), json_to_toml(v)?);
+            }
+            Some(toml::Value::Table(table))
+        }
+    }
 }

@@ -44,7 +44,7 @@ fn test_complete_semantic_search_workflow() {
     // Simulate semantic search query
     let query_embedding = Embedding {
         vector: vec![0.1; 384], // Simplified query embedding
-        model: "text-embedding-ada-002".to_string(),
+        model: "text-embedding-ada-002".to_owned(),
         dimensions: 384,
     };
 
@@ -84,30 +84,30 @@ fn test_complete_semantic_search_workflow() {
 fn create_sample_code_chunks() -> Vec<CodeChunk> {
     vec![
         CodeChunk {
-            id: "chunk-1".to_string(),
-            content: "pub struct User {\n    pub id: u64,\n    pub name: String,\n    pub email: String,\n}".to_string(),
-            file_path: "src/models.rs".to_string(),
+            id: "chunk-1".to_owned(),
+            content: "pub struct User {\n    pub id: u64,\n    pub name: String,\n    pub email: String,\n}".to_owned(),
+            file_path: "src/models.rs".to_owned(),
             start_line: 1,
             end_line: 5,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: serde_json::json!({"type": "struct", "name": "User"}),
         },
         CodeChunk {
-            id: "chunk-2".to_string(),
-            content: "impl User {\n    pub fn new(name: String, email: String) -> Self {\n        Self {\n            id: 0,\n            name,\n            email,\n        }\n    }\n}".to_string(),
-            file_path: "src/models.rs".to_string(),
+            id: "chunk-2".to_owned(),
+            content: "impl User {\n    pub fn new(name: String, email: String) -> Self {\n        Self {\n            id: 0,\n            name,\n            email,\n        }\n    }\n}".to_owned(),
+            file_path: "src/models.rs".to_owned(),
             start_line: 7,
             end_line: 15,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: serde_json::json!({"type": "impl", "struct": "User", "method": "new"}),
         },
         CodeChunk {
-            id: "chunk-3".to_string(),
-            content: "pub async fn create_user(\n    db: &Database,\n    name: String,\n    email: String\n) -> Result<User> {\n    let user = User::new(name, email);\n    db.save_user(&user).await?;\n    Ok(user)\n}".to_string(),
-            file_path: "src/handlers.rs".to_string(),
+            id: "chunk-3".to_owned(),
+            content: "pub async fn create_user(\n    db: &Database,\n    name: String,\n    email: String\n) -> Result<User> {\n    let user = User::new(name, email);\n    db.save_user(&user).await?;\n    Ok(user)\n}".to_owned(),
+            file_path: "src/handlers.rs".to_owned(),
             start_line: 20,
             end_line: 28,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: serde_json::json!({"type": "function", "name": "create_user", "async": true}),
         },
     ]
@@ -134,9 +134,9 @@ fn create_codebase_snapshot(chunks: &[CodeChunk]) -> CodebaseSnapshot {
     let total_size: u64 = files.values().map(|f| f.size).sum();
 
     CodebaseSnapshot {
-        id: "workflow-snapshot".to_string(),
+        id: "workflow-snapshot".to_owned(),
         created_at: 1640995200,
-        collection: "test-workflow".to_string(),
+        collection: "test-workflow".to_owned(),
         total_files: files.len(), // Dynamic count based on actual files
         files,
         total_size,
@@ -149,7 +149,7 @@ fn create_chunk_embeddings(chunks: &[CodeChunk]) -> Vec<Embedding> {
         .enumerate()
         .map(|(i, _)| Embedding {
             vector: vec![0.1 * (i + 1) as f32; 384],
-            model: "text-embedding-ada-002".to_string(),
+            model: "text-embedding-ada-002".to_owned(),
             dimensions: 384,
         })
         .collect()
@@ -186,9 +186,9 @@ fn sort_results_by_score(mut results: Vec<SearchResult>) -> Vec<SearchResult> {
 
 fn create_sync_batch() -> SyncBatch {
     SyncBatch {
-        id: "sync-batch-1".to_string(),
-        collection: "test-project".to_string(),
-        files: vec!["src/models.rs".to_string(), "src/handlers.rs".to_string()],
+        id: "sync-batch-1".to_owned(),
+        collection: "test-project".to_owned(),
+        files: vec!["src/models.rs".to_owned(), "src/handlers.rs".to_owned()],
         priority: 5,
         created_at: 1640995200,
     }
@@ -201,12 +201,12 @@ fn test_workflow_error_handling() {
 
     // Empty chunk content should be invalid
     let invalid_chunk = CodeChunk {
-        id: "".to_string(),        // Empty ID
-        content: "".to_string(),   // Empty content
-        file_path: "".to_string(), // Empty path
+        id: String::new(),        // Empty ID
+        content: String::new(),   // Empty content
+        file_path: String::new(), // Empty path
         start_line: 0,
         end_line: 0,
-        language: "".to_string(), // Empty language
+        language: String::new(), // Empty language
         metadata: serde_json::json!({}),
     };
 
@@ -223,12 +223,12 @@ fn test_workflow_performance_characteristics() {
     // Create a larger dataset to test performance characteristics
     let large_chunks: Vec<CodeChunk> = (0..100)
         .map(|i| CodeChunk {
-            id: format!("chunk-{}", i),
-            content: format!("fn function_{}() {{ println!(\"Function {}\"); }}", i, i),
+            id: format!("chunk-{i}"),
+            content: format!("fn function_{i}() {{ println!(\"Function {i}\"); }}"),
             file_path: format!("src/file{}.rs", i % 10),
             start_line: (i % 50 + 1) as u32,
             end_line: (i % 50 + 3) as u32,
-            language: "rust".to_string(),
+            language: "rust".to_owned(),
             metadata: serde_json::json!({"index": i}),
         })
         .collect();
@@ -240,7 +240,7 @@ fn test_workflow_performance_characteristics() {
     let large_embeddings: Vec<Embedding> = (0..100)
         .map(|_| Embedding {
             vector: vec![0.0; 384],
-            model: "test-model".to_string(),
+            model: "test-model".to_owned(),
             dimensions: 384,
         })
         .collect();
@@ -251,7 +251,7 @@ fn test_workflow_performance_characteristics() {
     // Test search on larger dataset
     let query_embedding = Embedding {
         vector: vec![0.0; 384],
-        model: "query-model".to_string(),
+        model: "query-model".to_owned(),
         dimensions: 384,
     };
 

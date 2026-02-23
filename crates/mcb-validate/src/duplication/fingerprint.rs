@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Token Fingerprinting using Rabin-Karp Rolling Hash
 //!
 //! Provides fast initial duplication detection using a rolling hash algorithm.
@@ -7,17 +10,24 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 
+use super::constants::{
+    NORMALIZED_IDENTIFIER, NORMALIZED_LITERAL, RABIN_KARP_BASE, RABIN_KARP_MODULUS,
+};
+use super::utils::lines_overlap;
+
 /// A fingerprint represents a hash of a code fragment
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct Fingerprint(u64);
 
 impl Fingerprint {
     /// Create a new fingerprint from a hash value
+    #[must_use]
     pub fn new(hash: u64) -> Self {
         Self(hash)
     }
 
     /// Get the raw hash value
+    #[must_use]
     pub fn value(&self) -> u64 {
         self.0
     }
@@ -66,9 +76,10 @@ pub struct TokenFingerprinter {
 
 impl TokenFingerprinter {
     /// Create a new fingerprinter with the given window size
+    #[must_use]
     pub fn new(window_size: usize) -> Self {
-        let base: u64 = 31;
-        let modulus: u64 = 1_000_000_007; // Large prime
+        let base: u64 = RABIN_KARP_BASE;
+        let modulus: u64 = RABIN_KARP_MODULUS;
 
         // Precompute base^(window_size-1) mod modulus
         let base_power = Self::mod_pow(base, window_size.saturating_sub(1) as u64, modulus);
@@ -175,6 +186,7 @@ impl TokenFingerprinter {
     }
 
     /// Find all duplicate fingerprints
+    #[must_use]
     pub fn find_duplicates(&self) -> Vec<FingerprintMatch> {
         let mut matches = Vec::new();
 
@@ -191,7 +203,7 @@ impl TokenFingerprinter {
 
                     // Skip if in the same file and overlapping
                     if loc1.file == loc2.file {
-                        let overlap = Self::lines_overlap(
+                        let overlap = lines_overlap(
                             loc1.start_line,
                             loc1.end_line,
                             loc2.start_line,
@@ -212,11 +224,6 @@ impl TokenFingerprinter {
         }
 
         matches
-    }
-
-    /// Check if two line ranges overlap
-    fn lines_overlap(start1: usize, end1: usize, start2: usize, end2: usize) -> bool {
-        !(end1 < start2 || end2 < start1)
     }
 
     /// Clear all stored fingerprints
@@ -279,6 +286,7 @@ pub enum TokenType {
 
 impl Token {
     /// Create a new token
+    #[must_use]
     pub fn new(text: String, line: usize, column: usize, token_type: TokenType) -> Self {
         Self {
             text,
@@ -291,11 +299,17 @@ impl Token {
     /// Normalize the token for Type 2 (renamed) clone detection
     ///
     /// Replaces identifiers with a placeholder while keeping structure
+    #[must_use]
     pub fn normalized_text(&self) -> &str {
         match self.token_type {
-            TokenType::Identifier => "$ID",
-            TokenType::Literal => "$LIT",
-            _ => &self.text,
+            TokenType::Identifier => NORMALIZED_IDENTIFIER,
+            TokenType::Literal => NORMALIZED_LITERAL,
+            TokenType::Keyword
+            | TokenType::Operator
+            | TokenType::Punctuation
+            | TokenType::Comment
+            | TokenType::Whitespace
+            | TokenType::Other => &self.text,
         }
     }
 }
@@ -311,103 +325,4 @@ pub struct FingerprintStats {
     pub unique_fingerprints: usize,
     /// Number of fingerprints with multiple locations (potential duplicates)
     pub duplicate_fingerprints: usize,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn make_tokens(texts: &[&str]) -> Vec<Token> {
-        texts
-            .iter()
-            .enumerate()
-            .map(|(i, text)| Token::new(text.to_string(), i + 1, 1, TokenType::Identifier))
-            .collect()
-    }
-
-    #[test]
-    fn test_fingerprint_simple() {
-        let mut fp = TokenFingerprinter::new(3);
-
-        let tokens1 = make_tokens(&["fn", "foo", "(", ")", "{", "}"]);
-        let tokens2 = make_tokens(&["fn", "foo", "(", ")", "{", "}"]);
-
-        fp.fingerprint_file(&PathBuf::from("file1.rs"), &tokens1);
-        fp.fingerprint_file(&PathBuf::from("file2.rs"), &tokens2);
-
-        let matches = fp.find_duplicates();
-        assert!(!matches.is_empty(), "Should find duplicates");
-    }
-
-    #[test]
-    fn test_no_overlap_same_file() {
-        let mut fp = TokenFingerprinter::new(3);
-
-        // Same file, same tokens - should not report overlapping matches
-        let tokens = make_tokens(&["a", "b", "c", "d", "e"]);
-        fp.fingerprint_file(&PathBuf::from("file1.rs"), &tokens);
-
-        let matches = fp.find_duplicates();
-        // All fingerprints in the same file will be from different positions
-        // But overlapping ones should be filtered out
-        for m in &matches {
-            if m.location1.file == m.location2.file {
-                // They should not overlap
-                assert!(
-                    m.location1.end_line < m.location2.start_line
-                        || m.location2.end_line < m.location1.start_line,
-                    "Found overlapping match in same file"
-                );
-            }
-        }
-    }
-
-    #[test]
-    fn test_rolling_hash_consistency() {
-        let fp = TokenFingerprinter::new(3);
-
-        let tokens = ["a", "b", "c", "d"];
-
-        // Compute hash for "a", "b", "c"
-        let hash1 = fp.initial_hash(&tokens[0..3]);
-
-        // Compute hash for "b", "c", "d" using rolling
-        let hash2_rolling = fp.rolling_hash(hash1, "a", "d");
-
-        // Compute hash for "b", "c", "d" directly
-        let hash2_direct = fp.initial_hash(&tokens[1..4]);
-
-        assert_eq!(
-            hash2_rolling, hash2_direct,
-            "Rolling hash should match direct hash"
-        );
-    }
-
-    #[test]
-    fn test_fingerprint_stats() {
-        let mut fp = TokenFingerprinter::new(2);
-
-        let tokens1 = make_tokens(&["a", "b", "c"]);
-        let tokens2 = make_tokens(&["a", "b", "d"]); // Shares "a", "b"
-
-        fp.fingerprint_file(&PathBuf::from("file1.rs"), &tokens1);
-        fp.fingerprint_file(&PathBuf::from("file2.rs"), &tokens2);
-
-        let stats = fp.stats();
-        assert!(
-            stats.duplicate_fingerprints >= 1,
-            "Should have at least one duplicate fingerprint"
-        );
-    }
-
-    #[test]
-    fn test_token_normalization() {
-        let id_token = Token::new("myVariable".to_string(), 1, 1, TokenType::Identifier);
-        let kw_token = Token::new("if".to_string(), 1, 1, TokenType::Keyword);
-        let lit_token = Token::new("42".to_string(), 1, 1, TokenType::Literal);
-
-        assert_eq!(id_token.normalized_text(), "$ID");
-        assert_eq!(kw_token.normalized_text(), "if");
-        assert_eq!(lit_token.normalized_text(), "$LIT");
-    }
 }

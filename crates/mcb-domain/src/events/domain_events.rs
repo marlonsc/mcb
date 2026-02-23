@@ -1,13 +1,13 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Event Publisher Domain Port
 //!
 //! Defines the business contract for publishing system events. This abstraction
 //! enables services to publish events without coupling to specific implementations
 //! (tokio broadcast, NATS, etc.).
 
-use std::sync::Arc;
-
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
@@ -125,8 +125,8 @@ pub enum DomainEvent {
     ConfigReloaded {
         /// Section that was reloaded
         section: String,
-        /// Timestamp of reload
-        timestamp: DateTime<Utc>,
+        /// Timestamp of reload (Unix epoch seconds)
+        timestamp: i64,
     },
 
     // === Health Events ===
@@ -143,8 +143,8 @@ pub enum DomainEvent {
     // === Metrics Events ===
     /// Periodic metrics snapshot
     MetricsSnapshot {
-        /// Timestamp of snapshot
-        timestamp: DateTime<Utc>,
+        /// Timestamp of snapshot (Unix epoch seconds)
+        timestamp: i64,
     },
 
     // === Search Events ===
@@ -200,6 +200,19 @@ pub enum DomainEvent {
         /// Duration in milliseconds
         duration_ms: u64,
     },
+
+    // === Logging Events ===
+    /// Log event captured from tracing for real-time streaming via SSE
+    LogEvent {
+        /// Log level (TRACE, DEBUG, INFO, WARN, ERROR)
+        level: String,
+        /// Log message
+        message: String,
+        /// Module/target path (e.g., "`mcb_server::handlers::index`")
+        target: String,
+        /// Timestamp (Unix epoch milliseconds)
+        timestamp: i64,
+    },
 }
 
 /// Domain Port for Publishing System Events
@@ -236,6 +249,3 @@ pub trait EventPublisher: Send + Sync {
     /// Useful for avoiding unnecessary event creation if no one is listening.
     fn has_subscribers(&self) -> bool;
 }
-
-/// Shared event publisher for dependency injection
-pub type SharedEventPublisher = Arc<dyn EventPublisher>;

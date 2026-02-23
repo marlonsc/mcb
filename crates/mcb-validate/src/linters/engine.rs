@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Linter Engine Module
 //!
 //! Unified linter interface for coordinating multiple linters.
@@ -19,6 +22,7 @@ pub struct LinterEngine {
 
 impl LinterEngine {
     /// Create a new linter engine with standard linters (Ruff and Clippy)
+    #[must_use]
     pub fn new() -> Self {
         Self {
             enabled_linters: vec![LinterType::Ruff, LinterType::Clippy],
@@ -27,6 +31,7 @@ impl LinterEngine {
     }
 
     /// Create a new linter engine with a custom list of linters
+    #[must_use]
     pub fn with_linters(linters: Vec<LinterType>) -> Self {
         Self {
             enabled_linters: linters,
@@ -35,6 +40,7 @@ impl LinterEngine {
     }
 
     /// Create engine with specific lint codes to enable
+    #[must_use]
     pub fn with_lint_codes(linters: Vec<LinterType>, lint_codes: Vec<String>) -> Self {
         Self {
             enabled_linters: linters,
@@ -43,6 +49,10 @@ impl LinterEngine {
     }
 
     /// Execute all enabled linters against the provided files
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the linter execution fails.
     pub async fn check_files(&self, files: &[&Path]) -> Result<Vec<LintViolation>> {
         let mut all_violations = Vec::new();
 
@@ -77,6 +87,7 @@ impl LinterEngine {
     }
 
     /// Map a linter-specific code to a custom rule ID
+    #[must_use]
     pub fn map_lint_to_rule(&self, lint_code: &str) -> Option<&'static str> {
         match lint_code {
             // Ruff mappings
@@ -90,6 +101,7 @@ impl LinterEngine {
     }
 
     /// Get the list of enabled linters
+    #[must_use]
     pub fn enabled_linters(&self) -> &[super::types::LinterType] {
         &self.enabled_linters
     }

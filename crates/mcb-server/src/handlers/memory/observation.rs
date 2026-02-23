@@ -1,17 +1,24 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use std::sync::Arc;
 
-use mcb_domain::entities::memory::ObservationMetadata;
-use mcb_domain::ports::services::MemoryServiceInterface;
-use mcb_domain::utils::vcs_context::VcsContext;
+use mcb_domain::ports::MemoryServiceInterface;
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
-use uuid::Uuid;
+use rmcp::model::CallToolResult;
 
-use super::helpers::MemoryHelpers;
+use super::common::{
+    MemoryOriginOptions, build_observation_metadata, require_data_map, require_str,
+    resolve_memory_origin_context, str_vec,
+};
 use crate::args::MemoryArgs;
-use crate::error_mapping::to_opaque_tool_error;
+use crate::constants::fields::{
+    FIELD_BRANCH, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE, FIELD_OBSERVATIONS,
+};
+use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::utils::mcp::tool_error;
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -19,58 +26,41 @@ pub async fn store_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match MemoryHelpers::json_map(&args.data) {
-        Some(data) => data,
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing data payload for observation store",
-            )]));
-        }
-    };
-    let content = match MemoryHelpers::get_required_str(data, "content") {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
-    };
-    let observation_type_str = match MemoryHelpers::get_required_str(data, "observation_type") {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
-    };
-    let observation_type = match MemoryHelpers::parse_observation_type(&observation_type_str) {
-        Ok(v) => v,
-        Err(error_result) => return Ok(error_result),
-    };
-    let tags = MemoryHelpers::get_string_list(data, "tags");
-    let project_id = args
-        .project_id
-        .clone()
-        .or_else(|| MemoryHelpers::get_str(data, "project_id"))
-        .ok_or_else(|| {
-            McpError::invalid_params("project_id is required for storing observation", None)
-        })?;
+    let data = extract_field!(require_data_map(
+        &args.data,
+        "Missing data payload for observation store"
+    ));
+    let content = extract_field!(require_str(data, "content"));
+    let observation_type_str = extract_field!(require_str(data, "observation_type"));
+    let observation_type: mcb_domain::entities::memory::ObservationType =
+        parse_enum!(observation_type_str, "observation_type");
+    let tags = str_vec(data, "tags");
+    let origin = resolve_memory_origin_context(
+        args,
+        data,
+        &MemoryOriginOptions {
+            execution_from_args: None,
+            execution_from_data: None,
+            file_path_payload: data.get("file_path").and_then(|v| v.as_str()),
+            timestamp: None,
+        },
+    )?;
 
-    let vcs_context = VcsContext::capture();
-    let metadata = ObservationMetadata {
-        id: Uuid::new_v4().to_string(),
-        session_id: MemoryHelpers::get_str(data, "session_id")
-            .or_else(|| args.session_id.as_ref().map(|id| id.as_str().to_string())),
-        repo_id: MemoryHelpers::get_str(data, "repo_id")
-            .or_else(|| args.repo_id.clone())
-            .or_else(|| vcs_context.repo_id.clone()),
-        file_path: MemoryHelpers::get_str(data, "file_path"),
-        branch: MemoryHelpers::get_str(data, "branch").or_else(|| vcs_context.branch.clone()),
-        commit: MemoryHelpers::get_str(data, "commit").or_else(|| vcs_context.commit.clone()),
-        execution: None,
-        quality_gate: None,
-    };
+    let metadata = build_observation_metadata(
+        origin.canonical_session_id,
+        origin.origin_context,
+        None,
+        None,
+    );
     match memory_service
-        .store_observation(project_id, content, observation_type, tags, metadata)
+        .store_observation(origin.project_id, content, observation_type, tags, metadata)
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({
-            "observation_id": observation_id,
+            FIELD_OBSERVATION_ID: observation_id,
             "deduplicated": deduplicated,
         })),
-        Err(e) => Ok(to_opaque_tool_error(e)),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }
 
@@ -82,14 +72,12 @@ pub async fn get_observations(
 ) -> Result<CallToolResult, McpError> {
     let ids = args.ids.clone().unwrap_or_default();
     if ids.is_empty() {
-        return Ok(CallToolResult::error(vec![Content::text(
-            "Missing observation ids",
-        )]));
+        return Ok(tool_error("Missing observation ids"));
     }
     match memory_service
         .get_observations_by_ids(
             &ids.iter()
-                .map(|id| ObservationId::new(id.clone()))
+                .map(|id| ObservationId::from_string(id))
                 .collect::<Vec<_>>(),
         )
         .await
@@ -101,22 +89,22 @@ pub async fn get_observations(
                     serde_json::json!({
                         "id": obs.id,
                         "content": obs.content,
-                        "observation_type": obs.r#type.as_str(),
+                        FIELD_OBSERVATION_TYPE: obs.r#type.as_str(),
                         "tags": obs.tags,
                         "session_id": obs.metadata.session_id,
                         "repo_id": obs.metadata.repo_id,
                         "file_path": obs.metadata.file_path,
-                        "branch": obs.metadata.branch,
+                        (FIELD_BRANCH): obs.metadata.branch,
                         "created_at": obs.created_at,
                         "content_hash": obs.content_hash,
                     })
                 })
                 .collect();
             ResponseFormatter::json_success(&serde_json::json!({
-                "count": observations.len(),
-                "observations": observations,
+                (FIELD_COUNT): observations.len(),
+                (FIELD_OBSERVATIONS): observations,
             }))
         }
-        Err(e) => Ok(to_opaque_tool_error(e)),
+        Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }

@@ -46,7 +46,7 @@ Before PR-first refactor:
 ### Policy Matrix
 
 | PR Type | Heavy Jobs | CodeQL | Cross-Platform | Coverage | Golden Tests | Gate Check | Time to Gate |
-|---------|------------|--------|----------------|----------|--------------|------------|--------------|
+| --------- | ------------ | -------- | ---------------- | ---------- | -------------- | ------------ | -------------- |
 | **Draft** | ❌ SKIP | ❌ SKIP | ❌ SKIP | ❌ SKIP | ❌ SKIP | ✅ PASS | ~30 seconds |
 | **Bot** | ❌ SKIP* | ❌ SKIP | ❌ SKIP | ❌ SKIP | ❌ SKIP | ✅ Simplified | ~3-5 minutes |
 | **Ready** | ✅ RUN | ✅ RUN (after gate) | ✅ RUN | ✅ RUN | ✅ RUN | ✅ Full | ~5-10 minutes |

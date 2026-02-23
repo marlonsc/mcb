@@ -1,4 +1,9 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
 use super::types::{AgentSessionStatus, AgentType};
 
@@ -6,7 +11,8 @@ use super::types::{AgentSessionStatus, AgentType};
 ///
 /// Tracks the lifecycle of an agent execution, including timing, status, resource usage,
 /// and summaries of the prompt and results.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[skip_serializing_none]
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct AgentSession {
     /// Unique identifier for this agent session.
     pub id: String,

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../docs/modules/server.md)
+//!
 //! MCP Server Builder
 //!
 //! Builder pattern for constructing MCP servers with dependency injection.
@@ -5,15 +8,15 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::VcsProvider;
-use mcb_domain::ports::repositories::{
-    IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
-    VcsEntityRepository,
-};
-use mcb_domain::ports::services::AgentSessionServiceInterface;
-use mcb_domain::ports::services::{
+use mcb_domain::ports::AgentSessionServiceInterface;
+use mcb_domain::ports::VcsProvider;
+use mcb_domain::ports::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
     ProjectDetectorService, SearchServiceInterface, ValidationServiceInterface,
+};
+use mcb_domain::ports::{
+    IssueEntityRepository, OrgEntityRepository, PlanEntityRepository, ProjectRepository,
+    VcsEntityRepository,
 };
 
 use crate::McpServer;
@@ -23,6 +26,7 @@ use crate::McpServer;
 /// Ensures all required domain services are provided before server construction.
 /// Follows the builder pattern to make server construction explicit and testable.
 #[derive(Default)]
+#[must_use]
 pub struct McpServerBuilder {
     indexing_service: Option<Arc<dyn IndexingServiceInterface>>,
     context_service: Option<Arc<dyn ContextServiceInterface>>,
@@ -147,7 +151,7 @@ impl McpServerBuilder {
     /// Build the MCP server
     ///
     /// # Returns
-    /// A Result containing the McpServer or an error if dependencies are missing
+    /// A Result containing the `McpServer` or an error if dependencies are missing
     ///
     /// # Errors
     /// Returns `BuilderError::MissingDependency` if any required service is not provided
@@ -202,13 +206,15 @@ impl McpServerBuilder {
             project: project_service,
             project_workflow: project_repository,
             vcs: vcs_provider,
-            vcs_entity: vcs_entity_repository,
-            plan_entity: plan_entity_repository,
-            issue_entity: issue_entity_repository,
-            org_entity: org_entity_repository,
+            entities: crate::mcp_server::McpEntityRepositories {
+                vcs: vcs_entity_repository,
+                plan: plan_entity_repository,
+                issue: issue_entity_repository,
+                org: org_entity_repository,
+            },
         };
 
-        Ok(McpServer::new(services))
+        Ok(McpServer::new(services, None))
     }
 }
 

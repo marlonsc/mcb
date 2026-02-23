@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Hybrid Search Providers
 //!
 //! This module provides hybrid search functionality that combines BM25 text-based
@@ -31,7 +34,7 @@
 //!
 //! ```no_run
 //! use mcb_providers::hybrid_search::HybridSearchEngine;
-//! use mcb_domain::ports::providers::HybridSearchProvider;
+//! use mcb_domain::ports::HybridSearchProvider;
 //!
 //! // Create engine with default weights (40% BM25, 60% semantic)
 //! let engine = HybridSearchEngine::new();
@@ -49,7 +52,7 @@
 //! ## Providers
 //!
 //! | Provider | Description | Use Case |
-//! |----------|-------------|----------|
+//! | ---------- | ------------- | ---------- |
 //! | `HybridSearchEngine` | Full BM25 + semantic hybrid | Production search |
 //!
 //! ## BM25 Algorithm

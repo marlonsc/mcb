@@ -1,20 +1,23 @@
-//! Configuration management with hot-reload capabilities
+//! Configuration Management - Type-safe, layered, Validated
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
 //!
 //! Provides TOML configuration loading, validation, and hot-reloading
 //! for all system components. This module manages the application's
 //! configuration lifecycle.
 
 pub mod loader;
-pub mod mcp_context_config;
+mod mcp_context_config;
 pub mod paths;
+pub mod test_builder;
 pub mod types;
 pub mod watcher;
 
 // Re-export main configuration types
 pub use types::{
-    AppConfig, AuthConfig, CacheProvider, CacheSystemConfig, LoggingConfig, ServerConfig,
-    ServerConfigBuilder, ServerConfigPresets, ServerCorsConfig, ServerNetworkConfig,
-    ServerSslConfig, ServerTimeoutConfig, TransportMode,
+    AppConfig, AuthConfig, CacheProvider, CacheSystemConfig, DatabaseConfig,
+    DatabaseConfigContainer, LoggingConfig, ServerConfig, ServerConfigBuilder, ServerConfigPresets,
+    ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig, TransportMode,
 };
 
 pub use loader::ConfigLoader;
@@ -23,4 +26,5 @@ pub use paths::{
     COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, VCS_LOCK_FILENAME,
     VCS_REGISTRY_FILENAME, config_dir,
 };
+pub use test_builder::TestConfigBuilder;
 pub use watcher::{ConfigWatcher, ConfigWatcherBuilder, ConfigWatcherUtils};

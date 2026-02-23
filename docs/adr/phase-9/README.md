@@ -283,7 +283,7 @@ Phase 9 builds on Phase 8's workflow system:
 - **ADR-003**: Unified Provider Architecture
 - **ADR-013**: Clean Architecture Crate Separation
 - **ADR-023**: Inventory to Linkme Migration
-- **ADR-029**: Hexagonal Architecture with dill
+- **ADR-029**: Hexagonal Architecture (superseded by ADR-050)
 
 ## Implementation Roadmap
 

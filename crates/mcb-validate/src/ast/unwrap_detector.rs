@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! AST-based Unwrap Detector using rust-code-analysis
 //!
 //! Uses our fork with extended Node API for unwrap/expect detection.
@@ -7,6 +10,7 @@ use std::path::Path;
 
 use rust_code_analysis::{Callback, Node, ParserTrait, action, guess_language};
 
+use crate::constants::common::{CFG_TEST_MARKER, EXPECT_CALL, MOD_PREFIX, UNWRAP_CALL};
 use crate::{Result, ValidationError};
 
 /// Detection result for unwrap/expect usage
@@ -50,50 +54,53 @@ impl Callback for UnwrapCallback {
     }
 }
 
-/// Recursively detect unwrap/expect calls in AST
 fn detect_recursive(
     node: &Node,
     code: &[u8],
     cfg: &UnwrapConfig,
     results: &mut Vec<UnwrapDetection>,
 ) {
-    // Check if this is a call_expression with unwrap/expect
-    if node.kind() == "call_expression"
-        && let Some(text) = node.utf8_text(code)
-    {
-        let method = extract_method(text);
-        if matches!(method.as_str(), "unwrap" | "expect") {
-            let byte_pos = node.start_byte();
-            let in_test = cfg
-                .test_ranges
-                .iter()
-                .any(|(start, end)| byte_pos >= *start && byte_pos < *end);
+    let mut stack = vec![node.0];
 
-            results.push(UnwrapDetection {
-                file: cfg.filename.clone(),
-                line: node.start_row() + 1,
-                column: node.start_position().1 + 1,
-                method,
-                in_test,
-                context: text.lines().next().unwrap_or("").trim().to_string(),
-            });
+    while let Some(ts_node) = stack.pop() {
+        let current = Node(ts_node);
+
+        if current.kind() == "call_expression"
+            && let Some(text) = current.utf8_text(code)
+        {
+            let method = extract_method(text);
+            if matches!(method.as_str(), "unwrap" | "expect") {
+                let byte_pos = current.start_byte();
+                let in_test = cfg
+                    .test_ranges
+                    .iter()
+                    .any(|(start, end)| byte_pos >= *start && byte_pos < *end);
+
+                results.push(UnwrapDetection {
+                    file: cfg.filename.clone(),
+                    line: current.start_row() + 1,
+                    column: current.start_position().1 + 1,
+                    method,
+                    in_test,
+                    context: text.lines().next().unwrap_or("").trim().to_owned(),
+                });
+            }
         }
-    }
 
-    // Recurse through children via inner tree-sitter node (public in our fork)
-    let mut cursor = node.0.walk();
-    for child in node.0.children(&mut cursor) {
-        let child_node = Node(child);
-        detect_recursive(&child_node, code, cfg, results);
+        let mut cursor = ts_node.walk();
+        let children: Vec<_> = ts_node.children(&mut cursor).collect();
+        for child in children.into_iter().rev() {
+            stack.push(child);
+        }
     }
 }
 
 /// Extract method name from call expression text
 fn extract_method(text: &str) -> String {
-    if text.contains(".unwrap()") {
-        "unwrap".to_string()
-    } else if text.contains(".expect(") {
-        "expect".to_string()
+    if text.contains(UNWRAP_CALL) {
+        "unwrap".to_owned()
+    } else if text.contains(EXPECT_CALL) {
+        "expect".to_owned()
     } else {
         String::new()
     }
@@ -107,41 +114,42 @@ fn find_test_ranges(root: &Node, code: &[u8]) -> Vec<(usize, usize)> {
 }
 
 fn find_test_modules_recursive(node: &Node, code: &[u8], ranges: &mut Vec<(usize, usize)>) {
-    if node.kind() == "mod_item" {
-        // Check for #[cfg(test)] attribute before this node
-        let start = node.start_byte();
-        // Look back up to 50 bytes (or start of file) for the attribute
-        let search_start = start.saturating_sub(50);
-        let before = std::str::from_utf8(&code[search_start..start]).unwrap_or("");
-        if before.contains("#[cfg(test)]") {
-            ranges.push((node.start_byte(), node.end_byte()));
-            return; // Don't recurse into test modules
-        }
+    let mut stack = vec![node.0];
 
-        // Also check if the module name is "tests" (common pattern)
-        if let Some(name_text) = node.utf8_text(code)
-            && (name_text.contains("mod tests") || name_text.contains("mod test"))
-        {
-            // Double check there's a #[cfg(test)] somewhere before it in the file
-            let all_before = std::str::from_utf8(&code[..start]).unwrap_or("");
-            // Find the last occurrence of #[cfg(test)] before this position
-            if let Some(attr_pos) = all_before.rfind("#[cfg(test)]") {
-                // Make sure there's no other mod_item between the attribute and this module
-                let between = &all_before[attr_pos..];
-                if !between.contains("mod ")
-                    || between.rfind("mod ").unwrap_or(0) == between.len() - name_text.len()
-                {
-                    ranges.push((node.start_byte(), node.end_byte()));
-                    return;
+    while let Some(ts_node) = stack.pop() {
+        let current = Node(ts_node);
+
+        if current.kind() == "mod_item" {
+            let start = current.start_byte();
+            let search_start = start.saturating_sub(50);
+            let before = std::str::from_utf8(&code[search_start..start]).unwrap_or("");
+            if before.contains(CFG_TEST_MARKER) {
+                ranges.push((current.start_byte(), current.end_byte()));
+                continue;
+            }
+
+            if let Some(name_text) = current.utf8_text(code)
+                && (name_text.contains(&format!("{MOD_PREFIX}tests"))
+                    || name_text.contains(&format!("{MOD_PREFIX}test")))
+            {
+                let all_before = std::str::from_utf8(&code[..start]).unwrap_or("");
+                if let Some(attr_pos) = all_before.rfind(CFG_TEST_MARKER) {
+                    let between = &all_before[attr_pos..];
+                    if !between.contains(MOD_PREFIX)
+                        || between.rfind(MOD_PREFIX).unwrap_or(0) == between.len() - name_text.len()
+                    {
+                        ranges.push((current.start_byte(), current.end_byte()));
+                        continue;
+                    }
                 }
             }
         }
-    }
 
-    // Recurse through children
-    let mut cursor = node.0.walk();
-    for child in node.0.children(&mut cursor) {
-        find_test_modules_recursive(&Node(child), code, ranges);
+        let mut cursor = ts_node.walk();
+        let children: Vec<_> = ts_node.children(&mut cursor).collect();
+        for child in children.into_iter().rev() {
+            stack.push(child);
+        }
     }
 }
 
@@ -158,6 +166,10 @@ impl Callback for TestRangeCallback {
 }
 
 /// Detect unwrap/expect in file content
+///
+/// # Errors
+///
+/// Returns an error if the language cannot be determined from the filename.
 pub fn detect_in_content(content: &str, filename: &str) -> Result<Vec<UnwrapDetection>> {
     let path = Path::new(filename);
     let source = content.as_bytes().to_vec();
@@ -172,7 +184,7 @@ pub fn detect_in_content(content: &str, filename: &str) -> Result<Vec<UnwrapDete
 
     // Second pass: detect unwraps
     let cfg = UnwrapConfig {
-        filename: filename.to_string(),
+        filename: filename.to_owned(),
         test_ranges,
     };
 
@@ -180,9 +192,16 @@ pub fn detect_in_content(content: &str, filename: &str) -> Result<Vec<UnwrapDete
 }
 
 /// Detect unwrap/expect in file
+///
+/// # Errors
+///
+/// Returns an error if the file cannot be read or its language is unsupported.
 pub fn detect_in_file(path: &Path) -> Result<Vec<UnwrapDetection>> {
     let content = std::fs::read_to_string(path)?;
-    detect_in_content(&content, &path.to_string_lossy())
+    let file_name = path
+        .to_str()
+        .ok_or_else(|| ValidationError::Config(format!("Non-UTF8 path: {}", path.display())))?;
+    detect_in_content(&content, file_name)
 }
 
 /// AST-based unwrap detector using rust-code-analysis
@@ -192,11 +211,19 @@ pub struct UnwrapDetector;
 
 impl UnwrapDetector {
     /// Create a new unwrap detector
+    ///
+    /// # Errors
+    ///
+    /// This constructor is infallible but returns `Result` for API consistency.
     pub fn new() -> Result<Self> {
         Ok(Self)
     }
 
     /// Detect unwrap/expect calls in Rust source code
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the language cannot be determined from the filename.
     pub fn detect_in_content(
         &mut self,
         content: &str,
@@ -206,6 +233,10 @@ impl UnwrapDetector {
     }
 
     /// Detect unwrap/expect calls in a file
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be read or its language is unsupported.
     pub fn detect_in_file(&mut self, path: &Path) -> Result<Vec<UnwrapDetection>> {
         detect_in_file(path)
     }
@@ -214,83 +245,5 @@ impl UnwrapDetector {
 impl Default for UnwrapDetector {
     fn default() -> Self {
         Self
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_detect_unwrap_in_code() {
-        let code = r"
-fn main() {
-    let x = Some(42);
-    let y = x.unwrap();
-}
-";
-        let detections = detect_in_content(code, "test.rs").unwrap();
-        assert!(!detections.is_empty());
-        assert_eq!(detections[0].method, "unwrap");
-        assert!(!detections[0].in_test);
-    }
-
-    #[test]
-    fn test_detect_expect_in_code() {
-        let code = r#"
-fn main() {
-    let x = Some(42);
-    let y = x.expect("should have value");
-}
-"#;
-        let detections = detect_in_content(code, "test.rs").unwrap();
-        assert!(!detections.is_empty());
-        assert_eq!(detections[0].method, "expect");
-    }
-
-    #[test]
-    fn test_detect_in_test_module() {
-        let code = r"
-fn main() {
-    let x = Some(42);
-}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn test_something() {
-        let y = Some(1).unwrap();
-    }
-}
-";
-        let detections = detect_in_content(code, "test.rs").unwrap();
-        // Should find the unwrap in test module
-        let test_detections: Vec<_> = detections.iter().filter(|d| d.in_test).collect();
-        assert!(!test_detections.is_empty());
-    }
-
-    #[test]
-    fn test_no_false_positives() {
-        let code = r#"
-fn main() {
-    let x = "unwrap is just a word here";
-    let y = Some(42)?;
-}
-"#;
-        let detections = detect_in_content(code, "test.rs").unwrap();
-        // Should not detect "unwrap" in string literal as a method call
-        let method_calls: Vec<_> = detections
-            .iter()
-            .filter(|d| d.method == "unwrap" || d.method == "expect")
-            .collect();
-        assert!(method_calls.is_empty());
-    }
-
-    #[test]
-    fn test_detector_struct_api() {
-        let mut detector = UnwrapDetector::new().unwrap();
-        let code = "fn f() { Some(1).unwrap(); }";
-        let detections = detector.detect_in_content(code, "test.rs").unwrap();
-        assert!(!detections.is_empty());
     }
 }

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
+//!
 //! Infrastructure Provider Interfaces
 //!
 //! Defines the port interfaces for infrastructure services that are used
@@ -24,7 +27,7 @@ use crate::value_objects::config::SyncBatch;
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::infrastructure::snapshot::SyncProvider;
+/// use mcb_domain::ports::SyncProvider;
 /// use std::path::Path;
 /// use std::sync::Arc;
 ///
@@ -74,7 +77,7 @@ pub trait SyncProvider: Send + Sync {
 /// # Example
 ///
 /// ```no_run
-/// use mcb_domain::ports::infrastructure::snapshot::SnapshotProvider;
+/// use mcb_domain::ports::SnapshotProvider;
 /// use std::path::Path;
 /// use std::sync::Arc;
 ///
