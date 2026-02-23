@@ -117,7 +117,7 @@ MCB follows **Clean Architecture** with strict inward-only dependency flow:
 [linkme](https://crates.io/crates/linkme) provider registration (zero runtime overhead).
 
 See [Architecture Documentation](./docs/architecture/ARCHITECTURE.md) for detailed design
-and [ADR index](./docs/adr/) for all 48 Architecture Decision Records.
+and [ADR index](./docs/adr/) for all 52 Architecture Decision Records.
 
 ## Documentation
 
@@ -129,7 +129,7 @@ and [ADR index](./docs/adr/) for all 48 Architecture Decision Records.
 ### Architecture & Design
 
 - [Architecture Overview](./docs/architecture/ARCHITECTURE.md) — Clean Architecture layers, crate map, dependency flow
-- [Architecture Decision Records](./docs/adr/) — 48 ADRs documenting every major design choice
+ [Architecture Decision Records](./docs/adr/) — 52 ADRs documenting every major design choice
 - [MCP Tools Schema](./docs/MCP_TOOLS.md) — Full tool API documentation
 
 ### Developer Guide
@@ -165,8 +165,9 @@ All contributions must pass:
 
 ## Planned
 
-- **v0.3.0** — Workflow system: FSM-based task orchestration, context scout, policy enforcement
-- **v0.4.0** — Integrated context: knowledge graph, hybrid search (semantic + BM25), time-travel queries
+ **v0.3.0** — SeaQL + Loco.rs platform rebuild: SeaORM persistence, Loco framework, Axum native
+ **v0.4.0** — Workflow system: FSM-based task orchestration, context scout, policy enforcement
+ **v0.5.0** — Integrated context: knowledge graph, hybrid search (semantic + BM25), time-travel queries
 
 See [Roadmap](./docs/developer/ROADMAP.md) for details.
 

@@ -1,7 +1,8 @@
-#![allow(missing_docs)]
-
+//! SeaORM database layer — entities, migrations, repositories, and GraphQL.
 pub mod conversions;
-#[allow(missing_docs)]
+/// Generated SeaORM entity modules (`sea-orm-codegen`).
 pub mod entities;
+/// Seaography-backed GraphQL schema and query root.
+pub mod graphql;
 pub mod migration;
 pub mod repos;

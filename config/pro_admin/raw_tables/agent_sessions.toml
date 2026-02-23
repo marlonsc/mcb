@@ -1,0 +1,38 @@
+[table]
+title = "Agent Sessions"
+table_size = "middle"
+page_size = 30
+order_by = { field = "started_at", order = "desc" }
+columns = [
+    { title = "ID", field = "id", width = 220 },
+    { field = "agent_type", width = 100 },
+    { field = "model", width = 120 },
+    { field = "status", width = 100 },
+    { field = "token_count", width = 100 },
+    { field = "tool_calls_count", width = 100 },
+    { field = "started_at", width = 140 },
+    { field = "duration_ms", width = 100 },
+]
+hidden_columns = [
+    "session_summary_id",
+    "prompt_summary",
+    "result_summary",
+    "delegations_count",
+]
+
+[filter]
+hidden_columns = ["session_summary_id"]
+
+[editor]
+enable = true
+title_field = "agent_type"
+
+[create]
+enable = false
+
+[update]
+enable = true
+readonly_columns = ["id", "started_at"]
+
+[delete]
+enable = false

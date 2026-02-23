@@ -10,7 +10,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use axum::Router as AxumRouter;
 use loco_rs::Result;
-use loco_rs::app::{AppContext as LocoAppContext, Hooks};
+use loco_rs::app::{AppContext as LocoAppContext, Hooks, Initializer};
 use loco_rs::bgworker::Queue;
 use loco_rs::boot::{BootResult, StartMode, create_app};
 use loco_rs::config::Config as LocoConfig;
@@ -73,6 +73,15 @@ impl Hooks for McbApp {
 
     fn routes(_ctx: &LocoAppContext) -> AppRoutes {
         AppRoutes::with_default_routes()
+            .prefix("/api")
+            .add_route(crate::controllers::admin::routes())
+            .add_route(crate::controllers::graphql::routes())
+    }
+
+    async fn initializers(_ctx: &LocoAppContext) -> Result<Vec<Box<dyn Initializer>>> {
+        Ok(vec![Box::new(
+            crate::initializers::graphql::GraphQLInitializer,
+        )])
     }
 
     async fn after_routes(router: AxumRouter, ctx: &LocoAppContext) -> Result<AxumRouter> {
