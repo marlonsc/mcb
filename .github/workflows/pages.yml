@@ -155,15 +155,13 @@ jobs:
           path: docs-site/
       - name: Check artifacts exist
         run: |
-          if [[ ! -d "docs-site/api" ]] && [[ ! -d "docs-site" ]]; then
-            echo "No documentation artifacts to deploy (docs were not built)" >&2
-            exit 0
-          fi
-          if [[ ! -d "docs-site/api" ]]; then
+          # Check for actual content files, not just directories
+          # (download-artifact may create empty dirs with continue-on-error)
+          if [[ ! -f "docs-site/api/index.html" ]]; then
             echo "Warning: Rust API docs not found, creating empty directory" >&2
             mkdir -p docs-site/api
           fi
-          if [[ ! -d "docs-site" ]]; then
+          if [[ ! -f "docs-site/index.html" ]]; then
             echo "Warning: mdBook docs not found, creating empty directory" >&2
             mkdir -p docs-site
           fi
