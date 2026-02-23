@@ -65,6 +65,16 @@ This directory contains all Architecture Decision Records (ADRs) for the Memory 
 - [ADR 045: Context Versioning](phase-9/README.md#adr-045-context-versioning) - Snapshot and temporal queries
 - [ADR 046: Integration Patterns](phase-9/README.md#adr-046-integration-patterns) - MCP tool integration
 - [ADR 047: Project Architecture](047-project-architecture.md) - Central Hub and Multi-Dimensional Coordination
+- [ADR 048: Observability Strategy](048-observability-strategy.md)
+
+### v0.2.1 Modernization (Stable Rust + DI Cleanup)
+
+- [ADR 049: Axum Return + rmcp Tower Compatibility](049-axum-return-rmcp-tower-compatibility.md)
+- [ADR 050: Manual Composition Root — dill Removal](050-manual-composition-root-dill-removal.md) - Stable Rust migration, removed nightly dependency
+
+### v0.3.0 SeaQL + Loco.rs Platform Rebuild — ACCEPTED
+
+- [ADR 051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md) - **ACCEPTED** - Platform migration to SeaORM 2.x + Loco.rs
 
 ### Implementation Timeline v0.1.2
 
@@ -110,7 +120,7 @@ This directory contains all Architecture Decision Records (ADRs) for the Memory 
 
 ## ADR Count
 
-**Total ADRs**: 47 (ADR-001 through ADR-047)
+**Total ADRs**: 51 (ADR-001 through ADR-051)
 
 - **Core Architecture**: ADR-001-007 (7 ADRs)
 - **v0.2.0 Features**: ADR-008-010 (3 ADRs)
@@ -118,6 +128,8 @@ This directory contains all Architecture Decision Records (ADRs) for the Memory 
 - **v0.1.2 Refactoring**: ADR-023-031 (9 ADRs)
 - **Phase 8 (Workflow)**: ADR-034-037 (4 ADRs)
 - **Phase 9 (Context)**: ADR-041-047 (7 ADRs)
+- **v0.2.1 Modernization**: ADR-049-050 (2 ADRs)
+- **v0.3.0 Platform Rebuild**: ADR-051 (1 ADR)
 
 ## Creating New ADRs
 
