@@ -54,7 +54,48 @@ pub(crate) async fn create_real_domain_services()
 
     let project_id = TEST_PROJECT_ID.to_owned();
 
-    let deps = mcb_infrastructure::di::test_factory::create_test_dependencies(project_id, &db, ctx);
+    let memory_repository = Arc::new(
+        mcb_providers::database::seaorm::repos::SeaOrmObservationRepository::new((*db).clone()),
+    );
+    let agent_repository = Arc::new(
+        mcb_providers::database::seaorm::repos::SeaOrmAgentRepository::new(Arc::clone(&db)),
+    );
+    let project_repository = Arc::new(
+        mcb_providers::database::seaorm::repos::SeaOrmProjectRepository::new((*db).clone()),
+    );
+    let entity_repo = Arc::new(
+        mcb_providers::database::seaorm::repos::SeaOrmEntityRepository::new(Arc::clone(&db)),
+    );
+    let file_hash_repository = Arc::new(
+        mcb_providers::database::seaorm::repos::SeaOrmIndexRepository::new(
+            Arc::clone(&db),
+            project_id.clone(),
+        ),
+    );
+
+    let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
+        project_id,
+        cache: mcb_infrastructure::cache::provider::SharedCacheProvider::from_arc(
+            ctx.cache_provider(),
+        ),
+        crypto: ctx.crypto_service(),
+        config: (*ctx.config).clone(),
+        embedding_provider: ctx.embedding_provider(),
+        vector_store_provider: ctx.vector_store_provider(),
+        language_chunker: ctx.language_chunker(),
+        indexing_ops: ctx.indexing(),
+        event_bus: ctx.event_bus(),
+        memory_repository,
+        agent_repository,
+        file_hash_repository,
+        vcs_provider: ctx.vcs_provider(),
+        project_service: ctx.project_service(),
+        project_repository,
+        vcs_entity_repository: Arc::clone(&entity_repo) as _,
+        plan_entity_repository: Arc::clone(&entity_repo) as _,
+        issue_entity_repository: Arc::clone(&entity_repo) as _,
+        org_entity_repository: entity_repo as _,
+    };
 
     let services = DomainServicesFactory::create_services(deps).await.ok()?;
     Some((services, temp_dir))

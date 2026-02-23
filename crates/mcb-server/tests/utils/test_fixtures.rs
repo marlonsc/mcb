@@ -16,7 +16,7 @@ use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::ports::IndexingResult;
 use mcb_domain::value_objects::Embedding;
 use mcb_infrastructure::config::{AppConfig, ConfigLoader, DatabaseConfig};
-use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
+use mcb_infrastructure::di::bootstrap::{AppContext, init_app, init_app_with_overrides};
 use mcb_infrastructure::di::modules::domain_services::DomainServicesFactory;
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
@@ -354,10 +354,11 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                         cfg.api_key = Some("test-key".to_owned());
                     }
 
-                    let ctx = init_app(fallback).await?;
-                    ctx.embedding_handle()
-                        .set(Arc::new(DeterministicEmbeddingProvider));
-                    Ok::<_, mcb_domain::error::Error>(ctx)
+                    init_app_with_overrides(
+                        fallback,
+                        Some(Arc::new(DeterministicEmbeddingProvider)),
+                    )
+                    .await
                 });
 
                 match fallback_result {
@@ -439,10 +440,7 @@ async fn init_app_deterministic_fallback(
         cfg.model = "text-embedding-3-small".to_owned();
         cfg.api_key = Some("test-key".to_owned());
     }
-    let ctx = init_app(config).await?;
-    ctx.embedding_handle()
-        .set(Arc::new(DeterministicEmbeddingProvider));
-    Ok(ctx)
+    init_app_with_overrides(config, Some(Arc::new(DeterministicEmbeddingProvider))).await
 }
 
 // ---------------------------------------------------------------------------
@@ -491,8 +489,48 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
     };
 
     let project_id = TEST_PROJECT_ID.to_owned();
+    let memory_repository = Arc::new(
+        mcb_providers::database::seaorm::repos::SeaOrmObservationRepository::new((*db).clone()),
+    );
+    let agent_repository = Arc::new(
+        mcb_providers::database::seaorm::repos::SeaOrmAgentRepository::new(Arc::clone(&db)),
+    );
+    let project_repository = Arc::new(
+        mcb_providers::database::seaorm::repos::SeaOrmProjectRepository::new((*db).clone()),
+    );
+    let entity_repo = Arc::new(
+        mcb_providers::database::seaorm::repos::SeaOrmEntityRepository::new(Arc::clone(&db)),
+    );
+    let file_hash_repository = Arc::new(
+        mcb_providers::database::seaorm::repos::SeaOrmIndexRepository::new(
+            Arc::clone(&db),
+            project_id.clone(),
+        ),
+    );
 
-    let deps = mcb_infrastructure::di::test_factory::create_test_dependencies(project_id, &db, ctx);
+    let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
+        project_id,
+        cache: mcb_infrastructure::cache::provider::SharedCacheProvider::from_arc(
+            ctx.cache_provider(),
+        ),
+        crypto: ctx.crypto_service(),
+        config: (*ctx.config).clone(),
+        embedding_provider: ctx.embedding_provider(),
+        vector_store_provider: ctx.vector_store_provider(),
+        language_chunker: ctx.language_chunker(),
+        indexing_ops: ctx.indexing(),
+        event_bus: ctx.event_bus(),
+        memory_repository,
+        agent_repository,
+        file_hash_repository,
+        vcs_provider: ctx.vcs_provider(),
+        project_service: ctx.project_service(),
+        project_repository,
+        vcs_entity_repository: Arc::clone(&entity_repo) as _,
+        plan_entity_repository: Arc::clone(&entity_repo) as _,
+        issue_entity_repository: Arc::clone(&entity_repo) as _,
+        org_entity_repository: entity_repo as _,
+    };
 
     let services_result = DomainServicesFactory::create_services(deps).await;
     assert!(services_result.is_ok(), "build domain services");

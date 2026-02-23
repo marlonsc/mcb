@@ -9,8 +9,7 @@
 //! 1. Services are obtained via DI, not constructed directly
 //! 2. All registries have registered providers
 //! 3. Provider names match expectations from config
-//! 4. Handles return consistent provider instances
-//! 5. Admin services can switch providers at runtime
+//! 4. Accessor returns consistent provider instances
 
 use rstest::rstest;
 // Force linkme registration of all providers
@@ -73,7 +72,7 @@ async fn test_config_provider_names_match_resolved_providers() {
         eprintln!("skipping: shared AppContext unavailable (FastEmbed model missing)");
         return;
     };
-    let embedding = ctx.embedding_handle().get();
+    let embedding = ctx.embedding_provider();
 
     assert_eq!(
         embedding.provider_name(),
@@ -83,37 +82,18 @@ async fn test_config_provider_names_match_resolved_providers() {
 }
 
 #[tokio::test]
-async fn test_handle_based_di_prevents_direct_construction() {
+async fn test_di_prevents_direct_construction() {
     let Some(ctx) = try_shared_app_context() else {
         eprintln!("skipping: shared AppContext unavailable (FastEmbed model missing)");
         return;
     };
 
-    let via_handle_1 = ctx.embedding_handle().get();
-    let via_handle_2 = ctx.embedding_handle().get();
+    let provider_1 = ctx.embedding_provider();
+    let provider_2 = ctx.embedding_provider();
 
     assert!(
-        Arc::ptr_eq(&via_handle_1, &via_handle_2),
-        "Handle should return same instance (proving DI is used, not direct construction)"
-    );
-}
-
-#[tokio::test]
-async fn test_multiple_handles_reference_same_underlying_provider() {
-    let Some(ctx) = try_shared_app_context() else {
-        eprintln!("skipping: shared AppContext unavailable (FastEmbed model missing)");
-        return;
-    };
-
-    let handle1 = ctx.embedding_handle();
-    let handle2 = ctx.embedding_handle();
-
-    let provider1 = handle1.get();
-    let provider2 = handle2.get();
-
-    assert!(
-        Arc::ptr_eq(&provider1, &provider2),
-        "Different handle references should return same provider"
+        Arc::ptr_eq(&provider_1, &provider_2),
+        "Accessor should return same instance (proving DI is used, not direct construction)"
     );
 }
 
@@ -158,46 +138,6 @@ async fn test_provider_factories_return_working_providers() {
     // Language provider
     let lang_config = LanguageProviderConfig::new("universal");
     let _ = resolve_language_provider(&lang_config).expect("Should resolve universal");
-}
-
-// ============================================================================
-// Admin Service Architecture Validation
-// ============================================================================
-
-#[tokio::test]
-async fn test_admin_services_accessible_via_context() {
-    let Some(ctx) = try_shared_app_context() else {
-        eprintln!("skipping: shared AppContext unavailable (FastEmbed model missing)");
-        return;
-    };
-
-    let embedding_admin = ctx.embedding_admin();
-    let vector_store_admin = ctx.vector_store_admin();
-    let cache_admin = ctx.cache_admin();
-
-    // Validate admin services return meaningful data
-    assert!(
-        !embedding_admin.list_providers().is_empty(),
-        "Embedding admin should list available providers"
-    );
-    assert!(
-        !embedding_admin.current_provider().is_empty(),
-        "Embedding admin should report current provider"
-    );
-
-    assert!(
-        !vector_store_admin.list_providers().is_empty(),
-        "Vector store admin should list available providers"
-    );
-
-    assert!(
-        !cache_admin.list_providers().is_empty(),
-        "Cache admin should list available providers"
-    );
-    assert!(
-        !cache_admin.current_provider().is_empty(),
-        "Cache admin should report current provider"
-    );
 }
 
 // ============================================================================

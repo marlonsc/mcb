@@ -11,7 +11,7 @@ use crate::utils::shared_context::try_shared_app_context;
 
 #[fixture]
 async fn provider_context() -> Option<Arc<dyn EmbeddingProvider>> {
-    try_shared_app_context().map(|ctx| ctx.embedding_handle().get())
+    try_shared_app_context().map(mcb_infrastructure::di::AppContext::embedding_provider)
 }
 
 #[fixture]

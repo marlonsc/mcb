@@ -235,8 +235,8 @@ fn test_sample_codebase_contains_expected_file(#[case] expected_file: &str) {
 async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context();
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
 
     let collection = unique_collection("golden-index");
     let chunks = read_sample_codebase_files();
@@ -306,8 +306,8 @@ async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>
 async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context();
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
 
     let golden_config = load_golden_queries()?;
     let collection = unique_collection("golden-search");
@@ -402,8 +402,8 @@ async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std
 async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context();
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
 
     let golden_config = load_golden_queries()?;
     let collection = unique_collection("golden-all-queries");
@@ -520,8 +520,8 @@ async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error
 
     let ctx = shared_app_context();
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
     let golden_config = load_golden_queries()?;
 
     let collection = unique_collection("golden-e2e");

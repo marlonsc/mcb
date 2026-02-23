@@ -25,8 +25,8 @@ async fn memory_service() -> Option<MemoryServiceImpl> {
     Some(MemoryServiceImpl::new(
         format!("test-project-{id}"),
         app_ctx.memory_repository(),
-        app_ctx.embedding_handle().get(),
-        app_ctx.vector_store_handle().get(),
+        app_ctx.embedding_provider(),
+        app_ctx.vector_store_provider(),
     ))
 }
 

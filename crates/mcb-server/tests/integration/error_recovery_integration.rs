@@ -78,8 +78,8 @@ async fn test_search_empty_collection_returns_empty_not_error()
 -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context();
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
 
     let collection = unique_collection("error-empty");
 
@@ -126,19 +126,19 @@ async fn test_provider_handles_return_valid_instances() -> Result<(), Box<dyn st
     let ctx = shared_app_context();
 
     // All handles should return valid providers
-    let embedding = ctx.embedding_handle().get();
+    let embedding = ctx.embedding_provider();
     assert!(
         embedding.dimensions() > 0,
         "Embedding should have positive dimensions"
     );
 
-    let vector_store = ctx.vector_store_handle().get();
+    let vector_store = ctx.vector_store_provider();
     assert!(
         !vector_store.provider_name().is_empty(),
         "Vector store should have a name"
     );
 
-    let cache = ctx.cache_handle().get();
+    let cache = ctx.cache_provider();
     assert!(
         !cache.provider_name().is_empty(),
         "Cache should have a name"
@@ -154,8 +154,8 @@ async fn test_provider_handles_return_valid_instances() -> Result<(), Box<dyn st
 async fn test_failed_search_doesnt_corrupt_state() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context();
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
 
     let collection = unique_collection("error-isolation");
 
@@ -250,20 +250,14 @@ fn test_resolve_with_empty_config_values() {
 // ============================================================================
 
 #[tokio::test]
-async fn test_concurrent_handle_access() -> Result<(), Box<dyn std::error::Error>> {
+async fn test_concurrent_provider_access() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context();
-
-    let handle = ctx.embedding_handle();
-
+    let provider = ctx.embedding_provider();
     let mut tasks = Vec::new();
     for _ in 0..10 {
-        let h = Arc::clone(&handle);
-        tasks.push(tokio::spawn(async move {
-            let provider = h.get();
-            provider.dimensions()
-        }));
+        let p = Arc::clone(&provider);
+        tasks.push(tokio::spawn(async move { p.dimensions() }));
     }
-
     for task in tasks {
         let dims = task.await?;
         assert_eq!(
