@@ -320,6 +320,32 @@ jsonpath-rust = "1.0.4"
 once_cell = "1.19"
 
 # ============================================
+# SeaQL Ecosystem (v0.3.0 — SQLite-only)
+# ============================================
+
+# SeaORM: Entity-first ORM with schema-sync and dense format
+# Pinned to exact RC version per v0.3.0 guardrails (not caret)
+sea-orm = { version = "=2.0.0-rc.34", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
+
+# SeaORM migrations
+sea-orm-migration = "=2.0.0-rc.34"
+
+# SeaQuery: SQL builder (explicit requirement)
+sea-query = "=0.32"
+
+# Seaography: GraphQL schema generator for SeaORM
+seaography = "2.0.0-rc.1"
+
+# Sea Streamer: Event streaming
+sea-streamer = { version = "0.6", features = ["file", "redis"] }
+
+# Async GraphQL
+async-graphql = "7"
+
+# Loco: Web framework
+loco-rs = "0.14"
+
+# ============================================
 # Build Profiles
 # ============================================
 
