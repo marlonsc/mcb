@@ -8,5 +8,6 @@ pub mod error;
 pub mod events;
 pub mod ports;
 pub mod repositories;
+pub mod schema_entity_sync_tests;
 pub mod utils;
 pub mod value_objects;
