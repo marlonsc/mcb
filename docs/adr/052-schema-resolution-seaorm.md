@@ -1,5 +1,5 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
-# ADR 049: Schema Resolution with SeaORM 2.x
+# ADR 052: Schema Resolution with SeaORM 2.x
 
 ## Status
 

@@ -16,7 +16,6 @@ use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
-use mcb_domain::test_services_config;
 
 // ============================================================================
 // Embedding Registry Tests - Real Provider Resolution
@@ -131,8 +130,7 @@ mod vector_store_registry_tests {
 
     #[rstest]
     fn test_config_builder() {
-        let milvus_uri = test_services_config::required_test_service_url("milvus_address")
-            .expect("milvus_address required in test config");
+        let milvus_uri = "http://127.0.0.1:19530".to_owned();
         let config = VectorStoreProviderConfig::new("milvus")
             .with_uri(&milvus_uri)
             .with_collection("embeddings")
@@ -140,7 +138,7 @@ mod vector_store_registry_tests {
             .with_encryption("secret-key");
 
         assert_eq!(config.provider, "milvus");
-        assert_eq!(config.uri, Some(milvus_uri));
+        assert_eq!(config.uri.as_deref(), Some("http://127.0.0.1:19530"));
         assert_eq!(config.collection, Some("embeddings".to_owned()));
         assert_eq!(config.dimensions, Some(384));
         assert_eq!(config.encrypted, Some(true));
@@ -198,8 +196,7 @@ mod cache_registry_tests {
 
     #[rstest]
     fn test_config_builder() {
-        let redis_uri = test_services_config::required_test_service_url("redis_url")
-            .expect("redis_url required in test config");
+        let redis_uri = "redis://127.0.0.1:6379".to_owned();
         let config = CacheProviderConfig::new("redis")
             .with_uri(&redis_uri)
             .with_max_size(10000)
@@ -207,7 +204,7 @@ mod cache_registry_tests {
             .with_namespace("mcb");
 
         assert_eq!(config.provider, "redis");
-        assert_eq!(config.uri, Some(redis_uri));
+        assert_eq!(config.uri.as_deref(), Some("redis://127.0.0.1:6379"));
         assert_eq!(config.max_size, Some(10000));
         assert_eq!(config.ttl_secs, Some(3600));
         assert_eq!(config.namespace, Some("mcb".to_owned()));

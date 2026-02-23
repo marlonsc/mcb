@@ -4340,7 +4340,6 @@ dependencies = [
  "dirs",
  "fastembed",
  "futures",
- "handlebars",
  "health",
  "hostname",
  "http-body-util",
