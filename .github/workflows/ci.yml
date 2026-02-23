@@ -259,11 +259,17 @@ jobs:
         shell: pwsh
         env:
           PROTOC_VERSION: "29.3"
+          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
         run: |
           $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\protoc.zip"
-          Expand-Archive "$env:TEMP\protoc.zip" -DestinationPath "$env:TEMP\protoc" -Force
-          "$env:TEMP\protoc\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+          $zip = "$env:TEMP\protoc.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:PROTOC_SHA256) {
+            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
+          }
+          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ matrix.rust }}
@@ -400,11 +406,17 @@ jobs:
         shell: pwsh
         env:
           PROTOC_VERSION: "29.3"
+          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
         run: |
           $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-          Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\protoc.zip"
-          Expand-Archive "$env:TEMP\protoc.zip" -DestinationPath "$env:TEMP\protoc" -Force
-          "$env:TEMP\protoc\bin" | Out-File -FilePath $env:GITHUB_PATH -Append
+          $zip = "$env:TEMP\protoc.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:PROTOC_SHA256) {
+            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
+          }
+          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable

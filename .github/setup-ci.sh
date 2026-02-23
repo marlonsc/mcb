@@ -32,10 +32,24 @@ Darwin)
 MINGW* | MSYS* | CYGWIN*)
 	if ! command -v protoc &>/dev/null; then
 		PROTOC_VERSION="${PROTOC_VERSION:-29.3}"
+		PROTOC_SHA256="${PROTOC_SHA256:-57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383}"
 		PROTOC_URL="https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOC_VERSION}/protoc-${PROTOC_VERSION}-win64.zip"
 		PROTOC_DIR="${TEMP:-/tmp}/protoc"
-		curl -sSfL "$PROTOC_URL" -o "${TEMP:-/tmp}/protoc.zip"
-		unzip -qo "${TEMP:-/tmp}/protoc.zip" -d "$PROTOC_DIR"
+		PROTOC_ZIP="${TEMP:-/tmp}/protoc.zip"
+		curl -sSfL "$PROTOC_URL" -o "$PROTOC_ZIP"
+		if command -v sha256sum &>/dev/null; then
+			ACTUAL_SHA256=$(sha256sum "$PROTOC_ZIP" | awk '{print $1}')
+		elif command -v shasum &>/dev/null; then
+			ACTUAL_SHA256=$(shasum -a 256 "$PROTOC_ZIP" | awk '{print $1}')
+		else
+			echo "ERROR: neither sha256sum nor shasum is available to verify protoc download." >&2
+			exit 1
+		fi
+		if [[ "${ACTUAL_SHA256,,}" != "${PROTOC_SHA256,,}" ]]; then
+			echo "ERROR: protoc checksum mismatch. expected=${PROTOC_SHA256} got=${ACTUAL_SHA256}" >&2
+			exit 1
+		fi
+		unzip -qo "$PROTOC_ZIP" -d "$PROTOC_DIR"
 		export PATH="$PROTOC_DIR/bin:$PATH"
 		if [[ -n "${GITHUB_PATH:-}" ]]; then
 			echo "$PROTOC_DIR/bin" >>"$GITHUB_PATH"
