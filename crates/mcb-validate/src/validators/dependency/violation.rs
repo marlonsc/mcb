@@ -88,5 +88,17 @@ define_violations! {
             context: String,
             severity: Severity,
         },
+        #[violation(
+            id = "DEP006",
+            severity = Error,
+            message = "Forbidden provider import outside mcb-providers: {file}:{line} - {context}",
+            suggestion = "Resolve providers via DI/registry and import only domain ports outside mcb-providers"
+        )]
+        ProviderBypassImport {
+            file: PathBuf,
+            line: usize,
+            context: String,
+            severity: Severity,
+        },
     }
 }

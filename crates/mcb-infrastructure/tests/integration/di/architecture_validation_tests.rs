@@ -13,8 +13,6 @@
 //! 5. Admin services can switch providers at runtime
 
 use rstest::rstest;
-// Force linkme registration of all providers
-extern crate mcb_providers;
 
 use std::sync::Arc;
 

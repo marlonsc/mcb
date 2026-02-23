@@ -9,7 +9,6 @@
 //! Run with: `cargo test -p mcb-server --test unit mcp_protocol`
 
 use rstest::rstest;
-extern crate mcb_providers;
 
 use axum::http::StatusCode;
 use mcb_server::transport::types::McpRequest;

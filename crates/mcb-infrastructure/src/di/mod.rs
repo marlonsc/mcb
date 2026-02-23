@@ -45,6 +45,7 @@ pub mod modules;
 pub mod provider_resolvers;
 pub mod repositories;
 pub mod resolver;
+#[cfg(feature = "test-utils")]
 pub mod test_factory;
 #[allow(missing_docs)]
 pub mod vcs;
@@ -71,5 +72,6 @@ pub use repositories::{
 pub use resolver::{
     AvailableProviders, ResolvedProviders, list_available_providers, resolve_providers,
 };
+#[cfg(feature = "test-utils")]
 pub use test_factory::create_test_dependencies;
 pub use vcs::default_vcs_provider;

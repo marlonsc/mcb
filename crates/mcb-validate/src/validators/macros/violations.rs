@@ -180,6 +180,7 @@ macro_rules! define_violations {
     ) => {
         #[derive(Debug, Clone, serde::Serialize)]
         #[doc = concat!("Violation types emitted by the [`", stringify!($name), "`] validator.")]
+        #[allow(missing_docs)]
         $vis enum $name {
             $(
                 $(#[doc = $doc])*

@@ -12,9 +12,6 @@ use serial_test::serial;
 
 use crate::utils::shared_context::{shared_fastembed_test_cache_dir, try_shared_app_context};
 
-// Force linkme registration by linking mcb_providers crate
-extern crate mcb_providers;
-
 /// Build a fresh config+tempdir for tests that intentionally test `init_app()`.
 ///
 /// # Errors

@@ -9,9 +9,6 @@
 //! These tests validate that the linkme distributed slice registry system works correctly
 //! by actually resolving and using registered providers, not just testing config builders.
 
-// Force linkme registration of all providers from mcb-providers
-extern crate mcb_providers;
-
 use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;

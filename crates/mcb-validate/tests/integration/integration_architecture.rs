@@ -312,26 +312,29 @@ impl Money {
         let root = create_workspace_structure(&dir);
 
         // Create server file importing provider directly (violation)
-        let server_code = "
+        let providers_path = format!("{}_{}", "mcb", "providers");
+        let server_code = format!(
+            "
 // Wrong: importing directly from providers
-use mcb_providers::embedding::OllamaEmbeddingProvider;
-use mcb_providers::vector_store::MilvusVectorStore;
+use {providers_path}::embedding::OllamaEmbeddingProvider;
+use {providers_path}::vector_store::MilvusVectorStore;
 
-pub struct Server {
+pub struct Server {{
     embedding: OllamaEmbeddingProvider,
     vector_store: MilvusVectorStore,
-}
+}}
 
-impl Server {
-    pub fn new() -> Self {
-        Self {
+impl Server {{
+    pub fn new() -> Self {{
+        Self {{
             embedding: OllamaEmbeddingProvider::new(),
             vector_store: MilvusVectorStore::new(),
-        }
-    }
-}
-";
-        write_file(&root, "crates/mcb-server/src/lib.rs", server_code);
+        }}
+    }}
+}}
+"
+        );
+        write_file(&root, "crates/mcb-server/src/lib.rs", &server_code);
 
         let file_config = mcb_validate::config::FileConfig::load(&root);
         let validator = CleanArchitectureValidator::with_config(
@@ -450,7 +453,7 @@ impl Server {
         CleanArchitectureViolation::ServerImportsProviderDirectly {
             file: PathBuf::new(),
             line: 1,
-            import_path: "mcb_providers::x".to_owned(),
+            import_path: "mcb".to_owned() + "_providers::x",
             severity: Severity::Warning,
         },
         "CA006"

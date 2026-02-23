@@ -164,6 +164,72 @@ scan_root = "crates/mcb/src/cli"
 pattern = "mcb_validate::"
 allowed_files = ["crates/mcb/src/cli/validate.rs"]
 
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP006"
+scan_root = "crates/mcb/src"
+pattern = "mcb_providers::"
+allowed_files = []
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP006"
+scan_root = "crates/mcb-domain/src"
+pattern = "mcb_providers::"
+allowed_files = []
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP006"
+scan_root = "crates/mcb-domain/tests"
+pattern = "mcb_providers::"
+allowed_files = []
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP006"
+scan_root = "crates/mcb-application/src"
+pattern = "mcb_providers::"
+allowed_files = []
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP006"
+scan_root = "crates/mcb-application/tests"
+pattern = "mcb_providers::"
+allowed_files = []
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP006"
+scan_root = "crates/mcb-infrastructure/src"
+pattern = "mcb_providers::"
+allowed_files = []
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP006"
+scan_root = "crates/mcb-infrastructure/tests"
+pattern = "mcb_providers::"
+allowed_files = []
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP006"
+scan_root = "crates/mcb-server/src"
+pattern = "mcb_providers::"
+allowed_files = []
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP006"
+scan_root = "crates/mcb-server/tests"
+pattern = "mcb_providers::"
+allowed_files = []
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP006"
+scan_root = "crates/mcb-validate/src"
+pattern = "mcb_providers::"
+allowed_files = []
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP006"
+scan_root = "crates/mcb-validate/tests"
+pattern = "mcb_providers::"
+allowed_files = []
+
 [validators]
 architecture = true
 clean_architecture = true

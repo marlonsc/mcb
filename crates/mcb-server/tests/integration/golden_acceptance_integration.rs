@@ -11,11 +11,6 @@
 //! 3. Search returns results matching `expected_files`
 //! 4. The architecture works end-to-end without external dependencies
 //!
-//! Uses `extern crate mcb_providers` to force linkme registration.
-
-// Force linkme registration of all providers
-extern crate mcb_providers;
-
 use std::collections::HashMap;
 use std::fs;
 use std::path::Path;

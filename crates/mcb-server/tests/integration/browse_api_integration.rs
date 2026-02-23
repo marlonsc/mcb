@@ -36,6 +36,9 @@ use mcb_server::transport::axum_http::{AppState, build_router};
 use rstest::rstest;
 use tower::ServiceExt;
 
+use super::utils::collection::unique_collection;
+use super::utils::real_providers::create_real_vector_store;
+
 /// Mock `VectorStoreBrowser` for testing
 pub struct TestVectorStoreBrowser {
     collections: Vec<CollectionInfo>,
@@ -386,16 +389,39 @@ async fn test_browse_auth_validation(
 
 use mcb_domain::ports::VectorStoreProvider;
 use mcb_domain::value_objects::Embedding;
-use mcb_providers::vector_store::{EdgeVecConfig, EdgeVecVectorStoreProvider};
 use std::collections::HashMap;
 
-/// Creates a test vector store instance (EdgeVec in-memory)
-fn create_test_vector_store() -> EdgeVecVectorStoreProvider {
-    let config = EdgeVecConfig {
-        dimensions: 384,
-        ..Default::default()
-    };
-    EdgeVecVectorStoreProvider::new(&config).expect("Failed to create test vector store")
+struct VectorStoreBrowserAdapter {
+    inner: Arc<dyn VectorStoreProvider>,
+}
+
+#[async_trait]
+impl VectorStoreBrowser for VectorStoreBrowserAdapter {
+    async fn list_collections(&self) -> DomainResult<Vec<CollectionInfo>> {
+        self.inner.list_collections().await
+    }
+
+    async fn list_file_paths(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> DomainResult<Vec<FileInfo>> {
+        self.inner.list_file_paths(collection, limit).await
+    }
+
+    async fn get_chunks_by_file(
+        &self,
+        collection: &CollectionId,
+        file_path: &str,
+    ) -> DomainResult<Vec<SearchResult>> {
+        self.inner.get_chunks_by_file(collection, file_path).await
+    }
+}
+
+async fn create_test_vector_store() -> Arc<dyn VectorStoreProvider> {
+    create_real_vector_store()
+        .await
+        .expect("failed to resolve test vector store via DI")
 }
 
 /// Helper to create metadata for a code chunk
@@ -507,14 +533,17 @@ async fn populate_test_store(store: &dyn VectorStoreProvider, collection: &str) 
 #[tokio::test]
 async fn test_e2e_real_store_list_collections() {
     // Create real in-memory store
-    let store = create_test_vector_store();
+    let store = create_test_vector_store().await;
 
     // Populate with test data
-    populate_test_store(&store, "test_project").await;
+    let collection = unique_collection("browse_collections");
+    populate_test_store(store.as_ref(), &collection).await;
 
     // Create browse state with real store
     let browse_state = BrowseState {
-        browser: Arc::new(store),
+        browser: Arc::new(VectorStoreBrowserAdapter {
+            inner: Arc::clone(&store),
+        }),
         highlight_service: create_test_highlight_service(),
     };
 
@@ -535,14 +564,15 @@ async fn test_e2e_real_store_list_collections() {
     // Parse and validate JSON response
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
 
-    let expected_collection_id = CollectionId::from_name("test_project").to_string();
+    let expected_collection_id = CollectionId::from_name(&collection).to_string();
 
     // Validate counts
     let collections = json["collections"].as_array().expect("collections array");
-    assert_eq!(collections.len(), 1, "Should have 1 collection");
 
-    let collection = &collections[0];
-    assert_eq!(collection["id"], expected_collection_id);
+    let collection = collections
+        .iter()
+        .find(|entry| entry["id"] == expected_collection_id)
+        .expect("target collection should exist in response");
     assert_eq!(collection["name"], expected_collection_id);
     assert_eq!(collection["vector_count"], 8, "Should have 8 chunks total");
     assert_eq!(collection["file_count"], 4, "Should have 4 unique files");
@@ -551,11 +581,14 @@ async fn test_e2e_real_store_list_collections() {
 
 #[tokio::test]
 async fn test_e2e_real_store_list_files() {
-    let store = create_test_vector_store();
-    populate_test_store(&store, "test_project").await;
+    let store = create_test_vector_store().await;
+    let collection = unique_collection("browse_files");
+    populate_test_store(store.as_ref(), &collection).await;
 
     let browse_state = BrowseState {
-        browser: Arc::new(store),
+        browser: Arc::new(VectorStoreBrowserAdapter {
+            inner: Arc::clone(&store),
+        }),
         highlight_service: create_test_highlight_service(),
     };
 
@@ -565,7 +598,10 @@ async fn test_e2e_real_store_list_files() {
 
     // List files in collection
     let response = client
-        .get("/collections/test_project/files")
+        .get(&format!(
+            "/collections/{}/files",
+            CollectionId::from_name(&collection)
+        ))
         .header(Header::new("X-Admin-Key", "test-key"))
         .dispatch()
         .await;
@@ -617,11 +653,14 @@ async fn test_e2e_real_store_list_files() {
 // Follow-up: mcb-ns8z (normalize paths + remove this ignore)
 #[cfg_attr(windows, ignore)]
 async fn test_e2e_real_store_get_file_chunks() {
-    let store = create_test_vector_store();
-    populate_test_store(&store, "test_project").await;
+    let store = create_test_vector_store().await;
+    let collection = unique_collection("browse_chunks");
+    populate_test_store(store.as_ref(), &collection).await;
 
     let browse_state = BrowseState {
-        browser: Arc::new(store),
+        browser: Arc::new(VectorStoreBrowserAdapter {
+            inner: Arc::clone(&store),
+        }),
         highlight_service: create_test_highlight_service(),
     };
 
@@ -631,7 +670,10 @@ async fn test_e2e_real_store_get_file_chunks() {
 
     // Get chunks for lib.rs
     let response = client
-        .get("/collections/test_project/chunks/src/lib.rs")
+        .get(&format!(
+            "/collections/{}/chunks/src/lib.rs",
+            CollectionId::from_name(&collection)
+        ))
         .header(Header::new("X-Admin-Key", "test-key"))
         .dispatch()
         .await;
@@ -695,11 +737,14 @@ async fn test_e2e_real_store_navigate_full_flow() {
     // 3. Select a file and view chunks
     // 4. Validate data at each step
 
-    let store = create_test_vector_store();
-    populate_test_store(&store, "my_rust_project").await;
+    let store = create_test_vector_store().await;
+    let collection = unique_collection("browse_flow");
+    populate_test_store(store.as_ref(), &collection).await;
 
     let browse_state = BrowseState {
-        browser: Arc::new(store),
+        browser: Arc::new(VectorStoreBrowserAdapter {
+            inner: Arc::clone(&store),
+        }),
         highlight_service: create_test_highlight_service(),
     };
 
@@ -724,11 +769,14 @@ async fn test_e2e_real_store_navigate_full_flow() {
         "Should have at least one collection"
     );
 
-    let collection_id = collections[0]["id"].as_str().expect("collection id");
-    assert_eq!(
-        collection_id,
-        CollectionId::from_name("my_rust_project").to_string()
-    );
+    let expected_collection_id = CollectionId::from_name(&collection).to_string();
+    let collection_id = collections
+        .iter()
+        .find_map(|entry| {
+            let id = entry["id"].as_str()?;
+            (id == expected_collection_id).then_some(id)
+        })
+        .expect("expected collection id should be present");
 
     // Step 2: List files in the collection
     let files_url = format!("/collections/{}/files", collection_id);
@@ -787,11 +835,13 @@ async fn test_e2e_real_store_navigate_full_flow() {
 
 #[tokio::test]
 async fn test_e2e_real_store_collection_not_found() {
-    let store = create_test_vector_store();
-    populate_test_store(&store, "existing_collection").await;
+    let store = create_test_vector_store().await;
+    populate_test_store(store.as_ref(), &unique_collection("browse_existing")).await;
 
     let browse_state = BrowseState {
-        browser: Arc::new(store),
+        browser: Arc::new(VectorStoreBrowserAdapter {
+            inner: Arc::clone(&store),
+        }),
         highlight_service: create_test_highlight_service(),
     };
 
@@ -817,14 +867,18 @@ async fn test_e2e_real_store_collection_not_found() {
 
 #[tokio::test]
 async fn test_e2e_real_store_multiple_collections() {
-    let store = create_test_vector_store();
+    let store = create_test_vector_store().await;
 
     // Create multiple collections
-    populate_test_store(&store, "project_alpha").await;
-    populate_test_store(&store, "project_beta").await;
+    let alpha = unique_collection("browse_alpha");
+    let beta = unique_collection("browse_beta");
+    populate_test_store(store.as_ref(), &alpha).await;
+    populate_test_store(store.as_ref(), &beta).await;
 
     let browse_state = BrowseState {
-        browser: Arc::new(store),
+        browser: Arc::new(VectorStoreBrowserAdapter {
+            inner: Arc::clone(&store),
+        }),
         highlight_service: create_test_highlight_service(),
     };
 
@@ -844,15 +898,14 @@ async fn test_e2e_real_store_multiple_collections() {
     let json: serde_json::Value = serde_json::from_str(&body).expect("valid JSON");
 
     let collections = json["collections"].as_array().expect("collections array");
-    assert_eq!(collections.len(), 2, "Should have 2 collections");
 
     let ids: Vec<&str> = collections
         .iter()
         .filter_map(|c| c["id"].as_str())
         .collect();
 
-    let alpha_id = CollectionId::from_name("project_alpha").to_string();
-    let beta_id = CollectionId::from_name("project_beta").to_string();
+    let alpha_id = CollectionId::from_name(&alpha).to_string();
+    let beta_id = CollectionId::from_name(&beta).to_string();
 
     assert!(
         ids.contains(&alpha_id.as_str()),
@@ -863,6 +916,6 @@ async fn test_e2e_real_store_multiple_collections() {
         "Should have project_beta id"
     );
 
-    // Validate total count
-    assert_eq!(json["total"], 2);
+    let total = json["total"].as_u64().expect("total as u64");
+    assert!(total >= 2);
 }

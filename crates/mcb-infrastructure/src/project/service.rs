@@ -16,8 +16,8 @@ use std::path::Path;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
-use mcb_domain::ports::ProjectDetectorService;
-use mcb_providers::project_detection::detect_all_projects;
+use mcb_domain::ports::{ProjectDetectorConfig, ProjectDetectorService};
+use mcb_domain::registry::project_detection::PROJECT_DETECTORS;
 
 /// Infrastructure service for project detection and scanning.
 ///
@@ -43,6 +43,25 @@ impl Default for ProjectService {
 #[async_trait]
 impl ProjectDetectorService for ProjectService {
     async fn detect_all(&self, path: &Path) -> Vec<ProjectType> {
-        detect_all_projects(path).await
+        let config = ProjectDetectorConfig {
+            repo_path: path.to_str().unwrap_or_default().to_owned(),
+        };
+
+        let mut results = Vec::new();
+
+        for entry in PROJECT_DETECTORS {
+            let has_marker = entry.marker_files.iter().any(|f| path.join(f).exists());
+            if !has_marker {
+                continue;
+            }
+
+            if let Ok(detector) = (entry.build)(&config)
+                && let Ok(Some(project_type)) = detector.detect(path).await
+            {
+                results.push(project_type);
+            }
+        }
+
+        results
     }
 }

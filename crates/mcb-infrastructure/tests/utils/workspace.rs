@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf};
 
-/// Returns the workspace root (directory containing Cargo.lock) from CARGO_MANIFEST_DIR.
+/// Returns the workspace root (directory containing Cargo.lock) from `CARGO_MANIFEST_DIR`.
 ///
 /// # Errors
-/// Fails if no ancestor of CARGO_MANIFEST_DIR contains Cargo.lock.
+/// Fails if no ancestor of `CARGO_MANIFEST_DIR` contains Cargo.lock.
 pub fn workspace_root() -> Result<PathBuf, Box<dyn std::error::Error>> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     for dir in manifest_dir.ancestors() {

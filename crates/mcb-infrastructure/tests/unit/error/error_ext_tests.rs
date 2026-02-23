@@ -25,20 +25,18 @@ fn test_error_context_extension() {
 fn test_infra_error_creation() {
     let error = infra::infrastructure_error_msg("test error message");
 
-    match &error {
-        Error::Infrastructure { message, source } => {
-            assert_eq!(message, "test error message");
-            assert!(source.is_none());
-        }
-        Error::Vcs(_)
-        | Error::Database(_)
-        | Error::Validation(_)
-        | Error::Embedding(_)
-        | Error::VectorStore(_)
-        | Error::Cache(_)
-        | Error::Config(_)
-        | Error::NotFound(_)
-        | Error::Language(_)
-        | Error::Other(_) => panic!("Expected Infrastructure error, got {error:?}"),
+    assert!(
+        matches!(
+            &error,
+            Error::Infrastructure {
+                message,
+                source: None
+            } if message == "test error message"
+        ),
+        "Expected Infrastructure error, got {error:?}"
+    );
+    if let Error::Infrastructure { message, source } = &error {
+        assert_eq!(message, "test error message");
+        assert!(source.is_none());
     }
 }

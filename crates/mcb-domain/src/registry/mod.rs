@@ -59,6 +59,7 @@ pub mod embedding;
 pub mod event_bus;
 pub mod fs;
 pub mod language;
+pub mod project_detection;
 pub mod task_runner;
 pub mod validation;
 pub mod vcs;

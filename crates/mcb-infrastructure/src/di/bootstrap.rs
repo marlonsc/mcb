@@ -212,6 +212,8 @@ impl std::fmt::Debug for AppContext {
 ///
 /// Returns an error if provider resolution, database connection, or service initialization fails.
 pub async fn init_app(config: AppConfig) -> Result<AppContext> {
+    crate::provider_linker::ensure_linked();
+
     mcb_domain::info!(
         "bootstrap",
         "Initializing application context with provider handles"

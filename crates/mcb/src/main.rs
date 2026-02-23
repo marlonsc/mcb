@@ -19,8 +19,6 @@
 //! - `mcb validate` - Run architecture validation
 
 // Force-link mcb-providers to ensure linkme inventory registrations are included
-extern crate mcb_providers;
-
 mod cli;
 
 use clap::{Parser, Subcommand};

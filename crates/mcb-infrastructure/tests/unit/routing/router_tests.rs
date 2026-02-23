@@ -98,8 +98,9 @@ fn test_get_all_health(monitor: InMemoryHealthMonitor) {
 #[fixture]
 fn router_setup() -> (Arc<InMemoryHealthMonitor>, DefaultProviderRouter) {
     let monitor = Arc::new(InMemoryHealthMonitor::new());
+    let monitor_for_router: Arc<dyn HealthMonitor> = Arc::<InMemoryHealthMonitor>::clone(&monitor);
     let router = DefaultProviderRouter::new(
-        Arc::clone(&monitor),
+        monitor_for_router,
         vec!["provider-a".to_owned(), "provider-b".to_owned()],
         vec![],
     );

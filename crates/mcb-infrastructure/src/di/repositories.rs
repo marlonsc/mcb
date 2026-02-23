@@ -12,17 +12,42 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use mcb_domain::error::Result;
-use mcb_domain::ports::{DatabaseExecutor, MemoryRepository, VcsEntityRepository};
-use mcb_providers::database;
+use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::{
+    DatabaseExecutor, DatabaseProvider, MemoryRepository, VcsEntityRepository,
+};
+use mcb_domain::registry::database::{
+    DatabaseProviderConfig, list_database_providers, resolve_database_provider,
+};
+
+fn resolve_default_database_provider() -> Result<Arc<dyn DatabaseProvider>> {
+    let provider_name = list_database_providers()
+        .first()
+        .map(|(name, _)| *name)
+        .ok_or_else(|| {
+            Error::configuration("Database: no providers registered in linkme registry")
+        })?;
+
+    resolve_database_provider(&DatabaseProviderConfig::new(provider_name))
+}
+
+async fn connect_executor(path: PathBuf) -> Result<Arc<dyn DatabaseExecutor>> {
+    let provider = resolve_default_database_provider()?;
+    provider.connect(path.as_path()).await
+}
 
 /// Creates a VCS entity repository backed by the provided database executor.
 ///
 /// Centralizes repository instantiation in the infrastructure layer.
+///
+/// # Errors
+///
+/// Returns an error if no database provider is registered or resolution fails.
 pub fn create_vcs_entity_repository(
     executor: Arc<dyn DatabaseExecutor>,
-) -> Arc<dyn VcsEntityRepository> {
-    database::create_vcs_entity_repository_from_executor(executor)
+) -> Result<Arc<dyn VcsEntityRepository>> {
+    let provider = resolve_default_database_provider()?;
+    Ok(provider.create_vcs_entity_repository(executor))
 }
 
 /// Create a file-backed memory repository.
@@ -33,7 +58,9 @@ pub fn create_vcs_entity_repository(
 ///
 /// Returns an error if the database connection or schema initialization fails.
 pub async fn create_memory_repository(path: PathBuf) -> Result<Arc<dyn MemoryRepository>> {
-    database::create_memory_repository(path).await
+    let provider = resolve_default_database_provider()?;
+    let executor = connect_executor(path).await?;
+    Ok(provider.create_memory_repository(executor))
 }
 
 /// Create a file-backed memory repository and its database executor.
@@ -46,5 +73,8 @@ pub async fn create_memory_repository(path: PathBuf) -> Result<Arc<dyn MemoryRep
 pub async fn create_memory_repository_with_executor(
     path: PathBuf,
 ) -> Result<(Arc<dyn MemoryRepository>, Arc<dyn DatabaseExecutor>)> {
-    database::create_memory_repository_with_executor(path).await
+    let provider = resolve_default_database_provider()?;
+    let executor = connect_executor(path).await?;
+    let memory_repository = provider.create_memory_repository(Arc::clone(&executor));
+    Ok((memory_repository, executor))
 }

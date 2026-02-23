@@ -60,10 +60,9 @@ impl VcsProvider for DynamicVcsProvider {
     }
 
     fn repository_id(&self, repo: &VcsRepository) -> RepositoryId {
-        self.providers.first().map_or_else(
-            || repo.id().clone(),
-            |provider| provider.repository_id(repo),
-        )
+        self.providers
+            .first()
+            .map_or_else(|| *repo.id(), |provider| provider.repository_id(repo))
     }
 
     async fn list_branches(&self, repo: &VcsRepository) -> Result<Vec<VcsBranch>> {
@@ -111,7 +110,7 @@ impl VcsProvider for DynamicVcsProvider {
 
         for provider in &self.providers {
             for repo in provider.list_repositories(root).await? {
-                let key = repo.path().to_path_buf();
+                let key = repo.path().clone();
                 if seen.insert(key) {
                     out.push(repo);
                 }
@@ -122,7 +121,7 @@ impl VcsProvider for DynamicVcsProvider {
     }
 }
 
-#[allow(missing_docs)]
+#[allow(missing_docs, clippy::missing_errors_doc)]
 pub fn default_vcs_provider() -> Result<Arc<dyn VcsProvider>> {
     Ok(Arc::new(DynamicVcsProvider::from_registry()?))
 }

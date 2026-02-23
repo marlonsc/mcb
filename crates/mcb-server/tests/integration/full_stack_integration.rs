@@ -13,9 +13,6 @@
 //!
 //! Uses real providers (Null/InMemory) for deterministic testing.
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
-
 use std::sync::Arc;
 
 use mcb_domain::entities::CodeChunk;

@@ -8,7 +8,6 @@
 //! All tests use random free ports to avoid conflicts.
 
 use rstest::rstest;
-extern crate mcb_providers;
 
 use axum::Router;
 use axum::body::Body;

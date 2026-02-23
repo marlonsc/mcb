@@ -25,9 +25,6 @@
 //! }
 //! ```
 
-// Force linkme registration of all providers from mcb-providers
-extern crate mcb_providers;
-
 use std::collections::HashMap;
 use std::sync::Arc;
 

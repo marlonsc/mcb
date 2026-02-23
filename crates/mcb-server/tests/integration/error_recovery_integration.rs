@@ -10,9 +10,6 @@
 //! 3. Invalid configurations fail fast with clear messages
 //! 4. Partial failures don't corrupt state
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
-
 use std::sync::Arc;
 
 use mcb_domain::registry::cache::*;

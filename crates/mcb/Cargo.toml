@@ -37,9 +37,6 @@ mcb-server = { path = "../mcb-server" }
 # Infrastructure layer - re-exported for DI container
 mcb-infrastructure = { path = "../mcb-infrastructure" }
 
-# Providers - MUST be in dependencies (not dev-dependencies) for linkme inventory registration
-mcb-providers = { path = "../mcb-providers" }
-
 # Validation - for mcb validate subcommand
 mcb-validate = { path = "../mcb-validate" }
 

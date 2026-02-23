@@ -7,7 +7,6 @@
 // not all items are used in each.
 #![allow(dead_code)]
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
+const _: fn() = mcb_infrastructure::provider_linker::ensure_linked;
 
 mcb_infrastructure::define_shared_test_context!("mcb-infra-shared.db");

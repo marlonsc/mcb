@@ -118,9 +118,6 @@ async-stream = { workspace = true }
 # Plugin registration
 linkme = { workspace = true }
 
-# Providers - MUST be in dependencies for linkme inventory registration
-mcb-providers = { path = "../mcb-providers" }
-
 [dev-dependencies]
 tempfile = { workspace = true }
 fastembed = { workspace = true }

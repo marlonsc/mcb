@@ -6,9 +6,6 @@
 //! Uses a process-wide shared `AppContext` to avoid re-loading the ONNX model
 //! (~5-10s) per test.
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
-
 use std::sync::Arc;
 
 use mcb_domain::error::{Error, Result};

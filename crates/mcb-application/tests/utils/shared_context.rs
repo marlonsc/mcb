@@ -4,7 +4,6 @@
 //! once per test binary, then shares it across all tests that need it.
 //! This avoids the ~5-10s model load per test.
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
+const _: fn() = mcb_infrastructure::provider_linker::ensure_linked;
 
 mcb_infrastructure::define_shared_test_context!("mcb-app-unit-shared.db");

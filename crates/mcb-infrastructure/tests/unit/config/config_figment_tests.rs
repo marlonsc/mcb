@@ -1,7 +1,5 @@
 //! Tests verifying Figment configuration pattern compliance (ADR-025)
-#![allow(unsafe_code)]
-#![allow(clippy::mem_forget)]
-#![allow(clippy::used_underscore_binding)]
+#![allow(unsafe_code, clippy::used_underscore_binding)]
 
 use crate::utils::env_vars::EnvVarGuard;
 use mcb_infrastructure::config::loader::ConfigLoader;

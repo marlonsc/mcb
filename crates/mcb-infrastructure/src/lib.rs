@@ -53,6 +53,8 @@ pub mod error_ext;
 pub mod health;
 pub mod logging;
 pub mod project;
+#[allow(missing_docs)]
+pub mod provider_linker;
 pub mod routing;
 pub mod services;
 pub mod utils;

@@ -42,6 +42,12 @@ pub fn validate_bypass_boundaries(
                         context,
                         severity: Severity::Error,
                     },
+                    "DEP006" => DependencyViolation::ProviderBypassImport {
+                        file,
+                        line,
+                        context,
+                        severity: Severity::Error,
+                    },
                     _ => DependencyViolation::AdminBypassImport {
                         file,
                         line,

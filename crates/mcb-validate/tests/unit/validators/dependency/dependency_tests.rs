@@ -102,7 +102,8 @@ mcb-infrastructure = { path = "../mcb-infrastructure" }
         DependencyViolation::ForbiddenUseStatement { .. }
         | DependencyViolation::CircularDependency { .. }
         | DependencyViolation::AdminBypassImport { .. }
-        | DependencyViolation::CliBypassPath { .. } => {
+        | DependencyViolation::CliBypassPath { .. }
+        | DependencyViolation::ProviderBypassImport { .. } => {
             return Err(format!("Expected ForbiddenCargoDependency, got {violation:?}").into());
         }
     }
@@ -145,7 +146,8 @@ version = "0.1.1"
         DependencyViolation::ForbiddenCargoDepedency { .. }
         | DependencyViolation::CircularDependency { .. }
         | DependencyViolation::AdminBypassImport { .. }
-        | DependencyViolation::CliBypassPath { .. } => {
+        | DependencyViolation::CliBypassPath { .. }
+        | DependencyViolation::ProviderBypassImport { .. } => {
             return Err(format!("Expected ForbiddenUseStatement, got {violation:?}").into());
         }
     }
