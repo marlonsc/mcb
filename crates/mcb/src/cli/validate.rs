@@ -44,7 +44,7 @@ pub struct ValidationResult {
     /// Number of warning violations found
     pub warnings: usize,
     /// Number of info violations found
-    pub infos: usize,
+    pub _infos: usize,
     /// Whether strict mode was enabled
     pub strict_mode: bool,
 }
@@ -104,7 +104,7 @@ impl ValidateArgs {
         Ok(ValidationResult {
             errors: report.summary.errors,
             warnings: report.summary.warnings,
-            infos: report.summary.infos,
+            _infos: report.summary.infos,
             strict_mode: self.strict,
         })
     }

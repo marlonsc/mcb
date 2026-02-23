@@ -1,4 +1,5 @@
 pub mod config;
+/// HTTP transport for JSON-RPC over REST.
 pub mod http;
 pub mod http_client;
 pub mod stdio;

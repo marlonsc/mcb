@@ -1,4 +1,5 @@
 //! Unit tests — `cargo test -p mcb-server --test unit`
+#![allow(missing_docs)]
 
 #[path = "../utils/mod.rs"]
 #[allow(dead_code, unused_imports)]

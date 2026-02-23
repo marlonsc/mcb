@@ -1,3 +1,4 @@
+//! MCB server crate — MCP protocol server with HTTP and stdio transports.
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[macro_use]
@@ -16,6 +17,7 @@ pub mod loco_app;
 pub mod mcp_server;
 pub mod session;
 pub mod tools;
+/// Transport layer for MCP protocol communication.
 pub mod transport;
 pub mod utils;
 

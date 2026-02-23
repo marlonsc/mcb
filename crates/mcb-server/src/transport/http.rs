@@ -55,11 +55,14 @@ impl BridgeProvenance {
     }
 }
 
+/// Shared state for the HTTP transport layer.
 #[derive(Clone)]
 pub struct HttpTransportState {
+    /// The MCP server instance used to handle incoming requests.
     pub server: Arc<McpServer>,
 }
 
+/// Handles an incoming MCP JSON-RPC request over HTTP.
 pub async fn handle_mcp_request(
     State(state): State<Arc<HttpTransportState>>,
     headers: HeaderMap,

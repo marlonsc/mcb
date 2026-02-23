@@ -18,7 +18,7 @@ use crate::config::TransportMode;
 use crate::constants::auth::*;
 use crate::constants::config::*;
 use crate::error_ext::ErrorContext;
-use crate::logging::log_config_loaded;
+
 use mcb_domain::value_objects::ProjectSettings;
 use mcb_validate::find_workspace_root_from;
 
@@ -73,7 +73,11 @@ impl ConfigLoader {
                 "Default configuration file not found. Expected config/default.toml".to_owned(),
             )
         })?;
-        log_config_loaded(&default_path, true);
+        mcb_domain::info!(
+            "config",
+            "Configuration loaded",
+            &default_path.display().to_string()
+        );
 
         // Source of truth starts from canonical defaults file only.
         // Runtime must not rely on hardcoded struct defaults.
@@ -81,7 +85,11 @@ impl ConfigLoader {
 
         if let Some(config_path) = &self.config_path {
             if !config_path.exists() {
-                log_config_loaded(config_path, false);
+                mcb_domain::warn!(
+                    "config",
+                    "Configuration file not found",
+                    &config_path.display().to_string()
+                );
                 return Err(Error::ConfigMissing(format!(
                     "Configuration file not found: {}",
                     config_path.display()
@@ -90,7 +98,11 @@ impl ConfigLoader {
 
             if config_path != &default_path {
                 figment = figment.merge(Toml::file(config_path));
-                log_config_loaded(config_path, true);
+                mcb_domain::info!(
+                    "config",
+                    "Configuration loaded",
+                    &config_path.display().to_string()
+                );
             }
         }
 
@@ -213,7 +225,11 @@ impl ConfigLoader {
                 match std::fs::read_to_string(&path) {
                     Ok(content) => match serde_yaml::from_str(&content) {
                         Ok(settings) => {
-                            log_config_loaded(&path, true);
+                            mcb_domain::info!(
+                                "config",
+                                "Configuration loaded",
+                                &path.display().to_string()
+                            );
                             return Some(settings);
                         }
                         Err(e) => {

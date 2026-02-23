@@ -31,9 +31,9 @@ use mcb_domain::ports::{
     VcsProvider, VectorStoreProvider,
 };
 
-use super::super::bootstrap::AppContext;
 use crate::cache::provider::SharedCacheProvider;
 use crate::config::AppConfig;
+
 // Use infrastructure validation service
 use crate::validation::InfraValidationService;
 
@@ -241,61 +241,5 @@ impl DomainServicesFactory {
             issue_entity_repository: deps.issue_entity_repository,
             org_entity_repository: deps.org_entity_repository,
         })
-    }
-
-    /// Create indexing service from app context
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if service dependency resolution fails.
-    pub async fn create_indexing_service(
-        app_context: &AppContext,
-    ) -> Result<Arc<dyn IndexingServiceInterface>> {
-        let indexing_ops = app_context.indexing();
-        let event_bus = app_context.event_bus();
-        let language_chunker = app_context.language_handle().get();
-        let context_service = Self::create_context_service(app_context).await?;
-        let file_hash_repository = app_context.file_hash_repository();
-        let supported_extensions = app_context.config.mcp.indexing.supported_extensions.clone();
-
-        Ok(Self::build_indexing_service(IndexingServiceInputs {
-            context_service,
-            language_chunker,
-            indexing_ops,
-            event_bus,
-            file_hash_repository,
-            supported_extensions,
-        }))
-    }
-
-    /// Create context service from app context
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if provider handle resolution fails.
-    pub async fn create_context_service(
-        app_context: &AppContext,
-    ) -> Result<Arc<dyn ContextServiceInterface>> {
-        let cache_provider = app_context.cache_handle().get();
-        let embedding_provider = app_context.embedding_handle().get();
-        let vector_store_provider = app_context.vector_store_handle().get();
-
-        Ok(Self::build_context_service(
-            cache_provider,
-            embedding_provider,
-            vector_store_provider,
-        ))
-    }
-
-    /// Create search service from app context
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if context service creation fails.
-    pub async fn create_search_service(
-        app_context: &AppContext,
-    ) -> Result<Arc<dyn SearchServiceInterface>> {
-        let context_service = Self::create_context_service(app_context).await?;
-        Ok(Arc::new(SearchServiceImpl::new(context_service)))
     }
 }

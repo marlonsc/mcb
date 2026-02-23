@@ -1,6 +1,5 @@
 use std::path::PathBuf;
 
-
 use clap::Args;
 use loco_rs::boot::{self, ServeParams, StartMode};
 use loco_rs::controller::middleware;
@@ -10,11 +9,14 @@ use mcb_server::McbApp;
 use loco_rs::app::Hooks;
 use loco_rs::config;
 
+/// Arguments for the `serve` subcommand.
 #[derive(Args, Debug, Clone)]
 pub struct ServeArgs {
+    /// Path to the configuration file.
     #[arg(short, long)]
     pub config: Option<PathBuf>,
 
+    /// Run as server daemon (HTTP only, no stdio).
     #[arg(long, help = "Run as server daemon (HTTP only, no stdio)")]
     pub server: bool,
 }

@@ -51,7 +51,7 @@ pub mod crypto;
 pub mod di;
 pub mod error_ext;
 pub mod health;
-pub mod logging;
+
 pub mod project;
 pub mod routing;
 pub mod services;

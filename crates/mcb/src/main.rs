@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 extern crate mcb_providers;
 
 mod cli;
@@ -9,13 +10,13 @@ use cli::{ServeArgs, ValidateArgs};
 #[command(name = "mcb")]
 #[command(about = "MCP Context Browser - Semantic Code Search Server")]
 #[command(version)]
-pub struct Cli {
+struct Cli {
     #[command(subcommand)]
-    pub command: Command,
+    command: Command,
 }
 
 #[derive(Subcommand, Debug)]
-pub enum Command {
+enum Command {
     #[command(alias = "server")]
     Serve(ServeArgs),
     Validate(ValidateArgs),

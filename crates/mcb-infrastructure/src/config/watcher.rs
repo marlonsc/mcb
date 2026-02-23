@@ -11,7 +11,7 @@ use std::sync::Arc;
 use crate::config::AppConfig;
 use crate::config::loader::ConfigLoader;
 use crate::error_ext::ErrorContext;
-use crate::logging::log_config_loaded;
+
 use mcb_domain::error::{Error, Result};
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::EventBusProvider;
@@ -83,7 +83,11 @@ impl ConfigWatcher {
 
         Self::publish_config_reloaded(self.event_bus.as_ref()).await;
 
-        log_config_loaded(&self.config_path, true);
+        mcb_domain::info!(
+            "config",
+            "Configuration loaded",
+            &self.config_path.display().to_string()
+        );
 
         Ok(new_config)
     }
@@ -166,7 +170,11 @@ impl ConfigWatcher {
                 *current_config.write().await = new_config;
                 Self::publish_config_reloaded(event_bus.as_ref()).await;
 
-                log_config_loaded(&config_path, true);
+                mcb_domain::info!(
+                    "config",
+                    "Configuration loaded",
+                    &config_path.display().to_string()
+                );
             }
             Err(e) => {
                 mcb_domain::warn!(
@@ -175,7 +183,11 @@ impl ConfigWatcher {
                     &e.to_string()
                 );
 
-                log_config_loaded(&config_path, false);
+                mcb_domain::warn!(
+                    "config",
+                    "Configuration file not found",
+                    &config_path.display().to_string()
+                );
             }
         }
     }
