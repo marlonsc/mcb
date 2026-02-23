@@ -5,7 +5,6 @@
 //! - `Model` struct with `DeriveEntityModel`
 //! - `Relation` enum with foreign key definitions
 //! - `ActiveModelBehavior` implementation
-#![allow(missing_docs)]
 
 pub mod prelude;
 
