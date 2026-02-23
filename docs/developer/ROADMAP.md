@@ -11,8 +11,8 @@ Development roadmap for**Memory Context Browser (MCB)** — a high-performance M
 
 | Field | Value |
 | ------- | ------- |
-| **Version** | v0.2.1 |
-| **Branch** | `release/v0.2.1` (only active release branch) |
+| **Version** | v0.3.0-dev |
+| **Branch** | `release/v0.3.0` (SeaQL + Loco.rs rebuild) |
 | **Build** | ✅ `cargo check --workspace` passes |
 | **Tests** | 1,705 passing (`cargo test --workspace`) |
 | **Crates** | 9 (Clean Architecture workspace) |
@@ -55,10 +55,31 @@ Consolidates all pre-v0.3.0 work: admin UI, data model hardening, modernization 
 
 ---
 
-### v0.3.0 — Workflow System
+### v0.3.0 — SeaQL + Loco.rs Platform Rebuild
+
+**Status:** In Progress
+**Target:** Q1 2026
+**Key ADRs:** ADR-051 (SeaORM Migration), ADR-052 (Loco.rs Foundation)
+
+Complete platform rebuild on modern Rust data and web stack. SeaORM provides
+type-safe database operations with proper migrations, while Loco.rs offers
+structured API development with background job support.
+
+| Component | Description |
+| ----------- | ------------- |
+| **SeaORM** | Type-safe SQL with entity relations and migration management |
+| **Loco.rs** | Structured web framework with middleware and background workers |
+| **Repository Pattern** | Explicit data access layer with async traits |
+| **Migration System** | Versioned database schema evolution |
+
+**Unblocks:** v0.4.0 Workflow System
+
+---
+
+### v0.4.0 — Workflow System
 
 **Status:** Planning
-**Target:** Q1 2026
+**Target:** Q2 2026
 **Key ADRs:** 034 (FSM), 035 (Scout), 036 (Policies), 037 (Orchestrator), 038 (Tiers)
 
 Implements complete workflow system with FSM-based task orchestration, context scouting, and policy enforcement.
@@ -78,14 +99,14 @@ Implements complete workflow system with FSM-based task orchestration, context s
 - Performance benchmarks established
 - Migration guide from v0.2.0
 
-**Unblocks:** v0.4.0 Integrated Context System
+**Unblocks:** v0.5.0 Integrated Context System
 
 ---
 
-### v0.4.0 — Integrated Context System
+### v0.5.0 — Integrated Context System
 
-**Status:** Design phase (parallel to v0.3.0)
-**Target:** Q2 2026 (after v0.3.0)
+**Status:** Design phase
+**Target:** Q3 2026 (after v0.4.0)
 **Key ADRs:** 041-046
 
 Multi-source integrated context with knowledge graphs, hybrid search, and temporal queries.

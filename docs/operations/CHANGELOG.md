@@ -15,6 +15,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - Unreleased
+
+### Summary
+
+Platform rebuild on SeaQL + Loco.rs foundation. Complete rewrite of the data
+layer replacing raw SQLite with SeaORM for type-safe database operations,
+migration management, and better testability. New web framework foundation
+using Loco.rs for structured API development.
+
+### Changed
+
+- **Database Layer**: Migrated from raw SQL/SQLite to SeaORM with proper
+  entity definitions, relations, and migrations.
+- **Web Framework**: Foundation on Loco.rs for structured routing,
+  middleware, and background job support.
+- **Architecture**: Clean Architecture alignment with explicit repository
+  patterns and service boundaries.
+
+### Technical Foundation
+
+- SeaORM entity generation and migration system
+- Loco.rs app structure with controllers and workers
+- Async trait patterns for data access layer
+- Database connection pooling and transaction management
+
+---
+
 ## [0.2.1] - 2026-02-XX
 
 ### Summary
