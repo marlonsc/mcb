@@ -32,7 +32,6 @@
 //! | Module | Description |
 //! | -------- | ------------- |
 //! | [`health`] | Health check endpoints |
-//! | [`logging`] | Structured logging with tracing |
 //!
 //! ### Routing & Selection
 //! | Module | Description |

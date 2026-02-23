@@ -42,9 +42,6 @@ pub mod lang;
 /// System limits and constraints.
 pub mod limits;
 
-/// Logging configuration and format constants.
-pub mod logging;
-
 /// Metadata and annotation constants.
 pub mod metadata;
 
