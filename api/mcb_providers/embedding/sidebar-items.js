@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["anthropic","fastembed","gemini","macros","ollama","openai","voyageai"]};

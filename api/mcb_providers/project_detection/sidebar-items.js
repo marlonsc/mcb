@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["detect_all_projects"],"static":["PROJECT_DETECTORS"],"struct":["CargoDetector","GoDetector","MavenDetector","NpmDetector","PythonDetector"]};

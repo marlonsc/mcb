@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["build_file_info_from_results","handle_vector_request_error","search_result_from_json_metadata"]};

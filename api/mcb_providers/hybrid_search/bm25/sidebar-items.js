@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["BM25Params","BM25Scorer"]};

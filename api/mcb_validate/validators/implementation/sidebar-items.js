@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ImplementationViolation"],"mod":["constants"],"struct":["ImplementationQualityValidator"]};

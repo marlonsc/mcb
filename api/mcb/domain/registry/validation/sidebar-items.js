@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["list_validation_providers","resolve_validation_provider"],"static":["VALIDATION_PROVIDERS"],"struct":["ValidationProviderConfig","ValidationProviderEntry"]};

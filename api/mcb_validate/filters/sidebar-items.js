@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["dependency_parser","file_matcher","language_detector","rule_filters"]};

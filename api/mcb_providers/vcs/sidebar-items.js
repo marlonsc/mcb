@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["factory","git2_provider","submodule"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ConfigUpdateError"],"fn":["read_update_config","validate_update_prerequisites","write_and_reload_config"]};

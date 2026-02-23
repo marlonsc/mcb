@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["browse","config","embedding","ids","org_context","project_context","project_settings","search","types"]};

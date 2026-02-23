@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["nav_groups"],"struct":["DashboardEntityCard","NavEntityLink","NavGroup"]};

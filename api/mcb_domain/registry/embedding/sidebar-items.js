@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["list_embedding_providers","resolve_embedding_provider"],"static":["EMBEDDING_PROVIDERS"],"struct":["EmbeddingProviderConfig","EmbeddingProviderEntry"]};

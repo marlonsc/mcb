@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["RefactoringViolation"],"mod":["constants"],"struct":["RefactoringValidator"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["create_tool_list","dispatch_tool_call","route_tool_call"],"mod":["registry","router"],"struct":["ToolDefinitions","ToolExecutionContext","ToolHandlers"]};

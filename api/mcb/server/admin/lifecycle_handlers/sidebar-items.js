@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["list_services_axum","restart_service_axum","services_health_axum","start_service_axum","stop_service_axum"],"struct":["ServiceActionResponse","ServiceErrorResponse","ServiceInfoResponse","ServiceListResponse","ServicesHealthResponse"]};

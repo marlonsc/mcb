@@ -1,0 +1,55 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Hybrid search provider implementations"><title>mcb_providers::hybrid_search - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mcb_providers" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="../sidebar-items.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc mod"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Module hybrid_search</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../mcb_providers/index.html">mcb_<wbr>providers</a><span class="version">0.2.1</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Module hybrid_<wbr>search</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#architecture" title="Architecture">Architecture</a></li><li><a href="#usage" title="Usage">Usage</a></li><li><a href="#providers" title="Providers">Providers</a></li><li><a href="#bm25-algorithm" title="BM25 Algorithm">BM25 Algorithm</a></li></ul><h3><a href="#reexports">Module Items</a></h3><ul class="block"><li><a href="#reexports" title="Re-exports">Re-exports</a></li><li><a href="#modules" title="Modules">Modules</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="../index.html">In crate mcb_<wbr>providers</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">mcb_providers</a></div><h1>Module <span>hybrid_<wbr>search</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/mcb_providers/hybrid_search/mod.rs.html#1-75">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Hybrid search provider implementations</p>
+<p>Implements <code>HybridSearchProvider</code> trait for combined BM25 + semantic search.
+Provides BM25 text ranking algorithm and hybrid score fusion.</p>
+<p><strong>Documentation</strong>: <a href="../../../../docs/modules/providers.md">docs/modules/providers.md</a></p>
+<p>Hybrid Search Providers</p>
+<p>This module provides hybrid search functionality that combines BM25 text-based
+ranking with semantic (vector) search for improved relevance.</p>
+<h3 id="architecture"><a class="doc-anchor" href="#architecture">§</a>Architecture</h3><div class="example-wrap"><pre class="language-text"><code>Query Input
+    |
+    v
++-------------------+     +-------------------+
+| BM25 Scorer       |     | Vector Store      |
+| (lexical match)   |     | (semantic match)  |
++-------------------+     +-------------------+
+          |                       |
+          v                       v
+    BM25 Score              Semantic Score
+          |                       |
+          +----------+------------+
+                     |
+                     v
+             Score Fusion
+    hybrid = bm25_weight * bm25 + semantic_weight * semantic
+                     |
+                     v
+             Ranked Results</code></pre></div><h3 id="usage"><a class="doc-anchor" href="#usage">§</a>Usage</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>mcb_providers::hybrid_search::HybridSearchEngine;
+<span class="kw">use </span>mcb_domain::ports::HybridSearchProvider;
+
+<span class="comment">// Create engine with default weights (40% BM25, 60% semantic)
+</span><span class="kw">let </span>engine = HybridSearchEngine::new();
+
+<span class="comment">// Index code chunks for BM25 scoring
+// engine.index_chunks("my-project", &amp;code_chunks).await?;
+
+// Get semantic results from vector store
+// let semantic_results = vector_store.search(...).await?;
+
+// Combine with BM25 for hybrid ranking
+// let results = engine.search("my-project", "auth middleware", semantic_results, 10).await?;</span></code></pre></div><h3 id="providers"><a class="doc-anchor" href="#providers">§</a>Providers</h3><div><table><thead><tr><th>Provider</th><th>Description</th><th>Use Case</th></tr></thead><tbody>
+<tr><td><code>HybridSearchEngine</code></td><td>Full BM25 + semantic hybrid</td><td>Production search</td></tr>
+</tbody></table>
+</div><h3 id="bm25-algorithm"><a class="doc-anchor" href="#bm25-algorithm">§</a>BM25 Algorithm</h3>
+<p>BM25 (Best Matching 25) scores documents based on term frequency and
+inverse document frequency:</p>
+<ul>
+<li><strong>High scores</strong>: Documents with query terms that are rare in the corpus</li>
+<li><strong>Low scores</strong>: Documents with common terms or no matching terms</li>
+</ul>
+<p>Parameters:</p>
+<ul>
+<li><code>k1</code>: Term frequency saturation (default: 1.2)</li>
+<li><code>b</code>: Document length normalization (default: 0.75)</li>
+</ul>
+</div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><dl class="item-table reexports"><dt id="reexport.BM25Params"><code>pub use bm25::<a class="struct" href="bm25/struct.BM25Params.html" title="struct mcb_providers::hybrid_search::bm25::BM25Params">BM25Params</a>;</code></dt><dt id="reexport.BM25Scorer"><code>pub use bm25::<a class="struct" href="bm25/struct.BM25Scorer.html" title="struct mcb_providers::hybrid_search::bm25::BM25Scorer">BM25Scorer</a>;</code></dt><dt id="reexport.HybridSearchEngine"><code>pub use engine::<a class="struct" href="engine/struct.HybridSearchEngine.html" title="struct mcb_providers::hybrid_search::engine::HybridSearchEngine">HybridSearchEngine</a>;</code></dt></dl><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="bm25/index.html" title="mod mcb_providers::hybrid_search::bm25">bm25</a></dt><dd><strong>Documentation</strong>: <a href="../../../../docs/modules/providers.md">docs/modules/providers.md</a></dd><dt><a class="mod" href="engine/index.html" title="mod mcb_providers::hybrid_search::engine">engine</a></dt><dd><strong>Documentation</strong>: <a href="../../../../docs/modules/providers.md">docs/modules/providers.md</a></dd></dl></section></div></main></body></html>

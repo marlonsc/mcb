@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DiffStatus"],"struct":["FileDiff","RefDiff","VcsBranch","VcsCommit","VcsCommitInput","VcsRepository"]};

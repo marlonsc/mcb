@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["detect_in_content","detect_in_file"],"struct":["UnwrapDetection","UnwrapDetector"]};

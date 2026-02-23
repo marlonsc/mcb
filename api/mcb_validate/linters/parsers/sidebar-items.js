@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["find_project_root","map_clippy_level","map_ruff_severity","parse_clippy_output","parse_ruff_output","run_linter_command"]};

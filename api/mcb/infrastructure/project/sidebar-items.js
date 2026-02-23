@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["context_resolver","workspace"],"struct":["ProjectService","WorkspaceExplorer"]};

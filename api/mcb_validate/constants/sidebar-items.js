@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["allowlists","architecture","common","defaults","duplication","engines","labels","rules","severities","validators"]};

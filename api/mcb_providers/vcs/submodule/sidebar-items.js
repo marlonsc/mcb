@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["collect_submodules","collect_submodules_with_depth"],"struct":["SubmoduleProvider"]};

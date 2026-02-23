@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["constants","domain_purity","duplicate_strings","file_placement","layer_violations","magic_numbers","strict_directory","trait_placement","validator","violation"]};

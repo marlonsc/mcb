@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ObservationType"],"struct":["Observation","ObservationMetadata"]};

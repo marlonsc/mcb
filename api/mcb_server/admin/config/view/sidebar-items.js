@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CacheConfigView","EmbeddingConfigView","LimitsConfigView","LoggingConfigView","MetricsConfigView","SanitizedConfig","ServerConfigView","VectorStoreConfigView"]};

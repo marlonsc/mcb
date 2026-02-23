@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TokenType"],"struct":["Fingerprint","FingerprintLocation","FingerprintMatch","FingerprintStats","Token","TokenFingerprinter"]};

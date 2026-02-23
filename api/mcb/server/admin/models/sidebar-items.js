@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["AdminActionResponse","AdminHealthResponse","ChunkDetailResponse","ChunkListResponse","CollectionInfoResponse","CollectionListResponse","CollectionStats","FileInfoResponse","FileListResponse","LivenessResponse","ReadinessResponse","ServerInfo"]};

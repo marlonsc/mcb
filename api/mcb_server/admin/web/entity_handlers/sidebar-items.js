@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["entities_bulk_delete","entities_create","entities_delete","entities_delete_confirm","entities_detail","entities_edit_form","entities_index","entities_list","entities_new_form","entities_update"]};

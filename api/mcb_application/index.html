@@ -1,0 +1,40 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Application Layer - MCP Context Browser"><title>mcb_application - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="mcb_application" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../static.files/storage-e2aeef58.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">Crate mcb_application</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../mcb_application/index.html">mcb_<wbr>application</a><span class="version">0.2.1</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#architecture" title="Architecture">Architecture</a></li><li><a href="#use-cases" title="Use Cases">Use Cases</a></li><li><a href="#decorators" title="Decorators">Decorators</a></li><li><a href="#ports-interfaces" title="Ports (Interfaces)">Ports (Interfaces)</a></li><li><a href="#dependencies" title="Dependencies">Dependencies</a></li></ul><h3><a href="#modules">Crate Items</a></h3><ul class="block"><li><a href="#modules" title="Modules">Modules</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>mcb_<wbr>application</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/mcb_application/lib.rs.html#1-48">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Application Layer - MCP Context Browser</p>
+<p>This crate contains the application layer of the MCP Context Browser,
+implementing use cases and orchestrating business logic according to
+Clean Architecture principles.</p>
+<p><strong>Documentation</strong>: <a href="../../../docs/modules/application.md"><code>docs/modules/application.md</code></a> |
+<strong>Architecture</strong>: <a href="../../../docs/adr/013-clean-architecture-crate-separation.md"><code>ADR-013</code></a>,
+<a href="../../../docs/adr/029-hexagonal-architecture-dill.md"><code>ADR-029</code></a></p>
+<h3 id="architecture"><a class="doc-anchor" href="#architecture">§</a>Architecture</h3>
+<p>The application layer:</p>
+<ul>
+<li>Contains use case implementations (application services)</li>
+<li>Defines ports (interfaces) for external dependencies</li>
+<li>Orchestrates domain entities and services</li>
+<li>Has no dependencies on infrastructure or external frameworks</li>
+</ul>
+<h3 id="use-cases"><a class="doc-anchor" href="#use-cases">§</a>Use Cases</h3>
+<ul>
+<li>Code indexing and ingestion</li>
+<li>Semantic search operations</li>
+<li>Context management</li>
+<li>Admin operations</li>
+</ul>
+<h3 id="decorators"><a class="doc-anchor" href="#decorators">§</a>Decorators</h3>
+<p>SOLID Open/Closed compliant decorators for cross-cutting concerns:</p>
+<ul>
+<li><code>decorators::InstrumentedEmbeddingProvider</code>: Adds timing metrics</li>
+</ul>
+<h3 id="ports-interfaces"><a class="doc-anchor" href="#ports-interfaces">§</a>Ports (Interfaces)</h3>
+<p>Defines contracts for external dependencies:</p>
+<ul>
+<li><code>ports::providers::*</code>: Provider interfaces (Embedding, <code>VectorStore</code>, Cache, etc.)</li>
+<li><code>domain_services::*</code>: Use case interfaces</li>
+</ul>
+<h3 id="dependencies"><a class="doc-anchor" href="#dependencies">§</a>Dependencies</h3>
+<p>This crate depends only on:</p>
+<ul>
+<li><code>mcb-domain</code>: For domain entities, value objects, and core business rules</li>
+<li>Pure Rust libraries for async, serialization, etc.</li>
+</ul>
+</div></details><h2 id="reexports" class="section-header">Re-exports<a href="#reexports" class="anchor">§</a></h2><dl class="item-table reexports"><dt><code>pub use <a class="mod" href="decorators/index.html" title="mod mcb_application::decorators">decorators</a>::*;</code></dt><dt><code>pub use <a class="mod" href="use_cases/index.html" title="mod mcb_application::use_cases">use_cases</a>::*;</code></dt></dl><h2 id="modules" class="section-header">Modules<a href="#modules" class="anchor">§</a></h2><dl class="item-table"><dt><a class="mod" href="constants/index.html" title="mod mcb_application::constants">constants</a></dt><dd><strong>Documentation</strong>: <a href="../../../docs/modules/application.md">docs/modules/application.md</a></dd><dt><a class="mod" href="decorators/index.html" title="mod mcb_application::decorators">decorators</a></dt><dd>Decorator Module - SOLID Open/Closed Compliant</dd><dt><a class="mod" href="use_cases/index.html" title="mod mcb_application::use_cases">use_<wbr>cases</a></dt><dd>Use Cases - Application Layer Services</dd></dl></section></div></main></body></html>

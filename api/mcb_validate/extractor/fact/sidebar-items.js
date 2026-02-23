@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["FactType"],"struct":["Fact","Location"]};

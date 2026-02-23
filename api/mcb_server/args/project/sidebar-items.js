@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ProjectAction","ProjectResource"],"struct":["ProjectArgs"]};

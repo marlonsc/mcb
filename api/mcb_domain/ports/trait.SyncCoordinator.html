@@ -1,0 +1,110 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Domain Port for File Synchronization Coordination"><title>SyncCoordinator in mcb_domain::ports - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="mcb_domain" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../static.files/storage-e2aeef58.js"></script><script defer src="sidebar-items.js"></script><script defer src="../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">SyncCoordinator</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../../mcb_domain/index.html">mcb_<wbr>domain</a><span class="version">0.2.1</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Sync<wbr>Coordinator</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li></ul><h3><a href="#required-methods">Required Methods</a></h3><ul class="block"><li><a href="#tymethod.get_changed_files" title="get_changed_files">get_changed_files</a></li><li><a href="#tymethod.mark_synced" title="mark_synced">mark_synced</a></li><li><a href="#tymethod.should_debounce" title="should_debounce">should_debounce</a></li><li><a href="#tymethod.sync" title="sync">sync</a></li><li><a href="#tymethod.tracked_file_count" title="tracked_file_count">tracked_file_count</a></li></ul><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2><a href="index.html">In mcb_<wbr>domain::<wbr>ports</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="../index.html">mcb_domain</a>::<wbr><a href="index.html">ports</a></div><h1>Trait <span class="trait">Sync<wbr>Coordinator</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../../src/mcb_domain/ports/infrastructure/sync.rs.html#92-146">Source</a> </span></div><pre class="rust item-decl"><code>pub trait SyncCoordinator: <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/marker/trait.Sync.html" title="trait core::marker::Sync">Sync</a> {
+    // Required methods
+    fn <a href="#tymethod.should_debounce" class="fn">should_debounce</a>&lt;'life0, 'life1, 'async_trait&gt;(
+        &amp;'life0 self,
+        codebase_path: &amp;'life1 <a class="struct" href="https://doc.rust-lang.org/1.93.1/std/path/struct.Path.html" title="struct std::path::Path">Path</a>,
+    ) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.93.1/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="type" href="../error/type.Result.html" title="type mcb_domain::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.93.1/std/primitive.bool.html">bool</a>&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;
+       <span class="where">where Self: 'async_trait,
+             'life0: 'async_trait,
+             'life1: 'async_trait</span>;
+<span class="item-spacer"></span>    fn <a href="#tymethod.sync" class="fn">sync</a>&lt;'life0, 'life1, 'async_trait&gt;(
+        &amp;'life0 self,
+        codebase_path: &amp;'life1 <a class="struct" href="https://doc.rust-lang.org/1.93.1/std/path/struct.Path.html" title="struct std::path::Path">Path</a>,
+        options: <a class="struct" href="struct.SyncOptions.html" title="struct mcb_domain::ports::SyncOptions">SyncOptions</a>,
+    ) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.93.1/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="type" href="../error/type.Result.html" title="type mcb_domain::error::Result">Result</a>&lt;<a class="struct" href="struct.SyncResult.html" title="struct mcb_domain::ports::SyncResult">SyncResult</a>&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;
+       <span class="where">where Self: 'async_trait,
+             'life0: 'async_trait,
+             'life1: 'async_trait</span>;
+<span class="item-spacer"></span>    fn <a href="#tymethod.get_changed_files" class="fn">get_changed_files</a>&lt;'life0, 'life1, 'async_trait&gt;(
+        &amp;'life0 self,
+        codebase_path: &amp;'life1 <a class="struct" href="https://doc.rust-lang.org/1.93.1/std/path/struct.Path.html" title="struct std::path::Path">Path</a>,
+    ) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.93.1/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="type" href="../error/type.Result.html" title="type mcb_domain::error::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;
+       <span class="where">where Self: 'async_trait,
+             'life0: 'async_trait,
+             'life1: 'async_trait</span>;
+<span class="item-spacer"></span>    fn <a href="#tymethod.mark_synced" class="fn">mark_synced</a>&lt;'life0, 'life1, 'async_trait&gt;(
+        &amp;'life0 self,
+        codebase_path: &amp;'life1 <a class="struct" href="https://doc.rust-lang.org/1.93.1/std/path/struct.Path.html" title="struct std::path::Path">Path</a>,
+    ) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.93.1/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="type" href="../error/type.Result.html" title="type mcb_domain::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.93.1/std/primitive.unit.html">()</a>&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;
+       <span class="where">where Self: 'async_trait,
+             'life0: 'async_trait,
+             'life1: 'async_trait</span>;
+<span class="item-spacer"></span>    fn <a href="#tymethod.tracked_file_count" class="fn">tracked_file_count</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.93.1/std/primitive.usize.html">usize</a>;
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Domain Port for File Synchronization Coordination</p>
+<p>This trait defines the contract for coordinating file synchronization
+operations. It handles debouncing (preventing excessive syncs), change
+detection, and cross-process coordination.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>mcb_domain::ports::{SyncCoordinator, SyncOptions};
+<span class="kw">use </span>std::path::Path;
+<span class="kw">use </span>std::sync::Arc;
+
+<span class="kw">async fn </span>sync_codebase(
+    coordinator: Arc&lt;<span class="kw">dyn </span>SyncCoordinator&gt;,
+    path: <span class="kw-2">&amp;</span>Path,
+) -&gt; mcb_domain::Result&lt;bool&gt; {
+    <span class="kw">let </span>result = coordinator.sync(path, SyncOptions::default()).<span class="kw">await</span><span class="question-mark">?</span>;
+    <span class="prelude-val">Ok</span>(result.performed)
+}</code></pre></div></div></details><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.should_debounce" class="method"><a class="src rightside" href="../../src/mcb_domain/ports/infrastructure/sync.rs.html#100">Source</a><h4 class="code-header">fn <a href="#tymethod.should_debounce" class="fn">should_debounce</a>&lt;'life0, 'life1, 'async_trait&gt;(
+    &amp;'life0 self,
+    codebase_path: &amp;'life1 <a class="struct" href="https://doc.rust-lang.org/1.93.1/std/path/struct.Path.html" title="struct std::path::Path">Path</a>,
+) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.93.1/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="type" href="../error/type.Result.html" title="type mcb_domain::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.93.1/std/primitive.bool.html">bool</a>&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;<div class="where">where
+    Self: 'async_trait,
+    'life0: 'async_trait,
+    'life1: 'async_trait,</div></h4></section></summary><div class="docblock"><p>Check if sync should be skipped due to debouncing</p>
+<p>Returns true if the codebase was synced too recently.</p>
+<h5 id="arguments"><a class="doc-anchor" href="#arguments">§</a>Arguments</h5>
+<ul>
+<li><code>codebase_path</code> - Root directory of the codebase</li>
+</ul>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.sync" class="method"><a class="src rightside" href="../../src/mcb_domain/ports/infrastructure/sync.rs.html#117">Source</a><h4 class="code-header">fn <a href="#tymethod.sync" class="fn">sync</a>&lt;'life0, 'life1, 'async_trait&gt;(
+    &amp;'life0 self,
+    codebase_path: &amp;'life1 <a class="struct" href="https://doc.rust-lang.org/1.93.1/std/path/struct.Path.html" title="struct std::path::Path">Path</a>,
+    options: <a class="struct" href="struct.SyncOptions.html" title="struct mcb_domain::ports::SyncOptions">SyncOptions</a>,
+) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.93.1/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="type" href="../error/type.Result.html" title="type mcb_domain::error::Result">Result</a>&lt;<a class="struct" href="struct.SyncResult.html" title="struct mcb_domain::ports::SyncResult">SyncResult</a>&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;<div class="where">where
+    Self: 'async_trait,
+    'life0: 'async_trait,
+    'life1: 'async_trait,</div></h4></section></summary><div class="docblock"><p>Perform sync operation for a codebase</p>
+<p>Coordinates the sync operation including:</p>
+<ul>
+<li>Debounce checking (unless force=true)</li>
+<li>Change detection</li>
+<li>Timestamp tracking</li>
+</ul>
+<h5 id="arguments-1"><a class="doc-anchor" href="#arguments-1">§</a>Arguments</h5>
+<ul>
+<li><code>codebase_path</code> - Root directory of the codebase to sync</li>
+<li><code>options</code> - Sync configuration options</li>
+</ul>
+<h5 id="returns"><a class="doc-anchor" href="#returns">§</a>Returns</h5>
+<p>Result containing sync status and changed files</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.get_changed_files" class="method"><a class="src rightside" href="../../src/mcb_domain/ports/infrastructure/sync.rs.html#131">Source</a><h4 class="code-header">fn <a href="#tymethod.get_changed_files" class="fn">get_changed_files</a>&lt;'life0, 'life1, 'async_trait&gt;(
+    &amp;'life0 self,
+    codebase_path: &amp;'life1 <a class="struct" href="https://doc.rust-lang.org/1.93.1/std/path/struct.Path.html" title="struct std::path::Path">Path</a>,
+) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.93.1/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="type" href="../error/type.Result.html" title="type mcb_domain::error::Result">Result</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/string/struct.String.html" title="struct alloc::string::String">String</a>&gt;&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;<div class="where">where
+    Self: 'async_trait,
+    'life0: 'async_trait,
+    'life1: 'async_trait,</div></h4></section></summary><div class="docblock"><p>Get list of files that have changed since last sync</p>
+<p>Scans the codebase for files that have been modified since the last
+sync operation.</p>
+<h5 id="arguments-2"><a class="doc-anchor" href="#arguments-2">§</a>Arguments</h5>
+<ul>
+<li><code>codebase_path</code> - Root directory of the codebase</li>
+</ul>
+<h5 id="returns-1"><a class="doc-anchor" href="#returns-1">§</a>Returns</h5>
+<p>List of changed file paths (relative to root)</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.mark_synced" class="method"><a class="src rightside" href="../../src/mcb_domain/ports/infrastructure/sync.rs.html#140">Source</a><h4 class="code-header">fn <a href="#tymethod.mark_synced" class="fn">mark_synced</a>&lt;'life0, 'life1, 'async_trait&gt;(
+    &amp;'life0 self,
+    codebase_path: &amp;'life1 <a class="struct" href="https://doc.rust-lang.org/1.93.1/std/path/struct.Path.html" title="struct std::path::Path">Path</a>,
+) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.93.1/core/pin/struct.Pin.html" title="struct core::pin::Pin">Pin</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.93.1/alloc/boxed/struct.Box.html" title="struct alloc::boxed::Box">Box</a>&lt;dyn <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/future/future/trait.Future.html" title="trait core::future::future::Future">Future</a>&lt;Output = <a class="type" href="../error/type.Result.html" title="type mcb_domain::error::Result">Result</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.93.1/std/primitive.unit.html">()</a>&gt;&gt; + <a class="trait" href="https://doc.rust-lang.org/1.93.1/core/marker/trait.Send.html" title="trait core::marker::Send">Send</a> + 'async_trait&gt;&gt;<div class="where">where
+    Self: 'async_trait,
+    'life0: 'async_trait,
+    'life1: 'async_trait,</div></h4></section></summary><div class="docblock"><p>Update the last sync timestamp for a codebase</p>
+<p>Called after a successful sync to update debounce tracking.</p>
+<h5 id="arguments-3"><a class="doc-anchor" href="#arguments-3">§</a>Arguments</h5>
+<ul>
+<li><code>codebase_path</code> - Root directory of the codebase</li>
+</ul>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.tracked_file_count" class="method"><a class="src rightside" href="../../src/mcb_domain/ports/infrastructure/sync.rs.html#145">Source</a><h4 class="code-header">fn <a href="#tymethod.tracked_file_count" class="fn">tracked_file_count</a>(&amp;self) -&gt; <a class="primitive" href="https://doc.rust-lang.org/1.93.1/std/primitive.usize.html">usize</a></h4></section></summary><div class="docblock"><p>Get the number of tracked files</p>
+<p>Returns the number of files currently being tracked for changes.</p>
+</div></details></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"></div><script src="../../trait.impl/mcb_domain/ports/infrastructure/sync/trait.SyncCoordinator.js" async></script></section></div></main></body></html>

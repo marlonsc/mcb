@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["map_highlight_to_category"],"struct":["HighlightServiceImpl"]};

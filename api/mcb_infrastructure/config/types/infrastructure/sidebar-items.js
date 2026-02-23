@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["CacheProvider"],"struct":["CacheSystemConfig","LimitsConfig","LoggingConfig","MetricsConfig","ResilienceConfig"]};

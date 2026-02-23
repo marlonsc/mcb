@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["default_vcs_provider"]};

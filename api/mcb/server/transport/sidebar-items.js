@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TransportMode"],"mod":["axum_http","config","http","http_client","stdio","types"],"struct":["HttpClientTransport","HttpTransport","HttpTransportConfig","McpClientConfig","McpError","McpRequest","McpResponse","TransportConfig"],"trait":["StdioServerExt"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["agent","consolidated","entity","index","memory","project","search","session","validate","vcs"]};

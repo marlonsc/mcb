@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["callbacks"],"struct":["ConfigPropagator","PropagatorHandle"],"type":["ConfigChangeCallback"]};

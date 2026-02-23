@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["list_cache_providers","resolve_cache_provider"],"static":["CACHE_PROVIDERS"],"struct":["CacheProviderConfig","CacheProviderEntry"]};

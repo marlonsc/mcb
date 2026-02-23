@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["highlight_renderer","highlight_service"],"struct":["HighlightServiceImpl"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["AdminApi","AdminApiConfig","AdminApiServices","AdminConfigWatcherConfig"]};

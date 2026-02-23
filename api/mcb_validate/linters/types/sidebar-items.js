@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LinterType"],"struct":["ClippyCode","ClippyMessageContent","ClippyOutput","ClippySpan","LintViolation","RuffLocation","RuffViolation"]};

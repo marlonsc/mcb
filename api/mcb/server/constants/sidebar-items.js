@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["JSONRPC_INTERNAL_ERROR","JSONRPC_INVALID_PARAMS","JSONRPC_INVALID_REQUEST","JSONRPC_METHOD_NOT_FOUND","JSONRPC_PARSE_ERROR","LIST_FILE_PATHS_LIMIT","VALID_SECTIONS"],"mod":["admin_config","display","fields","git","json_rpc","limits","protocol","tools","vcs"]};

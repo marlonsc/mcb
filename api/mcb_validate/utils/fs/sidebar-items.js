@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["collect_yaml_files"]};

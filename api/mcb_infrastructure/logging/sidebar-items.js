@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["forward","init_logging","log_config_loaded","log_health_check","parse_log_level","set_global_operation_logger","spawn_log_forwarder"],"type":["LogEventReceiver"]};

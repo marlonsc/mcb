@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["is_valid_section"],"mod":["dto","handlers","service","view"],"struct":["CacheConfigView","ConfigReloadResponse","ConfigResponse","ConfigSectionUpdateRequest","ConfigSectionUpdateResponse","EmbeddingConfigView","LimitsConfigView","LoggingConfigView","MetricsConfigView","SanitizedConfig","ServerConfigView","VectorStoreConfigView"]};

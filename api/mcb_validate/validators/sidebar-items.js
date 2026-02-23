@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["async_patterns","clean_architecture","config_quality","declarative_validator","dependency","documentation","error_boundary","hygiene","implementation","kiss","layer_flow","macros","naming","organization","pattern_validator","performance","pmat","port_adapter","quality","refactoring","solid","ssot","test_quality","visibility"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["collect_functions","compute_complexity_score","compute_tdg_scores","count_balanced_block_lines","count_symbol_occurrences","detect_dead_functions","extract_function_body","filter_complex_functions","is_exempt_symbol"],"struct":["FunctionRecord"]};

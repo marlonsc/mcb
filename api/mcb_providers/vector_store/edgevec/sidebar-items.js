@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MetricType"],"struct":["EdgeVecConfig","EdgeVecVectorStoreProvider","HnswConfig","QuantizerConfig"]};

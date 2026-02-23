@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["list_vector_store_providers","resolve_vector_store_provider"],"static":["VECTOR_STORE_PROVIDERS"],"struct":["VectorStoreProviderConfig","VectorStoreProviderEntry"]};

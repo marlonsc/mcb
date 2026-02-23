@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["directory","function_naming","inline_tests","naming","quality","validator","violation"]};

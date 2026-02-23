@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IssueEntityAction","IssueEntityResource","OrgEntityAction","OrgEntityResource","PlanEntityAction","PlanEntityResource","VcsEntityAction","VcsEntityResource"],"mod":["types"],"struct":["IssueEntityArgs","OrgEntityArgs","PlanEntityArgs","VcsEntityArgs"]};

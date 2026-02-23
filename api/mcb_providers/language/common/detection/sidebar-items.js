@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_chunk_size","is_language_supported","language_from_extension","supported_languages"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["get_jobs_status_axum"],"struct":["JobsStatusResponse"]};

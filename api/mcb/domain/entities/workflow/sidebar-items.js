@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["TransitionTrigger","WorkflowState"],"struct":["Transition","TransitionInput","WorkflowSession"]};

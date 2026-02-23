@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["AsyncViolation"],"mod":["constants"],"struct":["AsyncPatternValidator"]};

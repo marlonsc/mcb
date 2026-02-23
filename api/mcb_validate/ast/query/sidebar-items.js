@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["QueryCondition"],"struct":["AstQuery","AstQueryBuilder","AstQueryPatterns"]};

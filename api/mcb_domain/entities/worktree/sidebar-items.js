@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["WorktreeStatus"],"struct":["AgentWorktreeAssignment","Worktree"]};

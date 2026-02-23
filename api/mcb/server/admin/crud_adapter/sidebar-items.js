@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["resolve_adapter"],"mod":["adapter","mapper","resolver","unified"],"trait":["EntityCrudAdapter"]};

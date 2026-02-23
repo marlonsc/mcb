@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["collections","config","handlebars","json","mcp","text"]};

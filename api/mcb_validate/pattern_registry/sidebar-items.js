@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["compile_regex_pairs","default_rules_dir"],"static":["PATTERNS"],"struct":["PatternRegistry"]};

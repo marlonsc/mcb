@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MemberCountKind","SolidViolation"],"fn":["make_member_count_violation","validate_decl_member_count"],"mod":["constants"],"struct":["MemberCountInput","SolidValidator"]};

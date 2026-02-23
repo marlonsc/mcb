@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["browse_collection_page","browse_file_page","browse_page","browse_tree_page","config_page","dashboard","dashboard_ui","favicon","health_page","jobs_page","shared_js","theme_css"]};

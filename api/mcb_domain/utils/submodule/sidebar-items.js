@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["collection_name","repo_id"]};

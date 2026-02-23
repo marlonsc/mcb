@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ConfigError"],"mod":["loader","paths","test_builder","types","watcher"],"struct":["GitConfig","McpContextConfig"]};
