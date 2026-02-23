@@ -93,6 +93,7 @@ fn create_test_command(mcb_path: &PathBuf) -> Command {
             .as_nanos()
     );
     cmd.arg("serve");
+    cmd.arg("--stdio");
     cmd.arg("--config").arg(config_path);
     cmd.env(
         "MCP__PROVIDERS__DATABASE__CONFIGS__DEFAULT__PATH",

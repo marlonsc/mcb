@@ -133,7 +133,11 @@ impl Hooks for McbApp {
 /// Provider resolution uses MCB's config (Figment/TOML) for domain settings
 /// (embedding provider, vector store, etc.). The database connection comes
 /// from Loco's `AppContext.db`.
-async fn create_mcp_server(
+///
+/// # Errors
+///
+/// Returns an error if configuration loading or provider resolution fails.
+pub async fn create_mcp_server(
     db: DatabaseConnection,
 ) -> std::result::Result<McpServer, Box<dyn std::error::Error>> {
     // ── MCB domain config (provider settings, MCP config, etc.) ─────────

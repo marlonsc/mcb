@@ -1,13 +1,14 @@
 use std::path::PathBuf;
 
 use clap::Args;
+use loco_rs::app::Hooks;
 use loco_rs::boot::{self, ServeParams, StartMode};
+use loco_rs::config;
 use loco_rs::controller::middleware;
 use loco_rs::environment::Environment;
 use mcb_server::McbApp;
-
-use loco_rs::app::Hooks;
-use loco_rs::config;
+use mcb_server::loco_app::create_mcp_server;
+use mcb_server::transport::stdio::StdioServerExt;
 
 /// Arguments for the `serve` subcommand.
 #[derive(Args, Debug, Clone)]
@@ -19,6 +20,9 @@ pub struct ServeArgs {
     /// Run as server daemon (HTTP only, no stdio).
     #[arg(long, help = "Run as server daemon (HTTP only, no stdio)")]
     pub server: bool,
+    /// Run in stdio-only mode (MCP over stdin/stdout, no HTTP server).
+    #[arg(long, help = "Stdio-only mode for MCP clients (no HTTP server)")]
+    pub stdio: bool,
 }
 
 impl ServeArgs {
@@ -32,24 +36,27 @@ impl ServeArgs {
                 std::env::set_var("MCB_NO_STDIO", "1");
             }
         }
-
         let mcb_config = load_mcb_config(self.config.as_deref())?;
         let db_path = resolve_db_path(&mcb_config)?;
         let http_port = i32::from(mcb_config.server.network.port);
         let http_binding = mcb_config.server.network.host.clone();
         let db_uri = sqlite_uri(&db_path);
-
         let loco_config = build_loco_config(http_port, http_binding.clone(), db_uri);
         let environment = Environment::Development;
-
         let boot_result =
             McbApp::boot(StartMode::ServerOnly, &environment, loco_config.clone()).await?;
-        let serve = ServeParams {
-            port: loco_config.server.port,
-            binding: loco_config.server.binding.clone(),
-        };
-
-        boot::start::<McbApp>(boot_result, serve, false).await?;
+        if self.stdio {
+            // Stdio-only mode: create MCP server directly from Loco's DB, no HTTP.
+            let server = create_mcp_server(boot_result.app_context.db.clone()).await?;
+            server.serve_stdio().await?;
+        } else {
+            // Default: HTTP server + background stdio (unless --server).
+            let serve = ServeParams {
+                port: loco_config.server.port,
+                binding: loco_config.server.binding.clone(),
+            };
+            boot::start::<McbApp>(boot_result, serve, false).await?;
+        }
         Ok(())
     }
 }
