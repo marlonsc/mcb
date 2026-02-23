@@ -3,7 +3,7 @@
 # GitHub Pages Deployment
 # =============================================================================
 # Manual workflow: triggered via workflow_dispatch only
-# Superseded by release.yml for tag-triggered deployment.
+# Superseded by release.yml for tag-triggered deployment. 
 # This workflow is kept as a manual emergency fallback only.
 # Builds and deploys documentation (mdBook + Rust API docs) to GitHub Pages
 # =============================================================================

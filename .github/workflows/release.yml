@@ -89,7 +89,7 @@ jobs:
 
       - name: Build (Windows)
         if: runner.os == 'Windows'
-        run: cargo build --release --target ${{ matrix.target }}
+        run: make build RELEASE=1 TARGET=${{ matrix.target }}
 
       - name: Create dist directory (Unix)
         if: runner.os != 'Windows'

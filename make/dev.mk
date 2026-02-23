@@ -9,13 +9,13 @@ export MCB_TEST_PORT ?= 18080
 
 ##@ Core
 
-build: ## Build project (RELEASE=1 for release)
+build: ## Build project (RELEASE=1 for release, TARGET=<triple> for cross-build e.g. Windows CI)
 ifeq ($(RELEASE),1)
 	@echo "Building release..."
-	cargo build --release
+	cargo build --release $(if $(TARGET),--target $(TARGET),)
 else
 	@echo "Building debug..."
-	cargo build
+	cargo build $(if $(TARGET),--target $(TARGET),)
 endif
 
 test: ## Run tests (SCOPE=unit|doc|golden|startup|integration|e2e|all, THREADS=N)

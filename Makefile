@@ -9,6 +9,7 @@ export MCB_CI ?= 0
 export QUICK ?= 0
 export THREADS ?= 0
 export BUMP ?=
+export TARGET ?=
 
 # Rust 2024 Edition lints (preserved verbatim)
 export RUST_2024_LINTS := -D unsafe_op_in_unsafe_fn -D rust_2024_compatibility -W static_mut_refs
