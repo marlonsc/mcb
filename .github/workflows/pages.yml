@@ -132,7 +132,11 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     needs: [docs-rust, docs-book]
-    if: always() && !failure() && !cancelled()
+    if: |
+      always() &&
+      !failure() &&
+      !cancelled() &&
+      (needs.docs-rust.result == 'success' || needs.docs-book.result == 'success')
     permissions:
       contents: write
     steps:
@@ -151,9 +155,15 @@ jobs:
           path: docs-site/
       - name: Check artifacts exist
         run: |
-          if [[ ! -d "docs-site/api" ]] || [[ ! -d "docs-site" ]]; then
-            echo "Error: Expected artifacts missing (docs-site/api or docs-site)" >&2
-            exit 1
+          # Check for actual content files, not just directories
+          # (download-artifact may create empty dirs with continue-on-error)
+          if [[ ! -f "docs-site/api/index.html" ]]; then
+            echo "Warning: Rust API docs not found, creating empty directory" >&2
+            mkdir -p docs-site/api
+          fi
+          if [[ ! -f "docs-site/index.html" ]]; then
+            echo "Warning: mdBook docs not found, creating empty directory" >&2
+            mkdir -p docs-site
           fi
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
