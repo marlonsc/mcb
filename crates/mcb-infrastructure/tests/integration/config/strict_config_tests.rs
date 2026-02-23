@@ -8,86 +8,62 @@ use mcb_infrastructure::config::ConfigLoader;
 use serial_test::serial;
 use tempfile::TempDir;
 
-use crate::utils::env_vars::EnvVarGuard;
 use crate::utils::fs_guards::{CurrentDirGuard, RestoreFileGuard};
 use crate::utils::workspace::{scan_rs_files, workspace_root};
 
-fn workspace_default_toml() -> Result<PathBuf, Box<dyn std::error::Error>> {
+fn workspace_development_yaml() -> Result<PathBuf, Box<dyn std::error::Error>> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     for dir in manifest_dir.ancestors() {
-        let candidate = dir.join("config").join("default.toml");
+        let candidate = dir.join("config").join("development.yaml");
         if candidate.exists() {
             return Ok(candidate);
         }
     }
 
-    Err("workspace config/default.toml not found from CARGO_MANIFEST_DIR ancestors".into())
+    Err("workspace config/development.yaml not found from CARGO_MANIFEST_DIR ancestors".into())
 }
 
-fn write_temp_default(
+fn write_temp_yaml(
     temp_dir: &TempDir,
     contents: &str,
 ) -> Result<PathBuf, Box<dyn std::error::Error>> {
     let config_dir = temp_dir.path().join("config");
     fs::create_dir_all(&config_dir)?;
-    let default_path = config_dir.join("default.toml");
-    fs::write(&default_path, contents)?;
-    Ok(default_path)
+    let yaml_path = config_dir.join("development.yaml");
+    fs::write(&yaml_path, contents)?;
+    Ok(yaml_path)
 }
 
-fn inject_key_into_section(toml: &str, section_header: &str, key_line: &str) -> String {
+fn inject_bogus_key_into_yaml(yaml: &str) -> String {
     let mut result = String::new();
-    let mut found_section = false;
-    let mut inserted = false;
+    let mut found_settings = false;
 
-    for line in toml.lines() {
-        let trimmed = line.trim();
-
-        if trimmed == section_header {
-            found_section = true;
-        } else if found_section && !inserted && trimmed.starts_with('[') {
-            result.push_str(key_line);
-            result.push('\n');
-            inserted = true;
-            found_section = false;
-        }
-
+    for line in yaml.lines() {
         result.push_str(line);
         result.push('\n');
-    }
 
-    if found_section && !inserted {
-        result.push_str(key_line);
-        result.push('\n');
+        if line.trim() == "settings:" && !found_settings {
+            found_settings = true;
+            result.push_str("  bogus_key: true\n");
+        }
     }
-
-    assert!(
-        found_section || inserted,
-        "section {section_header} not found in TOML"
-    );
 
     result
 }
 
-fn remove_server_network_port(default_toml: &str) -> String {
-    let mut out = String::new();
-    let mut in_server_network = false;
+fn remove_port_from_yaml(yaml: &str) -> String {
+    let mut result = String::new();
 
-    for line in default_toml.lines() {
+    for line in yaml.lines() {
         let trimmed = line.trim();
-        if trimmed.starts_with('[') && trimmed.ends_with(']') {
-            in_server_network = trimmed == "[server.network]";
-        }
-
-        if in_server_network && trimmed.starts_with("port") && trimmed.contains('=') {
+        if trimmed.starts_with("port:") {
             continue;
         }
-
-        out.push_str(line);
-        out.push('\n');
+        result.push_str(line);
+        result.push('\n');
     }
 
-    out
+    result
 }
 
 #[test]
@@ -96,18 +72,19 @@ fn test_missing_default_toml_fails() -> Result<(), Box<dyn std::error::Error>> {
     let temp_dir = TempDir::new()?;
     let _cwd_guard = CurrentDirGuard::new(temp_dir.path())?;
 
-    let default_path = workspace_default_toml()?;
-    let backup_path = default_path.with_extension("toml.strict-config-test-backup");
-    let _restore = RestoreFileGuard::move_out(&default_path, &backup_path)?;
+    let yaml_path = workspace_development_yaml()?;
+    let backup_path = yaml_path.with_extension("yaml.strict-config-test-backup");
+    let _restore = RestoreFileGuard::move_out(&yaml_path, &backup_path)?;
 
     let result = ConfigLoader::new().load();
-    assert!(result.is_err(), "missing default.toml must fail");
+    assert!(result.is_err(), "missing development.yaml must fail");
 
     let message = result.expect_err("must fail").to_string();
     assert!(
-        message.contains("default.toml")
-            || message.contains("Default configuration file not found"),
-        "error should mention missing default.toml, got: {message}"
+        message.contains("development.yaml")
+            || message.contains("No YAML configuration file found")
+            || message.contains("Configuration file not found"),
+        "error should mention missing YAML file, got: {message}"
     );
     Ok(())
 }
@@ -116,20 +93,16 @@ fn test_missing_default_toml_fails() -> Result<(), Box<dyn std::error::Error>> {
 #[serial]
 fn test_unknown_key_rejected() -> Result<(), Box<dyn std::error::Error>> {
     let temp_dir = TempDir::new()?;
-    let default_toml = fs::read_to_string(workspace_default_toml()?)?;
+    let yaml_content = fs::read_to_string(workspace_development_yaml()?)?;
 
-    // Inject a bogus key into the existing [server.network] section.
-    // We must NOT duplicate the TOML section header — that would cause a
-    // TOML parse error and give a false positive.
-    let strict_toml =
-        inject_key_into_section(&default_toml, "[server.network]", "bogus_key = true");
-    let _default_path = write_temp_default(&temp_dir, &strict_toml)?;
+    let strict_yaml = inject_bogus_key_into_yaml(&yaml_content);
+    let _yaml_path = write_temp_yaml(&temp_dir, &strict_yaml)?;
     let _cwd_guard = CurrentDirGuard::new(temp_dir.path())?;
 
     let result = ConfigLoader::new().load();
     assert!(
         result.is_err(),
-        "unknown keys in TOML should be rejected (strict mode / deny_unknown_fields), but load succeeded"
+        "unknown keys in YAML should be rejected (strict mode / deny_unknown_fields), but load succeeded"
     );
     Ok(())
 }
@@ -138,9 +111,9 @@ fn test_unknown_key_rejected() -> Result<(), Box<dyn std::error::Error>> {
 #[serial]
 fn test_missing_required_key_fails() -> Result<(), Box<dyn std::error::Error>> {
     let temp_dir = TempDir::new()?;
-    let default_toml = fs::read_to_string(workspace_default_toml()?)?;
-    let missing_port_toml = remove_server_network_port(&default_toml);
-    let _default_path = write_temp_default(&temp_dir, &missing_port_toml)?;
+    let yaml_content = fs::read_to_string(workspace_development_yaml()?)?;
+    let missing_port_yaml = remove_port_from_yaml(&yaml_content);
+    let _yaml_path = write_temp_yaml(&temp_dir, &missing_port_yaml)?;
     let _cwd_guard = CurrentDirGuard::new(temp_dir.path())?;
 
     let result = ConfigLoader::new().load();
@@ -151,28 +124,19 @@ fn test_missing_required_key_fails() -> Result<(), Box<dyn std::error::Error>> {
 
     let message = result.expect_err("must fail").to_string();
     assert!(
-        message.contains("server.network.port") || message.contains("port"),
+        message.contains("server.network.port")
+            || message.contains("port")
+            || message.contains("missing field"),
         "error should mention missing key, got: {message}"
     );
     Ok(())
 }
 
-#[test]
-#[serial]
-fn test_mcp_env_override_port_works() -> Result<(), Box<dyn std::error::Error>> {
-    let temp_dir = TempDir::new()?;
-    let default_toml = fs::read_to_string(workspace_default_toml()?)?;
-    let _default_path = write_temp_default(&temp_dir, &default_toml)?;
-    let _cwd_guard = CurrentDirGuard::new(temp_dir.path())?;
-    let _env_guard = EnvVarGuard::set("MCP__SERVER__NETWORK__PORT", "9999");
-
-    let config = ConfigLoader::new().load()?;
-    assert_eq!(
-        config.server.network.port, 9999,
-        "MCP__SERVER__NETWORK__PORT should override port from default.toml"
-    );
-    Ok(())
-}
+// NOTE: test_mcp_env_override_port_works was deleted because Figment (which supported
+// MCP__ env var prefixes) was removed during the Figment→Loco YAML migration.
+// Environment variable override is no longer supported in the YAML-based config system.
+// If env override is needed in the future, it would need to be implemented as a separate
+// feature in ConfigLoader using serde_yaml's environment variable support.
 
 // ── Enforcement: no config bypass ────────────────────────────────────────────
 
@@ -275,7 +239,7 @@ fn test_no_impl_default_in_config_types() -> Result<(), Box<dyn std::error::Erro
 
     assert!(
         violations.is_empty(),
-        "impl Default found on operational config types (defaults must come from default.toml):\n{}",
+        "impl Default found on operational config types (defaults must come from development.yaml):\n{}",
         violations.join("\n")
     );
     Ok(())
@@ -305,7 +269,7 @@ fn test_no_serde_default_in_config_types() -> Result<(), Box<dyn std::error::Err
 
     assert!(
         violations.is_empty(),
-        "serde(default) found in config types (operational defaults must come from default.toml):\n{}",
+        "serde(default) found in config types (operational defaults must come from development.yaml):\n{}",
         violations.join("\n")
     );
     Ok(())
@@ -374,7 +338,6 @@ fn test_no_lang_constants_outside_domain() -> Result<(), Box<dyn std::error::Err
     let root = workspace_root()?;
     let domain_lang = root.join("crates/mcb-domain/src/constants/lang.rs");
 
-    // Only scan non-domain crate source dirs for LANG_ constant definitions
     let scan_dirs = &[
         "mcb-server/src",
         "mcb-providers/src",
@@ -387,11 +350,9 @@ fn test_no_lang_constants_outside_domain() -> Result<(), Box<dyn std::error::Err
     for crate_dir in scan_dirs {
         let dir = root.join("crates").join(crate_dir);
         for file_path in scan_rs_files(&dir) {
-            // Skip re-export files (allowed to `pub use mcb_domain::...`)
             let content = fs::read_to_string(&file_path).unwrap_or_default();
             let relative = file_path.strip_prefix(&root).unwrap_or(&file_path);
 
-            // Skip the canonical definition
             if file_path == domain_lang {
                 continue;
             }
@@ -401,12 +362,9 @@ fn test_no_lang_constants_outside_domain() -> Result<(), Box<dyn std::error::Err
                 if trimmed.starts_with("//") || trimmed.starts_with("///") {
                     continue;
                 }
-                // Allow re-exports from domain
                 if trimmed.contains("pub use mcb_domain::") {
                     continue;
                 }
-                // Detect local definitions of LANG_* string identifier constants
-                // Allow LANG_CHUNK_SIZE_MAP (provider-specific mapping table, not an identifier)
                 if trimmed.starts_with("pub const LANG_")
                     && trimmed.contains("&str")
                     && !trimmed.contains("LANG_CHUNK_SIZE_MAP")
@@ -465,7 +423,6 @@ fn test_no_bm25_constants_outside_domain() -> Result<(), Box<dyn std::error::Err
                 if trimmed.starts_with("//") || trimmed.starts_with("///") {
                     continue;
                 }
-                // Allow re-exports from domain
                 if trimmed.contains("pub use mcb_domain::") {
                     continue;
                 }
@@ -496,7 +453,6 @@ fn test_no_bm25_constants_outside_domain() -> Result<(), Box<dyn std::error::Err
 fn test_no_hardcoded_provider_defaults() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
 
-    // These function names indicate hardcoded fallback defaults for providers
     let banned_patterns = &[
         "default_embedding_config",
         "default_vector_store_config",
@@ -536,7 +492,7 @@ fn test_no_hardcoded_provider_defaults() -> Result<(), Box<dyn std::error::Error
     assert!(
         violations.is_empty(),
         "Hardcoded provider default functions must not exist in DI layer. \
-         Provider defaults come from config/default.toml:\n{}",
+         Provider defaults come from config/development.yaml:\n{}",
         violations.join("\n")
     );
     Ok(())

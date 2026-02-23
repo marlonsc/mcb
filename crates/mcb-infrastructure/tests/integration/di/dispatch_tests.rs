@@ -22,9 +22,10 @@ extern crate mcb_providers;
 fn test_config() -> Result<(AppConfig, tempfile::TempDir), Box<dyn std::error::Error>> {
     let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("test.db");
-    let default_path =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../config/default.toml");
-    let mut config = ConfigLoader::new().with_config_path(default_path).load()?;
+    let test_yaml_path =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../config/development.yaml");
+    let mut config = ConfigLoader::new().with_config_path(test_yaml_path).load()?;
+    config.server.network.port = 3000;
     config.providers.database.configs.insert(
         "default".to_owned(),
         mcb_infrastructure::config::DatabaseConfig {
