@@ -3,7 +3,9 @@
 //!
 //! Row-to-entity conversion using the domain port [`SqlRow`].
 
-use crate::utils::sqlite::row::{json_opt, json_vec, opt_i64, opt_str, req_i64, req_parsed, req_str};
+use crate::utils::sqlite::row::{
+    json_opt, json_vec, opt_i64, opt_str, req_i64, req_parsed, req_str,
+};
 use mcb_domain::constants::keys as schema;
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, CheckpointType};
 use mcb_domain::entities::issue::{IssueComment, IssueLabel};

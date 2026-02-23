@@ -8,8 +8,8 @@ pub mod organization;
 
 #[cfg(test)]
 mod schema_sync_tests {
-    use mcb_domain::schema::types::ColumnType;
     use mcb_domain::schema::Schema;
+    use mcb_domain::schema::types::ColumnType;
 
     fn column_type_to_rust(t: &ColumnType) -> &'static str {
         match t {

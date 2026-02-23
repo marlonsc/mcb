@@ -91,7 +91,14 @@ mod tests {
         let col_names: Vec<&str> = org_table.columns.iter().map(|c| c.name.as_str()).collect();
         assert_eq!(
             col_names,
-            vec!["id", "name", "slug", "settings_json", "created_at", "updated_at"]
+            vec![
+                "id",
+                "name",
+                "slug",
+                "settings_json",
+                "created_at",
+                "updated_at"
+            ]
         );
         println!("✓ organizations table has correct schema");
     }
@@ -105,7 +112,11 @@ mod tests {
             .find(|t| t.name == "users")
             .expect("users table not found");
 
-        let col_names: Vec<&str> = users_table.columns.iter().map(|c| c.name.as_str()).collect();
+        let col_names: Vec<&str> = users_table
+            .columns
+            .iter()
+            .map(|c| c.name.as_str())
+            .collect();
         assert!(col_names.contains(&"id"));
         assert!(col_names.contains(&"org_id"));
         assert!(col_names.contains(&"email"));
@@ -123,7 +134,11 @@ mod tests {
             .find(|t| t.name == "plans")
             .expect("plans table not found");
 
-        let col_names: Vec<&str> = plans_table.columns.iter().map(|c| c.name.as_str()).collect();
+        let col_names: Vec<&str> = plans_table
+            .columns
+            .iter()
+            .map(|c| c.name.as_str())
+            .collect();
         assert!(col_names.contains(&"id"));
         assert!(col_names.contains(&"org_id"));
         assert!(col_names.contains(&"project_id"));
@@ -142,9 +157,16 @@ mod tests {
             .find(|t| t.name == "project_issues")
             .expect("project_issues table not found");
 
-        let col_names: Vec<&str> = issues_table.columns.iter().map(|c| c.name.as_str()).collect();
+        let col_names: Vec<&str> = issues_table
+            .columns
+            .iter()
+            .map(|c| c.name.as_str())
+            .collect();
         assert!(col_names.contains(&"id"));
-        assert!(col_names.contains(&"labels"), "labels column should be Text (JSON)");
+        assert!(
+            col_names.contains(&"labels"),
+            "labels column should be Text (JSON)"
+        );
         assert!(col_names.contains(&"issue_type"));
         assert!(col_names.contains(&"status"));
         println!("✓ project_issues table has correct columns");
@@ -171,15 +193,18 @@ mod tests {
             assert_eq!(t_col.type_, d_col.type_, "type mismatch for {}", t_col.name);
             assert_eq!(
                 t_col.primary_key, d_col.primary_key,
-                "pk mismatch for {}", t_col.name
+                "pk mismatch for {}",
+                t_col.name
             );
             assert_eq!(
                 t_col.not_null, d_col.not_null,
-                "not_null mismatch for {}", t_col.name
+                "not_null mismatch for {}",
+                t_col.name
             );
             assert_eq!(
                 t_col.unique, d_col.unique,
-                "unique mismatch for {}", t_col.name
+                "unique mismatch for {}",
+                t_col.name
             );
         }
 

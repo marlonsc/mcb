@@ -92,10 +92,7 @@ impl Schema {
     }
 
     fn tables() -> Vec<TableDef> {
-        SCHEMA_ENTRIES
-            .iter()
-            .map(|entry| (entry.table)())
-            .collect()
+        SCHEMA_ENTRIES.iter().map(|entry| (entry.table)()).collect()
     }
 
     fn fts_def() -> Option<FtsDef> {

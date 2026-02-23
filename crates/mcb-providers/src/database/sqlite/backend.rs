@@ -26,10 +26,7 @@ impl SqliteBackend {
     /// Creates a backend with the given executor and SeaORM connection.
     #[must_use]
     pub fn new(executor: SqliteExecutor, sea_conn: DatabaseConnection) -> Self {
-        Self {
-            executor,
-            sea_conn,
-        }
+        Self { executor, sea_conn }
     }
 
     /// Returns the SeaORM connection for the same database.

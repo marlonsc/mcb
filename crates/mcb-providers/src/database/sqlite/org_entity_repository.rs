@@ -27,8 +27,7 @@ pub struct SqliteOrgEntityRepository {
     sea_conn: Option<sea_orm::DatabaseConnection>,
 }
 
-const INSERT_ORG_SQL: &str =
-    "INSERT INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
+const INSERT_ORG_SQL: &str = "INSERT INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)";
 
 fn org_insert_params(org: &Organization) -> [SqlParam; 6] {
     [
