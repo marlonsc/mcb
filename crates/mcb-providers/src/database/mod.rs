@@ -11,6 +11,7 @@
 //! - **postgres** – (future) PostgreSQL adapter and DDL
 //! - **mysql** – (future) MySQL adapter and DDL
 
+pub mod seaorm;
 pub mod sqlite;
 pub use sqlite::{
     SqliteAgentRepository, SqliteDatabaseProvider, SqliteExecutor, SqliteFileHashConfig,

@@ -130,9 +130,15 @@ sqlx = { workspace = true }
 sha2.workspace = true
 walkdir.workspace = true
 
+# SeaORM: Entity-first ORM (entities + migrations)
+sea-orm = { workspace = true }
+sea-orm-migration = { workspace = true }
+
 [features]
 default = []
 hybrid-search = []
+# Dev-only: auto-sync schema from SeaORM entities (NEVER enable in production)
+dev-schema-sync = []
 
 [lints]
 workspace = true
@@ -142,7 +148,13 @@ tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 rstest = { workspace = true }
 mockall = { workspace = true }
+sea-orm = { workspace = true }
+sea-orm-migration = { workspace = true }
 
 [[test]]
 name = "unit"
 path = "tests/unit/mod.rs"
+
+[[test]]
+name = "migration"
+path = "tests/migration/mod.rs"
