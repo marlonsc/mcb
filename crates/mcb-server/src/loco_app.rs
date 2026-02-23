@@ -17,7 +17,6 @@ use loco_rs::config::Config as LocoConfig;
 use loco_rs::controller::AppRoutes;
 use loco_rs::environment::Environment;
 use loco_rs::task::Tasks;
-use sea_orm::DatabaseConnection;
 
 use mcb_domain::ports::{
     AgentRepository, EventBusProvider, FileHashRepository, IndexingOperationsInterface,
@@ -77,7 +76,7 @@ impl Hooks for McbApp {
     }
 
     async fn after_routes(router: AxumRouter, ctx: &LocoAppContext) -> Result<AxumRouter> {
-        let server = create_mcp_server(ctx.db.clone())
+        let server = create_mcp_server(ctx)
             .await
             .map_err(|e| loco_rs::Error::string(&format!("MCP server init failed: {e}")))?;
         let server = Arc::new(server);
@@ -125,24 +124,26 @@ impl Hooks for McbApp {
 // MCP Server Factory
 // =========================================================================
 
-/// Creates a fully-wired MCP server from a Loco database connection.
+/// Creates a fully-wired MCP server from a Loco application context.
 ///
-/// Replaces the old `init.rs` bootstrap chain:
-///   `load_config → init_app → build_domain_services → McpServer::new`
-///
-/// Provider resolution uses MCB's config (Figment/TOML) for domain settings
-/// (embedding provider, vector store, etc.). The database connection comes
-/// from Loco's `AppContext.db`.
+/// Extracts `AppConfig` from Loco's `config.settings` and uses `ctx.db`
+/// for the database connection. No separate config loading step needed.
 ///
 /// # Errors
 ///
-/// Returns an error if configuration loading or provider resolution fails.
+/// Returns an error if settings extraction or provider resolution fails.
 pub async fn create_mcp_server(
-    db: DatabaseConnection,
+    ctx: &LocoAppContext,
 ) -> std::result::Result<McpServer, Box<dyn std::error::Error>> {
-    // ── MCB domain config (provider settings, MCP config, etc.) ─────────
-    let config = mcb_infrastructure::config::ConfigLoader::new().load()?;
+    // ── Extract MCB config from Loco settings ───────────────────────────
+    let settings_value =
+        ctx.config.settings.clone().ok_or(
+            "No 'settings' in Loco config. Ensure config/{env}.yaml has a 'settings:' key.",
+        )?;
+    let config: AppConfig = serde_json::from_value(settings_value)
+        .map_err(|e| format!("Failed to deserialize MCB settings from Loco config: {e}"))?;
     let config = Arc::new(config);
+    let db = ctx.db.clone();
 
     // ── Resolve providers directly (no handles, no admin switching) ──────
     let embedding_provider = EmbeddingProviderResolver::new(Arc::clone(&config))
@@ -164,11 +165,11 @@ pub async fn create_mcp_server(
         Arc::new(DefaultIndexingOperations::new());
 
     // ── SeaORM repositories (from Loco's database connection) ───────────
-    let db_arc = Arc::new(db.clone());
+    let db_arc = Arc::new(db);
     let project_id = current_project_id()?;
 
     let memory_repository: Arc<dyn MemoryRepository> =
-        Arc::new(SeaOrmObservationRepository::new(db));
+        Arc::new(SeaOrmObservationRepository::new((*db_arc).clone()));
     let agent_repository: Arc<dyn AgentRepository> =
         Arc::new(SeaOrmAgentRepository::new(Arc::clone(&db_arc)));
     let project_repository: Arc<dyn ProjectRepository> =

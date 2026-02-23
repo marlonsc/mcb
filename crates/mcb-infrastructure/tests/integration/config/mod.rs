@@ -9,4 +9,3 @@ mod strict_config_tests;
 mod server_tests;
 mod types_tests;
 mod validation_tests;
-mod watcher_tests;

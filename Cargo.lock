@@ -4194,7 +4194,6 @@ version = "0.2.1-dev"
 dependencies = [
  "aes-gcm",
  "anyhow",
- "arc-swap",
  "argon2",
  "async-trait",
  "base64 0.22.1",
@@ -4205,7 +4204,6 @@ dependencies = [
  "delegate",
  "dirs",
  "downcast-rs",
- "figment",
  "futures",
  "futures-util",
  "glob",
@@ -4222,7 +4220,6 @@ dependencies = [
  "mcb-providers",
  "mcb-validate",
  "mockall",
- "notify 8.2.0",
  "pbkdf2",
  "rand 0.10.0",
  "rayon",
