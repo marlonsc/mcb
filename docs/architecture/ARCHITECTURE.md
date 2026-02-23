@@ -891,7 +891,7 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 - `di/bootstrap.rs`: AppContext composition root configuration
 - `di/handles.rs`: RwLock provider handles
 - `di/admin.rs`: Admin services for runtime switching
-- `config/`: Configuration management (Figment)
+- `config/`: Configuration management (Loco YAML)
 - `cache/`: Cache infrastructure
 - `crypto/`: Encryption and hashing utilities
 - `health/`: Health check infrastructure
@@ -1965,7 +1965,7 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 
 - [ADR-005](../adr/005-context-cache-support.md) Context Cache
 - [ADR-006](../adr/006-code-audit-and-improvements.md) Code Audit
-- [ADR-007](../adr/007-integrated-web-administration-interface.md) Admin UI
+- [ADR-007](../adr/archive/superseded-007-web-admin-interface.md) Admin UI (archived)
 - [ADR-010](../adr/010-hooks-subsystem-agent-backed.md) Hooks
 - [ADR-011](../adr/011-http-transport-request-response-pattern.md) HTTP Transport
 - [ADR-012](../adr/012-di-strategy-two-layer-approach.md) Two-Layer DI
@@ -1979,8 +1979,8 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 - [ADR-021](../adr/021-dependency-management.md) Dependency Mgmt
 - [ADR-022](../adr/022-ci-integration-strategy.md) CI
 - [ADR-023](../adr/023-inventory-to-linkme-migration.md) Linkme
-- [ADR-025](../adr/025-figment-configuration.md) Figment
-- [ADR-026](../adr/026-routing-refactor-rocket-poem.md) Routing
+- [ADR-025](../adr/archive/superseded-025-figment-configuration.md) Figment (archived, see ADR-051)
+- [ADR-026](../adr/archive/superseded-026-routing-refactor-rocket-poem.md) Routing (archived, see ADR-049)
 - [ADR-027](../adr/027-architecture-evolution-v013.md) Arch Evolution
 - [ADR-028](../adr/028-advanced-code-browser-v020.md) Code Browser
 - [ADR-030](../adr/030-multi-provider-strategy.md) Multi-Provider
@@ -2268,23 +2268,26 @@ impl BackupManager {
 - Multi-branch and commit history search
 - Cross-session memory with SQLite storage
 - Hybrid search for observations and decisions
-- 📋**v0.3.0**: Advanced code intelligence + Workflow FSM (Phase 8)
-- Symbol extraction and cross-referencing
-- Call graph analysis
-- Dependency impact mapping
+- 🚧**v0.3.0**: SeaQL + Loco.rs Platform Rebuild (ADR-051)
+- SeaORM persistence replacing raw SQLite
+- Loco.rs framework with Axum native server
+- Entity CRUD (vcs/plan/issue/org resources)
+- Figment→Loco YAML config migration
+- 📋**v0.4.0**: Workflow FSM + Advanced Code Intelligence (Phase 8)
 - Workflow state machines (ADR-034)
 - Freshness tracking and policies (ADR-035, ADR-036)
 - Compensation and orchestration (ADR-037)
-- 🚧**v0.4.0**: Integrated Context System (Phase 9, Feb 17 - Mar 16, 2026)
+- Symbol extraction and cross-referencing
+- 📋**v0.5.0**: Integrated Context System (Phase 9)
 - Knowledge graph with code relationships (ADR-042)
 - Hybrid search engine with RRF fusion (ADR-043)
 - Context snapshots and time-travel queries (ADR-045)
 - Policy-driven context discovery (ADR-046)
 - 70+ tests, complete documentation
 
-### v0.4.0: Integrated Context System Architecture
+### v0.5.0: Integrated Context System Architecture
 
-**Overview**: v0.4.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
+**Overview**: v0.5.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
 
 ### 5-Layer Architecture
 

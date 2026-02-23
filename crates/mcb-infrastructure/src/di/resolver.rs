@@ -109,7 +109,7 @@ impl std::fmt::Debug for ResolvedProviders {
 pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
     // Get embedding config: prefer direct config (env vars), fallback to named config
     let embedding_config = if config.providers.embedding.provider.is_some() {
-        // Direct config from env vars like MCP__PROVIDERS__EMBEDDING__PROVIDER
+        // Direct config (e.g. settings.providers.embedding.provider in YAML)
         EmbeddingProviderConfig {
             provider: config
                 .providers
@@ -142,7 +142,7 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
 
     // Get vector store config: prefer direct config (env vars), fallback to named config
     let vector_store_config = if config.providers.vector_store.provider.is_some() {
-        // Direct config from env vars like MCP__PROVIDERS__VECTOR_STORE__PROVIDER
+        // Direct config (e.g. settings.providers.vector_store.provider in YAML)
         VectorStoreProviderConfig {
             provider: config
                 .providers

@@ -68,7 +68,7 @@ impl EmbeddingProviderResolver {
     ///
     /// Returns an error if no embedding provider is configured or resolution fails.
     pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn EmbeddingProvider>> {
-        // First, check direct config (flat env vars like MCP__PROVIDERS__EMBEDDING__PROVIDER)
+        // First, check direct config (e.g. settings.providers.embedding.provider in YAML)
         if let Some(ref provider_name) = self.config.providers.embedding.provider {
             let mut registry_config = EmbeddingProviderConfig::new(provider_name);
             if let Some(ref model) = self.config.providers.embedding.model {
@@ -140,7 +140,7 @@ impl VectorStoreProviderResolver {
     ///
     /// Returns an error if no matching vector store provider is found in the registry.
     pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn VectorStoreProvider>> {
-        // First, check direct config (flat env vars like MCP__PROVIDERS__VECTOR_STORE__PROVIDER)
+        // First, check direct config (e.g. settings.providers.vector_store.provider in YAML)
         if let Some(ref provider_name) = self.config.providers.vector_store.provider {
             let mut registry_config = VectorStoreProviderConfig::new(provider_name);
             if let Some(ref address) = self.config.providers.vector_store.address {

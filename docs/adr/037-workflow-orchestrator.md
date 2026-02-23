@@ -21,7 +21,7 @@ implementation_status: Complete
 
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout), [ADR-036](./036-enforcement-policies.md) (Enforcement Policies)
-- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-033](./033-mcp-handler-consolidation.md) (Handler Consolidation), [ADR-025](./025-figment-configuration.md) (Figment)
+- **Related:** [ADR-029](./archive/superseded-029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-033](./033-mcp-handler-consolidation.md) (Handler Consolidation), [ADR-025](./archive/superseded-025-figment-configuration.md) (Figment)
 - **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) →**ADR-037**
 
 ## Context
@@ -1697,5 +1697,5 @@ fn default_channel_capacity() -> usize { 256 }
 - [ADR-035: Context Scout](./035-context-scout.md) — `ContextScoutProvider` trait
 - [ADR-036: Enforcement Policies](./036-enforcement-policies.md) — `PolicyGuardProvider` trait
 - [ADR-033: MCP Handler Consolidation](./033-mcp-handler-consolidation.md) — Action-based tool pattern
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) — DI pattern (superseded by ADR-050)
-- [ADR-025: Figment Configuration](./025-figment-configuration.md) — Config pattern
+- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md) — DI pattern (superseded by ADR-050)
+- [ADR-025: Figment Configuration](./archive/superseded-025-figment-configuration.md) — Config pattern

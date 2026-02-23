@@ -17,7 +17,7 @@ implementation_status: Complete
 
 **Implemented** (v0.2.1)
 
-> Supersedes [ADR 029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md).
+> Supersedes [ADR 029: Hexagonal Architecture with dill](archive/superseded-029-hexagonal-architecture-dill.md).
 
 ## Context
 
@@ -181,5 +181,5 @@ IoC container.
 ## References
 
 - [linkme Documentation](https://docs.rs/linkme)
-- [ADR 029: Hexagonal Architecture with dill](029-hexagonal-architecture-dill.md) — Superseded
+ [ADR 029: Hexagonal Architecture with dill](archive/superseded-029-hexagonal-architecture-dill.md) — Superseded
 - [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md) — Historical

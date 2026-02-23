@@ -354,7 +354,7 @@ async fn test_full_indexing_flow() {
 - [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - mcb-providers organization
 - [ADR-031: Documentation Excellence](031-documentation-excellence.md) - Documentation per crate
 - [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Quality standards per layer
-- [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - mcb-server admin module
+- [ADR-007: Integrated Web Administration Interface](archive/superseded-007-web-admin-interface.md) - mcb-server admin module
 - [ADR-011: HTTP Transport](011-http-transport-request-response-pattern.md) - mcb-server transport layer
 - [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI in mcb-infrastructure
 - **Extended by**: [ADR-027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Introduces bounded contexts within layers

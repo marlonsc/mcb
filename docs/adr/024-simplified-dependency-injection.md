@@ -18,7 +18,7 @@ implementation_status: Complete
 ## Status
 
 **Superseded by [ADR 029: Hexagonal Architecture]
-(029-hexagonal-architecture-dill.md) (superseded by ADR-050)** (v0.1.2)
+(archive/superseded-029-hexagonal-architecture-dill.md) (superseded by ADR-050)** (v0.1.2)
 
 > Original replacement for [ADR 002: Dependency Injection with Shaku]
 > (002-dependency-injection-shaku.md) using a handle-based DI pattern with
@@ -26,7 +26,7 @@ implementation_status: Complete
 >
 > **Update (2026-01-20)**: The interim container-based approach was implemented
 > and later replaced by `init_app()` + `AppContext`. See [ADR 029]
-> (029-hexagonal-architecture-dill.md) (superseded by ADR-050) for migration history.
+> (archive/superseded-029-hexagonal-architecture-dill.md) (superseded by ADR-050) for migration history.
 >
 > **Implementation Note (2026-01-19)**: The interim `#[component]` macro approach is
 > incompatible with our domain error types and manual constructors. We use a

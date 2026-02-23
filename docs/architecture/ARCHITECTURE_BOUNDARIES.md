@@ -259,7 +259,7 @@ mcb-infrastructure/src/
 ├── di/                 # Dependency injection (manual composition root)
 │   ├── bootstrap.rs    # AppContext composition root
 │   └── resolvers.rs    # Service resolution
-├── config/             # Configuration (Figment)
+├── config/             # Configuration (Loco YAML)
 │   ├── loader.rs
 │   └── types/
 ├── infrastructure/     # Admin types (metrics, indexing ops)
@@ -562,7 +562,7 @@ make validate QUICK=1  # Fast validation
 - **ADR-013**: Clean Architecture Crate Separation
 - **ADR-023**: Inventory to Linkme Migration
 - **ADR-024**: Handle-Based Dependency Injection (deprecated → ADR-029, superseded by ADR-050)
-- **ADR-025**: Figment Configuration Loading
+- **ADR-025**: Figment Configuration Loading (archived, superseded by ADR-051 Loco YAML)
 - **ADR-027**: Architecture Evolution v0.1.3
 - **ADR-029**: Hexagonal Architecture (superseded by ADR-050)
 

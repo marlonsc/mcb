@@ -21,7 +21,7 @@ implementation_status: Complete
 
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM)
-- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment)
+- **Related:** [ADR-029](./archive/superseded-029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./archive/superseded-025-figment-configuration.md) (Figment)
 - **Series:**[ADR-034](./034-workflow-core-fsm.md) →**ADR-035** → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
 
 ## Context
@@ -1618,7 +1618,7 @@ WHERE i.status = 'open'
   status patterns
 - [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — FSM and
   persistence layer (dependency)
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md)
+- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md)
   — DI pattern (superseded by ADR-050)
 - [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md)
   — Schema reference

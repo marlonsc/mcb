@@ -344,6 +344,7 @@ seaography = "=2.0.0-rc.8"
 sea-streamer = { version = "0.5", features = ["file", "redis"] }
 
 async-graphql = "7"
+async-graphql-axum = "7"
 
 loco-rs = "0.16"
 

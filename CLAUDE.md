@@ -38,7 +38,7 @@ Clean Architecture with strict inward-only dependency flow, enforced at compile 
 ```
 mcb (CLI facade binary)
   -> mcb-server       (MCP protocol, Rocket HTTP, handlers, admin UI)
-    -> mcb-infrastructure (DI/linkme+Handle, config/Figment, cache/Moka, logging/tracing)
+    -> mcb-infrastructure (DI/linkme+Handle, config/Loco YAML, cache/Moka, logging/tracing)
       -> mcb-application  (use cases, service orchestration)
         -> mcb-domain     (entities, port traits, errors — ZERO infra deps)
   -> mcb-providers    (adapters: embedding, vector store, DB, git, language parsers)
@@ -74,7 +74,7 @@ mcb (CLI facade binary)
 2. Implement adapter in `mcb-providers/src/{category}/{name}.rs`
 3. Register via `#[distributed_slice(EMBEDDING_PROVIDERS)]` (or relevant slice)
 4. DI auto-discovers via linkme — no manual catalog edits
-5. Add config in `config/default.toml` under `[providers.{category}]`
+5. Add config in `config/development.yaml` under `settings.providers.{category}`
 
 ### Adding a New MCP Tool
 
@@ -165,7 +165,7 @@ CI adds: `-D clippy::multiple_unsafe_ops_per_block`, `-D clippy::undocumented_un
 - [Architecture](docs/architecture/ARCHITECTURE.md) — layers, crate map, dependency flow
 - [Clean Architecture](docs/architecture/CLEAN_ARCHITECTURE.md) — layer rules, extension guide
 - [Architecture Boundaries](docs/architecture/ARCHITECTURE_BOUNDARIES.md) — dependency rules, violations
-- [ADRs](docs/adr/) — 48 Architecture Decision Records
+ [ADRs](docs/adr/) — 52 Architecture Decision Records
 - [Contributing](docs/developer/CONTRIBUTING.md) — dev setup, coding standards, PR process
 - [MCP Tools](docs/MCP_TOOLS.md) — full tool API schemas
 - [Configuration](docs/CONFIGURATION.md) — all environment variables and config options

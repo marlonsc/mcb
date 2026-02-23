@@ -217,7 +217,7 @@ The public service interfaces will remain stable. Only the internal composition 
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md) - **SUPERSEDED** by [ADR 024](024-simplified-dependency-injection.md)
 - [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider factory selection
 - [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - DI pattern enforcement
-- [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - AdminService DI
+- [ADR-007: Integrated Web Administration Interface](archive/superseded-007-web-admin-interface.md) - AdminService DI
 - [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - GitProvider factory (v0.2.0)
 - [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - MemoryProvider DI (v0.2.0)
 - [ADR-010: Hooks Subsystem](010-hooks-subsystem-agent-backed.md) - HookProcessor DI (v0.2.0)

@@ -106,18 +106,23 @@ let result = provider.embed(text).await.unwrap();
 
 ## Configuration
 
-Configuration follows a hierarchical override pattern using figment (see [ADR-025](../adr/025-figment-configuration.md)):
+Configuration is loaded from Loco environment-based YAML files (see [ADR-051](../adr/051-seaql-loco-platform-rebuild.md); supersedes [ADR-025](../adr/archive/superseded-025-figment-configuration.md)):
 
 - **Hierarchical**: `AppConfig → {ProvidersConfig, ServerConfig, AuthConfig}`
-- **Loader**: Default TOML → Override TOML → `MCP__*` env vars (highest priority)
+- **Loader**: Environment-based YAML (`config/{env}.yaml`, e.g. `config/development.yaml`)
 - **Hot-reload**: `ConfigWatcher` monitors changes (`config/watcher.rs`)
 - **Validation**: Config is validated at startup before providers are initialized
 
-```text
-MCP__PROVIDERS__EMBEDDING__PROVIDER=openai
-MCP__PROVIDERS__VECTOR_STORE__PROVIDER=edgevec
-MCP__SERVER__NETWORK__PORT=8080
-MCP__INFRASTRUCTURE__CACHE__PROVIDER=moka
+```yaml
+# config/development.yaml (under settings:)
+providers:
+  embedding:
+    provider: openai
+  vector_store:
+    provider: edgevec
+server:
+  network:
+    port: 8080
 ```
 
 ## Testing Patterns

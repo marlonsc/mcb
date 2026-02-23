@@ -21,7 +21,7 @@ implementation_status: Complete
 
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout)
-- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment)
+- **Related:** [ADR-029](./archive/superseded-029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./archive/superseded-025-figment-configuration.md) (Figment)
 - **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) →**ADR-036** → [ADR-037](./037-workflow-orchestrator.md)
 
 ## Context
@@ -2172,5 +2172,5 @@ fn configurable_guard_factory(
 - [gatehouse](https://docs.rs/gatehouse/latest/gatehouse/) — Policy composition patterns (evaluated)
 - [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — `TransitionTrigger` consumed by guards
 - [ADR-035: Context Scout](./035-context-scout.md) — `ProjectContext` consumed by guards
-- [ADR-025: Figment Configuration](./025-figment-configuration.md) — Config pattern
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) — DI pattern (superseded by ADR-050)
+- [ADR-025: Figment Configuration](./archive/superseded-025-figment-configuration.md) — Config pattern
+- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md) — DI pattern (superseded by ADR-050)

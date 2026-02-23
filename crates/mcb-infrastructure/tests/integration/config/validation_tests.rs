@@ -40,7 +40,7 @@ fn test_auth_config_jwt_secret_length() {
     let default_auth = ConfigLoader::new().load().unwrap().auth;
     assert!(
         default_auth.jwt.secret.is_empty(),
-        "Default JWT secret should be empty (must be configured via MCP__AUTH__JWT__SECRET)"
+        "Default JWT secret should be empty (must be configured via settings.auth.jwt.secret in config YAML)"
     );
 
     // Custom secret can be set - minimum 32 characters required

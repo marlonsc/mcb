@@ -123,6 +123,8 @@ seaography = { workspace = true }
 sea-orm = { workspace = true }
 sea-orm-pro = { workspace = true }
 sea-schema = { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-axum = { workspace = true }
 
 # Providers - MUST be in dependencies for linkme inventory registration
 mcb-providers = { path = "../mcb-providers" }

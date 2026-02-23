@@ -249,7 +249,7 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 ## Related ADRs
 
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md)
-- [ADR-029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](archive/superseded-029-hexagonal-architecture-dill.md) (superseded by ADR-050)
 - [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md)
-- [ADR-004: Event Bus (Local and Distributed)](004-event-bus-local-distributed.md)
+- [ADR-004: Event Bus (Local and Distributed)](archive/superseded-004-event-bus-local-distributed.md)
 - [ADR-005: Context Cache Support (Moka and Redis)](005-context-cache-support.md)
