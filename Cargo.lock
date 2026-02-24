@@ -4068,33 +4068,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "mcb-application"
-version = "0.2.1"
-dependencies = [
- "anyhow",
- "async-trait",
- "delegate",
- "futures",
- "ignore",
- "insta",
- "linkme",
- "mcb-domain",
- "mcb-infrastructure",
- "mcb-providers",
- "mockall",
- "rstest",
- "serde",
- "serde_json",
- "serial_test",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "toml 1.0.3+spec-1.1.0",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "mcb-domain"
 version = "0.2.1"
 dependencies = [
@@ -4154,7 +4127,6 @@ dependencies = [
  "insta",
  "itertools",
  "loco-rs",
- "mcb-application",
  "mcb-domain",
  "mcb-providers",
  "mcb-validate",
@@ -4288,7 +4260,6 @@ dependencies = [
  "insta",
  "linkme",
  "loco-rs",
- "mcb-application",
  "mcb-domain",
  "mcb-infrastructure",
  "mcb-providers",

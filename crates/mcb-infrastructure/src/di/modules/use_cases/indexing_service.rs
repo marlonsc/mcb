@@ -37,7 +37,7 @@ use mcb_domain::ports::{
 use mcb_domain::value_objects::{CollectionId, OperationId};
 use tracing::{error, info, warn};
 
-use crate::constants::SKIP_DIRS;
+use crate::constants::use_cases::SKIP_DIRS;
 
 /// Accumulator for indexing progress and operational metrics.
 ///

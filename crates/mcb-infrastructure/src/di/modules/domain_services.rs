@@ -17,7 +17,7 @@
 
 use std::sync::Arc;
 
-use mcb_application::use_cases::{
+use super::use_cases::{
     AgentSessionServiceImpl, ContextServiceImpl, IndexingServiceDeps, IndexingServiceImpl,
     IndexingServiceWithHashDeps, MemoryServiceImpl, SearchServiceImpl,
 };

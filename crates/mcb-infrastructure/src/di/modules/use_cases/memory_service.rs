@@ -47,7 +47,7 @@ use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
 use std::str::FromStr;
 
-use crate::constants::{MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH};
+use crate::constants::use_cases::{MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH};
 
 /// Hybrid memory service combining relational metadata with semantic vector search.
 ///
@@ -133,10 +133,8 @@ impl MemoryServiceImpl {
             );
         }
 
-        let collection_id = CollectionId::from_uuid(id::deterministic(
-            "collection",
-            crate::constants::MEMORY_COLLECTION_NAME,
-        ));
+        let collection_id =
+            CollectionId::from_uuid(id::deterministic("collection", MEMORY_COLLECTION_NAME));
         let ids = self
             .vector_store
             .insert_vectors(&collection_id, &[embedding], vec![vector_metadata])

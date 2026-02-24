@@ -68,3 +68,6 @@ pub mod services;
 
 /// Provider name constants for fallback and resolution.
 pub mod providers;
+
+/// Use case service constants (indexing, memory, search).
+pub mod use_cases;
