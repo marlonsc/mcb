@@ -1561,6 +1561,8 @@ impl SessionManager {
 
 # config/default.toml — [orchestrator] section
 
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+
 [orchestrator]
 
 # Maximum concurrent workflow sessions
@@ -1658,6 +1660,8 @@ fn default_channel_capacity() -> usize { 256 }
 7. Extend `AppContext` with workflow fields
 8. Register `workflow` tool in MCP server tool list
 9. Add `[orchestrator]` section to `config/default.toml`
+
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
 
 ### Migration
 

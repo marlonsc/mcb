@@ -1716,6 +1716,8 @@ This enables**context-aware policies** that adapt to project state, not just sta
 
 # config/default.toml — [policies] section (all 11 policies)
 
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+
 [policies]
 
 # Global enable/disable for all policy evaluation
@@ -2137,6 +2139,8 @@ fn configurable_guard_factory(
 4. Add `guard/` module to `mcb-providers/src/` with provider, composition, and**11 built-in policies**
 5. Add `PoliciesConfig` and 11 settings structs to `mcb-infrastructure/src/config/`
 6. Add `[policies]` section to `config/default.toml` with configurations for all 11 policies
+
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
 
 ### Testing
 

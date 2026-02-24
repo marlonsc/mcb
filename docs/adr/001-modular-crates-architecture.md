@@ -23,7 +23,7 @@ implementation_status: Complete
 
 **Implemented** (v0.1.1)
 
-> Fully implemented with Clean Architecture + linkme + Handle DI across 7 crates.
+> Fully implemented with Clean Architecture + linkme + Handle DI across 6 crates.
 
 ## Context
 

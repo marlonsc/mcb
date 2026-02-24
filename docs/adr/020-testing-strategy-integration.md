@@ -97,7 +97,7 @@ proptest! {
 
 ## v0.1.1 Test Organization
 
-Current test structure in seven-crate workspace:
+Current test structure in six-crate workspace:
 
 ```text
 crates/

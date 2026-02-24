@@ -1374,6 +1374,8 @@ impl ContextScoutProvider for CachedContextScout {
 
 # config/default.toml — [context] section
 
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+
 [context]
 
 # Cache TTL in seconds (default 30s)
@@ -1583,6 +1585,8 @@ WHERE i.status = 'open'
 4. Add `context/` module to `mcb-providers/src/` with git discovery, tracker discovery, and cached scout
 5. Add `ContextScoutConfig` to `mcb-infrastructure/src/config/`
 6. Add `[context]` section to `config/default.toml`
+
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
 7. Create issue/phase/decision tables (if not created by ADR-034's workflow tables)
 
 ### Migration

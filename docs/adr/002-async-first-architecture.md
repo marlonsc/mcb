@@ -23,7 +23,7 @@ implementation_status: Complete
 
 Accepted
 
-> Fully implemented with Tokio async runtime across 7 crates in the Clean
+> Fully implemented with Tokio async runtime across 6 crates in the Clean
 > Architecture workspace.
 >
 > **Async Distribution by Crate**:

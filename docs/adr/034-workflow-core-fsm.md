@@ -1444,6 +1444,8 @@ impl SqliteWorkflowEngine {
 6. Add `WorkflowConfig` to `mcb-infrastructure/src/config/`
 7. Add `[workflow]` section to `config/default.toml`
 
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+
 ### Migration
 
 - New tables only (`workflow_sessions`, `workflow_transitions`). No existing tables modified.

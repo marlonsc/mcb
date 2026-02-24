@@ -91,7 +91,7 @@ pub enum AnalysisError {
 
 ## v0.1.1 Error Organization
 
-Current error types in the seven-crate structure:
+Current error types in the six-crate structure:
 
 | Crate | Error File | Error Type |
 | ------- | ----------- | ------------ |
