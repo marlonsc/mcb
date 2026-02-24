@@ -1,7 +1,7 @@
 # MCP Context Browser - Deployment Configuration
 # Location: ~/.config/mcb/mcb.toml
 #
-# This file is layered ON TOP of config/default.toml via Figment.
+# Deploy-specific MCB settings. See config/development.yaml for defaults.
 # Only override values that differ from defaults for a production deploy.
 
 # ============================================================================

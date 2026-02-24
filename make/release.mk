@@ -12,8 +12,8 @@ BINARY_NAME := mcb
 SYSTEMD_USER_DIR := $(HOME)/.config/systemd/user
 CONFIG_DIR := $(HOME)/.config/mcb
 DATA_DIR := $(HOME)/.local/share/mcb
-SERVICE_HOST := $(shell python3 -c 'import tomllib, os; p=os.path.expanduser("~/.config/mcb/mcb.toml"); d=tomllib.load(open(p,"rb")) if os.path.exists(p) else tomllib.load(open("config/default.toml","rb")); print(d.get("server",{}).get("network",{}).get("host", "127.0.0.1"))')
-SERVICE_PORT := $(shell python3 -c 'import tomllib, os; p=os.path.expanduser("~/.config/mcb/mcb.toml"); d=tomllib.load(open(p,"rb")) if os.path.exists(p) else tomllib.load(open("config/default.toml","rb")); print(d.get("server",{}).get("network",{}).get("port", 3000))')
+SERVICE_HOST := $(shell python3 -c "import yaml, os; d=yaml.safe_load(open('config/development.yaml')) if os.path.exists('config/development.yaml') else {}; print(d.get('settings',{}).get('server',{}).get('network',{}).get('host','127.0.0.1'))" 2>/dev/null || echo "127.0.0.1")
+SERVICE_PORT := $(shell python3 -c "import yaml, os; d=yaml.safe_load(open('config/development.yaml')) if os.path.exists('config/development.yaml') else {}; print(d.get('settings',{}).get('server',{}).get('network',{}).get('port',3000))" 2>/dev/null || echo "3000")
 
 NEXT_PATCH := $(shell echo $(VERSION) | awk -F. '{print $$1"."$$2"."($$3+1)}')
 NEXT_MINOR := $(shell echo $(VERSION) | awk -F. '{print $$1"."($$2+1)".0"}')

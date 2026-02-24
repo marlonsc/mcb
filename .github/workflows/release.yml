@@ -53,11 +53,12 @@ jobs:
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
+       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+         with:
+           persist-credentials: false
+           submodules: recursive
 
-      - name: Install dependencies (Unix)
+       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
         run: bash .github/setup-ci.sh
 
@@ -130,12 +131,13 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          fetch-depth: 0
-          persist-credentials: false
+       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+         with:
+           fetch-depth: 0
+           persist-credentials: false
+           submodules: recursive
 
-      - name: Download all artifacts
+       - name: Download all artifacts
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: release-artifacts
@@ -217,26 +219,27 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-        with:
-          save-if: false
-      - run: make rust-docs
-      - run: make test SCOPE=doc
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: rust-api-docs
-          path: target/doc/
-          retention-days: 7
-          include-hidden-files: false
+       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+         with:
+           persist-credentials: false
+           submodules: recursive
+       - run: bash .github/setup-ci.sh
+       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+         with:
+           toolchain: stable
+       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+         with:
+           save-if: false
+       - run: make rust-docs
+       - run: make test SCOPE=doc
+       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+         with:
+           name: rust-api-docs
+           path: target/doc/
+           retention-days: 7
+           include-hidden-files: false
 
-  docs-book:
+   docs-book:
     name: Build mdBook
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -244,20 +247,21 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - run: make docs-setup
-      - run: make docs-sync
-      - run: make docs-build
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-        with:
-          name: mdbook-docs
-          path: book/book/
-          retention-days: 7
-          include-hidden-files: false
+       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+         with:
+           persist-credentials: false
+           submodules: recursive
+       - run: make docs-setup
+       - run: make docs-sync
+       - run: make docs-build
+       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+         with:
+           name: mdbook-docs
+           path: book/book/
+           retention-days: 7
+           include-hidden-files: false
 
-  deploy-docs:
+   deploy-docs:
     name: Deploy to GitHub Pages
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -270,44 +274,45 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        continue-on-error: true
-        with:
-          name: rust-api-docs
-          path: docs-site/api/
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        continue-on-error: true
-        with:
-          name: mdbook-docs
-          path: docs-site/
-      - name: Check artifacts exist
-        run: |
-          if [[ ! -f "docs-site/api/index.html" ]]; then
-            echo "Warning: Rust API docs not found, creating empty directory" >&2
-            mkdir -p docs-site/api
-          fi
-          if [[ ! -f "docs-site/index.html" ]]; then
-            echo "Warning: mdBook docs not found, creating empty directory" >&2
-            mkdir -p docs-site
-          fi
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs-site
+       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+         with:
+           persist-credentials: false
+           submodules: recursive
+       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+         continue-on-error: true
+         with:
+           name: rust-api-docs
+           path: docs-site/api/
+       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+         continue-on-error: true
+         with:
+           name: mdbook-docs
+           path: docs-site/
+       - name: Check artifacts exist
+         run: |
+           if [[ ! -f "docs-site/api/index.html" ]]; then
+             echo "Warning: Rust API docs not found, creating empty directory" >&2
+             mkdir -p docs-site/api
+           fi
+           if [[ ! -f "docs-site/index.html" ]]; then
+             echo "Warning: mdBook docs not found, creating empty directory" >&2
+             mkdir -p docs-site
+           fi
+       - name: Deploy to GitHub Pages
+         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+         with:
+           github_token: ${{ secrets.GITHUB_TOKEN }}
+           publish_dir: docs-site
 
-  # ===========================================================================
-  # Cargo Publish (gated — requires CARGO_REGISTRY_TOKEN secret)
-  # ===========================================================================
-  # NOTE: Currently blocked by git dependencies (rust-code-analysis fork,
-  # milvus-sdk-rust). This step is gated by the CARGO_REGISTRY_TOKEN secret
-  # and will be skipped if the secret is not configured. Infrastructure is
-  # ready for when git dependencies are resolved and published to crates.io.
+   # ===========================================================================
+   # Cargo Publish (gated — requires CARGO_REGISTRY_TOKEN secret)
+   # ===========================================================================
+   # NOTE: Currently blocked by git dependencies (rust-code-analysis fork,
+   # milvus-sdk-rust). This step is gated by the CARGO_REGISTRY_TOKEN secret
+   # and will be skipped if the secret is not configured. Infrastructure is
+   # ready for when git dependencies are resolved and published to crates.io.
 
-  publish-crates:
+   publish-crates:
     name: Publish to crates.io
     timeout-minutes: 15
     runs-on: ubuntu-latest
@@ -316,41 +321,42 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-      - name: Check for registry token
-        id: check_token
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::CARGO_REGISTRY_TOKEN not configured — skipping crates.io publish"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
-      - run: bash .github/setup-ci.sh
-        if: steps.check_token.outputs.skip != 'true'
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        if: steps.check_token.outputs.skip != 'true'
-        with:
-          toolchain: stable
-      - name: Dry-run publish
-        if: steps.check_token.outputs.skip != 'true'
-        # NOTE: Workspace publish requires publishing crates in dependency order.
-        # When git deps are resolved, replace with katyo/publish-crates action
-        # or per-crate `cargo publish -p <crate>` in topological order:
-        # mcb-domain → mcb-application → mcb-providers → mcb-infrastructure → mcb-validate → mcb-server → mcb
-        run: cargo publish --dry-run -p mcb-domain
-      - name: Publish to crates.io
-        if: steps.check_token.outputs.skip != 'true'
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          set -e
-          for crate in mcb-domain mcb-application mcb-providers mcb-infrastructure mcb-validate mcb-server mcb; do
-            echo "Publishing $crate..."
-            cargo publish -p "$crate"
-            sleep 30
-          done
+       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+         with:
+           persist-credentials: false
+           submodules: recursive
+       - name: Check for registry token
+         id: check_token
+         env:
+           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+         run: |
+           if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
+             echo "skip=true" >> "$GITHUB_OUTPUT"
+             echo "::notice::CARGO_REGISTRY_TOKEN not configured — skipping crates.io publish"
+           else
+             echo "skip=false" >> "$GITHUB_OUTPUT"
+           fi
+       - run: bash .github/setup-ci.sh
+         if: steps.check_token.outputs.skip != 'true'
+       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+         if: steps.check_token.outputs.skip != 'true'
+         with:
+           toolchain: stable
+       - name: Dry-run publish
+         if: steps.check_token.outputs.skip != 'true'
+         # NOTE: Workspace publish requires publishing crates in dependency order.
+         # When git deps are resolved, replace with katyo/publish-crates action
+         # or per-crate `cargo publish -p <crate>` in topological order:
+         # mcb-domain → mcb-application → mcb-providers → mcb-infrastructure → mcb-validate → mcb-server → mcb
+         run: cargo publish --dry-run -p mcb-domain
+       - name: Publish to crates.io
+         if: steps.check_token.outputs.skip != 'true'
+         env:
+           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+         run: |
+           set -e
+           for crate in mcb-domain mcb-application mcb-providers mcb-infrastructure mcb-validate mcb-server mcb; do
+             echo "Publishing $crate..."
+             cargo publish -p "$crate"
+             sleep 30
+           done
