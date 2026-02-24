@@ -1,3 +1,8 @@
+> **Superseded (v0.3.0)**: The `mcb-application` crate was removed. Use case services moved to
+> `mcb-infrastructure::di::modules::use_cases`. See [infrastructure module](./infrastructure.md).
+
+---
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Application Layer (Use Cases)
 

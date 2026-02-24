@@ -51,13 +51,12 @@ Technical architecture documentation following C4 model principles.
 
 ### 📦 Modules (v0.2.1 Crate Structure)
 
-Module documentation organized by the seven-crate Clean Architecture:
+Module documentation organized by the six-crate architecture:
 
 - **[Module Index](modules/README.md)** - Complete module documentation
 - [Domain Layer](modules/domain.md) - Core business logic (`mcb-domain`)
-- [Application Layer](modules/application.md) - Business services (`mcb-application`)
 - [Providers](modules/providers.md) - External integrations (`mcb-providers`)
-- [Infrastructure](modules/infrastructure.md) - Cross-cutting concerns (`mcb-infrastructure`)
+- [Infrastructure](modules/infrastructure.md) - DI, use cases, cross-cutting concerns (`mcb-infrastructure`)
 - [Server](modules/server.md) - MCP protocol (`mcb-server`)
 - [Validation](modules/validate.md) - Architecture validation (`mcb-validate`)
 

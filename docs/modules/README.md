@@ -6,7 +6,7 @@ MCB uses a 4-layer architecture. Each layer is documented in its core module fil
 ## 🏗️ Core Layers (The Pillars)
 
 - **[Domain Layer](./domain.md)** (`mcb-domain`) - Entities, Value Objects, and Port Traits (**SSOT for Logic**)
-- **[Application Layer](./application.md)** (`mcb-application`) - Use Case implementations and Service Orchestration
+- **[Application Layer](./application.md)** (superseded — see infrastructure) - Historical use-case documentation
 - **[Providers Layer](./providers.md)** (`mcb-providers`) - External integrations (Adapters) and Storage (SQLite/Vector)
 - **[Infrastructure Layer](./infrastructure.md)** (`mcb-infrastructure`) - DI Bootstrap, Config, Logging, and Plumbing
 

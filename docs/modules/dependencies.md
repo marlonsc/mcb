@@ -11,22 +11,17 @@ digraph {
     node [shape=box, style=filled, fillcolor=lightblue];
 
     "mcb" -> "mcb-server";
-    "mcb" -> "mcb-application";
     "mcb" -> "mcb-domain";
     "mcb" -> "mcb-infrastructure";
     "mcb" -> "mcb-providers";
 
-    "mcb-server" -> "mcb-application";
-    "mcb-server" -> "mcb-domain";
     "mcb-server" -> "mcb-infrastructure";
-    "mcb-server" -> "mcb-providers";
 
-    "mcb-application" -> "mcb-domain";
-    "mcb-application" -> "mcb-providers";
-
-    "mcb-infrastructure" -> "mcb-domain";
+    "mcb-infrastructure" -> "mcb-providers";
 
     "mcb-providers" -> "mcb-domain";
+
+    "mcb-infrastructure" -> "mcb-domain";
 
     "mcb-validate" [fillcolor=lightyellow];
     "mcb-validate" -> "mcb-domain";
@@ -45,25 +40,26 @@ digraph {
          ┌───────────────┼───────────────┐
          │               │               │
          ▼               ▼               ▼
-    ┌─────────┐    ┌─────────┐    ┌─────────┐
-    │ server  │    │  app    │    │validate │
-    └────┬────┘    └────┬────┘    └────┬────┘
-         │               │               │
-         └───────┬───────┘               │
-                 │                       │
-         ┌───────┴───────┐               │
-         │               │               │
-         ▼               ▼               │
-    ┌─────────┐    ┌─────────┐          │
-    │providers│    │  infra  │          │
-    └────┬────┘    └────┬────┘          │
-         │               │               │
-         └───────┬───────┴───────────────┘
-                 │
-                 ▼
-            ┌─────────┐
-            │ domain  │  (Innermost)
-            └─────────┘
+    ┌─────────┐                    ┌─────────┐
+    │ server  │                    │validate │
+    └────┬────┘                    └────┬────┘
+         │                              │
+         ▼                              │
+    ┌─────────┐                         │
+    │  infra  │                         │
+    └────┬────┘                         │
+         │                              │
+         ▼                              │
+    ┌─────────┐                         │
+    │providers│                         │
+    └────┬────┘                         │
+         │                              │
+         └───────────────┬──────────────┘
+                         │
+                         ▼
+                    ┌─────────┐
+                    │ domain  │  (Innermost)
+                    └─────────┘
 ```
 
 ## Crate Descriptions
@@ -72,10 +68,9 @@ digraph {
 | ------- | --------- | -------------- |
 | `mcb` | Unified facade, public API | All crates |
 | `mcb-domain` | Core types, ports, entities | None (innermost) |
-| `mcb-application` | Business logic, use cases | domain, providers |
-| `mcb-infrastructure` | DI, config, cross-cutting services | domain, application, providers |
+| `mcb-infrastructure` | DI, config, cross-cutting services | domain, providers |
 | `mcb-providers` | External integrations | domain |
-| `mcb-server` | MCP protocol, HTTP transport | All except validate |
+| `mcb-server` | MCP protocol, HTTP transport | infrastructure |
 | `mcb-validate` | Architecture validation | domain |
 
 ## Key Dependency Patterns

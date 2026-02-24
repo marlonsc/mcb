@@ -2,7 +2,7 @@
 # Technical Patterns Reference
 
 **Last updated:** 2026-02-12
-**Source:** Codebase analysis across 7 crates (v0.2.1)
+**Source:** Codebase analysis across 6 crates (v0.2.1)
 
 This document captures the recurring implementation patterns used throughout MCB. For the full architecture overview, see [ARCHITECTURE.md](./ARCHITECTURE.md). For boundary rules, see [ARCHITECTURE_BOUNDARIES.md](./ARCHITECTURE_BOUNDARIES.md).
 
@@ -10,12 +10,11 @@ This document captures the recurring implementation patterns used throughout MCB
 
 ## Architecture: Clean Architecture + Hexagonal
 
-**Dependency direction:** `mcb-server → mcb-infrastructure → mcb-application → mcb-domain`
+**Dependency direction:** `mcb-server → mcb-infrastructure → mcb-providers → mcb-domain`
 Providers (`mcb-providers`) implement domain ports — never depend upstream.
 
 ```text
 mcb-domain         → Entities, ports (traits), errors, value objects, macros, registry
-mcb-application    → Use cases, decorators, services (orchestration)
 mcb-infrastructure → DI (linkme+Handle), config, crypto, logging, health, routing
 mcb-providers      → Embedding, vector store, cache, database, git, language, events
 mcb-server         → MCP handlers, admin UI (Handlebars), transport (stdio/HTTP), hooks
@@ -169,7 +168,7 @@ This cycle is architecture optimization only.
 | Handle\<T\> | `di/handle.rs` | Runtime-switchable providers |
 | define_id! | `value_objects/ids.rs` | New domain IDs |
 | EntityCrudAdapter | `mcb-server/src/admin/crud_adapter.rs` | Admin CRUD entities |
-| Decorator | `mcb-application/src/decorators/` | Cross-cutting concerns |
+| Decorator | `mcb-infrastructure/src/di/modules/use_cases/` | Cross-cutting concerns |
 | impl_registry! | `mcb-domain/src/macros.rs` | New provider registries |
 
 ## Related Documentation

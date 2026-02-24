@@ -540,7 +540,7 @@ Memory Context Browser implements Robert C. Martin's Clean Architecture with str
 1. **Dependency Rule**: Dependencies only point inward (toward the domain)
 2. **Abstraction Rule**: Inner layers define interfaces (ports), outer layers implement (adapters)
 3. **Entity Rule**: Domain entities have no external dependencies
-4. **Use Case Rule**: Application layer orchestrates without implementing infrastructure
+4. **Use Case Rule**: Infrastructure use-case modules orchestrate without embedding provider details
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -549,14 +549,14 @@ Memory Context Browser implements Robert C. Martin's Clean Architecture with str
 ├─────────────────────────────────────────────────────────┤
 │                 Infrastructure Layer                     │
 │               (mcb-infrastructure)                       │
-├────────────────────┬────────────────────────────────────┤
-│   Providers Layer  │      Application Layer             │
-│  (mcb-providers)   │     (mcb-application)              │
-├────────────────────┴────────────────────────────────────┤
+├─────────────────────────────────────────────────────────┤
+│                    Providers Layer                       │
+│                   (mcb-providers)                       │
+├─────────────────────────────────────────────────────────┤
 │                      Domain Layer                        │
 │                    (mcb-domain)                          │
 └─────────────────────────────────────────────────────────┘
-         Dependencies flow inward (toward domain)
+         Dependency flow: domain → providers → infrastructure → server
 ```
 
 For complete architectural details, see [ADR-013: Clean Architecture Crate Separation](../adr/013-clean-architecture-crate-separation.md).
@@ -570,15 +570,12 @@ The project enforces strict dependency rules to maintain Clean Architecture comp
 | Crate | MUST NOT depend on | Allowed Dependencies |
 | ------- | -------------------- | ---------------------- |
 | mcb-domain | Any internal crate | None (pure domain) |
-| mcb-application | mcb-infrastructure, mcb-server, mcb-providers | mcb-domain only |
-| mcb-providers | mcb-infrastructure, mcb-server | mcb-domain, mcb-application* |
-| mcb-infrastructure | mcb-server | mcb-domain, mcb-application |
+| mcb-providers | mcb-infrastructure, mcb-server | mcb-domain only |
+| mcb-infrastructure | mcb-server | mcb-domain, mcb-providers |
+| mcb-server | None | mcb-infrastructure |
 
-**Note**: `mcb-providers` → `mcb-application` dependency is allowed ONLY for:
-
-- Registry auto-registration (`ports::registry`)
-- Admin interfaces (`ports::admin`)
-- Infrastructure ports (`ports::infrastructure`)
+**Note**: Provider implementations import contracts from `mcb-domain` and are wired by
+`mcb-infrastructure`.
 
 Provider trait implementations MUST import from `mcb-domain::ports::providers`.
 
@@ -836,7 +833,7 @@ async fn test_full_flow() {
 
 ### Crate Structure (Clean Architecture Monorepo)
 
-The system follows Clean Architecture principles with 7 crates organized as a Cargo workspace:
+The system follows Clean Architecture principles with 6 crates organized as a Cargo workspace:
 
 #### 📦 Domain Layer (`crates/mcb-domain/`)
 
@@ -854,17 +851,17 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 > **Note**: All port traits (providers, infrastructure, admin, repositories, services) are defined in mcb-domain (single source of truth per ADR-029).
 
-#### 🔧 Application Layer (`crates/mcb-application/`)
+#### 🔧 Use Case Modules (`crates/mcb-infrastructure/src/di/modules/use_cases/`)
 
-**Purpose**: Business logic orchestration and use case implementations.
+**Purpose**: Service orchestration and use-case wiring through DI modules.
 
 ### Services
 
-- `use_cases/context_service.rs`: ContextService - embedding generation and vector storage coordination
-- `use_cases/indexing_service.rs`: IndexingService - codebase indexing workflow
-- `use_cases/search_service.rs`: SearchService - semantic search operations
-- `decorators/`: Service decorators for cross-cutting concerns
-- `constants.rs`: Application-level constants
+- `context_service.rs`: Context service wiring for embedding/vector workflows
+- `indexing_service.rs`: Indexing workflow composition
+- `search_service.rs`: Semantic search workflow composition
+- `memory_service.rs`: Memory and observation workflows
+- `agent_session_service.rs`: Agent session lifecycle composition
 
 #### 🔌 Providers Layer (`crates/mcb-providers/`)
 

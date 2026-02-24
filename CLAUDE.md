@@ -39,8 +39,7 @@ Clean Architecture with strict inward-only dependency flow, enforced at compile 
 mcb (CLI facade binary)
   -> mcb-server       (MCP protocol, Rocket HTTP, handlers, admin UI)
     -> mcb-infrastructure (DI/linkme+Handle, config/Loco YAML, cache/Moka, logging/tracing)
-      -> mcb-application  (use cases, service orchestration)
-        -> mcb-domain     (entities, port traits, errors — ZERO infra deps)
+      -> mcb-domain     (entities, port traits, errors — ZERO infra deps)
   -> mcb-providers    (adapters: embedding, vector store, DB, git, language parsers)
   -> mcb-validate     (rule engine, AST analysis, metrics — dev-only)
 ```
@@ -48,8 +47,7 @@ mcb (CLI facade binary)
 ### Dependency Rules
 
 - `mcb-domain`: Zero internal dependencies. No `sqlx`, `rocket`, `git2`.
-- `mcb-application`: Depends only on `mcb-domain`. No direct provider usage.
-- `mcb-providers`: Implements domain port traits. Depends on `mcb-domain` + `mcb-application`.
+- `mcb-providers`: Implements domain port traits. Depends on `mcb-domain` only.
 - `mcb-infrastructure`: Wires everything via DI. Can see all layers except server.
 - `mcb-server`: Entry point. Accesses services via DI, never directly via providers.
 
@@ -85,7 +83,7 @@ mcb (CLI facade binary)
 
 ### Adding a New Service
 
-1. Define use case in `mcb-application/src/services/`
+1. Define use case service in `mcb-infrastructure/src/di/modules/use_cases/`
 2. Expose via port trait in `mcb-domain/src/ports/`
 3. Register in DI catalog: `mcb-infrastructure/src/di/mod.rs`
 4. Inject into handlers via `Catalog::get::<dyn PortTrait>()`

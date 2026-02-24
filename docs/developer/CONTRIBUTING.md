@@ -69,7 +69,6 @@ crates/mcb-{name}/
 crates/
 ├── mcb/                # Unified facade crate (public API)
 ├── mcb-domain/         # Core types, ports, entities (innermost)
-├── mcb-application/    # Business services (use cases, domain services)
 ├── mcb-providers/      # External integrations (embedding, vector store, language)
 ├── mcb-infrastructure/ # Shared systems (DI, config, cross-cutting services)
 ├── mcb-server/         # MCP protocol, HTTP transport, admin
