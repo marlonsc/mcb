@@ -4,6 +4,7 @@ use loco_rs::boot::{self, ServeParams, StartMode};
 use loco_rs::environment::Environment;
 use mcb_server::McbApp;
 use mcb_server::loco_app::create_mcp_server;
+use mcb_server::tools::ExecutionFlow;
 use mcb_server::transport::stdio::StdioServerExt;
 
 /// Arguments for the `serve` subcommand.
@@ -34,7 +35,7 @@ impl ServeArgs {
             McbApp::boot(StartMode::ServerOnly, &environment, loco_config.clone()).await?;
         if self.stdio {
             // Stdio-only mode: create MCP server directly from Loco context, no HTTP.
-            let server = create_mcp_server(&boot_result.app_context).await?;
+            let server = create_mcp_server(&boot_result.app_context, ExecutionFlow::StdioOnly).await?;
             server.serve_stdio().await?;
         } else {
             // Default: HTTP server + background stdio (unless --server).

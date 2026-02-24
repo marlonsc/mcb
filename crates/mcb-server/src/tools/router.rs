@@ -59,6 +59,56 @@ pub struct ToolHandlers {
     pub hook_processor: Arc<HookProcessor>,
 }
 
+/// Valid execution flow modes for MCP tool dispatch.
+///
+/// Determines how the MCP server processes requests: direct stdio,
+/// client-bridged to a running HTTP daemon, or server-managed hybrid.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ExecutionFlow {
+    /// Direct stdio transport with no HTTP server.
+    StdioOnly,
+    /// Client bridges stdio calls to a running HTTP server.
+    ClientHybrid,
+    /// Server manages both HTTP and background stdio transport.
+    ServerHybrid,
+}
+
+impl ExecutionFlow {
+    /// Wire-format string for this execution flow.
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::StdioOnly => "stdio-only",
+            Self::ClientHybrid => "client-hybrid",
+            Self::ServerHybrid => "server-hybrid",
+        }
+    }
+}
+
+impl std::fmt::Display for ExecutionFlow {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl std::str::FromStr for ExecutionFlow {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.trim().to_ascii_lowercase().as_str() {
+            "stdio-only" => Ok(Self::StdioOnly),
+            "client-hybrid" => Ok(Self::ClientHybrid),
+            "server-hybrid" => Ok(Self::ServerHybrid),
+            other => Err(format!(
+                "Invalid execution_flow '{other}'. Expected one of: {}, {}, {}",
+                Self::StdioOnly.as_str(),
+                Self::ClientHybrid.as_str(),
+                Self::ServerHybrid.as_str(),
+            )),
+        }
+    }
+}
+
 /// Boot-time execution provenance defaults used by context resolution.
 #[derive(Debug, Clone)]
 pub struct RuntimeDefaults {
@@ -79,12 +129,12 @@ pub struct RuntimeDefaults {
     /// Default model identifier.
     pub model_id: Option<String>,
     /// Default execution flow.
-    pub execution_flow: Option<String>,
+    pub execution_flow: Option<ExecutionFlow>,
 }
 
 impl RuntimeDefaults {
     /// Discover runtime defaults once at server boot.
-    pub async fn discover(vcs: &dyn VcsProvider, execution_flow: Option<String>) -> Self {
+    pub async fn discover(vcs: &dyn VcsProvider, execution_flow: Option<ExecutionFlow>) -> Self {
         let cwd = std::env::current_dir().ok();
         Self::discover_from_path(vcs, cwd.as_deref(), execution_flow).await
     }
@@ -92,7 +142,7 @@ impl RuntimeDefaults {
     async fn discover_from_path(
         vcs: &dyn VcsProvider,
         cwd: Option<&Path>,
-        execution_flow: Option<String>,
+        execution_flow: Option<ExecutionFlow>,
     ) -> Self {
         let workspace_root = match cwd {
             Some(path) => discover_workspace_root(vcs, path).await,
@@ -432,7 +482,7 @@ impl ToolExecutionContext {
                 "x_execution_flow",
             ],
         )
-        .or_else(|| defaults.execution_flow.clone());
+        .or_else(|| defaults.execution_flow.map(|f| f.to_string()));
 
         Self {
             session_id,
@@ -723,10 +773,10 @@ fn validate_operation_mode_matrix(
 ) -> Result<(), McpError> {
     let flow = normalize_execution_flow(execution_context.execution_flow.as_deref())?;
 
-    let allowed = if matches!(tool_name, "validate") {
-        &["stdio-only", "client-hybrid"][..]
+    let allowed: &[ExecutionFlow] = if matches!(tool_name, "validate") {
+        &[ExecutionFlow::StdioOnly, ExecutionFlow::ClientHybrid]
     } else {
-        &["stdio-only", "client-hybrid", "server-hybrid"][..]
+        &[ExecutionFlow::StdioOnly, ExecutionFlow::ClientHybrid, ExecutionFlow::ServerHybrid]
     };
 
     if allowed.contains(&flow) {
@@ -734,27 +784,19 @@ fn validate_operation_mode_matrix(
     } else {
         Err(McpError::invalid_params(
             format!(
-                "Operation mode matrix violation for '{tool_name}': flow '{flow}' is not allowed. Allowed flows: {}",
-                allowed.join(", ")
+                "Operation mode matrix violation for '{tool_name}': flow '{}' is not allowed. Allowed flows: {}",
+                flow,
+                allowed.iter().map(|f| f.as_str()).collect::<Vec<_>>().join(", ")
             ),
             None,
         ))
     }
 }
 
-fn normalize_execution_flow(flow: Option<&str>) -> Result<&'static str, McpError> {
-    let normalized = flow.unwrap_or("stdio-only").trim().to_ascii_lowercase();
-    match normalized.as_str() {
-        "stdio-only" => Ok("stdio-only"),
-        "client-hybrid" => Ok("client-hybrid"),
-        "server-hybrid" => Ok("server-hybrid"),
-        _ => Err(McpError::invalid_params(
-            format!(
-                "Invalid execution_flow '{normalized}'. Expected one of: stdio-only, client-hybrid, server-hybrid"
-            ),
-            None,
-        )),
-    }
+fn normalize_execution_flow(flow: Option<&str>) -> Result<ExecutionFlow, McpError> {
+    let raw = flow.unwrap_or(ExecutionFlow::StdioOnly.as_str());
+    raw.parse::<ExecutionFlow>()
+        .map_err(|e| McpError::invalid_params(e, None))
 }
 
 async fn trigger_post_tool_use_hook(
@@ -819,7 +861,7 @@ mod tests {
     use mcb_domain::error::{Error, Result};
     use mcb_domain::value_objects::RepositoryId;
 
-    use super::{RuntimeDefaults, ToolExecutionContext, validate_execution_context};
+    use super::{ExecutionFlow, RuntimeDefaults, ToolExecutionContext, validate_execution_context};
 
     struct TestVcsProvider {
         repo_root: PathBuf,
@@ -904,7 +946,7 @@ mod tests {
             model_id: Some("gpt-5.3-codex".to_owned()),
             delegated: Some(false),
             timestamp: Some(1),
-            execution_flow: Some("stdio-only".to_owned()),
+            execution_flow: Some(ExecutionFlow::StdioOnly.to_string()),
         }
     }
 
@@ -955,7 +997,7 @@ mod tests {
             model_id: None,
             delegated: None,
             timestamp: None,
-            execution_flow: Some("stdio-only".to_owned()),
+            execution_flow: Some(ExecutionFlow::StdioOnly.to_string()),
         };
 
         assert!(
@@ -967,7 +1009,7 @@ mod tests {
     #[test]
     fn rejects_validate_in_server_hybrid_flow() {
         let mut context = valid_context();
-        context.execution_flow = Some("server-hybrid".to_owned());
+        context.execution_flow = Some(ExecutionFlow::ServerHybrid.to_string());
 
         let validation = validate_execution_context("validate", &context);
         assert!(
@@ -984,7 +1026,7 @@ mod tests {
     #[test]
     fn allows_search_in_client_hybrid_flow() {
         let mut context = valid_context();
-        context.execution_flow = Some("client-hybrid".to_owned());
+        context.execution_flow = Some(ExecutionFlow::ClientHybrid.to_string());
 
         let validation = validate_execution_context("search", &context);
         assert!(
@@ -996,7 +1038,7 @@ mod tests {
     #[test]
     fn allows_search_in_server_hybrid_flow() {
         let mut context = valid_context();
-        context.execution_flow = Some("server-hybrid".to_owned());
+        context.execution_flow = Some(ExecutionFlow::ServerHybrid.to_string());
 
         assert!(
             validate_execution_context("search", &context).is_ok(),
@@ -1019,7 +1061,7 @@ mod tests {
         let defaults = RuntimeDefaults::discover_from_path(
             &provider,
             Some(nested.as_path()),
-            Some("stdio-only".to_owned()),
+            Some(ExecutionFlow::StdioOnly),
         )
         .await;
 
@@ -1031,7 +1073,7 @@ mod tests {
         );
         assert_eq!(defaults.agent_program.as_deref(), Some("mcb-stdio"));
         assert_eq!(defaults.model_id.as_deref(), Some("unknown"));
-        assert_eq!(defaults.execution_flow.as_deref(), Some("stdio-only"));
+        assert_eq!(defaults.execution_flow, Some(ExecutionFlow::StdioOnly));
         assert!(defaults.session_id.is_some());
     }
 
@@ -1046,7 +1088,7 @@ mod tests {
             session_id: Some("session-default".to_owned()),
             agent_program: Some("mcb-stdio".to_owned()),
             model_id: Some("unknown".to_owned()),
-            execution_flow: Some("stdio-only".to_owned()),
+            execution_flow: Some(ExecutionFlow::StdioOnly),
         };
 
         let overrides = HashMap::from([
@@ -1086,7 +1128,7 @@ mod tests {
             session_id: Some("session-default".to_owned()),
             agent_program: Some("mcb-stdio".to_owned()),
             model_id: Some("unknown".to_owned()),
-            execution_flow: Some("stdio-only".to_owned()),
+            execution_flow: Some(ExecutionFlow::StdioOnly),
         };
 
         let context = ToolExecutionContext::resolve(&defaults, &HashMap::new());

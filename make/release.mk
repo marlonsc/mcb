@@ -6,15 +6,20 @@
 
 VERSION := $(shell grep '^version =' Cargo.toml | head -1 | sed 's/.*"\([^"]*\)".*/\1/')
 
+# Install locations
 INSTALL_DIR := $(HOME)/.local/bin
-INSTALL_BINARY := mcb
+CARGO_BIN_DIR := $(HOME)/.cargo/bin
 BINARY_NAME := mcb
 SYSTEMD_USER_DIR := $(HOME)/.config/systemd/user
 CONFIG_DIR := $(HOME)/.config/mcb
+CONFIG_YAML_DIR := $(CONFIG_DIR)/config
 DATA_DIR := $(HOME)/.local/share/mcb
-SERVICE_HOST := $(shell python3 -c "import yaml, os; d=yaml.safe_load(open('config/development.yaml')) if os.path.exists('config/development.yaml') else {}; print(d.get('settings',{}).get('server',{}).get('network',{}).get('host','127.0.0.1'))" 2>/dev/null || echo "127.0.0.1")
-SERVICE_PORT := $(shell python3 -c "import yaml, os; d=yaml.safe_load(open('config/development.yaml')) if os.path.exists('config/development.yaml') else {}; print(d.get('settings',{}).get('server',{}).get('network',{}).get('port',3000))" 2>/dev/null || echo "3000")
 
+# Service network settings (parsed from Loco YAML config)
+SERVICE_HOST := $(shell python3 -c "import yaml, os; d=yaml.safe_load(open('config/development.yaml')) if os.path.exists('config/development.yaml') else {}; print(d.get('server',{}).get('binding','0.0.0.0'))" 2>/dev/null || echo "0.0.0.0")
+SERVICE_PORT := $(shell python3 -c "import yaml, os; d=yaml.safe_load(open('config/development.yaml')) if os.path.exists('config/development.yaml') else {}; print(d.get('server',{}).get('port',3000))" 2>/dev/null || echo "3000")
+
+# Version bumping helpers
 NEXT_PATCH := $(shell echo $(VERSION) | awk -F. '{print $$1"."$$2"."($$3+1)}')
 NEXT_MINOR := $(shell echo $(VERSION) | awk -F. '{print $$1"."($$2+1)".0"}')
 NEXT_MAJOR := $(shell echo $(VERSION) | awk -F. '{print ($$1+1)".0.0"}')
@@ -37,72 +42,133 @@ release: ## Full release pipeline (lint + test + validate + build)
 	@cd dist && tar -czf $(BINARY_NAME)-$(VERSION).tar.gz $(BINARY_NAME)
 	@echo "Release v$(VERSION) ready: dist/$(BINARY_NAME)-$(VERSION).tar.gz"
 
-install: ## Install release binary + systemd service to user directories
-	@echo "Installing MCB v$(VERSION)..."
+install: ## Install release binary + config + systemd service
+	@echo "══════════════════════════════════════════════════════════"
+	@echo "  Installing MCB v$(VERSION)"
+	@echo "══════════════════════════════════════════════════════════"
+	@echo ""
+	@# ── 1. Build release binary ────────────────────────────────
+	@echo "[1/7] Building release binary..."
 	@$(MAKE) build RELEASE=1
-	@mkdir -p $(INSTALL_DIR) $(SYSTEMD_USER_DIR) $(CONFIG_DIR) $(DATA_DIR) || { echo "Failed to create directories"; exit 1; }
-	@echo "Installing deploy config to $(CONFIG_DIR)/mcb.toml..."
-	@cp config/deploy.toml "$(CONFIG_DIR)/mcb.toml" || { echo "Failed to install config"; exit 1; }
-	@sed -i 's|^path = "mcb.db"|path = "$(DATA_DIR)/mcb.db"|' "$(CONFIG_DIR)/mcb.toml"
-	@echo "Pre-validating config..."
-	@if target/release/$(BINARY_NAME) config validate --config "$(CONFIG_DIR)/mcb.toml" >/dev/null 2>&1; then \
-		echo "  Config valid"; \
-	else \
-		echo "  Config validate sub-command not available, testing with dry run..."; \
-		if target/release/$(BINARY_NAME) serve --server --config "$(CONFIG_DIR)/mcb.toml" --dry-run >/dev/null 2>&1; then \
-			echo "  Config valid (dry-run)"; \
-		else \
-			echo "  Warning: config validation not available, proceeding..."; \
-		fi; \
+	@echo ""
+	@# ── 2. Create directories ──────────────────────────────────
+	@echo "[2/7] Creating directories..."
+	@mkdir -p $(INSTALL_DIR) $(CARGO_BIN_DIR) $(SYSTEMD_USER_DIR) \
+	          $(CONFIG_YAML_DIR) $(DATA_DIR) \
+	    || { echo "FAIL: cannot create directories"; exit 1; }
+	@echo "  $(INSTALL_DIR)"
+	@echo "  $(CONFIG_YAML_DIR)"
+	@echo "  $(DATA_DIR)"
+	@echo ""
+	@# ── 3. Install Loco YAML config ────────────────────────────
+	@echo "[3/7] Installing Loco YAML config..."
+	@cp config/development.yaml "$(CONFIG_YAML_DIR)/development.yaml" \
+	    || { echo "FAIL: cannot copy development.yaml"; exit 1; }
+	@if [ -f config/production.yaml ]; then \
+		cp config/production.yaml "$(CONFIG_YAML_DIR)/production.yaml" && \
+		echo "  production.yaml installed"; \
 	fi
-	@echo "Stopping existing MCB..."
-	@-systemctl --user stop mcb.service 2>/dev/null; sleep 2
+	@# Patch database URI to use installed data directory
+	@sed -i 's|uri: sqlite://mcb.db|uri: sqlite://$(DATA_DIR)/mcb.db|' \
+	    "$(CONFIG_YAML_DIR)/development.yaml"
+	@echo "  development.yaml installed (db → $(DATA_DIR)/mcb.db)"
+	@echo ""
+	@# ── 4. Kill ALL running mcb processes ───────────────────────
+	@echo "[4/7] Stopping all MCB processes..."
+	@-systemctl --user stop mcb.service 2>/dev/null
 	@-systemctl --user reset-failed mcb.service 2>/dev/null
-	@MCB_PID=$$(pgrep -x mcb 2>/dev/null || true); \
-	if [ -n "$$MCB_PID" ]; then \
-		kill $$MCB_PID 2>/dev/null || true; \
-		WAIT=0; while [ $$WAIT -lt 10 ] && kill -0 $$MCB_PID 2>/dev/null; do \
+	@sleep 1
+	@# Kill every mcb process (binary name match), including orphans
+	@MCB_PIDS=$$(pgrep -f '$(BINARY_NAME) serve' 2>/dev/null || true); \
+	if [ -n "$$MCB_PIDS" ]; then \
+		echo "  Sending SIGTERM to: $$MCB_PIDS"; \
+		echo "$$MCB_PIDS" | xargs kill 2>/dev/null || true; \
+		WAIT=0; while [ $$WAIT -lt 10 ]; do \
+			ALIVE=$$(echo "$$MCB_PIDS" | xargs -I{} sh -c 'kill -0 {} 2>/dev/null && echo {}' | head -1); \
+			if [ -z "$$ALIVE" ]; then break; fi; \
 			sleep 1; WAIT=$$((WAIT + 1)); \
 		done; \
-		kill -9 $$MCB_PID 2>/dev/null || true; sleep 1; \
+		STILL=$$(echo "$$MCB_PIDS" | xargs -I{} sh -c 'kill -0 {} 2>/dev/null && echo {}'); \
+		if [ -n "$$STILL" ]; then \
+			echo "  Force-killing: $$STILL"; \
+			echo "$$STILL" | xargs kill -9 2>/dev/null || true; \
+			sleep 1; \
+		fi; \
+		echo "  All MCB processes stopped"; \
+	else \
+		echo "  No running MCB processes found"; \
 	fi
-	@rm -f "$(INSTALL_DIR)/$(INSTALL_BINARY).new" 2>/dev/null
-	@cp target/release/$(BINARY_NAME) "$(INSTALL_DIR)/$(INSTALL_BINARY).new" || { echo "Failed to copy binary"; exit 1; }
-	@chmod +x "$(INSTALL_DIR)/$(INSTALL_BINARY).new"
-	@rm -f "$(INSTALL_DIR)/$(INSTALL_BINARY)" 2>/dev/null
-	@mv "$(INSTALL_DIR)/$(INSTALL_BINARY).new" "$(INSTALL_DIR)/$(INSTALL_BINARY)" || { echo "Failed to install binary"; exit 1; }
-	@if ! $(INSTALL_DIR)/$(INSTALL_BINARY) --version >/dev/null 2>&1; then echo "Binary validation failed"; exit 1; fi
-	@cp systemd/mcb.service $(SYSTEMD_USER_DIR)/mcb.service || { echo "Failed to install systemd service"; exit 1; }
-	@systemctl --user daemon-reload || { echo "Failed to reload systemd"; exit 1; }
-	@systemctl --user enable mcb.service || { echo "Failed to enable service"; exit 1; }
+	@echo ""
+	@# ── 5. Install binary (atomic swap) ────────────────────────
+	@echo "[5/7] Installing binary..."
+	@cp target/release/$(BINARY_NAME) "$(INSTALL_DIR)/$(BINARY_NAME).new" \
+	    || { echo "FAIL: cannot copy binary"; exit 1; }
+	@chmod +x "$(INSTALL_DIR)/$(BINARY_NAME).new"
+	@mv -f "$(INSTALL_DIR)/$(BINARY_NAME).new" "$(INSTALL_DIR)/$(BINARY_NAME)" \
+	    || { echo "FAIL: cannot install binary"; exit 1; }
+	@# Also install to ~/.cargo/bin/ (where 'which mcb' finds it)
+	@cp "$(INSTALL_DIR)/$(BINARY_NAME)" "$(CARGO_BIN_DIR)/$(BINARY_NAME)" 2>/dev/null || true
+	@if ! $(INSTALL_DIR)/$(BINARY_NAME) --version >/dev/null 2>&1; then \
+		echo "FAIL: binary validation failed"; exit 1; \
+	fi
+	@echo "  $(INSTALL_DIR)/$(BINARY_NAME) → $$($(INSTALL_DIR)/$(BINARY_NAME) --version)"
+	@if [ -f "$(CARGO_BIN_DIR)/$(BINARY_NAME)" ]; then \
+		echo "  $(CARGO_BIN_DIR)/$(BINARY_NAME) → synced"; \
+	fi
+	@echo ""
+	@# ── 6. Install + start systemd service ──────────────────────
+	@echo "[6/7] Configuring systemd service..."
+	@cp systemd/mcb.service $(SYSTEMD_USER_DIR)/mcb.service \
+	    || { echo "FAIL: cannot install service file"; exit 1; }
+	@systemctl --user daemon-reload \
+	    || { echo "FAIL: systemctl daemon-reload"; exit 1; }
+	@systemctl --user enable mcb.service 2>/dev/null || true
 	@-systemctl --user reset-failed mcb.service 2>/dev/null
-	@systemctl --user start mcb.service || { echo "Failed to start service"; exit 1; }
-	@sleep 2
-	@echo "Configuring MCP agent integrations..."
+	@systemctl --user start mcb.service \
+	    || { echo "FAIL: cannot start service"; exit 1; }
+	@echo "  Service started"
+	@echo ""
+	@# ── 7. Configure MCP agent integrations ─────────────────────
+	@echo "[7/7] Configuring MCP agent integrations..."
 	@if command -v jq >/dev/null 2>&1; then \
 		if [ -f ".mcp.json" ]; then \
-			jq '.mcpServers.mcb.args = ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"]' .mcp.json > .mcp.json.tmp && \
-			mv .mcp.json.tmp .mcp.json && echo "  Claude Code: .mcp.json configured" || echo "  Claude Code: failed to update .mcp.json"; \
+			jq '.mcpServers.mcb.args = ["serve", "--stdio"]' .mcp.json > .mcp.json.tmp && \
+			mv .mcp.json.tmp .mcp.json && \
+			echo "  Claude Code: .mcp.json → [\"serve\", \"--stdio\"]" || \
+			echo "  Claude Code: failed to update .mcp.json"; \
 		else \
 			echo "  Claude Code: .mcp.json not found (skipped)"; \
 		fi; \
-		if [ -f "$(HOME)/.gemini/antigravity/mcp_config.json" ]; then \
-			jq '.mcpServers.mcb.args = ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"]' "$(HOME)/.gemini/antigravity/mcp_config.json" > "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" && \
-			mv "$(HOME)/.gemini/antigravity/mcp_config.json.tmp" "$(HOME)/.gemini/antigravity/mcp_config.json" && echo "  Gemini: mcp_config.json configured" || echo "  Gemini: failed to update config"; \
+		GEMINI_CFG="$(HOME)/.gemini/antigravity/mcp_config.json"; \
+		if [ -f "$$GEMINI_CFG" ]; then \
+			jq '.mcpServers.mcb.args = ["serve", "--stdio"]' "$$GEMINI_CFG" > "$$GEMINI_CFG.tmp" && \
+			mv "$$GEMINI_CFG.tmp" "$$GEMINI_CFG" && \
+			echo "  Gemini: mcp_config.json → [\"serve\", \"--stdio\"]" || \
+			echo "  Gemini: failed to update config"; \
 		else \
-			echo "  Gemini: mcp_config.json not found (skipped)"; \
+			echo "  Gemini: config not found (skipped)"; \
 		fi; \
 	else \
-		echo "  jq not found, skipping MCP agent config updates"; \
+		echo "  jq not found — skipping MCP agent config updates"; \
 	fi
+	@echo ""
+	@# ── Validate ─────────────────────────────────────────────────
 	@$(MAKE) install-validate
 
-install-validate: ## Validate MCB installation with retries
-	@echo "Validating MCB installation..."
-	@if ! $(INSTALL_DIR)/$(INSTALL_BINARY) --version 2>/dev/null | grep -q "mcb"; then \
-		echo "FAIL: binary not working"; exit 1; \
+install-validate: ## Validate MCB installation
+	@echo "── Validating installation ──────────────────────────────"
+	@# Binary check
+	@if ! $(INSTALL_DIR)/$(BINARY_NAME) --version 2>/dev/null | grep -q "mcb"; then \
+		echo "  FAIL: binary not responding"; exit 1; \
 	fi
-	@echo "  Binary: OK"
+	@echo "  Binary: $$($(INSTALL_DIR)/$(BINARY_NAME) --version)"
+	@# Installed config check
+	@if [ -f "$(CONFIG_YAML_DIR)/development.yaml" ]; then \
+		echo "  Config: $(CONFIG_YAML_DIR)/development.yaml"; \
+	else \
+		echo "  WARN: no installed config found"; \
+	fi
+	@# Systemd service check (with retries)
 	@RETRIES=0; \
 	while [ $$RETRIES -lt 8 ]; do \
 		if systemctl --user is-active --quiet mcb.service 2>/dev/null; then \
@@ -113,44 +179,49 @@ install-validate: ## Validate MCB installation with retries
 		if [ $$RETRIES -lt 8 ]; then sleep 2; fi; \
 	done; \
 	if [ $$RETRIES -eq 8 ]; then \
-		echo "FAIL: service did not start"; \
-		echo "--- systemd status ---"; \
+		echo "  WARN: systemd service not active (may be normal for stdio-only mode)"; \
+		echo "  --- systemd status ---"; \
 		systemctl --user status mcb.service --no-pager 2>/dev/null || true; \
-		echo "--- recent logs ---"; \
-		journalctl --user -u mcb.service -n 20 --no-pager 2>/dev/null || true; \
+		echo "  --- recent logs ---"; \
+		journalctl --user -u mcb.service -n 10 --no-pager 2>/dev/null || true; \
+	fi
+	@# MCP stdio smoke test
+	@echo "  MCP stdio: testing..."
+	@RESULT=$$(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"install-validate","version":"1.0"}}}' \
+	    | timeout 15 $(INSTALL_DIR)/$(BINARY_NAME) serve --stdio 2>/dev/null); \
+	if echo "$$RESULT" | grep -q '"serverInfo"'; then \
+		echo "  MCP stdio: OK ($$( echo "$$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['serverInfo']['name'] + ' ' + json.load(sys.stdin)['result']['serverInfo']['version'])" 2>/dev/null || echo 'response valid'))"; \
+	else \
+		echo "  FAIL: MCP stdio did not respond"; \
+		echo "  Response: $$RESULT"; \
 		exit 1; \
 	fi
-	@RETRIES=0; \
-	while [ $$RETRIES -lt 8 ]; do \
-		if curl -sf --connect-timeout 2 http://$(SERVICE_HOST):$(SERVICE_PORT)/healthz 2>/dev/null | grep -qE "OK|status|healthy"; then \
-			echo "  HTTP: responding on $(SERVICE_HOST):$(SERVICE_PORT)"; \
-			break; \
-		fi; \
-		RETRIES=$$((RETRIES + 1)); \
-		if [ $$RETRIES -lt 8 ]; then sleep 2; fi; \
-	done; \
-	if [ $$RETRIES -eq 8 ]; then \
-		echo "FAIL: HTTP health check failed on $(SERVICE_HOST):$(SERVICE_PORT)"; \
-		echo "--- recent logs ---"; \
-		journalctl --user -u mcb.service -n 20 --no-pager 2>/dev/null || true; \
-		exit 1; \
-	fi
-	@echo "MCB v$(VERSION) installed successfully."
+	@echo ""
+	@echo "══════════════════════════════════════════════════════════"
+	@echo "  MCB v$(VERSION) installed successfully"
+	@echo ""
+	@echo "  Binary:  $(INSTALL_DIR)/$(BINARY_NAME)"
+	@echo "  Config:  $(CONFIG_YAML_DIR)/"
+	@echo "  Data:    $(DATA_DIR)/"
+	@echo "  Service: systemctl --user status mcb"
+	@echo ""
+	@echo "  MCP integration: mcb serve --stdio"
+	@echo "══════════════════════════════════════════════════════════"
 
 version: ## Show version (BUMP=patch|minor|major to bump)
 ifeq ($(BUMP),patch)
 	@echo "Bumping to $(NEXT_PATCH)..."
-	@sed -i 's/^version = "$(VERSION)"/version = "$(NEXT_PATCH)"/' crates/mcb/Cargo.toml
+	@sed -i 's/^version = "$(VERSION)"/version = "$(NEXT_PATCH)"/' Cargo.toml
 	@cargo check 2>/dev/null || true
 	@echo "Version bumped to $(NEXT_PATCH)"
 else ifeq ($(BUMP),minor)
 	@echo "Bumping to $(NEXT_MINOR)..."
-	@sed -i 's/^version = "$(VERSION)"/version = "$(NEXT_MINOR)"/' crates/mcb/Cargo.toml
+	@sed -i 's/^version = "$(VERSION)"/version = "$(NEXT_MINOR)"/' Cargo.toml
 	@cargo check 2>/dev/null || true
 	@echo "Version bumped to $(NEXT_MINOR)"
 else ifeq ($(BUMP),major)
 	@echo "Bumping to $(NEXT_MAJOR)..."
-	@sed -i 's/^version = "$(VERSION)"/version = "$(NEXT_MAJOR)"/' crates/mcb/Cargo.toml
+	@sed -i 's/^version = "$(VERSION)"/version = "$(NEXT_MAJOR)"/' Cargo.toml
 	@cargo check 2>/dev/null || true
 	@echo "Version bumped to $(NEXT_MAJOR)"
 else

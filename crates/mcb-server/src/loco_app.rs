@@ -35,6 +35,7 @@ use mcb_providers::database::seaorm::migration::Migrator;
 
 use crate::McpServer;
 use crate::mcp_server::{McpEntityRepositories, McpServices};
+use crate::tools::ExecutionFlow;
 use crate::transport::http::HttpTransportState;
 use crate::transport::stdio::StdioServerExt;
 
@@ -78,7 +79,7 @@ impl Hooks for McbApp {
     }
 
     async fn after_routes(router: AxumRouter, ctx: &LocoAppContext) -> Result<AxumRouter> {
-        let server = create_mcp_server(ctx)
+        let server = create_mcp_server(ctx, ExecutionFlow::ServerHybrid)
             .await
             .map_err(|e| loco_rs::Error::string(&format!("MCP server init failed: {e}")))?;
         let server = Arc::new(server);
@@ -136,6 +137,7 @@ impl Hooks for McbApp {
 /// Returns an error if settings extraction or provider resolution fails.
 pub async fn create_mcp_server(
     ctx: &LocoAppContext,
+    execution_flow: ExecutionFlow,
 ) -> std::result::Result<McpServer, Box<dyn std::error::Error>> {
     // ── Extract MCB config from Loco settings ───────────────────────────
     let settings_value =
@@ -235,11 +237,10 @@ pub async fn create_mcp_server(
     };
 
     let vcs_for_defaults = Arc::clone(&mcp_services.vcs);
-    let execution_flow = "loco".to_owned();
     Ok(McpServer::new(
         mcp_services,
         &vcs_for_defaults,
-        Some(&execution_flow),
+        Some(execution_flow),
     ))
 }
 

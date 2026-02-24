@@ -32,7 +32,8 @@ use crate::handlers::{
 };
 use crate::hooks::HookProcessor;
 use crate::tools::{
-    RuntimeDefaults, ToolExecutionContext, ToolHandlers, create_tool_list, route_tool_call,
+    ExecutionFlow, RuntimeDefaults, ToolExecutionContext, ToolHandlers, create_tool_list,
+    route_tool_call,
 };
 
 /// Core MCP server implementation
@@ -106,11 +107,11 @@ impl McpServer {
     pub fn new(
         services: McpServices,
         vcs: &Arc<dyn VcsProvider>,
-        execution_flow: Option<&String>,
+        execution_flow: Option<ExecutionFlow>,
     ) -> Self {
         let runtime_defaults = futures::executor::block_on(RuntimeDefaults::discover(
             vcs.as_ref(),
-            execution_flow.cloned(),
+            execution_flow,
         ));
         let hook_processor = HookProcessor::new(Some(Arc::clone(&services.memory)));
         let vcs_entity_handler =
