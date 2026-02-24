@@ -18,11 +18,8 @@ use loco_rs::controller::AppRoutes;
 use loco_rs::environment::Environment;
 use loco_rs::task::Tasks;
 
-use mcb_domain::ports::{
-    AgentRepository, EventBusProvider, FileHashRepository, IndexingOperationsInterface,
-    IssueEntityRepository, MemoryRepository, OrgEntityRepository, PlanEntityRepository,
-    ProjectDetectorService, ProjectRepository, VcsEntityRepository,
-};
+use mcb_domain::ports::{EventBusProvider, IndexingOperationsInterface, ProjectDetectorService};
+use mcb_domain::registry::database::resolve_database_repositories;
 use mcb_infrastructure::cache::CacheAdapter;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::AppConfig;
@@ -35,10 +32,6 @@ use mcb_infrastructure::di::provider_resolvers::{
 use mcb_infrastructure::events::BroadcastEventBus;
 use mcb_infrastructure::infrastructure::admin::DefaultIndexingOperations;
 use mcb_providers::database::seaorm::migration::Migrator;
-use mcb_providers::database::seaorm::repos::{
-    SeaOrmAgentRepository, SeaOrmEntityRepository, SeaOrmIndexRepository,
-    SeaOrmObservationRepository, SeaOrmProjectRepository,
-};
 
 use crate::McpServer;
 use crate::mcp_server::{McpEntityRepositories, McpServices};
@@ -177,21 +170,17 @@ pub async fn create_mcp_server(
     let db_arc = Arc::new(db);
     let project_id = current_project_id()?;
 
-    let memory_repository: Arc<dyn MemoryRepository> =
-        Arc::new(SeaOrmObservationRepository::new((*db_arc).clone()));
-    let agent_repository: Arc<dyn AgentRepository> =
-        Arc::new(SeaOrmAgentRepository::new(Arc::clone(&db_arc)));
-    let project_repository: Arc<dyn ProjectRepository> =
-        Arc::new(SeaOrmProjectRepository::new((*db_arc).clone()));
-    let entity_repo = Arc::new(SeaOrmEntityRepository::new(Arc::clone(&db_arc)));
-    let vcs_entity_repository: Arc<dyn VcsEntityRepository> = Arc::clone(&entity_repo) as _;
-    let plan_entity_repository: Arc<dyn PlanEntityRepository> = Arc::clone(&entity_repo) as _;
-    let issue_entity_repository: Arc<dyn IssueEntityRepository> = Arc::clone(&entity_repo) as _;
-    let org_entity_repository: Arc<dyn OrgEntityRepository> = Arc::clone(&entity_repo) as _;
-    let file_hash_repository: Arc<dyn FileHashRepository> = Arc::new(SeaOrmIndexRepository::new(
-        Arc::clone(&db_arc),
-        project_id.clone(),
-    ));
+    let repos =
+        resolve_database_repositories("seaorm", Box::new((*db_arc).clone()), project_id.clone())
+            .map_err(|e| format!("Database repositories: {e}"))?;
+    let memory_repository = repos.memory;
+    let agent_repository = repos.agent;
+    let project_repository = repos.project;
+    let vcs_entity_repository = repos.vcs_entity;
+    let plan_entity_repository = repos.plan_entity;
+    let issue_entity_repository = repos.issue_entity;
+    let org_entity_repository = repos.org_entity;
+    let file_hash_repository = repos.file_hash;
 
     // ── Domain-level services ───────────────────────────────────────────
     let vcs_provider = mcb_infrastructure::di::vcs::default_vcs_provider();

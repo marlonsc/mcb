@@ -8,7 +8,6 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use mcb_domain::constants::keys as schema;
 use mcb_domain::ports::AgentSessionServiceInterface;
 use mcb_domain::ports::VcsProvider;
 use mcb_domain::ports::{
@@ -32,9 +31,9 @@ use crate::handlers::{
     VcsEntityHandler, VcsHandler,
 };
 use crate::hooks::HookProcessor;
-use crate::tools::{ToolExecutionContext, ToolHandlers, create_tool_list, route_tool_call};
-
-use crate::context_resolution::{resolve_context_bool, resolve_context_value};
+use crate::tools::{
+    RuntimeDefaults, ToolExecutionContext, ToolHandlers, create_tool_list, route_tool_call,
+};
 
 /// Core MCP server implementation
 ///
@@ -47,7 +46,7 @@ pub struct McpServer {
     services: McpServices,
     /// Tool handlers for MCP protocol
     handlers: ToolHandlers,
-    execution_flow: Option<String>,
+    runtime_defaults: RuntimeDefaults,
 }
 
 /// Entity repositories used by MCP entity handlers.
@@ -109,98 +108,43 @@ impl McpServer {
         request: &CallToolRequestParams,
         context: &rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> ToolExecutionContext {
-        let request_meta = request.meta.as_ref();
-        let context_meta = &context.meta;
-        let value = |keys: &[&str]| resolve_context_value(request_meta, context_meta, keys);
-        let value_or_env =
-            |keys: &[&str], env_key: &str| value(keys).or_else(|| std::env::var(env_key).ok());
+        let overrides =
+            ToolExecutionContext::metadata_overrides(request.meta.as_ref(), &context.meta);
+        let mut execution_context =
+            ToolExecutionContext::resolve(&self.runtime_defaults, &overrides);
 
-        let session_id = value(&["session_id", "sessionId", "x-session-id", "x_session_id"]);
-        let parent_session_id = value(&[
-            schema::PARENT_SESSION_ID,
-            "parentSessionId",
-            "x-parent-session-id",
-            "x_parent_session_id",
-        ]);
-        let project_id = value(&[
-            schema::PROJECT_ID,
-            "projectId",
-            "x-project-id",
-            "x_project_id",
-        ]);
-        let worktree_id = value(&[
-            schema::WORKTREE_ID,
-            "worktreeId",
-            "x-worktree-id",
-            "x_worktree_id",
-        ]);
-
-        let mut repo_id = value(&[schema::REPO_ID, "repoId", "x-repo-id", "x_repo_id"]);
-        let mut repo_path = value(&[schema::REPO_PATH, "repoPath", "x-repo-path", "x_repo_path"]);
-        let operator_id = value_or_env(
-            &[
-                "operator_id",
-                "operatorId",
-                "x-operator-id",
-                "x_operator_id",
-            ],
-            "USER",
-        );
-        let machine_id = value_or_env(
-            &["machine_id", "machineId", "x-machine-id", "x_machine_id"],
-            "HOSTNAME",
-        );
-        let agent_program = value(&[
-            "agent_program",
-            "agentProgram",
-            "ide",
-            "x-agent-program",
-            "x_agent_program",
-        ]);
-        let model_id = value(&["model_id", "model", "modelId", "x-model-id", "x_model_id"]);
-        let delegated = resolve_context_bool(
-            request_meta,
-            context_meta,
-            &["delegated", "is_delegated", "isDelegated", "x-delegated"],
-        )
-        .or(Some(parent_session_id.is_some()));
-
-        if let Some(path_str) = repo_path.clone()
+        if let Some(path_str) = execution_context.repo_path.clone()
             && let Ok(repo) = self
                 .services
                 .vcs
                 .open_repository(Path::new(&path_str))
                 .await
         {
-            repo_path = Some(repo.path().to_str().unwrap_or_default().to_owned());
-            if repo_id.is_none() {
-                repo_id = Some(self.services.vcs.repository_id(&repo).into_string());
+            execution_context.repo_path = Some(repo.path().to_str().unwrap_or_default().to_owned());
+            if execution_context
+                .repo_id
+                .as_deref()
+                .is_none_or(|value| value.trim().is_empty())
+            {
+                execution_context.repo_id =
+                    Some(self.services.vcs.repository_id(&repo).into_string());
             }
         }
 
-        let timestamp = mcb_domain::utils::time::epoch_secs_i64().ok();
-        let execution_flow = self.execution_flow.clone();
-
-        ToolExecutionContext {
-            session_id,
-            parent_session_id,
-            project_id,
-            worktree_id,
-            repo_id,
-            repo_path,
-            operator_id,
-            machine_id,
-            agent_program,
-            model_id,
-            delegated,
-            timestamp,
-            execution_flow,
-        }
+        execution_context
     }
 
     /// Create a new MCP server with injected dependencies
     #[must_use]
-    pub fn new(services: McpServices, execution_flow: Option<String>) -> Self {
+    pub fn new(
+        services: McpServices,
+        vcs: Arc<dyn VcsProvider>,
+        execution_flow: Option<String>,
+    ) -> Self {
+        let runtime_defaults = futures::executor::block_on(RuntimeDefaults::discover(
+            vcs.as_ref(),
+            execution_flow.clone(),
+        ));
         let hook_processor = HookProcessor::new(Some(Arc::clone(&services.memory)));
         let vcs_entity_handler =
             Arc::new(VcsEntityHandler::new(Arc::clone(&services.entities.vcs)));
@@ -244,7 +188,7 @@ impl McpServer {
         Self {
             services,
             handlers,
-            execution_flow,
+            runtime_defaults,
         }
     }
 
@@ -309,6 +253,11 @@ impl McpServer {
     #[must_use]
     pub fn tool_handlers(&self) -> ToolHandlers {
         self.handlers.clone()
+    }
+
+    #[must_use]
+    pub fn runtime_defaults(&self) -> RuntimeDefaults {
+        self.runtime_defaults.clone()
     }
 }
 

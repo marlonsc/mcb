@@ -5,13 +5,18 @@
 //! Routes incoming tool call requests to the appropriate handlers.
 //! This module provides a centralized dispatch mechanism for MCP tool calls.
 
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
+use mcb_domain::constants::keys as schema;
+use mcb_domain::ports::VcsProvider;
 use mcb_domain::value_objects::ids::SessionId;
 use mcb_domain::warn;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolRequestParams, CallToolResult};
+use rmcp::model::{CallToolRequestParams, CallToolResult, Meta};
 use serde_json::Value;
+use uuid::Uuid;
 
 use crate::handlers::{
     AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
@@ -54,6 +59,81 @@ pub struct ToolHandlers {
     pub hook_processor: Arc<HookProcessor>,
 }
 
+#[derive(Debug, Clone)]
+pub struct RuntimeDefaults {
+    pub workspace_root: Option<String>,
+    pub repo_path: Option<String>,
+    pub repo_id: Option<String>,
+    pub operator_id: Option<String>,
+    pub machine_id: Option<String>,
+    pub session_id: Option<String>,
+    pub agent_program: Option<String>,
+    pub model_id: Option<String>,
+    pub execution_flow: Option<String>,
+}
+
+impl RuntimeDefaults {
+    pub async fn discover(vcs: &dyn VcsProvider, execution_flow: Option<String>) -> Self {
+        let cwd = std::env::current_dir().ok();
+        Self::discover_from_path(vcs, cwd.as_deref(), execution_flow).await
+    }
+
+    async fn discover_from_path(
+        vcs: &dyn VcsProvider,
+        cwd: Option<&Path>,
+        execution_flow: Option<String>,
+    ) -> Self {
+        let workspace_root = match cwd {
+            Some(path) => discover_workspace_root(vcs, path).await,
+            None => None,
+        };
+
+        let repo_path = workspace_root.clone();
+        let repo_id = if let Some(path) = workspace_root.as_deref() {
+            vcs.open_repository(Path::new(path))
+                .await
+                .ok()
+                .map(|repo| vcs.repository_id(&repo).into_string())
+        } else {
+            None
+        };
+
+        let machine_id = hostname::get()
+            .ok()
+            .and_then(|h| h.into_string().ok())
+            .or_else(|| std::env::var("HOSTNAME").ok());
+
+        Self {
+            workspace_root,
+            repo_path,
+            repo_id,
+            operator_id: std::env::var("USER").ok(),
+            machine_id,
+            session_id: Some(Uuid::new_v4().to_string()),
+            agent_program: Some("mcb-stdio".to_owned()),
+            model_id: Some("unknown".to_owned()),
+            execution_flow,
+        }
+    }
+}
+
+async fn discover_workspace_root(vcs: &dyn VcsProvider, cwd: &Path) -> Option<String> {
+    let mut discovered_root: Option<PathBuf> = None;
+
+    for candidate in cwd.ancestors() {
+        if vcs.open_repository(candidate).await.is_ok() {
+            discovered_root = Some(candidate.to_path_buf());
+            continue;
+        }
+
+        if discovered_root.is_some() {
+            break;
+        }
+    }
+
+    discovered_root.map(|path| path.to_string_lossy().into_owned())
+}
+
 #[derive(Debug, Clone, Default)]
 /// Execution context extracted at transport boundary and propagated to hooks.
 pub struct ToolExecutionContext {
@@ -86,6 +166,278 @@ pub struct ToolExecutionContext {
 }
 
 impl ToolExecutionContext {
+    #[must_use]
+    pub fn metadata_overrides(
+        request_meta: Option<&Meta>,
+        context_meta: &Meta,
+    ) -> HashMap<String, String> {
+        let mut overrides = HashMap::new();
+
+        insert_override(
+            &mut overrides,
+            "session_id",
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &["session_id", "sessionId", "x-session-id", "x_session_id"],
+            ),
+        );
+        insert_override(
+            &mut overrides,
+            schema::PARENT_SESSION_ID,
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &[
+                    schema::PARENT_SESSION_ID,
+                    "parentSessionId",
+                    "x-parent-session-id",
+                    "x_parent_session_id",
+                ],
+            ),
+        );
+        insert_override(
+            &mut overrides,
+            schema::PROJECT_ID,
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &[
+                    schema::PROJECT_ID,
+                    "projectId",
+                    "x-project-id",
+                    "x_project_id",
+                ],
+            ),
+        );
+        insert_override(
+            &mut overrides,
+            schema::WORKTREE_ID,
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &[
+                    schema::WORKTREE_ID,
+                    "worktreeId",
+                    "x-worktree-id",
+                    "x_worktree_id",
+                ],
+            ),
+        );
+        insert_override(
+            &mut overrides,
+            schema::REPO_ID,
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &[schema::REPO_ID, "repoId", "x-repo-id", "x_repo_id"],
+            ),
+        );
+        insert_override(
+            &mut overrides,
+            schema::REPO_PATH,
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &[schema::REPO_PATH, "repoPath", "x-repo-path", "x_repo_path"],
+            ),
+        );
+        insert_override(
+            &mut overrides,
+            "workspace_root",
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &["workspace_root", "workspaceRoot", "x-workspace-root"],
+            ),
+        );
+        insert_override(
+            &mut overrides,
+            "operator_id",
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &[
+                    "operator_id",
+                    "operatorId",
+                    "x-operator-id",
+                    "x_operator_id",
+                ],
+            ),
+        );
+        insert_override(
+            &mut overrides,
+            "machine_id",
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &["machine_id", "machineId", "x-machine-id", "x_machine_id"],
+            ),
+        );
+        insert_override(
+            &mut overrides,
+            "agent_program",
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &[
+                    "agent_program",
+                    "agentProgram",
+                    "ide",
+                    "x-agent-program",
+                    "x_agent_program",
+                ],
+            ),
+        );
+        insert_override(
+            &mut overrides,
+            "model_id",
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &["model_id", "model", "modelId", "x-model-id", "x_model_id"],
+            ),
+        );
+        if let Some(delegated) = resolve_context_bool(
+            request_meta,
+            context_meta,
+            &["delegated", "is_delegated", "isDelegated", "x-delegated"],
+        ) {
+            overrides.insert("delegated".to_owned(), delegated.to_string());
+        }
+        insert_override(
+            &mut overrides,
+            "execution_flow",
+            resolve_context_value(
+                request_meta,
+                context_meta,
+                &[
+                    "execution_flow",
+                    "executionFlow",
+                    "x-execution-flow",
+                    "x_execution_flow",
+                ],
+            ),
+        );
+
+        overrides
+    }
+
+    #[must_use]
+    pub fn resolve(defaults: &RuntimeDefaults, overrides: &HashMap<String, String>) -> Self {
+        let session_id = resolve_override_value(
+            overrides,
+            &["session_id", "sessionId", "x-session-id", "x_session_id"],
+        )
+        .or_else(|| defaults.session_id.clone());
+        let parent_session_id = resolve_override_value(
+            overrides,
+            &[
+                schema::PARENT_SESSION_ID,
+                "parentSessionId",
+                "x-parent-session-id",
+                "x_parent_session_id",
+            ],
+        );
+        let project_id = resolve_override_value(
+            overrides,
+            &[
+                schema::PROJECT_ID,
+                "projectId",
+                "x-project-id",
+                "x_project_id",
+            ],
+        );
+        let worktree_id = resolve_override_value(
+            overrides,
+            &[
+                schema::WORKTREE_ID,
+                "worktreeId",
+                "x-worktree-id",
+                "x_worktree_id",
+            ],
+        );
+        let repo_id = resolve_override_value(
+            overrides,
+            &[schema::REPO_ID, "repoId", "x-repo-id", "x_repo_id"],
+        )
+        .or_else(|| defaults.repo_id.clone());
+        let repo_path = resolve_override_value(
+            overrides,
+            &[schema::REPO_PATH, "repoPath", "x-repo-path", "x_repo_path"],
+        )
+        .or_else(|| {
+            resolve_override_value(
+                overrides,
+                &["workspace_root", "workspaceRoot", "x-workspace-root"],
+            )
+        })
+        .or_else(|| defaults.repo_path.clone())
+        .or_else(|| defaults.workspace_root.clone());
+        let operator_id = resolve_override_value(
+            overrides,
+            &[
+                "operator_id",
+                "operatorId",
+                "x-operator-id",
+                "x_operator_id",
+            ],
+        )
+        .or_else(|| defaults.operator_id.clone());
+        let machine_id = resolve_override_value(
+            overrides,
+            &["machine_id", "machineId", "x-machine-id", "x_machine_id"],
+        )
+        .or_else(|| defaults.machine_id.clone());
+        let agent_program = resolve_override_value(
+            overrides,
+            &[
+                "agent_program",
+                "agentProgram",
+                "ide",
+                "x-agent-program",
+                "x_agent_program",
+            ],
+        )
+        .or_else(|| defaults.agent_program.clone());
+        let model_id = resolve_override_value(
+            overrides,
+            &["model_id", "model", "modelId", "x-model-id", "x_model_id"],
+        )
+        .or_else(|| defaults.model_id.clone());
+        let delegated = resolve_override_bool(
+            overrides,
+            &["delegated", "is_delegated", "isDelegated", "x-delegated"],
+        )
+        .or(Some(parent_session_id.is_some()));
+        let execution_flow = resolve_override_value(
+            overrides,
+            &[
+                "execution_flow",
+                "executionFlow",
+                "x-execution-flow",
+                "x_execution_flow",
+            ],
+        )
+        .or_else(|| defaults.execution_flow.clone());
+
+        Self {
+            session_id,
+            parent_session_id,
+            project_id,
+            worktree_id,
+            repo_id,
+            repo_path,
+            operator_id,
+            machine_id,
+            agent_program,
+            model_id,
+            delegated,
+            timestamp: mcb_domain::utils::time::epoch_secs_i64().ok(),
+            execution_flow,
+        }
+    }
+
     /// Inject execution context into tool arguments when those keys are missing.
     pub fn apply_to_request_if_missing(&self, request: &mut CallToolRequestParams) {
         insert_argument_if_missing(request, "session_id", self.session_id.as_deref());
@@ -151,6 +503,113 @@ fn insert_argument_if_missing(
     arguments
         .entry(key.to_owned())
         .or_insert_with(|| Value::String(value.to_owned()));
+}
+
+fn insert_override(overrides: &mut HashMap<String, String>, key: &str, value: Option<String>) {
+    if let Some(value) = normalize_text(value) {
+        overrides.insert(key.to_owned(), value);
+    }
+}
+
+fn resolve_override_value(overrides: &HashMap<String, String>, keys: &[&str]) -> Option<String> {
+    for key in keys {
+        if let Some(value) = normalize_text(overrides.get(*key).cloned()) {
+            return Some(value);
+        }
+    }
+    None
+}
+
+fn resolve_override_bool(overrides: &HashMap<String, String>, keys: &[&str]) -> Option<bool> {
+    for key in keys {
+        let Some(raw) = overrides.get(*key) else {
+            continue;
+        };
+
+        match raw.trim().to_ascii_lowercase().as_str() {
+            "true" | "1" | "yes" => return Some(true),
+            "false" | "0" | "no" => return Some(false),
+            _ => continue,
+        }
+    }
+
+    None
+}
+
+fn normalize_text(value: Option<String>) -> Option<String> {
+    value.and_then(|v| {
+        let trimmed = v.trim();
+        if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed.to_owned())
+        }
+    })
+}
+
+fn meta_value_as_string(meta: &Meta, keys: &[&str]) -> Option<String> {
+    for key in keys {
+        let Some(value) = meta.get(*key) else {
+            continue;
+        };
+
+        let extracted = match value {
+            Value::String(v) => normalize_text(Some(v.clone())),
+            Value::Number(v) => Some(v.to_string()),
+            Value::Bool(v) => Some(v.to_string()),
+            Value::Null | Value::Array(_) | Value::Object(_) => None,
+        };
+
+        if extracted.is_some() {
+            return extracted;
+        }
+    }
+
+    None
+}
+
+fn resolve_context_value(
+    request_meta: Option<&Meta>,
+    context_meta: &Meta,
+    keys: &[&str],
+) -> Option<String> {
+    request_meta
+        .and_then(|meta| meta_value_as_string(meta, keys))
+        .or_else(|| meta_value_as_string(context_meta, keys))
+}
+
+fn meta_value_as_bool(meta: &Meta, keys: &[&str]) -> Option<bool> {
+    for key in keys {
+        let Some(value) = meta.get(*key) else {
+            continue;
+        };
+
+        let extracted = match value {
+            Value::Bool(v) => Some(*v),
+            Value::String(v) => match v.trim().to_ascii_lowercase().as_str() {
+                "true" | "1" | "yes" => Some(true),
+                "false" | "0" | "no" => Some(false),
+                _ => None,
+            },
+            Value::Null | Value::Number(_) | Value::Array(_) | Value::Object(_) => None,
+        };
+
+        if extracted.is_some() {
+            return extracted;
+        }
+    }
+
+    None
+}
+
+fn resolve_context_bool(
+    request_meta: Option<&Meta>,
+    context_meta: &Meta,
+    keys: &[&str],
+) -> Option<bool> {
+    request_meta
+        .and_then(|meta| meta_value_as_bool(meta, keys))
+        .or_else(|| meta_value_as_bool(context_meta, keys))
 }
 
 /// Route a tool call request to the appropriate handler
@@ -339,7 +798,84 @@ async fn trigger_post_tool_use_hook(
 
 #[cfg(test)]
 mod tests {
-    use super::{ToolExecutionContext, validate_execution_context};
+    use std::collections::HashMap;
+    use std::path::{Path, PathBuf};
+
+    use async_trait::async_trait;
+    use mcb_domain::entities::vcs::{RefDiff, VcsBranch, VcsCommit, VcsRepository};
+    use mcb_domain::error::{Error, Result};
+    use mcb_domain::value_objects::RepositoryId;
+
+    use super::{RuntimeDefaults, ToolExecutionContext, validate_execution_context};
+
+    struct TestVcsProvider {
+        repo_root: PathBuf,
+        repo_id: RepositoryId,
+    }
+
+    #[async_trait]
+    impl mcb_domain::ports::VcsProvider for TestVcsProvider {
+        async fn open_repository(&self, path: &Path) -> Result<VcsRepository> {
+            if path.starts_with(&self.repo_root) {
+                return Ok(VcsRepository::new(
+                    self.repo_id,
+                    path.to_path_buf(),
+                    "main".to_owned(),
+                    vec!["main".to_owned()],
+                    None,
+                ));
+            }
+
+            Err(Error::vcs("not a repository"))
+        }
+
+        fn repository_id(&self, _repo: &VcsRepository) -> RepositoryId {
+            self.repo_id
+        }
+
+        async fn list_branches(&self, _repo: &VcsRepository) -> Result<Vec<VcsBranch>> {
+            Ok(Vec::new())
+        }
+
+        async fn commit_history(
+            &self,
+            _repo: &VcsRepository,
+            _branch: &str,
+            _limit: Option<usize>,
+        ) -> Result<Vec<VcsCommit>> {
+            Ok(Vec::new())
+        }
+
+        async fn list_files(&self, _repo: &VcsRepository, _branch: &str) -> Result<Vec<PathBuf>> {
+            Ok(Vec::new())
+        }
+
+        async fn read_file(
+            &self,
+            _repo: &VcsRepository,
+            _branch: &str,
+            _path: &Path,
+        ) -> Result<String> {
+            Ok(String::new())
+        }
+
+        fn vcs_name(&self) -> &str {
+            "test"
+        }
+
+        async fn diff_refs(
+            &self,
+            _repo: &VcsRepository,
+            _base_ref: &str,
+            _head_ref: &str,
+        ) -> Result<RefDiff> {
+            Err(Error::vcs("not implemented"))
+        }
+
+        async fn list_repositories(&self, _root: &Path) -> Result<Vec<VcsRepository>> {
+            Ok(Vec::new())
+        }
+    }
 
     fn valid_context() -> ToolExecutionContext {
         ToolExecutionContext {
@@ -453,5 +989,121 @@ mod tests {
             validate_execution_context("search", &context).is_ok(),
             "search must be allowed in server-hybrid flow"
         );
+    }
+
+    #[tokio::test]
+    async fn test_runtime_defaults_discover() {
+        let temp_dir = tempfile::tempdir().expect("temp dir");
+        let repo_root = temp_dir.path().join("repo");
+        let nested = repo_root.join("nested").join("path");
+        std::fs::create_dir_all(&nested).expect("nested path");
+
+        let provider = TestVcsProvider {
+            repo_root: repo_root.clone(),
+            repo_id: RepositoryId::from_name("repo-test"),
+        };
+
+        let defaults = RuntimeDefaults::discover_from_path(
+            &provider,
+            Some(nested.as_path()),
+            Some("stdio-only".to_owned()),
+        )
+        .await;
+
+        assert_eq!(defaults.workspace_root.as_deref(), repo_root.to_str());
+        assert_eq!(defaults.repo_path.as_deref(), repo_root.to_str());
+        assert_eq!(defaults.repo_id.as_deref(), Some("repo-test"));
+        assert_eq!(defaults.agent_program.as_deref(), Some("mcb-stdio"));
+        assert_eq!(defaults.model_id.as_deref(), Some("unknown"));
+        assert_eq!(defaults.execution_flow.as_deref(), Some("stdio-only"));
+        assert!(defaults.session_id.is_some());
+    }
+
+    #[test]
+    fn test_resolve_overrides_beat_defaults() {
+        let defaults = RuntimeDefaults {
+            workspace_root: Some("/defaults/workspace".to_owned()),
+            repo_path: Some("/defaults/repo".to_owned()),
+            repo_id: Some("repo-default".to_owned()),
+            operator_id: Some("operator-default".to_owned()),
+            machine_id: Some("machine-default".to_owned()),
+            session_id: Some("session-default".to_owned()),
+            agent_program: Some("mcb-stdio".to_owned()),
+            model_id: Some("unknown".to_owned()),
+            execution_flow: Some("stdio-only".to_owned()),
+        };
+
+        let overrides = HashMap::from([
+            ("session_id".to_owned(), "session-override".to_owned()),
+            ("repo_id".to_owned(), "repo-override".to_owned()),
+            ("repo_path".to_owned(), "/repo/override".to_owned()),
+            ("operator_id".to_owned(), "operator-override".to_owned()),
+            ("machine_id".to_owned(), "machine-override".to_owned()),
+            ("agent_program".to_owned(), "agent-override".to_owned()),
+            ("model_id".to_owned(), "model-override".to_owned()),
+            ("execution_flow".to_owned(), "client-hybrid".to_owned()),
+            ("delegated".to_owned(), "true".to_owned()),
+        ]);
+
+        let context = ToolExecutionContext::resolve(&defaults, &overrides);
+
+        assert_eq!(context.session_id.as_deref(), Some("session-override"));
+        assert_eq!(context.repo_id.as_deref(), Some("repo-override"));
+        assert_eq!(context.repo_path.as_deref(), Some("/repo/override"));
+        assert_eq!(context.operator_id.as_deref(), Some("operator-override"));
+        assert_eq!(context.machine_id.as_deref(), Some("machine-override"));
+        assert_eq!(context.agent_program.as_deref(), Some("agent-override"));
+        assert_eq!(context.model_id.as_deref(), Some("model-override"));
+        assert_eq!(context.execution_flow.as_deref(), Some("client-hybrid"));
+        assert_eq!(context.delegated, Some(true));
+        assert!(context.timestamp.is_some());
+    }
+
+    #[test]
+    fn test_resolve_with_empty_overrides_uses_defaults() {
+        let defaults = RuntimeDefaults {
+            workspace_root: Some("/defaults/workspace".to_owned()),
+            repo_path: Some("/defaults/repo".to_owned()),
+            repo_id: Some("repo-default".to_owned()),
+            operator_id: Some("operator-default".to_owned()),
+            machine_id: Some("machine-default".to_owned()),
+            session_id: Some("session-default".to_owned()),
+            agent_program: Some("mcb-stdio".to_owned()),
+            model_id: Some("unknown".to_owned()),
+            execution_flow: Some("stdio-only".to_owned()),
+        };
+
+        let context = ToolExecutionContext::resolve(&defaults, &HashMap::new());
+
+        assert_eq!(context.session_id.as_deref(), Some("session-default"));
+        assert_eq!(context.repo_id.as_deref(), Some("repo-default"));
+        assert_eq!(context.repo_path.as_deref(), Some("/defaults/repo"));
+        assert_eq!(context.operator_id.as_deref(), Some("operator-default"));
+        assert_eq!(context.machine_id.as_deref(), Some("machine-default"));
+        assert_eq!(context.agent_program.as_deref(), Some("mcb-stdio"));
+        assert_eq!(context.model_id.as_deref(), Some("unknown"));
+        assert_eq!(context.execution_flow.as_deref(), Some("stdio-only"));
+    }
+
+    #[test]
+    fn test_resolve_workspace_root_maps_to_repo_path() {
+        let defaults = RuntimeDefaults {
+            workspace_root: None,
+            repo_path: None,
+            repo_id: None,
+            operator_id: None,
+            machine_id: None,
+            session_id: None,
+            agent_program: None,
+            model_id: None,
+            execution_flow: None,
+        };
+        let overrides = HashMap::from([(
+            "workspace_root".to_owned(),
+            "/workspace/override".to_owned(),
+        )]);
+
+        let context = ToolExecutionContext::resolve(&defaults, &overrides);
+        assert_eq!(context.repo_path.as_deref(), Some("/workspace/override"));
     }
 }

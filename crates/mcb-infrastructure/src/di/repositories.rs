@@ -5,15 +5,17 @@ use std::sync::Arc;
 
 use mcb_domain::error::Result;
 use mcb_domain::ports::MemoryRepository;
+use mcb_domain::registry::database::resolve_database_repositories;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
 
 use mcb_providers::database::seaorm::migration::Migrator;
-use mcb_providers::database::seaorm::repos::SeaOrmObservationRepository;
 
 pub async fn create_memory_repository(path: PathBuf) -> Result<Arc<dyn MemoryRepository>> {
     let db = connect_sqlite_with_migrations(&path).await?;
-    Ok(Arc::new(SeaOrmObservationRepository::new(db)))
+    let repos = resolve_database_repositories("seaorm", Box::new(db), "default".to_owned())
+        .map_err(mcb_domain::error::Error::configuration)?;
+    Ok(repos.memory)
 }
 
 pub async fn create_memory_repository_with_db(
@@ -21,7 +23,10 @@ pub async fn create_memory_repository_with_db(
 ) -> Result<(Arc<dyn MemoryRepository>, Arc<DatabaseConnection>)> {
     let db = connect_sqlite_with_migrations(&path).await?;
     let db = Arc::new(db);
-    let repo = Arc::new(SeaOrmObservationRepository::new((*db).clone()));
+    let repos =
+        resolve_database_repositories("seaorm", Box::new((*db).clone()), "default".to_owned())
+            .map_err(mcb_domain::error::Error::configuration)?;
+    let repo = repos.memory;
     Ok((repo, db))
 }
 

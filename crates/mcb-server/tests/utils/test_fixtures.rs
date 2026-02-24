@@ -489,24 +489,20 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
     };
 
     let project_id = TEST_PROJECT_ID.to_owned();
-    let memory_repository = Arc::new(
-        mcb_providers::database::seaorm::repos::SeaOrmObservationRepository::new((*db).clone()),
-    );
-    let agent_repository = Arc::new(
-        mcb_providers::database::seaorm::repos::SeaOrmAgentRepository::new(Arc::clone(&db)),
-    );
-    let project_repository = Arc::new(
-        mcb_providers::database::seaorm::repos::SeaOrmProjectRepository::new((*db).clone()),
-    );
-    let entity_repo = Arc::new(
-        mcb_providers::database::seaorm::repos::SeaOrmEntityRepository::new(Arc::clone(&db)),
-    );
-    let file_hash_repository = Arc::new(
-        mcb_providers::database::seaorm::repos::SeaOrmIndexRepository::new(
-            Arc::clone(&db),
-            project_id.clone(),
-        ),
-    );
+    let repos = mcb_domain::registry::database::resolve_database_repositories(
+        "seaorm",
+        Box::new((*db).clone()),
+        project_id.clone(),
+    )
+    .expect("Failed to resolve database repositories in test");
+    let memory_repository = repos.memory;
+    let agent_repository = repos.agent;
+    let project_repository = repos.project;
+    let vcs_entity_repository = repos.vcs_entity;
+    let plan_entity_repository = repos.plan_entity;
+    let issue_entity_repository = repos.issue_entity;
+    let org_entity_repository = repos.org_entity;
+    let file_hash_repository = repos.file_hash;
 
     let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
         project_id,
@@ -526,10 +522,10 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
         vcs_provider: ctx.vcs_provider(),
         project_service: ctx.project_service(),
         project_repository,
-        vcs_entity_repository: Arc::clone(&entity_repo) as _,
-        plan_entity_repository: Arc::clone(&entity_repo) as _,
-        issue_entity_repository: Arc::clone(&entity_repo) as _,
-        org_entity_repository: entity_repo as _,
+        vcs_entity_repository,
+        plan_entity_repository,
+        issue_entity_repository,
+        org_entity_repository,
     };
 
     let services_result = DomainServicesFactory::create_services(deps).await;

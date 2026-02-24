@@ -164,10 +164,6 @@ name = "observation_repo"
 path = "tests/observation_repo.rs"
 
 [[test]]
-name = "session_repo"
-path = "tests/session_repo.rs"
-
-[[test]]
 name = "agent_repo"
 path = "tests/agent_repo.rs"
 

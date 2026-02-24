@@ -20,6 +20,7 @@ use mcb_domain::ports::{
     PlanEntityRepository, ProjectDetectorService, ProjectRepository, VcsEntityRepository,
     VcsProvider, VectorStoreProvider,
 };
+use mcb_domain::registry::database::resolve_database_repositories;
 
 use crate::config::{AppConfig, ConfigLoader};
 use crate::constants::providers::DEFAULT_DB_CONFIG_NAME;
@@ -30,10 +31,6 @@ use crate::di::provider_resolvers::{
 use crate::events::BroadcastEventBus;
 use crate::infrastructure::admin::DefaultIndexingOperations;
 use crate::project::ProjectService;
-use mcb_providers::database::seaorm::repos::{
-    SeaOrmAgentRepository, SeaOrmEntityRepository, SeaOrmIndexRepository,
-    SeaOrmObservationRepository, SeaOrmProjectRepository,
-};
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 
 /// Application context with resolved providers and infrastructure services.
@@ -330,21 +327,17 @@ pub async fn init_app_with_overrides(
     let db = Arc::new(db);
     let project_id = current_project_id()?;
 
-    // ── Repositories ────────────────────────────────────────────────────
-
-    let memory_repository: Arc<dyn MemoryRepository> =
-        Arc::new(SeaOrmObservationRepository::new((*db).clone()));
-    let agent_repository: Arc<dyn AgentRepository> =
-        Arc::new(SeaOrmAgentRepository::new(Arc::clone(&db)));
-    let project_repository: Arc<dyn ProjectRepository> =
-        Arc::new(SeaOrmProjectRepository::new((*db).clone()));
-    let entity_repo = Arc::new(SeaOrmEntityRepository::new(Arc::clone(&db)));
-    let vcs_entity_repository: Arc<dyn VcsEntityRepository> = Arc::clone(&entity_repo) as _;
-    let plan_entity_repository: Arc<dyn PlanEntityRepository> = Arc::clone(&entity_repo) as _;
-    let issue_entity_repository: Arc<dyn IssueEntityRepository> = Arc::clone(&entity_repo) as _;
-    let org_entity_repository: Arc<dyn OrgEntityRepository> = Arc::clone(&entity_repo) as _;
-    let file_hash_repository: Arc<dyn FileHashRepository> =
-        Arc::new(SeaOrmIndexRepository::new(Arc::clone(&db), project_id));
+    // ── Repositories (via linkme registry) ─────────────────────────
+    let repos = resolve_database_repositories("seaorm", Box::new((*db).clone()), project_id)
+        .map_err(mcb_domain::error::Error::configuration)?;
+    let memory_repository = repos.memory;
+    let agent_repository = repos.agent;
+    let project_repository = repos.project;
+    let vcs_entity_repository = repos.vcs_entity;
+    let plan_entity_repository = repos.plan_entity;
+    let issue_entity_repository = repos.issue_entity;
+    let org_entity_repository = repos.org_entity;
+    let file_hash_repository = repos.file_hash;
 
     let vcs_provider = crate::di::vcs::default_vcs_provider();
     let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new());
