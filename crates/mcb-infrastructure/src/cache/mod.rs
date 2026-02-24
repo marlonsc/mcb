@@ -8,4 +8,7 @@
 //! Types (`CacheEntryConfig`, `CacheStats`, `CacheProvider`) are in mcb-domain.
 
 pub mod config;
+pub mod loco_adapter;
 pub mod provider;
+
+pub use loco_adapter::LocoCacheAdapter;
