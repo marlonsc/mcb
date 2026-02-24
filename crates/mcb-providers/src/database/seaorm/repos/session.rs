@@ -54,6 +54,7 @@ impl SeaOrmAgentSessionRepository {
     }
 }
 
+// DbErr must be taken by value: `.map_err(map_db_err)` requires `fn(DbErr) -> Error`, not `fn(&DbErr) -> Error`.
 #[allow(clippy::needless_pass_by_value)]
 fn map_db_err(error: sea_orm::DbErr) -> Error {
     Error::database(format!("SeaORM agent session repository failure: {error}"))

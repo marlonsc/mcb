@@ -347,7 +347,7 @@ jobs:
          # NOTE: Workspace publish requires publishing crates in dependency order.
          # When git deps are resolved, replace with katyo/publish-crates action
          # or per-crate `cargo publish -p <crate>` in topological order:
-         # mcb-domain → mcb-application → mcb-providers → mcb-infrastructure → mcb-validate → mcb-server → mcb
+          # mcb-domain → mcb-providers → mcb-infrastructure → mcb-validate → mcb-server → mcb
          run: cargo publish --dry-run -p mcb-domain
        - name: Publish to crates.io
          if: steps.check_token.outputs.skip != 'true'
@@ -355,7 +355,7 @@ jobs:
            CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
          run: |
            set -e
-           for crate in mcb-domain mcb-application mcb-providers mcb-infrastructure mcb-validate mcb-server mcb; do
+            for crate in mcb-domain mcb-providers mcb-infrastructure mcb-validate mcb-server mcb; do
              echo "Publishing $crate..."
              cargo publish -p "$crate"
              sleep 30

@@ -429,6 +429,7 @@ impl IndexingServiceImpl {
 
         // Incremental check using file hashes
         let current_hash = mcb_domain::utils::compute_content_hash(&content);
+        // Cannot collapse: outer `if let` unwraps Option, inner `if` checks a bool condition.
         #[allow(clippy::collapsible_if)]
         if let Some(repo) = &self.file_hash_repository {
             if !repo

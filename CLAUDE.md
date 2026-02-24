@@ -5,7 +5,7 @@ It is the **single source of truth** for all AI agents. See [`AGENTS.md`](AGENTS
 
 ## Project
 
-MCB (Memory Context Browser) — a high-performance MCP server giving AI coding agents persistent memory, semantic code search, and architecture validation. Rust edition 2024, nightly toolchain, MSRV 1.92. Version 0.2.1-dev.
+MCB (Memory Context Browser) — a high-performance MCP server giving AI coding agents persistent memory, semantic code search, and architecture validation. Rust edition 2024, stable toolchain, MSRV 1.92. Version 0.2.1-dev.
 
 ## Build & Quality Commands
 
