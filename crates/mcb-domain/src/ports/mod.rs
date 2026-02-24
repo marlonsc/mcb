@@ -39,9 +39,9 @@ mod services;
 // --- Admin ---
 pub use admin::{
     CacheAdminInterface, EmbeddingAdminInterface, IndexingOperation, IndexingOperationStatus,
-    IndexingOperationsInterface, LanguageAdminInterface, PerformanceMetricsData,
-    PerformanceMetricsInterface, ProviderInfo, ValidationOperation, ValidationOperationResult,
-    ValidationOperationsInterface, ValidationStatus, VectorStoreAdminInterface,
+    IndexingOperationsInterface, LanguageAdminInterface, ProviderInfo, ValidationOperation,
+    ValidationOperationResult, ValidationOperationsInterface, ValidationStatus,
+    VectorStoreAdminInterface,
 };
 
 // --- Infrastructure ---

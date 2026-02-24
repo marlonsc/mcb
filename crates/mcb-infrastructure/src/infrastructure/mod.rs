@@ -5,5 +5,5 @@
 //! Concrete types are composed in the DI bootstrap module or `loco_app.rs`.
 pub mod admin;
 pub mod factory;
-pub use admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
+pub use admin::DefaultIndexingOperations;
 pub use factory::default_event_bus;

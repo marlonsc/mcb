@@ -8,7 +8,6 @@ pub mod bootstrap;
 pub mod modules;
 pub mod provider_resolvers;
 pub mod repositories;
-pub mod resolver;
 pub mod vcs;
 
 pub use bootstrap::*;
@@ -18,7 +17,4 @@ pub use provider_resolvers::{
     VectorStoreProviderResolver,
 };
 pub use repositories::{create_memory_repository, create_memory_repository_with_db};
-pub use resolver::{
-    AvailableProviders, ResolvedProviders, list_available_providers, resolve_providers,
-};
 pub use vcs::default_vcs_provider;

@@ -25,8 +25,7 @@
 //!
 //! ## Decorators
 //!
-//! SOLID Open/Closed compliant decorators for cross-cutting concerns:
-//! - `decorators::InstrumentedEmbeddingProvider`: Adds timing metrics
+//! SOLID Open/Closed compliant decorators for cross-cutting concerns.
 //!
 //! ## Ports (Interfaces)
 //!
@@ -44,5 +43,4 @@ pub mod constants;
 pub mod decorators;
 pub mod use_cases;
 
-pub use decorators::*;
 pub use use_cases::*;

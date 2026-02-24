@@ -1,3 +1,1 @@
-//! Unit tests.
-
-mod instrumented_embedding_tests;
+//! Unit tests for decorators.
