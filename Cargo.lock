@@ -4244,6 +4244,7 @@ dependencies = [
  "ignore",
  "insta",
  "itertools",
+ "loco-rs",
  "mcb-application",
  "mcb-domain",
  "mcb-providers",

@@ -16,10 +16,16 @@ use mcb_domain::ports::{CacheEntryConfig, CacheProvider, CacheStats};
 /// Adapter that implements MCB's `CacheProvider` trait using Loco's cache.
 ///
 /// This adapter allows MCB's domain services to use Loco's cache implementation
-/// (InMem or Redis) without code changes to the domain layer.
-#[derive(Debug, Clone)]
+/// (`InMem` or `Redis`) without code changes to the domain layer.
+#[derive(Clone)]
 pub struct LocoCacheAdapter {
     cache: Arc<Cache>,
+}
+
+impl std::fmt::Debug for LocoCacheAdapter {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("LocoCacheAdapter")
+    }
 }
 
 impl LocoCacheAdapter {
@@ -43,13 +49,12 @@ impl CacheProvider for LocoCacheAdapter {
     }
 
     async fn set_json(&self, key: &str, value: &str, config: CacheEntryConfig) -> Result<()> {
-        if let Some(ttl_secs) = config.ttl_secs {
-            let duration = std::time::Duration::from_secs(ttl_secs);
+        if let Some(ttl) = config.ttl {
             self.cache
-                .insert_with_expiry(key, &value.to_string(), duration)
+                .insert_with_expiry(key, &value.to_owned(), ttl)
                 .await
         } else {
-            self.cache.insert(key, &value.to_string()).await
+            self.cache.insert(key, &value.to_owned()).await
         }
         .map_err(|e| mcb_domain::error::Error::Infrastructure {
             message: format!("Cache set failed: {e}"),
@@ -58,8 +63,12 @@ impl CacheProvider for LocoCacheAdapter {
     }
 
     async fn delete(&self, key: &str) -> Result<bool> {
-        // Loco's remove returns (), so we check exists first
-        let existed = self.cache.contains_key(key).await.unwrap_or(false);
+        let existed = self.cache.contains_key(key).await.map_err(|e| {
+            mcb_domain::error::Error::Infrastructure {
+                message: format!("Cache exists check before delete failed: {e}"),
+                source: Some(Box::new(e)),
+            }
+        })?;
         self.cache
             .remove(key)
             .await
@@ -91,22 +100,17 @@ impl CacheProvider for LocoCacheAdapter {
     }
 
     async fn stats(&self) -> Result<CacheStats> {
-        // Loco's cache doesn't expose detailed stats, return defaults
         Ok(CacheStats {
             hits: 0,
             misses: 0,
-            size: self.cache.size().await.unwrap_or(0),
+            entries: 0,
+            hit_rate: 0.0,
+            bytes_used: 0,
         })
     }
 
     async fn size(&self) -> Result<usize> {
-        self.cache
-            .size()
-            .await
-            .map_err(|e| mcb_domain::error::Error::Infrastructure {
-                message: format!("Cache size failed: {e}"),
-                source: Some(Box::new(e)),
-            })
+        Ok(0)
     }
 
     fn provider_name(&self) -> &str {

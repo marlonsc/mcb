@@ -15,10 +15,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use mcb_domain::ports::{
-    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
-};
-use mcb_domain::registry::cache::{CacheProviderConfig, resolve_cache_provider};
+use mcb_domain::ports::{EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider};
 use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 use mcb_domain::registry::language::{LanguageProviderConfig, resolve_language_provider};
 use mcb_domain::registry::vector_store::{
@@ -226,62 +223,6 @@ where
 }
 
 impl_resolver_common!(VectorStoreProviderResolver);
-
-// ============================================================================
-// Cache Provider Resolver
-// ============================================================================
-
-/// Resolver component for cache providers
-///
-/// Uses the linkme registry to resolve cache providers by name.
-/// Can resolve from current config or from an override config.
-pub struct CacheProviderResolver {
-    config: Arc<AppConfig>,
-}
-
-impl CacheProviderResolver {
-    /// Resolve provider from current application config
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if no matching cache provider is found in the registry.
-    pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn CacheProvider>> {
-        let cache_provider_name = match &self.config.system.infrastructure.cache.provider {
-            crate::config::CacheProvider::Moka => "moka",
-            crate::config::CacheProvider::Redis => "redis",
-        };
-
-        let registry_config = CacheProviderConfig {
-            provider: cache_provider_name.to_owned(),
-            uri: self.config.system.infrastructure.cache.redis_url.clone(),
-            max_size: Some(self.config.system.infrastructure.cache.max_size),
-            ttl_secs: Some(self.config.system.infrastructure.cache.default_ttl_secs),
-            namespace: Some(self.config.system.infrastructure.cache.namespace.clone()),
-            extra: Default::default(),
-        };
-
-        resolve_cache_provider(&registry_config)
-    }
-
-    /// Resolve provider from override config (for admin API)
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the cache provider cannot be resolved.
-    pub fn resolve_from_override(
-        &self,
-        override_config: &CacheProviderConfig,
-    ) -> mcb_domain::error::Result<Arc<dyn CacheProvider>> {
-        resolve_cache_provider(override_config)
-    }
-
-    /// List available cache providers
-    #[must_use]
-    pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_domain::registry::cache::list_cache_providers()
-    }
-}
-impl_resolver_common!(CacheProviderResolver);
 
 // ============================================================================
 // Language Provider Resolver

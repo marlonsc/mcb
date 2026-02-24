@@ -13,8 +13,7 @@ pub mod vcs;
 pub use bootstrap::*;
 pub use modules::{DomainServicesContainer, DomainServicesFactory, ServiceDependencies};
 pub use provider_resolvers::{
-    CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
-    VectorStoreProviderResolver,
+    EmbeddingProviderResolver, LanguageProviderResolver, VectorStoreProviderResolver,
 };
 pub use repositories::{create_memory_repository, create_memory_repository_with_db};
 pub use vcs::default_vcs_provider;

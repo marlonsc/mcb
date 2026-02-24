@@ -89,7 +89,7 @@ async fn test_provider_selection_from_config() -> Result<(), Box<dyn std::error:
         app_context.vector_store_provider().provider_name(),
         "edgevec"
     );
-    assert_eq!(app_context.cache_provider().provider_name(), "moka");
+    assert_eq!(app_context.cache_provider().provider_name(), "test");
     assert_eq!(app_context.language_chunker().provider_name(), "universal");
     Ok(())
 }

@@ -14,7 +14,7 @@
 //! | ---------- | ------ | ----------------- |
 //! | Embedding | `EmbeddingProvider` | `OpenAI`, Ollama, `VoyageAI`, Gemini, `FastEmbed` |
 //! | Vector Store | `VectorStoreProvider` | `EdgeVec`, Encrypted, Milvus, Pinecone, Qdrant |
-//! | Cache | `CacheProvider` | Moka, Redis |
+//! | Cache | `CacheProvider` | delegated to Loco cache |
 //! | Events | `EventPublisher` | Tokio, Nats |
 //! | Hybrid Search | `HybridSearchProvider` | `HybridSearchEngine` |
 //! | Language | `LanguageChunkingProvider` | Rust, Python, Go, Java, etc. |
@@ -32,7 +32,6 @@
 //!
 //! ```no_run
 //! use mcb_providers::embedding::OllamaEmbeddingProvider;
-//! use mcb_providers::cache::MokaCacheProvider;
 //! use mcb_providers::language::RustProcessor;
 //! ```
 
@@ -62,11 +61,6 @@ pub mod embedding;
 ///
 /// Implements `VectorStoreProvider` trait for vector storage backends.
 pub mod vector_store;
-
-/// Cache provider implementations
-///
-/// Implements `CacheProvider` trait for caching backends.
-pub mod cache;
 
 /// Native PMAT-style analysis provider implementations.
 pub mod analysis;

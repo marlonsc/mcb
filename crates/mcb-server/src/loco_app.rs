@@ -23,14 +23,14 @@ use mcb_domain::ports::{
     IssueEntityRepository, MemoryRepository, OrgEntityRepository, PlanEntityRepository,
     ProjectDetectorService, ProjectRepository, VcsEntityRepository,
 };
+use mcb_infrastructure::cache::LocoCacheAdapter;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::modules::domain_services::{
     DomainServicesFactory, ServiceDependencies,
 };
 use mcb_infrastructure::di::provider_resolvers::{
-    CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
-    VectorStoreProviderResolver,
+    EmbeddingProviderResolver, LanguageProviderResolver, VectorStoreProviderResolver,
 };
 use mcb_infrastructure::infrastructure::admin::DefaultIndexingOperations;
 use mcb_providers::database::seaorm::migration::Migrator;
@@ -161,9 +161,9 @@ pub async fn create_mcp_server(
     let vector_store_provider = VectorStoreProviderResolver::new(Arc::clone(&config))
         .resolve_from_config()
         .map_err(|e| format!("Vector store provider: {e}"))?;
-    let cache_provider = CacheProviderResolver::new(Arc::clone(&config))
-        .resolve_from_config()
-        .map_err(|e| format!("Cache provider: {e}"))?;
+    let cache_provider: Arc<dyn mcb_domain::ports::CacheProvider> = Arc::new(
+        LocoCacheAdapter::new(std::sync::Arc::<loco_rs::cache::Cache>::clone(&ctx.cache)),
+    );
     let language_chunker = LanguageProviderResolver::new(Arc::clone(&config))
         .resolve_from_config()
         .map_err(|e| format!("Language provider: {e}"))?;

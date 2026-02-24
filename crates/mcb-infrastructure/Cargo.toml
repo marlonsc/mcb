@@ -129,6 +129,8 @@ tracing-appender = { workspace = true }
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
 
+loco-rs = { path = "../../third-party/loco", default-features = false, features = ["cache_inmem"] }
+
 # SQLite for legacy/direct queries
 sqlx = { workspace = true }
 

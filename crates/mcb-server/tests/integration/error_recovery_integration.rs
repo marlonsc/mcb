@@ -229,7 +229,10 @@ fn test_list_providers_never_panics() {
         !vector_store_providers.is_empty(),
         "Should have vector store providers"
     );
-    assert!(!cache_providers.is_empty(), "Should have cache providers");
+    assert!(
+        cache_providers.is_empty(),
+        "Cache providers are delegated to Loco and should not be linkme-registered"
+    );
     assert!(
         !language_providers.is_empty(),
         "Should have language providers"

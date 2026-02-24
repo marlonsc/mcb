@@ -9,23 +9,23 @@
 //! Production code uses `loco_app.rs::create_mcp_server()` directly.
 //! This module exists for test infrastructure compatibility.
 
-use std::sync::Arc;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 
 use mcb_domain::error::Result;
 use mcb_domain::ports::{
-    AgentRepository, CacheProvider, CryptoProvider, EmbeddingProvider, EventBusProvider,
-    FileHashRepository, IndexingOperationsInterface, IssueEntityRepository,
-    LanguageChunkingProvider, MemoryRepository, OrgEntityRepository, PlanEntityRepository,
-    ProjectDetectorService, ProjectRepository, VcsEntityRepository, VcsProvider,
-    VectorStoreProvider,
+    AgentRepository, CacheEntryConfig, CacheProvider, CacheStats, CryptoProvider,
+    EmbeddingProvider, EventBusProvider, FileHashRepository, IndexingOperationsInterface,
+    IssueEntityRepository, LanguageChunkingProvider, MemoryRepository, OrgEntityRepository,
+    PlanEntityRepository, ProjectDetectorService, ProjectRepository, VcsEntityRepository,
+    VcsProvider, VectorStoreProvider,
 };
 
 use crate::config::{AppConfig, ConfigLoader};
 use crate::constants::providers::DEFAULT_DB_CONFIG_NAME;
 use crate::crypto::CryptoService;
 use crate::di::provider_resolvers::{
-    CacheProviderResolver, EmbeddingProviderResolver, LanguageProviderResolver,
-    VectorStoreProviderResolver,
+    EmbeddingProviderResolver, LanguageProviderResolver, VectorStoreProviderResolver,
 };
 use crate::infrastructure::admin::DefaultIndexingOperations;
 use crate::project::ProjectService;
@@ -274,9 +274,7 @@ pub async fn init_app_with_overrides(
         .resolve_from_config()
         .map_err(|e| mcb_domain::error::Error::configuration(format!("VectorStore: {e}")))?;
 
-    let cache_provider = CacheProviderResolver::new(Arc::clone(&config))
-        .resolve_from_config()
-        .map_err(|e| mcb_domain::error::Error::configuration(format!("Cache: {e}")))?;
+    let cache_provider: Arc<dyn CacheProvider> = Arc::new(TestCache::new());
 
     let language_chunker = LanguageProviderResolver::new(Arc::clone(&config))
         .resolve_from_config()
@@ -404,4 +402,115 @@ fn current_project_id() -> Result<String> {
         .ok_or_else(|| {
             mcb_domain::error::Error::config("cannot determine project ID from current directory")
         })
+}
+
+// ============================================================================
+// Test Cache Implementation
+// ============================================================================
+
+/// Simple in-memory cache for test infrastructure.
+/// Replaces the linkme-registered cache providers for test-only bootstrap.
+#[derive(Debug)]
+struct TestCache {
+    data: Mutex<HashMap<String, String>>,
+}
+
+impl TestCache {
+    fn new() -> Self {
+        Self {
+            data: Mutex::new(HashMap::new()),
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl CacheProvider for TestCache {
+    async fn get_json(&self, key: &str) -> Result<Option<String>> {
+        let data = self
+            .data
+            .lock()
+            .map_err(|_| mcb_domain::error::Error::Infrastructure {
+                message: "Cache lock poisoned".to_owned(),
+                source: None,
+            })?;
+        Ok(data.get(key).cloned())
+    }
+
+    async fn set_json(&self, key: &str, value: &str, _config: CacheEntryConfig) -> Result<()> {
+        let mut data = self
+            .data
+            .lock()
+            .map_err(|_| mcb_domain::error::Error::Infrastructure {
+                message: "Cache lock poisoned".to_owned(),
+                source: None,
+            })?;
+        data.insert(key.to_owned(), value.to_owned());
+        Ok(())
+    }
+
+    async fn delete(&self, key: &str) -> Result<bool> {
+        let mut data = self
+            .data
+            .lock()
+            .map_err(|_| mcb_domain::error::Error::Infrastructure {
+                message: "Cache lock poisoned".to_owned(),
+                source: None,
+            })?;
+        Ok(data.remove(key).is_some())
+    }
+
+    async fn exists(&self, key: &str) -> Result<bool> {
+        let data = self
+            .data
+            .lock()
+            .map_err(|_| mcb_domain::error::Error::Infrastructure {
+                message: "Cache lock poisoned".to_owned(),
+                source: None,
+            })?;
+        Ok(data.contains_key(key))
+    }
+
+    async fn clear(&self) -> Result<()> {
+        let mut data = self
+            .data
+            .lock()
+            .map_err(|_| mcb_domain::error::Error::Infrastructure {
+                message: "Cache lock poisoned".to_owned(),
+                source: None,
+            })?;
+        data.clear();
+        Ok(())
+    }
+
+    async fn stats(&self) -> Result<CacheStats> {
+        let data = self
+            .data
+            .lock()
+            .map_err(|_| mcb_domain::error::Error::Infrastructure {
+                message: "Cache lock poisoned".to_owned(),
+                source: None,
+            })?;
+        Ok(CacheStats {
+            hits: 0,
+            misses: 0,
+            entries: data.len() as u64,
+            hit_rate: 0.0,
+            bytes_used: 0,
+        })
+    }
+
+    async fn size(&self) -> Result<usize> {
+        let data = self
+            .data
+            .lock()
+            .map_err(|_| mcb_domain::error::Error::Infrastructure {
+                message: "Cache lock poisoned".to_owned(),
+                source: None,
+            })?;
+        Ok(data.len())
+    }
+
+    fn provider_name(&self) -> &str {
+        "test"
+    }
 }

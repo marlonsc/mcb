@@ -4,7 +4,7 @@
 //! Caching infrastructure with TTL and namespaces
 //!
 //! Provides caching configuration and wiring.
-//! Cache provider implementations are in mcb-providers crate.
+//! Cache provider implementation is delegated to Loco cache via adapter.
 //! Types (`CacheEntryConfig`, `CacheStats`, `CacheProvider`) are in mcb-domain.
 
 pub mod config;

@@ -1,7 +1,7 @@
 #![allow(clippy::str_to_string)] // False positive: Error::to_string != &str::to_string
 //! Tests for provider registries
 //!
-//! Tests the auto-registration system for embedding, vector store, cache, and language providers.
+//! Tests the auto-registration system for embedding, vector store, and language providers.
 //! Uses `extern crate mcb_providers` to force linkme registration of real providers.
 //!
 //! ## Key Principle
@@ -12,7 +12,6 @@
 // Force linkme registration of all providers from mcb-providers
 extern crate mcb_providers;
 
-use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
@@ -186,72 +185,6 @@ mod vector_store_registry_tests {
 }
 
 // ============================================================================
-// Cache Registry Tests - Real Provider Resolution
-// ============================================================================
-
-#[cfg(test)]
-mod cache_registry_tests {
-    use super::*;
-    use rstest::rstest;
-
-    #[rstest]
-    fn test_config_builder() {
-        let redis_uri = "redis://127.0.0.1:6379".to_owned();
-        let config = CacheProviderConfig::new("redis")
-            .with_uri(&redis_uri)
-            .with_max_size(10000)
-            .with_ttl_secs(3600)
-            .with_namespace("mcb");
-
-        assert_eq!(config.provider, "redis");
-        assert_eq!(config.uri.as_deref(), Some("redis://127.0.0.1:6379"));
-        assert_eq!(config.max_size, Some(10000));
-        assert_eq!(config.ttl_secs, Some(3600));
-        assert_eq!(config.namespace, Some("mcb".to_owned()));
-    }
-
-    #[rstest]
-    fn test_list_cache_providers() {
-        let providers = list_cache_providers();
-
-        assert!(
-            !providers.is_empty(),
-            "Should have registered cache providers"
-        );
-
-        // Check for moka (local) provider
-        let has_moka = providers.iter().any(|(name, _)| *name == "moka");
-        assert!(
-            has_moka,
-            "Should have moka cache provider. Available: {providers:?}"
-        );
-    }
-
-    #[rstest]
-    fn test_resolve_moka_cache_provider() {
-        let config = CacheProviderConfig::new("moka").with_max_size(1000);
-
-        let result = resolve_cache_provider(&config);
-
-        assert!(
-            result.is_ok(),
-            "Should resolve moka cache provider, got error: {}",
-            result
-                .as_ref()
-                .err()
-                .map_or_else(|| "unknown".to_owned(), std::string::ToString::to_string)
-        );
-
-        let provider = result.expect("Provider should be valid");
-        assert_eq!(
-            provider.provider_name(),
-            "moka",
-            "Should be moka (local) cache provider"
-        );
-    }
-}
-
-// ============================================================================
 // Language Registry Tests - Real Provider Resolution
 // ============================================================================
 
@@ -319,13 +252,11 @@ mod integration_tests {
     #[rstest]
     #[case("embedding")]
     #[case("vector_store")]
-    #[case("cache")]
     #[case("language")]
     fn all_registries_have_providers(#[case] registry: &str) {
         let count = match registry {
             "embedding" => list_embedding_providers().len(),
             "vector_store" => list_vector_store_providers().len(),
-            "cache" => list_cache_providers().len(),
             "language" => list_language_providers().len(),
             _ => 0,
         };
@@ -342,16 +273,10 @@ mod integration_tests {
             &EmbeddingProviderConfig::new("fastembed")
                 .with_cache_dir(crate::utils::shared_context::shared_fastembed_test_cache_dir()),
         );
-        let cache = resolve_cache_provider(&CacheProviderConfig::new("moka").with_max_size(1000));
-
         if let Err(err) = embedding {
             eprintln!(
                 "skipping FastEmbed availability assertion due environment limitation: {err}"
             );
         }
-        assert!(
-            cache.is_ok(),
-            "Moka (local) cache provider should be resolvable for tests"
-        );
     }
 }

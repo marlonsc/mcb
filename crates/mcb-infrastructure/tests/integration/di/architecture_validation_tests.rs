@@ -17,7 +17,6 @@ extern crate mcb_providers;
 
 use std::sync::Arc;
 
-use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
@@ -33,7 +32,6 @@ use crate::utils::shared_context::try_shared_app_context;
 #[case("embedding", "ollama")]
 #[case("embedding", "openai")]
 #[case("vector_store", "edgevec")]
-#[case("cache", "moka")]
 #[case("language", "universal")]
 fn all_expected_providers_registered(#[case] provider_type: &str, #[case] expected: &str) {
     let provider_names: Vec<&str> = match provider_type {
@@ -42,10 +40,6 @@ fn all_expected_providers_registered(#[case] provider_type: &str, #[case] expect
             .map(|(name, _)| *name)
             .collect(),
         "vector_store" => list_vector_store_providers()
-            .iter()
-            .map(|(name, _)| *name)
-            .collect(),
-        "cache" => list_cache_providers()
             .iter()
             .map(|(name, _)| *name)
             .collect(),
@@ -124,10 +118,6 @@ async fn test_provider_factories_return_working_providers() {
         }
     }
 
-    let cache_config = CacheProviderConfig::new("moka").with_max_size(1000);
-    let cache = resolve_cache_provider(&cache_config).expect("Should resolve");
-    assert_eq!(cache.provider_name(), "moka");
-
     let vs_config = VectorStoreProviderConfig::new("edgevec").with_collection("test-collection");
     let vs = resolve_vector_store_provider(&vs_config).expect("Should resolve");
     assert!(
@@ -167,13 +157,6 @@ fn test_registry_entries_have_valid_descriptions() {
         );
     }
 
-    for (name, desc) in list_cache_providers() {
-        assert!(
-            !desc.is_empty(),
-            "Cache provider '{name}' has empty description"
-        );
-    }
-
     for (name, desc) in list_language_providers() {
         assert!(
             !desc.is_empty(),
@@ -185,7 +168,6 @@ fn test_registry_entries_have_valid_descriptions() {
 #[rstest]
 #[case("embedding")]
 #[case("vector_store")]
-#[case("cache")]
 #[case("language")]
 fn provider_resolution_fails_gracefully_for_unknown(#[case] provider_type: &str) {
     let result = match provider_type {
@@ -195,7 +177,6 @@ fn provider_resolution_fails_gracefully_for_unknown(#[case] provider_type: &str)
         "vector_store" => {
             resolve_vector_store_provider(&VectorStoreProviderConfig::new("xyz123")).map(|_| ())
         }
-        "cache" => resolve_cache_provider(&CacheProviderConfig::new("xyz123")).map(|_| ()),
         "language" => resolve_language_provider(&LanguageProviderConfig::new("xyz123")).map(|_| ()),
         _ => Ok(()),
     };
