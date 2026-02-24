@@ -303,7 +303,6 @@ serde_yaml = "0.9"
 
 # Rule Engines
 rust-rule-engine = "1.19"
-rusty-rules = "0.2"
 evalexpr = "13"
 
 # JSON Schema validation
