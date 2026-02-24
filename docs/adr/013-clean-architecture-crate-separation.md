@@ -17,6 +17,9 @@ implementation_status: Complete
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 Implemented (v0.1.1) - Six crates
 Updated (v0.1.2) - Added mcb-validate as 7th crate
 

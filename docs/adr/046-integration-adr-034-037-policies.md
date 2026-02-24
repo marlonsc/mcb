@@ -15,6 +15,9 @@ implementation_status: Complete
 
 # ADR-046: Integration with ADR-034-037 & Policies
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Status**: Proposed
 **Date**: 2026-02-05
 **Deciders**: MCB Architecture Team

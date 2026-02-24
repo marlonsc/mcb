@@ -17,6 +17,9 @@ implementation_status: Complete
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Accepted** — 2026-02-06
 
 - **Deciders:** Project team
