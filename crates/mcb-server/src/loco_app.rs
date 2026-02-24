@@ -234,7 +234,13 @@ pub async fn create_mcp_server(
         },
     };
 
-    Ok(McpServer::new(mcp_services, Some("loco".to_owned())))
+    let vcs_for_defaults = Arc::clone(&mcp_services.vcs);
+    let execution_flow = "loco".to_owned();
+    Ok(McpServer::new(
+        mcp_services,
+        &vcs_for_defaults,
+        Some(&execution_flow),
+    ))
 }
 
 // =========================================================================

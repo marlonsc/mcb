@@ -215,7 +215,7 @@ impl McpServerBuilder {
         };
 
         let vcs_for_defaults = Arc::clone(&services.vcs);
-        Ok(McpServer::new(services, vcs_for_defaults, None))
+        Ok(McpServer::new(services, &vcs_for_defaults, None))
     }
 }
 

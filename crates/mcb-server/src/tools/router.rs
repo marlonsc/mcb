@@ -59,20 +59,31 @@ pub struct ToolHandlers {
     pub hook_processor: Arc<HookProcessor>,
 }
 
+/// Boot-time execution provenance defaults used by context resolution.
 #[derive(Debug, Clone)]
 pub struct RuntimeDefaults {
+    /// Workspace root discovered from the current working directory.
     pub workspace_root: Option<String>,
+    /// Default repository path for tool execution.
     pub repo_path: Option<String>,
+    /// Default repository identifier.
     pub repo_id: Option<String>,
+    /// Default operator identifier.
     pub operator_id: Option<String>,
+    /// Default machine identifier.
     pub machine_id: Option<String>,
+    /// Default session identifier.
     pub session_id: Option<String>,
+    /// Default agent program identifier.
     pub agent_program: Option<String>,
+    /// Default model identifier.
     pub model_id: Option<String>,
+    /// Default execution flow.
     pub execution_flow: Option<String>,
 }
 
 impl RuntimeDefaults {
+    /// Discover runtime defaults once at server boot.
     pub async fn discover(vcs: &dyn VcsProvider, execution_flow: Option<String>) -> Self {
         let cwd = std::env::current_dir().ok();
         Self::discover_from_path(vcs, cwd.as_deref(), execution_flow).await
@@ -166,6 +177,7 @@ pub struct ToolExecutionContext {
 }
 
 impl ToolExecutionContext {
+    /// Collect request/context metadata into canonical override keys.
     #[must_use]
     pub fn metadata_overrides(
         request_meta: Option<&Meta>,
@@ -323,6 +335,7 @@ impl ToolExecutionContext {
         overrides
     }
 
+    /// Resolve execution context from explicit overrides and runtime defaults.
     #[must_use]
     pub fn resolve(defaults: &RuntimeDefaults, overrides: &HashMap<String, String>) -> Self {
         let session_id = resolve_override_value(
@@ -1012,7 +1025,10 @@ mod tests {
 
         assert_eq!(defaults.workspace_root.as_deref(), repo_root.to_str());
         assert_eq!(defaults.repo_path.as_deref(), repo_root.to_str());
-        assert_eq!(defaults.repo_id.as_deref(), Some("repo-test"));
+        assert_eq!(
+            defaults.repo_id.as_deref(),
+            Some(RepositoryId::from_name("repo-test").as_str().as_str())
+        );
         assert_eq!(defaults.agent_program.as_deref(), Some("mcb-stdio"));
         assert_eq!(defaults.model_id.as_deref(), Some("unknown"));
         assert_eq!(defaults.execution_flow.as_deref(), Some("stdio-only"));

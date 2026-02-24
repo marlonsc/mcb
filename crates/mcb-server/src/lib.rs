@@ -20,7 +20,6 @@ pub mod args;
 pub mod auth;
 pub mod builder;
 pub mod constants;
-pub(crate) mod context_resolution;
 pub mod controllers;
 pub mod error_mapping;
 pub mod formatter;

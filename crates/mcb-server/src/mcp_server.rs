@@ -21,8 +21,8 @@ use mcb_domain::ports::{
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
 use rmcp::model::{
-    CallToolRequestParams, CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams,
-    ProtocolVersion, ServerCapabilities, ServerInfo,
+    CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
+    ServerCapabilities, ServerInfo,
 };
 
 use crate::handlers::{
@@ -101,49 +101,16 @@ macro_rules! impl_arc_accessors {
 }
 
 impl McpServer {
-    /// Builds the execution context for a tool call.
-    ///
-    async fn build_execution_context(
-        &self,
-        request: &CallToolRequestParams,
-        context: &rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> ToolExecutionContext {
-        let overrides =
-            ToolExecutionContext::metadata_overrides(request.meta.as_ref(), &context.meta);
-        let mut execution_context =
-            ToolExecutionContext::resolve(&self.runtime_defaults, &overrides);
-
-        if let Some(path_str) = execution_context.repo_path.clone()
-            && let Ok(repo) = self
-                .services
-                .vcs
-                .open_repository(Path::new(&path_str))
-                .await
-        {
-            execution_context.repo_path = Some(repo.path().to_str().unwrap_or_default().to_owned());
-            if execution_context
-                .repo_id
-                .as_deref()
-                .is_none_or(|value| value.trim().is_empty())
-            {
-                execution_context.repo_id =
-                    Some(self.services.vcs.repository_id(&repo).into_string());
-            }
-        }
-
-        execution_context
-    }
-
     /// Create a new MCP server with injected dependencies
     #[must_use]
     pub fn new(
         services: McpServices,
-        vcs: Arc<dyn VcsProvider>,
-        execution_flow: Option<String>,
+        vcs: &Arc<dyn VcsProvider>,
+        execution_flow: Option<&String>,
     ) -> Self {
         let runtime_defaults = futures::executor::block_on(RuntimeDefaults::discover(
             vcs.as_ref(),
-            execution_flow.clone(),
+            execution_flow.cloned(),
         ));
         let hook_processor = HookProcessor::new(Some(Arc::clone(&services.memory)));
         let vcs_entity_handler =
@@ -255,6 +222,10 @@ impl McpServer {
         self.handlers.clone()
     }
 
+    /// Returns the runtime defaults discovered during server initialization.
+    ///
+    /// These defaults include workspace root, repository information, operator ID,
+    /// machine ID, session ID, agent program, model ID, and execution flow.
     #[must_use]
     pub fn runtime_defaults(&self) -> RuntimeDefaults {
         self.runtime_defaults.clone()
@@ -311,7 +282,39 @@ tools:
         mut request: rmcp::model::CallToolRequestParams,
         context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<CallToolResult, McpError> {
-        let execution_context = self.build_execution_context(&request, &context).await;
+        let mut overrides = std::collections::HashMap::new();
+        let extract_meta =
+            |meta: Option<&rmcp::model::Meta>,
+             map: &mut std::collections::HashMap<String, String>| {
+                if let Some(m) = meta {
+                    for (key, value) in m.iter() {
+                        if let Some(string_value) = value.as_str() {
+                            map.insert(key.clone(), string_value.to_owned());
+                        } else if let Some(bool_value) = value.as_bool() {
+                            map.insert(key.clone(), bool_value.to_string());
+                        } else if let Some(number_value) = value.as_number() {
+                            map.insert(key.clone(), number_value.to_string());
+                        }
+                    }
+                }
+            };
+
+        extract_meta(Some(&context.meta), &mut overrides);
+        extract_meta(request.meta.as_ref(), &mut overrides);
+
+        let mut execution_context =
+            ToolExecutionContext::resolve(&self.runtime_defaults, &overrides);
+
+        if let Some(path_str) = execution_context.repo_path.as_deref()
+            && execution_context
+                .repo_id
+                .as_deref()
+                .is_none_or(|value| value.trim().is_empty())
+            && let Ok(repo) = self.services.vcs.open_repository(Path::new(path_str)).await
+        {
+            execution_context.repo_id = Some(self.services.vcs.repository_id(&repo).into_string());
+        }
+
         execution_context.apply_to_request_if_missing(&mut request);
 
         route_tool_call(request, &self.handlers, execution_context).await

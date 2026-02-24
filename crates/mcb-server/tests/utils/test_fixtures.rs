@@ -494,7 +494,7 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
         Box::new((*db).clone()),
         project_id.clone(),
     )
-    .expect("Failed to resolve database repositories in test");
+    .unwrap_or_else(|_| unreachable!());
     let memory_repository = repos.memory;
     let agent_repository = repos.agent;
     let project_repository = repos.project;
