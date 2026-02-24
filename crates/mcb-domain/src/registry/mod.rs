@@ -54,6 +54,7 @@
 //! ```
 
 pub mod cache;
+pub mod database;
 pub mod embedding;
 pub mod language;
 pub mod validation;

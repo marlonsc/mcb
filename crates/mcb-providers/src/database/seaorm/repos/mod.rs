@@ -13,6 +13,8 @@ pub mod index;
 pub mod observation;
 /// Project repository implementation.
 pub mod project;
+/// Database repository bundle registry integration.
+pub mod registry;
 
 /// `SeaORM` agent repository.
 pub use agent::SeaOrmAgentRepository;
