@@ -11,8 +11,8 @@ Development roadmap for**Memory Context Browser (MCB)** — a high-performance M
 
 | Field | Value |
 | ------- | ------- |
-| **Version** | v0.2.1 |
-| **Branch** | `release/v0.2.1` (only active release branch) |
+| **Version** | v0.3.0-dev |
+| **Branch** | `release/v0.3.0` (SeaQL + Loco.rs rebuild) |
 | **Build** | ✅ `cargo check --workspace` passes |
 | **Tests** | 1,705 passing (`cargo test --workspace`) |
 | **Crates** | 9 (Clean Architecture workspace) |

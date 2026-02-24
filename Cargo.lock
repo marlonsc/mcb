@@ -4050,7 +4050,7 @@ dependencies = [
 
 [[package]]
 name = "mcb"
-version = "0.2.1-dev"
+version = "0.2.1"
 dependencies = [
  "clap",
  "insta",
@@ -4069,7 +4069,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-application"
-version = "0.2.1-dev"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -4096,7 +4096,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-domain"
-version = "0.2.1-dev"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -4128,7 +4128,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-infrastructure"
-version = "0.2.1-dev"
+version = "0.2.1"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -4205,7 +4205,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-providers"
-version = "0.2.1-dev"
+version = "0.2.1"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -4265,7 +4265,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-server"
-version = "0.2.1-dev"
+version = "0.2.1"
 dependencies = [
  "anyhow",
  "argon2",
@@ -4325,7 +4325,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-validate"
-version = "0.2.1-dev"
+version = "0.2.1"
 dependencies = [
  "async-trait",
  "cargo_metadata",

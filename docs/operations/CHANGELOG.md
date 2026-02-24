@@ -65,9 +65,7 @@ battle-tested libraries. All 9 MCP tools fully operational on the new stack.
 - Database tables: 31 (via single migration)
 - ADRs: 52 total
 
----
-
-## [0.2.1] - 2026-02-XX
+## [0.2.1] - 2026-02-23
 
 ### Summary
 
