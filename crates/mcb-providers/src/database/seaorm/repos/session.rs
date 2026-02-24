@@ -13,25 +13,35 @@ use sea_orm::{
 
 use crate::database::seaorm::entities::agent_session;
 
+/// SeaORM-backed repository for agent session persistence.
 pub struct SeaOrmAgentSessionRepository {
     db: Arc<DatabaseConnection>,
 }
 
+/// Condensed read model for session summary views.
 pub struct SessionSummaryView {
+    /// Session identifier.
     pub session_id: String,
+    /// Current session status.
     pub status: AgentSessionStatus,
+    /// Agent type used by the session.
     pub agent_type: AgentType,
+    /// Model name used during the session.
     pub model: String,
+    /// Session start timestamp (unix seconds).
     pub started_at: i64,
+    /// Session end timestamp when available.
     pub ended_at: Option<i64>,
 }
 
 impl SeaOrmAgentSessionRepository {
     #[must_use]
+    /// Creates a new session repository instance.
     pub fn new(db: Arc<DatabaseConnection>) -> Self {
         Self { db }
     }
 
+    /// Returns a summary projection for a session if it exists.
     pub async fn summarize_session(&self, id: &str) -> Result<Option<SessionSummaryView>> {
         let model = agent_session::Entity::find_by_id(id)
             .one(self.db.as_ref())

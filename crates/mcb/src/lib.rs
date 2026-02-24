@@ -1,4 +1,13 @@
-//! MCB — Memory Context Browser binary crate.
+//! MCB binary crate.
+//!
+//! Command-line entry point and re-export surface for the Memory Context Browser.
+//! Supports runtime server modes (HTTP and stdio) plus management subcommands.
+//!
+//! ## Typical usage
+//! ```bash
+//! mcb serve --transport http
+//! mcb serve --transport stdio
+//! ```
 pub mod cli;
 
 /// Re-export of the domain layer.

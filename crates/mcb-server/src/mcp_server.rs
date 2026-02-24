@@ -1,11 +1,9 @@
+//! MCP server core.
 //!
 //! **Documentation**: [docs/modules/server.md](../../../docs/modules/server.md)
 //!
-//!
-//! Core MCP protocol server that orchestrates semantic code search operations.
-//! Follows Clean Architecture principles with dependency injection.
-//!
-//! # Code Smells
+//! [`McpServer`] orchestrates MCP tool execution and wires service dependencies
+//! through [`McpServices`] and [`McpEntityRepositories`].
 
 use std::path::Path;
 use std::sync::Arc;

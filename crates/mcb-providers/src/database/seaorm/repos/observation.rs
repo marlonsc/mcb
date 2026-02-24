@@ -15,12 +15,14 @@ use sea_orm::{
 
 use crate::database::seaorm::entities::{observation, organization, project, session_summary};
 
+/// SeaORM-backed implementation for observation persistence and retrieval.
 pub struct SeaOrmObservationRepository {
     db: DatabaseConnection,
 }
 
 impl SeaOrmObservationRepository {
     #[must_use]
+    /// Creates a new observation repository backed by the provided database connection.
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
@@ -191,6 +193,7 @@ impl SeaOrmObservationRepository {
             .map_err(|e| Self::db_err("decode observations", e))
     }
 
+    /// Lists observations using the optional filter and result limit.
     pub async fn list_observations(
         &self,
         filter: Option<&MemoryFilter>,
@@ -199,6 +202,7 @@ impl SeaOrmObservationRepository {
         self.list_by_filter(filter, limit).await
     }
 
+    /// Selects observations for context injection, capped by `max_chars` content size.
     pub async fn inject_observations(
         &self,
         filter: Option<&MemoryFilter>,

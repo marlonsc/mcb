@@ -19,9 +19,8 @@ StartLimitBurst=3
 [Service]
 Type=simple
 
-# Binary in server mode (HTTP daemon)
-# Config auto-discovered at ~/.config/mcb/mcb.toml
-ExecStart=%h/.local/bin/mcb serve --server --config %h/.config/mcb/mcb.toml
+# Binary in server mode (HTTP daemon, no stdio)
+ExecStart=%h/.local/bin/mcb serve --server
 
 # Reload via SIGUSR1 triggers exec-based respawn (preserves PID)
 ExecReload=/bin/kill -SIGUSR1 $MAINPID
@@ -39,7 +38,7 @@ RestartSec=5
 # IMPORTANT: Override transport_mode to HYBRID for server daemon
 # Use hybrid mode (stdio bridge to local daemon) instead of deprecated HTTP
 Environment=RUST_LOG=info
-Environment=MCP__SERVER__TRANSPORT_MODE=hybrid
+Environment=LOCO_ENV=production
 
 # Working directory for data storage
 WorkingDirectory=%h/.local/share/mcb

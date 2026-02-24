@@ -1,4 +1,16 @@
-//! MCB server crate — MCP protocol server with HTTP and stdio transports.
+//! MCB Server crate.
+//!
+//! MCP protocol server implementation with HTTP and stdio transports.
+//!
+//! ## Architecture
+//! - `handlers` - MCP tool handlers for each domain operation
+//! - `tools` - tool descriptor registry and dispatch wiring
+//! - `transport` - HTTP and stdio transport adapters
+//! - `session` - runtime session lifecycle and context handling
+//!
+//! ## Entry point
+//! [`loco_app::create_mcp_server`] is the composition-root helper that wires
+//! domain services and repositories from the Loco application context.
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[macro_use]

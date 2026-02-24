@@ -18,29 +18,42 @@ use serde_json::json;
 
 use crate::database::seaorm::entities::{agent_worktree_assignment, branch, repository, worktree};
 
+/// SeaORM-backed repository for VCS entities (repositories, branches, worktrees).
 pub struct SeaOrmVcsEntityRepository {
     db: DatabaseConnection,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+/// Result of comparing two branches inside a repository.
 pub struct BranchComparison {
+    /// Repository identifier.
     pub repository_id: String,
+    /// Base branch name.
     pub base_branch: String,
+    /// Target branch name.
     pub target_branch: String,
+    /// Base branch head commit hash.
     pub base_head_commit: Option<String>,
+    /// Target branch head commit hash.
     pub target_head_commit: Option<String>,
+    /// Whether both branches point to the same head commit.
     pub heads_equal: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+/// Impact overview for branch/worktree distribution in a repository.
 pub struct ImpactAnalysis {
+    /// Repository identifier.
     pub repository_id: String,
+    /// Number of worktrees per branch name.
     pub branch_worktree_counts: HashMap<String, i64>,
+    /// Total number of worktrees across analyzed branches.
     pub total_worktrees: i64,
 }
 
 impl SeaOrmVcsEntityRepository {
     #[must_use]
+    /// Creates a new VCS entity repository.
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
@@ -49,6 +62,7 @@ impl SeaOrmVcsEntityRepository {
         Error::database(format!("{context}: {error}"))
     }
 
+    /// Creates or updates a repository record from indexed repository metadata.
     pub async fn index_repository(&self, repo: &Repository) -> Result<()> {
         let existing = repository::Entity::find_by_id(repo.id.clone())
             .one(&self.db)
@@ -62,6 +76,7 @@ impl SeaOrmVcsEntityRepository {
         self.create_repository(repo).await
     }
 
+    /// Searches branches by name substring in a repository.
     pub async fn search_branch(
         &self,
         repository_id: &str,
@@ -129,6 +144,7 @@ impl SeaOrmVcsEntityRepository {
             .collect()
     }
 
+    /// Compares two branches and returns their head information.
     pub async fn compare_branches(
         &self,
         repository_id: &str,
@@ -184,6 +200,7 @@ impl SeaOrmVcsEntityRepository {
         })
     }
 
+    /// Analyzes worktree impact for two branches in the same repository.
     pub async fn analyze_impact(
         &self,
         repository_id: &str,
