@@ -18,8 +18,8 @@ pub use super::server::{
     ServerSslConfig, ServerTimeoutConfig, TransportMode,
 };
 pub use super::system::{
-    AdminApiKeyConfig, ApiKeyConfig, AuthConfig, BackupConfig, DaemonConfig, EventBusConfig,
-    EventBusProvider, JwtConfig, OperationsConfig, PasswordAlgorithm, SnapshotConfig, SyncConfig,
+    AdminApiKeyConfig, ApiKeyConfig, AuthConfig, BackupConfig, DaemonConfig, EventBusBackend,
+    EventBusConfig, JwtConfig, OperationsConfig, PasswordAlgorithm, SnapshotConfig, SyncConfig,
 };
 /// Embedding configuration container
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -149,7 +149,7 @@ impl InfrastructureConfig {
     pub fn fallback() -> Self {
         Self {
             cache: CacheSystemConfig::default(),
-            event_bus: EventBusConfig::tokio(),
+            event_bus: EventBusConfig::in_process(),
             metrics: MetricsConfig::default(),
             resilience: ResilienceConfig::default(),
             limits: LimitsConfig::default(),

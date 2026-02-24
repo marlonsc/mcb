@@ -1,10 +1,9 @@
 //!
 //! **Documentation**: [docs/modules/infrastructure.md](../../../../../../docs/modules/infrastructure.md)
 //!
-//! Loco Cache Adapter
+//! Cache Adapter
 //!
-//! Adapts Loco's cache API to MCB's `CacheProvider` trait.
-//! Replaces the custom cache provider infrastructure with Loco's built-in cache.
+//! Bridges the framework cache to MCB's `CacheProvider` trait.
 
 use std::sync::Arc;
 
@@ -13,23 +12,20 @@ use loco_rs::cache::Cache;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{CacheEntryConfig, CacheProvider, CacheStats};
 
-/// Adapter that implements MCB's `CacheProvider` trait using Loco's cache.
-///
-/// This adapter allows MCB's domain services to use Loco's cache implementation
-/// (`InMem` or `Redis`) without code changes to the domain layer.
+/// Adapts the framework cache to MCB's `CacheProvider` port.
 #[derive(Clone)]
-pub struct LocoCacheAdapter {
+pub struct CacheAdapter {
     cache: Arc<Cache>,
 }
 
-impl std::fmt::Debug for LocoCacheAdapter {
+impl std::fmt::Debug for CacheAdapter {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.write_str("LocoCacheAdapter")
+        f.write_str("CacheAdapter")
     }
 }
 
-impl LocoCacheAdapter {
-    /// Create a new Loco cache adapter from Loco's cache.
+impl CacheAdapter {
+    /// Wrap a framework cache instance.
     #[must_use]
     pub fn new(cache: Arc<Cache>) -> Self {
         Self { cache }
@@ -37,7 +33,7 @@ impl LocoCacheAdapter {
 }
 
 #[async_trait]
-impl CacheProvider for LocoCacheAdapter {
+impl CacheProvider for CacheAdapter {
     async fn get_json(&self, key: &str) -> Result<Option<String>> {
         self.cache
             .get::<String>(key)
@@ -114,11 +110,11 @@ impl CacheProvider for LocoCacheAdapter {
     }
 
     fn provider_name(&self) -> &str {
-        "loco"
+        "cache-adapter"
     }
 }
 
-impl From<Arc<Cache>> for LocoCacheAdapter {
+impl From<Arc<Cache>> for CacheAdapter {
     fn from(cache: Arc<Cache>) -> Self {
         Self::new(cache)
     }

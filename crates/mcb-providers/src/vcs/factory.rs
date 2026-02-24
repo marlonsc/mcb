@@ -5,10 +5,10 @@ use std::sync::Arc;
 
 use mcb_domain::ports::VcsProvider;
 
-use super::git2_provider;
+use super::git;
 
-/// Builds the default VCS provider implementation.
+/// Builds the default VCS provider.
 #[must_use]
 pub fn default_vcs_provider() -> Arc<dyn VcsProvider> {
-    Arc::new(git2_provider::Git2Provider::new())
+    Arc::new(git::GitProvider::new())
 }

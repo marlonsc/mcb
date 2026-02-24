@@ -11,13 +11,13 @@ use tracing::{debug, warn};
 
 use crate::constants::events::EVENT_BUS_BUFFER_SIZE;
 
-/// Loco-owned in-process event bus adapter backed by `tokio::broadcast`.
+/// In-process domain event bus backed by a broadcast channel.
 #[derive(Clone)]
-pub struct LocoEventBusProvider {
+pub struct BroadcastEventBus {
     sender: Arc<broadcast::Sender<DomainEvent>>,
 }
 
-impl LocoEventBusProvider {
+impl BroadcastEventBus {
     /// Create a new event bus with default buffer size.
     #[must_use]
     pub fn new() -> Self {
@@ -28,22 +28,22 @@ impl LocoEventBusProvider {
     }
 }
 
-impl Default for LocoEventBusProvider {
+impl Default for BroadcastEventBus {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl std::fmt::Debug for LocoEventBusProvider {
+impl std::fmt::Debug for BroadcastEventBus {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("LocoEventBusProvider")
+        f.debug_struct("BroadcastEventBus")
             .field("subscribers", &self.sender.receiver_count())
             .finish()
     }
 }
 
 #[async_trait]
-impl EventBusProvider for LocoEventBusProvider {
+impl EventBusProvider for BroadcastEventBus {
     async fn publish_event(&self, event: DomainEvent) -> Result<()> {
         match self.sender.send(event) {
             Ok(count) => debug!("Published event to {count} subscribers"),
@@ -86,6 +86,6 @@ impl EventBusProvider for LocoEventBusProvider {
     }
 
     async fn subscribe(&self, topic: &str) -> Result<String> {
-        Ok(format!("loco-broadcast-{topic}-{}", id::generate()))
+        Ok(format!("broadcast-{topic}-{}", id::generate()))
     }
 }

@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
 //!
-//! Git2-based implementation of `VcsProvider`
+//! Git repository provider.
 
 use std::path::{Path, PathBuf};
 
@@ -17,13 +17,11 @@ use mcb_domain::{
     ports::VcsProvider,
 };
 
-/// Git implementation of `VcsProvider` using libgit2.
-///
-/// Constructed by `mcb_infrastructure::di::vcs` module for DI registration.
-pub struct Git2Provider;
+/// Git repository provider.
+pub struct GitProvider;
 
-impl Git2Provider {
-    /// Create a new Git2 provider instance
+impl GitProvider {
+    /// Create a new Git provider instance.
     #[must_use]
     pub fn new() -> Self {
         Self
@@ -93,14 +91,14 @@ impl Git2Provider {
     }
 }
 
-impl Default for Git2Provider {
+impl Default for GitProvider {
     fn default() -> Self {
         Self::new()
     }
 }
 
 #[async_trait]
-impl VcsProvider for Git2Provider {
+impl VcsProvider for GitProvider {
     async fn open_repository(&self, path: &Path) -> Result<VcsRepository> {
         let repo = Self::open_repo(path)?;
 

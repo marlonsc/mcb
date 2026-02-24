@@ -1,6 +1,6 @@
-//! Event bus adapters owned by the infrastructure layer.
+//! In-process domain event bus.
 
-/// In-process event bus implementation used by Loco wiring.
-pub mod loco;
+/// Broadcast-channel event bus.
+pub mod broadcast;
 
-pub use loco::LocoEventBusProvider;
+pub use broadcast::BroadcastEventBus;

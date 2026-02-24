@@ -10,7 +10,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use mcb_providers::constants::EVENTS_TOKIO_DEFAULT_CAPACITY;
+use mcb_providers::constants::EVENT_BUS_DEFAULT_CAPACITY;
 
 use crate::constants::events::{EVENT_BUS_CONNECTION_TIMEOUT_MS, EVENT_BUS_MAX_RECONNECT_ATTEMPTS};
 
@@ -84,62 +84,63 @@ pub struct AuthConfig {
 // EventBus Configuration
 // ============================================================================
 
-/// `EventBus` provider types
+/// Event bus backend.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, Default)]
 #[serde(rename_all = "lowercase")]
-pub enum EventBusProvider {
-    /// In-process broadcast channel (Tokio)
+pub enum EventBusBackend {
+    /// In-process broadcast channel.
     #[default]
-    Tokio,
+    #[serde(alias = "tokio")]
+    InProcess,
 }
 
-/// `EventBus` configuration
+/// Event bus configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EventBusConfig {
-    /// `EventBus` provider to use
-    pub provider: EventBusProvider,
-    /// Buffer capacity for in-process event bus
+    /// Event bus backend to use.
+    pub provider: EventBusBackend,
+    /// Buffer capacity for the event bus.
     pub capacity: usize,
-    /// Connection timeout in milliseconds
+    /// Connection timeout in milliseconds.
     pub connection_timeout_ms: u64,
-    /// Reconnection attempts for distributed providers
+    /// Maximum reconnection attempts.
     pub max_reconnect_attempts: u32,
 }
 
 impl EventBusConfig {
     /// Creates default in-process event bus configuration.
     #[must_use]
-    pub fn tokio() -> Self {
+    pub fn in_process() -> Self {
         Self {
-            provider: EventBusProvider::Tokio,
-            capacity: EVENTS_TOKIO_DEFAULT_CAPACITY,
+            provider: EventBusBackend::InProcess,
+            capacity: EVENT_BUS_DEFAULT_CAPACITY,
             connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
             max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
         }
     }
 
-    /// Creates in-process event bus configuration with custom queue capacity.
+    /// Creates in-process event bus configuration with custom buffer capacity.
     #[must_use]
-    pub fn tokio_with_capacity(capacity: usize) -> Self {
+    pub fn with_capacity(capacity: usize) -> Self {
         Self {
-            provider: EventBusProvider::Tokio,
+            provider: EventBusBackend::InProcess,
             capacity,
             connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
             max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
         }
     }
 
-    /// Default configuration (Tokio, default capacity).
+    /// Default configuration.
     #[must_use]
     pub fn default_config() -> Self {
-        Self::tokio()
+        Self::in_process()
     }
 
     /// Returns the fallback event bus configuration.
     #[must_use]
     pub fn fallback() -> Self {
-        Self::tokio()
+        Self::in_process()
     }
 }
 

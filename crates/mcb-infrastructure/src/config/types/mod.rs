@@ -20,7 +20,7 @@ pub mod system;
 pub use app::{
     AdminApiKeyConfig, ApiKeyConfig, AppConfig, AuthConfig, BackupConfig, CacheProvider,
     CacheSystemConfig, DaemonConfig, DataConfig, DatabaseConfig, DatabaseConfigContainer,
-    EmbeddingConfigContainer, EventBusConfig, EventBusProvider, IndexingConfig,
+    EmbeddingConfigContainer, EventBusBackend, EventBusConfig, IndexingConfig,
     InfrastructureConfig, JwtConfig, LimitsConfig, LoggingConfig, McpConfig, ModeConfig,
     OperatingMode, OperationsConfig, OperationsDaemonConfig, PasswordAlgorithm, ProvidersConfig,
     ResilienceConfig, ServerConfig, ServerConfigBuilder, ServerConfigPresets, ServerCorsConfig,

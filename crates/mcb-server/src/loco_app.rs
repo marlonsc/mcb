@@ -23,7 +23,7 @@ use mcb_domain::ports::{
     IssueEntityRepository, MemoryRepository, OrgEntityRepository, PlanEntityRepository,
     ProjectDetectorService, ProjectRepository, VcsEntityRepository,
 };
-use mcb_infrastructure::cache::LocoCacheAdapter;
+use mcb_infrastructure::cache::CacheAdapter;
 use mcb_infrastructure::cache::provider::SharedCacheProvider;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::di::modules::domain_services::{
@@ -32,7 +32,7 @@ use mcb_infrastructure::di::modules::domain_services::{
 use mcb_infrastructure::di::provider_resolvers::{
     EmbeddingProviderResolver, LanguageProviderResolver, VectorStoreProviderResolver,
 };
-use mcb_infrastructure::events::LocoEventBusProvider;
+use mcb_infrastructure::events::BroadcastEventBus;
 use mcb_infrastructure::infrastructure::admin::DefaultIndexingOperations;
 use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::{
@@ -161,15 +161,15 @@ pub async fn create_mcp_server(
     let vector_store_provider = VectorStoreProviderResolver::new(Arc::clone(&config))
         .resolve_from_config()
         .map_err(|e| format!("Vector store provider: {e}"))?;
-    let cache_provider: Arc<dyn mcb_domain::ports::CacheProvider> = Arc::new(
-        LocoCacheAdapter::new(std::sync::Arc::<loco_rs::cache::Cache>::clone(&ctx.cache)),
-    );
+    let cache_provider: Arc<dyn mcb_domain::ports::CacheProvider> = Arc::new(CacheAdapter::new(
+        std::sync::Arc::<loco_rs::cache::Cache>::clone(&ctx.cache),
+    ));
     let language_chunker = LanguageProviderResolver::new(Arc::clone(&config))
         .resolve_from_config()
         .map_err(|e| format!("Language provider: {e}"))?;
 
     // ── Infrastructure services ─────────────────────────────────────────
-    let event_bus: Arc<dyn EventBusProvider> = Arc::new(LocoEventBusProvider::new());
+    let event_bus: Arc<dyn EventBusProvider> = Arc::new(BroadcastEventBus::new());
     let indexing_ops: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());
 

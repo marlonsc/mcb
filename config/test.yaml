@@ -127,7 +127,7 @@ settings:
         redis_pool_size: 10
         namespace: mcb
       event_bus:
-        provider: tokio
+        provider: in_process
         capacity: 1024
         connection_timeout_ms: 5000
         max_reconnect_attempts: 5
