@@ -44,6 +44,18 @@ struct InsertPayload {
     contents: Vec<String>,
 }
 
+/// Convert a `CollectionId` to a valid Milvus collection name.
+///
+/// Milvus requires collection names matching `^[a-zA-Z_][a-zA-Z0-9_]*$` (max 255 chars).
+/// UUIDs (e.g. `2f106fbd-e15a-5304-8adf-75e1ab8ba3ee`) are converted by:
+///   1. Stripping hyphens -> `2f106fbde15a53048adf75e1ab8ba3ee`
+///   2. Prefixing with `mcb_` -> `mcb_2f106fbde15a53048adf75e1ab8ba3ee`
+fn to_milvus_name(collection: &CollectionId) -> String {
+    let raw = collection.to_string();
+    let sanitized = raw.replace('-', "");
+    format!("mcb_{sanitized}")
+}
+
 impl MilvusVectorStoreProvider {
     /// Helper method to convert Milvus errors to domain errors
     fn map_milvus_error<T, E: std::fmt::Display>(
@@ -105,7 +117,7 @@ impl MilvusVectorStoreProvider {
 
     /// Load collection with graceful error handling
     async fn load_collection_safe(&self, collection: &CollectionId) -> Result<()> {
-        let name_str = collection.to_string();
+        let name_str = to_milvus_name(collection);
         if let Err(e) = self.client.load_collection(&name_str, None).await {
             let err_str = e.to_string();
             if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
@@ -135,7 +147,7 @@ impl MilvusVectorStoreProvider {
         limit: usize,
     ) -> Result<Vec<milvus::collection::SearchResult<'_>>> {
         use milvus::query::SearchOptions;
-        let name_str = collection.to_string();
+        let name_str = to_milvus_name(collection);
 
         let search_options = SearchOptions::new()
             .limit(limit)
@@ -229,7 +241,8 @@ impl MilvusVectorStoreProvider {
     }
 
     fn build_collection_schema(name: &CollectionId, dimensions: usize) -> Result<CollectionSchema> {
-        CollectionSchemaBuilder::new(&name.to_string(), &format!("Collection for {name}"))
+        let name_str = to_milvus_name(name);
+        CollectionSchemaBuilder::new(&name_str, &format!("Collection for {name}"))
             .add_field(FieldSchema::new_primary_int64(
                 VECTOR_FIELD_ID,
                 "primary key field",
@@ -260,7 +273,7 @@ impl MilvusVectorStoreProvider {
 
     async fn create_vector_index_with_retry(&self, name: &CollectionId) -> Result<()> {
         use milvus::index::{IndexParams, IndexType, MetricType};
-        let name_str = name.to_string();
+        let name_str = to_milvus_name(name);
 
         let index_result: std::result::Result<(), milvus::error::Error> = retry_with_backoff(
             RetryConfig::new(
@@ -540,7 +553,7 @@ impl MilvusVectorStoreProvider {
 
         match self
             .client
-            .query(collection.to_string(), "id >= 0", &query_options)
+            .query(to_milvus_name(collection), "id >= 0", &query_options)
             .await
         {
             Ok(results) => Ok(Some(results)),
@@ -582,7 +595,7 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
     // --- Admin Methods ---
 
     async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
-        let name_str = name.to_string();
+        let name_str = to_milvus_name(name);
         Self::map_milvus_error(
             self.client.has_collection(&name_str).await,
             "check collection",
@@ -593,9 +606,10 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
         &self,
         collection: &CollectionId,
     ) -> Result<HashMap<String, serde_json::Value>> {
+        let name_str = to_milvus_name(collection);
         let stats = self
             .client
-            .get_collection_stats(&collection.to_string())
+            .get_collection_stats(&name_str)
             .await
             .map_err(|e| {
                 Error::vector_db(format!(
@@ -627,7 +641,7 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
     }
 
     async fn flush(&self, collection: &CollectionId) -> Result<()> {
-        let name_str = collection.to_string();
+        let name_str = to_milvus_name(collection);
         let result = retry_with_backoff(
             RetryConfig::new(
                 MILVUS_FLUSH_RETRY_COUNT,
@@ -667,12 +681,16 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let mut collections = Vec::new();
 
         for name in collection_names {
-            let collection_id = CollectionId::from_name(&name);
+            let _collection_id = CollectionId::from_name(&name);
             // Get stats for each collection
-            let stats = self.get_stats(&collection_id).await.unwrap_or_default();
+            let stats = self
+                .client
+                .get_collection_stats(&name)
+                .await
+                .unwrap_or_default();
             let vector_count = stats
-                .get("vectors_count")
-                .and_then(serde_json::Value::as_u64)
+                .get("row_count")
+                .and_then(|value: &String| value.parse::<u64>().ok())
                 .unwrap_or(0);
 
             // For now, we don't have a quick way to count unique files without querying all data
@@ -697,7 +715,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         if limit == 0 {
             return Ok(Vec::new());
         }
-        let name_str = collection.to_string();
+        let name_str = to_milvus_name(collection);
 
         // Ensure collection is loaded
         if let Err(e) = self.client.load_collection(&name_str, None).await {
@@ -736,7 +754,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         collection: &CollectionId,
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
-        let name_str = collection.to_string();
+        let name_str = to_milvus_name(collection);
         // Ensure collection is loaded
         if let Err(e) = self.client.load_collection(&name_str, None).await {
             let err_str = e.to_string();
@@ -800,7 +818,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
     }
 
     async fn delete_collection(&self, name: &CollectionId) -> Result<()> {
-        let name_str = name.to_string();
+        let name_str = to_milvus_name(name);
         Self::map_milvus_error(
             self.client.drop_collection(&name_str).await,
             "delete collection",
@@ -817,7 +835,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         let expected_dims = Self::validate_insert_input(vectors, metadata.len())?;
         let payload = Self::prepare_insert_data(vectors, &metadata, expected_dims);
         let columns = Self::build_insert_columns(payload);
-        let name_str = collection.to_string();
+        let name_str = to_milvus_name(collection);
 
         let res = Self::map_milvus_error(
             self.client.insert(&name_str, columns, None).await,
@@ -859,7 +877,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         }
 
         let options = DeleteOptions::with_ids(ValueVec::Long(id_numbers));
-        let name_str = collection.to_string();
+        let name_str = to_milvus_name(collection);
 
         Self::map_milvus_error(
             self.client.delete(&name_str, &options).await,
@@ -877,7 +895,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         if ids.is_empty() {
             return Ok(Vec::new());
         }
-        let name_str = collection.to_string();
+        let name_str = to_milvus_name(collection);
 
         // Ensure collection is loaded
         self.client
@@ -915,7 +933,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         if limit == 0 {
             return Ok(Vec::new());
         }
-        let name_str = collection.to_string();
+        let name_str = to_milvus_name(collection);
 
         // Ensure collection is loaded
         self.client
@@ -956,6 +974,46 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         }
 
         Ok(all_results)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_to_milvus_name_starts_with_letter() {
+        let id = CollectionId::from_name("test-collection");
+        let name = to_milvus_name(&id);
+        assert!(
+            name.starts_with("mcb_"),
+            "name must start with mcb_ prefix: {name}"
+        );
+    }
+
+    #[test]
+    fn test_to_milvus_name_no_hyphens() {
+        let id = CollectionId::from_name("test-collection");
+        let name = to_milvus_name(&id);
+        assert!(!name.contains('-'), "name must not contain hyphens: {name}");
+    }
+
+    #[test]
+    fn test_to_milvus_name_valid_pattern() {
+        let id = CollectionId::from_name("test-collection");
+        let name = to_milvus_name(&id);
+        let pattern = regex::Regex::new("^[a-zA-Z_][a-zA-Z0-9_]*$").unwrap();
+        assert!(
+            pattern.is_match(&name),
+            "name must match Milvus pattern: {name}"
+        );
+    }
+
+    #[test]
+    fn test_to_milvus_name_under_255_chars() {
+        let id = CollectionId::from_name("test-collection");
+        let name = to_milvus_name(&id);
+        assert!(name.len() <= 255, "name must be under 255 chars: {name}");
     }
 }
 
