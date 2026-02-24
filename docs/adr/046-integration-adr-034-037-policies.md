@@ -593,6 +593,8 @@ ADR-041-046 form a complete system:
 | **045** | Versioning & freshness | ✅ Proposed |
 | **046** | Policy integration | ✅ Proposed (THIS) |
 
+> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
+
 All layers connected. Ready for implementation (Phase 9).
 
 ---

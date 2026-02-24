@@ -2286,6 +2286,8 @@ impl BackupManager {
 
 **Overview**: v0.5.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
 
+> **v0.3.0 Migration Note:** This architecture is v0.4.0-v0.5.0 future work. The current v0.3.0 release uses 4 layers (domain → providers → infrastructure → server).
+
 ### 5-Layer Architecture
 
 ```text

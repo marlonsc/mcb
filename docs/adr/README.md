@@ -79,7 +79,7 @@ The v0.3.0 release is a full platform rebuild on SeaQL (SeaORM, SeaQuery, SeaSch
 
 ### Integrated Context System (v0.5.0, previously v0.4.0)
 
-- [ADR 041: Context Architecture](phase-9/README.md#adr-041-context-architecture) — 5-layer context system design
+- [ADR 041: Context Architecture](phase-9/README.md#adr-041-context-architecture) — 5-layer (v0.4.0-v0.5.0) context system design (future work)
 - [ADR 042: Knowledge Graph](phase-9/README.md#adr-042-knowledge-graph) — Graph structure and relationships
 - [ADR 043: Hybrid Search Engine](phase-9/README.md#adr-043-hybrid-search-engine) — RRF fusion algorithm
 - [ADR 044: Model Selection](phase-9/README.md#adr-044-model-selection) — Embedding and search model choices

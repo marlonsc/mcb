@@ -248,6 +248,9 @@ mcb-server/
 ### Success Criteria
 
 - ✅ 5-layer architecture fully integrated
+
+> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
+
 - ✅ 70+ tests with 85%+ coverage
 - ✅ Time-travel queries working (get context at specific timestamp)
 - ✅ Freshness propagating through search results
