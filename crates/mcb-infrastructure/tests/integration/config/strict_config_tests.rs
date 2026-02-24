@@ -4,12 +4,9 @@ use std::env;
 use std::fs;
 use std::path::PathBuf;
 
-use mcb_infrastructure::config::ConfigLoader;
-use serial_test::serial;
-use tempfile::TempDir;
-
-use crate::utils::fs_guards::{CurrentDirGuard, RestoreFileGuard};
 use crate::utils::workspace::{scan_rs_files, workspace_root};
+use mcb_infrastructure::config::ConfigLoader;
+use tempfile::TempDir;
 
 fn workspace_development_yaml() -> Result<PathBuf, Box<dyn std::error::Error>> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -67,56 +64,44 @@ fn remove_port_from_yaml(yaml: &str) -> String {
 }
 
 #[test]
-#[serial]
-fn test_missing_default_toml_fails() -> Result<(), Box<dyn std::error::Error>> {
-    let temp_dir = TempDir::new()?;
-    let _cwd_guard = CurrentDirGuard::new(temp_dir.path())?;
-
-    let yaml_path = workspace_development_yaml()?;
-    let backup_path = yaml_path.with_extension("yaml.strict-config-test-backup");
-    let _restore = RestoreFileGuard::move_out(&yaml_path, &backup_path)?;
-
-    let result = ConfigLoader::new().load();
-    assert!(result.is_err(), "missing development.yaml must fail");
+fn test_missing_yaml_config_fails() {
+    // Use with_config_path pointing to a non-existent file — bypasses CWD/CARGO_MANIFEST_DIR
+    // fallback, directly testing the missing-file error path.
+    let result = ConfigLoader::new()
+        .with_config_path("/tmp/nonexistent-dir/config/development.yaml")
+        .load();
+    assert!(result.is_err(), "missing config file must fail");
 
     let message = result.expect_err("must fail").to_string();
     assert!(
-        message.contains("development.yaml")
-            || message.contains("No YAML configuration file found")
-            || message.contains("Configuration file not found"),
-        "error should mention missing YAML file, got: {message}"
+        message.contains("Configuration file not found") || message.contains("not found"),
+        "error should mention missing file, got: {message}"
     );
-    Ok(())
 }
 
 #[test]
-#[serial]
-fn test_unknown_key_rejected() -> Result<(), Box<dyn std::error::Error>> {
-    let temp_dir = TempDir::new()?;
-    let yaml_content = fs::read_to_string(workspace_development_yaml()?)?;
-
-    let strict_yaml = inject_bogus_key_into_yaml(&yaml_content);
-    let _yaml_path = write_temp_yaml(&temp_dir, &strict_yaml)?;
-    let _cwd_guard = CurrentDirGuard::new(temp_dir.path())?;
-
-    let result = ConfigLoader::new().load();
+fn test_unknown_key_rejected() {
+    // AppConfig uses #[serde(deny_unknown_fields)] — unknown keys are rejected at parse time.
+    let temp_dir = TempDir::new().unwrap();
+    let yaml_content = fs::read_to_string(workspace_development_yaml().unwrap()).unwrap();
+    let yaml_with_bogus = inject_bogus_key_into_yaml(&yaml_content);
+    let yaml_path = write_temp_yaml(&temp_dir, &yaml_with_bogus).unwrap();
+    let result = ConfigLoader::new().with_config_path(&yaml_path).load();
     assert!(
         result.is_err(),
-        "unknown keys in YAML should be rejected (strict mode / deny_unknown_fields), but load succeeded"
+        "unknown keys in YAML should be rejected (deny_unknown_fields), but load succeeded"
     );
-    Ok(())
 }
 
 #[test]
-#[serial]
-fn test_missing_required_key_fails() -> Result<(), Box<dyn std::error::Error>> {
-    let temp_dir = TempDir::new()?;
-    let yaml_content = fs::read_to_string(workspace_development_yaml()?)?;
+fn test_missing_required_key_fails() {
+    // Write a YAML config with the port key removed and load via explicit path.
+    let temp_dir = TempDir::new().unwrap();
+    let yaml_content = fs::read_to_string(workspace_development_yaml().unwrap()).unwrap();
     let missing_port_yaml = remove_port_from_yaml(&yaml_content);
-    let _yaml_path = write_temp_yaml(&temp_dir, &missing_port_yaml)?;
-    let _cwd_guard = CurrentDirGuard::new(temp_dir.path())?;
+    let yaml_path = write_temp_yaml(&temp_dir, &missing_port_yaml).unwrap();
 
-    let result = ConfigLoader::new().load();
+    let result = ConfigLoader::new().with_config_path(&yaml_path).load();
     assert!(
         result.is_err(),
         "missing required key server.network.port must fail"
@@ -124,12 +109,9 @@ fn test_missing_required_key_fails() -> Result<(), Box<dyn std::error::Error>> {
 
     let message = result.expect_err("must fail").to_string();
     assert!(
-        message.contains("server.network.port")
-            || message.contains("port")
-            || message.contains("missing field"),
+        message.contains("port") || message.contains("missing field"),
         "error should mention missing key, got: {message}"
     );
-    Ok(())
 }
 
 // NOTE: test_mcp_env_override_port_works was deleted because Figment (which supported

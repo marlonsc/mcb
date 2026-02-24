@@ -286,12 +286,7 @@ fn validate_app_config(config: &AppConfig) -> Result<()> {
 }
 
 fn validate_server_config(config: &AppConfig) -> Result<()> {
-    if config.server.network.port == 0 {
-        return Err(Error::ConfigInvalid {
-            key: "server.network.port".to_owned(),
-            message: "Server port cannot be 0".to_owned(),
-        });
-    }
+    // Port 0 is valid: OS assigns an ephemeral port (used in tests and stdio-only mode).
     if matches!(config.server.transport_mode, TransportMode::Http) {
         return Err(Error::ConfigInvalid {
             key: "server.transport_mode".to_owned(),

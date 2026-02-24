@@ -145,9 +145,11 @@ fn cast_as_year_month(db: &DbConn, col: impl sea_orm::sea_query::IntoColumnRef) 
         DatabaseBackend::Postgres => Func::cust(sea_orm::sea_query::Alias::new("TO_CHAR"))
             .arg(Expr::col(col.into_column_ref()))
             .arg("YYYY-mm"),
+        // i64 Unix timestamps require the 'unixepoch' modifier for SQLite STRFTIME.
         DatabaseBackend::Sqlite | _ => Func::cust(sea_orm::sea_query::Alias::new("STRFTIME"))
             .arg("%Y-%m")
-            .arg(Expr::col(col.into_column_ref())),
+            .arg(Expr::col(col.into_column_ref()))
+            .arg("unixepoch"),
     };
     Expr::expr(func)
 }
@@ -160,9 +162,11 @@ fn cast_as_day(db: &DbConn, col: impl sea_orm::sea_query::IntoColumnRef) -> Expr
         DatabaseBackend::Postgres => Func::cust(sea_orm::sea_query::Alias::new("TO_CHAR"))
             .arg(Expr::col(col.into_column_ref()))
             .arg("YYYY-mm-dd"),
+        // i64 Unix timestamps require the 'unixepoch' modifier for SQLite STRFTIME.
         DatabaseBackend::Sqlite | _ => Func::cust(sea_orm::sea_query::Alias::new("STRFTIME"))
             .arg("%Y-%m-%d")
-            .arg(Expr::col(col.into_column_ref())),
+            .arg(Expr::col(col.into_column_ref()))
+            .arg("unixepoch"),
     };
     Expr::expr(func)
 }
