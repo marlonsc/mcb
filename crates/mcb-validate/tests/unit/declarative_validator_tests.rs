@@ -20,13 +20,13 @@ rules_path = "rules"
 infrastructure_path = "crates/mcb-infrastructure/src"
 domain_path = "crates/mcb-domain/src"
 server_path = "crates/mcb-server/src"
-application_path = "crates/mcb-application/src"
+application_path = "crates/mcb-infrastructure/src"
 
 [rules.naming]
 domain_crate = "mcb-domain"
 infrastructure_crate = "mcb-infrastructure"
 server_crate = "mcb-server"
-application_crate = "mcb-application"
+application_crate = "mcb-infrastructure"
 "#;
     fs::write(&config_path, config_content).unwrap();
 

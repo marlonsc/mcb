@@ -26,7 +26,7 @@ define_violations! {
             id = "PORT001",
             severity = Warning,
             message = "Adapter {adapter_name} missing port impl at {file}:{line}",
-            suggestion = "Implement a port trait from mcb-application/ports/"
+            suggestion = "Implement a port trait from mcb-domain/ports/"
         )]
         AdapterMissingPortImpl {
             adapter_name: String,

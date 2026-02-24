@@ -2,13 +2,13 @@
 //!
 //! Run with: cargo bench -p mcb-validate
 
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use mcb_validate::ValidationConfig;
 use mcb_validate::ast::UnwrapDetector;
 use mcb_validate::clean_architecture::CleanArchitectureValidator;
-use mcb_validate::duplication::{tokenize_source, DuplicationAnalyzer, DuplicationThresholds};
+use mcb_validate::duplication::{DuplicationAnalyzer, DuplicationThresholds, tokenize_source};
 use mcb_validate::generic_reporter::GenericReporter;
 use mcb_validate::violation_trait::Violation;
-use mcb_validate::ValidationConfig;
 use std::fs;
 use std::hint::black_box;
 use std::path::PathBuf;
@@ -129,14 +129,13 @@ fn create_test_workspace() -> (TempDir, PathBuf) {
     // Create workspace structure
     fs::create_dir_all(root.join("crates/mcb-domain/src/entities")).unwrap();
     fs::create_dir_all(root.join("crates/mcb-domain/src/value_objects")).unwrap();
-    fs::create_dir_all(root.join("crates/mcb-application/src/services")).unwrap();
     fs::create_dir_all(root.join("crates/mcb-providers/src")).unwrap();
     fs::create_dir_all(root.join("crates/mcb-server/src/handlers")).unwrap();
 
     // Create Cargo.toml
     let cargo_toml = r#"
 [workspace]
-members = ["crates/mcb-domain", "crates/mcb-application", "crates/mcb-providers", "crates/mcb-server"]
+members = ["crates/mcb-domain", "crates/mcb-providers", "crates/mcb-server"]
 "#;
     fs::write(root.join("Cargo.toml"), cargo_toml).unwrap();
 

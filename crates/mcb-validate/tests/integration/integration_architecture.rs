@@ -34,7 +34,7 @@ mod architecture_integration_tests {
     fn mcb_naming_config() -> NamingRulesConfig {
         NamingRulesConfig {
             domain_crate: "mcb-domain".to_owned(),
-            application_crate: "mcb-application".to_owned(),
+            application_crate: "mcb-infrastructure".to_owned(),
             providers_crate: "mcb-providers".to_owned(),
             infrastructure_crate: "mcb-infrastructure".to_owned(),
             server_crate: "mcb-server".to_owned(),
@@ -48,12 +48,7 @@ mod architecture_integration_tests {
         let root = dir.path().to_path_buf();
 
         // Create crate directories
-        let crates = [
-            "mcb-domain",
-            "mcb-application",
-            "mcb-providers",
-            "mcb-server",
-        ];
+        let crates = ["mcb-domain", "mcb-providers", "mcb-server"];
         for crate_name in &crates {
             let crate_dir = root.join("crates").join(crate_name).join("src");
             fs::create_dir_all(&crate_dir).unwrap();
@@ -154,7 +149,7 @@ impl Email {
 
         // Create handler that creates service directly (violation)
         let handler_code = r#"
-use mcb_application::services::SearchService;
+use mcb_infrastructure::di::modules::use_cases::SearchService;
 
 pub struct SearchHandler;
 

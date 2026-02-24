@@ -30,7 +30,6 @@ mod full_integration_tests {
         let dirs = [
             "crates/mcb-domain/src/entities",
             "crates/mcb-domain/src/value_objects",
-            "crates/mcb-application/src/services",
             "crates/mcb-providers/src/embedding",
             "crates/mcb-infrastructure/src",
             "crates/mcb-server/src/handlers",
@@ -45,7 +44,6 @@ mod full_integration_tests {
 [workspace]
 members = [
     "crates/mcb-domain",
-    "crates/mcb-application",
     "crates/mcb-providers",
     "crates/mcb-infrastructure",
     "crates/mcb-server",
