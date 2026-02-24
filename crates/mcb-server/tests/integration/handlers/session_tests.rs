@@ -222,3 +222,27 @@ async fn test_session_update_conflicting_project_id_rejected() {
     let err = update_result.expect_err("conflicting project_id must return invalid_params");
     assert!(err.message.contains("conflicting project_id"));
 }
+
+#[tokio::test]
+async fn test_session_create_missing_data_returns_invalid_params() {
+    let Some((handler, _services_temp_dir)) = create_handler().await else {
+        return;
+    };
+
+    let args = SessionArgs {
+        action: SessionAction::Create,
+        org_id: None,
+        session_id: None,
+        project_id: None,
+        data: None,
+        worktree_id: None,
+        parent_session_id: None,
+        agent_type: Some("explore".to_owned()),
+        status: None,
+        limit: None,
+    };
+
+    let result = handler.handle(Parameters(args)).await;
+    let err = result.expect_err("missing data must return invalid_params error");
+    assert!(err.message.contains("missing required field: data"));
+}

@@ -47,9 +47,12 @@ pub async fn store_session(
     if args.data.is_none() {
         return Ok(tool_error("Missing data payload for session summary"));
     }
-    let payload =
-        serde_json::from_value::<SessionSummaryPayload>(args.data.clone().unwrap_or_default())
-            .map_err(|_| McpError::invalid_params("invalid data", None))?;
+    let payload = serde_json::from_value::<SessionSummaryPayload>(
+        args.data
+            .clone()
+            .ok_or_else(|| McpError::invalid_params("missing required field: data", None))?,
+    )
+    .map_err(|_| McpError::invalid_params("invalid data", None))?;
     let session_id = args
         .session_id
         .or_else(|| payload.session_id.as_deref().map(SessionId::from));
