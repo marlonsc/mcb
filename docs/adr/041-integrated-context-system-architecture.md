@@ -23,7 +23,7 @@ implementation_status: Incomplete
 
 ## Context
 
-MCB v0.2.0 implements semantic code search with git awareness and persistent memory. v0.3.0 adds workflow orchestration (ADR-034-037: FSM, context discovery, policies, compensation). v0.4.0 must unify these into an**integrated context system** that combines:
+MCB v0.2.0 implements semantic code search with git awareness and persistent memory. v0.3.0 rebuilds the platform on SeaQL + Loco.rs (ADR-049-052). v0.4.0 adds workflow orchestration (ADR-034-037: FSM, context discovery, policies, compensation). v0.5.0 must unify these into an**integrated context system** that combines:
 
 - VCS data (git history, branches, commits)
 - Code indexing (AST chunks, relationships)

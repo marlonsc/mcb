@@ -6,7 +6,7 @@
 //!
 //! **Documentation**: [`docs/modules/application.md`](../../../docs/modules/application.md) |
 //! **Architecture**: [`ADR-013`](../../../docs/adr/013-clean-architecture-crate-separation.md),
-//! [`ADR-029`](../../../docs/adr/029-hexagonal-architecture-dill.md)
+//! [`ADR-029`](../../../docs/adr/archive/superseded-029-hexagonal-architecture-dill.md)
 //!
 //! ## Architecture
 //!

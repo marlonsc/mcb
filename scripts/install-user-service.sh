@@ -43,16 +43,16 @@ cp "$BINARY_SOURCE" ~/.local/bin/mcb
 chmod 755 ~/.local/bin/mcb
 
 # Copy config if it doesn't exist
-CONFIG_DEST="$HOME/.config/mcb/config.toml"
+CONFIG_DEST="$HOME/.config/mcb/config.yaml"
 if [ ! -f "$CONFIG_DEST" ]; then
-	if [ -f "$PROJECT_ROOT/config.example.toml" ]; then
+	if [ -f "$PROJECT_ROOT/config.example.yaml" ]; then
 		echo "Creating default configuration..."
-		cp "$PROJECT_ROOT/config.example.toml" "$CONFIG_DEST"
-	elif [ -f "$PROJECT_ROOT/config/default.toml" ]; then
+		cp "$PROJECT_ROOT/config.example.yaml" "$CONFIG_DEST"
+	elif [ -f "$PROJECT_ROOT/config/development.yaml" ]; then
 		echo "Creating configuration from canonical defaults..."
-		cp "$PROJECT_ROOT/config/default.toml" "$CONFIG_DEST"
+		cp "$PROJECT_ROOT/config/development.yaml" "$CONFIG_DEST"
 	else
-		echo -e "${RED}No default configuration found at $PROJECT_ROOT/config/default.toml${NC}"
+		echo -e "${RED}No default configuration found at $PROJECT_ROOT/config/development.yaml${NC}"
 		exit 1
 	fi
 	echo -e "${GREEN}Created config at $CONFIG_DEST${NC}"
@@ -82,7 +82,7 @@ echo -e "${GREEN}============================================${NC}"
 echo ""
 echo "Service locations:"
 echo "  Binary:  ~/.local/bin/mcb"
-echo "  Config:  ~/.config/mcb/config.toml"
+echo "  Config:  ~/.config/mcb/config.yaml"
 echo "  Data:    ~/.local/share/mcb/"
 echo "  Service: ~/.config/systemd/user/mcb.service"
 echo ""

@@ -129,7 +129,7 @@ and [ADR index](./docs/adr/) for all 52 Architecture Decision Records.
 ### Architecture & Design
 
 - [Architecture Overview](./docs/architecture/ARCHITECTURE.md) — Clean Architecture layers, crate map, dependency flow
- [Architecture Decision Records](./docs/adr/) — 52 ADRs documenting every major design choice
+- [Architecture Decision Records](./docs/adr/) — 52 ADRs documenting every major design choice
 - [MCP Tools Schema](./docs/MCP_TOOLS.md) — Full tool API documentation
 
 ### Developer Guide

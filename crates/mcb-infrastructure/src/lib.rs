@@ -6,7 +6,7 @@
 //! All adapters/providers are in mcb-providers crate, accessed via linkme registry.
 //!
 //! **Documentation**: [`docs/modules/infrastructure.md`](../../../docs/modules/infrastructure.md) |
-//! **DI Architecture**: [`ADR-029`](../../../docs/adr/029-hexagonal-architecture-dill.md),
+//! **DI Architecture**: [`ADR-029`](../../../docs/adr/archive/superseded-029-hexagonal-architecture-dill.md),
 //! [`ADR-023`](../../../docs/adr/023-inventory-to-linkme-migration.md)
 //!
 //! ## Module Categories
@@ -24,7 +24,7 @@
 //! ### Configuration & DI
 //! | Module | Description |
 //! | -------- | ------------- |
-//! | [`config`] | TOML configuration with hot-reload |
+//! | [`config`] | YAML configuration with hot-reload |
 //! | [`di`] | Handle-based dependency injection |
 //! | [`constants`] | Centralized configuration constants |
 //!

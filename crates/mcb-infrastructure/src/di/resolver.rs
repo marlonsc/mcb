@@ -125,7 +125,7 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
             extra: Default::default(),
         }
     } else {
-        // Fallback to named config (TOML)
+        // Fallback to named config (YAML settings)
         config
             .providers
             .embedding
@@ -159,7 +159,7 @@ pub fn resolve_providers(config: &AppConfig) -> Result<ResolvedProviders> {
             extra: Default::default(),
         }
     } else {
-        // Fallback to named config (TOML)
+        // Fallback to named config (YAML settings)
         config
             .providers
             .vector_store
