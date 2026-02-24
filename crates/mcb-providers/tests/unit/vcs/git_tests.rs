@@ -203,3 +203,35 @@ async fn diff_refs() -> TestResult<()> {
     );
     Ok(())
 }
+
+
+#[tokio::test]
+async fn list_branches_skips_invalid_entries() -> TestResult<()> {
+    let dir = create_test_repo().await?;
+    let provider = GitProvider::new();
+    let repo = provider.open_repository(dir.path()).await?;
+
+    // Create a valid branch
+    run_git(dir.path(), &["checkout", "-b", "feature/test"])?;
+    tokio_write(dir.path().join("feature.txt"), "Feature content\n").await?;
+    run_git(dir.path(), &["add", "."])?;
+    run_git(dir.path(), &["commit", "-m", "Feature commit"])?;
+
+    // List branches - should include both main and feature/test
+    let branches = provider.list_branches(&repo).await?;
+    assert!(!branches.is_empty(), "Should have at least one branch");
+    
+    // Verify all branches have non-empty names and head commits
+    for branch in &branches {
+        assert!(!branch.name().is_empty(), "Branch name should not be empty");
+        assert!(!branch.head_commit().is_empty(), "Head commit should not be empty");
+    }
+    
+    // Verify we have the feature branch
+    assert!(
+        branches.iter().any(|b| b.name() == "feature/test"),
+        "Should have feature/test branch"
+    );
+    
+    Ok(())
+}

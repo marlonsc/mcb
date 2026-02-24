@@ -133,18 +133,28 @@ impl VcsProvider for GitProvider {
             let (branch, _) =
                 branch_result.map_err(|e| Error::vcs_with_source("Failed to read branch", e))?;
 
-            let name = branch
-                .name()
-                .ok()
-                .flatten()
-                .map(String::from)
-                .unwrap_or_default();
+            let name = match branch.name() {
+                Ok(Some(n)) => n.to_owned(),
+                _ => {
+                    tracing::warn!(
+                        branch_id = ?branch.name(),
+                        "skipping branch with invalid name"
+                    );
+                    continue;
+                }
+            };
 
-            let head_commit = branch
-                .get()
-                .peel_to_commit()
-                .map(|c| c.id().to_string())
-                .unwrap_or_default();
+            let head_commit = match branch.get().peel_to_commit() {
+                Ok(c) => c.id().to_string(),
+                Err(e) => {
+                    tracing::warn!(
+                        error = %e,
+                        branch_name = %name,
+                        "skipping branch with invalid head commit"
+                    );
+                    continue;
+                }
+            };
 
             let is_default = name == repo.default_branch();
 
