@@ -30,7 +30,7 @@ impl ServeArgs {
             }
         }
         let environment = Environment::from(loco_rs::environment::resolve_from_env());
-        let loco_config = environment.load()?;
+        let loco_config = McbApp::load_config(&environment).await?;
         let boot_result =
             McbApp::boot(StartMode::ServerOnly, &environment, loco_config.clone()).await?;
         if self.stdio {

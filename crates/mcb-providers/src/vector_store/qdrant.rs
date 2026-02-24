@@ -138,7 +138,8 @@ impl VectorStoreAdmin for QdrantVectorStoreProvider {
 
         match response {
             Ok(_) => Ok(true),
-            Err(_) => Ok(false),
+            Err(e) if e.to_string().contains("(404)") => Ok(false),
+            Err(e) => Err(e),
         }
     }
 

@@ -287,6 +287,7 @@ impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
     }
 
     async fn flush(&self, _collection: &CollectionId) -> Result<()> {
+        // EdgeVec uses synchronous in-memory writes — flush is a no-op
         Ok(())
     }
 

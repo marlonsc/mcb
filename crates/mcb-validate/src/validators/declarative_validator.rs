@@ -370,22 +370,6 @@ impl DeclarativeValidator {
         })
     }
 
-    fn validate_ast_rules(rules: &[ValidatedRule]) -> Vec<Box<dyn Violation>> {
-        let ast_rules: Vec<&ValidatedRule> = rules
-            .iter()
-            .filter(|r| r.enabled && (r.ast_query.is_some() || !r.selectors.is_empty()))
-            .collect();
-
-        if !ast_rules.is_empty() {
-            mcb_domain::warn!(
-                "validate",
-                "DeclarativeValidator: AST rules skipped (not yet implemented)",
-                &format!("count = {}", ast_rules.len())
-            );
-        }
-
-        Vec::new()
-    }
 }
 
 impl Validator for DeclarativeValidator {
@@ -410,7 +394,6 @@ impl Validator for DeclarativeValidator {
         violations.extend(Self::validate_lint_select_rules(&rules, &files));
         violations.extend(self.validate_regex_rules(&rules, &files));
         violations.extend(validate_path_rules(&self.workspace_root, &rules, &files));
-        violations.extend(Self::validate_ast_rules(&rules));
         Ok(violations)
     }
 }

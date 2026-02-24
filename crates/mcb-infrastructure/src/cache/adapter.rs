@@ -96,17 +96,17 @@ impl CacheProvider for CacheAdapter {
     }
 
     async fn stats(&self) -> Result<CacheStats> {
-        Ok(CacheStats {
-            hits: 0,
-            misses: 0,
-            entries: 0,
-            hit_rate: 0.0,
-            bytes_used: 0,
+        Err(mcb_domain::error::Error::Infrastructure {
+            message: "Cache statistics not available: underlying provider does not expose metrics".to_owned(),
+            source: None,
         })
     }
 
     async fn size(&self) -> Result<usize> {
-        Ok(0)
+        Err(mcb_domain::error::Error::Infrastructure {
+            message: "Cache size not available: underlying provider does not expose metrics".to_owned(),
+            source: None,
+        })
     }
 
     fn provider_name(&self) -> &str {

@@ -53,7 +53,7 @@ pub async fn authorize_admin_api_key(
 
     for user in users_with_keys {
         if let Some(hash) = user.api_key_hash.as_deref()
-            && verify_api_key(hash, &api_key)
+            && verify_api_key(hash, &api_key)?
         {
             return Ok(AdminPrincipal {
                 user_id: user.id,
@@ -105,18 +105,22 @@ fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String> {
     )))
 }
 
-fn verify_api_key(hash: &str, candidate: &str) -> bool {
+fn verify_api_key(hash: &str, candidate: &str) -> Result<bool> {
     if let Ok(parsed) = PasswordHash::new(hash) {
-        return Argon2::default()
+        return Ok(Argon2::default()
             .verify_password(candidate.as_bytes(), &parsed)
-            .is_ok();
+            .is_ok());
     }
 
     if hash.starts_with("$2a$") || hash.starts_with("$2b$") || hash.starts_with("$2y$") {
-        return bcrypt::verify(candidate, hash).unwrap_or(false);
+        return bcrypt::verify(candidate, hash)
+            .map_err(|e| {
+                tracing::error!("bcrypt verification failed: {e}");
+                Error::InternalServerError
+            });
     }
 
-    false
+    Ok(false)
 }
 
 #[cfg(test)]

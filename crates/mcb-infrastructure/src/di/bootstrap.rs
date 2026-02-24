@@ -273,7 +273,7 @@ pub async fn init_app_with_overrides(
 
     let cache_provider: Arc<dyn CacheProvider> = Arc::new(TestCache::new());
 
-    let language_chunker = LanguageProviderResolver::new(Arc::clone(&config))
+    let language_chunker = LanguageProviderResolver::new()
         .resolve_from_config()
         .map_err(|e| mcb_domain::error::Error::configuration(format!("Language: {e}")))?;
 

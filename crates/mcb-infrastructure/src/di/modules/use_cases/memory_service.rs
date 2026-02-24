@@ -188,9 +188,9 @@ impl MemoryServiceImpl {
             Err(e) => {
                 mcb_domain::warn!(
                     "memory",
-                    "Vector search failed — falling back to FTS-only results"
+                    "Vector search failed — falling back to FTS-only results",
+                    &format!("{e}")
                 );
-                let _ = e;
                 Vec::new()
             }
         };

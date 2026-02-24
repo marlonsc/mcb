@@ -4,7 +4,7 @@
 //! All MCP services are fully wired in `after_routes()` using Loco's database
 //! connection and MCB's provider resolvers.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -63,6 +63,36 @@ impl Hooks for McbApp {
         config: LocoConfig,
     ) -> Result<BootResult> {
         create_app::<Self, Migrator>(mode, environment, config).await
+    }
+
+    /// MCB config resolution (overrides Loco default).
+    ///
+    /// Resolution order:
+    /// 1. `MCB_CONFIG_FOLDER` env var (explicit override)
+    /// 2. `config/` in CWD (standard Loco dev layout)
+    /// 3. `~/.config/mcb/config/` (installed binary)
+    async fn load_config(env: &Environment) -> loco_rs::Result<LocoConfig> {
+        // 1. Explicit MCB_CONFIG_FOLDER
+        if let Ok(folder) = std::env::var("MCB_CONFIG_FOLDER") {
+            return env.load_from_folder(Path::new(&folder));
+        }
+
+        // 2. Local config/ (standard Loco dev layout)
+        let env_name = loco_rs::environment::resolve_from_env();
+        let local_candidates = [
+            PathBuf::from("config").join(format!("{env_name}.local.yaml")),
+            PathBuf::from("config").join(format!("{env_name}.yaml")),
+        ];
+        if local_candidates.iter().any(|p| p.exists()) {
+            return env.load_from_folder(Path::new("config"));
+        }
+
+        // 3. Installed config: ~/.config/mcb/config/
+        let installed = dirs::config_dir()
+            .ok_or_else(|| loco_rs::Error::string("Cannot determine config directory"))?
+            .join("mcb")
+            .join("config");
+        env.load_from_folder(&installed)
     }
 
     fn routes(_ctx: &LocoAppContext) -> AppRoutes {
@@ -159,7 +189,7 @@ pub async fn create_mcp_server(
     let cache_provider: Arc<dyn mcb_domain::ports::CacheProvider> = Arc::new(CacheAdapter::new(
         std::sync::Arc::<loco_rs::cache::Cache>::clone(&ctx.cache),
     ));
-    let language_chunker = LanguageProviderResolver::new(Arc::clone(&config))
+    let language_chunker = LanguageProviderResolver::new()
         .resolve_from_config()
         .map_err(|e| format!("Language provider: {e}"))?;
 

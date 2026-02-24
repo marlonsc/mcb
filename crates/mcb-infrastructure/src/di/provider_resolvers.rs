@@ -232,11 +232,15 @@ impl_resolver_common!(VectorStoreProviderResolver);
 ///
 /// Uses the linkme registry to resolve language providers by name.
 /// Can resolve from current config or from an override config.
-pub struct LanguageProviderResolver {
-    config: Arc<AppConfig>,
-}
+pub struct LanguageProviderResolver;
 
 impl LanguageProviderResolver {
+    #[must_use]
+    /// Creates a new language provider resolver.
+    pub fn new() -> Self {
+        Self
+    }
+
     /// Resolve provider from current application config
     ///
     /// # Errors
@@ -245,8 +249,6 @@ impl LanguageProviderResolver {
     pub fn resolve_from_config(
         &self,
     ) -> mcb_domain::error::Result<Arc<dyn LanguageChunkingProvider>> {
-        // Use config so the field is not dead; language provider is "universal" for now
-        let _ = self.config.as_ref();
         let registry_config = LanguageProviderConfig::new("universal");
         resolve_language_provider(&registry_config)
     }
@@ -269,7 +271,17 @@ impl LanguageProviderResolver {
         mcb_domain::registry::language::list_language_providers()
     }
 }
-impl_resolver_common!(LanguageProviderResolver);
+impl Default for LanguageProviderResolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl std::fmt::Debug for LanguageProviderResolver {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LanguageProviderResolver").finish()
+    }
+}
 
 // ============================================================================
 // Helper Functions
