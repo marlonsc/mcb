@@ -12,9 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use mcb_providers::constants::EVENTS_TOKIO_DEFAULT_CAPACITY;
 
-use crate::constants::events::{
-    DEFAULT_NATS_CLIENT_NAME, EVENT_BUS_CONNECTION_TIMEOUT_MS, EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
-};
+use crate::constants::events::{EVENT_BUS_CONNECTION_TIMEOUT_MS, EVENT_BUS_MAX_RECONNECT_ATTEMPTS};
 
 // ============================================================================
 // Authentication Configuration
@@ -93,8 +91,6 @@ pub enum EventBusProvider {
     /// In-process broadcast channel (Tokio)
     #[default]
     Tokio,
-    /// Distributed message queue (NATS)
-    Nats,
 }
 
 /// `EventBus` configuration
@@ -105,10 +101,6 @@ pub struct EventBusConfig {
     pub provider: EventBusProvider,
     /// Buffer capacity for in-process event bus
     pub capacity: usize,
-    /// NATS server URL (for NATS provider)
-    pub nats_url: Option<String>,
-    /// NATS client name (for NATS provider)
-    pub nats_client_name: Option<String>,
     /// Connection timeout in milliseconds
     pub connection_timeout_ms: u64,
     /// Reconnection attempts for distributed providers
@@ -122,8 +114,6 @@ impl EventBusConfig {
         Self {
             provider: EventBusProvider::Tokio,
             capacity: EVENTS_TOKIO_DEFAULT_CAPACITY,
-            nats_url: None,
-            nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_owned()),
             connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
             max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
         }
@@ -135,20 +125,6 @@ impl EventBusConfig {
         Self {
             provider: EventBusProvider::Tokio,
             capacity,
-            nats_url: None,
-            nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_owned()),
-            connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
-            max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
-        }
-    }
-
-    /// Creates NATS-backed event bus configuration for the provided URL.
-    pub fn nats(url: impl Into<String>) -> Self {
-        Self {
-            provider: EventBusProvider::Nats,
-            capacity: EVENTS_TOKIO_DEFAULT_CAPACITY,
-            nats_url: Some(url.into()),
-            nats_client_name: Some(DEFAULT_NATS_CLIENT_NAME.to_owned()),
             connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
             max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
         }

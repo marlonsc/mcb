@@ -12,7 +12,7 @@ pub mod cache;
 pub mod database;
 /// Embedding constants (`OpenAI`, `VoyageAI`, etc.)
 pub mod embedding;
-/// Event bus constants (`NATS`, `Tokio`)
+/// Event bus constants (`Tokio`)
 pub mod events;
 /// HTTP client constants
 pub mod http;

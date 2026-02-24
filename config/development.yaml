@@ -142,8 +142,6 @@ settings:
       event_bus:
         provider: tokio
         capacity: 1024
-        nats_url: ""
-        nats_client_name: mcb
         connection_timeout_ms: 5000
         max_reconnect_attempts: 5
       metrics:
