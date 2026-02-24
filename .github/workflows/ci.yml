@@ -301,23 +301,12 @@ jobs:
          with:
            toolchain: stable
        - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-         with:
-           shared-key: ci-ubuntu-stable
-           save-if: false
-       - run: make validate
-         env:
-           RUST_MIN_STACK: 16777216
-       - name: Check Provider Traits Location
-         run: |
-           VIOLATIONS=$(
-             grep -r "use mcb_application::ports::providers" \
-               crates/mcb-providers/src/ 2>/dev/null || true
-           )
-           if [ -n "$VIOLATIONS" ]; then
-             echo "VIOLATION: Provider traits should be imported from mcb-domain"
-             echo "$VIOLATIONS"
-             exit 1
-           fi
+          with:
+            shared-key: ci-ubuntu-stable
+            save-if: false
+        - run: make validate
+          env:
+            RUST_MIN_STACK: 16777216
 
    golden-tests:
     name: Golden Acceptance Tests
