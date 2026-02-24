@@ -4,7 +4,6 @@
 
 mod analysis;
 mod database;
-mod events;
 mod hybrid_search;
 mod project_detection;
 mod vcs;

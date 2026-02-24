@@ -32,13 +32,13 @@ use mcb_infrastructure::di::modules::domain_services::{
 use mcb_infrastructure::di::provider_resolvers::{
     EmbeddingProviderResolver, LanguageProviderResolver, VectorStoreProviderResolver,
 };
+use mcb_infrastructure::events::LocoEventBusProvider;
 use mcb_infrastructure::infrastructure::admin::DefaultIndexingOperations;
 use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::{
     SeaOrmAgentRepository, SeaOrmEntityRepository, SeaOrmIndexRepository,
     SeaOrmObservationRepository, SeaOrmProjectRepository,
 };
-use mcb_providers::events::TokioEventBusProvider;
 
 use crate::McpServer;
 use crate::mcp_server::{McpEntityRepositories, McpServices};
@@ -169,7 +169,7 @@ pub async fn create_mcp_server(
         .map_err(|e| format!("Language provider: {e}"))?;
 
     // ── Infrastructure services ─────────────────────────────────────────
-    let event_bus: Arc<dyn EventBusProvider> = Arc::new(TokioEventBusProvider::new());
+    let event_bus: Arc<dyn EventBusProvider> = Arc::new(LocoEventBusProvider::new());
     let indexing_ops: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());
 

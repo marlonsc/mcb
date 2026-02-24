@@ -14,6 +14,14 @@ server:
   port: 3000
   binding: 0.0.0.0
   host: http://localhost:3000
+  middlewares:
+    static:
+      enable: true
+      must_exist: false
+      folder:
+        uri: /admin
+        path: assets/admin
+      fallback: assets/admin/index.html
 
 database:
   uri: sqlite://mcb.db?mode=rwc

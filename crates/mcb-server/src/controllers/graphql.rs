@@ -5,28 +5,30 @@ use async_graphql::{
     http::{GraphQLPlaygroundConfig, playground_source},
 };
 use async_graphql_axum::GraphQLRequest;
+use axum::http::HeaderMap;
 use loco_rs::prelude::*;
 use seaography::async_graphql;
 
 async fn graphql_playground() -> Result<Response> {
-    let config =
-        GraphQLPlaygroundConfig::new("/api/graphql").with_header("Authorization", "AUTO_TOKEN");
+    let config = GraphQLPlaygroundConfig::new("/api/graphql").with_header("X-API-Key", "AUTO_KEY");
 
     let res = playground_source(config).replace(
-        r#""Authorization":"AUTO_TOKEN""#,
-        r#""Authorization":`Bearer ${localStorage.getItem('auth_token')}`"#,
+        r#""X-API-Key":"AUTO_KEY""#,
+        r#""X-API-Key":`${localStorage.getItem('api_key') || ''}`"#,
     );
 
     Ok(Response::new(res.into()))
 }
 
 async fn graphql_handler(
-    auth: auth::JWT,
     State(ctx): State<AppContext>,
+    headers: HeaderMap,
     gql_req: GraphQLRequest,
 ) -> std::result::Result<async_graphql_axum::GraphQLResponse, (axum::http::StatusCode, &'static str)>
 {
-    let _user_email = auth.claims.pid;
+    crate::auth::authorize_admin_api_key(&ctx, &headers)
+        .await
+        .map_err(|_| (axum::http::StatusCode::UNAUTHORIZED, "Unauthorized"))?;
 
     let mut gql_req = gql_req.into_inner();
     gql_req = gql_req.data(seaography::UserContext { user_id: 0 });

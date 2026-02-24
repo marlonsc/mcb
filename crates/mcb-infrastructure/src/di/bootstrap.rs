@@ -27,13 +27,13 @@ use crate::crypto::CryptoService;
 use crate::di::provider_resolvers::{
     EmbeddingProviderResolver, LanguageProviderResolver, VectorStoreProviderResolver,
 };
+use crate::events::LocoEventBusProvider;
 use crate::infrastructure::admin::DefaultIndexingOperations;
 use crate::project::ProjectService;
 use mcb_providers::database::seaorm::repos::{
     SeaOrmAgentRepository, SeaOrmEntityRepository, SeaOrmIndexRepository,
     SeaOrmObservationRepository, SeaOrmProjectRepository,
 };
-use mcb_providers::events::TokioEventBusProvider;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 
 /// Application context with resolved providers and infrastructure services.
@@ -282,7 +282,7 @@ pub async fn init_app_with_overrides(
 
     // ── Infrastructure services ─────────────────────────────────────────
 
-    let event_bus: Arc<dyn EventBusProvider> = Arc::new(TokioEventBusProvider::new());
+    let event_bus: Arc<dyn EventBusProvider> = Arc::new(LocoEventBusProvider::new());
     let indexing_ops: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());
 

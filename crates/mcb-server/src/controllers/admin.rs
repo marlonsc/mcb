@@ -3,6 +3,7 @@
 //! Serves sea-orm-pro TOML configs as JSON for the admin frontend,
 //! plus MCB-specific dashboard queries (observation counts, session stats).
 
+use axum::http::HeaderMap;
 use loco_rs::prelude::*;
 use sea_orm::{
     DatabaseBackend, DbConn, DeriveColumn, EnumIter, FromQueryResult, QueryOrder, QuerySelect,
@@ -24,7 +25,8 @@ const CONFIG_ROOT: &str = "config/pro_admin";
 /// # Errors
 ///
 /// Returns an error if the config files under `config/pro_admin/` cannot be parsed.
-pub async fn config(_state: State<AppContext>) -> Result<Response> {
+pub async fn config(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
+    crate::auth::authorize_admin_api_key(&ctx, &headers).await?;
     let config = ConfigParser::new()
         .load_config(CONFIG_ROOT)
         .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
@@ -69,10 +71,11 @@ pub enum DatumColumn {
 ///
 /// Returns an error if the database query fails or the graph name is unknown.
 pub async fn dashboard(
-    _auth: auth::JWT,
     State(ctx): State<AppContext>,
+    headers: HeaderMap,
     Json(body): Json<DashboardBody>,
 ) -> Result<Response> {
+    crate::auth::authorize_admin_api_key(&ctx, &headers).await?;
     let db = &ctx.db;
     let data = match body.graph.as_str() {
         "observations_by_month" => {

@@ -15,7 +15,6 @@
 //! | Embedding | `EmbeddingProvider` | `OpenAI`, Ollama, `VoyageAI`, Gemini, `FastEmbed` |
 //! | Vector Store | `VectorStoreProvider` | `EdgeVec`, Encrypted, Milvus, Pinecone, Qdrant |
 //! | Cache | `CacheProvider` | delegated to Loco cache |
-//! | Events | `EventPublisher` | Tokio, Nats |
 //! | Hybrid Search | `HybridSearchProvider` | `HybridSearchEngine` |
 //! | Language | `LanguageChunkingProvider` | Rust, Python, Go, Java, etc. |
 //!
@@ -64,11 +63,6 @@ pub mod vector_store;
 
 /// Native PMAT-style analysis provider implementations.
 pub mod analysis;
-
-/// Event publisher implementations (simple EventPublisher trait)
-///
-/// Implements `EventPublisher` trait for event bus backends.
-pub mod events;
 
 /// Language chunking provider implementations
 ///
