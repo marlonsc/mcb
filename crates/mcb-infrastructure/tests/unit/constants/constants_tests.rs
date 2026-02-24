@@ -155,7 +155,7 @@ fn test_server_ports_distinct() {
 }
 
 #[rstest]
-#[case(REQUEST_TIMEOUT_SECS, 10)]
+#[case(HTTP_REQUEST_TIMEOUT_SECS, 10)]
 #[case(CONNECTION_TIMEOUT_SECS, 5)]
 fn test_server_timeouts(#[case] value: u64, #[case] min: u64) {
     assert!(value >= min);
@@ -163,7 +163,7 @@ fn test_server_timeouts(#[case] value: u64, #[case] min: u64) {
 
 #[rstest]
 fn test_server_timeout_relationship() {
-    assert!(REQUEST_TIMEOUT_SECS >= CONNECTION_TIMEOUT_SECS);
+    assert!(HTTP_REQUEST_TIMEOUT_SECS >= CONNECTION_TIMEOUT_SECS);
 }
 
 // ============================================================================

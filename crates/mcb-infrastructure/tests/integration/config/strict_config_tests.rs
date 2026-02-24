@@ -141,7 +141,6 @@ fn test_no_direct_env_var_in_production_code() -> Result<(), Box<dyn std::error:
     for crate_dir in &[
         "mcb-server/src",
         "mcb-providers/src",
-        "mcb-application/src",
         "mcb-infrastructure/src/di",
     ] {
         let dir = root.join("crates").join(crate_dir);
@@ -194,7 +193,7 @@ fn test_no_impl_default_in_config_types() -> Result<(), Box<dyn std::error::Erro
         "TransportMode",
         "OperatingMode",
         "PasswordAlgorithm",
-        "EventBusProvider",
+        "EventBusBackend",
         "ServerSslConfig",
     ];
 
@@ -323,7 +322,6 @@ fn test_no_lang_constants_outside_domain() -> Result<(), Box<dyn std::error::Err
     let scan_dirs = &[
         "mcb-server/src",
         "mcb-providers/src",
-        "mcb-application/src",
         "mcb-infrastructure/src",
     ];
 
@@ -378,7 +376,6 @@ fn test_no_bm25_constants_outside_domain() -> Result<(), Box<dyn std::error::Err
     let scan_dirs = &[
         "mcb-server/src",
         "mcb-providers/src",
-        "mcb-application/src",
         "mcb-infrastructure/src",
     ];
 

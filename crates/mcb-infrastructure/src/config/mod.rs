@@ -19,7 +19,7 @@ pub use types::{
 };
 
 pub use loader::ConfigLoader;
-pub use mcp_context_config::{ConfigError, GitConfig, McpContextConfig};
+pub use mcp_context_config::{GitConfig, McpContextConfig};
 pub use paths::{
     COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, VCS_LOCK_FILENAME,
     VCS_REGISTRY_FILENAME, config_dir,

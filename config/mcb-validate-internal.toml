@@ -14,13 +14,12 @@ enabled = true
 
 [rules.architecture.layer_boundaries]
 application_internal_deps = ["mcb-domain"]
-providers_internal_deps = ["mcb-domain", "mcb-application"]
+providers_internal_deps = ["mcb-domain"]
 infrastructure_internal_deps = [
     "mcb-domain",
-    "mcb-application",
     "mcb-providers",
 ]
-server_internal_deps = ["mcb-domain", "mcb-application", "mcb-infrastructure"]
+server_internal_deps = ["mcb-domain", "mcb-infrastructure"]
 
 [rules.naming]
 enabled = true
@@ -35,7 +34,7 @@ module_pattern = "^[a-z][a-z0-9_]*$"
 server_crate = "mcb-server"
 domain_crate = "mcb-domain"
 infrastructure_crate = "mcb-infrastructure"
-application_crate = "mcb-application"
+application_crate = ""
 providers_crate = "mcb-providers"
 validate_crate = "mcb-validate"
 
@@ -111,15 +110,15 @@ excluded_paths = [
 [rules.clean_architecture]
 enabled = true
 domain_dependencies = []
-application_dependencies = ["mcb-domain"]
-infrastructure_dependencies = ["mcb-application", "mcb-domain"]
+application_dependencies = []
+infrastructure_dependencies = ["mcb-domain"]
 server_path = "crates/mcb-server/src"
 handlers_path = "crates/mcb-server/src/handlers"
 domain_path = "crates/mcb-domain/src"
 entities_path = "crates/mcb-domain/src/entities"
 vo_path = "crates/mcb-domain/src/value_objects"
 infrastructure_path = "crates/mcb-infrastructure/src"
-application_path = "crates/mcb-application/src"
+application_path = ""
 ports_providers_path = "crates/mcb-domain/src/ports"
 identity_skip_suffixes = ["Builder", "Options", "Config", "Changes", "Filter"]
 
@@ -134,7 +133,6 @@ server_exempt_files = ["auth.rs", "middleware.rs"]
 enabled = true
 scan_crates = [
     "mcb-domain",
-    "mcb-application",
     "mcb-providers",
     "mcb-infrastructure",
     "mcb-server",

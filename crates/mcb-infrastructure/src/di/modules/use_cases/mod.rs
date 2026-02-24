@@ -3,9 +3,6 @@
 //! This module contains the use case implementations that orchestrate
 //! business logic and coordinate between domain entities and external ports.
 //!
-//! These services were previously in `mcb-application` and were moved here
-//! as part of v0.3.0 to simplify the crate graph (4-layer architecture).
-//!
 //! ## Services
 //!
 //! - [`AgentSessionServiceImpl`] — Agent session lifecycle, tool history, checkpoints

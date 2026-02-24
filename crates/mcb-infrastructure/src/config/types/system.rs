@@ -90,7 +90,7 @@ pub struct AuthConfig {
 pub enum EventBusBackend {
     /// In-process broadcast channel.
     #[default]
-    #[serde(alias = "tokio")]
+    #[serde(alias = "tokio", alias = "in_process")]
     InProcess,
 }
 

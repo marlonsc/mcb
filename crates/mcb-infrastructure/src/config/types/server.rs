@@ -224,7 +224,7 @@ impl ServerConfigBuilder {
                 },
                 ssl: ServerSslConfig::default(),
                 timeouts: ServerTimeoutConfig {
-                    request_timeout_secs: REQUEST_TIMEOUT_SECS,
+                    request_timeout_secs: HTTP_REQUEST_TIMEOUT_SECS,
                     connection_timeout_secs: CONNECTION_TIMEOUT_SECS,
                     max_request_body_size: MAX_REQUEST_BODY_SIZE,
                 },

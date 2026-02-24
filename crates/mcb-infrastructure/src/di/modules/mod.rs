@@ -12,7 +12,7 @@
 /// Domain services factory
 pub mod domain_services;
 
-/// Use case service implementations (moved from mcb-application in v0.3.0).
+/// Use case service implementations.
 pub mod use_cases;
 
 // Re-export domain services types
