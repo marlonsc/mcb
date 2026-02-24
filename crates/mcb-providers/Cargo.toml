@@ -122,9 +122,6 @@ milvus-sdk-rust = { workspace = true }
 # JSON Schema generation (for EdgeVec config)
 schemars = { workspace = true }
 
-# NATS for distributed events
-async-nats = { workspace = true }
-
 # SQLite for memory repository (uses generic schema from domain)
 sqlx = { workspace = true }
 sha2.workspace = true

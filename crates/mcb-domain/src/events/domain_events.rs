@@ -4,8 +4,7 @@
 //! Event Publisher Domain Port
 //!
 //! Defines the business contract for publishing system events. This abstraction
-//! enables services to publish events without coupling to specific implementations
-//! (tokio broadcast, NATS, etc.).
+//! enables services to publish events without coupling to specific implementations.
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
