@@ -12,8 +12,6 @@ pub mod analysis;
 pub mod fs;
 /// ID generation, deterministic correlation (UUID v5), content hashing, and masking.
 pub mod id;
-/// When to log full error details (off / debug / trace).
-pub mod logging;
 /// Naming convention checks (`CamelCase`, `snake_case`, `SCREAMING_SNAKE_CASE`).
 pub mod naming;
 /// Canonical path utilities — strict, no fallbacks.
@@ -31,7 +29,6 @@ pub mod vcs_context;
 
 pub use fs::find_files_by_extensions;
 pub use id::{compute_content_hash, compute_file_hash, correlate_id, mask_id};
-pub use logging::{ErrorDetailsLevel, parse_error_details_level};
 pub use naming::{
     get_suffix, is_camel_case, is_screaming_snake_case, is_snake_case, split_camel_case,
 };

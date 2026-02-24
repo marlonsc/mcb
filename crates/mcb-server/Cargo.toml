@@ -120,7 +120,6 @@ sea-streamer = { workspace = true }
 seaography = { workspace = true }
 sea-orm = { workspace = true }
 sea-orm-pro = { workspace = true }
-sea-schema = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-axum = { workspace = true }
 

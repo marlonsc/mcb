@@ -43,7 +43,7 @@ def _check_files(docs_dir, project_root):
         (r"mcp-context-browser", "old project name (now mcb)"),
         (r"MCP Context Browser", "old project name (now Memory Context Browser / MCB)"),
         (r"mcb-adapters", "old crate name (removed/renamed)"),
-        (r"mcb-core", "old crate name (split into mcb-domain + mcb-application)"),
+        (r"mcb-core", "old crate name (split into mcb-domain + mcb-infrastructure)"),
         (r"CODEQL_SETUP", "reference to archived doc"),
     ]
 

@@ -1,4 +1,4 @@
-//! Tests verifying Figment configuration pattern compliance (ADR-025)
+//! Tests verifying configuration loader behavior (Loco YAML config)
 #![allow(unsafe_code)]
 #![allow(clippy::mem_forget)]
 #![allow(clippy::used_underscore_binding)]

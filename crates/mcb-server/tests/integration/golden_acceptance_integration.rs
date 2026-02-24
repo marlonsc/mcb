@@ -53,8 +53,8 @@ pub struct GoldenQueriesConfig {
 /// Query configuration
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct QueryConfig {
-    #[allow(dead_code)]
-    pub collection_name: String,
+    #[serde(rename = "collection_name")]
+    pub _collection_name: String,
     pub timeout_ms: u64,
     pub relevance_threshold: f64,
     pub top_k: usize,

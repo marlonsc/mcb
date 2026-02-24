@@ -4273,7 +4273,6 @@ dependencies = [
  "schemars 1.2.1",
  "sea-orm",
  "sea-orm-pro",
- "sea-schema",
  "sea-streamer",
  "seaography",
  "serde",

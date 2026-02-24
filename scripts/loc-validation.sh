@@ -5,7 +5,7 @@ set -euo pipefail
 TOKEI_CMD="tokei crates/ -t Rust -e '**/tests/**' -e '**/fixtures/**' -e '**/benches/**'"
 
 echo "=== Source Code LOC (per-crate) ==="
-for crate in mcb-domain mcb-application mcb-infrastructure mcb-providers mcb-server mcb-validate; do
+for crate in mcb-domain mcb-infrastructure mcb-providers mcb-server mcb-validate; do
 	echo -n "$crate: "
 	tokei "crates/$crate/src" -t Rust -e '**/tests/**' -o json | jq '.Rust.code'
 done
@@ -27,7 +27,7 @@ cargo doc --workspace --no-deps 2>&1 | grep -c "warning" || echo "0"
 
 echo "=== Quality Metrics ==="
 echo -n "Production unwrap/expect: "
-grep -rn '\.unwrap()\|\.expect(' crates/mcb-application/src/ crates/mcb-server/src/ crates/mcb-infrastructure/src/ --include="*.rs" | grep -v test | wc -l
+grep -rn '\.unwrap()\|\.expect(' crates/mcb-server/src/ crates/mcb-infrastructure/src/ --include="*.rs" | grep -v test | wc -l
 echo -n "fn get_ in ports: "
 grep -rn 'fn get_' crates/mcb-domain/src/ports/ --include="*.rs" | wc -l
 echo -n "pub status: String: "
