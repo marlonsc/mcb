@@ -69,11 +69,10 @@ pub use providers::{
 // --- Repositories ---
 pub use repositories::{
     AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
-    AgentSessionRepository, ApiKeyRegistry, ChunkRepository, FileHashRepository, FtsSearchResult,
-    IndexRepository, IndexStats, IssueCommentRegistry, IssueEntityRepository,
-    IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry, MemoryRepository,
-    OrgEntityRepository, OrgRegistry, PlanEntityRepository, PlanRegistry, PlanReviewRegistry,
-    PlanVersionRegistry, ProjectRepository, RepositoryStats, SearchRepository, SearchStats,
+    AgentSessionRepository, ApiKeyRegistry, FileHashRepository, FtsSearchResult, IndexRepository,
+    IndexStats, IssueCommentRegistry, IssueEntityRepository, IssueLabelAssignmentManager,
+    IssueLabelRegistry, IssueRegistry, MemoryRepository, OrgEntityRepository, OrgRegistry,
+    PlanEntityRepository, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry, ProjectRepository,
     TeamMemberManager, TeamRegistry, UserRegistry, VcsEntityRepository,
 };
 

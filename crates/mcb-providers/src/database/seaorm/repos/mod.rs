@@ -13,10 +13,6 @@ pub mod index;
 pub mod observation;
 /// Project repository implementation.
 pub mod project;
-/// Agent session repository implementation.
-pub mod session;
-/// VCS repository implementation.
-pub mod vcs;
 
 /// `SeaORM` agent repository.
 pub use agent::SeaOrmAgentRepository;
@@ -28,7 +24,3 @@ pub use index::SeaOrmIndexRepository;
 pub use observation::SeaOrmObservationRepository;
 /// `SeaORM` project repository.
 pub use project::SeaOrmProjectRepository;
-/// `SeaORM` agent session repository.
-pub use session::SeaOrmAgentSessionRepository;
-/// `SeaORM` VCS repository.
-pub use vcs::SeaOrmVcsEntityRepository;
