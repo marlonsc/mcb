@@ -20,6 +20,10 @@ lazy_static::lazy_static! {
 ///
 /// The schema is intended to be built once at startup and stored in
 /// [`loco_rs::app::AppContext::shared_store`].
+///
+/// # Errors
+///
+/// Returns [`SchemaError`] if the GraphQL schema fails to build.
 pub fn schema(
     database: DatabaseConnection,
     depth: Option<usize>,

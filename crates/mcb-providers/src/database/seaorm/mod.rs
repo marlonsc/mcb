@@ -1,4 +1,4 @@
-//! SeaORM database layer — entities, migrations, repositories, and GraphQL.
+//! `SeaORM` database layer: entities, migrations, repositories, and GraphQL.
 pub mod conversions;
 /// Generated SeaORM entity modules (`sea-orm-codegen`).
 pub mod entities;
