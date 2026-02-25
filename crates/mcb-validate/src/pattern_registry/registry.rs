@@ -9,15 +9,15 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
-use tracing::{error, warn};
 
 use crate::Result;
+use crate::constants::linters::CARGO_TOML_FILENAME;
 use crate::constants::rules::{
     YAML_FIELD_ALLOWED_DEPS, YAML_FIELD_CONFIG, YAML_FIELD_CRATE_NAME, YAML_FIELD_ID,
     YAML_FIELD_PATTERNS, YAML_FIELD_REGEX, YAML_FIELD_SELECTORS,
 };
-use crate::linters::constants::CARGO_TOML_FILENAME;
 use crate::rules::templates::TemplateEngine;
+use mcb_domain::error;
 
 /// Registry of compiled regex patterns and configurations loaded from YAML rules
 pub struct PatternRegistry {
@@ -50,10 +50,10 @@ impl PatternRegistry {
         let rule_files = crate::utils::fs::collect_yaml_files(rules_dir)?;
         for path in rule_files.into_iter().filter(|p| !is_template_path(p)) {
             if let Err(e) = registry.load_rule_file(&path, naming_config, project_prefix) {
-                warn!(
-                    path = %path.display(),
-                    error = %e,
-                    "Failed to load patterns/config"
+                mcb_domain::warn!(
+                    "pattern_registry",
+                    "Failed to load patterns/config",
+                    &format!("path={} error={}", path.display(), e)
                 );
             }
         }
@@ -103,10 +103,10 @@ impl PatternRegistry {
         let engine = TemplateEngine::new();
         let variables_value = serde_yaml::Value::Mapping(variables);
         if let Err(e) = engine.substitute_variables(&mut yaml, &variables_value) {
-            warn!(
-                path = %path.display(),
-                error = %e,
-                "Failed to substitute variables"
+            mcb_domain::warn!(
+                "pattern_registry",
+                "Failed to substitute variables",
+                &format!("path={} error={}", path.display(), e)
             );
         }
 
@@ -309,7 +309,7 @@ pub static PATTERNS: std::sync::LazyLock<PatternRegistry> = std::sync::LazyLock:
     let project_prefix = &file_config.general.project_prefix;
     PatternRegistry::load_from_rules(&rules_dir, naming_config, project_prefix).unwrap_or_else(
         |e| {
-            error!(error = %e, "Failed to load pattern registry");
+            error!("pattern_registry", "Failed to load pattern registry", &e);
             PatternRegistry::new()
         },
     )

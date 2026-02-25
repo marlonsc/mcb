@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::Result;
-use crate::linters::constants::CARGO_TOML_FILENAME;
+use crate::constants::linters::CARGO_TOML_FILENAME;
 
 /// Information about a dependency
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -147,3 +147,19 @@ pub trait ValidationOperationsInterface: Send + Sync {
     /// Check if in progress
     fn is_in_progress(&self, operation_id: &OperationId) -> bool;
 }
+
+// ============================================================================
+// Validator Job Runner Port
+// ============================================================================
+
+/// Port for submitting validation jobs to the execution infrastructure.
+///
+/// Centralizes all validator execution: implementations use Loco workers
+/// (or in-process execution) and track progress via [`ValidationOperationsInterface`].
+pub trait ValidatorJobRunner: Send + Sync {
+    /// Submit a validation job for the given workspace and validators.
+    ///
+    /// Returns an [`OperationId`] that can be used to track progress via
+    /// [`ValidationOperationsInterface`].
+    fn submit_validation_job(&self, workspace: &str, validators: &[String]) -> OperationId;
+}

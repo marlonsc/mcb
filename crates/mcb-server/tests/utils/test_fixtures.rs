@@ -493,6 +493,7 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
         vector_store_provider: ctx.vector_store_provider(),
         language_chunker: ctx.language_chunker(),
         indexing_ops: ctx.indexing(),
+        validation_ops: ctx.validation_ops(),
         event_bus: ctx.event_bus(),
         memory_repository,
         agent_repository,

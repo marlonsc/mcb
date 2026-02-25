@@ -21,7 +21,6 @@ use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
 use serde_json::Value;
-use tracing::warn;
 
 use crate::constants::{
     EDGEVEC_DEFAULT_DIMENSIONS, HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER,
@@ -292,7 +291,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         metadata: Vec<HashMap<String, Value>>,
     ) -> Result<Vec<String>> {
         if vectors.is_empty() {
-            warn!("insert_vectors called with empty vectors array");
+            mcb_domain::warn!("pinecone", "insert_vectors called with empty vectors array");
             return Err(Error::vector_db(
                 "Cannot insert empty vectors array".to_owned(),
             ));
@@ -396,7 +395,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         ids: &[String],
     ) -> Result<Vec<SearchResult>> {
         if ids.is_empty() {
-            warn!("get_vectors_by_ids called with empty ids array");
+            mcb_domain::warn!("pinecone", "get_vectors_by_ids called with empty ids array");
             return Err(Error::vector_db(
                 "Cannot fetch vectors with empty ids array".to_owned(),
             ));

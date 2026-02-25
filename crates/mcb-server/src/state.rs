@@ -11,6 +11,27 @@ use mcb_domain::ports::{AuthRepositoryPort, DashboardQueryPort};
 
 use crate::mcp_server::McpServer;
 
+/// Result of MCP server composition: server plus ports for dashboard/auth.
+///
+/// Built by the Loco bridge so all Loco-exposed services go through centralized DI.
+#[derive(Clone)]
+pub struct McpServerBootstrap {
+    /// MCP server instance
+    pub mcp_server: Arc<McpServer>,
+    /// Dashboard query port (built via bridge from Loco DB)
+    pub dashboard: Arc<dyn DashboardQueryPort>,
+    /// Auth repository port (built via bridge from Loco DB)
+    pub auth_repo: Arc<dyn AuthRepositoryPort>,
+}
+
+impl McpServerBootstrap {
+    /// Build [`McbState`] from this bootstrap (for use in route layers).
+    #[must_use]
+    pub fn into_mcb_state(self) -> McbState {
+        McbState::new(self.dashboard, self.auth_repo, self.mcp_server)
+    }
+}
+
 /// Application state for MCB server controllers.
 ///
 /// Contains only domain port references - no framework types (`AppContext`, `DatabaseConnection`, `loco_rs`).

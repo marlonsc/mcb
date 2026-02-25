@@ -17,8 +17,8 @@ use mcb_domain::ports::{
     AgentRepository, CacheEntryConfig, CacheProvider, CacheStats, CryptoProvider,
     EmbeddingProvider, EventBusProvider, FileHashRepository, IndexingOperationsInterface,
     IssueEntityRepository, LanguageChunkingProvider, MemoryRepository, OrgEntityRepository,
-    PlanEntityRepository, ProjectDetectorService, ProjectRepository, VcsEntityRepository,
-    VcsProvider, VectorStoreProvider,
+    PlanEntityRepository, ProjectDetectorService, ProjectRepository, ValidationOperationsInterface,
+    VcsEntityRepository, VcsProvider, VectorStoreProvider,
 };
 use mcb_domain::registry::database::resolve_database_repositories;
 
@@ -29,7 +29,7 @@ use crate::di::provider_resolvers::{
     EmbeddingProviderResolver, LanguageProviderResolver, VectorStoreProviderResolver,
 };
 use crate::events::BroadcastEventBus;
-use crate::infrastructure::admin::DefaultIndexingOperations;
+use crate::infrastructure::admin::{DefaultIndexingOperations, DefaultValidationOperations};
 use crate::project::ProjectService;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 
@@ -50,6 +50,7 @@ pub struct AppContext {
     // Infrastructure services
     event_bus: Arc<dyn EventBusProvider>,
     indexing_ops: Arc<dyn IndexingOperationsInterface>,
+    validation_ops_arc: Arc<dyn ValidationOperationsInterface>,
 
     // Repositories
     memory_repository: Arc<dyn MemoryRepository>,
@@ -106,6 +107,12 @@ impl AppContext {
     #[must_use]
     pub fn indexing(&self) -> Arc<dyn IndexingOperationsInterface> {
         Arc::clone(&self.indexing_ops)
+    }
+
+    /// Get validation operations
+    #[must_use]
+    pub fn validation_ops(&self) -> Arc<dyn ValidationOperationsInterface> {
+        Arc::clone(&self.validation_ops_arc)
     }
 
     // ── Repository accessors ────────────────────────────────────────────
@@ -200,6 +207,7 @@ impl AppContext {
             vector_store_provider: self.vector_store_provider(),
             language_chunker: self.language_chunker(),
             indexing_ops: self.indexing(),
+            validation_ops: Arc::new(DefaultValidationOperations::new()),
             event_bus: self.event_bus(),
             memory_repository: self.memory_repository(),
             agent_repository: self.agent_repository(),
@@ -282,6 +290,8 @@ pub async fn init_app_with_overrides(
     let event_bus: Arc<dyn EventBusProvider> = Arc::new(BroadcastEventBus::new());
     let indexing_ops: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());
+    let validation_ops: Arc<dyn ValidationOperationsInterface> =
+        Arc::new(DefaultValidationOperations::new());
 
     // ── Database ────────────────────────────────────────────────────────
 
@@ -361,6 +371,7 @@ pub async fn init_app_with_overrides(
         language_chunker,
         event_bus,
         indexing_ops,
+        validation_ops_arc: validation_ops,
         memory_repository,
         agent_repository,
         project_repository,

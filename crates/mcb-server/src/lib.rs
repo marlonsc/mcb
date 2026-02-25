@@ -26,6 +26,7 @@ pub mod formatter;
 pub mod handlers;
 pub mod hooks;
 pub mod initializers;
+/// Loco app hooks and MCP server composition root.
 pub mod loco_app;
 pub mod mcp_server;
 pub mod session;

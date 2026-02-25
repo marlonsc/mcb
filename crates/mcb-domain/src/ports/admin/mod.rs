@@ -15,7 +15,7 @@ pub use dashboard::{
 };
 pub use operations::{
     IndexingOperation, IndexingOperationStatus, IndexingOperationsInterface, ValidationOperation,
-    ValidationOperationResult, ValidationOperationsInterface, ValidationStatus,
+    ValidationOperationResult, ValidationOperationsInterface, ValidationStatus, ValidatorJobRunner,
 };
 pub use providers::{
     CacheAdminInterface, EmbeddingAdminInterface, LanguageAdminInterface, ProviderInfo,

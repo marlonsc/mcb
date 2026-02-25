@@ -42,7 +42,7 @@ pub use admin::{
     EmbeddingAdminInterface, IndexingOperation, IndexingOperationStatus,
     IndexingOperationsInterface, LanguageAdminInterface, MonthlyCount, ProviderInfo, ToolCallCount,
     ValidationOperation, ValidationOperationResult, ValidationOperationsInterface,
-    ValidationStatus, VectorStoreAdminInterface,
+    ValidationStatus, ValidatorJobRunner, VectorStoreAdminInterface,
 };
 
 // --- Infrastructure ---

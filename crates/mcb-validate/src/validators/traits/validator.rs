@@ -5,8 +5,6 @@
 
 use std::sync::Arc;
 
-use tracing::{info, warn};
-
 use crate::Result;
 use crate::ValidationConfig;
 use crate::ValidationError;
@@ -118,11 +116,15 @@ impl ValidatorRegistry {
             };
             let mut all_violations = Vec::new();
 
-            info!(
-                trace_id = %active.trace_id(),
-                file_inventory_source = active.file_inventory_source().as_str(),
-                file_inventory_count = active.file_inventory_count(),
-                "Validation run context initialized"
+            mcb_domain::info!(
+                "validator_registry",
+                "Validation run context initialized",
+                &format!(
+                    "trace_id={} file_inventory_source={} file_inventory_count={}",
+                    active.trace_id(),
+                    active.file_inventory_source().as_str(),
+                    active.file_inventory_count()
+                )
             );
 
             for validator in &self.validators {
@@ -132,32 +134,42 @@ impl ValidatorRegistry {
 
                 let langs = validator.supported_languages();
                 if !langs.is_empty() && !langs.iter().any(|l| active.has_files_for_language(*l)) {
-                    info!(
-                        validator = %validator.name(),
-                        trace_id = %active.trace_id(),
-                        "Skipping validator: no files match supported languages"
+                    mcb_domain::info!(
+                        "validator_registry",
+                        "Skipping validator: no files match supported languages",
+                        &format!(
+                            "validator={} trace_id={}",
+                            validator.name(),
+                            active.trace_id()
+                        )
                     );
                     continue;
                 }
 
-                info!(
-                    validator = %validator.name(),
-                    trace_id = %active.trace_id(),
-                    file_inventory_source = active.file_inventory_source().as_str(),
-                    file_inventory_count = active.file_inventory_count(),
-                    "Running validator"
+                mcb_domain::info!(
+                    "validator_registry",
+                    "Running validator",
+                    &format!(
+                        "validator={} trace_id={} file_inventory_source={} file_inventory_count={}",
+                        validator.name(),
+                        active.trace_id(),
+                        active.file_inventory_source().as_str(),
+                        active.file_inventory_count()
+                    )
                 );
 
                 match validator.validate(config) {
                     Ok(violations) => all_violations.extend(violations),
                     Err(e) => {
-                        warn!(
-                            validator = %validator.name(),
-                            trace_id = %active.trace_id(),
-                            file_inventory_source = active.file_inventory_source().as_str(),
-                            file_inventory_count = active.file_inventory_count(),
-                            error = %e,
-                            "Validator failed, skipping"
+                        mcb_domain::warn!(
+                            "validator_registry",
+                            "Validator failed, skipping",
+                            &format!(
+                                "validator={} trace_id={} error={}",
+                                validator.name(),
+                                active.trace_id(),
+                                e
+                            )
                         );
                     }
                 }
@@ -205,33 +217,43 @@ impl ValidatorRegistry {
             };
             let mut all_violations = Vec::new();
 
-            info!(
-                trace_id = %active.trace_id(),
-                file_inventory_source = active.file_inventory_source().as_str(),
-                file_inventory_count = active.file_inventory_count(),
-                "Named validation run context initialized"
+            mcb_domain::info!(
+                "validator_registry",
+                "Named validation run context initialized",
+                &format!(
+                    "trace_id={} file_inventory_source={} file_inventory_count={}",
+                    active.trace_id(),
+                    active.file_inventory_source().as_str(),
+                    active.file_inventory_count()
+                )
             );
 
             for validator in &self.validators {
                 if names.contains(&validator.name()) {
-                    info!(
-                        validator = %validator.name(),
-                        trace_id = %active.trace_id(),
-                        file_inventory_source = active.file_inventory_source().as_str(),
-                        file_inventory_count = active.file_inventory_count(),
-                        "Running named validator"
+                    mcb_domain::info!(
+                        "validator_registry",
+                        "Running named validator",
+                        &format!(
+                            "validator={} trace_id={} file_inventory_source={} file_inventory_count={}",
+                            validator.name(),
+                            active.trace_id(),
+                            active.file_inventory_source().as_str(),
+                            active.file_inventory_count()
+                        )
                     );
 
                     match validator.validate(config) {
                         Ok(violations) => all_violations.extend(violations),
                         Err(e) => {
-                            warn!(
-                                validator = %validator.name(),
-                                trace_id = %active.trace_id(),
-                                file_inventory_source = active.file_inventory_source().as_str(),
-                                file_inventory_count = active.file_inventory_count(),
-                                error = %e,
-                                "Validator failed, skipping"
+                            mcb_domain::warn!(
+                                "validator_registry",
+                                "Validator failed, skipping",
+                                &format!(
+                                    "validator={} trace_id={} error={}",
+                                    validator.name(),
+                                    active.trace_id(),
+                                    e
+                                )
                             );
                         }
                     }

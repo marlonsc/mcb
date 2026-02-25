@@ -35,9 +35,10 @@ impl ServeArgs {
             McbApp::boot(StartMode::server_only(), &environment, loco_config.clone()).await?;
         if self.stdio {
             // Stdio-only mode: create MCP server directly from Loco context, no HTTP.
-            let server =
-                create_mcp_server(&boot_result.app_context, ExecutionFlow::StdioOnly).await?;
-            server.serve_stdio().await?;
+            let server = create_mcp_server(&boot_result.app_context, ExecutionFlow::StdioOnly)
+                .await
+                .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+            server.mcp_server.serve_stdio().await?;
         } else {
             // Default: HTTP server + background stdio (unless --server).
             let serve = ServeParams {

@@ -27,14 +27,14 @@ use mcb_domain::ports::{
     EmbeddingProvider, EventBusProvider, FileHashRepository, IndexingOperationsInterface,
     IndexingServiceInterface, IssueEntityRepository, LanguageChunkingProvider, MemoryRepository,
     MemoryServiceInterface, OrgEntityRepository, PlanEntityRepository, ProjectDetectorService,
-    ProjectRepository, SearchServiceInterface, ValidationServiceInterface, VcsEntityRepository,
-    VcsProvider, VectorStoreProvider,
+    ProjectRepository, SearchServiceInterface, ValidationOperationsInterface,
+    ValidationServiceInterface, ValidatorJobRunner, VcsEntityRepository, VcsProvider,
+    VectorStoreProvider,
 };
 
 use crate::cache::provider::SharedCacheProvider;
 use crate::config::AppConfig;
-
-// Use infrastructure validation service
+use crate::infrastructure::DefaultValidatorJobRunner;
 use crate::validation::InfraValidationService;
 
 /// Domain services container.
@@ -55,6 +55,10 @@ pub struct DomainServicesContainer {
     pub indexing_service: Arc<dyn IndexingServiceInterface>,
     /// Service for validating domain objects and operations
     pub validation_service: Arc<dyn ValidationServiceInterface>,
+    /// Tracks validation operations (progress, completion)
+    pub validation_ops: Arc<dyn ValidationOperationsInterface>,
+    /// Runs validation jobs (centralized executor; uses Loco when available)
+    pub validator_job_runner: Arc<dyn ValidatorJobRunner>,
     /// Service for managing persistent memory and observations
     pub memory_service: Arc<dyn MemoryServiceInterface>,
     /// Service for managing agent sessions and state
@@ -135,6 +139,8 @@ pub struct ServiceDependencies {
     pub issue_entity_repository: Arc<dyn IssueEntityRepository>,
     /// Repository for org entity CRUD
     pub org_entity_repository: Arc<dyn OrgEntityRepository>,
+    /// Interface for validation operations tracking
+    pub validation_ops: Arc<dyn ValidationOperationsInterface>,
 }
 
 /// Domain services factory - creates services with runtime dependencies
@@ -216,6 +222,12 @@ impl DomainServicesFactory {
         let validation_service: Arc<dyn ValidationServiceInterface> =
             Arc::new(InfraValidationService::new());
 
+        let validator_job_runner: Arc<dyn ValidatorJobRunner> =
+            Arc::new(DefaultValidatorJobRunner::new(
+                Arc::clone(&deps.validation_ops),
+                Arc::clone(&validation_service),
+            ));
+
         let memory_service: Arc<dyn MemoryServiceInterface> = Arc::new(MemoryServiceImpl::new(
             deps.project_id.clone(),
             deps.memory_repository,
@@ -231,6 +243,8 @@ impl DomainServicesFactory {
             search_service,
             indexing_service,
             validation_service,
+            validation_ops: deps.validation_ops,
+            validator_job_runner,
             memory_service,
             agent_session_service,
             project_service: deps.project_service,

@@ -140,7 +140,11 @@ impl IntelligentChunker {
         })
         .await
         .unwrap_or_else(|e| {
-            tracing::error!(error = ?e, "spawn_blocking panic in chunking engine");
+            mcb_domain::error!(
+                "chunking_engine",
+                "spawn_blocking panic in chunking engine",
+                &e
+            );
             Default::default()
         })
     }

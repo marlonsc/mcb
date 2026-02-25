@@ -28,19 +28,19 @@ path = "src/main.rs"
 workspace = true
 
 [dependencies]
-# Domain layer - re-exported for public API
+# Domain layer - re-exported for public API for domain layer
 mcb-domain = { path = "../mcb-domain" }
 
-# Server layer - re-exported for run_server entry point
+# Server layer - re-exported for run_server entry point for server layer
 mcb-server = { path = "../mcb-server" }
 
-# Infrastructure layer - re-exported for DI container
+# Infrastructure layer - re-exported for DI container for infrastructure layer
 mcb-infrastructure = { path = "../mcb-infrastructure" }
 
-# Providers - MUST be in dependencies (not dev-dependencies) for linkme inventory registration
+# Providers - re-exported for DI container for providers layer
 mcb-providers = { path = "../mcb-providers" }
 
-# Validation - for mcb validate subcommand
+# Validation - re-exported for DI container for mcb validate subcommand
 mcb-validate = { path = "../mcb-validate" }
 
 # Core async runtime

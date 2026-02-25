@@ -5,5 +5,8 @@
 //! Concrete types are composed in the DI bootstrap module or `loco_app.rs`.
 pub mod admin;
 pub mod factory;
-pub use admin::DefaultIndexingOperations;
+pub mod validator_job_runner;
+
+pub use admin::{DefaultIndexingOperations, DefaultValidationOperations};
 pub use factory::default_event_bus;
+pub use validator_job_runner::DefaultValidatorJobRunner;

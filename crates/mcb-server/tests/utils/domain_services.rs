@@ -80,6 +80,7 @@ pub(crate) async fn create_real_domain_services()
         vector_store_provider: ctx.vector_store_provider(),
         language_chunker: ctx.language_chunker(),
         indexing_ops: ctx.indexing(),
+        validation_ops: ctx.validation_ops(),
         event_bus: ctx.event_bus(),
         memory_repository,
         agent_repository,

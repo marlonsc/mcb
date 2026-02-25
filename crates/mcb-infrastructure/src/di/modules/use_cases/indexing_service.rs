@@ -35,7 +35,6 @@ use mcb_domain::ports::{
     IndexingResult, IndexingServiceInterface, IndexingStatus, LanguageChunkingProvider,
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
-use tracing::{error, info, warn};
 
 use crate::constants::use_cases::SKIP_DIRS;
 
@@ -256,10 +255,13 @@ impl IndexingServiceInterface for IndexingServiceImpl {
         let files = self.discover_files(path, &mut progress).await;
         let total_files = files.len();
 
-        info!(
-            "Starting indexing: {} files in {}",
-            total_files,
-            path.display()
+        mcb_domain::info!(
+            "indexing",
+            &format!(
+                "Starting indexing: {} files in {}",
+                total_files,
+                path.display()
+            )
         );
 
         // Start tracking operation
@@ -274,7 +276,7 @@ impl IndexingServiceInterface for IndexingServiceImpl {
             })
             .await
         {
-            warn!("Failed to publish IndexingStarted event: {}", e);
+            mcb_domain::warn!("indexing", "Failed to publish IndexingStarted event", &e);
         }
 
         // Clone service for the background task
@@ -354,7 +356,11 @@ impl IndexingServiceImpl {
                     // File hasn't changed, increment skip count but don't record as processed
                 }
                 Err(e) => {
-                    warn!(file = %file_path.display(), error = %e, "Failed to process file during indexing");
+                    mcb_domain::warn!(
+                        "indexing",
+                        "Failed to process file during indexing",
+                        &format!("file={} error={}", file_path.display(), e)
+                    );
                     failed_files.push(file_path.display().to_string());
                 }
             }
@@ -386,24 +392,25 @@ impl IndexingServiceImpl {
             })
             .await
         {
-            warn!("Failed to publish IndexingCompleted event: {}", e);
+            mcb_domain::warn!("indexing", "Failed to publish IndexingCompleted event", &e);
         }
 
         let error_count = failed_files.len();
         if error_count > 0 {
-            error!(
-                files_processed = files_processed,
-                chunks_created = chunks_created,
-                errors = error_count,
-                duration_ms = duration_ms,
-                "Indexing completed with errors"
+            mcb_domain::error!(
+                "indexing",
+                "Indexing completed with errors",
+                &format!(
+                    "files_processed={files_processed} chunks_created={chunks_created} errors={error_count} duration_ms={duration_ms}"
+                )
             );
         } else {
-            info!(
-                files_processed = files_processed,
-                chunks_created = chunks_created,
-                duration_ms = duration_ms,
-                "Indexing completed successfully"
+            mcb_domain::info!(
+                "indexing",
+                "Indexing completed successfully",
+                &format!(
+                    "files_processed={files_processed} chunks_created={chunks_created} duration_ms={duration_ms}"
+                )
             );
         }
     }

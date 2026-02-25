@@ -15,8 +15,6 @@
 
 use std::path::PathBuf;
 
-use tracing::{info, warn};
-
 use crate::embedded_rules::EmbeddedRules;
 use crate::engines::hybrid_engine::{HybridRuleEngine, RuleContext, RuleEngineType};
 use crate::filters::LanguageId;
@@ -197,30 +195,36 @@ impl UnifiedRuleRegistry {
         let mut all_violations: Vec<Box<dyn Violation>> = Vec::new();
 
         // 1. Run Rust validators
-        info!(
-            rust_validators = self.rust_validator_count(),
-            "Running Rust validators"
+        mcb_domain::info!(
+            "unified_registry",
+            &format!(
+                "Running Rust validators (count={})",
+                self.rust_validator_count()
+            )
         );
         match self.rust_registry.validate_all(config) {
             Ok(violations) => {
-                info!(
-                    count = violations.len(),
-                    "Rust validators produced violations"
+                mcb_domain::info!(
+                    "unified_registry",
+                    &format!("Rust validators produced {} violations", violations.len())
                 );
                 all_violations.extend(violations);
             }
             Err(e) => {
-                warn!(error = %e, "Rust validator registry failed");
+                mcb_domain::warn!("unified_registry", "Rust validator registry failed", &e);
                 return Err(e);
             }
         }
 
         // 2. Run YAML rules via HybridRuleEngine (synchronous wrapper)
-        info!(yaml_rules = self.yaml_rule_count(), "Running YAML rules");
+        mcb_domain::info!(
+            "unified_registry",
+            &format!("Running YAML rules (count={})", self.yaml_rule_count())
+        );
         let yaml_violations = self.execute_yaml_rules_sync(config)?;
-        info!(
-            count = yaml_violations.len(),
-            "YAML rules produced violations"
+        mcb_domain::info!(
+            "unified_registry",
+            &format!("YAML rules produced {} violations", yaml_violations.len())
         );
         all_violations.extend(yaml_violations);
 
@@ -254,7 +258,7 @@ impl UnifiedRuleRegistry {
         if !matching_names.is_empty() {
             match self.rust_registry.validate_named(config, &matching_names) {
                 Ok(v) => violations.extend(v),
-                Err(e) => warn!(error = %e, "Named Rust validation failed"),
+                Err(e) => mcb_domain::warn!("unified_registry", "Named Rust validation failed", &e),
             }
         }
 
@@ -297,7 +301,11 @@ impl UnifiedRuleRegistry {
         if !matching_names.is_empty() {
             match self.rust_registry.validate_named(config, &matching_names) {
                 Ok(v) => violations.extend(v),
-                Err(e) => warn!(error = %e, "Language-filtered Rust validation failed"),
+                Err(e) => mcb_domain::warn!(
+                    "unified_registry",
+                    "Language-filtered Rust validation failed",
+                    &e
+                ),
             }
         }
 
@@ -398,10 +406,10 @@ impl UnifiedRuleRegistry {
                     }
                 }
                 Err(e) => {
-                    warn!(
-                        rule_id = %rule.id,
-                        error = %e,
-                        "YAML rule execution failed, skipping"
+                    mcb_domain::warn!(
+                        "unified_registry",
+                        "YAML rule execution failed, skipping",
+                        &format!("rule_id={} error={}", rule.id, e)
                     );
                 }
             }

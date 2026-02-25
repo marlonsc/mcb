@@ -7,7 +7,6 @@ use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::{DomainEventStream, EventBusProvider};
 use mcb_domain::utils::id;
 use tokio::sync::broadcast;
-use tracing::{debug, warn};
 
 use crate::constants::events::EVENT_BUS_BUFFER_SIZE;
 
@@ -46,8 +45,11 @@ impl std::fmt::Debug for BroadcastEventBus {
 impl EventBusProvider for BroadcastEventBus {
     async fn publish_event(&self, event: DomainEvent) -> Result<()> {
         match self.sender.send(event) {
-            Ok(count) => debug!("Published event to {count} subscribers"),
-            Err(_) => debug!("Published event but no subscribers"),
+            Ok(count) => mcb_domain::debug!(
+                "event_bus",
+                &format!("Published event to {count} subscribers")
+            ),
+            Err(_) => mcb_domain::debug!("event_bus", "Published event but no subscribers"),
         }
         Ok(())
     }
@@ -59,7 +61,11 @@ impl EventBusProvider for BroadcastEventBus {
                 match rx.recv().await {
                     Ok(event) => return Some((event, rx)),
                     Err(broadcast::error::RecvError::Lagged(n)) => {
-                        warn!("Event stream lagged by {n} events");
+                        mcb_domain::warn!(
+                            "event_bus",
+                            "Event stream lagged",
+                            &format!("{n} events")
+                        );
                         continue;
                     }
                     Err(broadcast::error::RecvError::Closed) => return None,
@@ -77,11 +83,18 @@ impl EventBusProvider for BroadcastEventBus {
         let event: DomainEvent = match serde_json::from_slice(payload) {
             Ok(e) => e,
             Err(e) => {
-                warn!("Failed to deserialize event payload for topic '{topic}': {e}");
+                mcb_domain::warn!(
+                    "event_bus",
+                    "Failed to deserialize event payload for topic",
+                    &format!("topic={topic} error={e}")
+                );
                 return Ok(());
             }
         };
-        debug!("Publishing event to topic '{topic}': {event:?}");
+        mcb_domain::debug!(
+            "event_bus",
+            &format!("Publishing event to topic '{topic}': {event:?}")
+        );
         self.publish_event(event).await
     }
 

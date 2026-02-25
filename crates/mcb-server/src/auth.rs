@@ -41,7 +41,13 @@ pub async fn authorize_admin_api_key(
     let api_key_header = configured_api_key_header(settings);
     let api_key = extract_api_key(headers, &api_key_header)?;
 
-    let users_with_keys = auth_repo.find_users_by_api_key_hash(&api_key).await?;
+    let users_with_keys = auth_repo
+        .find_users_by_api_key_hash(&api_key)
+        .await
+        .map_err(|e| {
+            mcb_domain::error!("auth", "auth repository lookup failed", &e);
+            Error::InternalServerError
+        })?;
 
     for user_with_key in users_with_keys {
         if verify_api_key(&user_with_key.api_key_hash, &api_key)? {
@@ -103,7 +109,7 @@ fn verify_api_key(hash: &str, candidate: &str) -> Result<bool> {
 
     if hash.starts_with("$2a$") || hash.starts_with("$2b$") || hash.starts_with("$2y$") {
         return bcrypt::verify(candidate, hash).map_err(|e| {
-            tracing::error!("bcrypt verification failed: {e}");
+            mcb_domain::error!("auth", "bcrypt verification failed", &e);
             Error::InternalServerError
         });
     }

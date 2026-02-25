@@ -1,27 +1,44 @@
-use crate::{constants::admin::CONFIG_ROOT, state::McbState};
+use crate::{controllers::admin_config::load_admin_config, state::McbState};
 use axum::extract::Extension;
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
+
+/// JSON body for dashboard query requests.
 #[derive(Debug, Deserialize, Serialize)]
 pub struct DashboardBody {
+    /// Graph identifier (e.g. `observations_by_month`, `sessions_by_day`).
     pub graph: String,
+    /// Optional row limit.
     pub limit: Option<usize>,
 }
+
+/// Key-value pair for dashboard series data.
 #[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct Datum {
+    /// Label (e.g. month, day, tool name).
     pub key: String,
+    /// Count or value.
     pub val: i64,
 }
 
 fn datum(key: String, val: i64) -> Datum {
     Datum { key, val }
 }
+
+/// Returns admin config as JSON (sea-orm-pro).
+///
+/// # Errors
+///
+/// Fails when config cannot be loaded or serialized.
 pub async fn config(Extension(_state): Extension<McbState>) -> Result<Response> {
-    let config = sea_orm_pro::ConfigParser::new()
-        .load_config(CONFIG_ROOT)
-        .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
-    format::json(config)
+    format::json(load_admin_config()?)
 }
+
+/// Returns dashboard series data for the requested graph.
+///
+/// # Errors
+///
+/// Fails when the dashboard port fails or graph is unknown.
 pub async fn dashboard(
     Extension(state): Extension<McbState>,
     Json(body): Json<DashboardBody>,
@@ -68,6 +85,8 @@ pub async fn dashboard(
     format::json(data)
 }
 
+/// Registers admin routes under `/admin`.
+#[must_use]
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("admin")
