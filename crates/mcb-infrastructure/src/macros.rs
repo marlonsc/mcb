@@ -2,8 +2,8 @@
 
 /// Generate shared resolver boilerplate: `new(config)`, `Debug` impl.
 ///
-/// Used by `di/provider_resolvers.rs` for EmbeddingProviderResolver,
-/// VectorStoreProviderResolver, and similar resolver structs.
+/// Used by `di/provider_resolvers.rs` for `EmbeddingProviderResolver`,
+/// `VectorStoreProviderResolver`, and similar resolver structs.
 macro_rules! impl_resolver_common {
     ($resolver:ident) => {
         impl $resolver {

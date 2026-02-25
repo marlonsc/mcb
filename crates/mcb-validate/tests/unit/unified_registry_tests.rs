@@ -27,8 +27,7 @@ fn root_or_err() -> io::Result<PathBuf> {
 #[test]
 fn test_list_all_rules_discovers_both_systems() -> io::Result<()> {
     let root = root_or_err()?;
-    let registry = UnifiedRuleRegistry::new(&root)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+    let registry = UnifiedRuleRegistry::new(&root).map_err(|e| io::Error::other(e.to_string()))?;
 
     let all_rules = registry.list_all_rules();
 
@@ -67,8 +66,7 @@ fn test_list_all_rules_discovers_both_systems() -> io::Result<()> {
 #[test]
 fn test_rust_validator_count() -> io::Result<()> {
     let root = root_or_err()?;
-    let registry = UnifiedRuleRegistry::new(&root)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+    let registry = UnifiedRuleRegistry::new(&root).map_err(|e| io::Error::other(e.to_string()))?;
 
     assert!(
         registry.rust_validator_count() >= 18,
@@ -81,8 +79,7 @@ fn test_rust_validator_count() -> io::Result<()> {
 #[test]
 fn test_yaml_rule_count() -> io::Result<()> {
     let root = root_or_err()?;
-    let registry = UnifiedRuleRegistry::new(&root)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+    let registry = UnifiedRuleRegistry::new(&root).map_err(|e| io::Error::other(e.to_string()))?;
 
     assert!(
         registry.yaml_rule_count() >= 30,
@@ -95,8 +92,7 @@ fn test_yaml_rule_count() -> io::Result<()> {
 #[test]
 fn test_total_rule_count() -> io::Result<()> {
     let root = root_or_err()?;
-    let registry = UnifiedRuleRegistry::new(&root)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+    let registry = UnifiedRuleRegistry::new(&root).map_err(|e| io::Error::other(e.to_string()))?;
 
     let total = registry.total_rule_count();
     assert!(total >= 48, "Expected at least 48 total rules, got {total}");
@@ -111,8 +107,7 @@ fn test_total_rule_count() -> io::Result<()> {
 #[test]
 fn test_rule_info_has_correct_origins() -> io::Result<()> {
     let root = root_or_err()?;
-    let registry = UnifiedRuleRegistry::new(&root)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+    let registry = UnifiedRuleRegistry::new(&root).map_err(|e| io::Error::other(e.to_string()))?;
 
     let rules = registry.list_all_rules();
 
@@ -143,13 +138,12 @@ fn test_rule_info_has_correct_origins() -> io::Result<()> {
 #[test]
 fn test_execute_all_produces_violations_from_both_systems() -> io::Result<()> {
     let root = root_or_err()?;
-    let registry = UnifiedRuleRegistry::new(&root)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+    let registry = UnifiedRuleRegistry::new(&root).map_err(|e| io::Error::other(e.to_string()))?;
     let config = ValidationConfig::new(&root);
 
     let violations = registry
         .execute_all(&config)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| io::Error::other(e.to_string()))?;
     info!(
         total_violations = violations.len(),
         "execute_all completed successfully"
@@ -160,34 +154,31 @@ fn test_execute_all_produces_violations_from_both_systems() -> io::Result<()> {
 #[test]
 fn test_execute_by_category() -> io::Result<()> {
     let root = root_or_err()?;
-    let registry = UnifiedRuleRegistry::new(&root)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+    let registry = UnifiedRuleRegistry::new(&root).map_err(|e| io::Error::other(e.to_string()))?;
     let config = ValidationConfig::new(&root);
 
     let _ = registry
         .execute_by_category("architecture", &config)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| io::Error::other(e.to_string()))?;
     Ok(())
 }
 
 #[test]
 fn test_execute_by_language() -> io::Result<()> {
     let root = root_or_err()?;
-    let registry = UnifiedRuleRegistry::new(&root)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+    let registry = UnifiedRuleRegistry::new(&root).map_err(|e| io::Error::other(e.to_string()))?;
     let config = ValidationConfig::new(&root);
 
     let _ = registry
         .execute_by_language(LanguageId::Rust, &config)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+        .map_err(|e| io::Error::other(e.to_string()))?;
     Ok(())
 }
 
 #[test]
 fn test_accessors() -> io::Result<()> {
     let root = root_or_err()?;
-    let registry = UnifiedRuleRegistry::new(&root)
-        .map_err(|e| io::Error::new(io::ErrorKind::Other, e.to_string()))?;
+    let registry = UnifiedRuleRegistry::new(&root).map_err(|e| io::Error::other(e.to_string()))?;
 
     let _rust = registry.rust_registry();
     let _yaml = registry.yaml_rules();

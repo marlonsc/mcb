@@ -14,7 +14,7 @@
 
 use std::sync::Arc;
 
-use sea_orm::DatabaseConnection;
+use sea_orm::{ConnectionTrait, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
 
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
@@ -39,12 +39,9 @@ async fn setup_db() -> Arc<DatabaseConnection> {
     let db = sea_orm::Database::connect("sqlite::memory:")
         .await
         .expect("connect to in-memory SQLite");
-    db.execute(sea_orm::Statement::from_string(
-        db.get_database_backend(),
-        "PRAGMA foreign_keys = ON;".to_string(),
-    ))
-    .await
-    .expect("enable foreign keys");
+    db.execute_unprepared("PRAGMA foreign_keys = ON;")
+        .await
+        .expect("enable foreign keys");
     Migrator::up(&db, None).await.expect("migration up");
     Arc::new(db)
 }

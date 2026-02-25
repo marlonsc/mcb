@@ -33,46 +33,9 @@
 //! use mcb_providers::embedding::OllamaEmbeddingProvider;
 //! use mcb_providers::language::RustProcessor;
 //! ```
-
+//!
 // Allow unused macro imports while provider implementations are being migrated
 #![allow(unused_imports)]
-// Allow collapsible_if for complex conditional logic
-//!
-//! This crate contains all user-selectable provider implementations following
-//! Clean Architecture principles. Each provider implements a port (trait)
-//! defined in `mcb-domain`.
-//!
-//! **Documentation**: [`docs/modules/providers.md`](../../../docs/modules/providers.md) |
-//! **Strategy**: [`ADR-030`](../../../docs/adr/030-multi-provider-strategy.md),
-//! [`ADR-003`](../../../docs/adr/003-unified-provider-architecture.md)
-//!
-//! ## Provider Categories
-//!
-//! | Category | Port | Implementations |
-//! | ---------- | ------ | ----------------- |
-//! | Embedding | `EmbeddingProvider` | `OpenAI`, Ollama, `VoyageAI`, Gemini, `FastEmbed` |
-//! | Vector Store | `VectorStoreProvider` | `EdgeVec`, Encrypted, Milvus, Pinecone, Qdrant |
-//! | Cache | `CacheProvider` | delegated to Loco cache |
-//! | Hybrid Search | `HybridSearchProvider` | `HybridSearchEngine` |
-//! | Language | `LanguageChunkingProvider` | Rust, Python, Go, Java, etc. |
-//!
-//! ## Feature Flags
-//!
-//! Each provider can be enabled/disabled via feature flags for minimal builds:
-//!
-//! ```toml
-//! [dependencies]
-//! mcb-providers = { version = "0.1", default-features = false, features = ["embedding-ollama", "cache-moka"] }
-//! ```
-//!
-//! ## Usage
-//!
-//! ```no_run
-//! use mcb_providers::embedding::OllamaEmbeddingProvider;
-//! use mcb_providers::language::RustProcessor;
-//! ```
-
-// Allow collapsible_if for complex conditional logic
 
 // Re-export mcb-domain types commonly used with providers
 pub use mcb_domain::error::{Error, Result};

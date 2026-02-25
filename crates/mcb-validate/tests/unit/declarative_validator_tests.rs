@@ -4,10 +4,10 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-use mcb_validate::traits::validator::Validator;
-use mcb_validate::validators::declarative_validator::DeclarativeValidator;
 use mcb_validate::ValidationConfig;
 use mcb_validate::ValidationError;
+use mcb_validate::traits::validator::Validator;
+use mcb_validate::validators::declarative_validator::DeclarativeValidator;
 use tempfile::TempDir;
 
 fn create_test_env(root: &Path) -> io::Result<()> {
@@ -118,9 +118,9 @@ fn test_org020_domain_adapters_violation() -> io::Result<()> {
 
     let validator = DeclarativeValidator::new(root);
     let config = ValidationConfig::new(root);
-    let violations = validator.validate(&config).map_err(|e| {
-        io::Error::new(io::ErrorKind::Other, e.to_string())
-    })?;
+    let violations = validator
+        .validate(&config)
+        .map_err(|e| io::Error::other(e.to_string()))?;
 
     let violation = violations
         .iter()
@@ -131,9 +131,9 @@ fn test_org020_domain_adapters_violation() -> io::Result<()> {
                 "Expected ORG020 violation for adapter in domain",
             )
         })?;
-    let path = violation.file().ok_or_else(|| {
-        io::Error::new(io::ErrorKind::NotFound, "violation has no file")
-    })?;
+    let path = violation
+        .file()
+        .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "violation has no file"))?;
     assert!(path.ends_with("crates/mcb-domain/src/adapters/sql_repository.rs"));
     Ok(())
 }
@@ -155,9 +155,9 @@ fn test_org021_infra_ports_violation() -> io::Result<()> {
 
     let validator = DeclarativeValidator::new(root);
     let config = ValidationConfig::new(root);
-    let violations = validator.validate(&config).map_err(|e| {
-        io::Error::new(io::ErrorKind::Other, e.to_string())
-    })?;
+    let violations = validator
+        .validate(&config)
+        .map_err(|e| io::Error::other(e.to_string()))?;
 
     let violation = violations
         .iter()
@@ -189,23 +189,21 @@ fn test_org019_trait_placement_violation() -> io::Result<()> {
 
     let validator = DeclarativeValidator::new(root);
     let config = ValidationConfig::new(root);
-    let violations = validator.validate(&config).map_err(|e| {
-        io::Error::new(io::ErrorKind::Other, e.to_string())
-    })?;
+    let violations = validator
+        .validate(&config)
+        .map_err(|e| io::Error::other(e.to_string()))?;
 
-    let provider_violation = violations.iter().find(|v| {
-        v.id() == "ORG019"
-            && v.file().map_or(false, |p| p.ends_with("my_provider.rs"))
-    });
+    let provider_violation = violations
+        .iter()
+        .find(|v| v.id() == "ORG019" && v.file().is_some_and(|p| p.ends_with("my_provider.rs")));
     assert!(
         provider_violation.is_some(),
         "Expected ORG019 violation for MyProvider"
     );
 
-    let factory_violation = violations.iter().find(|v| {
-        v.id() == "ORG019"
-            && v.file().map_or(false, |p| p.ends_with("my_factory.rs"))
-    });
+    let factory_violation = violations
+        .iter()
+        .find(|v| v.id() == "ORG019" && v.file().is_some_and(|p| p.ends_with("my_factory.rs")));
     assert!(
         factory_violation.is_none(),
         "Did not expect ORG019 violation for MyProviderFactory"
@@ -213,16 +211,21 @@ fn test_org019_trait_placement_violation() -> io::Result<()> {
     Ok(())
 }
 
-fn write_ast_rule(root: &Path, rule_id: &str, ast_query: &str, include_selector: bool) -> io::Result<()> {
+fn write_ast_rule(
+    root: &Path,
+    rule_id: &str,
+    ast_query: &str,
+    include_selector: bool,
+) -> io::Result<()> {
     let rules_dir = root.join("rules/quality");
     fs::create_dir_all(&rules_dir)?;
 
     let selectors = if include_selector {
-        r#"
+        "
 selectors:
   - language: rust
     node_type: function_item
-"#
+"
     } else {
         ""
     };
@@ -276,9 +279,9 @@ fn test_ast_query_and_selector_execute_together() -> io::Result<()> {
 
     let validator = DeclarativeValidator::new(root);
     let config = ValidationConfig::new(root);
-    let violations = validator.validate(&config).map_err(|e| {
-        io::Error::new(io::ErrorKind::Other, e.to_string())
-    })?;
+    let violations = validator
+        .validate(&config)
+        .map_err(|e| io::Error::other(e.to_string()))?;
 
     let ast_count = violations.iter().filter(|v| v.id() == "AST001").count();
     assert_eq!(

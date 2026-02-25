@@ -387,7 +387,7 @@ fn create_crypto_service(config: &AppConfig) -> Result<CryptoService> {
     let secret_bytes = config.auth.jwt.secret.as_bytes();
     if secret_bytes.len() != 32 {
         return Err(mcb_domain::error::Error::configuration(
-            "JWT secret must be exactly 32 bytes long".to_string(),
+            "JWT secret must be exactly 32 bytes long".to_owned(),
         ));
     }
     let master_key = secret_bytes.to_vec();

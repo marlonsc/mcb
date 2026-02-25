@@ -19,8 +19,8 @@ impl Initializer for GraphQLInitializer {
     async fn after_routes(&self, router: AxumRouter, ctx: &AppContext) -> Result<AxumRouter> {
         let schema = mcb_providers::database::seaorm::graphql::query_root::schema(
             ctx.db.clone(),
-            SCHEMA_DEPTH,
-            SCHEMA_COMPLEXITY,
+            Some(SCHEMA_DEPTH),
+            Some(SCHEMA_COMPLEXITY),
         )
         .map_err(|e| loco_rs::Error::string(&format!("GraphQL schema build failed: {e}")))?;
         ctx.shared_store.insert(schema);
