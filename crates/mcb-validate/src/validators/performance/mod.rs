@@ -14,7 +14,6 @@
 //! - Arc/Mutex overuse
 //! - Inefficient iterator patterns
 
-pub mod constants;
 mod loop_checks;
 mod loops;
 mod pattern_checks;

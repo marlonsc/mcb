@@ -11,7 +11,6 @@
 //! - Long functions
 
 mod checks;
-pub mod constants;
 mod counting;
 mod validator;
 mod violations;

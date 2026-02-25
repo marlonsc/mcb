@@ -10,10 +10,10 @@ use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
 
 use super::RefactoringValidator;
-use super::constants::{
+use super::violation::RefactoringViolation;
+use crate::constants::refactoring::{
     CRATE_PATH_DELIMITER, MIGRATION_TYPE_SUFFIXES, REFACTORING_SKIP_PATTERNS, TYPE_DEFINITION_REGEX,
 };
-use super::violation::RefactoringViolation;
 
 /// Check for same type defined in multiple locations
 pub fn validate_duplicate_definitions(

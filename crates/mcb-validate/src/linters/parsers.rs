@@ -7,8 +7,8 @@
 
 use std::path::Path;
 
-use super::constants::CLIPPY_PREFIX;
 use super::types::{ClippyOutput, LintViolation, RuffViolation};
+use crate::constants::linters::CLIPPY_PREFIX;
 
 /// Execute linter command
 ///
@@ -100,7 +100,7 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
         .filter(|line| !line.trim().is_empty())
         .filter_map(|line| serde_json::from_str::<ClippyOutput>(line).ok())
         .filter(|clippy_output| {
-            clippy_output.reason == super::constants::CLIPPY_REASON_COMPILER_MESSAGE
+            clippy_output.reason == crate::constants::linters::CLIPPY_REASON_COMPILER_MESSAGE
         })
         .filter_map(|clippy_output| {
             let msg = clippy_output.message;
@@ -136,7 +136,10 @@ pub fn find_project_root(files: &[&Path]) -> Option<std::path::PathBuf> {
     if let Some(first_file) = files.first() {
         let mut current = first_file.parent()?;
         loop {
-            if current.join(super::constants::CARGO_TOML_FILENAME).exists() {
+            if current
+                .join(crate::constants::linters::CARGO_TOML_FILENAME)
+                .exists()
+            {
                 return Some(current.to_path_buf());
             }
             current = current.parent()?;

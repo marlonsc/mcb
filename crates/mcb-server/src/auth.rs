@@ -8,15 +8,11 @@
 use argon2::password_hash::PasswordHash;
 use argon2::{Argon2, PasswordVerifier};
 use axum::http::HeaderMap;
-use loco_rs::app::AppContext;
 use loco_rs::errors::Error;
 use loco_rs::prelude::Result;
+use mcb_domain::ports::AuthRepositoryPort;
 use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
-use mcb_providers::database::seaorm::entities::users;
-use sea_orm::ColumnTrait;
-use sea_orm::EntityTrait;
-use sea_orm::QueryFilter;
 
 /// Authenticated admin principal.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -38,25 +34,22 @@ pub struct AdminPrincipal {
 ///
 /// Returns `Unauthorized` when the key is missing or invalid.
 pub async fn authorize_admin_api_key(
-    ctx: &AppContext,
+    auth_repo: &dyn AuthRepositoryPort,
     headers: &HeaderMap,
+    settings: Option<&serde_json::Value>,
 ) -> Result<AdminPrincipal> {
-    let api_key_header = configured_api_key_header(ctx);
+    let api_key_header = configured_api_key_header(settings);
     let api_key = extract_api_key(headers, &api_key_header)?;
 
-    let users_with_keys = users::Entity::find()
-        .filter(users::Column::ApiKeyHash.is_not_null())
-        .all(&ctx.db)
-        .await?;
+    let users_with_keys = auth_repo.find_users_by_api_key_hash(&api_key).await?;
 
-    for user in users_with_keys {
-        if let Some(hash) = user.api_key_hash.as_deref()
-            && verify_api_key(hash, &api_key)?
-        {
+    for user_with_key in users_with_keys {
+        if verify_api_key(&user_with_key.api_key_hash, &api_key)? {
+            let user = user_with_key.user;
             return Ok(AdminPrincipal {
                 user_id: user.id,
                 email: user.email,
-                role: user.role,
+                role: user.role.to_string(),
             });
         }
     }
@@ -64,11 +57,9 @@ pub async fn authorize_admin_api_key(
     Err(Error::Unauthorized("invalid api key".to_owned()))
 }
 
-fn configured_api_key_header(ctx: &AppContext) -> String {
-    ctx.config
-        .settings
-        .as_ref()
-        .and_then(|settings| serde_json::from_value::<AppConfig>(settings.clone()).ok())
+pub(crate) fn configured_api_key_header(settings: Option<&serde_json::Value>) -> String {
+    settings
+        .and_then(|raw_settings| serde_json::from_value::<AppConfig>(raw_settings.clone()).ok())
         .map_or_else(
             || API_KEY_HEADER.to_owned(),
             |cfg| cfg.auth.api_key.header.to_ascii_lowercase(),

@@ -14,7 +14,7 @@ fn noop_detect_fn() -> DetectAllFn {
 async fn test_project_service_creation() {
     let service = ProjectService::new(noop_detect_fn());
     // Verify Debug impl works
-    let debug_str = format!("{:?}", service);
+    let debug_str = format!("{service:?}");
     assert!(debug_str.contains("ProjectService"));
 }
 

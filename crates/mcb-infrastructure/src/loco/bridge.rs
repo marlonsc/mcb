@@ -4,10 +4,13 @@ use std::sync::Arc;
 
 use loco_rs::app::AppContext as LocoAppContext;
 use mcb_domain::ports::{
-    CacheProvider, EventBusProvider, IndexingOperationsInterface, ProjectDetectorService,
+    AuthRepositoryPort, CacheProvider, DashboardQueryPort, EventBusProvider,
+    IndexingOperationsInterface, ProjectDetectorService, ValidationOperationsInterface,
 };
 use mcb_domain::registry::database::resolve_database_repositories;
 use sea_orm::DatabaseConnection;
+
+use mcb_providers::database::seaorm::{SeaOrmAuthRepositoryAdapter, SeaOrmDashboardAdapter};
 
 use crate::cache::CacheAdapter;
 use crate::cache::provider::SharedCacheProvider;
@@ -19,8 +22,44 @@ use crate::di::provider_resolvers::{
 };
 use crate::di::vcs::default_vcs_provider;
 use crate::events::BroadcastEventBus;
-use crate::infrastructure::admin::DefaultIndexingOperations;
+use crate::infrastructure::admin::{DefaultIndexingOperations, DefaultValidationOperations};
 use crate::project::ProjectService;
+
+/// Simple string-based error wrapper for bridge error conversions.
+#[derive(Debug)]
+struct StringError(String);
+
+impl std::fmt::Display for StringError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+
+impl std::error::Error for StringError {}
+
+/// Error type for Loco bridge operations (must be `Send + Sync` for use across await points).
+#[derive(Debug)]
+pub struct BridgeError(Box<dyn std::error::Error + Send + Sync>);
+
+impl std::fmt::Display for BridgeError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+impl std::error::Error for BridgeError {}
+
+impl From<String> for BridgeError {
+    fn from(s: String) -> Self {
+        BridgeError(Box::new(StringError(s)))
+    }
+}
+
+impl From<&str> for BridgeError {
+    fn from(s: &str) -> Self {
+        BridgeError(Box::new(StringError(s.to_owned())))
+    }
+}
 
 /// Composition root for Loco framework integration.
 ///
@@ -47,7 +86,7 @@ impl LocoBridge {
     /// # Errors
     ///
     /// Returns an error if required resources cannot be extracted from the context
-    pub fn new(ctx: &LocoAppContext) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(ctx: &LocoAppContext) -> Result<Self, BridgeError> {
         let settings_value = ctx.config.settings.clone().ok_or(
             "No 'settings' in Loco config. Ensure config/{env}.yaml has a 'settings:' key.",
         )?;
@@ -72,10 +111,11 @@ impl LocoBridge {
     /// # Returns
     ///
     /// A `ServiceDependencies` struct ready for `DomainServicesFactory::create_services()`
-    #[must_use]
-    pub fn build_service_dependencies(
-        &self,
-    ) -> Result<ServiceDependencies, Box<dyn std::error::Error>> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if provider resolution, database repositories, or crypto setup fails.
+    pub fn build_service_dependencies(&self) -> Result<ServiceDependencies, BridgeError> {
         let embedding_provider = EmbeddingProviderResolver::new(Arc::clone(&self.config))
             .resolve_from_config()
             .map_err(|e| format!("Embedding provider: {e}"))?;
@@ -89,6 +129,8 @@ impl LocoBridge {
         let event_bus: Arc<dyn EventBusProvider> = Arc::new(BroadcastEventBus::new());
         let indexing_ops: Arc<dyn IndexingOperationsInterface> =
             Arc::new(DefaultIndexingOperations::new());
+        let validation_ops: Arc<dyn ValidationOperationsInterface> =
+            Arc::new(DefaultValidationOperations::new());
 
         let project_id = current_project_id()?;
         let db_arc = Arc::new(self.db.clone());
@@ -103,7 +145,7 @@ impl LocoBridge {
         let detect_fn: crate::project::DetectAllFn = Arc::new(|path: &std::path::Path| {
             let path = path.to_path_buf();
             Box::pin(
-                async move { mcb_providers::project_detection::detect_all_projects(&path).await },
+                async move { mcb_providers::project_detection::detect_all_projects(&path).await }, // CA-EXCEPTION: DI composition root wires concrete provider
             )
         });
         let project_service: Arc<dyn ProjectDetectorService> =
@@ -120,6 +162,7 @@ impl LocoBridge {
             vector_store_provider,
             language_chunker,
             indexing_ops,
+            validation_ops,
             event_bus,
             memory_repository: repos.memory,
             agent_repository: repos.agent,
@@ -150,23 +193,38 @@ impl LocoBridge {
     /// # Errors
     ///
     /// Returns an error if any step of the composition pipeline fails
-    pub async fn build_mcp_server(&self, _flow: ()) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn build_mcp_server(&self, _flow: ()) -> Result<(), BridgeError> {
         let deps = self.build_service_dependencies()?;
         DomainServicesFactory::create_services(deps)
             .await
             .map_err(|e| format!("Domain services: {e}"))?;
         Ok(())
     }
+
+    /// Build dashboard and auth ports from Loco DB for server state.
+    ///
+    /// Centralizes construction of `DashboardQueryPort` and `AuthRepositoryPort` adapters
+    /// so all Loco-exposed services go through this bridge (single composition root).
+    #[must_use]
+    pub fn build_server_state_ports(
+        &self,
+    ) -> (Arc<dyn DashboardQueryPort>, Arc<dyn AuthRepositoryPort>) {
+        let dashboard =
+            Arc::new(SeaOrmDashboardAdapter::new(self.db.clone())) as Arc<dyn DashboardQueryPort>;
+        let auth = Arc::new(SeaOrmAuthRepositoryAdapter::new(self.db.clone()))
+            as Arc<dyn AuthRepositoryPort>;
+        (dashboard, auth)
+    }
 }
 
-fn current_project_id() -> Result<String, Box<dyn std::error::Error>> {
+fn current_project_id() -> Result<String, BridgeError> {
     std::env::current_dir()
         .ok()
         .and_then(|p| p.file_name().and_then(|n| n.to_str()).map(String::from))
         .ok_or_else(|| "Cannot determine project ID from current directory".into())
 }
 
-fn create_crypto_service(config: &AppConfig) -> Result<CryptoService, Box<dyn std::error::Error>> {
+fn create_crypto_service(config: &AppConfig) -> Result<CryptoService, BridgeError> {
     let secret_bytes = config.auth.jwt.secret.as_bytes();
     let master_key = if secret_bytes.is_empty() {
         use std::collections::hash_map::DefaultHasher;
@@ -196,5 +254,5 @@ fn create_crypto_service(config: &AppConfig) -> Result<CryptoService, Box<dyn st
         secret_bytes.to_vec()
     };
 
-    CryptoService::new(master_key).map_err(|e| e.into())
+    CryptoService::new(master_key).map_err(|e| BridgeError::from(e.to_string()))
 }

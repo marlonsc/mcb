@@ -1,198 +1,73 @@
-//! Admin panel configuration and dashboard endpoints.
-//!
-//! Serves sea-orm-pro TOML configs as JSON for the admin frontend,
-//! plus MCB-specific dashboard queries (observation counts, session stats).
-
-use axum::http::HeaderMap;
+use crate::{constants::admin::CONFIG_ROOT, state::McbState};
+use axum::extract::Extension;
 use loco_rs::prelude::*;
-use sea_orm::{
-    DatabaseBackend, DbConn, DeriveColumn, EnumIter, FromQueryResult, QueryOrder, QuerySelect,
-    sea_query::{Asterisk, Expr, Func},
-};
-use sea_orm_pro::ConfigParser;
-
 use serde::{Deserialize, Serialize};
+#[derive(Debug, Deserialize, Serialize)]
+pub struct DashboardBody {
+    pub graph: String,
+    pub limit: Option<usize>,
+}
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct Datum {
+    pub key: String,
+    pub val: i64,
+}
 
-use mcb_providers::database::seaorm::entities::{agent_sessions, observations, tool_calls};
-
-use crate::constants::admin::CONFIG_ROOT;
-
-/// Returns the sea-orm-pro admin panel configuration as JSON.
-///
-/// In development the config reloads from disk on every request so edits
-/// are reflected immediately.
-///
-/// # Errors
-///
-/// Returns an error if the config files under `config/pro_admin/` cannot be parsed.
-pub async fn config(State(ctx): State<AppContext>, headers: HeaderMap) -> Result<Response> {
-    crate::auth::authorize_admin_api_key(&ctx, &headers).await?;
-    let config = ConfigParser::new()
+fn datum(key: String, val: i64) -> Datum {
+    Datum { key, val }
+}
+pub async fn config(Extension(_state): Extension<McbState>) -> Result<Response> {
+    let config = sea_orm_pro::ConfigParser::new()
         .load_config(CONFIG_ROOT)
         .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
     format::json(config)
 }
-
-/// Request body for the `/admin/dashboard` endpoint.
-#[derive(Debug, Deserialize, Serialize)]
-pub struct DashboardBody {
-    /// Dashboard graph identifier (e.g. `"observations_by_month"`).
-    pub graph: String,
-    /// Optional start of the date range filter.
-    pub from: Option<sea_orm::prelude::DateTime>,
-    /// Optional end of the date range filter.
-    pub to: Option<sea_orm::prelude::DateTime>,
-}
-
-/// A single key/value data-point returned by dashboard queries.
-#[derive(Debug, Deserialize, Serialize, FromQueryResult, PartialEq)]
-pub struct Datum {
-    /// Grouping label (date bucket, tool name, etc.).
-    pub key: String,
-    /// Aggregated count for the group.
-    pub val: i32,
-}
-
-/// `SeaORM` column selector for [`Datum`] projections.
-#[derive(Copy, Clone, Debug, EnumIter, DeriveColumn)]
-pub enum DatumColumn {
-    /// Maps to [`Datum::key`].
-    Key,
-    /// Maps to [`Datum::val`].
-    Val,
-}
-
-/// Executes a named dashboard query and returns the result as JSON.
-///
-/// Supported graphs: `observations_by_month`, `sessions_by_day`,
-/// `tool_calls_by_tool`.
-///
-/// # Errors
-///
-/// Returns an error if the database query fails or the graph name is unknown.
 pub async fn dashboard(
-    State(ctx): State<AppContext>,
-    headers: HeaderMap,
+    Extension(state): Extension<McbState>,
     Json(body): Json<DashboardBody>,
 ) -> Result<Response> {
-    crate::auth::authorize_admin_api_key(&ctx, &headers).await?;
-    let db = &ctx.db;
+    let limit = body.limit.unwrap_or(30);
     let data = match body.graph.as_str() {
-        "observations_by_month" => {
-            observations::Entity::find()
-                .select_only()
-                .column_as(
-                    cast_as_year_month(db, observations::Column::CreatedAt),
-                    DatumColumn::Key,
-                )
-                .column_as(
-                    Expr::expr(Func::cast_as(
-                        Func::count(Expr::col(Asterisk)),
-                        int_keyword(db),
-                    )),
-                    DatumColumn::Val,
-                )
-                .group_by(Expr::col(DatumColumn::Key))
-                .order_by_asc(Expr::col(DatumColumn::Key))
-                .into_model::<Datum>()
-                .all(db)
-                .await?
-        }
-        "sessions_by_day" => {
-            agent_sessions::Entity::find()
-                .select_only()
-                .column_as(
-                    cast_as_day(db, agent_sessions::Column::StartedAt),
-                    DatumColumn::Key,
-                )
-                .column_as(
-                    Expr::expr(Func::cast_as(
-                        Func::count(Expr::col(Asterisk)),
-                        int_keyword(db),
-                    )),
-                    DatumColumn::Val,
-                )
-                .group_by(Expr::col(DatumColumn::Key))
-                .order_by_asc(Expr::col(DatumColumn::Key))
-                .into_model::<Datum>()
-                .all(db)
-                .await?
-        }
-        "tool_calls_by_tool" => {
-            tool_calls::Entity::find()
-                .select_only()
-                .column_as(Expr::col(tool_calls::Column::ToolName), DatumColumn::Key)
-                .column_as(
-                    Expr::expr(Func::cast_as(
-                        Func::count(Expr::col(Asterisk)),
-                        int_keyword(db),
-                    )),
-                    DatumColumn::Val,
-                )
-                .group_by(Expr::col(DatumColumn::Key))
-                .order_by_desc(Expr::col(DatumColumn::Val))
-                .into_model::<Datum>()
-                .all(db)
-                .await?
+        "observations_by_month" => state
+            .dashboard
+            .get_observations_by_month(limit)
+            .await
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?
+            .into_iter()
+            .map(|it| datum(it.month, it.count))
+            .collect::<Vec<_>>(),
+        "sessions_by_day" | "observations_by_day" => state
+            .dashboard
+            .get_observations_by_day(limit)
+            .await
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?
+            .into_iter()
+            .map(|it| datum(it.day, it.count))
+            .collect::<Vec<_>>(),
+        "tool_calls_by_tool" => state
+            .dashboard
+            .get_tool_call_counts()
+            .await
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?
+            .into_iter()
+            .map(|it| datum(it.tool_name, it.count))
+            .collect::<Vec<_>>(),
+        "agent_session_stats" => {
+            let stats = state
+                .dashboard
+                .get_agent_session_stats()
+                .await
+                .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+            vec![
+                datum("total_sessions".to_owned(), stats.total_sessions),
+                datum("total_agents".to_owned(), stats.total_agents),
+            ]
         }
         _ => not_found()?,
     };
     format::json(data)
 }
 
-fn cast_as_year_month(db: &DbConn, col: impl sea_orm::sea_query::IntoColumnRef) -> Expr {
-    let col_ref = col.into_column_ref();
-    let func = match db.get_database_backend() {
-        DatabaseBackend::MySql => Func::cust(sea_orm::sea_query::Alias::new("DATE_FORMAT"))
-            .arg(Expr::expr(
-                Func::cust("FROM_UNIXTIME").arg(Expr::col(col_ref.clone())),
-            ))
-            .arg("%Y-%m"),
-        DatabaseBackend::Postgres => Func::cust(sea_orm::sea_query::Alias::new("TO_CHAR"))
-            .arg(Expr::expr(
-                Func::cust("to_timestamp").arg(Expr::col(col_ref)),
-            ))
-            .arg("YYYY-MM"),
-        // i64 Unix timestamps require the 'unixepoch' modifier for SQLite STRFTIME.
-        DatabaseBackend::Sqlite | _ => Func::cust(sea_orm::sea_query::Alias::new("STRFTIME"))
-            .arg("%Y-%m")
-            .arg(Expr::col(col_ref))
-            .arg("unixepoch"),
-    };
-    Expr::expr(func)
-}
-
-fn cast_as_day(db: &DbConn, col: impl sea_orm::sea_query::IntoColumnRef) -> Expr {
-    let col_ref = col.into_column_ref();
-    let func = match db.get_database_backend() {
-        DatabaseBackend::MySql => Func::cust(sea_orm::sea_query::Alias::new("DATE_FORMAT"))
-            .arg(Expr::expr(
-                Func::cust("FROM_UNIXTIME").arg(Expr::col(col_ref.clone())),
-            ))
-            .arg("%Y-%m-%d"),
-        DatabaseBackend::Postgres => Func::cust(sea_orm::sea_query::Alias::new("TO_CHAR"))
-            .arg(Expr::expr(
-                Func::cust("to_timestamp").arg(Expr::col(col_ref)),
-            ))
-            .arg("YYYY-MM-DD"),
-        // i64 Unix timestamps require the 'unixepoch' modifier for SQLite STRFTIME.
-        DatabaseBackend::Sqlite | _ => Func::cust(sea_orm::sea_query::Alias::new("STRFTIME"))
-            .arg("%Y-%m-%d")
-            .arg(Expr::col(col_ref))
-            .arg("unixepoch"),
-    };
-    Expr::expr(func)
-}
-
-fn int_keyword(db: &DbConn) -> impl sea_orm::sea_query::IntoIden {
-    match db.get_database_backend() {
-        DatabaseBackend::MySql => sea_orm::sea_query::Alias::new("SIGNED INTEGER"),
-        DatabaseBackend::Postgres => sea_orm::sea_query::Alias::new("INT4"),
-        DatabaseBackend::Sqlite | _ => sea_orm::sea_query::Alias::new("INT"),
-    }
-}
-
-/// Registers `/admin/config` and `/admin/dashboard` routes.
 pub fn routes() -> Routes {
     Routes::new()
         .prefix("admin")

@@ -94,7 +94,7 @@ pub use exports::*;
 
 use std::path::{Path, PathBuf};
 
-use crate::linters::constants::CARGO_TOML_FILENAME;
+use crate::constants::linters::CARGO_TOML_FILENAME;
 use derive_more::Display;
 use thiserror::Error;
 

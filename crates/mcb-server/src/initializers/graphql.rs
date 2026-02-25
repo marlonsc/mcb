@@ -1,3 +1,10 @@
+//! # CA Exception: Seaography GraphQL Initializer
+//!
+//! This initializer is a declared Clean Architecture exception.
+//! Seaography auto-generates GraphQL schema from `SeaORM` entities,
+//! requiring direct `DatabaseConnection` access via `ctx.db`.
+//! See docs/architecture/ARCHITECTURE.md for rationale.
+//!
 //! GraphQL schema initializer — builds the Seaography schema at startup.
 
 use async_trait::async_trait;

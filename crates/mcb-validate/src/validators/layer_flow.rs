@@ -10,8 +10,8 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use crate::config::LayerFlowRulesConfig;
+use crate::constants::linters::CARGO_TOML_FILENAME;
 use crate::define_violations;
-use crate::linters::constants::CARGO_TOML_FILENAME;
 use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
 

@@ -1,12 +1,12 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use super::constants::MAX_UNRELATED_STRUCTS_PER_FILE;
 use super::validate_decl_member_count;
 use super::{MemberCountInput, MemberCountKind, make_member_count_violation};
 use crate::Result;
 use crate::Severity;
 use crate::ValidationConfig;
+use crate::constants::solid::MAX_UNRELATED_STRUCTS_PER_FILE;
 use crate::pattern_registry::required_pattern;
 use crate::utils::source::{count_block_lines, for_each_rust_file, structs_seem_related};
 use crate::validators::solid::violation::SolidViolation;

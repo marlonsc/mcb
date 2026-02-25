@@ -32,11 +32,9 @@
 //! ```
 
 pub mod analyzer;
-pub mod constants;
 pub mod detector;
 pub mod fingerprint;
 pub mod thresholds;
-pub(crate) mod utils;
 pub mod violation;
 
 pub use self::analyzer::{DuplicationAnalyzer, DuplicationStats};

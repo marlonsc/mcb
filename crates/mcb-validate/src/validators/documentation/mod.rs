@@ -5,7 +5,6 @@
 //! - Module-level documentation (//!)
 //! - Example code blocks for traits
 
-pub mod constants;
 mod helpers;
 mod validator;
 

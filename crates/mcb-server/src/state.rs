@@ -13,7 +13,7 @@ use crate::mcp_server::McpServer;
 
 /// Application state for MCB server controllers.
 ///
-/// Contains only domain port references - no framework types (AppContext, DatabaseConnection, loco_rs).
+/// Contains only domain port references - no framework types (`AppContext`, `DatabaseConnection`, `loco_rs`).
 /// This struct is designed to be injected into Axum handlers via Extension.
 ///
 /// # Architecture
@@ -31,7 +31,7 @@ pub struct McbState {
 }
 
 impl McbState {
-    /// Create new McbState with all required ports.
+    /// Create new `McbState` with all required ports.
     ///
     /// # Arguments
     /// * `dashboard` - Dashboard query port for admin operations
@@ -39,7 +39,7 @@ impl McbState {
     /// * `mcp_server` - MCP server instance
     ///
     /// # Returns
-    /// A new McbState instance ready for injection into handlers
+    /// A new `McbState` instance ready for injection into handlers
     #[must_use]
     pub fn new(
         dashboard: Arc<dyn DashboardQueryPort>,
@@ -56,8 +56,6 @@ impl McbState {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn test_mcb_state_creation() {
         // Tests will be added when mock ports are available

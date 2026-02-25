@@ -5,14 +5,14 @@ use std::path::Path;
 
 use super::super::violation::NamingViolation;
 use crate::apply_ca_rule;
-use crate::constants::common::STANDARD_SKIP_FILES;
-use crate::traits::violation::Severity;
-use crate::validators::naming::constants::{
+use crate::constants::ca::{
     CA_ADAPTERS_DIR, CA_ADAPTERS_REPOSITORY_DIR, CA_DI_DIR, CA_DOMAIN_PROVIDER_KEYWORD,
     CA_DOMAIN_REPOSITORY_KEYWORD, CA_HANDLER_DIRS, CA_HANDLER_KEYWORD, CA_INFRA_ADAPTER_KEYWORD,
     CA_INFRA_IMPL_SUFFIX, CA_MODULE_KEYWORD, CA_PORTS_DIR, CA_PORTS_PROVIDERS_DIR,
     CA_REPOSITORIES_DIR,
 };
+use crate::constants::common::STANDARD_SKIP_FILES;
+use crate::traits::violation::Severity;
 
 fn ca_violation(
     path: &Path,

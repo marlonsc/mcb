@@ -12,8 +12,10 @@ use crate::scan::for_each_scan_file;
 use crate::thresholds::thresholds;
 use crate::{Result, Severity};
 
-use super::constants::{DI_CONTAINER_CONTAINS, DI_CONTAINER_SUFFIXES, NESTING_PROXIMITY_THRESHOLD};
 use super::{KissValidator, KissViolation};
+use crate::constants::kiss::{
+    DI_CONTAINER_CONTAINS, DI_CONTAINER_SUFFIXES, NESTING_PROXIMITY_THRESHOLD,
+};
 
 impl KissValidator {
     fn update_test_module_tracking(

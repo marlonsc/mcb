@@ -11,7 +11,6 @@
 //! - Deleted module references
 //! - Dead code from refactoring
 
-pub mod constants;
 mod duplicates;
 mod modules;
 mod tests;

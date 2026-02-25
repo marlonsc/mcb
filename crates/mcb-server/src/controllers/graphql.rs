@@ -1,3 +1,10 @@
+//! # CA Exception: Seaography GraphQL
+//!
+//! This controller is a declared Clean Architecture exception.
+//! Seaography auto-generates GraphQL schema from `SeaORM` entities,
+//! requiring direct `DatabaseConnection` access via `ctx.db`.
+//! See docs/architecture/ARCHITECTURE.md for rationale.
+//!
 //! GraphQL playground and handler endpoints for Seaography auto-API.
 
 use async_graphql::{
@@ -5,9 +12,11 @@ use async_graphql::{
     http::{GraphQLPlaygroundConfig, playground_source},
 };
 use async_graphql_axum::GraphQLRequest;
-use axum::http::HeaderMap;
+use axum::{extract::Extension, http::HeaderMap};
 use loco_rs::prelude::*;
 use seaography::async_graphql;
+
+use crate::state::McbState;
 
 async fn graphql_playground() -> Result<Response> {
     let config = GraphQLPlaygroundConfig::new("/api/graphql").with_header("X-API-Key", "AUTO_KEY");
@@ -21,14 +30,19 @@ async fn graphql_playground() -> Result<Response> {
 }
 
 async fn graphql_handler(
+    Extension(state): Extension<McbState>,
     State(ctx): State<AppContext>,
     headers: HeaderMap,
     gql_req: GraphQLRequest,
 ) -> std::result::Result<async_graphql_axum::GraphQLResponse, (axum::http::StatusCode, &'static str)>
 {
-    crate::auth::authorize_admin_api_key(&ctx, &headers)
-        .await
-        .map_err(|_| (axum::http::StatusCode::UNAUTHORIZED, "Unauthorized"))?;
+    crate::auth::authorize_admin_api_key(
+        state.auth_repo.as_ref(),
+        &headers,
+        ctx.config.settings.as_ref(),
+    )
+    .await
+    .map_err(|_| (axum::http::StatusCode::UNAUTHORIZED, "Unauthorized"))?;
 
     let mut gql_req = gql_req.into_inner();
     gql_req = gql_req.data(seaography::UserContext { user_id: 0 });

@@ -9,7 +9,6 @@
 //! - Modules/Files: `snake_case`
 
 mod checks;
-pub mod constants;
 mod validator;
 mod violation;
 

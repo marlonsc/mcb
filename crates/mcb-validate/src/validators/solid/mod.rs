@@ -2,7 +2,6 @@
 //!
 //! **Documentation**: [`docs/modules/validate.md#solid`](../../../../../docs/modules/validate.md#solid)
 
-pub mod constants;
 mod isp;
 mod lsp;
 mod ocp;

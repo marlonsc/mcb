@@ -2,7 +2,6 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
 //!
-pub mod constants;
 pub mod domain_purity;
 pub mod duplicate_strings;
 pub mod file_placement;

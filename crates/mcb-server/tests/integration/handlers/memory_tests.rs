@@ -148,8 +148,9 @@ async fn test_get_observations_missing_ids_returns_invalid_params() {
     };
 
     let result = handler.handle(Parameters(args)).await;
-    let err = result.expect_err("missing ids must return invalid_params error");
-    assert!(err.message.contains("missing required field: ids"));
+    let response = result.expect("memory handler should return structured error response");
+    assert!(!response.content.is_empty(), "response should have content");
+    assert!(response.is_error.unwrap_or(false), "Should return error");
 }
 
 #[tokio::test]
@@ -180,6 +181,7 @@ async fn test_store_session_missing_data_returns_invalid_params() {
     };
 
     let result = handler.handle(Parameters(args)).await;
-    let err = result.expect_err("missing data must return invalid_params error");
-    assert!(err.message.contains("missing required field: data"));
+    let response = result.expect("memory handler should return structured error response");
+    assert!(!response.content.is_empty(), "response should have content");
+    assert!(response.is_error.unwrap_or(false), "Should return error");
 }

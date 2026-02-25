@@ -11,7 +11,6 @@
 
 mod block_on;
 mod blocking;
-pub mod constants;
 mod helpers;
 mod mutex;
 mod spawn;

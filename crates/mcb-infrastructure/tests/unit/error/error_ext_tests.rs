@@ -7,6 +7,7 @@ use mcb_infrastructure::error_ext::{ErrorContext, infra};
 use rstest::rstest;
 
 #[rstest]
+#[allow(clippy::wildcard_enum_match_arm)]
 fn test_error_context_extension() {
     let io_error = io::Error::new(io::ErrorKind::NotFound, "file not found");
 

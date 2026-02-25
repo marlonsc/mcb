@@ -4,7 +4,7 @@
 use regex::Regex;
 
 use super::KissValidator;
-use super::constants::SELF_PARAM_VARIANTS;
+use crate::constants::kiss::SELF_PARAM_VARIANTS;
 use crate::pattern_registry::compile_regex;
 
 impl KissValidator {
