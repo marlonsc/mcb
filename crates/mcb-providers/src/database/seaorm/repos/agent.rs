@@ -4,9 +4,6 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
-
-const FALLBACK_AGENT_MODEL: &str = "unknown";
-const FALLBACK_AGENT_PROMPT: &str = "auto-created for activity logging";
 use mcb_domain::entities::agent::{
     AgentSession, AgentSessionStatus, AgentType, Checkpoint, Delegation, ToolCall,
 };
@@ -22,6 +19,9 @@ use sea_orm::{
 use crate::database::seaorm::entities::{
     agent_session, checkpoint, delegation, organization, project, tool_call,
 };
+
+const FALLBACK_AGENT_MODEL: &str = "unknown";
+const FALLBACK_AGENT_PROMPT: &str = "auto-created for activity logging";
 
 pub struct SeaOrmAgentRepository {
     db: Arc<DatabaseConnection>,
