@@ -99,7 +99,7 @@ async fn test_highlight_fallback_to_plain_text() {
     let code = "some code";
     let result = service.highlight(code, "plaintext").await;
 
-    let err = result.expect_err("plaintext should not be a supported highlight language");
+    let _err = result.expect_err("plaintext should not be a supported highlight language");
 }
 
 #[tokio::test]

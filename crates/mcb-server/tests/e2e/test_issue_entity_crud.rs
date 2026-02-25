@@ -30,8 +30,8 @@ fn test_issue_payload(project_id: &str, title: &str) -> serde_json::Value {
         "created_by": "test-user",
         "title": title,
         "description": format!("Description for {title}"),
-        "issue_type": "task",
-        "status": "open",
+        "issue_type": "Task",
+        "status": "Open",
         "priority": 2,
         "labels": [],
         "notes": "",
@@ -189,7 +189,7 @@ async fn golden_issue_update_status() {
     assert!(!issue_id.is_empty(), "created issue id must be present");
 
     let mut updated = created.clone();
-    updated["status"] = json!("in_progress");
+    updated["status"] = json!("InProgress");
 
     let mut update_args = base_args(IssueEntityAction::Update, IssueEntityResource::Issue);
     update_args.data = Some(updated);
@@ -216,7 +216,7 @@ async fn golden_issue_update_status() {
     let body = result_json(&get_result.expect("issue get after update response"));
     assert_eq!(
         body.get("status").and_then(serde_json::Value::as_str),
-        Some("in_progress")
+        Some("InProgress")
     );
 }
 
@@ -548,7 +548,7 @@ async fn golden_issue_label_assign_to_issue() {
         .expect("labels response should be a JSON array")
         .clone();
     let has_label = labels.iter().any(|entry| {
-        entry.get("label_id").and_then(serde_json::Value::as_str) == Some(label_id.as_str())
+        entry.get("id").and_then(serde_json::Value::as_str) == Some(label_id.as_str())
     });
     assert!(
         has_label,

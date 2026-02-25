@@ -50,6 +50,12 @@ pub struct McpServer {
     runtime_defaults: RuntimeDefaults,
 }
 
+impl std::fmt::Debug for McpServer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("McpServer").finish()
+    }
+}
+
 /// Entity repositories used by MCP entity handlers.
 #[derive(Clone)]
 pub struct McpEntityRepositories {

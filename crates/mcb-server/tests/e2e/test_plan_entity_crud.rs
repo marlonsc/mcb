@@ -42,7 +42,7 @@ fn test_version_payload(plan_id: &str, version_number: i64) -> serde_json::Value
         "org_id": "",
         "plan_id": plan_id,
         "version_number": version_number,
-        "content_json": json!({"steps": ["step-1", "step-2"]}).to_owned(),
+        "content_json": "{\"steps\":[\"step-1\",\"step-2\"]}",
         "change_summary": format!("Version {version_number} changes"),
         "created_by": "test-user",
         "created_at": 0

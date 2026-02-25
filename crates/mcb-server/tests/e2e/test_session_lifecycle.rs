@@ -34,11 +34,11 @@ fn result_json(res: &rmcp::model::CallToolResult) -> serde_json::Value {
 /// Create a session and return the parsed JSON response.
 async fn create_session(server: &mcb_server::mcp_server::McpServer) -> serde_json::Value {
     let mut args = base_args(SessionAction::Create);
-    args.agent_type = Some("orchestrator".to_owned());
+    args.agent_type = Some("sisyphus".to_owned());
     args.project_id = Some("test-project-session".to_owned());
     args.data = Some(json!({
         "model": "claude-3-opus",
-        "agent_type": "orchestrator",
+        "agent_type": "sisyphus",
         "project_id": "test-project-session",
         "prompt_summary": "Golden test session"
     }));
@@ -65,7 +65,7 @@ async fn golden_session_create_and_get() {
         .as_str()
         .expect("created response must contain session_id");
     assert_eq!(created["status"].as_str(), Some("active"));
-    assert_eq!(created["agent_type"].as_str(), Some("orchestrator"));
+    assert_eq!(created["agent_type"].as_str(), Some("sisyphus"));
 
     // Get the session by id
     let mut get_args = base_args(SessionAction::Get);
@@ -86,7 +86,7 @@ async fn golden_session_create_and_get() {
 
     let fetched = result_json(&get_res);
     assert_eq!(fetched["id"].as_str(), Some(session_id));
-    assert_eq!(fetched["agent_type"].as_str(), Some("orchestrator"));
+    assert_eq!(fetched["agent_type"].as_str(), Some("sisyphus"));
     assert_eq!(fetched["model"].as_str(), Some("claude-3-opus"));
     assert_eq!(fetched["status"].as_str(), Some("active"));
     assert!(

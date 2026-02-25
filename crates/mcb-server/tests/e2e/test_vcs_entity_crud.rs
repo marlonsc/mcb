@@ -58,13 +58,14 @@ async fn create_repo(
 /// Helper: create a branch and return the JSON response body.
 async fn create_branch(
     server: &mcb_server::mcp_server::McpServer,
+    org_id: &str,
     repo_id: &str,
     branch_id: &str,
     branch_name: &str,
 ) -> serde_json::Value {
     let payload = json!({
         "id": branch_id,
-        "org_id": "default",
+        "org_id": org_id,
         "created_at": 0,
         "repository_id": repo_id,
         "name": branch_name,
@@ -74,6 +75,7 @@ async fn create_branch(
     });
 
     let mut args = base_args(VcsEntityAction::Create, VcsEntityResource::Branch);
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(payload);
 
     let result = server.vcs_entity_handler().handle(Parameters(args)).await;
@@ -291,13 +293,14 @@ async fn golden_vcs_branch_create_and_get() {
     let branch_id = "golden-vcs-branch-cg-1";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let created = create_branch(&server, repo_id, branch_id, "feat/golden-branch").await;
+    let created = create_branch(&server, org_id, repo_id, branch_id, "feat/golden-branch").await;
     assert_eq!(
         created.get("id").and_then(serde_json::Value::as_str),
         Some(branch_id)
     );
 
     let mut get_args = base_args(VcsEntityAction::Get, VcsEntityResource::Branch);
+    get_args.org_id = Some(org_id.to_owned());
     get_args.id = Some(branch_id.to_owned());
     let get_result = server
         .vcs_entity_handler()
@@ -330,10 +333,18 @@ async fn golden_vcs_branch_list() {
     let repo_id = "golden-vcs-repo-bl";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let _ = create_branch(&server, repo_id, "golden-vcs-branch-list-1", "main").await;
-    let _ = create_branch(&server, repo_id, "golden-vcs-branch-list-2", "develop").await;
+    let _ = create_branch(&server, org_id, repo_id, "golden-vcs-branch-list-1", "main").await;
+    let _ = create_branch(
+        &server,
+        org_id,
+        repo_id,
+        "golden-vcs-branch-list-2",
+        "develop",
+    )
+    .await;
 
     let mut list_args = base_args(VcsEntityAction::List, VcsEntityResource::Branch);
+    list_args.org_id = Some(org_id.to_owned());
     list_args.repository_id = Some(repo_id.to_owned());
     let list_result = server
         .vcs_entity_handler()
@@ -364,7 +375,7 @@ async fn golden_vcs_branch_delete() {
     let branch_id = "golden-vcs-branch-del-1";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let _ = create_branch(&server, repo_id, branch_id, "feat/to-delete").await;
+    let _ = create_branch(&server, org_id, repo_id, branch_id, "feat/to-delete").await;
 
     let mut delete_args = base_args(VcsEntityAction::Delete, VcsEntityResource::Branch);
     delete_args.id = Some(branch_id.to_owned());
@@ -378,6 +389,7 @@ async fn golden_vcs_branch_delete() {
     );
 
     let mut get_args = base_args(VcsEntityAction::Get, VcsEntityResource::Branch);
+    get_args.org_id = Some(org_id.to_owned());
     get_args.id = Some(branch_id.to_owned());
     let get_result = server
         .vcs_entity_handler()
@@ -400,7 +412,7 @@ async fn golden_vcs_worktree_create_and_get() {
     let worktree_id = "golden-vcs-wt-cg-1";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let _ = create_branch(&server, repo_id, branch_id, "main").await;
+    let _ = create_branch(&server, org_id, repo_id, branch_id, "main").await;
     let created = create_worktree(&server, repo_id, branch_id, worktree_id).await;
     assert_eq!(
         created.get("id").and_then(serde_json::Value::as_str),
@@ -442,7 +454,7 @@ async fn golden_vcs_worktree_list() {
     let branch_id = "golden-vcs-branch-wl";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let _ = create_branch(&server, repo_id, branch_id, "main").await;
+    let _ = create_branch(&server, org_id, repo_id, branch_id, "main").await;
     let _ = create_worktree(&server, repo_id, branch_id, "golden-vcs-wt-list-1").await;
     let _ = create_worktree(&server, repo_id, branch_id, "golden-vcs-wt-list-2").await;
 
@@ -478,7 +490,7 @@ async fn golden_vcs_worktree_delete() {
     let worktree_id = "golden-vcs-wt-del-1";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let _ = create_branch(&server, repo_id, branch_id, "main").await;
+    let _ = create_branch(&server, org_id, repo_id, branch_id, "main").await;
     let _ = create_worktree(&server, repo_id, branch_id, worktree_id).await;
 
     let mut delete_args = base_args(VcsEntityAction::Delete, VcsEntityResource::Worktree);
