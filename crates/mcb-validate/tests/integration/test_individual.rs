@@ -16,5 +16,6 @@ fn test_just_dependency() {
     let registry = ValidatorRegistry::standard_for(&workspace_root);
     let result = registry.validate_named(&config, &["dependency"]);
     println!("Result: {:?}", result.as_ref().map(Vec::len));
-    assert!(result.is_ok());
+    let violations = result.expect("dependency validator should run");
+    assert!(violations.iter().all(|v| !v.id().is_empty()));
 }

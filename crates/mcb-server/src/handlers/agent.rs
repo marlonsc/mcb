@@ -116,6 +116,7 @@ impl AgentHandler {
                         .get("prompt")
                         .and_then(Value::as_str)
                         .map(str::to_owned)
+                        // INTENTIONAL: Optional prompt field; empty string is valid default
                         .unwrap_or_default(),
                     prompt_embedding_id: data
                         .get("prompt_embedding_id")

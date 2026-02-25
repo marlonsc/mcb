@@ -28,7 +28,7 @@ async fn test_builder_all_services_provided() -> Result<(), Box<dyn std::error::
         .with_org_entity_repository(services.org_entity_repository)
         .build();
 
-    assert!(result.is_ok());
+    result.expect("builder with all services should succeed");
     Ok(())
 }
 
@@ -45,11 +45,11 @@ async fn test_builder_missing_indexing_service() -> Result<(), Box<dyn std::erro
         .with_vcs_provider(services.vcs_provider)
         .build();
 
-    assert!(result.is_err());
+    let err = result.expect_err("builder missing indexing service should fail");
     assert!(matches!(
-        result,
-        Err(BuilderError::MissingDependency(dep)) if dep == "indexing service"
-    ));
+        err,
+        BuilderError::MissingDependency(dep) if dep == "indexing service"
+    ), "expected MissingDependency(indexing service), got: {err:?}");
     Ok(())
 }
 
@@ -66,22 +66,24 @@ async fn test_builder_missing_vcs_provider() -> Result<(), Box<dyn std::error::E
         .with_agent_session_service(services.agent_session_service)
         .build();
 
-    assert!(result.is_err());
+    let err = result.expect_err("builder missing vcs provider should fail");
     assert!(matches!(
-        result,
-        Err(BuilderError::MissingDependency(dep)) if dep == "vcs provider"
-    ));
+        err,
+        BuilderError::MissingDependency(dep) if dep == "vcs provider"
+    ), "expected MissingDependency(vcs provider), got: {err:?}");
     Ok(())
 }
 
 #[test]
 fn test_builder_empty() {
     let result = McpServerBuilder::new().build();
-    assert!(result.is_err());
+    let err = result.expect_err("empty builder should fail");
+    assert!(matches!(err, BuilderError::MissingDependency(_)), "expected MissingDependency, got: {err:?}");
 }
 
 #[test]
 fn test_builder_default() {
     let result = McpServerBuilder::default().build();
-    assert!(result.is_err());
+    let err = result.expect_err("default builder should fail");
+    assert!(matches!(err, BuilderError::MissingDependency(_)), "expected MissingDependency, got: {err:?}");
 }

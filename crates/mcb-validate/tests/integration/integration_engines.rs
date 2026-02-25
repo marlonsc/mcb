@@ -105,8 +105,8 @@ mod expression_engine_tests {
         let context = create_test_context();
 
         let result = engine.evaluate_expression(expression, &context);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), expected, "{message}");
+        let value = result.expect("expression should evaluate");
+        assert_eq!(value, expected, "{message}");
     }
 
     #[test]
@@ -117,12 +117,12 @@ mod expression_engine_tests {
         vars.insert("count".to_owned(), json!(50));
 
         let result = engine.evaluate_with_variables("count < threshold", &vars);
-        assert!(result.is_ok());
-        assert!(result.unwrap());
+        let value = result.expect("count < threshold should evaluate");
+        assert!(value);
 
         let result = engine.evaluate_with_variables("count > threshold", &vars);
-        assert!(result.is_ok());
-        assert!(!result.unwrap());
+        let value = result.expect("count > threshold should evaluate");
+        assert!(!value);
     }
 
     #[test]
@@ -131,7 +131,11 @@ mod expression_engine_tests {
         let context = create_test_context();
 
         let result = engine.evaluate_expression("undefined_variable > 0", &context);
-        assert!(result.is_err());
+        let err = result.expect_err("invalid expression should fail");
+        assert!(
+            err.to_string().contains("Expression evaluation error"),
+            "unexpected error: {err}"
+        );
     }
 
     #[tokio::test]
@@ -148,9 +152,7 @@ mod expression_engine_tests {
         });
 
         let result = engine.execute(&rule, &context).await;
-        assert!(result.is_ok());
-
-        let violations = result.unwrap();
+        let violations = result.expect("expression rule should execute");
         assert_eq!(violations.len(), 1);
         assert!(violations[0].message().contains("unwrap"));
     }
@@ -217,7 +219,8 @@ rule "DomainIndependence" salience 10 {
         });
 
         let result = engine.execute(&rule, &context).await;
-        assert!(result.is_ok());
+        let violations = result.expect("grl rule execution should succeed");
+        assert!(violations.iter().all(|v| !v.message().is_empty()));
     }
 }
 
@@ -353,7 +356,8 @@ mod router_tests {
         #[case] rule: serde_json::Value,
     ) {
         let result = router.execute(&rule, &context).await;
-        assert!(result.is_ok());
+        let violations = result.expect("router should execute successfully");
+        assert!(violations.iter().all(|v| !v.message().is_empty()));
     }
 }
 
@@ -395,7 +399,8 @@ mod hybrid_engine_tests {
         let result = engine
             .execute_rule("TEST001", RuleEngineType::Expression, &rule, &context)
             .await;
-        assert!(result.is_ok());
+        let report = result.expect("expression engine execution should succeed");
+        assert!(!report.violations.is_empty());
     }
 
     #[rstest]
@@ -422,7 +427,8 @@ mod hybrid_engine_tests {
         let result = engine
             .execute_rule(rule_id, RuleEngineType::Auto, &rule, &context)
             .await;
-        assert!(result.is_ok());
+        let report = result.expect("auto-detection execution should succeed");
+        assert!(report.execution_time_ms < 60_000);
     }
 
     #[tokio::test]
@@ -436,9 +442,8 @@ mod hybrid_engine_tests {
         });
 
         let result = engine.execute_auto(&rule, &context).await;
-        assert!(result.is_ok());
-
-        let violations = result.unwrap().violations;
+        let report = result.expect("auto execution should succeed");
+        let violations = report.violations;
         assert!(!violations.is_empty());
     }
 

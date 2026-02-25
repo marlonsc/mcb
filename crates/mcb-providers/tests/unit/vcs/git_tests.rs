@@ -81,7 +81,13 @@ async fn open_repository() -> TestResult<()> {
 async fn open_repository_not_found(#[case] repo_path: &str) {
     let provider = GitProvider::new();
     let result = provider.open_repository(Path::new(repo_path)).await;
-    assert!(result.is_err());
+    let err = result.expect_err("should fail for non-existent path");
+    let err_msg = err.to_string().to_lowercase();
+    assert!(
+        err_msg.contains("not found") || err_msg.contains("path"),
+        "error: {}",
+        err
+    );
 }
 
 #[tokio::test]

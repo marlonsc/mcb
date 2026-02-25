@@ -146,6 +146,7 @@ impl UnifiedRuleRegistry {
                 .filters
                 .as_ref()
                 .and_then(|f| f.languages.clone())
+                // INTENTIONAL: Language filter extraction; empty filter means no filtering
                 .unwrap_or_default();
             rules.push(RuleInfo {
                 id: rule.id.clone(),

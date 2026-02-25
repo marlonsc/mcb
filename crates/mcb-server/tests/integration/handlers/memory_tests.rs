@@ -69,8 +69,8 @@ async fn test_memory_store_observation_success() {
     args.project_id = Some(TEST_PROJECT_ID.to_owned());
 
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    let _response = result.expect("response");
+    let response = result.expect("memory handler should succeed for valid observation store");
+    assert!(!response.content.is_empty(), "response should have content");
 }
 
 #[rstest]
@@ -82,8 +82,10 @@ async fn test_memory_validation_failures_return_error_response(#[case] args: Mem
         return;
     };
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    assert!(result.expect("response").is_error.unwrap_or(false));
+    let response =
+        result.expect("memory handler should return structured validation error response");
+    assert!(!response.content.is_empty(), "response should have content");
+    assert!(response.is_error.unwrap_or(false));
 }
 
 #[rstest]
@@ -114,8 +116,8 @@ async fn test_memory_inject_with_filters() {
     };
 
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    let _response = result.expect("response");
+    let response = result.expect("memory handler should succeed for inject with filters");
+    assert!(!response.content.is_empty(), "response should have content");
 }
 
 #[tokio::test]

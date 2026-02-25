@@ -42,6 +42,7 @@ pub async fn list_repositories(
 
     let repositories: Vec<String> = discovered_repos
         .iter()
+        // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
         .map(|repo| repo.path().to_str().unwrap_or_default().to_owned())
         .collect();
 

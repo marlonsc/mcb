@@ -321,6 +321,7 @@ impl LanguageDetector {
     /// Detect language from file path, returning a [`LanguageId`].
     pub fn detect(&self, path: &Path, content: Option<&str>) -> Option<LanguageId> {
         let source = content.map_or_else(
+            // INTENTIONAL: File read for language detection; empty string skips file
             || std::fs::read(path).unwrap_or_default(),
             |c| c.as_bytes().to_vec(),
         );
@@ -360,6 +361,7 @@ impl LanguageDetector {
     #[must_use]
     pub fn detect_rca_lang(&self, path: &Path, content: Option<&str>) -> Option<LANG> {
         let source = content.map_or_else(
+            // INTENTIONAL: File read for language detection; empty string skips file
             || std::fs::read(path).unwrap_or_default(),
             |c| c.as_bytes().to_vec(),
         );

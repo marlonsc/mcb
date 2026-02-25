@@ -54,8 +54,8 @@ async fn test_agent_actions_return_mcp_response(#[case] args: AgentArgs) {
     };
 
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    let response = result.expect("response");
+    let response = result.expect("agent handler should succeed for valid agent action");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
 }
 
@@ -70,8 +70,9 @@ async fn test_agent_log_tool_missing_tool_name_returns_error() {
         json!({ "success": true }),
     );
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    let response = result.expect("response");
+    let response =
+        result.expect("agent handler should return structured validation error response");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(response.is_error.unwrap_or(false));
 }
 
@@ -88,5 +89,10 @@ async fn test_agent_log_tool_empty_session_id() {
     };
 
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_err());
+    let err = result.expect_err("agent handler should fail for empty session_id");
+    let err_str = err.to_string();
+    assert!(
+        err_str.contains("session") || err_str.contains("empty") || err_str.contains("invalid"),
+        "error should mention invalid or empty session identifier, got: {err_str}"
+    );
 }

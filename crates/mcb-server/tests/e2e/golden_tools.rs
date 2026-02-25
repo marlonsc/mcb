@@ -25,7 +25,7 @@ async fn test_golden_e2e_complete_workflow() {
         path.exists(),
         "sample_codebase fixture must exist: {path:?}"
     );
-    let path_str = path.to_string_lossy().to_string();
+    let path_str = path.to_string_lossy().into_owned();
     let coll = GOLDEN_COLLECTION;
 
     let index_h = server.index_handler();
@@ -155,7 +155,7 @@ async fn test_golden_index_variants(
     let handler = server.index_handler();
     let args = IndexArgs {
         action: IndexAction::Start,
-        path: Some(path.to_string_lossy().to_string()),
+        path: Some(path.to_string_lossy().into_owned()),
         collection,
         extensions,
         exclude_dirs: None,
@@ -166,8 +166,8 @@ async fn test_golden_index_variants(
     };
 
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    let response = result.unwrap();
+    let response = result.expect("index variants should succeed");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
 
     let text = extract_text(&response.content);
@@ -188,7 +188,7 @@ async fn test_golden_search_returns_relevant_results() {
         .index_handler()
         .handle(Parameters(IndexArgs {
             action: IndexAction::Start,
-            path: Some(path.to_string_lossy().to_string()),
+            path: Some(path.to_string_lossy().into_owned()),
             collection: Some(collection.to_owned()),
             extensions: None,
             exclude_dirs: None,
@@ -237,9 +237,17 @@ async fn test_golden_search_handles_empty_query() {
         token: None,
     }));
     let result = r.await;
-    assert!(result.is_ok());
-    let response = result.unwrap();
+    let response = result.expect("empty query should return an error response");
+    assert!(
+        !response.content.is_empty(),
+        "error response should have content"
+    );
     assert!(response.is_error.unwrap_or(false));
+    let text = extract_text(&response.content);
+    assert!(
+        text.to_lowercase().contains("empty") || text.to_lowercase().contains("query"),
+        "error response should mention empty query: {text}"
+    );
 }
 
 #[tokio::test]
@@ -251,7 +259,7 @@ async fn test_golden_search_respects_limit_parameter() {
         .index_handler()
         .handle(Parameters(IndexArgs {
             action: IndexAction::Start,
-            path: Some(path.to_string_lossy().to_string()),
+            path: Some(path.to_string_lossy().into_owned()),
             collection: Some(collection.to_owned()),
             extensions: None,
             exclude_dirs: None,

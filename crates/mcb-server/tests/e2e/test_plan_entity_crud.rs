@@ -24,7 +24,7 @@ fn result_json(res: &rmcp::model::CallToolResult) -> serde_json::Value {
 
 fn test_plan_payload(project_id: &str, title: &str) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "org_id": "",
         "project_id": project_id,
         "title": title,
@@ -38,11 +38,11 @@ fn test_plan_payload(project_id: &str, title: &str) -> serde_json::Value {
 
 fn test_version_payload(plan_id: &str, version_number: i64) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "org_id": "",
         "plan_id": plan_id,
         "version_number": version_number,
-        "content_json": json!({"steps": ["step-1", "step-2"]}).to_string(),
+        "content_json": json!({"steps": ["step-1", "step-2"]}).to_owned(),
         "change_summary": format!("Version {version_number} changes"),
         "created_by": "test-user",
         "created_at": 0
@@ -51,7 +51,7 @@ fn test_version_payload(plan_id: &str, version_number: i64) -> serde_json::Value
 
 fn test_review_payload(plan_version_id: &str) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "org_id": "",
         "plan_version_id": plan_version_id,
         "reviewer_id": "reviewer-user",
@@ -69,7 +69,7 @@ async fn create_plan(
     let payload = test_plan_payload(project_id, title);
 
     let mut args = base_args(PlanEntityAction::Create, PlanEntityResource::Plan);
-    args.project_id = Some(project_id.to_string());
+    args.project_id = Some(project_id.to_owned());
     args.data = Some(payload);
 
     let result = server.plan_entity_handler().handle(Parameters(args)).await;
@@ -120,7 +120,7 @@ async fn golden_plan_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "created plan id must be present");
 
     let mut get_args = base_args(PlanEntityAction::Get, PlanEntityResource::Plan);
@@ -154,7 +154,7 @@ async fn golden_plan_list() {
     let _ = create_plan(&server, project_id, "Golden Plan List 2").await;
 
     let mut list_args = base_args(PlanEntityAction::List, PlanEntityResource::Plan);
-    list_args.project_id = Some(project_id.to_string());
+    list_args.project_id = Some(project_id.to_owned());
     let list_result = server
         .plan_entity_handler()
         .handle(Parameters(list_args))
@@ -182,7 +182,7 @@ async fn golden_plan_update() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "created plan id must be present");
 
     let mut updated = created.clone();
@@ -227,7 +227,7 @@ async fn golden_plan_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "created plan id must be present");
 
     let mut delete_args = base_args(PlanEntityAction::Delete, PlanEntityResource::Plan);
@@ -264,7 +264,7 @@ async fn golden_plan_version_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let created = create_version(&server, &plan_id, 1).await;
@@ -272,7 +272,7 @@ async fn golden_plan_version_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!version_id.is_empty(), "created version id must be present");
 
     let mut get_args = base_args(PlanEntityAction::Get, PlanEntityResource::Version);
@@ -307,7 +307,7 @@ async fn golden_plan_version_list() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let _ = create_version(&server, &plan_id, 1).await;
@@ -342,7 +342,7 @@ async fn golden_plan_version_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let created = create_version(&server, &plan_id, 1).await;
@@ -350,7 +350,7 @@ async fn golden_plan_version_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!version_id.is_empty(), "version id must be present");
 
     // Version delete is not in the handler dispatch — use the generic unsupported path
@@ -392,7 +392,7 @@ async fn golden_plan_review_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let version = create_version(&server, &plan_id, 1).await;
@@ -400,7 +400,7 @@ async fn golden_plan_review_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!version_id.is_empty(), "version id must be present");
 
     let created = create_review(&server, &version_id).await;
@@ -408,7 +408,7 @@ async fn golden_plan_review_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!review_id.is_empty(), "created review id must be present");
 
     let mut get_args = base_args(PlanEntityAction::Get, PlanEntityResource::Review);
@@ -444,7 +444,7 @@ async fn golden_plan_review_list() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let version = create_version(&server, &plan_id, 1).await;
@@ -452,7 +452,7 @@ async fn golden_plan_review_list() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!version_id.is_empty(), "version id must be present");
 
     let _ = create_review(&server, &version_id).await;
@@ -498,7 +498,7 @@ async fn golden_plan_review_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let version = create_version(&server, &plan_id, 1).await;
@@ -506,7 +506,7 @@ async fn golden_plan_review_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!version_id.is_empty(), "version id must be present");
 
     let created = create_review(&server, &version_id).await;
@@ -514,7 +514,7 @@ async fn golden_plan_review_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!review_id.is_empty(), "review id must be present");
 
     // Review delete may not be in the handler dispatch
@@ -559,7 +559,7 @@ async fn golden_plan_get_nonexistent() {
     let (server, _td) = create_test_mcp_server().await;
 
     let mut args = base_args(PlanEntityAction::Get, PlanEntityResource::Plan);
-    args.id = Some("nonexistent-plan-id-00000000".to_string());
+    args.id = Some("nonexistent-plan-id-00000000".to_owned());
     let result = server.plan_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "plan get with fake id should fail");
 }

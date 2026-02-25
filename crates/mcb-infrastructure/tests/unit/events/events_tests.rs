@@ -14,12 +14,12 @@ async fn test_publish_event_no_subscribers() {
         total_files: 5,
     };
     let result = bus.publish_event(event).await;
-    assert!(result.is_ok());
+    result.expect("publish_event with no subscribers should succeed");
 }
 
 #[tokio::test]
 async fn test_publish_invalid_payload() {
     let bus = default_event_bus();
     let result = bus.publish("topic", b"not-valid-json").await;
-    assert!(result.is_ok());
+    result.expect("publish with invalid payload should succeed gracefully");
 }

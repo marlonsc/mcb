@@ -1,4 +1,14 @@
 //! E2E golden tests — `cargo test -p mcb-server --test e2e`
+//!
+//! Allow test-idiomatic use of `expect/panic/to_string` in e2e helpers.
+
+#![allow(
+    clippy::expect_used,
+    clippy::panic,
+    clippy::str_to_string,
+    clippy::map_unwrap_or,
+    clippy::uninlined_format_args
+)]
 
 #[path = "../utils/mod.rs"]
 #[allow(dead_code, unused_imports)]

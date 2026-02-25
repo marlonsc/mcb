@@ -336,12 +336,15 @@ async fn update_progress_on_missing_op_returns_not_found() -> TestResult {
 
     let fake_id = mcb_domain::value_objects::OperationId::new();
     let result = repo.update_progress(&fake_id, None, 0).await;
-    assert!(result.is_err());
-
-    let err = result.unwrap_err();
+    let err = result.expect_err("update_progress should fail for missing operation");
+    let err_msg = err.to_string();
     assert!(
         matches!(err, mcb_domain::error::Error::NotFound { .. }),
         "expected NotFound, got: {err:?}"
+    );
+    assert!(
+        err_msg.to_lowercase().contains("not found"),
+        "expected not found message, got: {err_msg}"
     );
 
     Ok(())
@@ -354,11 +357,13 @@ async fn complete_missing_op_returns_not_found() -> TestResult {
 
     let fake_id = mcb_domain::value_objects::OperationId::new();
     let result = repo.complete_operation(&fake_id).await;
-    assert!(result.is_err());
-    assert!(matches!(
-        result.unwrap_err(),
-        mcb_domain::error::Error::NotFound { .. }
-    ));
+    let err = result.expect_err("complete_operation should fail for missing operation");
+    let err_msg = err.to_string();
+    assert!(matches!(err, mcb_domain::error::Error::NotFound { .. }));
+    assert!(
+        err_msg.to_lowercase().contains("not found"),
+        "expected not found message, got: {err_msg}"
+    );
 
     Ok(())
 }
@@ -370,11 +375,13 @@ async fn fail_missing_op_returns_not_found() -> TestResult {
 
     let fake_id = mcb_domain::value_objects::OperationId::new();
     let result = repo.fail_operation(&fake_id, "oops").await;
-    assert!(result.is_err());
-    assert!(matches!(
-        result.unwrap_err(),
-        mcb_domain::error::Error::NotFound { .. }
-    ));
+    let err = result.expect_err("fail_operation should fail for missing operation");
+    let err_msg = err.to_string();
+    assert!(matches!(err, mcb_domain::error::Error::NotFound { .. }));
+    assert!(
+        err_msg.to_lowercase().contains("not found"),
+        "expected not found message, got: {err_msg}"
+    );
 
     Ok(())
 }

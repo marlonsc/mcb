@@ -5,12 +5,11 @@ use rstest::rstest;
 #[tokio::test]
 async fn test_hook_processor_creation() {
     let processor = HookProcessor::new(None);
-    assert!(
-        processor
-            .process_post_tool_use(create_test_context())
-            .await
-            .is_err()
-    );
+    let err = processor
+        .process_post_tool_use(create_test_context())
+        .await
+        .expect_err("hook processor with no memory service should fail");
+    assert_eq!(err.to_string(), "Memory service unavailable");
 }
 
 #[rstest]
@@ -22,11 +21,8 @@ async fn test_post_tool_use_hook_graceful_degradation(#[case] tool_name: &str) {
     let context = PostToolUseContext::new(tool_name.to_owned(), false);
 
     let result = processor.process_post_tool_use(context).await;
-    assert!(result.is_err());
-    assert_eq!(
-        result.unwrap_err().to_string(),
-        "Memory service unavailable"
-    );
+    let err = result.expect_err("post_tool_use with no memory service should fail");
+    assert_eq!(err.to_string(), "Memory service unavailable");
 }
 
 #[tokio::test]
@@ -35,11 +31,8 @@ async fn test_session_start_hook_graceful_degradation() {
     let context = SessionStartContext::new(SessionId::from("test_session"));
 
     let result = processor.process_session_start(context).await;
-    assert!(result.is_err());
-    assert_eq!(
-        result.unwrap_err().to_string(),
-        "Memory service unavailable"
-    );
+    let err = result.expect_err("session_start with no memory service should fail");
+    assert_eq!(err.to_string(), "Memory service unavailable");
 }
 
 #[rstest]
@@ -91,7 +84,8 @@ async fn test_hook_processor_default() {
     let context = PostToolUseContext::new("test".to_owned(), false);
 
     let result = processor.process_post_tool_use(context).await;
-    assert!(result.is_err());
+    let err = result.expect_err("default hook processor should fail without memory service");
+    assert_eq!(err.to_string(), "Memory service unavailable");
 }
 
 #[tokio::test]

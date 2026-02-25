@@ -174,8 +174,8 @@ async fn test_real_memory_store_multiple_observations_counted() {
         };
 
         let result = memory_h.handle(Parameters(store_args)).await;
-        assert!(result.is_ok());
-        let resp = result.unwrap();
+        let resp = result.expect("memory handler should succeed for batch observation store");
+        assert!(!resp.content.is_empty(), "response should have content");
         assert!(!resp.is_error.unwrap_or(false), "Store {i} should succeed");
     }
 

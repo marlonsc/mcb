@@ -26,8 +26,7 @@ async fn test_gap1_validate_list_rules_returns_populated_list() {
         }))
         .await;
 
-    assert!(result.is_ok());
-    let resp = result.unwrap();
+    let resp = result.expect("validate list-rules should succeed");
     assert!(!resp.is_error.unwrap_or(false));
     assert!(!resp.content.is_empty(), "Response content empty");
 
@@ -71,9 +70,9 @@ async fn test_gap1_validate_list_rules_by_category_filter() {
         }))
         .await;
 
-    assert!(result.is_ok());
-    let resp = result.unwrap();
+    let resp = result.expect("validate list-rules with category filter should succeed");
     assert!(!resp.is_error.unwrap_or(false));
+    assert!(!resp.content.is_empty(), "Response content empty");
 
     let text = extract_text(&resp.content);
     let json_val: serde_json::Value = serde_json::from_str(&text).unwrap();
@@ -127,7 +126,7 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
             action: VcsAction::ListRepositories,
             org_id: None,
             repo_id: None,
-            repo_path: Some(temp_dir.path().to_string_lossy().to_string()),
+            repo_path: Some(temp_dir.path().to_string_lossy().into_owned()),
             base_branch: None,
             target_branch: None,
             query: None,
@@ -138,9 +137,9 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
         }))
         .await;
 
-    assert!(result.is_ok());
-    let resp = result.unwrap();
+    let resp = result.expect("vcs list-repositories should succeed");
     assert!(!resp.is_error.unwrap_or(false));
+    assert!(!resp.content.is_empty(), "Response content empty");
 
     let text = extract_text(&resp.content);
     let json_val: serde_json::Value = serde_json::from_str(&text).unwrap();

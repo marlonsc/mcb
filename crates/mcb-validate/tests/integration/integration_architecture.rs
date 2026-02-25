@@ -475,7 +475,8 @@ impl Server {
 
         // Should be able to call validate through trait
         let result = validator.validate(&config);
-        assert!(result.is_ok());
+        let report = result.expect("validation should succeed");
+        assert!(report.iter().all(|v| !v.id().is_empty()));
     }
 
     /// Test with real workspace structure (integration with actual codebase)
@@ -499,9 +500,8 @@ impl Server {
             let result = validator.validate_all();
 
             // Should not panic, even if violations exist
-            assert!(result.is_ok());
-
-            let violations = result.unwrap();
+            let violations = result.expect("validation should succeed");
+            assert!(violations.iter().all(|v| !v.id().is_empty()));
             // Log violations for informational purposes
             if !violations.is_empty() {
                 eprintln!(

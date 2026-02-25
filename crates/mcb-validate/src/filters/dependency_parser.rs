@@ -247,6 +247,7 @@ impl CargoDependencyParser {
                             .filter_map(|v| v.as_str().map(str::to_owned))
                             .collect()
                     })
+                    // INTENTIONAL: TOML array extraction; empty deps is valid
                     .unwrap_or_default();
 
                 let optional = table

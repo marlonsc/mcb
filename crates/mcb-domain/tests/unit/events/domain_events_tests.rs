@@ -124,7 +124,7 @@ async fn publish_events(#[case] events: Vec<DomainEvent>, #[case] expected_len: 
 
     for event in events {
         let result = publisher.publish(event).await;
-        assert!(result.is_ok());
+        result.expect("event publish should succeed");
     }
 
     let published_events = publisher.get_published_events();

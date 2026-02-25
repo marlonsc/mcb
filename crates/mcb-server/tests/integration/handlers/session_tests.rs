@@ -38,8 +38,11 @@ macro_rules! session_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let _response = result.expect("Expected response");
+            let response = result.expect("session handler should succeed for valid session action");
+            assert!(
+                !response.content.is_empty(),
+                "response should have content"
+            );
         }
     };
 
@@ -64,8 +67,9 @@ macro_rules! session_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let response = result.expect("Expected successful response");
+            let response =
+                result.expect("session handler should succeed for valid create input");
+            assert!(!response.content.is_empty(), "response should have content");
             assert!(!response.is_error.unwrap_or(false));
         }
     };
@@ -91,8 +95,9 @@ macro_rules! session_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let response = result.expect("Expected response");
+            let response =
+                result.expect("session handler should return structured error response");
+            assert!(!response.content.is_empty(), "response should have content");
             assert!(response.is_error.unwrap_or(false), "Should return error");
         }
     };

@@ -502,6 +502,7 @@ fn forbidden_patterns(rule_definition: &Value) -> Vec<&str> {
                 .filter_map(serde_json::Value::as_str)
                 .collect()
         })
+        // INTENTIONAL: Filter string collection; empty vec is safe if no filters
         .unwrap_or_default()
 }
 

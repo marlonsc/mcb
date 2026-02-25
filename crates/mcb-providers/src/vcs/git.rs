@@ -46,6 +46,7 @@ impl GitProvider {
             .push_head()
             .map_err(|e| Error::vcs_with_source("Failed to push HEAD to revwalk", e))?;
 
+        // INTENTIONAL: Sorting preference is non-critical; default ordering is acceptable
         revwalk.set_sorting(Sort::TIME | Sort::REVERSE).ok();
 
         let first_oid = revwalk
@@ -58,6 +59,7 @@ impl GitProvider {
 
     fn get_default_branch(repo: &Repository) -> Result<String> {
         repo.head()
+            // INTENTIONAL: Best-effort default branch detection; falls back to None
             .ok()
             .and_then(|head| head.shorthand().map(String::from))
             .ok_or_else(|| {
@@ -69,6 +71,7 @@ impl GitProvider {
 
     fn get_remote_url(repo: &Repository) -> Option<String> {
         repo.find_remote("origin")
+            // INTENTIONAL: Best-effort remote URL detection; falls back to None
             .ok()
             .and_then(|remote| remote.url().map(String::from))
     }
@@ -82,6 +85,7 @@ impl GitProvider {
         for branch_result in branches {
             let (branch, _) =
                 branch_result.map_err(|e| Error::vcs_with_source("Failed to read branch", e))?;
+            // INTENTIONAL: Optional branch name extraction; None means detached HEAD
             if let Some(name) = branch.name().ok().flatten() {
                 names.push(name.to_owned());
             }
@@ -160,7 +164,9 @@ impl VcsProvider for GitProvider {
 
             let upstream = branch
                 .upstream()
+                // INTENTIONAL: Optional upstream detection; None means no tracking branch
                 .ok()
+                // INTENTIONAL: Optional upstream name; None means no tracking branch
                 .and_then(|u| u.name().ok().flatten().map(String::from));
 
             result.push(VcsBranch::new(
@@ -206,6 +212,7 @@ impl VcsProvider for GitProvider {
             .push(branch_commit.id())
             .map_err(|e| Error::vcs_with_source("Failed to push commit to revwalk", e))?;
 
+        // INTENTIONAL: Sorting preference is non-critical; default ordering is acceptable
         revwalk.set_sorting(Sort::TIME).ok();
 
         let mut commits = Vec::new();

@@ -24,7 +24,7 @@ fn result_json(res: &rmcp::model::CallToolResult) -> serde_json::Value {
 
 fn test_issue_payload(project_id: &str, title: &str) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "org_id": "",
         "project_id": project_id,
         "created_by": "test-user",
@@ -44,7 +44,7 @@ fn test_issue_payload(project_id: &str, title: &str) -> serde_json::Value {
 
 fn test_comment_payload(issue_id: &str, content: &str) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "issue_id": issue_id,
         "author_id": "test-user",
         "content": content,
@@ -54,7 +54,7 @@ fn test_comment_payload(issue_id: &str, content: &str) -> serde_json::Value {
 
 fn test_label_payload(project_id: &str, name: &str) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "org_id": "",
         "project_id": project_id,
         "name": name,
@@ -71,7 +71,7 @@ async fn create_issue(
     let payload = test_issue_payload(project_id, title);
 
     let mut args = base_args(IssueEntityAction::Create, IssueEntityResource::Issue);
-    args.project_id = Some(project_id.to_string());
+    args.project_id = Some(project_id.to_owned());
     args.data = Some(payload);
 
     let result = server.issue_entity_handler().handle(Parameters(args)).await;
@@ -123,7 +123,7 @@ async fn golden_issue_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "created issue id must be present");
 
     let mut get_args = base_args(IssueEntityAction::Get, IssueEntityResource::Issue);
@@ -157,7 +157,7 @@ async fn golden_issue_list() {
     let _ = create_issue(&server, project_id, "Golden Issue List 2").await;
 
     let mut list_args = base_args(IssueEntityAction::List, IssueEntityResource::Issue);
-    list_args.project_id = Some(project_id.to_string());
+    list_args.project_id = Some(project_id.to_owned());
     let list_result = server
         .issue_entity_handler()
         .handle(Parameters(list_args))
@@ -185,7 +185,7 @@ async fn golden_issue_update_status() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "created issue id must be present");
 
     let mut updated = created.clone();
@@ -230,7 +230,7 @@ async fn golden_issue_update_assignee() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "created issue id must be present");
 
     let mut updated = created.clone();
@@ -275,7 +275,7 @@ async fn golden_issue_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "created issue id must be present");
 
     let mut delete_args = base_args(IssueEntityAction::Delete, IssueEntityResource::Issue);
@@ -312,7 +312,7 @@ async fn golden_issue_comment_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "host issue id must be present");
 
     let created = create_comment(&server, &issue_id, "Golden comment content").await;
@@ -320,7 +320,7 @@ async fn golden_issue_comment_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!comment_id.is_empty(), "created comment id must be present");
 
     let mut get_args = base_args(IssueEntityAction::Get, IssueEntityResource::Comment);
@@ -355,7 +355,7 @@ async fn golden_issue_comment_list() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "host issue id must be present");
 
     let _ = create_comment(&server, &issue_id, "Comment list 1").await;
@@ -390,7 +390,7 @@ async fn golden_issue_comment_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "host issue id must be present");
 
     let created = create_comment(&server, &issue_id, "Comment to delete").await;
@@ -398,7 +398,7 @@ async fn golden_issue_comment_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!comment_id.is_empty(), "created comment id must be present");
 
     let mut delete_args = base_args(IssueEntityAction::Delete, IssueEntityResource::Comment);
@@ -435,7 +435,7 @@ async fn golden_issue_label_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!label_id.is_empty(), "created label id must be present");
 
     let mut get_args = base_args(IssueEntityAction::Get, IssueEntityResource::Label);
@@ -469,7 +469,7 @@ async fn golden_issue_label_list() {
     let _ = create_label(&server, project_id, "golden-label-list-2").await;
 
     let mut list_args = base_args(IssueEntityAction::List, IssueEntityResource::Label);
-    list_args.project_id = Some(project_id.to_string());
+    list_args.project_id = Some(project_id.to_owned());
     let list_result = server
         .issue_entity_handler()
         .handle(Parameters(list_args))
@@ -497,7 +497,7 @@ async fn golden_issue_label_assign_to_issue() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "host issue id must be present");
 
     let label = create_label(&server, project_id, "golden-assign-label").await;
@@ -505,7 +505,7 @@ async fn golden_issue_label_assign_to_issue() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!label_id.is_empty(), "created label id must be present");
 
     let assignment_payload = json!({
@@ -543,7 +543,10 @@ async fn golden_issue_label_assign_to_issue() {
     );
 
     let body = result_json(&list_result.expect("label assignment list response"));
-    let labels = body.as_array().cloned().unwrap_or_default();
+    let labels = body
+        .as_array()
+        .expect("labels response should be a JSON array")
+        .clone();
     let has_label = labels.iter().any(|entry| {
         entry.get("label_id").and_then(serde_json::Value::as_str) == Some(label_id.as_str())
     });
@@ -571,7 +574,7 @@ async fn golden_issue_get_nonexistent() {
     let (server, _td) = create_test_mcp_server().await;
 
     let mut args = base_args(IssueEntityAction::Get, IssueEntityResource::Issue);
-    args.id = Some("00000000-0000-0000-0000-000000000000".to_string());
+    args.id = Some("00000000-0000-0000-0000-000000000000".to_owned());
     let result = server.issue_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "issue get with nonexistent id should fail");
 }

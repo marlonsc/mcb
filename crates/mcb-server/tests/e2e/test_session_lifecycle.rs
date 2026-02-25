@@ -34,8 +34,8 @@ fn result_json(res: &rmcp::model::CallToolResult) -> serde_json::Value {
 /// Create a session and return the parsed JSON response.
 async fn create_session(server: &mcb_server::mcp_server::McpServer) -> serde_json::Value {
     let mut args = base_args(SessionAction::Create);
-    args.agent_type = Some("orchestrator".to_string());
-    args.project_id = Some("test-project-session".to_string());
+    args.agent_type = Some("orchestrator".to_owned());
+    args.project_id = Some("test-project-session".to_owned());
     args.data = Some(json!({
         "model": "claude-3-opus",
         "agent_type": "orchestrator",
@@ -154,7 +154,7 @@ async fn golden_session_end() {
     update_args.session_id = Some(mcb_domain::value_objects::ids::SessionId::from_string(
         session_id,
     ));
-    update_args.status = Some("completed".to_string());
+    update_args.status = Some("completed".to_owned());
     update_args.data = Some(json!({
         "result_summary": "Session completed successfully"
     }));
@@ -263,7 +263,7 @@ async fn golden_session_summary() {
     summarize_args.session_id = Some(mcb_domain::value_objects::ids::SessionId::from_string(
         session_id,
     ));
-    summarize_args.project_id = Some("test-project-session".to_string());
+    summarize_args.project_id = Some("test-project-session".to_owned());
     summarize_args.data = Some(json!({
         "topics": ["architecture", "testing"],
         "decisions": ["Use golden tests for session lifecycle"],

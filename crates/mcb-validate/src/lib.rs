@@ -88,15 +88,6 @@ pub mod duplication;
 // === Centralized Utilities ===
 pub mod utils;
 
-// === New Validators (using new system) ===
-// Moved to validators module
-
-// === Validators ===
-// Moved to validators module
-
-use std::path::{Path, PathBuf};
-
-// Re-exports from modules that centralize their public API in mod.rs (no duplication)
 pub use ast::*;
 pub use config::*;
 pub use embedded_rules::EmbeddedRules;
@@ -114,11 +105,13 @@ pub use traits::{Validator, ValidatorRegistry, Violation, ViolationCategory};
 pub use unified_registry::{RuleInfo, RuleOrigin, UnifiedRuleRegistry};
 pub use validators::*;
 
+use std::path::{Path, PathBuf};
+
 use crate::linters::constants::CARGO_TOML_FILENAME;
 use derive_more::Display;
 use thiserror::Error;
 
-// ValidationConfig and crate-owned types follow
+// --- Crate-owned types (defined here; not in a submodule) ---
 
 /// Result type for validation operations
 pub type Result<T> = std::result::Result<T, ValidationError>;

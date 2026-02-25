@@ -152,6 +152,7 @@ impl DocumentationValidator {
                 let path = &entry.absolute_path;
                 let content = std::fs::read_to_string(path)?;
                 let lines: Vec<&str> = content.lines().collect();
+                // INTENTIONAL: Path to string; non-UTF8 paths yield empty string (best-effort)
                 let path_str = path.to_str().unwrap_or_default();
                 let regex_ctx = DocRegexContext {
                     doc_comment_re: &doc_comment_re,

@@ -74,7 +74,7 @@ async fn test_golden_e2e_complete_workflow() {
         path.exists(),
         "sample_codebase fixture must exist: {path:?}"
     );
-    let path_str = path.to_string_lossy().to_string();
+    let path_str = path.to_string_lossy().into_owned();
 
     let index_h = server.index_handler();
     let search_h = server.search_handler();
@@ -197,7 +197,7 @@ async fn test_golden_e2e_handles_reindex_correctly() {
     let collection = "golden_reindex_test";
     let args = index_args(
         IndexAction::Start,
-        Some(path.to_string_lossy().to_string()),
+        Some(path.to_string_lossy().into_owned()),
         Some(collection.to_owned()),
     );
     let r1 = index_h.handle(Parameters(args.clone())).await;
@@ -221,14 +221,14 @@ async fn test_golden_index_variants(
     let handler = server.index_handler();
     let mut args = index_args(
         IndexAction::Start,
-        Some(path.to_string_lossy().to_string()),
+        Some(path.to_string_lossy().into_owned()),
         collection,
     );
     args.extensions = extensions;
 
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    let response = result.unwrap();
+    let response = result.expect("index variants should succeed");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
 
     let text = extract_text(&response.content);
@@ -247,12 +247,22 @@ async fn test_golden_index_respects_ignore_patterns() {
     let handler = server.index_handler();
     let mut args = index_args(
         IndexAction::Start,
-        Some(path.to_string_lossy().to_string()),
+        Some(path.to_string_lossy().into_owned()),
         Some("golden_ignore_test".to_owned()),
     );
     args.ignore_patterns = Some(vec!["*_test.rs".to_owned()]);
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
+    let response = result.expect("index with ignore patterns should succeed");
+    assert!(!response.content.is_empty(), "response should have content");
+    assert!(!response.is_error.unwrap_or(false));
+
+    let text = extract_text(&response.content);
+    assert!(
+        text.contains("Files processed")
+            || text.contains("Indexing Started")
+            || text.contains("started"),
+        "response: {text}"
+    );
 }
 
 #[rstest]
@@ -310,9 +320,17 @@ async fn test_golden_mcp_empty_query_error_responses(#[case] query: &str) {
         .search_handler()
         .handle(Parameters(search_args(query, None, Some(5))))
         .await;
-    assert!(result.is_ok());
-    let response = result.unwrap();
+    let response = result.expect("empty query should return an error response");
+    assert!(
+        !response.content.is_empty(),
+        "error response should have content"
+    );
     assert!(response.is_error.unwrap_or(false));
+    let text = extract_text(&response.content);
+    assert!(
+        text.to_lowercase().contains("empty") || text.to_lowercase().contains("query"),
+        "error response should mention empty query: {text}"
+    );
 }
 
 #[tokio::test]
@@ -324,7 +342,7 @@ async fn test_golden_search_returns_relevant_results() {
         .index_handler()
         .handle(Parameters(index_args(
             IndexAction::Start,
-            Some(path.to_string_lossy().to_string()),
+            Some(path.to_string_lossy().into_owned()),
             Some(collection.to_owned()),
         )))
         .await
@@ -362,7 +380,7 @@ async fn test_golden_search_ranking_is_correct() {
         .index_handler()
         .handle(Parameters(index_args(
             IndexAction::Start,
-            Some(path.to_string_lossy().to_string()),
+            Some(path.to_string_lossy().into_owned()),
             Some(collection.to_owned()),
         )))
         .await
@@ -388,7 +406,7 @@ async fn test_golden_search_respects_limit_parameter() {
         .index_handler()
         .handle(Parameters(index_args(
             IndexAction::Start,
-            Some(path.to_string_lossy().to_string()),
+            Some(path.to_string_lossy().into_owned()),
             Some(collection.to_owned()),
         )))
         .await
@@ -415,7 +433,7 @@ async fn test_golden_search_filters_by_extension() {
     let collection = "golden_ext_filter_test";
     let mut args = index_args(
         IndexAction::Start,
-        Some(path.to_string_lossy().to_string()),
+        Some(path.to_string_lossy().into_owned()),
         Some(collection.to_owned()),
     );
     args.extensions = Some(vec!["rs".to_owned()]);
@@ -456,7 +474,7 @@ async fn test_golden_e2e_golden_queries_setup() {
         .index_handler()
         .handle(Parameters(index_args(
             IndexAction::Start,
-            Some(path.to_string_lossy().to_string()),
+            Some(path.to_string_lossy().into_owned()),
             Some(collection.to_owned()),
         )))
         .await
@@ -509,7 +527,7 @@ async fn test_golden_e2e_golden_queries_one_query() {
         .index_handler()
         .handle(Parameters(index_args(
             IndexAction::Start,
-            Some(path.to_string_lossy().to_string()),
+            Some(path.to_string_lossy().into_owned()),
             Some(collection.to_owned()),
         )))
         .await
@@ -559,7 +577,7 @@ async fn test_golden_e2e_golden_queries_all_handlers_succeed() {
         .index_handler()
         .handle(Parameters(index_args(
             IndexAction::Start,
-            Some(path.to_string_lossy().to_string()),
+            Some(path.to_string_lossy().into_owned()),
             Some(collection.to_owned()),
         )))
         .await

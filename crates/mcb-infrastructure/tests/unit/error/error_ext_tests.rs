@@ -11,13 +11,13 @@ fn test_error_context_extension() {
     let io_error = io::Error::new(io::ErrorKind::NotFound, "file not found");
 
     let result: Result<()> = Err(io_error).io_context("failed to read file");
-    assert!(result.is_err());
-
-    if let Err(Error::Io { source, message }) = result {
-        assert!(message.contains("failed to read file"));
-        assert!(source.is_some());
-    } else {
-        panic!("Expected Io error");
+    let err = result.expect_err("io_context should produce an error");
+    match err {
+        Error::Io { source, message } => {
+            assert!(message.contains("failed to read file"));
+            assert!(source.is_some());
+        }
+        other => panic!("Expected Io error, got: {other:?}"),
     }
 }
 

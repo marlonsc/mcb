@@ -132,12 +132,10 @@ fn test_ssl_cert_required_for_https() {
         cors: ServerConfigBuilder::new().build().cors,
     };
     let result = https_no_ssl.validate_ssl();
-    assert!(result.is_err());
+    let err = result.expect_err("HTTPS without SSL paths should fail validation");
     assert!(
-        result
-            .unwrap_err()
-            .to_string()
-            .contains("certificate path is required")
+        err.to_string().contains("certificate path is required"),
+        "error should mention certificate path: {err}"
     );
 
     // HTTPS with only cert path should fail
@@ -153,12 +151,10 @@ fn test_ssl_cert_required_for_https() {
         cors: ServerConfigBuilder::new().build().cors,
     };
     let result = https_cert_only.validate_ssl();
-    assert!(result.is_err());
+    let err = result.expect_err("HTTPS with cert only should fail validation");
     assert!(
-        result
-            .unwrap_err()
-            .to_string()
-            .contains("key path is required")
+        err.to_string().contains("key path is required"),
+        "error should mention key path: {err}"
     );
 
     // HTTP config doesn't require SSL
@@ -174,7 +170,7 @@ fn test_ssl_cert_required_for_https() {
         cors: ServerConfigBuilder::new().build().cors,
     };
     let result = http_config.validate_ssl();
-    assert!(result.is_ok());
+    result.expect("HTTP config should pass SSL validation");
 }
 
 #[test]

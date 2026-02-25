@@ -43,7 +43,7 @@ async fn create_user(
     let payload = serde_json::to_value(&user).expect("serialize user payload");
 
     let mut args = base_args(OrgEntityAction::Create, OrgEntityResource::User);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(payload);
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
@@ -60,7 +60,7 @@ async fn create_team(
     let payload = serde_json::to_value(&team).expect("serialize team payload");
 
     let mut args = base_args(OrgEntityAction::Create, OrgEntityResource::Team);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(payload);
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
@@ -137,7 +137,7 @@ async fn golden_org_update() {
     let mut org = test_organization("golden-org-update");
     create_org(&server, &org.id).await;
 
-    org.name = "Golden Org Updated".to_string();
+    org.name = "Golden Org Updated".to_owned();
     let mut update_args = base_args(OrgEntityAction::Update, OrgEntityResource::Org);
     update_args.data = Some(serde_json::to_value(&org).expect("serialize org update payload"));
 
@@ -214,12 +214,12 @@ async fn golden_user_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!user_id.is_empty(), "created user id must be present");
 
     let mut get_args = base_args(OrgEntityAction::Get, OrgEntityResource::User);
     get_args.id = Some(user_id.clone());
-    get_args.org_id = Some(org_id.to_string());
+    get_args.org_id = Some(org_id.to_owned());
     let get_result = server
         .org_entity_handler()
         .handle(Parameters(get_args))
@@ -252,12 +252,12 @@ async fn golden_user_get_by_email() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!created_id.is_empty(), "created user id must be present");
 
     let mut get_args = base_args(OrgEntityAction::Get, OrgEntityResource::User);
-    get_args.org_id = Some(org_id.to_string());
-    get_args.email = Some(email.to_string());
+    get_args.org_id = Some(org_id.to_owned());
+    get_args.email = Some(email.to_owned());
     let get_result = server
         .org_entity_handler()
         .handle(Parameters(get_args))
@@ -288,7 +288,7 @@ async fn golden_user_list_by_org() {
 
     let admin_user = test_admin_user(org_id, "golden-user-list-admin@example.com");
     let mut create_admin_args = base_args(OrgEntityAction::Create, OrgEntityResource::User);
-    create_admin_args.org_id = Some(org_id.to_string());
+    create_admin_args.org_id = Some(org_id.to_owned());
     create_admin_args.data =
         Some(serde_json::to_value(&admin_user).expect("serialize admin user payload"));
     let create_admin_result = server
@@ -301,7 +301,7 @@ async fn golden_user_list_by_org() {
     );
 
     let mut list_args = base_args(OrgEntityAction::List, OrgEntityResource::User);
-    list_args.org_id = Some(org_id.to_string());
+    list_args.org_id = Some(org_id.to_owned());
     let list_result = server
         .org_entity_handler()
         .handle(Parameters(list_args))
@@ -330,7 +330,7 @@ async fn golden_user_update() {
     updated["display_name"] = json!("Golden User Updated");
 
     let mut update_args = base_args(OrgEntityAction::Update, OrgEntityResource::User);
-    update_args.org_id = Some(org_id.to_string());
+    update_args.org_id = Some(org_id.to_owned());
     update_args.data = Some(updated);
     let update_result = server
         .org_entity_handler()
@@ -345,12 +345,12 @@ async fn golden_user_update() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!user_id.is_empty(), "created user id must be present");
 
     let mut get_args = base_args(OrgEntityAction::Get, OrgEntityResource::User);
     get_args.id = Some(user_id);
-    get_args.org_id = Some(org_id.to_string());
+    get_args.org_id = Some(org_id.to_owned());
     let get_result = server
         .org_entity_handler()
         .handle(Parameters(get_args))
@@ -378,7 +378,7 @@ async fn golden_user_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!user_id.is_empty(), "created user id must be present");
 
     let mut delete_args = base_args(OrgEntityAction::Delete, OrgEntityResource::User);
@@ -394,7 +394,7 @@ async fn golden_user_delete() {
 
     let mut get_args = base_args(OrgEntityAction::Get, OrgEntityResource::User);
     get_args.id = Some(user_id);
-    get_args.org_id = Some(org_id.to_string());
+    get_args.org_id = Some(org_id.to_owned());
     let get_result = server
         .org_entity_handler()
         .handle(Parameters(get_args))
@@ -407,7 +407,7 @@ async fn golden_user_create_missing_data() {
     let (server, _td) = create_test_mcp_server().await;
 
     let mut args = base_args(OrgEntityAction::Create, OrgEntityResource::User);
-    args.org_id = Some("golden-user-create-missing-data-org".to_string());
+    args.org_id = Some("golden-user-create-missing-data-org".to_owned());
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "user create without data should fail");
 }
@@ -417,7 +417,7 @@ async fn golden_user_get_missing_id_and_email() {
     let (server, _td) = create_test_mcp_server().await;
 
     let mut args = base_args(OrgEntityAction::Get, OrgEntityResource::User);
-    args.org_id = Some("golden-user-get-missing-org".to_string());
+    args.org_id = Some("golden-user-get-missing-org".to_owned());
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "user get without id/email should fail");
 
@@ -440,7 +440,7 @@ async fn golden_team_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!team_id.is_empty(), "created team id must be present");
 
     let mut get_args = base_args(OrgEntityAction::Get, OrgEntityResource::Team);
@@ -471,7 +471,7 @@ async fn golden_team_list() {
     let _ = create_team(&server, org_id, "Golden Team List 2").await;
 
     let mut list_args = base_args(OrgEntityAction::List, OrgEntityResource::Team);
-    list_args.org_id = Some(org_id.to_string());
+    list_args.org_id = Some(org_id.to_owned());
     let list_result = server
         .org_entity_handler()
         .handle(Parameters(list_args))
@@ -500,7 +500,7 @@ async fn golden_team_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!team_id.is_empty(), "created team id must be present");
 
     let mut delete_args = base_args(OrgEntityAction::Delete, OrgEntityResource::Team);
@@ -544,7 +544,7 @@ async fn golden_team_member_add_and_list() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!user_id.is_empty(), "created user id must be present");
 
     let team = create_team(&server, org_id, "Golden Team Member Add").await;
@@ -552,7 +552,7 @@ async fn golden_team_member_add_and_list() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!team_id.is_empty(), "created team id must be present");
 
     let member = test_team_member(&team_id, &user_id);
@@ -579,7 +579,10 @@ async fn golden_team_member_add_and_list() {
     );
 
     let body = result_json(&list_result.expect("team member list response"));
-    let members = body.as_array().cloned().unwrap_or_default();
+    let members = body
+        .as_array()
+        .expect("team members response should be a JSON array")
+        .clone();
     let has_member = members.iter().any(|entry| {
         entry.get("user_id").and_then(serde_json::Value::as_str) == Some(user_id.as_str())
     });
@@ -600,7 +603,7 @@ async fn golden_team_member_remove() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!user_id.is_empty(), "created user id must be present");
 
     let team = create_team(&server, org_id, "Golden Team Member Remove").await;
@@ -608,7 +611,7 @@ async fn golden_team_member_remove() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!team_id.is_empty(), "created team id must be present");
 
     let member = test_team_member(&team_id, &user_id);
@@ -647,7 +650,10 @@ async fn golden_team_member_remove() {
     );
 
     let body = result_json(&list_result.expect("team member list response"));
-    let members = body.as_array().cloned().unwrap_or_default();
+    let members = body
+        .as_array()
+        .expect("team members response after remove should be a JSON array")
+        .clone();
     let has_member = members.iter().any(|entry| {
         entry.get("user_id").and_then(serde_json::Value::as_str) == Some(user_id.as_str())
     });
@@ -659,7 +665,7 @@ async fn golden_team_member_get_unsupported() {
     let (server, _td) = create_test_mcp_server().await;
 
     let mut args = base_args(OrgEntityAction::Get, OrgEntityResource::TeamMember);
-    args.id = Some("non-existent-team-member".to_string());
+    args.id = Some("non-existent-team-member".to_owned());
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "team member get should be unsupported");
 }

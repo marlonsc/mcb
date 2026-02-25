@@ -83,8 +83,8 @@ async fn test_vcs_list_repositories_cases(
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result?;
+    let response = result.expect("vcs handler should succeed for list repositories input");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
     Ok(())
 }
@@ -104,8 +104,8 @@ async fn test_vcs_index_repository_success() -> Result<(), Box<dyn std::error::E
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let _response = result?;
+    let response = result.expect("vcs handler should succeed for repository indexing");
+    assert!(!response.content.is_empty(), "response should have content");
     Ok(())
 }
 
@@ -122,8 +122,8 @@ async fn test_vcs_index_repository_with_repo_path() -> Result<(), rmcp::ErrorDat
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let _response = result?;
+    let response = result.expect("vcs handler should handle index request with repo_path");
+    assert!(!response.content.is_empty(), "response should have content");
     Ok(())
 }
 
@@ -141,8 +141,8 @@ async fn test_vcs_analyze_impact_with_defaults() -> Result<(), rmcp::ErrorData> 
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let _response = result?;
+    let response = result.expect("vcs handler should handle analyze impact defaults");
+    assert!(!response.content.is_empty(), "response should have content");
     Ok(())
 }
 
@@ -159,8 +159,9 @@ async fn test_vcs_analyze_impact_missing_repo_path() -> Result<(), rmcp::ErrorDa
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result?;
+    let response =
+        result.expect("vcs handler should return structured error response for missing repo path");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(
         response.is_error.unwrap_or(false),
         "Missing repo_path and repo_id should return error"

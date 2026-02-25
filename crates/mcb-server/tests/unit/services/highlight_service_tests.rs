@@ -83,20 +83,11 @@ async fn test_highlight_unsupported_language() {
     let service = HighlightServiceImpl::new();
     let result = service.highlight("code", "brainfuck").await;
 
-    assert!(result.is_err());
-    let err_opt = result.err();
-    assert!(err_opt.is_some());
-    let err = match err_opt {
-        Some(error) => error,
-        None => return,
-    };
+    let err = result.expect_err("unsupported language should fail");
     assert!(matches!(
         err,
-        Error::Highlight(HighlightError::UnsupportedLanguage(_))
-    ));
-    if let Error::Highlight(HighlightError::UnsupportedLanguage(lang)) = err {
-        assert_eq!(lang, "brainfuck");
-    }
+        Error::Highlight(HighlightError::UnsupportedLanguage(ref lang)) if lang == "brainfuck"
+    ), "expected UnsupportedLanguage(brainfuck), got: {err:?}");
 }
 
 #[tokio::test]
@@ -105,7 +96,7 @@ async fn test_highlight_fallback_to_plain_text() {
     let code = "some code";
     let result = service.highlight(code, "plaintext").await;
 
-    assert!(result.is_err());
+    let err = result.expect_err("plaintext should not be a supported highlight language");
 }
 
 #[tokio::test]

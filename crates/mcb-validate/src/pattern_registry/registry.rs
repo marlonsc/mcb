@@ -213,6 +213,7 @@ impl PatternRegistry {
                     .filter_map(|v| v.as_str().map(str::to_owned))
                     .collect()
             })
+            // INTENTIONAL: YAML sequence parsing; empty patterns list is valid
             .unwrap_or_default()
     }
 

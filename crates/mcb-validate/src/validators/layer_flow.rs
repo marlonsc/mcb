@@ -108,6 +108,7 @@ impl LayerFlowValidator {
                             .filter(|dep| dep != crate_name && crate_names.contains(dep))
                             .collect()
                     })
+                    // INTENTIONAL: Dependency filter; empty list means no filtered deps
                     .unwrap_or_default();
                 Ok((crate_name.clone(), crate_deps))
             })

@@ -8,7 +8,7 @@ fn base_args(action: ProjectAction, resource: ProjectResource) -> ProjectArgs {
     ProjectArgs {
         action,
         resource,
-        project_id: "test-project".to_string(),
+        project_id: "test-project".to_owned(),
         data: None,
         filters: None,
     }

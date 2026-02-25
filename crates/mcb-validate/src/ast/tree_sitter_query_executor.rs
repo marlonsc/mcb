@@ -29,7 +29,7 @@ impl Callback for QueryExecutionCallback {
     type Res = crate::Result<Vec<TreeSitterQueryMatch>>;
     type Cfg = QueryExecutionCfg;
 
-    fn call<T: ParserTrait>(cfg: Self::Cfg, parser: &T) -> Self::Res {
+    fn call<T: ParserTrait>(cfg: <Self as Callback>::Cfg, parser: &T) -> <Self as Callback>::Res {
         let language = map_language(parser.get_language()).ok_or_else(|| {
             ValidationError::Config(format!(
                 "Unsupported language for tree-sitter query execution: {:?}",

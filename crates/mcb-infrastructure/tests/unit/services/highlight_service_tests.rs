@@ -10,8 +10,7 @@ mod tests {
 
         let result = service.highlight(code, "rust").await;
 
-        assert!(result.is_ok());
-        let highlighted = result.unwrap();
+        let highlighted = result.expect("highlight Rust code should succeed");
         assert_eq!(highlighted.original, code);
         assert_eq!(highlighted.language, "rust");
         assert!(
@@ -27,8 +26,7 @@ mod tests {
 
         let result = service.highlight(code, "rust").await;
 
-        assert!(result.is_ok());
-        let highlighted = result.unwrap();
+        let highlighted = result.expect("highlight empty code should succeed");
         assert_eq!(highlighted.original, "");
         assert!(highlighted.spans.is_empty());
     }
@@ -50,8 +48,7 @@ mod tests {
 
         let result = service.highlight(code, "python").await;
 
-        assert!(result.is_ok());
-        let highlighted = result.unwrap();
+        let highlighted = result.expect("highlight Python code should succeed");
         assert_eq!(highlighted.language, "python");
         assert!(
             !highlighted.spans.is_empty(),

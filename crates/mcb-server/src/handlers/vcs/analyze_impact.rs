@@ -59,6 +59,7 @@ pub async fn analyze_impact(
             _ => modified += 1,
         }
         impacted_files.push(ImpactFile {
+            // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
             path: file.path.to_str().unwrap_or_default().to_owned(),
             status: status.clone(),
             impact: file.additions + file.deletions,

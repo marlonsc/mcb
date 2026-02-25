@@ -47,7 +47,12 @@ macro_rules! validate_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_err(), "Missing path should return McpError");
+            let err = result.expect_err("validate handler should fail when path is missing");
+            let err_str = err.to_string();
+            assert!(
+                err_str.contains("path") || err_str.contains("missing required field"),
+                "error should mention missing path, got: {err_str}"
+            );
         }
     };
 
@@ -69,8 +74,8 @@ macro_rules! validate_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let response = result?;
+            let response = result.expect("validate handler should succeed for valid validation input");
+            assert!(!response.content.is_empty(), "response should have content");
             assert!(!response.is_error.unwrap_or(false));
             Ok(())
         }
@@ -93,8 +98,9 @@ macro_rules! validate_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let response = result?;
+            let response =
+                result.expect("validate handler should return structured error response for invalid path");
+            assert!(!response.content.is_empty(), "response should have content");
             assert!(response.is_error.unwrap_or(false), "Should return error");
             Ok(())
         }
@@ -118,8 +124,10 @@ macro_rules! validate_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let response = result?;
+            let response = result.expect(
+                "validate handler should return structured error response for invalid analyze input",
+            );
+            assert!(!response.content.is_empty(), "response should have content");
             assert!(response.is_error.unwrap_or(false), "Should return error");
             Ok(())
         }
@@ -187,8 +195,8 @@ async fn test_validate_run_with_specific_rules() -> Result<(), Box<dyn std::erro
     };
 
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    let response = result?;
+    let response = result.expect("validate handler should return rule validation response");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(response.is_error.unwrap_or(false), "Should return error");
     Ok(())
 }
@@ -215,8 +223,8 @@ async fn test_validate_list_rules(
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result?;
+    let response = result.expect("validate handler should succeed for list rules action");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
     Ok(())
 }

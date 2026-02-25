@@ -13,14 +13,17 @@ async fn golden_validate_analyze() {
         .handle(Parameters(ValidateArgs {
             action: ValidateAction::Analyze,
             scope: Some(ValidateScope::File),
-            path: Some(file_path.to_string_lossy().to_string()),
+            path: Some(file_path.to_string_lossy().into_owned()),
             rules: None,
             category: None,
         }))
         .await;
 
     assert!(result.is_ok(), "validate analyze must succeed");
-    let call_result = result.expect("already checked");
+    let call_result = match result {
+        Ok(r) => r,
+        Err(e) => panic!("already checked: {e}"),
+    };
     assert!(
         !call_result.is_error.unwrap_or(false),
         "analyze should not return an error"
@@ -44,7 +47,10 @@ async fn golden_validate_status() {
         .await;
 
     assert!(result.is_ok(), "validate list_rules must succeed");
-    let call_result = result.expect("already checked");
+    let call_result = match result {
+        Ok(r) => r,
+        Err(e) => panic!("already checked: {e}"),
+    };
     assert!(
         !call_result.is_error.unwrap_or(false),
         "list_rules should not return an error"
@@ -61,7 +67,7 @@ async fn golden_validate_missing_path() {
         .handle(Parameters(ValidateArgs {
             action: ValidateAction::Run,
             scope: Some(ValidateScope::File),
-            path: Some("/nonexistent/path/to/file.rs".to_string()),
+            path: Some("/nonexistent/path/to/file.rs".to_owned()),
             rules: None,
             category: None,
         }))
@@ -71,7 +77,10 @@ async fn golden_validate_missing_path() {
         result.is_ok(),
         "handler should return Ok with error content, not Err"
     );
-    let call_result = result.expect("already checked");
+    let call_result = match result {
+        Ok(r) => r,
+        Err(e) => panic!("already checked: {e}"),
+    };
     assert!(
         call_result.is_error.unwrap_or(false),
         "missing path should produce an error result"

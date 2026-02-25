@@ -46,6 +46,7 @@ pub async fn run_linter_command(
 #[must_use]
 pub fn parse_ruff_output(output: &str) -> Vec<LintViolation> {
     serde_json::from_str::<Vec<RuffViolation>>(output)
+        // INTENTIONAL: JSON parse fallback for linter output; empty array is safe default
         .unwrap_or_default()
         .into_iter()
         .map(|ruff_violation| LintViolation {
@@ -104,6 +105,7 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
         .filter_map(|clippy_output| {
             let msg = clippy_output.message;
             let span = msg.spans.into_iter().find(|s| s.is_primary)?;
+            // INTENTIONAL: Clippy JSON parse fallback; empty array is safe default
             let raw_code = msg.code.map(|c| c.code).unwrap_or_default();
             let rule_code = normalize_clippy_rule(raw_code)?;
             let category = if rule_code.contains("clippy") {

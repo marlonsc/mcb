@@ -49,10 +49,18 @@ async fn test_index_codebase(
     let result = handler.handle(Parameters(args)).await;
 
     if should_succeed {
-        assert!(result.is_ok());
-        let response = result.expect("Expected successful response");
+        let response = result.expect("index handler should succeed for valid start request");
+        assert!(!response.content.is_empty(), "response should have content");
         assert!(!response.is_error.unwrap_or(false));
     } else {
-        assert!(result.is_err());
+        let err = result.expect_err("index handler should fail for invalid start request");
+        let err_str = err.to_string();
+        assert!(
+            err_str.contains("path")
+                || err_str.contains("collection")
+                || err_str.contains("not found")
+                || err_str.contains("invalid"),
+            "error should mention invalid indexing inputs, got: {err_str}"
+        );
     }
 }

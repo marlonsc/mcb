@@ -33,8 +33,8 @@ async fn test_validation_agent_sql_storage_flow() {
         }))
         .await;
 
-    assert!(result.is_ok());
-    let resp = result.unwrap();
+    let resp = result.expect("agent log_tool should return a response");
+    assert!(!resp.content.is_empty(), "response should have content");
     let text = extract_text(&resp.content);
     assert!(
         text.contains("tool_call_id") && text.contains("tool_name"),
@@ -70,8 +70,8 @@ async fn test_validation_session_create_schema_fallback() {
         .await;
 
     // Should NOT fail with "Missing agent_type"
-    assert!(result.is_ok());
-    let resp = result.unwrap();
+    let resp = result.expect("session create with fallback agent_type should return a response");
+    assert!(!resp.content.is_empty(), "response should have content");
     let text = extract_text(&resp.content);
     assert!(
         !text.contains("Missing agent_type"),
@@ -111,8 +111,11 @@ async fn test_validation_memory_observation_enum_error() {
         }))
         .await;
 
-    assert!(result.is_ok());
-    let resp = result.unwrap();
+    let resp = result.expect("invalid observation_type should return an error response");
+    assert!(
+        !resp.content.is_empty(),
+        "error response should have content"
+    );
     assert!(resp.is_error.unwrap_or(false));
     let text = extract_text(&resp.content);
     assert!(

@@ -156,6 +156,7 @@ impl MemoryHandler {
             McpError::invalid_params("project_id is required for error pattern search", None)
         })?;
 
+        // INTENTIONAL: Optional query parameter; empty string means no filter
         let query = args.query.clone().unwrap_or_default();
         let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIMIT as u32) as usize;
 

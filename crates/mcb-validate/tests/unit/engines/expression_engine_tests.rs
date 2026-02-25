@@ -32,8 +32,8 @@ fn expression_evaluation(
 ) {
     let engine = ExpressionEngine::new();
     let result = engine.evaluate_expression(expression, &expression_context);
-    assert!(result.is_ok());
-    assert_eq!(result.unwrap(), expected);
+    let value = result.expect("expression should evaluate");
+    assert_eq!(value, expected);
 }
 
 #[test]
@@ -44,12 +44,12 @@ fn test_custom_variables() {
     variables.insert("y".to_owned(), serde_json::json!(5));
 
     let result = engine.evaluate_with_variables("x > y", &variables);
-    assert!(result.is_ok());
-    assert!(result.unwrap());
+    let value = result.expect("x > y should evaluate");
+    assert!(value);
 
     let result = engine.evaluate_with_variables("x + y == 15", &variables);
-    assert!(result.is_ok());
-    assert!(result.unwrap());
+    let value = result.expect("x + y == 15 should evaluate");
+    assert!(value);
 }
 
 #[test]
@@ -61,5 +61,9 @@ fn test_invalid_expression() {
     ]);
 
     let result = engine.evaluate_expression("undefined_var > 0", &context);
-    assert!(result.is_err());
+    let err = result.expect_err("invalid expression should fail");
+    assert!(
+        err.to_string().contains("Expression evaluation error"),
+        "unexpected error: {err}"
+    );
 }

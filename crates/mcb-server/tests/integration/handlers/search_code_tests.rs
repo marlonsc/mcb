@@ -27,8 +27,8 @@ async fn test_search_code_success() {
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected successful response");
+    let response = result.expect("search handler should succeed for valid code query");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
 }
 
@@ -55,7 +55,7 @@ async fn test_search_code_empty_query() {
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result.expect("Expected response");
+    let response = result.expect("search handler should return structured error response");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(response.is_error.unwrap_or(false));
 }

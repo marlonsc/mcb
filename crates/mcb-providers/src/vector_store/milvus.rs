@@ -1061,11 +1061,11 @@ mod tests {
     fn test_extract_string_field_missing_column_returns_error() {
         let fields: Vec<FieldColumn> = vec![];
         let result = MilvusVectorStoreProvider::extract_string_field(&fields, "missing", 0);
-        assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
+        let err = result.expect_err("extract_string_field should fail for missing column");
+        let err_msg = err.to_string();
         assert!(
-            err.contains("missing string field"),
-            "Expected error about missing field, got: {err}"
+            err_msg.contains("missing string field"),
+            "Expected error about missing field, got: {err_msg}"
         );
     }
 
@@ -1077,11 +1077,11 @@ mod tests {
         )];
         let result =
             MilvusVectorStoreProvider::extract_string_field(&fields, VECTOR_FIELD_FILE_PATH, 99);
-        assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
+        let err = result.expect_err("extract_string_field should fail for out-of-bounds index");
+        let err_msg = err.to_string();
         assert!(
-            err.contains("missing string field"),
-            "Expected error about missing field, got: {err}"
+            err_msg.contains("missing string field"),
+            "Expected error about missing field, got: {err_msg}"
         );
     }
 
@@ -1100,11 +1100,11 @@ mod tests {
     fn test_extract_long_field_missing_column_returns_error() {
         let fields: Vec<FieldColumn> = vec![];
         let result = MilvusVectorStoreProvider::extract_long_field(&fields, "missing", 0);
-        assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
+        let err = result.expect_err("extract_long_field should fail for missing column");
+        let err_msg = err.to_string();
         assert!(
-            err.contains("missing long field"),
-            "Expected error about missing field, got: {err}"
+            err_msg.contains("missing long field"),
+            "Expected error about missing field, got: {err_msg}"
         );
     }
 
@@ -1131,11 +1131,11 @@ mod tests {
             serde_json::json!("some content"),
         );
         let result = MilvusVectorStoreProvider::prepare_insert_data(&vectors, &[meta], 3);
-        assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
+        let err = result.expect_err("prepare_insert_data should fail when file_path is missing");
+        let err_msg = err.to_string();
         assert!(
-            err.contains(VECTOR_FIELD_FILE_PATH),
-            "Expected error mentioning file_path field, got: {err}"
+            err_msg.contains(VECTOR_FIELD_FILE_PATH),
+            "Expected error mentioning file_path field, got: {err_msg}"
         );
     }
 
@@ -1156,11 +1156,11 @@ mod tests {
             serde_json::json!("some content"),
         );
         let result = MilvusVectorStoreProvider::prepare_insert_data(&vectors, &[meta], 3);
-        assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
+        let err = result.expect_err("prepare_insert_data should fail when start_line is missing");
+        let err_msg = err.to_string();
         assert!(
-            err.contains(VECTOR_FIELD_START_LINE),
-            "Expected error mentioning start_line field, got: {err}"
+            err_msg.contains(VECTOR_FIELD_START_LINE),
+            "Expected error mentioning start_line field, got: {err_msg}"
         );
     }
 
@@ -1178,11 +1178,11 @@ mod tests {
         );
         meta.insert(VECTOR_FIELD_START_LINE.to_owned(), serde_json::json!(10));
         let result = MilvusVectorStoreProvider::prepare_insert_data(&vectors, &[meta], 3);
-        assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
+        let err = result.expect_err("prepare_insert_data should fail when content is missing");
+        let err_msg = err.to_string();
         assert!(
-            err.contains(VECTOR_FIELD_CONTENT),
-            "Expected error mentioning content field, got: {err}"
+            err_msg.contains(VECTOR_FIELD_CONTENT),
+            "Expected error mentioning content field, got: {err_msg}"
         );
     }
 
@@ -1204,8 +1204,7 @@ mod tests {
             serde_json::json!("fn main() {}"),
         );
         let result = MilvusVectorStoreProvider::prepare_insert_data(&vectors, &[meta], 3);
-        assert!(result.is_ok());
-        let payload = result.unwrap();
+        let payload = result.expect("prepare_insert_data should succeed with complete metadata");
         assert_eq!(payload.file_paths, vec!["src/main.rs"]);
         assert_eq!(payload.start_lines, vec![10]);
         assert_eq!(payload.contents, vec!["fn main() {}"]);
@@ -1217,11 +1216,12 @@ mod tests {
         let fields: Vec<FieldColumn> =
             vec![make_string_column(VECTOR_FIELD_ID, vec!["1".to_owned()])];
         let result = MilvusVectorStoreProvider::convert_query_results(&fields, None);
-        assert!(result.is_err());
-        let err = result.unwrap_err().to_string();
+        let err =
+            result.expect_err("convert_query_results should fail when required fields are missing");
+        let err_msg = err.to_string();
         assert!(
-            err.contains("missing"),
-            "Expected error about missing field, got: {err}"
+            err_msg.contains("missing"),
+            "Expected error about missing field, got: {err_msg}"
         );
     }
 

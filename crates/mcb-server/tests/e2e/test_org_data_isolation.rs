@@ -30,7 +30,7 @@ fn parse_list_len(text: &str) -> usize {
 async fn create_org(server: &mcb_server::mcp_server::McpServer, org_id: &str) {
     let org = test_organization(org_id);
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::Org);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(serde_json::to_value(&org).expect("serialize org"));
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
@@ -45,7 +45,7 @@ async fn create_user_in_org(
     let user = test_user(org_id, email);
     let user_id = user.id.clone();
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::User);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(serde_json::to_value(&user).expect("serialize user"));
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
@@ -61,7 +61,7 @@ async fn create_team_in_org(
     let team = test_team(org_id, name);
     let team_id = team.id.clone();
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::Team);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(serde_json::to_value(&team).expect("serialize team"));
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
@@ -78,7 +78,7 @@ async fn create_api_key_in_org(
     let key = test_api_key(user_id, org_id, name);
     let key_id = key.id.clone();
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::ApiKey);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(serde_json::to_value(&key).expect("serialize key"));
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
@@ -96,7 +96,7 @@ async fn list_count(
     org_id: &str,
 ) -> usize {
     let mut args = org_args(OrgEntityAction::List, resource);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_ok(), "list should succeed: {:?}", result);
@@ -171,7 +171,7 @@ async fn golden_isolation_cross_org_get_fails() {
 
     let mut args = org_args(OrgEntityAction::Get, OrgEntityResource::User);
     args.id = Some(user_id);
-    args.org_id = Some(TEST_ORG_ID_B.to_string());
+    args.org_id = Some(TEST_ORG_ID_B.to_owned());
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     match result {

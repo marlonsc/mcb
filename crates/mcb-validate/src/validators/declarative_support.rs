@@ -11,6 +11,7 @@ pub(crate) fn build_substitution_variables(workspace_root: &Path) -> serde_yaml:
     let file_config = FileConfig::load(workspace_root);
     let variables_val = serde_yaml::to_value(&file_config.rules.naming)
         .unwrap_or(serde_yaml::Value::Mapping(serde_yaml::Mapping::new()));
+    // INTENTIONAL: YAML mapping clone; empty mapping is valid default
     let mut variables = variables_val.as_mapping().cloned().unwrap_or_default();
 
     let ca_val = serde_yaml::to_value(&file_config.rules.clean_architecture)

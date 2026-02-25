@@ -110,6 +110,7 @@ pub fn track_fn_name(fn_pattern: Option<&Regex>, trimmed: &str, name: &mut Strin
         *name = cap
             .get(1)
             .map(|m| m.as_str().to_owned())
+            // INTENTIONAL: Regex capture group; no match yields empty string
             .unwrap_or_default();
     }
 }
