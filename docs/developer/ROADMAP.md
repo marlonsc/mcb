@@ -89,7 +89,9 @@ Implements complete workflow system with FSM-based task orchestration, context s
 | **PolicyEngine** | 11+ policies for workflow validation and enforcement |
 | **TaskOrchestrator** | Multi-layer coordination with event broadcasting |
 | **ExecutionTiers** | Hierarchical execution (immediate, scheduled, deferred) |
+
 **Unblocks:** v0.5.0 Integrated Context System
+
 ---
 
 ### v0.5.0 — Integrated Context System
@@ -98,6 +100,7 @@ Implements complete workflow system with FSM-based task orchestration, context s
 **Target:** Q3 2026 (after v0.4.0)
 **Key ADRs:** 041-046
 Multi-source integrated context with knowledge graphs, hybrid search, and temporal queries.
+
 | Component | Description |
 | ----------- | ------------- |
 | **Knowledge Graph** | petgraph-based relationships (calls, imports, extends) |

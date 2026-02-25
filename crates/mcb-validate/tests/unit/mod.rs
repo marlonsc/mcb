@@ -1,4 +1,5 @@
 //! Unit tests — `cargo test -p mcb-validate --test unit`
+#![allow(missing_docs)]
 
 #[path = "../utils/mod.rs"]
 pub mod utils;

@@ -25,6 +25,9 @@ pub const MILVUS_FIELD_VARCHAR_MAX_LENGTH: i32 = 512;
 /// Milvus metadata varchar max length
 pub const MILVUS_METADATA_VARCHAR_MAX_LENGTH: i32 = 65535;
 
+/// Milvus collection name pattern: must match `^[a-zA-Z_][a-zA-Z0-9_]*$` (max 255 chars).
+pub const MILVUS_COLLECTION_NAME_PATTERN: &str = "^[a-zA-Z_][a-zA-Z0-9_]*$";
+
 /// Milvus `IvfFlat` nlist parameter
 pub const MILVUS_IVFFLAT_NLIST: u32 = 128;
 

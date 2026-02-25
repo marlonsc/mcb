@@ -4,8 +4,7 @@ use async_trait::async_trait;
 use axum::Router as AxumRouter;
 use loco_rs::prelude::*;
 
-const DEPTH: Option<usize> = Some(100);
-const COMPLEXITY: Option<usize> = Some(1000);
+use crate::constants::graphql::{SCHEMA_COMPLEXITY, SCHEMA_DEPTH};
 
 /// Loco initializer that builds the Seaography GraphQL schema and stores it
 /// in [`AppContext::shared_store`] for use by the GraphQL controller.
@@ -20,8 +19,8 @@ impl Initializer for GraphQLInitializer {
     async fn after_routes(&self, router: AxumRouter, ctx: &AppContext) -> Result<AxumRouter> {
         let schema = mcb_providers::database::seaorm::graphql::query_root::schema(
             ctx.db.clone(),
-            DEPTH,
-            COMPLEXITY,
+            SCHEMA_DEPTH,
+            SCHEMA_COMPLEXITY,
         )
         .map_err(|e| loco_rs::Error::string(&format!("GraphQL schema build failed: {e}")))?;
         ctx.shared_store.insert(schema);

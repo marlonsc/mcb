@@ -40,7 +40,6 @@
 
 // Clippy allows for complex patterns in infrastructure code
 
-// Core infrastructure modules
 #[macro_use]
 pub(crate) mod macros;
 pub mod cache;
@@ -51,13 +50,12 @@ pub mod di;
 pub mod error_ext;
 pub mod events;
 pub mod health;
-
+pub mod infrastructure;
 pub mod project;
 pub mod routing;
 pub mod services;
 pub mod utils;
 pub mod validation;
 
-pub mod infrastructure;
-pub use error_ext::ErrorContext;
-pub use utils::TimedOperation;
+mod exports;
+pub use exports::*;

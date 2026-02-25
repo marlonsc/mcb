@@ -12,13 +12,11 @@ use loco_rs::app::AppContext;
 use loco_rs::errors::Error;
 use loco_rs::prelude::Result;
 use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
 use mcb_providers::database::seaorm::entities::users;
 use sea_orm::ColumnTrait;
 use sea_orm::EntityTrait;
 use sea_orm::QueryFilter;
-
-const DEFAULT_API_KEY_HEADER: &str = "x-api-key";
-const BEARER_PREFIX: &str = "Bearer ";
 
 /// Authenticated admin principal.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -72,7 +70,7 @@ fn configured_api_key_header(ctx: &AppContext) -> String {
         .as_ref()
         .and_then(|settings| serde_json::from_value::<AppConfig>(settings.clone()).ok())
         .map_or_else(
-            || DEFAULT_API_KEY_HEADER.to_owned(),
+            || API_KEY_HEADER.to_owned(),
             |cfg| cfg.auth.api_key.header.to_ascii_lowercase(),
         )
 }

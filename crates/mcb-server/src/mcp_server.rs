@@ -88,19 +88,6 @@ pub struct McpServices {
     pub entities: McpEntityRepositories,
 }
 
-/// Generate `Arc`-cloning accessor methods for `McpServer` fields.
-macro_rules! impl_arc_accessors {
-    ($($(#[doc = $doc:literal])* $name:ident -> $ty:ty => $($path:ident).+),+ $(,)?) => {
-        $(
-            $(#[doc = $doc])*
-            #[must_use]
-            pub fn $name(&self) -> Arc<$ty> {
-                Arc::clone(&self.$($path).+)
-            }
-        )+
-    };
-}
-
 impl McpServer {
     /// Create a new MCP server with injected dependencies
     #[must_use]

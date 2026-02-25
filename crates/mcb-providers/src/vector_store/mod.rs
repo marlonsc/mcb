@@ -20,8 +20,6 @@
 //! - **Production with encryption**: Use `EncryptedVectorStoreProvider` wrapper
 //! - **Cloud production**: Use `MilvusVectorStoreProvider` or `QdrantVectorStoreProvider`
 
-#[macro_use]
-mod macros;
 pub mod edgevec;
 pub mod encrypted;
 pub mod milvus;

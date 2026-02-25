@@ -504,4 +504,3 @@ crate::register_vector_store_provider!(
         )))
     }
 );
-

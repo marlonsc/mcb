@@ -32,8 +32,8 @@ use mcb_domain::ports::{
 };
 use mcb_domain::value_objects::ids::{IssueLabelAssignmentId, TeamMemberId};
 
-use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::entity::SeaOrmEntityRepository;
+use mcb_providers::migration::Migrator;
 
 async fn setup_db() -> Arc<DatabaseConnection> {
     let db = sea_orm::Database::connect("sqlite::memory:")

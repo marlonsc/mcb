@@ -585,7 +585,7 @@ mod tests {
             Duration::from_secs(5),
             reqwest::Client::new(),
         );
-        let collection = CollectionId::new("test_collection");
+        let collection = CollectionId::from_name("test_collection");
         let vectors: Vec<Embedding> = vec![];
         let metadata: Vec<HashMap<String, Value>> = vec![];
 
@@ -607,7 +607,7 @@ mod tests {
             Duration::from_secs(5),
             reqwest::Client::new(),
         );
-        let collection = CollectionId::new("test_collection");
+        let collection = CollectionId::from_name("test_collection");
         let ids: Vec<String> = vec![];
 
         let result = provider.get_vectors_by_ids(&collection, &ids).await;

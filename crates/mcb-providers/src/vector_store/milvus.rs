@@ -732,7 +732,9 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
                 || err_str.contains("collection not found")
                 || err_str.contains("not exist")
             {
-                return Ok(Vec::new());
+                return Err(Error::vector_db(format!(
+                    "Collection '{collection}' not found when listing file paths"
+                )));
             }
             return Err(Error::vector_db(format!(
                 "Failed to load collection '{collection}': {e}"
@@ -749,8 +751,9 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let query_results = match self.client.query(&name_str, &expr, &query_options).await {
             Ok(results) => results,
             Err(e) => {
-                mcb_domain::warn!("milvus", "failed to query file paths", &e.to_string());
-                return Ok(Vec::new());
+                let msg = format!("Failed to query file paths in collection '{collection}': {e}");
+                mcb_domain::warn!("milvus", "query file paths failed", &msg);
+                return Err(Error::vector_db(msg));
             }
         };
 
@@ -770,7 +773,9 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
                 || err_str.contains("collection not found")
                 || err_str.contains("not exist")
             {
-                return Ok(Vec::new());
+                return Err(Error::vector_db(format!(
+                    "Collection '{collection}' not found when querying chunks by file"
+                )));
             }
             return Err(Error::vector_db(format!(
                 "Failed to load collection '{collection}': {e}"
@@ -793,8 +798,10 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let query_results = match self.client.query(&name_str, &expr, &query_options).await {
             Ok(results) => results,
             Err(e) => {
-                mcb_domain::warn!("milvus", "failed to query chunks by file", &e.to_string());
-                return Ok(Vec::new());
+                let msg =
+                    format!("Failed to query chunks by file in collection '{collection}': {e}");
+                mcb_domain::warn!("milvus", "query chunks by file failed", &msg);
+                return Err(Error::vector_db(msg));
             }
         };
 
@@ -1010,7 +1017,7 @@ mod tests {
     fn test_to_milvus_name_valid_pattern() {
         let id = CollectionId::from_name("test-collection");
         let name = to_milvus_name(&id);
-        let pattern = regex::Regex::new("^[a-zA-Z_][a-zA-Z0-9_]*$").unwrap();
+        let pattern = regex::Regex::new(crate::constants::MILVUS_COLLECTION_NAME_PATTERN).unwrap();
         assert!(
             pattern.is_match(&name),
             "name must match Milvus pattern: {name}"
@@ -1215,6 +1222,70 @@ mod tests {
         assert!(
             err.contains("missing"),
             "Expected error about missing field, got: {err}"
+        );
+    }
+
+    // --- Error propagation tests for query/search failure paths ---
+
+    #[test]
+    fn test_error_collection_not_found_listing_file_paths() {
+        let collection = CollectionId::from_name("test-col");
+        let err = Error::vector_db(format!(
+            "Collection '{collection}' not found when listing file paths"
+        ));
+        let msg = err.to_string();
+        assert!(
+            msg.contains("not found") && msg.contains("listing file paths"),
+            "Error should contain 'not found' and 'listing file paths': {msg}"
+        );
+    }
+
+    #[test]
+    fn test_error_query_file_paths_propagates_cause() {
+        let collection = CollectionId::from_name("my-collection");
+        let original_err = "connection refused";
+        let msg =
+            format!("Failed to query file paths in collection '{collection}': {original_err}");
+        let err = Error::vector_db(msg);
+        let err_str = err.to_string();
+        assert!(
+            err_str.contains("Failed to query file paths"),
+            "Error should mention query file paths: {err_str}"
+        );
+        assert!(
+            err_str.contains("connection refused"),
+            "Error should preserve original cause: {err_str}"
+        );
+    }
+
+    #[test]
+    fn test_error_query_chunks_by_file_propagates_cause() {
+        let collection = CollectionId::from_name("chunks-col");
+        let original_err = "timeout";
+        let msg =
+            format!("Failed to query chunks by file in collection '{collection}': {original_err}");
+        let err = Error::vector_db(msg);
+        let err_str = err.to_string();
+        assert!(
+            err_str.contains("Failed to query chunks by file"),
+            "Error should mention query chunks by file: {err_str}"
+        );
+        assert!(
+            err_str.contains("timeout"),
+            "Error should preserve original cause: {err_str}"
+        );
+    }
+
+    #[test]
+    fn test_error_collection_not_found_chunks_by_file() {
+        let collection = CollectionId::from_name("missing-col");
+        let err = Error::vector_db(format!(
+            "Collection '{collection}' not found when querying chunks by file"
+        ));
+        let err_str = err.to_string();
+        assert!(
+            err_str.contains("not found") && err_str.contains("chunks by file"),
+            "Error should mention 'not found' and 'chunks by file': {err_str}"
         );
     }
 }

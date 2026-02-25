@@ -16,12 +16,10 @@ use sea_orm::{
     QuerySelect, Set,
 };
 
+use crate::constants::database::{FALLBACK_AGENT_MODEL, FALLBACK_AGENT_PROMPT};
 use crate::database::seaorm::entities::{
     agent_session, checkpoint, delegation, organization, project, tool_call,
 };
-
-const FALLBACK_AGENT_MODEL: &str = "unknown";
-const FALLBACK_AGENT_PROMPT: &str = "auto-created for activity logging";
 
 pub struct SeaOrmAgentRepository {
     db: Arc<DatabaseConnection>,

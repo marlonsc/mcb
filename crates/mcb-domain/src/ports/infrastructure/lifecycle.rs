@@ -103,7 +103,7 @@ pub trait LifecycleManaged: Send + Sync {
             },
             message: None,
             latency_ms: None,
-            last_check: crate::utils::time::epoch_secs_u64().unwrap_or_else(|_| 0), // INTENTIONAL: Use 0 if system time is unavailable
+            last_check: crate::utils::time::epoch_secs_u64().unwrap_or(0), // INTENTIONAL: Use 0 if system time is unavailable
         }
     }
 }

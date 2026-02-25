@@ -322,7 +322,7 @@ pub async fn init_app_with_overrides(
     })?;
 
     use sea_orm_migration::MigratorTrait;
-    mcb_providers::database::seaorm::migration::Migrator::up(&db, None)
+    mcb_providers::migration::Migrator::up(&db, None)
         .await
         .map_err(|e| {
             mcb_domain::error::Error::internal(format!("Failed to run migrations: {e}"))

@@ -28,24 +28,6 @@ use crate::constants::providers::{
     DEFAULT_DB_CONFIG_NAME, FALLBACK_EMBEDDING_PROVIDER, FALLBACK_VECTOR_STORE_PROVIDER,
 };
 
-macro_rules! impl_resolver_common {
-    ($resolver:ident) => {
-        impl $resolver {
-            #[must_use]
-            /// Creates a new resolver with the provided application config.
-            pub fn new(config: Arc<AppConfig>) -> Self {
-                Self { config }
-            }
-        }
-
-        impl std::fmt::Debug for $resolver {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                f.debug_struct(stringify!($resolver)).finish()
-            }
-        }
-    };
-}
-
 // ============================================================================
 // Embedding Provider Resolver
 // ============================================================================

@@ -13,6 +13,7 @@ use sea_orm::{
     QueryOrder, Statement, Value,
 };
 
+use crate::constants::database::OBSERVATION_LIST_MAX_LIMIT;
 use crate::database::seaorm::entities::{observation, organization, project, session_summary};
 
 /// SeaORM-backed implementation for observation persistence and retrieval.
@@ -273,8 +274,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
     }
 
     async fn search(&self, query: &str, mut limit: usize) -> Result<Vec<FtsSearchResult>> {
-        const MAX_LIMIT: usize = 1000;
-        limit = limit.min(MAX_LIMIT);
+        limit = limit.min(OBSERVATION_LIST_MAX_LIMIT);
         if query.trim().is_empty() {
             let observations = self.list_by_filter(None, limit).await?;
             return Ok(observations

@@ -1,5 +1,27 @@
 //! Common macros for infrastructure layer.
 
+/// Generate shared resolver boilerplate: `new(config)`, `Debug` impl.
+///
+/// Used by `di/provider_resolvers.rs` for EmbeddingProviderResolver,
+/// VectorStoreProviderResolver, and similar resolver structs.
+macro_rules! impl_resolver_common {
+    ($resolver:ident) => {
+        impl $resolver {
+            #[must_use]
+            /// Creates a new resolver with the provided application config.
+            pub fn new(config: Arc<AppConfig>) -> Self {
+                Self { config }
+            }
+        }
+
+        impl std::fmt::Debug for $resolver {
+            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                f.debug_struct(stringify!($resolver)).finish()
+            }
+        }
+    };
+}
+
 /// Generate shared `AppContext` test infrastructure for a test binary.
 ///
 /// Expands to `try_shared_app_context()`, `shared_app_context()`, and

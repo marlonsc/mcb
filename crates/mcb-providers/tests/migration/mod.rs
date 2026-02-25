@@ -3,7 +3,7 @@
 use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 use sea_orm_migration::MigratorTrait;
 
-use mcb_providers::database::seaorm::migration::Migrator;
+use mcb_providers::migration::Migrator;
 
 async fn query_names(db: &DatabaseConnection, sql: &str) -> Vec<String> {
     let stmt = Statement::from_string(DatabaseBackend::Sqlite, sql);

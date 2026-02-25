@@ -31,7 +31,7 @@ use mcb_infrastructure::di::provider_resolvers::{
 };
 use mcb_infrastructure::events::BroadcastEventBus;
 use mcb_infrastructure::infrastructure::admin::DefaultIndexingOperations;
-use mcb_providers::database::seaorm::migration::Migrator;
+use mcb_providers::migration::Migrator;
 
 use crate::McpServer;
 use crate::mcp_server::{McpEntityRepositories, McpServices};

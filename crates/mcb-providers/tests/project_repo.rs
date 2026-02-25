@@ -6,8 +6,8 @@ use mcb_domain::entities::project::{
     ProjectDependency, ProjectIssue, ProjectPhase,
 };
 use mcb_domain::ports::ProjectRepository;
-use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::project::SeaOrmProjectRepository;
+use mcb_providers::migration::Migrator;
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
 

@@ -258,10 +258,9 @@ impl UnifiedRuleRegistry {
         }
 
         // YAML rules — match by category field
-        let yaml_violations =
-            self.execute_yaml_rules_filtered_sync(config, |rule| {
-                rule.category.eq_ignore_ascii_case(category)
-            })?;
+        let yaml_violations = self.execute_yaml_rules_filtered_sync(config, |rule| {
+            rule.category.eq_ignore_ascii_case(category)
+        })?;
         violations.extend(yaml_violations);
 
         Ok(violations)
@@ -344,7 +343,10 @@ impl UnifiedRuleRegistry {
     /// # Errors
     ///
     /// Returns an error if a tokio runtime could not be created when not inside one.
-    fn execute_yaml_rules_sync(&self, config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {
+    fn execute_yaml_rules_sync(
+        &self,
+        config: &ValidationConfig,
+    ) -> Result<Vec<Box<dyn Violation>>> {
         self.execute_yaml_rules_filtered_sync(config, |_| true)
     }
 
@@ -447,4 +449,3 @@ impl UnifiedRuleRegistry {
         }
     }
 }
-

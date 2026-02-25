@@ -9,8 +9,8 @@ use mcb_domain::ports::IndexRepository;
 use mcb_domain::ports::IndexingOperationStatus;
 use mcb_domain::value_objects::CollectionId;
 use mcb_providers::database::seaorm::entities::{organization, project};
-use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::SeaOrmIndexRepository;
+use mcb_providers::migration::Migrator;
 use sea_orm::{ActiveModelTrait, ActiveValue::Set, ConnectionTrait, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
 

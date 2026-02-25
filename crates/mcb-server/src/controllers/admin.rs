@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 
 use mcb_providers::database::seaorm::entities::{agent_sessions, observations, tool_calls};
 
-const CONFIG_ROOT: &str = "config/pro_admin";
+use crate::constants::admin::CONFIG_ROOT;
 
 /// Returns the sea-orm-pro admin panel configuration as JSON.
 ///
