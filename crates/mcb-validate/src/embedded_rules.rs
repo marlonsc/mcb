@@ -78,12 +78,6 @@ impl EmbeddedRules {
         include_str!("../rules/migration/CTOR002_constructor-injection.yml");
     const RULES_MIGRATION_CTOR003_MANUAL_SERVICE_COMPOSITION_YML: &'static str =
         include_str!("../rules/migration/CTOR003_manual-service-composition.yml");
-    const RULES_MIGRATION_FIGMENT001_FIGMENT_MIGRATION_YML: &'static str =
-        include_str!("../rules/migration/FIGMENT001_figment-migration.yml");
-    const RULES_MIGRATION_FIGMENT002_FIGMENT_PATTERN_YML: &'static str =
-        include_str!("../rules/migration/FIGMENT002_figment-pattern.yml");
-    const RULES_MIGRATION_FIGMENT003_FIGMENT_PROFILE_SUPPORT_YML: &'static str =
-        include_str!("../rules/migration/FIGMENT003_figment-profile-support.yml");
     const RULES_MIGRATION_LINKME001_INVENTORY_MIGRATION_YML: &'static str =
         include_str!("../rules/migration/LINKME001_inventory-migration.yml");
     const RULES_MIGRATION_LINKME002_LINKME_SLICE_DECLARATION_YML: &'static str =
@@ -284,18 +278,6 @@ impl EmbeddedRules {
             (
                 "rules/migration/CTOR003_manual-service-composition.yml",
                 Self::RULES_MIGRATION_CTOR003_MANUAL_SERVICE_COMPOSITION_YML,
-            ),
-            (
-                "rules/migration/FIGMENT001_figment-migration.yml",
-                Self::RULES_MIGRATION_FIGMENT001_FIGMENT_MIGRATION_YML,
-            ),
-            (
-                "rules/migration/FIGMENT002_figment-pattern.yml",
-                Self::RULES_MIGRATION_FIGMENT002_FIGMENT_PATTERN_YML,
-            ),
-            (
-                "rules/migration/FIGMENT003_figment-profile-support.yml",
-                Self::RULES_MIGRATION_FIGMENT003_FIGMENT_PROFILE_SUPPORT_YML,
             ),
             (
                 "rules/migration/LINKME001_inventory-migration.yml",

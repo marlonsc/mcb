@@ -17,6 +17,9 @@ implementation_status: Complete
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Accepted** (v0.2.0 - Structure, v0.3.0 - Migration)
 **Date**: 2026-01-14
 
@@ -94,7 +97,7 @@ proptest! {
 
 ## v0.1.1 Test Organization
 
-Current test structure in seven-crate workspace:
+Current test structure in six-crate workspace:
 
 ```text
 crates/

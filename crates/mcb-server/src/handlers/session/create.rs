@@ -47,9 +47,12 @@ pub async fn create_session(
         Ok(data) => data,
         Err(error_result) => return Ok(error_result),
     };
-    let payload =
-        serde_json::from_value::<CreateSessionPayload>(args.data.clone().unwrap_or_default())
-            .map_err(|_| McpError::invalid_params("invalid data", None))?;
+    let payload = serde_json::from_value::<CreateSessionPayload>(
+        args.data
+            .clone()
+            .ok_or_else(|| McpError::invalid_params("missing required field: data", None))?,
+    )
+    .map_err(|_| McpError::invalid_params("invalid data", None))?;
 
     let agent_type_value = resolve_identifier_precedence(
         "agent_type",

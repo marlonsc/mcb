@@ -5,7 +5,7 @@ It is the **single source of truth** for all AI agents. See [`AGENTS.md`](AGENTS
 
 ## Project
 
-MCB (Memory Context Browser) — a high-performance MCP server giving AI coding agents persistent memory, semantic code search, and architecture validation. Rust edition 2024, nightly toolchain, MSRV 1.92. Version 0.2.1-dev.
+MCB (Memory Context Browser) — a high-performance MCP server giving AI coding agents persistent memory, semantic code search, and architecture validation. Rust edition 2024, stable toolchain, MSRV 1.92. Version 0.2.1-dev.
 
 ## Build & Quality Commands
 
@@ -38,9 +38,8 @@ Clean Architecture with strict inward-only dependency flow, enforced at compile 
 ```
 mcb (CLI facade binary)
   -> mcb-server       (MCP protocol, Rocket HTTP, handlers, admin UI)
-    -> mcb-infrastructure (DI/linkme+Handle, config/Figment, cache/Moka, logging/tracing)
-      -> mcb-application  (use cases, service orchestration)
-        -> mcb-domain     (entities, port traits, errors — ZERO infra deps)
+    -> mcb-infrastructure (DI/linkme+Handle, config/Loco YAML, cache/Moka, logging/tracing)
+      -> mcb-domain     (entities, port traits, errors — ZERO infra deps)
   -> mcb-providers    (adapters: embedding, vector store, DB, git, language parsers)
   -> mcb-validate     (rule engine, AST analysis, metrics — dev-only)
 ```
@@ -48,8 +47,7 @@ mcb (CLI facade binary)
 ### Dependency Rules
 
 - `mcb-domain`: Zero internal dependencies. No `sqlx`, `rocket`, `git2`.
-- `mcb-application`: Depends only on `mcb-domain`. No direct provider usage.
-- `mcb-providers`: Implements domain port traits. Depends on `mcb-domain` + `mcb-application`.
+- `mcb-providers`: Implements domain port traits. Depends on `mcb-domain` only.
 - `mcb-infrastructure`: Wires everything via DI. Can see all layers except server.
 - `mcb-server`: Entry point. Accesses services via DI, never directly via providers.
 
@@ -74,7 +72,7 @@ mcb (CLI facade binary)
 2. Implement adapter in `mcb-providers/src/{category}/{name}.rs`
 3. Register via `#[distributed_slice(EMBEDDING_PROVIDERS)]` (or relevant slice)
 4. DI auto-discovers via linkme — no manual catalog edits
-5. Add config in `config/default.toml` under `[providers.{category}]`
+5. Add config in `config/development.yaml` under `settings.providers.{category}`
 
 ### Adding a New MCP Tool
 
@@ -85,7 +83,7 @@ mcb (CLI facade binary)
 
 ### Adding a New Service
 
-1. Define use case in `mcb-application/src/services/`
+1. Define use case service in `mcb-infrastructure/src/di/modules/use_cases/`
 2. Expose via port trait in `mcb-domain/src/ports/`
 3. Register in DI catalog: `mcb-infrastructure/src/di/mod.rs`
 4. Inject into handlers via `Catalog::get::<dyn PortTrait>()`
@@ -165,7 +163,7 @@ CI adds: `-D clippy::multiple_unsafe_ops_per_block`, `-D clippy::undocumented_un
 - [Architecture](docs/architecture/ARCHITECTURE.md) — layers, crate map, dependency flow
 - [Clean Architecture](docs/architecture/CLEAN_ARCHITECTURE.md) — layer rules, extension guide
 - [Architecture Boundaries](docs/architecture/ARCHITECTURE_BOUNDARIES.md) — dependency rules, violations
-- [ADRs](docs/adr/) — 48 Architecture Decision Records
+- [ADRs](docs/adr/) — 52 Architecture Decision Records
 - [Contributing](docs/developer/CONTRIBUTING.md) — dev setup, coding standards, PR process
 - [MCP Tools](docs/MCP_TOOLS.md) — full tool API schemas
 - [Configuration](docs/CONFIGURATION.md) — all environment variables and config options

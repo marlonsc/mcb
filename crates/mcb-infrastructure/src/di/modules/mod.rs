@@ -12,5 +12,8 @@
 /// Domain services factory
 pub mod domain_services;
 
+/// Use case service implementations.
+pub mod use_cases;
+
 // Re-export domain services types
 pub use domain_services::{DomainServicesContainer, DomainServicesFactory, ServiceDependencies};

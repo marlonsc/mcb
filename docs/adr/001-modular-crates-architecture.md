@@ -16,11 +16,14 @@ implementation_status: Complete
 
 ## ADR 001: Modular Crates Architecture
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 ## Status
 
 **Implemented** (v0.1.1)
 
-> Fully implemented with Clean Architecture + linkme + Handle DI across 7 crates.
+> Fully implemented with Clean Architecture + linkme + Handle DI across 6 crates.
 
 ## Context
 
@@ -249,7 +252,7 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 ## Related ADRs
 
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md)
-- [ADR-029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](archive/superseded-029-hexagonal-architecture-dill.md) (superseded by ADR-050)
 - [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md)
-- [ADR-004: Event Bus (Local and Distributed)](004-event-bus-local-distributed.md)
+- [ADR-004: Event Bus (Local and Distributed)](archive/superseded-004-event-bus-local-distributed.md)
 - [ADR-005: Context Cache Support (Moka and Redis)](005-context-cache-support.md)

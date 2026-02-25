@@ -7,7 +7,7 @@ See [`AGENTS.md`](../AGENTS.md) for the full agent configuration index.
 
 ## Essential Rules
 
-- **Architecture**: Clean Architecture — dependencies flow inward only. Run `make validate` to verify.
+- **Architecture**: Clean Architecture — dependencies flow inward only (`server -> infrastructure -> providers -> domain`). Run `make validate` to verify.
 - **Error handling**: Use `Error::vcs("msg")` constructors, never `unwrap()`/`expect()` in production.
 - **Lints**: `unsafe_code = "deny"`, `dead_code = "deny"`. Zero clippy warnings required.
 - **Testing**: `make test` (1700+ tests). New logic must include tests.

@@ -37,13 +37,6 @@ fn build_args(action: AgentAction, session_id: &str, data: serde_json::Value) ->
 )]
 #[case(
     build_args(
-        AgentAction::LogTool,
-        TEST_SESSION_ID,
-        json!({ "success": true })
-    )
-)]
-#[case(
-    build_args(
         AgentAction::LogDelegation,
         TEST_SESSION_ID,
         json!({
@@ -60,6 +53,22 @@ async fn test_agent_actions_return_mcp_response(#[case] args: AgentArgs) {
         return;
     };
 
+    let result = handler.handle(Parameters(args)).await;
+    assert!(result.is_ok());
+    let response = result.expect("response");
+    assert!(!response.is_error.unwrap_or(false));
+}
+
+#[tokio::test]
+async fn test_agent_log_tool_missing_tool_name_returns_error() {
+    let Some((handler, _temp_dir)) = create_handler().await else {
+        return;
+    };
+    let args = build_args(
+        AgentAction::LogTool,
+        TEST_SESSION_ID,
+        json!({ "success": true }),
+    );
     let result = handler.handle(Parameters(args)).await;
     assert!(result.is_ok());
     let response = result.expect("response");

@@ -3,7 +3,7 @@
 //!
 use std::collections::HashMap;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// MCP Context configuration from .mcp-context.toml files
 ///
@@ -15,14 +15,12 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
-const EMBEDDED_APP_DEFAULTS: &str = include_str!("../../../../config/default.toml");
-
 /// Configuration errors that can occur during MCP context setup.
 #[derive(Debug, Error)]
 pub enum ConfigError {
     /// The configuration file was not found at the expected path.
     #[error("Config file not found: {0}")]
-    NotFound(PathBuf),
+    NotFound(std::path::PathBuf),
 
     /// Failed to read the configuration file from disk.
     #[error("Failed to read config file: {0}")]
@@ -72,24 +70,6 @@ impl Default for GitConfig {
     }
 }
 
-#[derive(Debug, Deserialize)]
-struct EmbeddedDefaultsToml {
-    mcp_context: EmbeddedMcpContext,
-}
-
-#[derive(Debug, Deserialize)]
-struct EmbeddedMcpContext {
-    git: GitConfig,
-}
-
-fn embedded_mcp_context_defaults() -> Result<McpContextConfig, ConfigError> {
-    let parsed: EmbeddedDefaultsToml = toml::from_str(EMBEDDED_APP_DEFAULTS)?;
-    Ok(McpContextConfig {
-        git: parsed.mcp_context.git,
-        custom: HashMap::new(),
-    })
-}
-
 /// Root MCP Context configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct McpContextConfig {
@@ -113,7 +93,7 @@ impl McpContextConfig {
         let config_path = path.join(".mcp-context.toml");
 
         if !config_path.exists() {
-            return embedded_mcp_context_defaults();
+            return Ok(Self::default());
         }
 
         let content = fs::read_to_string(&config_path)?;

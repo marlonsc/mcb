@@ -287,6 +287,7 @@ impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
     }
 
     async fn flush(&self, _collection: &CollectionId) -> Result<()> {
+        // EdgeVec uses synchronous in-memory writes — flush is a no-op
         Ok(())
     }
 
@@ -579,11 +580,26 @@ impl EdgeVecActor {
         query_vector: &[f32],
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
-        match self.index.search(query_vector, limit, &self.storage) {
+        // The HNSW index is global (shared across all collections), so when
+        // multiple collections exist we must over-fetch to ensure enough
+        // results survive the per-collection metadata filter.
+        let total_vectors = self.index.len();
+        let collection_size = self.metadata_store.get(collection).map_or(0, |m| m.len());
+        let fetch_limit = if collection_size > 0 && total_vectors > collection_size {
+            let ratio = (total_vectors as f64 / collection_size as f64).ceil() as usize;
+            (limit * ratio).min(total_vectors)
+        } else {
+            limit
+        };
+
+        match self.index.search(query_vector, fetch_limit, &self.storage) {
             Ok(results) => {
-                let mut final_results = Vec::with_capacity(results.len());
+                let mut final_results = Vec::with_capacity(limit);
                 if let Some(collection_metadata) = self.metadata_store.get(collection) {
                     for res in results {
+                        if final_results.len() >= limit {
+                            break;
+                        }
                         let external_id: Option<String> = self
                             .id_map
                             .iter()

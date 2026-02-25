@@ -237,6 +237,8 @@ impl MlBasedRouter {
 
 # config/default.toml
 
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+
 [routing]
 
 # Which router to use: "ast" | "rules" | "ml"

@@ -1,3 +1,4 @@
+use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
 use mcb_server::handlers::MemoryHandler;
 use rmcp::handler::server::wrapper::Parameters;
@@ -115,4 +116,68 @@ async fn test_memory_inject_with_filters() {
     let result = handler.handle(Parameters(args)).await;
     assert!(result.is_ok());
     let _response = result.expect("response");
+}
+
+#[tokio::test]
+async fn test_get_observations_missing_ids_returns_invalid_params() {
+    let Some((handler, _services_temp_dir)) = create_handler().await else {
+        return;
+    };
+
+    let args = MemoryArgs {
+        action: MemoryAction::Get,
+        org_id: None,
+        resource: MemoryResource::Observation,
+        project_id: None,
+        data: None,
+        ids: None,
+        repo_id: None,
+        session_id: None,
+        parent_session_id: None,
+        tags: None,
+        query: None,
+        anchor_id: None,
+        depth_before: None,
+        depth_after: None,
+        window_secs: None,
+        observation_types: None,
+        max_tokens: None,
+        limit: None,
+    };
+
+    let result = handler.handle(Parameters(args)).await;
+    let err = result.expect_err("missing ids must return invalid_params error");
+    assert!(err.message.contains("missing required field: ids"));
+}
+
+#[tokio::test]
+async fn test_store_session_missing_data_returns_invalid_params() {
+    let Some((handler, _services_temp_dir)) = create_handler().await else {
+        return;
+    };
+
+    let args = MemoryArgs {
+        action: MemoryAction::Store,
+        org_id: None,
+        resource: MemoryResource::Session,
+        project_id: None,
+        data: None,
+        ids: None,
+        repo_id: None,
+        session_id: Some(SessionId::from_name(TEST_SESSION_ID)),
+        parent_session_id: None,
+        tags: None,
+        query: None,
+        anchor_id: None,
+        depth_before: None,
+        depth_after: None,
+        window_secs: None,
+        observation_types: None,
+        max_tokens: None,
+        limit: None,
+    };
+
+    let result = handler.handle(Parameters(args)).await;
+    let err = result.expect_err("missing data must return invalid_params error");
+    assert!(err.message.contains("missing required field: data"));
 }

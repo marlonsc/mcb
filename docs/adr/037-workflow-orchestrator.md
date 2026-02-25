@@ -17,11 +17,14 @@ implementation_status: Complete
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Accepted** — 2026-02-06
 
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout), [ADR-036](./036-enforcement-policies.md) (Enforcement Policies)
-- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-033](./033-mcp-handler-consolidation.md) (Handler Consolidation), [ADR-025](./025-figment-configuration.md) (Figment)
+- **Related:** [ADR-029](./archive/superseded-029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-033](./033-mcp-handler-consolidation.md) (Handler Consolidation), [ADR-025](./archive/superseded-025-figment-configuration.md) (Figment)
 - **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) →**ADR-037**
 
 ## Context
@@ -1558,6 +1561,8 @@ impl SessionManager {
 
 # config/default.toml — [orchestrator] section
 
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+
 [orchestrator]
 
 # Maximum concurrent workflow sessions
@@ -1656,6 +1661,8 @@ fn default_channel_capacity() -> usize { 256 }
 8. Register `workflow` tool in MCP server tool list
 9. Add `[orchestrator]` section to `config/default.toml`
 
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+
 ### Migration
 
 - No existing code modified (additive only).
@@ -1697,5 +1704,5 @@ fn default_channel_capacity() -> usize { 256 }
 - [ADR-035: Context Scout](./035-context-scout.md) — `ContextScoutProvider` trait
 - [ADR-036: Enforcement Policies](./036-enforcement-policies.md) — `PolicyGuardProvider` trait
 - [ADR-033: MCP Handler Consolidation](./033-mcp-handler-consolidation.md) — Action-based tool pattern
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) — DI pattern (superseded by ADR-050)
-- [ADR-025: Figment Configuration](./025-figment-configuration.md) — Config pattern
+- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md) — DI pattern (superseded by ADR-050)
+- [ADR-025: Figment Configuration](./archive/superseded-025-figment-configuration.md) — Config pattern

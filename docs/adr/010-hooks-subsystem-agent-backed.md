@@ -17,6 +17,9 @@ implementation_status: Partial
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Proposed**(Planned for v0.2.0)
 
 > Not yet implemented. Target crate structure for v0.2.0:
@@ -1175,7 +1178,7 @@ if let Some(git) = &self.git_provider {
 
 - [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - HookProcessor follows trait-based DI
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async hook processing
-- [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - Hook monitoring UI
+- [ADR-007: Integrated Web Administration Interface](archive/superseded-007-web-admin-interface.md) - Hook monitoring UI
 - [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git context in hooks
 - [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Hook observation storage
 - [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for hook services

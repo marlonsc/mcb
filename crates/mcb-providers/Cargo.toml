@@ -122,17 +122,23 @@ milvus-sdk-rust = { workspace = true }
 # JSON Schema generation (for EdgeVec config)
 schemars = { workspace = true }
 
-# NATS for distributed events
-async-nats = { workspace = true }
-
 # SQLite for memory repository (uses generic schema from domain)
 sqlx = { workspace = true }
 sha2.workspace = true
 walkdir.workspace = true
 
+# SeaORM: Entity-first ORM (entities + migrations)
+sea-orm = { workspace = true }
+sea-orm-migration = { workspace = true }
+sea-query = { workspace = true }
+seaography = { workspace = true }
+async-graphql = { workspace = true }
+
 [features]
 default = []
 hybrid-search = []
+# Dev-only: auto-sync schema from SeaORM entities (NEVER enable in production)
+dev-schema-sync = []
 
 [lints]
 workspace = true
@@ -142,7 +148,33 @@ tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 rstest = { workspace = true }
 mockall = { workspace = true }
+sea-orm = { workspace = true }
+sea-orm-migration = { workspace = true }
 
 [[test]]
 name = "unit"
 path = "tests/unit/mod.rs"
+
+[[test]]
+name = "migration"
+path = "tests/migration/mod.rs"
+
+[[test]]
+name = "observation_repo"
+path = "tests/observation_repo.rs"
+
+[[test]]
+name = "agent_repo"
+path = "tests/agent_repo.rs"
+
+[[test]]
+name = "project_repo"
+path = "tests/project_repo.rs"
+
+[[test]]
+name = "entity_repo"
+path = "tests/entity_repo/mod.rs"
+
+[[test]]
+name = "index_repo"
+path = "tests/index_repo.rs"

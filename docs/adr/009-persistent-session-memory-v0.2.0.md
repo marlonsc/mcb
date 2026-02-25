@@ -17,6 +17,9 @@ implementation_status: Partial
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Proposed** (Planned for v0.2.0)
 
 > **Amendment 2026-02-02**: Tool naming convention updated to use `memory_`
@@ -1462,7 +1465,7 @@ fn reciprocal_rank_fusion(
 
 [adr-001]: 001-modular-crates-architecture.md
 [adr-003]: 003-unified-provider-architecture.md
-[adr-007]: 007-integrated-web-administration-interface.md
+[adr-007]: archive/superseded-007-web-admin-interface.md
 [adr-008]: 008-git-aware-semantic-indexing-v0.2.0.md
 [adr-010]: 010-hooks-subsystem-agent-backed.md
 [adr-012]: 012-di-strategy-two-layer-approach.md

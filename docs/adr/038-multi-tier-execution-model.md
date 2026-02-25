@@ -17,11 +17,14 @@ implementation_status: Complete
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Proposed** — 2026-02-05
 
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow FSM), [ADR-035](./035-context-scout.md) (Context Scout), [ADR-036](./036-enforcement-policies.md) (Enforcement Policies), [ADR-037](./037-workflow-orchestrator.md) (Orchestrator)
-- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-033](./033-mcp-handler-consolidation.md) (MCP Handlers)
+- **Related:** [ADR-029](./archive/superseded-029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./archive/superseded-025-figment-configuration.md) (Figment), [ADR-033](./033-mcp-handler-consolidation.md) (MCP Handlers)
 - **Supersedes:** None (integrating series)
 - **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md) →**ADR-038**
 
@@ -1083,6 +1086,6 @@ If implementation reveals critical issues (e.g., SQLite concurrency problems, po
 - [ADR-035: Context Scout](./035-context-scout.md) — Project state discovery
 - [ADR-036: Enforcement Policies](./036-enforcement-policies.md) — Policy evaluation and guards
 - [ADR-037: Workflow Orchestrator](./037-workflow-orchestrator.md) — MCP integration and orchestration
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) — DI container history (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md) — DI container history (superseded by ADR-050)
 - [ADR-013: Clean Architecture Crate Separation](./013-clean-architecture-crate-separation.md) — Crate boundaries
-- [ADR-025: Figment Configuration Migration](./025-figment-configuration.md) — Configuration loading
+- [ADR-025: Figment Configuration Migration](./archive/superseded-025-figment-configuration.md) — Configuration loading

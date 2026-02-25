@@ -14,8 +14,7 @@
 //! | ---------- | ------ | ----------------- |
 //! | Embedding | `EmbeddingProvider` | `OpenAI`, Ollama, `VoyageAI`, Gemini, `FastEmbed` |
 //! | Vector Store | `VectorStoreProvider` | `EdgeVec`, Encrypted, Milvus, Pinecone, Qdrant |
-//! | Cache | `CacheProvider` | Moka, Redis |
-//! | Events | `EventPublisher` | Tokio, Nats |
+//! | Cache | `CacheProvider` | delegated to Loco cache |
 //! | Hybrid Search | `HybridSearchProvider` | `HybridSearchEngine` |
 //! | Language | `LanguageChunkingProvider` | Rust, Python, Go, Java, etc. |
 //!
@@ -32,7 +31,6 @@
 //!
 //! ```no_run
 //! use mcb_providers::embedding::OllamaEmbeddingProvider;
-//! use mcb_providers::cache::MokaCacheProvider;
 //! use mcb_providers::language::RustProcessor;
 //! ```
 
@@ -63,18 +61,8 @@ pub mod embedding;
 /// Implements `VectorStoreProvider` trait for vector storage backends.
 pub mod vector_store;
 
-/// Cache provider implementations
-///
-/// Implements `CacheProvider` trait for caching backends.
-pub mod cache;
-
 /// Native PMAT-style analysis provider implementations.
 pub mod analysis;
-
-/// Event publisher implementations (simple EventPublisher trait)
-///
-/// Implements `EventPublisher` trait for event bus backends.
-pub mod events;
 
 /// Language chunking provider implementations
 ///
@@ -91,13 +79,11 @@ pub mod hybrid_search;
 // Re-export hybrid search providers
 pub use hybrid_search::HybridSearchEngine;
 
-/// Database providers (memory repository backends)
-///
-/// Each backend (SQLite, PostgreSQL, MySQL) has its own submodule and
-/// implements the generic schema DDL in its dialect.
+/// Database providers — `SeaORM` repositories for structured persistence.
+/// Database-agnostic (`SQLite` + `PostgreSQL` via connection string).
 pub mod database;
 
-pub use database::SqliteSchemaDdlGenerator;
+pub use database::seaorm::migration;
 
 /// Project type detection providers
 pub mod project_detection;

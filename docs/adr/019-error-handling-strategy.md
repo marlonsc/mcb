@@ -17,6 +17,9 @@ implementation_status: Incomplete
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Accepted** (v0.2.0 - Implementation)
 **Date**: 2026-01-14
 
@@ -88,7 +91,7 @@ pub enum AnalysisError {
 
 ## v0.1.1 Error Organization
 
-Current error types in the seven-crate structure:
+Current error types in the six-crate structure:
 
 | Crate | Error File | Error Type |
 | ------- | ----------- | ------------ |

@@ -29,9 +29,9 @@ pub trait VcsEntityRepository: Send + Sync {
     /// Performs the create branch operation.
     async fn create_branch(&self, branch: &Branch) -> Result<()>;
     /// Performs the get branch operation.
-    async fn get_branch(&self, id: &str) -> Result<Branch>;
+    async fn get_branch(&self, org_id: &str, id: &str) -> Result<Branch>;
     /// Performs the list branches operation.
-    async fn list_branches(&self, repository_id: &str) -> Result<Vec<Branch>>;
+    async fn list_branches(&self, org_id: &str, repository_id: &str) -> Result<Vec<Branch>>;
     /// Performs the update branch operation.
     async fn update_branch(&self, branch: &Branch) -> Result<()>;
     /// Performs the delete branch operation.

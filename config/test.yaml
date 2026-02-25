@@ -1,0 +1,187 @@
+# MCB — Loco configuration (test)
+
+logger:
+  enable: false
+  pretty_backtrace: true
+  level: debug
+  format: compact
+
+server:
+  port: 0
+  binding: 127.0.0.1
+  host: http://localhost
+
+database:
+  uri: "{{ get_env(name='DATABASE_URL', default='sqlite://mcb-test.db?mode=rwc') }}"
+  enable_logging: false
+  min_connections: 1
+  max_connections: 1
+  connect_timeout: 500
+  idle_timeout: 500
+  auto_migrate: true
+  dangerously_truncate: true
+  dangerously_recreate: true
+
+cache:
+  kind: InMem
+  max_capacity: 33554432
+
+# MCB test settings — same structure as development but with test defaults
+settings:
+  mode:
+    type: standalone
+    server_url: "http://127.0.0.1:3000"
+    session_prefix: ""
+    timeout_secs: 30
+    auto_reconnect: true
+    max_reconnect_attempts: 5
+
+  server:
+    transport_mode: stdio
+    network:
+      host: "127.0.0.1"
+      port: 0
+    ssl:
+      https: false
+    timeouts:
+      request_timeout_secs: 5
+      connection_timeout_secs: 2
+      max_request_body_size: 10485760
+    cors:
+      cors_enabled: false
+      cors_origins: []
+
+  providers:
+    database:
+      provider: sqlite
+      configs:
+        default:
+          provider: sqlite
+          path: ""
+    embedding:
+      provider: fastembed
+      cache_dir: "./.cache/mcb/fastembed"
+      configs:
+        default:
+          provider: fastembed
+          model: AllMiniLML6V2
+          dimensions: 384
+    vector_store:
+      provider: edgevec
+      collection: default
+      configs:
+        default:
+          provider: edgevec
+          dimensions: 384
+          collection: default
+
+  mcp:
+    indexing:
+      supported_extensions:
+        - rs
+        - py
+        - js
+        - ts
+        - java
+        - cpp
+        - c
+        - go
+
+  mcp_context:
+    git:
+      branches:
+        - main
+        - HEAD
+      depth: 50
+      ignore_patterns: []
+      include_submodules: true
+
+  logging:
+    level: info
+    json_format: false
+    max_file_size: 10485760
+    max_files: 5
+    event_bus_level: warn
+
+  auth:
+    enabled: false
+    password_algorithm: Argon2
+    jwt:
+      secret: ""
+      expiration_secs: 86400
+      refresh_expiration_secs: 604800
+    api_key:
+      enabled: true
+      header: "X-API-Key"
+    admin:
+      enabled: false
+      header: "X-Admin-Key"
+
+  system:
+    infrastructure:
+      cache:
+        enabled: true
+        provider: Moka
+        default_ttl_secs: 3600
+        max_size: 1000000
+        redis_pool_size: 10
+        namespace: mcb
+      event_bus:
+        provider: in_process
+        capacity: 1024
+        connection_timeout_ms: 5000
+        max_reconnect_attempts: 5
+      metrics:
+        enabled: true
+        collection_interval_secs: 10
+        prefix: mcb
+        endpoint_enabled: true
+        endpoint_path: "/metrics"
+      resilience:
+        circuit_breaker_failure_threshold: 5
+        circuit_breaker_timeout_secs: 30
+        circuit_breaker_success_threshold: 3
+        rate_limiter_rps: 100
+        rate_limiter_burst: 200
+        retry_attempts: 3
+        retry_delay_ms: 1000
+      limits:
+        memory_limit: 2147483648
+        cpu_limit: 4
+        disk_io_limit: 104857600
+        max_connections: 1000
+        max_requests_per_connection: 100
+    data:
+      snapshot:
+        enabled: true
+        directory: "./snapshots"
+        max_file_size: 104857600
+        compression_enabled: true
+        change_detection_enabled: true
+      sync:
+        enabled: true
+        watching_enabled: true
+        batch_size: 100
+        debounce_delay_ms: 1000
+        timeout_secs: 60
+        max_concurrent: 4
+      backup:
+        enabled: false
+        directory: "./backups"
+        interval_secs: 86400
+        max_backups: 7
+        compress: true
+        encrypt: false
+
+  operations_daemon:
+    daemon:
+      enabled: true
+      check_interval_secs: 30
+      restart_delay_secs: 5
+      max_restart_attempts: 10
+      auto_start: true
+    operations:
+      tracking_enabled: true
+      cleanup_interval_secs: 3600
+      retention_secs: 2592000
+      max_operations_in_memory: 10000

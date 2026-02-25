@@ -1,0 +1,36 @@
+---
+source: crates/mcb-server/tests/contract/agent_contract_tests.rs
+expression: "normalize_tool_call_ids(snapshot_payload(&request, status, &response))"
+---
+{
+  "request": {
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "action": "log_tool",
+        "data": {
+          "duration_ms": 5,
+          "success": true,
+          "tool_name": "search"
+        },
+        "session_id": "00000000-0000-0000-0000-000000000001"
+      },
+      "name": "agent"
+    }
+  },
+  "response": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "{\n  \"session_id\": \"00000000-0000-0000-0000-000000000001\",\n  \"tool_call_id\": \"tc_00000000-0000-0000-0000-000000000000\",\n  \"tool_name\": \"search\"\n}",
+          "type": "text"
+        }
+      ],
+      "isError": false
+    }
+  },
+  "status": 200
+}

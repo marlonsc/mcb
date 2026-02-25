@@ -1,128 +1,96 @@
 //!
 //! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
 //!
-//! Configuration loader
+//! Configuration loader — YAML-based (Loco convention)
 //!
-//! Handles loading configuration from various sources including
-//! TOML files, environment variables, and default values.
+//! Loads `AppConfig` from Loco YAML configuration files. Application settings
+//! live under the `settings:` key in `config/{env}.yaml`.
+//!
+//! Environment is resolved from `LOCO_ENV` / `RAILS_ENV` / `NODE_ENV` (default: `development`).
 
 use std::env;
 use std::path::{Path, PathBuf};
 
-use figment::Figment;
-use figment::providers::{Env, Format, Toml};
 use mcb_domain::error::{Error, Result};
 
 use crate::config::AppConfig;
 use crate::config::TransportMode;
 use crate::constants::auth::*;
-use crate::constants::config::*;
 use crate::error_ext::ErrorContext;
-use crate::logging::log_config_loaded;
+
 use mcb_domain::value_objects::ProjectSettings;
 use mcb_validate::find_workspace_root_from;
 
 /// Configuration loader service
+///
+/// Reads Loco YAML config files and extracts the `settings:` section
+/// as `AppConfig`. Follows Loco's file and environment conventions.
 #[derive(Clone)]
 pub struct ConfigLoader {
-    /// Configuration file path
+    /// Optional explicit config file path (overrides environment resolution)
     config_path: Option<PathBuf>,
-
-    /// Environment prefix
-    env_prefix: String,
 }
 
 impl ConfigLoader {
     /// Create a new configuration loader with default settings
     #[must_use]
     pub fn new() -> Self {
-        Self {
-            config_path: None,
-            env_prefix: CONFIG_ENV_PREFIX.to_owned(),
-        }
+        Self { config_path: None }
     }
 
-    /// Set the configuration file path
+    /// Set an explicit configuration file path (overrides env-based resolution)
     #[must_use]
     pub fn with_config_path<P: AsRef<Path>>(mut self, path: P) -> Self {
         self.config_path = Some(path.as_ref().to_path_buf());
         self
     }
 
-    /// Set the environment variable prefix
-    #[must_use]
-    pub fn with_env_prefix<S: Into<String>>(mut self, prefix: S) -> Self {
-        self.env_prefix = prefix.into();
-        self
-    }
-
-    /// Load configuration from all sources
+    /// Load configuration from YAML
     ///
-    /// Configuration sources are merged in this order (later sources override earlier):
-    /// 1. Default TOML configuration file (`config/default.toml`) (required)
-    /// 2. Optional TOML override file (`--config`) (if provided)
-    /// 3. Environment variables with `MCP__` prefix (e.g., `MCP__SERVER__NETWORK__PORT`)
+    /// Resolution order:
+    /// 1. Explicit path (via `with_config_path`)
+    /// 2. `config/{env}.local.yaml` (highest priority override)
+    /// 3. `config/{env}.yaml` (standard config)
+    ///
+    /// Environment is resolved from `LOCO_ENV` / `RAILS_ENV` / `NODE_ENV`, defaulting to `development`.
     ///
     /// # Errors
     ///
-    /// Returns an error if the default config file is missing, extraction fails,
-    /// or validation detects invalid values.
+    /// Returns an error if no config file is found, parsing fails, or validation detects invalid values.
     pub fn load(&self) -> Result<AppConfig> {
-        let default_path = Self::find_defaults_file_path().ok_or_else(|| {
-            Error::ConfigMissing(
-                "Default configuration file not found. Expected config/default.toml".to_owned(),
-            )
-        })?;
-        log_config_loaded(&default_path, true);
-
-        // Source of truth starts from canonical defaults file only.
-        // Runtime must not rely on hardcoded struct defaults.
-        let mut figment = Figment::new().merge(Toml::file(&default_path));
-
-        if let Some(config_path) = &self.config_path {
-            if !config_path.exists() {
-                log_config_loaded(config_path, false);
-                return Err(Error::ConfigMissing(format!(
-                    "Configuration file not found: {}",
-                    config_path.display()
-                )));
-            }
-
-            if config_path != &default_path {
-                figment = figment.merge(Toml::file(config_path));
-                log_config_loaded(config_path, true);
-            }
-        }
-
-        // Add environment variables
-        // Uses double underscore as separator for nested keys (e.g., MCP__SERVER__PORT)
-        // Prefix is MCP__ (double underscore) to match mcp-config.json env format
-        // lowercase(true) converts PROVIDERS__EMBEDDING to providers.embedding
-        figment = figment.merge(
-            Env::prefixed(&format!("{}{}", self.env_prefix, CONFIG_ENV_SEPARATOR))
-                .split(CONFIG_ENV_SEPARATOR)
-                .lowercase(true),
+        let yaml_path = self.find_yaml_config_path()?;
+        mcb_domain::info!(
+            "config",
+            "Configuration loaded",
+            &yaml_path.display().to_string()
         );
 
-        // Extract and deserialize configuration
-        let app_config: AppConfig = figment
-            .extract()
-            .context("Failed to extract configuration")?;
+        let content =
+            std::fs::read_to_string(&yaml_path).context("Failed to read YAML config file")?;
+        let yaml: serde_yaml::Value =
+            serde_yaml::from_str(&content).context("Failed to parse YAML config")?;
+
+        let settings = yaml.get("settings").ok_or_else(|| {
+            Error::ConfigMissing("No 'settings' key found in YAML configuration file".to_owned())
+        })?;
+
+        let app_config: AppConfig = serde_yaml::from_value(settings.clone())
+            .context("Failed to deserialize settings into AppConfig")?;
 
         // Validate configuration
         Self::validate_config(&app_config)?;
 
         // Apply project settings if available
         let mut app_config = app_config;
-        if let Some(settings) = Self::load_project_settings() {
-            app_config = resolve_config_with_project_settings(app_config, &settings);
-            app_config.project_settings = Some(settings);
+        if let Some(project_settings) = Self::load_project_settings() {
+            app_config = resolve_config_with_project_settings(app_config, &project_settings);
+            app_config.project_settings = Some(project_settings);
         }
 
         Ok(app_config)
     }
 
-    /// Reload configuration (useful for hot-reloading)
+    /// Reload configuration (re-reads from disk)
     ///
     /// # Errors
     ///
@@ -131,17 +99,21 @@ impl ConfigLoader {
         self.load()
     }
 
-    /// Save configuration to file
+    /// Save configuration to a YAML file (wrapped under `settings:` key)
     ///
     /// # Errors
     ///
     /// Returns an error if serialization or file writing fails.
     pub fn save_to_file<P: AsRef<Path>>(&self, config: &AppConfig, path: P) -> Result<()> {
-        let toml_string =
-            toml::to_string_pretty(config).context("Failed to serialize config to TOML")?;
-
-        std::fs::write(path.as_ref(), toml_string).context("Failed to write config file")?;
-
+        let settings_value = serde_yaml::to_value(config).context("Failed to serialize config")?;
+        let mut root = serde_yaml::Mapping::new();
+        root.insert(
+            serde_yaml::Value::String("settings".to_owned()),
+            settings_value,
+        );
+        let yaml_string =
+            serde_yaml::to_string(&root).context("Failed to serialize config to YAML")?;
+        std::fs::write(path.as_ref(), yaml_string).context("Failed to write config file")?;
         Ok(())
     }
 
@@ -151,31 +123,60 @@ impl ConfigLoader {
         self.config_path.as_deref()
     }
 
-    /// Find canonical defaults file path to try
+    /// Find the YAML config file following Loco conventions.
     ///
-    /// Per configuration policy, runtime defaults must come from a defaults TOML file,
-    /// not from hardcoded Rust constants.
-    fn find_defaults_file_path() -> Option<PathBuf> {
-        let current_dir = env::current_dir().ok()?;
+    /// Resolution:
+    /// 1. Explicit `config_path` (if set)
+    /// 2. Search `config/{env}.local.yaml` then `config/{env}.yaml`
+    ///    from current directory upward
+    /// 3. Search from `CARGO_MANIFEST_DIR` upward (workspace root)
+    fn find_yaml_config_path(&self) -> Result<PathBuf> {
+        // 1. Explicit path takes precedence
+        if let Some(path) = &self.config_path {
+            if path.exists() {
+                return Ok(path.clone());
+            }
+            return Err(Error::ConfigMissing(format!(
+                "Configuration file not found: {}",
+                path.display()
+            )));
+        }
 
-        // Search current directory and its ancestors for config/default.toml
-        for dir in current_dir.ancestors() {
-            let candidate = dir.join("config").join("default.toml");
-            if candidate.exists() {
-                return Some(candidate);
+        // Determine environment (same logic as Loco)
+        let env_name = env::var("LOCO_ENV")
+            .or_else(|_| env::var("RAILS_ENV"))
+            .or_else(|_| env::var("NODE_ENV"))
+            .unwrap_or_else(|_| "development".to_owned());
+
+        let filenames = [format!("{env_name}.local.yaml"), format!("{env_name}.yaml")];
+
+        // 2. Search from current directory upward
+        if let Ok(current_dir) = env::current_dir() {
+            for dir in current_dir.ancestors() {
+                for filename in &filenames {
+                    let candidate = dir.join("config").join(filename);
+                    if candidate.exists() {
+                        return Ok(candidate);
+                    }
+                }
             }
         }
 
-        // Search from crate location up to workspace root for config/default.toml
+        // 3. Search from CARGO_MANIFEST_DIR upward (for tests run from crate dirs)
         let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
         for dir in manifest_dir.ancestors() {
-            let candidate = dir.join("config").join("default.toml");
-            if candidate.exists() {
-                return Some(candidate);
+            for filename in &filenames {
+                let candidate = dir.join("config").join(filename);
+                if candidate.exists() {
+                    return Ok(candidate);
+                }
             }
         }
 
-        None
+        Err(Error::ConfigMissing(format!(
+            "No YAML configuration file found for environment '{env_name}'. \
+             Expected config/{env_name}.yaml"
+        )))
     }
 
     /// Validate configuration values
@@ -213,7 +214,11 @@ impl ConfigLoader {
                 match std::fs::read_to_string(&path) {
                     Ok(content) => match serde_yaml::from_str(&content) {
                         Ok(settings) => {
-                            log_config_loaded(&path, true);
+                            mcb_domain::info!(
+                                "config",
+                                "Configuration loaded",
+                                &path.display().to_string()
+                            );
                             return Some(settings);
                         }
                         Err(e) => {
@@ -238,8 +243,7 @@ impl ConfigLoader {
     }
 }
 
-/// Helper to merge defaults, project settings, and env vars (though env vars are already merged).
-/// This function overrides `AppConfig` values with `ProjectSettings` if present.
+/// Helper to merge project settings into `AppConfig`.
 fn resolve_config_with_project_settings(
     mut config: AppConfig,
     settings: &ProjectSettings,
@@ -282,12 +286,7 @@ fn validate_app_config(config: &AppConfig) -> Result<()> {
 }
 
 fn validate_server_config(config: &AppConfig) -> Result<()> {
-    if config.server.network.port == 0 {
-        return Err(Error::ConfigInvalid {
-            key: "server.network.port".to_owned(),
-            message: "Server port cannot be 0".to_owned(),
-        });
-    }
+    // Port 0 is valid: OS assigns an ephemeral port (used in tests and stdio-only mode).
     if matches!(config.server.transport_mode, TransportMode::Http) {
         return Err(Error::ConfigInvalid {
             key: "server.transport_mode".to_owned(),

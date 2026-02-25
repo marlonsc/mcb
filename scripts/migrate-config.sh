@@ -6,7 +6,7 @@
 #
 # Usage: ./scripts/migrate-config.sh [config_file]
 #
-# If config_file is not provided, uses ~/.config/mcb/config.toml
+# If config_file is not provided, uses ~/.config/mcb/config.yaml
 
 set -e
 
@@ -18,7 +18,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration file to migrate
-CONFIG_FILE="${1:-$HOME/.config/mcb/config.toml}"
+CONFIG_FILE="${1:-$HOME/.config/mcb/config.yaml}"
 
 echo -e "${GREEN}MCP Context Browser - Config Migration${NC}"
 echo "Migrating configuration file: $CONFIG_FILE"

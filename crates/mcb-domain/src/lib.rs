@@ -64,8 +64,6 @@ pub mod ports;
 /// Provider auto-registration registry
 pub mod registry;
 
-/// Generic schema definitions for persistence (backend-agnostic model)
-pub mod schema;
 #[cfg(any(test, feature = "test-utils"))]
 /// Test-only configuration helpers for external service endpoints.
 pub mod test_services_config;

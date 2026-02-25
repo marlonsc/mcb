@@ -11,6 +11,7 @@ use std::path::Path;
 use std::sync::LazyLock;
 
 use async_trait::async_trait;
+use tracing;
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{ChunkingOptions, ChunkingResult, CodeChunker};
@@ -138,7 +139,10 @@ impl IntelligentChunker {
             chunker.chunk_code(&content, &file_name, &language)
         })
         .await
-        .unwrap_or_default()
+        .unwrap_or_else(|e| {
+            tracing::error!(error = ?e, "spawn_blocking panic in chunking engine");
+            Default::default()
+        })
     }
 
     /// Generic chunking for unsupported languages

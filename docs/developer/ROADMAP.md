@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Development Roadmap
 
-**Last updated:** 2026-02-14
+**Last updated:** 2026-02-23
 
 Development roadmap for**Memory Context Browser (MCB)** — a high-performance MCP server for semantic code search, persistent memory, and agent-aware context management.
 
@@ -15,8 +15,8 @@ Development roadmap for**Memory Context Browser (MCB)** — a high-performance M
 | **Branch** | `release/v0.3.0` (SeaQL + Loco.rs rebuild) |
 | **Build** | ✅ `cargo check --workspace` passes |
 | **Tests** | 1,705 passing (`cargo test --workspace`) |
-| **Crates** | 9 (Clean Architecture workspace) |
-| **ADRs** | 48 (including Phase 8-9) |
+| **Crates** | 6 (Clean Architecture workspace) |
+| **ADRs** | 52 (including Phase 8-9 and v0.3.0 rebuild) |
 
 ### Project Metrics
 
@@ -55,33 +55,31 @@ Consolidates all pre-v0.3.0 work: admin UI, data model hardening, modernization 
 
 ---
 
-### v0.3.0 — SeaQL + Loco.rs Platform Rebuild
+### v0.3.0 — SeaQL + Loco.rs Platform Rebuild (CURRENT)
 
-**Status:** In Progress
+**Status:** In progress
 **Target:** Q1 2026
-**Key ADRs:** ADR-051 (SeaORM Migration), ADR-052 (Loco.rs Foundation)
+**Key ADRs:** 049 (Axum), 050 (Composition Root), 051 (SeaQL+Loco master plan), 052 (Schema Resolution)
 
-Complete platform rebuild on modern Rust data and web stack. SeaORM provides
-type-safe database operations with proper migrations, while Loco.rs offers
-structured API development with background job support.
+Full platform rebuild on SeaQL (SeaORM, SeaQuery, SeaSchema, SeaStreamer) and Loco.rs. Replaces Figment/TOML config, dill DI, and adds native Axum + rmcp Tower support.
 
 | Component | Description |
 | ----------- | ------------- |
-| **SeaORM** | Type-safe SQL with entity relations and migration management |
-| **Loco.rs** | Structured web framework with middleware and background workers |
-| **Repository Pattern** | Explicit data access layer with async traits |
-| **Migration System** | Versioned database schema evolution |
+| **Loco.rs** | Framework for server lifecycle, YAML config, migrations, workers |
+| **SeaORM** | Async ORM for all persistence (replaces raw SQLx) |
+| **SeaORM Pro** | Admin UI with CRUD, GraphQL, and seaography |
+| **Axum Native** | rmcp Tower compatibility via Axum (ADR-049) |
+| **Manual Composition Root** | linkme + Handle pattern, dill removed (ADR-050) |
+| **SeaStreamer** | Event architecture (replaces ADR-004 event bus) |
 
 **Unblocks:** v0.4.0 Workflow System
 
 ---
 
 ### v0.4.0 — Workflow System
-
 **Status:** Planning
-**Target:** Q2 2026
+**Target:** Q2 2026 (after v0.3.0)
 **Key ADRs:** 034 (FSM), 035 (Scout), 036 (Policies), 037 (Orchestrator), 038 (Tiers)
-
 Implements complete workflow system with FSM-based task orchestration, context scouting, and policy enforcement.
 
 | Component | Description |
@@ -91,26 +89,15 @@ Implements complete workflow system with FSM-based task orchestration, context s
 | **PolicyEngine** | 11+ policies for workflow validation and enforcement |
 | **TaskOrchestrator** | Multi-layer coordination with event broadcasting |
 | **ExecutionTiers** | Hierarchical execution (immediate, scheduled, deferred) |
-
-### Quality Gates
-
-- `make check` passes (0 errors)
-- `make validate` passes (0 violations)
-- Performance benchmarks established
-- Migration guide from v0.2.0
-
 **Unblocks:** v0.5.0 Integrated Context System
-
 ---
 
 ### v0.5.0 — Integrated Context System
 
-**Status:** Design phase
+**Status:** Design phase (parallel to v0.4.0)
 **Target:** Q3 2026 (after v0.4.0)
 **Key ADRs:** 041-046
-
 Multi-source integrated context with knowledge graphs, hybrid search, and temporal queries.
-
 | Component | Description |
 | ----------- | ------------- |
 | **Knowledge Graph** | petgraph-based relationships (calls, imports, extends) |
@@ -119,14 +106,12 @@ Multi-source integrated context with knowledge graphs, hybrid search, and tempor
 | **Context Versioning** | Immutable captures at commits/tags with temporal query API |
 | **Policy Integration** | Workflow state gates freshness requirements |
 
-**Architecture:** 5-layer system (VCS -> Indexing -> Memory -> Graph -> Search -> Policies), embedded-first (petgraph, tantivy, vecstore).
-
 ---
 
 ### v1.0.0 — Production Enterprise
 
 **Status:** Conceptual
-**Target:** After v0.4.0
+**Target:** After v0.5.0
 
 Enterprise-grade platform with SLA guarantees, compliance certifications, and high-availability deployment.
 

@@ -23,7 +23,7 @@ pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> 
             "Shared AppContext unavailable — FastEmbed model may be missing",
         ));
     };
-    Ok(ctx.vector_store_handle().get())
+    Ok(ctx.vector_store_provider())
 }
 
 /// Get the real `FastEmbed` provider from the shared context.
@@ -35,7 +35,7 @@ pub async fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvide
             "Shared AppContext unavailable — FastEmbed model may be missing",
         ));
     };
-    Ok(ctx.embedding_handle().get())
+    Ok(ctx.embedding_provider())
 }
 
 /// Get a real `FastEmbed` provider (model parameter is accepted for API compat).

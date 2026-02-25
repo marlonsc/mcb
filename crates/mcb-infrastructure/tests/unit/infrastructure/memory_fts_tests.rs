@@ -1,35 +1,30 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{Observation, ObservationType};
-use mcb_domain::ports::DatabaseExecutor;
 use mcb_domain::ports::MemoryRepository;
 use mcb_domain::value_objects::ObservationId;
-use mcb_infrastructure::di::create_memory_repository_with_executor;
+use mcb_infrastructure::di::repositories::create_memory_repository_with_db;
+use sea_orm::DatabaseConnection;
 use tempfile::TempDir;
 use uuid::Uuid;
 
 use crate::utils::create_test_project;
 
-async fn setup_repo_and_executor() -> Result<
-    (
-        Arc<dyn MemoryRepository>,
-        Arc<dyn DatabaseExecutor>,
-        TempDir,
-    ),
-    Box<dyn std::error::Error>,
-> {
+async fn setup_repo_and_db()
+-> Result<(Arc<dyn MemoryRepository>, Arc<DatabaseConnection>, TempDir), Box<dyn std::error::Error>>
+{
     let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("test.db");
-    let (repo, executor) = create_memory_repository_with_executor(db_path).await?;
-    Ok((repo, executor, temp_dir))
+    let (repo, db) = create_memory_repository_with_db(db_path).await?;
+    Ok((repo, db, temp_dir))
 }
 
 #[tokio::test]
 async fn test_fts_search_flow() -> Result<(), Box<dyn std::error::Error>> {
-    let (repo, executor, _dir) = setup_repo_and_executor().await?;
+    let (repo, db, _dir) = setup_repo_and_db().await?;
 
     let project_id = "test-project".to_owned();
-    create_test_project(executor.as_ref(), &project_id).await?;
+    create_test_project(db.as_ref(), &project_id).await?;
 
     let id = Uuid::new_v4().to_string();
     let obs = Observation {

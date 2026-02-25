@@ -16,11 +16,14 @@ implementation_status: Complete
 
 ## ADR 002: Async-First Architecture
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 ## Status
 
 Accepted
 
-> Fully implemented with Tokio async runtime across 7 crates in the Clean
+> Fully implemented with Tokio async runtime across 6 crates in the Clean
 > Architecture workspace.
 >
 > **Async Distribution by Crate**:

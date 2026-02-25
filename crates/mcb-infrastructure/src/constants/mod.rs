@@ -42,9 +42,6 @@ pub mod lang;
 /// System limits and constraints.
 pub mod limits;
 
-/// Logging configuration and format constants.
-pub mod logging;
-
 /// Metadata and annotation constants.
 pub mod metadata;
 
@@ -71,3 +68,6 @@ pub mod services;
 
 /// Provider name constants for fallback and resolution.
 pub mod providers;
+
+/// Use case service constants (indexing, memory, search).
+pub mod use_cases;

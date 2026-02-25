@@ -1,0 +1,31 @@
+---
+source: crates/mcb-server/tests/contract/entity_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "action": "list",
+        "resource": "org"
+      },
+      "name": "entity"
+    }
+  },
+  "response": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "[]",
+          "type": "text"
+        }
+      ],
+      "isError": false
+    }
+  },
+  "status": 200
+}

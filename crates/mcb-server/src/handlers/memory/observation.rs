@@ -70,7 +70,10 @@ pub async fn get_observations(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let ids = args.ids.clone().unwrap_or_default();
+    let ids = args
+        .ids
+        .clone()
+        .ok_or_else(|| McpError::invalid_params("missing required field: ids", None))?;
     if ids.is_empty() {
         return Ok(tool_error("Missing observation ids"));
     }

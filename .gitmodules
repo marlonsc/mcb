@@ -1,0 +1,30 @@
+[submodule "vendor/sea-query"]
+	path = third-party/sea-query
+	url = https://github.com/marlon-costa-dc/sea-query.git
+[submodule "vendor/sea-orm"]
+	path = third-party/sea-orm
+	url = https://github.com/marlon-costa-dc/sea-orm.git
+[submodule "vendor/loco"]
+	path = third-party/loco
+	url = https://github.com/marlon-costa-dc/loco.git
+[submodule "vendor/seaography"]
+	path = third-party/seaography
+	url = https://github.com/marlon-costa-dc/seaography.git
+[submodule "vendor/sea-schema"]
+	path = third-party/sea-schema
+	url = https://github.com/marlon-costa-dc/sea-schema.git
+[submodule "vendor/sea-streamer"]
+	path = third-party/sea-streamer
+	url = https://github.com/marlon-costa-dc/sea-streamer.git
+[submodule "vendor/sea-orm-pro"]
+	path = third-party/sea-orm-pro
+	url = https://github.com/marlon-costa-dc/sea-orm-pro.git
+[submodule "vendor/milvus-sdk-rust"]
+	path = third-party/milvus-sdk-rust
+	url = https://github.com/marlon-costa-dc/milvus-sdk-rust.git
+[submodule "vendor/edgevec"]
+	path = third-party/edgevec
+	url = https://github.com/marlon-costa-dc/edgevec.git
+[submodule "vendor/rust-code-analysis"]
+	path = third-party/rust-code-analysis
+	url = https://github.com/marlon-costa-dc/rust-code-analysis.git

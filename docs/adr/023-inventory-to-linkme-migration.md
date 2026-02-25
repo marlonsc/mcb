@@ -133,6 +133,6 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 ## Related ADRs
 
-- [ADR 029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) - Historical DI strategy (superseded by ADR-050)
+- [ADR 029: Hexagonal Architecture](archive/superseded-029-hexagonal-architecture-dill.md) - Historical DI strategy (superseded by ADR-050)
 - [ADR 003: Unified Provider Architecture](003-unified-provider-architecture.md) - Provider registration system
 - [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Multi-crate organization

@@ -19,11 +19,14 @@ implementation_status: Complete
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Accepted** — 2026-02-06
 
 - **Deciders:** Project team
 - **Supersedes:** [ADR-032](./032-agent-quality-domain-extension.md) (Agent & Quality Domain Extension)
-- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
+- **Related:** [ADR-029](./archive/superseded-029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./archive/superseded-025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
 - **Series:** ADR-034 → [ADR-035](./035-context-scout.md) →
   [ADR-036](./036-enforcement-policies.md) →
   [ADR-037](./037-workflow-orchestrator.md)
@@ -328,7 +331,7 @@ pub static DATABASE_PROVIDERS: [DatabaseProviderEntry] = [..];
 
 References:
 
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) — Handle-based DI pattern (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md) — Handle-based DI pattern (superseded by ADR-050)
 - [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Compile-time plugin discovery
 
 ---
@@ -1441,6 +1444,8 @@ impl SqliteWorkflowEngine {
 6. Add `WorkflowConfig` to `mcb-infrastructure/src/config/`
 7. Add `[workflow]` section to `config/default.toml`
 
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+
 ### Migration
 
 - New tables only (`workflow_sessions`, `workflow_transitions`). No existing tables modified.
@@ -1473,7 +1478,7 @@ impl SqliteWorkflowEngine {
 - [smlang-rs](https://docs.rs/smlang/latest/smlang/) — Declarative FSM macro
   (evaluated, not selected)
 - [sqlx](https://docs.rs/sqlx/latest/sqlx/) — Async SQLite driver
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md) (superseded by ADR-050)
   — DI pattern
 - [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md)
   — Auto-registration

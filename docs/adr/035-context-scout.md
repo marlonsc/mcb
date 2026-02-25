@@ -17,11 +17,14 @@ implementation_status: Complete
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Accepted** — 2026-02-06 (locked for Phase 9 dependency)
 
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM)
-- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment)
+- **Related:** [ADR-029](./archive/superseded-029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./archive/superseded-025-figment-configuration.md) (Figment)
 - **Series:**[ADR-034](./034-workflow-core-fsm.md) →**ADR-035** → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
 
 ## Context
@@ -1371,6 +1374,8 @@ impl ContextScoutProvider for CachedContextScout {
 
 # config/default.toml — [context] section
 
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+
 [context]
 
 # Cache TTL in seconds (default 30s)
@@ -1580,6 +1585,8 @@ WHERE i.status = 'open'
 4. Add `context/` module to `mcb-providers/src/` with git discovery, tracker discovery, and cached scout
 5. Add `ContextScoutConfig` to `mcb-infrastructure/src/config/`
 6. Add `[context]` section to `config/default.toml`
+
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
 7. Create issue/phase/decision tables (if not created by ADR-034's workflow tables)
 
 ### Migration
@@ -1618,7 +1625,7 @@ WHERE i.status = 'open'
   status patterns
 - [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — FSM and
   persistence layer (dependency)
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md)
+- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md)
   — DI pattern (superseded by ADR-050)
 - [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md)
   — Schema reference

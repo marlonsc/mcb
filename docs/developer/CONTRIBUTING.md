@@ -18,7 +18,7 @@ Thank you for your interest in contributing! This guide covers everything you ne
 git clone https://github.com/marlonsc/mcb.git
 cd mcb
 make build
-make test       # 1700+ tests across 7 crates
+make test       # 1700+ tests across 6 crates
 make check      # Full quality pipeline
 ```
 
@@ -69,7 +69,6 @@ crates/mcb-{name}/
 crates/
 ├── mcb/                # Unified facade crate (public API)
 ├── mcb-domain/         # Core types, ports, entities (innermost)
-├── mcb-application/    # Business services (use cases, domain services)
 ├── mcb-providers/      # External integrations (embedding, vector store, language)
 ├── mcb-infrastructure/ # Shared systems (DI, config, cross-cutting services)
 ├── mcb-server/         # MCP protocol, HTTP transport, admin
@@ -232,7 +231,7 @@ make docs-validate QUICK=1
 
 ## 🚀 Code References
 
-- **Config**: `mcb_infrastructure::config::ConfigLoader` — See [CONFIGURATION.md](../CONFIGURATION.md), [ADR-025](../adr/025-figment-configuration.md)
+- **Config**: `mcb_infrastructure::config::ConfigLoader` — See [CONFIGURATION.md](../CONFIGURATION.md), [ADR-051](../adr/051-seaql-loco-platform-rebuild.md) (supersedes [ADR-025](../adr/archive/superseded-025-figment-configuration.md))
 - **DI**: `mcb_infrastructure::di::bootstrap::init_app(config)` — See [ADR-050](../adr/050-manual-composition-root-dill-removal.md) (ADR-029 superseded)
 - **Patterns**: See [PATTERNS.md](../architecture/PATTERNS.md) for implementation patterns
 - **Run server**: `cargo run --bin mcb` or `make build` then run the binary

@@ -33,15 +33,14 @@ async fn test_validation_agent_sql_storage_flow() {
         }))
         .await;
 
-    // Should return a handled error, not panic or internal server error
     assert!(result.is_ok());
     let resp = result.unwrap();
     let text = extract_text(&resp.content);
     assert!(
-        text.contains("Memory storage error"),
-        "Should handle SQL error gracefully. Got: {text}"
+        text.contains("tool_call_id") && text.contains("tool_name"),
+        "LogTool should succeed and return tool_call_id. Got: {text}"
     );
-    assert!(resp.is_error.unwrap_or(false));
+    assert!(!resp.is_error.unwrap_or(false));
 }
 
 #[tokio::test]

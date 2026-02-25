@@ -14,8 +14,6 @@ use mcb_domain::error::Result;
 use serde::{Deserialize, Serialize};
 use tokio::sync::RwLock;
 
-use crate::logging::log_health_check;
-
 /// Health status enumeration
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -263,7 +261,19 @@ impl HealthRegistry {
 
         for (name, checker) in checkers.iter() {
             let check = checker.check_health().await;
-            log_health_check(name, check.status.is_healthy(), check.error.as_deref());
+            if check.status.is_healthy() {
+                mcb_domain::debug!("health", "Health check passed", name);
+            } else {
+                mcb_domain::error!(
+                    "health",
+                    "Health check failed",
+                    &format!(
+                        "component = {}, details = {}",
+                        name,
+                        check.error.as_deref().unwrap_or("Unknown failure")
+                    )
+                );
+            }
             response = response.add_check(check);
         }
 

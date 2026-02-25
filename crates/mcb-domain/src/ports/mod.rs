@@ -39,18 +39,17 @@ mod services;
 // --- Admin ---
 pub use admin::{
     CacheAdminInterface, EmbeddingAdminInterface, IndexingOperation, IndexingOperationStatus,
-    IndexingOperationsInterface, LanguageAdminInterface, PerformanceMetricsData,
-    PerformanceMetricsInterface, ProviderInfo, ValidationOperation, ValidationOperationResult,
-    ValidationOperationsInterface, ValidationStatus, VectorStoreAdminInterface,
+    IndexingOperationsInterface, LanguageAdminInterface, ProviderInfo, ValidationOperation,
+    ValidationOperationResult, ValidationOperationsInterface, ValidationStatus,
+    VectorStoreAdminInterface,
 };
 
 // --- Infrastructure ---
 pub use infrastructure::{
-    AuthServiceInterface, DatabaseExecutor, DatabaseProvider, DependencyHealth,
-    DependencyHealthCheck, DomainEventStream, EventBusProvider, ExtendedHealthResponse,
-    LifecycleManaged, LogLevel, OperationLogger, PortServiceState, ProviderContext,
-    ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator, ShutdownCoordinator,
-    SnapshotProvider, SqlParam, SqlRow, StateStoreProvider, SyncCoordinator, SyncOptions,
+    AuthServiceInterface, DependencyHealth, DependencyHealthCheck, DomainEventStream,
+    EventBusProvider, ExtendedHealthResponse, LifecycleManaged, LogLevel, OperationLogger,
+    PortServiceState, ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator,
+    ShutdownCoordinator, SnapshotProvider, StateStoreProvider, SyncCoordinator, SyncOptions,
     SyncProvider, SyncResult, SystemMetrics, SystemMetricsCollectorInterface,
 };
 
@@ -70,12 +69,12 @@ pub use providers::{
 // --- Repositories ---
 pub use repositories::{
     AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
-    AgentSessionRepository, ApiKeyRegistry, ChunkRepository, FileHashRepository, FtsSearchResult,
-    IssueCommentRegistry, IssueEntityRepository, IssueLabelAssignmentManager, IssueLabelRegistry,
-    IssueRegistry, MemoryRepository, OrgEntityRepository, OrgRegistry, PlanEntityRepository,
-    PlanRegistry, PlanReviewRegistry, PlanVersionRegistry, ProjectRepository, RepositoryStats,
-    SearchRepository, SearchStats, TeamMemberManager, TeamRegistry, UserRegistry,
-    VcsEntityRepository,
+    AgentSessionRepository, ApiKeyRegistry, FileHashRepository, FtsSearchResult, IndexRepository,
+    IndexStats, IssueCommentRegistry, IssueEntityRepository, IssueLabelAssignmentManager,
+    IssueLabelRegistry, IssueRegistry, MemoryRepository, OrgEntityRepository, OrgRegistry,
+    PlanEntityRepository, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry, ProjectRepository,
+    TeamMemberManager, TeamRegistry, TransitionRepository, UserRegistry, VcsEntityRepository,
+    WorkflowSessionRepository,
 };
 
 // --- Services ---

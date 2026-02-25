@@ -19,7 +19,7 @@
 //! #[tokio::test]
 //! async fn test_with_real_providers() {
 //!     let ctx = create_test_app_context().await.unwrap();
-//!     let embedding = ctx.embedding_handle().get();
+//!     let embedding = ctx.embedding_provider();
 //!     let results = embedding.embed_batch(&["test".into()]).await.unwrap();
 //!     assert_eq!(results[0].dimensions, 384);
 //! }
@@ -87,13 +87,13 @@ impl FullStackTestContext {
     /// Get embedding provider (via DI handle)
     #[must_use]
     pub fn embedding(&self) -> Arc<dyn EmbeddingProvider> {
-        self.app_context.embedding_handle().get()
+        self.app_context.embedding_provider()
     }
 
     /// Get vector store provider (via DI handle)
     #[must_use]
     pub fn vector_store(&self) -> Arc<dyn VectorStoreProvider> {
-        self.app_context.vector_store_handle().get()
+        self.app_context.vector_store_provider()
     }
 
     /// Embed texts using the real embedding provider
@@ -298,7 +298,7 @@ mod tests {
         };
 
         // Verify providers are resolved
-        let embedding = ctx.embedding_handle().get();
+        let embedding = ctx.embedding_provider();
         assert_eq!(
             embedding.dimensions(),
             384,

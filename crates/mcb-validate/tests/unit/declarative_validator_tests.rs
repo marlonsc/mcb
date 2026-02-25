@@ -1,5 +1,6 @@
 //! Integration tests for `DeclarativeValidator` and new path/regex rules.
 
+use mcb_validate::ValidationError;
 use mcb_validate::traits::validator::Validator;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;
 use std::fs;
@@ -20,13 +21,13 @@ rules_path = "rules"
 infrastructure_path = "crates/mcb-infrastructure/src"
 domain_path = "crates/mcb-domain/src"
 server_path = "crates/mcb-server/src"
-application_path = "crates/mcb-application/src"
+application_path = "crates/mcb-infrastructure/src"
 
 [rules.naming]
 domain_crate = "mcb-domain"
 infrastructure_crate = "mcb-infrastructure"
 server_crate = "mcb-server"
-application_crate = "mcb-application"
+application_crate = "mcb-infrastructure"
 "#;
     fs::write(&config_path, config_content).unwrap();
 
@@ -206,4 +207,103 @@ fn test_org019_trait_placement_violation() {
         factory_violation.is_none(),
         "Did not expect ORG019 violation for MyProviderFactory"
     );
+}
+
+fn write_ast_rule(root: &Path, rule_id: &str, ast_query: &str, include_selector: bool) {
+    let rules_dir = root.join("rules/quality");
+    fs::create_dir_all(&rules_dir).unwrap();
+
+    let selectors = if include_selector {
+        r#"
+selectors:
+  - language: rust
+    node_type: function_item
+"#
+    } else {
+        ""
+    };
+
+    let rule = format!(
+        r#"
+schema: "rule/v2"
+id: {rule_id}
+name: AST Query Rule
+category: quality
+severity: warning
+description: Verify AST query execution.
+rationale: Declarative AST query must execute.
+engine: regex
+rule:
+  type: regex_scan
+config:
+  patterns:
+    placeholder: 'fn\\s+'
+message: "AST violation"
+{selectors}
+ast_query: "{ast_query}"
+filters:
+  file_patterns:
+    - "crates/mcb-domain/**/*.rs"
+"#,
+    );
+
+    fs::write(rules_dir.join(format!("{rule_id}.yml")), rule).unwrap();
+}
+
+#[test]
+fn test_ast_query_and_selector_execute_together() {
+    let temp_dir = TempDir::new().unwrap();
+    let root = temp_dir.path();
+    create_test_env(root);
+
+    write_ast_rule(
+        root,
+        "AST001",
+        "(function_item name: (identifier) @name)",
+        true,
+    );
+
+    let source_file = root.join("crates/mcb-domain/src/sample.rs");
+    fs::create_dir_all(source_file.parent().unwrap()).unwrap();
+    fs::write(&source_file, "fn one() {}\nfn two() {}\nfn three() {}\n").unwrap();
+
+    let validator = DeclarativeValidator::new(root);
+    let config = mcb_validate::ValidationConfig::new(root);
+    let violations = validator.validate(&config).unwrap();
+
+    let ast_count = violations.iter().filter(|v| v.id() == "AST001").count();
+    assert_eq!(
+        ast_count, 6,
+        "expected selector and ast_query to both produce 3 matches"
+    );
+}
+
+#[test]
+fn test_invalid_ast_query_returns_config_error() {
+    let temp_dir = TempDir::new().unwrap();
+    let root = temp_dir.path();
+    create_test_env(root);
+
+    write_ast_rule(
+        root,
+        "AST002",
+        "(function_item name: (identifier) @name",
+        false,
+    );
+
+    let source_file = root.join("crates/mcb-domain/src/sample.rs");
+    fs::create_dir_all(source_file.parent().unwrap()).unwrap();
+    fs::write(&source_file, "fn bad() {}\n").unwrap();
+
+    let validator = DeclarativeValidator::new(root);
+    let config = mcb_validate::ValidationConfig::new(root);
+    let result = validator.validate(&config);
+
+    match result {
+        Err(ValidationError::Config(message)) => {
+            assert!(message.contains("Invalid tree-sitter query"));
+        }
+        Err(other) => panic!("expected ValidationError::Config, got {other:?}"),
+        Ok(_) => panic!("expected validation to fail for invalid tree-sitter query"),
+    }
 }

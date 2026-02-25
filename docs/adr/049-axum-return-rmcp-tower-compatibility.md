@@ -20,7 +20,7 @@ implementation_status: Planned
 **Accepted** (v0.2.2)
 
 > Supersedes [ADR 026: API Routing Refactor (Rocket vs Poem)]
-> (026-routing-refactor-rocket-poem.md)
+> (archive/superseded-026-routing-refactor-rocket-poem.md)
 >
 > The decision to migrate from Axum to Rocket (ADR-026) is reversed due to
 > rmcp's `StreamableHttpService` requiring Tower compatibility, which Rocket
@@ -206,7 +206,7 @@ We will migrate back to Axum (v0.8) from Rocket to enable rmcp's
 ## Related ADRs
 
 - [ADR 026: API Routing Refactor (Rocket vs Poem)]
-  (026-routing-refactor-rocket-poem.md) — **SUPERSEDED** by this ADR
+  (archive/superseded-026-routing-refactor-rocket-poem.md) — **SUPERSEDED** by this ADR
 - [ADR 033: MCP Handler Consolidation]
   (033-mcp-handler-consolidation.md) — MCP integration patterns
 
@@ -217,4 +217,4 @@ We will migrate back to Axum (v0.8) from Rocket to enable rmcp's
 - [Tower Service trait](https://docs.rs/tower/latest/tower/trait.Service.html) —
   Core abstraction
 - [Axum documentation](https://docs.rs/axum/latest/axum/) — Web framework
-- [ADR 026](026-routing-refactor-rocket-poem.md) — Original Rocket migration
+- [ADR 026](archive/superseded-026-routing-refactor-rocket-poem.md) — Original Rocket migration

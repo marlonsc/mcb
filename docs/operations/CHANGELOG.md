@@ -10,37 +10,60 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
-
 ### No unreleased changes
 
 ---
 
-## [0.3.0] - Unreleased
+## [0.3.0-dev] - 2026-02-XX
 
 ### Summary
 
-Platform rebuild on SeaQL + Loco.rs foundation. Complete rewrite of the data
-layer replacing raw SQLite with SeaORM for type-safe database operations,
-migration management, and better testability. New web framework foundation
-using Loco.rs for structured API development.
+Complete platform rebuild on the SeaQL ecosystem (SeaORM 2.x, SeaQuery, Seaography)
+and Loco.rs framework. Replaces custom sqlx persistence layer and admin UI with
+battle-tested libraries. All 9 MCP tools fully operational on the new stack.
+
+### Added
+
+- **SeaORM 2.x persistence layer** — 35 entities, 30 domain↔entity conversions, 7 repository implementations, 31-table migration via SchemaManager API (SQLite + PostgreSQL)
+- **Loco.rs framework integration** — `McbApp` with Hooks trait, admin controllers, GraphQL controller, MCP stdio coexistence via Tokio task
+- **Seaography GraphQL API** — Schema auto-generated from SeaORM entities, mounted at `/api/graphql` with JWT auth
+- **SeaORM Pro admin panel** — Dashboard with multi-database queries (MySQL, PostgreSQL, SQLite), config serving at `/admin/config`
+- **Contract snapshot tests** — 35 MCP tool contract tests via `insta` crate
+- **ADR-051** — SeaQL + Loco.rs platform rebuild decision record
+- **ADR-052** — Schema resolution for domain vs SeaORM entity naming
+- **10 third-party forks** — SeaQL ecosystem libraries forked as git submodules in `third-party/` with `[patch.crates-io]` overrides
 
 ### Changed
 
-- **Database Layer**: Migrated from raw SQL/SQLite to SeaORM with proper
-  entity definitions, relations, and migrations.
-- **Web Framework**: Foundation on Loco.rs for structured routing,
-  middleware, and background job support.
-- **Architecture**: Clean Architecture alignment with explicit repository
-  patterns and service boundaries.
+- **Persistence**: sqlx → SeaORM 2.0.0-rc.34 (all repositories migrated)
+- **Config format**: TOML (Figment) → YAML (Loco-native) for development and test configs
+- **DI bootstrap**: Provider factories updated to resolve SeaORM repositories
+- **Version roadmap**: Old v0.3.0 (Workflow FSM) → v0.4.0; Old v0.4.0 (Knowledge Graph) → v0.5.0
 
-### Technical Foundation
+### Removed
 
-- SeaORM entity generation and migration system
-- Loco.rs app structure with controllers and workers
-- Async trait patterns for data access layer
-- Database connection pooling and transaction management
+- Custom sqlx persistence layer (`crates/mcb-providers/src/database/sqlite/`, ~3,827 LOC)
+- Custom admin UI module (`crates/mcb-server/src/admin/`, ~5,062 LOC)
+- Legacy TOML config files (replaced by YAML)
+- 5 superseded ADRs archived (004, 007, 025, 026, 029)
 
----
+### Fixed
+
+- **memory list** — SQL bug in observation listing now resolved via SeaORM SeaQuery
+- **session create** — Schema validation errors fixed with proper field handling
+- **agent log_tool** — SQL storage failure fixed in agent repository
+- **vcs list_repositories** — Repository discovery bug fixed
+- **project tool** — Expanded from stubs to partial implementation (Get/List operations)
+
+### Metrics
+
+- Rust tests: 1,619 passing (`cargo test --workspace`)
+- Contract snapshot tests: 35 passing (`cargo insta test`)
+- Crates: 9 workspace members
+- MCP tools: 9/9 operational
+- SeaORM entities: 35
+- Database tables: 31 (via single migration)
+- ADRs: 52 total
 
 ## [0.2.1] - 2026-02-23
 

@@ -15,6 +15,9 @@ implementation_status: Incomplete
 
 # ADR-041: Integrated Context System Architecture v0.4.0
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Status**: Proposed
 **Date**: 2026-02-05
 **Deciders**: MCB Architecture Team
@@ -23,7 +26,7 @@ implementation_status: Incomplete
 
 ## Context
 
-MCB v0.2.0 implements semantic code search with git awareness and persistent memory. v0.3.0 adds workflow orchestration (ADR-034-037: FSM, context discovery, policies, compensation). v0.4.0 must unify these into an**integrated context system** that combines:
+MCB v0.2.0 implements semantic code search with git awareness and persistent memory. v0.3.0 rebuilds the platform on SeaQL + Loco.rs (ADR-049-052). v0.4.0 adds workflow orchestration (ADR-034-037: FSM, context discovery, policies, compensation). v0.5.0 must unify these into an**integrated context system** that combines:
 
 - VCS data (git history, branches, commits)
 - Code indexing (AST chunks, relationships)
@@ -245,6 +248,9 @@ mcb-server/
 ### Success Criteria
 
 - ✅ 5-layer architecture fully integrated
+
+> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
+
 - ✅ 70+ tests with 85%+ coverage
 - ✅ Time-travel queries working (get context at specific timestamp)
 - ✅ Freshness propagating through search results

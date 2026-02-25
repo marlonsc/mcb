@@ -13,41 +13,6 @@ use serde::{Deserialize, Serialize};
 use crate::value_objects::{CollectionId, OperationId};
 
 // ============================================================================
-// Performance Metrics Types
-// ============================================================================
-
-/// Data structure for detailed performance metrics
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-pub struct PerformanceMetricsData {
-    /// Total queries processed
-    pub total_queries: u64,
-    /// Total successful queries
-    pub successful_queries: u64,
-    /// Number of failed queries
-    pub failed_queries: u64,
-    /// Average response time in milliseconds
-    pub average_response_time_ms: f64,
-    /// Cache hit rate (0.0 to 1.0)
-    pub cache_hit_rate: f64,
-    /// Number of currently active connections
-    pub active_connections: usize,
-    /// Server uptime in seconds
-    pub uptime_seconds: u64,
-}
-
-/// Interface for tracking performance metrics
-pub trait PerformanceMetricsInterface: Send + Sync {
-    /// Get server uptime in seconds
-    fn uptime_secs(&self) -> u64;
-    /// Record a query execution
-    fn record_query(&self, response_time_ms: u64, success: bool, cache_hit: bool);
-    /// Update active connections count
-    fn update_active_connections(&self, delta: i64);
-    /// Get current performance metrics
-    fn get_performance_metrics(&self) -> PerformanceMetricsData;
-}
-
-// ============================================================================
 // Indexing Operations Types
 // ============================================================================
 

@@ -32,7 +32,7 @@ pub trait UserRegistry: Send + Sync {
     /// Performs the create user operation.
     async fn create_user(&self, user: &User) -> Result<()>;
     /// Performs the get user operation.
-    async fn get_user(&self, id: &str) -> Result<User>;
+    async fn get_user(&self, org_id: &str, id: &str) -> Result<User>;
     /// Performs the get user by email operation.
     async fn get_user_by_email(&self, org_id: &str, email: &str) -> Result<User>;
     /// Performs the list users operation.

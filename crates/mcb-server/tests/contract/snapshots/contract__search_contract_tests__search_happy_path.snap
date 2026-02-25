@@ -1,0 +1,33 @@
+---
+source: crates/mcb-server/tests/contract/search_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "collection": "contract-test",
+        "limit": 10,
+        "query": "test query",
+        "resource": "code"
+      },
+      "name": "search"
+    }
+  },
+  "response": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "text": "[search-text]",
+          "type": "text"
+        }
+      ],
+      "isError": false
+    }
+  },
+  "status": 200
+}

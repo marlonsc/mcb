@@ -1,202 +1,35 @@
+use std::collections::HashMap;
+use std::path::Path;
 use std::sync::Arc;
 
+use axum::Json;
 use axum::extract::State;
-use axum::http::{HeaderMap, Method};
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use axum::http::HeaderMap;
 use rmcp::ServerHandler;
 use rmcp::model::CallToolRequestParams;
-use tower_http::cors::{Any, CorsLayer};
-use tower_http::trace::TraceLayer;
-
-use mcb_domain::info;
 
 use crate::McpServer;
-use crate::admin::auth::AdminAuthConfig;
-use crate::admin::browse_handlers::BrowseState;
-use crate::admin::handlers::AdminState;
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_INVALID_PARAMS, JSONRPC_METHOD_NOT_FOUND};
-use crate::tools::{ToolExecutionContext, ToolHandlers, route_tool_call};
-use crate::transport::axum_http::{AppState, build_router};
+use crate::tools::{ToolExecutionContext, route_tool_call};
 use crate::transport::types::{McpRequest, McpResponse};
 
-#[path = "http/http_config.rs"]
-mod http_config;
-pub use http_config::HttpTransportConfig;
-
-#[derive(Clone)]
-struct BridgeProvenance {
-    workspace_root: Option<String>,
-    repo_path: Option<String>,
-    repo_id: Option<String>,
-    session_id: Option<String>,
-    parent_session_id: Option<String>,
-    project_id: Option<String>,
-    worktree_id: Option<String>,
-    operator_id: Option<String>,
-    machine_id: Option<String>,
-    agent_program: Option<String>,
-    model_id: Option<String>,
-    delegated: Option<String>,
-    execution_flow: Option<String>,
-}
-
-impl BridgeProvenance {
-    fn from_headers(headers: &HeaderMap) -> Self {
-        let header = |name: &str| {
-            headers
-                .get(name)
-                .and_then(|value| value.to_str().ok())
-                .map(ToOwned::to_owned)
-        };
-
-        Self {
-            workspace_root: header("X-Workspace-Root"),
-            repo_path: header("X-Repo-Path"),
-            repo_id: header("X-Repo-Id"),
-            session_id: header("X-Session-Id"),
-            parent_session_id: header("X-Parent-Session-Id"),
-            project_id: header("X-Project-Id"),
-            worktree_id: header("X-Worktree-Id"),
-            operator_id: header("X-Operator-Id"),
-            machine_id: header("X-Machine-Id"),
-            agent_program: header("X-Agent-Program"),
-            model_id: header("X-Model-Id"),
-            delegated: header("X-Delegated"),
-            execution_flow: header("X-Execution-Flow"),
-        }
-    }
-}
-
-/// Shared state for the HTTP transport (MCP server handle).
+/// Shared state for the HTTP transport layer.
 #[derive(Clone)]
 pub struct HttpTransportState {
-    /// MCP server instance used for tools and protocol.
+    /// The MCP server instance used to handle incoming requests.
     pub server: Arc<McpServer>,
 }
 
-#[allow(missing_docs)]
-pub struct HttpTransport {
-    config: HttpTransportConfig,
-    state: HttpTransportState,
-    admin_state: Option<AdminState>,
-    auth_config: Option<Arc<AdminAuthConfig>>,
-    browse_state: Option<BrowseState>,
-}
-
-impl HttpTransport {
-    /// Creates a new HTTP transport bound to the given config and server.
-    #[must_use]
-    pub fn new(config: HttpTransportConfig, server: Arc<McpServer>) -> Self {
-        Self {
-            config,
-            state: HttpTransportState { server },
-            admin_state: None,
-            auth_config: None,
-            browse_state: None,
-        }
-    }
-
-    /// Attaches admin state, auth config, and optional browse state so the router serves admin UI and API.
-    #[must_use]
-    pub fn with_admin(
-        mut self,
-        admin_state: AdminState,
-        auth_config: Arc<AdminAuthConfig>,
-        browse_state: Option<BrowseState>,
-    ) -> Self {
-        self.admin_state = Some(admin_state);
-        self.auth_config = Some(auth_config);
-        self.browse_state = browse_state;
-        self
-    }
-
-    /// Builds the Axum router (MCP + optional admin UI routes).
-    pub fn router(&self) -> Router {
-        let mut app = Router::new()
-            .route("/mcp", post(handle_mcp_request))
-            .route("/healthz", get(healthz))
-            .route("/readyz", get(readyz))
-            .with_state(Arc::new(self.state.clone()));
-
-        if let Some(admin_state) = self.admin_state.clone() {
-            let app_state = Arc::new(AppState {
-                metrics: Arc::clone(&admin_state.metrics),
-                indexing: Arc::clone(&admin_state.indexing),
-                browser: self.browse_state.as_ref().map(|b| Arc::clone(&b.browser)),
-                browse_state: self.browse_state.clone().map(Arc::new),
-                mcp_server: Some(Arc::clone(&self.state.server)),
-                admin_state: Some(Arc::new(admin_state)),
-                auth_config: Some(
-                    self.auth_config
-                        .clone()
-                        .unwrap_or_else(|| Arc::new(AdminAuthConfig::default())),
-                ),
-            });
-            app = app.merge(build_router(&app_state));
-        }
-
-        if self.config.enable_cors {
-            let cors = CorsLayer::new()
-                .allow_origin(Any)
-                .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::OPTIONS])
-                .allow_headers(Any);
-            app = app.layer(cors);
-        }
-
-        app.layer(TraceLayer::new_for_http())
-    }
-
-    /// Binds and serves the HTTP transport until the process exits.
-    ///
-    /// # Errors
-    /// Returns an error if socket address is invalid or bind/serve fails.
-    pub async fn start(self) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let addr = self.config.socket_addr()?;
-        info!("HttpTransport", "HTTP transport listening", &addr);
-
-        let listener = tokio::net::TcpListener::bind(addr).await?;
-        axum::serve(listener, self.router()).await?;
-        Ok(())
-    }
-
-    /// Serves the HTTP transport until the given shutdown future completes.
-    ///
-    /// # Errors
-    /// Returns an error if socket address is invalid or bind/serve fails.
-    pub async fn start_with_shutdown(
-        self,
-        shutdown_signal: impl std::future::Future<Output = ()> + Send + 'static,
-    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>> {
-        let addr = self.config.socket_addr()?;
-        info!("HttpTransport", "HTTP transport listening", &addr);
-
-        let listener = tokio::net::TcpListener::bind(addr).await?;
-        axum::serve(listener, self.router())
-            .with_graceful_shutdown(shutdown_signal)
-            .await?;
-        Ok(())
-    }
-}
-
-async fn healthz() -> &'static str {
-    "OK"
-}
-
-async fn readyz(State(_state): State<Arc<HttpTransportState>>) -> &'static str {
-    "OK"
-}
-
-async fn handle_mcp_request(
+/// Handles an incoming MCP JSON-RPC request over HTTP.
+pub async fn handle_mcp_request(
     State(state): State<Arc<HttpTransportState>>,
     headers: HeaderMap,
     Json(request): Json<McpRequest>,
 ) -> Json<McpResponse> {
-    let provenance = BridgeProvenance::from_headers(&headers);
     let response = match request.method.as_str() {
         "initialize" => handle_initialize(&state, &request).await,
         "tools/list" => handle_tools_list(&request).await,
-        "tools/call" => handle_tools_call(&state, &provenance, &request).await,
+        "tools/call" => handle_tools_call(&state, &headers, &request).await,
         "ping" => McpResponse::success(request.id.clone(), serde_json::json!({})),
         _ => McpResponse::error(
             request.id.clone(),
@@ -302,31 +135,53 @@ fn tool_result_to_json(result: &rmcp::model::CallToolResult) -> serde_json::Valu
     })
 }
 
-fn parse_delegated_flag(raw: Option<&str>) -> Option<bool> {
-    raw.map(str::trim)
-        .and_then(|v| match v.to_ascii_lowercase().as_str() {
-            "true" | "1" | "yes" => Some(true),
-            "false" | "0" | "no" => Some(false),
-            _ => None,
-        })
+fn extract_override(headers: &HeaderMap, header_name: &str) -> Option<String> {
+    headers
+        .get(header_name)
+        .and_then(|value| value.to_str().ok())
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToOwned::to_owned)
 }
 
-fn build_tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
-    server.tool_handlers()
+fn build_overrides(headers: &HeaderMap) -> HashMap<String, String> {
+    let mut overrides = HashMap::new();
+    let mappings = [
+        ("X-Workspace-Root", "workspace_root"),
+        ("X-Repo-Path", "repo_path"),
+        ("X-Repo-Id", "repo_id"),
+        ("X-Session-Id", "session_id"),
+        ("X-Parent-Session-Id", "parent_session_id"),
+        ("X-Project-Id", "project_id"),
+        ("X-Worktree-Id", "worktree_id"),
+        ("X-Operator-Id", "operator_id"),
+        ("X-Machine-Id", "machine_id"),
+        ("X-Agent-Program", "agent_program"),
+        ("X-Model-Id", "model_id"),
+        ("X-Delegated", "delegated"),
+        ("X-Execution-Flow", "execution_flow"),
+    ];
+
+    for (header_name, key) in mappings {
+        if let Some(value) = extract_override(headers, header_name) {
+            overrides.insert(key.to_owned(), value);
+        }
+    }
+
+    overrides
 }
 
 async fn handle_tools_call(
     state: &HttpTransportState,
-    bridge_provenance: &BridgeProvenance,
+    headers: &HeaderMap,
     request: &McpRequest,
 ) -> McpResponse {
-    let has_workspace_provenance = bridge_provenance
-        .workspace_root
-        .as_deref()
+    let overrides = build_overrides(headers);
+    let has_workspace_provenance = overrides
+        .get("workspace_root")
         .is_some_and(|value| !value.trim().is_empty())
-        || bridge_provenance
-            .repo_path
-            .as_deref()
+        || overrides
+            .get("repo_path")
             .is_some_and(|value| !value.trim().is_empty());
 
     if !has_workspace_provenance {
@@ -353,79 +208,53 @@ async fn handle_tools_call(
         Err((code, msg)) => return McpResponse::error(request.id.clone(), code, msg),
     };
 
-    let execution_context = {
-        let mut ctx = ToolExecutionContext {
-            session_id: bridge_provenance.session_id.clone(),
-            parent_session_id: bridge_provenance.parent_session_id.clone(),
-            project_id: bridge_provenance.project_id.clone(),
-            worktree_id: bridge_provenance.worktree_id.clone(),
-            repo_id: bridge_provenance.repo_id.clone(),
-            repo_path: bridge_provenance
-                .repo_path
-                .clone()
-                .or_else(|| bridge_provenance.workspace_root.clone()),
-            operator_id: bridge_provenance.operator_id.clone(),
-            machine_id: bridge_provenance.machine_id.clone(),
-            agent_program: bridge_provenance.agent_program.clone(),
-            model_id: bridge_provenance.model_id.clone(),
-            delegated: parse_delegated_flag(bridge_provenance.delegated.as_deref()),
-            timestamp: Some(chrono::Utc::now().timestamp()),
-            execution_flow: bridge_provenance
-                .execution_flow
-                .clone()
-                .or_else(|| Some("server-hybrid".to_owned())),
-        };
+    let mut execution_context =
+        ToolExecutionContext::resolve(&state.server.runtime_defaults(), &overrides);
 
-        if ctx
-            .operator_id
-            .as_deref()
-            .is_none_or(|s| s.trim().is_empty())
-        {
-            ctx.operator_id = std::env::var("USER").ok();
-        }
-        if ctx
-            .machine_id
-            .as_deref()
-            .is_none_or(|s| s.trim().is_empty())
-        {
-            ctx.machine_id = std::env::var("HOSTNAME").ok();
-        }
-        if ctx
-            .agent_program
-            .as_deref()
-            .is_none_or(|s| s.trim().is_empty())
-        {
-            ctx.agent_program = Some("mcb-http-bridge".to_owned());
-        }
-        if ctx.model_id.as_deref().is_none_or(|s| s.trim().is_empty()) {
-            ctx.model_id = Some("unknown".to_owned());
-        }
-        if ctx.delegated.is_none() {
-            ctx.delegated = Some(ctx.parent_session_id.is_some());
-        }
+    if execution_context
+        .agent_program
+        .as_deref()
+        .is_none_or(|value| value.trim().is_empty())
+    {
+        execution_context.agent_program = Some("mcb-http-bridge".to_owned());
+    }
+    if execution_context
+        .model_id
+        .as_deref()
+        .is_none_or(|value| value.trim().is_empty())
+    {
+        execution_context.model_id = Some("unknown".to_owned());
+    }
+    if execution_context
+        .execution_flow
+        .as_deref()
+        .is_none_or(|value| value.trim().is_empty())
+    {
+        execution_context.execution_flow = Some("server-hybrid".to_owned());
+    }
 
-        if let Some(ref path_str) = ctx.repo_path
-            && ctx.repo_id.as_deref().is_none_or(|s| s.trim().is_empty())
-            && let Ok(repo) = state
+    if let Some(path_str) = execution_context.repo_path.as_deref()
+        && execution_context
+            .repo_id
+            .as_deref()
+            .is_none_or(|value| value.trim().is_empty())
+        && let Ok(repo) = state
+            .server
+            .vcs_provider()
+            .open_repository(Path::new(path_str))
+            .await
+    {
+        execution_context.repo_id = Some(
+            state
                 .server
                 .vcs_provider()
-                .open_repository(std::path::Path::new(path_str))
-                .await
-        {
-            ctx.repo_id = Some(
-                state
-                    .server
-                    .vcs_provider()
-                    .repository_id(&repo)
-                    .into_string(),
-            );
-        }
-
-        ctx
-    };
+                .repository_id(&repo)
+                .into_string(),
+        );
+    }
 
     execution_context.apply_to_request_if_missing(&mut call_request);
-    let handlers = build_tool_handlers(&state.server);
+    let handlers = state.server.tool_handlers();
 
     match route_tool_call(call_request, &handlers, execution_context).await {
         Ok(result) => McpResponse::success(request.id.clone(), tool_result_to_json(&result)),

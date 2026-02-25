@@ -117,7 +117,7 @@ create_readme() {
         cat > "${BOOK_SRC}/README.md" << 'EOF'
 # MCP Context Browser
 
-<span class="version-badge">v0.1.1</span>
+<span class="version-badge">v0.2.1</span>
 
 **Semantic code search using vector embeddings** - A Model Context Protocol (MCP) server that provides intelligent code understanding through AI-powered embeddings.
 

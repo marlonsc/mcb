@@ -1,90 +1,39 @@
-//! # MCP Context Browser Server
+//! MCB Server crate.
 //!
-//! MCP protocol server implementation for semantic code analysis using vector embeddings.
-//!
-//! **Documentation**: [`docs/modules/server.md`](../../../docs/modules/server.md) |
-//! **Protocol**: [`ADR-033`](../../../docs/adr/033-mcp-handler-consolidation.md),
-//! [`ADR-011`](../../../docs/adr/011-http-transport-request-response-pattern.md)
-//!
-//! For user guides and tutorials, see the [online documentation](https://marlonsc.github.io/mcb/).
-//!
-//! ## Features
-//!
-//! - **Semantic Search**: AI-powered code understanding and retrieval using vector embeddings
-//! - **Multi-Provider**: Support for `OpenAI`, Ollama, `FastEmbed`, `VoyageAI`, Gemini embedding providers
-//! - **Vector Storage**: `EdgeVec` (local), Milvus, Qdrant, Pinecone
-//! - **AST Parsing**: 14 programming languages with tree-sitter based code chunking
-//! - **Hybrid Search**: Combines BM25 lexical search with semantic similarity
-//!
-//! ## Quick Start
-//!
-//! ```rust,no_run
-//! use mcb_server::run;
-//!
-//! #[tokio::main]
-//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
-//!     // Run with default config (XDG paths + environment)
-//!     // server_mode = false uses config to determine mode
-//!     run(None, false).await?;
-//!     Ok(())
-//! }
-//! ```
+//! MCP protocol server implementation with HTTP and stdio transports.
 //!
 //! ## Architecture
+//! - `handlers` - MCP tool handlers for each domain operation
+//! - `tools` - tool descriptor registry and dispatch wiring
+//! - `transport` - HTTP and stdio transport adapters
+//! - `session` - runtime session lifecycle and context handling
 //!
-//! This crate implements the transport and protocol layer for the MCP Context Browser.
-//! It depends on domain contracts and infrastructure services while remaining independent
-//! of specific provider implementations.
-//!
-//! ## Core Types
-//!
-//! The most important types for users:
-//!
-//! | Type | Description |
-//! | ------ | ------------- |
-//! | [`McpServer`] | Main server struct |
-//! | [`McpServerBuilder`] | Builder for server configuration |
-//!
-//! ## Feature Flags
-//!
-//! - `fastembed`: Local embeddings via `FastEmbed` (default)
-//! - `edgevec`: Local HNSW vector storage (default)
-//! - `milvus`: Milvus vector database support
-//! - `edgevec`: `EdgeVec` in-memory vector store
-//! - `redis-cache`: Redis distributed caching
-//! - `full`: All features enabled
-
-// Clippy allows for complex patterns in server code
-
-// Documentation configuration for docs.rs
+//! ## Entry point
+//! [`loco_app::create_mcp_server`] is the composition-root helper that wires
+//! domain services and repositories from the Loco application context.
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
-/// Common macros for the server layer
 #[macro_use]
 mod macros;
 
-pub mod admin;
 pub mod args;
 pub mod auth;
 pub mod builder;
 pub mod constants;
-pub(crate) mod context_resolution;
-/// Error mapping helpers for MCP-safe responses.
+pub mod controllers;
 pub mod error_mapping;
 pub mod formatter;
 pub mod handlers;
 pub mod hooks;
-pub mod init;
+pub mod initializers;
+pub mod loco_app;
 pub mod mcp_server;
 pub mod session;
-/// Internal template engine (Handlebars-only).
-pub mod templates;
 pub mod tools;
+/// Transport layer for MCP protocol communication.
 pub mod transport;
-/// Shared utility functions.
 pub mod utils;
 
-// Re-export core types for public API
 pub use builder::McpServerBuilder;
-pub use init::run;
+pub use loco_app::McbApp;
 pub use mcp_server::McpServer;

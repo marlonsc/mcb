@@ -14,14 +14,18 @@ use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::ports::IndexingResult;
-use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
 use mcb_domain::value_objects::Embedding;
 use mcb_infrastructure::config::{AppConfig, ConfigLoader, DatabaseConfig};
-use mcb_infrastructure::di::bootstrap::{AppContext, init_app};
+use mcb_infrastructure::di::bootstrap::{AppContext, init_app, init_app_with_overrides};
 use mcb_infrastructure::di::modules::domain_services::DomainServicesFactory;
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use tempfile::TempDir;
+use uuid::Uuid;
+use mcb_domain::entities::{Organization, User, UserRole, Team, TeamMember, TeamMemberRole, ApiKey};
+use mcb_domain::value_objects::TeamMemberId;
+use mcb_domain::utils::time::epoch_secs_i64;
+
 
 // -----------------------------------------------------------------------------
 // Common test fixture constants
@@ -41,6 +45,12 @@ pub const TEST_ORG_ID: &str = "test-org";
 
 /// Test fixture: default embedding dimensions (`FastEmbed` BGE-small-en-v1.5).
 pub const TEST_EMBEDDING_DIMENSIONS: usize = 384;
+
+/// Test fixture: organization A identifier for multi-tenant tests.
+pub const TEST_ORG_ID_A: &str = "test-org-a";
+
+/// Test fixture: organization B identifier for multi-tenant tests.
+pub const TEST_ORG_ID_B: &str = "test-org-b";
 
 // -----------------------------------------------------------------------------
 // Golden test helpers (shared by tests/golden and integration)
@@ -355,10 +365,11 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                         cfg.api_key = Some("test-key".to_owned());
                     }
 
-                    let ctx = init_app(fallback).await?;
-                    ctx.embedding_handle()
-                        .set(Arc::new(DeterministicEmbeddingProvider));
-                    Ok::<_, mcb_domain::error::Error>(ctx)
+                    init_app_with_overrides(
+                        fallback,
+                        Some(Arc::new(DeterministicEmbeddingProvider)),
+                    )
+                    .await
                 });
 
                 match fallback_result {
@@ -440,10 +451,7 @@ async fn init_app_deterministic_fallback(
         cfg.model = "text-embedding-3-small".to_owned();
         cfg.api_key = Some("test-key".to_owned());
     }
-    let ctx = init_app(config).await?;
-    ctx.embedding_handle()
-        .set(Arc::new(DeterministicEmbeddingProvider));
-    Ok(ctx)
+    init_app_with_overrides(config, Some(Arc::new(DeterministicEmbeddingProvider))).await
 }
 
 // ---------------------------------------------------------------------------
@@ -476,23 +484,11 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
     };
     let db_path = temp_dir.path().join("test.db");
 
-    let db_provider_result = resolve_database_provider(&DatabaseProviderConfig::new("sqlite"));
-    assert!(db_provider_result.is_ok(), "resolve sqlite provider");
-    let db_provider = match db_provider_result {
-        Ok(value) => value,
-        Err(_) => {
-            return (
-                McpServerBuilder::new()
-                    .build()
-                    .unwrap_or_else(|_| unreachable!()),
-                temp_dir,
-            );
-        }
-    };
-    let db_executor_result = db_provider.connect(&db_path).await;
-    assert!(db_executor_result.is_ok(), "connect fresh test database");
-    let db_executor = match db_executor_result {
-        Ok(value) => value,
+    let db_result =
+        mcb_infrastructure::di::repositories::connect_sqlite_with_migrations(&db_path).await;
+    assert!(db_result.is_ok(), "connect fresh test database");
+    let db = match db_result {
+        Ok(value) => Arc::new(value),
         Err(_) => {
             return (
                 McpServerBuilder::new()
@@ -504,12 +500,44 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
     };
 
     let project_id = TEST_PROJECT_ID.to_owned();
+    let repos = mcb_domain::registry::database::resolve_database_repositories(
+        "seaorm",
+        Box::new((*db).clone()),
+        project_id.clone(),
+    )
+    .unwrap_or_else(|_| unreachable!());
+    let memory_repository = repos.memory;
+    let agent_repository = repos.agent;
+    let project_repository = repos.project;
+    let vcs_entity_repository = repos.vcs_entity;
+    let plan_entity_repository = repos.plan_entity;
+    let issue_entity_repository = repos.issue_entity;
+    let org_entity_repository = repos.org_entity;
+    let file_hash_repository = repos.file_hash;
 
-    let deps = mcb_infrastructure::di::test_factory::create_test_dependencies(
+    let deps = mcb_infrastructure::di::modules::domain_services::ServiceDependencies {
         project_id,
-        &db_executor,
-        ctx,
-    );
+        cache: mcb_infrastructure::cache::provider::SharedCacheProvider::from_arc(
+            ctx.cache_provider(),
+        ),
+        crypto: ctx.crypto_service(),
+        config: (*ctx.config).clone(),
+        embedding_provider: ctx.embedding_provider(),
+        vector_store_provider: ctx.vector_store_provider(),
+        language_chunker: ctx.language_chunker(),
+        indexing_ops: ctx.indexing(),
+        event_bus: ctx.event_bus(),
+        memory_repository,
+        agent_repository,
+        file_hash_repository,
+        vcs_provider: ctx.vcs_provider(),
+        project_service: ctx.project_service(),
+        project_repository,
+        vcs_entity_repository,
+        plan_entity_repository,
+        issue_entity_repository,
+        org_entity_repository,
+    };
 
     let services_result = DomainServicesFactory::create_services(deps).await;
     assert!(services_result.is_ok(), "build domain services");
@@ -571,4 +599,126 @@ mod tests {
         assert!(!TEST_REPO_NAME.is_empty());
         assert!(!TEST_ORG_ID.is_empty());
     }
+
+// ============================================================================
+// Test Fixture Builders — Org/User/ApiKey/Team/TeamMember
+// ============================================================================
+
+/// Create a test organization with sensible defaults.
+///
+/// # Arguments
+/// * `id` - Organization identifier
+///
+/// # Returns
+/// A new `Organization` with default name, slug, and empty settings.
+pub fn test_organization(id: &str) -> Organization {
+    Organization {
+        id: id.to_string(),
+        name: format!("Test Org {}", id),
+        slug: format!("test-org-{}", id),
+        settings_json: "{}".to_string(),
+        created_at: epoch_secs_i64().unwrap_or(0),
+        updated_at: epoch_secs_i64().unwrap_or(0),
+    }
+}
+
+/// Create a test user with Member role.
+///
+/// # Arguments
+/// * `org_id` - Organization identifier
+/// * `email` - User email address
+///
+/// # Returns
+/// A new `User` with role=Member and default display name.
+pub fn test_user(org_id: &str, email: &str) -> User {
+    User {
+        id: Uuid::new_v4().to_string(),
+        org_id: org_id.to_string(),
+        email: email.to_string(),
+        display_name: email.split('@').next().unwrap_or("Test User").to_string(),
+        role: UserRole::Member,
+        api_key_hash: None,
+        created_at: epoch_secs_i64().unwrap_or(0),
+        updated_at: epoch_secs_i64().unwrap_or(0),
+    }
+}
+
+/// Create a test user with Admin role.
+///
+/// # Arguments
+/// * `org_id` - Organization identifier
+/// * `email` - User email address
+///
+/// # Returns
+/// A new `User` with role=Admin and default display name.
+pub fn test_admin_user(org_id: &str, email: &str) -> User {
+    User {
+        id: Uuid::new_v4().to_string(),
+        org_id: org_id.to_string(),
+        email: email.to_string(),
+        display_name: email.split('@').next().unwrap_or("Test Admin").to_string(),
+        role: UserRole::Admin,
+        api_key_hash: None,
+        created_at: epoch_secs_i64().unwrap_or(0),
+        updated_at: epoch_secs_i64().unwrap_or(0),
+    }
+}
+
+/// Create a test team.
+///
+/// # Arguments
+/// * `org_id` - Organization identifier
+/// * `name` - Team name
+///
+/// # Returns
+/// A new `Team` with unique ID and current timestamp.
+pub fn test_team(org_id: &str, name: &str) -> Team {
+    Team {
+        id: Uuid::new_v4().to_string(),
+        org_id: org_id.to_string(),
+        name: name.to_string(),
+        created_at: epoch_secs_i64().unwrap_or(0),
+    }
+}
+
+/// Create a test team member.
+///
+/// # Arguments
+/// * `team_id` - Team identifier
+/// * `user_id` - User identifier
+///
+/// # Returns
+/// A new `TeamMember` with role=Member and current timestamp.
+pub fn test_team_member(team_id: &str, user_id: &str) -> TeamMember {
+    TeamMember {
+        id: TeamMemberId::from_string(&format!("{}:{}", team_id, user_id)),
+        team_id: team_id.to_string(),
+        user_id: user_id.to_string(),
+        role: TeamMemberRole::Member,
+        joined_at: epoch_secs_i64().unwrap_or(0),
+    }
+}
+
+/// Create a test API key.
+///
+/// # Arguments
+/// * `user_id` - User identifier
+/// * `org_id` - Organization identifier
+/// * `name` - API key name
+///
+/// # Returns
+/// A new `ApiKey` with unique ID, hashed key, and current timestamp.
+pub fn test_api_key(user_id: &str, org_id: &str, name: &str) -> ApiKey {
+    ApiKey {
+        id: Uuid::new_v4().to_string(),
+        user_id: user_id.to_string(),
+        org_id: org_id.to_string(),
+        name: name.to_string(),
+        key_hash: format!("hash_{}", Uuid::new_v4()),
+        scopes_json: "[\"read\", \"write\"]".to_string(),
+        expires_at: None,
+        revoked_at: None,
+        created_at: epoch_secs_i64().unwrap_or(0),
+    }
+}
 }

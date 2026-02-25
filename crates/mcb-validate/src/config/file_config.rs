@@ -415,7 +415,7 @@ pub struct NamingRulesConfig {
     /// Target crate for infrastructure defaults (e.g., "mcb-infrastructure")
     pub infrastructure_crate: String,
 
-    /// Target crate for application logic (e.g., "mcb-application")
+    /// Target crate for application logic (empty in 4-layer architecture)
     pub application_crate: String,
 
     /// Target crate for providers (e.g., "mcb-providers")

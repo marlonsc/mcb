@@ -1,0 +1,30 @@
+[table]
+title = "Organizations"
+table_size = "middle"
+page_size = 30
+order_by = { field = "created_at", order = "desc" }
+columns = [
+    { title = "ID", field = "id", width = 200 },
+    { field = "name", width = 200 },
+    { field = "slug", width = 150 },
+    { field = "created_at", width = 140 },
+]
+hidden_columns = ["settings_json"]
+
+[filter]
+hidden_columns = ["settings_json"]
+
+[editor]
+enable = true
+title_field = "name"
+
+[create]
+enable = true
+hidden_columns = ["settings_json"]
+
+[update]
+enable = true
+readonly_columns = ["id", "created_at"]
+
+[delete]
+enable = true

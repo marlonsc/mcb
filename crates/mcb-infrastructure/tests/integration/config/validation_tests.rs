@@ -40,7 +40,7 @@ fn test_auth_config_jwt_secret_length() {
     let default_auth = ConfigLoader::new().load().unwrap().auth;
     assert!(
         default_auth.jwt.secret.is_empty(),
-        "Default JWT secret should be empty (must be configured via MCP__AUTH__JWT__SECRET)"
+        "Default JWT secret should be empty (must be configured via settings.auth.jwt.secret in config YAML)"
     );
 
     // Custom secret can be set - minimum 32 characters required
@@ -103,16 +103,13 @@ fn test_cache_config_ttl_when_enabled() {
     // TTL and size should still be valid even when disabled
     assert!(disabled_cache.default_ttl_secs > 0);
 
-    // Redis provider config
+    // Redis provider config (dummy URL for unit validation only)
     let redis_cache = CacheSystemConfig {
         enabled: true,
         provider: CacheProvider::Redis,
         default_ttl_secs: default_cache.default_ttl_secs,
         max_size: default_cache.max_size,
-        redis_url: Some(
-            mcb_domain::test_services_config::required_test_service_url("redis_url")
-                .expect("redis_url required in test config"),
-        ),
+        redis_url: Some("redis://127.0.0.1:6379".to_owned()),
         redis_pool_size: 16,
         namespace: default_cache.namespace.clone(),
     };

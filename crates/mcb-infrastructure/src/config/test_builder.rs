@@ -3,7 +3,7 @@
 //!
 //! Fluent builder for test configurations.
 //!
-//! Always starts from `config/default.toml` + env overrides, then applies
+//! Loads from `config/{env}.yaml` (Loco convention), then applies
 //! test-specific mutations. If any override produces an invalid config,
 //! `build()` fails — the test cannot start with bad config.
 //!
@@ -30,7 +30,7 @@ use super::{AppConfig, ConfigLoader, DatabaseConfig};
 
 /// Fluent builder for test configurations.
 ///
-/// Loads `config/default.toml` on construction, then applies typed overrides.
+/// Loads from Loco YAML config on construction, then applies typed overrides.
 /// Call [`build`](Self::build) to validate and finalize.
 pub struct TestConfigBuilder {
     config: AppConfig,
@@ -38,7 +38,7 @@ pub struct TestConfigBuilder {
 }
 
 impl TestConfigBuilder {
-    /// Create a builder seeded from `config/default.toml` + environment overrides.
+    /// Create a builder seeded from Loco YAML config.
     ///
     /// # Errors
     ///

@@ -18,8 +18,8 @@ pub use super::server::{
     ServerSslConfig, ServerTimeoutConfig, TransportMode,
 };
 pub use super::system::{
-    AdminApiKeyConfig, ApiKeyConfig, AuthConfig, BackupConfig, DaemonConfig, EventBusConfig,
-    EventBusProvider, JwtConfig, OperationsConfig, PasswordAlgorithm, SnapshotConfig, SyncConfig,
+    AdminApiKeyConfig, ApiKeyConfig, AuthConfig, BackupConfig, DaemonConfig, EventBusBackend,
+    EventBusConfig, JwtConfig, OperationsConfig, PasswordAlgorithm, SnapshotConfig, SyncConfig,
 };
 /// Embedding configuration container
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -37,7 +37,7 @@ pub struct EmbeddingConfigContainer {
     pub dimensions: Option<usize>,
     /// Cache directory for local embedding providers
     pub cache_dir: Option<PathBuf>,
-    /// Named configs for TOML format
+    /// Named configs for YAML format
     pub configs: HashMap<String, EmbeddingConfig>,
 }
 
@@ -53,7 +53,7 @@ pub struct VectorStoreConfigContainer {
     pub dimensions: Option<usize>,
     /// Collection name
     pub collection: Option<String>,
-    /// Named configs for TOML format
+    /// Named configs for YAML format
     pub configs: HashMap<String, VectorStoreConfig>,
 }
 
@@ -149,7 +149,7 @@ impl InfrastructureConfig {
     pub fn fallback() -> Self {
         Self {
             cache: CacheSystemConfig::default(),
-            event_bus: EventBusConfig::tokio(),
+            event_bus: EventBusConfig::in_process(),
             metrics: MetricsConfig::default(),
             resilience: ResilienceConfig::default(),
             limits: LimitsConfig::default(),

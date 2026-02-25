@@ -47,17 +47,6 @@ Core types and port traits (source of truth for all domain contracts):
   `LanguageChunkingProvider`, `VcsProvider`, `CryptoProvider`
 - **Repository ports**: `MemoryRepository`, `AgentRepository`, `VcsEntityRepository`, `ProjectRepository`, ...
 
-### mcb-application
-
-Use case services (source: `crates/mcb-application/src/use_cases/`):
-
-- `IndexingServiceImpl` — codebase indexing and ingestion
-- `SearchServiceImpl` — query processing and ranking
-- `ContextServiceImpl` — embedding and vector operations
-- `MemoryServiceImpl` — observation/memory use cases
-- `AgentSessionServiceImpl` — agent session lifecycle
-- `decorators::InstrumentedEmbeddingProvider` — metrics decorator (OCP pattern)
-
 ### mcb-server
 
 MCP protocol server (source: `crates/mcb-server/src/`):

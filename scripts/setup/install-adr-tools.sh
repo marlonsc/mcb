@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # =============================================================================
-# ADR Tools Installation Script - v0.1.1
+# ADR Tools Installation Script - v0.2.1
 # =============================================================================
 #
 # This script installs the professional ADR management tools required for
-# the v0.1.1 "Maintenance Release" release.
+# the MCB project.
 #
 # Tools installed:
 # - adrs: Professional ADR (Architecture Decision Records) management
@@ -32,7 +32,7 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 
-echo -e "${BLUE}🚀 Installing ADR Tools for MCP Context Browser v0.1.1${NC}"
+echo -e "${BLUE}🚀 Installing ADR Tools for MCB v0.2.1${NC}"
 echo -e "${BLUE}====================================================${NC}"
 echo ""
 

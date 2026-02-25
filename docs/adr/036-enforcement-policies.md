@@ -17,11 +17,14 @@ implementation_status: Complete
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Accepted** — 2026-02-06
 
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout)
-- **Related:** [ADR-029](./029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./025-figment-configuration.md) (Figment)
+- **Related:** [ADR-029](./archive/superseded-029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./archive/superseded-025-figment-configuration.md) (Figment)
 - **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) →**ADR-036** → [ADR-037](./037-workflow-orchestrator.md)
 
 ## Context
@@ -1713,6 +1716,8 @@ This enables**context-aware policies** that adapt to project state, not just sta
 
 # config/default.toml — [policies] section (all 11 policies)
 
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+
 [policies]
 
 # Global enable/disable for all policy evaluation
@@ -2135,6 +2140,8 @@ fn configurable_guard_factory(
 5. Add `PoliciesConfig` and 11 settings structs to `mcb-infrastructure/src/config/`
 6. Add `[policies]` section to `config/default.toml` with configurations for all 11 policies
 
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+
 ### Testing
 
 - Unit tests: Each of the 11 policies with pass/fail cases (minimum 2 tests per policy = 22 tests)
@@ -2172,5 +2179,5 @@ fn configurable_guard_factory(
 - [gatehouse](https://docs.rs/gatehouse/latest/gatehouse/) — Policy composition patterns (evaluated)
 - [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — `TransitionTrigger` consumed by guards
 - [ADR-035: Context Scout](./035-context-scout.md) — `ProjectContext` consumed by guards
-- [ADR-025: Figment Configuration](./025-figment-configuration.md) — Config pattern
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) — DI pattern (superseded by ADR-050)
+- [ADR-025: Figment Configuration](./archive/superseded-025-figment-configuration.md) — Config pattern
+- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md) — DI pattern (superseded by ADR-050)

@@ -10,9 +10,6 @@ pub const DEFAULT_HTTPS_PORT: u16 = 8443;
 /// Default server host address (localhost).
 pub const DEFAULT_SERVER_HOST: &str = "127.0.0.1";
 
-/// Request timeout in seconds.
-pub const REQUEST_TIMEOUT_SECS: u64 = 30;
-
 /// Connection timeout in seconds.
 pub const CONNECTION_TIMEOUT_SECS: u64 = 10;
 
@@ -36,9 +33,6 @@ pub const HTTP_KEEPALIVE_SECS: u64 = 60;
 
 /// Maximum number of idle connections per host.
 pub const HTTP_MAX_IDLE_PER_HOST: usize = 10;
-
-/// HTTP header name for Content-Type.
-pub const HTTP_HEADER_CONTENT_TYPE: &str = "Content-Type";
 
 /// HTTP header name for Accept.
 pub const HTTP_HEADER_ACCEPT: &str = "Accept";

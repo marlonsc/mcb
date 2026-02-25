@@ -12,12 +12,6 @@ fn test_jsonrpc_constants_exist(#[case] actual: i32, #[case] expected: i32) {
 }
 
 #[test]
-fn test_valid_sections_contains_expected() {
-    assert!(VALID_SECTIONS.contains(&"server"));
-    assert!(VALID_SECTIONS.contains(&"logging"));
-}
-
-#[test]
 fn test_highlight_names_length() {
     assert_eq!(
         mcb_infrastructure::constants::highlight::HIGHLIGHT_NAMES.len(),

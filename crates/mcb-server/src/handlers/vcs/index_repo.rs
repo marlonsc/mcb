@@ -49,7 +49,6 @@ pub async fn index_repository(
                 total_files += filtered_files.len();
             }
             Err(e) => {
-                let _ = branch;
                 return Ok(to_contextual_tool_error(e));
             }
         }
@@ -57,11 +56,14 @@ pub async fn index_repository(
     let commits_indexed = if args.include_commits.unwrap_or(false) {
         let mut count = 0;
         for branch in &branches {
-            if let Ok(commits) = vcs_provider
+            match vcs_provider
                 .commit_history(&repo, branch, Some(depth))
                 .await
             {
-                count += commits.len();
+                Ok(commits) => count += commits.len(),
+                Err(e) => {
+                    mcb_domain::warn!("vcs", "Failed to index commits", &format!("branch={branch}: {e}"));
+                }
             }
         }
         count

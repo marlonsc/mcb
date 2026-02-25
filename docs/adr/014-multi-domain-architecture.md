@@ -17,17 +17,20 @@ implementation_status: Complete
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
+
 **Superseded** (v0.1.2)
 **Date**: 2026-01-14
 **Version**: v0.1.1 Update
 
 > **Note**: This ADR describes future plans for multi-domain expansion. The v0.1.1 release
-> implemented the [Seven-Crate Clean Architecture](013-clean-architecture-crate-separation.md)
+> implemented the [Six-Crate Clean Architecture](013-clean-architecture-crate-separation.md)
 > which provides the foundation for this multi-domain strategy.
 
 ## Context
 
-MCB v0.1.1 has implemented the seven-crate Clean Architecture foundation. Future versions will integrate:
+MCB v0.1.1 has implemented the six-crate Clean Architecture foundation. Future versions will integrate:
 
 - Code analysis capabilities (complexity, debt, quality)
 - Git integration (repository analysis, commit history)
@@ -37,7 +40,7 @@ MCB v0.1.1 has implemented the seven-crate Clean Architecture foundation. Future
 
 ## Decision
 
-Adopt **modular domain architecture** within the seven-crate structure:
+Adopt **modular domain architecture** within the six-crate structure:
 
 ```text
 mcb/
@@ -78,7 +81,7 @@ mcb/
 
 **v0.1.1** (Current release):
 
-- Seven-crate Clean Architecture implemented
+- Six-crate Clean Architecture implemented
 - linkme + Handle DI with AppContext manual composition root (ADR-050; ADR-029 superseded)
 - 20+ port traits with `Send + Sync` bounds (in mcb-domain)
 - mcb-validate enforces layer boundaries
@@ -118,7 +121,7 @@ Mitigation:
 
 v0.1.1 (Completed):
 
-- [x] Seven-crate Clean Architecture implemented
+- [x] Six-crate Clean Architecture implemented
 - [x] linkme + Handle DI with AppContext manual composition root (ADR-050; ADR-029 superseded)
 - [x] 20+ port traits with `Send + Sync` bounds (in mcb-domain)
 - [x] mcb-validate enforces layer boundaries

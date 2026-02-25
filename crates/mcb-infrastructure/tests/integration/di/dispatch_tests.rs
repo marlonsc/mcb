@@ -22,9 +22,12 @@ extern crate mcb_providers;
 fn test_config() -> Result<(AppConfig, tempfile::TempDir), Box<dyn std::error::Error>> {
     let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("test.db");
-    let default_path =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../config/default.toml");
-    let mut config = ConfigLoader::new().with_config_path(default_path).load()?;
+    let test_yaml_path =
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../config/development.yaml");
+    let mut config = ConfigLoader::new()
+        .with_config_path(test_yaml_path)
+        .load()?;
+    config.server.network.port = 3000;
     config.providers.database.configs.insert(
         "default".to_owned(),
         mcb_infrastructure::config::DatabaseConfig {
@@ -52,9 +55,9 @@ async fn test_di_container_builder() -> Result<(), Box<dyn std::error::Error>> {
         "Config should be initialized"
     );
 
-    // Verify handles are accessible
-    let embedding_handle = app_context.embedding_handle();
-    assert!(!embedding_handle.get().provider_name().is_empty());
+    // Verify providers are accessible
+    let embedding = app_context.embedding_provider();
+    assert!(!embedding.provider_name().is_empty());
     Ok(())
 }
 
@@ -79,18 +82,15 @@ async fn test_provider_selection_from_config() -> Result<(), Box<dyn std::error:
     let app_context = init_app(config).await?;
 
     assert_eq!(
-        app_context.embedding_handle().get().provider_name(),
+        app_context.embedding_provider().provider_name(),
         "fastembed"
     );
     assert_eq!(
-        app_context.vector_store_handle().get().provider_name(),
+        app_context.vector_store_provider().provider_name(),
         "edgevec"
     );
-    assert_eq!(app_context.cache_handle().get().provider_name(), "moka");
-    assert_eq!(
-        app_context.language_handle().get().provider_name(),
-        "universal"
-    );
+    assert_eq!(app_context.cache_provider().provider_name(), "test");
+    assert_eq!(app_context.language_chunker().provider_name(), "universal");
     Ok(())
 }
 
@@ -105,60 +105,21 @@ async fn test_provider_resolution_uses_registry() {
     // Verify that providers implement the expected traits
     // (This would fail at compile time if providers didn't implement the traits)
 
-    // Test that we can call methods through the trait via handles
-    let embedding = app_context.embedding_handle().get();
+    // Test that we can call methods through the trait via accessors
+    let embedding = app_context.embedding_provider();
     let _dimensions = embedding.dimensions();
     let _health = embedding.health_check().await;
 
     // Verify provider names are returned correctly
+    assert!(!app_context.embedding_provider().provider_name().is_empty());
     assert!(
         !app_context
-            .embedding_handle()
-            .get()
+            .vector_store_provider()
             .provider_name()
             .is_empty()
     );
-    assert!(
-        !app_context
-            .vector_store_handle()
-            .get()
-            .provider_name()
-            .is_empty()
-    );
-    assert!(!app_context.cache_handle().get().provider_name().is_empty());
-    assert!(
-        !app_context
-            .language_handle()
-            .get()
-            .provider_name()
-            .is_empty()
-    );
-}
-
-#[tokio::test]
-#[serial]
-async fn test_admin_services_are_accessible() {
-    let Some(app_context) = try_shared_app_context() else {
-        eprintln!("skipping: shared AppContext unavailable (FastEmbed model missing)");
-        return;
-    };
-
-    // Verify admin services are accessible
-    let embedding_admin = app_context.embedding_admin();
-    let current = embedding_admin.current_provider();
-    assert!(!current.is_empty(), "Should have a current provider");
-
-    // Verify we can list available providers
-    let providers = embedding_admin.list_providers();
-    assert!(!providers.is_empty(), "Should have at least one provider");
-
-    // Verify cache admin
-    let cache_admin = app_context.cache_admin();
-    let cache_current = cache_admin.current_provider();
-    assert!(
-        !cache_current.is_empty(),
-        "Cache should have a current provider"
-    );
+    assert!(!app_context.cache_provider().provider_name().is_empty());
+    assert!(!app_context.language_chunker().provider_name().is_empty());
 }
 
 #[tokio::test]
@@ -175,18 +136,6 @@ async fn test_infrastructure_services_from_app_context() {
     assert!(
         std::sync::Arc::strong_count(&event_bus) >= 1,
         "EventBus service should have valid Arc reference"
-    );
-
-    let shutdown = app_context.shutdown();
-    assert!(
-        std::sync::Arc::strong_count(&shutdown) >= 1,
-        "Shutdown service should have valid Arc reference"
-    );
-
-    let performance = app_context.performance();
-    assert!(
-        std::sync::Arc::strong_count(&performance) >= 1,
-        "Performance service should have valid Arc reference"
     );
 
     let indexing = app_context.indexing();

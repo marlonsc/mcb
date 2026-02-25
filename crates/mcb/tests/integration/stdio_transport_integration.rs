@@ -82,8 +82,6 @@ fn get_mcb_path() -> PathBuf {
 /// Spawn mcb with test-safe configuration (no external service dependencies)
 fn create_test_command(mcb_path: &PathBuf) -> Command {
     let mut cmd = Command::new(mcb_path);
-    let config_path =
-        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/smoke-test.toml");
     let unique_db = format!(
         "/tmp/mcb-stdio-{}-{}.db",
         std::process::id(),
@@ -92,14 +90,14 @@ fn create_test_command(mcb_path: &PathBuf) -> Command {
             .unwrap_or_default()
             .as_nanos()
     );
+    // Run from workspace root so Loco finds config/test.yaml
+    let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    cmd.current_dir(&workspace_root);
     cmd.arg("serve");
-    cmd.arg("--config").arg(config_path);
-    cmd.env(
-        "MCP__PROVIDERS__DATABASE__CONFIGS__DEFAULT__PATH",
-        unique_db,
-    );
-    cmd.env("MCP__PROVIDERS__EMBEDDING__PROVIDER", "openai");
-    cmd.env("MCP__PROVIDERS__EMBEDDING__API_KEY", "test-key");
+    cmd.arg("--stdio");
+    // Use Loco test environment (config/test.yaml with Tera template for DATABASE_URL)
+    cmd.env("LOCO_ENV", "test");
+    cmd.env("DATABASE_URL", format!("sqlite://{unique_db}?mode=rwc"));
     cmd
 }
 

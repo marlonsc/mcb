@@ -49,11 +49,6 @@ pub fn is_redis_available() -> bool {
     is_service_available_from_config("redis_url")
 }
 
-/// NATS event bus service (default port 24222)
-pub fn is_nats_available() -> bool {
-    is_service_available_from_config("nats_url")
-}
-
 /// `PostgreSQL` service (default port 25432)
 #[must_use]
 pub fn is_postgres_available() -> bool {
@@ -154,13 +149,11 @@ mod tests {
         let milvus = is_milvus_available();
         let ollama = is_ollama_available();
         let redis = is_redis_available();
-        let nats = is_nats_available();
         let postgres = is_postgres_available();
 
         assert!(matches!(milvus, true | false));
         assert!(matches!(ollama, true | false));
         assert!(matches!(redis, true | false));
-        assert!(matches!(nats, true | false));
         assert!(matches!(postgres, true | false));
 
         println!("✓ Service detection logic verified");

@@ -58,6 +58,9 @@ pub mod embedded_rules;
 pub mod engines;
 pub mod rules;
 
+// === Unified Rule Registry (bridges Rust validators + YAML rules + AST engines) ===
+pub mod unified_registry;
+
 // === Pattern Registry (YAML-driven patterns) ===
 pub mod pattern_registry;
 /// Validation provider adapter that exposes this crate through domain ports.
@@ -164,6 +167,8 @@ pub use validators::declarative_validator::DeclarativeValidator;
 pub use traits::{Validator, ValidatorRegistry};
 pub use traits::{Violation, ViolationCategory};
 pub use validators::visibility::{VisibilityValidator, VisibilityViolation};
+// Re-export unified registry
+pub use unified_registry::{RuleInfo, RuleOrigin, UnifiedRuleRegistry};
 
 // Re-export ValidationConfig for multi-directory support
 // ValidationConfig is defined in this module

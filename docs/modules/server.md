@@ -106,7 +106,7 @@ crates/mcb-server/src/
 - **Tool Specification**: [MCP_TOOLS.md](../MCP_TOOLS.md)
 - **Admin API**: [admin.md](./admin.md)
 - **Transport**: [stdio, http]
-- **Handlers**: Internal mapping to use cases in `mcb-application`
+- **Handlers**: Internal mapping to use-case modules in `mcb-infrastructure`
 
 ---
 

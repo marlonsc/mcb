@@ -47,7 +47,7 @@ extra_instructions = """\
 You are reviewing a Rust 2024 edition workspace (9 crates) that follows Clean Architecture.
 
 Architecture rules (CI-blocking):
-- Dependencies point inward only: mcb-server -> mcb-infrastructure -> mcb-application -> mcb-domain
+- Dependencies point inward only: mcb-server -> mcb-infrastructure -> mcb-domain
 - mcb-providers implements port traits from mcb-domain, registers via linkme distributed slices
 - mcb-domain has ZERO dependencies on other MCB crates
 - No direct imports from mcb-providers in mcb-server (use DI via mcb-infrastructure)
@@ -145,10 +145,10 @@ content = """\
 ## MCB Rust Best Practices
 
 ### Architecture
-- Follow Clean Architecture: domain -> application -> infrastructure -> server
+- Follow Clean Architecture: domain -> infrastructure -> server
 - Port traits in mcb-domain, adapters in mcb-providers
 - Provider registration via linkme distributed slices
-- DI via dill IoC container (ADR-029)
+- DI via manual composition root with linkme (ADR-050)
 - Config via figment (ADR-025)
 
 ### Safety

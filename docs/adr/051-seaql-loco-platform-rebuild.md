@@ -5,9 +5,9 @@ adr: 51
 title: SeaQL + Loco.rs Platform Rebuild
 status: ACCEPTED
 created: 2026-02-22
-updated: 2026-02-22
-related: [49, 50, 3, 8, 9, 10]
-supersedes: []
+updated: 2026-02-23
+related: [52, 50, 3, 8, 9, 10]
+supersedes: [4, 7, 25, 26]
 superseded_by: []
 implementation_status: In Progress
 ---
@@ -21,7 +21,7 @@ implementation_status: In Progress
 **Accepted** (v0.3.0)
 
 > Platform rebuild decision documenting migration from custom infrastructure to SeaQL ecosystem + Loco.rs framework.
-> See ADR-049 for schema resolution decisions.
+> See ADR-052 for schema resolution decisions.
 
 ## Context
 
@@ -244,7 +244,7 @@ trait ObservationRepository {
 1. **API Surface**: Public MCP tool contracts unchanged
 2. **Clean Architecture**: Layer boundaries preserved
 3. **Provider Pattern**: linkme registration unchanged
-4. **Configuration**: Figment/TOML config continues to work
+4. **Configuration**: Loco YAML config replaces Figment/TOML (config/development.yaml, config/test.yaml)
 
 ## Alternatives Considered
 
@@ -335,7 +335,7 @@ trait ObservationRepository {
 
 1. **Contract Tests First**: Snapshot tests for all 9 MCP tools before any migration
 2. **Loco+rmcp Spike**: Proof-of-concept for coexistence pattern
-3. **Schema Resolution**: Domain `Schema` model vs SeaORM entities (ADR-049)
+3. **Schema Resolution**: Domain `Schema` model vs SeaORM entities (ADR-052)
 4. **Entity Generation**: SeaORM entities for all current schema tables
 5. **Repository Migration**: Port one entity at a time with tests
 6. **Admin Migration**: Loco.rs scaffolding + SeaORM Pro integration

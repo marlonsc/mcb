@@ -96,11 +96,19 @@ impl PineconeVectorStoreProvider {
     }
 
     /// Convert Pinecone match result to domain `SearchResult`
-    fn match_to_search_result(item: &Value, score: f64) -> SearchResult {
-        let id = item["id"].as_str().unwrap_or("").to_owned();
-        let default_metadata = serde_json::Value::Object(Default::default());
-        let metadata = item.get("metadata").unwrap_or(&default_metadata);
-        search_result_from_json_metadata(id, metadata, score)
+    fn match_to_search_result(item: &Value, score: f64) -> Result<SearchResult> {
+        let id = item["id"]
+            .as_str()
+            .ok_or_else(|| {
+                Error::vector_db(
+                    "Invalid Pinecone match: missing or non-string 'id' field".to_owned(),
+                )
+            })?
+            .to_owned();
+        let metadata = item.get("metadata").ok_or_else(|| {
+            Error::vector_db("Invalid Pinecone match: missing 'metadata' field".to_owned())
+        })?;
+        Ok(search_result_from_json_metadata(id, metadata, score))
     }
 }
 
@@ -225,17 +233,21 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
             .request(reqwest::Method::POST, "/query", Some(payload))
             .await?;
 
-        let mut results: Vec<SearchResult> = response["matches"]
-            .as_array()
-            .map(|arr| {
-                arr.iter()
-                    .map(|m| {
-                        let score = m["score"].as_f64().unwrap_or(0.0);
-                        Self::match_to_search_result(m, score)
-                    })
-                    .collect()
+        let matches = response["matches"].as_array().ok_or_else(|| {
+            Error::vector_db("Invalid Pinecone response: missing matches array".to_owned())
+        })?;
+
+        let mut results: Vec<SearchResult> = matches
+            .iter()
+            .map(|m| {
+                let score = m["score"].as_f64().ok_or_else(|| {
+                    Error::vector_db(
+                        "Invalid Pinecone match: missing or non-numeric 'score' field".to_owned(),
+                    )
+                })?;
+                Self::match_to_search_result(m, score)
             })
-            .unwrap_or_default();
+            .collect::<Result<Vec<_>>>()?;
 
         results.sort_by_key(|r| r.start_line);
         Ok(results)
@@ -345,10 +357,14 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         let results = matches
             .iter()
             .map(|m| {
-                let score = m["score"].as_f64().unwrap_or(0.0);
+                let score = m["score"].as_f64().ok_or_else(|| {
+                    Error::vector_db(
+                        "Invalid Pinecone match: missing or non-numeric 'score' field".to_owned(),
+                    )
+                })?;
                 Self::match_to_search_result(m, score)
             })
-            .collect();
+            .collect::<Result<Vec<_>>>()?;
 
         Ok(results)
     }
@@ -389,18 +405,22 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
             .request(reqwest::Method::GET, "/vectors/fetch", Some(payload))
             .await?;
 
-        let empty_obj = serde_json::Value::Object(Default::default());
-        let results = response["vectors"]
-            .as_object()
-            .map(|obj| {
-                obj.iter()
-                    .map(|(id, data)| {
-                        let metadata = data.get("metadata").unwrap_or(&empty_obj);
-                        search_result_from_json_metadata(id.clone(), metadata, 1.0)
-                    })
-                    .collect()
+        let vectors_obj = response["vectors"].as_object().ok_or_else(|| {
+            Error::vector_db("Invalid Pinecone response: missing vectors object".to_owned())
+        })?;
+
+        let results = vectors_obj
+            .iter()
+            .map(|(id, data)| {
+                let metadata = data.get("metadata").ok_or_else(|| {
+                    Error::vector_db(format!(
+                        "Invalid Pinecone vector '{}': missing 'metadata' field",
+                        id
+                    ))
+                })?;
+                Ok(search_result_from_json_metadata(id.clone(), metadata, 1.0))
             })
-            .unwrap_or_default();
+            .collect::<Result<Vec<_>>>()?;
 
         Ok(results)
     }
@@ -461,3 +481,91 @@ static PINECONE_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {
     description: "Pinecone cloud vector database (managed, serverless)",
     build: pinecone_factory,
 };
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ── match_to_search_result error propagation ──────────────────────
+
+    #[test]
+    fn test_match_to_search_result_missing_id_returns_error() {
+        let item = serde_json::json!({ "metadata": {} });
+        let result = PineconeVectorStoreProvider::match_to_search_result(&item, 0.9);
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("id"), "error should mention 'id': {err}");
+    }
+
+    #[test]
+    fn test_match_to_search_result_non_string_id_returns_error() {
+        let item = serde_json::json!({ "id": 42, "metadata": {} });
+        let result = PineconeVectorStoreProvider::match_to_search_result(&item, 0.9);
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("id"), "error should mention 'id': {err}");
+    }
+
+    #[test]
+    fn test_match_to_search_result_missing_metadata_returns_error() {
+        let item = serde_json::json!({ "id": "vec_123" });
+        let result = PineconeVectorStoreProvider::match_to_search_result(&item, 0.9);
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(
+            err.contains("metadata"),
+            "error should mention 'metadata': {err}"
+        );
+    }
+
+    #[test]
+    fn test_match_to_search_result_valid_item_succeeds() {
+        let item = serde_json::json!({
+            "id": "vec_123",
+            "metadata": {
+                "file_path": "src/main.rs",
+                "content": "fn main() {}",
+                "start_line": 1,
+                "language": "rust"
+            }
+        });
+        let result = PineconeVectorStoreProvider::match_to_search_result(&item, 0.95);
+        assert!(result.is_ok());
+        let sr = result.unwrap();
+        assert_eq!(sr.id, "vec_123");
+        assert!((sr.score - 0.95).abs() < f64::EPSILON);
+    }
+
+    // ── Factory tests ────────────────────────────────────────────────
+
+    #[test]
+    fn test_pinecone_factory_missing_api_key_returns_error() {
+        let config = VectorStoreProviderConfig {
+            provider: "pinecone".to_owned(),
+            uri: Some("https://my-index.svc.pinecone.io".to_owned()),
+            api_key: None,
+            ..Default::default()
+        };
+        let result = pinecone_factory(&config);
+        assert!(result.is_err());
+        let err = result.err().unwrap();
+        assert!(
+            err.contains("api_key"),
+            "error should mention 'api_key': {err}"
+        );
+    }
+
+    #[test]
+    fn test_pinecone_factory_missing_uri_returns_error() {
+        let config = VectorStoreProviderConfig {
+            provider: "pinecone".to_owned(),
+            api_key: Some("pk-test-key".to_owned()),
+            uri: None,
+            ..Default::default()
+        };
+        let result = pinecone_factory(&config);
+        assert!(result.is_err());
+        let err = result.err().unwrap();
+        assert!(err.contains("uri"), "error should mention 'uri': {err}");
+    }
+}

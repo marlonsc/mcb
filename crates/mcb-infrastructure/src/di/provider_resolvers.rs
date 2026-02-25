@@ -15,10 +15,7 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use mcb_domain::ports::{
-    CacheProvider, EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider,
-};
-use mcb_domain::registry::cache::{CacheProviderConfig, resolve_cache_provider};
+use mcb_domain::ports::{EmbeddingProvider, LanguageChunkingProvider, VectorStoreProvider};
 use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 use mcb_domain::registry::language::{LanguageProviderConfig, resolve_language_provider};
 use mcb_domain::registry::vector_store::{
@@ -68,7 +65,7 @@ impl EmbeddingProviderResolver {
     ///
     /// Returns an error if no embedding provider is configured or resolution fails.
     pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn EmbeddingProvider>> {
-        // First, check direct config (flat env vars like MCP__PROVIDERS__EMBEDDING__PROVIDER)
+        // First, check direct config (e.g. settings.providers.embedding.provider in YAML)
         if let Some(ref provider_name) = self.config.providers.embedding.provider {
             let mut registry_config = EmbeddingProviderConfig::new(provider_name);
             if let Some(ref model) = self.config.providers.embedding.model {
@@ -140,7 +137,7 @@ impl VectorStoreProviderResolver {
     ///
     /// Returns an error if no matching vector store provider is found in the registry.
     pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn VectorStoreProvider>> {
-        // First, check direct config (flat env vars like MCP__PROVIDERS__VECTOR_STORE__PROVIDER)
+        // First, check direct config (e.g. settings.providers.vector_store.provider in YAML)
         if let Some(ref provider_name) = self.config.providers.vector_store.provider {
             let mut registry_config = VectorStoreProviderConfig::new(provider_name);
             if let Some(ref address) = self.config.providers.vector_store.address {
@@ -228,62 +225,6 @@ where
 impl_resolver_common!(VectorStoreProviderResolver);
 
 // ============================================================================
-// Cache Provider Resolver
-// ============================================================================
-
-/// Resolver component for cache providers
-///
-/// Uses the linkme registry to resolve cache providers by name.
-/// Can resolve from current config or from an override config.
-pub struct CacheProviderResolver {
-    config: Arc<AppConfig>,
-}
-
-impl CacheProviderResolver {
-    /// Resolve provider from current application config
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if no matching cache provider is found in the registry.
-    pub fn resolve_from_config(&self) -> mcb_domain::error::Result<Arc<dyn CacheProvider>> {
-        let cache_provider_name = match &self.config.system.infrastructure.cache.provider {
-            crate::config::CacheProvider::Moka => "moka",
-            crate::config::CacheProvider::Redis => "redis",
-        };
-
-        let registry_config = CacheProviderConfig {
-            provider: cache_provider_name.to_owned(),
-            uri: self.config.system.infrastructure.cache.redis_url.clone(),
-            max_size: Some(self.config.system.infrastructure.cache.max_size),
-            ttl_secs: Some(self.config.system.infrastructure.cache.default_ttl_secs),
-            namespace: Some(self.config.system.infrastructure.cache.namespace.clone()),
-            extra: Default::default(),
-        };
-
-        resolve_cache_provider(&registry_config)
-    }
-
-    /// Resolve provider from override config (for admin API)
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the cache provider cannot be resolved.
-    pub fn resolve_from_override(
-        &self,
-        override_config: &CacheProviderConfig,
-    ) -> mcb_domain::error::Result<Arc<dyn CacheProvider>> {
-        resolve_cache_provider(override_config)
-    }
-
-    /// List available cache providers
-    #[must_use]
-    pub fn list_available(&self) -> Vec<(&'static str, &'static str)> {
-        mcb_domain::registry::cache::list_cache_providers()
-    }
-}
-impl_resolver_common!(CacheProviderResolver);
-
-// ============================================================================
 // Language Provider Resolver
 // ============================================================================
 
@@ -291,11 +232,15 @@ impl_resolver_common!(CacheProviderResolver);
 ///
 /// Uses the linkme registry to resolve language providers by name.
 /// Can resolve from current config or from an override config.
-pub struct LanguageProviderResolver {
-    config: Arc<AppConfig>,
-}
+pub struct LanguageProviderResolver;
 
 impl LanguageProviderResolver {
+    #[must_use]
+    /// Creates a new language provider resolver.
+    pub fn new() -> Self {
+        Self
+    }
+
     /// Resolve provider from current application config
     ///
     /// # Errors
@@ -304,8 +249,6 @@ impl LanguageProviderResolver {
     pub fn resolve_from_config(
         &self,
     ) -> mcb_domain::error::Result<Arc<dyn LanguageChunkingProvider>> {
-        // Use config so the field is not dead; language provider is "universal" for now
-        let _ = self.config.as_ref();
         let registry_config = LanguageProviderConfig::new("universal");
         resolve_language_provider(&registry_config)
     }
@@ -328,7 +271,17 @@ impl LanguageProviderResolver {
         mcb_domain::registry::language::list_language_providers()
     }
 }
-impl_resolver_common!(LanguageProviderResolver);
+impl Default for LanguageProviderResolver {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl std::fmt::Debug for LanguageProviderResolver {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("LanguageProviderResolver").finish()
+    }
+}
 
 // ============================================================================
 // Helper Functions
