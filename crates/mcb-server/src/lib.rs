@@ -29,6 +29,7 @@ pub mod initializers;
 pub mod loco_app;
 pub mod mcp_server;
 pub mod session;
+pub mod state;
 pub mod tools;
 /// Transport layer for MCP protocol communication.
 pub mod transport;
@@ -37,3 +38,4 @@ pub mod utils;
 pub use builder::McpServerBuilder;
 pub use loco_app::McbApp;
 pub use mcp_server::McpServer;
+pub use state::McbState;

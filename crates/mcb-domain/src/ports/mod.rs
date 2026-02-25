@@ -38,11 +38,12 @@ mod services;
 
 // --- Admin ---
 pub use admin::{
-    CacheAdminInterface, EmbeddingAdminInterface, IndexingOperation, IndexingOperationStatus,
-    IndexingOperationsInterface, LanguageAdminInterface, ProviderInfo, ValidationOperation,
-    ValidationOperationResult, ValidationOperationsInterface, ValidationStatus,
+    CacheAdminInterface, DashboardQueryPort, EmbeddingAdminInterface, IndexingOperation,
+    IndexingOperationStatus, IndexingOperationsInterface, LanguageAdminInterface, ProviderInfo,
+    ValidationOperation, ValidationOperationResult, ValidationOperationsInterface, ValidationStatus,
     VectorStoreAdminInterface,
 };
+
 
 // --- Infrastructure ---
 pub use infrastructure::{
@@ -69,12 +70,12 @@ pub use providers::{
 // --- Repositories ---
 pub use repositories::{
     AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
-    AgentSessionRepository, ApiKeyRegistry, FileHashRepository, FtsSearchResult, IndexRepository,
-    IndexStats, IssueCommentRegistry, IssueEntityRepository, IssueLabelAssignmentManager,
-    IssueLabelRegistry, IssueRegistry, MemoryRepository, OrgEntityRepository, OrgRegistry,
-    PlanEntityRepository, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry, ProjectRepository,
-    TeamMemberManager, TeamRegistry, TransitionRepository, UserRegistry, VcsEntityRepository,
-    WorkflowSessionRepository,
+    AgentSessionRepository, ApiKeyInfo, ApiKeyRegistry, AuthRepositoryPort, FileHashRepository,
+    FtsSearchResult, IndexRepository, IndexStats, IssueCommentRegistry, IssueEntityRepository,
+    IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry, MemoryRepository,
+    OrgEntityRepository, OrgRegistry, PlanEntityRepository, PlanRegistry, PlanReviewRegistry,
+    PlanVersionRegistry, ProjectRepository, TeamMemberManager, TeamRegistry, TransitionRepository,
+    UserRegistry, UserWithApiKey, VcsEntityRepository, WorkflowSessionRepository,
 };
 
 // --- Services ---

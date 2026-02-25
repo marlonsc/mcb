@@ -10,7 +10,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use mcb_providers::constants::EVENT_BUS_DEFAULT_CAPACITY;
+use mcb_domain::constants::EVENT_BUS_DEFAULT_CAPACITY;
 
 use crate::constants::events::{EVENT_BUS_CONNECTION_TIMEOUT_MS, EVENT_BUS_MAX_RECONNECT_ATTEMPTS};
 

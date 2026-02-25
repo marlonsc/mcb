@@ -12,8 +12,6 @@ pub mod cache;
 pub mod database;
 /// Embedding constants (`OpenAI`, `VoyageAI`, etc.)
 pub mod embedding;
-/// Event bus constants (`Tokio`)
-pub mod events;
 /// HTTP client constants
 pub mod http;
 /// Language processing constants
@@ -26,7 +24,6 @@ pub mod vector_store;
 pub use self::cache::*;
 pub use self::database::*;
 pub use self::embedding::*;
-pub use self::events::*;
 pub use self::http::*;
 pub use self::language::*;
 pub use self::retry::*;

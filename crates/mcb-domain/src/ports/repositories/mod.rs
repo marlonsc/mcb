@@ -1,9 +1,12 @@
+#![allow(unused_imports)]
+
 //!
 //! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
 //!
 //! Repository ports for data persistence.
 
 pub mod agent;
+pub mod auth;
 pub mod file_hash;
 pub mod index;
 pub mod issue;
@@ -18,6 +21,7 @@ pub use agent::{
     AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
     AgentSessionRepository,
 };
+pub use auth::{ApiKeyInfo, AuthRepositoryPort, UserWithApiKey};
 pub use file_hash::FileHashRepository;
 pub use index::{IndexRepository, IndexStats};
 pub use issue::{

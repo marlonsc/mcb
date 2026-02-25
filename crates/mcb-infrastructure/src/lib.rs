@@ -54,6 +54,7 @@ pub mod infrastructure;
 pub mod project;
 pub mod routing;
 pub mod services;
+pub mod loco;
 pub mod utils;
 pub mod validation;
 
