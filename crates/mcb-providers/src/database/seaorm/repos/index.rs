@@ -66,7 +66,10 @@ impl SeaOrmIndexRepository {
             "in_progress" => IndexingOperationStatus::InProgress,
             "completed" => IndexingOperationStatus::Completed,
             other if other.starts_with("failed:") => IndexingOperationStatus::Failed(
-                other.strip_prefix("failed:").unwrap_or("").to_owned(),
+                other
+                    .strip_prefix("failed:")
+                    .unwrap_or("error message missing from database")
+                    .to_owned(),
             ),
             _ => IndexingOperationStatus::Failed(format!("unknown status: {s}")),
         }

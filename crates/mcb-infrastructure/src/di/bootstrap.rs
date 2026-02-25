@@ -306,7 +306,11 @@ pub async fn init_app_with_overrides(
         })?;
     }
 
-    let db_url = format!("sqlite://{}?mode=rwc", memory_db_path.display());
+    let db_url = if memory_db_path.to_string_lossy().contains("://") {
+        memory_db_path.to_string_lossy().into_owned()
+    } else {
+        format!("sqlite://{}?mode=rwc", memory_db_path.display())
+    };
     let mut connect_opts = ConnectOptions::new(db_url);
     connect_opts
         .max_connections(5)
@@ -380,11 +384,13 @@ pub async fn init_test_app() -> Result<AppContext> {
 // =========================================================================
 
 fn create_crypto_service(config: &AppConfig) -> Result<CryptoService> {
-    let master_key = if config.auth.jwt.secret.len() >= 32 {
-        config.auth.jwt.secret.as_bytes()[..32].to_vec()
-    } else {
-        CryptoService::generate_master_key()
-    };
+    let secret_bytes = config.auth.jwt.secret.as_bytes();
+    if secret_bytes.len() != 32 {
+        return Err(mcb_domain::error::Error::configuration(
+            "JWT secret must be exactly 32 bytes long".to_string(),
+        ));
+    }
+    let master_key = secret_bytes.to_vec();
     CryptoService::new(master_key)
 }
 

@@ -39,6 +39,12 @@ async fn setup_db() -> Arc<DatabaseConnection> {
     let db = sea_orm::Database::connect("sqlite::memory:")
         .await
         .expect("connect to in-memory SQLite");
+    db.execute(sea_orm::Statement::from_string(
+        db.get_database_backend(),
+        "PRAGMA foreign_keys = ON;".to_string(),
+    ))
+    .await
+    .expect("enable foreign keys");
     Migrator::up(&db, None).await.expect("migration up");
     Arc::new(db)
 }

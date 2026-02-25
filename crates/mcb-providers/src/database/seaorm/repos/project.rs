@@ -10,8 +10,8 @@ use mcb_domain::entities::project::{
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::ProjectRepository;
 use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder,
-    QuerySelect, Set,
+    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter,
+    QueryOrder, QuerySelect, Set,
 };
 
 use crate::database::seaorm::entities::{
@@ -138,6 +138,18 @@ impl SeaOrmProjectRepository {
             .order_by_desc(project_issue::Column::UpdatedAt);
 
         if let Some(project_id) = &filter.project_id {
+            let project_exists = project::Entity::find()
+                .filter(project::Column::Id.eq(project_id.as_str()))
+                .filter(project::Column::OrgId.eq(org_id))
+                .count(&self.db)
+                .await
+                .map_err(db_error("verify project ownership"))?
+                > 0;
+            if !project_exists {
+                return Err(Error::not_found(format!(
+                    "Project with id {project_id} not found in org"
+                )));
+            }
             q = q.filter(project_issue::Column::ProjectId.eq(project_id.to_owned()));
         }
         if let Some(phase_id) = &filter.phase_id {

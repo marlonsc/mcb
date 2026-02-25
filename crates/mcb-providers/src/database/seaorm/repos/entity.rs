@@ -59,7 +59,7 @@ impl SeaOrmEntityRepository {
 
 fn db_err(e: sea_orm::DbErr) -> Error {
     Error::Database {
-        message: e.to_string(),
+        message: "Database error".into(),
         source: Some(Box::new(e)),
     }
 }

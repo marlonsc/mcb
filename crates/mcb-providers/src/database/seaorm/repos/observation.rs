@@ -119,13 +119,13 @@ impl SeaOrmObservationRepository {
             if let Some(session_id) = &f.session_id {
                 query.and_where(Expr::cust_with_values(
                     "json_extract(metadata, '$.session_id') = ?",
-                    vec![Value::from(session_id.clone())],
+                    vec![Value::from(session_id.as_str())],
                 ));
             }
             if let Some(parent_session_id) = &f.parent_session_id {
                 query.and_where(Expr::cust_with_values(
                     "json_extract(metadata, '$.origin_context.parent_session_id') = ?",
-                    vec![Value::from(parent_session_id.clone())],
+                    vec![Value::from(parent_session_id.as_str())],
                 ));
             }
             if let Some(repo_id) = &f.repo_id {
@@ -154,7 +154,7 @@ impl SeaOrmObservationRepository {
                 for tag in tags {
                     query.and_where(Expr::cust_with_values(
                         "EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)",
-                        vec![Value::from(tag.clone())],
+                        vec![Value::from(tag.as_str())],
                     ));
                 }
             }
@@ -263,7 +263,9 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .map_err(|e| Self::db_err("find observation by hash", e))
     }
 
-    async fn search(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>> {
+    async fn search(&self, query: &str, mut limit: usize) -> Result<Vec<FtsSearchResult>> {
+        const MAX_LIMIT: usize = 1000;
+        limit = limit.min(MAX_LIMIT);
         if query.trim().is_empty() {
             let observations = self.list_by_filter(None, limit).await?;
             return Ok(observations
@@ -275,14 +277,17 @@ impl MemoryRepository for SeaOrmObservationRepository {
                 .collect());
         }
 
-        let escaped = query.replace('\'', "''");
-        let sql = format!(
-            "SELECT id, bm25(observations_fts) AS rank FROM observations_fts WHERE observations_fts MATCH '{escaped}' ORDER BY bm25(observations_fts) LIMIT {limit}"
+        let sql = "SELECT id, bm25(observations_fts) AS rank FROM observations_fts \
+                   WHERE observations_fts MATCH ? ORDER BY bm25(observations_fts) LIMIT ?";
+        let stmt = Statement::from_sql_and_values(
+            self.db.get_database_backend(),
+            sql,
+            vec![Value::from(query), Value::from(limit as i64)],
         );
 
         let rows = self
             .db
-            .query_all_raw(Statement::from_string(self.db.get_database_backend(), sql))
+            .query_all_raw(stmt)
             .await
             .map_err(|e| Self::db_err("search observations using FTS5", e))?;
 
@@ -354,7 +359,8 @@ impl MemoryRepository for SeaOrmObservationRepository {
         self.ensure_org_and_project(&summary.project_id, summary.created_at)
             .await?;
 
-        let active: session_summary::ActiveModel = summary.clone().into();
+        let mut active: session_summary::ActiveModel = summary.clone().into();
+        active.org_id = Set(Some(DEFAULT_ORG_ID.to_owned()));
 
         session_summary::Entity::insert(active)
             .on_conflict(
