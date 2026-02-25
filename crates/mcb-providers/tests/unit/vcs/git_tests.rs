@@ -85,8 +85,7 @@ async fn open_repository_not_found(#[case] repo_path: &str) {
     let err_msg = err.to_string().to_lowercase();
     assert!(
         err_msg.contains("not found") || err_msg.contains("path"),
-        "error: {}",
-        err
+        "error: {err}"
     );
 }
 

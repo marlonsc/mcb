@@ -67,7 +67,7 @@ fn terminal_state_no_transitions() {
     let result = apply_transition(&mut session, &trigger);
 
     let err = result.expect_err("terminal state should not allow end-session transition");
-    let err_msg = err.to_string();
+    let err_msg = err.clone();
     assert!(
         err_msg.to_lowercase().contains("transition"),
         "error should mention transition, got: {err_msg}"
