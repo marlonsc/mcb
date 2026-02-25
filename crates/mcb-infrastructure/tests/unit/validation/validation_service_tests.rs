@@ -41,7 +41,10 @@ async fn test_validate_mcb_workspace_quality_only() -> Result<(), Box<dyn std::e
         .map_err(|_| "thread panicked")?;
 
     let report = result.expect("quality validation should succeed");
-    assert!(report.passed || !report.violations.is_empty(), "report should have a definitive result");
+    assert!(
+        report.passed || !report.violations.is_empty(),
+        "report should have a definitive result"
+    );
     Ok(())
 }
 

@@ -260,19 +260,20 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
             )
             .await?;
 
-        let mut results: Vec<SearchResult> = response["result"]["points"]
-            .as_array()
-            .map_or_else(
-                || {
-                    tracing::warn!(field = "search_result.payload", "qdrant payload missing or malformed, using empty default");
-                    Vec::new()
-                },
-                |arr| {
-                    arr.iter()
-                        .map(|item| Self::point_to_search_result(item, 1.0))
-                        .collect()
-                },
-            );
+        let mut results: Vec<SearchResult> = response["result"]["points"].as_array().map_or_else(
+            || {
+                tracing::warn!(
+                    field = "search_result.payload",
+                    "qdrant payload missing or malformed, using empty default"
+                );
+                Vec::new()
+            },
+            |arr| {
+                arr.iter()
+                    .map(|item| Self::point_to_search_result(item, 1.0))
+                    .collect()
+            },
+        );
 
         results.sort_by_key(|r| r.start_line);
         Ok(results)
@@ -436,19 +437,20 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
             )
             .await?;
 
-        let results = response["result"]
-            .as_array()
-            .map_or_else(
-                || {
-                    tracing::warn!(field = "search_result.vectors", "qdrant vectors field missing or malformed, using empty default");
-                    Vec::new()
-                },
-                |arr| {
-                    arr.iter()
-                        .map(|item| Self::point_to_search_result(item, 1.0))
-                        .collect()
-                },
-            );
+        let results = response["result"].as_array().map_or_else(
+            || {
+                tracing::warn!(
+                    field = "search_result.vectors",
+                    "qdrant vectors field missing or malformed, using empty default"
+                );
+                Vec::new()
+            },
+            |arr| {
+                arr.iter()
+                    .map(|item| Self::point_to_search_result(item, 1.0))
+                    .collect()
+            },
+        );
 
         Ok(results)
     }
@@ -471,19 +473,20 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
             )
             .await?;
 
-        let results = response["result"]["points"]
-            .as_array()
-            .map_or_else(
-                || {
-                    tracing::warn!(field = "search_result.id", "qdrant ID extraction failed, using empty default");
-                    Vec::new()
-                },
-                |arr| {
-                    arr.iter()
-                        .map(|item| Self::point_to_search_result(item, 1.0))
-                        .collect()
-                },
-            );
+        let results = response["result"]["points"].as_array().map_or_else(
+            || {
+                tracing::warn!(
+                    field = "search_result.id",
+                    "qdrant ID extraction failed, using empty default"
+                );
+                Vec::new()
+            },
+            |arr| {
+                arr.iter()
+                    .map(|item| Self::point_to_search_result(item, 1.0))
+                    .collect()
+            },
+        );
 
         Ok(results)
     }

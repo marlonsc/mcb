@@ -46,10 +46,13 @@ async fn test_builder_missing_indexing_service() -> Result<(), Box<dyn std::erro
         .build();
 
     let err = result.expect_err("builder missing indexing service should fail");
-    assert!(matches!(
-        err,
-        BuilderError::MissingDependency(dep) if dep == "indexing service"
-    ), "expected MissingDependency(indexing service), got: {err:?}");
+    assert!(
+        matches!(
+            err,
+            BuilderError::MissingDependency(dep) if dep == "indexing service"
+        ),
+        "expected MissingDependency(indexing service), got: {err:?}"
+    );
     Ok(())
 }
 
@@ -67,10 +70,13 @@ async fn test_builder_missing_vcs_provider() -> Result<(), Box<dyn std::error::E
         .build();
 
     let err = result.expect_err("builder missing vcs provider should fail");
-    assert!(matches!(
-        err,
-        BuilderError::MissingDependency(dep) if dep == "vcs provider"
-    ), "expected MissingDependency(vcs provider), got: {err:?}");
+    assert!(
+        matches!(
+            err,
+            BuilderError::MissingDependency(dep) if dep == "vcs provider"
+        ),
+        "expected MissingDependency(vcs provider), got: {err:?}"
+    );
     Ok(())
 }
 
@@ -78,12 +84,18 @@ async fn test_builder_missing_vcs_provider() -> Result<(), Box<dyn std::error::E
 fn test_builder_empty() {
     let result = McpServerBuilder::new().build();
     let err = result.expect_err("empty builder should fail");
-    assert!(matches!(err, BuilderError::MissingDependency(_)), "expected MissingDependency, got: {err:?}");
+    assert!(
+        matches!(err, BuilderError::MissingDependency(_)),
+        "expected MissingDependency, got: {err:?}"
+    );
 }
 
 #[test]
 fn test_builder_default() {
     let result = McpServerBuilder::default().build();
     let err = result.expect_err("default builder should fail");
-    assert!(matches!(err, BuilderError::MissingDependency(_)), "expected MissingDependency, got: {err:?}");
+    assert!(
+        matches!(err, BuilderError::MissingDependency(_)),
+        "expected MissingDependency, got: {err:?}"
+    );
 }

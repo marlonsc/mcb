@@ -73,7 +73,7 @@ pub(super) fn extract_functions_with_body_impl(
             *current_struct = cap
                 .get(1)
                 .map(|m| m.as_str().to_owned())
-            // INTENTIONAL: Regex capture group; no match yields empty string
+                // INTENTIONAL: Regex capture group; no match yields empty string
                 .unwrap_or_default();
         }
 
@@ -83,7 +83,7 @@ pub(super) fn extract_functions_with_body_impl(
             current_fn_name = cap
                 .get(1)
                 .map(|m| m.as_str().to_owned())
-            // INTENTIONAL: Regex capture group; no match yields empty string
+                // INTENTIONAL: Regex capture group; no match yields empty string
                 .unwrap_or_default();
             fn_start_line = orig_idx + 1;
             fn_body_lines.clear();

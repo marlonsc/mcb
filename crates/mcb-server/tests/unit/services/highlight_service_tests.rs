@@ -84,10 +84,13 @@ async fn test_highlight_unsupported_language() {
     let result = service.highlight("code", "brainfuck").await;
 
     let err = result.expect_err("unsupported language should fail");
-    assert!(matches!(
-        err,
-        Error::Highlight(HighlightError::UnsupportedLanguage(ref lang)) if lang == "brainfuck"
-    ), "expected UnsupportedLanguage(brainfuck), got: {err:?}");
+    assert!(
+        matches!(
+            err,
+            Error::Highlight(HighlightError::UnsupportedLanguage(ref lang)) if lang == "brainfuck"
+        ),
+        "expected UnsupportedLanguage(brainfuck), got: {err:?}"
+    );
 }
 
 #[tokio::test]
