@@ -322,7 +322,7 @@ pub async fn init_app_with_overrides(
     })?;
 
     use sea_orm_migration::MigratorTrait;
-    mcb_providers::migration::Migrator::up(&db, None)
+    mcb_providers::migration::Migrator::up(&db, None) // CA-EXCEPTION: SeaORM migration requirement
         .await
         .map_err(|e| {
             mcb_domain::error::Error::internal(format!("Failed to run migrations: {e}"))
@@ -344,7 +344,13 @@ pub async fn init_app_with_overrides(
     let file_hash_repository = repos.file_hash;
 
     let vcs_provider = crate::di::vcs::default_vcs_provider();
-    let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new());
+    let detect_fn: crate::project::DetectAllFn = std::sync::Arc::new(|path: &std::path::Path| {
+        let path = path.to_path_buf();
+        Box::pin(async move {
+            mcb_providers::project_detection::detect_all_projects(&path).await // CA-EXCEPTION: DI composition root wires concrete provider
+        })
+    });
+    let project_service: Arc<dyn ProjectDetectorService> = Arc::new(ProjectService::new(detect_fn));
     let crypto_service = Arc::new(create_crypto_service(&config)?);
 
     Ok(AppContext {

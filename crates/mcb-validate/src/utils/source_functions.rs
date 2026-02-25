@@ -3,7 +3,10 @@
 //!
 use regex::Regex;
 
-use crate::constants::common::{ATTRIBUTE_PREFIX, COMMENT_PREFIX, FN_PREFIX};
+use crate::constants::common::{
+    ATTRIBUTE_PREFIX, COMMENT_PREFIX, CONTROL_FLOW_CONTAINS_TOKENS, CONTROL_FLOW_STARTS_WITH_TOKENS,
+    FN_PREFIX,
+};
 
 use super::FunctionInfo;
 
@@ -141,13 +144,10 @@ fn is_structural_line(line: &str) -> bool {
 }
 
 fn has_control_flow(body: &[String]) -> bool {
-    const CONTAINS_TOKENS: [&str; 4] = [" if ", "} else", " match ", " else {"];
-    const STARTS_WITH_TOKENS: [&str; 5] = ["if ", "match ", "for ", "while ", "loop "];
-
     body.iter().any(|line| {
         line.contains("else {")
-            || CONTAINS_TOKENS.iter().any(|token| line.contains(token))
-            || STARTS_WITH_TOKENS
+            || CONTROL_FLOW_CONTAINS_TOKENS.iter().any(|token| line.contains(token))
+            || CONTROL_FLOW_STARTS_WITH_TOKENS
                 .iter()
                 .any(|token| line.starts_with(token))
     })

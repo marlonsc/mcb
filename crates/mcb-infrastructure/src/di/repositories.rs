@@ -9,7 +9,7 @@ use mcb_domain::registry::database::resolve_database_repositories;
 use sea_orm::{ConnectOptions, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
 
-use mcb_providers::migration::Migrator;
+use mcb_providers::migration::Migrator; // CA-EXCEPTION: SeaORM migration requirement
 
 pub async fn create_memory_repository(path: PathBuf) -> Result<Arc<dyn MemoryRepository>> {
     let db = connect_sqlite_with_migrations(&path).await?;

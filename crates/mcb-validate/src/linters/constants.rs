@@ -1,25 +1,16 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
 //!
-//! Constants for the linter integration module.
+//! Re-exports linter constants from the central constants module.
+//!
+//! All Clippy/Cargo constants live in [`crate::constants::linters`].
 
-/// Clippy rule code prefix.
-pub const CLIPPY_PREFIX: &str = "clippy::";
-
-/// Clippy CLI warning flag.
-pub const CLIPPY_WARN_FLAG: &str = "-W";
-
-/// Clippy subcommand name.
-pub const CLIPPY_COMMAND: &str = "clippy";
-
-/// Clippy JSON output format flag.
-pub const CLIPPY_MESSAGE_FORMAT_JSON: &str = "--message-format=json";
-
-/// Cargo argument separator.
-pub const CARGO_ARG_SEPARATOR: &str = "--";
-
-/// Cargo manifest filename.
-pub const CARGO_TOML_FILENAME: &str = "Cargo.toml";
-
-/// Clippy compiler-message reason string.
-pub const CLIPPY_REASON_COMPILER_MESSAGE: &str = "compiler-message";
+pub use crate::constants::linters::{
+    CARGO_ARG_SEPARATOR,
+    CARGO_TOML_FILENAME,
+    CLIPPY_COMMAND,
+    CLIPPY_MESSAGE_FORMAT_JSON,
+    CLIPPY_PREFIX,
+    CLIPPY_REASON_COMPILER_MESSAGE,
+    CLIPPY_WARN_FLAG,
+};

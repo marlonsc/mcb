@@ -1,5 +1,5 @@
 //!
-//! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md)
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
 //!
 //! Naming validation helper macros.
 //!

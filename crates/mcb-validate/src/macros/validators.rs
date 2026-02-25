@@ -1,5 +1,5 @@
 //!
-//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
 //!
 //! Validator registration and trait implementation macros.
 //!

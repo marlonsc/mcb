@@ -9,7 +9,7 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::VcsProvider;
-use mcb_providers::vcs;
+use mcb_providers::vcs; // CA-EXCEPTION: DI composition root wires concrete VCS provider
 
 /// Returns the default VCS provider for standalone and server modes.
 ///

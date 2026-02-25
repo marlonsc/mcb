@@ -4,12 +4,13 @@ use loco_rs::app::AppContext as LocoAppContext;
 use sea_orm::DatabaseConnection;
 
 use crate::config::AppConfig;
-use crate::ports::CacheProvider;
+use mcb_domain::ports::CacheProvider;
 
 /// Composition root for Loco framework integration.
 ///
 /// Wraps DomainServicesFactory and extracts Loco resources.
 /// Bridges the Loco framework's AppContext to MCB's dependency injection system.
+#[allow(dead_code)]
 pub struct LocoBridge {
     db: DatabaseConnection,
     cache: Arc<dyn CacheProvider>,
@@ -30,7 +31,7 @@ impl LocoBridge {
     /// # Errors
     ///
     /// Returns an error if required resources cannot be extracted from the context
-    pub fn new(ctx: &LocoAppContext) -> Result<Self, Box<dyn std::error::Error>> {
+    pub fn new(_ctx: &LocoAppContext) -> Result<Self, Box<dyn std::error::Error>> {
         todo!("Implement in Task 13")
     }
 
@@ -53,19 +54,19 @@ impl LocoBridge {
     ///
     /// # Arguments
     ///
-    /// * `flow` - The execution flow configuration for the MCP server
+    /// * `_flow` - The execution flow configuration for the MCP server (deferred to Task 13)
     ///
     /// # Returns
     ///
-    /// An initialized McpServer instance or an error if composition fails
+    /// An initialized MCP server instance or an error if composition fails (deferred to Task 13)
     ///
     /// # Errors
     ///
     /// Returns an error if any step of the composition pipeline fails
     pub async fn build_mcp_server(
         &self,
-        flow: mcb_server::ExecutionFlow,
-    ) -> Result<Arc<mcb_server::McpServer>, Box<dyn std::error::Error>> {
+        _flow: (),
+    ) -> Result<(), Box<dyn std::error::Error>> {
         todo!("Implement in Task 13")
     }
 }

@@ -93,8 +93,21 @@ pub const USE_PREFIX: &str = "use ";
 /// Rust `async fn` keyword prefix.
 pub const ASYNC_FN_PREFIX: &str = "async fn ";
 
+/// All function declaration line prefixes (fn, pub fn, async fn, pub async fn).
+pub const FN_PREFIXES: &[&str] = &[FN_PREFIX, PUB_FN_PREFIX, ASYNC_FN_PREFIX, PUB_ASYNC_FN_PREFIX];
+
 /// Rust `mod ` keyword prefix.
 pub const MOD_PREFIX: &str = "mod ";
+
+// ============================================================================
+// Control-Flow Detection (KISS / complexity)
+// ============================================================================
+
+/// Tokens that indicate control flow when contained in a line (with spaces).
+pub const CONTROL_FLOW_CONTAINS_TOKENS: &[&str] = &[" if ", "} else", " match ", " else {"];
+
+/// Tokens that indicate control flow when a line starts with them.
+pub const CONTROL_FLOW_STARTS_WITH_TOKENS: &[&str] = &["if ", "match ", "for ", "while ", "loop "];
 
 // ============================================================================
 // Error Handling Detection Patterns

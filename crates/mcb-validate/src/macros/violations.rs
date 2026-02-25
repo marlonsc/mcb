@@ -1,5 +1,5 @@
 //!
-//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
 //!
 //! Violation enum definition macro with automatic trait implementations.
 //!

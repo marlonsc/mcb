@@ -2,8 +2,7 @@
 //!
 //! **Documentation**: [`docs/modules/validate.md#validators-validators`](../../../../docs/modules/validate.md#validators-validators)
 //!
-/// Validation macros (`mk_validators!`, `impl_validator!`, `define_violations!`)
-pub mod macros;
+//! Validation macros (`mk_validators!`, `impl_validator!`, `define_violations!`) live in `crate::macros`.
 
 pub mod async_patterns;
 pub mod clean_architecture;
