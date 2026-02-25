@@ -21,6 +21,7 @@ use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
 use serde_json::Value;
+use tracing::warn;
 
 use crate::constants::{
     EDGEVEC_DEFAULT_DIMENSIONS, HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER,
@@ -291,7 +292,10 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         metadata: Vec<HashMap<String, Value>>,
     ) -> Result<Vec<String>> {
         if vectors.is_empty() {
-            return Ok(Vec::new());
+            warn!("insert_vectors called with empty vectors array");
+            return Err(Error::vector_db(
+                "Cannot insert empty vectors array".to_owned(),
+            ));
         }
         let collection_str = collection.to_string();
 
@@ -392,7 +396,10 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         ids: &[String],
     ) -> Result<Vec<SearchResult>> {
         if ids.is_empty() {
-            return Ok(Vec::new());
+            warn!("get_vectors_by_ids called with empty ids array");
+            return Err(Error::vector_db(
+                "Cannot fetch vectors with empty ids array".to_owned(),
+            ));
         }
         let collection_str = collection.to_string();
 
@@ -566,5 +573,46 @@ mod tests {
         assert!(result.is_err());
         let err = result.err().unwrap();
         assert!(err.contains("uri"), "error should mention 'uri': {err}");
+    }
+
+    // ── insert_vectors error propagation ──────────────────────────────
+
+    #[tokio::test]
+    async fn test_insert_vectors_empty_vectors_returns_error() {
+        let provider = PineconeVectorStoreProvider::new(
+            "test-key",
+            "https://test.pinecone.io",
+            Duration::from_secs(5),
+            reqwest::Client::new(),
+        );
+        let collection = CollectionId::new("test_collection");
+        let vectors: Vec<Embedding> = vec![];
+        let metadata: Vec<HashMap<String, Value>> = vec![];
+
+        let result = provider
+            .insert_vectors(&collection, &vectors, metadata)
+            .await;
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("empty"), "error should mention 'empty': {err}");
+    }
+
+    // ── get_vectors_by_ids error propagation ──────────────────────────
+
+    #[tokio::test]
+    async fn test_get_vectors_by_ids_empty_ids_returns_error() {
+        let provider = PineconeVectorStoreProvider::new(
+            "test-key",
+            "https://test.pinecone.io",
+            Duration::from_secs(5),
+            reqwest::Client::new(),
+        );
+        let collection = CollectionId::new("test_collection");
+        let ids: Vec<String> = vec![];
+
+        let result = provider.get_vectors_by_ids(&collection, &ids).await;
+        assert!(result.is_err());
+        let err = result.unwrap_err().to_string();
+        assert!(err.contains("empty"), "error should mention 'empty': {err}");
     }
 }
