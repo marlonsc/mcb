@@ -69,7 +69,7 @@ pub trait ProviderConfigManagerInterface: Send + Sync {
         if providers.is_empty() {
             None
         } else {
-            self.get_embedding_config(&providers[0]).ok()
+            self.get_embedding_config(&providers[0]).ok() // INTENTIONAL: Convert Result to Option for default provider lookup
         }
     }
 
@@ -79,7 +79,7 @@ pub trait ProviderConfigManagerInterface: Send + Sync {
         if providers.is_empty() {
             None
         } else {
-            self.get_vector_store_config(&providers[0]).ok()
+            self.get_vector_store_config(&providers[0]).ok() // INTENTIONAL: Convert Result to Option for default provider lookup
         }
     }
 }

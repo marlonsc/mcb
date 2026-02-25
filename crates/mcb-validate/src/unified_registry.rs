@@ -94,10 +94,7 @@ impl UnifiedRuleRegistry {
         let rust_registry = ValidatorRegistry::standard_for(&root);
 
         // Load embedded YAML rules
-        let embedded: Vec<(&str, &str)> = EmbeddedRules::all_yaml()
-            .into_iter()
-            .map(|(path, content)| (path, content))
-            .collect();
+        let embedded: Vec<(&str, &str)> = EmbeddedRules::all_yaml().into_iter().collect();
         let variables = build_substitution_variables(&root);
         let mut loader = YamlRuleLoader::from_embedded_with_variables(&embedded, Some(variables))?;
         let yaml_rules = loader.load_embedded_rules()?;
@@ -219,7 +216,7 @@ impl UnifiedRuleRegistry {
 
         // 2. Run YAML rules via HybridRuleEngine (synchronous wrapper)
         info!(yaml_rules = self.yaml_rule_count(), "Running YAML rules");
-        let yaml_violations = self.execute_yaml_rules_sync(config);
+        let yaml_violations = self.execute_yaml_rules_sync(config)?;
         info!(
             count = yaml_violations.len(),
             "YAML rules produced violations"
@@ -261,9 +258,10 @@ impl UnifiedRuleRegistry {
         }
 
         // YAML rules — match by category field
-        let yaml_violations = self.execute_yaml_rules_filtered_sync(config, |rule| {
-            rule.category.eq_ignore_ascii_case(category)
-        });
+        let yaml_violations =
+            self.execute_yaml_rules_filtered_sync(config, |rule| {
+                rule.category.eq_ignore_ascii_case(category)
+            })?;
         violations.extend(yaml_violations);
 
         Ok(violations)
@@ -309,10 +307,8 @@ impl UnifiedRuleRegistry {
             rule.filters
                 .as_ref()
                 .and_then(|f| f.languages.as_ref())
-                .map_or(true, |langs| {
-                    langs.iter().any(|l| l.eq_ignore_ascii_case(&lang_str))
-                })
-        });
+                .is_none_or(|langs| langs.iter().any(|l| l.eq_ignore_ascii_case(&lang_str)))
+        })?;
         violations.extend(yaml_violations);
 
         Ok(violations)
@@ -344,20 +340,28 @@ impl UnifiedRuleRegistry {
     ///
     /// Uses `tokio::runtime::Handle::current()` if inside a tokio context,
     /// otherwise creates a small blocking runtime.
-    fn execute_yaml_rules_sync(&self, config: &ValidationConfig) -> Vec<Box<dyn Violation>> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a tokio runtime could not be created when not inside one.
+    fn execute_yaml_rules_sync(&self, config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>> {
         self.execute_yaml_rules_filtered_sync(config, |_| true)
     }
 
     /// Execute YAML rules matching a predicate, synchronously.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a tokio runtime could not be created when not inside one.
     fn execute_yaml_rules_filtered_sync<F>(
         &self,
         config: &ValidationConfig,
         predicate: F,
-    ) -> Vec<Box<dyn Violation>>
+    ) -> Result<Vec<Box<dyn Violation>>>
     where
         F: Fn(&ValidatedRule) -> bool,
     {
-        let context = self.build_rule_context(config);
+        let context = Self::build_rule_context(config);
         let mut violations: Vec<Box<dyn Violation>> = Vec::new();
 
         for rule in &self.yaml_rules {
@@ -382,7 +386,7 @@ impl UnifiedRuleRegistry {
                 engine_type,
                 &rule.rule_definition,
                 &context,
-            ));
+            ))?;
 
             match result {
                 Ok(rule_result) => {
@@ -400,11 +404,11 @@ impl UnifiedRuleRegistry {
             }
         }
 
-        violations
+        Ok(violations)
     }
 
     /// Build a `RuleContext` from `ValidationConfig`.
-    fn build_rule_context(&self, config: &ValidationConfig) -> RuleContext {
+    fn build_rule_context(config: &ValidationConfig) -> RuleContext {
         use std::collections::HashMap;
         use std::sync::Arc;
 
@@ -420,213 +424,27 @@ impl UnifiedRuleRegistry {
     }
 
     /// Run an async future to completion, handling both tokio and non-tokio contexts.
-    fn block_on_async<F, T>(future: F) -> T
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a new tokio runtime could not be created when not inside one.
+    fn block_on_async<F, T>(future: F) -> Result<T>
     where
         F: std::future::Future<Output = T>,
     {
-        // Try to use existing tokio runtime handle
         if let Ok(handle) = tokio::runtime::Handle::try_current() {
-            // We're inside a tokio runtime — use block_in_place + block_on
-            tokio::task::block_in_place(|| handle.block_on(future))
+            Ok(tokio::task::block_in_place(|| handle.block_on(future)))
         } else {
-            // No runtime — create a minimal one
             let rt = tokio::runtime::Builder::new_current_thread()
                 .enable_all()
                 .build()
-                .expect("failed to create tokio runtime for YAML rule execution");
-            rt.block_on(future)
+                .map_err(|e| {
+                    crate::ValidationError::Config(format!(
+                        "failed to create tokio runtime for YAML rule execution: {e}"
+                    ))
+                })?;
+            Ok(rt.block_on(future))
         }
     }
 }
 
-// ---------------------------------------------------------------------------
-// Tests
-// ---------------------------------------------------------------------------
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    fn test_workspace_root() -> PathBuf {
-        // Navigate up from crate root to workspace root
-        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        manifest_dir
-            .parent() // crates/
-            .and_then(|p| p.parent()) // workspace root
-            .expect("could not find workspace root")
-            .to_path_buf()
-    }
-
-    #[test]
-    fn test_list_all_rules_discovers_both_systems() {
-        let root = test_workspace_root();
-        let registry = UnifiedRuleRegistry::new(&root).expect("failed to create registry");
-
-        let all_rules = registry.list_all_rules();
-
-        // Rust validators: 19 (18 standard + DeclarativeValidator)
-        let rust_count = all_rules
-            .iter()
-            .filter(|r| r.origin == RuleOrigin::Rust)
-            .count();
-        assert!(
-            rust_count >= 18,
-            "Expected at least 18 Rust validators, got {rust_count}"
-        );
-
-        // YAML rules: should have many enabled rules
-        let yaml_count = all_rules
-            .iter()
-            .filter(|r| r.origin == RuleOrigin::Yaml)
-            .count();
-        assert!(
-            yaml_count >= 30,
-            "Expected at least 30 YAML rules, got {yaml_count}"
-        );
-
-        // Total should be substantial
-        let total = all_rules.len();
-        assert!(total >= 48, "Expected at least 48 total rules, got {total}");
-
-        // Verify we have rules from both origins
-        assert!(
-            all_rules.iter().any(|r| r.origin == RuleOrigin::Rust),
-            "No Rust rules found"
-        );
-        assert!(
-            all_rules.iter().any(|r| r.origin == RuleOrigin::Yaml),
-            "No YAML rules found"
-        );
-    }
-
-    #[test]
-    fn test_rust_validator_count() {
-        let root = test_workspace_root();
-        let registry = UnifiedRuleRegistry::new(&root).expect("failed to create registry");
-
-        // standard_for registers 19 validators (18 standard + DeclarativeValidator)
-        assert!(
-            registry.rust_validator_count() >= 18,
-            "Expected at least 18 Rust validators, got {}",
-            registry.rust_validator_count()
-        );
-    }
-
-    #[test]
-    fn test_yaml_rule_count() {
-        let root = test_workspace_root();
-        let registry = UnifiedRuleRegistry::new(&root).expect("failed to create registry");
-
-        assert!(
-            registry.yaml_rule_count() >= 30,
-            "Expected at least 30 YAML rules, got {}",
-            registry.yaml_rule_count()
-        );
-    }
-
-    #[test]
-    fn test_total_rule_count() {
-        let root = test_workspace_root();
-        let registry = UnifiedRuleRegistry::new(&root).expect("failed to create registry");
-
-        let total = registry.total_rule_count();
-        assert!(total >= 48, "Expected at least 48 total rules, got {total}");
-        assert_eq!(
-            total,
-            registry.rust_validator_count() + registry.yaml_rule_count(),
-            "Total should equal Rust + YAML counts"
-        );
-    }
-
-    #[test]
-    fn test_rule_info_has_correct_origins() {
-        let root = test_workspace_root();
-        let registry = UnifiedRuleRegistry::new(&root).expect("failed to create registry");
-
-        let rules = registry.list_all_rules();
-
-        // Check a known Rust validator
-        let clean_arch = rules.iter().find(|r| r.id == "clean_architecture");
-        assert!(
-            clean_arch.is_some(),
-            "clean_architecture validator not found"
-        );
-        assert_eq!(clean_arch.unwrap().origin, RuleOrigin::Rust);
-
-        // Check that YAML rules have proper IDs (e.g. CA001, QUAL001, etc.)
-        let yaml_rules: Vec<&RuleInfo> = rules
-            .iter()
-            .filter(|r| r.origin == RuleOrigin::Yaml)
-            .collect();
-        assert!(
-            yaml_rules
-                .iter()
-                .any(|r| r.id.starts_with("CA") || r.id.starts_with("QUAL")),
-            "Expected YAML rules with CA or QUAL prefixes"
-        );
-    }
-
-    #[test]
-    fn test_execute_all_produces_violations_from_both_systems() {
-        let root = test_workspace_root();
-        let registry = UnifiedRuleRegistry::new(&root).expect("failed to create registry");
-        let config = ValidationConfig::new(&root);
-
-        // execute_all should not panic and should return a result
-        let result = registry.execute_all(&config);
-        assert!(result.is_ok(), "execute_all failed: {:?}", result.err());
-
-        // We expect at least some violations from the real workspace
-        let violations = result.unwrap();
-        // The workspace may or may not have violations — just verify it runs
-        // without error. In a real workspace, Rust validators typically find some.
-        info!(
-            total_violations = violations.len(),
-            "execute_all completed successfully"
-        );
-    }
-
-    #[test]
-    fn test_execute_by_category() {
-        let root = test_workspace_root();
-        let registry = UnifiedRuleRegistry::new(&root).expect("failed to create registry");
-        let config = ValidationConfig::new(&root);
-
-        // Execute only architecture-related rules
-        let result = registry.execute_by_category("architecture", &config);
-        assert!(
-            result.is_ok(),
-            "execute_by_category failed: {:?}",
-            result.err()
-        );
-    }
-
-    #[test]
-    fn test_execute_by_language() {
-        let root = test_workspace_root();
-        let registry = UnifiedRuleRegistry::new(&root).expect("failed to create registry");
-        let config = ValidationConfig::new(&root);
-
-        // Execute only Rust-language rules
-        let result = registry.execute_by_language(LanguageId::Rust, &config);
-        assert!(
-            result.is_ok(),
-            "execute_by_language failed: {:?}",
-            result.err()
-        );
-    }
-
-    #[test]
-    fn test_accessors() {
-        let root = test_workspace_root();
-        let registry = UnifiedRuleRegistry::new(&root).expect("failed to create registry");
-
-        // Verify accessors don't panic
-        let _rust = registry.rust_registry();
-        let _yaml = registry.yaml_rules();
-        let _engine = registry.hybrid_engine();
-
-        assert!(!registry.yaml_rules().is_empty());
-        assert!(!registry.rust_registry().validators().is_empty());
-    }
-}

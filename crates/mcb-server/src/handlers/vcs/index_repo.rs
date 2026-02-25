@@ -62,7 +62,11 @@ pub async fn index_repository(
             {
                 Ok(commits) => count += commits.len(),
                 Err(e) => {
-                    mcb_domain::warn!("vcs", "Failed to index commits", &format!("branch={branch}: {e}"));
+                    mcb_domain::warn!(
+                        "vcs",
+                        "Failed to index commits",
+                        &format!("branch={branch}: {e}")
+                    );
                 }
             }
         }

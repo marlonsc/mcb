@@ -144,10 +144,14 @@ fn cast_as_year_month(db: &DbConn, col: impl sea_orm::sea_query::IntoColumnRef) 
     let col_ref = col.into_column_ref();
     let func = match db.get_database_backend() {
         DatabaseBackend::MySql => Func::cust(sea_orm::sea_query::Alias::new("DATE_FORMAT"))
-            .arg(Expr::expr(Func::cust("FROM_UNIXTIME").arg(Expr::col(col_ref.clone()))))
+            .arg(Expr::expr(
+                Func::cust("FROM_UNIXTIME").arg(Expr::col(col_ref.clone())),
+            ))
             .arg("%Y-%m"),
         DatabaseBackend::Postgres => Func::cust(sea_orm::sea_query::Alias::new("TO_CHAR"))
-            .arg(Expr::expr(Func::cust("to_timestamp").arg(Expr::col(col_ref))))
+            .arg(Expr::expr(
+                Func::cust("to_timestamp").arg(Expr::col(col_ref)),
+            ))
             .arg("YYYY-MM"),
         // i64 Unix timestamps require the 'unixepoch' modifier for SQLite STRFTIME.
         DatabaseBackend::Sqlite | _ => Func::cust(sea_orm::sea_query::Alias::new("STRFTIME"))
@@ -162,10 +166,14 @@ fn cast_as_day(db: &DbConn, col: impl sea_orm::sea_query::IntoColumnRef) -> Expr
     let col_ref = col.into_column_ref();
     let func = match db.get_database_backend() {
         DatabaseBackend::MySql => Func::cust(sea_orm::sea_query::Alias::new("DATE_FORMAT"))
-            .arg(Expr::expr(Func::cust("FROM_UNIXTIME").arg(Expr::col(col_ref.clone()))))
+            .arg(Expr::expr(
+                Func::cust("FROM_UNIXTIME").arg(Expr::col(col_ref.clone())),
+            ))
             .arg("%Y-%m-%d"),
         DatabaseBackend::Postgres => Func::cust(sea_orm::sea_query::Alias::new("TO_CHAR"))
-            .arg(Expr::expr(Func::cust("to_timestamp").arg(Expr::col(col_ref))))
+            .arg(Expr::expr(
+                Func::cust("to_timestamp").arg(Expr::col(col_ref)),
+            ))
             .arg("YYYY-MM-DD"),
         // i64 Unix timestamps require the 'unixepoch' modifier for SQLite STRFTIME.
         DatabaseBackend::Sqlite | _ => Func::cust(sea_orm::sea_query::Alias::new("STRFTIME"))

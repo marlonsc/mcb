@@ -21,7 +21,7 @@ pub async fn create_test_project(
 ) -> Result<(), sea_orm::DbErr> {
     let now = chrono::Utc::now().timestamp();
 
-    db.execute(Statement::from_sql_and_values(
+    db.execute_raw(Statement::from_sql_and_values(
         db.get_database_backend(),
         "INSERT OR IGNORE INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
         [
@@ -35,7 +35,7 @@ pub async fn create_test_project(
     ))
     .await?;
 
-    db.execute(Statement::from_sql_and_values(
+    db.execute_raw(Statement::from_sql_and_values(
         db.get_database_backend(),
         "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
         [

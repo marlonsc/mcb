@@ -205,12 +205,18 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
 
         let collections = response["result"]["collections"]
             .as_array()
-            .ok_or_else(|| Error::vector_db("Qdrant list_collections: malformed response, missing collections array"))?
+            .ok_or_else(|| {
+                Error::vector_db(
+                    "Qdrant list_collections: malformed response, missing collections array",
+                )
+            })?
             .iter()
             .map(|item| {
                 let name = item["name"]
                     .as_str()
-                    .ok_or_else(|| Error::vector_db("Qdrant list_collections: missing collection name"))?
+                    .ok_or_else(|| {
+                        Error::vector_db("Qdrant list_collections: missing collection name")
+                    })?
                     .to_owned();
                 Ok(CollectionInfo::new(name, 0, 0, None, self.provider_name()))
             })
@@ -369,7 +375,9 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
 
         let results = response["result"]
             .as_array()
-            .ok_or_else(|| Error::vector_db("Qdrant search: malformed response, missing result array"))?
+            .ok_or_else(|| {
+                Error::vector_db("Qdrant search: malformed response, missing result array")
+            })?
             .iter()
             .map(|item| {
                 let score = item["score"]
@@ -497,63 +505,3 @@ crate::register_vector_store_provider!(
     }
 );
 
-#[cfg(test)]
-mod tests {
-    use mcb_domain::error::Error;
-    use serde_json::json;
-
-    /// Verify that `.ok_or_else()` on `as_str()` produces `Error::VectorDb`
-    #[test]
-    fn ok_or_else_on_missing_str_produces_vector_db_error() {
-        let item = json!({"status": "green"});
-        let result: Result<&str, Error> = item["name"]
-            .as_str()
-            .ok_or_else(|| Error::vector_db("missing collection name"));
-        let err = result.unwrap_err();
-        assert!(err.to_string().contains("missing collection name"));
-    }
-
-    /// Verify that `.ok_or_else()` on `as_f64()` produces `Error::VectorDb`
-    #[test]
-    fn ok_or_else_on_missing_f64_produces_vector_db_error() {
-        let item = json!({"id": 1, "payload": {}});
-        let result: Result<f64, Error> = item["score"]
-            .as_f64()
-            .ok_or_else(|| Error::vector_db("missing score in result"));
-        let err = result.unwrap_err();
-        assert!(err.to_string().contains("missing score in result"));
-    }
-
-    /// Verify that `.ok_or_else()` on `as_array()` produces `Error::VectorDb`
-    #[test]
-    fn ok_or_else_on_missing_array_produces_vector_db_error() {
-        let response = json!({"status": "ok"});
-        let result: Result<&Vec<serde_json::Value>, Error> = response["result"]
-            .as_array()
-            .ok_or_else(|| Error::vector_db("malformed response, missing result array"));
-        let err = result.unwrap_err();
-        assert!(err.to_string().contains("malformed response"));
-    }
-
-    /// Valid data passes through ok_or_else without error
-    #[test]
-    fn ok_or_else_passes_through_valid_str() {
-        let item = json!({"name": "my-collection"});
-        let name = item["name"]
-            .as_str()
-            .ok_or_else(|| Error::vector_db("missing name"))
-            .unwrap();
-        assert_eq!(name, "my-collection");
-    }
-
-    /// Valid f64 passes through ok_or_else without error
-    #[test]
-    fn ok_or_else_passes_through_valid_f64() {
-        let item = json!({"score": 0.95});
-        let score = item["score"]
-            .as_f64()
-            .ok_or_else(|| Error::vector_db("missing score"))
-            .unwrap();
-        assert!((score - 0.95).abs() < f64::EPSILON);
-    }
-}

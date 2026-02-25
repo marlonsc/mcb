@@ -92,10 +92,7 @@ impl KissValidator {
     /// Returns an error if file scanning or reading fails.
     pub fn validate_struct_fields(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let struct_pattern = match compile_regex(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{") {
-            Ok(regex) => regex,
-            Err(e) => return Err(e.into()),
-        };
+        let struct_pattern = compile_regex(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{")?;
 
         self.for_each_kiss_file(false, |path, content| {
             let lines: Vec<&str> = content.lines().collect();
@@ -142,12 +139,9 @@ impl KissValidator {
     /// Returns an error if file scanning or reading fails.
     pub fn validate_function_params(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let fn_pattern = match compile_regex(
+        let fn_pattern = compile_regex(
             r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*(?:<[^>]*>)?\s*\(([^)]*)\)",
-        ) {
-            Ok(regex) => regex,
-            Err(e) => return Err(e.into()),
-        };
+        )?;
 
         self.for_each_kiss_file(true, |path, content| {
             let lines: Vec<&str> = content.lines().collect();
@@ -193,15 +187,8 @@ impl KissValidator {
     /// Returns an error if file scanning or reading fails.
     pub fn validate_builder_complexity(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let builder_pattern =
-            match compile_regex(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*Builder)\s*") {
-                Ok(regex) => regex,
-                Err(e) => return Err(e.into()),
-            };
-        let option_pattern = match compile_regex("Option<") {
-            Ok(regex) => regex,
-            Err(e) => return Err(e.into()),
-        };
+        let builder_pattern = compile_regex(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*Builder)\s*")?;
+        let option_pattern = compile_regex("Option<")?;
 
         self.for_each_kiss_file(false, |path, content| {
             let lines: Vec<&str> = content.lines().collect();
@@ -237,10 +224,7 @@ impl KissValidator {
     /// Returns an error if file scanning or reading fails.
     pub fn validate_nesting_depth(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let control_flow_pattern = match compile_regex(r"\b(if|match|for|while|loop)\b") {
-            Ok(regex) => regex,
-            Err(e) => return Err(e.into()),
-        };
+        let control_flow_pattern = compile_regex(r"\b(if|match|for|while|loop)\b")?;
 
         self.for_each_kiss_file(false, |path, content| {
             let lines: Vec<&str> = content.lines().collect();
@@ -313,10 +297,7 @@ impl KissValidator {
     /// Returns an error if file scanning or reading fails.
     pub fn validate_function_length(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let fn_pattern = match compile_regex(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)") {
-            Ok(regex) => regex,
-            Err(e) => return Err(e.into()),
-        };
+        let fn_pattern = compile_regex(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)")?;
 
         self.for_each_kiss_file(true, |path, content| {
             let lines: Vec<&str> = content.lines().collect();

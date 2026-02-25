@@ -113,11 +113,10 @@ fn verify_api_key(hash: &str, candidate: &str) -> Result<bool> {
     }
 
     if hash.starts_with("$2a$") || hash.starts_with("$2b$") || hash.starts_with("$2y$") {
-        return bcrypt::verify(candidate, hash)
-            .map_err(|e| {
-                tracing::error!("bcrypt verification failed: {e}");
-                Error::InternalServerError
-            });
+        return bcrypt::verify(candidate, hash).map_err(|e| {
+            tracing::error!("bcrypt verification failed: {e}");
+            Error::InternalServerError
+        });
     }
 
     Ok(false)

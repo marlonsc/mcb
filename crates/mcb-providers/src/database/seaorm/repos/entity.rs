@@ -912,13 +912,19 @@ mod tests {
         assert_eq!(got.name, "main");
         assert!(got.is_default);
 
-        let list = repo.list_branches("org-001", "repo-001").await.expect("list");
+        let list = repo
+            .list_branches("org-001", "repo-001")
+            .await
+            .expect("list");
         assert_eq!(list.len(), 1);
 
         let mut updated = b.clone();
         updated.head_commit = "def456".into();
         repo.update_branch(&updated).await.expect("update");
-        let got2 = repo.get_branch("org-001", "br-001").await.expect("get after update");
+        let got2 = repo
+            .get_branch("org-001", "br-001")
+            .await
+            .expect("get after update");
         assert_eq!(got2.head_commit, "def456");
 
         repo.delete_branch("br-001").await.expect("delete");
@@ -1195,7 +1201,10 @@ mod tests {
         let mut updated = u.clone();
         updated.display_name = "Alice Updated".into();
         repo.update_user(&updated).await.expect("update");
-        let got2 = repo.get_user("org-001", "usr-001").await.expect("get after update");
+        let got2 = repo
+            .get_user("org-001", "usr-001")
+            .await
+            .expect("get after update");
         assert_eq!(got2.display_name, "Alice Updated");
 
         repo.delete_user("usr-001").await.expect("delete");

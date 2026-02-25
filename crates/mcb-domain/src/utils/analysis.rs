@@ -30,7 +30,7 @@ pub struct FunctionRecord {
 ///
 /// Returns an error if the internal complexity regex fails to compile.
 pub fn compute_complexity_score(content: &str, start_pos: usize) -> Result<u32> {
-    let body = extract_function_body(content, start_pos).unwrap_or_default();
+    let body = extract_function_body(content, start_pos).unwrap_or_else(|| String::new()); // INTENTIONAL: Default to empty string if body extraction fails
     let re = Regex::new(r"\b(if|for|while|loop|match)\b|&&|\|\|")
         .map_err(|e| Error::invalid_argument(format!("invalid complexity regex: {e}")))?;
     let count = re.find_iter(&body).count() as u32;

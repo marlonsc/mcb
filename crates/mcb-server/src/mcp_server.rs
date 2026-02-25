@@ -109,10 +109,8 @@ impl McpServer {
         vcs: &Arc<dyn VcsProvider>,
         execution_flow: Option<ExecutionFlow>,
     ) -> Self {
-        let runtime_defaults = futures::executor::block_on(RuntimeDefaults::discover(
-            vcs.as_ref(),
-            execution_flow,
-        ));
+        let runtime_defaults =
+            futures::executor::block_on(RuntimeDefaults::discover(vcs.as_ref(), execution_flow));
         let hook_processor = HookProcessor::new(Some(Arc::clone(&services.memory)));
         let vcs_entity_handler =
             Arc::new(VcsEntityHandler::new(Arc::clone(&services.entities.vcs)));

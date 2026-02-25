@@ -5,15 +5,20 @@ use tree_sitter::{Language, Parser};
 use crate::ast::{AstDecoder, AstQueryBuilder, QueryCondition};
 use crate::rules::yaml_loader::{AstSelector, ValidatedRule};
 
+/// A single match produced by the AST selector engine for a validated rule.
 #[derive(Debug, Clone)]
 pub struct AstSelectorMatch {
+    /// Path to the file where the match occurred.
     pub file_path: PathBuf,
+    /// One-based line number of the match.
     pub line: usize,
 }
 
+/// Engine that executes AST selectors (tree-sitter-based) against source files.
 pub struct AstSelectorEngine;
 
 impl AstSelectorEngine {
+    /// Runs the given rule's AST selectors against `file` and returns all matches.
     #[must_use]
     pub fn execute(rule: &ValidatedRule, file: &Path) -> Vec<AstSelectorMatch> {
         if rule.selectors.is_empty() {
@@ -90,7 +95,7 @@ impl AstSelectorEngine {
         let from_ext = file
             .extension()
             .and_then(|ext| ext.to_str())
-            .map(|ext| ext.to_ascii_lowercase());
+            .map(str::to_ascii_lowercase);
 
         match from_ext.as_deref() {
             Some("rs") => expected == "rust",

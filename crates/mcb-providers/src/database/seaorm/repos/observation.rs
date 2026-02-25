@@ -233,8 +233,12 @@ impl SeaOrmObservationRepository {
 #[async_trait]
 impl MemoryRepository for SeaOrmObservationRepository {
     async fn store_observation(&self, observation: &Observation) -> Result<()> {
-        self.ensure_org_and_project(DEFAULT_ORG_ID, &observation.project_id, observation.created_at)
-            .await?;
+        self.ensure_org_and_project(
+            DEFAULT_ORG_ID,
+            &observation.project_id,
+            observation.created_at,
+        )
+        .await?;
 
         let active: observation::ActiveModel = observation.clone().into();
 

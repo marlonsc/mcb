@@ -14,3 +14,4 @@ pub mod util_tests;
 pub mod validators;
 
 mod lib_tests;
+mod unified_registry_tests;

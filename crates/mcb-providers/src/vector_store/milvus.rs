@@ -458,10 +458,9 @@ impl MilvusVectorStoreProvider {
             .i_ds
             .as_ref()
             .ok_or_else(|| Error::vector_db("Milvus mutation result missing IDs field"))?;
-        let id_field = ids
-            .id_field
-            .as_ref()
-            .ok_or_else(|| Error::vector_db("Milvus mutation result has IDs but missing id_field"))?;
+        let id_field = ids.id_field.as_ref().ok_or_else(|| {
+            Error::vector_db("Milvus mutation result has IDs but missing id_field")
+        })?;
         match id_field {
             milvus::proto::schema::i_ds::IdField::IntId(int_ids) => Ok(int_ids
                 .data
@@ -478,11 +477,8 @@ impl MilvusVectorStoreProvider {
         let mut results = Vec::new();
         for search_result in search_results {
             for (index, id_value) in search_result.id.iter().enumerate() {
-                let distance_squared = search_result
-                    .score
-                    .get(index)
-                    .copied()
-                    .ok_or_else(|| {
+                let distance_squared =
+                    search_result.score.get(index).copied().ok_or_else(|| {
                         Error::vector_db(format!(
                             "Milvus search result missing score at index {index}"
                         ))
@@ -496,17 +492,9 @@ impl MilvusVectorStoreProvider {
 
                 results.push(SearchResult {
                     id: Self::value_to_id_string(Some(id_value.clone())),
-                    file_path: Self::extract_string_field(
-                        fields,
-                        VECTOR_FIELD_FILE_PATH,
-                        index,
-                    )?,
+                    file_path: Self::extract_string_field(fields, VECTOR_FIELD_FILE_PATH, index)?,
                     start_line,
-                    content: Self::extract_string_field(
-                        fields,
-                        VECTOR_FIELD_CONTENT,
-                        index,
-                    )?,
+                    content: Self::extract_string_field(fields, VECTOR_FIELD_CONTENT, index)?,
                     score: score as f64,
                     language: "unknown".to_owned(),
                 });
@@ -701,15 +689,9 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         for name in collection_names {
             let _collection_id = CollectionId::from_name(&name);
             // Get stats for each collection
-            let stats = self
-                .client
-                .get_collection_stats(&name)
-                .await
-                .map_err(|e| {
-                    Error::vector_db(format!(
-                        "Failed to get stats for collection '{name}': {e}"
-                    ))
-                })?;
+            let stats = self.client.get_collection_stats(&name).await.map_err(|e| {
+                Error::vector_db(format!("Failed to get stats for collection '{name}': {e}"))
+            })?;
             let vector_count = stats
                 .get("row_count")
                 .and_then(|value: &String| value.parse::<u64>().ok())
@@ -1044,7 +1026,7 @@ mod tests {
 
     // --- Error propagation tests for malformed Milvus responses ---
 
-    /// Helper: build a FieldColumn with string values
+    /// Helper: build a `FieldColumn` with string values
     fn make_string_column(name: &str, values: Vec<String>) -> FieldColumn {
         FieldColumn {
             name: name.to_owned(),
@@ -1056,7 +1038,7 @@ mod tests {
         }
     }
 
-    /// Helper: build a FieldColumn with long values
+    /// Helper: build a `FieldColumn` with long values
     fn make_long_column(name: &str, values: Vec<i64>) -> FieldColumn {
         FieldColumn {
             name: name.to_owned(),
@@ -1082,7 +1064,10 @@ mod tests {
 
     #[test]
     fn test_extract_string_field_out_of_bounds_returns_error() {
-        let fields = vec![make_string_column(VECTOR_FIELD_FILE_PATH, vec!["a.rs".to_owned()])];
+        let fields = vec![make_string_column(
+            VECTOR_FIELD_FILE_PATH,
+            vec!["a.rs".to_owned()],
+        )];
         let result =
             MilvusVectorStoreProvider::extract_string_field(&fields, VECTOR_FIELD_FILE_PATH, 99);
         assert!(result.is_err());
@@ -1133,10 +1118,7 @@ mod tests {
         }];
         // Metadata missing VECTOR_FIELD_FILE_PATH
         let mut meta = HashMap::new();
-        meta.insert(
-            VECTOR_FIELD_START_LINE.to_owned(),
-            serde_json::json!(10),
-        );
+        meta.insert(VECTOR_FIELD_START_LINE.to_owned(), serde_json::json!(10));
         meta.insert(
             VECTOR_FIELD_CONTENT.to_owned(),
             serde_json::json!("some content"),
@@ -1187,10 +1169,7 @@ mod tests {
             VECTOR_FIELD_FILE_PATH.to_owned(),
             serde_json::json!("src/main.rs"),
         );
-        meta.insert(
-            VECTOR_FIELD_START_LINE.to_owned(),
-            serde_json::json!(10),
-        );
+        meta.insert(VECTOR_FIELD_START_LINE.to_owned(), serde_json::json!(10));
         let result = MilvusVectorStoreProvider::prepare_insert_data(&vectors, &[meta], 3);
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();
@@ -1212,10 +1191,7 @@ mod tests {
             VECTOR_FIELD_FILE_PATH.to_owned(),
             serde_json::json!("src/main.rs"),
         );
-        meta.insert(
-            VECTOR_FIELD_START_LINE.to_owned(),
-            serde_json::json!(10),
-        );
+        meta.insert(VECTOR_FIELD_START_LINE.to_owned(), serde_json::json!(10));
         meta.insert(
             VECTOR_FIELD_CONTENT.to_owned(),
             serde_json::json!("fn main() {}"),
@@ -1231,10 +1207,8 @@ mod tests {
     #[test]
     fn test_convert_query_results_missing_fields_returns_error() {
         // Empty field columns — extract_string_field should fail
-        let fields: Vec<FieldColumn> = vec![make_string_column(
-            VECTOR_FIELD_ID,
-            vec!["1".to_owned()],
-        )];
+        let fields: Vec<FieldColumn> =
+            vec![make_string_column(VECTOR_FIELD_ID, vec!["1".to_owned()])];
         let result = MilvusVectorStoreProvider::convert_query_results(&fields, None);
         assert!(result.is_err());
         let err = result.unwrap_err().to_string();

@@ -776,7 +776,11 @@ fn validate_operation_mode_matrix(
     let allowed: &[ExecutionFlow] = if matches!(tool_name, "validate") {
         &[ExecutionFlow::StdioOnly, ExecutionFlow::ClientHybrid]
     } else {
-        &[ExecutionFlow::StdioOnly, ExecutionFlow::ClientHybrid, ExecutionFlow::ServerHybrid]
+        &[
+            ExecutionFlow::StdioOnly,
+            ExecutionFlow::ClientHybrid,
+            ExecutionFlow::ServerHybrid,
+        ]
     };
 
     if allowed.contains(&flow) {
@@ -786,7 +790,11 @@ fn validate_operation_mode_matrix(
             format!(
                 "Operation mode matrix violation for '{tool_name}': flow '{}' is not allowed. Allowed flows: {}",
                 flow,
-                allowed.iter().map(|f| f.as_str()).collect::<Vec<_>>().join(", ")
+                allowed
+                    .iter()
+                    .map(|f| f.as_str())
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ),
             None,
         ))

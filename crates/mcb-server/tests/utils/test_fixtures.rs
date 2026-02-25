@@ -11,10 +11,15 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
+use mcb_domain::entities::{
+    ApiKey, Organization, Team, TeamMember, TeamMemberRole, User, UserRole,
+};
 use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::ports::IndexingResult;
+use mcb_domain::utils::time::epoch_secs_i64;
 use mcb_domain::value_objects::Embedding;
+use mcb_domain::value_objects::TeamMemberId;
 use mcb_infrastructure::config::{AppConfig, ConfigLoader, DatabaseConfig};
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app, init_app_with_overrides};
 use mcb_infrastructure::di::modules::domain_services::DomainServicesFactory;
@@ -22,10 +27,6 @@ use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use tempfile::TempDir;
 use uuid::Uuid;
-use mcb_domain::entities::{Organization, User, UserRole, Team, TeamMember, TeamMemberRole, ApiKey};
-use mcb_domain::value_objects::TeamMemberId;
-use mcb_domain::utils::time::epoch_secs_i64;
-
 
 // -----------------------------------------------------------------------------
 // Common test fixture constants
@@ -600,125 +601,125 @@ mod tests {
         assert!(!TEST_ORG_ID.is_empty());
     }
 
-// ============================================================================
-// Test Fixture Builders — Org/User/ApiKey/Team/TeamMember
-// ============================================================================
+    // ============================================================================
+    // Test Fixture Builders — Org/User/ApiKey/Team/TeamMember
+    // ============================================================================
 
-/// Create a test organization with sensible defaults.
-///
-/// # Arguments
-/// * `id` - Organization identifier
-///
-/// # Returns
-/// A new `Organization` with default name, slug, and empty settings.
-pub fn test_organization(id: &str) -> Organization {
-    Organization {
-        id: id.to_string(),
-        name: format!("Test Org {}", id),
-        slug: format!("test-org-{}", id),
-        settings_json: "{}".to_string(),
-        created_at: epoch_secs_i64().unwrap_or(0),
-        updated_at: epoch_secs_i64().unwrap_or(0),
+    /// Create a test organization with sensible defaults.
+    ///
+    /// # Arguments
+    /// * `id` - Organization identifier
+    ///
+    /// # Returns
+    /// A new `Organization` with default name, slug, and empty settings.
+    pub fn test_organization(id: &str) -> Organization {
+        Organization {
+            id: id.to_string(),
+            name: format!("Test Org {}", id),
+            slug: format!("test-org-{}", id),
+            settings_json: "{}".to_string(),
+            created_at: epoch_secs_i64().unwrap_or(0),
+            updated_at: epoch_secs_i64().unwrap_or(0),
+        }
     }
-}
 
-/// Create a test user with Member role.
-///
-/// # Arguments
-/// * `org_id` - Organization identifier
-/// * `email` - User email address
-///
-/// # Returns
-/// A new `User` with role=Member and default display name.
-pub fn test_user(org_id: &str, email: &str) -> User {
-    User {
-        id: Uuid::new_v4().to_string(),
-        org_id: org_id.to_string(),
-        email: email.to_string(),
-        display_name: email.split('@').next().unwrap_or("Test User").to_string(),
-        role: UserRole::Member,
-        api_key_hash: None,
-        created_at: epoch_secs_i64().unwrap_or(0),
-        updated_at: epoch_secs_i64().unwrap_or(0),
+    /// Create a test user with Member role.
+    ///
+    /// # Arguments
+    /// * `org_id` - Organization identifier
+    /// * `email` - User email address
+    ///
+    /// # Returns
+    /// A new `User` with role=Member and default display name.
+    pub fn test_user(org_id: &str, email: &str) -> User {
+        User {
+            id: Uuid::new_v4().to_string(),
+            org_id: org_id.to_string(),
+            email: email.to_string(),
+            display_name: email.split('@').next().unwrap_or("Test User").to_string(),
+            role: UserRole::Member,
+            api_key_hash: None,
+            created_at: epoch_secs_i64().unwrap_or(0),
+            updated_at: epoch_secs_i64().unwrap_or(0),
+        }
     }
-}
 
-/// Create a test user with Admin role.
-///
-/// # Arguments
-/// * `org_id` - Organization identifier
-/// * `email` - User email address
-///
-/// # Returns
-/// A new `User` with role=Admin and default display name.
-pub fn test_admin_user(org_id: &str, email: &str) -> User {
-    User {
-        id: Uuid::new_v4().to_string(),
-        org_id: org_id.to_string(),
-        email: email.to_string(),
-        display_name: email.split('@').next().unwrap_or("Test Admin").to_string(),
-        role: UserRole::Admin,
-        api_key_hash: None,
-        created_at: epoch_secs_i64().unwrap_or(0),
-        updated_at: epoch_secs_i64().unwrap_or(0),
+    /// Create a test user with Admin role.
+    ///
+    /// # Arguments
+    /// * `org_id` - Organization identifier
+    /// * `email` - User email address
+    ///
+    /// # Returns
+    /// A new `User` with role=Admin and default display name.
+    pub fn test_admin_user(org_id: &str, email: &str) -> User {
+        User {
+            id: Uuid::new_v4().to_string(),
+            org_id: org_id.to_string(),
+            email: email.to_string(),
+            display_name: email.split('@').next().unwrap_or("Test Admin").to_string(),
+            role: UserRole::Admin,
+            api_key_hash: None,
+            created_at: epoch_secs_i64().unwrap_or(0),
+            updated_at: epoch_secs_i64().unwrap_or(0),
+        }
     }
-}
 
-/// Create a test team.
-///
-/// # Arguments
-/// * `org_id` - Organization identifier
-/// * `name` - Team name
-///
-/// # Returns
-/// A new `Team` with unique ID and current timestamp.
-pub fn test_team(org_id: &str, name: &str) -> Team {
-    Team {
-        id: Uuid::new_v4().to_string(),
-        org_id: org_id.to_string(),
-        name: name.to_string(),
-        created_at: epoch_secs_i64().unwrap_or(0),
+    /// Create a test team.
+    ///
+    /// # Arguments
+    /// * `org_id` - Organization identifier
+    /// * `name` - Team name
+    ///
+    /// # Returns
+    /// A new `Team` with unique ID and current timestamp.
+    pub fn test_team(org_id: &str, name: &str) -> Team {
+        Team {
+            id: Uuid::new_v4().to_string(),
+            org_id: org_id.to_string(),
+            name: name.to_string(),
+            created_at: epoch_secs_i64().unwrap_or(0),
+        }
     }
-}
 
-/// Create a test team member.
-///
-/// # Arguments
-/// * `team_id` - Team identifier
-/// * `user_id` - User identifier
-///
-/// # Returns
-/// A new `TeamMember` with role=Member and current timestamp.
-pub fn test_team_member(team_id: &str, user_id: &str) -> TeamMember {
-    TeamMember {
-        id: TeamMemberId::from_string(&format!("{}:{}", team_id, user_id)),
-        team_id: team_id.to_string(),
-        user_id: user_id.to_string(),
-        role: TeamMemberRole::Member,
-        joined_at: epoch_secs_i64().unwrap_or(0),
+    /// Create a test team member.
+    ///
+    /// # Arguments
+    /// * `team_id` - Team identifier
+    /// * `user_id` - User identifier
+    ///
+    /// # Returns
+    /// A new `TeamMember` with role=Member and current timestamp.
+    pub fn test_team_member(team_id: &str, user_id: &str) -> TeamMember {
+        TeamMember {
+            id: TeamMemberId::from_string(&format!("{}:{}", team_id, user_id)),
+            team_id: team_id.to_string(),
+            user_id: user_id.to_string(),
+            role: TeamMemberRole::Member,
+            joined_at: epoch_secs_i64().unwrap_or(0),
+        }
     }
-}
 
-/// Create a test API key.
-///
-/// # Arguments
-/// * `user_id` - User identifier
-/// * `org_id` - Organization identifier
-/// * `name` - API key name
-///
-/// # Returns
-/// A new `ApiKey` with unique ID, hashed key, and current timestamp.
-pub fn test_api_key(user_id: &str, org_id: &str, name: &str) -> ApiKey {
-    ApiKey {
-        id: Uuid::new_v4().to_string(),
-        user_id: user_id.to_string(),
-        org_id: org_id.to_string(),
-        name: name.to_string(),
-        key_hash: format!("hash_{}", Uuid::new_v4()),
-        scopes_json: "[\"read\", \"write\"]".to_string(),
-        expires_at: None,
-        revoked_at: None,
-        created_at: epoch_secs_i64().unwrap_or(0),
+    /// Create a test API key.
+    ///
+    /// # Arguments
+    /// * `user_id` - User identifier
+    /// * `org_id` - Organization identifier
+    /// * `name` - API key name
+    ///
+    /// # Returns
+    /// A new `ApiKey` with unique ID, hashed key, and current timestamp.
+    pub fn test_api_key(user_id: &str, org_id: &str, name: &str) -> ApiKey {
+        ApiKey {
+            id: Uuid::new_v4().to_string(),
+            user_id: user_id.to_string(),
+            org_id: org_id.to_string(),
+            name: name.to_string(),
+            key_hash: format!("hash_{}", Uuid::new_v4()),
+            scopes_json: "[\"read\", \"write\"]".to_string(),
+            expires_at: None,
+            revoked_at: None,
+            created_at: epoch_secs_i64().unwrap_or(0),
+        }
     }
-}
 }

@@ -414,8 +414,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
             .map(|(id, data)| {
                 let metadata = data.get("metadata").ok_or_else(|| {
                     Error::vector_db(format!(
-                        "Invalid Pinecone vector '{}': missing 'metadata' field",
-                        id
+                        "Invalid Pinecone vector '{id}': missing 'metadata' field"
                     ))
                 })?;
                 Ok(search_result_from_json_metadata(id.clone(), metadata, 1.0))
