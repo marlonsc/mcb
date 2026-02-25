@@ -73,7 +73,8 @@ pub use repositories::{
     IndexStats, IssueCommentRegistry, IssueEntityRepository, IssueLabelAssignmentManager,
     IssueLabelRegistry, IssueRegistry, MemoryRepository, OrgEntityRepository, OrgRegistry,
     PlanEntityRepository, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry, ProjectRepository,
-    TeamMemberManager, TeamRegistry, UserRegistry, VcsEntityRepository,
+    TeamMemberManager, TeamRegistry, TransitionRepository, UserRegistry, VcsEntityRepository,
+    WorkflowSessionRepository,
 };
 
 // --- Services ---

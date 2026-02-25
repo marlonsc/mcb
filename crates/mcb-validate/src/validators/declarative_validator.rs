@@ -9,6 +9,7 @@ use regex::Regex;
 
 use crate::Result;
 use crate::ValidationConfig;
+use crate::ast::{AstSelectorEngine, TreeSitterQueryExecutor};
 use crate::config::FileConfig;
 use crate::embedded_rules::EmbeddedRules;
 use crate::filters::LanguageId;
@@ -233,6 +234,55 @@ impl DeclarativeValidator {
         violations
     }
 
+    fn validate_ast_selector_rules(
+        &self,
+        rules: &[ValidatedRule],
+        files: &[PathBuf],
+    ) -> crate::Result<Vec<Box<dyn Violation>>> {
+        let ast_rules: Vec<&ValidatedRule> = rules
+            .iter()
+            .filter(|r| r.enabled && (!r.selectors.is_empty() || r.ast_query.is_some()))
+            .collect();
+
+        if ast_rules.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let filter_executor = RuleFilterExecutor::new(self.workspace_root.clone());
+        let workspace_deps = match filter_executor.parse_workspace_dependencies() {
+            Ok(deps) => deps,
+            Err(e) => {
+                mcb_domain::warn!(
+                    "validate",
+                    "Failed to parse workspace dependencies for AST selector rules",
+                    &e.to_string()
+                );
+                return Ok(Vec::new());
+            }
+        };
+
+        let mut violations: Vec<Box<dyn Violation>> = Vec::new();
+        for rule in &ast_rules {
+            for file in files {
+                if !Self::should_execute_on_file(&filter_executor, &workspace_deps, rule, file) {
+                    continue;
+                }
+
+                let selector_matches = AstSelectorEngine::execute(rule, file);
+                violations.extend(selector_matches.into_iter().map(|matched| {
+                    Self::build_pattern_match_violation(rule, matched.file_path, matched.line)
+                }));
+
+                let query_matches = TreeSitterQueryExecutor::execute(rule, file)?;
+                violations.extend(query_matches.into_iter().map(|matched| {
+                    Self::build_pattern_match_violation(rule, matched.file_path, matched.line)
+                }));
+            }
+        }
+
+        Ok(violations)
+    }
+
     fn is_regex_rule(rule: &ValidatedRule) -> bool {
         let uses_regex_engine = rule.lint_select.is_empty()
             && rule.metrics.is_none()
@@ -369,7 +419,6 @@ impl DeclarativeValidator {
             category: parse_category(&rule.category),
         })
     }
-
 }
 
 impl Validator for DeclarativeValidator {
@@ -392,6 +441,7 @@ impl Validator for DeclarativeValidator {
         let mut violations = Vec::new();
         violations.extend(Self::validate_metrics_rules(&rules, &files));
         violations.extend(Self::validate_lint_select_rules(&rules, &files));
+        violations.extend(self.validate_ast_selector_rules(&rules, &files)?);
         violations.extend(self.validate_regex_rules(&rules, &files));
         violations.extend(validate_path_rules(&self.workspace_root, &rules, &files));
         Ok(violations)

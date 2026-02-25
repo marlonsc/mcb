@@ -1,3 +1,4 @@
+use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
 use mcb_server::handlers::MemoryHandler;
 use rmcp::handler::server::wrapper::Parameters;
@@ -163,7 +164,7 @@ async fn test_store_session_missing_data_returns_invalid_params() {
         data: None,
         ids: None,
         repo_id: None,
-        session_id: Some(TEST_SESSION_ID.to_owned()),
+        session_id: Some(SessionId::from_name(TEST_SESSION_ID)),
         parent_session_id: None,
         tags: None,
         query: None,

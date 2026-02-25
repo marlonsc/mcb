@@ -16,6 +16,8 @@
 pub mod core;
 pub mod decoder;
 pub mod query;
+pub mod selector_engine;
+pub mod tree_sitter_query_executor;
 pub mod types;
 pub mod unwrap_detector;
 
@@ -24,6 +26,8 @@ pub use core::{AstNode, AstParseResult, Position, Span};
 
 pub use decoder::AstDecoder;
 pub use query::{AstQuery, AstQueryBuilder, AstQueryPatterns, QueryCondition};
+pub use selector_engine::{AstSelectorEngine, AstSelectorMatch};
+pub use tree_sitter_query_executor::{TreeSitterQueryExecutor, TreeSitterQueryMatch};
 // Re-export RCA types for direct usage (NO wrappers)
 pub use rust_code_analysis::{
     Callback, LANG, Node, ParserTrait, Search, action, find, guess_language,

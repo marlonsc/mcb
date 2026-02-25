@@ -12,6 +12,7 @@ pub mod org;
 pub mod plan;
 pub mod project;
 pub mod vcs;
+pub mod workflow;
 
 pub use agent::{
     AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
@@ -30,3 +31,4 @@ pub use org::{
 pub use plan::{PlanEntityRepository, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry};
 pub use project::ProjectRepository;
 pub use vcs::VcsEntityRepository;
+pub use workflow::{TransitionRepository, WorkflowSessionRepository};
