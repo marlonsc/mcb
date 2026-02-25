@@ -275,8 +275,8 @@ criterion = "0.8.1"
 linkme = "0.3"
 
 # Development/testing
-tempfile = "3.25"
-serial_test = "3.2"
+tempfile = "3.26"
+serial_test = "3.4"
 rstest = "0.26"
 mockall = "0.14"
 insta = { version = "1.41", features = ["json", "yaml", "redactions"] }
