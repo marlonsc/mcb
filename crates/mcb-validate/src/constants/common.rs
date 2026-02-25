@@ -94,7 +94,12 @@ pub const USE_PREFIX: &str = "use ";
 pub const ASYNC_FN_PREFIX: &str = "async fn ";
 
 /// All function declaration line prefixes (fn, pub fn, async fn, pub async fn).
-pub const FN_PREFIXES: &[&str] = &[FN_PREFIX, PUB_FN_PREFIX, ASYNC_FN_PREFIX, PUB_ASYNC_FN_PREFIX];
+pub const FN_PREFIXES: &[&str] = &[
+    FN_PREFIX,
+    PUB_FN_PREFIX,
+    ASYNC_FN_PREFIX,
+    PUB_ASYNC_FN_PREFIX,
+];
 
 /// Rust `mod ` keyword prefix.
 pub const MOD_PREFIX: &str = "mod ";

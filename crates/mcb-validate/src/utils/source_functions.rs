@@ -4,8 +4,8 @@
 use regex::Regex;
 
 use crate::constants::common::{
-    ATTRIBUTE_PREFIX, COMMENT_PREFIX, CONTROL_FLOW_CONTAINS_TOKENS, CONTROL_FLOW_STARTS_WITH_TOKENS,
-    FN_PREFIX,
+    ATTRIBUTE_PREFIX, COMMENT_PREFIX, CONTROL_FLOW_CONTAINS_TOKENS,
+    CONTROL_FLOW_STARTS_WITH_TOKENS, FN_PREFIX,
 };
 
 use super::FunctionInfo;
@@ -146,7 +146,9 @@ fn is_structural_line(line: &str) -> bool {
 fn has_control_flow(body: &[String]) -> bool {
     body.iter().any(|line| {
         line.contains("else {")
-            || CONTROL_FLOW_CONTAINS_TOKENS.iter().any(|token| line.contains(token))
+            || CONTROL_FLOW_CONTAINS_TOKENS
+                .iter()
+                .any(|token| line.contains(token))
             || CONTROL_FLOW_STARTS_WITH_TOKENS
                 .iter()
                 .any(|token| line.starts_with(token))

@@ -216,12 +216,13 @@ pub async fn create_mcp_server(
 
     // ── Domain-level services ───────────────────────────────────────────
     let vcs_provider = mcb_infrastructure::di::vcs::default_vcs_provider();
-    let detect_fn: mcb_infrastructure::project::DetectAllFn = std::sync::Arc::new(|path: &std::path::Path| {
-        let path = path.to_path_buf();
-        Box::pin(async move {
-            mcb_providers::project_detection::detect_all_projects(&path).await
-        })
-    });
+    let detect_fn: mcb_infrastructure::project::DetectAllFn =
+        std::sync::Arc::new(|path: &std::path::Path| {
+            let path = path.to_path_buf();
+            Box::pin(
+                async move { mcb_providers::project_detection::detect_all_projects(&path).await },
+            )
+        });
     let project_service: Arc<dyn ProjectDetectorService> =
         Arc::new(mcb_infrastructure::project::ProjectService::new(detect_fn));
     let crypto_service = create_crypto_service(&config)?;

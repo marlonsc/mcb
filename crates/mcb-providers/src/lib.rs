@@ -37,13 +37,8 @@
 // Allow unused macro imports while provider implementations are being migrated
 #![allow(unused_imports)]
 
-// Re-export mcb-domain types commonly used with providers
-pub use mcb_domain::error::{Error, Result};
-pub use mcb_domain::ports::CryptoProvider;
-pub use mcb_domain::ports::{
-    CacheProvider, ComplexityAnalyzer, DeadCodeDetector, EmbeddingProvider, HybridSearchProvider,
-    LanguageChunkingProvider, TdgScorer, VcsProvider, VectorStoreProvider,
-};
+mod exports;
+pub use exports::*;
 
 /// Centralized macros for provider implementations (embedding, language, vector_store).
 #[macro_use]
@@ -80,14 +75,13 @@ pub mod language;
 /// Provides BM25 text ranking algorithm and hybrid score fusion.
 pub mod hybrid_search;
 
-// Re-export hybrid search providers
-pub use hybrid_search::HybridSearchEngine;
+// Re-export hybrid search providers (via exports.rs at crate root)
 
 /// Database providers — `SeaORM` repositories for structured persistence.
 /// Database-agnostic (`SQLite` + `PostgreSQL` via connection string).
 pub mod database;
 
-pub use database::migration;
+// database::migration re-exported at crate root via exports.rs
 
 /// Project type detection providers
 pub mod project_detection;

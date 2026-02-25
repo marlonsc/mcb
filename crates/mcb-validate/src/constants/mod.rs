@@ -46,6 +46,33 @@ pub mod validators;
 /// Linter integration (Clippy/Cargo) constants.
 pub mod linters;
 
+/// Quality validator constants (unwrap/panic detection).
+pub mod quality;
+
+/// SOLID validator constants.
+pub mod solid;
+
+/// Organization validator constants (magic numbers, domain purity, layer violations).
+pub mod organization;
+
+/// KISS validator constants.
+pub mod kiss;
+
+/// Refactoring validator constants.
+pub mod refactoring;
+
+/// Implementation validator constants.
+pub mod implementation;
+
+/// Documentation validator constants.
+pub mod documentation;
+
+/// Async patterns validator constants.
+pub mod async_patterns;
+
+/// Performance validator constants.
+pub mod performance;
+
 // ============================================================================
 // PMAT Integration (top-level, no sub-module needed)
 // ============================================================================

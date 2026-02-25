@@ -13,9 +13,9 @@
 //! - **Monorepo Handling**: Scanning nested projects within a workspace.
 
 use std::fmt;
+use std::future::Future;
 use std::path::Path;
 use std::pin::Pin;
-use std::future::Future;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -26,9 +26,8 @@ use mcb_domain::ports::ProjectDetectorService;
 ///
 /// Accepts a path and returns detected project types. The concrete implementation
 /// is provided by `mcb-providers` via the DI layer (CA-compliant).
-pub type DetectAllFn = Arc<
-    dyn Fn(&Path) -> Pin<Box<dyn Future<Output = Vec<ProjectType>> + Send + '_>> + Send + Sync,
->;
+pub type DetectAllFn =
+    Arc<dyn Fn(&Path) -> Pin<Box<dyn Future<Output = Vec<ProjectType>> + Send + '_>> + Send + Sync>;
 
 /// Infrastructure service for project detection and scanning.
 ///

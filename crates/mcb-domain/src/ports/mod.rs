@@ -38,12 +38,12 @@ mod services;
 
 // --- Admin ---
 pub use admin::{
-    CacheAdminInterface, DashboardQueryPort, EmbeddingAdminInterface, IndexingOperation,
-    IndexingOperationStatus, IndexingOperationsInterface, LanguageAdminInterface, ProviderInfo,
-    ValidationOperation, ValidationOperationResult, ValidationOperationsInterface, ValidationStatus,
-    VectorStoreAdminInterface,
+    AgentSessionStats, CacheAdminInterface, DailyCount, DashboardQueryPort,
+    EmbeddingAdminInterface, IndexingOperation, IndexingOperationStatus,
+    IndexingOperationsInterface, LanguageAdminInterface, MonthlyCount, ProviderInfo, ToolCallCount,
+    ValidationOperation, ValidationOperationResult, ValidationOperationsInterface,
+    ValidationStatus, VectorStoreAdminInterface,
 };
-
 
 // --- Infrastructure ---
 pub use infrastructure::{

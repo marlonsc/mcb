@@ -43,13 +43,13 @@ pub const RUSTY_DEFAULT_FIELD: &str = "value";
 /// Default operator for condition checks.
 pub const RUSTY_DEFAULT_OPERATOR: &str = "equals";
 
-/// Cargo dependency condition: not_exists.
+/// Cargo dependency condition: `not_exists`.
 pub const RUSTY_DEFAULT_CARGO_CONDITION: &str = "not_exists";
 
-/// File size rule condition: exceeds_limit.
+/// File size rule condition: `exceeds_limit`.
 pub const RUSTY_DEFAULT_FILE_SIZE_CONDITION: &str = "exceeds_limit";
 
-/// Default file extension pattern for file_size rules.
+/// Default file extension pattern for `file_size` rules.
 pub const RUSTY_DEFAULT_FILE_SIZE_PATTERN: &str = ".rs";
 
 /// Default label for custom actions.
@@ -70,16 +70,16 @@ pub const RUSTY_AST_PATTERN_VIOLATION_ID: &str = "AST_PATTERN";
 /// Path fragment for target directory (skip in scans).
 pub const RUSTY_TARGET_DIR_FRAGMENT: &str = "/target/";
 
-/// Rule type: cargo_dependencies.
+/// Rule type: `cargo_dependencies`.
 pub const RUSTY_RULE_TYPE_CARGO_DEPENDENCIES: &str = "cargo_dependencies";
 
-/// Rule type: file_size.
+/// Rule type: `file_size`.
 pub const RUSTY_RULE_TYPE_FILE_SIZE: &str = "file_size";
 
-/// Rule type: ast_pattern.
+/// Rule type: `ast_pattern`.
 pub const RUSTY_RULE_TYPE_AST_PATTERN: &str = "ast_pattern";
 
-/// Condition: not_exists.
+/// Condition: `not_exists`.
 pub const RUSTY_CONDITION_NOT_EXISTS: &str = "not_exists";
 
 /// Condition: exists.
