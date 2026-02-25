@@ -4,6 +4,9 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
+
+const FALLBACK_AGENT_MODEL: &str = "unknown";
+const FALLBACK_AGENT_PROMPT: &str = "auto-created for activity logging";
 use mcb_domain::entities::agent::{
     AgentSession, AgentSessionStatus, AgentType, Checkpoint, Delegation, ToolCall,
 };
@@ -109,13 +112,13 @@ impl SeaOrmAgentRepository {
             id: session_id.to_owned(),
             session_summary_id: format!("auto-summary-{session_id}"),
             agent_type: AgentType::Sisyphus,
-            model: "unknown".to_owned(),
+            model: FALLBACK_AGENT_MODEL.to_owned(),
             parent_session_id: None,
             started_at: timestamp,
             ended_at: None,
             duration_ms: None,
             status: AgentSessionStatus::Active,
-            prompt_summary: Some("auto-created for activity logging".to_owned()),
+            prompt_summary: Some(FALLBACK_AGENT_PROMPT.to_owned()),
             result_summary: None,
             token_count: None,
             tool_calls_count: None,
