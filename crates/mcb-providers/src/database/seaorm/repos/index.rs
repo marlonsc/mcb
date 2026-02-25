@@ -342,43 +342,50 @@ impl FileHashRepository for SeaOrmIndexRepository {
     }
 
     async fn upsert_hash(&self, collection: &str, file_path: &str, hash: &str) -> Result<()> {
+        use sea_orm::TransactionTrait;
+
         let now = Self::now()?;
+        let project_id = self.project_id.clone();
+        let collection = collection.to_owned();
+        let file_path = file_path.to_owned();
+        let hash = hash.to_owned();
 
-        let existing = file_hash::Entity::find()
-            .filter(file_hash::Column::ProjectId.eq(&self.project_id))
-            .filter(file_hash::Column::Collection.eq(collection))
-            .filter(file_hash::Column::FilePath.eq(file_path))
-            .one(self.db.as_ref())
+        self.db
+            .as_ref()
+            .transaction::<_, (), sea_orm::DbErr>(|txn| {
+                Box::pin(async move {
+                    let existing = file_hash::Entity::find()
+                        .filter(file_hash::Column::ProjectId.eq(&project_id))
+                        .filter(file_hash::Column::Collection.eq(&collection))
+                        .filter(file_hash::Column::FilePath.eq(&file_path))
+                        .one(txn)
+                        .await?;
+
+                    if let Some(model) = existing {
+                        let mut active: file_hash::ActiveModel = model.into();
+                        active.content_hash = Set(hash);
+                        active.indexed_at = Set(now);
+                        active.deleted_at = Set(None);
+                        active.update(txn).await?;
+                    } else {
+                        let active = file_hash::ActiveModel {
+                            id: sea_orm::ActiveValue::NotSet,
+                            project_id: Set(project_id),
+                            collection: Set(collection),
+                            file_path: Set(file_path),
+                            content_hash: Set(hash),
+                            indexed_at: Set(now),
+                            deleted_at: Set(None),
+                            origin_context: Set(None),
+                        };
+                        file_hash::Entity::insert(active).exec(txn).await?;
+                    }
+
+                    Ok(())
+                })
+            })
             .await
-            .map_err(|e| Self::db_err("find file hash for upsert", e))?;
-
-        if let Some(model) = existing {
-            let mut active: file_hash::ActiveModel = model.into();
-            active.content_hash = Set(hash.to_owned());
-            active.indexed_at = Set(now);
-            active.deleted_at = Set(None);
-            active
-                .update(self.db.as_ref())
-                .await
-                .map_err(|e| Self::db_err("update file hash", e))?;
-        } else {
-            let active = file_hash::ActiveModel {
-                id: sea_orm::ActiveValue::NotSet,
-                project_id: Set(self.project_id.clone()),
-                collection: Set(collection.to_owned()),
-                file_path: Set(file_path.to_owned()),
-                content_hash: Set(hash.to_owned()),
-                indexed_at: Set(now),
-                deleted_at: Set(None),
-                origin_context: Set(None),
-            };
-            file_hash::Entity::insert(active)
-                .exec(self.db.as_ref())
-                .await
-                .map_err(|e| Self::db_err("insert file hash", e))?;
-        }
-
-        Ok(())
+            .map_err(|e| Self::db_err("upsert file hash", e))
     }
 
     async fn mark_deleted(&self, collection: &str, file_path: &str) -> Result<()> {
@@ -461,13 +468,27 @@ impl FileHashRepository for SeaOrmIndexRepository {
     }
 
     fn compute_hash(&self, path: &std::path::Path) -> Result<String> {
+        use std::io::{BufReader, Read};
+
         use sha2::{Digest, Sha256};
 
-        let contents = std::fs::read(path).map_err(|e| Error::Database {
-            message: format!("read file for hashing: {}", path.display()),
+        let file = std::fs::File::open(path).map_err(|e| Error::Database {
+            message: format!("open file for hashing: {}", path.display()),
             source: Some(Box::new(e)),
         })?;
-        let hash = Sha256::digest(&contents);
-        Ok(format!("{hash:x}"))
+        let mut reader = BufReader::new(file);
+        let mut hasher = Sha256::new();
+        let mut buf = [0u8; 8192];
+        loop {
+            let n = reader.read(&mut buf).map_err(|e| Error::Database {
+                message: format!("read file for hashing: {}", path.display()),
+                source: Some(Box::new(e)),
+            })?;
+            if n == 0 {
+                break;
+            }
+            hasher.update(&buf[..n]);
+        }
+        Ok(format!("{:x}", hasher.finalize()))
     }
 }

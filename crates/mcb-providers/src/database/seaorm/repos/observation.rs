@@ -40,9 +40,14 @@ impl SeaOrmObservationRepository {
         }
     }
 
-    async fn ensure_org_and_project(&self, project_id: &str, timestamp: i64) -> Result<()> {
+    async fn ensure_org_and_project(
+        &self,
+        org_id: &str,
+        project_id: &str,
+        timestamp: i64,
+    ) -> Result<()> {
         let org = organization::ActiveModel {
-            id: Set(DEFAULT_ORG_ID.to_owned()),
+            id: Set(org_id.to_owned()),
             name: Set(DEFAULT_ORG_NAME.to_owned()),
             slug: Set(DEFAULT_ORG_NAME.to_owned()),
             settings_json: Set("{}".to_owned()),
@@ -228,7 +233,7 @@ impl SeaOrmObservationRepository {
 #[async_trait]
 impl MemoryRepository for SeaOrmObservationRepository {
     async fn store_observation(&self, observation: &Observation) -> Result<()> {
-        self.ensure_org_and_project(&observation.project_id, observation.created_at)
+        self.ensure_org_and_project(DEFAULT_ORG_ID, &observation.project_id, observation.created_at)
             .await?;
 
         let active: observation::ActiveModel = observation.clone().into();
@@ -356,11 +361,10 @@ impl MemoryRepository for SeaOrmObservationRepository {
     }
 
     async fn store_session_summary(&self, summary: &SessionSummary) -> Result<()> {
-        self.ensure_org_and_project(&summary.project_id, summary.created_at)
+        self.ensure_org_and_project(&summary.org_id, &summary.project_id, summary.created_at)
             .await?;
 
-        let mut active: session_summary::ActiveModel = summary.clone().into();
-        active.org_id = Set(Some(DEFAULT_ORG_ID.to_owned()));
+        let active: session_summary::ActiveModel = summary.clone().into();
 
         session_summary::Entity::insert(active)
             .on_conflict(

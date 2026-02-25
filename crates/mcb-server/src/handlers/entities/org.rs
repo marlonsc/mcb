@@ -84,7 +84,7 @@ impl OrgEntityHandler {
             }
             (OrgEntityAction::Get, OrgEntityResource::User) => {
                 let user = if let Some(id) = args.id.as_deref() {
-                    self.repo.get_user(id).await
+                    self.repo.get_user(org_id.as_str(), id).await
                 } else if let Some(email) = args.email.as_deref() {
                     self.repo.get_user_by_email(org_id.as_str(), email).await
                 } else {

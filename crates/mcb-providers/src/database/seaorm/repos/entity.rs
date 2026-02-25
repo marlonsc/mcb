@@ -123,16 +123,18 @@ impl VcsEntityRepository for SeaOrmEntityRepository {
         Ok(())
     }
 
-    async fn get_branch(&self, id: &str) -> Result<Branch> {
+    async fn get_branch(&self, org_id: &str, id: &str) -> Result<Branch> {
         let model = branch::Entity::find_by_id(id)
+            .filter(branch::Column::OrgId.eq(org_id))
             .one(self.db.as_ref())
             .await
             .map_err(db_err)?;
         Error::not_found_or(model.map(Branch::from), "Branch", id)
     }
 
-    async fn list_branches(&self, repository_id: &str) -> Result<Vec<Branch>> {
+    async fn list_branches(&self, org_id: &str, repository_id: &str) -> Result<Vec<Branch>> {
         let models = branch::Entity::find()
+            .filter(branch::Column::OrgId.eq(org_id))
             .filter(branch::Column::RepositoryId.eq(repository_id))
             .all(self.db.as_ref())
             .await
@@ -300,8 +302,9 @@ impl UserRegistry for SeaOrmEntityRepository {
         Ok(())
     }
 
-    async fn get_user(&self, id: &str) -> Result<User> {
+    async fn get_user(&self, org_id: &str, id: &str) -> Result<User> {
         let model = user::Entity::find_by_id(id)
+            .filter(user::Column::OrgId.eq(org_id))
             .one(self.db.as_ref())
             .await
             .map_err(db_err)?;
@@ -711,24 +714,24 @@ impl IssueLabelAssignmentManager for SeaOrmEntityRepository {
     }
 
     async fn list_labels_for_issue(&self, issue_id: &str) -> Result<Vec<IssueLabel>> {
-        // Query through the junction table to get labels for an issue
         let assignments = issue_label_assignment::Entity::find()
             .filter(issue_label_assignment::Column::IssueId.eq(issue_id))
             .all(self.db.as_ref())
             .await
             .map_err(db_err)?;
 
-        let mut labels = Vec::new();
-        for asgn in assignments {
-            if let Some(label) = issue_label::Entity::find_by_id(&asgn.label_id)
-                .one(self.db.as_ref())
-                .await
-                .map_err(db_err)?
-            {
-                labels.push(IssueLabel::from(label));
-            }
+        if assignments.is_empty() {
+            return Ok(vec![]);
         }
-        Ok(labels)
+
+        let label_ids: Vec<String> = assignments.into_iter().map(|a| a.label_id).collect();
+        let labels = issue_label::Entity::find()
+            .filter(issue_label::Column::Id.is_in(label_ids))
+            .all(self.db.as_ref())
+            .await
+            .map_err(db_err)?;
+
+        Ok(labels.into_iter().map(IssueLabel::from).collect())
     }
 }
 
@@ -905,22 +908,22 @@ mod tests {
         };
 
         repo.create_branch(&b).await.expect("create");
-        let got = repo.get_branch("br-001").await.expect("get");
+        let got = repo.get_branch("org-001", "br-001").await.expect("get");
         assert_eq!(got.name, "main");
         assert!(got.is_default);
 
-        let list = repo.list_branches("repo-001").await.expect("list");
+        let list = repo.list_branches("org-001", "repo-001").await.expect("list");
         assert_eq!(list.len(), 1);
 
         let mut updated = b.clone();
         updated.head_commit = "def456".into();
         repo.update_branch(&updated).await.expect("update");
-        let got2 = repo.get_branch("br-001").await.expect("get after update");
+        let got2 = repo.get_branch("org-001", "br-001").await.expect("get after update");
         assert_eq!(got2.head_commit, "def456");
 
         repo.delete_branch("br-001").await.expect("delete");
         let list2 = repo
-            .list_branches("repo-001")
+            .list_branches("org-001", "repo-001")
             .await
             .expect("list after delete");
         assert!(list2.is_empty());
@@ -1177,7 +1180,7 @@ mod tests {
         };
 
         repo.create_user(&u).await.expect("create");
-        let got = repo.get_user("usr-001").await.expect("get");
+        let got = repo.get_user("org-001", "usr-001").await.expect("get");
         assert_eq!(got.email, "alice@example.com");
 
         let got_email = repo
@@ -1192,7 +1195,7 @@ mod tests {
         let mut updated = u.clone();
         updated.display_name = "Alice Updated".into();
         repo.update_user(&updated).await.expect("update");
-        let got2 = repo.get_user("usr-001").await.expect("get after update");
+        let got2 = repo.get_user("org-001", "usr-001").await.expect("get after update");
         assert_eq!(got2.display_name, "Alice Updated");
 
         repo.delete_user("usr-001").await.expect("delete");

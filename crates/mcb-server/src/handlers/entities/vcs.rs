@@ -143,11 +143,11 @@ impl VcsEntityHandler {
             }
             (VcsEntityAction::Get, VcsEntityResource::Branch) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_branch(&id).await)?)
+                ok_json(&map_opaque_error(self.repo.get_branch(&org_id, &id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Branch) => {
                 let repo_id = require_arg!(args.repository_id, "repository_id required");
-                ok_json(&map_opaque_error(self.repo.list_branches(repo_id).await)?)
+                ok_json(&map_opaque_error(self.repo.list_branches(&org_id, repo_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Branch) => {
                 let branch: Branch = require_data(args.data, "data required")?;
