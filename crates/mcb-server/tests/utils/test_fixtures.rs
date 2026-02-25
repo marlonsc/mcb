@@ -9,20 +9,19 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use async_trait::async_trait;
+use fastembed::{EmbeddingModel, InitOptions};
 
 use mcb_domain::entities::{
     ApiKey, Organization, Team, TeamMember, TeamMemberRole, User, UserRole,
 };
-use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::ports::IndexingResult;
 use mcb_domain::utils::time::epoch_secs_i64;
-use mcb_domain::value_objects::Embedding;
 use mcb_domain::value_objects::TeamMemberId;
 use mcb_infrastructure::config::{AppConfig, ConfigLoader, DatabaseConfig};
 use mcb_infrastructure::di::bootstrap::{AppContext, init_app, init_app_with_overrides};
 use mcb_infrastructure::di::modules::domain_services::DomainServicesFactory;
+use mcb_providers::embedding::FastEmbedProvider;
 use mcb_server::McpServerBuilder;
 use mcb_server::mcp_server::McpServer;
 use tempfile::TempDir;
@@ -168,56 +167,18 @@ pub fn create_test_indexing_result(
 }
 
 // ---------------------------------------------------------------------------
-// Shared AppContext (process-wide) with deterministic embedding fallback
+// Shared AppContext (process-wide) with FastEmbed fallback
 // ---------------------------------------------------------------------------
-
-#[derive(Debug)]
-struct DeterministicEmbeddingProvider;
-
-#[async_trait]
-impl EmbeddingProvider for DeterministicEmbeddingProvider {
-    async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
-        Ok(texts
-            .iter()
-            .map(|text| {
-                let mut vector = vec![0.0_f32; TEST_EMBEDDING_DIMENSIONS];
-                if !text.is_empty() {
-                    let base = (text.len() % TEST_EMBEDDING_DIMENSIONS) as f32 / 10.0;
-                    for (i, value) in vector.iter_mut().enumerate() {
-                        *value = base + (i as f32 / 1000.0);
-                    }
-                    let norm = vector.iter().map(|x| x * x).sum::<f32>().sqrt();
-                    if norm > 0.0 {
-                        for v in &mut vector {
-                            *v /= norm;
-                        }
-                    }
-                }
-                Embedding {
-                    vector,
-                    model: "fastembed-test-fallback".to_owned(),
-                    dimensions: TEST_EMBEDDING_DIMENSIONS,
-                }
-            })
-            .collect())
-    }
-
-    fn dimensions(&self) -> usize {
-        TEST_EMBEDDING_DIMENSIONS
-    }
-
-    fn provider_name(&self) -> &str {
-        "fastembed"
-    }
-}
 
 pub fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
     static DIR: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
     DIR.get_or_init(|| {
-        let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR").map_or_else(
-            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
-            std::path::PathBuf::from,
-        );
+        let cache_dir = std::env::var_os("FASTEMBED_CACHE_DIR")
+            .or_else(|| std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR"))
+            .map_or_else(
+                || std::env::temp_dir().join("mcb-fastembed-test-cache"),
+                std::path::PathBuf::from,
+            );
         if let Err(err) = std::fs::create_dir_all(&cache_dir) {
             mcb_domain::warn!(
                 "test_fixtures",
@@ -229,6 +190,15 @@ pub fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
         cache_dir
     })
     .clone()
+}
+
+fn create_test_fastembed_provider()
+-> std::result::Result<Arc<dyn EmbeddingProvider>, mcb_domain::error::Error> {
+    let init_options = InitOptions::new(EmbeddingModel::AllMiniLML6V2)
+        .with_show_download_progress(false)
+        .with_cache_dir(shared_fastembed_test_cache_dir());
+    let provider = FastEmbedProvider::with_options(init_options)?;
+    Ok(Arc::new(provider))
 }
 
 pub fn try_shared_app_context() -> Option<&'static AppContext> {
@@ -323,7 +293,7 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                     };
                 }
 
-                // Fallback: OpenAI config + DeterministicEmbeddingProvider.
+                // Fallback: OpenAI config + FastEmbedProvider override.
                 // Fresh runtime because the old one may be tainted by the
                 // ort panic.
                 drop(rt);
@@ -344,7 +314,7 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
 
                 mcb_domain::info!(
                     "test_fixtures",
-                    "ort/FastEmbed unavailable, using deterministic embedding fallback"
+                    "ort/FastEmbed unavailable, retrying with explicit FastEmbed override"
                 );
 
                 let fallback_result = rt.block_on(async {
@@ -366,11 +336,7 @@ pub fn try_shared_app_context() -> Option<&'static AppContext> {
                         cfg.api_key = Some("test-key".to_owned());
                     }
 
-                    init_app_with_overrides(
-                        fallback,
-                        Some(Arc::new(DeterministicEmbeddingProvider)),
-                    )
-                    .await
+                    init_app_with_overrides(fallback, Some(create_test_fastembed_provider()?)).await
                 });
 
                 match fallback_result {
@@ -417,7 +383,7 @@ pub fn shared_app_context() -> &'static AppContext {
 // ---------------------------------------------------------------------------
 
 /// `init_app` wrapper that catches ort panics (missing `libonnxruntime.so`)
-/// and retries with an `OpenAI` config + [`DeterministicEmbeddingProvider`].
+/// and retries with an `OpenAI` config + [`FastEmbedProvider`] override.
 ///
 /// Use in place of bare `init_app(config)` in any test that might run in CI.
 pub async fn safe_init_app(
@@ -436,13 +402,13 @@ pub async fn safe_init_app(
             if !is_ort {
                 return Err(err);
             }
-            init_app_deterministic_fallback(fallback_config).await
+            init_app_fastembed_fallback(fallback_config).await
         }
-        Err(_) => init_app_deterministic_fallback(fallback_config).await,
+        Err(_) => init_app_fastembed_fallback(fallback_config).await,
     }
 }
 
-async fn init_app_deterministic_fallback(
+async fn init_app_fastembed_fallback(
     mut config: AppConfig,
 ) -> std::result::Result<AppContext, mcb_domain::error::Error> {
     config.providers.embedding.provider = Some("openai".to_owned());
@@ -452,7 +418,7 @@ async fn init_app_deterministic_fallback(
         cfg.model = "text-embedding-3-small".to_owned();
         cfg.api_key = Some("test-key".to_owned());
     }
-    init_app_with_overrides(config, Some(Arc::new(DeterministicEmbeddingProvider))).await
+    init_app_with_overrides(config, Some(create_test_fastembed_provider()?)).await
 }
 
 // ---------------------------------------------------------------------------

@@ -385,12 +385,35 @@ pub async fn init_test_app() -> Result<AppContext> {
 
 fn create_crypto_service(config: &AppConfig) -> Result<CryptoService> {
     let secret_bytes = config.auth.jwt.secret.as_bytes();
-    if secret_bytes.len() != 32 {
+    let master_key = if secret_bytes.is_empty() {
+        // ADR-025: default config has empty secret. When auth is disabled,
+        // generate a random 32-byte key for internal crypto operations.
+        use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
+        let mut hasher = DefaultHasher::new();
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap_or_default()
+            .as_nanos()
+            .hash(&mut hasher);
+        let h1 = hasher.finish().to_le_bytes();
+        hasher.write_u8(0xff);
+        let h2 = hasher.finish().to_le_bytes();
+        let h3 = hasher.finish().to_le_bytes();
+        let h4 = hasher.finish().to_le_bytes();
+        let mut key = Vec::with_capacity(32);
+        key.extend_from_slice(&h1);
+        key.extend_from_slice(&h2);
+        key.extend_from_slice(&h3);
+        key.extend_from_slice(&h4);
+        key
+    } else if secret_bytes.len() != 32 {
         return Err(mcb_domain::error::Error::configuration(
             "JWT secret must be exactly 32 bytes long".to_owned(),
         ));
-    }
-    let master_key = secret_bytes.to_vec();
+    } else {
+        secret_bytes.to_vec()
+    };
     CryptoService::new(master_key)
 }
 
