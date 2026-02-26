@@ -17,13 +17,13 @@ permissions:
 
 on: # yamllint disable-line rule:truthy
   push:
-    branches:
-      - main
-      - "feat/*"
+    # branches:
+      #       - main
+      #       - "feat/*"
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
-    branches:
+    # branches:
       - main
 
 concurrency:
