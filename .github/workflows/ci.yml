@@ -23,9 +23,6 @@ jobs:
   changes:
     name: Detect Changes
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: read
     outputs:
       src: ${{ steps.filter.outputs.src }}
       docs: ${{ steps.filter.outputs.docs }}
@@ -343,9 +340,6 @@ jobs:
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
       (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: read
-    strategy:
       fail-fast: false
       matrix:
         include:
@@ -513,9 +507,6 @@ jobs:
       (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") &&
       (github.event_name != 'pull_request' || github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
     strategy:
       fail-fast: false
       matrix:
@@ -549,9 +540,6 @@ jobs:
     timeout-minutes: 5
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
-    permissions:
-      contents: write
-      pull-requests: write
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
