@@ -21,24 +21,84 @@ use uuid::Uuid;
 ///
 /// Each entry maps a canonical key to all accepted aliases (camelCase, x-header, snake_case).
 const STRING_FIELD_ALIASES: &[(&str, &[&str])] = &[
-    ("session_id", &["session_id", "sessionId", "x-session-id", "x_session_id"]),
-    ("parent_session_id", &["parent_session_id", "parentSessionId", "x-parent-session-id", "x_parent_session_id"]),
-    ("project_id", &["project_id", "projectId", "x-project-id", "x_project_id"]),
-    ("worktree_id", &["worktree_id", "worktreeId", "x-worktree-id", "x_worktree_id"]),
+    (
+        "session_id",
+        &["session_id", "sessionId", "x-session-id", "x_session_id"],
+    ),
+    (
+        "parent_session_id",
+        &[
+            "parent_session_id",
+            "parentSessionId",
+            "x-parent-session-id",
+            "x_parent_session_id",
+        ],
+    ),
+    (
+        "project_id",
+        &["project_id", "projectId", "x-project-id", "x_project_id"],
+    ),
+    (
+        "worktree_id",
+        &[
+            "worktree_id",
+            "worktreeId",
+            "x-worktree-id",
+            "x_worktree_id",
+        ],
+    ),
     ("repo_id", &["repo_id", "repoId", "x-repo-id", "x_repo_id"]),
-    ("repo_path", &["repo_path", "repoPath", "x-repo-path", "x_repo_path"]),
-    ("workspace_root", &["workspace_root", "workspaceRoot", "x-workspace-root"]),
-    ("operator_id", &["operator_id", "operatorId", "x-operator-id", "x_operator_id"]),
-    ("machine_id", &["machine_id", "machineId", "x-machine-id", "x_machine_id"]),
-    ("agent_program", &["agent_program", "agentProgram", "ide", "x-agent-program", "x_agent_program"]),
-    ("model_id", &["model_id", "model", "modelId", "x-model-id", "x_model_id"]),
-    ("execution_flow", &["execution_flow", "executionFlow", "x-execution-flow", "x_execution_flow"]),
+    (
+        "repo_path",
+        &["repo_path", "repoPath", "x-repo-path", "x_repo_path"],
+    ),
+    (
+        "workspace_root",
+        &["workspace_root", "workspaceRoot", "x-workspace-root"],
+    ),
+    (
+        "operator_id",
+        &[
+            "operator_id",
+            "operatorId",
+            "x-operator-id",
+            "x_operator_id",
+        ],
+    ),
+    (
+        "machine_id",
+        &["machine_id", "machineId", "x-machine-id", "x_machine_id"],
+    ),
+    (
+        "agent_program",
+        &[
+            "agent_program",
+            "agentProgram",
+            "ide",
+            "x-agent-program",
+            "x_agent_program",
+        ],
+    ),
+    (
+        "model_id",
+        &["model_id", "model", "modelId", "x-model-id", "x_model_id"],
+    ),
+    (
+        "execution_flow",
+        &[
+            "execution_flow",
+            "executionFlow",
+            "x-execution-flow",
+            "x_execution_flow",
+        ],
+    ),
 ];
 
 /// Canonical boolean field → alias mapping for context resolution.
-const BOOL_FIELD_ALIASES: &[(&str, &[&str])] = &[
-    ("delegated", &["delegated", "is_delegated", "isDelegated", "x-delegated"]),
-];
+const BOOL_FIELD_ALIASES: &[(&str, &[&str])] = &[(
+    "delegated",
+    &["delegated", "is_delegated", "isDelegated", "x-delegated"],
+)];
 
 use crate::handlers::{
     AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
@@ -296,9 +356,8 @@ impl ToolExecutionContext {
             .or_else(|| defaults.model_id.clone());
         let delegated = resolve_override_bool(overrides, field_aliases("delegated"))
             .or(Some(parent_session_id.is_some()));
-        let execution_flow =
-            resolve_override_value(overrides, field_aliases("execution_flow"))
-                .or_else(|| defaults.execution_flow.map(|f| f.to_string()));
+        let execution_flow = resolve_override_value(overrides, field_aliases("execution_flow"))
+            .or_else(|| defaults.execution_flow.map(|f| f.to_string()));
 
         Self {
             session_id,
@@ -322,18 +381,27 @@ impl ToolExecutionContext {
         let args = request.arguments.get_or_insert_with(Default::default);
         for (key, value) in [
             ("session_id", self.session_id.as_deref().map(str_value)),
-            ("parent_session_id", self.parent_session_id.as_deref().map(str_value)),
+            (
+                "parent_session_id",
+                self.parent_session_id.as_deref().map(str_value),
+            ),
             ("project_id", self.project_id.as_deref().map(str_value)),
             ("worktree_id", self.worktree_id.as_deref().map(str_value)),
             ("repo_id", self.repo_id.as_deref().map(str_value)),
             ("repo_path", self.repo_path.as_deref().map(str_value)),
             ("operator_id", self.operator_id.as_deref().map(str_value)),
             ("machine_id", self.machine_id.as_deref().map(str_value)),
-            ("agent_program", self.agent_program.as_deref().map(str_value)),
+            (
+                "agent_program",
+                self.agent_program.as_deref().map(str_value),
+            ),
             ("model_id", self.model_id.as_deref().map(str_value)),
             ("delegated", self.delegated.map(Value::Bool)),
             ("timestamp", self.timestamp.map(|v| Value::Number(v.into()))),
-            ("execution_flow", self.execution_flow.as_deref().map(str_value)),
+            (
+                "execution_flow",
+                self.execution_flow.as_deref().map(str_value),
+            ),
         ] {
             if let Some(v) = value {
                 args.entry(key.to_owned()).or_insert(v);
@@ -599,7 +667,10 @@ async fn trigger_post_tool_use_hook(
         context = context.with_session_id(SessionId::from_string(session_id));
     }
     for (key, value) in [
-        ("parent_session_id", execution_context.parent_session_id.as_deref()),
+        (
+            "parent_session_id",
+            execution_context.parent_session_id.as_deref(),
+        ),
         ("project_id", execution_context.project_id.as_deref()),
         ("worktree_id", execution_context.worktree_id.as_deref()),
         ("repo_id", execution_context.repo_id.as_deref()),

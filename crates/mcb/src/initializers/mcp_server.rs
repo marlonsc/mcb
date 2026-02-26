@@ -50,11 +50,20 @@ impl Initializer for McpServerInitializer {
             event_bus,
         };
 
-        let bootstrap = build_mcp_server_bootstrap(&resolution_ctx, ExecutionFlow::ServerHybrid)
+        let stdio_only = std::env::var("MCB_STDIO_ONLY").is_ok();
+        let no_stdio = std::env::var("MCB_NO_STDIO").is_ok();
+
+        let execution_flow = if stdio_only {
+            ExecutionFlow::StdioOnly
+        } else {
+            ExecutionFlow::ServerHybrid
+        };
+
+        let bootstrap = build_mcp_server_bootstrap(&resolution_ctx, execution_flow)
             .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
         let mcp_server_for_stdio = Arc::clone(&bootstrap.mcp_server);
-        if std::env::var("MCB_NO_STDIO").is_err() {
+        if stdio_only || !no_stdio {
             tokio::spawn(async move {
                 let server = (*mcp_server_for_stdio).clone();
                 if let Err(e) = server.serve_stdio().await {

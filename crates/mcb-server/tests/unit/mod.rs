@@ -5,7 +5,6 @@
 #[allow(dead_code, unused_imports)]
 mod utils;
 
-pub mod builder;
 pub mod constants;
 pub mod context_resolution;
 pub mod error_mapping;

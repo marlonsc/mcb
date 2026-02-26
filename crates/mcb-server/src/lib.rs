@@ -17,7 +17,6 @@ mod macros;
 
 pub mod args;
 pub mod auth;
-pub mod builder;
 pub mod composition;
 pub mod constants;
 pub mod controllers;

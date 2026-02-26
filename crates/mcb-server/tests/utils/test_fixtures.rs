@@ -24,7 +24,6 @@ use mcb_providers::embedding::FastEmbedProvider;
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::tools::ExecutionFlow;
-use mcb_server::McpServerBuilder;
 use tempfile::TempDir;
 use uuid::Uuid;
 
@@ -202,6 +201,33 @@ fn create_test_fastembed_provider()
     Ok(Arc::new(provider))
 }
 
+async fn create_test_resolution_context() -> Option<(ServiceResolutionContext, TempDir)> {
+    let (config, opt_temp) = TestConfigBuilder::new()
+        .ok()?
+        .with_temp_db("test.db")
+        .ok()?
+        .with_fastembed_shared_cache()
+        .ok()?
+        .build()
+        .ok()?;
+
+    let temp_dir = opt_temp.unwrap_or_else(|| TempDir::new().unwrap_or_else(|_| unreachable!()));
+    let db_path = config
+        .providers
+        .database
+        .configs
+        .get("default")
+        .and_then(|c| c.path.as_ref())
+        .cloned()
+        .unwrap_or_else(|| temp_dir.path().join("test.db"));
+
+    let db = connect_sqlite_with_migrations(&db_path).await.ok()?;
+    let resolution_ctx = ServiceResolutionContext {
+        db,
+        config: Arc::new(config),
+        event_bus: Arc::new(BroadcastEventBus::new()),
+    };
+    Some((resolution_ctx, temp_dir))
 }
 
 // ---------------------------------------------------------------------------
@@ -215,64 +241,15 @@ fn create_test_fastembed_provider()
 ///
 /// Returns `(server, temp_dir)` — keep `temp_dir` alive for the test.
 pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
-    let (config, opt_temp) = match TestConfigBuilder::new()
-        .and_then(|b| b.with_temp_db("test.db"))
-        .and_then(|b| b.with_fastembed_shared_cache())
-        .and_then(|b| b.build())
-    {
-        Ok(x) => x,
-        Err(_) => {
-            return (
-                McpServerBuilder::new()
-                    .build()
-                    .unwrap_or_else(|_| unreachable!()),
-                TempDir::new().unwrap_or_else(|_| unreachable!()),
-            );
-        }
-    };
+    let (resolution_ctx, temp_dir) = create_test_resolution_context()
+        .await
+        .unwrap_or_else(|| panic!("failed to build test ServiceResolutionContext"));
 
-    let temp_dir = opt_temp.unwrap_or_else(|| TempDir::new().unwrap_or_else(|_| unreachable!()));
-    let db_path = config
-        .providers
-        .database
-        .configs
-        .get("default")
-        .and_then(|c| c.path.as_ref())
-        .cloned()
-        .unwrap_or_else(|| temp_dir.path().join("test.db"));
+    let bootstrap = build_mcp_server_bootstrap(&resolution_ctx, ExecutionFlow::ServerHybrid)
+        .unwrap_or_else(|err| panic!("failed to build MCP server bootstrap for tests: {err}"));
+    let server = Arc::unwrap_or_clone(bootstrap.mcp_server);
 
-    let db = match connect_sqlite_with_migrations(&db_path).await {
-        Ok(d) => d,
-        Err(_) => {
-            return (
-                McpServerBuilder::new()
-                    .build()
-                    .unwrap_or_else(|_| unreachable!()),
-                temp_dir,
-            );
-        }
-    };
-
-    let resolution_ctx = ServiceResolutionContext {
-        db,
-        config: Arc::new(config),
-        event_bus: Arc::new(BroadcastEventBus::new()),
-    };
-
-    let bootstrap = match build_mcp_server_bootstrap(&resolution_ctx, ExecutionFlow::ServerHybrid)
-    {
-        Ok(b) => b,
-        Err(_) => {
-            return (
-                McpServerBuilder::new()
-                    .build()
-                    .unwrap_or_else(|_| unreachable!()),
-                temp_dir,
-            );
-        }
-    };
-
-    (bootstrap.mcp_server, temp_dir)
+    (server, temp_dir)
 }
 
 /// Process-wide shared [`McbState`] for unit tests. Builds once via [`create_real_domain_services`].
