@@ -16,6 +16,11 @@ permissions:
   contents: "read"
 
 on: # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+      - "feat/*"
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     branches:
