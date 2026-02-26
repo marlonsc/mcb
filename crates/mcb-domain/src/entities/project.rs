@@ -121,7 +121,6 @@ pub struct DetectedProject {
 // Workflow State
 // ============================================================================
 
-/// Represents the execution state of a project phase.
 crate::define_string_enum! {
     /// Represents the execution state of a project phase.
     pub enum PhaseStatus [strum = "snake_case"] {
@@ -138,7 +137,6 @@ crate::define_string_enum! {
     }
 }
 
-/// Classifies the nature of a project issue.
 crate::define_string_enum! {
     /// Classifies the nature of a project issue.
     pub enum IssueType [strum = "snake_case", schema] {
@@ -155,7 +153,6 @@ crate::define_string_enum! {
     }
 }
 
-/// Tracks the lifecycle state of an issue.
 crate::define_string_enum! {
     /// Tracks the lifecycle state of an issue.
     pub enum IssueStatus [strum = "snake_case", schema] {
@@ -172,7 +169,6 @@ crate::define_string_enum! {
     }
 }
 
-/// Defines the relationship between two project issues.
 crate::define_string_enum! {
     /// Defines the relationship between two project issues.
     pub enum DependencyType [strum = "snake_case"] {

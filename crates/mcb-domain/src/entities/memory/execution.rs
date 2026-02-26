@@ -4,7 +4,6 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-/// Type of execution or command that was run.
 crate::define_string_enum! {
     /// Type of execution or command that was run.
     pub enum ExecutionType [strum = "lowercase"] {

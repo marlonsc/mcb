@@ -30,7 +30,6 @@ crate::define_entity! {
     }
 }
 
-/// Lifecycle status of a worktree.
 crate::define_string_enum! {
     /// Lifecycle status of a worktree.
     pub enum WorktreeStatus [strum = "snake_case", serde = "snake_case", schema] {

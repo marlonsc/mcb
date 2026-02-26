@@ -20,7 +20,6 @@ crate::define_entity! {
     }
 }
 
-/// Status of an organization in its lifecycle.
 crate::define_string_enum! {
     /// Status of an organization in its lifecycle.
     pub enum OrgStatus [strum = "lowercase", schema] {

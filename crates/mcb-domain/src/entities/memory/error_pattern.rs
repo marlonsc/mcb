@@ -4,7 +4,6 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-/// Categories for error patterns to classify the type of error encountered.
 crate::define_string_enum! {
     /// Categories for error patterns to classify the type of error encountered.
     pub enum ErrorPatternCategory [strum = "lowercase"] {

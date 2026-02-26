@@ -4,13 +4,6 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-/// Represents the status of a quality gate check.
-///
-/// Quality gates are validation checks that can result in one of four states:
-/// - `Passed`: The check completed successfully and met all criteria
-/// - `Failed`: The check completed but did not meet required criteria
-/// - `Warning`: The check completed with non-critical issues
-/// - `Skipped`: The check was not executed
 crate::define_string_enum! {
     /// Represents the status of a quality gate check.
     ///

@@ -4,7 +4,6 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// Type of version control system.
 crate::define_string_enum! {
     /// Type of version control system.
     pub enum VcsType [strum = "snake_case", serde = "snake_case", schema] {

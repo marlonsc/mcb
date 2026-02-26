@@ -22,7 +22,6 @@ crate::define_entity! {
     }
 }
 
-/// Role a user holds within an organization.
 crate::define_string_enum! {
     /// Role a user holds within an organization.
     pub enum UserRole [strum = "lowercase", schema] {

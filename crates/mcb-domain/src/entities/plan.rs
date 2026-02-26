@@ -21,7 +21,6 @@ crate::define_entity! {
     }
 }
 
-/// Lifecycle status for a plan.
 crate::define_string_enum! {
     /// Lifecycle status for a plan.
     pub enum PlanStatus [strum = "snake_case", serde = "snake_case", schema] {
@@ -78,7 +77,6 @@ pub struct PlanReview {
     pub created_at: i64,
 }
 
-/// Verdict values for a plan review.
 crate::define_string_enum! {
     /// Verdict values for a plan review.
     pub enum ReviewVerdict [strum = "snake_case", serde = "snake_case", schema] {

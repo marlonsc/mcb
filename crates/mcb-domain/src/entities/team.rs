@@ -36,7 +36,6 @@ pub struct TeamMember {
     pub joined_at: i64,
 }
 
-/// Role a user holds within a specific team.
 crate::define_string_enum! {
     /// Role a user holds within a specific team.
     pub enum TeamMemberRole [strum = "lowercase", schema] {
