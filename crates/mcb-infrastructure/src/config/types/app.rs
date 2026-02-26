@@ -13,9 +13,6 @@ pub use super::infrastructure::{
     CacheProvider, CacheSystemConfig, LimitsConfig, LoggingConfig, MetricsConfig, ResilienceConfig,
 };
 pub use super::mode::{ModeConfig, OperatingMode};
-pub use super::server::{
-    ServerConfig, ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig,
-};
 pub use super::system::{
     AdminApiKeyConfig, ApiKeyConfig, AuthConfig, BackupConfig, DaemonConfig, EventBusBackend,
     EventBusConfig, JwtConfig, OperationsConfig, PasswordAlgorithm, SnapshotConfig, SyncConfig,
@@ -159,8 +156,6 @@ pub struct OperationsDaemonConfig {
 pub struct AppConfig {
     /// Operating mode configuration
     pub mode: ModeConfig,
-    /// Server configuration
-    pub server: ServerConfig,
     /// Provider configurations
     pub providers: ProvidersConfig,
     /// Logging configuration

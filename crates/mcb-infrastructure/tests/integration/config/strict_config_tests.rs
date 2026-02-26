@@ -49,12 +49,13 @@ fn inject_bogus_key_into_yaml(yaml: &str) -> String {
     result
 }
 
-fn remove_port_from_yaml(yaml: &str) -> String {
+fn remove_required_key_from_yaml(yaml: &str) -> String {
     let mut result = String::new();
 
     for line in yaml.lines() {
         let trimmed = line.trim();
-        if trimmed.starts_with("port:") {
+        // password_algorithm is unique and required in auth config
+        if trimmed.starts_with("password_algorithm:") {
             continue;
         }
         result.push_str(line);
@@ -118,21 +119,21 @@ fn test_unknown_key_rejected() {
 
 #[test]
 fn test_missing_required_key_fails() {
-    // Write a YAML config with the port key removed and load via explicit path.
+    // Write a YAML config with a required key removed and load via explicit path.
     let temp_dir = TempDir::new().unwrap();
     let yaml_content = fs::read_to_string(workspace_development_yaml().unwrap()).unwrap();
-    let missing_port_yaml = remove_port_from_yaml(&yaml_content);
-    let yaml_path = write_temp_yaml(&temp_dir, &missing_port_yaml).unwrap();
+    let missing_key_yaml = remove_required_key_from_yaml(&yaml_content);
+    let yaml_path = write_temp_yaml(&temp_dir, &missing_key_yaml).unwrap();
 
     let result = load_app_config_from_yaml_path(&yaml_path);
     assert!(
         result.is_err(),
-        "missing required key server.network.port must fail"
+        "missing required key auth.password_algorithm must fail"
     );
 
     let message = result.expect_err("must fail").to_string();
     assert!(
-        message.contains("port") || message.contains("missing field"),
+        message.contains("password_algorithm") || message.contains("missing field"),
         "error should mention missing key, got: {message}"
     );
 }
@@ -214,7 +215,6 @@ fn test_no_impl_default_in_config_types() -> Result<(), Box<dyn std::error::Erro
         "OperatingMode",
         "PasswordAlgorithm",
         "EventBusBackend",
-        "ServerSslConfig",
     ];
 
     let mut violations = Vec::new();

@@ -75,7 +75,7 @@ pub(crate) fn resolve_config_with_project_settings(
 }
 
 pub fn validate_app_config(config: &AppConfig) -> Result<()> {
-    validate_server_config(config)?;
+    validate_auth_config(config)?;
     validate_auth_config(config)?;
     validate_cache_config(config)?;
     validate_limits_config(config)?;
@@ -85,17 +85,6 @@ pub fn validate_app_config(config: &AppConfig) -> Result<()> {
     Ok(())
 }
 
-fn validate_server_config(config: &AppConfig) -> Result<()> {
-    if config.server.ssl.https
-        && (config.server.ssl.ssl_cert_path.is_none() || config.server.ssl.ssl_key_path.is_none())
-    {
-        return Err(Error::ConfigInvalid {
-            key: "server.ssl".to_owned(),
-            message: "SSL certificate and key paths are required when HTTPS is enabled".to_owned(),
-        });
-    }
-    Ok(())
-}
 
 fn validate_auth_config(config: &AppConfig) -> Result<()> {
     if config.auth.enabled {
