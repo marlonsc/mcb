@@ -63,3 +63,19 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: echo "Linting"
+
+  rust-ci:
+    name: Rust CI
+    needs: [changes, classify, lint]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Rust CI gate"
+
+  analyze:
+    name: Analyze
+    needs: [rust-ci]
+    if: needs.rust-ci.result == 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Analyze gate"
