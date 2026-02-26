@@ -153,10 +153,10 @@ jobs:
             echo "## GitHub Pages Deployment"
             echo ""
             if [[ "$DEPLOY_RESULT" == "success" ]]; then
-              echo "✓ Documentation deployed successfully"
+              echo "[OK] Documentation deployed successfully"
               echo ""
               echo "View at: https://${REPO%%/*}.github.io/${REPO##*/}/"
             else
-              echo "✗ Deployment failed: $DEPLOY_RESULT"
+              echo "[FAIL] Deployment failed: $DEPLOY_RESULT"
             fi
           } >> "$GITHUB_STEP_SUMMARY"

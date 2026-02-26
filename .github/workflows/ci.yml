@@ -1,11 +1,10 @@
----
 # =============================================================================
-# CI Pipeline — 3-Stage with Shared Compilation Cache
+# CI Pipeline - 3-Stage with Shared Compilation Cache
 # =============================================================================
-# Stage 1: Fast checks (lint, audit, docs) — parallel. Lint SAVES rust cache.
+# Stage 1: Fast checks (lint, audit, docs) - parallel. Lint SAVES rust cache.
 # Stage 2a: Test + Validate (parallel, both after lint, REUSE lint cache)
-# Stage 2b: Cross-platform + golden + coverage — gated by test-linux
-# Stage 3: Release builds — gated by tests + validate + audit
+# Stage 2b: Cross-platform + golden + coverage - gated by test-linux
+# Stage 3: Release builds - gated by tests + validate + audit
 # Gate: rust-ci consolidated check
 # Post-gate: CodeQL analysis (most expensive, runs last)
 # =============================================================================
@@ -15,16 +14,12 @@ name: CI
 permissions:
   contents: "read"
 
-on: # yamllint disable-line rule:truthy
+on:
   push:
-    branches:
-      - main
-      - "feat/*"
-  workflow_dispatch:
+    branches: ["main", "feat/*"]
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
-    branches:
-      - main
+  workflow_dispatch:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
@@ -36,7 +31,7 @@ env:
 
 jobs:
   # ===========================================================================
-  # Stage 0 — Classification
+  # Stage 0 - Classification
   # ===========================================================================
 
   changes:
@@ -106,7 +101,7 @@ jobs:
           fi
 
   # ===========================================================================
-  # Stage 1 — Fast Checks (all parallel, ~5 min)
+  # Stage 1 - Fast Checks (all parallel, ~5 min)
   # ===========================================================================
 
   lint:
@@ -202,7 +197,7 @@ jobs:
           include-hidden-files: false
 
   # ===========================================================================
-  # Stage 2a — Primary Test Gate (reuses lint cache, ~8 min)
+  # Stage 2a - Primary Test Gate (reuses lint cache, ~8 min)
   # ===========================================================================
 
   test-linux:
@@ -232,7 +227,7 @@ jobs:
         run: make test THREADS=4
 
   # ===========================================================================
-  # Stage 2b — Extended Testing (after linux stable, all parallel)
+  # Stage 2b - Extended Testing (after linux stable, all parallel)
   # ===========================================================================
 
   test-cross:
@@ -365,7 +360,7 @@ jobs:
           fail_ci_if_error: false
 
   # ===========================================================================
-  # Stage 3 — Release Artifacts
+  # Stage 3 - Release Artifacts
   # ===========================================================================
 
   release-build:
@@ -447,7 +442,7 @@ jobs:
           include-hidden-files: false
 
   # ===========================================================================
-  # Gate — Consolidated PR Check (required status check)
+  # Gate - Consolidated PR Check (required status check)
   # ===========================================================================
 
   rust-ci:
@@ -503,15 +498,15 @@ jobs:
             for job in LINT_RESULT TEST_LINUX_RESULT VALIDATE_RESULT; do
               result="${!job}"
               if [[ "$result" != "success" && "$result" != "skipped" ]]; then
-                echo "✗ $job: $result"
+                echo "[FAIL] $job: $result"
                 FAILED=1
               fi
             done
             if [[ $FAILED -eq 1 ]]; then
-              echo "✗ Simplified checks failed"
+              echo "[FAIL] Simplified checks failed"
               exit 1
             fi
-            echo "✓ Simplified checks passed"
+            echo "[OK] Simplified checks passed"
             exit 0
           fi
 
@@ -523,25 +518,25 @@ jobs:
                        RELEASE_BUILD_RESULT; do
               result="${!job}"
               if [[ "$result" != "success" && "$result" != "skipped" ]]; then
-                echo "✗ $job: $result"
+                echo "[FAIL] $job: $result"
                 FAILED=1
               fi
             done
 
             if [[ $FAILED -eq 1 ]]; then
-              echo "✗ Full suite check failed"
+              echo "[FAIL] Full suite check failed"
               exit 1
             fi
 
-            echo "✓ Full suite — all required checks passed"
+            echo "[OK] Full suite - all required checks passed"
             exit 0
           fi
 
-          echo "✗ Unexpected classification state"
+          echo "[FAIL] Unexpected classification state"
           exit 1
 
   # ===========================================================================
-  # Post-Gate — CodeQL (most expensive, runs only after gate passes)
+  # Post-Gate - CodeQL (most expensive, runs only after gate passes)
   # ===========================================================================
 
   analyze:
