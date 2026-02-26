@@ -1,16 +1,30 @@
+---
+# =============================================================================
+# Release Workflow
+# =============================================================================
+# Triggered only on version tags (v*)
+# Builds release binaries for Linux, macOS, Windows
+# Creates GitHub Release with artifacts and changelog
+# =============================================================================
+
 name: Release
+
 permissions:
   contents: read
   pages: write
-'on':
+
+on: # yamllint disable-line rule:truthy
   push:
     tags:
-      - v*
+      - "v*"
+
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false
+
 env:
   CARGO_TERM_COLOR: always
+
 jobs:
   release-build:
     name: Build Release (${{ matrix.target }})
@@ -38,61 +52,77 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
+
       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
         run: bash .github/setup-ci.sh
+
       - name: Install protoc (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         env:
-          PROTOC_VERSION: '29.3'
-          PROTOC_SHA256: 57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383
-        run: "$url = \"https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip\"\
-          \n$zip = \"$env:TEMP\\protoc.zip\"\nInvoke-WebRequest -Uri $url -OutFile\
-          \ $zip -ErrorAction Stop\n$hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()\n\
-          if ($hash -ne $env:PROTOC_SHA256) {\n  throw \"protoc checksum mismatch:\
-          \ expected $($env:PROTOC_SHA256), got $hash\"\n}\nExpand-Archive $zip -DestinationPath\
-          \ \"$env:TEMP\\protoc\" -Force\nAdd-Content -Path $env:GITHUB_PATH -Value\
-          \ \"$env:TEMP\\protoc\\bin\"\n"
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
+          PROTOC_VERSION: "29.3"
+          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
+        run: |
+          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          $zip = "$env:TEMP\protoc.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:PROTOC_SHA256) {
+            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
+          }
+          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
+
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
           targets: ${{ matrix.target }}
+
       - name: Build (Unix)
         if: runner.os != 'Windows'
         run: make build RELEASE=1
+
       - name: Build (Windows)
         if: runner.os == 'Windows'
         run: cargo build --release --target ${{ matrix.target }}
+
       - name: Create dist directory (Unix)
         if: runner.os != 'Windows'
         run: mkdir -p dist
+
       - name: Create dist directory (Windows)
         if: runner.os == 'Windows'
         run: New-Item -ItemType Directory -Force -Path dist
         shell: pwsh
+
       - name: Copy artifact (Unix)
         if: runner.os != 'Windows'
         env:
           ARTIFACT: ${{ matrix.artifact_name }}
           ASSET: ${{ matrix.asset_name }}
         run: cp "target/release/$ARTIFACT" "dist/$ASSET"
+
       - name: Copy artifact (Windows)
         if: runner.os == 'Windows'
-        run: Copy-Item "target\${{ matrix.target }}\release\${{ matrix.artifact_name
-          }}" "dist\${{ matrix.asset_name }}"
+        run: >-
+          Copy-Item "target\${{ matrix.target }}\release\${{ matrix.artifact_name }}"
+          "dist\${{ matrix.asset_name }}"
         shell: pwsh
+
       - name: Upload artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: release-artifacts-${{ matrix.target }}
           path: dist/${{ matrix.asset_name }}
           retention-days: 7
           include-hidden-files: false
+
   create-release:
     name: Create GitHub Release
     timeout-minutes: 10
@@ -101,66 +131,86 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
           persist-credentials: false
           submodules: recursive
+
       - name: Download all artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
           path: release-artifacts
+
       - name: Extract version from tag
         id: extract_version
-        run: 'TAG=${GITHUB_REF#refs/tags/}
-
+        run: |
+          TAG=${GITHUB_REF#refs/tags/}
           VERSION=${TAG#v}
-
           echo "RELEASE_VERSION=$VERSION" >> "$GITHUB_ENV"
-
           echo "RELEASE_TAG=$TAG" >> "$GITHUB_ENV"
-
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
-          '
       - name: Generate changelog
-        run: "VERSION=\"${{ steps.extract_version.outputs.version }}\"\n\n# Extract\
-          \ version section from CHANGELOG.md (preferred)\nif [ -f \"docs/operations/CHANGELOG.md\"\
-          \ ]; then\n  sed -n \"/^## \\\\[$VERSION\\\\]/,/^## \\\\[/p\" docs/operations/CHANGELOG.md\
-          \ | sed '$d' > RELEASE_NOTES.md\nfi\n\n# Fallback to git log if CHANGELOG\
-          \ section not found or empty\nif [ ! -s RELEASE_NOTES.md ]; then\n  PREV_TAG=$(\n\
-          \    git tag --list 'v*' --sort=-version:refname |\n    head -2 | tail -1\n\
-          \  )\n  if [ -z \"$PREV_TAG\" ]; then\n    git log --oneline --reverse >\
-          \ RELEASE_NOTES.md\n  else\n    git log \"$PREV_TAG..HEAD\" --oneline >\
-          \ RELEASE_NOTES.md\n  fi\n  sed -i '1s/^/## Changes\\n\\n/' RELEASE_NOTES.md\n\
-          fi\n"
+        run: |
+          VERSION="${{ steps.extract_version.outputs.version }}"
+
+          # Extract version section from CHANGELOG.md (preferred)
+          if [ -f "docs/operations/CHANGELOG.md" ]; then
+            sed -n "/^## \\[$VERSION\\]/,/^## \\[/p" docs/operations/CHANGELOG.md | sed '$d' > RELEASE_NOTES.md
+          fi
+
+          # Fallback to git log if CHANGELOG section not found or empty
+          if [ ! -s RELEASE_NOTES.md ]; then
+            PREV_TAG=$(
+              git tag --list 'v*' --sort=-version:refname |
+              head -2 | tail -1
+            )
+            if [ -z "$PREV_TAG" ]; then
+              git log --oneline --reverse > RELEASE_NOTES.md
+            else
+              git log "$PREV_TAG..HEAD" --oneline > RELEASE_NOTES.md
+            fi
+            sed -i '1s/^/## Changes\n\n/' RELEASE_NOTES.md
+          fi
+
       - name: Create Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           tag_name: ${{ steps.extract_version.outputs.tag }}
           name: Release ${{ steps.extract_version.outputs.version }}
           body_path: RELEASE_NOTES.md
-          files: 'release-artifacts/release-artifacts-x86_64-unknown-linux-gnu/mcb-x86_64-linux-gnu
-
+          files: |
+            release-artifacts/release-artifacts-x86_64-unknown-linux-gnu/mcb-x86_64-linux-gnu
             release-artifacts/release-artifacts-x86_64-apple-darwin/mcb-x86_64-macos
-
             release-artifacts/release-artifacts-x86_64-pc-windows-msvc/mcb-x86_64-windows.exe
-
-            '
           draft: false
           prerelease: false
+
       - name: Release Summary
         env:
           RELEASE_TAG: ${{ steps.extract_version.outputs.tag }}
           REPO: ${{ github.repository }}
-        run: "{\n  echo \"## Release Created\"\n  echo \"\"\n  echo \"[OK] Release\
-          \ $RELEASE_TAG created successfully\"\n  echo \"\"\n  echo \"**Artifacts:**\"\
-          \n  echo \"- Linux (x86_64-unknown-linux-gnu)\"\n  echo \"- macOS (x86_64-apple-darwin)\"\
-          \n  echo \"- Windows (x86_64-pc-windows-msvc)\"\n  echo \"\"\n  echo \"\
-          **URL:**\"\n  echo \"https://github.com/${REPO}/releases/tag/${RELEASE_TAG}\"\
-          \n} >> \"$GITHUB_STEP_SUMMARY\"\n"
+        run: |
+          {
+            echo "## Release Created"
+            echo ""
+            echo "[OK] Release $RELEASE_TAG created successfully"
+            echo ""
+            echo "**Artifacts:**"
+            echo "- Linux (x86_64-unknown-linux-gnu)"
+            echo "- macOS (x86_64-apple-darwin)"
+            echo "- Windows (x86_64-pc-windows-msvc)"
+            echo ""
+            echo "**URL:**"
+            echo "https://github.com/${REPO}/releases/tag/${RELEASE_TAG}"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  # ===========================================================================
+  # Documentation Build + Deploy (triggered on every release tag)
+  # ===========================================================================
+
   docs-rust:
     name: Build Rust API Docs
     timeout-minutes: 15
@@ -169,25 +219,26 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
-        with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
-        with:
-          save-if: false
-      - run: make rust-docs
-      - run: make test SCOPE=doc
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-        with:
-          name: rust-api-docs
-          path: target/doc/
-          retention-days: 7
-          include-hidden-files: false
+       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+         with:
+           persist-credentials: false
+           submodules: recursive
+       - run: bash .github/setup-ci.sh
+       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+         with:
+           toolchain: stable
+       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+         with:
+           save-if: false
+       - run: make rust-docs
+       - run: make test SCOPE=doc
+       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+         with:
+           name: rust-api-docs
+           path: target/doc/
+           retention-days: 7
+           include-hidden-files: false
+
   docs-book:
     name: Build mdBook
     timeout-minutes: 10
@@ -196,63 +247,71 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - run: make docs-setup
-      - run: make docs-sync
-      - run: make docs-build
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
-        with:
-          name: mdbook-docs
-          path: book/book/
-          retention-days: 7
-          include-hidden-files: false
+       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+         with:
+           persist-credentials: false
+           submodules: recursive
+       - run: make docs-setup
+       - run: make docs-sync
+       - run: make docs-build
+       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+         with:
+           name: mdbook-docs
+           path: book/book/
+           retention-days: 7
+           include-hidden-files: false
+
   deploy-docs:
     name: Deploy to GitHub Pages
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    needs:
-      - docs-rust
-      - docs-book
-    if: 'always() &&
-
+    needs: [docs-rust, docs-book]
+    if: |
+      always() &&
       !failure() &&
-
       !cancelled() &&
-
-      (needs.docs-rust.result == ''success'' || needs.docs-book.result == ''success'')
-
-      '
+      (needs.docs-rust.result == 'success' || needs.docs-book.result == 'success')
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-        continue-on-error: true
-        with:
-          name: rust-api-docs
-          path: docs-site/api/
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131
-        continue-on-error: true
-        with:
-          name: mdbook-docs
-          path: docs-site/
-      - name: Check artifacts exist
-        run: "if [[ ! -f \"docs-site/api/index.html\" ]]; then\n  echo \"Warning:\
-          \ Rust API docs not found, creating empty directory\" >&2\n  mkdir -p docs-site/api\n\
-          fi\nif [[ ! -f \"docs-site/index.html\" ]]; then\n  echo \"Warning: mdBook\
-          \ docs not found, creating empty directory\" >&2\n  mkdir -p docs-site\n\
-          fi\n"
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: docs-site
+       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+         with:
+           persist-credentials: false
+           submodules: recursive
+       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+         continue-on-error: true
+         with:
+           name: rust-api-docs
+           path: docs-site/api/
+       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+         continue-on-error: true
+         with:
+           name: mdbook-docs
+           path: docs-site/
+       - name: Check artifacts exist
+         run: |
+           if [[ ! -f "docs-site/api/index.html" ]]; then
+             echo "Warning: Rust API docs not found, creating empty directory" >&2
+             mkdir -p docs-site/api
+           fi
+           if [[ ! -f "docs-site/index.html" ]]; then
+             echo "Warning: mdBook docs not found, creating empty directory" >&2
+             mkdir -p docs-site
+           fi
+       - name: Deploy to GitHub Pages
+         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+         with:
+           github_token: ${{ secrets.GITHUB_TOKEN }}
+           publish_dir: docs-site
+
+  # ===========================================================================
+  # Cargo Publish (gated - requires CARGO_REGISTRY_TOKEN secret)
+  # ===========================================================================
+  # NOTE: Currently blocked by git dependencies (rust-code-analysis fork,
+  # milvus-sdk-rust). This step is gated by the CARGO_REGISTRY_TOKEN secret
+  # and will be skipped if the secret is not configured. Infrastructure is
+  # ready for when git dependencies are resolved and published to crates.io.
+
   publish-crates:
     name: Publish to crates.io
     timeout-minutes: 15
@@ -262,31 +321,42 @@ jobs:
     permissions:
       contents: read
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - name: Check for registry token
-        id: check_token
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: "if [ -z \"$CARGO_REGISTRY_TOKEN\" ]; then\n  echo \"skip=true\" >> \"\
-          $GITHUB_OUTPUT\"\n  echo \"::notice::CARGO_REGISTRY_TOKEN not configured\
-          \ - skipping crates.io publish\"\nelse\n  echo \"skip=false\" >> \"$GITHUB_OUTPUT\"\
-          \nfi\n"
-      - run: bash .github/setup-ci.sh
-        if: steps.check_token.outputs.skip != 'true'
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
-        if: steps.check_token.outputs.skip != 'true'
-        with:
-          toolchain: stable
-      - name: Dry-run publish
-        if: steps.check_token.outputs.skip != 'true'
-        run: cargo publish --dry-run -p mcb-domain
-      - name: Publish to crates.io
-        if: steps.check_token.outputs.skip != 'true'
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: "set -e\n for crate in mcb-domain mcb-providers mcb-infrastructure mcb-validate\
-          \ mcb-server mcb; do\n  echo \"Publishing $crate...\"\n  cargo publish -p\
-          \ \"$crate\"\n  sleep 30\ndone\n"
+       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+         with:
+           persist-credentials: false
+           submodules: recursive
+       - name: Check for registry token
+         id: check_token
+         env:
+           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+         run: |
+           if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
+             echo "skip=true" >> "$GITHUB_OUTPUT"
+             echo "::notice::CARGO_REGISTRY_TOKEN not configured - skipping crates.io publish"
+           else
+             echo "skip=false" >> "$GITHUB_OUTPUT"
+           fi
+       - run: bash .github/setup-ci.sh
+         if: steps.check_token.outputs.skip != 'true'
+       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+         if: steps.check_token.outputs.skip != 'true'
+         with:
+           toolchain: stable
+       - name: Dry-run publish
+         if: steps.check_token.outputs.skip != 'true'
+         # NOTE: Workspace publish requires publishing crates in dependency order.
+         # When git deps are resolved, replace with katyo/publish-crates action
+         # or per-crate `cargo publish -p <crate>` in topological order:
+          # mcb-domain -> mcb-providers -> mcb-infrastructure -> mcb-validate -> mcb-server -> mcb
+         run: cargo publish --dry-run -p mcb-domain
+       - name: Publish to crates.io
+         if: steps.check_token.outputs.skip != 'true'
+         env:
+           CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+         run: |
+           set -e
+            for crate in mcb-domain mcb-providers mcb-infrastructure mcb-validate mcb-server mcb; do
+             echo "Publishing $crate..."
+             cargo publish -p "$crate"
+             sleep 30
+           done
