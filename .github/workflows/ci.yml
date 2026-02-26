@@ -118,20 +118,20 @@ jobs:
       ((needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") || needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - run: bash .github/setup-ci.sh
-       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: stable
-           components: rustfmt, clippy
-       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-         with:
-           shared-key: ci-ubuntu-stable
-           save-if: true
-       - run: make lint MCB_CI=1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: true
+      - run: make lint MCB_CI=1
 
   audit:
     name: Security Audit
@@ -140,19 +140,19 @@ jobs:
     if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
     runs-on: ubuntu-latest
     steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - run: bash .github/setup-ci.sh --install-audit
-       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: stable
-       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-         with:
-           shared-key: ci-ubuntu-stable
-           save-if: false
-       - run: make audit
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh --install-audit
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - run: make audit
 
   validate-docs:
     name: Validate Documentation
@@ -161,20 +161,20 @@ jobs:
     needs: [changes, classify]
     if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true') && (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
     steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - run: make docs-check
-       - run: bash .github/setup-ci.sh
-       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: stable
-       - run: |
-           sudo apt-get update
-           sudo apt-get install -y nodejs npm
-           npm install -g markdownlint-cli
-       - run: make docs-validate QUICK=1
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: make docs-check
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y nodejs npm
+          npm install -g markdownlint-cli
+      - run: make docs-validate QUICK=1
 
   docs-diagrams:
     name: Generate Diagrams
@@ -183,23 +183,23 @@ jobs:
     needs: [changes, classify]
     if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
     steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
-         with:
-           java-version: "17"
-           distribution: "temurin"
-       - name: Install PlantUML
-         run: sudo apt-get update && sudo apt-get install -y plantuml
-       - run: make diagrams
-       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-         with:
-           name: architecture-diagrams
-           path: docs/architecture/diagrams/generated/
-           retention-days: 30
-           include-hidden-files: false
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+        with:
+          java-version: "17"
+          distribution: "temurin"
+      - name: Install PlantUML
+        run: sudo apt-get update && sudo apt-get install -y plantuml
+      - run: make diagrams
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: architecture-diagrams
+          path: docs/architecture/diagrams/generated/
+          retention-days: 30
+          include-hidden-files: false
 
   # ===========================================================================
   # Stage 2a — Primary Test Gate (reuses lint cache, ~8 min)
@@ -214,22 +214,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - run: bash .github/setup-ci.sh
-       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: stable
-       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-         with:
-           shared-key: ci-ubuntu-stable
-           save-if: false
-       - name: Startup Smoke (DDL/Init)
-         run: make test SCOPE=startup THREADS=4
-       - name: Full Test Suite
-         run: make test THREADS=4
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - name: Startup Smoke (DDL/Init)
+        run: make test SCOPE=startup THREADS=4
+      - name: Full Test Suite
+        run: make test THREADS=4
 
   # ===========================================================================
   # Stage 2b — Extended Testing (after linux stable, all parallel)
@@ -255,39 +255,39 @@ jobs:
           - os: windows-latest
             rust: stable
     steps:
-       - name: Enable long paths (Windows)
-         if: runner.os == 'Windows'
-         run: git config --system core.longpaths true
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - name: Install dependencies (Unix)
-         if: runner.os != 'Windows'
-         run: bash .github/setup-ci.sh
-       - name: Install protoc (Windows)
-         if: runner.os == 'Windows'
-         shell: pwsh
-         env:
-           PROTOC_VERSION: "29.3"
-           PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
-         run: |
-           $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-           $zip = "$env:TEMP\protoc.zip"
-           Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-           $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-           if ($hash -ne $env:PROTOC_SHA256) {
-             throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
-           }
-           Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
-           Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
-       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: ${{ matrix.rust }}
-       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-         with:
-           save-if: false
-       - run: make test THREADS=4
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          PROTOC_VERSION: "29.3"
+          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
+        run: |
+          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          $zip = "$env:TEMP\protoc.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:PROTOC_SHA256) {
+            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
+          }
+          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          save-if: false
+      - run: make test THREADS=4
 
   validate:
     name: Architecture Validation
@@ -297,21 +297,21 @@ jobs:
       ((needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") || needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - run: bash .github/setup-ci.sh
-       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: stable
-       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-          with:
-            shared-key: ci-ubuntu-stable
-            save-if: false
-        - run: make validate
-          env:
-            RUST_MIN_STACK: 16777216
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - run: make validate
+        env:
+          RUST_MIN_STACK: 16777216
 
   golden-tests:
     name: Golden Acceptance Tests
@@ -322,19 +322,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - run: bash .github/setup-ci.sh
-       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: stable
-       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-         with:
-           shared-key: ci-ubuntu-stable
-           save-if: false
-       - run: make test SCOPE=golden THREADS=2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - run: make test SCOPE=golden THREADS=2
 
   coverage:
     name: Coverage
@@ -346,23 +346,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - run: bash .github/setup-ci.sh --install-coverage
-       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: stable
-       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-         with:
-           shared-key: ci-ubuntu-stable
-           save-if: false
-       - run: make coverage MCB_CI=1 THREADS=4
-       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
-         with:
-           files: ./coverage/lcov.info
-           fail_ci_if_error: false
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh --install-coverage
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - run: make coverage MCB_CI=1 THREADS=4
+      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
 
   # ===========================================================================
   # Stage 3 — Release Artifacts
@@ -395,56 +395,56 @@ jobs:
             artifact_name: mcb.exe
             asset_name: mcb-x86_64-windows.exe
     steps:
-       - name: Enable long paths (Windows)
-         if: runner.os == 'Windows'
-         run: git config --system core.longpaths true
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - name: Install dependencies (Unix)
-         if: runner.os != 'Windows'
-         run: bash .github/setup-ci.sh
-       - name: Install protoc (Windows)
-         if: runner.os == 'Windows'
-         shell: pwsh
-         env:
-           PROTOC_VERSION: "29.3"
-           PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
-         run: |
-           $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-           $zip = "$env:TEMP\protoc.zip"
-           Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-           $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-           if ($hash -ne $env:PROTOC_SHA256) {
-             throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
-           }
-           Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
-           Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
-       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: stable
-           targets: ${{ matrix.target }}
-       - run: make build RELEASE=1
-       - name: Create dist directory
-         run: mkdir -p dist
-       - name: Copy artifact (Unix)
-         if: runner.os != 'Windows'
-         env:
-           ARTIFACT: ${{ matrix.artifact_name }}
-           ASSET: ${{ matrix.asset_name }}
-         run: cp "target/release/$ARTIFACT" "dist/$ASSET"
-       - name: Copy artifact (Windows)
-         if: runner.os == 'Windows'
-         run: Copy-Item "target\release\${{ matrix.artifact_name }}" "dist\${{ matrix.asset_name }}"
-         shell: pwsh
-       - name: Upload artifact
-         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-         with:
-           name: release-artifacts-${{ matrix.target }}
-           path: dist/${{ matrix.asset_name }}
-           retention-days: 7
-           include-hidden-files: false
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          PROTOC_VERSION: "29.3"
+          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
+        run: |
+          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          $zip = "$env:TEMP\protoc.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:PROTOC_SHA256) {
+            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
+          }
+          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+      - run: make build RELEASE=1
+      - name: Create dist directory
+        run: mkdir -p dist
+      - name: Copy artifact (Unix)
+        if: runner.os != 'Windows'
+        env:
+          ARTIFACT: ${{ matrix.artifact_name }}
+          ASSET: ${{ matrix.asset_name }}
+        run: cp "target/release/$ARTIFACT" "dist/$ASSET"
+      - name: Copy artifact (Windows)
+        if: runner.os == 'Windows'
+        run: Copy-Item "target\release\${{ matrix.artifact_name }}" "dist\${{ matrix.asset_name }}"
+        shell: pwsh
+      - name: Upload artifact
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: release-artifacts-${{ matrix.target }}
+          path: dist/${{ matrix.asset_name }}
+          retention-days: 7
+          include-hidden-files: false
 
   # ===========================================================================
   # Gate — Consolidated PR Check (required status check)
@@ -565,26 +565,26 @@ jobs:
     env:
       CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
     steps:
-       - name: Checkout repository
-         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - name: Initialize CodeQL
-         uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
-         with:
-           languages: ${{ matrix.language }}
-           config-file: ./.github/codeql-config.yml
-       - name: Setup Rust
-         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: stable
-       - name: Autobuild
-         uses: github/codeql-action/autobuild@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
-       - name: Perform CodeQL Analysis
-         uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
-         with:
-           category: "/language:${{ matrix.language }}"
+      - name: Checkout repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql-config.yml
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
+        with:
+          category: "/language:${{ matrix.language }}"
 
   # ===========================================================================
   # Dependabot Auto-Merge (independent)
