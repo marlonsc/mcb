@@ -43,14 +43,14 @@ impl McpTestContext {
 pub async fn post_mcp(
     ctx: &McpTestContext,
     request: &McpRequest,
-    headers: &[(&str, &str)],
+    headers: &[(String, String)],
 ) -> TestResult<(StatusCode, McpResponse)> {
     let mut builder = Request::builder()
         .method("POST")
         .uri("/mcp")
         .header("Content-Type", "application/json");
     for (name, value) in headers {
-        builder = builder.header(*name, *value);
+        builder = builder.header(name, value);
     }
 
     let req = builder.body(Body::from(serde_json::to_vec(request)?))?;
@@ -63,6 +63,19 @@ pub async fn post_mcp(
     let body = String::from_utf8(body.to_vec())?;
     let parsed: McpResponse = serde_json::from_str(&body)?;
     Ok((status, parsed))
+}
+
+/// Helper for tests using static string slices
+pub async fn post_mcp_str(
+    ctx: &McpTestContext,
+    request: &McpRequest,
+    headers: &[(&str, &str)],
+) -> TestResult<(StatusCode, McpResponse)> {
+    let owned_headers: Vec<(String, String)> = headers
+        .iter()
+        .map(|(k, v)| (k.to_string(), v.to_string()))
+        .collect();
+    post_mcp(ctx, request, &owned_headers).await
 }
 
 pub fn tools_list_request() -> McpRequest {

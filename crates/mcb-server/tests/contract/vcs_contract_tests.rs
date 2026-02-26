@@ -1,5 +1,7 @@
 use serde_json::json;
 
+use crate::common::workspace_root;
+
 use crate::common::{call_tool, snapshot_payload, tool_call_request};
 
 #[tokio::test]
@@ -8,7 +10,7 @@ async fn vcs_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Er
         "vcs",
         json!({
             "action": "list_repositories",
-            "repo_path": "/home/marlonsc/mcb-v030-seaql-loco-rebuild",
+            "repo_path": workspace_root(),
             "limit": 5,
         }),
     );

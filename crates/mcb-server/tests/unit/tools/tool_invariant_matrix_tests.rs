@@ -8,7 +8,7 @@ use mcb_server::McpServer;
 use mcb_server::tools::router::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use rmcp::model::CallToolRequestParams;
 
-use crate::utils::http_mcp::{McpTestContext, post_mcp, tools_call_request};
+use crate::utils::http_mcp::{McpTestContext, post_mcp_str, tools_call_request};
 use crate::utils::test_fixtures::create_test_mcp_server;
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
@@ -145,7 +145,7 @@ async fn client_hybrid_allows_server_side_tools(
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "client-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers).await?;
+    let (status, response) = post_mcp_str(&ctx, &request, &headers).await?;
 
     assert_eq!(status, StatusCode::OK);
     let error_opt = response.error;
@@ -169,7 +169,7 @@ async fn server_hybrid_blocks_validate() -> Result<(), Box<dyn std::error::Error
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "server-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers).await?;
+    let (status, response) = post_mcp_str(&ctx, &request, &headers).await?;
 
     assert_eq!(status, StatusCode::OK);
     let error_opt = response.error;

@@ -14,7 +14,7 @@ crate::define_string_enum! {
         #[strum(serialize = "mercurial", serialize = "hg")]
         Mercurial,
         /// Subversion repository.
-        #[strum(serialize = "svn", serialize = "subversion")]
+        #[strum(to_string = "svn", serialize = "subversion")]
         Svn,
     }
 }

@@ -10,6 +10,7 @@
 //!
 //! Run with: `cargo test -p mcb-server --test integration stdio_transport`
 
+use serial_test::serial;
 use std::io::{BufRead, BufReader, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
@@ -205,6 +206,7 @@ fn initialize_mcp_session(
 ///
 /// This prevents regression of the fix in commit ffbe441 where ANSI color codes
 /// from logging were polluting the JSON-RPC stream on stdout.
+#[serial]
 #[test]
 fn test_stdio_no_ansi_codes_in_output() -> TestResult {
     let mut guard = spawn_mcb_stdio();
@@ -243,6 +245,7 @@ fn test_stdio_no_ansi_codes_in_output() -> TestResult {
 }
 
 /// Test that response is valid JSON (not corrupted by logs)
+#[serial]
 #[test]
 fn test_stdio_response_is_valid_json() -> TestResult {
     let mut guard = spawn_mcb_stdio();
@@ -288,6 +291,7 @@ fn test_stdio_response_is_valid_json() -> TestResult {
 // =============================================================================
 
 /// Test complete tools/list roundtrip via stdio
+#[serial]
 #[test]
 fn test_stdio_roundtrip_tools_list() -> TestResult {
     let mut guard = spawn_mcb_stdio();
@@ -344,6 +348,7 @@ fn test_stdio_roundtrip_tools_list() -> TestResult {
 }
 
 /// Test initialize request via stdio
+#[serial]
 #[test]
 fn test_stdio_roundtrip_initialize() -> TestResult {
     let mut guard = spawn_mcb_stdio();
@@ -395,6 +400,7 @@ fn test_stdio_roundtrip_initialize() -> TestResult {
 /// transport layer to treat the deserialization error as a closed stream and
 /// shut down the connection.  Both outcomes are valid: the server either
 /// responds with an error **or** closes the connection — it must NOT panic.
+#[serial]
 #[test]
 fn test_stdio_error_response_format() -> TestResult {
     let mut guard = spawn_mcb_stdio();
@@ -467,6 +473,7 @@ fn test_stdio_error_response_format() -> TestResult {
 // =============================================================================
 
 /// Test that logs go to stderr, not stdout
+#[serial]
 #[test]
 fn test_stdio_logs_go_to_stderr() -> TestResult {
     let mut guard = spawn_mcb_stdio();
