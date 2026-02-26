@@ -226,3 +226,77 @@ macro_rules! impl_as_str_from_as_ref {
         }
     };
 }
+
+/// Defines a string enum with standard derive stack and strum serialization.
+///
+/// Generates: `Debug`, `Clone`, `PartialEq`, `Eq`, `serde::Serialize`,
+/// `serde::Deserialize`, `strum_macros::AsRefStr`, `strum_macros::Display`,
+/// `strum_macros::EnumString`, plus `impl_as_str_from_as_ref!`.
+///
+/// Use `schema` to also derive `schemars::JsonSchema`.
+/// Use `serde = "..."` to add `#[serde(rename_all = "...")]`.
+#[macro_export]
+macro_rules! define_string_enum {
+    (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident
+        [strum = $strum_case:literal $(, serde = $serde_case:literal)? , schema]
+        {
+            $(
+                $(#[$variant_meta:meta])*
+                $variant:ident
+            ),* $(,)?
+        }
+    ) => {
+        #[derive(
+            Debug,
+            Clone,
+            PartialEq,
+            Eq,
+            serde::Serialize,
+            serde::Deserialize,
+            schemars::JsonSchema,
+            strum_macros::AsRefStr,
+            strum_macros::Display,
+            strum_macros::EnumString,
+        )]
+        $(#[serde(rename_all = $serde_case)])*
+        #[strum(serialize_all = $strum_case, ascii_case_insensitive)]
+        $(#[$meta])*
+        $vis enum $name {
+            $($(#[$variant_meta])* $variant,)*
+        }
+        crate::impl_as_str_from_as_ref!($name);
+    };
+
+    (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident
+        [strum = $strum_case:literal $(, serde = $serde_case:literal)?]
+        {
+            $(
+                $(#[$variant_meta:meta])*
+                $variant:ident
+            ),* $(,)?
+        }
+    ) => {
+        #[derive(
+            Debug,
+            Clone,
+            PartialEq,
+            Eq,
+            serde::Serialize,
+            serde::Deserialize,
+            strum_macros::AsRefStr,
+            strum_macros::Display,
+            strum_macros::EnumString,
+        )]
+        $(#[serde(rename_all = $serde_case)])*
+        #[strum(serialize_all = $strum_case, ascii_case_insensitive)]
+        $(#[$meta])*
+        $vis enum $name {
+            $($(#[$variant_meta])* $variant,)*
+        }
+        crate::impl_as_str_from_as_ref!($name);
+    };
+}

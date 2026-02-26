@@ -37,24 +37,12 @@ pub struct TeamMember {
 }
 
 /// Role a user holds within a specific team.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
-pub enum TeamMemberRole {
-    /// Team lead with management capabilities.
-    Lead,
-    /// Regular team member.
-    Member,
+crate::define_string_enum! {
+    /// Role a user holds within a specific team.
+    pub enum TeamMemberRole [strum = "lowercase", schema] {
+        /// Team lead with management capabilities.
+        Lead,
+        /// Regular team member.
+        Member,
+    }
 }
-
-crate::impl_as_str_from_as_ref!(TeamMemberRole);

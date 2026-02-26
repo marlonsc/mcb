@@ -34,7 +34,6 @@ pub(crate) mod macros;
 pub mod config;
 pub mod constants;
 pub mod crypto;
-pub mod error_ext;
 pub mod infrastructure;
 
 pub mod logging;

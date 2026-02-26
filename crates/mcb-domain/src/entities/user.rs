@@ -23,30 +23,22 @@ crate::define_entity! {
 }
 
 /// Role a user holds within an organization.
-#[derive(
-    Debug,
-    Clone,
-    Default,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
-pub enum UserRole {
-    /// Full administrative access.
-    #[default]
-    Admin,
-    /// Standard member with read/write access.
-    Member,
-    /// Read-only viewer.
-    Viewer,
-    /// Service account (API-only, used by agents).
-    Service,
+crate::define_string_enum! {
+    /// Role a user holds within an organization.
+    pub enum UserRole [strum = "lowercase", schema] {
+        /// Full administrative access.
+        Admin,
+        /// Standard member with read/write access.
+        Member,
+        /// Read-only viewer.
+        Viewer,
+        /// Service account (API-only, used by agents).
+        Service,
+    }
 }
 
-crate::impl_as_str_from_as_ref!(UserRole);
+impl Default for UserRole {
+    fn default() -> Self {
+        Self::Admin
+    }
+}
