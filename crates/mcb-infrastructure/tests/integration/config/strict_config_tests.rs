@@ -211,7 +211,6 @@ fn test_no_impl_default_in_config_types() -> Result<(), Box<dyn std::error::Erro
 
     let allowed = [
         "CacheProvider",
-        "TransportMode",
         "OperatingMode",
         "PasswordAlgorithm",
         "EventBusBackend",

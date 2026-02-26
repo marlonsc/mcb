@@ -21,13 +21,12 @@ use milvus::value::{Value, ValueVec};
 
 use crate::constants::{
     MILVUS_DEFAULT_TIMEOUT_SECS, MILVUS_DISTANCE_METRIC, MILVUS_ERROR_COLLECTION_NOT_EXISTS,
-    MILVUS_ERROR_RATE_LIMIT, MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_FLUSH_RETRY_BACKOFF_MS,
-    MILVUS_FLUSH_RETRY_COUNT, MILVUS_INDEX_RETRY_BACKOFF_MS, MILVUS_IVFFLAT_NLIST,
+    MILVUS_ERROR_RATE_LIMIT, MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_IVFFLAT_NLIST,
     MILVUS_METADATA_VARCHAR_MAX_LENGTH, MILVUS_PARAM_METRIC_TYPE, MILVUS_PARAM_NLIST,
-    MILVUS_QUERY_BATCH_SIZE, MILVUS_VECTOR_INDEX_NAME, STATS_FIELD_COLLECTION,
-    STATS_FIELD_PROVIDER, STATS_FIELD_STATUS, STATS_FIELD_VECTORS_COUNT, STATUS_ACTIVE,
-    VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_ID, VECTOR_FIELD_LINE_NUMBER,
-    VECTOR_FIELD_START_LINE, VECTOR_FIELD_VECTOR,
+    MILVUS_QUERY_BATCH_SIZE, MILVUS_VECTOR_INDEX_NAME, PROVIDER_RETRY_BACKOFF_MS,
+    PROVIDER_RETRY_COUNT, STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS,
+    STATS_FIELD_VECTORS_COUNT, STATUS_ACTIVE, VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH,
+    VECTOR_FIELD_ID, VECTOR_FIELD_LINE_NUMBER, VECTOR_FIELD_START_LINE, VECTOR_FIELD_VECTOR,
 };
 use crate::utils::retry::{RetryConfig, retry_with_backoff};
 
@@ -270,8 +269,8 @@ impl MilvusVectorStoreProvider {
 
         let index_result: std::result::Result<(), milvus::error::Error> = retry_with_backoff(
             RetryConfig::new(
-                MILVUS_FLUSH_RETRY_COUNT,
-                std::time::Duration::from_millis(MILVUS_INDEX_RETRY_BACKOFF_MS),
+                PROVIDER_RETRY_COUNT,
+                std::time::Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
             ),
             |_| async {
                 let nlist_params: HashMap<String, String> = HashMap::from([(
@@ -635,8 +634,8 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
         let name_str = to_milvus_name(collection);
         let result = retry_with_backoff(
             RetryConfig::new(
-                MILVUS_FLUSH_RETRY_COUNT,
-                std::time::Duration::from_millis(MILVUS_FLUSH_RETRY_BACKOFF_MS),
+                PROVIDER_RETRY_COUNT,
+                std::time::Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
             ),
             |_| self.client.flush_collections(vec![&name_str]),
             |e| {

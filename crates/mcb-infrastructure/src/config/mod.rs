@@ -15,7 +15,7 @@ pub mod validation;
 pub use types::{
     AppConfig, AuthConfig, CacheProvider, CacheSystemConfig, DatabaseConfig,
     DatabaseConfigContainer, LoggingConfig, ServerConfig, ServerCorsConfig, ServerNetworkConfig,
-    ServerSslConfig, ServerTimeoutConfig, TransportMode,
+    ServerSslConfig, ServerTimeoutConfig,
 };
 
 pub use mcp_context_config::{GitConfig, McpContextConfig};

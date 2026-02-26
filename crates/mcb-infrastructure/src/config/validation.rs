@@ -1,5 +1,4 @@
 use crate::config::AppConfig;
-use crate::config::TransportMode;
 use crate::constants::auth::*;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::ProjectSettings;
@@ -87,12 +86,6 @@ pub fn validate_app_config(config: &AppConfig) -> Result<()> {
 }
 
 fn validate_server_config(config: &AppConfig) -> Result<()> {
-    if matches!(config.server.transport_mode, TransportMode::Http) {
-        return Err(Error::ConfigInvalid {
-            key: "server.transport_mode".to_owned(),
-            message: "transport_mode=http is not supported. Use stdio or hybrid (stdio bridge to local daemon).".to_owned(),
-        });
-    }
     if config.server.ssl.https
         && (config.server.ssl.ssl_cert_path.is_none() || config.server.ssl.ssl_key_path.is_none())
     {

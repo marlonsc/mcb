@@ -12,7 +12,7 @@ use mcb_domain::constants::embedding::EMBEDDING_DIMENSION_GEMINI;
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
 use crate::constants::{
-    EMBEDDING_RETRY_BACKOFF_MS, EMBEDDING_RETRY_COUNT, HTTP_HEADER_CONTENT_TYPE,
+    PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT, HTTP_HEADER_CONTENT_TYPE,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
@@ -86,8 +86,8 @@ impl GeminiEmbeddingProvider {
             headers: &headers,
             body: Some(&payload),
             retry: Some(RetryConfig::new(
-                EMBEDDING_RETRY_COUNT,
-                std::time::Duration::from_millis(EMBEDDING_RETRY_BACKOFF_MS),
+                PROVIDER_RETRY_COUNT,
+                std::time::Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
             )),
         })
         .await

@@ -43,14 +43,6 @@ pub const MILVUS_DEFAULT_QUERY_LIMIT: i64 = 10_000;
 /// Milvus pagination batch size (keeps gRPC responses under 4MB limit)
 pub const MILVUS_QUERY_BATCH_SIZE: usize = 100;
 
-/// Milvus flush retry count
-pub const MILVUS_FLUSH_RETRY_COUNT: usize = 3;
-
-/// Milvus flush retry backoff in milliseconds
-pub const MILVUS_FLUSH_RETRY_BACKOFF_MS: u64 = 1000;
-
-/// Milvus index creation retry backoff in milliseconds
-pub const MILVUS_INDEX_RETRY_BACKOFF_MS: u64 = 500;
 
 /// Milvus distance metric type for search
 pub const MILVUS_DISTANCE_METRIC: &str = "L2";

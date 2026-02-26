@@ -23,7 +23,7 @@ use crate::{
 
 use crate::constants::{
     EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_INPUT, EMBEDDING_PARAM_MODEL,
-    EMBEDDING_RETRY_BACKOFF_MS, EMBEDDING_RETRY_COUNT, HTTP_HEADER_AUTHORIZATION,
+    PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT, HTTP_HEADER_AUTHORIZATION,
     HTTP_HEADER_CONTENT_TYPE,
 };
 use crate::utils::embedding::{HttpEmbeddingClient, parse_standard_embedding, process_batch};
@@ -80,8 +80,8 @@ impl AnthropicEmbeddingProvider {
             headers: &headers,
             body: Some(&payload),
             retry: Some(RetryConfig::new(
-                EMBEDDING_RETRY_COUNT,
-                std::time::Duration::from_millis(EMBEDDING_RETRY_BACKOFF_MS),
+                PROVIDER_RETRY_COUNT,
+                std::time::Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
             )),
         })
         .await

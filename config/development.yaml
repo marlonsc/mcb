@@ -49,7 +49,6 @@ settings:
     max_reconnect_attempts: 5
 
   server:
-    transport_mode: stdio
     network:
       host: "0.0.0.0"
       port: 3000
@@ -99,15 +98,6 @@ settings:
         - cpp
         - c
         - go
-
-  mcp_context:
-    git:
-      branches:
-        - main
-        - HEAD
-      depth: 50
-      ignore_patterns: []
-      include_submodules: true
 
   logging:
     level: info

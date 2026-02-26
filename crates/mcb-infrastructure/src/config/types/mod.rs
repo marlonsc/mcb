@@ -24,8 +24,7 @@ pub use app::{
     InfrastructureConfig, JwtConfig, LimitsConfig, LoggingConfig, McpConfig, ModeConfig,
     OperatingMode, OperationsConfig, OperationsDaemonConfig, PasswordAlgorithm, ProvidersConfig,
     ResilienceConfig, ServerConfig, ServerCorsConfig, ServerNetworkConfig, ServerSslConfig,
-    ServerTimeoutConfig, SnapshotConfig, SyncConfig, SystemConfig, TransportMode,
-    VectorStoreConfigContainer,
+    ServerTimeoutConfig, SnapshotConfig, SyncConfig, SystemConfig, VectorStoreConfigContainer,
 };
 // Also re-export MetricsConfig which is only in infrastructure
 pub use infrastructure::MetricsConfig;

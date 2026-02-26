@@ -11,12 +11,10 @@ mod validation_tests;
 
 use mcb_infrastructure::config::{
     ServerConfig, ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig,
-    TransportMode,
 };
 
 pub(super) fn default_server_config() -> ServerConfig {
     ServerConfig {
-        transport_mode: TransportMode::Stdio,
         network: ServerNetworkConfig {
             host: "127.0.0.1".to_owned(),
             port: 8080,

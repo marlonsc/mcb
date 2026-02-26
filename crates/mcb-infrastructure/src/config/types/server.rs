@@ -7,32 +7,6 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-/// Transport mode for MCP server
-///
-/// Defines how the MCP server communicates with clients.
-///
-/// # Modes
-///
-/// | Mode | Description | Use Case |
-/// | ------ | ------------- | ---------- |
-/// | `Stdio` | Standard I/O streams | CLI tools, IDE integrations |
-/// | `Http` | HTTP with SSE | Web clients, REST APIs |
-/// | `Hybrid` | Both simultaneously | Dual-interface servers |
-#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
-#[serde(rename_all = "lowercase")]
-pub enum TransportMode {
-    /// Standard I/O transport (traditional MCP protocol)
-    /// Used for CLI tools and IDE integrations (e.g., Claude Code)
-    #[default]
-    Stdio,
-    /// HTTP transport with Server-Sent Events
-    /// Used for web clients and REST API access
-    Http,
-    /// Both Stdio and HTTP simultaneously
-    /// Allows serving both CLI and web clients from the same process
-    Hybrid,
-}
-
 /// Network configuration for server
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -87,9 +61,6 @@ pub struct ServerCorsConfig {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ServerConfig {
-    /// Transport mode (stdio, http, hybrid)
-    pub transport_mode: TransportMode,
-
     /// Network configuration
     pub network: ServerNetworkConfig,
 

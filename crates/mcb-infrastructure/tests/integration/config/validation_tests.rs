@@ -124,7 +124,6 @@ fn test_cache_config_ttl_when_enabled() {
 fn test_ssl_cert_required_for_https() {
     // HTTPS without SSL paths should fail validation
     let https_no_ssl = ServerConfig {
-        transport_mode: default_server_config().transport_mode,
         network: default_server_config().network,
         ssl: ServerSslConfig {
             https: true,
@@ -143,7 +142,6 @@ fn test_ssl_cert_required_for_https() {
 
     // HTTPS with only cert path should fail
     let https_cert_only = ServerConfig {
-        transport_mode: default_server_config().transport_mode,
         network: default_server_config().network,
         ssl: ServerSslConfig {
             https: true,
@@ -162,7 +160,6 @@ fn test_ssl_cert_required_for_https() {
 
     // HTTP config doesn't require SSL
     let http_config = ServerConfig {
-        transport_mode: default_server_config().transport_mode,
         network: default_server_config().network,
         ssl: ServerSslConfig {
             https: false,

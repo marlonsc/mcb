@@ -15,7 +15,6 @@ pub use super::infrastructure::{
 pub use super::mode::{ModeConfig, OperatingMode};
 pub use super::server::{
     ServerConfig, ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig,
-    TransportMode,
 };
 pub use super::system::{
     AdminApiKeyConfig, ApiKeyConfig, AuthConfig, BackupConfig, DaemonConfig, EventBusBackend,
@@ -89,13 +88,6 @@ pub struct ProvidersConfig {
     pub vector_store: VectorStoreConfigContainer,
 }
 
-/// Default context settings for MCP operations.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[serde(deny_unknown_fields)]
-pub struct McpContextDefaultsConfig {
-    /// Git-related context defaults.
-    pub git: McpContextGitDefaultsConfig,
-}
 
 /// Indexing configuration for file discovery.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -113,19 +105,6 @@ pub struct McpConfig {
     pub indexing: IndexingConfig,
 }
 
-/// Git defaults for MCP context resolution.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[serde(deny_unknown_fields)]
-pub struct McpContextGitDefaultsConfig {
-    /// Default branches to consider.
-    pub branches: Vec<String>,
-    /// Clone depth limit.
-    pub depth: usize,
-    /// Glob patterns to exclude from context.
-    pub ignore_patterns: Vec<String>,
-    /// Whether to include git submodules.
-    pub include_submodules: bool,
-}
 
 /// Infrastructure configurations
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -194,8 +173,6 @@ pub struct AppConfig {
     pub operations_daemon: OperationsDaemonConfig,
     /// MCP server feature configuration.
     pub mcp: McpConfig,
-    /// MCP context resolution defaults.
-    pub mcp_context: McpContextDefaultsConfig,
     /// Project settings loaded from workspace
     #[serde(skip)]
     pub project_settings: Option<ProjectSettings>,
