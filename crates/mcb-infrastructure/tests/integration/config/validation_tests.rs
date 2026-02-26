@@ -7,9 +7,10 @@ use serial_test::serial;
 use std::path::PathBuf;
 
 use mcb_infrastructure::config::{
-    CacheProvider, CacheSystemConfig, ServerConfig, ServerConfigBuilder, ServerConfigPresets,
-    ServerSslConfig, TestConfigBuilder,
+    CacheProvider, CacheSystemConfig, ServerConfig, ServerSslConfig, TestConfigBuilder,
 };
+
+use super::{default_server_config, development_config, production_config, testing_config};
 
 fn loaded_config() -> mcb_infrastructure::config::AppConfig {
     TestConfigBuilder::new()
@@ -23,16 +24,16 @@ fn loaded_config() -> mcb_infrastructure::config::AppConfig {
 #[case(443)]
 #[case(65535)]
 fn server_config_port_validation(#[case] port: u16) {
-    let config = ServerConfigBuilder::new().port(port).build();
+    let mut config = default_server_config();
+    config.network.port = port;
     assert_eq!(config.network.port, port);
 }
 
 #[test]
 fn server_config_address_parsing() {
-    let config = ServerConfigBuilder::new()
-        .host("127.0.0.1")
-        .port(8080)
-        .build();
+    let mut config = default_server_config();
+    config.network.host = "127.0.0.1".to_owned();
+    config.network.port = 8080;
     let addr = config.parse_address().unwrap();
     assert_eq!(addr.port(), 8080);
 }
@@ -40,12 +41,14 @@ fn server_config_address_parsing() {
 #[test]
 #[serial]
 fn test_auth_config_jwt_secret_length() {
-    // Default config has empty secret - MUST be configured when auth is enabled
-    // per ADR-025: fail-fast on missing configuration
     let default_auth = loaded_config().auth;
     assert!(
-        default_auth.jwt.secret.is_empty(),
-        "Default JWT secret should be empty (must be configured via settings.auth.jwt.secret in config YAML)"
+        !default_auth.jwt.secret.is_empty(),
+        "JWT secret must be configured in test YAML"
+    );
+    assert!(
+        default_auth.jwt.secret.len() >= 32,
+        "Configured JWT secret should be at least 32 characters"
     );
 
     // Custom secret can be set - minimum 32 characters required
@@ -121,15 +124,15 @@ fn test_cache_config_ttl_when_enabled() {
 fn test_ssl_cert_required_for_https() {
     // HTTPS without SSL paths should fail validation
     let https_no_ssl = ServerConfig {
-        transport_mode: ServerConfigBuilder::new().build().transport_mode,
-        network: ServerConfigBuilder::new().build().network,
+        transport_mode: default_server_config().transport_mode,
+        network: default_server_config().network,
         ssl: ServerSslConfig {
             https: true,
             ssl_cert_path: None,
             ssl_key_path: None,
         },
-        timeouts: ServerConfigBuilder::new().build().timeouts,
-        cors: ServerConfigBuilder::new().build().cors,
+        timeouts: default_server_config().timeouts,
+        cors: default_server_config().cors,
     };
     let result = https_no_ssl.validate_ssl();
     let err = result.expect_err("HTTPS without SSL paths should fail validation");
@@ -140,15 +143,15 @@ fn test_ssl_cert_required_for_https() {
 
     // HTTPS with only cert path should fail
     let https_cert_only = ServerConfig {
-        transport_mode: ServerConfigBuilder::new().build().transport_mode,
-        network: ServerConfigBuilder::new().build().network,
+        transport_mode: default_server_config().transport_mode,
+        network: default_server_config().network,
         ssl: ServerSslConfig {
             https: true,
             ssl_cert_path: Some(PathBuf::from("/path/to/cert.pem")),
             ssl_key_path: None,
         },
-        timeouts: ServerConfigBuilder::new().build().timeouts,
-        cors: ServerConfigBuilder::new().build().cors,
+        timeouts: default_server_config().timeouts,
+        cors: default_server_config().cors,
     };
     let result = https_cert_only.validate_ssl();
     let err = result.expect_err("HTTPS with cert only should fail validation");
@@ -159,15 +162,15 @@ fn test_ssl_cert_required_for_https() {
 
     // HTTP config doesn't require SSL
     let http_config = ServerConfig {
-        transport_mode: ServerConfigBuilder::new().build().transport_mode,
-        network: ServerConfigBuilder::new().build().network,
+        transport_mode: default_server_config().transport_mode,
+        network: default_server_config().network,
         ssl: ServerSslConfig {
             https: false,
             ssl_cert_path: None,
             ssl_key_path: None,
         },
-        timeouts: ServerConfigBuilder::new().build().timeouts,
-        cors: ServerConfigBuilder::new().build().cors,
+        timeouts: default_server_config().timeouts,
+        cors: default_server_config().cors,
     };
     let result = http_config.validate_ssl();
     result.expect("HTTP config should pass SSL validation");
@@ -177,7 +180,7 @@ fn test_ssl_cert_required_for_https() {
 #[serial]
 fn test_default_config_is_valid() {
     // Default server config should be parseable
-    let server_config = ServerConfigBuilder::new().build();
+    let server_config = default_server_config();
     let addr_result = server_config.parse_address();
     assert!(
         addr_result.is_ok(),
@@ -192,27 +195,27 @@ fn test_default_config_is_valid() {
     );
 
     // Presets should produce valid configs
-    let dev_config = ServerConfigPresets::development();
+    let dev_config = development_config();
     assert!(dev_config.parse_address().is_ok());
     assert!(dev_config.validate_ssl().is_ok());
 
-    let test_config = ServerConfigPresets::testing();
+    let test_config = testing_config();
     assert!(test_config.parse_address().is_ok());
     assert!(test_config.validate_ssl().is_ok());
 
     // Production preset has HTTPS but no SSL paths - that's expected for "template"
     // Users must provide real SSL paths for production
-    let prod_config = ServerConfigPresets::production();
+    let prod_config = production_config();
     assert!(prod_config.parse_address().is_ok());
     // Production config is a template, SSL paths must be added by user
     // So we just verify the address is valid
 
-    // Default auth config - JWT secret is empty by design (must be configured)
     let auth_config = loaded_config().auth;
     assert!(
-        auth_config.jwt.secret.is_empty(),
-        "Default JWT secret should be empty per ADR-025"
+        !auth_config.jwt.secret.is_empty(),
+        "JWT secret must be configured in test profile"
     );
+    assert!(auth_config.jwt.secret.len() >= 32);
     assert!(auth_config.jwt.expiration_secs > 0);
 
     // Default cache config should have valid values
@@ -230,36 +233,34 @@ fn server_url_generation(
     #[case] https: bool,
     #[case] expected_url: &str,
 ) {
-    let config = ServerConfigBuilder::new()
-        .host(host)
-        .port(port)
-        .https(https)
-        .build();
+    let mut config = default_server_config();
+    config.network.host = host.to_owned();
+    config.network.port = port;
+    config.ssl.https = https;
     assert_eq!(config.get_base_url(), expected_url);
 }
 
 #[test]
 fn test_cors_configuration() {
     // CORS disabled
-    let no_cors = ServerConfigBuilder::new().cors(false, vec![]).build();
+    let mut no_cors = default_server_config();
+    no_cors.cors.cors_enabled = false;
+    no_cors.cors.cors_origins = vec![];
     assert!(!no_cors.cors.cors_enabled);
     assert!(no_cors.cors.cors_origins.is_empty());
 
     // CORS with specific origins
-    let cors_config = ServerConfigBuilder::new()
-        .cors(
-            true,
-            vec![
-                "https://app.example.com".to_owned(),
-                "https://admin.example.com".to_owned(),
-            ],
-        )
-        .build();
+    let mut cors_config = default_server_config();
+    cors_config.cors.cors_enabled = true;
+    cors_config.cors.cors_origins = vec![
+        "https://app.example.com".to_owned(),
+        "https://admin.example.com".to_owned(),
+    ];
     assert!(cors_config.cors.cors_enabled);
     assert_eq!(cors_config.cors.cors_origins.len(), 2);
 
     // Development preset has permissive CORS
-    let dev_config = ServerConfigPresets::development();
+    let dev_config = development_config();
     let (enabled, origins) = (
         dev_config.cors.cors_enabled,
         dev_config.cors.cors_origins.clone(),
@@ -272,10 +273,9 @@ fn test_cors_configuration() {
 #[case(120, 30)]
 #[case(60, 10)]
 fn timeout_configuration(#[case] request_secs: u64, #[case] connection_secs: u64) {
-    let config = ServerConfigBuilder::new()
-        .request_timeout(request_secs)
-        .connection_timeout(connection_secs)
-        .build();
+    let mut config = default_server_config();
+    config.timeouts.request_timeout_secs = request_secs;
+    config.timeouts.connection_timeout_secs = connection_secs;
 
     let request_timeout = config.request_timeout();
     let connection_timeout = config.connection_timeout();

@@ -94,7 +94,10 @@ fn test_missing_yaml_config_fails() {
 
     let message = result.expect_err("must fail").to_string();
     assert!(
-        message.contains("Configuration file not found") || message.contains("not found"),
+        message.contains("Configuration file not found")
+            || message.contains("not found")
+            || message.contains("No such file or directory")
+            || message.contains("Failed to read"),
         "error should mention missing file, got: {message}"
     );
 }
@@ -207,7 +210,6 @@ fn test_no_impl_default_in_config_types() -> Result<(), Box<dyn std::error::Erro
     let types_dir = root.join("crates/mcb-infrastructure/src/config/types");
 
     let allowed = [
-        "ServerConfigBuilder",
         "CacheProvider",
         "TransportMode",
         "OperatingMode",

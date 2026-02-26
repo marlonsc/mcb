@@ -4,11 +4,13 @@
 //! during the configuration refactoring. These tests are retained as a
 //! placeholder for future configuration type testing.
 
-use mcb_infrastructure::config::{ServerConfigBuilder, ServerNetworkConfig, ServerSslConfig};
+use mcb_infrastructure::config::{ServerNetworkConfig, ServerSslConfig};
+
+use super::default_server_config;
 
 #[test]
 fn test_server_config_defaults() {
-    let config = ServerConfigBuilder::new().build();
+    let config = default_server_config();
 
     // Network defaults
     assert!(!config.network.host.is_empty());

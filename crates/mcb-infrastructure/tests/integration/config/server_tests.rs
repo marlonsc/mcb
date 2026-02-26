@@ -3,12 +3,11 @@
 use rstest::rstest;
 use std::net::SocketAddr;
 
-use mcb_infrastructure::config::{ServerConfigBuilder, ServerConfigPresets};
-use mcb_infrastructure::constants::http::DEFAULT_HTTPS_PORT;
+use super::{default_server_config, development_config, production_config, testing_config};
 
 #[test]
 fn test_parse_address() {
-    let mut config = ServerConfigBuilder::new().build();
+    let mut config = default_server_config();
     config.network.host = "127.0.0.1".to_owned();
     config.network.port = 8080;
 
@@ -20,7 +19,7 @@ fn test_parse_address() {
 #[case("127.0.0.1", 8080, false, "http://127.0.0.1:8080")]
 #[case("example.com", 8443, true, "https://example.com:8443")]
 fn server_url(#[case] host: &str, #[case] port: u16, #[case] https: bool, #[case] expected: &str) {
-    let mut config = ServerConfigBuilder::new().build();
+    let mut config = default_server_config();
     config.network.host = host.to_owned();
     config.network.port = port;
     config.ssl.https = https;
@@ -30,13 +29,13 @@ fn server_url(#[case] host: &str, #[case] port: u16, #[case] https: bool, #[case
 
 #[test]
 fn test_server_config_builder() {
-    let config = ServerConfigBuilder::new()
-        .host("0.0.0.0")
-        .port(9000)
-        .https(true)
-        .request_timeout(120)
-        .cors(true, vec!["https://app.example.com".to_owned()])
-        .build();
+    let mut config = default_server_config();
+    config.network.host = "0.0.0.0".to_owned();
+    config.network.port = 9000;
+    config.ssl.https = true;
+    config.timeouts.request_timeout_secs = 120;
+    config.cors.cors_enabled = true;
+    config.cors.cors_origins = vec!["https://app.example.com".to_owned()];
 
     assert_eq!(config.network.host, "0.0.0.0");
     assert_eq!(config.network.port, 9000);
@@ -48,17 +47,17 @@ fn test_server_config_builder() {
 
 #[test]
 fn test_presets() {
-    let dev_config = ServerConfigPresets::development();
+    let dev_config = development_config();
     assert_eq!(dev_config.network.host, "127.0.0.1");
     assert_eq!(dev_config.network.port, 8080);
     assert!(!dev_config.ssl.https);
 
-    let prod_config = ServerConfigPresets::production();
+    let prod_config = production_config();
     assert_eq!(prod_config.network.host, "0.0.0.0");
-    assert_eq!(prod_config.network.port, DEFAULT_HTTPS_PORT);
+    assert_eq!(prod_config.network.port, 8443);
     assert!(prod_config.ssl.https);
 
-    let test_config = ServerConfigPresets::testing();
+    let test_config = testing_config();
     assert_eq!(test_config.network.port, 0); // Random port
     assert!(!test_config.ssl.https);
 }
