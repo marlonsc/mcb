@@ -137,7 +137,7 @@ jobs:
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
-      - run: make lint MCB_CI=1
+      - run: make lint
 
   audit:
     name: Security Audit
