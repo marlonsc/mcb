@@ -60,23 +60,22 @@ impl ProjectDetector for PythonDetector {
         let requirements_path = path.join("requirements.txt");
 
         // Try pyproject.toml first (modern standard)
-        if pyproject_path.exists() {
-            if let Some(content) = read_file_opt(&pyproject_path, "python").await
-                && let Some(pyproject) =
-                    parse_toml_opt::<PyProject>(&content, &pyproject_path, "python")
-                && let Some(project) = pyproject.project
-            {
-                return Ok(Some(ProjectType::Python {
-                    name: project.name.unwrap_or_else(|| {
-                        path.file_name()
-                            .and_then(|n| n.to_str())
-                            .unwrap_or("unknown")
-                            .to_owned()
-                    }),
-                    version: project.version,
-                    dependencies: project.dependencies.unwrap_or_default(),
-                }));
-            }
+        if pyproject_path.exists()
+            && let Some(content) = read_file_opt(&pyproject_path, "python").await
+            && let Some(pyproject) =
+                parse_toml_opt::<PyProject>(&content, &pyproject_path, "python")
+            && let Some(project) = pyproject.project
+        {
+            return Ok(Some(ProjectType::Python {
+                name: project.name.unwrap_or_else(|| {
+                    path.file_name()
+                        .and_then(|n| n.to_str())
+                        .unwrap_or("unknown")
+                        .to_owned()
+                }),
+                version: project.version,
+                dependencies: project.dependencies.unwrap_or_default(),
+            }));
         }
 
         // Fall back to requirements.txt

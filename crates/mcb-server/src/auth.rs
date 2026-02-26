@@ -68,10 +68,7 @@ pub(crate) fn configured_api_key_header(settings: Option<&serde_json::Value>) ->
         .and_then(|auth| auth.get("api_key"))
         .and_then(|api_key| api_key.get("header"))
         .and_then(serde_json::Value::as_str)
-        .map_or_else(
-            || API_KEY_HEADER.to_owned(),
-            |header| header.to_ascii_lowercase(),
-        )
+        .map_or_else(|| API_KEY_HEADER.to_owned(), str::to_ascii_lowercase)
 }
 
 fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String> {

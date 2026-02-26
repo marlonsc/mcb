@@ -45,4 +45,5 @@ pub trait ProjectDetector: Send + Sync {
 }
 
 #[linkme::distributed_slice]
+/// Distributed slice of all registered project detectors.
 pub static PROJECT_DETECTORS: [ProjectDetectorEntry] = [..];

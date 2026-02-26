@@ -88,11 +88,11 @@ fn run_validation(
     use mcb_domain::registry::validation::{build_validators, run_validators};
 
     let root = workspace_root.to_path_buf();
-    let validators_list = build_validators(root.clone())?;
+    let validators_list = build_validators(&root)?;
     let request = RuleValidatorRequest {
         workspace_root: root,
-        validator_names: validators.map(|s| s.to_vec()),
-        severity_filter: severity_filter.map(String::from),
+        validator_names: validators.map(<[String]>::to_vec),
+        severity_filter: severity_filter.map(Into::into),
         exclude_patterns: None,
     };
     run_validators(&validators_list, &request)

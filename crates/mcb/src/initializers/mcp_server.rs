@@ -1,6 +1,6 @@
 //! MCP server Loco initializer.
 //!
-//! Builds and wires the MCP server and McbState through Loco's initializer pipeline.
+//! Builds and wires the MCP server and `McbState` through Loco's initializer pipeline.
 //! All handler state is managed by Loco; no manual bootstrap in Hooks.
 
 use std::sync::Arc;
@@ -17,7 +17,7 @@ use mcb_server::tools::ExecutionFlow;
 use mcb_server::transport::http::HttpTransportState;
 use mcb_server::transport::stdio::StdioServerExt;
 
-/// Loco initializer that builds the MCP server and injects McbState into the router.
+/// Loco initializer that builds the MCP server and injects `McbState` into the router.
 pub struct McpServerInitializer;
 
 #[async_trait]

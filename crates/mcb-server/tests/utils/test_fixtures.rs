@@ -218,6 +218,21 @@ impl SharedTestContext {
 }
 
 fn create_shared_test_context() -> Option<SharedTestContext> {
+    // Create a persistent multi-thread runtime for provider actor tasks.
+    // FastEmbed and EdgeVec use `tokio::spawn` for actor loops that must outlive
+    // individual `#[tokio::test]` runtimes (each test creates/drops its own runtime).
+    // Intentionally leaked because SharedTestContext is process-wide via OnceLock.
+    let persistent_rt = Box::leak(Box::new(
+        tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(2)
+            .enable_all()
+            .build()
+            .ok()?,
+    ));
+    // Enter the persistent runtime so tokio::spawn calls (inside provider constructors)
+    // target it instead of the calling test's short-lived runtime.
+    let _guard = persistent_rt.enter();
+
     let builder = TestConfigBuilder::new().ok()?;
     let builder = builder.with_fastembed_shared_cache().ok()?;
     let (config, _opt_temp) = builder.build().ok()?;
@@ -282,7 +297,7 @@ pub fn try_shared_app_context() -> Option<&'static SharedTestContext> {
     CTX.get_or_init(create_shared_test_context).as_ref()
 }
 
-#[allow(clippy::panic)]
+#[allow(clippy::panic, clippy::expect_used)]
 pub fn shared_app_context() -> &'static SharedTestContext {
     try_shared_app_context().expect("shared test context init failed")
 }
@@ -320,12 +335,13 @@ async fn create_test_resolution_context() -> Option<(ServiceResolutionContext, T
 // create_test_mcp_server
 // ---------------------------------------------------------------------------
 
-/// Create an MCP server with default providers (SQLite, FastEmbed, etc.) and an isolated DB.
+/// Create an MCP server with default providers (`SQLite`, `FastEmbed`, etc.) and an isolated DB.
 ///
 /// Builds state via Loco-style composition: [`ServiceResolutionContext`] +
-/// [`build_mcp_server_bootstrap`]. Each call gets its own `TempDir` and database.
+/// [`build_mcp_server_bootstrap`]. Each call gets its own [`TempDir`] and database.
 ///
 /// Returns `(server, temp_dir)` — keep `temp_dir` alive for the test.
+#[allow(clippy::panic)]
 pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
     let (resolution_ctx, temp_dir) = create_test_resolution_context()
         .await
@@ -339,6 +355,7 @@ pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
 }
 
 /// Process-wide shared [`McbState`] for unit tests. Builds once via [`create_real_domain_services`].
+#[allow(clippy::unwrap_used)]
 pub fn try_shared_mcb_state() -> Option<&'static mcb_server::state::McbState> {
     static STATE: std::sync::OnceLock<
         Option<(mcb_server::state::McbState, Box<tempfile::TempDir>)>,
@@ -359,7 +376,7 @@ pub fn try_shared_mcb_state() -> Option<&'static mcb_server::state::McbState> {
     STATE.get().and_then(|o| o.as_ref()).map(|(s, _)| s as &_)
 }
 
-#[allow(clippy::panic)]
+#[allow(clippy::panic, clippy::expect_used)]
 pub fn shared_mcb_state() -> &'static mcb_server::state::McbState {
     try_shared_mcb_state().expect("shared McbState init failed")
 }

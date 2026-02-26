@@ -6,6 +6,7 @@ use serial_test::serial;
 
 use mcb_infrastructure::config::{CacheProvider, CacheSystemConfig, TestConfigBuilder};
 
+#[allow(clippy::expect_used)]
 fn loaded_config() -> mcb_infrastructure::config::AppConfig {
     TestConfigBuilder::new()
         .and_then(|b| b.build().map(|(config, _)| config))

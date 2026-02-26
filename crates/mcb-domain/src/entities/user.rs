@@ -36,6 +36,8 @@ crate::define_string_enum! {
     }
 }
 
+// Manual impl because `define_string_enum!` does not derive Default for all enums.
+#[allow(clippy::derivable_impls)]
 impl Default for UserRole {
     fn default() -> Self {
         Self::Admin

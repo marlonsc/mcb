@@ -2,6 +2,11 @@ use crate::config::AppConfig;
 use crate::constants::auth::*;
 use mcb_domain::error::{Error, Result};
 
+/// Validate the application configuration at startup.
+///
+/// # Errors
+///
+/// Returns an error if any configuration constraint is violated.
 pub fn validate_app_config(config: &AppConfig) -> Result<()> {
     validate_auth_config(config)?;
     validate_cache_config(config)?;

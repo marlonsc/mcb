@@ -28,13 +28,18 @@ pub type ToolCallFn = for<'a> fn(&'a CallToolRequestParams, &'a ToolHandlers) ->
 
 /// Single source-of-truth descriptor for both tool listing and dispatch.
 pub struct ToolDescriptor {
+    /// Unique tool name exposed via MCP.
     pub name: &'static str,
+    /// Human-readable tool description.
     pub description: &'static str,
+    /// Factory that produces the JSON schema for tool arguments.
     pub schema: fn() -> schemars::Schema,
+    /// Dispatch function for tool invocation.
     pub call: ToolCallFn,
 }
 
 #[linkme::distributed_slice]
+/// All registered tool descriptors.
 pub static TOOL_DESCRIPTORS: [ToolDescriptor];
 
 /// Register a tool: generates schema factory, dispatch function, and linkme descriptor.
@@ -204,6 +209,10 @@ fn descriptor_by_name(name: &str) -> Option<&'static ToolDescriptor> {
 }
 
 /// Resolve a tool definition by name from the descriptor registry.
+///
+/// # Errors
+///
+/// Returns an error if the tool name is unknown or the registry contains duplicates.
 pub fn tool_by_name(name: &str) -> Result<Tool, McpError> {
     validate_registry_unique_tool_names()?;
     let descriptor = descriptor_by_name(name)
@@ -212,6 +221,10 @@ pub fn tool_by_name(name: &str) -> Result<Tool, McpError> {
 }
 
 /// Create the complete list of available tools from the shared registry.
+///
+/// # Errors
+///
+/// Returns an error if the registry contains duplicates or a schema fails to serialize.
 pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
     validate_registry_unique_tool_names()?;
     TOOL_DESCRIPTORS
@@ -221,6 +234,10 @@ pub fn create_tool_list() -> Result<Vec<Tool>, McpError> {
 }
 
 /// Dispatch to the tool call function from the shared descriptor registry.
+///
+/// # Errors
+///
+/// Returns an error if the tool name is unknown or the handler fails.
 pub async fn dispatch_tool_call(
     request: &CallToolRequestParams,
     handlers: &ToolHandlers,

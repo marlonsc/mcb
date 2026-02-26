@@ -57,7 +57,9 @@ pub mod database;
 pub mod embedding;
 pub mod events;
 pub mod language;
+/// Project detection provider registry.
 pub mod project_detection;
+/// Service registry (context, indexing, search, memory, agent session, validation).
 pub mod services;
 
 pub use services::{
@@ -72,5 +74,7 @@ pub use validation::{
     VALIDATION_PROVIDERS, VALIDATOR_ENTRIES, ValidationProviderConfig, ValidatorEntry,
     build_validators, list_validator_entries, list_validator_names, run_validators,
 };
+/// VCS provider registry.
 pub mod vcs;
+/// Vector store provider registry.
 pub mod vector_store;

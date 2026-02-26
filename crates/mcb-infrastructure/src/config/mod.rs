@@ -9,6 +9,7 @@ mod mcp_context_config;
 pub mod paths;
 pub mod test_builder;
 pub mod types;
+/// Application configuration validation at startup.
 pub mod validation;
 
 // Re-export main configuration types

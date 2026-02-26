@@ -61,7 +61,7 @@ macro_rules! impl_registry {
             })
         }
 
-        /// List all registered providers
+        /// List all registered providers as `(name, description)` pairs.
         pub fn $list() -> Vec<(&'static str, &'static str)> {
             $slice.iter().map(|e| (e.name, e.description)).collect()
         }

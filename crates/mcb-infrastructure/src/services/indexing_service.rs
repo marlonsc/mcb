@@ -499,7 +499,7 @@ fn build_indexing_service_from_registry(
 
     let indexing_ops: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());
-    let event_bus = ctx.event_bus.clone();
+    let event_bus = Arc::clone(&ctx.event_bus);
 
     Ok(Arc::new(
         IndexingServiceImpl::new_with_file_hash_repository(IndexingServiceWithHashDeps {

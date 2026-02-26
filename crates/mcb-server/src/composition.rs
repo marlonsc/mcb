@@ -51,13 +51,13 @@ pub fn build_mcp_server_bootstrap(
         project: resolve_project_detection_service(&ProjectDetectionServiceConfig::new(
             "universal",
         ))?,
-        project_workflow: repos.project.clone(),
+        project_workflow: Arc::clone(&repos.project),
         vcs: resolve_vcs_provider(&VcsProviderConfig::new("git"))?,
         entities: McpEntityRepositories {
-            vcs: repos.vcs_entity.clone(),
-            plan: repos.plan_entity.clone(),
-            issue: repos.issue_entity.clone(),
-            org: repos.org_entity.clone(),
+            vcs: Arc::clone(&repos.vcs_entity),
+            plan: Arc::clone(&repos.plan_entity),
+            issue: Arc::clone(&repos.issue_entity),
+            org: Arc::clone(&repos.org_entity),
         },
     };
 

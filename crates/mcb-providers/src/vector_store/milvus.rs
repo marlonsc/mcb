@@ -219,6 +219,7 @@ impl MilvusVectorStoreProvider {
     }
 
     fn extract_string_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<String> {
+        #[allow(clippy::wildcard_enum_match_arm)]
         Self::extract_field(fields, name, index, "string", |value| match value {
             Value::String(text) => Some(text.to_string()),
             _ => None,
@@ -226,6 +227,7 @@ impl MilvusVectorStoreProvider {
     }
 
     fn extract_long_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<i64> {
+        #[allow(clippy::wildcard_enum_match_arm)]
         Self::extract_field(fields, name, index, "long", |value| match value {
             Value::Long(number) => Some(number),
             _ => None,

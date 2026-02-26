@@ -97,7 +97,7 @@ impl ValidationProvider for McbValidateProvider {
 
 fn run_validation(workspace_root: &Path, options: &ValidationOptions) -> Result<ValidationReport> {
     let root = workspace_root.to_path_buf();
-    let validators_list = build_validators(root.clone())?;
+    let validators_list = build_validators(&root)?;
     let request = RuleValidatorRequest {
         workspace_root: root,
         validator_names: options.validators.clone(),

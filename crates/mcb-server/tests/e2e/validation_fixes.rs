@@ -5,6 +5,8 @@
 //! 2. Session Create Schema Fallback (`agent_type` in data) - P2
 //! 3. Memory Observation Enum Validation - P2
 
+use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
+use mcb_domain::utils::time::epoch_secs_i64;
 use mcb_server::args::{
     AgentAction, AgentArgs, MemoryAction, MemoryArgs, MemoryResource, SessionAction, SessionArgs,
 };
@@ -17,14 +19,40 @@ use crate::utils::text::extract_text;
 #[tokio::test]
 async fn test_validation_agent_sql_storage_flow() {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
-    let agent_h = server.agent_handler();
 
-    // Verify LogTool handles repo errors gracefully (proving handler execution)
+    // Create a session first — LogTool requires an existing session in the DB
+    let session_id_str = "test-sql-storage-session";
+    let now = epoch_secs_i64().unwrap_or(0);
+    let session = AgentSession {
+        id: mcb_domain::value_objects::SessionId::from_name(session_id_str).to_string(),
+        session_summary_id: "test-summary".to_owned(),
+        agent_type: AgentType::Sisyphus,
+        model: "test-model".to_owned(),
+        parent_session_id: None,
+        started_at: now,
+        ended_at: None,
+        duration_ms: None,
+        status: AgentSessionStatus::Active,
+        prompt_summary: None,
+        result_summary: None,
+        token_count: None,
+        tool_calls_count: None,
+        delegations_count: None,
+        project_id: None,
+        worktree_id: None,
+    };
+    server
+        .agent_session_service()
+        .create_session(session)
+        .await
+        .expect("pre-create agent session");
+
+    let agent_h = server.agent_handler();
     let result = agent_h
         .handle(Parameters(AgentArgs {
             action: AgentAction::LogTool,
             org_id: None,
-            session_id: mcb_domain::value_objects::SessionId::from_name("missing-session"),
+            session_id: mcb_domain::value_objects::SessionId::from_name(session_id_str),
             data: json!({
                 "tool_name": "test",
                 "success": true,

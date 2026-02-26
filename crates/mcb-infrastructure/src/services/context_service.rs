@@ -23,6 +23,7 @@ pub struct ContextServiceImpl {
 }
 
 impl ContextServiceImpl {
+    /// Create a new context service from embedding and vector store providers.
     pub fn new(
         embedding_provider: Arc<dyn EmbeddingProvider>,
         vector_store_provider: Arc<dyn VectorStoreProvider>,
@@ -63,24 +64,24 @@ impl ContextServiceInterface for ContextServiceImpl {
             .map(|chunk| {
                 let mut m = HashMap::new();
                 m.insert(
-                    METADATA_KEY_FILE_PATH.to_string(),
+                    METADATA_KEY_FILE_PATH.to_owned(),
                     Value::String(chunk.file_path.clone()),
                 );
                 m.insert(
-                    METADATA_KEY_START_LINE.to_string(),
+                    METADATA_KEY_START_LINE.to_owned(),
                     Value::String(chunk.start_line.to_string()),
                 );
                 m.insert(
-                    METADATA_KEY_END_LINE.to_string(),
+                    METADATA_KEY_END_LINE.to_owned(),
                     Value::String(chunk.end_line.to_string()),
                 );
                 m.insert(
-                    METADATA_KEY_CONTENT.to_string(),
+                    METADATA_KEY_CONTENT.to_owned(),
                     Value::String(chunk.content.clone()),
                 );
                 if !chunk.language.is_empty() {
                     m.insert(
-                        METADATA_KEY_LANGUAGE.to_string(),
+                        METADATA_KEY_LANGUAGE.to_owned(),
                         Value::String(chunk.language.clone()),
                     );
                 }

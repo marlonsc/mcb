@@ -87,12 +87,12 @@ pub struct RuleValidatorRequest {
     pub exclude_patterns: Option<Vec<String>>,
 }
 
-/// Port for a single rule validator (e.g. clean_architecture, quality).
+/// Port for a single rule validator (e.g. `clean_architecture`, `quality`).
 ///
 /// Validators are discovered via linkme in [`crate::registry::validation::VALIDATOR_ENTRIES`]
 /// and built with a workspace root. Implementations live in mcb-validate.
 pub trait RuleValidator: Send + Sync {
-    /// Unique validator name (e.g. "clean_architecture", "quality").
+    /// Unique validator name (e.g. `"clean_architecture"`, `"quality"`).
     fn name(&self) -> &'static str;
 
     /// Run this validator and return a validation report.

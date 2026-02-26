@@ -24,6 +24,7 @@ pub mod edgevec;
 pub mod encrypted;
 pub mod milvus;
 pub mod pinecone;
+/// Qdrant vector search engine provider.
 pub mod qdrant;
 
 // Re-export for convenience

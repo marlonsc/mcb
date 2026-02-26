@@ -28,5 +28,7 @@ pub mod infrastructure {
 pub use crate::loco_app::McbApp;
 pub use domain::*;
 pub use server::McpServer;
+/// Loco initializers for the MCP server.
 pub mod initializers;
+/// Loco application hook implementation.
 pub mod loco_app;

@@ -20,7 +20,9 @@ use crate::ports::{
 pub struct DatabaseRepositories {
     /// Repository for memory entities.
     pub memory: Arc<dyn MemoryRepository>,
+    /// Repository for authentication data.
     pub auth: Arc<dyn AuthRepositoryPort>,
+    /// Repository for dashboard queries.
     pub dashboard: Arc<dyn DashboardQueryPort>,
     /// Repository for agent entities.
     pub agent: Arc<dyn AgentRepository>,

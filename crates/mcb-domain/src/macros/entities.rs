@@ -266,7 +266,7 @@ macro_rules! define_string_enum {
         $vis enum $name {
             $($(#[$variant_meta])* $variant,)*
         }
-        crate::impl_as_str_from_as_ref!($name);
+        $crate::impl_as_str_from_as_ref!($name);
     };
 
     (
@@ -297,6 +297,6 @@ macro_rules! define_string_enum {
         $vis enum $name {
             $($(#[$variant_meta])* $variant,)*
         }
-        crate::impl_as_str_from_as_ref!($name);
+        $crate::impl_as_str_from_as_ref!($name);
     };
 }

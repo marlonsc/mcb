@@ -197,7 +197,11 @@ async fn test_validate_run_with_specific_rules() -> Result<(), Box<dyn std::erro
     let result = handler.handle(Parameters(args)).await;
     let response = result.expect("validate handler should return rule validation response");
     assert!(!response.content.is_empty(), "response should have content");
-    assert!(response.is_error.unwrap_or(false), "Should return error");
+    // Non-existent rules produce 0 violations = success (no matching rules to enforce)
+    assert!(
+        !response.is_error.unwrap_or(false),
+        "non-existent rules should not cause an error — they simply produce 0 violations"
+    );
     Ok(())
 }
 

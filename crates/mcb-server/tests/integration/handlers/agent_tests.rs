@@ -1,3 +1,5 @@
+use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
+use mcb_domain::utils::time::epoch_secs_i64;
 use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::args::{AgentAction, AgentArgs};
 use mcb_server::handlers::AgentHandler;
@@ -52,9 +54,47 @@ fn build_args(action: AgentAction, session_id: &str, data: serde_json::Value) ->
 )]
 #[tokio::test]
 async fn test_agent_actions_return_mcp_response(#[case] args: AgentArgs) {
-    let Some((handler, _temp_dir)) = create_handler().await else {
-        return;
+    let (state, temp_dir) = match create_real_domain_services().await {
+        Some(v) => v,
+        None => return,
     };
+    let service = state.mcp_server.agent_session_service();
+
+    // Create the parent agent session — LogTool/LogDelegation require an existing session
+    let now = epoch_secs_i64().unwrap_or(0);
+    let make_session = |id: String| AgentSession {
+        id,
+        session_summary_id: "test-summary".to_owned(),
+        agent_type: AgentType::Sisyphus,
+        model: "test-model".to_owned(),
+        parent_session_id: None,
+        started_at: now,
+        ended_at: None,
+        duration_ms: None,
+        status: AgentSessionStatus::Active,
+        prompt_summary: None,
+        result_summary: None,
+        token_count: None,
+        tool_calls_count: None,
+        delegations_count: None,
+        project_id: None,
+        worktree_id: None,
+    };
+    // Parent session ID is the UUID from SessionId::from_name(TEST_SESSION_ID)
+    service
+        .create_session(make_session(
+            SessionId::from_name(TEST_SESSION_ID).to_string(),
+        ))
+        .await
+        .ok();
+    // Child session ID is used as raw string by the handler (not hashed)
+    service
+        .create_session(make_session("child-session-123".to_owned()))
+        .await
+        .ok();
+
+    let handler = AgentHandler::new(service);
+    let _temp_dir = temp_dir;
 
     let result = handler.handle(Parameters(args)).await;
     let response = result.expect("agent handler should succeed for valid agent action");

@@ -19,7 +19,7 @@ use uuid::Uuid;
 
 /// Canonical string field → alias mapping for context resolution.
 ///
-/// Each entry maps a canonical key to all accepted aliases (camelCase, x-header, snake_case).
+/// Each entry maps a canonical key to all accepted aliases (`camelCase`, `x-header`, `snake_case`).
 const STRING_FIELD_ALIASES: &[(&str, &[&str])] = &[
     (
         "session_id",
@@ -420,8 +420,7 @@ fn field_aliases(canonical: &str) -> &'static [&'static str] {
         .iter()
         .chain(BOOL_FIELD_ALIASES.iter())
         .find(|&&(k, _)| k == canonical)
-        .map(|&(_, aliases)| aliases)
-        .unwrap_or(&[])
+        .map_or(&[] as &[&str], |&(_, aliases)| aliases)
 }
 
 fn insert_override(overrides: &mut HashMap<String, String>, key: &str, value: Option<String>) {

@@ -46,5 +46,7 @@ pub mod validation;
 mod exports;
 pub use exports::*;
 pub mod events;
+/// Repository trait re-exports for infrastructure consumers.
 pub mod repositories;
+/// DI resolution context for service factory functions.
 pub mod resolution_context;

@@ -7,11 +7,11 @@
 //! Providers register themselves via `#[linkme::distributed_slice]` and are
 //! discovered at runtime.
 //!
-//! Individual rule validators (e.g. clean_architecture, quality) are also
+//! Individual rule validators (e.g. `clean_architecture`, `quality`) are also
 //! registered via [`VALIDATOR_ENTRIES`] and built/resolved through this module.
 
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 use crate::error::Result;
@@ -65,12 +65,12 @@ crate::impl_registry!(
 // Rule validator entries (linkme-discovered validators)
 // ============================================================================
 
-/// Registry entry for a single rule validator (e.g. clean_architecture, quality).
+/// Registry entry for a single rule validator (e.g. `clean_architecture`, `quality`).
 ///
 /// Validators register via `#[linkme::distributed_slice(VALIDATOR_ENTRIES)]`
 /// in implementing crates (e.g. mcb-validate).
 pub struct ValidatorEntry {
-    /// Unique validator name (e.g. "clean_architecture")
+    /// Unique validator name (e.g. `"clean_architecture"`).
     pub name: &'static str,
     /// Human-readable description
     pub description: &'static str,
@@ -96,7 +96,7 @@ pub fn list_validator_entries() -> Vec<(&'static str, &'static str)> {
 pub fn list_validator_names() -> Vec<String> {
     VALIDATOR_ENTRIES
         .iter()
-        .map(|e| e.name.to_string())
+        .map(|e| e.name.to_owned())
         .collect()
 }
 
@@ -105,10 +105,10 @@ pub fn list_validator_names() -> Vec<String> {
 /// # Errors
 ///
 /// Returns an error if any validator's build function fails.
-pub fn build_validators(workspace_root: PathBuf) -> Result<Vec<Arc<dyn RuleValidator>>> {
+pub fn build_validators(workspace_root: &Path) -> Result<Vec<Arc<dyn RuleValidator>>> {
     let mut out = Vec::with_capacity(VALIDATOR_ENTRIES.len());
     for entry in VALIDATOR_ENTRIES {
-        let v = (entry.build)(workspace_root.clone()).map_err(|e| {
+        let v = (entry.build)(workspace_root.to_path_buf()).map_err(|e| {
             crate::error::Error::Configuration {
                 message: format!("validator '{}': {}", entry.name, e),
                 source: None,
@@ -191,7 +191,7 @@ fn filter_violations_by_severity(
             let l = match v.severity.as_str() {
                 "ERROR" => 1,
                 "WARNING" => 2,
-                "INFO" => 3,
+                // INFO and any unknown severity treated as lowest priority
                 _ => 3,
             };
             l <= level

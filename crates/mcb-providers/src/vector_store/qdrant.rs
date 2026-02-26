@@ -18,6 +18,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 use std::time::Duration;
+
+/// Qdrant vector search engine client.
 pub struct QdrantVectorStoreProvider {
     base_url: String,
     api_key: Option<String>,
@@ -35,6 +37,7 @@ impl fmt::Debug for QdrantVectorStoreProvider {
     }
 }
 impl QdrantVectorStoreProvider {
+    /// Create a new Qdrant vector store provider.
     #[must_use]
     pub fn new(
         base_url: &str,
