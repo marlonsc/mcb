@@ -6,7 +6,66 @@ permissions:
 on: [push, pull_request]
 
 jobs:
-  test:
+  changes:
+    name: Detect Changes
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+      docs: ${{ steps.filter.outputs.docs }}
+      ci: ${{ steps.filter.outputs.ci }}
     steps:
-      - run: echo "Hello"
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'src/**'
+              - 'crates/**'
+              - 'tests/**'
+              - 'Cargo.toml'
+              - 'Cargo.lock'
+            docs:
+              - 'docs/**'
+              - 'scripts/docs/**'
+            ci:
+              - '.github/workflows/ci.yml'
+              - '.github/setup-ci.sh'
+              - 'Makefile'
+              - 'make/*.mk'
+
+  classify:
+    name: Classify PR
+    needs: [changes]
+    runs-on: ubuntu-latest
+    outputs:
+      is_draft: ${{ steps.classify.outputs.is_draft }}
+      is_bot: ${{ steps.classify.outputs.is_bot }}
+      is_fork: ${{ steps.classify.outputs.is_fork }}
+      run_full: ${{ steps.classify.outputs.run_full }}
+      run_simplified: ${{ steps.classify.outputs.run_simplified }}
+    steps:
+      - name: Classify PR Type
+        id: classify
+        env:
+          IS_DRAFT: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft || 'false' }}
+          IS_BOT: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.type == 'Bot' || 'false' }}
+          IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork || 'false' }}
+        run: |
+          echo "is_draft=${IS_DRAFT}" >> "$GITHUB_OUTPUT"
+          echo "is_bot=${IS_BOT}" >> "$GITHUB_OUTPUT"
+          echo "is_fork=${IS_FORK}" >> "$GITHUB_OUTPUT"
+
+          if [[ "${IS_DRAFT}" == "false" && "${IS_BOT}" == "false" ]]; then
+            echo "run_full=true" >> "$GITHUB_OUTPUT"
+            echo "run_simplified=false" >> "$GITHUB_OUTPUT"
+          elif [[ "${IS_BOT}" == "true" || "${IS_DRAFT}" == "true" ]]; then
+            echo "run_full=false" >> "$GITHUB_OUTPUT"
+            echo "run_simplified=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_full=false" >> "$GITHUB_OUTPUT"
+            echo "run_simplified=false" >> "$GITHUB_OUTPUT"
+          fi
