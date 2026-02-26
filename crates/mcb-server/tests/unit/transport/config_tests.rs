@@ -1,11 +1,16 @@
-use mcb_infrastructure::config::ConfigLoader;
-use mcb_infrastructure::config::TransportMode;
+use mcb_infrastructure::config::{TestConfigBuilder, TransportMode};
 use mcb_server::transport::config::TransportConfig;
 use rstest::rstest;
 
+fn loaded_config() -> mcb_infrastructure::config::AppConfig {
+    TestConfigBuilder::new()
+        .and_then(|b| b.build().map(|(config, _)| config))
+        .expect("load config")
+}
+
 #[test]
 fn test_from_server_config() {
-    let loaded = ConfigLoader::new().load().expect("load config");
+    let loaded = loaded_config();
     let config = TransportConfig::from_server_config(&loaded.server);
     assert_eq!(config.mode, loaded.server.transport_mode);
     assert_eq!(config.http_port, Some(loaded.server.network.port));
@@ -24,7 +29,7 @@ fn test_transport_constructors(
     #[case] offset: u16,
     #[case] expected_mode: TransportMode,
 ) {
-    let loaded = ConfigLoader::new().load().expect("load config");
+    let loaded = loaded_config();
     let override_port = loaded.server.network.port.saturating_add(offset);
     let host = loaded.server.network.host.clone();
     let config = match kind {
@@ -49,7 +54,7 @@ fn test_transport_constructors(
 
 #[test]
 fn test_config_clone() {
-    let loaded = ConfigLoader::new().load().expect("load config");
+    let loaded = loaded_config();
     let override_port = loaded.server.network.port.saturating_add(11);
     let config = TransportConfig::http(loaded.server.network.host.clone(), override_port);
     let cloned = config.clone();

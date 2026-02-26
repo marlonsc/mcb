@@ -40,66 +40,54 @@ fn find_builder(name: &str) -> Result<ServiceBuilder> {
         .ok_or_else(|| Error::internal(format!("No service provider found for '{name}'")))
 }
 
-pub fn resolve_context_service(context: &dyn Any) -> Result<Arc<dyn ContextServiceInterface>> {
-    match find_builder(CONTEXT_SERVICE_NAME)? {
-        ServiceBuilder::Context(build) => build(context),
-        _ => Err(Error::internal(format!(
-            "Service provider '{}' is not a context builder",
-            CONTEXT_SERVICE_NAME
-        ))),
-    }
+macro_rules! resolve_service {
+    ($fn_name:ident, $const:ident, $variant:ident, $trait_obj:ty) => {
+        pub fn $fn_name(context: &dyn std::any::Any) -> Result<std::sync::Arc<$trait_obj>> {
+            match find_builder($const)? {
+                ServiceBuilder::$variant(build) => build(context),
+                _ => Err(Error::internal(format!(
+                    "Service provider '{}' is not a {} builder",
+                    $const,
+                    stringify!($variant)
+                ))),
+            }
+        }
+    };
 }
 
-pub fn resolve_indexing_service(context: &dyn Any) -> Result<Arc<dyn IndexingServiceInterface>> {
-    match find_builder(INDEXING_SERVICE_NAME)? {
-        ServiceBuilder::Indexing(build) => build(context),
-        _ => Err(Error::internal(format!(
-            "Service provider '{}' is not an indexing builder",
-            INDEXING_SERVICE_NAME
-        ))),
-    }
-}
-
-pub fn resolve_search_service(context: &dyn Any) -> Result<Arc<dyn SearchServiceInterface>> {
-    match find_builder(SEARCH_SERVICE_NAME)? {
-        ServiceBuilder::Search(build) => build(context),
-        _ => Err(Error::internal(format!(
-            "Service provider '{}' is not a search builder",
-            SEARCH_SERVICE_NAME
-        ))),
-    }
-}
-
-pub fn resolve_memory_service(context: &dyn Any) -> Result<Arc<dyn MemoryServiceInterface>> {
-    match find_builder(MEMORY_SERVICE_NAME)? {
-        ServiceBuilder::Memory(build) => build(context),
-        _ => Err(Error::internal(format!(
-            "Service provider '{}' is not a memory builder",
-            MEMORY_SERVICE_NAME
-        ))),
-    }
-}
-
-pub fn resolve_agent_session_service(
-    context: &dyn Any,
-) -> Result<Arc<dyn AgentSessionServiceInterface>> {
-    match find_builder(AGENT_SESSION_SERVICE_NAME)? {
-        ServiceBuilder::AgentSession(build) => build(context),
-        _ => Err(Error::internal(format!(
-            "Service provider '{}' is not an agent session builder",
-            AGENT_SESSION_SERVICE_NAME
-        ))),
-    }
-}
-
-pub fn resolve_validation_service(
-    context: &dyn Any,
-) -> Result<Arc<dyn ValidationServiceInterface>> {
-    match find_builder(VALIDATION_SERVICE_NAME)? {
-        ServiceBuilder::Validation(build) => build(context),
-        _ => Err(Error::internal(format!(
-            "Service provider '{}' is not a validation builder",
-            VALIDATION_SERVICE_NAME
-        ))),
-    }
-}
+resolve_service!(
+    resolve_context_service,
+    CONTEXT_SERVICE_NAME,
+    Context,
+    dyn ContextServiceInterface
+);
+resolve_service!(
+    resolve_indexing_service,
+    INDEXING_SERVICE_NAME,
+    Indexing,
+    dyn IndexingServiceInterface
+);
+resolve_service!(
+    resolve_search_service,
+    SEARCH_SERVICE_NAME,
+    Search,
+    dyn SearchServiceInterface
+);
+resolve_service!(
+    resolve_memory_service,
+    MEMORY_SERVICE_NAME,
+    Memory,
+    dyn MemoryServiceInterface
+);
+resolve_service!(
+    resolve_agent_session_service,
+    AGENT_SESSION_SERVICE_NAME,
+    AgentSession,
+    dyn AgentSessionServiceInterface
+);
+resolve_service!(
+    resolve_validation_service,
+    VALIDATION_SERVICE_NAME,
+    Validation,
+    dyn ValidationServiceInterface
+);

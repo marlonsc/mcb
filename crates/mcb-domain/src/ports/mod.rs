@@ -47,11 +47,11 @@ pub use admin::{
 
 // --- Infrastructure ---
 pub use infrastructure::{
-    AuthServiceInterface, DependencyHealth, DependencyHealthCheck, DomainEventStream,
+    DependencyHealth, DependencyHealthCheck, DomainEventStream,
     EventBusProvider, ExtendedHealthResponse, LifecycleManaged, LogLevel, OperationLogger,
     PortServiceState, ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator,
-    ShutdownCoordinator, SnapshotProvider, StateStoreProvider, SyncCoordinator, SyncOptions,
-    SyncProvider, SyncResult, SystemMetrics, SystemMetricsCollectorInterface,
+    ShutdownCoordinator, SnapshotProvider, SyncCoordinator, SyncOptions,
+    SyncProvider, SyncResult,
 };
 
 // --- Providers ---
@@ -59,9 +59,8 @@ pub use providers::vector_store::{VectorStoreAdmin, VectorStoreBrowser};
 pub use providers::{
     ComplexityAnalyzer, ComplexityFinding,
     CryptoProvider, DeadCodeDetector,
-    DeadCodeFinding, EmbeddingProvider, EncryptedData, FileMetrics, FunctionMetrics,
-    HalsteadMetrics, HttpClientConfig, HttpClientProvider, HybridSearchProvider,
-    HybridSearchResult, LanguageChunkingProvider, MetricLabels, MetricsAnalysisProvider,
+    DeadCodeFinding, EmbeddingProvider, EncryptedData, HttpClientConfig, HttpClientProvider, HybridSearchProvider,
+    HybridSearchResult, LanguageChunkingProvider, MetricLabels,
     MetricsError, MetricsProvider, MetricsResult, PROJECT_DETECTORS, ProjectDetector,
     ProjectDetectorConfig, ProjectDetectorEntry, ProviderConfigManagerInterface, RuleValidator,
     RuleValidatorRequest, TdgFinding, TdgScorer, ValidationOptions, ValidationProvider,

@@ -2,10 +2,11 @@
 
 use std::env;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use crate::utils::workspace::{scan_rs_files, workspace_root};
-use mcb_infrastructure::config::ConfigLoader;
+use mcb_domain::error::{Error, Result as DomainResult};
+use mcb_infrastructure::config::{AppConfig, validate_app_config};
 use tempfile::TempDir;
 
 fn workspace_development_yaml() -> Result<PathBuf, Box<dyn std::error::Error>> {
@@ -63,13 +64,32 @@ fn remove_port_from_yaml(yaml: &str) -> String {
     result
 }
 
+fn load_app_config_from_yaml_path(path: &Path) -> DomainResult<AppConfig> {
+    let content = fs::read_to_string(path).map_err(|e| Error::Configuration {
+        message: format!("Failed to read {}: {e}", path.display()),
+        source: None,
+    })?;
+    let yaml: serde_yaml::Value =
+        serde_yaml::from_str(&content).map_err(|e| Error::Configuration {
+            message: format!("Failed to parse YAML: {e}"),
+            source: None,
+        })?;
+    let settings = yaml
+        .get("settings")
+        .ok_or_else(|| Error::ConfigMissing("No 'settings' key in config".to_owned()))?;
+    let config: AppConfig =
+        serde_yaml::from_value(settings.clone()).map_err(|e| Error::Configuration {
+            message: format!("Failed to deserialize AppConfig: {e}"),
+            source: None,
+        })?;
+    validate_app_config(&config)?;
+    Ok(config)
+}
+
 #[test]
 fn test_missing_yaml_config_fails() {
-    // Use with_config_path pointing to a non-existent file — bypasses CWD/CARGO_MANIFEST_DIR
-    // fallback, directly testing the missing-file error path.
-    let result = ConfigLoader::new()
-        .with_config_path("/tmp/nonexistent-dir/config/development.yaml")
-        .load();
+    let result =
+        load_app_config_from_yaml_path(Path::new("/tmp/nonexistent-dir/config/development.yaml"));
     assert!(result.is_err(), "missing config file must fail");
 
     let message = result.expect_err("must fail").to_string();
@@ -86,7 +106,7 @@ fn test_unknown_key_rejected() {
     let yaml_content = fs::read_to_string(workspace_development_yaml().unwrap()).unwrap();
     let yaml_with_bogus = inject_bogus_key_into_yaml(&yaml_content);
     let yaml_path = write_temp_yaml(&temp_dir, &yaml_with_bogus).unwrap();
-    let result = ConfigLoader::new().with_config_path(&yaml_path).load();
+    let result = load_app_config_from_yaml_path(&yaml_path);
     assert!(
         result.is_err(),
         "unknown keys in YAML should be rejected (deny_unknown_fields), but load succeeded"
@@ -101,7 +121,7 @@ fn test_missing_required_key_fails() {
     let missing_port_yaml = remove_port_from_yaml(&yaml_content);
     let yaml_path = write_temp_yaml(&temp_dir, &missing_port_yaml).unwrap();
 
-    let result = ConfigLoader::new().with_config_path(&yaml_path).load();
+    let result = load_app_config_from_yaml_path(&yaml_path);
     assert!(
         result.is_err(),
         "missing required key server.network.port must fail"
@@ -118,7 +138,6 @@ fn test_missing_required_key_fails() {
 // MCP__ env var prefixes) was removed during the Figment→Loco YAML migration.
 // Environment variable override is no longer supported in the YAML-based config system.
 // If env override is needed in the future, it would need to be implemented as a separate
-// feature in ConfigLoader using serde_yaml's environment variable support.
 
 // ── Enforcement: no config bypass ────────────────────────────────────────────
 
@@ -126,7 +145,7 @@ fn test_missing_required_key_fails() {
 fn test_no_direct_env_var_in_production_code() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
     let allowed_paths: &[&str] = &[
-        "mcb-infrastructure/src/config/loader.rs",
+        "mcb-infrastructure/src/config/validation.rs",
         "mcb-validate/src/config/",
     ];
 

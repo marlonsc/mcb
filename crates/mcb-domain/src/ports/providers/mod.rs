@@ -14,7 +14,6 @@
 //! | VectorStoreProvider | Vector storage and similarity search |
 //! | HybridSearchProvider | Combined semantic and keyword search |
 //! | LanguageChunkingProvider | Language-specific code chunking |
-//! | MetricsAnalysisProvider | Code complexity metrics analysis |
 //! | ValidationProvider | Pluggable code validation engines |
 //! | CryptoProvider | Encryption/decryption services |
 //! | ProjectDetector | Project type detection (Cargo, npm, Python, Go, Maven) |
@@ -35,8 +34,6 @@ pub mod hybrid_search;
 mod language_chunking;
 /// Observability metrics provider port (Prometheus/OpenTelemetry)
 pub mod metrics;
-/// Code metrics analysis provider port
-pub mod metrics_analysis;
 /// Project detection provider port
 pub mod project_detection;
 /// Validation provider port
@@ -57,9 +54,6 @@ pub use http::{HttpClientConfig, HttpClientProvider};
 pub use hybrid_search::{HybridSearchProvider, HybridSearchResult};
 pub use language_chunking::LanguageChunkingProvider;
 pub use metrics::{MetricLabels, MetricsError, MetricsProvider, MetricsResult};
-pub use metrics_analysis::{
-    FileMetrics, FunctionMetrics, HalsteadMetrics, MetricsAnalysisProvider,
-};
 pub use project_detection::{
     PROJECT_DETECTORS, ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
 };

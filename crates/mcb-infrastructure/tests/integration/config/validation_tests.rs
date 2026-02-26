@@ -6,11 +6,16 @@ use rstest::rstest;
 use serial_test::serial;
 use std::path::PathBuf;
 
-use mcb_infrastructure::config::ConfigLoader;
 use mcb_infrastructure::config::{
     CacheProvider, CacheSystemConfig, ServerConfig, ServerConfigBuilder, ServerConfigPresets,
-    ServerSslConfig,
+    ServerSslConfig, TestConfigBuilder,
 };
+
+fn loaded_config() -> mcb_infrastructure::config::AppConfig {
+    TestConfigBuilder::new()
+        .and_then(|b| b.build().map(|(config, _)| config))
+        .expect("load config")
+}
 
 #[rstest]
 #[case(0)]
@@ -37,7 +42,7 @@ fn server_config_address_parsing() {
 fn test_auth_config_jwt_secret_length() {
     // Default config has empty secret - MUST be configured when auth is enabled
     // per ADR-025: fail-fast on missing configuration
-    let default_auth = ConfigLoader::new().load().unwrap().auth;
+    let default_auth = loaded_config().auth;
     assert!(
         default_auth.jwt.secret.is_empty(),
         "Default JWT secret should be empty (must be configured via settings.auth.jwt.secret in config YAML)"
@@ -74,12 +79,7 @@ fn test_cache_config_ttl_when_enabled() {
     assert!(enabled_cache.max_size > 0);
 
     // Default cache config has reasonable TTL
-    let default_cache = ConfigLoader::new()
-        .load()
-        .unwrap()
-        .system
-        .infrastructure
-        .cache;
+    let default_cache = loaded_config().system.infrastructure.cache;
     assert!(
         default_cache.default_ttl_secs >= 60,
         "Default TTL should be at least 60 seconds"
@@ -208,7 +208,7 @@ fn test_default_config_is_valid() {
     // So we just verify the address is valid
 
     // Default auth config - JWT secret is empty by design (must be configured)
-    let auth_config = ConfigLoader::new().load().unwrap().auth;
+    let auth_config = loaded_config().auth;
     assert!(
         auth_config.jwt.secret.is_empty(),
         "Default JWT secret should be empty per ADR-025"
@@ -216,12 +216,7 @@ fn test_default_config_is_valid() {
     assert!(auth_config.jwt.expiration_secs > 0);
 
     // Default cache config should have valid values
-    let cache_config = ConfigLoader::new()
-        .load()
-        .unwrap()
-        .system
-        .infrastructure
-        .cache;
+    let cache_config = loaded_config().system.infrastructure.cache;
     assert!(cache_config.default_ttl_secs > 0);
     assert!(cache_config.max_size > 0);
 }

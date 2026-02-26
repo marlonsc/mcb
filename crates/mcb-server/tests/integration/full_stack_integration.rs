@@ -47,7 +47,7 @@ fn create_test_chunks() -> Vec<CodeChunk> {
             file_path: "src/main.rs".to_owned(),
             content: "#[tokio::main]
 async fn main() {
-    let config = ConfigLoader::new().load()?;
+    let config = TestConfigBuilder::new()?.build()?.0;
     run_server(&config).await;
 }"
             .to_owned(),
