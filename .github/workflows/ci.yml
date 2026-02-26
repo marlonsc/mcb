@@ -17,13 +17,13 @@ permissions:
 
 on: # yamllint disable-line rule:truthy
   push:
-    # branches:
-      #       - main
-      #       - "feat/*"
+    branches:
+      - main
+      - "feat/*"
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
-    # branches:
+    branches:
       - main
 
 concurrency:
@@ -97,7 +97,7 @@ jobs:
           if [[ "${IS_DRAFT}" == "false" && "${IS_BOT}" == "false" ]]; then
             echo "run_full=true" >> "$GITHUB_OUTPUT"
             echo "run_simplified=false" >> "$GITHUB_OUTPUT"
-          elif [[ "${IS_BOT}" == "true" ]]; then
+          elif [[ "${IS_BOT}" == "true" || "${IS_DRAFT}" == "true" ]]; then
             echo "run_full=false" >> "$GITHUB_OUTPUT"
             echo "run_simplified=true" >> "$GITHUB_OUTPUT"
           else
@@ -133,7 +133,7 @@ jobs:
            save-if: true
        - run: make lint MCB_CI=1
 
-   audit:
+  audit:
     name: Security Audit
     timeout-minutes: 10
     needs: [changes, classify]
@@ -154,7 +154,7 @@ jobs:
            save-if: false
        - run: make audit
 
-   validate-docs:
+  validate-docs:
     name: Validate Documentation
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -176,7 +176,7 @@ jobs:
            npm install -g markdownlint-cli
        - run: make docs-validate QUICK=1
 
-   docs-diagrams:
+  docs-diagrams:
     name: Generate Diagrams
     timeout-minutes: 10
     runs-on: ubuntu-latest
@@ -201,11 +201,11 @@ jobs:
            retention-days: 30
            include-hidden-files: false
 
-   # ===========================================================================
-   # Stage 2a — Primary Test Gate (reuses lint cache, ~8 min)
-   # ===========================================================================
+  # ===========================================================================
+  # Stage 2a — Primary Test Gate (reuses lint cache, ~8 min)
+  # ===========================================================================
 
-   test-linux:
+  test-linux:
     name: Test (ubuntu-latest, Rust stable)
     needs: [changes, classify, lint]
     if: |
@@ -231,11 +231,11 @@ jobs:
        - name: Full Test Suite
          run: make test THREADS=4
 
-   # ===========================================================================
-   # Stage 2b — Extended Testing (after linux stable, all parallel)
-   # ===========================================================================
+  # ===========================================================================
+  # Stage 2b — Extended Testing (after linux stable, all parallel)
+  # ===========================================================================
 
-   test-cross:
+  test-cross:
     name: Test (${{ matrix.os }}, Rust ${{ matrix.rust }})
     needs: [changes, classify, test-linux]
     if: |
@@ -289,7 +289,7 @@ jobs:
            save-if: false
        - run: make test THREADS=4
 
-   validate:
+  validate:
     name: Architecture Validation
     needs: [changes, classify, lint]
     if: |
@@ -313,7 +313,7 @@ jobs:
           env:
             RUST_MIN_STACK: 16777216
 
-   golden-tests:
+  golden-tests:
     name: Golden Acceptance Tests
     needs: [changes, classify, test-linux]
     if: |
@@ -336,7 +336,7 @@ jobs:
            save-if: false
        - run: make test SCOPE=golden THREADS=2
 
-   coverage:
+  coverage:
     name: Coverage
     needs: [changes, classify, test-linux]
     if: |
@@ -364,11 +364,11 @@ jobs:
            files: ./coverage/lcov.info
            fail_ci_if_error: false
 
-   # ===========================================================================
-   # Stage 3 — Release Artifacts
-   # ===========================================================================
+  # ===========================================================================
+  # Stage 3 — Release Artifacts
+  # ===========================================================================
 
-   release-build:
+  release-build:
     name: Build Release Binaries (${{ matrix.target }})
     timeout-minutes: 30
     needs: [changes, classify, test-linux, validate, audit]
@@ -446,11 +446,11 @@ jobs:
            retention-days: 7
            include-hidden-files: false
 
-   # ===========================================================================
-   # Gate — Consolidated PR Check (required status check)
-   # ===========================================================================
+  # ===========================================================================
+  # Gate — Consolidated PR Check (required status check)
+  # ===========================================================================
 
-   rust-ci:
+  rust-ci:
     name: Rust CI (PR consolidated)
     timeout-minutes: 5
     runs-on: ubuntu-latest
@@ -497,21 +497,21 @@ jobs:
           echo "Release Build: $RELEASE_BUILD_RESULT"
           echo ""
 
-          if [[ "$IS_DRAFT" == "true" ]]; then
-            echo "✓ Draft PR — gate passed (no heavy jobs required)"
-            exit 0
-          fi
-
           if [[ "$RUN_SIMPLIFIED" == "true" ]]; then
-            echo "=== Bot PR Policy (Simplified) ==="
+            echo "=== Simplified Suite Policy (Draft/Bot PR) ==="
+            FAILED=0
             for job in LINT_RESULT TEST_LINUX_RESULT VALIDATE_RESULT; do
               result="${!job}"
-              if [[ "$result" != "success" ]]; then
+              if [[ "$result" != "success" && "$result" != "skipped" ]]; then
                 echo "✗ $job: $result"
-                exit 1
+                FAILED=1
               fi
             done
-            echo "✓ Bot PR — simplified checks passed"
+            if [[ $FAILED -eq 1 ]]; then
+              echo "✗ Simplified checks failed"
+              exit 1
+            fi
+            echo "✓ Simplified checks passed"
             exit 0
           fi
 
@@ -586,11 +586,11 @@ jobs:
          with:
            category: "/language:${{ matrix.language }}"
 
-   # ===========================================================================
-   # Dependabot Auto-Merge (independent)
-   # ===========================================================================
+  # ===========================================================================
+  # Dependabot Auto-Merge (independent)
+  # ===========================================================================
 
-   auto-merge-dependabot:
+  auto-merge-dependabot:
     name: Auto-Merge Dependabot
     timeout-minutes: 5
     runs-on: ubuntu-latest

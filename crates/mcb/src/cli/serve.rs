@@ -43,7 +43,7 @@ impl ServeArgs {
             port: loco_config.server.port,
             binding: loco_config.server.binding.clone(),
         };
-        boot::start::<McbApp>(boot_result, serve, false).await?;
+        boot::start::<McbApp>(boot_result, serve, self.stdio).await?;
 
         Ok(())
     }
