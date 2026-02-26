@@ -29,8 +29,13 @@ impl Initializer for McpServerInitializer {
     async fn after_routes(&self, router: AxumRouter, ctx: &AppContext) -> Result<AxumRouter> {
         mcb_domain::infra::logging::set_log_fn(mcb_infrastructure::logging::tracing_log_fn);
 
-        let config_val = ctx.config.clone();
-        let app_config: AppConfig = serde_json::from_value(serde_json::to_value(config_val)?)?;
+        let settings = ctx
+            .config
+            .settings
+            .clone()
+            .ok_or_else(|| loco_rs::Error::string("missing loco settings for AppConfig"))?;
+        let app_config: AppConfig = serde_json::from_value(settings)
+            .map_err(|e| loco_rs::Error::string(&format!("invalid AppConfig settings: {e}")))?;
 
         let event_bus = mcb_domain::registry::events::resolve_event_bus_provider(
             &mcb_domain::registry::events::EventBusProviderConfig::new(

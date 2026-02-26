@@ -11,7 +11,6 @@ use axum::http::HeaderMap;
 use loco_rs::errors::Error;
 use loco_rs::prelude::Result;
 use mcb_domain::ports::AuthRepositoryPort;
-use mcb_infrastructure::config::AppConfig;
 use mcb_infrastructure::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
 
 /// Authenticated admin principal.
@@ -65,10 +64,13 @@ pub async fn authorize_admin_api_key(
 
 pub(crate) fn configured_api_key_header(settings: Option<&serde_json::Value>) -> String {
     settings
-        .and_then(|raw_settings| serde_json::from_value::<AppConfig>(raw_settings.clone()).ok())
+        .and_then(|raw_settings| raw_settings.get("auth"))
+        .and_then(|auth| auth.get("api_key"))
+        .and_then(|api_key| api_key.get("header"))
+        .and_then(serde_json::Value::as_str)
         .map_or_else(
             || API_KEY_HEADER.to_owned(),
-            |cfg| cfg.auth.api_key.header.to_ascii_lowercase(),
+            |header| header.to_ascii_lowercase(),
         )
 }
 
