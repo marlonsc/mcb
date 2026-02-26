@@ -1,39 +1,26 @@
-# =============================================================================
-# CI Pipeline - 3-Stage with Shared Compilation Cache
-# =============================================================================
-# Stage 1: Fast checks (lint, audit, docs) - parallel. Lint SAVES rust cache.
-# Stage 2a: Test + Validate (parallel, both after lint, REUSE lint cache)
-# Stage 2b: Cross-platform + golden + coverage - gated by test-linux
-# Stage 3: Release builds - gated by tests + validate + audit
-# Gate: rust-ci consolidated check
-# Post-gate: CodeQL analysis (most expensive, runs last)
-# =============================================================================
-
 name: CI
-
 permissions:
-  contents: "read"
-
-on:
+  contents: read
+'on':
   push:
-    branches: ["main", "feat/*"]
+    branches:
+      - main
+      - feat/*
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
-  workflow_dispatch:
-
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+      - converted_to_draft
+  workflow_dispatch: null
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
-
 env:
   CARGO_TERM_COLOR: always
-  MCB_RUN_DOCKER_INTEGRATION_TESTS: "0"
-
+  MCB_RUN_DOCKER_INTEGRATION_TESTS: '0'
 jobs:
-  # ===========================================================================
-  # Stage 0 - Classification
-  # ===========================================================================
-
   changes:
     name: Detect Changes
     timeout-minutes: 5
@@ -46,25 +33,13 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       ci: ${{ steps.filter.outputs.ci }}
     steps:
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36
         id: filter
         with:
-          filters: |
-            src:
-              - 'src/**'
-              - 'crates/**'
-              - 'tests/**'
-              - 'Cargo.toml'
-              - 'Cargo.lock'
-            docs:
-              - 'docs/**'
-              - 'scripts/docs/**'
-            ci:
-              - '.github/workflows/ci.yml'
-              - '.github/setup-ci.sh'
-              - 'Makefile'
-              - 'make/*.mk'
-
+          filters: "src:\n  - 'src/**'\n  - 'crates/**'\n  - 'tests/**'\n  - 'Cargo.toml'\n\
+            \  - 'Cargo.lock'\ndocs:\n  - 'docs/**'\n  - 'scripts/docs/**'\nci:\n\
+            \  - '.github/workflows/ci.yml'\n  - '.github/setup-ci.sh'\n  - 'Makefile'\n\
+            \  - 'make/*.mk'\n"
   classify:
     name: Classify PR
     timeout-minutes: 5
@@ -79,145 +54,156 @@ jobs:
       - name: Classify PR Type
         id: classify
         env:
-          IS_DRAFT: ${{ github.event_name == "pull_request" && github.event.pull_request.draft || "false" }}
-          IS_BOT: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.type == 'Bot' || 'false' }}
-          IS_FORK: ${{ github.event_name == "pull_request" && github.event.pull_request.head.repo.fork || "false" }}
-        run: |
-          {
-            echo "is_draft=${IS_DRAFT}"
-            echo "is_bot=${IS_BOT}"
-            echo "is_fork=${IS_FORK}"
-          } >> "$GITHUB_OUTPUT"
-
-          if [[ "${IS_DRAFT}" == "false" && "${IS_BOT}" == "false" ]]; then
-            echo "run_full=true" >> "$GITHUB_OUTPUT"
-            echo "run_simplified=false" >> "$GITHUB_OUTPUT"
-          elif [[ "${IS_BOT}" == "true" || "${IS_DRAFT}" == "true" ]]; then
-            echo "run_full=false" >> "$GITHUB_OUTPUT"
-            echo "run_simplified=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "run_full=false" >> "$GITHUB_OUTPUT"
-            echo "run_simplified=false" >> "$GITHUB_OUTPUT"
-          fi
-
-  # ===========================================================================
-  # Stage 1 - Fast Checks (all parallel, ~5 min)
-  # ===========================================================================
-
+          IS_DRAFT: ${{ github.event_name == "pull_request" && github.event.pull_request.draft
+            || "false" }}
+          IS_BOT: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.type
+            == 'Bot' || 'false' }}
+          IS_FORK: ${{ github.event_name == "pull_request" && github.event.pull_request.head.repo.fork
+            || "false" }}
+        run: "{\n  echo \"is_draft=${IS_DRAFT}\"\n  echo \"is_bot=${IS_BOT}\"\n  echo\
+          \ \"is_fork=${IS_FORK}\"\n} >> \"$GITHUB_OUTPUT\"\n\nif [[ \"${IS_DRAFT}\"\
+          \ == \"false\" && \"${IS_BOT}\" == \"false\" ]]; then\n  echo \"run_full=true\"\
+          \ >> \"$GITHUB_OUTPUT\"\n  echo \"run_simplified=false\" >> \"$GITHUB_OUTPUT\"\
+          \nelif [[ \"${IS_BOT}\" == \"true\" || \"${IS_DRAFT}\" == \"true\" ]]; then\n\
+          \  echo \"run_full=false\" >> \"$GITHUB_OUTPUT\"\n  echo \"run_simplified=true\"\
+          \ >> \"$GITHUB_OUTPUT\"\nelse\n  echo \"run_full=false\" >> \"$GITHUB_OUTPUT\"\
+          \n  echo \"run_simplified=false\" >> \"$GITHUB_OUTPUT\"\nfi\n"
   lint:
     name: Lint (Rust 2024)
     timeout-minutes: 10
-    needs: [changes, classify]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      ((needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") || needs.classify.outputs.run_simplified == 'true')
+    needs:
+      - changes
+      - classify
+    if: '(needs.changes.outputs.src == ''true'' || needs.changes.outputs.ci == ''true'')
+      &&
+
+      ((needs.classify.outputs.run_full == "true" || github.event_name == "push" ||
+      github.event_name == "workflow_dispatch") || needs.classify.outputs.run_simplified
+      == ''true'')
+
+      '
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           submodules: recursive
       - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
       - run: make lint MCB_CI=1
-
   audit:
     name: Security Audit
     timeout-minutes: 10
-    needs: [changes, classify]
-    if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
+    needs:
+      - changes
+      - classify
+    if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true')
+      && (needs.classify.outputs.run_full == "true" || github.event_name == "push"
+      || github.event_name == "workflow_dispatch")
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           submodules: recursive
       - run: bash .github/setup-ci.sh --install-audit
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
       - run: make audit
-
   validate-docs:
     name: Validate Documentation
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    needs: [changes, classify]
-    if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true') && (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
+    needs:
+      - changes
+      - classify
+    if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true')
+      && (needs.classify.outputs.run_full == "true" || github.event_name == "push"
+      || github.event_name == "workflow_dispatch")
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           submodules: recursive
       - run: make docs-check
       - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
-      - run: |
-          sudo apt-get update
-          sudo apt-get install -y nodejs npm
-          npm install -g markdownlint-cli
-      - run: make docs-validate QUICK=1
+      - run: 'sudo apt-get update
 
+          sudo apt-get install -y nodejs npm
+
+          npm install -g markdownlint-cli
+
+          '
+      - run: make docs-validate QUICK=1
   docs-diagrams:
     name: Generate Diagrams
     timeout-minutes: 10
     runs-on: ubuntu-latest
-    needs: [changes, classify]
-    if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
+    needs:
+      - changes
+      - classify
+    if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.src == 'true'
+      || needs.changes.outputs.ci == 'true') && (needs.classify.outputs.run_full ==
+      "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654
         with:
-          java-version: "17"
-          distribution: "temurin"
+          java-version: '17'
+          distribution: temurin
       - name: Install PlantUML
         run: sudo apt-get update && sudo apt-get install -y plantuml
       - run: make diagrams
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: architecture-diagrams
           path: docs/architecture/diagrams/generated/
           retention-days: 30
           include-hidden-files: false
-
-  # ===========================================================================
-  # Stage 2a - Primary Test Gate (reuses lint cache, ~8 min)
-  # ===========================================================================
-
   test-linux:
     name: Test (ubuntu-latest, Rust stable)
-    needs: [changes, classify, lint]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      ((needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") || needs.classify.outputs.run_simplified == 'true')
+    needs:
+      - changes
+      - classify
+      - lint
+    if: '(needs.changes.outputs.src == ''true'' || needs.changes.outputs.ci == ''true'')
+      &&
+
+      ((needs.classify.outputs.run_full == "true" || github.event_name == "push" ||
+      github.event_name == "workflow_dispatch") || needs.classify.outputs.run_simplified
+      == ''true'')
+
+      '
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           submodules: recursive
       - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
@@ -225,17 +211,19 @@ jobs:
         run: make test SCOPE=startup THREADS=4
       - name: Full Test Suite
         run: make test THREADS=4
-
-  # ===========================================================================
-  # Stage 2b - Extended Testing (after linux stable, all parallel)
-  # ===========================================================================
-
   test-cross:
     name: Test (${{ matrix.os }}, Rust ${{ matrix.rust }})
-    needs: [changes, classify, test-linux]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
+    needs:
+      - changes
+      - classify
+      - test-linux
+    if: '(needs.changes.outputs.src == ''true'' || needs.changes.outputs.ci == ''true'')
+      &&
+
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" ||
+      github.event_name == "workflow_dispatch")
+
+      '
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     continue-on-error: ${{ matrix.rust == 'beta' }}
@@ -253,7 +241,7 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           submodules: recursive
@@ -264,112 +252,133 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         env:
-          PROTOC_VERSION: "29.3"
-          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
-        run: |
-          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-          $zip = "$env:TEMP\protoc.zip"
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-          if ($hash -ne $env:PROTOC_SHA256) {
-            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
-          }
-          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+          PROTOC_VERSION: '29.3'
+          PROTOC_SHA256: 57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383
+        run: "$url = \"https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip\"\
+          \n$zip = \"$env:TEMP\\protoc.zip\"\nInvoke-WebRequest -Uri $url -OutFile\
+          \ $zip -ErrorAction Stop\n$hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()\n\
+          if ($hash -ne $env:PROTOC_SHA256) {\n  throw \"protoc checksum mismatch:\
+          \ expected $($env:PROTOC_SHA256), got $hash\"\n}\nExpand-Archive $zip -DestinationPath\
+          \ \"$env:TEMP\\protoc\" -Force\nAdd-Content -Path $env:GITHUB_PATH -Value\
+          \ \"$env:TEMP\\protoc\\bin\"\n"
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: ${{ matrix.rust }}
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
         with:
           save-if: false
       - run: make test THREADS=4
-
   validate:
     name: Architecture Validation
-    needs: [changes, classify, lint]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      ((needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") || needs.classify.outputs.run_simplified == 'true')
+    needs:
+      - changes
+      - classify
+      - lint
+    if: '(needs.changes.outputs.src == ''true'' || needs.changes.outputs.ci == ''true'')
+      &&
+
+      ((needs.classify.outputs.run_full == "true" || github.event_name == "push" ||
+      github.event_name == "workflow_dispatch") || needs.classify.outputs.run_simplified
+      == ''true'')
+
+      '
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           submodules: recursive
       - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
       - run: make validate
         env:
           RUST_MIN_STACK: 16777216
-
   golden-tests:
     name: Golden Acceptance Tests
-    needs: [changes, classify, test-linux]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
+    needs:
+      - changes
+      - classify
+      - test-linux
+    if: '(needs.changes.outputs.src == ''true'' || needs.changes.outputs.ci == ''true'')
+      &&
+
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" ||
+      github.event_name == "workflow_dispatch")
+
+      '
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           submodules: recursive
       - run: bash .github/setup-ci.sh
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
       - run: make test SCOPE=golden THREADS=2
-
   coverage:
     name: Coverage
-    needs: [changes, classify, test-linux]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") &&
-      needs.classify.outputs.is_fork == 'false'
+    needs:
+      - changes
+      - classify
+      - test-linux
+    if: '(needs.changes.outputs.src == ''true'' || needs.changes.outputs.ci == ''true'')
+      &&
+
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" ||
+      github.event_name == "workflow_dispatch") &&
+
+      needs.classify.outputs.is_fork == ''false''
+
+      '
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           submodules: recursive
       - run: bash .github/setup-ci.sh --install-coverage
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
       - run: make coverage MCB_CI=1 THREADS=4
-      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
-
-  # ===========================================================================
-  # Stage 3 - Release Artifacts
-  # ===========================================================================
-
   release-build:
     name: Build Release Binaries (${{ matrix.target }})
     timeout-minutes: 30
-    needs: [changes, classify, test-linux, validate, audit]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
+    needs:
+      - changes
+      - classify
+      - test-linux
+      - validate
+      - audit
+    if: '(needs.changes.outputs.src == ''true'' || needs.changes.outputs.ci == ''true'')
+      &&
+
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" ||
+      github.event_name == "workflow_dispatch")
+
+      '
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -393,7 +402,7 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           submodules: recursive
@@ -404,19 +413,16 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         env:
-          PROTOC_VERSION: "29.3"
-          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
-        run: |
-          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-          $zip = "$env:TEMP\protoc.zip"
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-          if ($hash -ne $env:PROTOC_SHA256) {
-            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
-          }
-          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+          PROTOC_VERSION: '29.3'
+          PROTOC_SHA256: 57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383
+        run: "$url = \"https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip\"\
+          \n$zip = \"$env:TEMP\\protoc.zip\"\nInvoke-WebRequest -Uri $url -OutFile\
+          \ $zip -ErrorAction Stop\n$hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()\n\
+          if ($hash -ne $env:PROTOC_SHA256) {\n  throw \"protoc checksum mismatch:\
+          \ expected $($env:PROTOC_SHA256), got $hash\"\n}\nExpand-Archive $zip -DestinationPath\
+          \ \"$env:TEMP\\protoc\" -Force\nAdd-Content -Path $env:GITHUB_PATH -Value\
+          \ \"$env:TEMP\\protoc\\bin\"\n"
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
           targets: ${{ matrix.target }}
@@ -431,20 +437,16 @@ jobs:
         run: cp "target/release/$ARTIFACT" "dist/$ASSET"
       - name: Copy artifact (Windows)
         if: runner.os == 'Windows'
-        run: Copy-Item "target\release\${{ matrix.artifact_name }}" "dist\${{ matrix.asset_name }}"
+        run: Copy-Item "target\release\${{ matrix.artifact_name }}" "dist\${{ matrix.asset_name
+          }}"
         shell: pwsh
       - name: Upload artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
         with:
           name: release-artifacts-${{ matrix.target }}
           path: dist/${{ matrix.asset_name }}
           retention-days: 7
           include-hidden-files: false
-
-  # ===========================================================================
-  # Gate - Consolidated PR Check (required status check)
-  # ===========================================================================
-
   rust-ci:
     name: Rust CI (PR consolidated)
     timeout-minutes: 5
@@ -476,78 +478,48 @@ jobs:
           GOLDEN_RESULT: ${{ needs.golden-tests.result }}
           COVERAGE_RESULT: ${{ needs.coverage.result }}
           RELEASE_BUILD_RESULT: ${{ needs.release-build.result }}
-        run: |
-          echo "=== PR Classification ==="
-          echo "Is Draft: $IS_DRAFT | Is Bot: $IS_BOT"
-          echo "Run Full: $RUN_FULL | Run Simplified: $RUN_SIMPLIFIED"
-          echo ""
-          echo "=== Job Results ==="
-          echo "Lint:          $LINT_RESULT"
-          echo "Test Linux:    $TEST_LINUX_RESULT"
-          echo "Test Cross:    $TEST_CROSS_RESULT"
-          echo "Validate:      $VALIDATE_RESULT"
-          echo "Audit:         $AUDIT_RESULT"
-          echo "Golden:        $GOLDEN_RESULT"
-          echo "Coverage:      $COVERAGE_RESULT"
-          echo "Release Build: $RELEASE_BUILD_RESULT"
-          echo ""
-
-          if [[ "$RUN_SIMPLIFIED" == "true" ]]; then
-            echo "=== Simplified Suite Policy (Draft/Bot PR) ==="
-            FAILED=0
-            for job in LINT_RESULT TEST_LINUX_RESULT VALIDATE_RESULT; do
-              result="${!job}"
-              if [[ "$result" != "success" && "$result" != "skipped" ]]; then
-                echo "[FAIL] $job: $result"
-                FAILED=1
-              fi
-            done
-            if [[ $FAILED -eq 1 ]]; then
-              echo "[FAIL] Simplified checks failed"
-              exit 1
-            fi
-            echo "[OK] Simplified checks passed"
-            exit 0
-          fi
-
-          if [[ "$RUN_FULL" == "true" ]]; then
-            echo "=== Full Suite Policy (Human Ready PR) ==="
-            FAILED=0
-            for job in LINT_RESULT TEST_LINUX_RESULT TEST_CROSS_RESULT \
-                       VALIDATE_RESULT AUDIT_RESULT GOLDEN_RESULT COVERAGE_RESULT \
-                       RELEASE_BUILD_RESULT; do
-              result="${!job}"
-              if [[ "$result" != "success" && "$result" != "skipped" ]]; then
-                echo "[FAIL] $job: $result"
-                FAILED=1
-              fi
-            done
-
-            if [[ $FAILED -eq 1 ]]; then
-              echo "[FAIL] Full suite check failed"
-              exit 1
-            fi
-
-            echo "[OK] Full suite - all required checks passed"
-            exit 0
-          fi
-
-          echo "[FAIL] Unexpected classification state"
-          exit 1
-
-  # ===========================================================================
-  # Post-Gate - CodeQL (most expensive, runs only after gate passes)
-  # ===========================================================================
-
+        run: "echo \"=== PR Classification ===\"\necho \"Is Draft: $IS_DRAFT | Is\
+          \ Bot: $IS_BOT\"\necho \"Run Full: $RUN_FULL | Run Simplified: $RUN_SIMPLIFIED\"\
+          \necho \"\"\necho \"=== Job Results ===\"\necho \"Lint:          $LINT_RESULT\"\
+          \necho \"Test Linux:    $TEST_LINUX_RESULT\"\necho \"Test Cross:    $TEST_CROSS_RESULT\"\
+          \necho \"Validate:      $VALIDATE_RESULT\"\necho \"Audit:         $AUDIT_RESULT\"\
+          \necho \"Golden:        $GOLDEN_RESULT\"\necho \"Coverage:      $COVERAGE_RESULT\"\
+          \necho \"Release Build: $RELEASE_BUILD_RESULT\"\necho \"\"\n\nif [[ \"$RUN_SIMPLIFIED\"\
+          \ == \"true\" ]]; then\n  echo \"=== Simplified Suite Policy (Draft/Bot\
+          \ PR) ===\"\n  FAILED=0\n  for job in LINT_RESULT TEST_LINUX_RESULT VALIDATE_RESULT;\
+          \ do\n    result=\"${!job}\"\n    if [[ \"$result\" != \"success\" && \"\
+          $result\" != \"skipped\" ]]; then\n      echo \"[FAIL] $job: $result\"\n\
+          \      FAILED=1\n    fi\n  done\n  if [[ $FAILED -eq 1 ]]; then\n    echo\
+          \ \"[FAIL] Simplified checks failed\"\n    exit 1\n  fi\n  echo \"[OK] Simplified\
+          \ checks passed\"\n  exit 0\nfi\n\nif [[ \"$RUN_FULL\" == \"true\" ]]; then\n\
+          \  echo \"=== Full Suite Policy (Human Ready PR) ===\"\n  FAILED=0\n  for\
+          \ job in LINT_RESULT TEST_LINUX_RESULT TEST_CROSS_RESULT \\\n          \
+          \   VALIDATE_RESULT AUDIT_RESULT GOLDEN_RESULT COVERAGE_RESULT \\\n    \
+          \         RELEASE_BUILD_RESULT; do\n    result=\"${!job}\"\n    if [[ \"\
+          $result\" != \"success\" && \"$result\" != \"skipped\" ]]; then\n      echo\
+          \ \"[FAIL] $job: $result\"\n      FAILED=1\n    fi\n  done\n\n  if [[ $FAILED\
+          \ -eq 1 ]]; then\n    echo \"[FAIL] Full suite check failed\"\n    exit\
+          \ 1\n  fi\n\n  echo \"[OK] Full suite - all required checks passed\"\n \
+          \ exit 0\nfi\n\necho \"[FAIL] Unexpected classification state\"\nexit 1\n"
   analyze:
     name: Analyze (${{ matrix.language }})
     timeout-minutes: 15
-    needs: [changes, classify, rust-ci]
-    if: |
-      needs.rust-ci.result == 'success' &&
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") &&
-      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
+    needs:
+      - changes
+      - classify
+      - rust-ci
+    if: 'needs.rust-ci.result == ''success'' &&
+
+      (needs.changes.outputs.src == ''true'' || needs.changes.outputs.ci == ''true'')
+      &&
+
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" ||
+      github.event_name == "workflow_dispatch") &&
+
+      (github.event_name != ''pull_request'' || github.event.pull_request.head.repo.fork
+      == false)
+
+      '
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -555,35 +527,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: [rust]
+        language:
+          - rust
     env:
-      CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
+      CODEQL_ENABLE_EXPERIMENTAL_FEATURES: 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
         with:
           persist-credentials: false
           submodules: recursive
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
+        uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e
         with:
           languages: ${{ matrix.language }}
           config-file: ./.github/codeql-config.yml
       - name: Setup Rust
-        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9
         with:
           toolchain: stable
       - name: Autobuild
-        uses: github/codeql-action/autobuild@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
+        uses: github/codeql-action/autobuild@89a39a4e59826350b863aa6b6252a07ad50cf83e
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
+        uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e
         with:
-          category: "/language:${{ matrix.language }}"
-
-  # ===========================================================================
-  # Dependabot Auto-Merge (independent)
-  # ===========================================================================
-
+          category: /language:${{ matrix.language }}
   auto-merge-dependabot:
     name: Auto-Merge Dependabot
     timeout-minutes: 5
@@ -595,28 +563,23 @@ jobs:
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
-
+          github-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Enable auto-merge for patch and minor updates
-        if: >-
-          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
           steps.metadata.outputs.update-type == 'version-update:semver-minor'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Auto-approve major updates (review only, no merge)
-        if: >-
-          steps.metadata.outputs.update-type == 'version-update:semver-major'
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
         env:
           PR_URL: ${{ github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEP_NAMES: ${{ steps.metadata.outputs.dependency-names }}
-        run: |
-          echo "::notice ::Major update detected: $DEP_NAMES"
-          echo "Major updates require manual review and merge."
-          gh pr comment "$PR_URL" --body \
-            "**Major version update detected.** This PR requires manual review before merging."
+        run: "echo \"::notice ::Major update detected: $DEP_NAMES\"\necho \"Major\
+          \ updates require manual review and merge.\"\ngh pr comment \"$PR_URL\"\
+          \ --body \\\n  \"**Major version update detected.** This PR requires manual\
+          \ review before merging.\"\n"
