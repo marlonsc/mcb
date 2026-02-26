@@ -31,7 +31,7 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       ci: ${{ steps.filter.outputs.ci }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
@@ -94,7 +94,7 @@ jobs:
       ((needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") || needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
           submodules: recursive
@@ -117,7 +117,7 @@ jobs:
       (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
           submodules: recursive
@@ -131,3 +131,450 @@ jobs:
           save-if: false
       - run: make audit
 
+  validate-docs:
+    name: Validate Documentation
+    needs: [changes, classify]
+    if: |
+      (needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: make docs-check
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y nodejs npm
+          npm install -g markdownlint-cli
+      - run: make docs-validate QUICK=1
+
+  docs-diagrams:
+    name: Generate Diagrams
+    needs: [changes, classify]
+    if: |
+      (needs.changes.outputs.docs == 'true' || needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: actions/setup-java@v4 # v4.7.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+      - name: Install PlantUML
+        run: sudo apt-get update && sudo apt-get install -y plantuml
+      - run: make diagrams
+      - uses: actions/upload-artifact@v4 # v6.0.0
+        with:
+          name: architecture-diagrams
+          path: docs/architecture/diagrams/generated/
+          retention-days: 30
+          include-hidden-files: false
+
+  test-linux:
+    name: Test (ubuntu-latest, Rust stable)
+    needs: [changes, classify, lint]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      ((needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") || needs.classify.outputs.run_simplified == 'true')
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - name: Startup Smoke (DDL/Init)
+        run: make test SCOPE=startup THREADS=4
+      - name: Full Test Suite
+        run: make test THREADS=4
+
+  test-cross:
+    name: Test (${{ matrix.os }}, Rust ${{ matrix.rust }})
+    needs: [changes, classify, test-linux]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    continue-on-error: ${{ matrix.rust == 'beta' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            rust: beta
+          - os: macos-latest
+            rust: stable
+          - os: windows-latest
+            rust: stable
+    steps:
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          PROTOC_VERSION: "29.3"
+          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
+        run: |
+          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          $zip = "$env:TEMP\protoc.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:PROTOC_SHA256) {
+            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
+          }
+          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: ${{ matrix.rust }}
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          save-if: false
+      - run: make test THREADS=4
+
+  validate:
+    name: Architecture Validation
+    needs: [changes, classify, lint]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      ((needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") || needs.classify.outputs.run_simplified == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - run: make validate
+        env:
+          RUST_MIN_STACK: 16777216
+
+  golden-tests:
+    name: Golden Acceptance Tests
+    needs: [changes, classify, test-linux]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - run: make test SCOPE=golden THREADS=2
+
+  coverage:
+    name: Coverage
+    needs: [changes, classify, test-linux]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") &&
+      needs.classify.outputs.is_fork == 'false'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh --install-coverage
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-ubuntu-stable
+          save-if: false
+      - run: make coverage MCB_CI=1 THREADS=4
+      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.1.2
+        with:
+          files: ./coverage/lcov.info
+          fail_ci_if_error: false
+
+  release-build:
+    name: Build Release Binaries (${{ matrix.target }})
+    timeout-minutes: 30
+    needs: [changes, classify, test-linux, validate, audit]
+    if: |
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch")
+    runs-on: ${{ matrix.os }}
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact_name: mcb
+            asset_name: mcb-x86_64-linux-gnu
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact_name: mcb
+            asset_name: mcb-x86_64-macos
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact_name: mcb.exe
+            asset_name: mcb-x86_64-windows.exe
+    steps:
+      - name: Enable long paths (Windows)
+        if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          PROTOC_VERSION: "29.3"
+          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
+        run: |
+          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          $zip = "$env:TEMP\protoc.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:PROTOC_SHA256) {
+            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
+          }
+          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
+      - run: make build RELEASE=1
+      - name: Create dist directory
+        run: mkdir -p dist
+      - name: Copy artifact (Unix)
+        if: runner.os != 'Windows'
+        env:
+          ARTIFACT: ${{ matrix.artifact_name }}
+          ASSET: ${{ matrix.asset_name }}
+        run: cp "target/release/$ARTIFACT" "dist/$ASSET"
+      - name: Copy artifact (Windows)
+        if: runner.os == 'Windows'
+        run: Copy-Item "target\release\${{ matrix.artifact_name }}" "dist\${{ matrix.asset_name }}"
+        shell: pwsh
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4 # v6.0.0
+        with:
+          name: release-artifacts-${{ matrix.target }}
+          path: dist/${{ matrix.asset_name }}
+          retention-days: 7
+          include-hidden-files: false
+
+  rust-ci:
+    name: Rust CI (PR consolidated)
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    needs:
+      - changes
+      - classify
+      - lint
+      - test-linux
+      - test-cross
+      - validate
+      - audit
+      - golden-tests
+      - coverage
+      - release-build
+    if: always()
+    steps:
+      - name: Evaluate Required Checks
+        env:
+          IS_DRAFT: ${{ needs.classify.outputs.is_draft }}
+          IS_BOT: ${{ needs.classify.outputs.is_bot }}
+          RUN_FULL: ${{ needs.classify.outputs.run_full }}
+          RUN_SIMPLIFIED: ${{ needs.classify.outputs.run_simplified }}
+          LINT_RESULT: ${{ needs.lint.result }}
+          TEST_LINUX_RESULT: ${{ needs.test-linux.result }}
+          TEST_CROSS_RESULT: ${{ needs.test-cross.result }}
+          VALIDATE_RESULT: ${{ needs.validate.result }}
+          AUDIT_RESULT: ${{ needs.audit.result }}
+          GOLDEN_RESULT: ${{ needs.golden-tests.result }}
+          COVERAGE_RESULT: ${{ needs.coverage.result }}
+          RELEASE_BUILD_RESULT: ${{ needs.release-build.result }}
+        run: |
+          echo "=== PR Classification ==="
+          echo "Is Draft: $IS_DRAFT | Is Bot: $IS_BOT"
+          echo "Run Full: $RUN_FULL | Run Simplified: $RUN_SIMPLIFIED"
+          echo ""
+          echo "=== Job Results ==="
+          echo "Lint:          $LINT_RESULT"
+          echo "Test Linux:    $TEST_LINUX_RESULT"
+          echo "Test Cross:    $TEST_CROSS_RESULT"
+          echo "Validate:      $VALIDATE_RESULT"
+          echo "Audit:         $AUDIT_RESULT"
+          echo "Golden:        $GOLDEN_RESULT"
+          echo "Coverage:      $COVERAGE_RESULT"
+          echo "Release Build: $RELEASE_BUILD_RESULT"
+          echo ""
+
+          if [[ "$RUN_SIMPLIFIED" == "true" ]]; then
+            echo "=== Simplified Suite Policy (Draft/Bot PR) ==="
+            FAILED=0
+            for job in LINT_RESULT TEST_LINUX_RESULT VALIDATE_RESULT; do
+              result="${!job}"
+              if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+                echo "[FAIL] $job: $result"
+                FAILED=1
+              fi
+            done
+            if [[ $FAILED -eq 1 ]]; then
+              echo "[FAIL] Simplified checks failed"
+              exit 1
+            fi
+            echo "[OK] Simplified checks passed"
+            exit 0
+          fi
+
+          if [[ "$RUN_FULL" == "true" ]]; then
+            echo "=== Full Suite Policy (Human Ready PR) ==="
+            FAILED=0
+            for job in LINT_RESULT TEST_LINUX_RESULT TEST_CROSS_RESULT \
+                       VALIDATE_RESULT AUDIT_RESULT GOLDEN_RESULT COVERAGE_RESULT \
+                       RELEASE_BUILD_RESULT; do
+              result="${!job}"
+              if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+                echo "[FAIL] $job: $result"
+                FAILED=1
+              fi
+            done
+
+            if [[ $FAILED -eq 1 ]]; then
+              echo "[FAIL] Full suite check failed"
+              exit 1
+            fi
+
+            echo "[OK] Full suite - all required checks passed"
+            exit 0
+          fi
+
+          echo "[FAIL] Unexpected classification state"
+          exit 1
+
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    timeout-minutes: 15
+    needs: [changes, classify, rust-ci]
+    if: |
+      needs.rust-ci.result == 'success' &&
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") &&
+      (github.event_name != 'pull_request' || github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [rust]
+    env:
+      CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3 # v3.28.13
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql-config.yml
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3 # v3.28.13
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3 # v3.28.13
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  auto-merge-dependabot:
+    name: Auto-Merge Dependabot
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Fetch Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Enable auto-merge for patch and minor updates
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-patch' ||
+          steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event_name == 'pull_request' && github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Auto-approve major updates (review only, no merge)
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-major'
+        env:
+          PR_URL: ${{ github.event_name == 'pull_request' && github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEP_NAMES: ${{ steps.metadata.outputs.dependency-names }}
+        run: |
+          echo "::notice ::Major update detected: $DEP_NAMES"
+          echo "Major updates require manual review and merge."
+          gh pr comment "$PR_URL" --body \
+            "**Major version update detected.** This PR requires manual review before merging."
