@@ -44,14 +44,10 @@ pub(crate) fn create_base_memory_args(
 ///
 /// Uses [`ServiceResolutionContext`] and [`build_mcp_server_bootstrap`]; no manual bootstrap.
 pub(crate) async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDir)> {
-    let (config, opt_temp) = TestConfigBuilder::new()
-        .ok()?
-        .with_temp_db("test.db")
-        .ok()?
-        .with_fastembed_shared_cache()
-        .ok()?
-        .build()
-        .ok()?;
+    let builder = TestConfigBuilder::new().ok()?;
+    let builder = builder.with_temp_db("test.db").ok()?;
+    let builder = builder.with_fastembed_shared_cache().ok()?;
+    let (config, opt_temp) = builder.build().ok()?;
 
     let temp_dir = opt_temp?;
     let db_path = config
@@ -71,7 +67,8 @@ pub(crate) async fn create_real_domain_services() -> Option<(McbState, tempfile:
         event_bus: Arc::new(BroadcastEventBus::new()),
     };
 
-    let bootstrap = build_mcp_server_bootstrap(&resolution_ctx, ExecutionFlow::ServerHybrid).ok()?;
+    let bootstrap =
+        build_mcp_server_bootstrap(&resolution_ctx, ExecutionFlow::ServerHybrid).ok()?;
     let state = bootstrap.into_mcb_state();
     Some((state, temp_dir))
 }

@@ -1,5 +1,6 @@
 #![allow(missing_docs)]
 
+extern crate mcb_infrastructure;
 extern crate mcb_providers;
 
 #[path = "../utils/mod.rs"]

@@ -507,3 +507,93 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         self.repository.delete_observation(id).await
     }
 }
+
+// ---------------------------------------------------------------------------
+// Linkme Registration
+// ---------------------------------------------------------------------------
+use mcb_domain::registry::services::{
+    MEMORY_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
+};
+
+fn build_memory_service_from_registry(
+    context: &dyn std::any::Any,
+) -> mcb_domain::error::Result<Arc<dyn mcb_domain::ports::MemoryServiceInterface>> {
+    let ctx = context
+        .downcast_ref::<crate::resolution_context::ServiceResolutionContext>()
+        .ok_or_else(|| {
+            mcb_domain::error::Error::internal(
+                "Memory service builder requires ServiceResolutionContext",
+            )
+        })?;
+
+    let config = &ctx.config;
+
+    // Resolve embedding provider (same config propagation as context_service)
+    let mut embed_cfg = mcb_domain::registry::embedding::EmbeddingProviderConfig::new(
+        config
+            .providers
+            .embedding
+            .provider
+            .as_deref()
+            .unwrap_or("null"),
+    );
+    if let Some(ref v) = config.providers.embedding.cache_dir {
+        embed_cfg = embed_cfg.with_cache_dir(v.clone());
+    }
+    if let Some(ref v) = config.providers.embedding.model {
+        embed_cfg = embed_cfg.with_model(v.clone());
+    }
+    if let Some(ref v) = config.providers.embedding.base_url {
+        embed_cfg = embed_cfg.with_base_url(v.clone());
+    }
+    if let Some(ref v) = config.providers.embedding.api_key {
+        embed_cfg = embed_cfg.with_api_key(v.clone());
+    }
+    if let Some(d) = config.providers.embedding.dimensions {
+        embed_cfg = embed_cfg.with_dimensions(d);
+    }
+    let embedding = mcb_domain::registry::embedding::resolve_embedding_provider(&embed_cfg)
+        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
+
+    // Resolve vector store provider
+    let mut vec_cfg = mcb_domain::registry::vector_store::VectorStoreProviderConfig::new(
+        config
+            .providers
+            .vector_store
+            .provider
+            .as_deref()
+            .unwrap_or("null"),
+    );
+    if let Some(ref v) = config.providers.vector_store.address {
+        vec_cfg = vec_cfg.with_uri(v.clone());
+    }
+    if let Some(ref v) = config.providers.vector_store.collection {
+        vec_cfg = vec_cfg.with_collection(v.clone());
+    }
+    if let Some(d) = config.providers.vector_store.dimensions {
+        vec_cfg = vec_cfg.with_dimensions(d);
+    }
+    let vector_store = mcb_domain::registry::vector_store::resolve_vector_store_provider(&vec_cfg)
+        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
+
+    // Resolve memory repository from database providers
+    let repos = mcb_domain::registry::database::resolve_database_repositories(
+        "seaorm",
+        Box::new(ctx.db.clone()),
+        "default".to_owned(),
+    )
+    .map_err(mcb_domain::error::Error::internal)?;
+
+    Ok(Arc::new(MemoryServiceImpl::new(
+        "default".to_owned(),
+        repos.memory,
+        embedding,
+        vector_store,
+    )))
+}
+
+#[linkme::distributed_slice(SERVICES_REGISTRY)]
+static MEMORY_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
+    name: MEMORY_SERVICE_NAME,
+    build: ServiceBuilder::Memory(build_memory_service_from_registry),
+};

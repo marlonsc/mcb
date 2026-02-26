@@ -6,7 +6,7 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use mcb_domain::value_objects::{EmbeddingConfig, ProjectSettings, VectorStoreConfig};
+use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use serde::{Deserialize, Serialize};
 
 pub use super::infrastructure::{
@@ -85,7 +85,6 @@ pub struct ProvidersConfig {
     pub vector_store: VectorStoreConfigContainer,
 }
 
-
 /// Indexing configuration for file discovery.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
@@ -101,7 +100,6 @@ pub struct McpConfig {
     /// Indexing subsystem settings.
     pub indexing: IndexingConfig,
 }
-
 
 /// Infrastructure configurations
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -168,7 +166,4 @@ pub struct AppConfig {
     pub operations_daemon: OperationsDaemonConfig,
     /// MCP server feature configuration.
     pub mcp: McpConfig,
-    /// Project settings loaded from workspace
-    #[serde(skip)]
-    pub project_settings: Option<ProjectSettings>,
 }

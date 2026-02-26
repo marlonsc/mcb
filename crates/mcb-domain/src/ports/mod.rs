@@ -38,33 +38,29 @@ mod services;
 
 // --- Admin ---
 pub use admin::{
-    AgentSessionStats, DailyCount, DashboardQueryPort,
-    EmbeddingAdminInterface, IndexingOperation, IndexingOperationStatus,
-    IndexingOperationsInterface, LanguageAdminInterface, MonthlyCount, ProviderInfo, ToolCallCount,
-    ValidationOperation, ValidationOperationResult, ValidationOperationsInterface,
-    ValidationStatus, ValidatorJobRunner, VectorStoreAdminInterface,
+    AgentSessionStats, DailyCount, DashboardQueryPort, EmbeddingAdminInterface, IndexingOperation,
+    IndexingOperationStatus, IndexingOperationsInterface, LanguageAdminInterface, MonthlyCount,
+    ProviderInfo, ToolCallCount, ValidationOperation, ValidationOperationResult,
+    ValidationOperationsInterface, ValidationStatus, ValidatorJobRunner, VectorStoreAdminInterface,
 };
 
 // --- Infrastructure ---
 pub use infrastructure::{
-    DependencyHealth, DependencyHealthCheck, DomainEventStream,
-    EventBusProvider, ExtendedHealthResponse, LifecycleManaged, LogLevel, OperationLogger,
-    PortServiceState, ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator,
-    ShutdownCoordinator, SnapshotProvider, SyncCoordinator, SyncOptions,
-    SyncProvider, SyncResult,
+    DependencyHealth, DependencyHealthCheck, DomainEventStream, EventBusProvider,
+    ExtendedHealthResponse, LifecycleManaged, LogLevel, OperationLogger, PortServiceState,
+    ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator,
+    ShutdownCoordinator, SnapshotProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult,
 };
 
 // --- Providers ---
 pub use providers::vector_store::{VectorStoreAdmin, VectorStoreBrowser};
 pub use providers::{
-    ComplexityAnalyzer, ComplexityFinding,
-    CryptoProvider, DeadCodeDetector,
-    DeadCodeFinding, EmbeddingProvider, EncryptedData, HttpClientConfig, HttpClientProvider, HybridSearchProvider,
-    HybridSearchResult, LanguageChunkingProvider, MetricLabels,
-    MetricsError, MetricsProvider, MetricsResult, PROJECT_DETECTORS, ProjectDetector,
-    ProjectDetectorConfig, ProjectDetectorEntry, ProviderConfigManagerInterface, RuleValidator,
-    RuleValidatorRequest, TdgFinding, TdgScorer, ValidationOptions, ValidationProvider,
-    ValidatorInfo, VcsProvider, VectorStoreProvider,
+    ComplexityAnalyzer, ComplexityFinding, CryptoProvider, DeadCodeDetector, DeadCodeFinding,
+    EmbeddingProvider, EncryptedData, HttpClientConfig, HttpClientProvider, HybridSearchProvider,
+    HybridSearchResult, LanguageChunkingProvider, MetricLabels, MetricsError, MetricsProvider,
+    MetricsResult, PROJECT_DETECTORS, ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
+    ProviderConfigManagerInterface, RuleValidator, RuleValidatorRequest, TdgFinding, TdgScorer,
+    ValidationOptions, ValidationProvider, ValidatorInfo, VcsProvider, VectorStoreProvider,
 };
 
 // --- Repositories ---

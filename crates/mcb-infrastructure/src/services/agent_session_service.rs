@@ -176,3 +176,37 @@ impl CheckpointManager for AgentSessionServiceImpl {
         Ok(())
     }
 }
+
+// ---------------------------------------------------------------------------
+// Linkme Registration
+// ---------------------------------------------------------------------------
+use mcb_domain::registry::services::{
+    AGENT_SESSION_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
+};
+
+fn build_agent_session_service_from_registry(
+    context: &dyn std::any::Any,
+) -> mcb_domain::error::Result<Arc<dyn mcb_domain::ports::AgentSessionServiceInterface>> {
+    let ctx = context
+        .downcast_ref::<crate::resolution_context::ServiceResolutionContext>()
+        .ok_or_else(|| {
+            mcb_domain::error::Error::internal(
+                "Agent session service builder requires ServiceResolutionContext",
+            )
+        })?;
+
+    let repos = mcb_domain::registry::database::resolve_database_repositories(
+        "seaorm",
+        Box::new(ctx.db.clone()),
+        "default".to_owned(),
+    )
+    .map_err(mcb_domain::error::Error::internal)?;
+
+    Ok(Arc::new(AgentSessionServiceImpl::new(repos.agent)))
+}
+
+#[linkme::distributed_slice(SERVICES_REGISTRY)]
+static AGENT_SESSION_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
+    name: AGENT_SESSION_SERVICE_NAME,
+    build: ServiceBuilder::AgentSession(build_agent_session_service_from_registry),
+};

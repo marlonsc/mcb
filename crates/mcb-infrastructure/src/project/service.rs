@@ -57,3 +57,23 @@ impl ProjectDetectorService for ProjectService {
         (self.detect_fn)(path).await
     }
 }
+
+// ---------------------------------------------------------------------------
+// Linkme Registration
+// ---------------------------------------------------------------------------
+use mcb_domain::registry::project_detection::{
+    PROJECT_DETECTION_SERVICES, ProjectDetectionServiceEntry,
+};
+
+#[linkme::distributed_slice(PROJECT_DETECTION_SERVICES)]
+static UNIVERSAL_PROJECT_DETECTION_ENTRY: ProjectDetectionServiceEntry =
+    ProjectDetectionServiceEntry {
+        name: "universal",
+        description: "Universal project detector using all language-specific detectors",
+        build: |_config| {
+            let detect_fn: DetectAllFn = Arc::new(|path| {
+                Box::pin(mcb_providers::project_detection::detect_all_projects(path))
+            });
+            Ok(Arc::new(ProjectService::new(detect_fn)))
+        },
+    };

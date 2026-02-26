@@ -147,29 +147,54 @@ static CONTEXT_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEnt
 
         let config = &ctx.config;
 
-        let embedding = mcb_domain::registry::embedding::resolve_embedding_provider(
-            &mcb_domain::registry::embedding::EmbeddingProviderConfig::new(
-                config
-                    .providers
-                    .embedding
-                    .provider
-                    .as_deref()
-                    .unwrap_or("null"),
-            ),
-        )
-        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
+        // Propagate ALL config fields from AppConfig to provider registry configs.
+        // This ensures the single source of truth (AppConfig) flows through DI.
+        let mut embed_cfg = mcb_domain::registry::embedding::EmbeddingProviderConfig::new(
+            config
+                .providers
+                .embedding
+                .provider
+                .as_deref()
+                .unwrap_or("null"),
+        );
+        if let Some(ref v) = config.providers.embedding.cache_dir {
+            embed_cfg = embed_cfg.with_cache_dir(v.clone());
+        }
+        if let Some(ref v) = config.providers.embedding.model {
+            embed_cfg = embed_cfg.with_model(v.clone());
+        }
+        if let Some(ref v) = config.providers.embedding.base_url {
+            embed_cfg = embed_cfg.with_base_url(v.clone());
+        }
+        if let Some(ref v) = config.providers.embedding.api_key {
+            embed_cfg = embed_cfg.with_api_key(v.clone());
+        }
+        if let Some(d) = config.providers.embedding.dimensions {
+            embed_cfg = embed_cfg.with_dimensions(d);
+        }
+        let embedding = mcb_domain::registry::embedding::resolve_embedding_provider(&embed_cfg)
+            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
 
-        let vector_store = mcb_domain::registry::vector_store::resolve_vector_store_provider(
-            &mcb_domain::registry::vector_store::VectorStoreProviderConfig::new(
-                config
-                    .providers
-                    .vector_store
-                    .provider
-                    .as_deref()
-                    .unwrap_or("null"),
-            ),
-        )
-        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
+        let mut vec_cfg = mcb_domain::registry::vector_store::VectorStoreProviderConfig::new(
+            config
+                .providers
+                .vector_store
+                .provider
+                .as_deref()
+                .unwrap_or("null"),
+        );
+        if let Some(ref v) = config.providers.vector_store.address {
+            vec_cfg = vec_cfg.with_uri(v.clone());
+        }
+        if let Some(ref v) = config.providers.vector_store.collection {
+            vec_cfg = vec_cfg.with_collection(v.clone());
+        }
+        if let Some(d) = config.providers.vector_store.dimensions {
+            vec_cfg = vec_cfg.with_dimensions(d);
+        }
+        let vector_store =
+            mcb_domain::registry::vector_store::resolve_vector_store_provider(&vec_cfg)
+                .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
 
         Ok(Arc::new(ContextServiceImpl::new(embedding, vector_store)))
     }),

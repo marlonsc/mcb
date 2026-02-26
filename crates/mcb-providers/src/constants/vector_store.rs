@@ -43,7 +43,6 @@ pub const MILVUS_DEFAULT_QUERY_LIMIT: i64 = 10_000;
 /// Milvus pagination batch size (keeps gRPC responses under 4MB limit)
 pub const MILVUS_QUERY_BATCH_SIZE: usize = 100;
 
-
 /// Milvus distance metric type for search
 pub const MILVUS_DISTANCE_METRIC: &str = "L2";
 

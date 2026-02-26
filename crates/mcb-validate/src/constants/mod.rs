@@ -25,7 +25,6 @@ pub mod ca;
 /// Pending-task and stub detection labels.
 pub mod labels;
 
-
 /// Clone detection fingerprinting keywords.
 pub mod duplication;
 

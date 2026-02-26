@@ -26,12 +26,7 @@ use std::path::PathBuf;
 use mcb_domain::error::{Error, Result};
 use tempfile::TempDir;
 
-use super::{
-    AppConfig, DatabaseConfig,
-    validation::{
-        load_project_settings, resolve_config_with_project_settings, validate_app_config,
-    },
-};
+use super::{AppConfig, DatabaseConfig, validation::validate_app_config};
 
 fn load_test_config() -> Result<AppConfig> {
     let env_name = std::env::var("LOCO_ENV")
@@ -59,15 +54,11 @@ fn load_test_config() -> Result<AppConfig> {
                 let settings = yaml
                     .get("settings")
                     .ok_or_else(|| Error::ConfigMissing("No 'settings' key in config".into()))?;
-                let mut config: AppConfig =
+                let config: AppConfig =
                     serde_yaml::from_value(settings.clone()).map_err(|e| Error::Configuration {
                         message: format!("Failed to deserialize AppConfig: {e}"),
                         source: None,
                     })?;
-                if let Some(project_settings) = load_project_settings() {
-                    config = resolve_config_with_project_settings(config, &project_settings);
-                    config.project_settings = Some(project_settings);
-                }
                 return Ok(config);
             }
         }

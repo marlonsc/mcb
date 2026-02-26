@@ -229,7 +229,7 @@ impl EdgeVecVectorStoreProvider {
         let (tx, rx) = oneshot::channel();
         let _ = self.sender.send(build_message(tx)).await;
         rx.await
-            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+            .unwrap_or_else(|_| Err(Error::vector_db("Actor closed")))
     }
     async fn send_core<T, F>(&self, f: F) -> Result<T>
     where
@@ -468,7 +468,7 @@ impl EdgeVecActor {
 
         let storage = edgevec::VectorStorage::new(&hnsw_config, None);
         let index = edgevec::HnswIndex::new(hnsw_config, &storage)
-            .map_err(|e| Error::internal(format!("Failed to create EdgeVec HNSW index: {e}")))?;
+            .map_err(|e| Error::vector_db(format!("Failed to create EdgeVec HNSW index: {e}")))?;
 
         Ok(Self {
             receiver,
@@ -538,7 +538,7 @@ impl EdgeVecActor {
                     ids.push(external_id);
                 }
                 Err(e) => {
-                    return Err(Error::internal(format!("Failed to insert vector: {e}")));
+                    return Err(Error::vector_db(format!("Failed to insert vector: {e}")));
                 }
             }
         }
@@ -629,7 +629,7 @@ impl EdgeVecActor {
                 }
                 Ok(final_results)
             }
-            Err(e) => Err(Error::internal(format!("Search failed: {e}"))),
+            Err(e) => Err(Error::vector_db(format!("Search failed: {e}"))),
         }
     }
 }
@@ -684,7 +684,7 @@ impl EdgeVecActor {
     fn handle_list_file_paths(&self, collection: &str, limit: usize) -> Result<Vec<FileInfo>> {
         let collection_metadata = self
             .get_collection_metadata(collection)
-            .ok_or_else(|| Error::internal(format!("Collection '{collection}' not found")))?;
+            .ok_or_else(|| Error::vector_db(format!("Collection '{collection}' not found")))?;
 
         let mut file_map: HashMap<String, (u32, String)> = HashMap::new();
 

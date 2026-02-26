@@ -132,6 +132,7 @@ insta = { workspace = true }
 tower = { workspace = true }
 http-body-util = { workspace = true }
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+mcb-providers = { path = "../mcb-providers" }
 
 [[test]]
 name = "unit"

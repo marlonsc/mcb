@@ -22,6 +22,6 @@ pub mod vector_store;
 pub use self::database::*;
 pub use self::embedding::*;
 pub use self::http::*;
-pub use self::vector_store::*;
 pub use self::language::*;
 pub use self::retry::*;
+pub use self::vector_store::*;

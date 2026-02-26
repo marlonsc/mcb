@@ -12,7 +12,10 @@ use crate::utils::invariants::assert_error_shape;
 
 async fn memory_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
     let (state, temp_dir) = create_real_domain_services().await?;
-    Some((MemoryHandler::new(state.mcp_server.memory_service()), temp_dir))
+    Some((
+        MemoryHandler::new(state.mcp_server.memory_service()),
+        temp_dir,
+    ))
 }
 
 async fn session_handler() -> Option<(SessionHandler, tempfile::TempDir)> {

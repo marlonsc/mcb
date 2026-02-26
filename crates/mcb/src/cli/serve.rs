@@ -1,4 +1,3 @@
-
 use clap::Args;
 use loco_rs::app::Hooks;
 use loco_rs::boot::{self, ServeParams, StartMode};

@@ -21,4 +21,3 @@ impl<T> fmt::Display for Sensitive<T> {
         write!(f, "{REDACTED}")
     }
 }
-

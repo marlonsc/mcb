@@ -493,10 +493,9 @@ fn build_indexing_service_from_registry(
     let context_service = resolve_context_service(context)?;
     let language_chunker = resolve_language_provider(&LanguageProviderConfig::new("universal"))?;
 
-    let database_provider = app_config.providers.database.provider.clone();
-    let repositories =
-        resolve_database_repositories(&database_provider, Box::new(db), "default".to_owned())
-            .map_err(mcb_domain::error::Error::internal)?;
+    // Use "seaorm" — the actual registry provider — not the user-facing config name.
+    let repositories = resolve_database_repositories("seaorm", Box::new(db), "default".to_owned())
+        .map_err(mcb_domain::error::Error::internal)?;
 
     let indexing_ops: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());

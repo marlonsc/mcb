@@ -10,7 +10,7 @@ use axum::Extension;
 use axum::Router as AxumRouter;
 use loco_rs::prelude::*;
 
-use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::config::{AppConfig, validate_app_config};
 use mcb_infrastructure::resolution_context::ServiceResolutionContext;
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::tools::ExecutionFlow;
@@ -36,6 +36,9 @@ impl Initializer for McpServerInitializer {
             .ok_or_else(|| loco_rs::Error::string("missing loco settings for AppConfig"))?;
         let app_config: AppConfig = serde_json::from_value(settings)
             .map_err(|e| loco_rs::Error::string(&format!("invalid AppConfig settings: {e}")))?;
+
+        validate_app_config(&app_config)
+            .map_err(|e| loco_rs::Error::string(&format!("AppConfig validation failed: {e}")))?;
 
         let event_bus = mcb_domain::registry::events::resolve_event_bus_provider(
             &mcb_domain::registry::events::EventBusProviderConfig::new(

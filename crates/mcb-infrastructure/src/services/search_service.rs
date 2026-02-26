@@ -121,3 +121,19 @@ impl SearchServiceInterface for SearchServiceImpl {
         Ok(filtered.into_iter().take(limit).collect())
     }
 }
+
+// ---------------------------------------------------------------------------
+// Linkme Registration
+// ---------------------------------------------------------------------------
+use mcb_domain::registry::services::{
+    SEARCH_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
+};
+
+#[linkme::distributed_slice(SERVICES_REGISTRY)]
+static SEARCH_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
+    name: SEARCH_SERVICE_NAME,
+    build: ServiceBuilder::Search(|context| {
+        let context_service = mcb_domain::registry::services::resolve_context_service(context)?;
+        Ok(Arc::new(SearchServiceImpl::new(context_service)))
+    }),
+};

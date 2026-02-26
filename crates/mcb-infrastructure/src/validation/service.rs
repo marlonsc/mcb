@@ -162,3 +162,18 @@ fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<
         functions,
     })
 }
+
+// ---------------------------------------------------------------------------
+// Linkme Registration
+// ---------------------------------------------------------------------------
+use mcb_domain::registry::services::{
+    SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry, VALIDATION_SERVICE_NAME,
+};
+
+#[linkme::distributed_slice(SERVICES_REGISTRY)]
+static VALIDATION_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
+    name: VALIDATION_SERVICE_NAME,
+    build: ServiceBuilder::Validation(|_context| {
+        Ok(std::sync::Arc::new(InfraValidationService::new()))
+    }),
+};

@@ -50,7 +50,6 @@ provider_admin_interface!(
     extra = {}
 );
 
-
 provider_admin_interface!(
     /// Interface for language provider admin operations.
     trait LanguageAdminInterface,

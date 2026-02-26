@@ -7,20 +7,20 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use fastembed::{EmbeddingModel, InitOptions};
-
 use mcb_domain::entities::{
     ApiKey, Organization, Team, TeamMember, TeamMemberRole, User, UserRole,
 };
-use mcb_domain::ports::EmbeddingProvider;
-use mcb_domain::ports::IndexingResult;
+use mcb_domain::ports::{EmbeddingProvider, IndexingResult, VectorStoreProvider};
+use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
+use mcb_domain::registry::vector_store::{
+    VectorStoreProviderConfig, resolve_vector_store_provider,
+};
 use mcb_domain::utils::time::epoch_secs_i64;
 use mcb_domain::value_objects::TeamMemberId;
 use mcb_infrastructure::config::TestConfigBuilder;
 use mcb_infrastructure::events::BroadcastEventBus;
 use mcb_infrastructure::repositories::connect_sqlite_with_migrations;
 use mcb_infrastructure::resolution_context::ServiceResolutionContext;
-use mcb_providers::embedding::FastEmbedProvider;
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::tools::ExecutionFlow;
@@ -192,13 +192,99 @@ pub fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
     .clone()
 }
 
-fn create_test_fastembed_provider()
--> std::result::Result<Arc<dyn EmbeddingProvider>, mcb_domain::error::Error> {
-    let init_options = InitOptions::new(EmbeddingModel::AllMiniLML6V2)
-        .with_show_download_progress(false)
-        .with_cache_dir(shared_fastembed_test_cache_dir());
-    let provider = FastEmbedProvider::with_options(init_options)?;
-    Ok(Arc::new(provider))
+// ---------------------------------------------------------------------------
+// SharedTestContext — DI-resolved providers for integration tests
+// ---------------------------------------------------------------------------
+
+/// Shared test context with DI-resolved providers.
+///
+/// Resolves embedding and vector store providers through the same linkme registry
+/// as production code. Process-wide shared to avoid re-loading ONNX models per test.
+pub struct SharedTestContext {
+    embedding: Arc<dyn EmbeddingProvider>,
+    vector_store: Arc<dyn VectorStoreProvider>,
+}
+
+impl SharedTestContext {
+    /// Get the DI-resolved embedding provider.
+    pub fn embedding_provider(&self) -> Arc<dyn EmbeddingProvider> {
+        Arc::clone(&self.embedding)
+    }
+
+    /// Get the DI-resolved vector store provider.
+    pub fn vector_store_provider(&self) -> Arc<dyn VectorStoreProvider> {
+        Arc::clone(&self.vector_store)
+    }
+}
+
+fn create_shared_test_context() -> Option<SharedTestContext> {
+    let builder = TestConfigBuilder::new().ok()?;
+    let builder = builder.with_fastembed_shared_cache().ok()?;
+    let (config, _opt_temp) = builder.build().ok()?;
+
+    // Resolve embedding provider through linkme registry (same as production).
+    // Propagate ALL config fields from AppConfig — single source of truth.
+    let mut embed_cfg = EmbeddingProviderConfig::new(
+        config
+            .providers
+            .embedding
+            .provider
+            .as_deref()
+            .unwrap_or("fastembed"),
+    );
+    if let Some(ref v) = config.providers.embedding.cache_dir {
+        embed_cfg = embed_cfg.with_cache_dir(v.clone());
+    }
+    if let Some(ref v) = config.providers.embedding.model {
+        embed_cfg = embed_cfg.with_model(v.clone());
+    }
+    if let Some(ref v) = config.providers.embedding.base_url {
+        embed_cfg = embed_cfg.with_base_url(v.clone());
+    }
+    if let Some(ref v) = config.providers.embedding.api_key {
+        embed_cfg = embed_cfg.with_api_key(v.clone());
+    }
+    if let Some(d) = config.providers.embedding.dimensions {
+        embed_cfg = embed_cfg.with_dimensions(d);
+    }
+    let embedding = resolve_embedding_provider(&embed_cfg).ok()?;
+
+    // Resolve vector store provider through linkme registry (same as production).
+    // Propagate ALL config fields from AppConfig — single source of truth.
+    let mut vec_cfg = VectorStoreProviderConfig::new(
+        config
+            .providers
+            .vector_store
+            .provider
+            .as_deref()
+            .unwrap_or("edgevec"),
+    );
+    if let Some(ref v) = config.providers.vector_store.address {
+        vec_cfg = vec_cfg.with_uri(v.clone());
+    }
+    if let Some(ref v) = config.providers.vector_store.collection {
+        vec_cfg = vec_cfg.with_collection(v.clone());
+    }
+    if let Some(d) = config.providers.vector_store.dimensions {
+        vec_cfg = vec_cfg.with_dimensions(d);
+    }
+    let vector_store = resolve_vector_store_provider(&vec_cfg).ok()?;
+
+    Some(SharedTestContext {
+        embedding,
+        vector_store,
+    })
+}
+
+/// Process-wide shared test context. Builds once via linkme registry resolution.
+pub fn try_shared_app_context() -> Option<&'static SharedTestContext> {
+    static CTX: std::sync::OnceLock<Option<SharedTestContext>> = std::sync::OnceLock::new();
+    CTX.get_or_init(create_shared_test_context).as_ref()
+}
+
+#[allow(clippy::panic)]
+pub fn shared_app_context() -> &'static SharedTestContext {
+    try_shared_app_context().expect("shared test context init failed")
 }
 
 async fn create_test_resolution_context() -> Option<(ServiceResolutionContext, TempDir)> {
@@ -258,9 +344,17 @@ pub fn try_shared_mcb_state() -> Option<&'static mcb_server::state::McbState> {
         Option<(mcb_server::state::McbState, Box<tempfile::TempDir>)>,
     > = std::sync::OnceLock::new();
     STATE.get_or_init(|| {
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        rt.block_on(async { crate::utils::domain_services::create_real_domain_services() })
-            .map(|(s, t)| (s, Box::new(t)))
+        // Spawn a separate thread so the new runtime doesn't conflict with an
+        // existing #[tokio::test] runtime on the calling thread.
+        std::thread::spawn(|| {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            rt.block_on(async {
+                crate::utils::domain_services::create_real_domain_services().await
+            })
+        })
+        .join()
+        .unwrap()
+        .map(|(s, t)| (s, Box::new(t)))
     });
     STATE.get().and_then(|o| o.as_ref()).map(|(s, _)| s as &_)
 }

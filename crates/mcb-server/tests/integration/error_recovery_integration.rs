@@ -133,11 +133,8 @@ async fn test_provider_handles_return_valid_instances() -> Result<(), Box<dyn st
         "Vector store should have a name"
     );
 
-    let cache = ctx.cache_provider();
-    assert!(
-        !cache.provider_name().is_empty(),
-        "Cache should have a name"
-    );
+    // Note: CacheProvider is delegated to Loco, not registered via linkme.
+    // No cache_provider() accessor on SharedTestContext.
     Ok(())
 }
 
@@ -212,10 +209,9 @@ fn test_list_providers_never_panics() {
     // These should never panic, even if registry is empty
     let embedding_providers = list_embedding_providers();
     let vector_store_providers = list_vector_store_providers();
-    let cache_providers = list_cache_providers();
+    // Note: CacheProvider is delegated to Loco — no linkme registry for cache.
     let language_providers = list_language_providers();
 
-    // With extern crate mcb_providers, none should be empty
     assert!(
         !embedding_providers.is_empty(),
         "Should have embedding providers"
@@ -223,10 +219,6 @@ fn test_list_providers_never_panics() {
     assert!(
         !vector_store_providers.is_empty(),
         "Should have vector store providers"
-    );
-    assert!(
-        cache_providers.is_empty(),
-        "Cache providers are delegated to Loco and should not be linkme-registered"
     );
     assert!(
         !language_providers.is_empty(),

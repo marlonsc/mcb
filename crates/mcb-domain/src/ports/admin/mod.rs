@@ -18,6 +18,5 @@ pub use operations::{
     ValidationOperationResult, ValidationOperationsInterface, ValidationStatus, ValidatorJobRunner,
 };
 pub use providers::{
-    EmbeddingAdminInterface, LanguageAdminInterface, ProviderInfo,
-    VectorStoreAdminInterface,
+    EmbeddingAdminInterface, LanguageAdminInterface, ProviderInfo, VectorStoreAdminInterface,
 };

@@ -1,4 +1,8 @@
 //! Integration tests — `cargo test -p mcb-server --test integration`
+#![allow(missing_docs)]
+
+extern crate mcb_infrastructure;
+extern crate mcb_providers;
 
 #[path = "../utils/mod.rs"]
 #[allow(dead_code, unused_imports)]
