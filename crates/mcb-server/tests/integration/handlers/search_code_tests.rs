@@ -6,10 +6,13 @@ use crate::utils::domain_services::create_real_domain_services;
 
 #[tokio::test]
 async fn test_search_code_success() {
-    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
         return;
     };
-    let handler = SearchHandler::new(services.search_service, services.memory_service);
+    let handler = SearchHandler::new(
+        state.mcp_server.search_service(),
+        state.mcp_server.memory_service(),
+    );
 
     let args = SearchArgs {
         query: "test query".to_owned(),
@@ -34,10 +37,13 @@ async fn test_search_code_success() {
 
 #[tokio::test]
 async fn test_search_code_empty_query() {
-    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
         return;
     };
-    let handler = SearchHandler::new(services.search_service, services.memory_service);
+    let handler = SearchHandler::new(
+        state.mcp_server.search_service(),
+        state.mcp_server.memory_service(),
+    );
 
     let args = SearchArgs {
         query: String::new(),

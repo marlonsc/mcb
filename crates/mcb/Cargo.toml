@@ -52,6 +52,15 @@ clap = { workspace = true }
 # Loco framework - boot, config, server lifecycle
 loco-rs = { workspace = true }
 
+# Async trait desugaring (required by Loco's Hooks/Initializer traits)
+async-trait = { workspace = true }
+
+# Axum router types (required by Loco Initializer::after_routes)
+axum = { workspace = true }
+
+# XDG config directory lookup for installed config fallback
+dirs = { workspace = true }
+
 # Re-export for doc examples
 serde_json = { workspace = true }
 

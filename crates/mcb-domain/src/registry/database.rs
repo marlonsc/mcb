@@ -11,14 +11,17 @@ use std::any::Any;
 use std::sync::Arc;
 
 use crate::ports::{
-    AgentRepository, FileHashRepository, IssueEntityRepository, MemoryRepository,
-    OrgEntityRepository, PlanEntityRepository, ProjectRepository, VcsEntityRepository,
+    AgentRepository, AuthRepositoryPort, DashboardQueryPort, FileHashRepository,
+    IssueEntityRepository, MemoryRepository, OrgEntityRepository, PlanEntityRepository,
+    ProjectRepository, VcsEntityRepository,
 };
 
 /// Complete set of database-backed repositories required by the application.
 pub struct DatabaseRepositories {
     /// Repository for memory entities.
     pub memory: Arc<dyn MemoryRepository>,
+    pub auth: Arc<dyn AuthRepositoryPort>,
+    pub dashboard: Arc<dyn DashboardQueryPort>,
     /// Repository for agent entities.
     pub agent: Arc<dyn AgentRepository>,
     /// Repository for project entities.

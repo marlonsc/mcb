@@ -11,8 +11,8 @@ use crate::utils::domain_services::create_real_domain_services;
 use crate::utils::test_fixtures::{TEST_PROJECT_ID, TEST_SESSION_ID};
 
 async fn create_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
-    let (services, temp_dir) = create_real_domain_services().await?;
-    Some((MemoryHandler::new(services.memory_service), temp_dir))
+    let (state, temp_dir) = create_real_domain_services().await?;
+    Some((MemoryHandler::new(state.mcp_server.memory_service()), temp_dir))
 }
 
 fn missing_data_store_args() -> MemoryArgs {

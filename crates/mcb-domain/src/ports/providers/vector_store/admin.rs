@@ -3,19 +3,23 @@
 //!
 #![allow(missing_docs)]
 
-use async_trait::async_trait;
+use std::collections::HashMap;
 
-use super::{MetadataMap, PortResult, StoreCollectionId};
+use async_trait::async_trait;
+use serde_json::Value;
+
+use crate::error::Result;
+use crate::value_objects::CollectionId;
 
 #[async_trait]
 pub trait VectorStoreAdmin: Send + Sync {
-    async fn collection_exists(&self, collection: &StoreCollectionId) -> PortResult<bool>;
-    async fn get_stats(&self, collection: &StoreCollectionId) -> PortResult<MetadataMap>;
-    async fn flush(&self, collection: &StoreCollectionId) -> PortResult<()>;
+    async fn collection_exists(&self, collection: &CollectionId) -> Result<bool>;
+    async fn get_stats(&self, collection: &CollectionId) -> Result<HashMap<String, Value>>;
+    async fn flush(&self, collection: &CollectionId) -> Result<()>;
     fn provider_name(&self) -> &str;
 
-    async fn health_check(&self) -> PortResult<()> {
-        let health_check_id = StoreCollectionId::from_name("__health_check__");
+    async fn health_check(&self) -> Result<()> {
+        let health_check_id = CollectionId::from_name("__health_check__");
         self.collection_exists(&health_check_id).await?;
         Ok(())
     }

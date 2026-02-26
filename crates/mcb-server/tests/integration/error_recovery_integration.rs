@@ -15,7 +15,6 @@ extern crate mcb_providers;
 
 use std::sync::Arc;
 
-use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
@@ -32,7 +31,6 @@ use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context}
 #[rstest]
 #[case("embedding")]
 #[case("vector_store")]
-#[case("cache")]
 #[case("language")]
 fn test_unknown_provider_error_message(
     #[case] provider_kind: &str,
@@ -48,9 +46,6 @@ fn test_unknown_provider_error_message(
                 .err()
                 .map(|e| e.to_string())
         }
-        "cache" => resolve_cache_provider(&CacheProviderConfig::new("nonexistent_xyz_cache"))
-            .err()
-            .map(|e| e.to_string()),
         "language" => {
             resolve_language_provider(&LanguageProviderConfig::new("nonexistent_xyz_lang"))
                 .err()

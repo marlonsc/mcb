@@ -7,8 +7,6 @@
 
 use mcb_infrastructure::config::{ServerConfig, TransportMode};
 
-use crate::utils::config::load_startup_config_or_default;
-
 /// Transport configuration for MCP server
 ///
 /// This struct provides convenience methods for creating transport configurations.
@@ -23,18 +21,6 @@ pub struct TransportConfig {
     pub http_host: Option<String>,
 }
 
-/// Returns default `TransportConfig` with Stdio mode and no HTTP configuration
-impl Default for TransportConfig {
-    fn default() -> Self {
-        let config = load_startup_config_or_default();
-        Self {
-            mode: config.server.transport_mode,
-            http_port: Some(config.server.network.port),
-            http_host: Some(config.server.network.host),
-        }
-    }
-}
-
 impl TransportConfig {
     /// Create stdio-only transport config
     #[must_use]
@@ -46,25 +32,23 @@ impl TransportConfig {
         }
     }
 
-    /// Create HTTP-only transport config
+    /// Create HTTP-only transport config with explicit host and port
     #[must_use]
-    pub fn http(port: u16) -> Self {
-        let config = load_startup_config_or_default();
+    pub fn http(host: String, port: u16) -> Self {
         Self {
             mode: TransportMode::Http,
             http_port: Some(port),
-            http_host: Some(config.server.network.host),
+            http_host: Some(host),
         }
     }
 
-    /// Create hybrid transport config (both stdio and HTTP)
+    /// Create hybrid transport config (both stdio and HTTP) with explicit host and port
     #[must_use]
-    pub fn hybrid(http_port: u16) -> Self {
-        let config = load_startup_config_or_default();
+    pub fn hybrid(host: String, http_port: u16) -> Self {
         Self {
             mode: TransportMode::Hybrid,
             http_port: Some(http_port),
-            http_host: Some(config.server.network.host),
+            http_host: Some(host),
         }
     }
 

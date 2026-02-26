@@ -146,21 +146,24 @@ fn run_full_validation_report() {
 
     let mut all_violations: Vec<Box<dyn Violation>> = Vec::new();
 
-    for &name in validator_names {
+    for name in validator_names {
         let root = workspace_root.clone();
-        let vname = name.to_owned();
+        let vname = name.clone();
         let result = std::thread::Builder::new()
             .name(format!("validator-{vname}"))
             .stack_size(16 * 1024 * 1024)
             .spawn(move || {
                 let config = ValidationConfig::new(&root);
                 let registry = ValidatorRegistry::standard_for(&root);
-                let v = registry.validators().iter().find(|v| v.name() == vname);
+                let v = registry
+                    .validators()
+                    .iter()
+                    .find(|v| v.name() == vname.as_str());
                 assert!(v.is_some(), "validator must exist");
                 v.and_then(|v| v.validate(&config).ok())
             })
             .unwrap_or_else(|_| {
-                mcb_domain::warn!("validate_test", "Failed to spawn validator thread", &name);
+                mcb_domain::warn!("validate_test", "Failed to spawn validator thread", &vname);
                 std::thread::spawn(|| None)
             })
             .join();
@@ -171,14 +174,14 @@ fn run_full_validation_report() {
                 mcb_domain::warn!(
                     "validate_test",
                     "Validator returned error or was not found",
-                    &name
+                    &vname
                 );
             }
             Err(_) => {
                 mcb_domain::warn!(
                     "validate_test",
                     "Validator panicked (likely stack overflow)",
-                    &name
+                    &vname
                 );
             }
         }

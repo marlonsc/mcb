@@ -3,8 +3,8 @@ use mcb_server::handlers::project::ProjectHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
 fn create_handler() -> ProjectHandler {
-    let ctx = crate::utils::shared_context::shared_app_context();
-    ProjectHandler::new(ctx.project_repository())
+    let state = crate::utils::shared_context::shared_mcb_state();
+    ProjectHandler::new(state.mcp_server.project_workflow_repository())
 }
 
 #[tokio::test]

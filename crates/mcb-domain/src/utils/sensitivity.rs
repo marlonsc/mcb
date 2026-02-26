@@ -22,8 +22,3 @@ impl<T> fmt::Display for Sensitive<T> {
     }
 }
 
-/// Returns an optional redacted view: `None` stays `None`, `Some(t)` becomes `Some(Sensitive(t))`.
-#[must_use]
-pub fn redact_optional<T>(opt: &Option<T>) -> Option<Sensitive<&T>> {
-    opt.as_ref().map(Sensitive)
-}

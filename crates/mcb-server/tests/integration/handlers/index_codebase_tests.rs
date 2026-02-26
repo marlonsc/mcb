@@ -19,10 +19,10 @@ async fn test_index_codebase(
     #[case] collection: Option<&str>,
     #[case] should_succeed: bool,
 ) {
-    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
         return;
     };
-    let handler = IndexHandler::new(services.indexing_service);
+    let handler = IndexHandler::new(state.mcp_server.indexing_service());
 
     let _temp_dir_guard;
     let path_val = if create_codebase {

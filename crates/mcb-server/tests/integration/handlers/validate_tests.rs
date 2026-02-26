@@ -33,10 +33,10 @@ macro_rules! validate_test {
     ($test_name:ident, $action:expr, expect_mcp_error) => {
         #[tokio::test]
         async fn $test_name() {
-            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
                 return;
             };
-            let handler = ValidateHandler::new(services.validation_service);
+            let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
             let args = ValidateArgs {
                 action: $action,
@@ -60,10 +60,10 @@ macro_rules! validate_test {
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
             let (_temp_dir, path) = $path_expr?;
-            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
                 return Ok(());
             };
-            let handler = ValidateHandler::new(services.validation_service);
+            let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
             let args = ValidateArgs {
                 action: $action,
@@ -84,10 +84,10 @@ macro_rules! validate_test {
     ($test_name:ident, $action:expr, path: $path:expr, $(scope: $scope:expr,)? expect_error) => {
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
-            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
                 return Ok(());
             };
-            let handler = ValidateHandler::new(services.validation_service);
+            let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
             let args = ValidateArgs {
                 action: $action,
@@ -110,10 +110,10 @@ macro_rules! validate_test {
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
             let (_temp_dir, path) = $path_expr?;
-            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
                 return Ok(());
             };
-            let handler = ValidateHandler::new(services.validation_service);
+            let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
             let args = ValidateArgs {
                 action: $action,
@@ -181,10 +181,10 @@ validate_test!(
 #[tokio::test]
 async fn test_validate_run_with_specific_rules() -> Result<(), Box<dyn std::error::Error>> {
     let (_temp_dir, path) = create_temp_file()?;
-    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
         return Ok(());
     };
-    let handler = ValidateHandler::new(services.validation_service);
+    let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
     let args = ValidateArgs {
         action: ValidateAction::Run,
@@ -208,10 +208,10 @@ async fn test_validate_run_with_specific_rules() -> Result<(), Box<dyn std::erro
 async fn test_validate_list_rules(
     #[case] category: Option<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
         return Ok(());
     };
-    let handler = ValidateHandler::new(services.validation_service);
+    let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
     let args = ValidateArgs {
         action: ValidateAction::ListRules,

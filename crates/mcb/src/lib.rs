@@ -25,6 +25,8 @@ pub mod infrastructure {
     pub use mcb_infrastructure::*;
 }
 
+pub use crate::loco_app::McbApp;
 pub use domain::*;
-pub use server::McbApp;
 pub use server::{McpServer, McpServerBuilder};
+pub mod initializers;
+pub mod loco_app;

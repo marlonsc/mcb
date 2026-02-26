@@ -9,6 +9,5 @@ pub mod graphql;
 pub mod json_rpc;
 pub mod limits;
 pub mod protocol;
-pub mod tools;
 pub mod vcs;
 pub use json_rpc::*;

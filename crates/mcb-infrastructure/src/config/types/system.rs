@@ -94,6 +94,16 @@ pub enum EventBusBackend {
     InProcess,
 }
 
+impl EventBusBackend {
+    /// Registry provider name for this backend.
+    #[must_use]
+    pub fn provider_name(&self) -> &'static str {
+        match self {
+            Self::InProcess => "inprocess",
+        }
+    }
+}
+
 /// Event bus configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -129,18 +139,6 @@ impl EventBusConfig {
             connection_timeout_ms: EVENT_BUS_CONNECTION_TIMEOUT_MS,
             max_reconnect_attempts: EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
         }
-    }
-
-    /// Default configuration.
-    #[must_use]
-    pub fn default_config() -> Self {
-        Self::in_process()
-    }
-
-    /// Returns the fallback event bus configuration.
-    #[must_use]
-    pub fn fallback() -> Self {
-        Self::in_process()
     }
 }
 
@@ -180,15 +178,6 @@ pub struct SystemConfig {
     pub events: EventBusConfig,
 }
 
-impl SystemConfig {
-    /// Returns the fallback system runtime configuration.
-    #[must_use]
-    pub fn fallback() -> Self {
-        Self {
-            events: EventBusConfig::fallback(),
-        }
-    }
-}
 /// Sync configuration
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]

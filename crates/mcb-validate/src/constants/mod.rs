@@ -8,7 +8,7 @@
 //! - [`common`] — Cross-cutting code patterns (comments, test paths, declarations)
 //! - [`architecture`] — Architecture layer path fragments
 //! - [`labels`] — Pending-task and stub detection labels
-//! - [`allowlists`] — Validation skip-lists and generic names
+//! - [`duplication`] — Clone detection fingerprinting keywords
 //! - [`duplication`] — Clone detection fingerprinting keywords
 //!
 //! - [`ca`] — Clean Architecture naming and layout
@@ -25,8 +25,6 @@ pub mod ca;
 /// Pending-task and stub detection labels.
 pub mod labels;
 
-/// Validation skip-lists and generic names.
-pub mod allowlists;
 
 /// Clone detection fingerprinting keywords.
 pub mod duplication;

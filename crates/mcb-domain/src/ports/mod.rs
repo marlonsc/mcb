@@ -38,7 +38,7 @@ mod services;
 
 // --- Admin ---
 pub use admin::{
-    AgentSessionStats, CacheAdminInterface, DailyCount, DashboardQueryPort,
+    AgentSessionStats, DailyCount, DashboardQueryPort,
     EmbeddingAdminInterface, IndexingOperation, IndexingOperationStatus,
     IndexingOperationsInterface, LanguageAdminInterface, MonthlyCount, ProviderInfo, ToolCallCount,
     ValidationOperation, ValidationOperationResult, ValidationOperationsInterface,
@@ -57,14 +57,15 @@ pub use infrastructure::{
 // --- Providers ---
 pub use providers::vector_store::{VectorStoreAdmin, VectorStoreBrowser};
 pub use providers::{
-    CacheEntryConfig, CacheProvider, CacheStats, ComplexityAnalyzer, ComplexityFinding,
-    CryptoProvider, DEFAULT_CACHE_NAMESPACE, DEFAULT_CACHE_TTL_SECS, DeadCodeDetector,
+    ComplexityAnalyzer, ComplexityFinding,
+    CryptoProvider, DeadCodeDetector,
     DeadCodeFinding, EmbeddingProvider, EncryptedData, FileMetrics, FunctionMetrics,
     HalsteadMetrics, HttpClientConfig, HttpClientProvider, HybridSearchProvider,
     HybridSearchResult, LanguageChunkingProvider, MetricLabels, MetricsAnalysisProvider,
-    MetricsError, MetricsProvider, MetricsResult, ProjectDetector, ProjectDetectorConfig,
-    ProjectDetectorEntry, ProviderConfigManagerInterface, TdgFinding, TdgScorer, ValidationOptions,
-    ValidationProvider, ValidatorInfo, VcsProvider, VectorStoreProvider,
+    MetricsError, MetricsProvider, MetricsResult, PROJECT_DETECTORS, ProjectDetector,
+    ProjectDetectorConfig, ProjectDetectorEntry, ProviderConfigManagerInterface, RuleValidator,
+    RuleValidatorRequest, TdgFinding, TdgScorer, ValidationOptions, ValidationProvider,
+    ValidatorInfo, VcsProvider, VectorStoreProvider,
 };
 
 // --- Repositories ---

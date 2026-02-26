@@ -55,12 +55,7 @@ impl ValidationServiceInterface for InfraValidationService {
     }
 
     async fn list_validators(&self) -> Result<Vec<String>> {
-        use mcb_validate::ValidatorRegistry;
-
-        Ok(ValidatorRegistry::standard_validator_names()
-            .iter()
-            .map(|name| (*name).to_owned())
-            .collect())
+        Ok(mcb_domain::registry::validation::list_validator_names())
     }
 
     async fn validate_file(
@@ -89,32 +84,18 @@ fn run_validation(
     validators: Option<&[String]>,
     severity_filter: Option<&str>,
 ) -> Result<ValidationReport> {
-    use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
+    use mcb_domain::ports::RuleValidatorRequest;
+    use mcb_domain::registry::validation::{build_validators, run_validators};
 
-    let config = ValidationConfig::new(workspace_root);
-    let registry = ValidatorRegistry::standard_for(workspace_root);
-
-    let report = if let Some(names) = validators {
-        let names_ref: Vec<&str> = names.iter().map(String::as_str).collect();
-        let violations = registry
-            .validate_named(&config, &names_ref)
-            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-        GenericReporter::create_report(&violations, workspace_root.to_path_buf())
-    } else {
-        let violations = registry
-            .validate_all(&config)
-            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-        GenericReporter::create_report(&violations, workspace_root.to_path_buf())
+    let root = workspace_root.to_path_buf();
+    let validators_list = build_validators(root.clone())?;
+    let request = RuleValidatorRequest {
+        workspace_root: root,
+        validator_names: validators.map(|s| s.to_vec()),
+        severity_filter: severity_filter.map(String::from),
+        exclude_patterns: None,
     };
-
-    Ok(convert_report(report, severity_filter))
-}
-
-fn convert_report(
-    report: mcb_validate::GenericReport,
-    severity_filter: Option<&str>,
-) -> ValidationReport {
-    mcb_validate::utils::validation_report::from_generic_report(report, severity_filter, true)
+    run_validators(&validators_list, &request)
 }
 
 fn run_file_validation(

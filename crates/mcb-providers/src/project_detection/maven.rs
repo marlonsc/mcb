@@ -12,9 +12,8 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
 use quick_xml::Reader;
 use quick_xml::events::Event;
-use tokio::fs::read_to_string;
 
-use super::PROJECT_DETECTORS;
+use super::common::read_file_opt;
 
 /// Maven project detector
 pub struct MavenDetector;
@@ -158,16 +157,8 @@ impl ProjectDetector for MavenDetector {
             return Ok(None);
         }
 
-        let content = match read_to_string(&pom_path).await {
-            Ok(c) => c,
-            Err(e) => {
-                mcb_domain::debug!(
-                    "maven",
-                    "Failed to read pom.xml",
-                    &format!("path = {pom_path:?}, error = {e}")
-                );
-                return Ok(None);
-            }
+        let Some(content) = read_file_opt(&pom_path, "maven").await else {
+            return Ok(None);
         };
 
         match Self::parse_pom(&content) {
@@ -201,7 +192,7 @@ fn maven_factory(
 
 // linkme distributed_slice uses #[link_section] internally
 #[allow(unsafe_code)]
-#[linkme::distributed_slice(PROJECT_DETECTORS)]
+#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
 static MAVEN_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "maven",
     description: "Detects Maven projects with pom.xml",

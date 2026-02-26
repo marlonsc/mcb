@@ -14,6 +14,7 @@ use sea_orm::{
     QueryOrder, QuerySelect, Set,
 };
 
+use super::common::db_error;
 use crate::database::seaorm::entities::{
     project, project_decision, project_dependency, project_issue, project_phase,
 };
@@ -414,8 +415,4 @@ impl ProjectRepository for SeaOrmProjectRepository {
             .map_err(db_error("delete project"))?;
         Ok(())
     }
-}
-
-fn db_error(op: &'static str) -> impl Fn(sea_orm::DbErr) -> Error {
-    move |e| Error::database(format!("{op}: {e}"))
 }

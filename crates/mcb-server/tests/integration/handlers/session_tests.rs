@@ -9,9 +9,12 @@ use crate::utils::test_fixtures::TEST_PROJECT_ID;
 use crate::utils::text::extract_text;
 
 async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
-    let (services, temp_dir) = create_real_domain_services().await?;
+    let (state, temp_dir) = create_real_domain_services().await?;
     Some((
-        SessionHandler::new(services.agent_session_service, services.memory_service),
+        SessionHandler::new(
+            state.mcp_server.agent_session_service(),
+            state.mcp_server.memory_service(),
+        ),
         temp_dir,
     ))
 }

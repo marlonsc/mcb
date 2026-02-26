@@ -267,14 +267,8 @@ mod handler_error_tests {
     use rmcp::handler::server::wrapper::Parameters;
 
     async fn create_handler() -> IndexHandler {
-        let ctx = crate::utils::shared_context::shared_app_context();
-        let services_res = ctx.build_domain_services().await;
-        assert!(services_res.is_ok(), "build domain services");
-        let services = match services_res {
-            Ok(services) => services,
-            Err(_) => unreachable!(),
-        };
-        IndexHandler::new(services.indexing_service)
+        let state = crate::utils::shared_context::shared_mcb_state();
+        IndexHandler::new(state.mcp_server.indexing_service())
     }
 
     #[tokio::test]

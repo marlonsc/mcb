@@ -1,52 +1,30 @@
-//!
-//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#vector-store-providers)
-//!
-//! Qdrant Vector Store Provider
-//!
-//! Implements the `VectorStoreProvider` port using Qdrant's cloud and self-hosted
-//! vector database REST API.
-//!
-//! Qdrant is an open-source vector search engine with rich filtering and payload support.
-//! This provider communicates via Qdrant's REST API using the reqwest HTTP client.
-
-use std::collections::HashMap;
-use std::fmt;
-use std::sync::Arc;
-use std::time::Duration;
-
-use async_trait::async_trait;
-use dashmap::DashMap;
-use mcb_domain::constants::http::CONTENT_TYPE_JSON;
-use mcb_domain::error::{Error, Result};
-use mcb_domain::utils::id;
-
 use crate::constants::{
     HTTP_HEADER_CONTENT_TYPE, STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS,
     STATS_FIELD_VECTORS_COUNT, STATUS_UNKNOWN, VECTOR_FIELD_FILE_PATH,
     VECTOR_STORE_RETRY_BACKOFF_SECS, VECTOR_STORE_RETRY_COUNT,
 };
+use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
+use crate::utils::vector_store::search_result_from_json_metadata;
+use async_trait::async_trait;
+use dashmap::DashMap;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
+use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
 use reqwest::Client;
 use serde_json::Value;
-
-use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
-use crate::utils::vector_store::search_result_from_json_metadata;
-
-/// Qdrant vector store provider
-///
-/// Implements the vector store domain ports using Qdrant's REST API.
-/// Supports collection management, vector upsert, similarity search,
-/// and advanced filtering via Qdrant's payload-based query system.
+use std::collections::HashMap;
+use std::fmt;
+use std::sync::Arc;
+use std::time::Duration;
 pub struct QdrantVectorStoreProvider {
     base_url: String,
     api_key: Option<String>,
     timeout: Duration,
     http_client: Client,
-    /// Track collection dimensions locally
     collections: Arc<DashMap<String, usize>>,
 }
-
 impl fmt::Debug for QdrantVectorStoreProvider {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("QdrantVectorStoreProvider")
@@ -56,15 +34,7 @@ impl fmt::Debug for QdrantVectorStoreProvider {
             .finish()
     }
 }
-
 impl QdrantVectorStoreProvider {
-    /// Create a new Qdrant vector store provider
-    ///
-    /// # Arguments
-    /// * `base_url` - Qdrant server URL (e.g., "<http://localhost:6333>")
-    /// * `api_key` - Optional API key for Qdrant Cloud
-    /// * `timeout` - Request timeout duration
-    /// * `http_client` - Reqwest HTTP client for making API requests
     #[must_use]
     pub fn new(
         base_url: &str,
@@ -81,12 +51,91 @@ impl QdrantVectorStoreProvider {
         }
     }
 
-    /// Build a URL for the Qdrant API
     fn api_url(&self, path: &str) -> String {
         format!("{}{}", self.base_url, path)
     }
 
-    /// Make an authenticated request to Qdrant
+    fn collection_path(collection: &CollectionId) -> String {
+        format!("/collections/{collection}")
+    }
+
+    fn collection_points_path(collection: &CollectionId, operation: &str) -> String {
+        format!("{}/points/{operation}", Self::collection_path(collection))
+    }
+
+    async fn request_collection(
+        &self,
+        method: reqwest::Method,
+        collection: &CollectionId,
+        body: Option<Value>,
+    ) -> Result<Value> {
+        self.request(method, &Self::collection_path(collection), body)
+            .await
+    }
+
+    async fn request_points(
+        &self,
+        method: reqwest::Method,
+        collection: &CollectionId,
+        body: Option<Value>,
+    ) -> Result<Value> {
+        self.request(
+            method,
+            &format!("{}/points", Self::collection_path(collection)),
+            body,
+        )
+        .await
+    }
+
+    async fn request_points_operation(
+        &self,
+        method: reqwest::Method,
+        collection: &CollectionId,
+        operation: &str,
+        body: Option<Value>,
+    ) -> Result<Value> {
+        self.request(
+            method,
+            &Self::collection_points_path(collection, operation),
+            body,
+        )
+        .await
+    }
+
+    fn map_result_items(
+        items: &Value,
+        warn_message: &'static str,
+        warn_field: &'static str,
+    ) -> Vec<SearchResult> {
+        items.as_array().map_or_else(
+            || {
+                mcb_domain::warn!("qdrant", warn_message, &warn_field);
+                Vec::new()
+            },
+            |arr| {
+                arr.iter()
+                    .map(|item| Self::point_to_search_result(item, 1.0))
+                    .collect()
+            },
+        )
+    }
+
+    fn map_scored_search_results(response: &Value) -> Result<Vec<SearchResult>> {
+        response["result"]
+            .as_array()
+            .ok_or_else(|| {
+                Error::vector_db("Qdrant search: malformed response, missing result array")
+            })?
+            .iter()
+            .map(|item| {
+                let score = item["score"]
+                    .as_f64()
+                    .ok_or_else(|| Error::vector_db("Qdrant search: missing score in result"))?;
+                Ok(Self::point_to_search_result(item, score))
+            })
+            .collect()
+    }
+
     async fn request(
         &self,
         method: reqwest::Method,
@@ -114,7 +163,6 @@ impl QdrantVectorStoreProvider {
         .await
     }
 
-    /// Convert Qdrant point result to domain `SearchResult`
     fn point_to_search_result(item: &Value, score: f64) -> SearchResult {
         let id = match &item["id"] {
             Value::String(s) => s.clone(),
@@ -129,14 +177,11 @@ impl QdrantVectorStoreProvider {
 
 #[async_trait]
 impl VectorStoreAdmin for QdrantVectorStoreProvider {
-    // --- Admin Methods ---
-
     async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
-        let response = self
-            .request(reqwest::Method::GET, &format!("/collections/{name}"), None)
-            .await;
-
-        match response {
+        match self
+            .request_collection(reqwest::Method::GET, name, None)
+            .await
+        {
             Ok(_) => Ok(true),
             Err(e) if e.to_string().contains("(404)") => Ok(false),
             Err(e) => Err(e),
@@ -155,11 +200,7 @@ impl VectorStoreAdmin for QdrantVectorStoreProvider {
         );
 
         match self
-            .request(
-                reqwest::Method::GET,
-                &format!("/collections/{collection}"),
-                None,
-            )
+            .request_collection(reqwest::Method::GET, collection, None)
             .await
         {
             Ok(data) => {
@@ -196,8 +237,6 @@ impl VectorStoreAdmin for QdrantVectorStoreProvider {
 
 #[async_trait]
 impl VectorStoreBrowser for QdrantVectorStoreProvider {
-    // --- Browser Methods ---
-
     async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
         let response = self
             .request(reqwest::Method::GET, "/collections", None)
@@ -241,39 +280,28 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
         collection: &CollectionId,
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
-        let payload = serde_json::json!({
-            "filter": {
-                "must": [{
-                    "key": VECTOR_FIELD_FILE_PATH,
-                    "match": { "value": file_path }
-                }]
-            },
-            "limit": 100,
-            "with_payload": true
-        });
-
         let response = self
-            .request(
+            .request_points_operation(
                 reqwest::Method::POST,
-                &format!("/collections/{collection}/points/scroll"),
-                Some(payload),
+                collection,
+                "scroll",
+                Some(serde_json::json!({
+                    "filter": {
+                        "must": [{
+                            "key": VECTOR_FIELD_FILE_PATH,
+                            "match": { "value": file_path }
+                        }]
+                    },
+                    "limit": 100,
+                    "with_payload": true
+                })),
             )
             .await?;
 
-        let mut results: Vec<SearchResult> = response["result"]["points"].as_array().map_or_else(
-            || {
-                mcb_domain::warn!(
-                    "qdrant",
-                    "payload missing or malformed, using empty default",
-                    &"search_result.payload"
-                );
-                Vec::new()
-            },
-            |arr| {
-                arr.iter()
-                    .map(|item| Self::point_to_search_result(item, 1.0))
-                    .collect()
-            },
+        let mut results = Self::map_result_items(
+            &response["result"]["points"],
+            "payload missing or malformed, using empty default",
+            "search_result.payload",
         );
 
         results.sort_by_key(|r| r.start_line);
@@ -283,20 +311,16 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
 
 #[async_trait]
 impl VectorStoreProvider for QdrantVectorStoreProvider {
-    // --- Provider Methods ---
-
     async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
-        let payload = serde_json::json!({
-            "vectors": {
-                "size": dimensions,
-                "distance": crate::constants::QDRANT_DISTANCE_METRIC
-            }
-        });
-
-        self.request(
+        self.request_collection(
             reqwest::Method::PUT,
-            &format!("/collections/{name}"),
-            Some(payload),
+            name,
+            Some(serde_json::json!({
+                "vectors": {
+                    "size": dimensions,
+                    "distance": crate::constants::QDRANT_DISTANCE_METRIC
+                }
+            })),
         )
         .await?;
 
@@ -305,12 +329,8 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
     }
 
     async fn delete_collection(&self, name: &CollectionId) -> Result<()> {
-        self.request(
-            reqwest::Method::DELETE,
-            &format!("/collections/{name}"),
-            None,
-        )
-        .await?;
+        self.request_collection(reqwest::Method::DELETE, name, None)
+            .await?;
 
         self.collections.remove(&name.to_string());
         Ok(())
@@ -339,14 +359,10 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
             ids.push(id);
         }
 
-        let payload = serde_json::json!({
-            "points": points
-        });
-
-        self.request(
+        self.request_points(
             reqwest::Method::PUT,
-            &format!("/collections/{collection}/points"),
-            Some(payload),
+            collection,
+            Some(serde_json::json!({ "points": points })),
         )
         .await?;
 
@@ -373,26 +389,10 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         }
 
         let response = self
-            .request(
-                reqwest::Method::POST,
-                &format!("/collections/{collection}/points/search"),
-                Some(payload),
-            )
+            .request_points_operation(reqwest::Method::POST, collection, "search", Some(payload))
             .await?;
 
-        let results = response["result"]
-            .as_array()
-            .ok_or_else(|| {
-                Error::vector_db("Qdrant search: malformed response, missing result array")
-            })?
-            .iter()
-            .map(|item| {
-                let score = item["score"]
-                    .as_f64()
-                    .ok_or_else(|| Error::vector_db("Qdrant search: missing score in result"))?;
-                Ok(Self::point_to_search_result(item, score))
-            })
-            .collect::<Result<Vec<_>>>()?;
+        let results = Self::map_scored_search_results(&response)?;
 
         Ok(results)
     }
@@ -402,14 +402,11 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
             return Ok(());
         }
 
-        let payload = serde_json::json!({
-            "points": ids
-        });
-
-        self.request(
+        self.request_points_operation(
             reqwest::Method::POST,
-            &format!("/collections/{collection}/points/delete"),
-            Some(payload),
+            collection,
+            "delete",
+            Some(serde_json::json!({ "points": ids })),
         )
         .await?;
 
@@ -425,33 +422,21 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
             return Ok(Vec::new());
         }
 
-        let payload = serde_json::json!({
-            "ids": ids,
-            "with_payload": true
-        });
-
         let response = self
-            .request(
+            .request_points(
                 reqwest::Method::POST,
-                &format!("/collections/{collection}/points"),
-                Some(payload),
+                collection,
+                Some(serde_json::json!({
+                    "ids": ids,
+                    "with_payload": true
+                })),
             )
             .await?;
 
-        let results = response["result"].as_array().map_or_else(
-            || {
-                mcb_domain::warn!(
-                    "qdrant",
-                    "vectors field missing or malformed, using empty default",
-                    &"search_result.vectors"
-                );
-                Vec::new()
-            },
-            |arr| {
-                arr.iter()
-                    .map(|item| Self::point_to_search_result(item, 1.0))
-                    .collect()
-            },
+        let results = Self::map_result_items(
+            &response["result"],
+            "vectors field missing or malformed, using empty default",
+            "search_result.vectors",
         );
 
         Ok(results)
@@ -462,42 +447,27 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         collection: &CollectionId,
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
-        let payload = serde_json::json!({
-            "limit": limit,
-            "with_payload": true
-        });
-
         let response = self
-            .request(
+            .request_points_operation(
                 reqwest::Method::POST,
-                &format!("/collections/{collection}/points/scroll"),
-                Some(payload),
+                collection,
+                "scroll",
+                Some(serde_json::json!({
+                    "limit": limit,
+                    "with_payload": true
+                })),
             )
             .await?;
 
-        let results = response["result"]["points"].as_array().map_or_else(
-            || {
-                mcb_domain::warn!(
-                    "qdrant",
-                    "ID extraction failed, using empty default",
-                    &"search_result.id"
-                );
-                Vec::new()
-            },
-            |arr| {
-                arr.iter()
-                    .map(|item| Self::point_to_search_result(item, 1.0))
-                    .collect()
-            },
+        let results = Self::map_result_items(
+            &response["result"]["points"],
+            "ID extraction failed, using empty default",
+            "search_result.id",
         );
 
         Ok(results)
     }
 }
-
-// ============================================================================
-// Auto-registration via linkme distributed slice
-// ============================================================================
 
 use crate::constants::QDRANT_DEFAULT_PORT;
 

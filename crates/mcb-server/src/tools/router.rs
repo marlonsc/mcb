@@ -9,7 +9,6 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use mcb_domain::constants::keys as schema;
 use mcb_domain::ports::VcsProvider;
 use mcb_domain::value_objects::ids::SessionId;
 use mcb_domain::warn;
@@ -17,6 +16,29 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolRequestParams, CallToolResult, Meta};
 use serde_json::Value;
 use uuid::Uuid;
+
+/// Canonical string field → alias mapping for context resolution.
+///
+/// Each entry maps a canonical key to all accepted aliases (camelCase, x-header, snake_case).
+const STRING_FIELD_ALIASES: &[(&str, &[&str])] = &[
+    ("session_id", &["session_id", "sessionId", "x-session-id", "x_session_id"]),
+    ("parent_session_id", &["parent_session_id", "parentSessionId", "x-parent-session-id", "x_parent_session_id"]),
+    ("project_id", &["project_id", "projectId", "x-project-id", "x_project_id"]),
+    ("worktree_id", &["worktree_id", "worktreeId", "x-worktree-id", "x_worktree_id"]),
+    ("repo_id", &["repo_id", "repoId", "x-repo-id", "x_repo_id"]),
+    ("repo_path", &["repo_path", "repoPath", "x-repo-path", "x_repo_path"]),
+    ("workspace_root", &["workspace_root", "workspaceRoot", "x-workspace-root"]),
+    ("operator_id", &["operator_id", "operatorId", "x-operator-id", "x_operator_id"]),
+    ("machine_id", &["machine_id", "machineId", "x-machine-id", "x_machine_id"]),
+    ("agent_program", &["agent_program", "agentProgram", "ide", "x-agent-program", "x_agent_program"]),
+    ("model_id", &["model_id", "model", "modelId", "x-model-id", "x_model_id"]),
+    ("execution_flow", &["execution_flow", "executionFlow", "x-execution-flow", "x_execution_flow"]),
+];
+
+/// Canonical boolean field → alias mapping for context resolution.
+const BOOL_FIELD_ALIASES: &[(&str, &[&str])] = &[
+    ("delegated", &["delegated", "is_delegated", "isDelegated", "x-delegated"]),
+];
 
 use crate::handlers::{
     AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
@@ -234,255 +256,49 @@ impl ToolExecutionContext {
         context_meta: &Meta,
     ) -> HashMap<String, String> {
         let mut overrides = HashMap::new();
-
-        insert_override(
-            &mut overrides,
-            "session_id",
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &["session_id", "sessionId", "x-session-id", "x_session_id"],
-            ),
-        );
-        insert_override(
-            &mut overrides,
-            schema::PARENT_SESSION_ID,
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &[
-                    schema::PARENT_SESSION_ID,
-                    "parentSessionId",
-                    "x-parent-session-id",
-                    "x_parent_session_id",
-                ],
-            ),
-        );
-        insert_override(
-            &mut overrides,
-            schema::PROJECT_ID,
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &[
-                    schema::PROJECT_ID,
-                    "projectId",
-                    "x-project-id",
-                    "x_project_id",
-                ],
-            ),
-        );
-        insert_override(
-            &mut overrides,
-            schema::WORKTREE_ID,
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &[
-                    schema::WORKTREE_ID,
-                    "worktreeId",
-                    "x-worktree-id",
-                    "x_worktree_id",
-                ],
-            ),
-        );
-        insert_override(
-            &mut overrides,
-            schema::REPO_ID,
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &[schema::REPO_ID, "repoId", "x-repo-id", "x_repo_id"],
-            ),
-        );
-        insert_override(
-            &mut overrides,
-            schema::REPO_PATH,
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &[schema::REPO_PATH, "repoPath", "x-repo-path", "x_repo_path"],
-            ),
-        );
-        insert_override(
-            &mut overrides,
-            "workspace_root",
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &["workspace_root", "workspaceRoot", "x-workspace-root"],
-            ),
-        );
-        insert_override(
-            &mut overrides,
-            "operator_id",
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &[
-                    "operator_id",
-                    "operatorId",
-                    "x-operator-id",
-                    "x_operator_id",
-                ],
-            ),
-        );
-        insert_override(
-            &mut overrides,
-            "machine_id",
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &["machine_id", "machineId", "x-machine-id", "x_machine_id"],
-            ),
-        );
-        insert_override(
-            &mut overrides,
-            "agent_program",
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &[
-                    "agent_program",
-                    "agentProgram",
-                    "ide",
-                    "x-agent-program",
-                    "x_agent_program",
-                ],
-            ),
-        );
-        insert_override(
-            &mut overrides,
-            "model_id",
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &["model_id", "model", "modelId", "x-model-id", "x_model_id"],
-            ),
-        );
-        if let Some(delegated) = resolve_context_bool(
-            request_meta,
-            context_meta,
-            &["delegated", "is_delegated", "isDelegated", "x-delegated"],
-        ) {
-            overrides.insert("delegated".to_owned(), delegated.to_string());
+        for &(canonical, aliases) in STRING_FIELD_ALIASES {
+            insert_override(
+                &mut overrides,
+                canonical,
+                resolve_context_value(request_meta, context_meta, aliases),
+            );
         }
-        insert_override(
-            &mut overrides,
-            "execution_flow",
-            resolve_context_value(
-                request_meta,
-                context_meta,
-                &[
-                    "execution_flow",
-                    "executionFlow",
-                    "x-execution-flow",
-                    "x_execution_flow",
-                ],
-            ),
-        );
-
+        for &(canonical, aliases) in BOOL_FIELD_ALIASES {
+            if let Some(val) = resolve_context_bool(request_meta, context_meta, aliases) {
+                overrides.insert(canonical.to_owned(), val.to_string());
+            }
+        }
         overrides
     }
 
     /// Resolve execution context from explicit overrides and runtime defaults.
     #[must_use]
     pub fn resolve(defaults: &RuntimeDefaults, overrides: &HashMap<String, String>) -> Self {
-        let session_id = resolve_override_value(
-            overrides,
-            &["session_id", "sessionId", "x-session-id", "x_session_id"],
-        )
-        .or_else(|| defaults.session_id.clone());
-        let parent_session_id = resolve_override_value(
-            overrides,
-            &[
-                schema::PARENT_SESSION_ID,
-                "parentSessionId",
-                "x-parent-session-id",
-                "x_parent_session_id",
-            ],
-        );
-        let project_id = resolve_override_value(
-            overrides,
-            &[
-                schema::PROJECT_ID,
-                "projectId",
-                "x-project-id",
-                "x_project_id",
-            ],
-        );
-        let worktree_id = resolve_override_value(
-            overrides,
-            &[
-                schema::WORKTREE_ID,
-                "worktreeId",
-                "x-worktree-id",
-                "x_worktree_id",
-            ],
-        );
-        let repo_id = resolve_override_value(
-            overrides,
-            &[schema::REPO_ID, "repoId", "x-repo-id", "x_repo_id"],
-        )
-        .or_else(|| defaults.repo_id.clone());
-        let repo_path = resolve_override_value(
-            overrides,
-            &[schema::REPO_PATH, "repoPath", "x-repo-path", "x_repo_path"],
-        )
-        .or_else(|| {
-            resolve_override_value(
-                overrides,
-                &["workspace_root", "workspaceRoot", "x-workspace-root"],
-            )
-        })
-        .or_else(|| defaults.repo_path.clone())
-        .or_else(|| defaults.workspace_root.clone());
-        let operator_id = resolve_override_value(
-            overrides,
-            &[
-                "operator_id",
-                "operatorId",
-                "x-operator-id",
-                "x_operator_id",
-            ],
-        )
-        .or_else(|| defaults.operator_id.clone());
-        let machine_id = resolve_override_value(
-            overrides,
-            &["machine_id", "machineId", "x-machine-id", "x_machine_id"],
-        )
-        .or_else(|| defaults.machine_id.clone());
-        let agent_program = resolve_override_value(
-            overrides,
-            &[
-                "agent_program",
-                "agentProgram",
-                "ide",
-                "x-agent-program",
-                "x_agent_program",
-            ],
-        )
-        .or_else(|| defaults.agent_program.clone());
-        let model_id = resolve_override_value(
-            overrides,
-            &["model_id", "model", "modelId", "x-model-id", "x_model_id"],
-        )
-        .or_else(|| defaults.model_id.clone());
-        let delegated = resolve_override_bool(
-            overrides,
-            &["delegated", "is_delegated", "isDelegated", "x-delegated"],
-        )
-        .or(Some(parent_session_id.is_some()));
-        let execution_flow = resolve_override_value(
-            overrides,
-            &[
-                "execution_flow",
-                "executionFlow",
-                "x-execution-flow",
-                "x_execution_flow",
-            ],
-        )
-        .or_else(|| defaults.execution_flow.map(|f| f.to_string()));
+        let session_id = resolve_override_value(overrides, field_aliases("session_id"))
+            .or_else(|| defaults.session_id.clone());
+        let parent_session_id =
+            resolve_override_value(overrides, field_aliases("parent_session_id"));
+        let project_id = resolve_override_value(overrides, field_aliases("project_id"));
+        let worktree_id = resolve_override_value(overrides, field_aliases("worktree_id"));
+        let repo_id = resolve_override_value(overrides, field_aliases("repo_id"))
+            .or_else(|| defaults.repo_id.clone());
+        let repo_path = resolve_override_value(overrides, field_aliases("repo_path"))
+            .or_else(|| resolve_override_value(overrides, field_aliases("workspace_root")))
+            .or_else(|| defaults.repo_path.clone())
+            .or_else(|| defaults.workspace_root.clone());
+        let operator_id = resolve_override_value(overrides, field_aliases("operator_id"))
+            .or_else(|| defaults.operator_id.clone());
+        let machine_id = resolve_override_value(overrides, field_aliases("machine_id"))
+            .or_else(|| defaults.machine_id.clone());
+        let agent_program = resolve_override_value(overrides, field_aliases("agent_program"))
+            .or_else(|| defaults.agent_program.clone());
+        let model_id = resolve_override_value(overrides, field_aliases("model_id"))
+            .or_else(|| defaults.model_id.clone());
+        let delegated = resolve_override_bool(overrides, field_aliases("delegated"))
+            .or(Some(parent_session_id.is_some()));
+        let execution_flow =
+            resolve_override_value(overrides, field_aliases("execution_flow"))
+                .or_else(|| defaults.execution_flow.map(|f| f.to_string()));
 
         Self {
             session_id,
@@ -503,69 +319,41 @@ impl ToolExecutionContext {
 
     /// Inject execution context into tool arguments when those keys are missing.
     pub fn apply_to_request_if_missing(&self, request: &mut CallToolRequestParams) {
-        insert_argument_if_missing(request, "session_id", self.session_id.as_deref());
-        insert_argument_if_missing(
-            request,
-            "parent_session_id",
-            self.parent_session_id.as_deref(),
-        );
-        insert_argument_if_missing(request, "project_id", self.project_id.as_deref());
-        insert_argument_if_missing(request, "worktree_id", self.worktree_id.as_deref());
-        insert_argument_if_missing(request, "repo_id", self.repo_id.as_deref());
-        insert_argument_if_missing(request, "repo_path", self.repo_path.as_deref());
-        insert_argument_if_missing(request, "operator_id", self.operator_id.as_deref());
-        insert_argument_if_missing(request, "machine_id", self.machine_id.as_deref());
-        insert_argument_if_missing(request, "agent_program", self.agent_program.as_deref());
-        insert_argument_if_missing(request, "model_id", self.model_id.as_deref());
-        insert_bool_argument_if_missing(request, "delegated", self.delegated);
-        insert_i64_argument_if_missing(request, "timestamp", self.timestamp);
-        insert_argument_if_missing(request, "execution_flow", self.execution_flow.as_deref());
+        let args = request.arguments.get_or_insert_with(Default::default);
+        for (key, value) in [
+            ("session_id", self.session_id.as_deref().map(str_value)),
+            ("parent_session_id", self.parent_session_id.as_deref().map(str_value)),
+            ("project_id", self.project_id.as_deref().map(str_value)),
+            ("worktree_id", self.worktree_id.as_deref().map(str_value)),
+            ("repo_id", self.repo_id.as_deref().map(str_value)),
+            ("repo_path", self.repo_path.as_deref().map(str_value)),
+            ("operator_id", self.operator_id.as_deref().map(str_value)),
+            ("machine_id", self.machine_id.as_deref().map(str_value)),
+            ("agent_program", self.agent_program.as_deref().map(str_value)),
+            ("model_id", self.model_id.as_deref().map(str_value)),
+            ("delegated", self.delegated.map(Value::Bool)),
+            ("timestamp", self.timestamp.map(|v| Value::Number(v.into()))),
+            ("execution_flow", self.execution_flow.as_deref().map(str_value)),
+        ] {
+            if let Some(v) = value {
+                args.entry(key.to_owned()).or_insert(v);
+            }
+        }
     }
 }
 
-fn insert_i64_argument_if_missing(
-    request: &mut CallToolRequestParams,
-    key: &'static str,
-    value: Option<i64>,
-) {
-    let Some(value) = value else {
-        return;
-    };
-
-    let arguments = request.arguments.get_or_insert_with(Default::default);
-    arguments
-        .entry(key.to_owned())
-        .or_insert_with(|| Value::Number(serde_json::Number::from(value)));
+fn str_value(s: &str) -> Value {
+    Value::String(s.to_owned())
 }
 
-fn insert_bool_argument_if_missing(
-    request: &mut CallToolRequestParams,
-    key: &'static str,
-    value: Option<bool>,
-) {
-    let Some(value) = value else {
-        return;
-    };
-
-    let arguments = request.arguments.get_or_insert_with(Default::default);
-    arguments
-        .entry(key.to_owned())
-        .or_insert_with(|| Value::Bool(value));
-}
-
-fn insert_argument_if_missing(
-    request: &mut CallToolRequestParams,
-    key: &'static str,
-    value: Option<&str>,
-) {
-    let Some(value) = value else {
-        return;
-    };
-
-    let arguments = request.arguments.get_or_insert_with(Default::default);
-    arguments
-        .entry(key.to_owned())
-        .or_insert_with(|| Value::String(value.to_owned()));
+/// Look up aliases for a canonical field name from the alias tables.
+fn field_aliases(canonical: &str) -> &'static [&'static str] {
+    STRING_FIELD_ALIASES
+        .iter()
+        .chain(BOOL_FIELD_ALIASES.iter())
+        .find(|&&(k, _)| k == canonical)
+        .map(|&(_, aliases)| aliases)
+        .unwrap_or(&[])
 }
 
 fn insert_override(overrides: &mut HashMap<String, String>, key: &str, value: Option<String>) {
@@ -711,32 +499,23 @@ fn validate_execution_context(
 ) -> Result<(), McpError> {
     validate_operation_mode_matrix(tool_name, execution_context)?;
 
-    let requires_provenance = matches!(tool_name, "index" | "search" | "memory");
-    if !requires_provenance {
+    if !matches!(tool_name, "index" | "search" | "memory") {
         return Ok(());
     }
 
     let mut missing = Vec::new();
-    if is_missing_text(&execution_context.session_id) {
-        missing.push("session_id");
-    }
-    if is_missing_text(&execution_context.repo_id) {
-        missing.push("repo_id");
-    }
-    if is_missing_text(&execution_context.repo_path) {
-        missing.push("repo_path");
-    }
-    if is_missing_text(&execution_context.operator_id) {
-        missing.push("operator_id");
-    }
-    if is_missing_text(&execution_context.machine_id) {
-        missing.push("machine_id");
-    }
-    if is_missing_text(&execution_context.agent_program) {
-        missing.push("agent_program");
-    }
-    if is_missing_text(&execution_context.model_id) {
-        missing.push("model_id");
+    for (key, value) in [
+        ("session_id", &execution_context.session_id),
+        ("repo_id", &execution_context.repo_id),
+        ("repo_path", &execution_context.repo_path),
+        ("operator_id", &execution_context.operator_id),
+        ("machine_id", &execution_context.machine_id),
+        ("agent_program", &execution_context.agent_program),
+        ("model_id", &execution_context.model_id),
+    ] {
+        if is_missing_text(value) {
+            missing.push(key);
+        }
     }
     if execution_context.delegated.is_none() {
         missing.push("delegated");
@@ -819,32 +598,20 @@ async fn trigger_post_tool_use_hook(
     if let Some(session_id) = &execution_context.session_id {
         context = context.with_session_id(SessionId::from_string(session_id));
     }
-    if let Some(parent_session_id) = &execution_context.parent_session_id {
-        context = context.with_metadata("parent_session_id", parent_session_id.as_str());
-    }
-    if let Some(project_id) = &execution_context.project_id {
-        context = context.with_metadata("project_id", project_id.as_str());
-    }
-    if let Some(worktree_id) = &execution_context.worktree_id {
-        context = context.with_metadata("worktree_id", worktree_id.as_str());
-    }
-    if let Some(repo_id) = &execution_context.repo_id {
-        context = context.with_metadata("repo_id", repo_id.as_str());
-    }
-    if let Some(repo_path) = &execution_context.repo_path {
-        context = context.with_metadata("repo_path", repo_path.as_str());
-    }
-    if let Some(operator_id) = &execution_context.operator_id {
-        context = context.with_metadata("operator_id", operator_id.as_str());
-    }
-    if let Some(machine_id) = &execution_context.machine_id {
-        context = context.with_metadata("machine_id", machine_id.as_str());
-    }
-    if let Some(agent_program) = &execution_context.agent_program {
-        context = context.with_metadata("agent_program", agent_program.as_str());
-    }
-    if let Some(model_id) = &execution_context.model_id {
-        context = context.with_metadata("model_id", model_id.as_str());
+    for (key, value) in [
+        ("parent_session_id", execution_context.parent_session_id.as_deref()),
+        ("project_id", execution_context.project_id.as_deref()),
+        ("worktree_id", execution_context.worktree_id.as_deref()),
+        ("repo_id", execution_context.repo_id.as_deref()),
+        ("repo_path", execution_context.repo_path.as_deref()),
+        ("operator_id", execution_context.operator_id.as_deref()),
+        ("machine_id", execution_context.machine_id.as_deref()),
+        ("agent_program", execution_context.agent_program.as_deref()),
+        ("model_id", execution_context.model_id.as_deref()),
+    ] {
+        if let Some(v) = value {
+            context = context.with_metadata(key, v);
+        }
     }
     if let Some(delegated) = execution_context.delegated {
         context = context.with_metadata("delegated", delegated.to_string());

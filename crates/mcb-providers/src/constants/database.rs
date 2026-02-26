@@ -8,16 +8,6 @@ pub const FILE_HASH_TOMBSTONE_TTL_SECS: i64 = 30 * 24 * 60 * 60;
 pub const SQL_PREVIEW_CHAR_LIMIT: usize = 120;
 
 // ============================================================================
-// Agent / session fallbacks
-// ============================================================================
-
-/// Fallback agent model name when not provided.
-pub const FALLBACK_AGENT_MODEL: &str = "unknown";
-
-/// Fallback agent prompt for auto-created activity logging.
-pub const FALLBACK_AGENT_PROMPT: &str = "auto-created for activity logging";
-
-// ============================================================================
 // Observation / query limits
 // ============================================================================
 

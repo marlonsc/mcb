@@ -53,9 +53,24 @@
 //! }
 //! ```
 
-pub mod cache;
 pub mod database;
 pub mod embedding;
+pub mod events;
 pub mod language;
+pub mod project_detection;
+pub mod services;
+
+pub use services::{
+    AGENT_SESSION_SERVICE_NAME, CONTEXT_SERVICE_NAME, INDEXING_SERVICE_NAME, MEMORY_SERVICE_NAME,
+    SEARCH_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
+    VALIDATION_SERVICE_NAME, resolve_agent_session_service, resolve_context_service,
+    resolve_indexing_service, resolve_memory_service, resolve_search_service,
+    resolve_validation_service,
+};
 pub mod validation;
+pub use validation::{
+    VALIDATION_PROVIDERS, VALIDATOR_ENTRIES, ValidationProviderConfig, ValidatorEntry,
+    build_validators, list_validator_entries, list_validator_names, run_validators,
+};
+pub mod vcs;
 pub mod vector_store;

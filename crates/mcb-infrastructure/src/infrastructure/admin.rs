@@ -34,12 +34,6 @@ impl DefaultIndexingOperations {
         }
     }
 
-    /// Create as Arc for sharing
-    #[must_use]
-    pub fn new_shared() -> Arc<Self> {
-        Arc::new(Self::new())
-    }
-
     /// Start tracking a new indexing operation (inherent impl; trait delegates here).
     #[must_use]
     pub fn start_operation_internal(
@@ -142,12 +136,6 @@ impl DefaultValidationOperations {
         Self {
             operations: Arc::new(DashMap::new()),
         }
-    }
-
-    /// Create as Arc for sharing
-    #[must_use]
-    pub fn new_shared() -> Arc<Self> {
-        Arc::new(Self::new())
     }
 }
 

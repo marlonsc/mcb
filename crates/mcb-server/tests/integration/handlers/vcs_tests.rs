@@ -9,8 +9,8 @@ use rstest::*;
 use crate::utils::domain_services::create_real_domain_services;
 
 async fn create_handler() -> Option<(VcsHandler, tempfile::TempDir)> {
-    let (services, temp_dir) = create_real_domain_services().await?;
-    Some((VcsHandler::new(services.vcs_provider), temp_dir))
+    let (state, temp_dir) = create_real_domain_services().await?;
+    Some((VcsHandler::new(state.mcp_server.vcs_provider()), temp_dir))
 }
 
 fn base_vcs_args(action: VcsAction) -> VcsArgs {

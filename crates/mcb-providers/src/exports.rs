@@ -7,6 +7,6 @@ pub use crate::hybrid_search::HybridSearchEngine;
 pub use mcb_domain::error::{Error, Result};
 pub use mcb_domain::ports::CryptoProvider;
 pub use mcb_domain::ports::{
-    CacheProvider, ComplexityAnalyzer, DeadCodeDetector, EmbeddingProvider, HybridSearchProvider,
+    ComplexityAnalyzer, DeadCodeDetector, EmbeddingProvider, HybridSearchProvider,
     LanguageChunkingProvider, TdgScorer, VcsProvider, VectorStoreProvider,
 };

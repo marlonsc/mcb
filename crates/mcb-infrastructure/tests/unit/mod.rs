@@ -9,7 +9,6 @@ pub mod crypto;
 pub mod di;
 pub mod error;
 pub mod events;
-pub mod health;
 pub mod infrastructure;
 
 pub mod routing;

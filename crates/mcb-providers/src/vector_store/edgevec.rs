@@ -213,6 +213,8 @@ enum EdgeVecMessage {
     Browse(BrowseMessage),
 }
 
+type CollectionMetadata = HashMap<String, serde_json::Value>;
+
 /// `EdgeVec` vector store provider implementation using Actor pattern
 pub struct EdgeVecVectorStoreProvider {
     sender: mpsc::Sender<EdgeVecMessage>,
@@ -220,6 +222,34 @@ pub struct EdgeVecVectorStoreProvider {
 }
 
 impl EdgeVecVectorStoreProvider {
+    async fn send_message<T, F>(&self, build_message: F) -> Result<T>
+    where
+        F: FnOnce(oneshot::Sender<Result<T>>) -> EdgeVecMessage,
+    {
+        let (tx, rx) = oneshot::channel();
+        let _ = self.sender.send(build_message(tx)).await;
+        rx.await
+            .unwrap_or_else(|_| Err(Error::internal("Actor closed")))
+    }
+    async fn send_core<T, F>(&self, f: F) -> Result<T>
+    where
+        F: FnOnce(oneshot::Sender<Result<T>>) -> CoreMessage,
+    {
+        self.send_message(|tx| EdgeVecMessage::Core(f(tx))).await
+    }
+    async fn send_query<T, F>(&self, f: F) -> Result<T>
+    where
+        F: FnOnce(oneshot::Sender<Result<T>>) -> QueryMessage,
+    {
+        self.send_message(|tx| EdgeVecMessage::Query(f(tx))).await
+    }
+    async fn send_browse<T, F>(&self, f: F) -> Result<T>
+    where
+        F: FnOnce(oneshot::Sender<Result<T>>) -> BrowseMessage,
+    {
+        self.send_message(|tx| EdgeVecMessage::Browse(f(tx))).await
+    }
+
     /// Create a new `EdgeVec` vector store provider
     ///
     /// # Errors
@@ -266,24 +296,22 @@ impl EdgeVecVectorStoreProvider {
 #[async_trait]
 impl VectorStoreAdmin for EdgeVecVectorStoreProvider {
     async fn collection_exists(&self, collection: &CollectionId) -> Result<bool> {
-        send_actor_msg!(
-            self,
-            Query(QueryMessage::CollectionExists {
-                name: collection.to_string()
-            })
-        )
+        self.send_query(|tx| QueryMessage::CollectionExists {
+            name: collection.to_string(),
+            tx,
+        })
+        .await
     }
 
     async fn get_stats(
         &self,
         collection: &CollectionId,
     ) -> Result<HashMap<String, serde_json::Value>> {
-        send_actor_msg!(
-            self,
-            Query(QueryMessage::GetStats {
-                collection: collection.to_string()
-            })
-        )
+        self.send_query(|tx| QueryMessage::GetStats {
+            collection: collection.to_string(),
+            tx,
+        })
+        .await
     }
 
     async fn flush(&self, _collection: &CollectionId) -> Result<()> {
@@ -307,13 +335,12 @@ impl VectorStoreBrowser for EdgeVecVectorStoreProvider {
         collection: &CollectionId,
         limit: usize,
     ) -> Result<Vec<FileInfo>> {
-        send_actor_msg!(
-            self,
-            Browse(BrowseMessage::ListFilePaths {
-                collection: collection.to_string(),
-                limit: limit
-            })
-        )
+        self.send_browse(|tx| BrowseMessage::ListFilePaths {
+            collection: collection.to_string(),
+            limit,
+            tx,
+        })
+        .await
     }
 
     async fn get_chunks_by_file(
@@ -321,34 +348,31 @@ impl VectorStoreBrowser for EdgeVecVectorStoreProvider {
         collection: &CollectionId,
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
-        send_actor_msg!(
-            self,
-            Browse(BrowseMessage::GetChunksByFile {
-                collection: collection.to_string(),
-                file_path: file_path.to_owned()
-            })
-        )
+        self.send_browse(|tx| BrowseMessage::GetChunksByFile {
+            collection: collection.to_string(),
+            file_path: file_path.to_owned(),
+            tx,
+        })
+        .await
     }
 }
 
 #[async_trait]
 impl VectorStoreProvider for EdgeVecVectorStoreProvider {
     async fn create_collection(&self, collection: &CollectionId, _dimensions: usize) -> Result<()> {
-        send_actor_msg!(
-            self,
-            Core(CoreMessage::CreateCollection {
-                name: collection.to_string()
-            })
-        )
+        self.send_core(|tx| CoreMessage::CreateCollection {
+            name: collection.to_string(),
+            tx,
+        })
+        .await
     }
 
     async fn delete_collection(&self, collection: &CollectionId) -> Result<()> {
-        send_actor_msg!(
-            self,
-            Core(CoreMessage::DeleteCollection {
-                name: collection.to_string()
-            })
-        )
+        self.send_core(|tx| CoreMessage::DeleteCollection {
+            name: collection.to_string(),
+            tx,
+        })
+        .await
     }
 
     async fn insert_vectors(
@@ -357,14 +381,13 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         vectors: &[Embedding],
         metadata: Vec<HashMap<String, serde_json::Value>>,
     ) -> Result<Vec<String>> {
-        send_actor_msg!(
-            self,
-            Core(CoreMessage::InsertVectors {
-                collection: collection.to_string(),
-                vectors: vectors.to_vec(),
-                metadata: metadata
-            })
-        )
+        self.send_core(|tx| CoreMessage::InsertVectors {
+            collection: collection.to_string(),
+            vectors: vectors.to_vec(),
+            metadata,
+            tx,
+        })
+        .await
     }
 
     async fn search_similar(
@@ -374,24 +397,22 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         limit: usize,
         _filter: Option<&str>,
     ) -> Result<Vec<SearchResult>> {
-        send_actor_msg!(
-            self,
-            Core(CoreMessage::SearchSimilar {
-                collection: collection.to_string(),
-                query_vector: query_vector.to_vec(),
-                limit: limit
-            })
-        )
+        self.send_core(|tx| CoreMessage::SearchSimilar {
+            collection: collection.to_string(),
+            query_vector: query_vector.to_vec(),
+            limit,
+            tx,
+        })
+        .await
     }
 
     async fn delete_vectors(&self, collection: &CollectionId, ids: &[String]) -> Result<()> {
-        send_actor_msg!(
-            self,
-            Core(CoreMessage::DeleteVectors {
-                collection: collection.to_string(),
-                ids: ids.to_vec()
-            })
-        )
+        self.send_core(|tx| CoreMessage::DeleteVectors {
+            collection: collection.to_string(),
+            ids: ids.to_vec(),
+            tx,
+        })
+        .await
     }
 
     async fn get_vectors_by_ids(
@@ -399,13 +420,12 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         collection: &CollectionId,
         ids: &[String],
     ) -> Result<Vec<SearchResult>> {
-        send_actor_msg!(
-            self,
-            Query(QueryMessage::GetVectorsByIds {
-                collection: collection.to_string(),
-                ids: ids.to_vec()
-            })
-        )
+        self.send_query(|tx| QueryMessage::GetVectorsByIds {
+            collection: collection.to_string(),
+            ids: ids.to_vec(),
+            tx,
+        })
+        .await
     }
 
     async fn list_vectors(
@@ -413,13 +433,12 @@ impl VectorStoreProvider for EdgeVecVectorStoreProvider {
         collection: &CollectionId,
         limit: usize,
     ) -> Result<Vec<SearchResult>> {
-        send_actor_msg!(
-            self,
-            Query(QueryMessage::ListVectors {
-                collection: collection.to_string(),
-                limit: limit
-            })
-        )
+        self.send_query(|tx| QueryMessage::ListVectors {
+            collection: collection.to_string(),
+            limit,
+            tx,
+        })
+        .await
     }
 }
 
@@ -427,15 +446,10 @@ struct EdgeVecActor {
     receiver: mpsc::Receiver<EdgeVecMessage>,
     index: edgevec::HnswIndex,
     storage: edgevec::VectorStorage,
-    metadata_store: DashMap<String, HashMap<String, serde_json::Value>>,
+    metadata_store: DashMap<String, CollectionMetadata>,
     id_map: DashMap<String, VectorId>,
     config: EdgeVecConfig,
 }
-
-// =============================================================================
-// Core - Constructor and HNSW configuration
-// =============================================================================
-
 impl EdgeVecActor {
     fn new(receiver: mpsc::Receiver<EdgeVecMessage>, config: EdgeVecConfig) -> Result<Self> {
         let hnsw_config = edgevec::HnswConfig {
@@ -466,11 +480,6 @@ impl EdgeVecActor {
         })
     }
 }
-
-// =============================================================================
-// Collection Handlers - Create, delete, exists
-// =============================================================================
-
 impl EdgeVecActor {
     fn handle_create_collection(&self, name: String) -> Result<()> {
         self.metadata_store.insert(name, HashMap::new());
@@ -492,12 +501,18 @@ impl EdgeVecActor {
         Ok(self.metadata_store.contains_key(name))
     }
 }
-
-// =============================================================================
-// Vector CRUD Handlers - Insert, delete, get, list vectors
-// =============================================================================
-
 impl EdgeVecActor {
+    fn get_collection_metadata(
+        &self,
+        name: &str,
+    ) -> Option<dashmap::mapref::one::Ref<'_, String, CollectionMetadata>> {
+        self.metadata_store.get(name)
+    }
+
+    fn collection_metadata_len(&self, name: &str) -> usize {
+        self.get_collection_metadata(name).map_or(0, |m| m.len())
+    }
+
     fn handle_insert_vectors(
         &mut self,
         collection: &str,
@@ -544,7 +559,7 @@ impl EdgeVecActor {
 
     fn handle_get_vectors_by_ids(&self, collection: &str, ids: Vec<String>) -> Vec<SearchResult> {
         let mut final_results = Vec::new();
-        if let Some(collection_metadata) = self.metadata_store.get(collection) {
+        if let Some(collection_metadata) = self.get_collection_metadata(collection) {
             for id in ids {
                 if let Some(meta_val) = collection_metadata.get(&id) {
                     final_results.push(search_result_from_json_metadata(id.clone(), meta_val, 1.0));
@@ -556,7 +571,7 @@ impl EdgeVecActor {
 
     fn handle_list_vectors(&self, collection: &str, limit: usize) -> Vec<SearchResult> {
         let mut final_results = Vec::new();
-        if let Some(collection_metadata) = self.metadata_store.get(collection) {
+        if let Some(collection_metadata) = self.get_collection_metadata(collection) {
             for (ext_id, meta_val) in collection_metadata.iter().take(limit) {
                 final_results.push(search_result_from_json_metadata(
                     ext_id.clone(),
@@ -568,11 +583,6 @@ impl EdgeVecActor {
         final_results
     }
 }
-
-// =============================================================================
-// Search Handlers - Similarity search
-// =============================================================================
-
 impl EdgeVecActor {
     fn handle_search_similar(
         &self,
@@ -584,7 +594,7 @@ impl EdgeVecActor {
         // multiple collections exist we must over-fetch to ensure enough
         // results survive the per-collection metadata filter.
         let total_vectors = self.index.len();
-        let collection_size = self.metadata_store.get(collection).map_or(0, |m| m.len());
+        let collection_size = self.collection_metadata_len(collection);
         let fetch_limit = if collection_size > 0 && total_vectors > collection_size {
             let ratio = (total_vectors as f64 / collection_size as f64).ceil() as usize;
             (limit * ratio).min(total_vectors)
@@ -595,7 +605,7 @@ impl EdgeVecActor {
         match self.index.search(query_vector, fetch_limit, &self.storage) {
             Ok(results) => {
                 let mut final_results = Vec::with_capacity(limit);
-                if let Some(collection_metadata) = self.metadata_store.get(collection) {
+                if let Some(collection_metadata) = self.get_collection_metadata(collection) {
                     for res in results {
                         if final_results.len() >= limit {
                             break;
@@ -623,14 +633,9 @@ impl EdgeVecActor {
         }
     }
 }
-
-// =============================================================================
-// Stats Handlers - Get collection statistics
-// =============================================================================
-
 impl EdgeVecActor {
     fn handle_get_stats(&self, collection: &str) -> HashMap<String, serde_json::Value> {
-        let vector_count = self.metadata_store.get(collection).map_or(0, |m| m.len());
+        let vector_count = self.collection_metadata_len(collection);
         let mut stats = HashMap::new();
         stats.insert(
             STATS_FIELD_COLLECTION.to_owned(),
@@ -651,11 +656,6 @@ impl EdgeVecActor {
         stats
     }
 }
-
-// =============================================================================
-// Browse Handlers - List collections, files, and chunks
-// =============================================================================
-
 impl EdgeVecActor {
     fn handle_list_collections(&self) -> Vec<CollectionInfo> {
         self.metadata_store
@@ -683,8 +683,7 @@ impl EdgeVecActor {
 
     fn handle_list_file_paths(&self, collection: &str, limit: usize) -> Result<Vec<FileInfo>> {
         let collection_metadata = self
-            .metadata_store
-            .get(collection)
+            .get_collection_metadata(collection)
             .ok_or_else(|| Error::internal(format!("Collection '{collection}' not found")))?;
 
         let mut file_map: HashMap<String, (u32, String)> = HashMap::new();
@@ -722,7 +721,7 @@ impl EdgeVecActor {
         let mut results = Vec::new();
         // Normalize to forward slashes for cross-platform path matching
         let normalized_query = file_path.replace('\\', "/");
-        if let Some(collection_metadata) = self.metadata_store.get(collection) {
+        if let Some(collection_metadata) = self.get_collection_metadata(collection) {
             for (ext_id, meta_val) in collection_metadata.iter() {
                 if let Some(meta) = meta_val.as_object()
                     && meta
@@ -742,11 +741,6 @@ impl EdgeVecActor {
         Ok(results)
     }
 }
-
-// =============================================================================
-// Message Loop - Main actor run loop
-// =============================================================================
-
 impl EdgeVecActor {
     async fn run(mut self) {
         while let Some(msg) = self.receiver.recv().await {
@@ -839,11 +833,6 @@ impl EdgeVecActor {
         }
     }
 }
-
-// ============================================================================
-// Auto-registration via linkme distributed slice
-// ============================================================================
-
 use mcb_domain::registry::vector_store::{
     VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
 };

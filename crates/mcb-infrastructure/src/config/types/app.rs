@@ -143,20 +143,6 @@ pub struct InfrastructureConfig {
     pub limits: LimitsConfig,
 }
 
-impl InfrastructureConfig {
-    /// Returns the fallback infrastructure configuration.
-    #[must_use]
-    pub fn fallback() -> Self {
-        Self {
-            cache: CacheSystemConfig::default(),
-            event_bus: EventBusConfig::in_process(),
-            metrics: MetricsConfig::default(),
-            resilience: ResilienceConfig::default(),
-            limits: LimitsConfig::default(),
-        }
-    }
-}
-
 /// Data management configurations
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
@@ -177,17 +163,6 @@ pub struct SystemConfig {
     pub infrastructure: InfrastructureConfig,
     /// Data management configurations
     pub data: DataConfig,
-}
-
-impl SystemConfig {
-    /// Returns the fallback system configuration.
-    #[must_use]
-    pub fn fallback() -> Self {
-        Self {
-            infrastructure: InfrastructureConfig::fallback(),
-            data: DataConfig::default(),
-        }
-    }
 }
 
 /// Operations and daemon configurations
@@ -224,23 +199,4 @@ pub struct AppConfig {
     /// Project settings loaded from workspace
     #[serde(skip)]
     pub project_settings: Option<ProjectSettings>,
-}
-
-impl AppConfig {
-    /// Returns the fallback application configuration.
-    #[must_use]
-    pub fn fallback() -> Self {
-        Self {
-            mode: ModeConfig::default(),
-            server: ServerConfig::fallback(),
-            providers: ProvidersConfig::default(),
-            logging: LoggingConfig::default(),
-            auth: AuthConfig::default(),
-            system: SystemConfig::fallback(),
-            operations_daemon: OperationsDaemonConfig::default(),
-            mcp: McpConfig::default(),
-            mcp_context: McpContextDefaultsConfig::default(),
-            project_settings: None,
-        }
-    }
 }

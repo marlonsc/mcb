@@ -11,9 +11,8 @@ use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
 use regex::Regex;
-use tokio::fs::read_to_string;
 
-use super::PROJECT_DETECTORS;
+use super::common::read_file_opt;
 
 /// Go project detector
 pub struct GoDetector {
@@ -52,16 +51,8 @@ impl ProjectDetector for GoDetector {
             return Ok(None);
         }
 
-        let content = match read_to_string(&gomod_path).await {
-            Ok(c) => c,
-            Err(e) => {
-                mcb_domain::debug!(
-                    "go",
-                    "Failed to read go.mod",
-                    &format!("path = {gomod_path:?}, error = {e}")
-                );
-                return Ok(None);
-            }
+        let Some(content) = read_file_opt(&gomod_path, "go").await else {
+            return Ok(None);
         };
 
         let mut module = String::new();
@@ -148,7 +139,7 @@ fn go_factory(
 
 // linkme distributed_slice uses #[link_section] internally
 #[allow(unsafe_code)]
-#[linkme::distributed_slice(PROJECT_DETECTORS)]
+#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
 static GO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "go",
     description: "Detects Go projects with go.mod",

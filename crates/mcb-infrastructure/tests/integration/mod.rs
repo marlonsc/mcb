@@ -3,6 +3,5 @@
 #[path = "../utils/mod.rs"]
 pub mod utils;
 
-pub mod cache;
 pub mod config;
 pub mod di;

@@ -47,7 +47,7 @@ fn create_test_chunks() -> Vec<CodeChunk> {
             file_path: "src/main.rs".to_owned(),
             content: "#[tokio::main]
 async fn main() {
-    let config = AppConfig::fallback();
+    let config = ConfigLoader::new().load()?;
     run_server(&config).await;
 }"
             .to_owned(),
@@ -71,7 +71,7 @@ async fn assert_embedding_batch_shape(
         assert_eq!(emb.dimensions, expected_dim);
         assert_eq!(emb.vector.len(), expected_dim);
         assert!(
-            emb.model == "AllMiniLML6V2" || emb.model == "fastembed-test-fallback",
+            emb.model == "AllMiniLML6V2" || emb.model == "fastembed-test",
             "unexpected model: {}",
             emb.model
         );

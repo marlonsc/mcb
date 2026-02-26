@@ -1,7 +1,7 @@
 //!
 //! Tests for the MCP tool registry and definitions.
 
-use mcb_server::tools::{ToolDefinitions, create_tool_list};
+use mcb_server::tools::{create_tool_list, tool_by_name};
 use rstest::rstest;
 
 #[rstest]
@@ -10,7 +10,7 @@ use rstest::rstest;
 #[case("validate")]
 #[case("memory")]
 fn test_tool_definitions_core(#[case] tool_name: &str) {
-    let tool = ToolDefinitions::by_name(tool_name).expect("Should create tool");
+    let tool = tool_by_name(tool_name).expect("Should create tool");
 
     assert_eq!(&*tool.name, tool_name);
     assert!(tool.description.is_some(), "Tool should have description");

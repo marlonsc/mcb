@@ -5,21 +5,22 @@
 
 use async_trait::async_trait;
 
-use super::{PortResult, StoreCollectionId, StoreCollectionInfo, StoreFileInfo, StoreSearchResult};
+use crate::error::Result;
+use crate::value_objects::{CollectionId, CollectionInfo, FileInfo, SearchResult};
 
 #[async_trait]
 pub trait VectorStoreBrowser: Send + Sync {
-    async fn list_collections(&self) -> PortResult<Vec<StoreCollectionInfo>>;
+    async fn list_collections(&self) -> Result<Vec<CollectionInfo>>;
 
     async fn list_file_paths(
         &self,
-        collection: &StoreCollectionId,
+        collection: &CollectionId,
         limit: usize,
-    ) -> PortResult<Vec<StoreFileInfo>>;
+    ) -> Result<Vec<FileInfo>>;
 
     async fn get_chunks_by_file(
         &self,
-        collection: &StoreCollectionId,
+        collection: &CollectionId,
         file_path: &str,
-    ) -> PortResult<Vec<StoreSearchResult>>;
+    ) -> Result<Vec<SearchResult>>;
 }

@@ -65,6 +65,8 @@ pub mod unified_registry;
 pub mod pattern_registry;
 /// Validation provider adapter that exposes this crate through domain ports.
 pub mod provider;
+/// Linkme registration of all validators into mcb-domain registry.
+mod validator_entries;
 
 // === Rule Filtering System (Phase 6) ===
 pub mod filters;

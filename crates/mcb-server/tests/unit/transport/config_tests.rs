@@ -4,9 +4,9 @@ use mcb_server::transport::config::TransportConfig;
 use rstest::rstest;
 
 #[test]
-fn test_default_is_stdio() {
-    let config = TransportConfig::default();
+fn test_from_server_config() {
     let loaded = ConfigLoader::new().load().expect("load config");
+    let config = TransportConfig::from_server_config(&loaded.server);
     assert_eq!(config.mode, loaded.server.transport_mode);
     assert_eq!(config.http_port, Some(loaded.server.network.port));
     assert_eq!(
@@ -26,10 +26,11 @@ fn test_transport_constructors(
 ) {
     let loaded = ConfigLoader::new().load().expect("load config");
     let override_port = loaded.server.network.port.saturating_add(offset);
+    let host = loaded.server.network.host.clone();
     let config = match kind {
         "stdio" => TransportConfig::stdio(),
-        "http" => TransportConfig::http(override_port),
-        "hybrid" => TransportConfig::hybrid(override_port),
+        "http" => TransportConfig::http(host, override_port),
+        "hybrid" => TransportConfig::hybrid(host, override_port),
         _ => panic!("unknown constructor kind"),
     };
 
@@ -50,7 +51,7 @@ fn test_transport_constructors(
 fn test_config_clone() {
     let loaded = ConfigLoader::new().load().expect("load config");
     let override_port = loaded.server.network.port.saturating_add(11);
-    let config = TransportConfig::http(override_port);
+    let config = TransportConfig::http(loaded.server.network.host.clone(), override_port);
     let cloned = config.clone();
     assert_eq!(cloned.http_port, Some(override_port));
 }

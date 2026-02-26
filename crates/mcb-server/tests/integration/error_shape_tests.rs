@@ -11,14 +11,17 @@ use crate::utils::domain_services::{create_base_memory_args, create_real_domain_
 use crate::utils::invariants::assert_error_shape;
 
 async fn memory_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
-    let (services, temp_dir) = create_real_domain_services().await?;
-    Some((MemoryHandler::new(services.memory_service), temp_dir))
+    let (state, temp_dir) = create_real_domain_services().await?;
+    Some((MemoryHandler::new(state.mcp_server.memory_service()), temp_dir))
 }
 
 async fn session_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
-    let (services, temp_dir) = create_real_domain_services().await?;
+    let (state, temp_dir) = create_real_domain_services().await?;
     Some((
-        SessionHandler::new(services.agent_session_service, services.memory_service),
+        SessionHandler::new(
+            state.mcp_server.agent_session_service(),
+            state.mcp_server.memory_service(),
+        ),
         temp_dir,
     ))
 }

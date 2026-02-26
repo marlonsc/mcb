@@ -6,8 +6,8 @@ use serde_json::json;
 use crate::utils::text::extract_text;
 
 fn create_handler() -> PlanEntityHandler {
-    let ctx = crate::utils::shared_context::shared_app_context();
-    PlanEntityHandler::new(ctx.plan_entity_repository())
+    let state = crate::utils::shared_context::shared_mcb_state();
+    PlanEntityHandler::new(state.mcp_server.plan_entity_repository())
 }
 
 #[tokio::test]

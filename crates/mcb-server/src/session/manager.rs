@@ -5,7 +5,6 @@
 
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-use std::sync::Arc;
 use std::time::Instant;
 
 use dashmap::DashMap;
@@ -125,10 +124,4 @@ impl SessionManager {
         self.sessions
             .retain(|_, ctx| now.duration_since(ctx.last_access) < max_age);
     }
-}
-
-/// Create a shared session manager
-#[must_use]
-pub fn create_session_manager() -> Arc<SessionManager> {
-    Arc::new(SessionManager::new())
 }

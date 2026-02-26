@@ -57,6 +57,19 @@ fn to_milvus_name(collection: &CollectionId) -> String {
     format!("mcb_{sanitized}")
 }
 
+const DEFAULT_OUTPUT_FIELDS: &[&str] = &[
+    VECTOR_FIELD_ID,
+    VECTOR_FIELD_FILE_PATH,
+    VECTOR_FIELD_START_LINE,
+    VECTOR_FIELD_CONTENT,
+];
+
+fn is_collection_not_found(msg: &str) -> bool {
+    msg.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
+        || msg.contains("collection not found")
+        || msg.contains("not exist")
+}
+
 impl MilvusVectorStoreProvider {
     /// Helper method to convert Milvus errors to domain errors
     fn map_milvus_error<T, E: std::fmt::Display>(
@@ -121,10 +134,7 @@ impl MilvusVectorStoreProvider {
         let name_str = to_milvus_name(collection);
         if let Err(e) = self.client.load_collection(&name_str, None).await {
             let err_str = e.to_string();
-            if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
-                || err_str.contains("collection not found")
-                || err_str.contains("not exist")
-            {
+            if is_collection_not_found(&err_str) {
                 mcb_domain::debug!(
                     "milvus",
                     "Collection does not exist, returning empty results"
@@ -140,6 +150,13 @@ impl MilvusVectorStoreProvider {
         Ok(())
     }
 
+    fn default_output_fields() -> Vec<String> {
+        DEFAULT_OUTPUT_FIELDS
+            .iter()
+            .map(|field| (*field).to_owned())
+            .collect()
+    }
+
     /// Perform the actual search operation
     async fn perform_search(
         &self,
@@ -152,12 +169,7 @@ impl MilvusVectorStoreProvider {
 
         let search_options = SearchOptions::new()
             .limit(limit)
-            .output_fields(vec![
-                VECTOR_FIELD_ID.to_owned(),
-                VECTOR_FIELD_FILE_PATH.to_owned(),
-                VECTOR_FIELD_START_LINE.to_owned(),
-                VECTOR_FIELD_CONTENT.to_owned(),
-            ])
+            .output_fields(Self::default_output_fields())
             .add_param(MILVUS_PARAM_METRIC_TYPE, MILVUS_DISTANCE_METRIC);
 
         self.client
@@ -185,62 +197,40 @@ impl MilvusVectorStoreProvider {
         }
     }
 
-    fn extract_string_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<String> {
+    fn extract_field<T, F>(
+        fields: &[FieldColumn],
+        name: &str,
+        index: usize,
+        field_type: &str,
+        extractor: F,
+    ) -> Result<T>
+    where
+        F: Fn(Value<'_>) -> Option<T>,
+    {
         fields
             .iter()
             .find(|column| column.name == name)
             .and_then(|column| column.get(index))
-            .and_then(|value| match value {
-                Value::String(text) => Some(text.to_string()),
-                Value::None
-                | Value::Bool(_)
-                | Value::Int8(_)
-                | Value::Int16(_)
-                | Value::Int32(_)
-                | Value::Long(_)
-                | Value::Float(_)
-                | Value::Double(_)
-                | Value::FloatArray(_)
-                | Value::Binary(_)
-                | Value::Json(_)
-                | Value::Array(_)
-                | Value::StructArray(_)
-                | Value::VectorArray(_) => None,
-            })
+            .and_then(extractor)
             .ok_or_else(|| {
                 Error::vector_db(format!(
-                    "Milvus response missing string field '{name}' at index {index}"
+                    "Milvus response missing {field_type} field '{name}' at index {index}"
                 ))
             })
     }
 
+    fn extract_string_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<String> {
+        Self::extract_field(fields, name, index, "string", |value| match value {
+            Value::String(text) => Some(text.to_string()),
+            _ => None,
+        })
+    }
+
     fn extract_long_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<i64> {
-        fields
-            .iter()
-            .find(|column| column.name == name)
-            .and_then(|column| column.get(index))
-            .and_then(|value| match value {
-                Value::Long(number) => Some(number),
-                Value::None
-                | Value::Bool(_)
-                | Value::Int8(_)
-                | Value::Int16(_)
-                | Value::Int32(_)
-                | Value::Float(_)
-                | Value::Double(_)
-                | Value::FloatArray(_)
-                | Value::Binary(_)
-                | Value::String(_)
-                | Value::Json(_)
-                | Value::Array(_)
-                | Value::StructArray(_)
-                | Value::VectorArray(_) => None,
-            })
-            .ok_or_else(|| {
-                Error::vector_db(format!(
-                    "Milvus response missing long field '{name}' at index {index}"
-                ))
-            })
+        Self::extract_field(fields, name, index, "long", |value| match value {
+            Value::Long(number) => Some(number),
+            _ => None,
+        })
     }
 
     fn build_collection_schema(name: &CollectionId, dimensions: usize) -> Result<CollectionSchema> {
@@ -552,12 +542,7 @@ impl MilvusVectorStoreProvider {
         let query_options = QueryOptions::new()
             .limit(batch_limit)
             .offset(offset)
-            .output_fields(vec![
-                VECTOR_FIELD_ID.to_owned(),
-                VECTOR_FIELD_FILE_PATH.to_owned(),
-                VECTOR_FIELD_START_LINE.to_owned(),
-                VECTOR_FIELD_CONTENT.to_owned(),
-            ]);
+            .output_fields(Self::default_output_fields());
 
         match self
             .client
@@ -728,10 +713,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         // Ensure collection is loaded
         if let Err(e) = self.client.load_collection(&name_str, None).await {
             let err_str = e.to_string();
-            if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
-                || err_str.contains("collection not found")
-                || err_str.contains("not exist")
-            {
+            if is_collection_not_found(&err_str) {
                 return Err(Error::vector_db(format!(
                     "Collection '{collection}' not found when listing file paths"
                 )));
@@ -769,10 +751,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         // Ensure collection is loaded
         if let Err(e) = self.client.load_collection(&name_str, None).await {
             let err_str = e.to_string();
-            if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
-                || err_str.contains("collection not found")
-                || err_str.contains("not exist")
-            {
+            if is_collection_not_found(&err_str) {
                 return Err(Error::vector_db(format!(
                     "Collection '{collection}' not found when querying chunks by file"
                 )));
@@ -788,12 +767,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         let expr = format!("file_path == \"{}\"", file_path.replace('"', "\\\""));
         let query_options = QueryOptions::new()
             .limit(1000) // Reasonable limit for chunks per file
-            .output_fields(vec![
-                VECTOR_FIELD_ID.to_owned(),
-                VECTOR_FIELD_FILE_PATH.to_owned(),
-                VECTOR_FIELD_START_LINE.to_owned(),
-                VECTOR_FIELD_CONTENT.to_owned(),
-            ]);
+            .output_fields(Self::default_output_fields());
 
         let query_results = match self.client.query(&name_str, &expr, &query_options).await {
             Ok(results) => results,
@@ -924,13 +898,7 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
         let expr = format!("id in [{}]", ids.join(","));
 
         use milvus::query::QueryOptions;
-        let mut query_options = QueryOptions::new();
-        query_options = query_options.output_fields(vec![
-            VECTOR_FIELD_ID.to_owned(),
-            VECTOR_FIELD_FILE_PATH.to_owned(),
-            VECTOR_FIELD_START_LINE.to_owned(),
-            VECTOR_FIELD_CONTENT.to_owned(),
-        ]);
+        let query_options = QueryOptions::new().output_fields(Self::default_output_fields());
 
         let query_results = Self::map_milvus_error(
             self.client.query(&name_str, &expr, &query_options).await,

@@ -43,3 +43,6 @@ pub trait ProjectDetector: Send + Sync {
     /// Detector name for logging
     fn detector_name(&self) -> &str;
 }
+
+#[linkme::distributed_slice]
+pub static PROJECT_DETECTORS: [ProjectDetectorEntry] = [..];

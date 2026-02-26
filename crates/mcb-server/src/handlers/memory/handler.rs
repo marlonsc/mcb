@@ -72,7 +72,10 @@ impl MemoryHandler {
         args: &MemoryArgs,
         action: MemoryResourceAction,
     ) -> Result<CallToolResult, McpError> {
-        match (action, args.resource) {
+        crate::entity_crud_dispatch! {
+            action = action,
+            resource = args.resource,
+            {
             (MemoryResourceAction::Store, MemoryResource::Observation) => {
                 observation::store_observation(&self.memory_service, args).await
             }
@@ -102,6 +105,7 @@ impl MemoryHandler {
             }
             (MemoryResourceAction::Get, MemoryResource::ErrorPattern) => {
                 self.handle_get_error_pattern(args).await
+            }
             }
         }
     }
@@ -196,7 +200,7 @@ impl MemoryHandler {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum MemoryResourceAction {
     Store,
     Get,

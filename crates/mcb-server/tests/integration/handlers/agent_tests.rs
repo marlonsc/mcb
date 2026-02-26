@@ -9,8 +9,8 @@ use crate::utils::domain_services::create_real_domain_services;
 use crate::utils::test_fixtures::TEST_SESSION_ID;
 
 async fn create_handler() -> Option<(AgentHandler, tempfile::TempDir)> {
-    let (services, temp_dir) = create_real_domain_services().await?;
-    Some((AgentHandler::new(services.agent_session_service), temp_dir))
+    let (state, temp_dir) = create_real_domain_services().await?;
+    Some((AgentHandler::new(state.mcp_server.agent_session_service()), temp_dir))
 }
 
 fn build_args(action: AgentAction, session_id: &str, data: serde_json::Value) -> AgentArgs {

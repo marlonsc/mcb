@@ -16,14 +16,11 @@
 //! | LanguageChunkingProvider | Language-specific code chunking |
 //! | MetricsAnalysisProvider | Code complexity metrics analysis |
 //! | ValidationProvider | Pluggable code validation engines |
-//! | CacheProvider | Caching backend services |
 //! | CryptoProvider | Encryption/decryption services |
 //! | ProjectDetector | Project type detection (Cargo, npm, Python, Go, Maven) |
 
 /// Native PMAT-style analysis provider ports
 pub mod analysis;
-/// Cache provider port
-pub mod cache;
 /// Config provider port
 pub mod config;
 /// Crypto provider port
@@ -53,9 +50,6 @@ pub mod vector_store;
 pub use analysis::{
     ComplexityAnalyzer, ComplexityFinding, DeadCodeDetector, DeadCodeFinding, TdgFinding, TdgScorer,
 };
-pub use cache::{
-    CacheEntryConfig, CacheProvider, CacheStats, DEFAULT_CACHE_NAMESPACE, DEFAULT_CACHE_TTL_SECS,
-};
 pub use config::ProviderConfigManagerInterface;
 pub use crypto::{CryptoProvider, EncryptedData};
 pub use embedding::EmbeddingProvider;
@@ -66,7 +60,11 @@ pub use metrics::{MetricLabels, MetricsError, MetricsProvider, MetricsResult};
 pub use metrics_analysis::{
     FileMetrics, FunctionMetrics, HalsteadMetrics, MetricsAnalysisProvider,
 };
-pub use project_detection::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
-pub use validation::{ValidationOptions, ValidationProvider, ValidatorInfo};
+pub use project_detection::{
+    PROJECT_DETECTORS, ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
+};
+pub use validation::{
+    RuleValidator, RuleValidatorRequest, ValidationOptions, ValidationProvider, ValidatorInfo,
+};
 pub use vcs::VcsProvider;
 pub use vector_store::VectorStoreProvider;

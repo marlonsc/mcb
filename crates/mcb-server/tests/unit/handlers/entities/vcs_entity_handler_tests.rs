@@ -6,8 +6,8 @@ use serde_json::json;
 use crate::utils::text::extract_text;
 
 fn create_handler() -> VcsEntityHandler {
-    let ctx = crate::utils::shared_context::shared_app_context();
-    VcsEntityHandler::new(ctx.vcs_entity_repository())
+    let state = crate::utils::shared_context::shared_mcb_state();
+    VcsEntityHandler::new(state.mcp_server.vcs_entity_repository())
 }
 
 #[tokio::test]

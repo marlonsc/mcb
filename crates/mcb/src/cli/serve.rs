@@ -1,11 +1,17 @@
+use std::sync::Arc;
+
 use clap::Args;
 use loco_rs::app::Hooks;
 use loco_rs::boot::{self, ServeParams, StartMode};
 use loco_rs::environment::Environment;
-use mcb_server::McbApp;
-use mcb_server::loco_app::create_mcp_server;
+
+use mcb_infrastructure::config::AppConfig;
+use mcb_infrastructure::resolution_context::ServiceResolutionContext;
+use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::tools::ExecutionFlow;
 use mcb_server::transport::stdio::StdioServerExt;
+
+use crate::loco_app::McbApp;
 
 /// Arguments for the `serve` subcommand.
 #[derive(Args, Debug, Clone)]
@@ -34,11 +40,30 @@ impl ServeArgs {
         let boot_result =
             McbApp::boot(StartMode::server_only(), &environment, loco_config.clone()).await?;
         if self.stdio {
-            // Stdio-only mode: create MCP server directly from Loco context, no HTTP.
-            let server = create_mcp_server(&boot_result.app_context, ExecutionFlow::StdioOnly)
-                .await
+            // Stdio-only mode: build MCP server from Loco context, serve stdio directly.
+            let app_config: AppConfig = serde_json::from_value(serde_json::to_value(
+                boot_result.app_context.config.clone(),
+            )?)?;
+            let event_bus = mcb_domain::registry::events::resolve_event_bus_provider(
+                &mcb_domain::registry::events::EventBusProviderConfig::new(
+                    app_config
+                        .system
+                        .infrastructure
+                        .event_bus
+                        .provider
+                        .provider_name(),
+                ),
+            )
+            .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+            let resolution_ctx = ServiceResolutionContext {
+                db: boot_result.app_context.db.clone(),
+                config: Arc::new(app_config),
+                event_bus,
+            };
+            let bootstrap = build_mcp_server_bootstrap(&resolution_ctx, ExecutionFlow::StdioOnly)
                 .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
-            server.mcp_server.serve_stdio().await?;
+            let server = (*bootstrap.mcp_server).clone();
+            server.serve_stdio().await?;
         } else {
             // Default: HTTP server + background stdio (unless --server).
             let serve = ServeParams {

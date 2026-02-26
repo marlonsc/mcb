@@ -71,6 +71,42 @@ pub struct ValidationOptions {
 }
 
 // ============================================================================
+// Rule validator (linkme-discovered validators)
+// ============================================================================
+
+/// Request for running one or more rule validators.
+#[derive(Debug, Clone)]
+pub struct RuleValidatorRequest {
+    /// Workspace root path
+    pub workspace_root: std::path::PathBuf,
+    /// Validator names to run (None = all registered)
+    pub validator_names: Option<Vec<String>>,
+    /// Minimum severity to report
+    pub severity_filter: Option<String>,
+    /// Exclude patterns
+    pub exclude_patterns: Option<Vec<String>>,
+}
+
+/// Port for a single rule validator (e.g. clean_architecture, quality).
+///
+/// Validators are discovered via linkme in [`crate::registry::validation::VALIDATOR_ENTRIES`]
+/// and built with a workspace root. Implementations live in mcb-validate.
+pub trait RuleValidator: Send + Sync {
+    /// Unique validator name (e.g. "clean_architecture", "quality").
+    fn name(&self) -> &'static str;
+
+    /// Run this validator and return a validation report.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if validation fails (e.g. I/O, parse).
+    fn run(
+        &self,
+        request: &RuleValidatorRequest,
+    ) -> std::result::Result<ValidationReport, crate::error::Error>;
+}
+
+// ============================================================================
 // Provider Trait
 // ============================================================================
 

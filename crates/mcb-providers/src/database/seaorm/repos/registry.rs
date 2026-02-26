@@ -8,6 +8,8 @@ use mcb_domain::registry::database::{
 };
 use sea_orm::DatabaseConnection;
 
+use crate::database::seaorm::auth_repository::SeaOrmAuthRepositoryAdapter;
+use crate::database::seaorm::dashboard::SeaOrmDashboardAdapter;
 use crate::database::seaorm::repos::{
     SeaOrmAgentRepository, SeaOrmEntityRepository, SeaOrmIndexRepository,
     SeaOrmObservationRepository, SeaOrmProjectRepository,
@@ -35,6 +37,8 @@ fn create_seaorm_repositories(
 
     Ok(DatabaseRepositories {
         memory: Arc::new(observation_repo),
+        auth: Arc::new(SeaOrmAuthRepositoryAdapter::new((*db).clone())),
+        dashboard: Arc::new(SeaOrmDashboardAdapter::new((*db).clone())),
         agent: Arc::new(agent_repo),
         project: Arc::new(project_repo),
         vcs_entity: Arc::clone(&entity_repo) as _,

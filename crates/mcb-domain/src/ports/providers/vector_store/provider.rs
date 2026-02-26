@@ -3,53 +3,47 @@
 //!
 #![allow(missing_docs)]
 
-use async_trait::async_trait;
+use std::collections::HashMap;
 
-use super::{
-    MetadataMap, PortResult, StoreCollectionId, StoreEmbedding, StoreSearchResult,
-    VectorStoreAdmin, VectorStoreBrowser,
-};
+use async_trait::async_trait;
+use serde_json::Value;
+
+use super::{VectorStoreAdmin, VectorStoreBrowser};
+use crate::error::Result;
+use crate::value_objects::{CollectionId, Embedding, SearchResult};
 
 #[async_trait]
 pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sync {
-    async fn create_collection(
-        &self,
-        collection: &StoreCollectionId,
-        dimensions: usize,
-    ) -> PortResult<()>;
+    async fn create_collection(&self, collection: &CollectionId, dimensions: usize) -> Result<()>;
 
-    async fn delete_collection(&self, collection: &StoreCollectionId) -> PortResult<()>;
+    async fn delete_collection(&self, collection: &CollectionId) -> Result<()>;
 
     async fn insert_vectors(
         &self,
-        collection: &StoreCollectionId,
-        vectors: &[StoreEmbedding],
-        metadata: Vec<MetadataMap>,
-    ) -> PortResult<Vec<String>>;
+        collection: &CollectionId,
+        vectors: &[Embedding],
+        metadata: Vec<HashMap<String, Value>>,
+    ) -> Result<Vec<String>>;
 
     async fn search_similar(
         &self,
-        collection: &StoreCollectionId,
+        collection: &CollectionId,
         query_vector: &[f32],
         limit: usize,
         filter: Option<&str>,
-    ) -> PortResult<Vec<StoreSearchResult>>;
+    ) -> Result<Vec<SearchResult>>;
 
-    async fn delete_vectors(
-        &self,
-        collection: &StoreCollectionId,
-        ids: &[String],
-    ) -> PortResult<()>;
+    async fn delete_vectors(&self, collection: &CollectionId, ids: &[String]) -> Result<()>;
 
     async fn get_vectors_by_ids(
         &self,
-        collection: &StoreCollectionId,
+        collection: &CollectionId,
         ids: &[String],
-    ) -> PortResult<Vec<StoreSearchResult>>;
+    ) -> Result<Vec<SearchResult>>;
 
     async fn list_vectors(
         &self,
-        collection: &StoreCollectionId,
+        collection: &CollectionId,
         limit: usize,
-    ) -> PortResult<Vec<StoreSearchResult>>;
+    ) -> Result<Vec<SearchResult>>;
 }

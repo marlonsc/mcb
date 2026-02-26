@@ -8,7 +8,6 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::registry::cache::CacheProviderConfig;
 use crate::registry::embedding::EmbeddingProviderConfig;
 use crate::registry::language::LanguageProviderConfig;
 use crate::registry::vector_store::VectorStoreProviderConfig;
@@ -51,16 +50,6 @@ provider_admin_interface!(
     extra = {}
 );
 
-provider_admin_interface!(
-    /// Interface for cache provider admin operations.
-    trait CacheAdminInterface,
-    config = CacheProviderConfig,
-    list_doc = "List all available cache providers.",
-    extra = {
-        /// Get current provider name.
-        fn current_provider(&self) -> String;
-    }
-);
 
 provider_admin_interface!(
     /// Interface for language provider admin operations.

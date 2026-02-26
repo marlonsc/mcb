@@ -3,11 +3,11 @@
 //!
 //! Version Control System Providers.
 
-pub mod factory;
+// factory module DELETED — use linkme VCS registry
 pub mod git;
 pub mod submodule;
 
-pub use crate::project_detection::{PROJECT_DETECTORS, detect_all_projects};
-pub use factory::default_vcs_provider;
+pub use crate::project_detection::detect_all_projects;
+// default_vcs_provider DELETED — resolve via registry
 pub use git::GitProvider;
 pub use submodule::{SubmoduleProvider, collect_submodules, collect_submodules_with_depth};

@@ -11,7 +11,7 @@
 pub const SAFETY_COMMENT_MARKERS: &[&str] = &["// SAFETY:", "// safety:"];
 
 /// Ignore hint keywords for unwrap/expect suppression.
-pub const IGNORE_HINT_KEYWORDS: &[&str] = &["lock_poisoning_recovery", "hardcoded_fallback"];
+pub const IGNORE_HINT_KEYWORDS: &[&str] = &["lock_poisoning_recovery"];
 
 /// Number of lines before/after a detection to search for ignore hints.
 pub const COMMENT_SEARCH_RADIUS: usize = 3;

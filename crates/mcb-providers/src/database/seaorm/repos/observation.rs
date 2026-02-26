@@ -13,6 +13,7 @@ use sea_orm::{
     QueryOrder, Statement, Value,
 };
 
+use super::common::db_error;
 use crate::constants::database::OBSERVATION_LIST_MAX_LIMIT;
 use crate::database::seaorm::entities::{observation, organization, project, session_summary};
 
@@ -26,10 +27,6 @@ impl SeaOrmObservationRepository {
     /// Creates a new observation repository backed by the provided database connection.
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
-    }
-
-    fn db_err(context: &str, error: DbErr) -> Error {
-        Error::memory_with_source(context, error)
     }
 
     fn ignore_not_inserted<T>(
@@ -66,7 +63,7 @@ impl SeaOrmObservationRepository {
                 .exec(&self.db)
                 .await,
         )
-        .map_err(|e| Self::db_err("auto-create default org", e))?;
+        .map_err(db_error("auto-create default org"))?;
 
         let proj = project::ActiveModel {
             id: Set(project_id.to_owned()),
@@ -87,7 +84,7 @@ impl SeaOrmObservationRepository {
                 .exec(&self.db)
                 .await,
         )
-        .map_err(|e| Self::db_err("auto-create project", e))?;
+        .map_err(db_error("auto-create project"))?;
 
         Ok(())
     }
@@ -178,7 +175,7 @@ impl SeaOrmObservationRepository {
             .db
             .query_all_raw(self.build_list_sql(filter, limit))
             .await
-            .map_err(|e| Self::db_err("list observations", e))?;
+            .map_err(db_error("list observations"))?;
 
         rows.into_iter()
             .map(|row| {
@@ -196,7 +193,7 @@ impl SeaOrmObservationRepository {
                 Ok(model.into())
             })
             .collect::<std::result::Result<Vec<_>, DbErr>>()
-            .map_err(|e| Self::db_err("decode observations", e))
+            .map_err(db_error("decode observations"))
     }
 
     /// Lists observations using the optional filter and result limit.
@@ -251,7 +248,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
             )
             .exec(&self.db)
             .await
-            .map_err(|e| Self::db_err("store observation", e))?;
+            .map_err(db_error("store observation"))?;
 
         Ok(())
     }
@@ -261,7 +258,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .one(&self.db)
             .await
             .map(|model| model.map(Into::into))
-            .map_err(|e| Self::db_err("get observation", e))
+            .map_err(db_error("get observation"))
     }
 
     async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
@@ -270,7 +267,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .one(&self.db)
             .await
             .map(|model| model.map(Into::into))
-            .map_err(|e| Self::db_err("find observation by hash", e))
+            .map_err(db_error("find observation by hash"))
     }
 
     async fn search(&self, query: &str, mut limit: usize) -> Result<Vec<FtsSearchResult>> {
@@ -298,7 +295,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .db
             .query_all_raw(stmt)
             .await
-            .map_err(|e| Self::db_err("search observations using FTS5", e))?;
+            .map_err(db_error("search observations using FTS5"))?;
 
         rows.into_iter()
             .map(|row| {
@@ -308,14 +305,14 @@ impl MemoryRepository for SeaOrmObservationRepository {
                 })
             })
             .collect::<std::result::Result<Vec<_>, DbErr>>()
-            .map_err(|e| Self::db_err("decode FTS5 results", e))
+            .map_err(db_error("decode FTS5 results"))
     }
 
     async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
         observation::Entity::delete_by_id(id.to_string())
             .exec(&self.db)
             .await
-            .map_err(|e| Self::db_err("delete observation", e))?;
+            .map_err(db_error("delete observation"))?;
         Ok(())
     }
 
@@ -331,7 +328,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .all(&self.db)
             .await
             .map(|models| models.into_iter().map(Into::into).collect())
-            .map_err(|e| Self::db_err("get observations by ids", e))
+            .map_err(db_error("get observations by ids"))
     }
 
     async fn get_timeline(
@@ -384,7 +381,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
             )
             .exec(&self.db)
             .await
-            .map_err(|e| Self::db_err("store session summary", e))?;
+            .map_err(db_error("store session summary"))?;
 
         Ok(())
     }
@@ -396,6 +393,6 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .one(&self.db)
             .await
             .map(|model| model.map(Into::into))
-            .map_err(|e| Self::db_err("get session summary", e))
+            .map_err(db_error("get session summary"))
     }
 }

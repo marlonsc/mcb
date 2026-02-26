@@ -55,27 +55,11 @@ impl Default for ValidatorRegistry {
 }
 
 impl ValidatorRegistry {
-    /// Canonical validator names used by registry-based execution.
-    pub const STANDARD_VALIDATOR_NAMES: &'static [&'static str] = &[
-        "clean_architecture",
-        "layer_flow",
-        "port_adapter",
-        "visibility",
-        "dependency",
-        "quality",
-        "solid",
-        "naming",
-        "patterns",
-        "documentation",
-        "hygiene",
-        "performance",
-        "async_patterns",
-        "kiss",
-        "organization",
-        "implementation",
-        "refactoring",
-        "error_boundary",
-    ];
+    /// Canonical validator names from linkme registry (domain). Use this for CLI/handlers.
+    #[must_use]
+    pub fn standard_validator_names() -> Vec<String> {
+        mcb_domain::registry::validation::list_validator_names()
+    }
 
     /// Create an empty registry
     #[must_use]
@@ -289,11 +273,5 @@ impl ValidatorRegistry {
             crate::validators::error_boundary::ErrorBoundaryValidator,
             crate::validators::declarative_validator::DeclarativeValidator,
         )
-    }
-
-    /// Return canonical validator names for public API consumers.
-    #[must_use]
-    pub fn standard_validator_names() -> &'static [&'static str] {
-        Self::STANDARD_VALIDATOR_NAMES
     }
 }

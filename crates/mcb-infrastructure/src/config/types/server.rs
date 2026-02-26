@@ -197,14 +197,6 @@ impl ServerConfig {
     }
 }
 
-impl ServerConfig {
-    /// Returns the fallback server configuration.
-    #[must_use]
-    pub fn fallback() -> Self {
-        ServerConfigBuilder::new().build()
-    }
-}
-
 /// Server configuration builder
 #[derive(Clone)]
 pub struct ServerConfigBuilder {

@@ -8,7 +8,7 @@
 pub mod registry;
 pub mod router;
 
-pub use registry::{ToolDefinitions, create_tool_list, dispatch_tool_call};
+pub use registry::{create_tool_list, dispatch_tool_call, tool_by_name};
 pub use router::{
     ExecutionFlow, RuntimeDefaults, ToolExecutionContext, ToolHandlers, route_tool_call,
 };

@@ -4191,7 +4191,10 @@ dependencies = [
 name = "mcb"
 version = "0.3.0-dev"
 dependencies = [
+ "async-trait",
+ "axum",
  "clap",
+ "dirs",
  "insta",
  "loco-rs",
  "mcb-domain",
@@ -4265,6 +4268,7 @@ dependencies = [
  "ignore",
  "insta",
  "itertools",
+ "linkme",
  "loco-rs",
  "mcb-domain",
  "mcb-providers",
@@ -4286,7 +4290,6 @@ dependencies = [
  "serial_test",
  "sha2",
  "sqlx",
- "sysinfo",
  "tempfile",
  "thiserror 2.0.18",
  "tokio",

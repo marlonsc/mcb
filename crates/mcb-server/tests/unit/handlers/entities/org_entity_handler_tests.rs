@@ -6,8 +6,8 @@ use serde_json::json;
 use crate::utils::text::extract_text;
 
 fn create_handler() -> OrgEntityHandler {
-    let ctx = crate::utils::shared_context::shared_app_context();
-    OrgEntityHandler::new(ctx.org_entity_repository())
+    let state = crate::utils::shared_context::shared_mcb_state();
+    OrgEntityHandler::new(state.mcp_server.org_entity_repository())
 }
 
 #[tokio::test]

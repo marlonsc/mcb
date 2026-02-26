@@ -6,10 +6,10 @@ use crate::utils::domain_services::create_real_domain_services;
 
 #[tokio::test]
 async fn test_get_indexing_status_success() {
-    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
         return;
     };
-    let handler = IndexHandler::new(services.indexing_service);
+    let handler = IndexHandler::new(state.mcp_server.indexing_service());
 
     let args = IndexArgs {
         action: IndexAction::Status,

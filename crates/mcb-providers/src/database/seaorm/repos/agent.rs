@@ -16,7 +16,7 @@ use sea_orm::{
     QuerySelect, Set,
 };
 
-use crate::constants::database::{FALLBACK_AGENT_MODEL, FALLBACK_AGENT_PROMPT};
+use super::common::db_error;
 use crate::database::seaorm::entities::{
     agent_session, checkpoint, delegation, organization, project, tool_call,
 };
@@ -31,18 +31,11 @@ impl SeaOrmAgentRepository {
         Self { db }
     }
 
-    fn db_err<E>(context: &str, source: E) -> Error
-    where
-        E: std::error::Error + Send + Sync + 'static,
-    {
-        Error::memory_with_source(context, source)
-    }
-
     async fn ensure_org_exists(&self, timestamp: i64) -> Result<()> {
         let existing = organization::Entity::find_by_id(DEFAULT_ORG_ID)
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("check existing org", e))?;
+            .map_err(db_error("check existing org"))?;
 
         if existing.is_some() {
             return Ok(());
@@ -60,7 +53,7 @@ impl SeaOrmAgentRepository {
         organization::Entity::insert(org)
             .exec(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("auto-create default org", e))?;
+            .map_err(db_error("auto-create default org"))?;
 
         Ok(())
     }
@@ -71,7 +64,7 @@ impl SeaOrmAgentRepository {
         let existing = project::Entity::find_by_id(project_id.to_owned())
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("check existing project", e))?;
+            .map_err(db_error("check existing project"))?;
 
         if existing.is_some() {
             return Ok(());
@@ -89,47 +82,23 @@ impl SeaOrmAgentRepository {
         project::Entity::insert(row)
             .exec(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("auto-create project", e))?;
+            .map_err(db_error("auto-create project"))?;
 
         Ok(())
     }
 
-    async fn ensure_session_exists(&self, session_id: &str, timestamp: i64) -> Result<()> {
+    /// Verify that a referenced session exists (strict: no auto-creation).
+    async fn require_session_exists(&self, session_id: &str) -> Result<()> {
         let existing = agent_session::Entity::find_by_id(session_id.to_owned())
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("check existing session", e))?;
+            .map_err(db_error("check existing session"))?;
 
-        if existing.is_some() {
-            return Ok(());
+        if existing.is_none() {
+            return Err(Error::not_found(format!(
+                "Agent session '{session_id}' not found. Sessions must be created before storing events."
+            )));
         }
-
-        self.ensure_org_exists(timestamp).await?;
-
-        let fallback = AgentSession {
-            id: session_id.to_owned(),
-            session_summary_id: format!("auto-summary-{session_id}"),
-            agent_type: AgentType::Sisyphus,
-            model: FALLBACK_AGENT_MODEL.to_owned(),
-            parent_session_id: None,
-            started_at: timestamp,
-            ended_at: None,
-            duration_ms: None,
-            status: AgentSessionStatus::Active,
-            prompt_summary: Some(FALLBACK_AGENT_PROMPT.to_owned()),
-            result_summary: None,
-            token_count: None,
-            tool_calls_count: None,
-            delegations_count: None,
-            project_id: None,
-            worktree_id: None,
-        };
-
-        let active: agent_session::ActiveModel = fallback.into();
-        agent_session::Entity::insert(active)
-            .exec(self.db.as_ref())
-            .await
-            .map_err(|e| Self::db_err("auto-create agent session", e))?;
 
         Ok(())
     }
@@ -146,8 +115,7 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
         }
 
         if let Some(parent_session_id) = &session.parent_session_id {
-            self.ensure_session_exists(parent_session_id, session.started_at)
-                .await?;
+            self.require_session_exists(parent_session_id).await?;
         }
 
         let active: agent_session::ActiveModel = session.clone().into();
@@ -155,7 +123,7 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
         agent_session::Entity::insert(active)
             .exec(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("create agent session", e))?;
+            .map_err(db_error("create agent session"))?;
 
         Ok(())
     }
@@ -164,7 +132,7 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
         let session = agent_session::Entity::find_by_id(id.to_owned())
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("get agent session", e))?;
+            .map_err(db_error("get agent session"))?;
 
         Ok(session.map(Into::into))
     }
@@ -176,15 +144,14 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
         }
 
         if let Some(parent_session_id) = &session.parent_session_id {
-            self.ensure_session_exists(parent_session_id, session.started_at)
-                .await?;
+            self.require_session_exists(parent_session_id).await?;
         }
 
         let active: agent_session::ActiveModel = session.clone().into();
         active
             .update(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("update agent session", e))?;
+            .map_err(db_error("update agent session"))?;
 
         Ok(())
     }
@@ -220,7 +187,7 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
         let sessions = q
             .all(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("list agent sessions", e))?;
+            .map_err(db_error("list agent sessions"))?;
 
         Ok(sessions.into_iter().map(Into::into).collect())
     }
@@ -231,7 +198,7 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
             .order_by_desc(agent_session::Column::StartedAt)
             .all(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("list project sessions", e))?;
+            .map_err(db_error("list project sessions"))?;
 
         Ok(sessions.into_iter().map(Into::into).collect())
     }
@@ -242,7 +209,7 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
             .order_by_desc(agent_session::Column::StartedAt)
             .all(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("list worktree sessions", e))?;
+            .map_err(db_error("list worktree sessions"))?;
 
         Ok(sessions.into_iter().map(Into::into).collect())
     }
@@ -251,28 +218,27 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
 #[async_trait]
 impl AgentEventRepository for SeaOrmAgentRepository {
     async fn store_delegation(&self, delegation: &Delegation) -> Result<()> {
-        self.ensure_session_exists(&delegation.parent_session_id, delegation.created_at)
+        self.require_session_exists(&delegation.parent_session_id)
             .await?;
-        self.ensure_session_exists(&delegation.child_session_id, delegation.created_at)
+        self.require_session_exists(&delegation.child_session_id)
             .await?;
 
         let active: delegation::ActiveModel = delegation.clone().into();
         delegation::Entity::insert(active)
             .exec(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("store delegation", e))?;
+            .map_err(db_error("store delegation"))?;
 
         Ok(())
     }
 
     async fn store_tool_call(&self, tool_call: &ToolCall) -> Result<()> {
-        self.ensure_session_exists(&tool_call.session_id, tool_call.created_at)
-            .await?;
+        self.require_session_exists(&tool_call.session_id).await?;
 
         let parent_session = agent_session::Entity::find_by_id(tool_call.session_id.clone())
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("load session for tool call", e))?;
+            .map_err(db_error("load session for tool call"))?;
 
         let mut active: tool_call::ActiveModel = tool_call.clone().into();
         active.org_id = Set(Some(DEFAULT_ORG_ID.to_owned()));
@@ -282,7 +248,7 @@ impl AgentEventRepository for SeaOrmAgentRepository {
         tool_call::Entity::insert(active)
             .exec(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("store tool call", e))?;
+            .map_err(db_error("store tool call"))?;
 
         Ok(())
     }
@@ -291,14 +257,13 @@ impl AgentEventRepository for SeaOrmAgentRepository {
 #[async_trait]
 impl AgentCheckpointRepository for SeaOrmAgentRepository {
     async fn store_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
-        self.ensure_session_exists(&checkpoint.session_id, checkpoint.created_at)
-            .await?;
+        self.require_session_exists(&checkpoint.session_id).await?;
 
         let active: checkpoint::ActiveModel = checkpoint.clone().into();
         checkpoint::Entity::insert(active)
             .exec(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("store checkpoint", e))?;
+            .map_err(db_error("store checkpoint"))?;
 
         Ok(())
     }
@@ -307,20 +272,19 @@ impl AgentCheckpointRepository for SeaOrmAgentRepository {
         let checkpoint = checkpoint::Entity::find_by_id(id.to_owned())
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("get checkpoint", e))?;
+            .map_err(db_error("get checkpoint"))?;
 
         Ok(checkpoint.map(Into::into))
     }
 
     async fn update_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
-        self.ensure_session_exists(&checkpoint.session_id, checkpoint.created_at)
-            .await?;
+        self.require_session_exists(&checkpoint.session_id).await?;
 
         let active: checkpoint::ActiveModel = checkpoint.clone().into();
         active
             .update(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("update checkpoint", e))?;
+            .map_err(db_error("update checkpoint"))?;
 
         Ok(())
     }
