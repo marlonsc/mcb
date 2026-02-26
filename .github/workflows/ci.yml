@@ -67,9 +67,9 @@ jobs:
       - name: Classify PR Type
         id: classify
         env:
-          IS_DRAFT: ${{ github.event.pull_request.draft || 'false' }}
-          IS_BOT: ${{ github.event.pull_request.user.type == 'Bot' || 'false' }}
-          IS_FORK: ${{ github.event.pull_request.head.repo.fork || 'false' }}
+          IS_DRAFT: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft || 'false' }}
+          IS_BOT: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.type == 'Bot' || 'false' }}
+          IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork || 'false' }}
         run: |
           echo "is_draft=${IS_DRAFT}" >> "$GITHUB_OUTPUT"
           echo "is_bot=${IS_BOT}" >> "$GITHUB_OUTPUT"
@@ -511,7 +511,7 @@ jobs:
       needs.rust-ci.result == 'success' &&
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
       (needs.classify.outputs.run_full == "true" || github.event_name == "push" || github.event_name == "workflow_dispatch") &&
-      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
+      (github.event_name != 'pull_request' || github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -548,7 +548,7 @@ jobs:
     name: Auto-Merge Dependabot
     timeout-minutes: 5
     runs-on: ubuntu-latest
-    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    if: github.event_name == 'pull_request' && github.event.pull_request.user.login == 'dependabot[bot]'
     permissions:
       contents: write
       pull-requests: write
@@ -564,13 +564,13 @@ jobs:
           steps.metadata.outputs.update-type == 'version-update:semver-minor'
         run: gh pr merge --auto --squash "$PR_URL"
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_URL: ${{ github.event_name == 'pull_request' && github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Auto-approve major updates (review only, no merge)
         if: |
           steps.metadata.outputs.update-type == 'version-update:semver-major'
         env:
-          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_URL: ${{ github.event_name == 'pull_request' && github.event.pull_request.html_url }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DEP_NAMES: ${{ steps.metadata.outputs.dependency-names }}
         run: |
