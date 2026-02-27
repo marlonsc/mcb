@@ -39,10 +39,31 @@ pub async fn jobs(Extension(state): Extension<McbState>) -> Result<Response> {
 
     let total = indexing_ops.len() + validation_ops.len();
     let running = indexing_running + validation_running;
+    let queued = validation_ops
+        .values()
+        .filter(|op| matches!(op.status, ValidationStatus::Queued))
+        .count()
+        + indexing_ops
+            .values()
+            .filter(|op| matches!(op.status, IndexingOperationStatus::Starting))
+            .count();
+
+    // Combine all operations into a single jobs array for API consumers
+    let mut jobs: Vec<serde_json::Value> = indexing_ops
+        .values()
+        .map(|op| serde_json::to_value(op).unwrap_or_default())
+        .collect();
+    jobs.extend(
+        validation_ops
+            .values()
+            .map(|op| serde_json::to_value(op).unwrap_or_default()),
+    );
 
     format::json(serde_json::json!({
         "total": total,
         "running": running,
+        "queued": queued,
+        "jobs": jobs,
         "indexing_operations": indexing_ops.values().collect::<Vec<_>>(),
         "validation_operations": validation_ops.values().collect::<Vec<_>>(),
     }))

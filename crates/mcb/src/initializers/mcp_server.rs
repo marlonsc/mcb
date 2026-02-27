@@ -143,6 +143,34 @@ impl Initializer for McpServerInitializer {
             .route(
                 "/collections",
                 axum::routing::get(mcb_server::controllers::collections_api::collections),
+            )
+            // Static file routes for assets at root level
+            .route(
+                "/favicon.ico",
+                axum::routing::get(|| async {
+                    (
+                        [(axum::http::header::CONTENT_TYPE, "image/svg+xml")],
+                        include_str!("../../../../assets/admin/favicon.ico"),
+                    )
+                }),
+            )
+            .route(
+                "/ui/theme.css",
+                axum::routing::get(|| async {
+                    (
+                        [(axum::http::header::CONTENT_TYPE, "text/css")],
+                        include_str!("../../../../assets/admin/ui/theme.css"),
+                    )
+                }),
+            )
+            .route(
+                "/ui/shared.js",
+                axum::routing::get(|| async {
+                    (
+                        [(axum::http::header::CONTENT_TYPE, "application/javascript")],
+                        include_str!("../../../../assets/admin/ui/shared.js"),
+                    )
+                }),
             );
 
         // Merge UI routes first, then apply Extension layer so all routes get McbState
