@@ -5,6 +5,7 @@
 
 use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
+    shutdown_client,
 };
 use serial_test::serial;
 
@@ -22,7 +23,7 @@ async fn test_project_list() -> TestResult {
         !extract_text(&result).is_empty(),
         "project list should return a response"
     );
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -38,7 +39,7 @@ async fn test_project_list_issues() -> TestResult {
     )
     .await;
     assert_tool_error(result, &["unsupported", "list", "issue"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -49,7 +50,7 @@ async fn test_project_get_nonexistent() -> TestResult {
     let client = create_client().await?;
     let result = call_tool(&client, "project", serde_json::json!({"action": "get", "resource": "project", "project_id": "nonexistent-project"})).await;
     assert_tool_error(result, &["not found", "error"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -60,7 +61,7 @@ async fn test_project_invalid_resource() -> TestResult {
     let client = create_client().await?;
     let result = call_tool(&client, "project", serde_json::json!({"action": "list", "resource": "nonexistent_resource", "project_id": "test"})).await;
     assert_tool_error(result, &["unknown variant", "expected one of"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }

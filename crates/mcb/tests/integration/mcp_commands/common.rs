@@ -14,6 +14,10 @@ use serde_json::Value;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, OnceLock};
 use tokio::process::Command;
+use tokio::time::{Duration, timeout};
+
+/// Per-operation timeout — prevents any single MCP call or shutdown from hanging.
+const OP_TIMEOUT: Duration = Duration::from_secs(10);
 
 pub type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
@@ -87,11 +91,27 @@ fn create_test_command() -> Command {
 }
 
 /// Create an MCP client connected to a fresh mcb process via stdio.
+///
+/// Includes a timeout to prevent hanging if the server fails to start.
 pub async fn create_client() -> Result<RunningService<RoleClient, ()>, Box<dyn std::error::Error>> {
     let transport = TokioChildProcess::new(create_test_command())
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
-    let client = ().serve(transport).await.map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+    let client = timeout(OP_TIMEOUT, ().serve(transport))
+        .await
+        .map_err(|_| "Timeout: mcb server failed to start within 10s")?
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
     Ok(client)
+}
+
+/// Gracefully shut down the MCP client with a timeout.
+///
+/// Wraps `client.cancel()` in a timeout so that if the child process doesn't
+/// exit cleanly, the `Drop` impl on `ChildWithCleanup` will kill it.
+pub async fn shutdown_client(client: RunningService<RoleClient, ()>) {
+    // If cancel() hangs (child process stuck), the timeout fires and drops
+    // the client, which triggers ChildWithCleanup::drop() → kill().
+    let _ = timeout(Duration::from_secs(3), client.cancel()).await;
+    cleanup_temp_dbs();
 }
 
 // --- Tool call helpers ---
@@ -105,19 +125,25 @@ fn json_args(value: Value) -> Option<serde_json::Map<String, Value>> {
 }
 
 /// Call an MCP tool by name with JSON arguments.
+///
+/// Includes a timeout to prevent hanging on unresponsive tool calls.
 pub async fn call_tool(
     client: &RunningService<RoleClient, ()>,
     tool_name: &str,
     arguments: Value,
 ) -> Result<CallToolResult, Box<dyn std::error::Error>> {
-    let result = client
-        .call_tool(CallToolRequestParams {
+    let result = timeout(
+        OP_TIMEOUT,
+        client.call_tool(CallToolRequestParams {
             meta: None,
             name: tool_name.to_owned().into(),
             arguments: json_args(arguments),
             task: None,
-        })
-        .await?;
+        }),
+    )
+    .await
+    .map_err(|_| format!("Timeout: tool '{tool_name}' did not respond within 10s"))?
+    .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
     Ok(result)
 }
 

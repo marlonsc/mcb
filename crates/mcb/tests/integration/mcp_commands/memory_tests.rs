@@ -5,7 +5,7 @@
 
 use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
-    is_error,
+    is_error, shutdown_client,
 };
 use serial_test::serial;
 
@@ -23,7 +23,7 @@ async fn test_memory_list_observations() -> TestResult {
         !extract_text(&result).is_empty(),
         "memory list should return a response"
     );
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -57,7 +57,7 @@ async fn test_memory_store_and_list() -> TestResult {
         !extract_text(&list_result).is_empty(),
         "list should return a response"
     );
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -73,7 +73,7 @@ async fn test_memory_get_missing_ids() -> TestResult {
     )
     .await;
     assert_tool_error(result, &["id", "required", "error"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -92,7 +92,7 @@ async fn test_memory_timeline() -> TestResult {
         !extract_text(&result).is_empty(),
         "timeline should return a response"
     );
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -108,7 +108,7 @@ async fn test_memory_invalid_action() -> TestResult {
     )
     .await;
     assert_tool_error(result, &["unknown variant", "expected one of"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }

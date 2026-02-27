@@ -4,6 +4,7 @@
 
 use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
+    shutdown_client,
 };
 use serial_test::serial;
 
@@ -21,7 +22,7 @@ async fn test_search_memory() -> TestResult {
         !extract_text(&result).is_empty(),
         "memory search should return a response"
     );
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -37,7 +38,7 @@ async fn test_search_code_missing_collection() -> TestResult {
     )
     .await;
     assert_tool_error(result, &["collection", "required"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -48,7 +49,7 @@ async fn test_search_missing_query() -> TestResult {
     let client = create_client().await?;
     let result = call_tool(&client, "search", serde_json::json!({"resource": "code"})).await;
     assert_tool_error(result, &["query", "missing field"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -64,7 +65,7 @@ async fn test_search_invalid_resource() -> TestResult {
     )
     .await;
     assert_tool_error(result, &["unknown variant", "expected one of"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }

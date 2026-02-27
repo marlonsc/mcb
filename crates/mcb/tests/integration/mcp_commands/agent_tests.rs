@@ -4,6 +4,7 @@
 
 use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
+    shutdown_client,
 };
 use serial_test::serial;
 
@@ -25,7 +26,7 @@ async fn test_agent_log_tool() -> TestResult {
         !extract_text(&result).is_empty(),
         "log_tool should return a response"
     );
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -43,7 +44,7 @@ async fn test_agent_log_delegation() -> TestResult {
         !extract_text(&result).is_empty(),
         "log_delegation should return a response"
     );
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -61,7 +62,7 @@ async fn test_agent_missing_session_id() -> TestResult {
     )
     .await;
     assert_tool_error(result, &["session", "not found"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }

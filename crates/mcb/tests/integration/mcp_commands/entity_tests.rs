@@ -7,7 +7,7 @@
 
 use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
-    is_error,
+    is_error, shutdown_client,
 };
 use serial_test::serial;
 
@@ -26,7 +26,7 @@ async fn test_entity_list_orgs() -> TestResult {
         !extract_text(&result).is_empty(),
         "list orgs should return a response"
     );
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -46,7 +46,7 @@ async fn test_entity_list_repositories() -> TestResult {
         "list repositories should not error, got: {}",
         extract_text(&result)
     );
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -62,7 +62,7 @@ async fn test_entity_get_nonexistent() -> TestResult {
     )
     .await;
     assert_tool_error(result, &["not found", "error"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -78,7 +78,7 @@ async fn test_entity_list_plans_requires_project() -> TestResult {
     )
     .await;
     assert_tool_error(result, &["project_id", "required"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
@@ -94,7 +94,7 @@ async fn test_entity_invalid_resource() -> TestResult {
     )
     .await;
     assert_tool_error(result, &["unknown variant", "expected one of"]);
-    let _ = client.cancel().await;
+    shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
