@@ -17,3 +17,5 @@ mod form_deserialization_test;
 mod full_stack_integration;
 mod golden_acceptance_integration;
 mod hooks_integration;
+
+mod admin_api_tests;
