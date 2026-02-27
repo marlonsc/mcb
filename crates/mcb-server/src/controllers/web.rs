@@ -229,6 +229,18 @@ pub async fn not_found_page() -> Result<Response> {
     format::html(&page_layout("Not Found", body))
 }
 
+/// Returns the 404 page HTML as a raw string (for use as Axum fallback handler).
+#[must_use]
+pub fn not_found_html() -> String {
+    let body = r#"
+        <h1>404</h1>
+        <p>Not Found</p>
+        <p>The page you're looking for doesn't exist.</p>
+        <a href="/ui/">Return to Dashboard</a>
+    "#;
+    page_layout("Not Found", body)
+}
+
 /// Registers web UI routes under `/ui`.
 #[must_use]
 pub fn routes() -> Routes {

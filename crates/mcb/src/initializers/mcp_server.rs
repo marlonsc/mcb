@@ -144,6 +144,10 @@ impl Initializer for McpServerInitializer {
                 "/collections",
                 axum::routing::get(mcb_server::controllers::collections_api::collections),
             )
+            .route(
+                "/config",
+                axum::routing::get(mcb_server::controllers::admin::config),
+            )
             // Static file routes for assets at root level
             .route(
                 "/favicon.ico",
@@ -177,6 +181,16 @@ impl Initializer for McpServerInitializer {
         let router = router.merge(ui_routes).layer(Extension(mcb_state));
         let mcp_routes = axum::Router::new().nest_service("/mcp", mcp_service);
 
-        Ok(router.merge(mcp_routes))
+        // 404 fallback handler for unknown routes
+        let router = router
+            .merge(mcp_routes)
+            .fallback(axum::routing::get(|| async {
+                (
+                    axum::http::StatusCode::NOT_FOUND,
+                    axum::response::Html(mcb_server::controllers::web::not_found_html()),
+                )
+            }));
+
+        Ok(router)
     }
 }
