@@ -39,8 +39,13 @@ impl ServeArgs {
         let boot_result =
             McbApp::boot(StartMode::server_only(), &environment, loco_config.clone()).await?;
 
+        // Allow SERVER_PORT env var to override the config file port (used for E2E testing).
+        let port = std::env::var("SERVER_PORT")
+            .ok()
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(loco_config.server.port);
         let serve = ServeParams {
-            port: loco_config.server.port,
+            port,
             binding: loco_config.server.binding.clone(),
         };
         boot::start::<McbApp>(boot_result, serve, self.stdio).await?;

@@ -45,6 +45,30 @@ pub fn cleanup_temp_dbs() {
     }
 }
 
+// --- Child PID tracking (ensures processes are killed after cancel() times out) ---
+
+static CHILD_PIDS: OnceLock<Arc<Mutex<Vec<u32>>>> = OnceLock::new();
+
+fn get_child_pids() -> Arc<Mutex<Vec<u32>>> {
+    Arc::clone(CHILD_PIDS.get_or_init(|| Arc::new(Mutex::new(Vec::new()))))
+}
+
+fn register_child_pid(pid: u32) {
+    if let Ok(mut pids) = get_child_pids().lock() {
+        pids.push(pid);
+    }
+}
+
+fn kill_registered_children() {
+    if let Ok(mut pids) = get_child_pids().lock() {
+        for pid in pids.drain(..) {
+            let _ = std::process::Command::new("kill")
+                .args(["-KILL", &pid.to_string()])
+                .status();
+        }
+    }
+}
+
 // --- Binary discovery ---
 
 fn get_mcb_path() -> PathBuf {
@@ -96,6 +120,10 @@ fn create_test_command() -> Command {
 pub async fn create_client() -> Result<RunningService<RoleClient, ()>, Box<dyn std::error::Error>> {
     let transport = TokioChildProcess::new(create_test_command())
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+    // Track the PID so we can forcefully kill the process if cancel() hangs.
+    if let Some(pid) = transport.id() {
+        register_child_pid(pid);
+    }
     let client = timeout(OP_TIMEOUT, ().serve(transport))
         .await
         .map_err(|_| "Timeout: mcb server failed to start within 10s")?
@@ -103,14 +131,15 @@ pub async fn create_client() -> Result<RunningService<RoleClient, ()>, Box<dyn s
     Ok(client)
 }
 
-/// Gracefully shut down the MCP client with a timeout.
+/// Gracefully shut down the MCP client with a timeout, then kill any stray child.
 ///
-/// Wraps `client.cancel()` in a timeout so that if the child process doesn't
-/// exit cleanly, the `Drop` impl on `ChildWithCleanup` will kill it.
+/// `cancel()` awaits the service `JoinHandle` which may block if the child process
+/// doesn't exit on its own. After the 3-second timeout we forcefully kill any
+/// registered child PIDs so the next serial test can start a fresh process.
 pub async fn shutdown_client(client: RunningService<RoleClient, ()>) {
-    // If cancel() hangs (child process stuck), the timeout fires and drops
-    // the client, which triggers ChildWithCleanup::drop() → kill().
     let _ = timeout(Duration::from_secs(3), client.cancel()).await;
+    // Forcefully kill any remaining child processes.
+    kill_registered_children();
     cleanup_temp_dbs();
 }
 

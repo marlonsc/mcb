@@ -9,6 +9,48 @@ use loco_rs::environment::Environment;
 use mcb_providers::migration::Migrator;
 use std::path::{Path, PathBuf};
 
+/// Extract the filesystem path from a `SQLite` URI, returning `None` for
+/// in-memory or non-SQLite databases.
+fn extract_sqlite_path(uri: &str) -> Option<PathBuf> {
+    let path_str = uri.strip_prefix("sqlite://")?.split('?').next()?;
+    if path_str.is_empty() || path_str == ":memory:" {
+        return None;
+    }
+    Some(PathBuf::from(path_str))
+}
+
+/// `SQLite` file magic bytes: `"SQLite format 3\0"` (first 16 bytes).
+const SQLITE_MAGIC: &[u8; 16] = b"SQLite format 3\x00";
+
+/// Returns `true` if the file at `path` begins with the `SQLite` magic bytes.
+fn is_valid_sqlite(path: &std::path::Path) -> bool {
+    use std::io::Read;
+    let Ok(mut f) = std::fs::File::open(path) else {
+        return false;
+    };
+    let mut buf = [0u8; 16];
+    matches!(f.read_exact(&mut buf), Ok(())) && &buf == SQLITE_MAGIC
+}
+
+/// Back up a corrupt `SQLite` file before Loco tries to open it.
+/// Logs `"backing up and recreating"` so startup smoke tests can detect recovery.
+// Permitted: pre-boot stderr output before the Loco/tracing logger initializes.
+#[allow(clippy::print_stderr)]
+fn recover_sqlite_before_boot(path: &std::path::Path) {
+    use std::time::SystemTime;
+    let ts = SystemTime::now()
+        .duration_since(SystemTime::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_secs();
+    let backup = format!("{}.bak.{ts}", path.display());
+    if std::fs::copy(path, &backup).is_ok() {
+        eprintln!(
+            "[mcb:db_recovery] backing up and recreating: backed up corrupt file to {backup}"
+        );
+        let _ = std::fs::remove_file(path);
+    }
+}
+
 /// MCB Loco application type implementing [`Hooks`].
 #[derive(Debug)]
 pub struct McbApp;
@@ -25,6 +67,14 @@ impl Hooks for McbApp {
         environment: &Environment,
         config: LocoConfig,
     ) -> Result<BootResult> {
+        // Pre-flight: recover corrupt SQLite before Loco tries to connect.
+        // Loco's create_app will fail hard on a corrupt file; we intercept first.
+        if let Some(ref p) = extract_sqlite_path(&config.database.uri)
+            && p.exists()
+            && !is_valid_sqlite(p)
+        {
+            recover_sqlite_before_boot(p);
+        }
         create_app::<Self, Migrator>(mode, environment, config).await
     }
     async fn load_config(env: &Environment) -> loco_rs::Result<LocoConfig> {

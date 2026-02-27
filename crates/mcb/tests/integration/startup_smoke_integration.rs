@@ -54,9 +54,12 @@ fn unique_temp_path(name: &str) -> PathBuf {
 ///
 /// Panics if the process cannot be spawned.
 fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
+    // Set CWD to workspace root so Loco can find config/test.yaml.
+    let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     Command::new(get_mcb_path())
         .arg("serve")
         .arg("--server")
+        .current_dir(&workspace_root)
         // Use Loco test environment (config/test.yaml with Tera template for DATABASE_URL)
         .env("LOCO_ENV", "test")
         .env(
