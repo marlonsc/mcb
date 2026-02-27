@@ -89,6 +89,21 @@ impl SeaOrmObservationRepository {
         Ok(())
     }
 
+    /// Returns the SQL expression for checking tag containment, appropriate for the
+    /// current database backend.
+    fn tag_contains_sql(&self) -> &'static str {
+        use sea_orm::DatabaseBackend;
+        match self.db.get_database_backend() {
+            DatabaseBackend::MySql => "JSON_SEARCH(tags, 'one', ?) IS NOT NULL",
+            DatabaseBackend::Postgres => {
+                "EXISTS (SELECT 1 FROM jsonb_array_elements_text(tags::jsonb) AS elem WHERE elem = ?)"
+            }
+            DatabaseBackend::Sqlite | _ => {
+                "(tags IS NOT NULL AND tags != '' AND EXISTS (SELECT 1 FROM json_each(tags) WHERE json_each.value = ?))"
+            }
+        }
+    }
+
     fn build_list_sql(&self, filter: Option<&MemoryFilter>, limit: usize) -> Statement {
         let mut query = Query::select();
         query
@@ -154,9 +169,10 @@ impl SeaOrmObservationRepository {
                 ));
             }
             if let Some(tags) = &f.tags {
+                let tag_filter_sql = self.tag_contains_sql();
                 for tag in tags {
                     query.and_where(Expr::cust_with_values(
-                        "EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)",
+                        tag_filter_sql,
                         vec![Value::from(tag.as_str())],
                     ));
                 }

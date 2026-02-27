@@ -37,7 +37,9 @@ impl VcsHandler {
         Parameters(args): Parameters<VcsArgs>,
     ) -> Result<CallToolResult, McpError> {
         args.validate()
-            .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
+            .map_err(|e| McpError::invalid_params(format!("invalid vcs arguments: {e}"), None))?;
+
+        Self::validate_action_params(&args)?;
 
         match args.action {
             VcsAction::ListRepositories => {
@@ -56,5 +58,40 @@ impl VcsHandler {
                 analyze_impact::analyze_impact(&self.vcs_provider, &args).await
             }
         }
+    }
+
+    /// Validates that required parameters are present for the requested action.
+    fn validate_action_params(args: &VcsArgs) -> Result<(), McpError> {
+        let has_repo_path = args
+            .repo_path
+            .as_ref()
+            .is_some_and(|p| !p.trim().is_empty());
+
+        match args.action {
+            VcsAction::IndexRepository | VcsAction::CompareBranches | VcsAction::AnalyzeImpact => {
+                if !has_repo_path {
+                    return Err(McpError::invalid_params(
+                        format!("repo_path is required for {:?}", args.action),
+                        None,
+                    ));
+                }
+            }
+            VcsAction::SearchBranch => {
+                if !has_repo_path {
+                    return Err(McpError::invalid_params(
+                        "repo_path is required for search_branch",
+                        None,
+                    ));
+                }
+                if args.query.as_ref().is_none_or(|q| q.trim().is_empty()) {
+                    return Err(McpError::invalid_params(
+                        "query is required for search_branch",
+                        None,
+                    ));
+                }
+            }
+            VcsAction::ListRepositories => {}
+        }
+        Ok(())
     }
 }

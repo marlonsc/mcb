@@ -21,6 +21,9 @@ use crate::database::seaorm::entities::{
     agent_session, checkpoint, delegation, organization, project, tool_call,
 };
 
+/// Default limit for agent session queries to prevent unbounded result sets.
+const DEFAULT_SESSION_LIMIT: u64 = 100;
+
 pub struct SeaOrmAgentRepository {
     db: Arc<DatabaseConnection>,
 }
@@ -180,9 +183,8 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
 
         q = q.order_by_desc(agent_session::Column::StartedAt);
 
-        if let Some(limit) = query.limit {
-            q = q.limit(limit as u64);
-        }
+        let limit = query.limit.map_or(DEFAULT_SESSION_LIMIT, |l| l as u64);
+        q = q.limit(limit);
 
         let sessions = q
             .all(self.db.as_ref())
@@ -196,6 +198,7 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
         let sessions = agent_session::Entity::find()
             .filter(agent_session::Column::ProjectId.eq(project_id.to_owned()))
             .order_by_desc(agent_session::Column::StartedAt)
+            .limit(DEFAULT_SESSION_LIMIT)
             .all(self.db.as_ref())
             .await
             .map_err(db_error("list project sessions"))?;
@@ -207,6 +210,7 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
         let sessions = agent_session::Entity::find()
             .filter(agent_session::Column::WorktreeId.eq(worktree_id.to_owned()))
             .order_by_desc(agent_session::Column::StartedAt)
+            .limit(DEFAULT_SESSION_LIMIT)
             .all(self.db.as_ref())
             .await
             .map_err(db_error("list worktree sessions"))?;
