@@ -102,7 +102,51 @@ impl Initializer for McpServerInitializer {
             },
         );
 
-        let router = router.layer(Extension(mcb_state));
+        // Web UI routes (served at root, not under /api)
+        let ui_routes = axum::Router::new()
+            .route(
+                "/",
+                axum::routing::get(|| async { axum::response::Redirect::temporary("/ui/") }),
+            )
+            .route(
+                "/ui",
+                axum::routing::get(mcb_server::controllers::web::dashboard),
+            )
+            .route(
+                "/ui/",
+                axum::routing::get(mcb_server::controllers::web::dashboard),
+            )
+            .route(
+                "/ui/config",
+                axum::routing::get(mcb_server::controllers::web::config_page),
+            )
+            .route(
+                "/ui/health",
+                axum::routing::get(mcb_server::controllers::web::health_page),
+            )
+            .route(
+                "/ui/jobs",
+                axum::routing::get(mcb_server::controllers::web::jobs_page),
+            )
+            .route(
+                "/ui/browse",
+                axum::routing::get(mcb_server::controllers::web::browse_page),
+            )
+            .route(
+                "/health",
+                axum::routing::get(mcb_server::controllers::health_api::health),
+            )
+            .route(
+                "/jobs",
+                axum::routing::get(mcb_server::controllers::jobs_api::jobs),
+            )
+            .route(
+                "/collections",
+                axum::routing::get(mcb_server::controllers::collections_api::collections),
+            );
+
+        // Merge UI routes first, then apply Extension layer so all routes get McbState
+        let router = router.merge(ui_routes).layer(Extension(mcb_state));
         let mcp_routes = axum::Router::new().nest_service("/mcp", mcp_service);
 
         Ok(router.merge(mcp_routes))
