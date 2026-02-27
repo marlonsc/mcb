@@ -15,15 +15,14 @@
 //! # Example
 //!
 //! ```rust
-//! use mcb_providers::database::seaorm::constraints::{ConstraintBuilder, SearchConstraint};
-//! use sea_orm::QuerySelect;
+//! use mcb_providers::database::seaorm::constraints::{ConstraintBuilder, EntityType};
+//! use sea_query::Query;
 //!
 //! let mut query = Query::select();
-//! query.from(observation::Entity);
 //!
 //! ConstraintBuilder::new()
 //!     .with_project_id("proj-123")
-//!     .with_entity_type("memory")
+//!     .with_entity_type(EntityType::Memory)
 //!     .with_tags(&["important", "review"])
 //!     .apply_to(&mut query);
 //! ```
@@ -119,6 +118,8 @@ pub enum SearchConstraint {
 /// # Example
 ///
 /// ```rust
+/// use mcb_providers::database::seaorm::constraints::ConstraintBuilder;
+///
 /// let builder = ConstraintBuilder::new()
 ///     .with_project_id("my-project")
 ///     .with_file_extensions(&["rs", "toml"]);
