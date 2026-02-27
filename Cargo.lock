@@ -4203,6 +4203,7 @@ dependencies = [
  "mcb-server",
  "mcb-validate",
  "mockall",
+ "rmcp",
  "rstest",
  "serde_json",
  "serial_test",
