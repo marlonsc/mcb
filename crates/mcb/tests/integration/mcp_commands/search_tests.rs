@@ -1,0 +1,70 @@
+//! Tests for the `search` MCP tool.
+//!
+//! Resources: code, memory, context
+
+use super::common::{
+    TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
+};
+use serial_test::serial;
+
+#[serial]
+#[tokio::test]
+async fn test_search_memory() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool(
+        &client,
+        "search",
+        serde_json::json!({"query": "test", "resource": "memory", "limit": 5}),
+    )
+    .await?;
+    assert!(
+        !extract_text(&result).is_empty(),
+        "memory search should return a response"
+    );
+    let _ = client.cancel().await;
+    cleanup_temp_dbs();
+    Ok(())
+}
+
+#[serial]
+#[tokio::test]
+async fn test_search_code_missing_collection() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool(
+        &client,
+        "search",
+        serde_json::json!({"query": "test", "resource": "code", "limit": 5}),
+    )
+    .await;
+    assert_tool_error(result, &["collection", "required"]);
+    let _ = client.cancel().await;
+    cleanup_temp_dbs();
+    Ok(())
+}
+
+#[serial]
+#[tokio::test]
+async fn test_search_missing_query() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool(&client, "search", serde_json::json!({"resource": "code"})).await;
+    assert_tool_error(result, &["query", "missing field"]);
+    let _ = client.cancel().await;
+    cleanup_temp_dbs();
+    Ok(())
+}
+
+#[serial]
+#[tokio::test]
+async fn test_search_invalid_resource() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool(
+        &client,
+        "search",
+        serde_json::json!({"query": "test", "resource": "nonexistent"}),
+    )
+    .await;
+    assert_tool_error(result, &["unknown variant", "expected one of"]);
+    let _ = client.cancel().await;
+    cleanup_temp_dbs();
+    Ok(())
+}
