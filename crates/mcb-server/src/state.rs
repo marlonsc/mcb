@@ -7,7 +7,10 @@
 
 use std::sync::Arc;
 
-use mcb_domain::ports::{AuthRepositoryPort, DashboardQueryPort};
+use mcb_domain::ports::{
+    AuthRepositoryPort, DashboardQueryPort, EmbeddingProvider, IndexingOperationsInterface,
+    ValidationOperationsInterface, VectorStoreProvider,
+};
 
 use crate::mcp_server::McpServer;
 
@@ -22,13 +25,29 @@ pub struct McpServerBootstrap {
     pub dashboard: Arc<dyn DashboardQueryPort>,
     /// Auth repository port (built via bridge from Loco DB)
     pub auth_repo: Arc<dyn AuthRepositoryPort>,
+    /// Shared embedding provider for health checks and metadata (single-resolution DI)
+    pub embedding_provider: Arc<dyn EmbeddingProvider>,
+    /// Shared vector store provider for collections and health (single-resolution DI)
+    pub vector_store: Arc<dyn VectorStoreProvider>,
+    /// Shared indexing operations tracker for jobs admin (single-resolution DI)
+    pub indexing_ops: Arc<dyn IndexingOperationsInterface>,
+    /// Shared validation operations tracker for jobs admin (single-resolution DI)
+    pub validation_ops: Arc<dyn ValidationOperationsInterface>,
 }
 
 impl McpServerBootstrap {
     /// Build [`McbState`] from this bootstrap (for use in route layers).
     #[must_use]
     pub fn into_mcb_state(self) -> McbState {
-        McbState::new(self.dashboard, self.auth_repo, self.mcp_server)
+        McbState::new(
+            self.dashboard,
+            self.auth_repo,
+            self.mcp_server,
+            self.embedding_provider,
+            self.vector_store,
+            self.indexing_ops,
+            self.validation_ops,
+        )
     }
 }
 
@@ -49,6 +68,14 @@ pub struct McbState {
     pub auth_repo: Arc<dyn AuthRepositoryPort>,
     /// MCP server instance for tool execution
     pub mcp_server: Arc<McpServer>,
+    /// Shared embedding provider for health checks and metadata
+    pub embedding_provider: Arc<dyn EmbeddingProvider>,
+    /// Shared vector store provider for collections and health
+    pub vector_store: Arc<dyn VectorStoreProvider>,
+    /// Shared indexing operations tracker for jobs admin
+    pub indexing_ops: Arc<dyn IndexingOperationsInterface>,
+    /// Shared validation operations tracker for jobs admin
+    pub validation_ops: Arc<dyn ValidationOperationsInterface>,
 }
 
 impl McbState {
@@ -58,6 +85,10 @@ impl McbState {
     /// * `dashboard` - Dashboard query port for admin operations
     /// * `auth_repo` - Auth repository port for API key verification
     /// * `mcp_server` - MCP server instance
+    /// * `embedding_provider` - Shared embedding provider for health/metadata
+    /// * `vector_store` - Shared vector store provider for collections/health
+    /// * `indexing_ops` - Shared indexing operations tracker
+    /// * `validation_ops` - Shared validation operations tracker
     ///
     /// # Returns
     /// A new `McbState` instance ready for injection into handlers
@@ -66,11 +97,19 @@ impl McbState {
         dashboard: Arc<dyn DashboardQueryPort>,
         auth_repo: Arc<dyn AuthRepositoryPort>,
         mcp_server: Arc<McpServer>,
+        embedding_provider: Arc<dyn EmbeddingProvider>,
+        vector_store: Arc<dyn VectorStoreProvider>,
+        indexing_ops: Arc<dyn IndexingOperationsInterface>,
+        validation_ops: Arc<dyn ValidationOperationsInterface>,
     ) -> Self {
         Self {
             dashboard,
             auth_repo,
             mcp_server,
+            embedding_provider,
+            vector_store,
+            indexing_ops,
+            validation_ops,
         }
     }
 }

@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <style>
+      @media (prefers-color-scheme: dark) {
+        .icon-bg { fill: #1a1a1a; }
+        .icon-fg { fill: #ffffff; }
+      }
+      @media (prefers-color-scheme: light) {
+        .icon-bg { fill: #ffffff; }
+        .icon-fg { fill: #000000; }
+      }
+    </style>
+  </defs>
+  <!-- Background -->
+  <rect width="64" height="64" class="icon-bg"/>
+  <!-- Admin gear icon -->
+  <g class="icon-fg">
+    <!-- Gear circle -->
+    <circle cx="32" cy="32" r="20" fill="none" stroke="currentColor" stroke-width="2"/>
+    <!-- Gear teeth -->
+    <rect x="30" y="8" width="4" height="6" class="icon-fg"/>
+    <rect x="30" y="50" width="4" height="6" class="icon-fg"/>
+    <rect x="8" y="30" width="6" height="4" class="icon-fg"/>
+    <rect x="50" y="30" width="6" height="4" class="icon-fg"/>
+    <!-- Center dot -->
+    <circle cx="32" cy="32" r="4" class="icon-fg"/>
+  </g>
+</svg>

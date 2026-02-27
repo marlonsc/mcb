@@ -1,5 +1,6 @@
 ---
 source: crates/mcb-server/tests/contract/search_contract_tests.rs
+assertion_line: 18
 expression: "snapshot_payload(&request, status, &response)"
 ---
 {
@@ -17,17 +18,12 @@ expression: "snapshot_payload(&request, status, &response)"
     }
   },
   "response": {
+    "error": {
+      "code": -32602,
+      "message": "Missing execution provenance for 'search': session_id, repo_id, repo_path, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
+    },
     "id": 1,
-    "jsonrpc": "2.0",
-    "result": {
-      "content": [
-        {
-          "text": "[search-text]",
-          "type": "text"
-        }
-      ],
-      "isError": false
-    }
+    "jsonrpc": "2.0"
   },
   "status": 200
 }

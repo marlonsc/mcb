@@ -4189,7 +4189,7 @@ dependencies = [
 
 [[package]]
 name = "mcb"
-version = "0.3.0-dev"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -4214,7 +4214,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-domain"
-version = "0.3.0-dev"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -4246,7 +4246,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-infrastructure"
-version = "0.3.0-dev"
+version = "0.3.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -4322,7 +4322,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-providers"
-version = "0.3.0-dev"
+version = "0.3.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -4382,7 +4382,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-server"
-version = "0.3.0-dev"
+version = "0.3.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -4440,7 +4440,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-validate"
-version = "0.3.0-dev"
+version = "0.3.0"
 dependencies = [
  "async-trait",
  "cargo_metadata",
