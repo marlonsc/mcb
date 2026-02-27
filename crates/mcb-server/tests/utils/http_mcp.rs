@@ -2,8 +2,9 @@ use std::sync::Arc;
 
 use axum::http::StatusCode;
 use mcb_server::McpServer;
-use mcb_server::transport::types::{McpRequest, McpResponse};
-use rmcp::ServerHandler;
+use mcb_server::tools::router::{ToolExecutionContext, route_tool_call};
+use mcb_server::transport::types::{McpError, McpRequest, McpResponse};
+use rmcp::model::CallToolRequestParams;
 use tempfile::TempDir;
 
 use crate::utils::test_fixtures::create_test_mcp_server;
@@ -32,21 +33,70 @@ pub async fn post_mcp(
     request: &McpRequest,
     _headers: &[(String, String)],
 ) -> TestResult<(StatusCode, McpResponse)> {
-    // Call the server directly using ServerHandler trait
-    let response = ctx.server.handle_call(request.clone()).await;
+    // Handle tools/call method
+    if request.method != "tools/call" {
+        let mcp_response = McpResponse {
+            jsonrpc: "2.0".to_owned(),
+            result: None,
+            error: Some(McpError {
+                code: -32601,
+                message: format!("Unknown tool: {}", request.method),
+            }),
+            id: request.id.clone(),
+        };
+        return Ok((StatusCode::OK, mcp_response));
+    }
+
+    // Extract tool name and arguments from params
+    let params = request
+        .params
+        .as_ref()
+        .ok_or("Missing params for tools/call")?;
+    let tool_name = params
+        .get("name")
+        .and_then(|v| v.as_str())
+        .ok_or("Missing tool name in params")?;
+    let arguments = params
+        .get("arguments")
+        .cloned()
+        .unwrap_or(serde_json::json!({}));
+
+    // Convert to CallToolRequestParams
+    let call_request = CallToolRequestParams {
+        name: tool_name.to_owned().into(),
+        arguments: if let serde_json::Value::Object(map) = arguments {
+            Some(map)
+        } else {
+            Some(serde_json::Map::new())
+        },
+        task: None,
+        meta: None,
+    };
+
+    // Call the server using route_tool_call
+    let response = route_tool_call(
+        call_request,
+        &ctx.server.tool_handlers(),
+        ToolExecutionContext::default(),
+    )
+    .await;
 
     // Convert rmcp response to McpResponse
     let mcp_response = match response {
         Ok(result) => McpResponse {
-            result: Some(result),
+            jsonrpc: "2.0".to_owned(),
+            result: Some(serde_json::to_value(&result)?),
             error: None,
+            id: request.id.clone(),
         },
         Err(err) => McpResponse {
+            jsonrpc: "2.0".to_owned(),
             result: None,
-            error: Some(serde_json::json!({
-                "code": err.code,
-                "message": err.message,
-            })),
+            error: Some(McpError {
+                code: err.code.0,
+                message: err.message.to_string(),
+            }),
+            id: request.id.clone(),
         },
     };
 
