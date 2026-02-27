@@ -11,10 +11,10 @@ Development roadmap for**Memory Context Browser (MCB)** — a high-performance M
 
 | Field | Value |
 | ------- | ------- |
-| **Version** | v0.3.0-dev |
-| **Branch** | `release/v0.3.0` (SeaQL + Loco.rs rebuild) |
+| **Version** | v0.3.0 |
+| **Branch** | `main` (SeaQL + Loco.rs rebuild complete) |
 | **Build** | ✅ `cargo check --workspace` passes |
-| **Tests** | 1,705 passing (`cargo test --workspace`) |
+| **Tests** | 128/140 passing (91%, 12 snapshot mismatches, 38 deferred) |
 | **Crates** | 6 (Clean Architecture workspace) |
 | **ADRs** | 52 (including Phase 8-9 and v0.3.0 rebuild) |
 
@@ -55,10 +55,10 @@ Consolidates all pre-v0.3.0 work: admin UI, data model hardening, modernization 
 
 ---
 
-### v0.3.0 — SeaQL + Loco.rs Platform Rebuild (CURRENT)
+### v0.3.0 — SeaQL + Loco.rs Platform Rebuild
 
-**Status:** In progress
-**Target:** Q1 2026
+**Status:** Released
+**Released:** 2026-02-27
 **Key ADRs:** 049 (Axum), 050 (Composition Root), 051 (SeaQL+Loco master plan), 052 (Schema Resolution)
 
 Full platform rebuild on SeaQL (SeaORM, SeaQuery, SeaSchema, SeaStreamer) and Loco.rs. Replaces Figment/TOML config, dill DI, and adds native Axum + rmcp Tower support.
