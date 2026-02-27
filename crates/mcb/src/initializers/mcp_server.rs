@@ -14,8 +14,11 @@ use mcb_infrastructure::config::{AppConfig, validate_app_config};
 use mcb_infrastructure::resolution_context::ServiceResolutionContext;
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::tools::ExecutionFlow;
-use mcb_server::transport::http::HttpTransportState;
 use mcb_server::transport::stdio::StdioServerExt;
+use rmcp::transport::streamable_http_server::{
+    StreamableHttpServerConfig, StreamableHttpService, session::local::LocalSessionManager,
+};
+use tokio_util::sync::CancellationToken;
 
 /// Loco initializer that builds the MCP server and injects `McbState` into the router.
 pub struct McpServerInitializer;
@@ -83,17 +86,24 @@ impl Initializer for McpServerInitializer {
         let mcb_state = bootstrap.into_mcb_state();
         ctx.shared_store.insert(mcb_state.clone());
 
-        let mcp_state = Arc::new(HttpTransportState {
-            server: Arc::clone(&mcb_state.mcp_server),
-        });
+        let ct = CancellationToken::new();
+        let mcp_server_for_http = Arc::clone(&mcb_state.mcp_server);
+
+        let mcp_service = StreamableHttpService::new(
+            move || {
+                let server = (*mcp_server_for_http).clone();
+                Ok(server)
+            },
+            LocalSessionManager::default().into(),
+            StreamableHttpServerConfig {
+                stateful_mode: false,
+                cancellation_token: ct.child_token(),
+                ..Default::default()
+            },
+        );
 
         let router = router.layer(Extension(mcb_state));
-        let mcp_routes = axum::Router::new()
-            .route(
-                "/mcp",
-                axum::routing::post(mcb_server::transport::http::handle_mcp_request),
-            )
-            .with_state(mcp_state);
+        let mcp_routes = axum::Router::new().nest_service("/mcp", mcp_service);
 
         Ok(router.merge(mcp_routes))
     }

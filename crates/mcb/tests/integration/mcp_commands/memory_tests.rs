@@ -36,8 +36,8 @@ async fn test_memory_store_and_list() -> TestResult {
         &client,
         "memory",
         serde_json::json!({
-            "action": "store", "resource": "observation",
-            "data": {"content": "Test observation from TDD", "type": "context", "tags": ["test"]}
+            "action": "store", "resource": "observation", "project_id": "test-proj",
+            "data": {"content": "Test observation from TDD", "observation_type": "context", "tags": ["test"]}
         }),
     )
     .await?;
@@ -55,7 +55,7 @@ async fn test_memory_store_and_list() -> TestResult {
     .await?;
     assert!(
         !extract_text(&list_result).is_empty(),
-        "list after store should have data"
+        "list should return a response"
     );
     let _ = client.cancel().await;
     cleanup_temp_dbs();

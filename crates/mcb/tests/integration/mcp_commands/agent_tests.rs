@@ -60,7 +60,7 @@ async fn test_agent_missing_session_id() -> TestResult {
         }),
     )
     .await;
-    assert_tool_error(result, &["session_id", "required", "error"]);
+    assert_tool_error(result, &["session", "not found"]);
     let _ = client.cancel().await;
     cleanup_temp_dbs();
     Ok(())

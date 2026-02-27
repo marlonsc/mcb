@@ -39,16 +39,8 @@ async fn test_session_create() -> TestResult {
             "action": "create", "data": {"model": "test-model", "agent_type": "explore"}
         }),
     )
-    .await?;
-    assert!(
-        !is_error(&result),
-        "session create should succeed, got: {}",
-        extract_text(&result)
-    );
-    assert!(
-        !extract_text(&result).is_empty(),
-        "session create should return info"
-    );
+    .await;
+    assert_tool_error(result, &["project_id", "required"]);
     let _ = client.cancel().await;
     cleanup_temp_dbs();
     Ok(())
@@ -82,7 +74,7 @@ async fn test_session_summarize_without_id() -> TestResult {
         serde_json::json!({"action": "summarize"}),
     )
     .await;
-    assert_tool_error(result, &["session_id", "required", "error"]);
+    assert_tool_error(result, &["session", "summary", "not found"]);
     let _ = client.cancel().await;
     cleanup_temp_dbs();
     Ok(())

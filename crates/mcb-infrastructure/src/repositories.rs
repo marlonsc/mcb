@@ -103,7 +103,7 @@ async fn recover_database(path: &std::path::Path) -> Result<DatabaseConnection> 
     mcb_domain::info!(
         "db_recovery",
         "Memory database recreated",
-        "fresh database created"
+        &"fresh database created"
     );
 
     // Run migrations on the fresh database

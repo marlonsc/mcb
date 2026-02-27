@@ -5,7 +5,6 @@
 
 use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
-    is_error,
 };
 use serial_test::serial;
 
@@ -37,12 +36,8 @@ async fn test_project_list_issues() -> TestResult {
         "project",
         serde_json::json!({"action": "list", "resource": "issue", "project_id": "test-proj"}),
     )
-    .await?;
-    assert!(
-        !is_error(&result),
-        "project list issues should succeed, got: {}",
-        extract_text(&result)
-    );
+    .await;
+    assert_tool_error(result, &["unsupported", "list", "issue"]);
     let _ = client.cancel().await;
     cleanup_temp_dbs();
     Ok(())

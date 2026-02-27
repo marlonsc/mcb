@@ -45,6 +45,7 @@ mcb-validate = { path = "../mcb-validate" }
 
 # Core async runtime
 tokio = { workspace = true }
+tokio-util = { workspace = true }
 
 # CLI
 clap = { workspace = true }
@@ -64,6 +65,9 @@ dirs = { workspace = true }
 # Re-export for doc examples
 serde_json = { workspace = true }
 
+# MCP protocol - rmcp transport for StreamableHttpService
+rmcp = { workspace = true }
+
 # Re-export key domain types for convenience
 [package.metadata.docs.rs]
 all-features = true
@@ -79,7 +83,6 @@ uuid = { workspace = true, features = ["v4"] }
 
 serial_test = { workspace = true }
 serde_json = { workspace = true }
-rmcp = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 [[test]]
 name = "unit"

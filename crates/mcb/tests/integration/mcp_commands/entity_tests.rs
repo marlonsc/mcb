@@ -38,10 +38,14 @@ async fn test_entity_list_repositories() -> TestResult {
     let result = call_tool(
         &client,
         "entity",
-        serde_json::json!({"action": "list", "resource": "repository"}),
+        serde_json::json!({"action": "list", "resource": "repository", "project_id": "test-project"}),
     )
     .await?;
-    assert!(!is_error(&result), "list repositories should not error");
+    assert!(
+        !is_error(&result),
+        "list repositories should not error, got: {}",
+        extract_text(&result)
+    );
     let _ = client.cancel().await;
     cleanup_temp_dbs();
     Ok(())
