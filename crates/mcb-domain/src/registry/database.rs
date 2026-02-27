@@ -47,7 +47,7 @@ pub struct DatabaseRepositoryEntry {
     /// Human-readable provider description.
     pub description: &'static str,
     /// Factory that builds a full repository bundle.
-    pub build: fn(Box<dyn Any + Send + Sync>, String) -> Result<DatabaseRepositories, String>,
+    pub build: fn(Box<dyn Any + Send + Sync>, String) -> crate::error::Result<DatabaseRepositories>,
 }
 
 #[linkme::distributed_slice]
@@ -64,10 +64,15 @@ pub fn resolve_database_repositories(
     provider_name: &str,
     connection: Box<dyn Any + Send + Sync>,
     namespace: String,
-) -> Result<DatabaseRepositories, String> {
+) -> crate::error::Result<DatabaseRepositories> {
     for entry in DATABASE_REPOSITORY_PROVIDERS {
         if entry.name == provider_name {
-            return (entry.build)(connection, namespace);
+            return (entry.build)(connection, namespace).map_err(|e| {
+                crate::error::Error::Configuration {
+                    message: e.to_string(),
+                    source: None,
+                }
+            });
         }
     }
 
@@ -76,9 +81,12 @@ pub fn resolve_database_repositories(
         .map(|entry| entry.name)
         .collect();
 
-    Err(format!(
-        "Unknown database repository provider '{provider_name}'. Available providers: {available:?}"
-    ))
+    Err(crate::error::Error::Configuration {
+        message: format!(
+            "Unknown database repository provider '{provider_name}'. Available providers: {available:?}"
+        ),
+        source: None,
+    })
 }
 
 /// List all registered database repository providers.

@@ -38,8 +38,7 @@ pub fn build_mcp_server_bootstrap(
         "seaorm",
         Box::new(resolution_ctx.db.clone()),
         "default".to_owned(),
-    )
-    .map_err(mcb_domain::Error::internal)?;
+    )?;
 
     let mcp_services = McpServices {
         indexing: resolve_indexing_service(raw_ctx)?,

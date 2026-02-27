@@ -199,8 +199,7 @@ fn build_agent_session_service_from_registry(
         "seaorm",
         Box::new(ctx.db.clone()),
         "default".to_owned(),
-    )
-    .map_err(mcb_domain::error::Error::internal)?;
+    )?;
 
     Ok(Arc::new(AgentSessionServiceImpl::new(repos.agent)))
 }

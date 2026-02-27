@@ -581,8 +581,7 @@ fn build_memory_service_from_registry(
         "seaorm",
         Box::new(ctx.db.clone()),
         "default".to_owned(),
-    )
-    .map_err(mcb_domain::error::Error::internal)?;
+    )?;
 
     Ok(Arc::new(MemoryServiceImpl::new(
         "default".to_owned(),
