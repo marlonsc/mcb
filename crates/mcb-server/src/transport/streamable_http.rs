@@ -19,22 +19,23 @@ pub fn extract_override(headers: &HeaderMap, header_name: &str) -> Option<String
         .map(ToOwned::to_owned)
 }
 
-/// Build a HashMap of header overrides from HTTP headers.
+/// Build a `HashMap` of header overrides from HTTP headers.
 ///
 /// Maps custom headers to their corresponding context keys:
-/// - X-Workspace-Root → workspace_root
-/// - X-Repo-Path → repo_path
-/// - X-Repo-Id → repo_id
-/// - X-Session-Id → session_id
-/// - X-Parent-Session-Id → parent_session_id
-/// - X-Project-Id → project_id
-/// - X-Worktree-Id → worktree_id
-/// - X-Operator-Id → operator_id
-/// - X-Machine-Id → machine_id
-/// - X-Agent-Program → agent_program
-/// - X-Model-Id → model_id
+/// - X-Workspace-Root → `workspace_root`
+/// - X-Repo-Path → `repo_path`
+/// - X-Repo-Id → `repo_id`
+/// - X-Session-Id → `session_id`
+/// - X-Parent-Session-Id → `parent_session_id`
+/// - X-Project-Id → `project_id`
+/// - X-Worktree-Id → `worktree_id`
+/// - X-Operator-Id → `operator_id`
+/// - X-Machine-Id → `machine_id`
+/// - X-Agent-Program → `agent_program`
+/// - X-Model-Id → `model_id`
 /// - X-Delegated → delegated
-/// - X-Execution-Flow → execution_flow
+/// - X-Execution-Flow → `execution_flow`
+#[must_use]
 pub fn build_overrides(headers: &HeaderMap) -> HashMap<String, String> {
     let mut overrides = HashMap::new();
     let mappings = [
