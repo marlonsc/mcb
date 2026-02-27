@@ -170,6 +170,7 @@ pub fn is_error(result: &CallToolResult) -> bool {
 /// - `Ok(CallToolResult { is_error: true })` — application-level error
 ///
 /// If `expected_keywords` is non-empty, at least one keyword must appear in the error.
+#[allow(clippy::panic)]
 pub fn assert_tool_error(
     result: Result<CallToolResult, Box<dyn std::error::Error>>,
     expected_keywords: &[&str],
