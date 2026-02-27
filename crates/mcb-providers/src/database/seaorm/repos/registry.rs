@@ -23,9 +23,12 @@ use crate::database::seaorm::repos::{
 fn create_seaorm_repositories(
     connection: Box<dyn Any + Send + Sync>,
     project_id: String,
-) -> Result<DatabaseRepositories, String> {
+) -> mcb_domain::error::Result<DatabaseRepositories> {
     let db = connection.downcast::<DatabaseConnection>().map_err(|_| {
-        "Expected sea_orm::DatabaseConnection but received different type".to_owned()
+        mcb_domain::error::Error::Configuration {
+            message: "Expected sea_orm::DatabaseConnection but received different type".to_owned(),
+            source: None,
+        }
     })?;
     let db = Arc::new(*db);
 
@@ -54,5 +57,9 @@ fn create_seaorm_repositories(
 static SEAORM_REPOS: DatabaseRepositoryEntry = DatabaseRepositoryEntry {
     name: "seaorm",
     description: "SeaORM database repositories (SQLite, PostgreSQL, MySQL)",
-    build: create_seaorm_repositories,
+    build: create_seaorm_repositories
+        as fn(
+            Box<dyn Any + Send + Sync>,
+            String,
+        ) -> mcb_domain::error::Result<DatabaseRepositories>,
 };
