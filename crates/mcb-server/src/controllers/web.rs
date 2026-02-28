@@ -4,6 +4,7 @@ use crate::state::McbState;
 use axum::extract::Extension;
 use loco_rs::prelude::*;
 use mcb_domain::ports::{IndexingOperationStatus, ValidationStatus};
+use mcb_domain::value_objects::CollectionId;
 
 /// Common HTML page layout wrapper.
 fn page_layout(title: &str, body: &str) -> String {
@@ -189,6 +190,14 @@ pub async fn jobs_page(Extension(state): Extension<McbState>) -> Result<Response
     format::html(&page_layout("Jobs", &body))
 }
 
+/// Escapes HTML special characters in a string.
+fn html_escape(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+}
+
 /// Browse page — shows vector store collections.
 ///
 /// # Errors
@@ -201,12 +210,39 @@ pub async fn browse_page(Extension(state): Extension<McbState>) -> Result<Respon
         .await
         .unwrap_or_default();
 
-    let items_html: String = if collections.is_empty() {
-        "<p>No collections found.</p>".to_owned()
+    let mut all_chunks: Vec<mcb_domain::value_objects::SearchResult> = Vec::new();
+    for collection in &collections {
+        let id = CollectionId::from_string(&collection.name);
+        let vecs = state
+            .vector_store
+            .list_vectors(&id, 50)
+            .await
+            .unwrap_or_default();
+        all_chunks.extend(vecs);
+    }
+
+    let chunks_html: String = if all_chunks.is_empty() {
+        r#"<p class="no-chunks">No collections indexed yet. Use the MCP <code>index</code> tool to index a codebase.</p>"#.to_owned()
     } else {
-        collections
+        all_chunks
             .iter()
-            .map(|c| format!(r#"<div class="card"><h3>{}</h3></div>"#, c.name))
+            .enumerate()
+            .map(|(i, chunk)| {
+                let lang = chunk.language.to_lowercase();
+                let content = html_escape(&chunk.content);
+                let file = html_escape(&chunk.file_path);
+                format!(
+                    r#"<div class="code-chunk" data-chunk-id="{}" data-index="{}" data-language="{}" tabindex="0">
+  <div class="chunk-header">
+    <span class="chunk-file">{}</span>
+    <span class="chunk-lang">{}</span>
+    <span class="chunk-lines">:{}</span>
+  </div>
+  <pre class="chunk-content"><code>{}</code></pre>
+</div>"#,
+                    chunk.id, i, lang, file, lang, chunk.start_line, content
+                )
+            })
             .collect::<Vec<_>>()
             .join("\n")
     };
@@ -215,8 +251,69 @@ pub async fn browse_page(Extension(state): Extension<McbState>) -> Result<Respon
         r#"
         <h1>Browse</h1>
         <div id="collections-grid" class="collections-grid">
-            {items_html}
+            {chunks_html}
         </div>
+        <script>
+(function() {{
+  function getChunks() {{ return Array.from(document.querySelectorAll('[data-chunk-id]')); }}
+  function getActiveIndex(chunks) {{
+    var active = document.querySelector('[data-active="true"]');
+    if (active) return parseInt(active.dataset.index || '0', 10);
+    var focused = document.activeElement;
+    if (focused && focused.hasAttribute('data-chunk-id')) return parseInt(focused.dataset.index || '0', 10);
+    return -1;
+  }}
+  function setActive(chunks, idx) {{
+    chunks.forEach(function(c) {{ c.removeAttribute('data-active'); }});
+    var target = chunks[idx];
+    if (target) {{
+      target.setAttribute('data-active', 'true');
+      target.focus();
+      target.scrollIntoView({{ behavior: 'smooth', block: 'nearest' }});
+    }}
+  }}
+  var pendingG = false;
+  document.addEventListener('keydown', function(e) {{
+    var chunks = getChunks();
+    if (!chunks.length) return;
+    var current = getActiveIndex(chunks);
+    if (current < 0) current = 0;
+    if (e.key === 'j') {{
+      e.preventDefault();
+      setActive(chunks, Math.min(current + 1, chunks.length - 1));
+      pendingG = false;
+    }} else if (e.key === 'k') {{
+      e.preventDefault();
+      setActive(chunks, Math.max(current - 1, 0));
+      pendingG = false;
+    }} else if (e.key === 'g' && !e.shiftKey) {{
+      e.preventDefault();
+      if (pendingG) {{ setActive(chunks, 0); pendingG = false; }}
+      else {{ pendingG = true; setTimeout(function() {{ pendingG = false; }}, 500); }}
+    }} else if (e.key === 'G' || (e.shiftKey && (e.key === 'g' || e.key === 'G'))) {{
+      e.preventDefault();
+      setActive(chunks, chunks.length - 1);
+      pendingG = false;
+    }} else if (e.key === 'End') {{
+      e.preventDefault();
+      setActive(chunks, chunks.length - 1);
+      pendingG = false;
+    }} else if (e.key === 'c') {{
+      e.preventDefault();
+      var chunk = chunks[current >= 0 ? current : 0];
+      if (chunk) {{ navigator.clipboard.writeText((chunk.textContent || '').trim()).catch(function() {{}}); }}
+      pendingG = false;
+    }} else if (e.key === 'Escape') {{
+      e.preventDefault();
+      var a = document.querySelector('[data-active="true"]');
+      if (a) a.removeAttribute('data-active');
+      pendingG = false;
+    }} else {{
+      pendingG = false;
+    }}
+  }});
+}})()
+        </script>
     "#
     );
     format::html(&page_layout("Browse", &body))

@@ -145,6 +145,10 @@ impl Initializer for McpServerInitializer {
                 axum::routing::get(mcb_server::controllers::collections_api::collections),
             )
             .route(
+                "/chunks",
+                axum::routing::get(mcb_server::controllers::collections_api::chunks),
+            )
+            .route(
                 "/config",
                 axum::routing::get(mcb_server::controllers::admin::config),
             )

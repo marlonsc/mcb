@@ -328,9 +328,15 @@ impl IndexingServiceInterface for IndexingServiceImpl {
 
     /// # Errors
     ///
-    /// Returns an error if the context service fails to clear the collection.
+    /// Returns an error if the context service or hash repository fails to clear
+    /// the collection.
     async fn clear_collection(&self, collection: &CollectionId) -> Result<()> {
-        self.context_service.clear_collection(collection).await
+        self.context_service.clear_collection(collection).await?;
+        // Also clear stale hashes so next indexing re-processes all files
+        if let Some(repo) = &self.file_hash_repository {
+            repo.clear_collection(&collection.to_string()).await?;
+        }
+        Ok(())
     }
 }
 
