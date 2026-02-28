@@ -48,61 +48,12 @@ impl NamingValidator {
             return Ok(Vec::new());
         }
         let mut violations = Vec::new();
-
-        let t = std::time::Instant::now();
-        let v = self.run_type_name_check()?;
-        mcb_domain::debug!(
-            "naming",
-            "type_names done",
-            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-        );
-        violations.extend(v);
-
-        let t = std::time::Instant::now();
-        let v = self.run_function_name_check()?;
-        mcb_domain::debug!(
-            "naming",
-            "function_names done",
-            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-        );
-        violations.extend(v);
-
-        let t = std::time::Instant::now();
-        let v = self.run_constant_name_check()?;
-        mcb_domain::debug!(
-            "naming",
-            "constant_names done",
-            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-        );
-        violations.extend(v);
-
-        let t = std::time::Instant::now();
-        let v = self.run_module_name_check()?;
-        mcb_domain::debug!(
-            "naming",
-            "module_names done",
-            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-        );
-        violations.extend(v);
-
-        let t = std::time::Instant::now();
-        let v = self.run_file_suffix_check()?;
-        mcb_domain::debug!(
-            "naming",
-            "file_suffix done",
-            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-        );
-        violations.extend(v);
-
-        let t = std::time::Instant::now();
-        let v = self.run_ca_naming_check()?;
-        mcb_domain::debug!(
-            "naming",
-            "ca_naming done",
-            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-        );
-        violations.extend(v);
-
+        violations.extend(self.run_type_name_check()?);
+        violations.extend(self.run_function_name_check()?);
+        violations.extend(self.run_constant_name_check()?);
+        violations.extend(self.run_module_name_check()?);
+        violations.extend(self.run_file_suffix_check()?);
+        violations.extend(self.run_ca_naming_check()?);
         Ok(violations)
     }
 
@@ -252,8 +203,66 @@ impl NamingValidator {
     }
 }
 
-crate::impl_validator!(
-    NamingValidator,
-    "naming",
-    "Validates naming conventions (CamelCase, snake_case, SCREAMING_SNAKE_CASE)"
-);
+impl crate::traits::validator::Validator for NamingValidator {
+    fn name(&self) -> &'static str {
+        "naming"
+    }
+
+    fn description(&self) -> &'static str {
+        "Validates naming conventions (CamelCase, snake_case, SCREAMING_SNAKE_CASE)"
+    }
+
+    fn checks<'a>(
+        &'a self,
+        _config: &'a crate::ValidationConfig,
+    ) -> crate::Result<Vec<crate::traits::validator::NamedCheck<'a>>> {
+        if !self.rules.enabled {
+            mcb_domain::debug!("naming", "Naming validator disabled, skipping");
+            return Ok(Vec::new());
+        }
+        Ok(vec![
+            crate::traits::validator::NamedCheck::new("type_names", move || {
+                Ok(self
+                    .run_type_name_check()?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .collect())
+            }),
+            crate::traits::validator::NamedCheck::new("function_names", move || {
+                Ok(self
+                    .run_function_name_check()?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .collect())
+            }),
+            crate::traits::validator::NamedCheck::new("constant_names", move || {
+                Ok(self
+                    .run_constant_name_check()?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .collect())
+            }),
+            crate::traits::validator::NamedCheck::new("module_names", move || {
+                Ok(self
+                    .run_module_name_check()?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .collect())
+            }),
+            crate::traits::validator::NamedCheck::new("file_suffix", move || {
+                Ok(self
+                    .run_file_suffix_check()?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .collect())
+            }),
+            crate::traits::validator::NamedCheck::new("ca_naming", move || {
+                Ok(self
+                    .run_ca_naming_check()?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .collect())
+            }),
+        ])
+    }
+}

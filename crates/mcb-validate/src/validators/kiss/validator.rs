@@ -71,58 +71,68 @@ impl KissValidator {
             return Ok(Vec::new());
         }
         let mut violations = Vec::new();
-
-        let t = std::time::Instant::now();
-        let v = self.validate_struct_fields()?;
-        mcb_domain::debug!(
-            "kiss",
-            "struct_fields done",
-            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-        );
-        violations.extend(v);
-
-        let t = std::time::Instant::now();
-        let v = self.validate_function_params()?;
-        mcb_domain::debug!(
-            "kiss",
-            "function_params done",
-            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-        );
-        violations.extend(v);
-
-        let t = std::time::Instant::now();
-        let v = self.validate_builder_complexity()?;
-        mcb_domain::debug!(
-            "kiss",
-            "builder_complexity done",
-            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-        );
-        violations.extend(v);
-
-        let t = std::time::Instant::now();
-        let v = self.validate_nesting_depth()?;
-        mcb_domain::debug!(
-            "kiss",
-            "nesting_depth done",
-            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-        );
-        violations.extend(v);
-
-        let t = std::time::Instant::now();
-        let v = self.validate_function_length()?;
-        mcb_domain::debug!(
-            "kiss",
-            "function_length done",
-            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-        );
-        violations.extend(v);
-
+        violations.extend(self.validate_struct_fields()?);
+        violations.extend(self.validate_function_params()?);
+        violations.extend(self.validate_builder_complexity()?);
+        violations.extend(self.validate_nesting_depth()?);
+        violations.extend(self.validate_function_length()?);
         Ok(violations)
     }
 }
 
-crate::impl_validator!(
-    KissValidator,
-    "kiss",
-    "Validates KISS principle (Keep It Simple, Stupid)"
-);
+impl crate::traits::validator::Validator for KissValidator {
+    fn name(&self) -> &'static str {
+        "kiss"
+    }
+
+    fn description(&self) -> &'static str {
+        "Validates KISS principle (Keep It Simple, Stupid)"
+    }
+
+    fn checks<'a>(
+        &'a self,
+        _config: &'a crate::ValidationConfig,
+    ) -> crate::Result<Vec<crate::traits::validator::NamedCheck<'a>>> {
+        if !self.rules.enabled {
+            mcb_domain::debug!("kiss", "KISS validator disabled, skipping");
+            return Ok(Vec::new());
+        }
+        Ok(vec![
+            crate::traits::validator::NamedCheck::new("struct_fields", move || {
+                Ok(self
+                    .validate_struct_fields()?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .collect())
+            }),
+            crate::traits::validator::NamedCheck::new("function_params", move || {
+                Ok(self
+                    .validate_function_params()?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .collect())
+            }),
+            crate::traits::validator::NamedCheck::new("builder_complexity", move || {
+                Ok(self
+                    .validate_builder_complexity()?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .collect())
+            }),
+            crate::traits::validator::NamedCheck::new("nesting_depth", move || {
+                Ok(self
+                    .validate_nesting_depth()?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .collect())
+            }),
+            crate::traits::validator::NamedCheck::new("function_length", move || {
+                Ok(self
+                    .validate_function_length()?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .collect())
+            }),
+        ])
+    }
+}

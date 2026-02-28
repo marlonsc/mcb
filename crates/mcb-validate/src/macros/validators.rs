@@ -78,6 +78,9 @@ macro_rules! impl_config_only_validator_new {
 }
 
 /// Implements the `Validator` trait for validators exposing `validate_all()`.
+///
+/// Generates a `checks()` that wraps `validate_all()` as a single named check.
+/// The default `validate()` on the trait handles timing and logging.
 #[macro_export]
 macro_rules! impl_validator {
     ($validator_ty:ty, $name:literal, $desc:literal) => {
@@ -90,20 +93,29 @@ macro_rules! impl_validator {
                 $desc
             }
 
-            fn validate(
-                &self,
-                _config: &$crate::ValidationConfig,
-            ) -> $crate::Result<Vec<Box<dyn $crate::traits::violation::Violation>>> {
-                let violations = self.validate_all()?;
-                Ok(violations
-                    .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn $crate::traits::violation::Violation>)
-                    .collect())
+            fn checks<'a>(
+                &'a self,
+                _config: &'a $crate::ValidationConfig,
+            ) -> $crate::Result<Vec<$crate::traits::validator::NamedCheck<'a>>> {
+                Ok(vec![$crate::traits::validator::NamedCheck::new(
+                    "validate_all",
+                    move || {
+                        let violations = self.validate_all()?;
+                        Ok(violations
+                            .into_iter()
+                            .map(|v| Box::new(v) as Box<dyn $crate::traits::violation::Violation>)
+                            .collect())
+                    },
+                )])
             }
         }
     };
 }
 /// Defines a standard simple validator that executes a list of functions.
+///
+/// Generates `checks()` with one [`NamedCheck`] per function in the list.
+/// The default `validate()` on the trait runs them through `run_checks()`.
+/// Also generates a typed `validate_all()` convenience method for direct use.
 #[macro_export]
 macro_rules! create_validator {
     ($name:ident, $id:literal, $desc:literal, $violation_ty:ty, [ $($func:path),* $(,)? ]) => {
@@ -115,12 +127,13 @@ macro_rules! create_validator {
         $crate::impl_simple_validator_new!($name);
 
         impl $name {
-            /// Run all validations and return violations of the specific type.
+            /// Runs all checks and returns typed violations.
             ///
             /// # Errors
-            /// Returns an error if file traversal or pattern compilation fails.
+            ///
+            /// Returns an error if any sub-check fails.
             pub fn validate_all(&self) -> $crate::Result<Vec<$violation_ty>> {
-                let mut violations: Vec<$violation_ty> = Vec::new();
+                let mut violations = Vec::new();
                 $(
                     violations.extend($func(&self.config)?);
                 )*
@@ -128,6 +141,37 @@ macro_rules! create_validator {
             }
         }
 
-        $crate::impl_validator!($name, $id, $desc);
+        impl $crate::traits::validator::Validator for $name {
+            fn name(&self) -> &'static str {
+                $id
+            }
+
+            fn description(&self) -> &'static str {
+                $desc
+            }
+
+            fn checks<'a>(
+                &'a self,
+                _config: &'a $crate::ValidationConfig,
+            ) -> $crate::Result<Vec<$crate::traits::validator::NamedCheck<'a>>> {
+                Ok(vec![
+                    $(
+                        $crate::traits::validator::NamedCheck::new(
+                            stringify!($func),
+                            move || {
+                                let violations = $func(&self.config)?;
+                                Ok(violations
+                                    .into_iter()
+                                    .map(|v| {
+                                        Box::new(v)
+                                            as Box<dyn $crate::traits::violation::Violation>
+                                    })
+                                    .collect())
+                            },
+                        ),
+                    )*
+                ])
+            }
+        }
     };
 }

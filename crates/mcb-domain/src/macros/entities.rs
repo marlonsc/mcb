@@ -136,7 +136,19 @@ macro_rules! define_entity {
             $($shared)*
         }
     };
-    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] id $(, $rest:ident)*) => {
+    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] $field:ident $(, $rest:ident)*) => {
+        define_entity!(
+            @expand_field
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [$($shared)*]
+            [$($rest),*]
+            $field
+        );
+    };
+    (@expand_field [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] [$($rest:tt)*] id) => {
         define_entity!(
             @collect
             [$($meta)*]
@@ -148,10 +160,10 @@ macro_rules! define_entity {
                 /// Unique identifier for the entity.
                 pub id: String,
             ]
-            $($rest),*
+            $($rest)*
         );
     };
-    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] org_id $(, $rest:ident)*) => {
+    (@expand_field [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] [$($rest:tt)*] org_id) => {
         define_entity!(
             @collect
             [$($meta)*]
@@ -163,10 +175,10 @@ macro_rules! define_entity {
                 /// Organization identifier for tenant isolation.
                 pub org_id: String,
             ]
-            $($rest),*
+            $($rest)*
         );
     };
-    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] project_id $(, $rest:ident)*) => {
+    (@expand_field [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] [$($rest:tt)*] project_id) => {
         define_entity!(
             @collect
             [$($meta)*]
@@ -178,10 +190,10 @@ macro_rules! define_entity {
                 /// Project identifier the entity belongs to.
                 pub project_id: String,
             ]
-            $($rest),*
+            $($rest)*
         );
     };
-    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] created_at $(, $rest:ident)*) => {
+    (@expand_field [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] [$($rest:tt)*] created_at) => {
         define_entity!(
             @collect
             [$($meta)*]
@@ -193,10 +205,10 @@ macro_rules! define_entity {
                 /// Timestamp when the entity was created (Unix epoch).
                 pub created_at: i64,
             ]
-            $($rest),*
+            $($rest)*
         );
     };
-    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] updated_at $(, $rest:ident)*) => {
+    (@expand_field [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] [$($rest:tt)*] updated_at) => {
         define_entity!(
             @collect
             [$($meta)*]
@@ -208,7 +220,7 @@ macro_rules! define_entity {
                 /// Timestamp when the entity was last updated (Unix epoch).
                 pub updated_at: i64,
             ]
-            $($rest),*
+            $($rest)*
         );
     };
 }

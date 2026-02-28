@@ -54,18 +54,19 @@ impl SeaOrmDashboardAdapter {
         row.try_get::<i64>("", column)
             .or_else(|_| row.try_get::<i32>("", column).map(i64::from))
     }
-}
-
-#[async_trait]
-impl DashboardQueryPort for SeaOrmDashboardAdapter {
-    async fn get_observations_by_month(&self, limit: usize) -> Result<Vec<MonthlyCount>> {
-        let month_expr = self.year_month_expr();
+    /// Shared helper for time-bucketed observation queries.
+    async fn query_observation_time_series(
+        &self,
+        time_expr: &str,
+        alias: &str,
+        limit: usize,
+    ) -> Result<Vec<(String, i64)>> {
         let count_expr = self.cast_count_expr("COUNT(*)");
         let sql = format!(
-            "SELECT {month_expr} AS month, {count_expr} AS count \
+            "SELECT {time_expr} AS {alias}, {count_expr} AS count \
              FROM observations \
-             GROUP BY {month_expr} \
-             ORDER BY month DESC \
+             GROUP BY {time_expr} \
+             ORDER BY {alias} DESC \
              LIMIT ?"
         );
         let stmt = Statement::from_sql_and_values(
@@ -78,51 +79,35 @@ impl DashboardQueryPort for SeaOrmDashboardAdapter {
             .db
             .query_all_raw(stmt)
             .await
-            .map_err(|e| Self::db_err("query observations by month", e))?;
+            .map_err(|e| Self::db_err(&format!("query observations by {alias}"), e))?;
 
         rows.into_iter()
             .map(|row| {
-                let month = row
-                    .try_get::<String>("", "month")
-                    .map_err(|e| Self::db_err("decode month", e))?;
+                let label = row
+                    .try_get::<String>("", alias)
+                    .map_err(|e| Self::db_err(&format!("decode {alias}"), e))?;
                 let count = Self::decode_count(&row, "count")
-                    .map_err(|e| Self::db_err("decode month count", e))?;
-                Ok(MonthlyCount { month, count })
+                    .map_err(|e| Self::db_err(&format!("decode {alias} count"), e))?;
+                Ok((label, count))
             })
+            .collect()
+    }
+}
+#[async_trait]
+impl DashboardQueryPort for SeaOrmDashboardAdapter {
+    async fn get_observations_by_month(&self, limit: usize) -> Result<Vec<MonthlyCount>> {
+        self.query_observation_time_series(self.year_month_expr(), "month", limit)
+            .await?
+            .into_iter()
+            .map(|(month, count)| Ok(MonthlyCount { month, count }))
             .collect()
     }
 
     async fn get_observations_by_day(&self, limit: usize) -> Result<Vec<DailyCount>> {
-        let day_expr = self.day_expr();
-        let count_expr = self.cast_count_expr("COUNT(*)");
-        let sql = format!(
-            "SELECT {day_expr} AS day, {count_expr} AS count \
-             FROM observations \
-             GROUP BY {day_expr} \
-             ORDER BY day DESC \
-             LIMIT ?"
-        );
-        let stmt = Statement::from_sql_and_values(
-            self.db.get_database_backend(),
-            sql,
-            vec![Value::from(limit as i64)],
-        );
-
-        let rows = self
-            .db
-            .query_all_raw(stmt)
-            .await
-            .map_err(|e| Self::db_err("query observations by day", e))?;
-
-        rows.into_iter()
-            .map(|row| {
-                let day = row
-                    .try_get::<String>("", "day")
-                    .map_err(|e| Self::db_err("decode day", e))?;
-                let count = Self::decode_count(&row, "count")
-                    .map_err(|e| Self::db_err("decode day count", e))?;
-                Ok(DailyCount { day, count })
-            })
+        self.query_observation_time_series(self.day_expr(), "day", limit)
+            .await?
+            .into_iter()
+            .map(|(day, count)| Ok(DailyCount { day, count }))
             .collect()
     }
 
