@@ -203,3 +203,23 @@ fn test_error_collection_not_found_chunks_by_file() {
         "Error should mention 'not found' and 'chunks by file': {err_str}"
     );
 }
+
+#[test]
+fn test_default_output_fields_contains_all_extraction_fields() {
+    use mcb_providers::vector_store::milvus::DEFAULT_OUTPUT_FIELDS;
+
+    // All fields that extract_string_field/extract_long_field use must be in DEFAULT_OUTPUT_FIELDS
+    let expected_fields = [
+        VECTOR_FIELD_ID,
+        VECTOR_FIELD_FILE_PATH,
+        VECTOR_FIELD_START_LINE,
+        mcb_providers::constants::VECTOR_FIELD_CONTENT,
+    ];
+
+    for field in &expected_fields {
+        assert!(
+            DEFAULT_OUTPUT_FIELDS.contains(field),
+            "DEFAULT_OUTPUT_FIELDS must contain '{field}' for extraction to work"
+        );
+    }
+}

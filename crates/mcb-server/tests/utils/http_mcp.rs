@@ -3,7 +3,7 @@ use std::sync::Arc;
 use axum::http::StatusCode;
 use mcb_server::McpServer;
 use mcb_server::tools::create_tool_list;
-use mcb_server::tools::router::{ToolExecutionContext, route_tool_call};
+use mcb_server::tools::{ToolExecutionContext, route_tool_call};
 use mcb_server::transport::types::{McpError, McpRequest, McpResponse};
 use rmcp::model::CallToolRequestParams;
 use tempfile::TempDir;

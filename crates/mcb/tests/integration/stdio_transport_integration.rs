@@ -381,21 +381,30 @@ async fn test_stdio_logs_go_to_stderr() -> TestResult {
             use tokio::io::AsyncBufReadExt;
             let mut reader = tokio::io::BufReader::new(stderr);
             let mut line = String::new();
-            while reader
-                .read_line(&mut line)
-                .await
-                .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?
-                > 0
-            {
-                // Stderr lines should NOT be valid JSON-RPC responses
-                let parsed: Result<serde_json::Value, _> = serde_json::from_str(&line);
-                if let Ok(json) = parsed {
-                    assert!(
-                        json.get("jsonrpc").is_none(),
-                        "JSON-RPC message found in stderr - should be on stdout!"
-                    );
+            // Timeout: don't block forever if stderr never sends EOF
+            let drain_result = tokio::time::timeout(std::time::Duration::from_secs(2), async {
+                while reader
+                    .read_line(&mut line)
+                    .await
+                    .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?
+                    > 0
+                {
+                    // Stderr lines should NOT be valid JSON-RPC responses
+                    let parsed: Result<serde_json::Value, _> = serde_json::from_str(&line);
+                    if let Ok(json) = parsed {
+                        assert!(
+                            json.get("jsonrpc").is_none(),
+                            "JSON-RPC message found in stderr - should be on stdout!"
+                        );
+                    }
+                    line.clear();
                 }
-                line.clear();
+                Ok::<(), Box<dyn std::error::Error>>(())
+            })
+            .await;
+            // Timeout is acceptable — stderr may not close cleanly
+            if let Ok(inner) = drain_result {
+                inner?;
             }
         }
 

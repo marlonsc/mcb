@@ -6,7 +6,7 @@ use std::sync::Arc;
 
 use axum::http::StatusCode;
 use mcb_server::McpServer;
-use mcb_server::tools::router::{ToolExecutionContext, ToolHandlers, route_tool_call};
+use mcb_server::tools::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use rmcp::model::CallToolRequestParams;
 
 use crate::utils::http_mcp::{

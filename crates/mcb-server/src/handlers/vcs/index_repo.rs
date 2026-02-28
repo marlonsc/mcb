@@ -76,8 +76,7 @@ pub async fn index_repository(
     };
     let result = IndexResult {
         repository_id: repo.id().to_string(),
-        // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
-        path: repo.path().to_str().unwrap_or_default().to_owned(),
+        path: repo.path().to_string_lossy().into_owned(),
         default_branch: repo.default_branch().to_owned(),
         branches_found: branches.clone(),
         total_files,
