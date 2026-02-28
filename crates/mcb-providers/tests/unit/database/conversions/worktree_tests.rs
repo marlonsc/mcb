@@ -1,4 +1,4 @@
-//! Tests for worktree conversion.
+//! Tests for `worktree` conversion.
 
 use mcb_domain::entities::Worktree;
 use mcb_providers::database::seaorm::entities::worktree;

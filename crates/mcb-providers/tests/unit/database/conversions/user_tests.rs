@@ -1,4 +1,4 @@
-//! Tests for user conversion.
+//! Tests for `user` conversion.
 
 use mcb_domain::entities::User;
 use mcb_providers::database::seaorm::entities::user;

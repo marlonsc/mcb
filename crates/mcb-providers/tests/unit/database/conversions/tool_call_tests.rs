@@ -1,4 +1,4 @@
-//! Tests for tool_call conversion.
+//! Tests for `tool_call` conversion.
 
 use mcb_domain::entities::ToolCall;
 use mcb_providers::database::seaorm::entities::tool_call;

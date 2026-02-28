@@ -229,8 +229,7 @@ impl RuntimeDefaults {
     /// * `execution_flow` - Execution flow mode (optional)
     ///
     /// # Returns
-    /// RuntimeDefaults with discovered values
-
+    /// `RuntimeDefaults` with discovered values
     pub async fn discover_from_path(
         vcs: &dyn VcsProvider,
         cwd: Option<&Path>,
@@ -578,9 +577,9 @@ pub async fn route_tool_call(
 /// * `tool_name` - Name of the tool being executed
 /// * `execution_context` - Execution context to validate
 ///
-/// # Returns
-/// Ok if valid, Err with details if validation fails
-
+/// # Errors
+///
+/// Returns `McpError` if the operation mode or provenance scope check fails.
 pub fn validate_execution_context(
     tool_name: &str,
     execution_context: &ToolExecutionContext,

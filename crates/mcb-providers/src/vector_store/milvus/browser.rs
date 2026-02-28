@@ -18,7 +18,10 @@ pub(super) fn query_row_count(query_results: &[FieldColumn]) -> usize {
 /// Convert Milvus query results to domain `SearchResult` objects.
 ///
 /// Extracts file path, start line, and content from Milvus field columns.
-
+///
+/// # Errors
+///
+/// Returns an error if required fields are missing from the query results.
 pub fn convert_query_results(
     query_results: &[FieldColumn],
     file_path_override: Option<&str>,

@@ -1,4 +1,4 @@
-//! Tests for checkpoint conversion.
+//! Tests for `checkpoint` conversion.
 
 use mcb_domain::entities::Checkpoint;
 use mcb_providers::database::seaorm::entities::checkpoint;

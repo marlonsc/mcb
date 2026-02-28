@@ -1,4 +1,4 @@
-//! Tests for observation conversion.
+//! Tests for `observation` conversion.
 
 use mcb_domain::entities::Observation;
 use mcb_providers::database::seaorm::entities::observation;

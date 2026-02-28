@@ -1,4 +1,4 @@
-//! Tests for project_dependency conversion.
+//! Tests for `project_dependency` conversion.
 
 use mcb_domain::entities::ProjectDependency;
 use mcb_providers::database::seaorm::entities::project_dependency;

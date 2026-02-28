@@ -1,4 +1,4 @@
-//! Tests for team_member conversion.
+//! Tests for `team_member` conversion.
 
 use mcb_domain::entities::TeamMember;
 use mcb_providers::database::seaorm::entities::team_member;

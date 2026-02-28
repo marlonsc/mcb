@@ -12,11 +12,14 @@ use milvus::client::Client;
 
 use crate::constants::MILVUS_DEFAULT_TIMEOUT_SECS;
 
+/// Milvus admin operations (create, drop, health).
 pub mod admin;
+/// Milvus collection browsing operations.
 pub mod browser;
 mod helpers;
 mod list;
 mod provider;
+/// Schema utilities for Milvus collections.
 pub mod schema;
 mod search;
 
@@ -39,6 +42,7 @@ pub const DEFAULT_OUTPUT_FIELDS: &[&str] = &[
 /// UUIDs (e.g. `2f106fbd-e15a-5304-8adf-75e1ab8ba3ee`) are converted by:
 ///   1. Stripping hyphens -> `2f106fbde15a53048adf75e1ab8ba3ee`
 ///   2. Prefixing with `mcb_` -> `mcb_2f106fbde15a53048adf75e1ab8ba3ee`
+#[must_use]
 pub fn to_milvus_name(collection: &CollectionId) -> String {
     let raw = collection.to_string();
     let sanitized = raw.replace('-', "");

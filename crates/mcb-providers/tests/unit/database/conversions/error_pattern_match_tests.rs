@@ -1,4 +1,4 @@
-//! Tests for error_pattern_match conversion.
+//! Tests for `error_pattern_match` conversion.
 
 use mcb_domain::entities::memory::ErrorPatternMatch;
 use mcb_providers::database::seaorm::entities::error_pattern_match;

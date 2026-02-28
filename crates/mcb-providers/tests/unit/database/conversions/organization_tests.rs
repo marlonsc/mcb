@@ -1,4 +1,4 @@
-//! Tests for organization conversion.
+//! Tests for `organization` conversion.
 
 use mcb_domain::entities::Organization;
 use mcb_providers::database::seaorm::entities::organization;

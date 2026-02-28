@@ -1,4 +1,4 @@
-//! Tests for project_decision conversion.
+//! Tests for `project_decision` conversion.
 
 use mcb_domain::entities::ProjectDecision;
 use mcb_providers::database::seaorm::entities::project_decision;

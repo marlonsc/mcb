@@ -1,4 +1,4 @@
-//! Conversion tests for SeaORM entity ↔ domain entity transformations.
+//! Conversion tests for `SeaORM` entity ↔ domain entity transformations.
 
 mod agent_session_tests;
 mod agent_worktree_assignment_tests;

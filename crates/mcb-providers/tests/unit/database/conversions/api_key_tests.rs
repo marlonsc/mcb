@@ -1,4 +1,4 @@
-//! Tests for api_key conversion.
+//! Tests for `api_key` conversion.
 
 use mcb_domain::entities::ApiKey;
 use mcb_providers::database::seaorm::entities::api_key;

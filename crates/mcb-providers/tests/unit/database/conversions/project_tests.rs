@@ -1,4 +1,4 @@
-//! Tests for project conversion.
+//! Tests for `project` conversion.
 
 use mcb_domain::entities::Project;
 use mcb_providers::database::seaorm::entities::project;

@@ -1,4 +1,4 @@
-//! Tests for delegation conversion.
+//! Tests for `delegation` conversion.
 
 use mcb_domain::entities::Delegation;
 use mcb_providers::database::seaorm::entities::delegation;

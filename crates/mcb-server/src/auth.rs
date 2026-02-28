@@ -77,9 +77,9 @@ pub(crate) fn configured_api_key_header(settings: Option<&serde_json::Value>) ->
 /// * `headers` - HTTP headers to search
 /// * `header_name` - Name of the custom header to check first
 ///
-/// # Returns
-/// The API key string if found, or an error if missing/invalid
-
+/// # Errors
+///
+/// Returns `Unauthorized` when the key is missing or header value is invalid.
 pub fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String> {
     if let Some(value) = headers.get(header_name) {
         let key = value

@@ -1,4 +1,4 @@
-//! Tests for session_summary conversion.
+//! Tests for `session_summary` conversion.
 
 use mcb_domain::entities::memory::SessionSummary;
 use mcb_providers::database::seaorm::entities::session_summary;

@@ -1,4 +1,4 @@
-//! Tests for project_phase conversion.
+//! Tests for `project_phase` conversion.
 
 use mcb_domain::entities::ProjectPhase;
 use mcb_providers::database::seaorm::entities::project_phase;

@@ -1,4 +1,4 @@
-//! Tests for repository conversion.
+//! Tests for `repository` conversion.
 
 use mcb_domain::entities::Repository;
 use mcb_providers::database::seaorm::entities::repository;

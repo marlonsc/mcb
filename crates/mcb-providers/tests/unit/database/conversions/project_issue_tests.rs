@@ -1,4 +1,4 @@
-//! Tests for project_issue conversion.
+//! Tests for `project_issue` conversion.
 
 use mcb_domain::entities::ProjectIssue;
 use mcb_providers::database::seaorm::entities::project_issue;

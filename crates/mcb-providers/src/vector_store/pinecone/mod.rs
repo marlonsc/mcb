@@ -134,7 +134,11 @@ impl PineconeVectorStoreProvider {
             .map_or(EDGEVEC_DEFAULT_DIMENSIONS, |d| *d.value())
     }
 
-    /// Convert Pinecone match result to domain `SearchResult`
+    /// Convert Pinecone match result to domain `SearchResult`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if required fields are missing from the match result.
     pub fn match_to_search_result(item: &Value, score: f64) -> Result<SearchResult> {
         let id = Self::extract_json_field(item, "id", Value::as_str, "match", "string")?.to_owned();
         let metadata = Self::extract_json_field(item, "metadata", Some, "match", "value")?;
@@ -151,6 +155,10 @@ use mcb_domain::registry::vector_store::{
 };
 
 /// Factory function for creating Pinecone vector store provider instances.
+///
+/// # Errors
+///
+/// Returns `Err` if required configuration (API key, host) is missing.
 pub fn pinecone_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {

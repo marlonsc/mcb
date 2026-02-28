@@ -1,4 +1,4 @@
-//! Tests for agent_worktree_assignment conversion.
+//! Tests for `agent_worktree_assignment` conversion.
 
 use mcb_domain::entities::AgentWorktreeAssignment;
 use mcb_providers::database::seaorm::entities::agent_worktree_assignment;

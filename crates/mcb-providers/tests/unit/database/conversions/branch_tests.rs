@@ -1,4 +1,4 @@
-//! Tests for branch conversion.
+//! Tests for `branch` conversion.
 
 use mcb_domain::entities::Branch;
 use mcb_providers::database::seaorm::entities::branch;

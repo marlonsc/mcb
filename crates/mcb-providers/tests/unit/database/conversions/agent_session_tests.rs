@@ -1,4 +1,4 @@
-//! Tests for agent_session conversion.
+//! Tests for `agent_session` conversion.
 
 use mcb_domain::entities::AgentSession;
 use mcb_providers::database::seaorm::entities::agent_session;

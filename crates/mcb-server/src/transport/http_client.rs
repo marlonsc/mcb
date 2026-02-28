@@ -145,6 +145,10 @@ impl HttpClientTransport {
     /// a loopback address (`127.0.0.1`, `localhost`, `[::1]`), since the
     /// traffic never leaves the local machine. Any other combination is
     /// rejected to prevent cleartext transmission of sensitive data.
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the URL uses plain HTTP with a non-loopback host.
     pub fn require_secure_transport(url: &str) -> Result<(), String> {
         let lower = url.to_ascii_lowercase();
 

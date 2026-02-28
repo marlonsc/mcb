@@ -1,4 +1,4 @@
-//! Tests for issue_label_assignment conversion.
+//! Tests for `issue_label_assignment` conversion.
 
 use mcb_domain::entities::IssueLabelAssignment;
 use mcb_providers::database::seaorm::entities::issue_label_assignment;

@@ -33,7 +33,10 @@ where
 }
 
 /// Extract a string field from Milvus field columns.
-
+///
+/// # Errors
+///
+/// Returns an error if the field is missing or has an unexpected type.
 pub fn extract_string_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<String> {
     #[allow(clippy::wildcard_enum_match_arm)]
     extract_field(fields, name, index, "string", |value| match value {
@@ -43,7 +46,10 @@ pub fn extract_string_field(fields: &[FieldColumn], name: &str, index: usize) ->
 }
 
 /// Extract a long (i64) field from Milvus field columns.
-
+///
+/// # Errors
+///
+/// Returns an error if the field is missing or has an unexpected type.
 pub fn extract_long_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<i64> {
     #[allow(clippy::wildcard_enum_match_arm)]
     extract_field(fields, name, index, "long", |value| match value {

@@ -1,4 +1,4 @@
-//! Tests for plan_review conversion.
+//! Tests for `plan_review` conversion.
 
 use mcb_domain::entities::PlanReview;
 use mcb_providers::database::seaorm::entities::plan_review;

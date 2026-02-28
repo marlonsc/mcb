@@ -1,4 +1,4 @@
-//! Tests for plan conversion.
+//! Tests for `plan` conversion.
 
 use mcb_domain::entities::Plan;
 use mcb_providers::database::seaorm::entities::plan;

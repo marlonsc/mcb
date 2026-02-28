@@ -1,4 +1,4 @@
-//! Tests for issue_comment conversion.
+//! Tests for `issue_comment` conversion.
 
 use mcb_domain::entities::IssueComment;
 use mcb_providers::database::seaorm::entities::issue_comment;
