@@ -65,6 +65,41 @@ impl KissValidator {
         )
     }
 
+    /// Helper for validating RCA-based function metrics.
+    /// Handles the boilerplate: for_each_kiss_file → parse_file_spaces → iterate functions → check metric.
+    /// The closure `check` is called for each non-test function and should return Some(violation) if the metric exceeds threshold.
+    fn validate_rca_fn_metric<F>(
+        &self,
+        check_label: &str,
+        mut check: F,
+    ) -> Result<Vec<KissViolation>>
+    where
+        F: FnMut(&rust_code_analysis::FuncSpace, &PathBuf) -> Option<KissViolation>,
+    {
+        let mut violations = Vec::new();
+        mcb_domain::debug!("kiss", &format!("Checking {}", check_label));
+
+        self.for_each_kiss_file(true, |path, content| {
+            let Some(root) = rca_helpers::parse_file_spaces(&path, &content) else {
+                return Ok(());
+            };
+            mcb_domain::trace!("kiss", check_label, &format!("file={}", path.display()));
+
+            for space in rca_helpers::collect_spaces_of_kind(&root, &content, SpaceKind::Function) {
+                let fn_name = space.name.as_deref().unwrap_or("");
+                if fn_name.starts_with(TEST_FUNCTION_PREFIX) {
+                    continue;
+                }
+                if let Some(violation) = check(&space, &path) {
+                    violations.push(violation);
+                }
+            }
+            Ok(())
+        })?;
+
+        Ok(violations)
+    }
+
     fn for_each_non_test_line<F>(lines: &[&str], mut f: F)
     where
         F: FnMut(usize, &str, &str),
@@ -146,40 +181,21 @@ impl KissValidator {
     ///
     /// Returns an error if file scanning or reading fails.
     pub fn validate_function_params(&self) -> Result<Vec<KissViolation>> {
-        let mut violations = Vec::new();
-        mcb_domain::debug!("kiss", "Checking function parameter counts");
-
-        self.for_each_kiss_file(true, |path, content| {
-            let Some(root) = rca_helpers::parse_file_spaces(&path, &content) else {
-                return Ok(());
-            };
-            mcb_domain::trace!(
-                "kiss",
-                "Checking params",
-                &format!("file={}", path.display())
-            );
-
-            for space in rca_helpers::collect_spaces_of_kind(&root, &content, SpaceKind::Function) {
-                let fn_name = space.name.as_deref().unwrap_or("");
-                if fn_name.starts_with(TEST_FUNCTION_PREFIX) {
-                    continue;
-                }
-                let param_count = space.metrics.nargs.fn_args().round() as usize;
-                if param_count > self.max_function_params {
-                    violations.push(KissViolation::FunctionTooManyParams {
-                        file: path.clone(),
-                        line: space.start_line,
-                        function_name: fn_name.to_owned(),
-                        param_count,
-                        max_allowed: self.max_function_params,
-                        severity: Severity::Warning,
-                    });
-                }
+        self.validate_rca_fn_metric("function parameter counts", |space, path| {
+            let param_count = space.metrics.nargs.fn_args().round() as usize;
+            if param_count > self.max_function_params {
+                Some(KissViolation::FunctionTooManyParams {
+                    file: path.clone(),
+                    line: space.start_line,
+                    function_name: space.name.as_deref().unwrap_or("").to_owned(),
+                    param_count,
+                    max_allowed: self.max_function_params,
+                    severity: Severity::Warning,
+                })
+            } else {
+                None
             }
-            Ok(())
-        })?;
-
-        Ok(violations)
+        })
     }
 
     /// Detects builder structs with too many optional fields.
@@ -301,39 +317,20 @@ impl KissValidator {
     ///
     /// Returns an error if file scanning or reading fails.
     pub fn validate_function_length(&self) -> Result<Vec<KissViolation>> {
-        let mut violations = Vec::new();
-        mcb_domain::debug!("kiss", "Checking function lengths");
-
-        self.for_each_kiss_file(true, |path, content| {
-            let Some(root) = rca_helpers::parse_file_spaces(&path, &content) else {
-                return Ok(());
-            };
-            mcb_domain::trace!(
-                "kiss",
-                "Checking lengths",
-                &format!("file={}", path.display())
-            );
-
-            for space in rca_helpers::collect_spaces_of_kind(&root, &content, SpaceKind::Function) {
-                let fn_name = space.name.as_deref().unwrap_or("");
-                if fn_name.starts_with(TEST_FUNCTION_PREFIX) {
-                    continue;
-                }
-                let line_count = space.metrics.loc.sloc().round() as usize;
-                if line_count > self.max_function_lines {
-                    violations.push(KissViolation::FunctionTooLong {
-                        file: path.clone(),
-                        line: space.start_line,
-                        function_name: fn_name.to_owned(),
-                        line_count,
-                        max_allowed: self.max_function_lines,
-                        severity: Severity::Warning,
-                    });
-                }
+        self.validate_rca_fn_metric("function lengths", |space, path| {
+            let line_count = space.metrics.loc.sloc().round() as usize;
+            if line_count > self.max_function_lines {
+                Some(KissViolation::FunctionTooLong {
+                    file: path.clone(),
+                    line: space.start_line,
+                    function_name: space.name.as_deref().unwrap_or("").to_owned(),
+                    line_count,
+                    max_allowed: self.max_function_lines,
+                    severity: Severity::Warning,
+                })
+            } else {
+                None
             }
-            Ok(())
-        })?;
-
-        Ok(violations)
+        })
     }
 }
