@@ -73,8 +73,10 @@ fn load_app_config_from_yaml_path(path: &Path) -> DomainResult<AppConfig> {
     let settings = yaml
         .get("settings")
         .ok_or_else(|| Error::ConfigMissing("No 'settings' key in config".to_owned()))?;
-    let config: AppConfig = serde_yaml::from_value(settings.clone())
-        .map_err(|e| Error::config_with_source("Failed to deserialize AppConfig", e))?;
+    let config: AppConfig = serde_yaml::from_value(settings.clone()).map_err(|e| {
+        let detail = e.to_string();
+        Error::config_with_source(format!("Failed to deserialize AppConfig: {detail}"), e)
+    })?;
     validate_app_config(&config)?;
     Ok(config)
 }
