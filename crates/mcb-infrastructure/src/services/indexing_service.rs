@@ -41,7 +41,7 @@ use mcb_domain::registry::services::{
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
 
-/// Registry provider name for SeaORM database repositories.
+/// Registry provider name for `SeaORM` database repositories.
 const DATABASE_PROVIDER: &str = "seaorm";
 
 /// Default namespace for database repositories.

@@ -1,26 +1,14 @@
 //!
 //! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
 //!
-//! Admin configuration loader for sea-orm-pro admin panel.
+//! Admin configuration path resolution for sea-orm-pro admin panel.
 //!
-//! Provides a clean abstraction over sea-orm-pro's ConfigParser to avoid
-//! direct dependencies in the controller layer.
+//! Provides path resolution for admin configuration without direct dependency
+//! on sea-orm-pro (which is a third-party, non-integrated crate).
 
 use std::path::PathBuf;
 
-use mcb_domain::error::{Error, Result};
-
-/// Loads admin configuration from the specified directory.
-///
-/// # Errors
-///
-/// Returns an error if the configuration cannot be loaded or serialized.
-pub fn load_admin_config(config_root: &str) -> Result<serde_json::Value> {
-    let cfg = sea_orm_pro::ConfigParser::new()
-        .load_config(config_root)
-        .map_err(|e| Error::config(&e.to_string()))?;
-    serde_json::to_value(cfg).map_err(|e| Error::config(&e.to_string()))
-}
+use mcb_domain::error::Result;
 
 /// Resolves the admin configuration root directory.
 ///

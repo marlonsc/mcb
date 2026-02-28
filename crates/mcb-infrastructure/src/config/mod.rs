@@ -19,9 +19,9 @@ pub use types::{
     DatabaseConfigContainer, LoggingConfig,
 };
 
-pub use admin_config::{load_admin_config, resolve_admin_config_root};
+pub use admin_config::resolve_admin_config_root;
 pub use mcp_context_config::{GitConfig, McpContextConfig};
-pub use mcp_context_config::{GitConfig, McpContextConfig};
+
 pub use paths::{
     COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, VCS_LOCK_FILENAME,
     VCS_REGISTRY_FILENAME, config_dir,

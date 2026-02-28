@@ -15,7 +15,6 @@ use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{ChunkingOptions, ChunkingResult, CodeChunker};
 use mcb_domain::value_objects::Language;
-use tracing;
 
 use super::constants::CHUNK_SIZE_GENERIC;
 use super::detection::{is_language_supported, language_from_extension};

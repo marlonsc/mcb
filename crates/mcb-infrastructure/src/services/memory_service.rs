@@ -47,7 +47,7 @@ use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
 use std::str::FromStr;
 
-/// Registry provider name for SeaORM database repositories.
+/// Registry provider name for `SeaORM` database repositories.
 const DATABASE_PROVIDER: &str = "seaorm";
 
 /// Default namespace for database repositories.
