@@ -19,7 +19,25 @@ use crate::filters::LanguageDetector;
 pub fn parse_file_spaces(path: &Path, content: &str) -> Option<FuncSpace> {
     let detector = LanguageDetector::new();
     let lang = detector.detect_rca_lang(path, Some(content))?;
-    get_function_spaces(&lang, content.as_bytes().to_vec(), path, None)
+    mcb_domain::trace!(
+        "rca_helpers",
+        "Parsing file with RCA",
+        &format!(
+            "file={} lang={:?} bytes={}",
+            path.display(),
+            lang,
+            content.len()
+        )
+    );
+    let result = get_function_spaces(&lang, content.as_bytes().to_vec(), path, None);
+    if result.is_none() {
+        mcb_domain::debug!(
+            "rca_helpers",
+            "RCA returned no spaces for file",
+            &format!("file={}", path.display())
+        );
+    }
+    result
 }
 
 /// Visit every [`FuncSpace`] recursively, calling `f` with the space and

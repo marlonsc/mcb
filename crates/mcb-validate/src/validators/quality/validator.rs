@@ -47,11 +47,52 @@ impl QualityValidator {
     /// Returns an error if any sub-validation encounters a file system or parsing error.
     pub fn validate_all(&self) -> Result<Vec<QualityViolation>> {
         let mut violations = Vec::new();
-        violations.extend(unwrap::validate(self)?);
-        violations.extend(panic::validate(self)?);
-        violations.extend(metrics::validate(self)?);
-        violations.extend(comments::validate(self)?);
-        violations.extend(dead_code::validate(self)?);
+
+        let t = std::time::Instant::now();
+        let v = unwrap::validate(self)?;
+        mcb_domain::debug!(
+            "quality",
+            "unwrap check done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = panic::validate(self)?;
+        mcb_domain::debug!(
+            "quality",
+            "panic check done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = metrics::validate(self)?;
+        mcb_domain::debug!(
+            "quality",
+            "metrics check done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = comments::validate(self)?;
+        mcb_domain::debug!(
+            "quality",
+            "comments check done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = dead_code::validate(self)?;
+        mcb_domain::debug!(
+            "quality",
+            "dead_code check done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
         Ok(violations)
     }
 }

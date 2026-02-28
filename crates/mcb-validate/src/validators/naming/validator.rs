@@ -44,15 +44,65 @@ impl NamingValidator {
     /// Returns an error if regex compilation, directory enumeration, or file reading fails.
     pub fn validate_all(&self) -> Result<Vec<NamingViolation>> {
         if !self.rules.enabled {
+            mcb_domain::debug!("naming", "Naming validator disabled, skipping");
             return Ok(Vec::new());
         }
         let mut violations = Vec::new();
-        violations.extend(self.run_type_name_check()?);
-        violations.extend(self.run_function_name_check()?);
-        violations.extend(self.run_constant_name_check()?);
-        violations.extend(self.run_module_name_check()?);
-        violations.extend(self.run_file_suffix_check()?);
-        violations.extend(self.run_ca_naming_check()?);
+
+        let t = std::time::Instant::now();
+        let v = self.run_type_name_check()?;
+        mcb_domain::debug!(
+            "naming",
+            "type_names done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = self.run_function_name_check()?;
+        mcb_domain::debug!(
+            "naming",
+            "function_names done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = self.run_constant_name_check()?;
+        mcb_domain::debug!(
+            "naming",
+            "constant_names done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = self.run_module_name_check()?;
+        mcb_domain::debug!(
+            "naming",
+            "module_names done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = self.run_file_suffix_check()?;
+        mcb_domain::debug!(
+            "naming",
+            "file_suffix done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = self.run_ca_naming_check()?;
+        mcb_domain::debug!(
+            "naming",
+            "ca_naming done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
         Ok(violations)
     }
 

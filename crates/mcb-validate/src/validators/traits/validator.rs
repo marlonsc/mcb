@@ -118,7 +118,7 @@ impl ValidatorRegistry {
 
                 let langs = validator.supported_languages();
                 if !langs.is_empty() && !langs.iter().any(|l| active.has_files_for_language(*l)) {
-                    mcb_domain::info!(
+                    mcb_domain::debug!(
                         "validator_registry",
                         "Skipping validator: no files match supported languages",
                         &format!(
@@ -133,17 +133,26 @@ impl ValidatorRegistry {
                 mcb_domain::info!(
                     "validator_registry",
                     "Running validator",
-                    &format!(
-                        "validator={} trace_id={} file_inventory_source={} file_inventory_count={}",
-                        validator.name(),
-                        active.trace_id(),
-                        active.file_inventory_source().as_str(),
-                        active.file_inventory_count()
-                    )
+                    &format!("validator={}", validator.name())
                 );
 
+                let started = std::time::Instant::now();
                 match validator.validate(config) {
-                    Ok(violations) => all_violations.extend(violations),
+                    Ok(violations) => {
+                        let count = violations.len();
+                        let elapsed = started.elapsed();
+                        mcb_domain::info!(
+                            "validator_registry",
+                            "Validator completed",
+                            &format!(
+                                "validator={} violations={} elapsed={:.2?}",
+                                validator.name(),
+                                count,
+                                elapsed
+                            )
+                        );
+                        all_violations.extend(violations);
+                    }
                     Err(e) => {
                         mcb_domain::warn!(
                             "validator_registry",
@@ -216,18 +225,27 @@ impl ValidatorRegistry {
                 if names.contains(&validator.name()) {
                     mcb_domain::info!(
                         "validator_registry",
-                        "Running named validator",
-                        &format!(
-                            "validator={} trace_id={} file_inventory_source={} file_inventory_count={}",
-                            validator.name(),
-                            active.trace_id(),
-                            active.file_inventory_source().as_str(),
-                            active.file_inventory_count()
-                        )
+                        "Running validator",
+                        &format!("validator={}", validator.name())
                     );
 
+                    let started = std::time::Instant::now();
                     match validator.validate(config) {
-                        Ok(violations) => all_violations.extend(violations),
+                        Ok(violations) => {
+                            let count = violations.len();
+                            let elapsed = started.elapsed();
+                            mcb_domain::info!(
+                                "validator_registry",
+                                "Validator completed",
+                                &format!(
+                                    "validator={} violations={} elapsed={:.2?}",
+                                    validator.name(),
+                                    count,
+                                    elapsed
+                                )
+                            );
+                            all_violations.extend(violations);
+                        }
                         Err(e) => {
                             mcb_domain::warn!(
                                 "validator_registry",

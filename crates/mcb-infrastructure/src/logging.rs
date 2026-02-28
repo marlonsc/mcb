@@ -50,7 +50,7 @@ pub fn set_stderr_log_level(level: LogLevel) {
     STDERR_LOG_LEVEL.store(n, Ordering::Relaxed);
 }
 
-fn level_to_u8(level: &LogLevel) -> u8 {
+fn level_to_u8(level: LogLevel) -> u8 {
     match level {
         LogLevel::Error => 0,
         LogLevel::Warn => 1,
@@ -63,6 +63,7 @@ fn level_to_u8(level: &LogLevel) -> u8 {
 /// CLI-friendly log function that writes to stderr with level filtering.
 ///
 /// Respects the global level set by [`set_stderr_log_level`].
+#[allow(clippy::print_stderr)]
 pub fn stderr_log_fn(
     level: LogLevel,
     context: &str,
@@ -70,7 +71,7 @@ pub fn stderr_log_fn(
     detail: Option<&dyn std::fmt::Display>,
 ) {
     let threshold = STDERR_LOG_LEVEL.load(Ordering::Relaxed);
-    if level_to_u8(&level) > threshold {
+    if level_to_u8(level) > threshold {
         return;
     }
     let tag = match level {

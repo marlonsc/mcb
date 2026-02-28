@@ -22,6 +22,7 @@ pub fn validate_srp(
     max_struct_lines: usize,
 ) -> Result<Vec<SolidViolation>> {
     let mut violations = Vec::new();
+    mcb_domain::debug!("solid_srp", "Checking impl block sizes (SRP)");
 
     for crate_dir in config.get_source_dirs()? {
         let src_dir = crate_dir.join("src");
@@ -37,6 +38,11 @@ pub fn validate_srp(
             let Some(root) = rca_helpers::parse_file_spaces(&entry.absolute_path, &content) else {
                 return Ok(());
             };
+            mcb_domain::trace!(
+                "solid_srp",
+                "Checking SRP",
+                &format!("file={}", entry.absolute_path.display())
+            );
 
             // Check impl blocks via RCA SpaceKind::Impl
             for space in rca_helpers::collect_spaces_of_kind(&root, &content, SpaceKind::Impl) {
@@ -92,6 +98,7 @@ pub fn validate_impl_method_count(
     max_impl_methods: usize,
 ) -> Result<Vec<SolidViolation>> {
     let mut violations = Vec::new();
+    mcb_domain::debug!("solid_srp", "Checking impl method counts");
 
     for crate_dir in config.get_source_dirs()? {
         let src_dir = crate_dir.join("src");

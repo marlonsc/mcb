@@ -147,11 +147,17 @@ impl KissValidator {
     /// Returns an error if file scanning or reading fails.
     pub fn validate_function_params(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
+        mcb_domain::debug!("kiss", "Checking function parameter counts");
 
         self.for_each_kiss_file(true, |path, content| {
             let Some(root) = rca_helpers::parse_file_spaces(&path, &content) else {
                 return Ok(());
             };
+            mcb_domain::trace!(
+                "kiss",
+                "Checking params",
+                &format!("file={}", path.display())
+            );
 
             for space in rca_helpers::collect_spaces_of_kind(&root, &content, SpaceKind::Function) {
                 let fn_name = space.name.as_deref().unwrap_or("");
@@ -296,11 +302,17 @@ impl KissValidator {
     /// Returns an error if file scanning or reading fails.
     pub fn validate_function_length(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
+        mcb_domain::debug!("kiss", "Checking function lengths");
 
         self.for_each_kiss_file(true, |path, content| {
             let Some(root) = rca_helpers::parse_file_spaces(&path, &content) else {
                 return Ok(());
             };
+            mcb_domain::trace!(
+                "kiss",
+                "Checking lengths",
+                &format!("file={}", path.display())
+            );
 
             for space in rca_helpers::collect_spaces_of_kind(&root, &content, SpaceKind::Function) {
                 let fn_name = space.name.as_deref().unwrap_or("");

@@ -67,14 +67,56 @@ impl KissValidator {
     /// Returns an error if any sub-validation encounters a file system or parsing error.
     pub fn validate_all(&self) -> Result<Vec<KissViolation>> {
         if !self.rules.enabled {
+            mcb_domain::debug!("kiss", "KISS validator disabled, skipping");
             return Ok(Vec::new());
         }
         let mut violations = Vec::new();
-        violations.extend(self.validate_struct_fields()?);
-        violations.extend(self.validate_function_params()?);
-        violations.extend(self.validate_builder_complexity()?);
-        violations.extend(self.validate_nesting_depth()?);
-        violations.extend(self.validate_function_length()?);
+
+        let t = std::time::Instant::now();
+        let v = self.validate_struct_fields()?;
+        mcb_domain::debug!(
+            "kiss",
+            "struct_fields done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = self.validate_function_params()?;
+        mcb_domain::debug!(
+            "kiss",
+            "function_params done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = self.validate_builder_complexity()?;
+        mcb_domain::debug!(
+            "kiss",
+            "builder_complexity done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = self.validate_nesting_depth()?;
+        mcb_domain::debug!(
+            "kiss",
+            "nesting_depth done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = self.validate_function_length()?;
+        mcb_domain::debug!(
+            "kiss",
+            "function_length done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
         Ok(violations)
     }
 }

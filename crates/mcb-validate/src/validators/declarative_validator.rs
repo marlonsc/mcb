@@ -87,11 +87,21 @@ impl DeclarativeValidator {
             let Some(metrics_config) = &rule.metrics else {
                 continue;
             };
+            mcb_domain::trace!(
+                "declarative",
+                "Checking metrics rule",
+                &format!("rule={}", rule.id)
+            );
 
             let thresholds = MetricThresholds::from_metrics_config(metrics_config);
             let analyzer = RcaAnalyzer::with_thresholds(thresholds);
 
             for file in files {
+                mcb_domain::trace!(
+                    "declarative",
+                    "Metrics check",
+                    &format!("rule={} file={}", rule.id, file.display())
+                );
                 match analyzer.find_violations(file) {
                     Ok(file_violations) => {
                         let typed: Vec<MetricViolation> = file_violations;
@@ -162,8 +172,18 @@ impl DeclarativeValidator {
         };
 
         for rule in &lint_rules {
+            mcb_domain::trace!(
+                "declarative",
+                "Running lint-select rule",
+                &format!("rule={}", rule.id)
+            );
             match run_on_dedicated(Box::pin(YamlRuleExecutor::execute_rule(rule, &file_refs))) {
                 Ok(lint_violations) => {
+                    mcb_domain::trace!(
+                        "declarative",
+                        "Lint rule done",
+                        &format!("rule={} violations={}", rule.id, lint_violations.len())
+                    );
                     violations.extend(lint_violations.into_iter().map(|mut v| {
                         v.ensure_file_path();
                         Box::new(v) as Box<dyn Violation>
@@ -210,25 +230,43 @@ impl DeclarativeValidator {
         let mut violations: Vec<Box<dyn Violation>> = Vec::new();
 
         for rule in &regex_rules {
+            mcb_domain::trace!(
+                "declarative",
+                "Running regex rule",
+                &format!("rule={}", rule.id)
+            );
             let compiled = Self::compile_rule_patterns(rule);
             if compiled.is_empty() {
                 continue;
             }
 
             let ignore_compiled = Self::compile_ignore_patterns(rule);
+            let mut rule_violations = 0usize;
 
             for file in files {
                 if !Self::should_execute_on_file(&filter_executor, &workspace_deps, rule, file) {
                     continue;
                 }
+                mcb_domain::trace!(
+                    "declarative",
+                    "Regex check",
+                    &format!("rule={} file={}", rule.id, file.display())
+                );
 
-                violations.extend(Self::collect_regex_violations_for_file(
+                let file_violations = Self::collect_regex_violations_for_file(
                     rule,
                     file,
                     &compiled,
                     &ignore_compiled,
-                ));
+                );
+                rule_violations += file_violations.len();
+                violations.extend(file_violations);
             }
+            mcb_domain::trace!(
+                "declarative",
+                "Regex rule done",
+                &format!("rule={} violations={}", rule.id, rule_violations)
+            );
         }
 
         violations
@@ -263,21 +301,39 @@ impl DeclarativeValidator {
 
         let mut violations: Vec<Box<dyn Violation>> = Vec::new();
         for rule in &ast_rules {
+            mcb_domain::trace!(
+                "declarative",
+                "Running AST rule",
+                &format!("rule={}", rule.id)
+            );
+            let mut rule_violations = 0usize;
             for file in files {
                 if !Self::should_execute_on_file(&filter_executor, &workspace_deps, rule, file) {
                     continue;
                 }
+                mcb_domain::trace!(
+                    "declarative",
+                    "AST check",
+                    &format!("rule={} file={}", rule.id, file.display())
+                );
 
                 let selector_matches = AstSelectorEngine::execute(rule, file);
+                rule_violations += selector_matches.len();
                 violations.extend(selector_matches.into_iter().map(|matched| {
                     Self::build_pattern_match_violation(rule, matched.file_path, matched.line)
                 }));
 
                 let query_matches = TreeSitterQueryExecutor::execute(rule, file)?;
+                rule_violations += query_matches.len();
                 violations.extend(query_matches.into_iter().map(|matched| {
                     Self::build_pattern_match_violation(rule, matched.file_path, matched.line)
                 }));
             }
+            mcb_domain::trace!(
+                "declarative",
+                "AST rule done",
+                &format!("rule={} violations={}", rule.id, rule_violations)
+            );
         }
 
         Ok(violations)
@@ -436,14 +492,67 @@ impl Validator for DeclarativeValidator {
 
     fn validate(&self, config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
         let rules = self.load_rules()?;
+        let enabled_count = rules.iter().filter(|r| r.enabled).count();
+        mcb_domain::debug!(
+            "declarative",
+            "Rules loaded",
+            &format!("total={} enabled={}", rules.len(), enabled_count)
+        );
+
         let files = Self::collect_files(config, Some(LanguageId::Rust));
+        mcb_domain::debug!(
+            "declarative",
+            "Files collected for declarative rules",
+            &format!("file_count={}", files.len())
+        );
 
         let mut violations = Vec::new();
-        violations.extend(Self::validate_metrics_rules(&rules, &files));
-        violations.extend(Self::validate_lint_select_rules(&rules, &files));
-        violations.extend(self.validate_ast_selector_rules(&rules, &files)?);
-        violations.extend(self.validate_regex_rules(&rules, &files));
-        violations.extend(validate_path_rules(&self.workspace_root, &rules, &files));
+
+        let t = std::time::Instant::now();
+        let v = Self::validate_metrics_rules(&rules, &files);
+        mcb_domain::debug!(
+            "declarative",
+            "Metrics slice done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = Self::validate_lint_select_rules(&rules, &files);
+        mcb_domain::debug!(
+            "declarative",
+            "Lint-select slice done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = self.validate_ast_selector_rules(&rules, &files)?;
+        mcb_domain::debug!(
+            "declarative",
+            "AST selector slice done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = self.validate_regex_rules(&rules, &files);
+        mcb_domain::debug!(
+            "declarative",
+            "Regex slice done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
+        let t = std::time::Instant::now();
+        let v = validate_path_rules(&self.workspace_root, &rules, &files);
+        mcb_domain::debug!(
+            "declarative",
+            "Path rules slice done",
+            &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
+        );
+        violations.extend(v);
+
         Ok(violations)
     }
 }

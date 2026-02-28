@@ -28,6 +28,11 @@ impl NativePmatAnalyzer {
             files.push((entry.absolute_path.clone(), content));
             Ok(())
         })?;
+        mcb_domain::debug!(
+            "pmat",
+            "Loaded Rust files",
+            &format!("count={}", files.len())
+        );
         Ok(files)
     }
 
@@ -39,6 +44,11 @@ impl NativePmatAnalyzer {
             let Some(root) = rca_helpers::parse_file_spaces(file, content) else {
                 continue;
             };
+            mcb_domain::trace!(
+                "pmat",
+                "Collecting functions",
+                &format!("file={}", file.display())
+            );
             for space in rca_helpers::collect_spaces_of_kind(&root, content, SpaceKind::Function) {
                 let name = space.name.as_deref().unwrap_or("").to_owned();
                 if name.is_empty() {
@@ -52,6 +62,11 @@ impl NativePmatAnalyzer {
                 });
             }
         }
+        mcb_domain::debug!(
+            "pmat",
+            "Functions collected",
+            &format!("count={}", records.len())
+        );
         records
     }
 }

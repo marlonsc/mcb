@@ -1,5 +1,5 @@
 //! Validate command - runs architecture validation
-#![allow(clippy::print_stdout)]
+#![allow(clippy::print_stdout, clippy::print_stderr)]
 
 use std::path::PathBuf;
 use std::time::Instant;
@@ -97,6 +97,7 @@ impl ValidateArgs {
     }
 
     /// Print a progress message to stderr (respects --silent)
+    #[allow(clippy::print_stderr)]
     fn progress(&self, msg: &str) {
         if !self.silent {
             eprintln!("{msg}");
