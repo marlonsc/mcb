@@ -24,7 +24,7 @@ impl MilvusVectorStoreProvider {
             .query(to_milvus_name(collection), "id >= 0", &query_options)
             .await
         {
-            Ok(results) => Ok(Some(vec![results])),
+            Ok(results) => Ok(Some(results)),
             Err(e) => {
                 let err_str = e.to_string();
                 if err_str.contains("message length too large") {
@@ -78,12 +78,12 @@ impl MilvusVectorStoreProvider {
                 break;
             };
 
-            let row_count = browser::query_row_count(&query_results[0]);
+            let row_count = browser::query_row_count(&query_results);
             if row_count == 0 {
                 break;
             }
 
-            all_results.extend(browser::convert_query_results(&query_results[0], None)?);
+            all_results.extend(browser::convert_query_results(&query_results, None)?);
 
             offset += row_count as i64;
 

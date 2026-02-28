@@ -1,4 +1,4 @@
-//! VectorStoreAdmin implementation for Qdrant.
+//! `VectorStoreAdmin` implementation for Qdrant.
 
 use std::collections::HashMap;
 

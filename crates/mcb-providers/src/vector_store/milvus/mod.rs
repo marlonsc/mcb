@@ -12,26 +12,20 @@ use milvus::client::Client;
 
 use crate::constants::MILVUS_DEFAULT_TIMEOUT_SECS;
 
-mod admin;
-mod browser;
+pub mod admin;
+pub mod browser;
 mod helpers;
-mod provider;
-mod schema;
 mod list;
+mod provider;
+pub mod schema;
 mod search;
-
-#[cfg(test)]
-mod tests;
-
-
 
 /// Milvus vector store provider implementation
 pub struct MilvusVectorStoreProvider {
     client: Client,
 }
 
-/// Default output fields for Milvus queries
-
+/// Default output fields for Milvus queries.
 pub const DEFAULT_OUTPUT_FIELDS: &[&str] = &[
     crate::constants::VECTOR_FIELD_ID,
     crate::constants::VECTOR_FIELD_FILE_PATH,
@@ -45,7 +39,7 @@ pub const DEFAULT_OUTPUT_FIELDS: &[&str] = &[
 /// UUIDs (e.g. `2f106fbd-e15a-5304-8adf-75e1ab8ba3ee`) are converted by:
 ///   1. Stripping hyphens -> `2f106fbde15a53048adf75e1ab8ba3ee`
 ///   2. Prefixing with `mcb_` -> `mcb_2f106fbde15a53048adf75e1ab8ba3ee`
-pub(super) fn to_milvus_name(collection: &CollectionId) -> String {
+pub fn to_milvus_name(collection: &CollectionId) -> String {
     let raw = collection.to_string();
     let sanitized = raw.replace('-', "");
     format!("mcb_{sanitized}")
@@ -63,7 +57,8 @@ impl MilvusVectorStoreProvider {
         result: std::result::Result<T, E>,
         operation: &str,
     ) -> Result<T> {
-        result.map_err(|e| mcb_domain::error::Error::vector_db(format!("Failed to {operation}: {e}")))
+        result
+            .map_err(|e| mcb_domain::error::Error::vector_db(format!("Failed to {operation}: {e}")))
     }
 
     /// Create a new Milvus vector store provider
@@ -98,7 +93,9 @@ impl MilvusVectorStoreProvider {
                     "Milvus connection timed out after {timeout} seconds"
                 ))
             })?
-            .map_err(|e| mcb_domain::error::Error::vector_db(format!("Failed to connect to Milvus: {e}")))?;
+            .map_err(|e| {
+                mcb_domain::error::Error::vector_db(format!("Failed to connect to Milvus: {e}"))
+            })?;
 
         Ok(Self { client })
     }

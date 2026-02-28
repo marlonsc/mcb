@@ -1,9 +1,9 @@
 use super::*;
 use mcb_domain::error::Error;
-use mcb_domain::value_objects::{CollectionId, Embedding};
+use mcb_domain::value_objects::Embedding;
 use milvus::data::FieldColumn;
 use milvus::proto::schema::DataType;
-use milvus::value::{Value, ValueVec};
+use milvus::value::ValueVec;
 use std::collections::HashMap;
 
 use crate::constants::{

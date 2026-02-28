@@ -143,7 +143,13 @@ pub struct IndexingServiceWithHashDeps {
 }
 
 impl IndexingServiceImpl {
-    fn workspace_relative_path(file_path: &Path, workspace_root: &Path) -> Result<String> {
+    /// Compute the relative path of a file within the workspace.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file is not under the workspace root.
+
+    pub fn workspace_relative_path(file_path: &Path, workspace_root: &Path) -> Result<String> {
         mcb_domain::utils::path::workspace_relative_path(file_path, workspace_root)
     }
 
@@ -539,31 +545,3 @@ static INDEXING_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEn
     name: INDEXING_SERVICE_NAME,
     build: ServiceBuilder::Indexing(build_indexing_service_from_registry),
 };
-
-#[cfg(test)]
-mod tests {
-    use super::IndexingServiceImpl;
-    use std::path::Path;
-
-    #[test]
-    fn workspace_relative_path_normalizes_within_workspace() {
-        let workspace = Path::new("/repo");
-        let file = Path::new("/repo/src/main.rs");
-
-        let relative =
-            IndexingServiceImpl::workspace_relative_path(file, workspace).expect("relative path");
-
-        assert_eq!(relative, "src/main.rs");
-    }
-
-    #[test]
-    fn workspace_relative_path_rejects_outside_workspace() {
-        let workspace = Path::new("/repo");
-        let file = Path::new("/other/main.rs");
-
-        let err = IndexingServiceImpl::workspace_relative_path(file, workspace)
-            .expect_err("outside path must fail");
-
-        assert!(err.to_string().contains("is not under root"));
-    }
-}

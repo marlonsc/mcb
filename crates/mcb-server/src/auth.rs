@@ -71,7 +71,16 @@ pub(crate) fn configured_api_key_header(settings: Option<&serde_json::Value>) ->
         .map_or_else(|| API_KEY_HEADER.to_owned(), str::to_ascii_lowercase)
 }
 
-fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String> {
+/// Extract API key from headers, checking both custom header and Authorization bearer.
+///
+/// # Arguments
+/// * `headers` - HTTP headers to search
+/// * `header_name` - Name of the custom header to check first
+///
+/// # Returns
+/// The API key string if found, or an error if missing/invalid
+
+pub fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String> {
     if let Some(value) = headers.get(header_name) {
         let key = value
             .to_str()
@@ -114,36 +123,4 @@ fn verify_api_key(hash: &str, candidate: &str) -> Result<bool> {
     }
 
     Ok(false)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use axum::http::HeaderValue;
-
-    #[test]
-    fn extract_api_key_reads_x_api_key() {
-        let mut headers = HeaderMap::new();
-        headers.insert("x-api-key", HeaderValue::from_static("abc123"));
-        assert_eq!(
-            extract_api_key(&headers, "x-api-key").expect("api key"),
-            "abc123"
-        );
-    }
-
-    #[test]
-    fn extract_api_key_reads_authorization_bearer() {
-        let mut headers = HeaderMap::new();
-        headers.insert("authorization", HeaderValue::from_static("Bearer abc123"));
-        assert_eq!(
-            extract_api_key(&headers, "x-api-key").expect("api key"),
-            "abc123"
-        );
-    }
-
-    #[test]
-    fn extract_api_key_rejects_missing_headers() {
-        let headers = HeaderMap::new();
-        assert!(extract_api_key(&headers, "x-api-key").is_err());
-    }
 }

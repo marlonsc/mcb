@@ -15,16 +15,13 @@ use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
 
-use crate::constants::{
-    HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT,
-};
+use crate::constants::{HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT};
 use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
 use crate::utils::vector_store::search_result_from_json_metadata;
 
 mod admin;
 mod browser;
 mod provider;
-
 
 /// Qdrant vector search engine client.
 pub struct QdrantVectorStoreProvider {

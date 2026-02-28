@@ -1,9 +1,14 @@
-use super::*;
-use mcb_domain::value_objects::{CollectionId, Embedding};
+use mcb_domain::value_objects::CollectionId;
+use mcb_providers::constants::{
+    MILVUS_COLLECTION_NAME_PATTERN, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_ID,
+    VECTOR_FIELD_START_LINE,
+};
+use mcb_providers::vector_store::milvus::browser::convert_query_results;
+use mcb_providers::vector_store::milvus::schema::{extract_long_field, extract_string_field};
+use mcb_providers::vector_store::milvus::to_milvus_name;
 use milvus::data::FieldColumn;
 use milvus::proto::schema::DataType;
 use milvus::value::ValueVec;
-use std::collections::HashMap;
 
 #[test]
 fn test_to_milvus_name_starts_with_letter() {
@@ -26,7 +31,7 @@ fn test_to_milvus_name_no_hyphens() {
 fn test_to_milvus_name_valid_pattern() {
     let id = CollectionId::from_name("test-collection");
     let name = to_milvus_name(&id);
-    let pattern = regex::Regex::new(crate::constants::MILVUS_COLLECTION_NAME_PATTERN).unwrap();
+    let pattern = regex::Regex::new(MILVUS_COLLECTION_NAME_PATTERN).unwrap();
     assert!(
         pattern.is_match(&name),
         "name must match Milvus pattern: {name}"
@@ -69,7 +74,7 @@ fn make_long_column(name: &str, values: Vec<i64>) -> FieldColumn {
 #[test]
 fn test_extract_string_field_missing_column_returns_error() {
     let fields: Vec<FieldColumn> = vec![];
-    let result = schema::extract_string_field(&fields, "missing", 0);
+    let result = extract_string_field(&fields, "missing", 0);
     let err = result.expect_err("extract_string_field should fail for missing column");
     let err_msg = err.to_string();
     assert!(
@@ -81,11 +86,10 @@ fn test_extract_string_field_missing_column_returns_error() {
 #[test]
 fn test_extract_string_field_out_of_bounds_returns_error() {
     let fields = vec![make_string_column(
-        crate::constants::VECTOR_FIELD_FILE_PATH,
+        VECTOR_FIELD_FILE_PATH,
         vec!["a.rs".to_owned()],
     )];
-    let result =
-        schema::extract_string_field(&fields, crate::constants::VECTOR_FIELD_FILE_PATH, 99);
+    let result = extract_string_field(&fields, VECTOR_FIELD_FILE_PATH, 99);
     let err = result.expect_err("extract_string_field should fail for out-of-bounds index");
     let err_msg = err.to_string();
     assert!(
@@ -97,17 +101,17 @@ fn test_extract_string_field_out_of_bounds_returns_error() {
 #[test]
 fn test_extract_string_field_valid_returns_ok() {
     let fields = vec![make_string_column(
-        crate::constants::VECTOR_FIELD_FILE_PATH,
+        VECTOR_FIELD_FILE_PATH,
         vec!["src/main.rs".to_owned()],
     )];
-    let result = schema::extract_string_field(&fields, crate::constants::VECTOR_FIELD_FILE_PATH, 0);
+    let result = extract_string_field(&fields, VECTOR_FIELD_FILE_PATH, 0);
     assert_eq!(result.unwrap(), "src/main.rs");
 }
 
 #[test]
 fn test_extract_long_field_missing_column_returns_error() {
     let fields: Vec<FieldColumn> = vec![];
-    let result = schema::extract_long_field(&fields, "missing", 0);
+    let result = extract_long_field(&fields, "missing", 0);
     let err = result.expect_err("extract_long_field should fail for missing column");
     let err_msg = err.to_string();
     assert!(
@@ -118,22 +122,16 @@ fn test_extract_long_field_missing_column_returns_error() {
 
 #[test]
 fn test_extract_long_field_valid_returns_ok() {
-    let fields = vec![make_long_column(
-        crate::constants::VECTOR_FIELD_START_LINE,
-        vec![42],
-    )];
-    let result = schema::extract_long_field(&fields, crate::constants::VECTOR_FIELD_START_LINE, 0);
+    let fields = vec![make_long_column(VECTOR_FIELD_START_LINE, vec![42])];
+    let result = extract_long_field(&fields, VECTOR_FIELD_START_LINE, 0);
     assert_eq!(result.unwrap(), 42);
 }
 
 #[test]
 fn test_convert_query_results_missing_fields_returns_error() {
     // Empty field columns — extract_string_field should fail
-    let fields: Vec<FieldColumn> = vec![make_string_column(
-        crate::constants::VECTOR_FIELD_ID,
-        vec!["1".to_owned()],
-    )];
-    let result = browser::convert_query_results(&fields, None);
+    let fields: Vec<FieldColumn> = vec![make_string_column(VECTOR_FIELD_ID, vec!["1".to_owned()])];
+    let result = convert_query_results(&fields, None);
     let err =
         result.expect_err("convert_query_results should fail when required fields are missing");
     let err_msg = err.to_string();

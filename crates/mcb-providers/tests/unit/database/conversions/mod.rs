@@ -1,0 +1,30 @@
+//! Conversion tests for SeaORM entity ↔ domain entity transformations.
+
+mod agent_session_tests;
+mod agent_worktree_assignment_tests;
+mod api_key_tests;
+mod branch_tests;
+mod checkpoint_tests;
+mod delegation_tests;
+mod error_pattern_match_tests;
+mod error_pattern_tests;
+mod issue_comment_tests;
+mod issue_label_assignment_tests;
+mod issue_label_tests;
+mod observation_tests;
+mod organization_tests;
+mod plan_review_tests;
+mod plan_tests;
+mod plan_version_tests;
+mod project_decision_tests;
+mod project_dependency_tests;
+mod project_issue_tests;
+mod project_phase_tests;
+mod project_tests;
+mod repository_tests;
+mod session_summary_tests;
+mod team_member_tests;
+mod team_tests;
+mod tool_call_tests;
+mod user_tests;
+mod worktree_tests;

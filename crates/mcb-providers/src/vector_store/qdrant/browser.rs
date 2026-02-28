@@ -1,4 +1,4 @@
-//! VectorStoreBrowser implementation for Qdrant.
+//! `VectorStoreBrowser` implementation for Qdrant.
 
 use async_trait::async_trait;
 

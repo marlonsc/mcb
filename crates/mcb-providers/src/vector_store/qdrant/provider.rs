@@ -1,4 +1,4 @@
-//! VectorStoreProvider implementation for Qdrant.
+//! `VectorStoreProvider` implementation for Qdrant.
 
 use std::collections::HashMap;
 

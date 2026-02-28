@@ -32,11 +32,9 @@ where
         })
 }
 
-pub(super) fn extract_string_field(
-    fields: &[FieldColumn],
-    name: &str,
-    index: usize,
-) -> Result<String> {
+/// Extract a string field from Milvus field columns.
+
+pub fn extract_string_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<String> {
     #[allow(clippy::wildcard_enum_match_arm)]
     extract_field(fields, name, index, "string", |value| match value {
         Value::String(text) => Some(text.to_string()),
@@ -44,14 +42,15 @@ pub(super) fn extract_string_field(
     })
 }
 
-pub(super) fn extract_long_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<i64> {
+/// Extract a long (i64) field from Milvus field columns.
+
+pub fn extract_long_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<i64> {
     #[allow(clippy::wildcard_enum_match_arm)]
     extract_field(fields, name, index, "long", |value| match value {
         Value::Long(number) => Some(number),
         _ => None,
     })
 }
-
 
 pub(super) fn build_collection_schema(
     name: &CollectionId,

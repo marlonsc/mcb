@@ -15,7 +15,11 @@ pub(super) fn query_row_count(query_results: &[FieldColumn]) -> usize {
     query_results.first().map_or(0, FieldColumn::len)
 }
 
-pub(super) fn convert_query_results(
+/// Convert Milvus query results to domain `SearchResult` objects.
+///
+/// Extracts file path, start line, and content from Milvus field columns.
+
+pub fn convert_query_results(
     query_results: &[FieldColumn],
     file_path_override: Option<&str>,
 ) -> Result<Vec<SearchResult>> {
