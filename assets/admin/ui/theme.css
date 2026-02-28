@@ -338,3 +338,56 @@ tr:hover {
 .p-2 { padding: var(--spacing-md); }
 .p-3 { padding: var(--spacing-lg); }
 .p-4 { padding: var(--spacing-xl); }
+
+/* Navigation Layout */
+.main-nav {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  gap: var(--spacing-md);
+}
+
+.nav-brand {
+  font-weight: var(--font-weight-bold);
+  font-size: var(--font-size-lg);
+}
+
+.nav-links {
+  display: flex;
+  gap: var(--spacing-md);
+  flex: 1;
+}
+
+/* Page Content */
+.content {
+  padding: var(--spacing-xl);
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Collections Grid — responsive columns */
+.collections-grid {
+  display: grid;
+  gap: var(--spacing-lg);
+  grid-template-columns: repeat(1, 1fr);
+}
+
+@media (min-width: 600px) {
+  .collections-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .collections-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (min-width: 1280px) {
+  .collections-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}

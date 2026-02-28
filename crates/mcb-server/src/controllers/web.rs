@@ -16,6 +16,12 @@ fn page_layout(title: &str, body: &str) -> String {
     <title>MCB Admin - {title}</title>
     <link rel="icon" href="/favicon.ico" type="image/svg+xml">
     <link rel="stylesheet" href="/ui/theme.css">
+    <script>
+        (function() {{
+            var saved = localStorage.getItem('mcb-theme');
+            if (saved) document.documentElement.setAttribute('data-theme', saved);
+        }})();
+    </script>
 </head>
 <body>
     <nav class="main-nav">
@@ -27,7 +33,7 @@ fn page_layout(title: &str, body: &str) -> String {
             <a href="/ui/jobs">Jobs</a>
             <a href="/ui/browse">Browse</a>
         </div>
-        <button title="Theme Toggle" aria-label="Toggle theme" onclick="toggleTheme()">🌓</button>
+        <button title="Toggle Theme" aria-label="Toggle theme" onclick="toggleTheme()">🌓</button>
     </nav>
     <main class="content">
         {body}
@@ -35,9 +41,11 @@ fn page_layout(title: &str, body: &str) -> String {
     <script src="/ui/shared.js"></script>
     <script>
         function toggleTheme() {{
-            const html = document.documentElement;
-            const current = html.getAttribute('data-theme') || 'light';
-            html.setAttribute('data-theme', current === 'light' ? 'dark' : 'light');
+            var html = document.documentElement;
+            var current = html.getAttribute('data-theme') || 'light';
+            var next = current === 'light' ? 'dark' : (current === 'dark' ? 'auto' : 'light');
+            html.setAttribute('data-theme', next);
+            localStorage.setItem('mcb-theme', next);
         }}
     </script>
 </body>

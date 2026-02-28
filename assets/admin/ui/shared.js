@@ -9,11 +9,11 @@
 
 /**
  * Get the current theme from localStorage or system preference
- * @returns {string} 'light' or 'dark'
+ * @returns {string} 'light', 'dark', or 'auto'
  */
 function getCurrentTheme() {
-  const stored = localStorage.getItem('admin-theme');
-  if (stored) {
+  const stored = localStorage.getItem('mcb-theme');
+  if (stored && ['light', 'dark', 'auto'].includes(stored)) {
     return stored;
   }
   
@@ -27,10 +27,10 @@ function getCurrentTheme() {
 
 /**
  * Set the theme and update the DOM
- * @param {string} theme - 'light' or 'dark'
+ * @param {string} theme - 'light', 'dark', or 'auto'
  */
 function setTheme(theme) {
-  if (theme !== 'light' && theme !== 'dark') {
+  if (!['light', 'dark', 'auto'].includes(theme)) {
     console.warn(`Invalid theme: ${theme}. Using 'light'.`);
     theme = 'light';
   }
@@ -39,7 +39,7 @@ function setTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   
   // Store preference
-  localStorage.setItem('admin-theme', theme);
+  localStorage.setItem('mcb-theme', theme);
   
   // Dispatch custom event for other components to listen
   window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme } }));
@@ -50,8 +50,8 @@ function setTheme(theme) {
  * @returns {string} The new theme
  */
 function toggleTheme() {
-  const current = getCurrentTheme();
-  const next = current === 'light' ? 'dark' : 'light';
+  const current = document.documentElement.getAttribute('data-theme') || 'light';
+  const next = current === 'light' ? 'dark' : (current === 'dark' ? 'auto' : 'light');
   setTheme(next);
   return next;
 }
@@ -66,7 +66,7 @@ function initializeTheme() {
   // Listen for system theme changes
   if (window.matchMedia) {
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-      if (!localStorage.getItem('admin-theme')) {
+      if (!localStorage.getItem('mcb-theme')) {
         setTheme(e.matches ? 'dark' : 'light');
       }
     });
