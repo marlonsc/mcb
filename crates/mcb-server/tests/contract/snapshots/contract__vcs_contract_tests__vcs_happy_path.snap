@@ -1,6 +1,5 @@
 ---
 source: crates/mcb-server/tests/contract/vcs_contract_tests.rs
-assertion_line: 19
 expression: "snapshot_payload(&request, status, &response)"
 ---
 {
@@ -10,7 +9,7 @@ expression: "snapshot_payload(&request, status, &response)"
     "params": {
       "arguments": {
         "action": "list_repositories",
-        "limit": 5,
+        "limit": 1,
         "repo_path": "<WORKSPACE_ROOT>"
       },
       "name": "vcs"
@@ -22,7 +21,7 @@ expression: "snapshot_payload(&request, status, &response)"
     "result": {
       "content": [
         {
-          "text": "{\n  \"repositories\": [\n    \"<WORKSPACE_ROOT>\",\n    \"<WORKSPACE_ROOT>/.git/beads-worktrees/beads-sync\",\n    \"<WORKSPACE_ROOT>/third-party/edgevec\",\n    \"<WORKSPACE_ROOT>/third-party/loco\",\n    \"<WORKSPACE_ROOT>/third-party/milvus-sdk-rust\",\n    \"<WORKSPACE_ROOT>/third-party/milvus-sdk-rust/milvus-proto\",\n    \"<WORKSPACE_ROOT>/third-party/rust-code-analysis\",\n    \"<WORKSPACE_ROOT>/third-party/sea-orm\",\n    \"<WORKSPACE_ROOT>/third-party/sea-orm-pro\",\n    \"<WORKSPACE_ROOT>/third-party/sea-query\",\n    \"<WORKSPACE_ROOT>/third-party/sea-schema\",\n    \"<WORKSPACE_ROOT>/third-party/sea-streamer\",\n    \"<WORKSPACE_ROOT>/third-party/seaography\"\n  ],\n  \"count\": 13\n}",
+          "text": "{\n  \"repositories\": [\n    \"<WORKSPACE_ROOT>\"\n  ],\n  \"count\": 1\n}",
           "type": "text"
         }
       ],

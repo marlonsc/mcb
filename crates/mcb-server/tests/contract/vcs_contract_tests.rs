@@ -11,7 +11,7 @@ async fn vcs_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Er
         json!({
             "action": "list_repositories",
             "repo_path": workspace_root(),
-            "limit": 5,
+            "limit": 1,
         }),
     );
     let (status, response) = call_tool(&request).await?;

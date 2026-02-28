@@ -40,11 +40,19 @@ pub async fn list_repositories(
         .await
         .map_err(|e| to_opaque_mcp_error(&e))?;
 
-    let repositories: Vec<String> = discovered_repos
+    let mut repositories: Vec<String> = discovered_repos
         .iter()
         // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
         .map(|repo| repo.path().to_str().unwrap_or_default().to_owned())
         .collect();
+
+    // Sort alphabetically for deterministic output across environments.
+    repositories.sort();
+
+    // Apply limit if specified.
+    if let Some(limit) = args.limit {
+        repositories.truncate(limit as usize);
+    }
 
     let result = ListRepositoriesResponse {
         count: repositories.len(),
