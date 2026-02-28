@@ -1,3 +1,5 @@
+#![allow(clippy::expect_used)]
+
 use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::hooks::{HookProcessor, PostToolUseContext, SessionStartContext};
 use rstest::rstest;
@@ -18,7 +20,7 @@ async fn test_hook_processor_creation() {
 #[tokio::test]
 async fn test_post_tool_use_hook_graceful_degradation(#[case] tool_name: &str) {
     let processor = HookProcessor::new(None);
-    let context = PostToolUseContext::new(tool_name.to_owned(), false);
+    let context = PostToolUseContext::new(tool_name.to_owned(), false).expect("test timestamp");
 
     let result = processor.process_post_tool_use(context).await;
     let err = result.expect_err("post_tool_use with no memory service should fail");
@@ -28,7 +30,8 @@ async fn test_post_tool_use_hook_graceful_degradation(#[case] tool_name: &str) {
 #[tokio::test]
 async fn test_session_start_hook_graceful_degradation() {
     let processor = HookProcessor::new(None);
-    let context = SessionStartContext::new(SessionId::from("test_session"));
+    let context =
+        SessionStartContext::new(SessionId::from("test_session")).expect("test timestamp");
 
     let result = processor.process_session_start(context).await;
     let err = result.expect_err("session_start with no memory service should fail");
@@ -45,7 +48,7 @@ async fn test_post_tool_use_context_enrichment(
     #[case] with_session_id: bool,
     #[case] with_metadata: bool,
 ) {
-    let mut context = PostToolUseContext::new(tool_name.to_owned(), false);
+    let mut context = PostToolUseContext::new(tool_name.to_owned(), false).expect("test timestamp");
 
     let session_id_val = SessionId::from("session_123");
     if with_session_id {
@@ -73,7 +76,7 @@ async fn test_post_tool_use_context_enrichment(
 #[tokio::test]
 async fn test_session_start_context_creation() {
     let sid = SessionId::from("session_456");
-    let context = SessionStartContext::new(sid);
+    let context = SessionStartContext::new(sid).expect("test timestamp");
     assert_eq!(context.session_id.as_str(), sid.as_str());
     assert!(context.timestamp > 0);
 }
@@ -81,7 +84,7 @@ async fn test_session_start_context_creation() {
 #[tokio::test]
 async fn test_hook_processor_default() {
     let processor = HookProcessor::default();
-    let context = PostToolUseContext::new("test".to_owned(), false);
+    let context = PostToolUseContext::new("test".to_owned(), false).expect("test timestamp");
 
     let result = processor.process_post_tool_use(context).await;
     let err = result.expect_err("default hook processor should fail without memory service");
@@ -90,11 +93,11 @@ async fn test_hook_processor_default() {
 
 #[tokio::test]
 async fn test_post_tool_use_error_status() {
-    let context = PostToolUseContext::new("failing_tool".to_owned(), true);
+    let context = PostToolUseContext::new("failing_tool".to_owned(), true).expect("test timestamp");
 
     assert_eq!(context.tool_name, "failing_tool");
 }
 
 fn create_test_context() -> PostToolUseContext {
-    PostToolUseContext::new("test_tool".to_owned(), false)
+    PostToolUseContext::new("test_tool".to_owned(), false).expect("test timestamp")
 }

@@ -66,7 +66,7 @@ impl KissValidator {
     }
 
     /// Helper for validating RCA-based function metrics.
-    /// Handles the boilerplate: for_each_kiss_file → parse_file_spaces → iterate functions → check metric.
+    /// Handles the boilerplate: `for_each_kiss_file` → `parse_file_spaces` → iterate functions → check metric.
     /// The closure `check` is called for each non-test function and should return Some(violation) if the metric exceeds threshold.
     fn validate_rca_fn_metric<F>(
         &self,
@@ -77,7 +77,7 @@ impl KissValidator {
         F: FnMut(&rust_code_analysis::FuncSpace, &PathBuf) -> Option<KissViolation>,
     {
         let mut violations = Vec::new();
-        mcb_domain::debug!("kiss", &format!("Checking {}", check_label));
+        mcb_domain::debug!("kiss", &format!("Checking {check_label}"));
 
         self.for_each_kiss_file(true, |path, content| {
             let Some(root) = rca_helpers::parse_file_spaces(&path, &content) else {
@@ -90,6 +90,7 @@ impl KissValidator {
                 if fn_name.starts_with(TEST_FUNCTION_PREFIX) {
                     continue;
                 }
+                #[allow(clippy::needless_borrow)]
                 if let Some(violation) = check(&space, &path) {
                     violations.push(violation);
                 }

@@ -73,9 +73,8 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
     // Match common assertion macros - allow leading whitespace for indented code
     // The pattern checks for assertions at the start of a line (with optional whitespace)
     // or preceded by whitespace/punctuation to avoid false positives like "some_assert!"
-    let real_assert_pattern = compile_regex(
-        r"(?:^|\s)(assert!|assert_eq!|assert_ne!|assert_matches!|debug_assert!|debug_assert_eq!|debug_assert_ne!|panic!)",
-    )?;
+    let real_assert_pattern =
+        compile_regex(r"(?:^|\s)(assert[a-z_]*!|assert_[a-z_]+\(|debug_assert[a-z_]*!|panic!)")?;
     let unwrap_pattern = compile_regex(r"\.unwrap\(|\.expect\(")?;
     let scan_input = QualityScanInput {
         test_attr_pattern: &test_attr_pattern,

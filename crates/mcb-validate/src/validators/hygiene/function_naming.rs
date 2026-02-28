@@ -34,7 +34,7 @@ pub fn validate_test_function_naming(config: &ValidationConfig) -> Result<Vec<Hy
     let tokio_test_pattern = compile_regex(r"#\[tokio::test\]")?;
     let fn_pattern = compile_regex(r"(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\(")?;
     let assert_pattern = compile_regex(
-        r"assert!|assert_eq!|assert_ne!|panic!|should_panic|\.unwrap\(|\.expect\(|Box<dyn\s|type_name::",
+        r"assert[a-z_]*!|assert_[a-z_]+\(|panic!|should_panic|\.unwrap\(|\.expect\(|Box<dyn\s|type_name::",
     )?;
     let scan_input = NamingScanInput {
         test_attr_pattern: &test_attr_pattern,
@@ -51,6 +51,9 @@ pub fn validate_test_function_naming(config: &ValidationConfig) -> Result<Vec<Hy
 
         for_each_file_under_root(config, &tests_dir, Some(LanguageId::Rust), |entry| {
             let path = &entry.absolute_path;
+            if path.to_str().is_some_and(|s| s.contains("/fixtures/")) {
+                return Ok(());
+            }
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
 

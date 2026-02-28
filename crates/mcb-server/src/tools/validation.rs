@@ -131,7 +131,8 @@ pub async fn trigger_post_tool_use_hook(
     execution_context: &ToolExecutionContext,
 ) -> Result<(), String> {
     let mut context =
-        PostToolUseContext::new(tool_name.to_owned(), result.is_error.unwrap_or(false));
+        PostToolUseContext::new(tool_name.to_owned(), result.is_error.unwrap_or(false))
+            .map_err(|e| e.to_string())?;
 
     if let Some(session_id) = &execution_context.session_id {
         context = context.with_session_id(SessionId::from_string(session_id));

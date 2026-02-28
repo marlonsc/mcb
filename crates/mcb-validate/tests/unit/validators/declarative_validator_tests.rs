@@ -5,6 +5,7 @@ use std::io;
 use std::path::Path;
 
 use mcb_validate::ValidationConfig;
+use mcb_validate::ValidationError;
 use mcb_validate::traits::validator::Validator;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;
 use tempfile::TempDir;
@@ -125,4 +126,83 @@ message: "Unwrap detected"
         "expected regex rule to execute when selectors are absent"
     );
     Ok(())
+}
+
+#[test]
+fn ast_query_matches_rust_function_names() {
+    let temp = TempDir::new().unwrap();
+    let root = temp.path();
+    write_workspace_manifest(root).unwrap();
+    write_validator_config(root).unwrap();
+    write_source_file(root, "pub fn first() {}\n\nfn second() { let _x = 1; }\n").unwrap();
+    write_rule(
+        root,
+        "AST002.yml",
+        r#"
+schema: "rule/v2"
+id: "AST002"
+name: "Tree-sitter query match"
+category: "quality"
+severity: "warning"
+enabled: true
+description: "Function declarations should match ast_query"
+rationale: "Coverage for tree-sitter query execution"
+engine: "regex"
+selectors:
+  - language: "rust"
+    node_type: "function_item"
+ast_query: "(function_item name: (identifier) @name)"
+message: "Function detected"
+"#,
+    )
+    .unwrap();
+
+    let validator = DeclarativeValidator::new(root);
+    let config = ValidationConfig::new(root);
+    let violations = validator.validate(&config).unwrap();
+
+    let ast_violations: Vec<_> = violations.iter().filter(|v| v.id() == "AST002").collect();
+    assert_eq!(
+        ast_violations.len(),
+        4,
+        "expected 2 selector + 2 ast_query matches"
+    );
+}
+
+#[test]
+fn invalid_ast_query_returns_config_error() {
+    let temp = TempDir::new().unwrap();
+    let root = temp.path();
+    write_workspace_manifest(root).unwrap();
+    write_validator_config(root).unwrap();
+    write_source_file(root, "pub fn first() {}\n").unwrap();
+    write_rule(
+        root,
+        "AST003.yml",
+        r#"
+schema: "rule/v2"
+id: "AST003"
+name: "Invalid tree-sitter query"
+category: "quality"
+severity: "warning"
+enabled: true
+description: "Invalid ast_query must error"
+rationale: "Coverage for query compilation error handling"
+engine: "regex"
+ast_query: "(function_item name: (identifier) @name"
+"#,
+    )
+    .unwrap();
+
+    let validator = DeclarativeValidator::new(root);
+    let config = ValidationConfig::new(root);
+    let result = validator.validate(&config);
+
+    match result {
+        Err(ValidationError::Config(message)) => {
+            assert!(message.contains("Invalid tree-sitter query"));
+        }
+        Err(other) => panic!("expected ValidationError::Config, got {other:?}"),
+        Ok(_) => panic!("expected validation to fail for invalid tree-sitter query"),
+    }
 }

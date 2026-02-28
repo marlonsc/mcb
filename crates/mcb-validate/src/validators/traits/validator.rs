@@ -21,6 +21,9 @@ use crate::filters::LanguageId;
 use crate::run_context::ValidationRunContext;
 use crate::traits::violation::Violation;
 
+/// Return type for named check closures.
+pub type CheckFn<'a> = Box<dyn FnOnce() -> Result<Vec<Box<dyn Violation>>> + 'a>;
+
 // ============================================================================
 // NamedCheck — a single executable sub-check
 // ============================================================================
@@ -31,10 +34,10 @@ use crate::traits::violation::Violation;
 /// The runner ([`run_checks`]) executes them sequentially with automatic
 /// timing and debug-level logging.
 pub struct NamedCheck<'a> {
-    /// Human-readable check name (e.g. "struct_fields", "function_params")
+    /// Human-readable check name (e.g. `struct_fields`, `function_params`)
     pub name: &'static str,
     /// Closure that runs the check and returns violations
-    pub run: Box<dyn FnOnce() -> Result<Vec<Box<dyn Violation>>> + 'a>,
+    pub run: CheckFn<'a>,
 }
 
 impl<'a> NamedCheck<'a> {
@@ -59,6 +62,10 @@ impl<'a> NamedCheck<'a> {
 /// This is the single place where the timing/logging pattern lives.
 /// All validators delegate to this (either via the default `validate()`
 /// implementation or by calling it directly).
+///
+/// # Errors
+///
+/// Returns an error if any named check fails.
 pub fn run_checks(
     validator_name: &str,
     checks: Vec<NamedCheck<'_>>,
@@ -99,6 +106,10 @@ pub trait Validator: Send + Sync {
     ///
     /// Default returns an empty list. Override this to expose sub-checks.
     /// The default `validate()` implementation uses this.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if building sub-checks fails.
     fn checks<'a>(&'a self, _config: &'a ValidationConfig) -> Result<Vec<NamedCheck<'a>>> {
         Ok(Vec::new())
     }
@@ -180,14 +191,13 @@ impl ValidatorRegistry {
 
     /// Run a single validator with timing, logging, and error handling
     fn run_single_validator(
-        &self,
-        validator: &Box<dyn Validator>,
+        validator: &dyn Validator,
         config: &ValidationConfig,
         trace_id: &str,
         all_violations: &mut Vec<Box<dyn Violation>>,
     ) {
         let started = std::time::Instant::now();
-        match validator.as_ref().validate(config) {
+        match validator.validate(config) {
             Ok(violations) => {
                 let count = violations.len();
                 let elapsed = started.elapsed();
@@ -267,8 +277,8 @@ impl ValidatorRegistry {
                     &format!("validator={}", validator.name())
                 );
 
-                self.run_single_validator(
-                    validator,
+                Self::run_single_validator(
+                    validator.as_ref(),
                     config,
                     active.trace_id(),
                     &mut all_violations,
@@ -336,8 +346,8 @@ impl ValidatorRegistry {
                         &format!("validator={}", validator.name())
                     );
 
-                    self.run_single_validator(
-                        validator,
+                    Self::run_single_validator(
+                        validator.as_ref(),
                         config,
                         active.trace_id(),
                         &mut all_violations,

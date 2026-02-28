@@ -230,19 +230,23 @@ def gen_from_model_field(field: str, convert: dict) -> str:
             f"            {domain_field}: m\n"
             f"                .{field}\n"
             f"                .as_deref()\n"
-            f"                .and_then(|s| serde_json::from_str(s).ok())\n"
+            f"                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = \"{field}\", error = %e, \"malformed JSON in DB column\")).ok())\n"
             f"                .unwrap_or_default(),"
         )
 
     if ctype == "json_array_required":
-        return f"            {domain_field}: serde_json::from_str(&m.{field}).unwrap_or_default(),"
+        return (
+            f"            {domain_field}: serde_json::from_str(&m.{field})\n"
+            f"                .map_err(|e| tracing::warn!(field = \"{field}\", error = %e, \"malformed JSON in DB column\"))\n"
+            f"                .unwrap_or_default(),"
+        )
 
     if ctype == "json_object":
         return (
             f"            {domain_field}: m\n"
             f"                .{field}\n"
             f"                .as_deref()\n"
-            f"                .and_then(|s| serde_json::from_str(s).ok())\n"
+            f"                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = \"{field}\", error = %e, \"malformed JSON in DB column\")).ok())\n"
             f"                .unwrap_or_default(),"
         )
 
@@ -252,7 +256,7 @@ def gen_from_model_field(field: str, convert: dict) -> str:
             f"            {domain_field}: m\n"
             f"                .{field}\n"
             f"                .as_deref()\n"
-            f"                .and_then(|s| serde_json::from_str::<{obj_type}>(s).ok()),"
+            f"                .and_then(|s| serde_json::from_str::<{obj_type}>(s).map_err(|e| tracing::warn!(field = \"{field}\", error = %e, \"malformed JSON in DB column\")).ok()),"
         )
 
     if ctype == "json_value":

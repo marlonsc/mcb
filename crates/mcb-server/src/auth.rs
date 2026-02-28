@@ -122,5 +122,6 @@ fn verify_api_key(hash: &str, candidate: &str) -> Result<bool> {
         });
     }
 
+    tracing::warn!(hash_prefix = %hash.chars().take(4).collect::<String>(), "unrecognized password hash format");
     Ok(false)
 }

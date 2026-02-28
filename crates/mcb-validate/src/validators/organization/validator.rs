@@ -3,6 +3,7 @@
 //!
 //! Organization validator implementation
 
+use super::violation::OrganizationViolation;
 use super::{
     domain_purity::validate_domain_traits_only, duplicate_strings::validate_duplicate_strings,
     file_placement::validate_file_placement, layer_violations::validate_layer_violations,
