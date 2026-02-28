@@ -25,10 +25,9 @@ fn create_seaorm_repositories(
     project_id: String,
 ) -> mcb_domain::error::Result<DatabaseRepositories> {
     let db = connection.downcast::<DatabaseConnection>().map_err(|_| {
-        mcb_domain::error::Error::Configuration {
-            message: "Expected sea_orm::DatabaseConnection but received different type".to_owned(),
-            source: None,
-        }
+        mcb_domain::error::Error::configuration(
+            "Expected sea_orm::DatabaseConnection but received different type",
+        )
     })?;
     let db = Arc::new(*db);
 

@@ -477,9 +477,7 @@ impl MilvusVectorStoreProvider {
                 let score = 1.0 / (1.0 + distance_squared.sqrt());
                 let fields = &search_result.field;
                 let start_line =
-                    Self::extract_long_field(fields, VECTOR_FIELD_START_LINE, index)?.max(
-                        Self::extract_long_field(fields, VECTOR_FIELD_LINE_NUMBER, index)?,
-                    ) as u32;
+                    Self::extract_long_field(fields, VECTOR_FIELD_START_LINE, index)? as u32;
 
                 results.push(SearchResult {
                     id: Self::value_to_id_string(Some(id_value.clone())),
@@ -509,9 +507,7 @@ impl MilvusVectorStoreProvider {
                 None => Self::extract_string_field(query_results, VECTOR_FIELD_FILE_PATH, index)?,
             };
             let start_line =
-                Self::extract_long_field(query_results, VECTOR_FIELD_START_LINE, index)?.max(
-                    Self::extract_long_field(query_results, VECTOR_FIELD_LINE_NUMBER, index)?,
-                ) as u32;
+                Self::extract_long_field(query_results, VECTOR_FIELD_START_LINE, index)? as u32;
 
             results.push(SearchResult {
                 id: Self::value_to_id_string(

@@ -154,12 +154,20 @@ pub trait ValidationOperationsInterface: Send + Sync {
 
 /// Port for submitting validation jobs to the execution infrastructure.
 ///
-/// Centralizes all validator execution: implementations use Loco workers
+/// Centralizes all validator execution: implementations use background workers
 /// (or in-process execution) and track progress via [`ValidationOperationsInterface`].
 pub trait ValidatorJobRunner: Send + Sync {
     /// Submit a validation job for the given workspace and validators.
     ///
     /// Returns an [`OperationId`] that can be used to track progress via
     /// [`ValidationOperationsInterface`].
-    fn submit_validation_job(&self, workspace: &str, validators: &[String]) -> OperationId;
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the validation job cannot be submitted.
+    fn submit_validation_job(
+        &self,
+        workspace: &str,
+        validators: &[String],
+    ) -> Result<OperationId, String>;
 }

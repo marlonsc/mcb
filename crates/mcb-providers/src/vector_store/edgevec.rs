@@ -227,9 +227,12 @@ impl EdgeVecVectorStoreProvider {
         F: FnOnce(oneshot::Sender<Result<T>>) -> EdgeVecMessage,
     {
         let (tx, rx) = oneshot::channel();
-        let _ = self.sender.send(build_message(tx)).await;
+        self.sender
+            .send(build_message(tx))
+            .await
+            .map_err(|_| Error::vector_db("Actor channel closed"))?;
         rx.await
-            .unwrap_or_else(|_| Err(Error::vector_db("Actor closed")))
+            .map_err(|_| Error::vector_db("Actor response channel closed"))?
     }
     async fn send_core<T, F>(&self, f: F) -> Result<T>
     where

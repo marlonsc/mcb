@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
 //!
-pub mod admin;
+
 pub mod display;
 pub mod fields;
 pub mod git;

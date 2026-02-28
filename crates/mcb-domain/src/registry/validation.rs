@@ -109,10 +109,7 @@ pub fn build_validators(workspace_root: &Path) -> Result<Vec<Arc<dyn RuleValidat
     let mut out = Vec::with_capacity(VALIDATOR_ENTRIES.len());
     for entry in VALIDATOR_ENTRIES {
         let v = (entry.build)(workspace_root.to_path_buf()).map_err(|e| {
-            crate::error::Error::Configuration {
-                message: format!("validator '{}': {}", entry.name, e),
-                source: None,
-            }
+            crate::error::Error::configuration(format!("validator '{}': {}", entry.name, e))
         })?;
         out.push(v);
     }

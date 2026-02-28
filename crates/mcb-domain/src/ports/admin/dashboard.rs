@@ -6,8 +6,6 @@
 //! Interfaces for querying dashboard and admin analytics data,
 //! including observation counts, tool usage, and session statistics.
 
-#![allow(dead_code)]
-
 use async_trait::async_trait;
 
 use crate::error::Result;

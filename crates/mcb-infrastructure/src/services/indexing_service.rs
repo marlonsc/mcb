@@ -41,6 +41,15 @@ use mcb_domain::registry::services::{
 };
 use mcb_domain::value_objects::{CollectionId, OperationId};
 
+/// Registry provider name for SeaORM database repositories.
+const DATABASE_PROVIDER: &str = "seaorm";
+
+/// Default namespace for database repositories.
+const DEFAULT_NAMESPACE: &str = "default";
+
+/// Registry provider name for universal language chunking.
+const LANGUAGE_PROVIDER: &str = "universal";
+
 use crate::constants::use_cases::SKIP_DIRS;
 use crate::infrastructure::DefaultIndexingOperations;
 
@@ -448,15 +457,15 @@ impl IndexingServiceImpl {
 
         // Incremental check using file hashes
         let current_hash = mcb_domain::utils::compute_content_hash(&content);
-        // Cannot collapse: outer `if let` unwraps Option, inner `if` checks a bool condition.
-        #[allow(clippy::collapsible_if)]
-        if let Some(repo) = &self.file_hash_repository {
-            if !repo
-                .has_changed(&collection.to_string(), &relative_path, &current_hash)
-                .await?
+        match &self.file_hash_repository {
+            Some(repo)
+                if !repo
+                    .has_changed(&collection.to_string(), &relative_path, &current_hash)
+                    .await? =>
             {
                 return Ok(ProcessResult::Skipped);
             }
+            _ => {}
         }
 
         // Generate semantic chunks
@@ -497,10 +506,15 @@ fn build_indexing_service_from_registry(
     let db = ctx.db.clone();
 
     let context_service = resolve_context_service(context)?;
-    let language_chunker = resolve_language_provider(&LanguageProviderConfig::new("universal"))?;
+    let language_chunker =
+        resolve_language_provider(&LanguageProviderConfig::new(LANGUAGE_PROVIDER))?;
 
     // Use "seaorm" — the actual registry provider — not the user-facing config name.
-    let repositories = resolve_database_repositories("seaorm", Box::new(db), "default".to_owned())?;
+    let repositories = resolve_database_repositories(
+        DATABASE_PROVIDER,
+        Box::new(db),
+        DEFAULT_NAMESPACE.to_owned(),
+    )?;
 
     let indexing_ops: Arc<dyn IndexingOperationsInterface> =
         Arc::new(DefaultIndexingOperations::new());

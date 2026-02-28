@@ -20,17 +20,19 @@ impl SeaOrmAuthRepositoryAdapter {
         Self { db }
     }
 
-    fn map_user(model: users::Model) -> User {
-        User {
+    fn map_user(model: users::Model) -> Result<User> {
+        Ok(User {
             id: model.id,
             org_id: model.org_id,
             email: model.email,
             display_name: model.display_name,
-            role: model.role.parse::<UserRole>().unwrap_or_default(),
+            role: model.role.parse::<UserRole>().map_err(|e| {
+                Error::authentication(format!("Invalid user role '{}': {}", model.role, e))
+            })?,
             api_key_hash: model.api_key_hash,
             created_at: model.created_at,
             updated_at: model.updated_at,
-        }
+        })
     }
 }
 
@@ -38,29 +40,24 @@ impl SeaOrmAuthRepositoryAdapter {
 impl AuthRepositoryPort for SeaOrmAuthRepositoryAdapter {
     async fn find_users_by_api_key_hash(&self, key_hash: &str) -> Result<Vec<UserWithApiKey>> {
         let users_with_keys = users::Entity::find()
-            .filter(users::Column::ApiKeyHash.is_not_null())
+            .filter(users::Column::ApiKeyHash.eq(key_hash.to_owned()))
             .all(&self.db)
             .await
             .map_err(|e| Error::database(format!("find users with API key hashes failed: {e}")))?;
 
-        let mut matches = Vec::new();
-        for user_model in users_with_keys {
-            let Some(stored_hash) = user_model.api_key_hash.clone() else {
-                continue;
-            };
-            if stored_hash != key_hash {
-                continue;
-            }
-
-            let user = Self::map_user(user_model.clone());
-            matches.push(UserWithApiKey {
-                user,
-                api_key_id: user_model.id,
-                api_key_hash: stored_hash,
-            });
-        }
-
-        Ok(matches)
+        let results = users_with_keys
+            .into_iter()
+            .filter_map(|user_model| {
+                let user = Self::map_user(user_model.clone()).ok()?;
+                let api_key_hash = user_model.api_key_hash?;
+                Some(UserWithApiKey {
+                    user,
+                    api_key_id: user_model.id,
+                    api_key_hash,
+                })
+            })
+            .collect();
+        Ok(results)
     }
 
     async fn verify_api_key(&self, key_hash: &str) -> Result<Option<ApiKeyInfo>> {

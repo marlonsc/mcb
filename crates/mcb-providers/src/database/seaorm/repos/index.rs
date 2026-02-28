@@ -466,17 +466,15 @@ impl FileHashRepository for SeaOrmIndexRepository {
 
         use sha2::{Digest, Sha256};
 
-        let file = std::fs::File::open(path).map_err(|e| Error::Database {
-            message: format!("open file for hashing: {}", path.display()),
-            source: Some(Box::new(e)),
+        let file = std::fs::File::open(path).map_err(|e| {
+            Error::database_with_source(format!("open file for hashing: {}", path.display()), e)
         })?;
         let mut reader = BufReader::new(file);
         let mut hasher = Sha256::new();
         let mut buf = [0u8; 8192];
         loop {
-            let n = reader.read(&mut buf).map_err(|e| Error::Database {
-                message: format!("read file for hashing: {}", path.display()),
-                source: Some(Box::new(e)),
+            let n = reader.read(&mut buf).map_err(|e| {
+                Error::database_with_source(format!("read file for hashing: {}", path.display()), e)
             })?;
             if n == 0 {
                 break;

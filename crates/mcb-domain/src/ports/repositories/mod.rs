@@ -1,5 +1,3 @@
-#![allow(unused_imports)]
-
 //!
 //! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
 //!

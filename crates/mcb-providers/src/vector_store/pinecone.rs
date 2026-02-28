@@ -292,6 +292,13 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
                 "Cannot insert empty vectors array".to_owned(),
             ));
         }
+        if vectors.len() != metadata.len() {
+            return Err(Error::vector_db(format!(
+                "Vectors/metadata length mismatch: vectors={}, metadata={}",
+                vectors.len(),
+                metadata.len()
+            )));
+        }
         let collection_str = collection.to_string();
 
         let mut ids = Vec::with_capacity(vectors.len());
@@ -381,7 +388,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
 
         let response = self
             .request(
-                reqwest::Method::GET,
+                reqwest::Method::POST,
                 "/vectors/fetch",
                 Some(serde_json::json!({ "ids": ids, "namespace": collection_str })),
             )

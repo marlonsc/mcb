@@ -67,12 +67,8 @@ pub fn resolve_database_repositories(
 ) -> crate::error::Result<DatabaseRepositories> {
     for entry in DATABASE_REPOSITORY_PROVIDERS {
         if entry.name == provider_name {
-            return (entry.build)(connection, namespace).map_err(|e| {
-                crate::error::Error::Configuration {
-                    message: e.to_string(),
-                    source: None,
-                }
-            });
+            return (entry.build)(connection, namespace)
+                .map_err(|e| crate::error::Error::configuration(e.to_string()));
         }
     }
 
@@ -81,12 +77,9 @@ pub fn resolve_database_repositories(
         .map(|entry| entry.name)
         .collect();
 
-    Err(crate::error::Error::Configuration {
-        message: format!(
-            "Unknown database repository provider '{provider_name}'. Available providers: {available:?}"
-        ),
-        source: None,
-    })
+    Err(crate::error::Error::configuration(format!(
+        "Unknown database repository provider '{provider_name}'. Available providers: {available:?}"
+    )))
 }
 
 /// List all registered database repository providers.

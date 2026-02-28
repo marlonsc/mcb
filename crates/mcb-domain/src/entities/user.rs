@@ -24,8 +24,10 @@ crate::define_entity! {
 
 crate::define_string_enum! {
     /// Role a user holds within an organization.
+    #[derive(Default)]
     pub enum UserRole [strum = "lowercase", schema] {
         /// Full administrative access.
+        #[default]
         Admin,
         /// Standard member with read/write access.
         Member,
@@ -33,13 +35,5 @@ crate::define_string_enum! {
         Viewer,
         /// Service account (API-only, used by agents).
         Service,
-    }
-}
-
-// Manual impl because `define_string_enum!` does not derive Default for all enums.
-#[allow(clippy::derivable_impls)]
-impl Default for UserRole {
-    fn default() -> Self {
-        Self::Admin
     }
 }

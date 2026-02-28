@@ -41,7 +41,11 @@ impl DefaultValidatorJobRunner {
 
 impl ValidatorJobRunner for DefaultValidatorJobRunner {
     #[instrument(skip(self), fields(workspace = %workspace))]
-    fn submit_validation_job(&self, workspace: &str, validators: &[String]) -> OperationId {
+    fn submit_validation_job(
+        &self,
+        workspace: &str,
+        validators: &[String],
+    ) -> Result<OperationId, String> {
         let op_id = self.validation_ops.start_operation(workspace, validators);
         let ops = Arc::clone(&self.validation_ops);
         let svc = Arc::clone(&self.validation_service);
@@ -78,6 +82,6 @@ impl ValidatorJobRunner for DefaultValidatorJobRunner {
                 }
             }
         });
-        op_id
+        Ok(op_id)
     }
 }

@@ -2,8 +2,6 @@
 //! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
 //!
 
-#![allow(unused_imports)]
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
 //!
 
 pub mod dashboard;

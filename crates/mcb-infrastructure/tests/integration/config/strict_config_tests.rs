@@ -66,23 +66,15 @@ fn remove_required_key_from_yaml(yaml: &str) -> String {
 }
 
 fn load_app_config_from_yaml_path(path: &Path) -> DomainResult<AppConfig> {
-    let content = fs::read_to_string(path).map_err(|e| Error::Configuration {
-        message: format!("Failed to read {}: {e}", path.display()),
-        source: None,
-    })?;
-    let yaml: serde_yaml::Value =
-        serde_yaml::from_str(&content).map_err(|e| Error::Configuration {
-            message: format!("Failed to parse YAML: {e}"),
-            source: None,
-        })?;
+    let content = fs::read_to_string(path)
+        .map_err(|e| Error::config_with_source(format!("Failed to read {}", path.display()), e))?;
+    let yaml: serde_yaml::Value = serde_yaml::from_str(&content)
+        .map_err(|e| Error::config_with_source("Failed to parse YAML", e))?;
     let settings = yaml
         .get("settings")
         .ok_or_else(|| Error::ConfigMissing("No 'settings' key in config".to_owned()))?;
-    let config: AppConfig =
-        serde_yaml::from_value(settings.clone()).map_err(|e| Error::Configuration {
-            message: format!("Failed to deserialize AppConfig: {e}"),
-            source: None,
-        })?;
+    let config: AppConfig = serde_yaml::from_value(settings.clone())
+        .map_err(|e| Error::config_with_source("Failed to deserialize AppConfig", e))?;
     validate_app_config(&config)?;
     Ok(config)
 }

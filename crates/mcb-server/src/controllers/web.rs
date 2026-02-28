@@ -204,20 +204,12 @@ fn html_escape(s: &str) -> String {
 ///
 /// Fails when collection data cannot be loaded.
 pub async fn browse_page(Extension(state): Extension<McbState>) -> Result<Response> {
-    let collections = state
-        .vector_store
-        .list_collections()
-        .await
-        .unwrap_or_default();
+    let collections = state.vector_store.list_collections().await?;
 
     let mut all_chunks: Vec<mcb_domain::value_objects::SearchResult> = Vec::new();
     for collection in &collections {
         let id = CollectionId::from_string(&collection.name);
-        let vecs = state
-            .vector_store
-            .list_vectors(&id, 50)
-            .await
-            .unwrap_or_default();
+        let vecs = state.vector_store.list_vectors(&id, 50).await?;
         all_chunks.extend(vecs);
     }
 

@@ -23,7 +23,7 @@ impl SeaOrmDashboardAdapter {
     where
         E: std::error::Error + Send + Sync + 'static,
     {
-        Error::memory_with_source(context, source)
+        Error::database_with_source(context, source)
     }
 
     fn year_month_expr(&self) -> &'static str {
@@ -171,7 +171,7 @@ impl DashboardQueryPort for SeaOrmDashboardAdapter {
             .map_err(|e| Self::db_err("query agent session stats", e))?
             .into_iter()
             .next()
-            .ok_or_else(|| Error::memory("missing agent session stats row"))?;
+            .ok_or_else(|| Error::database("missing agent session stats row"))?;
 
         let total_sessions = Self::decode_count(&row, "total_sessions")
             .map_err(|e| Self::db_err("decode total sessions", e))?;

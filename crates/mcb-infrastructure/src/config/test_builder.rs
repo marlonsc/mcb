@@ -41,24 +41,16 @@ fn load_test_config() -> Result<AppConfig> {
         for filename in &filenames {
             let candidate = dir.join("config").join(filename);
             if candidate.exists() {
-                let content =
-                    std::fs::read_to_string(&candidate).map_err(|e| Error::Configuration {
-                        message: format!("Failed to read {}: {e}", candidate.display()),
-                        source: None,
-                    })?;
-                let yaml: serde_yaml::Value =
-                    serde_yaml::from_str(&content).map_err(|e| Error::Configuration {
-                        message: format!("Failed to parse YAML: {e}"),
-                        source: None,
-                    })?;
+                let content = std::fs::read_to_string(&candidate).map_err(|e| {
+                    Error::config_with_source(format!("Failed to read {}", candidate.display()), e)
+                })?;
+                let yaml: serde_yaml::Value = serde_yaml::from_str(&content)
+                    .map_err(|e| Error::config_with_source("Failed to parse YAML", e))?;
                 let settings = yaml
                     .get("settings")
                     .ok_or_else(|| Error::ConfigMissing("No 'settings' key in config".into()))?;
-                let config: AppConfig =
-                    serde_yaml::from_value(settings.clone()).map_err(|e| Error::Configuration {
-                        message: format!("Failed to deserialize AppConfig: {e}"),
-                        source: None,
-                    })?;
+                let config: AppConfig = serde_yaml::from_value(settings.clone())
+                    .map_err(|e| Error::config_with_source("Failed to deserialize AppConfig", e))?;
                 return Ok(config);
             }
         }

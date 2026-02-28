@@ -1,3 +1,19 @@
+use std::collections::HashMap;
+use std::fmt;
+use std::sync::Arc;
+use std::time::Duration;
+
+use async_trait::async_trait;
+use dashmap::DashMap;
+use reqwest::Client;
+use serde_json::Value;
+
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
+use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
+use mcb_domain::utils::id;
+use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
+
 use crate::constants::{
     HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT,
     STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS, STATS_FIELD_VECTORS_COUNT,
@@ -5,20 +21,6 @@ use crate::constants::{
 };
 use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
 use crate::utils::vector_store::search_result_from_json_metadata;
-use async_trait::async_trait;
-use dashmap::DashMap;
-use mcb_domain::constants::http::CONTENT_TYPE_JSON;
-use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
-use mcb_domain::utils::id;
-use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
-use reqwest::Client;
-use serde_json::Value;
-use std::collections::HashMap;
-use std::fmt;
-use std::sync::Arc;
-use std::time::Duration;
-
 /// Qdrant vector search engine client.
 pub struct QdrantVectorStoreProvider {
     base_url: String,
@@ -109,18 +111,13 @@ impl QdrantVectorStoreProvider {
         items: &Value,
         warn_message: &'static str,
         warn_field: &'static str,
-    ) -> Vec<SearchResult> {
-        items.as_array().map_or_else(
-            || {
-                mcb_domain::warn!("qdrant", warn_message, &warn_field);
-                Vec::new()
-            },
-            |arr| {
-                arr.iter()
-                    .map(|item| Self::point_to_search_result(item, 1.0))
-                    .collect()
-            },
-        )
+    ) -> Result<Vec<SearchResult>> {
+        items
+            .as_array()
+            .ok_or_else(|| Error::vector_db(format!("Qdrant: {warn_message} ({warn_field})")))?
+            .iter()
+            .map(|item| Ok(Self::point_to_search_result(item, 1.0)))
+            .collect()
     }
 
     fn map_scored_search_results(response: &Value) -> Result<Vec<SearchResult>> {
@@ -305,7 +302,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
             &response["result"]["points"],
             "payload missing or malformed, using empty default",
             "search_result.payload",
-        );
+        )?;
 
         results.sort_by_key(|r| r.start_line);
         Ok(results)
@@ -440,7 +437,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
             &response["result"],
             "vectors field missing or malformed, using empty default",
             "search_result.vectors",
-        );
+        )?;
 
         Ok(results)
     }
@@ -466,7 +463,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
             &response["result"]["points"],
             "ID extraction failed, using empty default",
             "search_result.id",
-        );
+        )?;
 
         Ok(results)
     }

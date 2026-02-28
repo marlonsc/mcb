@@ -5,6 +5,7 @@
 //! Provides YAML configuration loading (Loco convention), validation, and
 //! type-safe configuration for all system components.
 
+mod admin_config;
 mod mcp_context_config;
 pub mod paths;
 pub mod test_builder;
@@ -18,6 +19,8 @@ pub use types::{
     DatabaseConfigContainer, LoggingConfig,
 };
 
+pub use admin_config::{load_admin_config, resolve_admin_config_root};
+pub use mcp_context_config::{GitConfig, McpContextConfig};
 pub use mcp_context_config::{GitConfig, McpContextConfig};
 pub use paths::{
     COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, VCS_LOCK_FILENAME,

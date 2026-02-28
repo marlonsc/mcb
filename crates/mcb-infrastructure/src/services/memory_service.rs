@@ -47,6 +47,18 @@ use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::{CollectionId, Embedding, ObservationId, SessionId};
 use std::str::FromStr;
 
+/// Registry provider name for SeaORM database repositories.
+const DATABASE_PROVIDER: &str = "seaorm";
+
+/// Default namespace for database repositories.
+const DEFAULT_NAMESPACE: &str = "default";
+
+/// Default embedding provider name (null provider when not configured).
+const DEFAULT_EMBEDDING_PROVIDER: &str = "null";
+
+/// Default vector store provider name (null provider when not configured).
+const DEFAULT_VECTOR_STORE_PROVIDER: &str = "null";
+
 use crate::constants::use_cases::{MEMORY_COLLECTION_NAME, OBSERVATION_PREVIEW_LENGTH};
 
 /// Hybrid memory service combining relational metadata with semantic vector search.
@@ -535,7 +547,7 @@ fn build_memory_service_from_registry(
             .embedding
             .provider
             .as_deref()
-            .unwrap_or("null"),
+            .unwrap_or(DEFAULT_EMBEDDING_PROVIDER),
     );
     if let Some(ref v) = config.providers.embedding.cache_dir {
         embed_cfg = embed_cfg.with_cache_dir(v.clone());
@@ -562,7 +574,7 @@ fn build_memory_service_from_registry(
             .vector_store
             .provider
             .as_deref()
-            .unwrap_or("null"),
+            .unwrap_or(DEFAULT_VECTOR_STORE_PROVIDER),
     );
     if let Some(ref v) = config.providers.vector_store.address {
         vec_cfg = vec_cfg.with_uri(v.clone());
@@ -578,13 +590,13 @@ fn build_memory_service_from_registry(
 
     // Resolve memory repository from database providers
     let repos = mcb_domain::registry::database::resolve_database_repositories(
-        "seaorm",
+        DATABASE_PROVIDER,
         Box::new(ctx.db.clone()),
-        "default".to_owned(),
+        DEFAULT_NAMESPACE.to_owned(),
     )?;
 
     Ok(Arc::new(MemoryServiceImpl::new(
-        "default".to_owned(),
+        DEFAULT_NAMESPACE.to_owned(),
         repos.memory,
         embedding,
         vector_store,

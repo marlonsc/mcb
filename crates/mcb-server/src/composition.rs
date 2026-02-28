@@ -41,6 +41,17 @@ use mcb_infrastructure::services::{
 use crate::mcp_server::{McpEntityRepositories, McpServer, McpServices};
 use crate::state::McpServerBootstrap;
 use crate::tools::ExecutionFlow;
+/// Registry provider name for SeaORM database repositories.
+const DATABASE_PROVIDER: &str = "seaorm";
+
+/// Default namespace for database repositories.
+const DEFAULT_NAMESPACE: &str = "default";
+
+/// Registry provider name for universal language chunking.
+const LANGUAGE_PROVIDER: &str = "universal";
+
+/// Registry provider name for Git VCS.
+const VCS_PROVIDER: &str = "git";
 
 /// Build MCP server and dashboard/auth ports from a resolution context.
 ///
@@ -60,9 +71,9 @@ pub fn build_mcp_server_bootstrap(
 
     // 1. Resolve DB repos (unchanged)
     let repos = resolve_database_repositories(
-        "seaorm",
+        DATABASE_PROVIDER,
         Box::new(resolution_ctx.db.clone()),
-        "default".to_owned(),
+        DEFAULT_NAMESPACE.to_owned(),
     )?;
 
     // 2. Resolve shared providers ONCE (single-resolution DI)
@@ -84,7 +95,8 @@ pub fn build_mcp_server_bootstrap(
     let search_service: Arc<dyn SearchServiceInterface> =
         Arc::new(SearchServiceImpl::new(Arc::clone(&context_service)));
 
-    let language_chunker = resolve_language_provider(&LanguageProviderConfig::new("universal"))?;
+    let language_chunker =
+        resolve_language_provider(&LanguageProviderConfig::new(LANGUAGE_PROVIDER))?;
     let indexing_service: Arc<dyn IndexingServiceInterface> = Arc::new(
         IndexingServiceImpl::new_with_file_hash_repository(IndexingServiceWithHashDeps {
             service: IndexingServiceDeps {
@@ -99,7 +111,7 @@ pub fn build_mcp_server_bootstrap(
     );
 
     let memory_service: Arc<dyn MemoryServiceInterface> = Arc::new(MemoryServiceImpl::new(
-        "default".to_owned(),
+        DEFAULT_NAMESPACE.to_owned(),
         repos.memory,
         Arc::clone(&embedding_provider),
         Arc::clone(&vector_store_provider),
@@ -114,10 +126,10 @@ pub fn build_mcp_server_bootstrap(
         memory: memory_service,
         agent_session: resolve_agent_session_service(raw_ctx)?,
         project: resolve_project_detection_service(&ProjectDetectionServiceConfig::new(
-            "universal",
+            LANGUAGE_PROVIDER,
         ))?,
         project_workflow: Arc::clone(&repos.project),
-        vcs: resolve_vcs_provider(&VcsProviderConfig::new("git"))?,
+        vcs: resolve_vcs_provider(&VcsProviderConfig::new(VCS_PROVIDER))?,
         entities: McpEntityRepositories {
             vcs: Arc::clone(&repos.vcs_entity),
             plan: Arc::clone(&repos.plan_entity),
