@@ -19,6 +19,9 @@ use std::sync::{Arc, Mutex, OnceLock};
 use tokio::process::Command;
 use tokio::time::{Duration, timeout};
 
+/// Startup timeout -- longer to allow fastembed model download on first cold CI run.
+/// The `AllMiniLML6V2` ONNX model (~90MB) must be downloaded from `HuggingFace` on first run.
+const STARTUP_TIMEOUT: Duration = Duration::from_secs(120);
 type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 // =============================================================================
@@ -118,7 +121,7 @@ fn create_test_command() -> Command {
 #[serial]
 #[tokio::test]
 async fn test_stdio_no_ansi_codes_in_output() -> TestResult {
-    let _ = timeout(Duration::from_secs(10), async {
+    let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
         let client =
@@ -141,7 +144,7 @@ async fn test_stdio_no_ansi_codes_in_output() -> TestResult {
         Ok::<(), Box<dyn std::error::Error>>(())
     })
     .await
-    .map_err(|_| "Test timeout after 10 seconds")?;
+    .map_err(|_| "Test timeout")?;
     Ok(())
 }
 
@@ -149,7 +152,7 @@ async fn test_stdio_no_ansi_codes_in_output() -> TestResult {
 #[serial]
 #[tokio::test]
 async fn test_stdio_response_is_valid_json() -> TestResult {
-    let _ = timeout(Duration::from_secs(10), async {
+    let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
         let client =
@@ -174,7 +177,7 @@ async fn test_stdio_response_is_valid_json() -> TestResult {
         Ok::<(), Box<dyn std::error::Error>>(())
     })
     .await
-    .map_err(|_| "Test timeout after 10 seconds")?;
+    .map_err(|_| "Test timeout")?;
     Ok(())
 }
 
@@ -186,7 +189,7 @@ async fn test_stdio_response_is_valid_json() -> TestResult {
 #[serial]
 #[tokio::test]
 async fn test_stdio_roundtrip_tools_list() -> TestResult {
-    let _ = timeout(Duration::from_secs(10), async {
+    let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
         let client =
@@ -243,7 +246,7 @@ async fn test_stdio_roundtrip_tools_list() -> TestResult {
         Ok::<(), Box<dyn std::error::Error>>(())
     })
     .await
-    .map_err(|_| "Test timeout after 10 seconds")?;
+    .map_err(|_| "Test timeout")?;
     Ok(())
 }
 
@@ -251,7 +254,7 @@ async fn test_stdio_roundtrip_tools_list() -> TestResult {
 #[serial]
 #[tokio::test]
 async fn test_stdio_roundtrip_initialize() -> TestResult {
-    let _ = timeout(Duration::from_secs(10), async {
+    let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
         let client =
@@ -284,7 +287,7 @@ async fn test_stdio_roundtrip_initialize() -> TestResult {
         Ok::<(), Box<dyn std::error::Error>>(())
     })
     .await
-    .map_err(|_| "Test timeout after 10 seconds")?;
+    .map_err(|_| "Test timeout")?;
     Ok(())
 }
 
@@ -300,7 +303,7 @@ async fn test_stdio_roundtrip_initialize() -> TestResult {
 #[serial]
 #[tokio::test]
 async fn test_stdio_error_response_format() -> TestResult {
-    let _ = timeout(Duration::from_secs(10), async {
+    let _ = timeout(STARTUP_TIMEOUT, async {
         let cmd = create_test_command();
         let (transport, _stderr) = rmcp::transport::child_process::TokioChildProcess::builder(cmd)
             .stderr(Stdio::piped())
@@ -337,7 +340,7 @@ async fn test_stdio_error_response_format() -> TestResult {
         Ok::<(), Box<dyn std::error::Error>>(())
     })
     .await
-    .map_err(|_| "Test timeout after 10 seconds")?;
+    .map_err(|_| "Test timeout")?;
     Ok(())
 }
 
@@ -345,7 +348,7 @@ async fn test_stdio_error_response_format() -> TestResult {
 #[serial]
 #[tokio::test]
 async fn test_stdio_logs_go_to_stderr() -> TestResult {
-    let _ = timeout(Duration::from_secs(10), async {
+    let _ = timeout(STARTUP_TIMEOUT, async {
         let cmd = create_test_command();
         let (transport, stderr_handle) =
             rmcp::transport::child_process::TokioChildProcess::builder(cmd)
@@ -400,6 +403,6 @@ async fn test_stdio_logs_go_to_stderr() -> TestResult {
         Ok::<(), Box<dyn std::error::Error>>(())
     })
     .await
-    .map_err(|_| "Test timeout after 10 seconds")?;
+    .map_err(|_| "Test timeout")?;
     Ok(())
 }

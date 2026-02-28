@@ -16,9 +16,13 @@ use std::sync::{Arc, Mutex, OnceLock};
 use tokio::process::Command;
 use tokio::time::{Duration, timeout};
 
-/// Per-operation timeout — prevents any single MCP call or shutdown from hanging.
+/// Per-operation timeout -- prevents any single MCP call or shutdown from hanging.
 const OP_TIMEOUT: Duration = Duration::from_secs(10);
 
+/// Server startup timeout -- longer to allow fastembed model download on first cold CI run.
+/// The `AllMiniLML6V2` ONNX model (~90MB) must be downloaded from `HuggingFace` on first run.
+/// Subsequent runs use the cached model and start in <3s.
+const STARTUP_TIMEOUT: Duration = Duration::from_secs(120);
 pub type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 // --- Temp DB cleanup ---
@@ -124,9 +128,9 @@ pub async fn create_client() -> Result<RunningService<RoleClient, ()>, Box<dyn s
     if let Some(pid) = transport.id() {
         register_child_pid(pid);
     }
-    let client = timeout(OP_TIMEOUT, ().serve(transport))
+    let client = timeout(STARTUP_TIMEOUT, ().serve(transport))
         .await
-        .map_err(|_| "Timeout: mcb server failed to start within 10s")?
+        .map_err(|_| "Timeout: mcb server failed to start within 120s (fastembed model may be downloading on first run)")?
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
     Ok(client)
 }

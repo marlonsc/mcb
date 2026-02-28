@@ -248,6 +248,13 @@ jobs:
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
+      - name: Cache fastembed models
+        uses: actions/cache@6849a6489940f00c2f30c0fb92c6274307ccb58a # v4.1.2
+        with:
+          path: .cache/mcb/fastembed
+          key: fastembed-${{ runner.os }}-allminilml6v2-v1
+          restore-keys: |
+            fastembed-${{ runner.os }}-
       - name: Startup Smoke (DDL/Init)
         run: make test SCOPE=startup THREADS=4
       - name: Full Test Suite
