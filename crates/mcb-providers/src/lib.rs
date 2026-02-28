@@ -34,8 +34,6 @@
 //! use mcb_providers::language::RustProcessor;
 //! ```
 //!
-// Allow unused macro imports while provider implementations are being migrated
-#![allow(unused_imports)]
 
 mod exports;
 pub use exports::*;

@@ -6,6 +6,8 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::*;
 use serde_json::json;
 
+use crate::utils::text::extract_text;
+
 use crate::utils::domain_services::create_base_memory_args;
 use crate::utils::domain_services::create_real_domain_services;
 use crate::utils::test_fixtures::{TEST_PROJECT_ID, TEST_SESSION_ID};
@@ -251,8 +253,9 @@ async fn test_get_observations_with_valid_ids_happy_path() {
         store_result.expect("memory handler should succeed for valid observation store");
 
     // Extract the observation ID from the response
+    let store_text = extract_text(&store_response.content);
     let response_json: serde_json::Value =
-        serde_json::from_str(&store_response.content).expect("response should be valid JSON");
+        serde_json::from_str(&store_text).expect("response should be valid JSON");
     let observation_id = response_json["observation_id"]
         .as_str()
         .expect("response should contain observation_id")
@@ -289,8 +292,9 @@ async fn test_get_observations_with_valid_ids_happy_path() {
     );
 
     // Verify the response contains the observation
+    let response_text = extract_text(&response.content);
     let response_json: serde_json::Value =
-        serde_json::from_str(&response.content).expect("response should be valid JSON");
+        serde_json::from_str(&response_text).expect("response should be valid JSON");
     assert!(
         response_json["observations"].is_array(),
         "response should contain observations array"

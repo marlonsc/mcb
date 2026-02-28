@@ -24,10 +24,6 @@ use crate::constants::{
 };
 use crate::utils::embedding::{HttpEmbeddingClient, parse_standard_embedding, process_batch};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
-use crate::{
-    define_http_embedding_provider, impl_embedding_provider_trait, impl_http_provider_base,
-    register_http_provider,
-};
 
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 

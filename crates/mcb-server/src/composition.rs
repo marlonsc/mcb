@@ -41,7 +41,7 @@ use mcb_infrastructure::services::{
 use crate::mcp_server::{McpEntityRepositories, McpServer, McpServices};
 use crate::state::McpServerBootstrap;
 use crate::tools::ExecutionFlow;
-/// Registry provider name for SeaORM database repositories.
+/// Registry provider name for `SeaORM` database repositories.
 const DATABASE_PROVIDER: &str = "seaorm";
 
 /// Default namespace for database repositories.

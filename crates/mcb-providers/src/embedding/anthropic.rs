@@ -16,10 +16,6 @@ use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use crate::constants::ANTHROPIC_MAX_INPUT_TOKENS;
-use crate::{
-    define_http_embedding_provider, impl_embedding_provider_trait, impl_http_provider_base,
-    register_http_provider,
-};
 
 use crate::constants::{
     EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_INPUT, EMBEDDING_PARAM_MODEL,

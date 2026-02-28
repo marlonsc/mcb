@@ -19,7 +19,6 @@ use reqwest::Client;
 
 use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
-use crate::{define_http_embedding_provider, impl_http_provider_base, register_http_provider};
 
 define_http_embedding_provider!(
     /// Gemini embedding provider

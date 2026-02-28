@@ -24,10 +24,11 @@ macro_rules! entity_crud_dispatch {
         resource = $resource:expr,
         { $($arms:tt)* }
     ) => {
+        #[allow(unreachable_patterns)]
         match ($action, $resource) {
             $($arms)*
-            (action, resource) if true => Err(rmcp::model::ErrorData::invalid_params(
-                format!("Unsupported action {:?} for resource {:?}", action, resource),
+            _ => Err(rmcp::model::ErrorData::invalid_params(
+                format!("Unsupported action {:?} for resource {:?}", $action, $resource),
                 None,
             )),
         }
