@@ -4,11 +4,14 @@
 use std::fs;
 use std::path::{Path, PathBuf};
 
+use rust_code_analysis::SpaceKind;
+
 use mcb_domain::ports::{
     ComplexityAnalyzer, ComplexityFinding, DeadCodeDetector, DeadCodeFinding, TdgFinding, TdgScorer,
 };
-use mcb_domain::utils::analysis;
+use mcb_domain::utils::analysis::{self, FunctionRecord};
 
+use crate::ast::rca_helpers;
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
 use crate::{Result, ValidationConfig};
@@ -27,6 +30,30 @@ impl NativePmatAnalyzer {
         })?;
         Ok(files)
     }
+
+    /// Collect function records using RCA's AST and cyclomatic complexity metric,
+    /// replacing the regex-based `analysis::collect_functions`.
+    fn collect_functions_rca(files: &[(PathBuf, String)]) -> Vec<FunctionRecord> {
+        let mut records = Vec::new();
+        for (file, content) in files {
+            let Some(root) = rca_helpers::parse_file_spaces(file, content) else {
+                continue;
+            };
+            for space in rca_helpers::collect_spaces_of_kind(&root, content, SpaceKind::Function) {
+                let name = space.name.as_deref().unwrap_or("").to_owned();
+                if name.is_empty() {
+                    continue;
+                }
+                records.push(FunctionRecord {
+                    file: file.clone(),
+                    name,
+                    line: space.start_line,
+                    complexity: space.metrics.cyclomatic.cyclomatic().round() as u32,
+                });
+            }
+        }
+        records
+    }
 }
 
 impl ComplexityAnalyzer for NativePmatAnalyzer {
@@ -37,7 +64,7 @@ impl ComplexityAnalyzer for NativePmatAnalyzer {
     ) -> std::result::Result<Vec<ComplexityFinding>, mcb_domain::error::Error> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
-        let functions = analysis::collect_functions(&files)?;
+        let functions = Self::collect_functions_rca(&files);
         Ok(analysis::filter_complex_functions(functions, threshold))
     }
 }
@@ -49,7 +76,7 @@ impl DeadCodeDetector for NativePmatAnalyzer {
     ) -> std::result::Result<Vec<DeadCodeFinding>, mcb_domain::error::Error> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
-        let functions = analysis::collect_functions(&files)?;
+        let functions = Self::collect_functions_rca(&files);
         let contents: Vec<String> = files.iter().map(|(_, c)| c.clone()).collect();
         analysis::detect_dead_functions(functions, &contents)
     }
@@ -63,7 +90,7 @@ impl TdgScorer for NativePmatAnalyzer {
     ) -> std::result::Result<Vec<TdgFinding>, mcb_domain::error::Error> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
-        let functions = analysis::collect_functions(&files)?;
+        let functions = Self::collect_functions_rca(&files);
         let dead_code = self.detect_dead_code(workspace_root)?;
         Ok(analysis::compute_tdg_scores(
             &files, functions, &dead_code, threshold,

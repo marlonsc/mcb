@@ -2,13 +2,14 @@
 //!
 //! Provides the public API for memory operations.
 
+use std::str::FromStr;
+
 use mcb_domain::entities::memory::{
     ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationType,
 };
 use mcb_domain::error::Result;
 use mcb_domain::ports::{CreateSessionSummaryInput, MemoryServiceInterface};
 use mcb_domain::value_objects::{Embedding, ObservationId, SessionId};
-use std::str::FromStr;
 
 use super::MemoryServiceImpl;
 

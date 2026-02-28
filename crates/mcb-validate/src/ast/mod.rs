@@ -16,6 +16,8 @@
 pub mod core;
 pub mod decoder;
 pub mod query;
+/// Shared RCA helpers — thin utilities over native `FuncSpace`/`SpaceKind` types.
+pub mod rca_helpers;
 /// Tree-sitter-based AST selector engine for rule-driven node matching.
 pub mod selector_engine;
 /// Tree-sitter query executor for running tree-sitter queries against source files.

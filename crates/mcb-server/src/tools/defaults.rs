@@ -6,8 +6,9 @@
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
-use mcb_domain::ports::VcsProvider;
 use uuid::Uuid;
+
+use mcb_domain::ports::VcsProvider;
 
 /// Valid execution flow modes for MCP tool dispatch.
 ///

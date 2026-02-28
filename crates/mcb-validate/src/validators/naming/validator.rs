@@ -58,20 +58,10 @@ impl NamingValidator {
 
     /// Validates that struct, enum, and trait names follow CamelCase convention.
     fn run_type_name_check(&self) -> Result<Vec<NamingViolation>> {
-        let struct_pattern = compile_regex(r"(?:pub\s+)?struct\s+([A-Za-z_][A-Za-z0-9_]*)")?;
-        let enum_pattern = compile_regex(r"(?:pub\s+)?enum\s+([A-Za-z_][A-Za-z0-9_]*)")?;
-        let trait_pattern = compile_regex(r"(?:pub\s+)?trait\s+([A-Za-z_][A-Za-z0-9_]*)")?;
-
         let mut violations = Vec::new();
         self.for_each_crate_src_rs_path(|path| {
             let content = std::fs::read_to_string(path)?;
-            violations.extend(validate_type_names(
-                path,
-                &content,
-                &struct_pattern,
-                &enum_pattern,
-                &trait_pattern,
-            ));
+            violations.extend(validate_type_names(path, &content));
             Ok(())
         })?;
         Ok(violations)
@@ -79,13 +69,10 @@ impl NamingValidator {
 
     /// Validates that function and method names follow `snake_case` convention.
     fn run_function_name_check(&self) -> Result<Vec<NamingViolation>> {
-        let fn_pattern =
-            compile_regex(r"(?:pub\s+)?(?:async\s+)?fn\s+([A-Za-z_][A-Za-z0-9_]*)\s*[<(]")?;
-
         let mut violations = Vec::new();
         self.for_each_crate_src_rs_path(|path| {
             let content = std::fs::read_to_string(path)?;
-            violations.extend(validate_function_names(path, &content, &fn_pattern));
+            violations.extend(validate_function_names(path, &content));
             Ok(())
         })?;
         Ok(violations)

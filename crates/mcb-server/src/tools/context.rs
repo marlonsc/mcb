@@ -5,13 +5,14 @@
 
 use std::collections::HashMap;
 
+use rmcp::model::{CallToolRequestParams, Meta};
+use serde_json::Value;
+
 use crate::tools::defaults::RuntimeDefaults;
 use crate::tools::field_aliases::{
     BOOL_FIELD_ALIASES, STRING_FIELD_ALIASES, field_aliases, normalize_text, resolve_override_bool,
     resolve_override_value,
 };
-use rmcp::model::{CallToolRequestParams, Meta};
-use serde_json::Value;
 
 #[derive(Debug, Clone, Default)]
 /// Execution context extracted at transport boundary and propagated to hooks.

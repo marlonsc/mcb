@@ -1,51 +1,55 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use super::validate_decl_member_count;
-use super::{MemberCountInput, MemberCountKind, make_member_count_violation};
+use rust_code_analysis::SpaceKind;
+
 use crate::Result;
 use crate::Severity;
 use crate::ValidationConfig;
+use crate::ast::rca_helpers;
 use crate::constants::solid::MAX_UNRELATED_STRUCTS_PER_FILE;
-use crate::pattern_registry::required_pattern;
-use crate::utils::source::{count_block_lines, for_each_rust_file, structs_seem_related};
+use crate::filters::LanguageId;
+use crate::scan::for_each_scan_file;
+use crate::utils::source::structs_seem_related;
 use crate::validators::solid::violation::SolidViolation;
 
-/// SRP: Check for structs/impls that are too large
+/// SRP: Check for impl blocks that are too large (via RCA AST metrics).
 ///
 /// # Errors
-/// Returns an error if patterns fail to compile or file reading fails.
+/// Returns an error if file scanning or reading fails.
 pub fn validate_srp(
     config: &ValidationConfig,
     max_struct_lines: usize,
 ) -> Result<Vec<SolidViolation>> {
     let mut violations = Vec::new();
-    let impl_pattern = required_pattern("SOLID002.impl_decl")?;
-    let struct_pattern = required_pattern("SOLID002.struct_decl")?;
 
-    for_each_rust_file(config, |path, lines| {
-        let mut structs_in_file: Vec<(String, usize)> = Vec::new();
+    for crate_dir in config.get_source_dirs()? {
+        let src_dir = crate_dir.join("src");
+        if !src_dir.exists() {
+            continue;
+        }
 
-        for (line_num, line) in lines.iter().enumerate() {
-            if let Some(cap) = struct_pattern.captures(line) {
-                let name = cap.get(1).map_or("", |m| m.as_str());
-                structs_in_file.push((name.to_owned(), line_num + 1));
+        for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, _src_dir| {
+            if !entry.absolute_path.starts_with(&src_dir) {
+                return Ok(());
             }
+            let content = std::fs::read_to_string(&entry.absolute_path)?;
+            let Some(root) = rca_helpers::parse_file_spaces(&entry.absolute_path, &content) else {
+                return Ok(());
+            };
 
-            if let Some(cap) = impl_pattern.captures(line) {
-                let name = cap
-                    .get(1)
-                    .or(cap.get(2))
-                    .map_or("", |m: regex::Match| m.as_str());
-                let block_lines = count_block_lines(&lines, line_num);
+            // Check impl blocks via RCA SpaceKind::Impl
+            for space in rca_helpers::collect_spaces_of_kind(&root, &content, SpaceKind::Impl) {
+                let name = space.name.as_deref().unwrap_or("");
+                let sloc = space.metrics.loc.sloc().round() as usize;
 
-                if block_lines > max_struct_lines {
+                if sloc > max_struct_lines {
                     violations.push(SolidViolation::TooManyResponsibilities {
-                        file: path.clone(),
-                        line: line_num + 1,
+                        file: entry.absolute_path.clone(),
+                        line: space.start_line,
                         item_type: "impl".to_owned(),
                         item_name: name.to_owned(),
-                        line_count: block_lines,
+                        line_count: sloc,
                         max_allowed: max_struct_lines,
                         suggestion: "Consider splitting into smaller, focused impl blocks"
                             .to_owned(),
@@ -53,51 +57,80 @@ pub fn validate_srp(
                     });
                 }
             }
-        }
 
-        if structs_in_file.len() > MAX_UNRELATED_STRUCTS_PER_FILE {
+            // Check for multiple unrelated structs via RCA SpaceKind::Struct
             let struct_names: Vec<String> =
-                structs_in_file.iter().map(|(n, _)| n.clone()).collect();
+                rca_helpers::collect_spaces_of_kind(&root, &content, SpaceKind::Struct)
+                    .iter()
+                    .filter_map(|s| s.name.clone())
+                    .collect();
 
-            if !structs_seem_related(&struct_names) {
+            if struct_names.len() > MAX_UNRELATED_STRUCTS_PER_FILE
+                && !structs_seem_related(&struct_names)
+            {
                 violations.push(SolidViolation::MultipleUnrelatedStructs {
-                    file: path.clone(),
+                    file: entry.absolute_path.clone(),
                     struct_names,
                     suggestion: "Consider splitting into separate modules".to_owned(),
                     severity: Severity::Info,
                 });
             }
-        }
-        Ok(())
-    })?;
+
+            Ok(())
+        })?;
+    }
 
     Ok(violations)
 }
 
-/// SRP: Check for impl blocks with too many methods
+/// SRP: Check for impl blocks with too many methods (via RCA NOM metric).
 ///
 /// # Errors
-/// Returns an error if pattern compilation fails.
+/// Returns an error if file scanning or reading fails.
 pub fn validate_impl_method_count(
     config: &ValidationConfig,
     max_impl_methods: usize,
 ) -> Result<Vec<SolidViolation>> {
-    validate_decl_member_count(
-        config,
-        "SOLID003.impl_only_decl",
-        "SOLID002.fn_decl",
-        max_impl_methods,
-        |file, line, name, count, max| {
-            make_member_count_violation(
-                MemberCountKind::Impl,
-                MemberCountInput {
-                    file,
-                    line,
-                    item_name: name,
-                    method_count: count,
-                    max_allowed: max,
-                },
-            )
-        },
-    )
+    let mut violations = Vec::new();
+
+    for crate_dir in config.get_source_dirs()? {
+        let src_dir = crate_dir.join("src");
+        if !src_dir.exists() {
+            continue;
+        }
+
+        for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, _src_dir| {
+            if !entry.absolute_path.starts_with(&src_dir) {
+                return Ok(());
+            }
+            let content = std::fs::read_to_string(&entry.absolute_path)?;
+            let Some(root) = rca_helpers::parse_file_spaces(&entry.absolute_path, &content) else {
+                return Ok(());
+            };
+
+            for space in rca_helpers::collect_spaces_of_kind(&root, &content, SpaceKind::Impl) {
+                let name = space.name.as_deref().unwrap_or("");
+                let method_count =
+                    (space.metrics.nom.functions() + space.metrics.nom.closures()).round() as usize;
+
+                if method_count > max_impl_methods {
+                    violations.push(SolidViolation::ImplTooManyMethods {
+                        file: entry.absolute_path.clone(),
+                        line: space.start_line,
+                        type_name: name.to_owned(),
+                        method_count,
+                        max_allowed: max_impl_methods,
+                        suggestion:
+                            "Consider splitting into smaller, focused impl blocks or extracting to traits"
+                                .to_owned(),
+                        severity: Severity::Warning,
+                    });
+                }
+            }
+
+            Ok(())
+        })?;
+    }
+
+    Ok(violations)
 }
