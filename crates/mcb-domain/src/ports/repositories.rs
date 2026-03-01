@@ -438,6 +438,9 @@ pub trait FileHashRepository: Send + Sync {
     /// Clear all records for a collection.
     async fn clear_collection(&self, collection: &str) -> Result<u64>;
     /// Compute hash for a local file.
+    ///
+    /// # Errors
+    /// Returns an error if the file cannot be read or hashing fails.
     fn compute_hash(&self, path: &Path) -> Result<String>;
 }
 

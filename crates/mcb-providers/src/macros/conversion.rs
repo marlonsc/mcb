@@ -1,4 +1,4 @@
-//! Conversion macros for SeaORM entities ↔ domain types.
+//! Conversion macros for `SeaORM` entities ↔ domain types.
 //!
 //! Replaces `scripts/codegen-conversions.py` and `config/conversions.toml`.
 //!
