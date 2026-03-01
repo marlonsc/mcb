@@ -41,6 +41,10 @@ pub use tests::fs_scan as test_fs_scan;
 #[cfg(any(test, feature = "test-utils"))]
 pub use tests::guards as test_guards;
 #[cfg(any(test, feature = "test-utils"))]
+pub use tests::json_helpers as test_json_helpers;
+#[cfg(any(test, feature = "test-utils"))]
+pub use tests::mcp_assertions as test_mcp_assertions;
+#[cfg(any(test, feature = "test-utils"))]
 pub use tests::search_fixtures as test_search_fixtures;
 #[cfg(any(test, feature = "test-utils"))]
 pub use tests::service_detection as test_service_detection;

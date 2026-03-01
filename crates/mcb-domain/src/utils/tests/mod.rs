@@ -43,3 +43,9 @@ pub mod timeouts;
 
 /// `SearchResult` test fixture builders.
 pub mod search_fixtures;
+
+/// JSON parsing and extraction helpers for test assertions.
+pub mod json_helpers;
+
+/// MCP `CallToolResult` assertion helpers (error_text, is_error, assert_error_shape, etc.).
+pub mod mcp_assertions;

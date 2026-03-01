@@ -66,14 +66,22 @@ pub(crate) async fn create_real_domain_services() -> Option<(McbState, tempfile:
     let embedding_provider = match resolve_embedding_from_config(&config) {
         Ok(p) => p,
         Err(e) => {
-            println!("⊘ SKIPPED: Embedding provider unavailable (skipping test) - {e}");
+            mcb_domain::warn!(
+                "domain_services",
+                "SKIPPED: Embedding provider unavailable (skipping test)",
+                &e
+            );
             return None;
         }
     };
     let vector_store_provider = match resolve_vector_store_from_config(&config) {
         Ok(p) => p,
         Err(e) => {
-            println!("⊘ SKIPPED: Vector store provider unavailable (skipping test) - {e}");
+            mcb_domain::warn!(
+                "domain_services",
+                "SKIPPED: Vector store provider unavailable (skipping test)",
+                &e
+            );
             return None;
         }
     };

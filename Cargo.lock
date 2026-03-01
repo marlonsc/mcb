@@ -4227,6 +4227,7 @@ dependencies = [
  "mockall",
  "regex",
  "reqwest 0.13.2",
+ "rmcp",
  "rstest",
  "schemars 1.2.1",
  "serde",

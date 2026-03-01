@@ -507,6 +507,7 @@ fn test_no_hardcoded_provider_defaults() -> Result<(), Box<dyn std::error::Error
 
 /// Load `AppConfig` from development.yaml WITHOUT running `validate_app_config`.
 /// This lets us mutate fields and then call `validate_app_config` ourselves.
+#[allow(clippy::expect_used)]
 fn load_valid_config_unvalidated() -> AppConfig {
     let path = workspace_development_yaml().expect("development.yaml must exist");
     let content = fs::read_to_string(&path).expect("read development.yaml");

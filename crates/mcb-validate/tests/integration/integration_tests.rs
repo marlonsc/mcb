@@ -132,6 +132,7 @@ fn test_full_validation_report() {
     }
 }
 
+#[allow(clippy::unwrap_used)]
 fn run_full_validation_report() {
     let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
     let validator_names = ValidatorRegistry::standard_validator_names();

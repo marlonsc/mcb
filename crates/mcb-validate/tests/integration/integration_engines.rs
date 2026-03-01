@@ -18,6 +18,7 @@ use serde_json::json;
 /// Create a test context with sample files
 ///
 /// Uses the actual project workspace root so `cargo_metadata` works.
+#[allow(clippy::unwrap_used)]
 fn create_test_context() -> RuleContext {
     let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
 

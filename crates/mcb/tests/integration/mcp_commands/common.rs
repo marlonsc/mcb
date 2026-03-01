@@ -16,6 +16,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 use tokio::process::Command;
 use tokio::time::{Duration, timeout};
 
+pub use mcb_domain::test_mcp_assertions::{assert_tool_error, extract_text, is_error};
 pub use mcb_domain::test_utils::TestResult;
 
 /// Per-operation timeout -- prevents any single MCP call or shutdown from hanging.
@@ -179,61 +180,4 @@ pub async fn call_tool(
     .map_err(|_| format!("Timeout: tool '{tool_name}' did not respond within 10s"))?
     .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
     Ok(result)
-}
-
-/// Extract all text content blocks from a tool result, joined by newlines.
-pub fn extract_text(result: &CallToolResult) -> String {
-    result
-        .content
-        .iter()
-        .filter_map(|c| c.raw.as_text())
-        .map(|t| t.text.as_str())
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
-/// Check if a tool result indicates an error.
-pub fn is_error(result: &CallToolResult) -> bool {
-    result.is_error.unwrap_or(false)
-}
-
-/// Assert that a tool call results in an error (either MCP-level or application-level).
-///
-/// The server may return errors as:
-/// - `Err(McpError)` — JSON-RPC level (e.g., invalid params, unknown variant)
-/// - `Ok(CallToolResult { is_error: true })` — application-level error
-///
-/// If `expected_keywords` is non-empty, at least one keyword must appear in the error.
-pub fn assert_tool_error(
-    result: Result<CallToolResult, Box<dyn std::error::Error>>,
-    expected_keywords: &[&str],
-) {
-    match result {
-        Err(e) => {
-            if !expected_keywords.is_empty() {
-                let msg = e.to_string().to_lowercase();
-                assert!(
-                    expected_keywords
-                        .iter()
-                        .any(|k| msg.contains(&k.to_lowercase())),
-                    "Expected error containing one of {expected_keywords:?}, got: {e}"
-                );
-            }
-        }
-        Ok(r) if is_error(&r) => {
-            if !expected_keywords.is_empty() {
-                let text = extract_text(&r).to_lowercase();
-                assert!(
-                    expected_keywords
-                        .iter()
-                        .any(|k| text.contains(&k.to_lowercase())),
-                    "Expected error containing one of {expected_keywords:?}, got: {}",
-                    extract_text(&r)
-                );
-            }
-        }
-        Ok(r) => {
-            unreachable!("Expected error, got success: {}", extract_text(&r));
-        }
-    }
 }

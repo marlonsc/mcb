@@ -334,7 +334,12 @@ pub fn create_test_api_key(user_id: &str, org_id: &str, name: &str) -> ApiKey {
 /// Create a temporary codebase directory with sample code files.
 ///
 /// Returns `(TempDir, PathBuf)` — keep `TempDir` alive for the test.
+///
+/// # Panics
+///
+/// Panics if the temp directory or any sample file cannot be created.
 #[must_use]
+#[allow(clippy::expect_used)]
 pub fn create_temp_codebase() -> (TempDir, std::path::PathBuf) {
     let temp_dir = TempDir::new().expect("Failed to create temp directory");
     let codebase_path = temp_dir.path().to_path_buf();

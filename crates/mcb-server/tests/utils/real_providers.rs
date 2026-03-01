@@ -56,21 +56,12 @@ mod tests {
     use super::*;
     use rstest::rstest;
 
-    fn should_run_integration_tests() -> bool {
-        // Check for CI environment
-        if std::env::var("CI").is_ok() || std::env::var("GITHUB_ACTIONS").is_ok() {
-            // In CI, only run if explicitly enabled
-            return std::env::var("MCB_RUN_DOCKER_INTEGRATION_TESTS")
-                .is_ok_and(|v| v == "1" || v == "true");
-        }
-        // Local: run unless disabled
-        std::env::var("MCB_RUN_DOCKER_INTEGRATION_TESTS").map_or(true, |v| v != "0" && v != "false")
-    }
+    use mcb_domain::test_service_detection::should_run_docker_integration_tests;
 
     #[rstest]
     #[tokio::test]
     async fn test_real_vector_store_creation() {
-        if !should_run_integration_tests() {
+        if !should_run_docker_integration_tests() {
             println!("Skipping integration test");
             return;
         }
@@ -87,7 +78,7 @@ mod tests {
     #[rstest]
     #[tokio::test]
     async fn test_real_vector_store_basic_operations() {
-        if !should_run_integration_tests() {
+        if !should_run_docker_integration_tests() {
             println!("Skipping integration test");
             return;
         }
@@ -133,7 +124,7 @@ mod tests {
     #[rstest]
     #[tokio::test]
     async fn test_real_embedding_provider_creation() {
-        if !should_run_integration_tests() {
+        if !should_run_docker_integration_tests() {
             println!("Skipping integration test");
             return;
         }
@@ -158,7 +149,7 @@ mod tests {
     #[rstest]
     #[tokio::test]
     async fn test_real_embedding_provider_with_model() {
-        if !should_run_integration_tests() {
+        if !should_run_docker_integration_tests() {
             println!("Skipping integration test");
             return;
         }
@@ -186,7 +177,7 @@ mod tests {
     #[rstest]
     #[tokio::test]
     async fn test_real_embedding_provider_embed_batch() {
-        if !should_run_integration_tests() {
+        if !should_run_docker_integration_tests() {
             println!("Skipping integration test");
             return;
         }
