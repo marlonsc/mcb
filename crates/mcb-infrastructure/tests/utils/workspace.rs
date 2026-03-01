@@ -1,6 +1,10 @@
 use std::path::{Path, PathBuf};
 
-#[allow(clippy::missing_errors_doc)]
+/// Returns the workspace root directory by walking up from `CARGO_MANIFEST_DIR`.
+///
+/// # Errors
+///
+/// Returns an error if no ancestor directory contains a `Cargo.lock` file.
 pub fn workspace_root() -> Result<PathBuf, Box<dyn std::error::Error>> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     for dir in manifest_dir.ancestors() {

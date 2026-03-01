@@ -7,7 +7,11 @@ pub struct CurrentDirGuard {
 }
 
 impl CurrentDirGuard {
-    #[allow(clippy::missing_errors_doc)]
+    /// Creates a guard that changes to `new_dir` and restores the original directory on drop.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `current_dir()` or `set_current_dir()` fails.
     pub fn new(new_dir: &Path) -> Result<Self, Box<dyn std::error::Error>> {
         let original = env::current_dir()?;
         env::set_current_dir(new_dir)?;
@@ -27,7 +31,11 @@ pub struct RestoreFileGuard {
 }
 
 impl RestoreFileGuard {
-    #[allow(clippy::missing_errors_doc)]
+    /// Moves `target` to `backup` and restores it on drop.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the rename operation fails.
     pub fn move_out(target: &Path, backup: &Path) -> Result<Self, Box<dyn std::error::Error>> {
         fs::rename(target, backup)?;
         Ok(Self {
