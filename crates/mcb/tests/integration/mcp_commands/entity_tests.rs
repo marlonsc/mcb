@@ -81,8 +81,11 @@ async fn test_entity_list_plans_requires_project() -> TestResult {
         "entity",
         serde_json::json!({"action": "list", "resource": "plan"}),
     )
-    .await;
-    assert_tool_error(result, &["project_id", "required"]);
+    .await?;
+    assert!(
+        !is_error(&result),
+        "auto-context should provide project_id and list plans should succeed"
+    );
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())

@@ -3,8 +3,7 @@
 //! Actions: `log_tool`, `log_delegation`
 
 use super::common::{
-    TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
-    shutdown_client,
+    TestResult, call_tool, cleanup_temp_dbs, create_client, extract_text, is_error, shutdown_client,
 };
 use rstest::rstest;
 use serial_test::serial;
@@ -64,8 +63,11 @@ async fn test_agent_missing_session_id() -> TestResult {
             "action": "log_tool", "data": {"tool_name": "search", "success": true}
         }),
     )
-    .await;
-    assert_tool_error(result, &["session", "not found"]);
+    .await?;
+    assert!(
+        !is_error(&result),
+        "auto-context should provide a session_id and log_tool should succeed"
+    );
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())

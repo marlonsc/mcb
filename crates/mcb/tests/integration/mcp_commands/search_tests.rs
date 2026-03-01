@@ -4,7 +4,7 @@
 
 use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
-    shutdown_client,
+    is_error, shutdown_client,
 };
 use rstest::rstest;
 use serial_test::serial;
@@ -39,8 +39,11 @@ async fn test_search_code_missing_collection() -> TestResult {
         "search",
         serde_json::json!({"query": "test", "resource": "code", "limit": 5}),
     )
-    .await;
-    assert_tool_error(result, &["collection", "required"]);
+    .await?;
+    assert!(
+        !is_error(&result),
+        "auto-context should provide collection and search code should succeed"
+    );
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())

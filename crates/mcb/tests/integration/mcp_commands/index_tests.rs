@@ -30,8 +30,11 @@ async fn test_index_status() -> TestResult {
 #[tokio::test]
 async fn test_index_clear_missing_collection() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(&client, "index", serde_json::json!({"action": "clear"})).await;
-    assert_tool_error(result, &["collection", "required"]);
+    let result = call_tool(&client, "index", serde_json::json!({"action": "clear"})).await?;
+    assert!(
+        !is_error(&result),
+        "auto-context should provide collection and clear should succeed"
+    );
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
@@ -42,8 +45,11 @@ async fn test_index_clear_missing_collection() -> TestResult {
 #[tokio::test]
 async fn test_index_start_missing_path() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(&client, "index", serde_json::json!({"action": "start"})).await;
-    assert_tool_error(result, &["path", "required"]);
+    let result = call_tool(&client, "index", serde_json::json!({"action": "start"})).await?;
+    assert!(
+        !is_error(&result),
+        "auto-context should provide path and start should succeed"
+    );
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())

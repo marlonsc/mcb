@@ -42,8 +42,11 @@ async fn test_session_create() -> TestResult {
             "action": "create", "data": {"model": "test-model", "agent_type": "explore"}
         }),
     )
-    .await;
-    assert_tool_error(result, &["project_id", "required"]);
+    .await?;
+    assert!(
+        !is_error(&result),
+        "auto-context should provide project_id and create session should succeed"
+    );
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
