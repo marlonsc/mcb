@@ -27,6 +27,9 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::{
     AgentRepository, AgentSessionManager, AgentSessionQuery, CheckpointManager, DelegationTracker,
 };
+use mcb_domain::registry::services::{
+    AGENT_SESSION_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
+};
 use mcb_domain::utils::time as domain_time;
 
 /// Application service for managing agent session lifecycle and persistence.
@@ -180,9 +183,6 @@ impl CheckpointManager for AgentSessionServiceImpl {
 // ---------------------------------------------------------------------------
 // Linkme Registration
 // ---------------------------------------------------------------------------
-use mcb_domain::registry::services::{
-    AGENT_SESSION_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
-};
 
 fn build_agent_session_service_from_registry(
     context: &dyn std::any::Any,
@@ -204,6 +204,8 @@ fn build_agent_session_service_from_registry(
     Ok(Arc::new(AgentSessionServiceImpl::new(repos.agent)))
 }
 
+// linkme distributed_slice uses unsafe link-section attributes internally
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(SERVICES_REGISTRY)]
 static AGENT_SESSION_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
     name: AGENT_SESSION_SERVICE_NAME,

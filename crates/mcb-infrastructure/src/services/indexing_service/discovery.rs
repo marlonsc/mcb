@@ -56,9 +56,8 @@ impl IndexingServiceImpl {
         path.extension()
             .and_then(|ext| ext.to_str())
             .is_some_and(|ext| {
-                self.supported_extensions
-                    .iter()
-                    .any(|supported| supported == &ext.to_ascii_lowercase())
+                let ext_lower = ext.to_ascii_lowercase();
+                self.supported_extensions.contains(&ext_lower)
             })
     }
 }

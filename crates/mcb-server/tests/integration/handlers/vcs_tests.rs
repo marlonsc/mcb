@@ -160,15 +160,8 @@ async fn test_vcs_analyze_impact_missing_repo_path() -> Result<(), rmcp::ErrorDa
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(
-        result.is_err(),
-        "Missing repo_path should return an Err for AnalyzeImpact"
-    );
-    let err = result.unwrap_err();
-    assert!(
-        err.message.contains("repo_path is required"),
-        "error message should mention repo_path, got: {}",
-        err.message
-    );
+    let response =
+        result.expect("vcs handler should handle auto-resolved repo_path for analyze impact");
+    assert!(!response.content.is_empty(), "response should have content");
     Ok(())
 }

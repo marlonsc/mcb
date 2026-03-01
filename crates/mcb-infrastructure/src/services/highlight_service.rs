@@ -254,6 +254,8 @@ impl HighlightServiceInterface for HighlightServiceImpl {
     }
 }
 
+// linkme distributed_slice uses unsafe link-section attributes internally
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(SERVICES_REGISTRY)]
 static HIGHLIGHT_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
     name: HIGHLIGHT_SERVICE_NAME,

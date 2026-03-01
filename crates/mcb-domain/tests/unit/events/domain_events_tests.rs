@@ -5,6 +5,7 @@ use std::sync::Mutex;
 
 use async_trait::async_trait;
 use mcb_domain::events::{DomainEvent, EventPublisher};
+use mcb_domain::test_utils::TestResult;
 
 // Mock event publisher for testing
 struct TestEventPublisher {
@@ -122,12 +123,14 @@ fn has_subscribers(#[case] expected_has_subscribers: bool) {
 )]
 #[rstest]
 #[tokio::test]
-async fn publish_events(#[case] events: Vec<DomainEvent>, #[case] expected_len: usize) {
+async fn publish_events(
+    #[case] events: Vec<DomainEvent>,
+    #[case] expected_len: usize,
+) -> TestResult<()> {
     let publisher = TestEventPublisher::new();
 
     for event in events {
-        let result = publisher.publish(event).await;
-        result.expect("event publish should succeed");
+        publisher.publish(event).await?;
     }
 
     let published_events = publisher.get_published_events();
@@ -139,6 +142,8 @@ async fn publish_events(#[case] events: Vec<DomainEvent>, #[case] expected_len: 
             DomainEvent::IndexRebuild { collection } if collection == &Some("test".to_owned())
         ));
     }
+
+    Ok(())
 }
 
 #[rstest]

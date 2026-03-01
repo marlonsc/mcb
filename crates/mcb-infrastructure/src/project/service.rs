@@ -68,6 +68,8 @@ use mcb_domain::registry::project_detection::{
     PROJECT_DETECTION_SERVICES, ProjectDetectionServiceEntry,
 };
 
+// linkme distributed_slice uses unsafe link-section attributes internally
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(PROJECT_DETECTION_SERVICES)]
 static UNIVERSAL_PROJECT_DETECTION_ENTRY: ProjectDetectionServiceEntry =
     ProjectDetectionServiceEntry {

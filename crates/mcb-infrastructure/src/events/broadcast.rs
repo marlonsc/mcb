@@ -108,6 +108,8 @@ impl EventBusProvider for BroadcastEventBus {
 // ---------------------------------------------------------------------------
 use mcb_domain::registry::events::{EVENT_BUS_PROVIDERS, EventBusProviderEntry};
 
+// linkme distributed_slice uses unsafe link-section attributes internally
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(EVENT_BUS_PROVIDERS)]
 static BROADCAST_EVENT_BUS_ENTRY: EventBusProviderEntry = EventBusProviderEntry {
     name: "inprocess",

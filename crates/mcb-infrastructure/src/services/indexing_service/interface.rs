@@ -30,6 +30,18 @@ impl IndexingServiceInterface for IndexingServiceImpl {
         let files = self.discover_files(path, &mut progress).await;
         let total_files = files.len();
 
+        // Log any discovery errors so unreadable directories are not silently skipped
+        if !progress.errors.is_empty() {
+            mcb_domain::warn!(
+                "indexing",
+                &format!(
+                    "File discovery encountered {} error(s) in {}",
+                    progress.errors.len(),
+                    path.display()
+                )
+            );
+        }
+
         mcb_domain::info!(
             "indexing",
             &format!(

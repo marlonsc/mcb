@@ -123,5 +123,5 @@ static DEFAULT_VALIDATION_OPERATIONS_PROVIDER_ENTRY: ValidationOperationsProvide
     ValidationOperationsProviderEntry {
         name: "default",
         description: "In-memory validation operations tracker",
-        build: |_config| Ok(Arc::new(DefaultValidationOperations::new())),
+        build: |_config| Ok(Arc::new(DefaultValidationOperations::default())),
     };

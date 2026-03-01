@@ -62,7 +62,6 @@ pub fn resolve_embedding_from_config(
         embed_cfg = embed_cfg.with_dimensions(d);
     }
     resolve_embedding_provider(&embed_cfg)
-        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))
 }
 
 /// Build [`VectorStoreProviderConfig`] from application config and resolve the provider.
@@ -94,7 +93,6 @@ pub fn resolve_vector_store_from_config(
         vec_cfg = vec_cfg.with_dimensions(d);
     }
     resolve_vector_store_provider(&vec_cfg)
-        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))
 }
 
 /// Create a default [`HybridSearchProvider`] with standard BM25/semantic weights.

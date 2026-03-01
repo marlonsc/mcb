@@ -65,11 +65,11 @@ linkme = { workspace = true }
 # HTTP Client types for providers
 reqwest = { workspace = true }
 toml = { workspace = true, optional = true }
-tempfile.workspace = true
+tempfile = { workspace = true, optional = true }
 
 [features]
 default = []
-test-utils = ["dep:toml"]
+test-utils = ["dep:toml", "dep:tempfile"]
 
 [lints]
 workspace = true

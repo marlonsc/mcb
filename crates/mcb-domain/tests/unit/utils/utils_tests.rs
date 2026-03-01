@@ -2,7 +2,6 @@ use mcb_domain::utils::id;
 use rstest::rstest;
 
 #[rstest]
-#[test]
 fn correlate_id_is_deterministic() {
     let first = id::correlate_id("session", "ses_1234567890");
     let second = id::correlate_id("session", "ses_1234567890");

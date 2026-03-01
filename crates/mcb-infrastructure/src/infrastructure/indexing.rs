@@ -120,5 +120,5 @@ static DEFAULT_INDEXING_OPERATIONS_PROVIDER_ENTRY: IndexingOperationsProviderEnt
     IndexingOperationsProviderEntry {
         name: "default",
         description: "In-memory indexing operations tracker",
-        build: |_config| Ok(Arc::new(DefaultIndexingOperations::new())),
+        build: |_config| Ok(Arc::new(DefaultIndexingOperations::default())),
     };
