@@ -16,3 +16,5 @@ pub mod embedding;
 pub mod language;
 #[macro_use]
 pub mod vector_store;
+#[macro_use]
+pub mod conversion;
