@@ -40,13 +40,12 @@ pub fn bridge_headers() -> Vec<(String, String)> {
     ]
 }
 
-#[allow(clippy::needless_pass_by_value)]
-pub fn tool_call_request(tool_name: &str, arguments: Value) -> McpRequest {
+pub fn tool_call_request(tool_name: &str, arguments: &Value) -> McpRequest {
     McpRequest {
         method: "tools/call".to_owned(),
         params: Some(json!({
             "name": tool_name,
-            "arguments": arguments,
+            "arguments": arguments.clone(),
         })),
         id: Some(json!(1)),
     }

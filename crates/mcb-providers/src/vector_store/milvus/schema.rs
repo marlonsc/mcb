@@ -38,10 +38,12 @@ where
 ///
 /// Returns an error if the field is missing or has an unexpected type.
 pub fn extract_string_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<String> {
-    #[allow(clippy::wildcard_enum_match_arm)]
-    extract_field(fields, name, index, "string", |value| match value {
-        Value::String(text) => Some(text.to_string()),
-        _ => None,
+    extract_field(fields, name, index, "string", |value| {
+        if let Value::String(text) = value {
+            Some(text.to_string())
+        } else {
+            None
+        }
     })
 }
 
@@ -51,10 +53,12 @@ pub fn extract_string_field(fields: &[FieldColumn], name: &str, index: usize) ->
 ///
 /// Returns an error if the field is missing or has an unexpected type.
 pub fn extract_long_field(fields: &[FieldColumn], name: &str, index: usize) -> Result<i64> {
-    #[allow(clippy::wildcard_enum_match_arm)]
-    extract_field(fields, name, index, "long", |value| match value {
-        Value::Long(number) => Some(number),
-        _ => None,
+    extract_field(fields, name, index, "long", |value| {
+        if let Value::Long(number) = value {
+            Some(number)
+        } else {
+            None
+        }
     })
 }
 

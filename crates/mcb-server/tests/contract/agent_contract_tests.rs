@@ -30,7 +30,7 @@ fn normalize_tool_call_ids(mut payload: serde_json::Value) -> serde_json::Value 
 async fn agent_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
         "agent",
-        json!({
+        &json!({
             "action": "log_tool",
             "session_id": "00000000-0000-0000-0000-000000000001",
             "data": {
@@ -53,7 +53,7 @@ async fn agent_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::
 async fn agent_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
         "agent",
-        json!({
+        &json!({
             "action": 123,
             "session_id": "00000000-0000-0000-0000-000000000001",
             "data": {"tool_name": "search"},

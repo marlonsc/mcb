@@ -1,4 +1,4 @@
-#![allow(clippy::missing_errors_doc)]
+//! SeaORM-backed observation and memory repository implementation.
 
 use async_trait::async_trait;
 use mcb_domain::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
@@ -213,6 +213,10 @@ impl SeaOrmObservationRepository {
     }
 
     /// Lists observations using the optional filter and result limit.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query fails.
     pub async fn list_observations(
         &self,
         filter: Option<&MemoryFilter>,
@@ -222,6 +226,10 @@ impl SeaOrmObservationRepository {
     }
 
     /// Selects observations for context injection, capped by `max_chars` content size.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query fails.
     pub async fn inject_observations(
         &self,
         filter: Option<&MemoryFilter>,

@@ -6,7 +6,7 @@ use crate::common::{call_tool, snapshot_payload, tool_call_request};
 async fn entity_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
         "entity",
-        json!({
+        &json!({
             "action": "list",
             "resource": "org",
         }),
@@ -24,7 +24,7 @@ async fn entity_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error:
 async fn entity_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
         "entity",
-        json!({
+        &json!({
             "action": 123,
             "resource": "org",
         }),

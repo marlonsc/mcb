@@ -1,4 +1,4 @@
-#![allow(clippy::missing_errors_doc, missing_docs)]
+//! `SQLite` database connection and migration utilities.
 
 use std::fs;
 use std::path::PathBuf;
@@ -13,12 +13,24 @@ use sea_orm_migration::MigratorTrait;
 
 use mcb_providers::migration::Migrator; // CA-EXCEPTION: SeaORM migration requirement
 
+/// Creates a memory repository backed by a `SQLite` database at the given path.
+///
+/// # Errors
+///
+/// Returns an error if the database connection, migration, or repository
+/// resolution fails.
 pub async fn create_memory_repository(path: PathBuf) -> Result<Arc<dyn MemoryRepository>> {
     let db = connect_sqlite_with_migrations(&path).await?;
     let repos = resolve_database_repositories("seaorm", Box::new(db), "default".to_owned())?;
     Ok(repos.memory)
 }
 
+/// Creates a memory repository and returns it alongside the raw database connection.
+///
+/// # Errors
+///
+/// Returns an error if the database connection, migration, or repository
+/// resolution fails.
 pub async fn create_memory_repository_with_db(
     path: PathBuf,
 ) -> Result<(Arc<dyn MemoryRepository>, Arc<DatabaseConnection>)> {
@@ -30,6 +42,14 @@ pub async fn create_memory_repository_with_db(
     Ok((repo, db))
 }
 
+/// Connects to a `SQLite` database and runs pending migrations.
+///
+/// If the initial connection or migration fails, attempts automatic recovery
+/// by backing up the corrupted file and creating a fresh database.
+///
+/// # Errors
+///
+/// Returns an error if both the primary connection and recovery fail.
 pub async fn connect_sqlite_with_migrations(path: &std::path::Path) -> Result<DatabaseConnection> {
     // Try to connect and run migrations
     match connect_sqlite(path).await {
@@ -60,6 +80,12 @@ pub async fn connect_sqlite_with_migrations(path: &std::path::Path) -> Result<Da
     }
 }
 
+/// Opens a `SQLite` connection at the given path, creating the file and parent
+/// directories if they do not exist.
+///
+/// # Errors
+///
+/// Returns an error if directory creation or the database connection fails.
 pub async fn connect_sqlite(path: &std::path::Path) -> Result<DatabaseConnection> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent).map_err(|e| {

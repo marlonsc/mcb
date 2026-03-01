@@ -6,7 +6,7 @@ use crate::common::{call_tool, snapshot_payload, tool_call_request};
 async fn search_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
         "search",
-        json!({
+        &json!({
             "query": "test query",
             "resource": "code",
             "collection": "contract-test",
@@ -29,7 +29,7 @@ async fn search_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error:
 async fn search_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
         "search",
-        json!({
+        &json!({
             "query": 999,
             "resource": "code",
         }),

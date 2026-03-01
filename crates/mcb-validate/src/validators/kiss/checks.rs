@@ -90,8 +90,7 @@ impl KissValidator {
                 if fn_name.starts_with(TEST_FUNCTION_PREFIX) {
                     continue;
                 }
-                #[allow(clippy::needless_borrow)]
-                if let Some(violation) = check(&space, &path) {
+                if let Some(violation) = check(space, &path) {
                     violations.push(violation);
                 }
             }

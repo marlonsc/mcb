@@ -151,7 +151,6 @@ pub(super) fn build_insert_columns(payload: InsertPayload) -> Vec<FieldColumn> {
     ]
 }
 
-#[allow(clippy::str_to_string)] // False positive: iter yields &i64, not &str
 pub(super) fn parse_milvus_ids(
     result: &milvus::proto::milvus::MutationResult,
 ) -> Result<Vec<String>> {
@@ -164,11 +163,9 @@ pub(super) fn parse_milvus_ids(
         .as_ref()
         .ok_or_else(|| Error::vector_db("Milvus mutation result has IDs but missing id_field"))?;
     match id_field {
-        milvus::proto::schema::i_ds::IdField::IntId(int_ids) => Ok(int_ids
-            .data
-            .iter()
-            .map(std::string::ToString::to_string)
-            .collect()),
+        milvus::proto::schema::i_ds::IdField::IntId(int_ids) => {
+            Ok(int_ids.data.iter().map(ToString::to_string).collect())
+        }
         milvus::proto::schema::i_ds::IdField::StrId(str_ids) => Ok(str_ids.data.clone()),
     }
 }

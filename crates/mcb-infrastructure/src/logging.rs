@@ -63,13 +63,13 @@ fn level_to_u8(level: LogLevel) -> u8 {
 /// CLI-friendly log function that writes to stderr with level filtering.
 ///
 /// Respects the global level set by [`set_stderr_log_level`].
-#[allow(clippy::print_stderr)]
 pub fn stderr_log_fn(
     level: LogLevel,
     context: &str,
     message: &str,
     detail: Option<&dyn std::fmt::Display>,
 ) {
+    use std::io::Write;
     let threshold = STDERR_LOG_LEVEL.load(Ordering::Relaxed);
     if level_to_u8(level) > threshold {
         return;
@@ -82,9 +82,9 @@ pub fn stderr_log_fn(
         LogLevel::Trace => "TRACE",
     };
     if let Some(d) = detail {
-        eprintln!("[{tag}] {context}: {message} ({d})");
+        let _ = writeln!(std::io::stderr(), "[{tag}] {context}: {message} ({d})");
     } else {
-        eprintln!("[{tag}] {context}: {message}");
+        let _ = writeln!(std::io::stderr(), "[{tag}] {context}: {message}");
     }
 }
 

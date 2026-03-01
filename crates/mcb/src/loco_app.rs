@@ -35,8 +35,8 @@ fn is_valid_sqlite(path: &std::path::Path) -> bool {
 /// Back up a corrupt `SQLite` file before Loco tries to open it.
 /// Logs `"backing up and recreating"` so startup smoke tests can detect recovery.
 // Permitted: pre-boot stderr output before the Loco/tracing logger initializes.
-#[allow(clippy::print_stderr)]
 fn recover_sqlite_before_boot(path: &std::path::Path) {
+    use std::io::Write;
     use std::time::SystemTime;
     let ts = SystemTime::now()
         .duration_since(SystemTime::UNIX_EPOCH)
@@ -44,7 +44,8 @@ fn recover_sqlite_before_boot(path: &std::path::Path) {
         .as_secs();
     let backup = format!("{}.bak.{ts}", path.display());
     if std::fs::copy(path, &backup).is_ok() {
-        eprintln!(
+        let _ = writeln!(
+            std::io::stderr(),
             "[mcb:db_recovery] backing up and recreating: backed up corrupt file to {backup}"
         );
         let _ = std::fs::remove_file(path);

@@ -6,7 +6,7 @@ use crate::common::{call_tool, snapshot_payload, tool_call_request};
 async fn memory_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
         "memory",
-        json!({
+        &json!({
             "action": "list",
             "resource": "observation",
             "limit": 10,
@@ -23,7 +23,7 @@ async fn memory_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error:
 
 #[tokio::test]
 async fn memory_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
-    let request = tool_call_request("memory", json!({"action": 123, "resource": "observation"}));
+    let request = tool_call_request("memory", &json!({"action": 123, "resource": "observation"}));
     let (status, response) = call_tool(&request).await?;
 
     insta::assert_json_snapshot!(
