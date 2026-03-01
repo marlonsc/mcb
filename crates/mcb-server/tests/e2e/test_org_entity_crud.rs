@@ -3,6 +3,8 @@ use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 fn base_args(action: OrgEntityAction, resource: OrgEntityResource) -> OrgEntityArgs {
     OrgEntityArgs {
         action,
@@ -69,8 +71,8 @@ async fn create_team(
 }
 
 #[tokio::test]
-async fn golden_org_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_org_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org = test_organization("golden-org-create-get");
     let payload = serde_json::to_value(&org).expect("serialize org payload");
 
@@ -104,11 +106,12 @@ async fn golden_org_create_and_get() {
         body.get("name").and_then(serde_json::Value::as_str),
         Some(org.name.as_str())
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_org_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_org_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     create_org(&server, "golden-org-list-1").await;
     create_org(&server, "golden-org-list-2").await;
@@ -129,11 +132,12 @@ async fn golden_org_list() {
         count >= 2,
         "org list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_org_update() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_org_update() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let mut org = test_organization("golden-org-update");
     create_org(&server, &org.id).await;
 
@@ -166,11 +170,12 @@ async fn golden_org_update() {
         body.get("name").and_then(serde_json::Value::as_str),
         Some("Golden Org Updated")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_org_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_org_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org = test_organization("golden-org-delete");
     create_org(&server, &org.id).await;
 
@@ -192,20 +197,22 @@ async fn golden_org_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "org get should fail after delete");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_org_create_missing_data() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_org_create_missing_data() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let args = base_args(OrgEntityAction::Create, OrgEntityResource::Org);
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "org create without data should fail");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_user_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_user_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-user-create-get-org";
     create_org(&server, org_id).await;
 
@@ -238,11 +245,12 @@ async fn golden_user_create_and_get() {
         body.get("email").and_then(serde_json::Value::as_str),
         Some("golden-user-create-get@example.com")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_user_get_by_email() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_user_get_by_email() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-user-get-by-email-org";
     let email = "golden-user-get-by-email@example.com";
     create_org(&server, org_id).await;
@@ -276,11 +284,12 @@ async fn golden_user_get_by_email() {
         body.get("id").and_then(serde_json::Value::as_str),
         Some(created_id.as_str())
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_user_list_by_org() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_user_list_by_org() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-user-list-org";
     create_org(&server, org_id).await;
 
@@ -317,11 +326,12 @@ async fn golden_user_list_by_org() {
         count >= 2,
         "user list should have at least 2 users, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_user_update() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_user_update() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-user-update-org";
     create_org(&server, org_id).await;
 
@@ -365,11 +375,12 @@ async fn golden_user_update() {
         body.get("display_name").and_then(serde_json::Value::as_str),
         Some("Golden User Updated")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_user_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_user_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-user-delete-org";
     create_org(&server, org_id).await;
 
@@ -400,21 +411,23 @@ async fn golden_user_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "user get should fail after delete");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_user_create_missing_data() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_user_create_missing_data() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(OrgEntityAction::Create, OrgEntityResource::User);
     args.org_id = Some("golden-user-create-missing-data-org".to_owned());
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "user create without data should fail");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_user_get_missing_id_and_email() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_user_get_missing_id_and_email() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(OrgEntityAction::Get, OrgEntityResource::User);
     args.org_id = Some("golden-user-get-missing-org".to_owned());
@@ -427,11 +440,12 @@ async fn golden_user_get_missing_id_and_email() {
         "unexpected error: {}",
         err.message
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_team_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_team_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-team-create-get-org";
     create_org(&server, org_id).await;
 
@@ -459,11 +473,12 @@ async fn golden_team_create_and_get() {
         body.get("id").and_then(serde_json::Value::as_str),
         Some(team_id.as_str())
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_team_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_team_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-team-list-org";
     create_org(&server, org_id).await;
 
@@ -487,11 +502,12 @@ async fn golden_team_list() {
         count >= 2,
         "team list should have at least 2 teams, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_team_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_team_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-team-delete-org";
     create_org(&server, org_id).await;
 
@@ -521,21 +537,23 @@ async fn golden_team_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "team get should fail after delete");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_team_update_unsupported() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_team_update_unsupported() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(OrgEntityAction::Update, OrgEntityResource::Team);
     args.data = Some(json!({"id": "unused", "name": "Unsupported Update"}));
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "team update should be unsupported");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_team_member_add_and_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_team_member_add_and_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-team-member-add-list-org";
     create_org(&server, org_id).await;
 
@@ -590,11 +608,12 @@ async fn golden_team_member_add_and_list() {
         has_member,
         "team member list should include newly added member"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_team_member_remove() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_team_member_remove() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-team-member-remove-org";
     create_org(&server, org_id).await;
 
@@ -658,14 +677,16 @@ async fn golden_team_member_remove() {
         entry.get("user_id").and_then(serde_json::Value::as_str) == Some(user_id.as_str())
     });
     assert!(!has_member, "team member should be removed from list");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_team_member_get_unsupported() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_team_member_get_unsupported() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(OrgEntityAction::Get, OrgEntityResource::TeamMember);
     args.id = Some("non-existent-team-member".to_owned());
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "team member get should be unsupported");
+    Ok(())
 }

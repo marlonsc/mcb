@@ -4,6 +4,8 @@ use crate::utils::test_fixtures::create_test_mcp_server;
 use mcb_server::args::{ProjectAction, ProjectArgs, ProjectResource};
 use rmcp::handler::server::wrapper::Parameters;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 fn base_args(action: ProjectAction, resource: ProjectResource) -> ProjectArgs {
     ProjectArgs {
         action,
@@ -15,8 +17,8 @@ fn base_args(action: ProjectAction, resource: ProjectResource) -> ProjectArgs {
 }
 
 #[tokio::test]
-async fn golden_project_create_phase() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_project_create_phase() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(ProjectAction::Create, ProjectResource::Phase);
     args.data = Some(serde_json::json!({
@@ -39,11 +41,12 @@ async fn golden_project_create_phase() {
         "error should mention unsupported action, got: {}",
         err.message
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_project_list_phases() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_project_list_phases() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let args = base_args(ProjectAction::List, ProjectResource::Phase);
 
@@ -60,11 +63,12 @@ async fn golden_project_list_phases() {
         "error should mention unsupported action, got: {}",
         err.message
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_project_create_decision() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_project_create_decision() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(ProjectAction::Create, ProjectResource::Decision);
     args.data = Some(serde_json::json!({
@@ -87,11 +91,12 @@ async fn golden_project_create_decision() {
         "error should mention unsupported action, got: {}",
         err.message
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_project_missing_project_id() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_project_missing_project_id() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(ProjectAction::Get, ProjectResource::Project);
     args.project_id = String::new();
@@ -108,4 +113,5 @@ async fn golden_project_missing_project_id() {
         "error should mention project_id is required, got: {}",
         err.message
     );
+    Ok(())
 }

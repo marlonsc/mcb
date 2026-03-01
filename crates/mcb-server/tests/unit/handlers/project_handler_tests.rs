@@ -2,14 +2,18 @@ use mcb_server::args::{ProjectAction, ProjectArgs, ProjectResource};
 use mcb_server::handlers::project::ProjectHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-fn create_handler() -> ProjectHandler {
-    let state = crate::utils::shared_context::shared_mcb_state();
-    ProjectHandler::new(state.mcp_server.project_workflow_repository())
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
+fn create_handler() -> TestResult<ProjectHandler> {
+    let state = crate::utils::shared_context::shared_mcb_state()?;
+    Ok(ProjectHandler::new(
+        state.mcp_server.project_workflow_repository(),
+    ))
 }
 
 #[tokio::test]
-async fn rejects_empty_project_id_for_get() {
-    let handler = create_handler();
+async fn rejects_empty_project_id_for_get() -> TestResult {
+    let handler = create_handler()?;
     let args = ProjectArgs {
         action: ProjectAction::Get,
         resource: ProjectResource::Project,
@@ -23,4 +27,5 @@ async fn rejects_empty_project_id_for_get() {
         .await
         .expect_err("must reject empty project_id");
     assert!(err.message.contains("project_id is required"));
+    Ok(())
 }

@@ -1,5 +1,6 @@
 //! Web controllers for custom MCB admin HTML pages served at `/ui/*`.
 
+use crate::controllers::admin_config::load_admin_config;
 use crate::state::McbState;
 use axum::extract::Extension;
 use loco_rs::prelude::*;
@@ -80,6 +81,19 @@ pub async fn dashboard(Extension(_state): Extension<McbState>) -> Result<Respons
 pub async fn config_page(Extension(state): Extension<McbState>) -> Result<Response> {
     let provider_name = state.embedding_provider.provider_name();
     let dimensions = state.embedding_provider.dimensions();
+    let admin_config = load_admin_config()?;
+    let vector_host = admin_config
+        .get("providers")
+        .and_then(|v| v.get("vector_store"))
+        .and_then(|v| v.get("host"))
+        .and_then(serde_json::Value::as_str)
+        .unwrap_or("localhost");
+    let vector_port = admin_config
+        .get("providers")
+        .and_then(|v| v.get("vector_store"))
+        .and_then(|v| v.get("port"))
+        .and_then(serde_json::Value::as_i64)
+        .unwrap_or(19530);
 
     let body = format!(
         r#"
@@ -92,8 +106,8 @@ pub async fn config_page(Extension(state): Extension<McbState>) -> Result<Respon
             </table>
             <h3>Vector Store</h3>
             <table>
-                <tr><td>Host</td><td>localhost</td></tr>
-                <tr><td>Port</td><td>19530</td></tr>
+                <tr><td>Host</td><td>{vector_host}</td></tr>
+                <tr><td>Port</td><td>{vector_port}</td></tr>
             </table>
         </div>
     "#
@@ -208,7 +222,7 @@ pub async fn browse_page(Extension(state): Extension<McbState>) -> Result<Respon
         .vector_store
         .list_collections()
         .await
-        .unwrap_or_default();
+        .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
     let mut all_chunks: Vec<mcb_domain::value_objects::SearchResult> = Vec::new();
     for collection in &collections {
@@ -217,7 +231,7 @@ pub async fn browse_page(Extension(state): Extension<McbState>) -> Result<Respon
             .vector_store
             .list_vectors(&id, 50)
             .await
-            .unwrap_or_default();
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
         all_chunks.extend(vecs);
     }
 

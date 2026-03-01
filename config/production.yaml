@@ -99,15 +99,6 @@ settings:
         - c
         - go
 
-  mcp_context:
-    git:
-      branches:
-        - main
-        - HEAD
-      depth: 50
-      ignore_patterns: []
-      include_submodules: true
-
   logging:
     level: info
     json_format: false

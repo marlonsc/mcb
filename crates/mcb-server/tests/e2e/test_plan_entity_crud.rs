@@ -3,6 +3,8 @@ use mcb_server::args::{PlanEntityAction, PlanEntityArgs, PlanEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 fn base_args(action: PlanEntityAction, resource: PlanEntityResource) -> PlanEntityArgs {
     PlanEntityArgs {
         action,
@@ -111,8 +113,8 @@ async fn create_review(
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-async fn golden_plan_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-plan-create-get-proj";
 
     let created = create_plan(&server, project_id, "Golden Plan Create Get").await;
@@ -143,11 +145,12 @@ async fn golden_plan_create_and_get() {
         body.get("title").and_then(serde_json::Value::as_str),
         Some("Golden Plan Create Get")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_plan_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-plan-list-proj";
 
     let _ = create_plan(&server, project_id, "Golden Plan List 1").await;
@@ -170,11 +173,12 @@ async fn golden_plan_list() {
         count >= 2,
         "plan list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_plan_update() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_update() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-plan-update-proj";
 
     let created = create_plan(&server, project_id, "Golden Plan Update").await;
@@ -215,11 +219,12 @@ async fn golden_plan_update() {
         body.get("title").and_then(serde_json::Value::as_str),
         Some("Golden Plan Updated Title")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_plan_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-plan-delete-proj";
 
     let created = create_plan(&server, project_id, "Golden Plan Delete").await;
@@ -248,6 +253,7 @@ async fn golden_plan_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "plan get should fail after delete");
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -255,8 +261,8 @@ async fn golden_plan_delete() {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-async fn golden_plan_version_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_version_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-version-create-get-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Version Create Get").await;
@@ -295,11 +301,12 @@ async fn golden_plan_version_create_and_get() {
         body.get("plan_id").and_then(serde_json::Value::as_str),
         Some(plan_id.as_str())
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_plan_version_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_version_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-version-list-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Version List").await;
@@ -330,11 +337,12 @@ async fn golden_plan_version_list() {
         count >= 2,
         "version list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_plan_version_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_version_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-version-delete-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Version Delete").await;
@@ -365,7 +373,7 @@ async fn golden_plan_version_delete() {
     // If delete is unsupported for versions, verify the error
     if delete_result.is_err() {
         // Delete not supported for versions — that's expected
-        return;
+        return Ok(());
     }
 
     // If delete succeeded, verify get fails
@@ -376,6 +384,7 @@ async fn golden_plan_version_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "version get should fail after delete");
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -383,8 +392,8 @@ async fn golden_plan_version_delete() {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-async fn golden_plan_review_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_review_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-review-create-get-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Review Create Get").await;
@@ -432,11 +441,12 @@ async fn golden_plan_review_create_and_get() {
             .and_then(serde_json::Value::as_str),
         Some(version_id.as_str())
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_plan_review_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_review_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-review-list-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Review List").await;
@@ -486,11 +496,12 @@ async fn golden_plan_review_list() {
         count >= 2,
         "review list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_plan_review_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_review_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-review-delete-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Review Delete").await;
@@ -528,7 +539,7 @@ async fn golden_plan_review_delete() {
     // If delete is unsupported for reviews, verify the error
     if delete_result.is_err() {
         // Delete not supported for reviews — that's expected
-        return;
+        return Ok(());
     }
 
     // If delete succeeded, verify get fails
@@ -539,6 +550,7 @@ async fn golden_plan_review_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "review get should fail after delete");
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -546,20 +558,22 @@ async fn golden_plan_review_delete() {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-async fn golden_plan_create_missing_data() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_create_missing_data() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let args = base_args(PlanEntityAction::Create, PlanEntityResource::Plan);
     let result = server.plan_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "plan create without data should fail");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_plan_get_nonexistent() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_get_nonexistent() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(PlanEntityAction::Get, PlanEntityResource::Plan);
     args.id = Some("nonexistent-plan-id-00000000".to_owned());
     let result = server.plan_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "plan get with fake id should fail");
+    Ok(())
 }

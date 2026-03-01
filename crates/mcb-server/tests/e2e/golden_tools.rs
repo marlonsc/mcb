@@ -9,6 +9,8 @@ use rstest::rstest;
 use crate::utils::test_fixtures::GOLDEN_COLLECTION;
 use crate::utils::text::extract_text;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 fn sample_codebase_path() -> std::path::PathBuf {
     crate::utils::test_fixtures::sample_codebase_path()
 }
@@ -18,8 +20,8 @@ fn sample_codebase_path() -> std::path::PathBuf {
 // =============================================================================
 
 #[tokio::test]
-async fn test_golden_e2e_complete_workflow() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_golden_e2e_complete_workflow() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let path = sample_codebase_path();
     assert!(
         path.exists(),
@@ -138,6 +140,7 @@ async fn test_golden_e2e_complete_workflow() {
     };
     let r = index_h.handle(Parameters(clear_args)).await;
     assert!(r.is_ok());
+    Ok(())
 }
 
 #[rstest]
@@ -147,8 +150,8 @@ async fn test_golden_e2e_complete_workflow() {
 async fn test_golden_index_variants(
     #[case] collection: Option<String>,
     #[case] extensions: Option<Vec<String>>,
-) {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+) -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let path = sample_codebase_path();
     assert!(path.exists(), "sample_codebase must exist: {path:?}");
 
@@ -177,11 +180,12 @@ async fn test_golden_index_variants(
             || text.contains("started"),
         "response: {text}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_golden_search_returns_relevant_results() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_golden_search_returns_relevant_results() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let path = sample_codebase_path();
     let collection = "golden_search_relevance";
     server
@@ -217,11 +221,12 @@ async fn test_golden_search_returns_relevant_results() {
         }))
         .await;
     assert!(r.is_ok(), "search must succeed after index");
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_golden_search_handles_empty_query() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_golden_search_handles_empty_query() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let search_h = server.search_handler();
     let r = search_h.handle(Parameters(SearchArgs {
         query: "   ".to_owned(),
@@ -248,11 +253,12 @@ async fn test_golden_search_handles_empty_query() {
         text.to_lowercase().contains("empty") || text.to_lowercase().contains("query"),
         "error response should mention empty query: {text}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_golden_search_respects_limit_parameter() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_golden_search_respects_limit_parameter() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let path = sample_codebase_path();
     let collection = "golden_limit_test";
     server
@@ -288,4 +294,5 @@ async fn test_golden_search_respects_limit_parameter() {
         }))
         .await;
     assert!(r.is_ok(), "search must succeed");
+    Ok(())
 }

@@ -1,6 +1,8 @@
 use rstest::rstest;
 extern crate mcb_providers;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 use std::sync::Arc;
 
 use axum::http::StatusCode;
@@ -53,8 +55,8 @@ fn full_provenance_context() -> ToolExecutionContext {
 #[case("vcs")]
 #[case("entity")]
 #[tokio::test]
-async fn empty_args_returns_invalid_params(#[case] tool_name: &str) {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn empty_args_returns_invalid_params(#[case] tool_name: &str) -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let handlers = tool_handlers(&Arc::new(server));
     let request = empty_call_request(tool_name);
     let context = full_provenance_context();
@@ -75,6 +77,7 @@ async fn empty_args_returns_invalid_params(#[case] tool_name: &str) {
         "{tool_name}: expected parse error, got: {}",
         error.message
     );
+    Ok(())
 }
 
 #[rstest]
@@ -82,8 +85,8 @@ async fn empty_args_returns_invalid_params(#[case] tool_name: &str) {
 #[case("search")]
 #[case("memory")]
 #[tokio::test]
-async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let handlers = tool_handlers(&Arc::new(server));
     let request = empty_call_request(tool_name);
 
@@ -97,6 +100,7 @@ async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) {
         "{tool_name}: expected provenance error, got: {}",
         error.message
     );
+    Ok(())
 }
 
 #[rstest]
@@ -107,8 +111,8 @@ async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) {
 #[case("vcs")]
 #[case("entity")]
 #[tokio::test]
-async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str) {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str) -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let handlers = tool_handlers(&Arc::new(server));
     let request = empty_call_request(tool_name);
 
@@ -125,6 +129,7 @@ async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str)
         error.code.0, -32602,
         "{tool_name}: should still be -32602 from parse failure"
     );
+    Ok(())
 }
 
 #[rstest]

@@ -83,7 +83,7 @@ settings:
     enabled: false
     password_algorithm: Argon2
     jwt:
-      secret: "test-jwt-secret-exactly-32bytes!"
+      secret: "{{ get_env(name='JWT_SECRET', default='test-jwt-secret-exactly-32bytes!') }}"
       expiration_secs: 86400
       refresh_expiration_secs: 604800
     api_key:

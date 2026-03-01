@@ -1,4 +1,4 @@
-#![allow(clippy::expect_used)]
+type TestResult<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -98,7 +98,7 @@ impl WorkflowSessionRepository for ConflictOnUpdateSessionRepository {
 }
 
 #[tokio::test]
-async fn full_workflow_lifecycle_persists_history_and_events() {
+async fn full_workflow_lifecycle_persists_history_and_events() -> TestResult {
     let session_repo: Arc<dyn WorkflowSessionRepository> =
         Arc::new(InMemoryWorkflowSessionRepository::default());
     let transition_repo: Arc<dyn TransitionRepository> =
@@ -111,10 +111,7 @@ async fn full_workflow_lifecycle_persists_history_and_events() {
         WorkflowEventPublisher::new(event_bus),
     );
 
-    let session = orchestrator
-        .create_session("project-alpha")
-        .await
-        .expect("session should be created");
+    let session = orchestrator.create_session("project-alpha").await?;
 
     let triggers = vec![
         TransitionTrigger::ContextDiscovered {
@@ -133,33 +130,25 @@ async fn full_workflow_lifecycle_persists_history_and_events() {
 
     let mut final_state = WorkflowState::Initializing;
     for trigger in triggers {
-        final_state = orchestrator
-            .apply_trigger(&session.id, trigger)
-            .await
-            .expect("transition should succeed");
+        final_state = orchestrator.apply_trigger(&session.id, trigger).await?;
     }
 
     assert!(matches!(final_state, WorkflowState::Completed));
 
-    let persisted = orchestrator
-        .get_session(&session.id)
-        .await
-        .expect("session should exist");
+    let persisted = orchestrator.get_session(&session.id).await?;
     assert!(matches!(persisted.current_state, WorkflowState::Completed));
     assert_eq!(persisted.version, 6);
 
-    let history = orchestrator
-        .get_history(&session.id)
-        .await
-        .expect("history should be available");
+    let history = orchestrator.get_history(&session.id).await?;
     assert_eq!(history.len(), 6);
 
     let captured_events = events.lock().await;
     assert_eq!(captured_events.len(), 7);
+    Ok(())
 }
 
 #[tokio::test]
-async fn invalid_transition_returns_error_without_side_effects() {
+async fn invalid_transition_returns_error_without_side_effects() -> TestResult {
     let session_repo: Arc<dyn WorkflowSessionRepository> =
         Arc::new(InMemoryWorkflowSessionRepository::default());
     let transition_repo: Arc<dyn TransitionRepository> =
@@ -172,10 +161,7 @@ async fn invalid_transition_returns_error_without_side_effects() {
         WorkflowEventPublisher::new(event_bus),
     );
 
-    let session = orchestrator
-        .create_session("project-alpha")
-        .await
-        .expect("session should be created");
+    let session = orchestrator.create_session("project-alpha").await?;
 
     let result = orchestrator
         .apply_trigger(
@@ -192,28 +178,24 @@ async fn invalid_transition_returns_error_without_side_effects() {
         "unexpected error: {err}"
     );
 
-    let persisted = orchestrator
-        .get_session(&session.id)
-        .await
-        .expect("session should exist");
+    let persisted = orchestrator.get_session(&session.id).await?;
     assert!(matches!(
         persisted.current_state,
         WorkflowState::Initializing
     ));
     assert_eq!(persisted.version, 0);
 
-    let history = orchestrator
-        .get_history(&session.id)
-        .await
-        .expect("history should be available");
+    let history = orchestrator.get_history(&session.id).await?;
     assert_eq!(history.len(), 0);
 
     let captured_events = events.lock().await;
     assert_eq!(captured_events.len(), 1);
+    Ok(())
 }
 
 #[tokio::test]
-async fn optimistic_concurrency_conflict_returns_error_without_transition_side_effects() {
+async fn optimistic_concurrency_conflict_returns_error_without_transition_side_effects()
+-> TestResult {
     let session_repo: Arc<dyn WorkflowSessionRepository> =
         Arc::new(ConflictOnUpdateSessionRepository::new());
     let transition_repo: Arc<dyn TransitionRepository> =
@@ -226,10 +208,7 @@ async fn optimistic_concurrency_conflict_returns_error_without_transition_side_e
         WorkflowEventPublisher::new(event_bus),
     );
 
-    let session = orchestrator
-        .create_session("project-alpha")
-        .await
-        .expect("session should be created");
+    let session = orchestrator.create_session("project-alpha").await?;
 
     let result = orchestrator
         .apply_trigger(
@@ -246,22 +225,17 @@ async fn optimistic_concurrency_conflict_returns_error_without_transition_side_e
         "unexpected error: {err}"
     );
 
-    let persisted = orchestrator
-        .get_session(&session.id)
-        .await
-        .expect("session should exist");
+    let persisted = orchestrator.get_session(&session.id).await?;
     assert!(matches!(
         persisted.current_state,
         WorkflowState::Initializing
     ));
     assert_eq!(persisted.version, 0);
 
-    let history = orchestrator
-        .get_history(&session.id)
-        .await
-        .expect("history should be available");
+    let history = orchestrator.get_history(&session.id).await?;
     assert_eq!(history.len(), 0);
 
     let captured_events = events.lock().await;
     assert_eq!(captured_events.len(), 1);
+    Ok(())
 }

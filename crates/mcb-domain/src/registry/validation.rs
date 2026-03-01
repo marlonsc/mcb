@@ -116,6 +116,35 @@ pub fn build_validators(workspace_root: &Path) -> Result<Vec<Arc<dyn RuleValidat
     Ok(out)
 }
 
+/// Build only the requested validators for the given workspace root.
+///
+/// Unknown validator names are ignored to preserve existing behavior.
+///
+/// # Errors
+///
+/// Returns an error if any selected validator's build function fails.
+pub fn build_named_validators(
+    workspace_root: &Path,
+    validator_names: &[String],
+) -> Result<Vec<Arc<dyn RuleValidator>>> {
+    let requested: std::collections::HashSet<&str> =
+        validator_names.iter().map(String::as_str).collect();
+    let mut out = Vec::new();
+
+    for entry in VALIDATOR_ENTRIES {
+        if !requested.contains(entry.name) {
+            continue;
+        }
+
+        let validator = (entry.build)(workspace_root.to_path_buf()).map_err(|e| {
+            crate::error::Error::configuration(format!("validator '{}': {}", entry.name, e))
+        })?;
+        out.push(validator);
+    }
+
+    Ok(out)
+}
+
 /// Run a set of validators with the given request and merge reports.
 ///
 /// If `request.validator_names` is `Some`, only validators whose name is in the list are run.

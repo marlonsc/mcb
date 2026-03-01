@@ -85,7 +85,7 @@ async fn assert_embedding_batch_shape(
 
 #[tokio::test]
 async fn test_init_app_creates_working_context() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     // Verify embedding handle returns a real provider
     let embedding = ctx.embedding_provider();
@@ -117,7 +117,7 @@ async fn test_init_app_creates_working_context() -> Result<(), Box<dyn std::erro
 async fn test_embedding_generates_real_vectors(
     #[case] texts: Vec<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     assert_embedding_batch_shape(&embedding, &texts).await?;
@@ -126,7 +126,7 @@ async fn test_embedding_generates_real_vectors(
 
 #[tokio::test]
 async fn test_full_index_and_search_flow() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();
@@ -197,7 +197,7 @@ async fn test_full_index_and_search_flow() -> Result<(), Box<dyn std::error::Err
 
 #[tokio::test]
 async fn test_provider_accessors_return_same_instance() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
     // Get embedding provider twice via accessor
     let provider1 = ctx.embedding_provider();
     let provider2 = ctx.embedding_provider();
@@ -211,7 +211,7 @@ async fn test_provider_accessors_return_same_instance() -> Result<(), Box<dyn st
 
 #[tokio::test]
 async fn test_multiple_collections_isolated() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();

@@ -1,30 +1,32 @@
-#![allow(clippy::expect_used, clippy::unwrap_used, missing_docs)]
+#![allow(missing_docs)]
 
 use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 use sea_orm_migration::MigratorTrait;
 
 use mcb_providers::migration::Migrator;
 
-async fn query_names(db: &DatabaseConnection, sql: &str) -> Vec<String> {
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
+async fn query_names(db: &DatabaseConnection, sql: &str) -> TestResult<Vec<String>> {
     let stmt = Statement::from_string(DatabaseBackend::Sqlite, sql);
-    let rows = db.query_all_raw(stmt).await.expect("query");
-    rows.iter()
-        .map(|r| r.try_get_by_index::<String>(0).unwrap())
-        .collect()
+    let rows = db.query_all_raw(stmt).await?;
+    let mut names = Vec::with_capacity(rows.len());
+    for r in &rows {
+        names.push(r.try_get_by_index::<String>(0)?);
+    }
+    Ok(names)
 }
 
 #[tokio::test]
-async fn migration_creates_all_tables() {
-    let db = sea_orm::Database::connect("sqlite::memory:")
-        .await
-        .expect("connect to in-memory SQLite");
+async fn migration_creates_all_tables() -> TestResult {
+    let db = sea_orm::Database::connect("sqlite::memory:").await?;
 
-    Migrator::up(&db, None).await.expect("migration up");
+    Migrator::up(&db, None).await?;
 
     let table_names = query_names(
         &db,
         "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'seaql_migrations' ORDER BY name",
-    ).await;
+    ).await?;
 
     let expected = [
         "agent_sessions",
@@ -64,21 +66,20 @@ async fn migration_creates_all_tables() {
             "missing table: {name} (found: {table_names:?})"
         );
     }
+    Ok(())
 }
 
 #[tokio::test]
-async fn migration_creates_fts5_triggers() {
-    let db = sea_orm::Database::connect("sqlite::memory:")
-        .await
-        .expect("connect to in-memory SQLite");
+async fn migration_creates_fts5_triggers() -> TestResult {
+    let db = sea_orm::Database::connect("sqlite::memory:").await?;
 
-    Migrator::up(&db, None).await.expect("migration up");
+    Migrator::up(&db, None).await?;
 
     let trigger_names = query_names(
         &db,
         "SELECT name FROM sqlite_master WHERE type='trigger' ORDER BY name",
     )
-    .await;
+    .await?;
 
     assert!(
         trigger_names.iter().any(|t| t == "obs_ai"),
@@ -92,21 +93,20 @@ async fn migration_creates_fts5_triggers() {
         trigger_names.iter().any(|t| t == "obs_au"),
         "missing trigger obs_au"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn migration_creates_indexes() {
-    let db = sea_orm::Database::connect("sqlite::memory:")
-        .await
-        .expect("connect to in-memory SQLite");
+async fn migration_creates_indexes() -> TestResult {
+    let db = sea_orm::Database::connect("sqlite::memory:").await?;
 
-    Migrator::up(&db, None).await.expect("migration up");
+    Migrator::up(&db, None).await?;
 
     let index_names = query_names(
         &db,
         "SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'idx_%' ORDER BY name",
     )
-    .await;
+    .await?;
 
     assert!(
         index_names.iter().any(|i| i == "idx_obs_project"),
@@ -120,36 +120,33 @@ async fn migration_creates_indexes() {
         index_names.iter().any(|i| i == "idx_branches_repo"),
         "missing index idx_branches_repo"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn migration_down_drops_all_tables() {
-    let db = sea_orm::Database::connect("sqlite::memory:")
-        .await
-        .expect("connect to in-memory SQLite");
+async fn migration_down_drops_all_tables() -> TestResult {
+    let db = sea_orm::Database::connect("sqlite::memory:").await?;
 
-    Migrator::up(&db, None).await.expect("migration up");
-    Migrator::down(&db, None).await.expect("migration down");
+    Migrator::up(&db, None).await?;
+    Migrator::down(&db, None).await?;
 
     let table_names = query_names(
         &db,
         "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' AND name != 'seaql_migrations'",
-    ).await;
+    ).await?;
 
     assert!(
         table_names.is_empty(),
         "tables should be empty after down migration, found: {table_names:?}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn migration_is_idempotent() {
-    let db = sea_orm::Database::connect("sqlite::memory:")
-        .await
-        .expect("connect to in-memory SQLite");
+async fn migration_is_idempotent() -> TestResult {
+    let db = sea_orm::Database::connect("sqlite::memory:").await?;
 
-    Migrator::up(&db, None).await.expect("first migration up");
-    Migrator::up(&db, None)
-        .await
-        .expect("second migration up should be idempotent");
+    Migrator::up(&db, None).await?;
+    Migrator::up(&db, None).await?;
+    Ok(())
 }

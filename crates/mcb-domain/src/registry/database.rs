@@ -67,8 +67,7 @@ pub fn resolve_database_repositories(
 ) -> crate::error::Result<DatabaseRepositories> {
     for entry in DATABASE_REPOSITORY_PROVIDERS {
         if entry.name == provider_name {
-            return (entry.build)(connection, namespace)
-                .map_err(|e| crate::error::Error::configuration(e.to_string()));
+            return (entry.build)(connection, namespace);
         }
     }
 

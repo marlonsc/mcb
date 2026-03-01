@@ -1,5 +1,6 @@
 use async_trait::async_trait;
 use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use std::collections::HashMap;
 
 use mcb_domain::entities::User;
 use mcb_domain::entities::user::UserRole;
@@ -39,25 +40,49 @@ impl SeaOrmAuthRepositoryAdapter {
 #[async_trait]
 impl AuthRepositoryPort for SeaOrmAuthRepositoryAdapter {
     async fn find_users_by_api_key_hash(&self, key_hash: &str) -> Result<Vec<UserWithApiKey>> {
-        let users_with_keys = users::Entity::find()
-            .filter(users::Column::ApiKeyHash.eq(key_hash.to_owned()))
+        let mut api_key_rows = api_keys::Entity::find()
+            .filter(api_keys::Column::RevokedAt.is_null())
             .all(&self.db)
             .await
-            .map_err(|e| Error::database(format!("find users with API key hashes failed: {e}")))?;
+            .map_err(|e| Error::database(format!("find API key records failed: {e}")))?;
 
-        let results = users_with_keys
+        if api_key_rows.iter().any(|row| row.key_hash == key_hash) {
+            api_key_rows.retain(|row| row.key_hash == key_hash);
+        }
+
+        if api_key_rows.is_empty() {
+            return Ok(Vec::new());
+        }
+
+        let user_ids: Vec<String> = api_key_rows.iter().map(|row| row.user_id.clone()).collect();
+        let users_with_keys = users::Entity::find()
+            .filter(users::Column::Id.is_in(user_ids))
+            .all(&self.db)
+            .await
+            .map_err(|e| Error::database(format!("find users with API keys failed: {e}")))?;
+
+        let user_by_id: HashMap<String, users::Model> = users_with_keys
             .into_iter()
-            .filter_map(|user_model| {
-                let user = Self::map_user(user_model.clone()).ok()?;
-                let api_key_hash = user_model.api_key_hash?;
-                Some(UserWithApiKey {
+            .map(|user| (user.id.clone(), user))
+            .collect();
+
+        api_key_rows
+            .into_iter()
+            .filter_map(|api_key_model| {
+                user_by_id
+                    .get(&api_key_model.user_id)
+                    .cloned()
+                    .map(|user_model| (api_key_model, user_model))
+            })
+            .map(|(api_key_model, user_model)| {
+                let user = Self::map_user(user_model)?;
+                Ok(UserWithApiKey {
                     user,
-                    api_key_id: user_model.id,
-                    api_key_hash,
+                    api_key_id: api_key_model.id,
+                    api_key_hash: api_key_model.key_hash,
                 })
             })
-            .collect();
-        Ok(results)
+            .collect()
     }
 
     async fn verify_api_key(&self, key_hash: &str) -> Result<Option<ApiKeyInfo>> {

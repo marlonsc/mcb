@@ -19,7 +19,7 @@ pub struct McpTestContext {
 
 impl McpTestContext {
     pub async fn new() -> TestResult<Self> {
-        let (server_instance, temp) = create_test_mcp_server().await;
+        let (server_instance, temp) = create_test_mcp_server().await?;
         let server = Arc::new(server_instance);
 
         Ok(Self {

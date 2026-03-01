@@ -5,14 +5,18 @@ use serde_json::json;
 
 use crate::utils::text::extract_text;
 
-fn create_handler() -> PlanEntityHandler {
-    let state = crate::utils::shared_context::shared_mcb_state();
-    PlanEntityHandler::new(state.mcp_server.plan_entity_repository())
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
+fn create_handler() -> TestResult<PlanEntityHandler> {
+    let state = crate::utils::shared_context::shared_mcb_state()?;
+    Ok(PlanEntityHandler::new(
+        state.mcp_server.plan_entity_repository(),
+    ))
 }
 
 #[tokio::test]
-async fn list_plan_versions_requires_plan_id() {
-    let handler = create_handler();
+async fn list_plan_versions_requires_plan_id() -> TestResult {
+    let handler = create_handler()?;
     let args = PlanEntityArgs {
         action: PlanEntityAction::List,
         resource: PlanEntityResource::Version,
@@ -29,6 +33,7 @@ async fn list_plan_versions_requires_plan_id() {
         .await
         .expect_err("must reject missing plan_id");
     assert!(err.message.contains("plan_id required"));
+    Ok(())
 }
 
 fn plan_payload(id: &str, project_id: &str) -> serde_json::Value {
@@ -70,8 +75,8 @@ async fn list_plan_count(handler: &PlanEntityHandler, project_id: &str) -> usize
 }
 
 #[tokio::test]
-async fn create_plan_with_conflicting_project_id_rejected_without_side_effect() {
-    let handler = create_handler();
+async fn create_plan_with_conflicting_project_id_rejected_without_side_effect() -> TestResult {
+    let handler = create_handler()?;
     let before_count = list_plan_count(&handler, "project-a").await;
 
     let create_args = PlanEntityArgs {
@@ -93,4 +98,5 @@ async fn create_plan_with_conflicting_project_id_rejected_without_side_effect() 
 
     let after_count = list_plan_count(&handler, "project-a").await;
     assert_eq!(after_count, before_count);
+    Ok(())
 }

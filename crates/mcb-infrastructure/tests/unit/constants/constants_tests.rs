@@ -31,10 +31,7 @@ fn test_http_count_constants(#[case] value: usize, #[case] min: usize, #[case] m
 
 #[rstest]
 fn test_http_timeout_relationships() {
-    assert!(
-        HTTP_CLIENT_IDLE_TIMEOUT_SECS >= HTTP_REQUEST_TIMEOUT_SECS,
-        "Idle timeout should be >= request timeout"
-    );
+    const { assert!(HTTP_CLIENT_IDLE_TIMEOUT_SECS >= HTTP_REQUEST_TIMEOUT_SECS) };
 }
 
 // ============================================================================
@@ -64,8 +61,8 @@ fn test_embedding_dimension_common_values() {
     let common_dims = [256, 384, 512, 768, 1024, 1536, 2048, 3072];
     assert!(common_dims.contains(&EMBEDDING_DIMENSION_NULL));
 
-    assert!(EMBEDDING_DIMENSION_OPENAI_SMALL >= 1024);
-    assert!(EMBEDDING_DIMENSION_OPENAI_LARGE > EMBEDDING_DIMENSION_OPENAI_SMALL);
+    const { assert!(EMBEDDING_DIMENSION_OPENAI_SMALL >= 1024) };
+    const { assert!(EMBEDDING_DIMENSION_OPENAI_LARGE > EMBEDDING_DIMENSION_OPENAI_SMALL) };
     assert_eq!(
         EMBEDDING_DIMENSION_OPENAI_ADA,
         EMBEDDING_DIMENSION_OPENAI_SMALL
@@ -85,7 +82,7 @@ fn test_jwt_constants_range(#[case] value: u64, #[case] min: u64, #[case] max: u
 
 #[rstest]
 fn test_jwt_relationship() {
-    assert!(JWT_REFRESH_EXPIRATION_SECS > JWT_DEFAULT_EXPIRATION_SECS);
+    const { assert!(JWT_REFRESH_EXPIRATION_SECS > JWT_DEFAULT_EXPIRATION_SECS) };
 }
 
 #[rstest]
@@ -113,11 +110,11 @@ fn test_bearer_prefix() {
 
 #[rstest]
 fn test_aes_gcm_constants() {
-    assert_eq!(AES_GCM_KEY_SIZE, 32);
-    assert_eq!(AES_GCM_NONCE_SIZE, 12);
+    const { assert!(AES_GCM_KEY_SIZE == 32) };
+    const { assert!(AES_GCM_NONCE_SIZE == 12) };
 }
 
 #[rstest]
 fn test_pbkdf2_iterations() {
-    assert!(PBKDF2_ITERATIONS >= 10_000);
+    const { assert!(PBKDF2_ITERATIONS >= 10_000) };
 }

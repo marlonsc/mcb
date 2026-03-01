@@ -8,6 +8,8 @@ use mcb_server::args::{SessionAction, SessionArgs};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 /// Helper: build a `SessionArgs` with defaults for all optional fields.
 fn base_args(action: SessionAction) -> SessionArgs {
     SessionArgs {
@@ -57,8 +59,8 @@ async fn create_session(server: &mcb_server::mcp_server::McpServer) -> serde_jso
 // Test 1: Create session → Get by id → verify fields
 // ---------------------------------------------------------------------------
 #[tokio::test]
-async fn golden_session_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_session_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let created = create_session(&server).await;
     let session_id = created["session_id"]
@@ -93,14 +95,15 @@ async fn golden_session_create_and_get() {
         fetched["started_at"].as_i64().is_some(),
         "started_at must be set"
     );
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
 // Test 2: Create sessions → List → verify count
 // ---------------------------------------------------------------------------
 #[tokio::test]
-async fn golden_session_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_session_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     // Create two sessions
     let _ = create_session(&server).await;
@@ -135,14 +138,15 @@ async fn golden_session_list() {
         "sessions array should have at least 2 entries, got {}",
         sessions.len()
     );
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
 // Test 3: Create → End session (update status) → Get → verify ended_at / status
 // ---------------------------------------------------------------------------
 #[tokio::test]
-async fn golden_session_end() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_session_end() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let created = create_session(&server).await;
     let session_id = created["session_id"]
@@ -191,14 +195,15 @@ async fn golden_session_end() {
 
     let fetched = result_json(&get_res);
     assert_eq!(fetched["status"].as_str(), Some("completed"));
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
 // Test 4: Create with no data → verify error
 // ---------------------------------------------------------------------------
 #[tokio::test]
-async fn golden_session_create_missing_data() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_session_create_missing_data() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     // Create with no data payload at all
     let args = base_args(SessionAction::Create);
@@ -216,14 +221,15 @@ async fn golden_session_create_missing_data() {
             // Validation error at the MCP layer is also acceptable
         }
     }
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
 // Test 5: Get with fake id → verify error
 // ---------------------------------------------------------------------------
 #[tokio::test]
-async fn golden_session_get_nonexistent() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_session_get_nonexistent() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(SessionAction::Get);
     args.session_id = Some(mcb_domain::value_objects::ids::SessionId::from_string(
@@ -245,14 +251,15 @@ async fn golden_session_get_nonexistent() {
         is_error || mentions_not_found,
         "get nonexistent should return error or 'not found', got: {text}"
     );
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
 // Test 6: Create → Summarize → verify response
 // ---------------------------------------------------------------------------
 #[tokio::test]
-async fn golden_session_summary() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_session_summary() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let created = create_session(&server).await;
     let session_id = created["session_id"]
@@ -291,4 +298,5 @@ async fn golden_session_summary() {
         body["summary_id"].as_str().is_some() || body["session_id"].as_str().is_some(),
         "summarize response should contain summary_id or session_id: {body}"
     );
+    Ok(())
 }

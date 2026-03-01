@@ -262,18 +262,21 @@ fn test_format_clear_index(
 use crate::utils::text::extract_text;
 
 mod handler_error_tests {
+
+    type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
     use mcb_server::args::{IndexAction, IndexArgs};
     use mcb_server::handlers::IndexHandler;
     use rmcp::handler::server::wrapper::Parameters;
 
-    async fn create_handler() -> IndexHandler {
-        let state = crate::utils::shared_context::shared_mcb_state();
-        IndexHandler::new(state.mcp_server.indexing_service())
+    async fn create_handler() -> TestResult<IndexHandler> {
+        let state = crate::utils::shared_context::shared_mcb_state()?;
+        Ok(IndexHandler::new(state.mcp_server.indexing_service()))
     }
 
     #[tokio::test]
-    async fn test_handler_service_error_handling() {
-        let handler = create_handler().await;
+    async fn test_handler_service_error_handling() -> TestResult {
+        let handler = create_handler().await?;
 
         let args = IndexArgs {
             action: IndexAction::Start,
@@ -297,5 +300,6 @@ mod handler_error_tests {
                 || err_str.contains("not found"),
             "Expected path-related error. Got: {err_str}"
         );
+        Ok(())
     }
 }

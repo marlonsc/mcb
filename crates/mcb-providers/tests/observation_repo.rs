@@ -1,4 +1,4 @@
-#![allow(clippy::expect_used, missing_docs)]
+#![allow(missing_docs)]
 
 use mcb_domain::entities::memory::{
     MemoryFilter, Observation, ObservationMetadata, ObservationType,
@@ -39,10 +39,10 @@ fn make_observation(
     }
 }
 
-async fn setup_repo() -> SeaOrmObservationRepository {
-    let db: DatabaseConnection = Database::connect("sqlite::memory:")
-        .await
-        .expect("connect sqlite memory");
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
+async fn setup_repo() -> TestResult<SeaOrmObservationRepository> {
+    let db: DatabaseConnection = Database::connect("sqlite::memory:").await?;
 
     let schema = [
         "CREATE TABLE organizations (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, settings_json TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)",
@@ -56,17 +56,15 @@ async fn setup_repo() -> SeaOrmObservationRepository {
     ];
 
     for stmt in schema {
-        db.execute_unprepared(stmt)
-            .await
-            .expect("create observation schema");
+        db.execute_unprepared(stmt).await?;
     }
 
-    SeaOrmObservationRepository::new(db)
+    Ok(SeaOrmObservationRepository::new(db))
 }
 
 #[tokio::test]
-async fn observation_repo_round_trip_store_get_list_timeline_and_inject() {
-    let repo = setup_repo().await;
+async fn observation_repo_round_trip_store_get_list_timeline_and_inject() -> TestResult {
+    let repo = setup_repo().await?;
 
     let obs1 = make_observation(
         "11111111-1111-1111-1111-111111111111",
@@ -90,17 +88,16 @@ async fn observation_repo_round_trip_store_get_list_timeline_and_inject() {
         "ses-2",
     );
 
-    repo.store_observation(&obs1).await.expect("store obs1");
-    repo.store_observation(&obs2).await.expect("store obs2");
-    repo.store_observation(&obs3).await.expect("store obs3");
+    repo.store_observation(&obs1).await?;
+    repo.store_observation(&obs2).await?;
+    repo.store_observation(&obs3).await?;
 
     let fetched = repo
         .get_observation(&ObservationId::from_string(
             "22222222-2222-2222-2222-222222222222",
         ))
-        .await
-        .expect("get obs2")
-        .expect("obs2 exists");
+        .await?
+        .ok_or("obs2 should exist")?;
     assert_eq!(fetched.id, "22222222-2222-2222-2222-222222222222");
     assert_eq!(fetched.content, "second observation content");
 
@@ -113,8 +110,7 @@ async fn observation_repo_round_trip_store_get_list_timeline_and_inject() {
             }),
             10,
         )
-        .await
-        .expect("list with tags and session");
+        .await?;
 
     let filtered_ids: Vec<&str> = filtered.iter().map(|obs| obs.id.as_str()).collect();
     assert_eq!(
@@ -132,8 +128,7 @@ async fn observation_repo_round_trip_store_get_list_timeline_and_inject() {
             1,
             None,
         )
-        .await
-        .expect("timeline");
+        .await?;
     let timeline_ids: Vec<&str> = timeline.iter().map(|obs| obs.id.as_str()).collect();
     assert_eq!(
         timeline_ids,
@@ -153,19 +148,19 @@ async fn observation_repo_round_trip_store_get_list_timeline_and_inject() {
             10,
             128,
         )
-        .await
-        .expect("inject observations");
+        .await?;
     assert!(!injected.is_empty());
     assert!(
         injected
             .iter()
             .all(|obs| obs.tags.iter().any(|tag| tag == "important"))
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn search_handles_empty_query_for_memory_list_bug_regression() {
-    let repo = setup_repo().await;
+async fn search_handles_empty_query_for_memory_list_bug_regression() -> TestResult {
+    let repo = setup_repo().await?;
 
     let observation = make_observation(
         "44444444-4444-4444-4444-444444444444",
@@ -174,14 +169,13 @@ async fn search_handles_empty_query_for_memory_list_bug_regression() {
         1_700_100_001,
         "ses-list",
     );
-    repo.store_observation(&observation)
-        .await
-        .expect("store regression observation");
+    repo.store_observation(&observation).await?;
 
-    let results = repo.search("", 10).await.expect("search empty query");
+    let results = repo.search("", 10).await?;
     assert!(
         results
             .iter()
             .any(|item| item.id == "44444444-4444-4444-4444-444444444444")
     );
+    Ok(())
 }

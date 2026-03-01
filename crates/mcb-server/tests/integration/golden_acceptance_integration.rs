@@ -233,7 +233,7 @@ fn test_sample_codebase_contains_expected_file(#[case] expected_file: &str) {
 
 #[tokio::test]
 async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();
@@ -304,7 +304,7 @@ async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>
 
 #[tokio::test]
 async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();
@@ -400,7 +400,7 @@ async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std
 /// (embedding, `vector_store`, handler, cache, di, error, chunking, etc.)
 #[tokio::test]
 async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();
@@ -518,7 +518,7 @@ async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error
     // 5. Search with all golden queries
     // 6. Validate expected_files found
 
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();

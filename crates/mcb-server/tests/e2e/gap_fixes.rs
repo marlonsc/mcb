@@ -11,9 +11,11 @@ use rstest::rstest;
 use std::fs;
 use std::process::Command;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 #[tokio::test]
-async fn test_gap1_validate_list_rules_returns_populated_list() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_gap1_validate_list_rules_returns_populated_list() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let validate_h = server.validate_handler();
 
     let result = validate_h
@@ -53,11 +55,12 @@ async fn test_gap1_validate_list_rules_returns_populated_list() {
 
     assert!(rule_names.contains(&"clean_architecture"));
     assert!(rule_names.contains(&"solid"));
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_gap1_validate_list_rules_by_category_filter() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_gap1_validate_list_rules_by_category_filter() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let validate_h = server.validate_handler();
 
     let result = validate_h
@@ -88,11 +91,12 @@ async fn test_gap1_validate_list_rules_by_category_filter() {
             Some("quality")
         );
     }
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_gap2_vcs_list_repositories_discovers_repos() {
-    let (server, temp_dir) = create_test_mcp_server().await;
+async fn test_gap2_vcs_list_repositories_discovers_repos() -> TestResult {
+    let (server, temp_dir) = create_test_mcp_server().await?;
     let vcs_h = server.vcs_handler();
 
     // Create a git repo in the temp dir
@@ -166,6 +170,7 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
         found,
         "Created repo test-repo not found in list: {repo_strings:?}"
     );
+    Ok(())
 }
 
 #[rstest]
@@ -176,8 +181,8 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
 async fn test_gap3_session_list_status_handling(
     #[case] status: Option<String>,
     #[case] should_succeed: bool,
-) {
-    let (server, _temp) = create_test_mcp_server().await;
+) -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let session_h = server.session_handler();
 
     let result = session_h
@@ -200,7 +205,7 @@ async fn test_gap3_session_list_status_handling(
             result.is_err(),
             "Invalid status should return invalid_params"
         );
-        return;
+        return Ok(());
     }
 
     assert!(
@@ -214,4 +219,5 @@ async fn test_gap3_session_list_status_handling(
     let json_val: serde_json::Value = serde_json::from_str(&text).unwrap();
     assert!(json_val.get("sessions").is_some());
     assert!(json_val.get("count").is_some());
+    Ok(())
 }

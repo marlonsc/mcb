@@ -297,9 +297,13 @@ pub fn try_shared_app_context() -> Option<&'static SharedTestContext> {
     CTX.get_or_init(create_shared_test_context).as_ref()
 }
 
-#[allow(clippy::panic, clippy::expect_used)]
-pub fn shared_app_context() -> &'static SharedTestContext {
-    try_shared_app_context().expect("shared test context init failed")
+/// Returns the shared test context, or an error if initialization failed.
+///
+/// # Errors
+///
+/// Returns an error if the shared context was not initialized.
+pub fn shared_app_context() -> Result<&'static SharedTestContext, &'static str> {
+    try_shared_app_context().ok_or("shared test context init failed")
 }
 
 async fn create_test_resolution_context() -> Option<(ServiceResolutionContext, TempDir)> {
@@ -341,21 +345,21 @@ async fn create_test_resolution_context() -> Option<(ServiceResolutionContext, T
 /// [`build_mcp_server_bootstrap`]. Each call gets its own [`TempDir`] and database.
 ///
 /// Returns `(server, temp_dir)` — keep `temp_dir` alive for the test.
-#[allow(clippy::panic)]
-pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
+/// # Errors
+///
+/// Returns an error if the resolution context or MCP bootstrap could not be built.
+pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn std::error::Error>> {
     let (resolution_ctx, temp_dir) = create_test_resolution_context()
         .await
-        .unwrap_or_else(|| panic!("failed to build test ServiceResolutionContext"));
+        .ok_or("failed to build test ServiceResolutionContext")?;
 
-    let bootstrap = build_mcp_server_bootstrap(&resolution_ctx, ExecutionFlow::ServerHybrid)
-        .unwrap_or_else(|err| panic!("failed to build MCP server bootstrap for tests: {err}"));
+    let bootstrap = build_mcp_server_bootstrap(&resolution_ctx, ExecutionFlow::ServerHybrid)?;
     let server = Arc::unwrap_or_clone(bootstrap.mcp_server);
 
-    (server, temp_dir)
+    Ok((server, temp_dir))
 }
 
 /// Process-wide shared [`McbState`] for unit tests. Builds once via [`create_real_domain_services`].
-#[allow(clippy::unwrap_used)]
 pub fn try_shared_mcb_state() -> Option<&'static mcb_server::state::McbState> {
     static STATE: std::sync::OnceLock<
         Option<(mcb_server::state::McbState, Box<tempfile::TempDir>)>,
@@ -364,21 +368,25 @@ pub fn try_shared_mcb_state() -> Option<&'static mcb_server::state::McbState> {
         // Spawn a separate thread so the new runtime doesn't conflict with an
         // existing #[tokio::test] runtime on the calling thread.
         std::thread::spawn(|| {
-            let rt = tokio::runtime::Runtime::new().unwrap();
+            let rt = tokio::runtime::Runtime::new().ok()?;
             rt.block_on(async {
                 crate::utils::domain_services::create_real_domain_services().await
             })
         })
         .join()
-        .unwrap()
+        .ok()?
         .map(|(s, t)| (s, Box::new(t)))
     });
     STATE.get().and_then(|o| o.as_ref()).map(|(s, _)| s as &_)
 }
 
-#[allow(clippy::panic, clippy::expect_used)]
-pub fn shared_mcb_state() -> &'static mcb_server::state::McbState {
-    try_shared_mcb_state().expect("shared McbState init failed")
+/// Returns the shared `McbState`, or an error if initialization failed.
+///
+/// # Errors
+///
+/// Returns an error if the shared state was not initialized.
+pub fn shared_mcb_state() -> Result<&'static mcb_server::state::McbState, &'static str> {
+    try_shared_mcb_state().ok_or("shared McbState init failed")
 }
 
 // -----------------------------------------------------------------------------

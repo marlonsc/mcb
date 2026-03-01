@@ -9,7 +9,7 @@ use mcb_infrastructure::config::{CacheProvider, CacheSystemConfig, TestConfigBui
 fn loaded_config() -> Result<mcb_infrastructure::config::AppConfig, Box<dyn std::error::Error>> {
     TestConfigBuilder::new()
         .and_then(|b| b.build().map(|(config, _)| config))
-        .map_err(|e| e.into())
+        .map_err(Into::into)
 }
 
 #[test]

@@ -26,8 +26,11 @@ use mcb_domain::ports::ProjectDetectorService;
 ///
 /// Accepts a path and returns detected project types. The concrete implementation
 /// is provided by `mcb-providers` via the DI layer (CA-compliant).
-pub type DetectAllFn =
-    Arc<dyn Fn(&Path) -> Pin<Box<dyn Future<Output = Vec<ProjectType>> + Send + '_>> + Send + Sync>;
+pub type DetectAllFn = Arc<
+    dyn for<'a> Fn(&'a Path) -> Pin<Box<dyn Future<Output = Vec<ProjectType>> + Send + 'a>>
+        + Send
+        + Sync,
+>;
 
 /// Infrastructure service for project detection and scanning.
 ///

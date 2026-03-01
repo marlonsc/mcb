@@ -158,7 +158,7 @@ impl Initializer for McpServerInitializer {
                 axum::routing::get(|| async {
                     (
                         [(axum::http::header::CONTENT_TYPE, "image/svg+xml")],
-                        include_str!("../../../../assets/admin/favicon.ico"),
+                        include_str!("../../../../assets/admin/favicon.svg"),
                     )
                 }),
             )

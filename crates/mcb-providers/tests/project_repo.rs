@@ -1,4 +1,4 @@
-#![allow(clippy::expect_used, missing_docs)]
+#![allow(missing_docs)]
 
 use mcb_domain::entities::Project;
 use mcb_domain::entities::project::{

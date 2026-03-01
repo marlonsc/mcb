@@ -20,6 +20,8 @@ use serde_json::json;
 use crate::utils::test_fixtures::create_test_mcp_server;
 use crate::utils::text::{extract_text, parse_count_from_json_text};
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 async fn list_observation_count(
     memory_h: &mcb_server::handlers::MemoryHandler,
     query: &str,
@@ -57,8 +59,8 @@ async fn list_observation_count(
 /// Stores an observation via the memory handler and verifies it was actually
 /// persisted by retrieving it back through a list query.
 #[tokio::test]
-async fn test_real_memory_store_observation_persists() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_memory_store_observation_persists() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let memory_h = server.memory_handler();
     let project_id = "real-persist-test";
 
@@ -136,12 +138,13 @@ async fn test_real_memory_store_observation_persists() {
             || list_text.contains("Authentication"),
         "Listed observations should contain our stored content, got: {list_text}"
     );
+    Ok(())
 }
 
 /// Stores multiple observations and verifies the count matches.
 #[tokio::test]
-async fn test_real_memory_store_multiple_observations_counted() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_memory_store_multiple_observations_counted() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let memory_h = server.memory_handler();
     let project_id = "real-multi-store";
 
@@ -214,6 +217,7 @@ async fn test_real_memory_store_multiple_observations_counted() {
         has_observations || list_text.contains("\"count\": 3"),
         "Should find all 3 observations in list. Response: {list_text}"
     );
+    Ok(())
 }
 
 // =============================================================================
@@ -223,8 +227,8 @@ async fn test_real_memory_store_multiple_observations_counted() {
 /// Attempts to store an observation with missing required fields.
 /// Verifies the error message is contextual (not the old "internal error").
 #[tokio::test]
-async fn test_real_memory_store_missing_data_returns_contextual_error() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_memory_store_missing_data_returns_contextual_error() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let memory_h = server.memory_handler();
 
     let bad_args = MemoryArgs {
@@ -265,6 +269,7 @@ async fn test_real_memory_store_missing_data_returns_contextual_error() {
         text.contains("Missing"),
         "Error should mention missing required field. Got: {text}"
     );
+    Ok(())
 }
 
 // =============================================================================
@@ -275,8 +280,8 @@ async fn test_real_memory_store_missing_data_returns_contextual_error() {
 /// Tests the full store → get round-trip on real `SQLite`.
 /// No observation seed needed — `store_session_summary` auto-creates org + project (honesty fix v0.2.1).
 #[tokio::test]
-async fn test_real_session_summary_store_and_retrieve() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_session_summary_store_and_retrieve() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let memory_h = server.memory_handler();
 
     // 1. Store a session summary (NO seed observation needed — auto-create handles FK)
@@ -354,6 +359,7 @@ async fn test_real_session_summary_store_and_retrieve() {
         get_text.contains("architecture") || get_text.contains("hexagonal"),
         "Retrieved session summary should contain stored data, got: {get_text}"
     );
+    Ok(())
 }
 
 // =============================================================================
@@ -362,8 +368,8 @@ async fn test_real_session_summary_store_and_retrieve() {
 
 /// Passes an invalid `agent_type` and verifies the error lists valid types.
 #[tokio::test]
-async fn test_real_session_create_invalid_agent_type_contextual_error() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_session_create_invalid_agent_type_contextual_error() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let session_h = server.session_handler();
 
     let bad_args = SessionArgs {
@@ -390,6 +396,7 @@ async fn test_real_session_create_invalid_agent_type_contextual_error() {
         err_text.contains("sisyphus") || err_text.contains("oracle") || err_text.contains("Valid"),
         "Error should list valid agent types, got: {err_text}"
     );
+    Ok(())
 }
 
 // =============================================================================
@@ -398,8 +405,8 @@ async fn test_real_session_create_invalid_agent_type_contextual_error() {
 
 /// Searches an empty project and verifies it returns empty results (not an error).
 #[tokio::test]
-async fn test_real_search_empty_project_returns_empty_not_error() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_search_empty_project_returns_empty_not_error() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let search_h = server.search_handler();
 
     let search_args = SearchArgs {
@@ -432,11 +439,12 @@ async fn test_real_search_empty_project_returns_empty_not_error() {
         text.contains("\"count\": 0") || text.contains("\"count\":0") || text.contains("[]"),
         "Search on empty project should return count 0 or empty array, got: {text}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_real_search_memory_enriches_origin_context_fields() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_search_memory_enriches_origin_context_fields() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let memory_h = server.memory_handler();
     let search_h = server.search_handler();
 
@@ -522,6 +530,7 @@ async fn test_real_search_memory_enriches_origin_context_fields() {
         text.contains("abc123origin"),
         "Expected commit in response: {text}"
     );
+    Ok(())
 }
 
 // =============================================================================
@@ -532,8 +541,8 @@ async fn test_real_search_memory_enriches_origin_context_fields() {
 /// Proves the entire FK chain (org → project → `session_summary` → `agent_session`) works
 /// with auto-create, no observation seed needed.
 #[tokio::test]
-async fn test_real_agent_session_create_and_retrieve() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_agent_session_create_and_retrieve() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let memory_h = server.memory_handler();
     let session_h = server.session_handler();
 
@@ -654,11 +663,12 @@ async fn test_real_agent_session_create_and_retrieve() {
         get_text.contains(summary_id),
         "Retrieved session should reference original summary_id, got: {get_text}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_real_agent_session_create_without_summary_id_succeeds() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_agent_session_create_without_summary_id_succeeds() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let session_h = server.session_handler();
 
     let create_args = SessionArgs {
@@ -718,6 +728,7 @@ async fn test_real_agent_session_create_without_summary_id_succeeds() {
         get_text.contains("\"session_summary_id\": \"auto_"),
         "Session summary id should be auto-generated, got: {get_text}"
     );
+    Ok(())
 }
 
 // =============================================================================
@@ -727,8 +738,8 @@ async fn test_real_agent_session_create_without_summary_id_succeeds() {
 /// Lists sessions on a fresh (empty) database.
 /// Verifies honest behavior: empty results, not an error or fake data.
 #[tokio::test]
-async fn test_real_session_list_empty_returns_gracefully() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_session_list_empty_returns_gracefully() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let session_h = server.session_handler();
 
     let list_args = SessionArgs {
@@ -751,11 +762,12 @@ async fn test_real_session_list_empty_returns_gracefully() {
         !list_resp.is_error.unwrap_or(false),
         "Empty session list should not be an error"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_real_session_list_filters_by_parent_session_id() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_session_list_filters_by_parent_session_id() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let session_h = server.session_handler();
 
     let parent_create = SessionArgs {
@@ -840,6 +852,7 @@ async fn test_real_session_list_filters_by_parent_session_id() {
     let list_text = extract_text(&list_resp.content);
     assert!(list_text.contains(&child_id));
     assert!(list_text.contains(&parent_id));
+    Ok(())
 }
 
 #[rstest]
@@ -848,8 +861,8 @@ async fn test_real_session_list_filters_by_parent_session_id() {
 #[tokio::test]
 async fn test_real_memory_store_conflicting_ids_rejected_without_side_effect(
     #[case] mode: &str,
-) -> Result<(), rmcp::ErrorData> {
-    let (server, _temp) = create_test_mcp_server().await;
+) -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let memory_h = server.memory_handler();
     let query = if mode == "observation" {
         "conflict-observation-side-effect-token"
@@ -922,8 +935,8 @@ async fn test_real_memory_store_conflicting_ids_rejected_without_side_effect(
 }
 
 #[tokio::test]
-async fn test_real_session_create_conflicting_project_rejected_without_side_effect() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_real_session_create_conflicting_project_rejected_without_side_effect() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let session_h = server.session_handler();
 
     let list_before = SessionArgs {
@@ -988,4 +1001,5 @@ async fn test_real_session_create_conflicting_project_rejected_without_side_effe
     let after_count = parse_count_from_json_text(&after_text);
 
     assert_eq!(after_count, before_count);
+    Ok(())
 }

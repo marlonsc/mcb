@@ -16,9 +16,11 @@ use serde_json::json;
 use crate::utils::test_fixtures::TEST_PROJECT_ID;
 use crate::utils::text::extract_text;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 #[tokio::test]
-async fn test_validation_agent_sql_storage_flow() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_validation_agent_sql_storage_flow() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
 
     // Create a session first — LogTool requires an existing session in the DB
     let session_id_str = "test-sql-storage-session";
@@ -69,11 +71,12 @@ async fn test_validation_agent_sql_storage_flow() {
         "LogTool should succeed and return tool_call_id. Got: {text}"
     );
     assert!(!resp.is_error.unwrap_or(false));
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_validation_session_create_schema_fallback() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_validation_session_create_schema_fallback() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let session_h = server.session_handler();
 
     // Try creating session with agent_type inside data (MISSING from top-level args)
@@ -106,11 +109,12 @@ async fn test_validation_session_create_schema_fallback() {
         "Fallback failed: {text}"
     );
     // It will likely fail with "Failed to create agent session" due to missing FK, which is fine
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_validation_memory_observation_enum_error() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_validation_memory_observation_enum_error() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let memory_h = server.memory_handler();
 
     let result = memory_h
@@ -150,4 +154,5 @@ async fn test_validation_memory_observation_enum_error() {
         text.contains("Invalid observation_type:") || text.contains("Unknown observation type:"),
         "Error message validation failed: {text}"
     );
+    Ok(())
 }

@@ -100,3 +100,18 @@ impl EmbeddedRules {
             .collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::EmbeddedRules;
+
+    #[test]
+    fn embedded_yaml_entries_are_non_empty() {
+        for (path, content) in EmbeddedRules::all_yaml() {
+            assert!(
+                !content.trim().is_empty(),
+                "embedded rule '{path}' must not be empty"
+            );
+        }
+    }
+}

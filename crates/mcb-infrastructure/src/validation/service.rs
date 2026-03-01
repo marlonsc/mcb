@@ -85,10 +85,16 @@ fn run_validation(
     severity_filter: Option<&str>,
 ) -> Result<ValidationReport> {
     use mcb_domain::ports::RuleValidatorRequest;
-    use mcb_domain::registry::validation::{build_validators, run_validators};
+    use mcb_domain::registry::validation::{
+        build_named_validators, build_validators, run_validators,
+    };
 
     let root = workspace_root.to_path_buf();
-    let validators_list = build_validators(&root)?;
+    let validators_list = if let Some(names) = validators {
+        build_named_validators(&root, names)?
+    } else {
+        build_validators(&root)?
+    };
     let request = RuleValidatorRequest {
         workspace_root: root,
         validator_names: validators.map(<[String]>::to_vec),
@@ -170,6 +176,7 @@ use mcb_domain::registry::services::{
     SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry, VALIDATION_SERVICE_NAME,
 };
 
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(SERVICES_REGISTRY)]
 static VALIDATION_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
     name: VALIDATION_SERVICE_NAME,

@@ -5,14 +5,18 @@ use serde_json::json;
 
 use crate::utils::text::extract_text;
 
-fn create_handler() -> IssueEntityHandler {
-    let state = crate::utils::shared_context::shared_mcb_state();
-    IssueEntityHandler::new(state.mcp_server.issue_entity_repository())
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
+fn create_handler() -> TestResult<IssueEntityHandler> {
+    let state = crate::utils::shared_context::shared_mcb_state()?;
+    Ok(IssueEntityHandler::new(
+        state.mcp_server.issue_entity_repository(),
+    ))
 }
 
 #[tokio::test]
-async fn list_issues_requires_project_id() {
-    let handler = create_handler();
+async fn list_issues_requires_project_id() -> TestResult {
+    let handler = create_handler()?;
     let args = IssueEntityArgs {
         action: IssueEntityAction::List,
         resource: IssueEntityResource::Issue,
@@ -29,6 +33,7 @@ async fn list_issues_requires_project_id() {
         .await
         .expect_err("must reject missing project_id");
     assert!(err.message.contains("project_id required for list"));
+    Ok(())
 }
 
 fn issue_payload(id: &str, project_id: &str) -> serde_json::Value {
@@ -82,8 +87,8 @@ async fn list_issue_count(handler: &IssueEntityHandler, project_id: &str) -> usi
 }
 
 #[tokio::test]
-async fn create_issue_with_conflicting_project_id_rejected_without_side_effect() {
-    let handler = create_handler();
+async fn create_issue_with_conflicting_project_id_rejected_without_side_effect() -> TestResult {
+    let handler = create_handler()?;
     let before_count = list_issue_count(&handler, "project-a").await;
 
     let create_args = IssueEntityArgs {
@@ -105,4 +110,5 @@ async fn create_issue_with_conflicting_project_id_rejected_without_side_effect()
 
     let after_count = list_issue_count(&handler, "project-a").await;
     assert_eq!(after_count, before_count);
+    Ok(())
 }

@@ -3,6 +3,8 @@ use mcb_server::args::{IssueEntityAction, IssueEntityArgs, IssueEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 fn base_args(action: IssueEntityAction, resource: IssueEntityResource) -> IssueEntityArgs {
     IssueEntityArgs {
         action,
@@ -114,8 +116,8 @@ async fn create_label(
 // ============================================================================
 
 #[tokio::test]
-async fn golden_issue_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-issue-create-get-proj";
 
     let created = create_issue(&server, project_id, "Golden Issue Create Get").await;
@@ -146,11 +148,12 @@ async fn golden_issue_create_and_get() {
         body.get("title").and_then(serde_json::Value::as_str),
         Some("Golden Issue Create Get")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_issue_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-issue-list-proj";
 
     let _ = create_issue(&server, project_id, "Golden Issue List 1").await;
@@ -173,11 +176,12 @@ async fn golden_issue_list() {
         count >= 2,
         "issue list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_issue_update_status() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_update_status() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-issue-update-status-proj";
 
     let created = create_issue(&server, project_id, "Golden Issue Update Status").await;
@@ -218,11 +222,12 @@ async fn golden_issue_update_status() {
         body.get("status").and_then(serde_json::Value::as_str),
         Some("InProgress")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_issue_update_assignee() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_update_assignee() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-issue-update-assignee-proj";
 
     let created = create_issue(&server, project_id, "Golden Issue Update Assignee").await;
@@ -263,11 +268,12 @@ async fn golden_issue_update_assignee() {
         body.get("assignee").and_then(serde_json::Value::as_str),
         Some("golden-assignee-user")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_issue_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-issue-delete-proj";
 
     let created = create_issue(&server, project_id, "Golden Issue Delete").await;
@@ -296,6 +302,7 @@ async fn golden_issue_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "issue get should fail after delete");
+    Ok(())
 }
 
 // ============================================================================
@@ -303,8 +310,8 @@ async fn golden_issue_delete() {
 // ============================================================================
 
 #[tokio::test]
-async fn golden_issue_comment_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_comment_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-comment-create-get-proj";
 
     let issue = create_issue(&server, project_id, "Golden Comment Host Issue").await;
@@ -343,11 +350,12 @@ async fn golden_issue_comment_create_and_get() {
         body.get("content").and_then(serde_json::Value::as_str),
         Some("Golden comment content")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_issue_comment_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_comment_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-comment-list-proj";
 
     let issue = create_issue(&server, project_id, "Golden Comment List Host").await;
@@ -378,11 +386,12 @@ async fn golden_issue_comment_list() {
         count >= 2,
         "comment list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_issue_comment_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_comment_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-comment-delete-proj";
 
     let issue = create_issue(&server, project_id, "Golden Comment Delete Host").await;
@@ -419,6 +428,7 @@ async fn golden_issue_comment_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "comment get should fail after delete");
+    Ok(())
 }
 
 // ============================================================================
@@ -426,8 +436,8 @@ async fn golden_issue_comment_delete() {
 // ============================================================================
 
 #[tokio::test]
-async fn golden_issue_label_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_label_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-label-create-get-proj";
 
     let created = create_label(&server, project_id, "golden-label-create-get").await;
@@ -458,11 +468,12 @@ async fn golden_issue_label_create_and_get() {
         body.get("name").and_then(serde_json::Value::as_str),
         Some("golden-label-create-get")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_issue_label_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_label_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-label-list-proj";
 
     let _ = create_label(&server, project_id, "golden-label-list-1").await;
@@ -485,11 +496,12 @@ async fn golden_issue_label_list() {
         count >= 2,
         "label list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_issue_label_assign_to_issue() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_label_assign_to_issue() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-label-assign-proj";
 
     let issue = create_issue(&server, project_id, "Golden Label Assign Host").await;
@@ -554,6 +566,7 @@ async fn golden_issue_label_assign_to_issue() {
         has_label,
         "label assignment list should include the assigned label"
     );
+    Ok(())
 }
 
 // ============================================================================
@@ -561,20 +574,22 @@ async fn golden_issue_label_assign_to_issue() {
 // ============================================================================
 
 #[tokio::test]
-async fn golden_issue_create_missing_fields() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_create_missing_fields() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let args = base_args(IssueEntityAction::Create, IssueEntityResource::Issue);
     let result = server.issue_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "issue create without data should fail");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_issue_get_nonexistent() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_get_nonexistent() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(IssueEntityAction::Get, IssueEntityResource::Issue);
     args.id = Some("00000000-0000-0000-0000-000000000000".to_owned());
     let result = server.issue_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "issue get with nonexistent id should fail");
+    Ok(())
 }

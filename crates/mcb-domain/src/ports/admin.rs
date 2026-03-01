@@ -173,12 +173,8 @@ pub trait ValidatorJobRunner: Send + Sync {
     /// Submit a validation job for the given workspace and validators.
     ///
     /// # Errors
-    /// Returns an error message if the job cannot be submitted.
-    fn submit_validation_job(
-        &self,
-        workspace: &str,
-        validators: &[String],
-    ) -> std::result::Result<OperationId, String>;
+    /// Returns a domain error if the job cannot be submitted.
+    fn submit_validation_job(&self, workspace: &str, validators: &[String]) -> Result<OperationId>;
 }
 
 // ============================================================================

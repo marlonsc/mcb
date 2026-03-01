@@ -3,6 +3,8 @@ use mcb_server::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 fn base_args(action: VcsEntityAction, resource: VcsEntityResource) -> VcsEntityArgs {
     VcsEntityArgs {
         action,
@@ -122,8 +124,8 @@ async fn create_worktree(
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-async fn golden_vcs_repo_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_repo_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-repo-cg";
     let project_id = "golden-vcs-proj-cg";
     let repo_id = "golden-vcs-repo-cg-1";
@@ -158,11 +160,12 @@ async fn golden_vcs_repo_create_and_get() {
         body.get("name").and_then(serde_json::Value::as_str),
         Some(format!("repo-{repo_id}").as_str())
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_vcs_repo_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_repo_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-repo-list";
     let project_id = "golden-vcs-proj-list";
 
@@ -190,11 +193,12 @@ async fn golden_vcs_repo_list() {
         count >= 2,
         "repo list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_vcs_repo_update() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_repo_update() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-repo-upd";
     let project_id = "golden-vcs-proj-upd";
     let repo_id = "golden-vcs-repo-upd-1";
@@ -246,11 +250,12 @@ async fn golden_vcs_repo_update() {
         body.get("name").and_then(serde_json::Value::as_str),
         Some("Updated Repo Name")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_vcs_repo_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_repo_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-repo-del";
     let project_id = "golden-vcs-proj-del";
     let repo_id = "golden-vcs-repo-del-1";
@@ -278,6 +283,7 @@ async fn golden_vcs_repo_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "repo get should fail after delete");
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -285,8 +291,8 @@ async fn golden_vcs_repo_delete() {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-async fn golden_vcs_branch_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_branch_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-branch-cg";
     let project_id = "golden-vcs-proj-bcg";
     let repo_id = "golden-vcs-repo-bcg";
@@ -323,11 +329,12 @@ async fn golden_vcs_branch_create_and_get() {
         body.get("name").and_then(serde_json::Value::as_str),
         Some("feat/golden-branch")
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_vcs_branch_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_branch_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-branch-list";
     let project_id = "golden-vcs-proj-bl";
     let repo_id = "golden-vcs-repo-bl";
@@ -364,11 +371,12 @@ async fn golden_vcs_branch_list() {
         count >= 2,
         "branch list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_vcs_branch_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_branch_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-branch-del";
     let project_id = "golden-vcs-proj-bd";
     let repo_id = "golden-vcs-repo-bd";
@@ -396,6 +404,7 @@ async fn golden_vcs_branch_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "branch get should fail after delete");
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -403,8 +412,8 @@ async fn golden_vcs_branch_delete() {
 // ---------------------------------------------------------------------------
 
 #[tokio::test]
-async fn golden_vcs_worktree_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_worktree_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-wt-cg";
     let project_id = "golden-vcs-proj-wcg";
     let repo_id = "golden-vcs-repo-wcg";
@@ -443,11 +452,12 @@ async fn golden_vcs_worktree_create_and_get() {
             .and_then(serde_json::Value::as_str),
         Some(repo_id)
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_vcs_worktree_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_worktree_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-wt-list";
     let project_id = "golden-vcs-proj-wl";
     let repo_id = "golden-vcs-repo-wl";
@@ -478,11 +488,12 @@ async fn golden_vcs_worktree_list() {
         count >= 2,
         "worktree list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_vcs_worktree_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_worktree_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-wt-del";
     let project_id = "golden-vcs-proj-wd";
     let repo_id = "golden-vcs-repo-wd";
@@ -511,4 +522,5 @@ async fn golden_vcs_worktree_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "worktree get should fail after delete");
+    Ok(())
 }

@@ -23,7 +23,7 @@ impl MemoryServiceImpl {
     /// Store an observation in both relational and vector stores.
     ///
     /// Deduplicates based on content hash. Returns the observation ID and a boolean
-    /// indicating whether this is a new observation (false if duplicate).
+    /// indicating whether the input was deduplicated (`true` means duplicate content).
     pub(crate) async fn store_observation_impl(
         &self,
         project_id: String,
@@ -89,7 +89,10 @@ impl MemoryServiceImpl {
             embedding_id,
         };
 
-        self.repository.store_observation(&observation).await?;
+        if let Err(err) = self.repository.store_observation(&observation).await {
+            let _ = self.vector_store.delete_vectors(&collection_id, &ids).await;
+            return Err(err);
+        }
 
         Ok((observation.id, false))
     }

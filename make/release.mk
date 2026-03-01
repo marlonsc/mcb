@@ -143,7 +143,7 @@ install: ## Install release binary + config + systemd service
 	@echo "[7/7] Configuring MCP agent integrations..."
 	@if command -v jq >/dev/null 2>&1; then \
 		if [ -f ".mcp.json" ]; then \
-			jq '.mcpServers.mcb = {"command": "$(INSTALL_DIR)/$(BINARY_NAME)", "args": ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"], "env": {}}' .mcp.json > .mcp.json.tmp && \
+			jq '.mcpServers.mcb = {"command": "$(INSTALL_DIR)/$(BINARY_NAME)", "args": ["serve", "--stdio"], "env": {}}' .mcp.json > .mcp.json.tmp && \
 			mv .mcp.json.tmp .mcp.json && \
 			echo "  Claude Code: .mcp.json updated" || \
 			echo "  Claude Code: failed to update .mcp.json"; \
@@ -152,7 +152,7 @@ install: ## Install release binary + config + systemd service
 		fi; \
 		OPENCODE_CFG="$(HOME)/.config/opencode/opencode.json"; \
 		if [ -f "$$OPENCODE_CFG" ]; then \
-			jq '.mcp.mcb = {"type": "local", "command": ["$(INSTALL_DIR)/$(BINARY_NAME)", "serve", "--config", "$(CONFIG_DIR)/mcb.toml"]}' "$$OPENCODE_CFG" > "$$OPENCODE_CFG.tmp" && \
+			jq '.mcp.mcb = {"type": "local", "command": ["$(INSTALL_DIR)/$(BINARY_NAME)", "serve", "--stdio"]}' "$$OPENCODE_CFG" > "$$OPENCODE_CFG.tmp" && \
 			mv "$$OPENCODE_CFG.tmp" "$$OPENCODE_CFG" && \
 			echo "  OpenCode: opencode.json updated" || \
 			echo "  OpenCode: failed to update config"; \
@@ -161,7 +161,7 @@ install: ## Install release binary + config + systemd service
 		fi; \
 		GEMINI_CFG="$(HOME)/.gemini/antigravity/mcp_config.json"; \
 		if [ -f "$$GEMINI_CFG" ]; then \
-			jq '.mcpServers.mcb = {"command": "$(INSTALL_DIR)/$(BINARY_NAME)", "args": ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"], "type": "stdio", "env": {}, "description": "MCB - Semantic code search via daemon bridge"}' "$$GEMINI_CFG" > "$$GEMINI_CFG.tmp" && \
+			jq '.mcpServers.mcb = {"command": "$(INSTALL_DIR)/$(BINARY_NAME)", "args": ["serve", "--stdio"], "type": "stdio", "env": {}, "description": "MCB - Semantic code search via daemon bridge"}' "$$GEMINI_CFG" > "$$GEMINI_CFG.tmp" && \
 			mv "$$GEMINI_CFG.tmp" "$$GEMINI_CFG" && \
 			jq 'del(.mcpServers.mcb.disabled)' "$$GEMINI_CFG" > "$$GEMINI_CFG.tmp" && \
 			mv "$$GEMINI_CFG.tmp" "$$GEMINI_CFG" && \
@@ -172,7 +172,7 @@ install: ## Install release binary + config + systemd service
 		fi; \
 		CURSOR_CFG="$$(readlink -f $(HOME)/.cursor/mcp.json 2>/dev/null || echo '$(HOME)/.cursor/mcp.json')"; \
 		if [ -f "$$CURSOR_CFG" ]; then \
-			jq '.mcpServers.mcb = {"type": "stdio", "command": "$(INSTALL_DIR)/$(BINARY_NAME)", "args": ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"], "env": {}, "description": "MCB - Semantic code search via daemon bridge"}' "$$CURSOR_CFG" > "$$CURSOR_CFG.tmp" && \
+			jq '.mcpServers.mcb = {"type": "stdio", "command": "$(INSTALL_DIR)/$(BINARY_NAME)", "args": ["serve", "--stdio"], "env": {}, "description": "MCB - Semantic code search via daemon bridge"}' "$$CURSOR_CFG" > "$$CURSOR_CFG.tmp" && \
 			mv "$$CURSOR_CFG.tmp" "$$CURSOR_CFG" && \
 			echo "  Cursor: mcp.json updated" || \
 			echo "  Cursor: failed to update config"; \
@@ -217,13 +217,13 @@ install-validate: ## Validate MCB installation
 		journalctl --user -u mcb.service -n 10 --no-pager 2>/dev/null || true; \
 	fi
 	@# MCP client-mode smoke test
-	@echo "  MCP config mode: testing..."
+	@echo "  MCP stdio: testing..."
 	@RESULT=$$(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"install-validate","version":"1.0"}}}' \
-	    | timeout 15 $(INSTALL_DIR)/$(BINARY_NAME) serve --config $(CONFIG_DIR)/mcb.toml 2>/dev/null); \
+	    | timeout 15 $(INSTALL_DIR)/$(BINARY_NAME) serve --stdio 2>/dev/null); \
 	if echo "$$RESULT" | grep -q '"serverInfo"'; then \
-		echo "  MCP config mode: OK ($$( echo "$$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['serverInfo']['name'] + ' ' + json.load(sys.stdin)['result']['serverInfo']['version'])" 2>/dev/null || echo 'response valid'))"; \
+		echo "  MCP stdio: OK ($$( echo "$$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['serverInfo']['name'] + ' ' + json.load(sys.stdin)['result']['serverInfo']['version'])" 2>/dev/null || echo 'response valid'))"; \
 	else \
-		echo "  FAIL: MCP config mode did not respond"; \
+		echo "  FAIL: MCP stdio did not respond"; \
 		echo "  Response: $$RESULT"; \
 		exit 1; \
 	fi
@@ -236,7 +236,7 @@ install-validate: ## Validate MCB installation
 	@echo "  Data:    $(DATA_DIR)/"
 	@echo "  Service: systemctl --user status mcb"
 	@echo ""
-	@echo "  MCP integration: mcb serve --config ~/.config/mcb/mcb.toml"
+	@echo "  MCP integration: mcb serve --stdio"
 	@echo "══════════════════════════════════════════════════════════"
 
 version: ## Show version (BUMP=patch|minor|major to bump)

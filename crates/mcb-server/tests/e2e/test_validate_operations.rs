@@ -2,10 +2,12 @@ use crate::utils::test_fixtures::{create_test_mcp_server, sample_codebase_path};
 use mcb_server::args::{ValidateAction, ValidateArgs, ValidateScope};
 use rmcp::handler::server::wrapper::Parameters;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 /// Validate with action=Analyze on a sample codebase file → verify success response.
 #[tokio::test]
-async fn golden_validate_analyze() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_validate_analyze() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let handler = server.validate_handler();
     let file_path = sample_codebase_path().join("src/main.rs");
 
@@ -28,12 +30,13 @@ async fn golden_validate_analyze() {
         !call_result.is_error.unwrap_or(false),
         "analyze should not return an error"
     );
+    Ok(())
 }
 
 /// Validate with action=ListRules → verify response shape contains validators/count.
 #[tokio::test]
-async fn golden_validate_status() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_validate_status() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let handler = server.validate_handler();
 
     let result = handler
@@ -55,12 +58,13 @@ async fn golden_validate_status() {
         !call_result.is_error.unwrap_or(false),
         "list_rules should not return an error"
     );
+    Ok(())
 }
 
 /// Validate with an invalid (non-existent) path → verify error response.
 #[tokio::test]
-async fn golden_validate_missing_path() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_validate_missing_path() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let handler = server.validate_handler();
 
     let result = handler
@@ -85,12 +89,13 @@ async fn golden_validate_missing_path() {
         call_result.is_error.unwrap_or(false),
         "missing path should produce an error result"
     );
+    Ok(())
 }
 
 /// Validate with no action args (empty path for Analyze) → verify error.
 #[tokio::test]
-async fn golden_validate_empty_args() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_validate_empty_args() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let handler = server.validate_handler();
 
     let result = handler
@@ -108,4 +113,5 @@ async fn golden_validate_empty_args() {
         result.is_err(),
         "analyze without path should return an MCP error"
     );
+    Ok(())
 }

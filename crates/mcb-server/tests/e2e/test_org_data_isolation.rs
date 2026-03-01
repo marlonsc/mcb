@@ -7,6 +7,8 @@ use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::Value;
 
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 fn org_args(action: OrgEntityAction, resource: OrgEntityResource) -> OrgEntityArgs {
     OrgEntityArgs {
         action,
@@ -105,8 +107,8 @@ async fn list_count(
 }
 
 #[tokio::test]
-async fn golden_isolation_users_scoped_to_org() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_users_scoped_to_org() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -114,11 +116,12 @@ async fn golden_isolation_users_scoped_to_org() {
 
     let count_b = list_count(&server, OrgEntityResource::User, TEST_ORG_ID_B).await;
     assert_eq!(count_b, 0, "org-B user list should be empty");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_isolation_teams_scoped_to_org() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_teams_scoped_to_org() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -126,11 +129,12 @@ async fn golden_isolation_teams_scoped_to_org() {
 
     let count_b = list_count(&server, OrgEntityResource::Team, TEST_ORG_ID_B).await;
     assert_eq!(count_b, 0, "org-B team list should be empty");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_isolation_api_keys_scoped_to_org() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_api_keys_scoped_to_org() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -139,11 +143,12 @@ async fn golden_isolation_api_keys_scoped_to_org() {
 
     let count_b = list_count(&server, OrgEntityResource::ApiKey, TEST_ORG_ID_B).await;
     assert_eq!(count_b, 0, "org-B api key list should be empty");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_isolation_org_a_invisible_to_org_b() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_org_a_invisible_to_org_b() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -159,11 +164,12 @@ async fn golden_isolation_org_a_invisible_to_org_b() {
     assert_eq!(users_b, 0, "org-B user list should be empty");
     assert_eq!(teams_b, 0, "org-B team list should be empty");
     assert_eq!(keys_b, 0, "org-B api key list should be empty");
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_isolation_cross_org_get_fails() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_cross_org_get_fails() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -192,11 +198,12 @@ async fn golden_isolation_cross_org_get_fails() {
             );
         }
     }
+    Ok(())
 }
 
 #[tokio::test]
-async fn golden_isolation_both_orgs_coexist() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_both_orgs_coexist() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -209,4 +216,5 @@ async fn golden_isolation_both_orgs_coexist() {
 
     assert_eq!(count_a, 2, "org-A should list only org-A users");
     assert_eq!(count_b, 1, "org-B should list only org-B users");
+    Ok(())
 }
