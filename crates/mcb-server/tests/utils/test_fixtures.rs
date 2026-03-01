@@ -11,16 +11,14 @@ use mcb_domain::entities::{
     ApiKey, Organization, Team, TeamMember, TeamMemberRole, User, UserRole,
 };
 use mcb_domain::ports::{EmbeddingProvider, IndexingResult, VectorStoreProvider};
-use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 use mcb_domain::registry::events::{EventBusProviderConfig, resolve_event_bus_provider};
-use mcb_domain::registry::vector_store::{
-    VectorStoreProviderConfig, resolve_vector_store_provider,
-};
 use mcb_domain::utils::time::epoch_secs_i64;
 use mcb_domain::value_objects::TeamMemberId;
 use mcb_infrastructure::config::TestConfigBuilder;
 use mcb_infrastructure::repositories::connect_sqlite_with_migrations;
-use mcb_infrastructure::resolution_context::ServiceResolutionContext;
+use mcb_infrastructure::resolution_context::{
+    ServiceResolutionContext, resolve_embedding_from_config, resolve_vector_store_from_config,
+};
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::tools::ExecutionFlow;
@@ -29,20 +27,12 @@ use tempfile::TempDir;
 use uuid::Uuid;
 
 // -----------------------------------------------------------------------------
-// Common test fixture constants
+// Common test fixture constants — re-export from mcb-domain SSOT
 // -----------------------------------------------------------------------------
-
-/// Test fixture: default project identifier.
-pub const TEST_PROJECT_ID: &str = "test-project";
-
-/// Test fixture: default session identifier.
-pub const TEST_SESSION_ID: &str = "test-session";
+pub use mcb_domain::test_utils::{TEST_ORG_ID, TEST_PROJECT_ID, TEST_SESSION_ID};
 
 /// Test fixture: default repository name.
 pub const TEST_REPO_NAME: &str = "test-repo";
-
-/// Test fixture: default organization identifier.
-pub const TEST_ORG_ID: &str = "test-org";
 
 /// Test fixture: default embedding dimensions (`FastEmbed` BGE-small-en-v1.5).
 pub const TEST_EMBEDDING_DIMENSIONS: usize = 384;
@@ -238,53 +228,9 @@ fn create_shared_test_context() -> Option<SharedTestContext> {
     let builder = builder.with_fastembed_shared_cache().ok()?;
     let (config, _opt_temp) = builder.build().ok()?;
 
-    // Resolve embedding provider through linkme registry (same as production).
-    // Propagate ALL config fields from AppConfig — single source of truth.
-    let mut embed_cfg = EmbeddingProviderConfig::new(
-        config
-            .providers
-            .embedding
-            .provider
-            .as_deref()
-            .unwrap_or("fastembed"),
-    );
-    if let Some(ref v) = config.providers.embedding.cache_dir {
-        embed_cfg = embed_cfg.with_cache_dir(v.clone());
-    }
-    if let Some(ref v) = config.providers.embedding.model {
-        embed_cfg = embed_cfg.with_model(v.clone());
-    }
-    if let Some(ref v) = config.providers.embedding.base_url {
-        embed_cfg = embed_cfg.with_base_url(v.clone());
-    }
-    if let Some(ref v) = config.providers.embedding.api_key {
-        embed_cfg = embed_cfg.with_api_key(v.clone());
-    }
-    if let Some(d) = config.providers.embedding.dimensions {
-        embed_cfg = embed_cfg.with_dimensions(d);
-    }
-    let embedding = resolve_embedding_provider(&embed_cfg).ok()?;
-
-    // Resolve vector store provider through linkme registry (same as production).
-    // Propagate ALL config fields from AppConfig — single source of truth.
-    let mut vec_cfg = VectorStoreProviderConfig::new(
-        config
-            .providers
-            .vector_store
-            .provider
-            .as_deref()
-            .unwrap_or("edgevec"),
-    );
-    if let Some(ref v) = config.providers.vector_store.address {
-        vec_cfg = vec_cfg.with_uri(v.clone());
-    }
-    if let Some(ref v) = config.providers.vector_store.collection {
-        vec_cfg = vec_cfg.with_collection(v.clone());
-    }
-    if let Some(d) = config.providers.vector_store.dimensions {
-        vec_cfg = vec_cfg.with_dimensions(d);
-    }
-    let vector_store = resolve_vector_store_provider(&vec_cfg).ok()?;
+    // Resolve providers through centralized helpers (same as production).
+    let embedding = resolve_embedding_from_config(&config).ok()?;
+    let vector_store = resolve_vector_store_from_config(&config).ok()?;
 
     Some(SharedTestContext {
         embedding,
@@ -329,10 +275,14 @@ async fn create_test_resolution_context() -> Option<(ServiceResolutionContext, T
 
     let db = connect_sqlite_with_migrations(&db_path).await.ok()?;
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;
+    let embedding_provider = resolve_embedding_from_config(&config).ok()?;
+    let vector_store_provider = resolve_vector_store_from_config(&config).ok()?;
     let resolution_ctx = ServiceResolutionContext {
         db,
         config: Arc::new(config),
         event_bus,
+        embedding_provider,
+        vector_store_provider,
     };
     Some((resolution_ctx, temp_dir))
 }

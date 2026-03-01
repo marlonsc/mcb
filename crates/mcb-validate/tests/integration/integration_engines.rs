@@ -6,8 +6,8 @@
 //! - Router for automatic engine selection
 
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 
+use crate::utils::get_workspace_root;
 use mcb_validate::engines::{
     ExpressionEngine, HybridRuleEngine, ReteEngine, RoutedEngine, RuleContext, RuleEngine,
     RuleEngineRouter, RuleEngineType,
@@ -15,16 +15,6 @@ use mcb_validate::engines::{
 use mcb_validate::{ValidationConfig, Violation};
 use rstest::*;
 use serde_json::json;
-
-/// Get the workspace root for tests (the actual project root)
-fn get_workspace_root() -> PathBuf {
-    // Use CARGO_MANIFEST_DIR to find crate root, then go up to workspace root
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_owned());
-    PathBuf::from(manifest_dir)
-        .parent() // crates/
-        .and_then(|p| p.parent()) // workspace root
-        .map_or_else(|| PathBuf::from("."), Path::to_path_buf)
-}
 
 /// Create a test context with sample files
 ///
@@ -512,6 +502,7 @@ mod ca001_domain_independence_tests {
     use rstest::rstest;
 
     fn create_domain_context() -> RuleContext {
+        use std::path::PathBuf;
         let mut file_contents = HashMap::new();
         file_contents.insert(
             "crates/mcb-domain/src/lib.rs".to_owned(),

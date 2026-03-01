@@ -6,8 +6,9 @@ use std::path::PathBuf;
 use crate::utils::workspace::workspace_root;
 use mcb_domain::ports::ValidationServiceInterface;
 use mcb_domain::registry::services::resolve_validation_service;
-use rstest::rstest;
+use rstest::{fixture, rstest};
 
+#[fixture]
 fn validation_service()
 -> Result<std::sync::Arc<dyn ValidationServiceInterface>, Box<dyn std::error::Error>> {
     Ok(resolve_validation_service(&())?)

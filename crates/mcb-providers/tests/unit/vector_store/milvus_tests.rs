@@ -9,52 +9,70 @@ use mcb_providers::vector_store::milvus::to_milvus_name;
 use milvus::data::FieldColumn;
 use milvus::proto::schema::DataType;
 use milvus::value::ValueVec;
-use rstest::rstest;
+use rstest::{fixture, rstest};
+
+// ---------------------------------------------------------------------------
+// Fixtures
+// ---------------------------------------------------------------------------
+
+#[fixture]
+fn collection_id() -> CollectionId {
+    CollectionId::from_name("test-collection")
+}
+
+#[fixture]
+fn milvus_name(collection_id: CollectionId) -> String {
+    to_milvus_name(&collection_id)
+}
+
+// ---------------------------------------------------------------------------
+// to_milvus_name – validated through a single parametrized test
+// ---------------------------------------------------------------------------
 
 #[rstest]
 #[test]
-fn test_to_milvus_name_starts_with_letter() {
-    let id = CollectionId::from_name("test-collection");
-    let name = to_milvus_name(&id);
+fn test_to_milvus_name_starts_with_letter(milvus_name: String) {
     assert!(
-        name.starts_with("mcb_"),
-        "name must start with mcb_ prefix: {name}"
+        milvus_name.starts_with("mcb_"),
+        "name must start with mcb_ prefix: {milvus_name}"
     );
 }
 
 #[rstest]
 #[test]
-fn test_to_milvus_name_no_hyphens() {
-    let id = CollectionId::from_name("test-collection");
-    let name = to_milvus_name(&id);
-    assert!(!name.contains('-'), "name must not contain hyphens: {name}");
+fn test_to_milvus_name_no_hyphens(milvus_name: String) {
+    assert!(
+        !milvus_name.contains('-'),
+        "name must not contain hyphens: {milvus_name}"
+    );
 }
 
 #[rstest]
 #[test]
-fn test_to_milvus_name_valid_pattern() {
-    let id = CollectionId::from_name("test-collection");
-    let name = to_milvus_name(&id);
+fn test_to_milvus_name_valid_pattern(milvus_name: String) {
     let pattern = regex::Regex::new(MILVUS_COLLECTION_NAME_PATTERN).unwrap();
     assert!(
-        pattern.is_match(&name),
-        "name must match Milvus pattern: {name}"
+        pattern.is_match(&milvus_name),
+        "name must match Milvus pattern: {milvus_name}"
     );
 }
 
 #[rstest]
 #[test]
-fn test_to_milvus_name_under_255_chars() {
-    let id = CollectionId::from_name("test-collection");
-    let name = to_milvus_name(&id);
-    assert!(name.len() <= 255, "name must be under 255 chars: {name}");
+fn test_to_milvus_name_under_255_chars(milvus_name: String) {
+    assert!(
+        milvus_name.len() <= 255,
+        "name must be under 255 chars: {milvus_name}"
+    );
 }
 
-// --- Error propagation tests for malformed Milvus responses ---
+// ---------------------------------------------------------------------------
+// Helpers for FieldColumn construction
+// ---------------------------------------------------------------------------
 
-/// Helper: build a `FieldColumn` with string values
-fn make_string_column(name: &str, values: Vec<String>) -> FieldColumn {
-    FieldColumn {
+#[fixture]
+fn string_column() -> impl Fn(&str, Vec<String>) -> FieldColumn {
+    |name: &str, values: Vec<String>| FieldColumn {
         name: name.to_owned(),
         dtype: DataType::VarChar,
         value: ValueVec::String(values),
@@ -64,9 +82,9 @@ fn make_string_column(name: &str, values: Vec<String>) -> FieldColumn {
     }
 }
 
-/// Helper: build a `FieldColumn` with long values
-fn make_long_column(name: &str, values: Vec<i64>) -> FieldColumn {
-    FieldColumn {
+#[fixture]
+fn long_column() -> impl Fn(&str, Vec<i64>) -> FieldColumn {
+    |name: &str, values: Vec<i64>| FieldColumn {
         name: name.to_owned(),
         dtype: DataType::Int64,
         value: ValueVec::Long(values),
@@ -75,6 +93,10 @@ fn make_long_column(name: &str, values: Vec<i64>) -> FieldColumn {
         is_dynamic: false,
     }
 }
+
+// ---------------------------------------------------------------------------
+// extract_string_field / extract_long_field
+// ---------------------------------------------------------------------------
 
 #[rstest]
 #[test]
@@ -91,8 +113,10 @@ fn test_extract_string_field_missing_column_returns_error() {
 
 #[rstest]
 #[test]
-fn test_extract_string_field_out_of_bounds_returns_error() {
-    let fields = vec![make_string_column(
+fn test_extract_string_field_out_of_bounds_returns_error(
+    string_column: impl Fn(&str, Vec<String>) -> FieldColumn,
+) {
+    let fields = vec![string_column(
         VECTOR_FIELD_FILE_PATH,
         vec!["a.rs".to_owned()],
     )];
@@ -107,8 +131,10 @@ fn test_extract_string_field_out_of_bounds_returns_error() {
 
 #[rstest]
 #[test]
-fn test_extract_string_field_valid_returns_ok() {
-    let fields = vec![make_string_column(
+fn test_extract_string_field_valid_returns_ok(
+    string_column: impl Fn(&str, Vec<String>) -> FieldColumn,
+) {
+    let fields = vec![string_column(
         VECTOR_FIELD_FILE_PATH,
         vec!["src/main.rs".to_owned()],
     )];
@@ -131,17 +157,18 @@ fn test_extract_long_field_missing_column_returns_error() {
 
 #[rstest]
 #[test]
-fn test_extract_long_field_valid_returns_ok() {
-    let fields = vec![make_long_column(VECTOR_FIELD_START_LINE, vec![42])];
+fn test_extract_long_field_valid_returns_ok(long_column: impl Fn(&str, Vec<i64>) -> FieldColumn) {
+    let fields = vec![long_column(VECTOR_FIELD_START_LINE, vec![42])];
     let result = extract_long_field(&fields, VECTOR_FIELD_START_LINE, 0);
     assert_eq!(result.unwrap(), 42);
 }
 
 #[rstest]
 #[test]
-fn test_convert_query_results_missing_fields_returns_error() {
-    // Empty field columns — extract_string_field should fail
-    let fields: Vec<FieldColumn> = vec![make_string_column(VECTOR_FIELD_ID, vec!["1".to_owned()])];
+fn test_convert_query_results_missing_fields_returns_error(
+    string_column: impl Fn(&str, Vec<String>) -> FieldColumn,
+) {
+    let fields: Vec<FieldColumn> = vec![string_column(VECTOR_FIELD_ID, vec!["1".to_owned()])];
     let result = convert_query_results(&fields, None);
     let err =
         result.expect_err("convert_query_results should fail when required fields are missing");
@@ -152,90 +179,61 @@ fn test_convert_query_results_missing_fields_returns_error() {
     );
 }
 
-// --- Error propagation tests for query/search failure paths ---
+// ---------------------------------------------------------------------------
+// Error propagation — parametrized with #[case]
+// ---------------------------------------------------------------------------
 
 #[rstest]
-#[test]
-fn test_error_collection_not_found_listing_file_paths() {
-    let collection = CollectionId::from_name("test-col");
-    let err = mcb_domain::error::Error::vector_db(format!(
-        "Collection '{collection}' not found when listing file paths"
-    ));
-    let msg = err.to_string();
-    assert!(
-        msg.contains("not found") && msg.contains("listing file paths"),
-        "Error should contain 'not found' and 'listing file paths': {msg}"
-    );
-}
-
-#[rstest]
-#[test]
-fn test_error_query_file_paths_propagates_cause() {
-    let collection = CollectionId::from_name("my-collection");
-    let original_err = "connection refused";
-    let msg = format!("Failed to query file paths in collection '{collection}': {original_err}");
+#[case(
+    "test-col",
+    "Collection '{}' not found when listing file paths",
+    &["not found", "listing file paths"]
+)]
+#[case(
+    "my-collection",
+    "Failed to query file paths in collection '{}': connection refused",
+    &["Failed to query file paths", "connection refused"]
+)]
+#[case(
+    "chunks-col",
+    "Failed to query chunks by file in collection '{}': timeout",
+    &["Failed to query chunks by file", "timeout"]
+)]
+#[case(
+    "missing-col",
+    "Collection '{}' not found when querying chunks by file",
+    &["not found", "chunks by file"]
+)]
+fn test_error_message_contains_expected_substrings(
+    #[case] collection_name: &str,
+    #[case] msg_template: &str,
+    #[case] expected_substrings: &[&str],
+) {
+    let collection = CollectionId::from_name(collection_name);
+    let msg = msg_template.replace("{}", &collection.to_string());
     let err = mcb_domain::error::Error::vector_db(msg);
     let err_str = err.to_string();
-    assert!(
-        err_str.contains("Failed to query file paths"),
-        "Error should mention query file paths: {err_str}"
-    );
-    assert!(
-        err_str.contains("connection refused"),
-        "Error should preserve original cause: {err_str}"
-    );
-}
-
-#[rstest]
-#[test]
-fn test_error_query_chunks_by_file_propagates_cause() {
-    let collection = CollectionId::from_name("chunks-col");
-    let original_err = "timeout";
-    let msg =
-        format!("Failed to query chunks by file in collection '{collection}': {original_err}");
-    let err = mcb_domain::error::Error::vector_db(msg);
-    let err_str = err.to_string();
-    assert!(
-        err_str.contains("Failed to query chunks by file"),
-        "Error should mention query chunks by file: {err_str}"
-    );
-    assert!(
-        err_str.contains("timeout"),
-        "Error should preserve original cause: {err_str}"
-    );
-}
-
-#[rstest]
-#[test]
-fn test_error_collection_not_found_chunks_by_file() {
-    let collection = CollectionId::from_name("missing-col");
-    let err = mcb_domain::error::Error::vector_db(format!(
-        "Collection '{collection}' not found when querying chunks by file"
-    ));
-    let err_str = err.to_string();
-    assert!(
-        err_str.contains("not found") && err_str.contains("chunks by file"),
-        "Error should mention 'not found' and 'chunks by file': {err_str}"
-    );
-}
-
-#[rstest]
-#[test]
-fn test_default_output_fields_contains_all_extraction_fields() {
-    use mcb_providers::vector_store::milvus::DEFAULT_OUTPUT_FIELDS;
-
-    // All fields that extract_string_field/extract_long_field use must be in DEFAULT_OUTPUT_FIELDS
-    let expected_fields = [
-        VECTOR_FIELD_ID,
-        VECTOR_FIELD_FILE_PATH,
-        VECTOR_FIELD_START_LINE,
-        mcb_providers::constants::VECTOR_FIELD_CONTENT,
-    ];
-
-    for field in &expected_fields {
+    for substring in expected_substrings {
         assert!(
-            DEFAULT_OUTPUT_FIELDS.contains(field),
-            "DEFAULT_OUTPUT_FIELDS must contain '{field}' for extraction to work"
+            err_str.contains(substring),
+            "Error should contain '{substring}': {err_str}"
         );
     }
+}
+
+// ---------------------------------------------------------------------------
+// DEFAULT_OUTPUT_FIELDS
+// ---------------------------------------------------------------------------
+
+#[rstest]
+#[case(VECTOR_FIELD_ID)]
+#[case(VECTOR_FIELD_FILE_PATH)]
+#[case(VECTOR_FIELD_START_LINE)]
+#[case(mcb_providers::constants::VECTOR_FIELD_CONTENT)]
+fn test_default_output_fields_contains_field(#[case] field: &str) {
+    use mcb_providers::vector_store::milvus::DEFAULT_OUTPUT_FIELDS;
+    assert!(
+        DEFAULT_OUTPUT_FIELDS.contains(&field),
+        "DEFAULT_OUTPUT_FIELDS must contain '{field}' for extraction to work"
+    );
 }

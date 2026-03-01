@@ -1,14 +1,16 @@
+use mcb_domain::test_utils::TestResult;
 use rstest::rstest;
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-fn workspace_root() -> PathBuf {
+fn workspace_root() -> Result<PathBuf, Box<dyn std::error::Error>> {
     Path::new(env!("CARGO_MANIFEST_DIR"))
         .ancestors()
         .nth(2)
-        .expect("workspace root")
-        .to_path_buf()
+        .ok_or("workspace root not found")
+        .map(Path::to_path_buf)
+        .map_err(Into::into)
 }
 
 fn rust_files_under(path: &Path, out: &mut Vec<PathBuf>) {
@@ -26,8 +28,8 @@ fn rust_files_under(path: &Path, out: &mut Vec<PathBuf>) {
 
 #[rstest]
 #[test]
-fn no_direct_concrete_di_shortcuts_outside_linkme_registries() {
-    let root = workspace_root();
+fn no_direct_concrete_di_shortcuts_outside_linkme_registries() -> TestResult {
+    let root = workspace_root()?;
 
     let allowed_paths: Vec<PathBuf> = vec![
         root.join("crates/mcb-infrastructure/src/infrastructure/admin.rs"),
@@ -94,4 +96,6 @@ fn no_direct_concrete_di_shortcuts_outside_linkme_registries() {
         violations.is_empty(),
         "direct concrete DI shortcuts found outside linkme registries: {violations:#?}"
     );
+
+    Ok(())
 }

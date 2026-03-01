@@ -11,7 +11,9 @@ use axum::Router as AxumRouter;
 use loco_rs::prelude::*;
 
 use mcb_infrastructure::config::{AppConfig, validate_app_config};
-use mcb_infrastructure::resolution_context::ServiceResolutionContext;
+use mcb_infrastructure::resolution_context::{
+    ServiceResolutionContext, resolve_embedding_from_config, resolve_vector_store_from_config,
+};
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::tools::ExecutionFlow;
 use mcb_server::transport::stdio::StdioServerExt;
@@ -55,10 +57,17 @@ impl Initializer for McpServerInitializer {
         )
         .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
+        let embedding_provider = resolve_embedding_from_config(&app_config)
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+        let vector_store_provider = resolve_vector_store_from_config(&app_config)
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+
         let resolution_ctx = ServiceResolutionContext {
             db: ctx.db.clone(),
             config: Arc::new(app_config),
             event_bus,
+            embedding_provider,
+            vector_store_provider,
         };
 
         let stdio_only = std::env::var("MCB_STDIO_ONLY").is_ok();

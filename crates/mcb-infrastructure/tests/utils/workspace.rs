@@ -1,19 +1,6 @@
 use std::path::{Path, PathBuf};
 
-/// Returns the workspace root directory by walking up from `CARGO_MANIFEST_DIR`.
-///
-/// # Errors
-///
-/// Returns an error if no ancestor directory contains a `Cargo.lock` file.
-pub fn workspace_root() -> Result<PathBuf, Box<dyn std::error::Error>> {
-    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    for dir in manifest_dir.ancestors() {
-        if dir.join("Cargo.lock").exists() {
-            return Ok(dir.to_path_buf());
-        }
-    }
-    Err("workspace root not found from CARGO_MANIFEST_DIR ancestors".into())
-}
+pub use mcb_domain::test_utils::workspace_root;
 
 pub fn scan_rs_files(dir: &Path) -> Vec<PathBuf> {
     let mut results = Vec::new();

@@ -78,23 +78,17 @@ version = "{DEFAULT_VERSION}"
     );
 }
 
-/// Get the workspace root for integration tests
+/// Get the workspace root for integration tests.
+///
+/// Thin wrapper around [`mcb_domain::test_utils::workspace_root`] that panics
+/// instead of returning a `Result` — for backward compatibility with callers.
 ///
 /// # Panics
 /// Panics if `CARGO_MANIFEST_DIR` has fewer than two parent directories.
 #[must_use]
 pub fn get_workspace_root() -> std::path::PathBuf {
-    let manifest_dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    let parent = manifest_dir.parent();
-    assert!(parent.is_some(), "CARGO_MANIFEST_DIR should have a parent");
-    let grandparent = parent.and_then(|p| p.parent());
-    assert!(
-        grandparent.is_some(),
-        "CARGO_MANIFEST_DIR grandparent should exist"
-    );
-    // Safety: we asserted both are Some above, so unwrap_or is never
-    // reached; we supply a fallback to satisfy the linter.
-    grandparent.unwrap_or(manifest_dir.as_path()).to_path_buf()
+    mcb_domain::test_utils::workspace_root()
+        .expect("workspace root should be discoverable from CARGO_MANIFEST_DIR")
 }
 
 // ---------------------------------------------------------------------------

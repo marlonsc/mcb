@@ -4,20 +4,12 @@
 //! Uses the actual workspace so `cargo_metadata` works correctly.
 
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 
+use crate::utils::get_workspace_root;
 use mcb_validate::ValidationConfig;
 use mcb_validate::engines::RuleContext;
 use mcb_validate::engines::rete_engine::ReteEngine;
 use rstest::rstest;
-
-fn get_workspace_root() -> PathBuf {
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_owned());
-    PathBuf::from(manifest_dir)
-        .parent()
-        .and_then(|p| p.parent())
-        .map_or_else(|| PathBuf::from("."), Path::to_path_buf)
-}
 
 #[rstest]
 #[tokio::test]

@@ -18,7 +18,7 @@ use mcb_domain::registry::admin_operations::{
 };
 use mcb_domain::test_utils::TestResult;
 use mcb_infrastructure::infrastructure::DefaultValidatorJobRunner;
-use rstest::rstest;
+use rstest::{fixture, rstest};
 
 struct SuccessValidationService;
 
@@ -140,15 +140,18 @@ impl ValidationServiceInterface for FailingValidationService {
     }
 }
 
-fn make_ops() -> Arc<dyn ValidationOperationsInterface> {
+#[fixture]
+fn validation_ops() -> TestResult<Arc<dyn ValidationOperationsInterface>> {
     resolve_validation_operations_provider(&ValidationOperationsProviderConfig::new("default"))
-        .expect("validation operations provider should resolve")
+        .map_err(Into::into)
 }
 
 #[rstest]
 #[tokio::test]
-async fn submit_validation_job_completes_successfully() -> TestResult {
-    let ops = make_ops();
+async fn submit_validation_job_completes_successfully(
+    validation_ops: TestResult<Arc<dyn ValidationOperationsInterface>>,
+) -> TestResult {
+    let ops = validation_ops?;
     let svc: Arc<dyn ValidationServiceInterface> = Arc::new(SuccessValidationService);
     let runner = DefaultValidatorJobRunner::new(Arc::clone(&ops), svc);
 
@@ -170,8 +173,10 @@ async fn submit_validation_job_completes_successfully() -> TestResult {
 
 #[rstest]
 #[tokio::test]
-async fn submit_validation_job_marks_failure_result() -> TestResult {
-    let ops = make_ops();
+async fn submit_validation_job_marks_failure_result(
+    validation_ops: TestResult<Arc<dyn ValidationOperationsInterface>>,
+) -> TestResult {
+    let ops = validation_ops?;
     let svc: Arc<dyn ValidationServiceInterface> = Arc::new(FailingValidationService);
     let runner = DefaultValidatorJobRunner::new(Arc::clone(&ops), svc);
 
@@ -195,8 +200,10 @@ async fn submit_validation_job_marks_failure_result() -> TestResult {
 
 #[rstest]
 #[test]
-fn submit_validation_job_requires_runtime() {
-    let ops = make_ops();
+fn submit_validation_job_requires_runtime(
+    validation_ops: TestResult<Arc<dyn ValidationOperationsInterface>>,
+) -> TestResult {
+    let ops = validation_ops?;
     let svc: Arc<dyn ValidationServiceInterface> = Arc::new(SuccessValidationService);
     let runner = DefaultValidatorJobRunner::new(ops, svc);
 
@@ -207,4 +214,5 @@ fn submit_validation_job_requires_runtime() {
         err.to_string().contains("active tokio runtime"),
         "unexpected error: {err}"
     );
+    Ok(())
 }

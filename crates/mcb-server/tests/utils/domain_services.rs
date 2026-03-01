@@ -4,7 +4,9 @@ use mcb_domain::registry::events::{EventBusProviderConfig, resolve_event_bus_pro
 use mcb_domain::value_objects::SessionId;
 use mcb_infrastructure::config::TestConfigBuilder;
 use mcb_infrastructure::repositories::connect_sqlite_with_migrations;
-use mcb_infrastructure::resolution_context::ServiceResolutionContext;
+use mcb_infrastructure::resolution_context::{
+    ServiceResolutionContext, resolve_embedding_from_config, resolve_vector_store_from_config,
+};
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::state::McbState;
@@ -61,11 +63,15 @@ pub(crate) async fn create_real_domain_services() -> Option<(McbState, tempfile:
 
     let db = connect_sqlite_with_migrations(&db_path).await.ok()?;
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;
+    let embedding_provider = resolve_embedding_from_config(&config).ok()?;
+    let vector_store_provider = resolve_vector_store_from_config(&config).ok()?;
 
     let resolution_ctx = ServiceResolutionContext {
         db,
         config: Arc::new(config),
         event_bus,
+        embedding_provider,
+        vector_store_provider,
     };
 
     let bootstrap =

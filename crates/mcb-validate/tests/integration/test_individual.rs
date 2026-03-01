@@ -1,13 +1,6 @@
+use crate::utils::get_workspace_root;
 use mcb_validate::{ValidationConfig, ValidatorRegistry};
 use rstest::rstest;
-use std::path::{Path, PathBuf};
-
-fn get_workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .and_then(|p| p.parent())
-        .map_or_else(|| PathBuf::from("."), Path::to_path_buf)
-}
 
 #[rstest]
 #[test]

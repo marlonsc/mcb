@@ -1,19 +1,9 @@
 //! Integration tests that validate the actual workspace
 
 use rstest::rstest;
-use std::path::PathBuf;
 
+use crate::utils::get_workspace_root;
 use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry, Violation};
-
-fn get_workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .nth(2)
-        .map_or_else(
-            || PathBuf::from(env!("CARGO_MANIFEST_DIR")),
-            std::path::Path::to_path_buf,
-        )
-}
 
 #[rstest]
 #[case("dependency", "Dependency Violations", true)]

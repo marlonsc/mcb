@@ -6,21 +6,12 @@
 //! - `LintViolation` structs are properly populated
 //! - `lint_select` codes are correctly categorized
 
+use crate::utils::get_workspace_root;
 use rstest::rstest;
 use std::path::PathBuf;
 
 use mcb_validate::linters::{LintViolation, LinterEngine, LinterType, YamlRuleExecutor};
 use mcb_validate::{ValidatedRule, YamlRuleLoader};
-
-fn get_workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .nth(2)
-        .map_or_else(
-            || PathBuf::from(env!("CARGO_MANIFEST_DIR")),
-            std::path::Path::to_path_buf,
-        )
-}
 
 /// Check if an external tool is available on the system
 fn is_tool_available(tool: &str) -> bool {

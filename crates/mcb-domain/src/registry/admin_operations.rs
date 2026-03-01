@@ -1,5 +1,3 @@
-#![allow(missing_docs)]
-
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Default)]
