@@ -1,41 +1,43 @@
-#![allow(clippy::expect_used)]
+type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::hooks::{HookProcessor, PostToolUseContext, SessionStartContext};
 use rstest::rstest;
 
 #[tokio::test]
-async fn test_hook_processor_creation() {
+async fn test_hook_processor_creation() -> TestResult {
     let processor = HookProcessor::new(None);
     let err = processor
-        .process_post_tool_use(create_test_context())
+        .process_post_tool_use(create_test_context()?)
         .await
         .expect_err("hook processor with no memory service should fail");
     assert_eq!(err.to_string(), "Memory service unavailable");
+    Ok(())
 }
 
 #[rstest]
 #[case("test_tool")]
 #[case("test")]
 #[tokio::test]
-async fn test_post_tool_use_hook_graceful_degradation(#[case] tool_name: &str) {
+async fn test_post_tool_use_hook_graceful_degradation(#[case] tool_name: &str) -> TestResult {
     let processor = HookProcessor::new(None);
-    let context = PostToolUseContext::new(tool_name.to_owned(), false).expect("test timestamp");
+    let context = PostToolUseContext::new(tool_name.to_owned(), false)?;
 
     let result = processor.process_post_tool_use(context).await;
     let err = result.expect_err("post_tool_use with no memory service should fail");
     assert_eq!(err.to_string(), "Memory service unavailable");
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_session_start_hook_graceful_degradation() {
+async fn test_session_start_hook_graceful_degradation() -> TestResult {
     let processor = HookProcessor::new(None);
-    let context =
-        SessionStartContext::new(SessionId::from("test_session")).expect("test timestamp");
+    let context = SessionStartContext::new(SessionId::from("test_session"))?;
 
     let result = processor.process_session_start(context).await;
     let err = result.expect_err("session_start with no memory service should fail");
     assert_eq!(err.to_string(), "Memory service unavailable");
+    Ok(())
 }
 
 #[rstest]
@@ -47,8 +49,8 @@ async fn test_post_tool_use_context_enrichment(
     #[case] tool_name: &str,
     #[case] with_session_id: bool,
     #[case] with_metadata: bool,
-) {
-    let mut context = PostToolUseContext::new(tool_name.to_owned(), false).expect("test timestamp");
+) -> TestResult {
+    let mut context = PostToolUseContext::new(tool_name.to_owned(), false)?;
 
     let session_id_val = SessionId::from("session_123");
     if with_session_id {
@@ -71,33 +73,37 @@ async fn test_post_tool_use_context_enrichment(
     if with_metadata {
         assert_eq!(context.metadata.get("key"), Some(&"value".to_owned()));
     }
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_session_start_context_creation() {
+async fn test_session_start_context_creation() -> TestResult {
     let sid = SessionId::from("session_456");
-    let context = SessionStartContext::new(sid).expect("test timestamp");
+    let context = SessionStartContext::new(sid)?;
     assert_eq!(context.session_id.as_str(), sid.as_str());
     assert!(context.timestamp > 0);
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_hook_processor_default() {
+async fn test_hook_processor_default() -> TestResult {
     let processor = HookProcessor::default();
-    let context = PostToolUseContext::new("test".to_owned(), false).expect("test timestamp");
+    let context = PostToolUseContext::new("test".to_owned(), false)?;
 
     let result = processor.process_post_tool_use(context).await;
     let err = result.expect_err("default hook processor should fail without memory service");
     assert_eq!(err.to_string(), "Memory service unavailable");
+    Ok(())
 }
 
 #[tokio::test]
-async fn test_post_tool_use_error_status() {
-    let context = PostToolUseContext::new("failing_tool".to_owned(), true).expect("test timestamp");
+async fn test_post_tool_use_error_status() -> TestResult {
+    let context = PostToolUseContext::new("failing_tool".to_owned(), true)?;
 
     assert_eq!(context.tool_name, "failing_tool");
+    Ok(())
 }
 
-fn create_test_context() -> PostToolUseContext {
-    PostToolUseContext::new("test_tool".to_owned(), false).expect("test timestamp")
+fn create_test_context() -> Result<PostToolUseContext, Box<dyn std::error::Error>> {
+    Ok(PostToolUseContext::new("test_tool".to_owned(), false)?)
 }
