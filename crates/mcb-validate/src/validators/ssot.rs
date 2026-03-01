@@ -135,7 +135,10 @@ const FORBIDDEN_RAW_ID_FIELD_PATTERN: &str = r"\bpub\s+([a-z_][a-z0-9_]*)\s*:\s*
 crate::impl_simple_validator_new!(SsotValidator);
 
 impl SsotValidator {
-    /// Overrides the generated validate_all method because it needs custom file gathering
+    /// Overrides the generated `validate_all` method because it needs custom file gathering.
+    ///
+    /// # Errors
+    /// Returns an error if workspace scanning or regex compilation fails.
     pub fn analyze_workspace(&self) -> Result<Vec<SsotViolation>> {
         let mut files = Vec::new();
 
@@ -154,6 +157,9 @@ impl SsotValidator {
     }
 
     /// Validate an in-memory synthetic file map (used by unit tests).
+    ///
+    /// # Errors
+    /// Returns an error if regex compilation fails.
     pub fn validate_synthetic_files(files: &HashMap<String, String>) -> Result<Vec<SsotViolation>> {
         let synthetic_files = files
             .iter()

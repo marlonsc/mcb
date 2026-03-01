@@ -171,6 +171,9 @@ pub trait ValidationOperationsInterface: Send + Sync {
 /// Port for submitting validation jobs to the execution infrastructure.
 pub trait ValidatorJobRunner: Send + Sync {
     /// Submit a validation job for the given workspace and validators.
+    ///
+    /// # Errors
+    /// Returns an error message if the job cannot be submitted.
     fn submit_validation_job(
         &self,
         workspace: &str,

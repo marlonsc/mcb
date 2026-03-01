@@ -54,6 +54,10 @@ pub struct TdgFinding {
 
 /// Complexity analysis provider.
 pub trait ComplexityAnalyzer: Send + Sync {
+    /// Analyze code complexity in the workspace.
+    ///
+    /// # Errors
+    /// Returns an error if workspace scanning or analysis fails.
     fn analyze_complexity(
         &self,
         workspace_root: &Path,
@@ -63,11 +67,19 @@ pub trait ComplexityAnalyzer: Send + Sync {
 
 /// Dead code detection provider.
 pub trait DeadCodeDetector: Send + Sync {
+    /// Detect dead code symbols in the workspace.
+    ///
+    /// # Errors
+    /// Returns an error if workspace scanning fails.
     fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<DeadCodeFinding>>;
 }
 
 /// Technical Debt Gradient scoring provider.
 pub trait TdgScorer: Send + Sync {
+    /// Calculate technical debt gradient scores for workspace files.
+    ///
+    /// # Errors
+    /// Returns an error if workspace scanning or scoring fails.
     fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<TdgFinding>>;
 }
 
@@ -78,7 +90,16 @@ pub trait TdgScorer: Send + Sync {
 /// Provider configuration manager interface
 #[async_trait::async_trait]
 pub trait ProviderConfigManagerInterface: Send + Sync {
+    /// Get embedding configuration by provider name.
+    ///
+    /// # Errors
+    /// Returns an error if the named provider is not configured.
     fn get_embedding_config(&self, name: &str) -> Result<&EmbeddingConfig>;
+
+    /// Get vector store configuration by provider name.
+    ///
+    /// # Errors
+    /// Returns an error if the named provider is not configured.
     fn get_vector_store_config(&self, name: &str) -> Result<&VectorStoreConfig>;
     fn list_embedding_providers(&self) -> Vec<String>;
     fn list_vector_store_providers(&self) -> Vec<String>;
@@ -137,8 +158,18 @@ impl EncryptedData {
 /// Cryptographic provider port
 #[async_trait]
 pub trait CryptoProvider: Send + Sync {
+    /// Encrypt the given plaintext bytes.
+    ///
+    /// # Errors
+    /// Returns an error if encryption fails.
     fn encrypt(&self, plaintext: &[u8]) -> Result<EncryptedData>;
+
+    /// Decrypt the given encrypted data.
+    ///
+    /// # Errors
+    /// Returns an error if decryption fails or data is invalid.
     fn decrypt(&self, encrypted_data: &EncryptedData) -> Result<Vec<u8>>;
+
     fn provider_name(&self) -> &str;
 }
 
@@ -197,10 +228,16 @@ impl Default for HttpClientConfig {
 pub trait HttpClientProvider: Send + Sync {
     fn client(&self) -> &Client;
     fn config(&self) -> &HttpClientConfig;
+
+    /// Create an HTTP client with a custom timeout.
+    ///
+    /// # Errors
+    /// Returns an error if client construction fails.
     fn client_with_timeout(
         &self,
         timeout: Duration,
     ) -> std::result::Result<Client, Box<dyn std::error::Error + Send + Sync>>;
+
     fn is_enabled(&self) -> bool;
 }
 
@@ -425,6 +462,11 @@ pub struct RuleValidatorRequest {
 /// Port for a single rule validator
 pub trait RuleValidator: Send + Sync {
     fn name(&self) -> &'static str;
+
+    /// Run the validator against the given request.
+    ///
+    /// # Errors
+    /// Returns an error if validation execution fails.
     fn run(
         &self,
         request: &RuleValidatorRequest,
