@@ -66,12 +66,23 @@ install: ## Install release binary + config + systemd service
 	    || { echo "FAIL: cannot copy development.yaml"; exit 1; }
 	@if [ -f config/production.yaml ]; then \
 		cp config/production.yaml "$(CONFIG_YAML_DIR)/production.yaml" && \
-		echo "  production.yaml installed"; \
+		echo "  production.yaml installed (dev fallback)"; \
 	fi
 	@# Patch database URI to use installed data directory
 	@sed -i 's|uri: sqlite://mcb.db|uri: sqlite://$(DATA_DIR)/mcb.db|' \
 	    "$(CONFIG_YAML_DIR)/development.yaml"
 	@echo "  development.yaml installed (db → $(DATA_DIR)/mcb.db)"
+	@echo "[3b/7] Installing MCB client config (deploy.toml → mcb.toml)..."
+	@cp config/deploy.toml "$(CONFIG_DIR)/mcb.toml" \
+	    || { echo "FAIL: cannot copy deploy.toml"; exit 1; }
+	@sed -i 's|path = "mcb.db"|path = "$(DATA_DIR)/mcb.db"|' "$(CONFIG_DIR)/mcb.toml"
+	@echo "  $(CONFIG_DIR)/mcb.toml (client mode → http://127.0.0.1:8080)"
+	@echo "[3c/7] Installing production config for daemon..."
+	@mkdir -p "$(DATA_DIR)/config"
+	@cp config/production.yaml "$(DATA_DIR)/config/production.yaml" \
+	    || { echo "FAIL: cannot copy production.yaml"; exit 1; }
+	@sed -i 's|uri: sqlite://mcb.db|uri: sqlite://$(DATA_DIR)/mcb.db|' "$(DATA_DIR)/config/production.yaml"
+	@echo "  $(DATA_DIR)/config/production.yaml (standalone + ollama + milvus)"
 	@echo ""
 	@# ── 4. Kill ALL running mcb processes ───────────────────────
 	@echo "[4/7] Stopping all MCB processes..."
@@ -79,7 +90,7 @@ install: ## Install release binary + config + systemd service
 	@-systemctl --user reset-failed mcb.service 2>/dev/null
 	@sleep 1
 	@# Kill every mcb process (binary name match), including orphans
-	@MCB_PIDS=$$(pgrep -f '$(BINARY_NAME) serve' 2>/dev/null || true); \
+	@MCB_PIDS=$$(pgrep -x $(BINARY_NAME) 2>/dev/null || true); \
 	if [ -n "$$MCB_PIDS" ]; then \
 		echo "  Sending SIGTERM to: $$MCB_PIDS"; \
 		echo "$$MCB_PIDS" | xargs kill 2>/dev/null || true; \
@@ -132,21 +143,41 @@ install: ## Install release binary + config + systemd service
 	@echo "[7/7] Configuring MCP agent integrations..."
 	@if command -v jq >/dev/null 2>&1; then \
 		if [ -f ".mcp.json" ]; then \
-			jq '.mcpServers.mcb.args = ["serve", "--stdio"]' .mcp.json > .mcp.json.tmp && \
+			jq '.mcpServers.mcb = {"command": "$(INSTALL_DIR)/$(BINARY_NAME)", "args": ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"], "env": {}}' .mcp.json > .mcp.json.tmp && \
 			mv .mcp.json.tmp .mcp.json && \
-			echo "  Claude Code: .mcp.json → [\"serve\", \"--stdio\"]" || \
+			echo "  Claude Code: .mcp.json updated" || \
 			echo "  Claude Code: failed to update .mcp.json"; \
 		else \
 			echo "  Claude Code: .mcp.json not found (skipped)"; \
 		fi; \
+		OPENCODE_CFG="$(HOME)/.config/opencode/opencode.json"; \
+		if [ -f "$$OPENCODE_CFG" ]; then \
+			jq '.mcp.mcb = {"type": "local", "command": ["$(INSTALL_DIR)/$(BINARY_NAME)", "serve", "--config", "$(CONFIG_DIR)/mcb.toml"]}' "$$OPENCODE_CFG" > "$$OPENCODE_CFG.tmp" && \
+			mv "$$OPENCODE_CFG.tmp" "$$OPENCODE_CFG" && \
+			echo "  OpenCode: opencode.json updated" || \
+			echo "  OpenCode: failed to update config"; \
+		else \
+			echo "  OpenCode: config not found (skipped)"; \
+		fi; \
 		GEMINI_CFG="$(HOME)/.gemini/antigravity/mcp_config.json"; \
 		if [ -f "$$GEMINI_CFG" ]; then \
-			jq '.mcpServers.mcb.args = ["serve", "--stdio"]' "$$GEMINI_CFG" > "$$GEMINI_CFG.tmp" && \
+			jq '.mcpServers.mcb = {"command": "$(INSTALL_DIR)/$(BINARY_NAME)", "args": ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"], "type": "stdio", "env": {}, "description": "MCB - Semantic code search via daemon bridge"}' "$$GEMINI_CFG" > "$$GEMINI_CFG.tmp" && \
 			mv "$$GEMINI_CFG.tmp" "$$GEMINI_CFG" && \
-			echo "  Gemini: mcp_config.json → [\"serve\", \"--stdio\"]" || \
-			echo "  Gemini: failed to update config"; \
+			jq 'del(.mcpServers.mcb.disabled)' "$$GEMINI_CFG" > "$$GEMINI_CFG.tmp" && \
+			mv "$$GEMINI_CFG.tmp" "$$GEMINI_CFG" && \
+			echo "  Antigravity: mcp_config.json updated" || \
+			echo "  Antigravity: failed to update config"; \
 		else \
-			echo "  Gemini: config not found (skipped)"; \
+			echo "  Antigravity: config not found (skipped)"; \
+		fi; \
+		CURSOR_CFG="$$(readlink -f $(HOME)/.cursor/mcp.json 2>/dev/null || echo '$(HOME)/.cursor/mcp.json')"; \
+		if [ -f "$$CURSOR_CFG" ]; then \
+			jq '.mcpServers.mcb = {"type": "stdio", "command": "$(INSTALL_DIR)/$(BINARY_NAME)", "args": ["serve", "--config", "$(CONFIG_DIR)/mcb.toml"], "env": {}, "description": "MCB - Semantic code search via daemon bridge"}' "$$CURSOR_CFG" > "$$CURSOR_CFG.tmp" && \
+			mv "$$CURSOR_CFG.tmp" "$$CURSOR_CFG" && \
+			echo "  Cursor: mcp.json updated" || \
+			echo "  Cursor: failed to update config"; \
+		else \
+			echo "  Cursor: config not found (skipped)"; \
 		fi; \
 	else \
 		echo "  jq not found — skipping MCP agent config updates"; \
@@ -179,7 +210,7 @@ install-validate: ## Validate MCB installation
 		if [ $$RETRIES -lt 8 ]; then sleep 2; fi; \
 	done; \
 	if [ $$RETRIES -eq 8 ]; then \
-		echo "  WARN: systemd service not active (may be normal for stdio-only mode)"; \
+		echo "  WARN: systemd service not active (check: journalctl --user -u mcb.service)"; \
 		echo "  --- systemd status ---"; \
 		systemctl --user status mcb.service --no-pager 2>/dev/null || true; \
 		echo "  --- recent logs ---"; \
@@ -188,7 +219,7 @@ install-validate: ## Validate MCB installation
 	@# MCP stdio smoke test
 	@echo "  MCP stdio: testing..."
 	@RESULT=$$(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"install-validate","version":"1.0"}}}' \
-	    | timeout 15 $(INSTALL_DIR)/$(BINARY_NAME) serve --stdio 2>/dev/null); \
+	    | timeout 15 $(INSTALL_DIR)/$(BINARY_NAME) serve --config $(CONFIG_DIR)/mcb.toml 2>/dev/null); \
 	if echo "$$RESULT" | grep -q '"serverInfo"'; then \
 		echo "  MCP stdio: OK ($$( echo "$$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['serverInfo']['name'] + ' ' + json.load(sys.stdin)['result']['serverInfo']['version'])" 2>/dev/null || echo 'response valid'))"; \
 	else \
@@ -205,7 +236,7 @@ install-validate: ## Validate MCB installation
 	@echo "  Data:    $(DATA_DIR)/"
 	@echo "  Service: systemctl --user status mcb"
 	@echo ""
-	@echo "  MCP integration: mcb serve --stdio"
+	@echo "  MCP integration: mcb serve --config ~/.config/mcb/mcb.toml"
 	@echo "══════════════════════════════════════════════════════════"
 
 version: ## Show version (BUMP=patch|minor|major to bump)
