@@ -40,6 +40,31 @@ macro_rules! provider_admin_interface {
     };
 }
 
+/// Define an aggregate trait with automatic blanket implementation.
+///
+/// Generates a supertrait + blanket `impl<T>` for any `T` that satisfies all components.
+///
+/// # Example
+///
+/// ```ignore
+/// define_aggregate! {
+///     /// Aggregate for org entity management.
+///     pub trait OrgEntityRepository = OrgRegistry + UserRegistry + TeamRegistry;
+/// }
+/// ```
+#[macro_export]
+macro_rules! define_aggregate {
+    (
+        $(#[$meta:meta])*
+        $vis:vis trait $name:ident = $first:ident $(+ $rest:ident)*;
+    ) => {
+        $(#[$meta])*
+        $vis trait $name: $first $(+ $rest)* + Send + Sync {}
+
+        impl<T> $name for T where T: $first $(+ $rest)* + Send + Sync {}
+    };
+}
+
 /// Implement `FromStr` for an enum with case-insensitive string matching
 #[macro_export]
 macro_rules! impl_from_str {

@@ -4,8 +4,8 @@
 //! Version Control System Providers.
 
 // factory module DELETED — use linkme VCS registry
-pub mod git;
-pub mod submodule;
+mod git;
+mod submodule;
 
 pub use crate::project_detection::detect_all_projects;
 // default_vcs_provider DELETED — resolve via registry
