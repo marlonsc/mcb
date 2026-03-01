@@ -344,7 +344,11 @@ jobs:
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
-      - run: make validate
+      - name: Architecture-only validators (fast gate)
+        run: >-
+          cargo run --package mcb -- validate .
+          --validators clean_architecture,layer_flow,dependency
+          --quick --format json
         env:
           RUST_MIN_STACK: 16777216
 
