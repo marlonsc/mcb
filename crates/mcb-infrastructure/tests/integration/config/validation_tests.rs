@@ -6,17 +6,16 @@ use serial_test::serial;
 
 use mcb_infrastructure::config::{CacheProvider, CacheSystemConfig, TestConfigBuilder};
 
-#[allow(clippy::expect_used)]
-fn loaded_config() -> mcb_infrastructure::config::AppConfig {
+fn loaded_config() -> Result<mcb_infrastructure::config::AppConfig, Box<dyn std::error::Error>> {
     TestConfigBuilder::new()
         .and_then(|b| b.build().map(|(config, _)| config))
-        .expect("load config")
+        .map_err(|e| e.into())
 }
 
 #[test]
 #[serial]
-fn test_auth_config_jwt_secret_length() {
-    let default_auth = loaded_config().auth;
+fn test_auth_config_jwt_secret_length() -> Result<(), Box<dyn std::error::Error>> {
+    let default_auth = loaded_config()?.auth;
     assert!(
         !default_auth.jwt.secret.is_empty(),
         "JWT secret must be configured in test YAML"
@@ -38,6 +37,7 @@ fn test_auth_config_jwt_secret_length() {
     // Expiration times should be reasonable
     assert!(default_auth.jwt.expiration_secs > 0);
     assert!(default_auth.jwt.refresh_expiration_secs > default_auth.jwt.expiration_secs);
+    Ok(())
 }
 
 #[test]
@@ -57,7 +57,7 @@ fn test_cache_config_ttl_when_enabled() {
     assert!(enabled_cache.max_size > 0);
 
     // Default cache config has reasonable TTL
-    let default_cache = loaded_config().system.infrastructure.cache;
+    let default_cache = loaded_config()?.system.infrastructure.cache;
     assert!(
         default_cache.default_ttl_secs >= 60,
         "Default TTL should be at least 60 seconds"
@@ -97,8 +97,8 @@ fn test_cache_config_ttl_when_enabled() {
 
 #[test]
 #[serial]
-fn test_default_config_is_valid() {
-    let auth_config = loaded_config().auth;
+fn test_default_config_is_valid() -> Result<(), Box<dyn std::error::Error>> {
+    let auth_config = loaded_config()?.auth;
     assert!(
         !auth_config.jwt.secret.is_empty(),
         "JWT secret must be configured in test profile"
@@ -107,7 +107,8 @@ fn test_default_config_is_valid() {
     assert!(auth_config.jwt.expiration_secs > 0);
 
     // Default cache config should have valid values
-    let cache_config = loaded_config().system.infrastructure.cache;
+    let cache_config = loaded_config()?.system.infrastructure.cache;
     assert!(cache_config.default_ttl_secs > 0);
     assert!(cache_config.max_size > 0);
+    Ok(())
 }
