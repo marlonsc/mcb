@@ -175,3 +175,120 @@ macro_rules! create_validator {
         }
     };
 }
+
+/// Defines a complete validator including its struct, violation enum, and traits.
+///
+/// This unified macro replaces the need for separate `define_violations!`,
+/// `pub struct`, and `impl Validator` blocks.
+///
+/// It generates:
+/// 1. The violation enum (via `define_violations!`)
+/// 2. The validator struct
+/// 3. A `validate_all(&self)` convenience method
+/// 4. The `Validator` trait implementation
+///
+/// Note: You still need to implement `new()` and/or `with_config()` yourself
+/// in a separate `impl` block, as configuration loading varies between validators.
+#[macro_export]
+macro_rules! define_validator {
+    (
+        name: $name_str:literal,
+        description: $desc_str:literal,
+
+        $(#[$struct_meta:meta])*
+        $struct_vis:vis struct $validator_name:ident {
+            $(
+                $(#[$field_meta:meta])*
+                $field_vis:vis $field:ident : $field_ty:ty
+            ),* $(,)?
+        }
+
+        violations: $severity_mode:ident, $category:expr,
+        $(#[$enum_meta:meta])*
+        $enum_vis:vis enum $enum_name:ident {
+            $($violation_body:tt)*
+        }
+
+        checks: [
+            $( $check_name:ident => $check_expr:expr ),* $(,)?
+        ]
+
+        $(, enabled = $enabled_expr:expr )?
+        $(,)?
+    ) => {
+        use $crate::define_violations;
+        $crate::define_violations! {
+            $severity_mode,
+            $category,
+            $(#[$enum_meta])*
+            $enum_vis enum $enum_name {
+                $($violation_body)*
+            }
+        }
+
+        $(#[$struct_meta])*
+        $struct_vis struct $validator_name {
+            $(
+                $(#[$field_meta])*
+                $field_vis $field : $field_ty,
+            )*
+        }
+
+        impl $validator_name {
+            /// Runs all checks and returns typed violations.
+            ///
+            /// # Errors
+            ///
+            /// Returns an error if any sub-check fails.
+            pub fn validate_all(&self) -> $crate::Result<Vec<$enum_name>> {
+                $(
+                    // If an enabled check is provided, evaluate it
+                    if !(($enabled_expr)(self)) {
+                        return Ok(Vec::new());
+                    }
+                )?
+
+                let mut violations = Vec::new();
+                $(
+                    violations.extend($check_expr(self)?);
+                )*
+                Ok(violations)
+            }
+        }
+
+        impl $crate::traits::validator::Validator for $validator_name {
+            fn name(&self) -> &'static str {
+                $name_str
+            }
+
+            fn description(&self) -> &'static str {
+                $desc_str
+            }
+
+            fn checks<'a>(
+                &'a self,
+                _config: &'a $crate::ValidationConfig,
+            ) -> $crate::Result<Vec<$crate::traits::validator::NamedCheck<'a>>> {
+                $(
+                    if !(($enabled_expr)(self)) {
+                        return Ok(Vec::new());
+                    }
+                )?
+                Ok(vec![
+                    $(
+                        $crate::traits::validator::NamedCheck::new(
+                            stringify!($check_name),
+                            move || {
+                                let violations = $check_expr(self)?;
+                                Ok(violations
+                                    .into_iter()
+                                    .map(|v| Box::new(v) as Box<dyn $crate::traits::violation::Violation>)
+                                    .collect())
+                            },
+                        ),
+                    )*
+                ])
+            }
+        }
+    };
+}
