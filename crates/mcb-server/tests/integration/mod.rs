@@ -19,3 +19,4 @@ mod golden_acceptance_integration;
 mod hooks_integration;
 
 mod admin_api_tests;
+mod auto_context_tests;

@@ -63,8 +63,20 @@ pub(crate) async fn create_real_domain_services() -> Option<(McbState, tempfile:
 
     let db = connect_sqlite_with_migrations(&db_path).await.ok()?;
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;
-    let embedding_provider = resolve_embedding_from_config(&config).ok()?;
-    let vector_store_provider = resolve_vector_store_from_config(&config).ok()?;
+    let embedding_provider = match resolve_embedding_from_config(&config) {
+        Ok(p) => p,
+        Err(e) => {
+            println!("⊘ SKIPPED: Embedding provider unavailable (skipping test) - {e}");
+            return None;
+        }
+    };
+    let vector_store_provider = match resolve_vector_store_from_config(&config) {
+        Ok(p) => p,
+        Err(e) => {
+            println!("⊘ SKIPPED: Vector store provider unavailable (skipping test) - {e}");
+            return None;
+        }
+    };
 
     let resolution_ctx = ServiceResolutionContext {
         db,
