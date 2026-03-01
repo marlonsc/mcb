@@ -216,14 +216,14 @@ install-validate: ## Validate MCB installation
 		echo "  --- recent logs ---"; \
 		journalctl --user -u mcb.service -n 10 --no-pager 2>/dev/null || true; \
 	fi
-	@# MCP stdio smoke test
-	@echo "  MCP stdio: testing..."
+	@# MCP client-mode smoke test
+	@echo "  MCP config mode: testing..."
 	@RESULT=$$(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"install-validate","version":"1.0"}}}' \
 	    | timeout 15 $(INSTALL_DIR)/$(BINARY_NAME) serve --config $(CONFIG_DIR)/mcb.toml 2>/dev/null); \
 	if echo "$$RESULT" | grep -q '"serverInfo"'; then \
-		echo "  MCP stdio: OK ($$( echo "$$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['serverInfo']['name'] + ' ' + json.load(sys.stdin)['result']['serverInfo']['version'])" 2>/dev/null || echo 'response valid'))"; \
+		echo "  MCP config mode: OK ($$( echo "$$RESULT" | python3 -c "import sys,json; print(json.load(sys.stdin)['result']['serverInfo']['name'] + ' ' + json.load(sys.stdin)['result']['serverInfo']['version'])" 2>/dev/null || echo 'response valid'))"; \
 	else \
-		echo "  FAIL: MCP stdio did not respond"; \
+		echo "  FAIL: MCP config mode did not respond"; \
 		echo "  Response: $$RESULT"; \
 		exit 1; \
 	fi
