@@ -6,13 +6,6 @@
 //! `mcb_domain::test_fs_scan`. This module re-exports them.
 #![allow(dead_code, clippy::missing_errors_doc, missing_docs, unused_imports)]
 
-// Re-export centralized guards and fs scanners from mcb-domain SSOT
-pub use mcb_domain::test_fs_scan::scan_rs_files;
-pub use mcb_domain::test_guards::{CurrentDirGuard, EnvVarGuard, RestoreFileGuard};
-
-// Re-export workspace_root from centralized SSOT
-pub use mcb_domain::test_utils::workspace_root;
-
 use mcb_domain::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
 use sea_orm::{ConnectionTrait, DatabaseConnection, Statement};
 

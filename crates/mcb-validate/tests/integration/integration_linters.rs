@@ -6,7 +6,6 @@
 //! - `LintViolation` structs are properly populated
 //! - `lint_select` codes are correctly categorized
 
-use crate::utils::get_workspace_root;
 use rstest::rstest;
 use std::path::PathBuf;
 
@@ -418,7 +417,7 @@ fn test_clippy_real_execution() {
             "-W",
             "clippy::all",
         ])
-        .current_dir(get_workspace_root())
+        .current_dir(mcb_domain::test_utils::workspace_root().unwrap())
         .output()
         .expect("Failed to execute cargo clippy");
 

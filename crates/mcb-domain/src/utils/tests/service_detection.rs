@@ -38,25 +38,25 @@ fn is_service_available_from_config(key: &str) -> bool {
 /// Milvus vector database service.
 #[must_use]
 pub fn is_milvus_available() -> bool {
-    is_service_available_from_config("milvus_address")
+    is_service_available_from_config("milvus")
 }
 
 /// Ollama LLM service.
 #[must_use]
 pub fn is_ollama_available() -> bool {
-    is_service_available_from_config("ollama_url")
+    is_service_available_from_config("ollama")
 }
 
 /// Redis cache service.
 #[must_use]
 pub fn is_redis_available() -> bool {
-    is_service_available_from_config("redis_url")
+    is_service_available_from_config("redis")
 }
 
 /// PostgreSQL service.
 #[must_use]
 pub fn is_postgres_available() -> bool {
-    is_service_available_from_config("postgres_url")
+    is_service_available_from_config("postgres")
 }
 
 /// Check if running in CI environment.

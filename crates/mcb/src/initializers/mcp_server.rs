@@ -62,6 +62,9 @@ impl Initializer for McpServerInitializer {
         let vector_store_provider = resolve_vector_store_from_config(&app_config)
             .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
+        let stdio_only = app_config.mcp.stdio_only;
+        let no_stdio = app_config.mcp.no_stdio;
+
         let resolution_ctx = ServiceResolutionContext {
             db: ctx.db.clone(),
             config: Arc::new(app_config),
@@ -69,9 +72,6 @@ impl Initializer for McpServerInitializer {
             embedding_provider,
             vector_store_provider,
         };
-
-        let stdio_only = std::env::var("MCB_STDIO_ONLY").is_ok();
-        let no_stdio = std::env::var("MCB_NO_STDIO").is_ok();
 
         let execution_flow = if stdio_only {
             ExecutionFlow::StdioOnly

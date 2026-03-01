@@ -16,6 +16,7 @@ async fn test_search_code_success() {
         state.mcp_server.search_service(),
         state.mcp_server.memory_service(),
         create_default_hybrid_search_provider(),
+        state.mcp_server.indexing_service(),
     );
 
     let args = SearchArgs {
@@ -31,6 +32,7 @@ async fn test_search_code_success() {
         filters: None,
         token: None,
         repo_id: None,
+        repo_path: None,
     };
 
     let result = handler.handle(Parameters(args)).await;
@@ -50,6 +52,7 @@ async fn test_search_code_empty_query() {
         state.mcp_server.search_service(),
         state.mcp_server.memory_service(),
         create_default_hybrid_search_provider(),
+        state.mcp_server.indexing_service(),
     );
 
     let args = SearchArgs {
@@ -65,6 +68,7 @@ async fn test_search_code_empty_query() {
         filters: None,
         token: None,
         repo_id: None,
+        repo_path: None,
     };
 
     let result = handler.handle(Parameters(args)).await;

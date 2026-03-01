@@ -8,6 +8,8 @@
 use std::path::Path;
 use std::sync::Arc;
 
+use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
+use mcb_domain::entities::project::Project;
 use mcb_domain::ports::AgentSessionServiceInterface;
 use mcb_domain::ports::HybridSearchProvider;
 use mcb_domain::ports::VcsProvider;
@@ -25,6 +27,7 @@ use rmcp::model::{
     CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
     ServerCapabilities, ServerInfo,
 };
+use tokio::sync::OnceCell;
 
 use crate::handlers::{
     AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
@@ -49,6 +52,8 @@ pub struct McpServer {
     /// Tool handlers for MCP protocol
     handlers: ToolHandlers,
     runtime_defaults: RuntimeDefaults,
+    /// Lazy auto-initialization gate for session + project creation (T10, T11).
+    auto_init: Arc<OnceCell<()>>,
 }
 
 impl std::fmt::Debug for McpServer {
@@ -130,6 +135,7 @@ impl McpServer {
                 Arc::clone(&services.search),
                 Arc::clone(&services.memory),
                 Arc::clone(&services.hybrid_search),
+                Arc::clone(&services.indexing),
             )),
             validate: Arc::new(ValidateHandler::new(Arc::clone(&services.validation))),
             memory: Arc::new(MemoryHandler::new(Arc::clone(&services.memory))),
@@ -152,6 +158,7 @@ impl McpServer {
             services,
             handlers,
             runtime_defaults,
+            auto_init: Arc::new(OnceCell::new()),
         }
     }
 
@@ -313,6 +320,97 @@ tools:
 
         execution_context.apply_to_request_if_missing(&mut request);
 
+        // T10 + T11: Lazy auto-creation of session and project on first tool call.
+        {
+            let services = self.services.clone();
+            let defaults = self.runtime_defaults.clone();
+            let ctx = execution_context.clone();
+            self.auto_init
+                .get_or_init(|| async move {
+                    auto_create_session_and_project(&services, &defaults, &ctx).await;
+                })
+                .await;
+        }
+
         route_tool_call(request, &self.handlers, execution_context).await
+    }
+}
+
+/// Auto-create agent session and project on first tool call (T10 + T11).
+///
+/// Called lazily via `OnceCell` so it runs exactly once per server boot and
+/// does not block startup. Failures are non-fatal: logged as warnings but
+/// never propagated to tool callers.
+async fn auto_create_session_and_project(
+    services: &McpServices,
+    defaults: &RuntimeDefaults,
+    ctx: &ToolExecutionContext,
+) {
+    // T10: Auto-create agent session with IDE identity
+    if let Some(ref session_id) = ctx.session_id {
+        let now = mcb_domain::utils::time::epoch_secs_i64().unwrap_or(0);
+        let ide_label = defaults
+            .agent_program
+            .as_deref()
+            .or(ctx.agent_program.as_deref())
+            .unwrap_or("mcb-stdio");
+        let session = AgentSession {
+            id: session_id.clone(),
+            session_summary_id: format!("auto_{}", mcb_domain::utils::id::generate().simple()),
+            agent_type: AgentType::Sisyphus,
+            model: ctx.model_id.clone().unwrap_or_else(|| "unknown".to_owned()),
+            parent_session_id: ctx.parent_session_id.clone(),
+            started_at: now,
+            ended_at: None,
+            duration_ms: None,
+            status: AgentSessionStatus::Active,
+            prompt_summary: Some(format!("Auto-session via {ide_label}")),
+            result_summary: None,
+            token_count: None,
+            tool_calls_count: None,
+            delegations_count: None,
+            project_id: ctx.project_id.clone(),
+            worktree_id: ctx.worktree_id.clone(),
+        };
+        match services.agent_session.create_session(session).await {
+            Ok(_) => tracing::info!("Auto-session created: {session_id} via {ide_label}"),
+            Err(e) => tracing::warn!("Auto-session creation failed (non-fatal): {e}"),
+        }
+    }
+
+    // T11: Auto-create project from VCS context
+    if let (Some(org_id), Some(repo_path)) = (&ctx.org_id, &ctx.repo_path) {
+        let project_name = Path::new(repo_path.as_str())
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("unknown");
+        match services
+            .project_workflow
+            .get_by_name(org_id, project_name)
+            .await
+        {
+            Ok(_) => {
+                tracing::debug!("Project '{project_name}' already exists for org '{org_id}'");
+            }
+            Err(_) => {
+                let now = mcb_domain::utils::time::epoch_secs_i64().unwrap_or(0);
+                let project = Project {
+                    id: mcb_domain::utils::id::generate().to_string(),
+                    org_id: org_id.clone(),
+                    name: project_name.to_owned(),
+                    path: repo_path.clone(),
+                    created_at: now,
+                    updated_at: now,
+                };
+                match services.project_workflow.create(&project).await {
+                    Ok(()) => {
+                        tracing::info!("Auto-project created: '{project_name}' for org '{org_id}'");
+                    }
+                    Err(e) => {
+                        tracing::warn!("Auto-project creation failed (non-fatal): {e}");
+                    }
+                }
+            }
+        }
     }
 }

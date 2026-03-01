@@ -16,6 +16,7 @@ fn build_search_args(query: &str, min_score: Option<f32>, collection: Option<&st
         session_id: None,
         token: None,
         repo_id: None,
+        repo_path: None,
     }
 }
 

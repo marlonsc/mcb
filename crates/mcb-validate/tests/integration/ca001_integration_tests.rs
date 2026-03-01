@@ -5,7 +5,6 @@
 
 use std::collections::HashMap;
 
-use crate::utils::get_workspace_root;
 use mcb_validate::ValidationConfig;
 use mcb_validate::engines::RuleContext;
 use mcb_validate::engines::rete_engine::ReteEngine;
@@ -15,7 +14,7 @@ use rstest::rstest;
 #[tokio::test]
 async fn test_ca001_detects_mcb_domain_violations() {
     let mut engine = ReteEngine::new();
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
 
     let context = RuleContext {
         workspace_root: workspace_root.clone(),
@@ -57,7 +56,7 @@ rule "DomainIndependence" salience 10 {
 #[tokio::test]
 async fn test_ca001_allows_clean_dependencies() {
     let mut engine = ReteEngine::new();
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
 
     let context = RuleContext {
         workspace_root: workspace_root.clone(),

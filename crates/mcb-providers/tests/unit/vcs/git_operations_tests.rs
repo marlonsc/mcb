@@ -1,108 +1,12 @@
-//! Unit tests for Git VCS provider.
+//! Unit tests for Git VCS provider — list/commit/read/diff/branch operations.
 
 use rstest::rstest;
 use std::path::Path;
-use std::process::{Command, Stdio};
 
-use mcb_domain::ports::VcsProvider;
-use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
 use mcb_domain::test_utils::TestResult;
-use tempfile::TempDir;
 use tokio::fs::write as tokio_write;
 
-fn vcs_provider() -> TestResult<std::sync::Arc<dyn VcsProvider>> {
-    Ok(resolve_vcs_provider(&VcsProviderConfig::new("git"))?)
-}
-
-fn run_git(dir: &Path, args: &[&str]) -> TestResult<()> {
-    let status = Command::new("git")
-        .args(args)
-        .current_dir(dir)
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()?;
-
-    if status.success() {
-        Ok(())
-    } else {
-        Err(format!("git {args:?} failed").into())
-    }
-}
-
-async fn create_test_repo() -> TestResult<TempDir> {
-    let dir = TempDir::new()?;
-
-    run_git(dir.path(), &["init"])?;
-    run_git(dir.path(), &["config", "user.email", "test@example.com"])?;
-    run_git(dir.path(), &["config", "user.name", "Test User"])?;
-
-    tokio_write(dir.path().join("README.md"), "# Test Repo\n").await?;
-
-    run_git(dir.path(), &["add", "."])?;
-    run_git(dir.path(), &["commit", "-m", "Initial commit"])?;
-
-    Ok(dir)
-}
-
-#[rstest]
-#[case(false)]
-#[case(true)]
-fn git_provider_basics(#[case] check_object_safety: bool) {
-    let provider = vcs_provider().expect("vcs provider should resolve");
-    if check_object_safety {
-        fn _assert_object_safe(_: &dyn VcsProvider) {}
-        _assert_object_safe(provider.as_ref());
-        let _erased: &dyn VcsProvider = provider.as_ref();
-        assert_eq!(
-            std::mem::size_of::<&dyn VcsProvider>(),
-            2 * std::mem::size_of::<usize>(),
-            "trait object reference should be a fat pointer"
-        );
-    }
-}
-
-#[rstest]
-#[tokio::test]
-async fn open_repository() -> TestResult<()> {
-    let dir = create_test_repo().await?;
-    let provider = vcs_provider()?;
-
-    let repo = provider.open_repository(dir.path()).await?;
-    assert!(!repo.id().as_str().is_empty());
-    assert!(!repo.branches().is_empty());
-    Ok(())
-}
-
-#[rstest]
-#[case("/nonexistent/path")]
-#[case("/this/definitely/does/not/exist")]
-#[tokio::test]
-async fn open_repository_not_found(#[case] repo_path: &str) {
-    let provider = vcs_provider().expect("vcs provider should resolve");
-    let result = provider.open_repository(Path::new(repo_path)).await;
-    let err = result.expect_err("should fail for non-existent path");
-    let err_msg = err.to_string().to_lowercase();
-    assert!(
-        err_msg.contains("not found") || err_msg.contains("path"),
-        "error: {err}"
-    );
-}
-
-#[rstest]
-#[tokio::test]
-async fn repository_id_stable() -> TestResult<()> {
-    let dir = create_test_repo().await?;
-    let provider = vcs_provider()?;
-
-    let repo1 = provider.open_repository(dir.path()).await?;
-    let repo2 = provider.open_repository(dir.path()).await?;
-
-    assert_eq!(
-        provider.repository_id(&repo1),
-        provider.repository_id(&repo2)
-    );
-    Ok(())
-}
+use super::common::{create_test_repo, run_git, vcs_provider};
 
 #[rstest]
 #[case("branches")]

@@ -70,3 +70,27 @@ async fn agent_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error
     );
     Ok(())
 }
+
+#[rstest]
+#[tokio::test]
+async fn agent_store_without_session_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
+    let request = tool_call_request(
+        "agent",
+        &json!({
+            "action": "log_tool",
+            "session_id": "nonexistent-session-00000",
+            "data": {
+                "tool_name": "search",
+                "success": true,
+                "duration_ms": 5,
+            }
+        }),
+    );
+    let (status, response) = call_tool(&request).await?;
+
+    insta::assert_json_snapshot!(
+        "agent_store_without_session",
+        snapshot_payload(&request, status, &response)
+    );
+    Ok(())
+}

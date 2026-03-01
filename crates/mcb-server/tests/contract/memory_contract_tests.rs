@@ -35,3 +35,44 @@ async fn memory_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::erro
     );
     Ok(())
 }
+
+#[rstest]
+#[tokio::test]
+async fn memory_get_observation_ids_none_contract_snapshot()
+-> Result<(), Box<dyn std::error::Error>> {
+    let request = tool_call_request(
+        "memory",
+        &json!({
+            "action": "get",
+            "resource": "observation"
+        }),
+    );
+    let (status, response) = call_tool(&request).await?;
+
+    insta::assert_json_snapshot!(
+        "memory_get_observation_ids_none",
+        snapshot_payload(&request, status, &response)
+    );
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn memory_get_observation_ids_empty_contract_snapshot()
+-> Result<(), Box<dyn std::error::Error>> {
+    let request = tool_call_request(
+        "memory",
+        &json!({
+            "action": "get",
+            "resource": "observation",
+            "ids": []
+        }),
+    );
+    let (status, response) = call_tool(&request).await?;
+
+    insta::assert_json_snapshot!(
+        "memory_get_observation_ids_empty",
+        snapshot_payload(&request, status, &response)
+    );
+    Ok(())
+}

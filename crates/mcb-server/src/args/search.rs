@@ -79,5 +79,9 @@ pub struct SearchArgs {
     /// Repository ID injected by execution context (hidden from MCP schema).
     #[schemars(skip)]
     pub repo_id: Option<String>,
+
+    /// Workspace/repo path injected by execution context (hidden from MCP schema).
+    #[schemars(skip)]
+    pub repo_path: Option<String>,
 }
 }

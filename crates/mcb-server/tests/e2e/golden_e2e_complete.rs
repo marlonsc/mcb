@@ -13,7 +13,7 @@ use crate::utils::test_fixtures::{
     golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
 };
 use crate::utils::text::extract_text;
-use crate::utils::timeouts::TEST_TIMEOUT;
+use mcb_domain::test_timeouts::TEST_TIMEOUT;
 use mcb_domain::test_utils::TestResult;
 
 fn index_args(action: IndexAction, path: Option<String>, collection: Option<String>) -> IndexArgs {
@@ -45,6 +45,7 @@ fn search_args(query: &str, collection: Option<String>, limit: Option<u32>) -> S
         session_id: None,
         token: None,
         repo_id: None,
+        repo_path: None,
     }
 }
 

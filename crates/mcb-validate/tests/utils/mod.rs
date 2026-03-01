@@ -83,19 +83,6 @@ version = "{DEFAULT_VERSION}"
     );
 }
 
-/// Get the workspace root for integration tests.
-///
-/// Thin wrapper around [`mcb_domain::test_utils::workspace_root`] that panics
-/// instead of returning a `Result` — for backward compatibility with callers.
-///
-/// # Panics
-/// Panics if `CARGO_MANIFEST_DIR` has fewer than two parent directories.
-#[must_use]
-pub fn get_workspace_root() -> std::path::PathBuf {
-    mcb_domain::test_utils::workspace_root()
-        .expect("workspace root should be discoverable from CARGO_MANIFEST_DIR")
-}
-
 // ---------------------------------------------------------------------------
 // Assertion helpers
 // ---------------------------------------------------------------------------

@@ -119,6 +119,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
         session_id: None,
         token: None,
         repo_id: None,
+        repo_path: None,
     };
     let r = search_h.handle(Parameters(search_args)).await;
     assert!(r.is_ok());
@@ -227,6 +228,7 @@ async fn test_golden_search_returns_relevant_results() -> TestResult {
             session_id: None,
             token: None,
             repo_id: None,
+            repo_path: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed after index");
@@ -251,6 +253,7 @@ async fn test_golden_search_handles_empty_query() -> TestResult {
         session_id: None,
         token: None,
         repo_id: None,
+        repo_path: None,
     }));
     let result = r.await;
     let response = result.expect("empty query should return an error response");
@@ -305,6 +308,7 @@ async fn test_golden_search_respects_limit_parameter() -> TestResult {
             session_id: None,
             token: None,
             repo_id: None,
+            repo_path: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed");

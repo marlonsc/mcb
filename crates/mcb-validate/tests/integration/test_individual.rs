@@ -1,4 +1,3 @@
-use crate::utils::get_workspace_root;
 use mcb_validate::{ValidationConfig, ValidatorRegistry};
 use rstest::rstest;
 
@@ -6,7 +5,7 @@ use rstest::rstest;
 #[test]
 fn test_just_dependency() {
     println!("Testing ONLY dependency validator...");
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root);
     let registry = ValidatorRegistry::standard_for(&workspace_root);
     let result = registry.validate_named(&config, &["dependency"]);

@@ -135,8 +135,7 @@ impl RuntimeDefaults {
         let (org_id, auto_project_id) = workspace_root
             .as_deref()
             .and_then(extract_org_and_project_from_git_remote)
-            .map(|(org, proj)| (Some(org), Some(proj)))
-            .unwrap_or((None, None));
+            .map_or((None, None), |(org, proj)| (Some(org), Some(proj)));
 
         Self {
             workspace_root,
@@ -250,10 +249,11 @@ fn parse_org_and_project_from_remote_url(url: &str) -> Option<(String, String)> 
         .and_then(|s| s.split_once(':').map(|(_, p)| p))
     {
         let clean = path.trim_end_matches(".git");
-        if let Some((org, project)) = clean.split_once('/') {
-            if !org.is_empty() && !project.is_empty() {
-                return Some((org.to_owned(), project.to_owned()));
-            }
+        if let Some((org, project)) = clean.split_once('/')
+            && !org.is_empty()
+            && !project.is_empty()
+        {
+            return Some((org.to_owned(), project.to_owned()));
         }
     }
 

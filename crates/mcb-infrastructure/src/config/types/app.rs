@@ -99,6 +99,10 @@ pub struct IndexingConfig {
 pub struct McpConfig {
     /// Indexing subsystem settings.
     pub indexing: IndexingConfig,
+    /// Disable stdio transport (HTTP-only server daemon mode).
+    pub no_stdio: bool,
+    /// Enable stdio-only mode (MCP over stdin/stdout, no HTTP).
+    pub stdio_only: bool,
 }
 
 /// Infrastructure configurations

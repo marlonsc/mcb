@@ -7,7 +7,6 @@
 
 use std::collections::HashMap;
 
-use crate::utils::get_workspace_root;
 use mcb_validate::engines::{
     ExpressionEngine, HybridRuleEngine, ReteEngine, RoutedEngine, RuleContext, RuleEngine,
     RuleEngineRouter, RuleEngineType,
@@ -20,7 +19,7 @@ use serde_json::json;
 ///
 /// Uses the actual project workspace root so `cargo_metadata` works.
 fn create_test_context() -> RuleContext {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
 
     let mut file_contents = HashMap::new();
     file_contents.insert(

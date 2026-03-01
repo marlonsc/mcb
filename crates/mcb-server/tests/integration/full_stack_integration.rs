@@ -23,8 +23,8 @@ use mcb_domain::value_objects::CollectionId;
 use rstest::rstest;
 use serde_json::json;
 
-use crate::utils::collection::unique_collection;
 use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
+use mcb_domain::test_collection::unique_collection;
 
 /// Create test code chunks for full-stack testing
 fn create_test_chunks() -> Vec<CodeChunk> {

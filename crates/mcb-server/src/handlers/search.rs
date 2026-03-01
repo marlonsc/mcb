@@ -3,12 +3,14 @@
 //!
 //! Search handler for code and memory search operations.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::error::Error;
 use mcb_domain::ports::HybridSearchProvider;
+use mcb_domain::ports::IndexingServiceInterface;
 use mcb_domain::ports::MemoryServiceInterface;
 use mcb_domain::ports::SearchServiceInterface;
 use mcb_domain::utils::id as domain_id;
@@ -35,12 +37,14 @@ pub struct SearchHandler {
     search_service: Arc<dyn SearchServiceInterface>,
     memory_service: Arc<dyn MemoryServiceInterface>,
     hybrid_search: Arc<dyn HybridSearchProvider>,
+    indexing_service: Arc<dyn IndexingServiceInterface>,
 }
 
 handler_new!(SearchHandler {
     search_service: Arc<dyn SearchServiceInterface>,
     memory_service: Arc<dyn MemoryServiceInterface>,
     hybrid_search: Arc<dyn HybridSearchProvider>,
+    indexing_service: Arc<dyn IndexingServiceInterface>,
 });
 
 impl SearchHandler {
@@ -122,6 +126,29 @@ impl SearchHandler {
                             collection_name,
                             e
                         );
+
+                        // T12: Trigger background auto-indexing (fire-and-forget)
+                        if let Some(repo_path) = args.repo_path.as_deref() {
+                            let path = PathBuf::from(repo_path);
+                            if path.is_dir() {
+                                let indexing = Arc::clone(&self.indexing_service);
+                                let coll_id = collection_id;
+                                tokio::spawn(async move {
+                                    tracing::info!(
+                                        "Auto-indexing triggered for '{}'",
+                                        coll_id.as_str()
+                                    );
+                                    if let Err(idx_err) =
+                                        indexing.index_codebase(&path, &coll_id).await
+                                    {
+                                        tracing::warn!(
+                                            "Auto-indexing failed (non-fatal): {idx_err}"
+                                        );
+                                    }
+                                });
+                            }
+                        }
+
                         match self
                             .hybrid_search
                             .search(collection_name, query, vec![], limit)

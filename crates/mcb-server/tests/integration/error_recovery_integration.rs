@@ -21,8 +21,8 @@ use mcb_domain::registry::vector_store::*;
 use mcb_domain::value_objects::CollectionId;
 use rstest::rstest;
 
-use crate::utils::collection::unique_collection;
 use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
+use mcb_domain::test_collection::unique_collection;
 
 // ============================================================================
 // Provider Resolution Error Handling

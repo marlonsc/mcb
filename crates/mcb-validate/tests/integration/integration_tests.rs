@@ -2,7 +2,6 @@
 
 use rstest::rstest;
 
-use crate::utils::get_workspace_root;
 use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry, Violation};
 
 #[rstest]
@@ -15,7 +14,7 @@ fn validate_workspace_group(
     #[case] header: &str,
     #[case] must_be_clean: bool,
 ) {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root);
     let registry = ValidatorRegistry::standard_for(&workspace_root);
     let violations = registry
@@ -40,7 +39,7 @@ fn validate_workspace_group(
 #[rstest]
 #[test]
 fn test_validate_workspace_quality() {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root);
     let registry = ValidatorRegistry::standard_for(&workspace_root);
     let violations = registry
@@ -82,7 +81,7 @@ fn test_validate_workspace_quality() {
 #[rstest]
 #[test]
 fn test_validate_workspace_documentation() {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root);
     let registry = ValidatorRegistry::standard_for(&workspace_root);
     let violations = registry
@@ -134,7 +133,7 @@ fn test_full_validation_report() {
 }
 
 fn run_full_validation_report() {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
     let validator_names = ValidatorRegistry::standard_validator_names();
 
     let mut all_violations: Vec<Box<dyn Violation>> = Vec::new();
@@ -198,7 +197,7 @@ fn run_full_validation_report() {
 #[rstest]
 #[test]
 fn test_validation_config() {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root)
         .with_additional_path("src.legacy")
         .with_exclude_pattern("target/");
