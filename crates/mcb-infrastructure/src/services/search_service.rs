@@ -129,6 +129,8 @@ use mcb_domain::registry::services::{
     SEARCH_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
 };
 
+// linkme distributed_slice uses #[link_section] internally
+#[allow(unsafe_code)]
 #[linkme::distributed_slice(SERVICES_REGISTRY)]
 static SEARCH_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
     name: SEARCH_SERVICE_NAME,

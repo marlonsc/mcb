@@ -20,10 +20,10 @@ pub fn validate_app_config(config: &AppConfig) -> Result<()> {
 fn validate_auth_config(config: &AppConfig) -> Result<()> {
     if config.auth.enabled {
         if config.auth.jwt.secret.is_empty() {
-            return Err(Error::ConfigInvalid {
-                key: "auth.jwt.secret".to_owned(),
-                message: "JWT secret cannot be empty when authentication is enabled".to_owned(),
-            });
+            return Err(Error::config_invalid(
+                "auth.jwt.secret",
+                "JWT secret cannot be empty when authentication is enabled",
+            ));
         }
         if config.auth.jwt.secret.len() < MIN_JWT_SECRET_LENGTH {
             return Err(Error::config_invalid(
