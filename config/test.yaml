@@ -61,6 +61,8 @@ settings:
           collection: default
 
   mcp:
+    no_stdio: false
+    stdio_only: false
     indexing:
       supported_extensions:
         - rs

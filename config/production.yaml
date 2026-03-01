@@ -73,6 +73,8 @@ settings:
           address: "http://localhost:29530"
 
   mcp:
+    no_stdio: false
+    stdio_only: false
     indexing:
       supported_extensions:
         - rs

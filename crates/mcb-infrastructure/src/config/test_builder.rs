@@ -29,7 +29,7 @@ use tempfile::TempDir;
 use super::{AppConfig, DatabaseConfig, validation::validate_app_config};
 
 fn load_test_config() -> Result<AppConfig> {
-    let env_name = loco_rs::environment::resolve_from_env();
+    let env_name = std::env::var("LOCO_ENV").unwrap_or_else(|_| "test".to_owned());
 
     let filenames = [format!("{env_name}.local.yaml"), format!("{env_name}.yaml")];
 
