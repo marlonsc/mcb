@@ -4,7 +4,9 @@ use std::collections::HashMap;
 
 use mcb_server::tools::{ExecutionFlow, RuntimeDefaults, ToolExecutionContext};
 use rmcp::model::CallToolRequestParams;
+use rstest::rstest;
 
+#[rstest]
 #[test]
 fn test_resolve_uses_override_when_present() {
     let defaults = RuntimeDefaults {
@@ -27,6 +29,7 @@ fn test_resolve_uses_override_when_present() {
     assert_eq!(context.session_id, Some("override-session".to_owned()));
 }
 
+#[rstest]
 #[test]
 fn test_resolve_falls_back_to_default_when_override_missing() {
     let defaults = RuntimeDefaults {
@@ -48,6 +51,7 @@ fn test_resolve_falls_back_to_default_when_override_missing() {
     assert_eq!(context.session_id, Some("default-session".to_owned()));
 }
 
+#[rstest]
 #[test]
 fn test_resolve_prefers_override_over_default() {
     let defaults = RuntimeDefaults {
@@ -70,6 +74,7 @@ fn test_resolve_prefers_override_over_default() {
     assert_eq!(context.repo_id, Some("override-repo-id".to_owned()));
 }
 
+#[rstest]
 #[test]
 fn test_resolve_handles_multiple_overrides() {
     let defaults = RuntimeDefaults {
@@ -96,6 +101,7 @@ fn test_resolve_handles_multiple_overrides() {
     assert_eq!(context.operator_id, Some("override-operator".to_owned()));
 }
 
+#[rstest]
 #[test]
 fn test_resolve_sets_delegated_true_when_parent_session_id_present() {
     let defaults = RuntimeDefaults {
@@ -119,6 +125,7 @@ fn test_resolve_sets_delegated_true_when_parent_session_id_present() {
     assert_eq!(context.delegated, Some(true));
 }
 
+#[rstest]
 #[test]
 fn test_resolve_respects_explicit_delegated_override() {
     let defaults = RuntimeDefaults {
@@ -141,6 +148,7 @@ fn test_resolve_respects_explicit_delegated_override() {
     assert_eq!(context.delegated, Some(false));
 }
 
+#[rstest]
 #[test]
 fn test_apply_to_request_if_missing_injects_missing_values() {
     let context = ToolExecutionContext {
@@ -174,6 +182,7 @@ fn test_apply_to_request_if_missing_injects_missing_values() {
     assert_eq!(args.get("repo_id"), Some(&serde_json::json!("repo-789")));
 }
 
+#[rstest]
 #[test]
 fn test_apply_to_request_if_missing_does_not_overwrite_existing_values() {
     let context = ToolExecutionContext {
@@ -225,6 +234,7 @@ fn test_apply_to_request_if_missing_does_not_overwrite_existing_values() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_apply_to_request_if_missing_injects_boolean_values() {
     let context = ToolExecutionContext {
@@ -256,6 +266,7 @@ fn test_apply_to_request_if_missing_injects_boolean_values() {
     assert_eq!(args.get("delegated"), Some(&serde_json::json!(true)));
 }
 
+#[rstest]
 #[test]
 fn test_apply_to_request_if_missing_injects_timestamp() {
     let context = ToolExecutionContext {
@@ -287,6 +298,7 @@ fn test_apply_to_request_if_missing_injects_timestamp() {
     assert_eq!(args.get("timestamp"), Some(&serde_json::json!(1234567890)));
 }
 
+#[rstest]
 #[test]
 fn test_apply_to_request_if_missing_does_not_inject_none_values() {
     let context = ToolExecutionContext {
@@ -318,6 +330,7 @@ fn test_apply_to_request_if_missing_does_not_inject_none_values() {
     assert!(args.is_none() || args.unwrap().is_empty());
 }
 
+#[rstest]
 #[test]
 fn test_apply_to_request_if_missing_creates_arguments_map_if_needed() {
     let context = ToolExecutionContext {

@@ -8,6 +8,7 @@ use mcb_validate::ValidationConfig;
 use mcb_validate::ValidationError;
 use mcb_validate::traits::validator::Validator;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;
+use rstest::rstest;
 use tempfile::TempDir;
 
 fn create_test_env(root: &Path) -> io::Result<()> {
@@ -95,6 +96,7 @@ filters:
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_org020_domain_adapters_violation() -> io::Result<()> {
     let temp_dir = TempDir::new()?;
@@ -138,6 +140,7 @@ fn test_org020_domain_adapters_violation() -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_org021_infra_ports_violation() -> io::Result<()> {
     let temp_dir = TempDir::new()?;
@@ -172,6 +175,7 @@ fn test_org021_infra_ports_violation() -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_org019_trait_placement_violation() -> io::Result<()> {
     let temp_dir = TempDir::new()?;
@@ -258,6 +262,7 @@ filters:
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_ast_query_and_selector_execute_together() -> io::Result<()> {
     let temp_dir = TempDir::new()?;
@@ -291,6 +296,7 @@ fn test_ast_query_and_selector_execute_together() -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_invalid_ast_query_returns_config_error() -> io::Result<()> {
     let temp_dir = TempDir::new()?;

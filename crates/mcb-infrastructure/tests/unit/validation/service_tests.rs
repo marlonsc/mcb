@@ -2,13 +2,20 @@
 
 use crate::utils::workspace::workspace_root;
 use mcb_domain::ports::ValidationServiceInterface;
-use mcb_infrastructure::validation::InfraValidationService;
+use mcb_domain::registry::services::resolve_validation_service;
+use rstest::rstest;
 
+fn validation_service()
+-> Result<std::sync::Arc<dyn ValidationServiceInterface>, Box<dyn std::error::Error>> {
+    Ok(resolve_validation_service(&())?)
+}
+
+#[rstest]
 #[tokio::test]
 async fn test_validate_with_specific_validator_filters_correctly()
 -> Result<(), Box<dyn std::error::Error>> {
     let workspace_root = workspace_root()?;
-    let service = InfraValidationService::new();
+    let service = validation_service()?;
 
     // Run validation with only the "quality" validator
     let result = std::thread::Builder::new()
@@ -40,11 +47,12 @@ async fn test_validate_with_specific_validator_filters_correctly()
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_validate_with_specific_validator_does_not_fail_on_unrelated_validators()
 -> Result<(), Box<dyn std::error::Error>> {
     let workspace_root = workspace_root()?;
-    let service = InfraValidationService::new();
+    let service = validation_service()?;
 
     // Run validation with only the "quality" validator
     // This should succeed even if other validators (like clean_architecture)

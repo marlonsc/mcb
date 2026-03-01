@@ -7,9 +7,11 @@ use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
     shutdown_client,
 };
+use rstest::rstest;
 use serial_test::serial;
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_project_list() -> TestResult {
     let client = create_client().await?;
@@ -29,6 +31,7 @@ async fn test_project_list() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_project_list_issues() -> TestResult {
     let client = create_client().await?;
@@ -45,6 +48,7 @@ async fn test_project_list_issues() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_project_get_nonexistent() -> TestResult {
     let client = create_client().await?;
@@ -56,6 +60,7 @@ async fn test_project_get_nonexistent() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_project_invalid_resource() -> TestResult {
     let client = create_client().await?;

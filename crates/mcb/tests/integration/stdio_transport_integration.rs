@@ -10,8 +10,10 @@
 //!
 //! Run with: `cargo test -p mcb --test integration stdio_transport`
 
+use mcb_domain::test_utils::TestResult;
 use rmcp::ServiceExt;
 use rmcp::transport::child_process::TokioChildProcess;
+use rstest::rstest;
 use serial_test::serial;
 use std::path::PathBuf;
 use std::process::Stdio;
@@ -22,7 +24,6 @@ use tokio::time::{Duration, timeout};
 /// Startup timeout -- longer to allow fastembed model download on first cold CI run.
 /// The `AllMiniLML6V2` ONNX model (~90MB) must be downloaded from `HuggingFace` on first run.
 const STARTUP_TIMEOUT: Duration = Duration::from_secs(120);
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 // =============================================================================
 // TEMP DB CLEANUP INFRASTRUCTURE
@@ -119,6 +120,7 @@ fn create_test_command() -> Command {
 /// This prevents regression of the fix in commit ffbe441 where ANSI color codes
 /// from logging were polluting the JSON-RPC stream on stdout.
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_stdio_no_ansi_codes_in_output() -> TestResult {
     let _ = timeout(STARTUP_TIMEOUT, async {
@@ -150,6 +152,7 @@ async fn test_stdio_no_ansi_codes_in_output() -> TestResult {
 
 /// Test that response is valid JSON (not corrupted by logs)
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_stdio_response_is_valid_json() -> TestResult {
     let _ = timeout(STARTUP_TIMEOUT, async {
@@ -187,6 +190,7 @@ async fn test_stdio_response_is_valid_json() -> TestResult {
 
 /// Test complete tools/list roundtrip via stdio
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_stdio_roundtrip_tools_list() -> TestResult {
     let _ = timeout(STARTUP_TIMEOUT, async {
@@ -252,6 +256,7 @@ async fn test_stdio_roundtrip_tools_list() -> TestResult {
 
 /// Test initialize request via stdio
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_stdio_roundtrip_initialize() -> TestResult {
     let _ = timeout(STARTUP_TIMEOUT, async {
@@ -301,6 +306,7 @@ async fn test_stdio_roundtrip_initialize() -> TestResult {
 /// shut down the connection.  Both outcomes are valid: the server either
 /// responds with an error **or** closes the connection — it must NOT panic.
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_stdio_error_response_format() -> TestResult {
     let _ = timeout(STARTUP_TIMEOUT, async {
@@ -346,6 +352,7 @@ async fn test_stdio_error_response_format() -> TestResult {
 
 /// Test that logs go to stderr, not stdout
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_stdio_logs_go_to_stderr() -> TestResult {
     let _ = timeout(STARTUP_TIMEOUT, async {

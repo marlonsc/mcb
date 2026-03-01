@@ -3,7 +3,9 @@ use serde_json::json;
 use crate::common::workspace_root;
 
 use crate::common::{call_tool, snapshot_payload, tool_call_request};
+use rstest::rstest;
 
+#[rstest]
 #[tokio::test]
 async fn vcs_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
@@ -23,6 +25,7 @@ async fn vcs_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Er
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn vcs_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request("vcs", &json!({"action": 123}));

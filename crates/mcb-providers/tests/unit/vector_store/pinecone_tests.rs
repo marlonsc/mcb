@@ -2,12 +2,14 @@ use mcb_domain::ports::VectorStoreProvider;
 use mcb_domain::registry::vector_store::VectorStoreProviderConfig;
 use mcb_domain::value_objects::{CollectionId, Embedding};
 use mcb_providers::vector_store::pinecone::{PineconeVectorStoreProvider, pinecone_factory};
+use rstest::rstest;
 use serde_json::Value;
 use std::collections::HashMap;
 use std::time::Duration;
 
 // ── match_to_search_result error propagation ──────────────────────
 
+#[rstest]
 #[test]
 fn test_match_to_search_result_missing_id_returns_error() {
     let item = serde_json::json!({ "metadata": {} });
@@ -20,6 +22,7 @@ fn test_match_to_search_result_missing_id_returns_error() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_match_to_search_result_non_string_id_returns_error() {
     let item = serde_json::json!({ "id": 42, "metadata": {} });
@@ -32,6 +35,7 @@ fn test_match_to_search_result_non_string_id_returns_error() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_match_to_search_result_missing_metadata_returns_error() {
     let item = serde_json::json!({ "id": "vec_123" });
@@ -44,6 +48,7 @@ fn test_match_to_search_result_missing_metadata_returns_error() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_match_to_search_result_valid_item_succeeds() {
     let item = serde_json::json!({
@@ -63,6 +68,7 @@ fn test_match_to_search_result_valid_item_succeeds() {
 
 // ── Factory tests ────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_pinecone_factory_missing_api_key_returns_error() {
     let config = VectorStoreProviderConfig {
@@ -81,6 +87,7 @@ fn test_pinecone_factory_missing_api_key_returns_error() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_pinecone_factory_missing_uri_returns_error() {
     let config = VectorStoreProviderConfig {
@@ -98,6 +105,7 @@ fn test_pinecone_factory_missing_uri_returns_error() {
 
 // ── insert_vectors error propagation ──────────────────────────────
 
+#[rstest]
 #[tokio::test]
 async fn test_insert_vectors_empty_vectors_returns_error() {
     let provider = PineconeVectorStoreProvider::new(
@@ -123,6 +131,7 @@ async fn test_insert_vectors_empty_vectors_returns_error() {
 
 // ── get_vectors_by_ids error propagation ──────────────────────────
 
+#[rstest]
 #[tokio::test]
 async fn test_get_vectors_by_ids_empty_ids_returns_error() {
     let provider = PineconeVectorStoreProvider::new(

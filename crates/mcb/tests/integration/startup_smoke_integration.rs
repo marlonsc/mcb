@@ -4,6 +4,7 @@
 //! - Corrupted/incompatible databases are backed up and recreated
 //! - DDL errors surface with actionable source context
 
+use rstest::rstest;
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -88,6 +89,7 @@ fn cleanup_temp_files(db_path: &std::path::Path, prefix: &str) {
     }
 }
 
+#[rstest]
 #[test]
 fn corrupted_db_is_backed_up_and_recreated() {
     let db_path = unique_temp_path("corrupt.db");
@@ -150,6 +152,7 @@ fn corrupted_db_is_backed_up_and_recreated() {
     );
 }
 
+#[rstest]
 #[test]
 fn ddl_error_messages_include_source_context() {
     let db_path = unique_temp_path("ddl-ctx.db");

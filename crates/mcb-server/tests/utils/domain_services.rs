@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
+use mcb_domain::registry::events::{EventBusProviderConfig, resolve_event_bus_provider};
 use mcb_domain::value_objects::SessionId;
 use mcb_infrastructure::config::TestConfigBuilder;
-use mcb_infrastructure::events::BroadcastEventBus;
 use mcb_infrastructure::repositories::connect_sqlite_with_migrations;
 use mcb_infrastructure::resolution_context::ServiceResolutionContext;
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
@@ -60,11 +60,12 @@ pub(crate) async fn create_real_domain_services() -> Option<(McbState, tempfile:
         .unwrap_or_else(|| temp_dir.path().join("test.db"));
 
     let db = connect_sqlite_with_migrations(&db_path).await.ok()?;
+    let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;
 
     let resolution_ctx = ServiceResolutionContext {
         db,
         config: Arc::new(config),
-        event_bus: Arc::new(BroadcastEventBus::new()),
+        event_bus,
     };
 
     let bootstrap =

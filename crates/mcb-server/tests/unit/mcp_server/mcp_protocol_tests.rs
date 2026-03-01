@@ -242,6 +242,7 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
 #[case("initialize")]
 #[case("tools/list")]
 #[case("ping")]
+#[rstest]
 #[tokio::test]
 async fn test_response_has_jsonrpc_field(
     #[case] method: &str,

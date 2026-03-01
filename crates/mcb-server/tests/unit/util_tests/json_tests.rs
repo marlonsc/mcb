@@ -2,6 +2,7 @@ use mcb_server::utils::json::json_map;
 use rstest::rstest;
 use serde_json::json;
 
+#[rstest]
 #[test]
 fn test_json_map() {
     let val = Some(json!({"key": "value"}));
@@ -9,6 +10,7 @@ fn test_json_map() {
     assert_eq!(map.get("key").unwrap().as_str().unwrap(), "value");
 }
 
+#[rstest]
 #[test]
 fn test_get_str() {
     let val = json!({"key": "value"});
@@ -39,6 +41,7 @@ fn test_get_bool(#[case] value: serde_json::Value, #[case] expected: Option<bool
     );
 }
 
+#[rstest]
 #[test]
 fn test_get_string_list() {
     let val = json!({"key": ["a", "b", "c"]});

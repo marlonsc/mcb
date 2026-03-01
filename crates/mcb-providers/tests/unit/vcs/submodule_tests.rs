@@ -4,6 +4,7 @@ use mcb_providers::vcs::collect_submodules;
 use rstest::rstest;
 use tempfile::TempDir;
 
+#[rstest]
 #[tokio::test]
 async fn test_collect_submodules_empty_repo() -> Result<(), Box<dyn std::error::Error>> {
     let temp = TempDir::new()?;

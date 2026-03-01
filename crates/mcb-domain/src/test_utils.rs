@@ -1,6 +1,26 @@
 //!
 //! **Documentation**: [docs/modules/domain.md#testing-utilities](../../../docs/modules/domain.md#testing-utilities)
 //!
+//! Centralized test utilities for the entire workspace.
+//! All crates MUST import shared test types from here instead of defining them locally.
+
+/// Centralized test result type for all test functions across the workspace.
+///
+/// Use this instead of defining per-file `type TestResult` aliases.
+///
+/// # Example
+/// ```rust,ignore
+/// use mcb_domain::test_utils::TestResult;
+///
+/// #[test]
+/// fn my_test() -> TestResult {
+///     let value = some_fallible_fn()?;
+///     assert_eq!(value, 42);
+///     Ok(())
+/// }
+/// ```
+pub type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+
 use crate::entities::agent::{
     AgentSession, AgentSessionStatus, AgentType, Checkpoint, CheckpointType, ToolCall,
 };

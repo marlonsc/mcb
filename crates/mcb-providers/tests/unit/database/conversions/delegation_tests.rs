@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::Delegation;
 use mcb_providers::database::seaorm::entities::delegation;
+use rstest::rstest;
 
 fn sample_delegation() -> delegation::Model {
     delegation::Model {
@@ -18,6 +19,7 @@ fn sample_delegation() -> delegation::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_delegation() {
     let model = sample_delegation();

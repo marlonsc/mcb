@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::Observation;
 use mcb_providers::database::seaorm::entities::observation;
+use rstest::rstest;
 
 fn sample_observation() -> observation::Model {
     observation::Model {
@@ -17,6 +18,7 @@ fn sample_observation() -> observation::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_observation() {
     let model = sample_observation();

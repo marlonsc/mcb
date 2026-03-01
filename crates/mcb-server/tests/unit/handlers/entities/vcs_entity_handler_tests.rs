@@ -4,8 +4,8 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use crate::utils::text::extract_text;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+use mcb_domain::test_utils::TestResult;
+use rstest::rstest;
 
 fn create_handler() -> TestResult<VcsEntityHandler> {
     let state = crate::utils::shared_context::shared_mcb_state()?;
@@ -14,6 +14,7 @@ fn create_handler() -> TestResult<VcsEntityHandler> {
     ))
 }
 
+#[rstest]
 #[tokio::test]
 async fn list_repositories_requires_project_id() -> TestResult {
     let handler = create_handler()?;
@@ -74,6 +75,7 @@ async fn list_repo_count(handler: &VcsEntityHandler, project_id: &str) -> usize 
         .unwrap_or(0)
 }
 
+#[rstest]
 #[tokio::test]
 async fn create_repository_conflicting_project_id_rejected_without_side_effect() -> TestResult {
     let handler = create_handler()?;
@@ -102,6 +104,7 @@ async fn create_repository_conflicting_project_id_rejected_without_side_effect()
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn update_repository_conflicting_project_id_rejected_without_side_effect() -> TestResult {
     let handler = create_handler()?;
@@ -129,6 +132,7 @@ async fn update_repository_conflicting_project_id_rejected_without_side_effect()
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn delete_repository_requires_project_id() -> TestResult {
     let handler = create_handler()?;

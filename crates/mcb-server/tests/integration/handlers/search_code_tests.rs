@@ -3,7 +3,9 @@ use mcb_server::handlers::SearchHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
 use crate::utils::domain_services::create_real_domain_services;
+use rstest::rstest;
 
+#[rstest]
 #[tokio::test]
 async fn test_search_code_success() {
     let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
@@ -35,6 +37,7 @@ async fn test_search_code_success() {
     assert!(!response.is_error.unwrap_or(false));
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_search_code_empty_query() {
     let Some((state, _services_temp_dir)) = create_real_domain_services().await else {

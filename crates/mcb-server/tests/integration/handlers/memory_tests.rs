@@ -125,6 +125,7 @@ async fn test_memory_inject_with_filters() {
     assert!(!response.content.is_empty(), "response should have content");
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_get_observations_missing_ids_returns_invalid_params() {
     let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -158,6 +159,7 @@ async fn test_get_observations_missing_ids_returns_invalid_params() {
     assert!(response.is_error.unwrap_or(false), "Should return error");
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_store_session_missing_data_returns_invalid_params() {
     let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -191,6 +193,7 @@ async fn test_store_session_missing_data_returns_invalid_params() {
     assert!(response.is_error.unwrap_or(false), "Should return error");
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_get_observations_empty_ids_returns_error() {
     let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -227,6 +230,7 @@ async fn test_get_observations_empty_ids_returns_error() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_get_observations_with_valid_ids_happy_path() {
     let Some((handler, _services_temp_dir)) = create_handler().await else {

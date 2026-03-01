@@ -9,13 +9,14 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use crate::utils::text::extract_text;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+use mcb_domain::test_utils::TestResult;
+use rstest::rstest;
 
 // =============================================================================
 // Memory E2E Tests
 // =============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_memory_store_with_default_project() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -59,6 +60,7 @@ async fn test_golden_memory_store_with_default_project() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_memory_list_empty_graceful() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -102,6 +104,7 @@ async fn test_golden_memory_list_empty_graceful() -> TestResult {
 // Context Search E2E Tests
 // =============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_context_search_basic() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;

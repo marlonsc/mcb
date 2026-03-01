@@ -68,6 +68,7 @@ fn create_git_repo_fixture() -> Result<(tempfile::TempDir, String), std::io::Err
 #[case(Some(10))]
 #[case(Some(5))]
 #[case(None)]
+#[rstest]
 #[tokio::test]
 async fn test_vcs_list_repositories_cases(
     #[case] limit: Option<u32>,

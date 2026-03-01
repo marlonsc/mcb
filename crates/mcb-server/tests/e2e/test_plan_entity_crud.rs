@@ -1,9 +1,9 @@
 use crate::utils::test_fixtures::*;
+use mcb_domain::test_utils::TestResult;
 use mcb_server::args::{PlanEntityAction, PlanEntityArgs, PlanEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::json;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 fn base_args(action: PlanEntityAction, resource: PlanEntityResource) -> PlanEntityArgs {
     PlanEntityArgs {
@@ -112,6 +112,7 @@ async fn create_review(
 // Plan CRUD (4 tests)
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_create_and_get() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -148,6 +149,7 @@ async fn golden_plan_create_and_get() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_list() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -176,6 +178,7 @@ async fn golden_plan_list() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_update() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -222,6 +225,7 @@ async fn golden_plan_update() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_delete() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -260,6 +264,7 @@ async fn golden_plan_delete() -> TestResult {
 // PlanVersion CRUD (3 tests)
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_version_create_and_get() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -304,6 +309,7 @@ async fn golden_plan_version_create_and_get() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_version_list() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -340,6 +346,7 @@ async fn golden_plan_version_list() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_version_delete() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -391,6 +398,7 @@ async fn golden_plan_version_delete() -> TestResult {
 // PlanReview CRUD (3 tests)
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_review_create_and_get() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -444,6 +452,7 @@ async fn golden_plan_review_create_and_get() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_review_list() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -499,6 +508,7 @@ async fn golden_plan_review_list() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_review_delete() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -557,6 +567,7 @@ async fn golden_plan_review_delete() -> TestResult {
 // Error paths (2 tests)
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_create_missing_data() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -567,6 +578,7 @@ async fn golden_plan_create_missing_data() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_plan_get_nonexistent() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;

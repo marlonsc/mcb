@@ -1,8 +1,10 @@
 //! Tests for constraint builder.
 
 use mcb_providers::database::seaorm::constraints::{ConstraintBuilder, EntityType};
+use rstest::rstest;
 use std::str::FromStr;
 
+#[rstest]
 #[test]
 fn test_entity_type_from_str() {
     assert_eq!(EntityType::from_str("memory").unwrap(), EntityType::Memory);
@@ -10,6 +12,7 @@ fn test_entity_type_from_str() {
     assert!(EntityType::from_str("unknown").is_err());
 }
 
+#[rstest]
 #[test]
 fn test_constraint_builder_chaining() {
     let builder = ConstraintBuilder::new()
@@ -21,6 +24,7 @@ fn test_constraint_builder_chaining() {
     assert_eq!(builder.len(), 4);
 }
 
+#[rstest]
 #[test]
 fn test_constraint_builder_tags() {
     let builder = ConstraintBuilder::new().with_tags(&["tag1", "tag2", "tag3"]);
@@ -30,6 +34,7 @@ fn test_constraint_builder_tags() {
     // but we can verify the builder was created and has the expected length
 }
 
+#[rstest]
 #[test]
 fn test_empty_builder() {
     let builder = ConstraintBuilder::new();
@@ -37,6 +42,7 @@ fn test_empty_builder() {
     assert_eq!(builder.len(), 0);
 }
 
+#[rstest]
 #[test]
 fn test_build_condition_returns_all() {
     let builder = ConstraintBuilder::new()

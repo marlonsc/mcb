@@ -7,9 +7,11 @@ use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
     is_error, shutdown_client,
 };
+use rstest::rstest;
 use serial_test::serial;
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_memory_list_observations() -> TestResult {
     let client = create_client().await?;
@@ -29,6 +31,7 @@ async fn test_memory_list_observations() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_memory_store_and_list() -> TestResult {
     let client = create_client().await?;
@@ -63,6 +66,7 @@ async fn test_memory_store_and_list() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_memory_get_missing_ids() -> TestResult {
     let client = create_client().await?;
@@ -79,6 +83,7 @@ async fn test_memory_get_missing_ids() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_memory_timeline() -> TestResult {
     let client = create_client().await?;
@@ -98,6 +103,7 @@ async fn test_memory_timeline() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_memory_invalid_action() -> TestResult {
     let client = create_client().await?;

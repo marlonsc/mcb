@@ -12,6 +12,7 @@ mod handlers;
 mod vector_store;
 
 use std::sync::Arc;
+use rstest::rstest;
 
 /// Application configuration
 pub struct Config {
@@ -50,7 +51,9 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn test_default_config() {
         let config = Config::default();

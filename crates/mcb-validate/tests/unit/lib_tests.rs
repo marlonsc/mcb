@@ -5,6 +5,7 @@ use std::path::PathBuf;
 
 use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry};
 
+#[rstest]
 #[test]
 fn test_severity_serialization() {
     let severity = Severity::Error;
@@ -12,6 +13,7 @@ fn test_severity_serialization() {
     assert_eq!(json, "\"Error\"");
 }
 
+#[rstest]
 #[test]
 fn test_validation_config_creation() {
     let config = ValidationConfig::new("/workspace");
@@ -20,6 +22,7 @@ fn test_validation_config_creation() {
     assert!(config.exclude_patterns.is_empty());
 }
 
+#[rstest]
 #[test]
 fn test_validation_config_builder() {
     let config = ValidationConfig::new("/workspace")
@@ -44,6 +47,7 @@ fn validation_config_should_exclude(#[case] file: &str, #[case] expected: bool) 
     assert_eq!(config.should_exclude(&PathBuf::from(file)), expected);
 }
 
+#[rstest]
 #[test]
 fn test_validator_registry_with_config() {
     let config = ValidationConfig::new("/tmp/test-workspace")

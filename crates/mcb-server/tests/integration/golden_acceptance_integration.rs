@@ -115,6 +115,7 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
 // Fixture Validation Tests (always run)
 // ============================================================================
 
+#[rstest]
 #[test]
 fn test_golden_queries_fixture_valid() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_golden_queries()?;
@@ -169,6 +170,7 @@ fn test_config_values_reasonable(
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_query_ids_unique() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_golden_queries()?;
@@ -184,6 +186,7 @@ fn test_query_ids_unique() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_sample_codebase_files_exist() {
     let chunks = read_sample_codebase_files();
@@ -231,6 +234,7 @@ fn test_sample_codebase_contains_expected_file(#[case] expected_file: &str) {
 // Real Provider Tests (using FastEmbed + EdgeVec)
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context()?;
@@ -302,6 +306,7 @@ async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context()?;
@@ -398,6 +403,7 @@ async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std
 /// semantic-like matching without requiring external embedding services.
 /// The provider generates vectors based on domain keywords
 /// (embedding, `vector_store`, handler, cache, di, error, chunking, etc.)
+#[rstest]
 #[tokio::test]
 async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context()?;
@@ -508,6 +514,7 @@ async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error::Error>> {
     // This test validates the complete golden test workflow:

@@ -83,6 +83,7 @@ async fn assert_embedding_batch_shape(
 // Full-Stack Flow Tests
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_init_app_creates_working_context() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context()?;
@@ -113,6 +114,7 @@ async fn test_init_app_creates_working_context() -> Result<(), Box<dyn std::erro
 #[case(vec!["authentication middleware".to_owned(), "database connection pool".to_owned()])]
 #[case(vec!["first text".to_owned()])]
 #[case(vec!["second text".to_owned(), "third text".to_owned()])]
+#[rstest]
 #[tokio::test]
 async fn test_embedding_generates_real_vectors(
     #[case] texts: Vec<String>,
@@ -124,6 +126,7 @@ async fn test_embedding_generates_real_vectors(
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_full_index_and_search_flow() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context()?;
@@ -195,6 +198,7 @@ async fn test_full_index_and_search_flow() -> Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_provider_accessors_return_same_instance() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context()?;
@@ -209,6 +213,7 @@ async fn test_provider_accessors_return_same_instance() -> Result<(), Box<dyn st
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_multiple_collections_isolated() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context()?;

@@ -1,5 +1,6 @@
 use crate::utils::test_fixtures::{TEST_REPO_NAME, create_test_mcp_server};
 use crate::utils::text::extract_text;
+use mcb_domain::test_utils::TestResult;
 use mcb_server::args::SessionAction;
 use mcb_server::args::SessionArgs;
 use mcb_server::args::ValidateAction;
@@ -11,8 +12,7 @@ use rstest::rstest;
 use std::fs;
 use std::process::Command;
 
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
-
+#[rstest]
 #[tokio::test]
 async fn test_gap1_validate_list_rules_returns_populated_list() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -58,6 +58,7 @@ async fn test_gap1_validate_list_rules_returns_populated_list() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_gap1_validate_list_rules_by_category_filter() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -94,6 +95,7 @@ async fn test_gap1_validate_list_rules_by_category_filter() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_gap2_vcs_list_repositories_discovers_repos() -> TestResult {
     let (server, temp_dir) = create_test_mcp_server().await?;
@@ -177,6 +179,7 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() -> TestResult {
 #[case(None, true)]
 #[case(Some(String::new()), true)]
 #[case(Some("not_a_real_status".to_owned()), false)]
+#[rstest]
 #[tokio::test]
 async fn test_gap3_session_list_status_handling(
     #[case] status: Option<String>,

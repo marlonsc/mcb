@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::ProjectIssue;
 use mcb_providers::database::seaorm::entities::project_issue;
+use rstest::rstest;
 
 fn sample_project_issue() -> project_issue::Model {
     project_issue::Model {
@@ -29,6 +30,7 @@ fn sample_project_issue() -> project_issue::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_project_issue() {
     let model = sample_project_issue();

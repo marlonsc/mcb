@@ -1,7 +1,5 @@
 //! Included by mcb-server test binary; contract: `docs/testing/GOLDEN_TESTS_CONTRACT.md`.
 
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
-
 use std::path::Path;
 use std::time::Duration;
 
@@ -16,6 +14,7 @@ use crate::utils::test_fixtures::{
 };
 use crate::utils::text::extract_text;
 use crate::utils::timeouts::TEST_TIMEOUT;
+use mcb_domain::test_utils::TestResult;
 
 fn index_args(action: IndexAction, path: Option<String>, collection: Option<String>) -> IndexArgs {
     IndexArgs {
@@ -68,6 +67,7 @@ fn load_golden_queries_fixture() -> Result<GoldenQueriesFixture, Box<dyn std::er
     Ok(serde_json::from_str(&content)?)
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_e2e_complete_workflow() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -151,6 +151,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_e2e_handles_concurrent_operations() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -171,6 +172,7 @@ async fn test_golden_e2e_handles_concurrent_operations() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_e2e_respects_collection_isolation() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -194,6 +196,7 @@ async fn test_golden_e2e_respects_collection_isolation() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_e2e_handles_reindex_correctly() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -247,6 +250,7 @@ async fn test_golden_index_variants(
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_index_respects_ignore_patterns() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -277,6 +281,7 @@ async fn test_golden_index_respects_ignore_patterns() -> TestResult {
 #[case(IndexAction::Status, false)]
 #[case(IndexAction::Clear, false)]
 #[case(IndexAction::Status, true)]
+#[rstest]
 #[tokio::test]
 async fn test_golden_mcp_index_schema_actions(
     #[case] action: IndexAction,
@@ -305,6 +310,7 @@ async fn test_golden_mcp_index_schema_actions(
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_mcp_search_code_schema() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -344,6 +350,7 @@ async fn test_golden_mcp_empty_query_error_responses(#[case] query: &str) -> Tes
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_search_returns_relevant_results() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -383,6 +390,7 @@ async fn test_golden_search_returns_relevant_results() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_search_ranking_is_correct() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -410,6 +418,7 @@ async fn test_golden_search_ranking_is_correct() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_search_respects_limit_parameter() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -440,6 +449,7 @@ async fn test_golden_search_respects_limit_parameter() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_search_filters_by_extension() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -469,6 +479,7 @@ async fn test_golden_search_filters_by_extension() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_e2e_golden_queries_setup() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -523,6 +534,7 @@ async fn test_golden_e2e_golden_queries_setup() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_e2e_golden_queries_one_query() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -574,6 +586,7 @@ async fn test_golden_e2e_golden_queries_one_query() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_e2e_golden_queries_all_handlers_succeed() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;

@@ -7,13 +7,14 @@ use std::sync::Arc;
 
 use mcb_domain::error::Result;
 use mcb_domain::ports::IndexingServiceInterface;
+use mcb_domain::registry::admin_operations::{
+    IndexingOperationsProviderConfig, resolve_indexing_operations_provider,
+};
 use mcb_domain::registry::database::resolve_database_repositories;
 use mcb_domain::registry::language::{LanguageProviderConfig, resolve_language_provider};
 use mcb_domain::registry::services::{
     INDEXING_SERVICE_NAME, ServiceBuilder, ServiceRegistryEntry, resolve_context_service,
 };
-
-use crate::infrastructure::DefaultIndexingOperations;
 
 use super::{IndexingServiceDeps, IndexingServiceImpl, IndexingServiceWithHashDeps};
 
@@ -57,7 +58,7 @@ fn build_indexing_service_from_registry(
     )?;
 
     let indexing_ops: Arc<dyn mcb_domain::ports::IndexingOperationsInterface> =
-        Arc::new(DefaultIndexingOperations::new());
+        resolve_indexing_operations_provider(&IndexingOperationsProviderConfig::new("default"))?;
     let event_bus = Arc::clone(&ctx.event_bus);
 
     Ok(Arc::new(

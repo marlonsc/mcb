@@ -12,6 +12,7 @@ use crate::utils::test_fixtures::create_temp_codebase;
 #[case(false, None, Some("test"), false)]
 #[case(true, None, None, false)]
 #[case(false, Some("/definitely/nonexistent/mcb-path"), Some("test"), false)]
+#[rstest]
 #[tokio::test]
 async fn test_index_codebase(
     #[case] create_codebase: bool,

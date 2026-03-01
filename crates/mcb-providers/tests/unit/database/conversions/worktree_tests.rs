@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::Worktree;
 use mcb_providers::database::seaorm::entities::worktree;
+use rstest::rstest;
 
 fn sample_worktree() -> worktree::Model {
     worktree::Model {
@@ -19,6 +20,7 @@ fn sample_worktree() -> worktree::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_worktree() {
     let model = sample_worktree();

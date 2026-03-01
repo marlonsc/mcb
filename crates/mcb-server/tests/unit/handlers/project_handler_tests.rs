@@ -1,8 +1,8 @@
+use mcb_domain::test_utils::TestResult;
 use mcb_server::args::{ProjectAction, ProjectArgs, ProjectResource};
 use mcb_server::handlers::project::ProjectHandler;
 use rmcp::handler::server::wrapper::Parameters;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+use rstest::rstest;
 
 fn create_handler() -> TestResult<ProjectHandler> {
     let state = crate::utils::shared_context::shared_mcb_state()?;
@@ -11,6 +11,7 @@ fn create_handler() -> TestResult<ProjectHandler> {
     ))
 }
 
+#[rstest]
 #[tokio::test]
 async fn rejects_empty_project_id_for_get() -> TestResult {
     let handler = create_handler()?;

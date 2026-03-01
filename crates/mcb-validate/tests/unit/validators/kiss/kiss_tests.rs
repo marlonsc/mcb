@@ -9,11 +9,13 @@ use crate::utils::test_constants::{
     DOMAIN_CRATE, FIXTURE_DOMAIN_SERVICE_PATH, INFRA_CRATE, LIB_RS, SERVER_CRATE, TEST_CRATE,
 };
 use crate::utils::*;
+use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_kiss_full_workspace() {
     let (_temp, root) =
@@ -44,6 +46,7 @@ fn test_kiss_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_clean_code_no_violations() {
     let (_temp, root) = with_inline_crate(

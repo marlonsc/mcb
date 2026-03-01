@@ -19,6 +19,10 @@ use mcb_domain::ports::{
     IndexingServiceInterface, MemoryServiceInterface, SearchServiceInterface,
     ValidationOperationsInterface, VectorStoreProvider,
 };
+use mcb_domain::registry::admin_operations::{
+    IndexingOperationsProviderConfig, ValidationOperationsProviderConfig,
+    resolve_indexing_operations_provider, resolve_validation_operations_provider,
+};
 use mcb_domain::registry::database::resolve_database_repositories;
 use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 use mcb_domain::registry::language::{LanguageProviderConfig, resolve_language_provider};
@@ -30,8 +34,6 @@ use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
 use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
-use mcb_infrastructure::infrastructure::DefaultIndexingOperations;
-use mcb_infrastructure::infrastructure::DefaultValidationOperations;
 use mcb_infrastructure::resolution_context::ServiceResolutionContext;
 use mcb_infrastructure::services::{
     ContextServiceImpl, IndexingServiceDeps, IndexingServiceImpl, IndexingServiceWithHashDeps,
@@ -82,9 +84,11 @@ pub fn build_mcp_server_bootstrap(
 
     // 3. Create shared operation trackers
     let indexing_ops: Arc<dyn IndexingOperationsInterface> =
-        Arc::new(DefaultIndexingOperations::new());
+        resolve_indexing_operations_provider(&IndexingOperationsProviderConfig::new("default"))?;
     let validation_ops: Arc<dyn ValidationOperationsInterface> =
-        Arc::new(DefaultValidationOperations::new());
+        resolve_validation_operations_provider(&ValidationOperationsProviderConfig::new(
+            "default",
+        ))?;
 
     // 4. Build services with INJECTED shared providers
     let context_service: Arc<dyn ContextServiceInterface> = Arc::new(ContextServiceImpl::new(

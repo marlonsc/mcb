@@ -7,11 +7,13 @@ use mcb_validate::ErrorBoundaryValidator;
 
 use crate::utils::test_constants::*;
 use crate::utils::*;
+use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_error_boundary_full_workspace() {
     let (_temp, root) =
@@ -76,6 +78,7 @@ fn test_error_boundary_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_clean_error_boundary_no_violations() {
     let (_temp, root) = with_inline_crate(

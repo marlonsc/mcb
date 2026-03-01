@@ -1,5 +1,3 @@
-type TestResult<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
-
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
@@ -11,10 +9,12 @@ use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::{
     DomainEventStream, EventBusProvider, TransitionRepository, WorkflowSessionRepository,
 };
+use mcb_domain::test_utils::TestResult;
 use mcb_providers::workflow::{
     InMemoryTransitionRepository, InMemoryWorkflowSessionRepository, WorkflowEventPublisher,
     WorkflowOrchestrator,
 };
+use rstest::rstest;
 use tokio::sync::Mutex;
 
 struct TestEventBus {
@@ -97,6 +97,7 @@ impl WorkflowSessionRepository for ConflictOnUpdateSessionRepository {
     }
 }
 
+#[rstest]
 #[tokio::test]
 async fn full_workflow_lifecycle_persists_history_and_events() -> TestResult {
     let session_repo: Arc<dyn WorkflowSessionRepository> =
@@ -147,6 +148,7 @@ async fn full_workflow_lifecycle_persists_history_and_events() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn invalid_transition_returns_error_without_side_effects() -> TestResult {
     let session_repo: Arc<dyn WorkflowSessionRepository> =
@@ -193,6 +195,7 @@ async fn invalid_transition_returns_error_without_side_effects() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn optimistic_concurrency_conflict_returns_error_without_transition_side_effects()
 -> TestResult {

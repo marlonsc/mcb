@@ -18,7 +18,9 @@ pub fn parse_count_from_json_text(text: &str) -> usize {
 #[cfg(test)]
 mod tests {
     use super::{extract_text, parse_count_from_json_text, parse_json, parse_json_text};
+    use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn parse_json_text_and_count_work() {
         let value_opt = parse_json_text(r#"{"count":3}"#);
@@ -35,12 +37,14 @@ mod tests {
         assert_eq!(parse_count_from_json_text("not-json"), 0);
     }
 
+    #[rstest]
     #[test]
     fn extract_text_handles_empty_slice() {
         let content: [rmcp::model::Content; 0] = [];
         assert!(extract_text(&content).is_empty());
     }
 
+    #[rstest]
     #[test]
     fn parse_json_works_for_typed_values() {
         let parsed = parse_json::<serde_json::Value>(r#"{"ok":true}"#);

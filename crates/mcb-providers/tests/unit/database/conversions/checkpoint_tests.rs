@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::Checkpoint;
 use mcb_providers::database::seaorm::entities::checkpoint;
+use rstest::rstest;
 
 fn sample_checkpoint() -> checkpoint::Model {
     checkpoint::Model {
@@ -16,6 +17,7 @@ fn sample_checkpoint() -> checkpoint::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_checkpoint() {
     let model = sample_checkpoint();

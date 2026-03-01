@@ -1,6 +1,7 @@
 use serde_json::json;
 
 use crate::common::{call_tool, snapshot_payload, tool_call_request};
+use rstest::rstest;
 
 fn normalize_tool_call_ids(mut payload: serde_json::Value) -> serde_json::Value {
     if let Some(text) = payload
@@ -26,6 +27,7 @@ fn normalize_tool_call_ids(mut payload: serde_json::Value) -> serde_json::Value 
     payload
 }
 
+#[rstest]
 #[tokio::test]
 async fn agent_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
@@ -49,6 +51,7 @@ async fn agent_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn agent_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(

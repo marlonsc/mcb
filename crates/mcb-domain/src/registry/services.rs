@@ -3,8 +3,9 @@ use std::sync::Arc;
 
 use crate::error::{Error, Result};
 use crate::ports::{
-    AgentSessionServiceInterface, ContextServiceInterface, IndexingServiceInterface,
-    MemoryServiceInterface, SearchServiceInterface, ValidationServiceInterface,
+    AgentSessionServiceInterface, ContextServiceInterface, HighlightServiceInterface,
+    IndexingServiceInterface, MemoryServiceInterface, SearchServiceInterface,
+    ValidationServiceInterface,
 };
 
 /// Registry name for the context service.
@@ -19,6 +20,8 @@ pub const MEMORY_SERVICE_NAME: &str = "memory";
 pub const AGENT_SESSION_SERVICE_NAME: &str = "agent_session";
 /// Registry name for the validation service.
 pub const VALIDATION_SERVICE_NAME: &str = "validation";
+#[allow(missing_docs)]
+pub const HIGHLIGHT_SERVICE_NAME: &str = "highlight";
 
 /// Typed factory enum for building domain services from a resolution context.
 #[derive(Clone, Copy)]
@@ -35,6 +38,8 @@ pub enum ServiceBuilder {
     AgentSession(fn(&dyn Any) -> Result<Arc<dyn AgentSessionServiceInterface>>),
     /// Build a validation service.
     Validation(fn(&dyn Any) -> Result<Arc<dyn ValidationServiceInterface>>),
+    #[allow(missing_docs)]
+    Highlight(fn(&dyn Any) -> Result<Arc<dyn HighlightServiceInterface>>),
 }
 
 /// Entry in the service registry pairing a name with its builder.
@@ -112,4 +117,10 @@ resolve_service!(
     VALIDATION_SERVICE_NAME,
     Validation,
     dyn ValidationServiceInterface
+);
+resolve_service!(
+    resolve_highlight_service,
+    HIGHLIGHT_SERVICE_NAME,
+    Highlight,
+    dyn HighlightServiceInterface
 );

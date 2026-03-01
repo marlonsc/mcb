@@ -4,7 +4,9 @@ use crate::utils::test_fixtures::{
     sample_codebase_path,
 };
 use crate::utils::text::extract_text;
+use rstest::rstest;
 
+#[rstest]
 #[test]
 fn test_fixtures_referenced() {
     assert!(!GOLDEN_COLLECTION.is_empty());

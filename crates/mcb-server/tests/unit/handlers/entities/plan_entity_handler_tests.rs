@@ -4,8 +4,8 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use crate::utils::text::extract_text;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+use mcb_domain::test_utils::TestResult;
+use rstest::rstest;
 
 fn create_handler() -> TestResult<PlanEntityHandler> {
     let state = crate::utils::shared_context::shared_mcb_state()?;
@@ -14,6 +14,7 @@ fn create_handler() -> TestResult<PlanEntityHandler> {
     ))
 }
 
+#[rstest]
 #[tokio::test]
 async fn list_plan_versions_requires_plan_id() -> TestResult {
     let handler = create_handler()?;
@@ -74,6 +75,7 @@ async fn list_plan_count(handler: &PlanEntityHandler, project_id: &str) -> usize
         .unwrap_or(0)
 }
 
+#[rstest]
 #[tokio::test]
 async fn create_plan_with_conflicting_project_id_rejected_without_side_effect() -> TestResult {
     let handler = create_handler()?;

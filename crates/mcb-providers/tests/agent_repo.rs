@@ -3,11 +3,11 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::AgentEventRepository;
+use mcb_domain::test_utils::TestResult;
 use mcb_providers::database::seaorm::entities::{agent_session, delegation, tool_call};
 use mcb_providers::database::seaorm::repos::agent::SeaOrmAgentRepository;
+use rstest::rstest;
 use sea_orm::{ConnectionTrait, Database, EntityTrait};
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 fn sample_tool_call(session_id: &str) -> mcb_domain::entities::agent::ToolCall {
     mcb_domain::entities::agent::ToolCall {
@@ -54,6 +54,7 @@ async fn setup_repo() -> TestResult<(SeaOrmAgentRepository, Arc<sea_orm::Databas
 }
 
 #[ignore = "auto-create session on orphan tool_call not yet implemented"]
+#[rstest]
 #[tokio::test]
 async fn log_tool_persists_when_session_missing() -> TestResult {
     let (repo, db) = setup_repo().await?;
@@ -81,6 +82,7 @@ async fn log_tool_persists_when_session_missing() -> TestResult {
 }
 
 #[ignore = "auto-create session on orphan delegation not yet implemented"]
+#[rstest]
 #[tokio::test]
 async fn log_delegation_persists_when_sessions_missing() -> TestResult {
     let (repo, db) = setup_repo().await?;

@@ -1,6 +1,8 @@
 use mcb_infrastructure::services::indexing_service::IndexingServiceImpl;
+use rstest::rstest;
 use std::path::Path;
 
+#[rstest]
 #[test]
 fn workspace_relative_path_normalizes_within_workspace() {
     let workspace = Path::new("/repo");
@@ -10,6 +12,7 @@ fn workspace_relative_path_normalizes_within_workspace() {
     assert_eq!(relative, "src/main.rs");
 }
 
+#[rstest]
 #[test]
 fn workspace_relative_path_rejects_outside_workspace() {
     let workspace = Path::new("/repo");

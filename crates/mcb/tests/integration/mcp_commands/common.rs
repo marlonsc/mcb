@@ -16,6 +16,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 use tokio::process::Command;
 use tokio::time::{Duration, timeout};
 
+pub use mcb_domain::test_utils::TestResult;
+
 /// Per-operation timeout -- prevents any single MCP call or shutdown from hanging.
 const OP_TIMEOUT: Duration = Duration::from_secs(10);
 
@@ -23,7 +25,6 @@ const OP_TIMEOUT: Duration = Duration::from_secs(10);
 /// The `AllMiniLML6V2` ONNX model (~90MB) must be downloaded from `HuggingFace` on first run.
 /// Subsequent runs use the cached model and start in <3s.
 const STARTUP_TIMEOUT: Duration = Duration::from_secs(120);
-pub type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 // --- Temp DB cleanup ---
 

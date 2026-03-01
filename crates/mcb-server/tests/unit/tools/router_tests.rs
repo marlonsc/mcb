@@ -8,6 +8,7 @@ use mcb_domain::value_objects::RepositoryId;
 use mcb_server::tools::{
     ExecutionFlow, RuntimeDefaults, ToolExecutionContext, validate_execution_context,
 };
+use rstest::rstest;
 
 struct TestVcsProvider {
     repo_root: PathBuf,
@@ -96,6 +97,7 @@ fn valid_context() -> ToolExecutionContext {
     }
 }
 
+#[rstest]
 #[test]
 fn rejects_blank_provenance_scope_for_search() {
     let mut context = valid_context();
@@ -110,6 +112,7 @@ fn rejects_blank_provenance_scope_for_search() {
     assert!(error.message.contains("operator_id"));
 }
 
+#[rstest]
 #[test]
 fn rejects_delegated_without_parent_session_id() {
     let mut context = valid_context();
@@ -128,6 +131,7 @@ fn rejects_delegated_without_parent_session_id() {
     assert!(error.message.contains("parent_session_id"));
 }
 
+#[rstest]
 #[test]
 fn non_provenance_tool_bypasses_scope_gate() {
     let context = ToolExecutionContext {
@@ -152,6 +156,7 @@ fn non_provenance_tool_bypasses_scope_gate() {
     );
 }
 
+#[rstest]
 #[test]
 fn rejects_validate_in_server_hybrid_flow() {
     let mut context = valid_context();
@@ -169,6 +174,7 @@ fn rejects_validate_in_server_hybrid_flow() {
     assert!(err.message.contains("Operation mode matrix violation"));
 }
 
+#[rstest]
 #[test]
 fn allows_search_in_client_hybrid_flow() {
     let mut context = valid_context();
@@ -181,6 +187,7 @@ fn allows_search_in_client_hybrid_flow() {
     );
 }
 
+#[rstest]
 #[test]
 fn allows_search_in_server_hybrid_flow() {
     let mut context = valid_context();
@@ -192,6 +199,7 @@ fn allows_search_in_server_hybrid_flow() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_runtime_defaults_discover() {
     let temp_dir = tempfile::tempdir().expect("temp dir");
@@ -223,6 +231,7 @@ async fn test_runtime_defaults_discover() {
     assert!(defaults.session_id.is_some());
 }
 
+#[rstest]
 #[test]
 fn test_resolve_overrides_beat_defaults() {
     let defaults = RuntimeDefaults {
@@ -263,6 +272,7 @@ fn test_resolve_overrides_beat_defaults() {
     assert!(context.timestamp.is_some());
 }
 
+#[rstest]
 #[test]
 fn test_resolve_with_empty_overrides_uses_defaults() {
     let defaults = RuntimeDefaults {
@@ -289,6 +299,7 @@ fn test_resolve_with_empty_overrides_uses_defaults() {
     assert_eq!(context.execution_flow.as_deref(), Some("stdio-only"));
 }
 
+#[rstest]
 #[test]
 fn test_resolve_workspace_root_maps_to_repo_path() {
     let defaults = RuntimeDefaults {

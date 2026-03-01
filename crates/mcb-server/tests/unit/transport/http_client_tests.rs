@@ -2,6 +2,7 @@ use mcb_server::transport::http_client::HttpClientTransport;
 
 use crate::utils::timeouts::TEST_TIMEOUT;
 
+#[rstest]
 #[test]
 fn test_http_client_creation() {
     let client = HttpClientTransport::new_with_session_source(
@@ -14,9 +15,11 @@ fn test_http_client_creation() {
     assert!(client.is_ok());
 }
 
+use rstest::rstest;
 use std::fs;
 use std::time::Duration;
 
+#[rstest]
 #[test]
 fn session_id_override_takes_precedence_over_file() {
     let temp_dir = match tempfile::tempdir() {
@@ -45,6 +48,7 @@ fn session_id_override_takes_precedence_over_file() {
     assert!(!session_file.exists());
 }
 
+#[rstest]
 #[test]
 fn session_id_persists_via_session_file() {
     let temp_dir = tempfile::tempdir().expect("failed to create temp dir");
@@ -82,6 +86,7 @@ fn session_id_persists_via_session_file() {
     assert_eq!(first_session, second_session);
 }
 
+#[rstest]
 #[test]
 fn secure_transport_allows_loopback_http() {
     for url in [
@@ -96,6 +101,7 @@ fn secure_transport_allows_loopback_http() {
     }
 }
 
+#[rstest]
 #[test]
 fn secure_transport_allows_https() {
     for url in [
@@ -110,6 +116,7 @@ fn secure_transport_allows_https() {
     }
 }
 
+#[rstest]
 #[test]
 fn secure_transport_rejects_remote_http() {
     for url in [
@@ -124,11 +131,13 @@ fn secure_transport_rejects_remote_http() {
     }
 }
 
+#[rstest]
 #[test]
 fn secure_transport_rejects_unknown_scheme() {
     assert!(HttpClientTransport::require_secure_transport("ftp://files.example.com").is_err());
 }
 
+#[rstest]
 #[test]
 fn machine_id_detected_from_gethostname_without_env() {
     let expected_hostname = hostname::get()
@@ -142,6 +151,7 @@ fn machine_id_detected_from_gethostname_without_env() {
     );
 }
 
+#[rstest]
 #[test]
 fn machine_id_prefers_gethostname_over_env() {
     let gethostname_result = hostname::get()

@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::User;
 use mcb_providers::database::seaorm::entities::user;
+use rstest::rstest;
 
 fn sample_user() -> user::Model {
     user::Model {
@@ -16,6 +17,7 @@ fn sample_user() -> user::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_user() {
     let model = sample_user();

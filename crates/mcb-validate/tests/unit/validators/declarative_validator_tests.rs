@@ -8,6 +8,7 @@ use mcb_validate::ValidationConfig;
 use mcb_validate::ValidationError;
 use mcb_validate::traits::validator::Validator;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;
+use rstest::rstest;
 use tempfile::TempDir;
 
 fn write_workspace_manifest(root: &Path) -> io::Result<()> {
@@ -42,6 +43,7 @@ fn write_rule(root: &Path, file_name: &str, content: &str) -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn ast_selector_matches_rust_function_nodes() -> io::Result<()> {
     let temp = TempDir::new()?;
@@ -83,6 +85,7 @@ message: "Function node detected"
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn regex_rules_without_selectors_still_work() -> io::Result<()> {
     let temp = TempDir::new()?;
@@ -128,6 +131,7 @@ message: "Unwrap detected"
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn ast_query_matches_rust_function_names() {
     let temp = TempDir::new().unwrap();
@@ -169,6 +173,7 @@ message: "Function detected"
     );
 }
 
+#[rstest]
 #[test]
 fn invalid_ast_query_returns_config_error() {
     let temp = TempDir::new().unwrap();

@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::Repository;
 use mcb_providers::database::seaorm::entities::repository;
+use rstest::rstest;
 
 fn sample_repository() -> repository::Model {
     repository::Model {
@@ -18,6 +19,7 @@ fn sample_repository() -> repository::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_repository() {
     let model = sample_repository();

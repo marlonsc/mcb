@@ -9,11 +9,13 @@ use mcb_validate::PatternValidator;
 
 use crate::utils::test_constants::*;
 use crate::utils::*;
+use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_patterns_full_workspace() {
     let (_temp, root) =
@@ -37,6 +39,7 @@ fn test_patterns_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_clean_patterns_no_violations() {
     let (_temp, root) = with_inline_crate(

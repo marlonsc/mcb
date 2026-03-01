@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::memory::SessionSummary;
 use mcb_providers::database::seaorm::entities::session_summary;
+use rstest::rstest;
 
 fn sample_session_summary() -> session_summary::Model {
     session_summary::Model {
@@ -19,6 +20,7 @@ fn sample_session_summary() -> session_summary::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_session_summary() {
     let model = sample_session_summary();

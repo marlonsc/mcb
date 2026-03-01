@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::ApiKey;
 use mcb_providers::database::seaorm::entities::api_key;
+use rstest::rstest;
 
 fn sample_api_key() -> api_key::Model {
     api_key::Model {
@@ -17,6 +18,7 @@ fn sample_api_key() -> api_key::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_api_key() {
     let model = sample_api_key();

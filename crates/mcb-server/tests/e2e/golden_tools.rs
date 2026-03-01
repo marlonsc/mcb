@@ -8,8 +8,7 @@ use rstest::rstest;
 
 use crate::utils::test_fixtures::GOLDEN_COLLECTION;
 use crate::utils::text::extract_text;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+use mcb_domain::test_utils::TestResult;
 
 fn sample_codebase_path() -> std::path::PathBuf {
     crate::utils::test_fixtures::sample_codebase_path()
@@ -19,6 +18,7 @@ fn sample_codebase_path() -> std::path::PathBuf {
 // E2E: Complete workflow (clear -> status -> index -> status -> search -> clear)
 // =============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_e2e_complete_workflow() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -183,6 +183,7 @@ async fn test_golden_index_variants(
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_search_returns_relevant_results() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -224,6 +225,7 @@ async fn test_golden_search_returns_relevant_results() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_search_handles_empty_query() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -256,6 +258,7 @@ async fn test_golden_search_handles_empty_query() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_search_respects_limit_parameter() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;

@@ -1,10 +1,11 @@
+use mcb_domain::test_utils::TestResult;
 use mcb_domain::utils::path::{
     path_to_utf8_string, strict_canonicalize, strict_strip_prefix, workspace_relative_path,
 };
+use rstest::rstest;
 use std::path::{Path, PathBuf};
 
-type TestResult = Result<(), Box<dyn std::error::Error>>;
-
+#[rstest]
 #[test]
 fn workspace_relative_happy_path() -> TestResult {
     let root = Path::new("/home/user/project");
@@ -13,6 +14,7 @@ fn workspace_relative_happy_path() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn workspace_relative_nested() -> TestResult {
     let root = Path::new("/a/b");
@@ -21,6 +23,7 @@ fn workspace_relative_nested() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn workspace_relative_outside_root_returns_error() {
     let root = Path::new("/home/user/project");
@@ -35,6 +38,7 @@ fn workspace_relative_outside_root_returns_error() {
     }
 }
 
+#[rstest]
 #[test]
 fn strict_strip_prefix_same_path() -> TestResult {
     let root = Path::new("/a/b");
@@ -44,6 +48,7 @@ fn strict_strip_prefix_same_path() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn strict_strip_prefix_errors_outside_root() {
     let root = Path::new("/a/b");
@@ -51,6 +56,7 @@ fn strict_strip_prefix_errors_outside_root() {
     assert!(strict_strip_prefix(path, root).is_err());
 }
 
+#[rstest]
 #[test]
 fn path_to_utf8_string_forward_slashes() -> TestResult {
     // On Unix the backslash is a valid filename char, but we still replace it
@@ -59,6 +65,7 @@ fn path_to_utf8_string_forward_slashes() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn strict_canonicalize_nonexistent_path_returns_error() {
     let bad = Path::new("/this/path/definitely/does/not/exist/xyz123");
@@ -73,6 +80,7 @@ fn strict_canonicalize_nonexistent_path_returns_error() {
 }
 
 #[cfg(target_os = "linux")]
+#[rstest]
 #[test]
 fn strict_canonicalize_real_path_succeeds() -> TestResult {
     // /tmp always exists on Linux

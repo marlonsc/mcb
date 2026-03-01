@@ -1,16 +1,18 @@
 //! Unit tests for Git VCS provider.
 
 use rstest::rstest;
-use std::error::Error;
 use std::path::Path;
 use std::process::{Command, Stdio};
 
 use mcb_domain::ports::VcsProvider;
-use mcb_providers::vcs::GitProvider;
+use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
+use mcb_domain::test_utils::TestResult;
 use tempfile::TempDir;
 use tokio::fs::write as tokio_write;
 
-type TestResult<T> = std::result::Result<T, Box<dyn Error + Send + Sync>>;
+fn vcs_provider() -> TestResult<std::sync::Arc<dyn VcsProvider>> {
+    Ok(resolve_vcs_provider(&VcsProviderConfig::new("git"))?)
+}
 
 fn run_git(dir: &Path, args: &[&str]) -> TestResult<()> {
     let status = Command::new("git")
@@ -46,15 +48,11 @@ async fn create_test_repo() -> TestResult<TempDir> {
 #[case(false)]
 #[case(true)]
 fn git_provider_basics(#[case] check_object_safety: bool) {
-    let provider = GitProvider::new();
-    assert!(
-        !std::any::type_name::<GitProvider>().is_empty(),
-        "GitProvider type is visible"
-    );
+    let provider = vcs_provider().expect("vcs provider should resolve");
     if check_object_safety {
         fn _assert_object_safe(_: &dyn VcsProvider) {}
-        _assert_object_safe(&provider);
-        let _erased: &dyn VcsProvider = &provider;
+        _assert_object_safe(provider.as_ref());
+        let _erased: &dyn VcsProvider = provider.as_ref();
         assert_eq!(
             std::mem::size_of::<&dyn VcsProvider>(),
             2 * std::mem::size_of::<usize>(),
@@ -63,10 +61,11 @@ fn git_provider_basics(#[case] check_object_safety: bool) {
     }
 }
 
+#[rstest]
 #[tokio::test]
 async fn open_repository() -> TestResult<()> {
     let dir = create_test_repo().await?;
-    let provider = GitProvider::new();
+    let provider = vcs_provider()?;
 
     let repo = provider.open_repository(dir.path()).await?;
     assert!(!repo.id().as_str().is_empty());
@@ -79,7 +78,7 @@ async fn open_repository() -> TestResult<()> {
 #[case("/this/definitely/does/not/exist")]
 #[tokio::test]
 async fn open_repository_not_found(#[case] repo_path: &str) {
-    let provider = GitProvider::new();
+    let provider = vcs_provider().expect("vcs provider should resolve");
     let result = provider.open_repository(Path::new(repo_path)).await;
     let err = result.expect_err("should fail for non-existent path");
     let err_msg = err.to_string().to_lowercase();
@@ -89,10 +88,11 @@ async fn open_repository_not_found(#[case] repo_path: &str) {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn repository_id_stable() -> TestResult<()> {
     let dir = create_test_repo().await?;
-    let provider = GitProvider::new();
+    let provider = vcs_provider()?;
 
     let repo1 = provider.open_repository(dir.path()).await?;
     let repo2 = provider.open_repository(dir.path()).await?;
@@ -110,7 +110,7 @@ async fn repository_id_stable() -> TestResult<()> {
 #[tokio::test]
 async fn list_repository_entities(#[case] entity_kind: &str) -> TestResult<()> {
     let dir = create_test_repo().await?;
-    let provider = GitProvider::new();
+    let provider = vcs_provider()?;
     let repo = provider.open_repository(dir.path()).await?;
 
     if entity_kind == "branches" {
@@ -137,7 +137,7 @@ async fn commit_history_variants(
     #[case] expected_min_len: usize,
 ) -> TestResult<()> {
     let dir = create_test_repo().await?;
-    let provider = GitProvider::new();
+    let provider = vcs_provider()?;
     let repo = provider.open_repository(dir.path()).await?;
 
     let commits = provider
@@ -161,7 +161,7 @@ async fn read_file_variants(
     #[case] should_succeed: bool,
 ) -> TestResult<()> {
     let dir = create_test_repo().await?;
-    let provider = GitProvider::new();
+    let provider = vcs_provider()?;
     let repo = provider.open_repository(dir.path()).await?;
 
     let content = provider
@@ -178,6 +178,7 @@ async fn read_file_variants(
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn diff_refs() -> TestResult<()> {
     let dir = create_test_repo().await?;
@@ -187,7 +188,7 @@ async fn diff_refs() -> TestResult<()> {
     run_git(dir.path(), &["add", "."])?;
     run_git(dir.path(), &["commit", "-m", "Second commit"])?;
 
-    let provider = GitProvider::new();
+    let provider = vcs_provider()?;
     let repo = provider.open_repository(dir.path()).await?;
 
     let commits = provider
@@ -209,10 +210,11 @@ async fn diff_refs() -> TestResult<()> {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn list_branches_skips_invalid_entries() -> TestResult<()> {
     let dir = create_test_repo().await?;
-    let provider = GitProvider::new();
+    let provider = vcs_provider()?;
     let repo = provider.open_repository(dir.path()).await?;
 
     // Create a valid branch

@@ -1,9 +1,9 @@
 use crate::utils::test_fixtures::*;
+use mcb_domain::test_utils::TestResult;
 use mcb_server::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::json;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 fn base_args(action: VcsEntityAction, resource: VcsEntityResource) -> VcsEntityArgs {
     VcsEntityArgs {
@@ -123,6 +123,7 @@ async fn create_worktree(
 // Repository CRUD
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn golden_vcs_repo_create_and_get() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -163,6 +164,7 @@ async fn golden_vcs_repo_create_and_get() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_vcs_repo_list() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -196,6 +198,7 @@ async fn golden_vcs_repo_list() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_vcs_repo_update() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -253,6 +256,7 @@ async fn golden_vcs_repo_update() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_vcs_repo_delete() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -290,6 +294,7 @@ async fn golden_vcs_repo_delete() -> TestResult {
 // Branch CRUD
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn golden_vcs_branch_create_and_get() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -332,6 +337,7 @@ async fn golden_vcs_branch_create_and_get() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_vcs_branch_list() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -374,6 +380,7 @@ async fn golden_vcs_branch_list() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_vcs_branch_delete() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -411,6 +418,7 @@ async fn golden_vcs_branch_delete() -> TestResult {
 // Worktree CRUD
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn golden_vcs_worktree_create_and_get() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -455,6 +463,7 @@ async fn golden_vcs_worktree_create_and_get() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_vcs_worktree_list() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -491,6 +500,7 @@ async fn golden_vcs_worktree_list() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_vcs_worktree_delete() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;

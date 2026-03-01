@@ -1,6 +1,8 @@
 use axum::http::{HeaderMap, HeaderValue};
 use mcb_server::auth::extract_api_key;
+use rstest::rstest;
 
+#[rstest]
 #[test]
 fn extract_api_key_reads_x_api_key() {
     let mut headers = HeaderMap::new();
@@ -11,6 +13,7 @@ fn extract_api_key_reads_x_api_key() {
     );
 }
 
+#[rstest]
 #[test]
 fn extract_api_key_reads_authorization_bearer() {
     let mut headers = HeaderMap::new();
@@ -21,6 +24,7 @@ fn extract_api_key_reads_authorization_bearer() {
     );
 }
 
+#[rstest]
 #[test]
 fn extract_api_key_rejects_missing_headers() {
     let headers = HeaderMap::new();

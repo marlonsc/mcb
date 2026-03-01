@@ -47,6 +47,7 @@ fn validate_workspace_group(
     }
 }
 
+#[rstest]
 #[test]
 fn test_validate_workspace_quality() {
     let workspace_root = get_workspace_root();
@@ -88,6 +89,7 @@ fn test_validate_workspace_quality() {
     }
 }
 
+#[rstest]
 #[test]
 fn test_validate_workspace_documentation() {
     let workspace_root = get_workspace_root();
@@ -117,6 +119,7 @@ fn test_validate_workspace_documentation() {
     println!("Total: {} documentation violations\n", violations.len());
 }
 
+#[rstest]
 #[test]
 fn test_full_validation_report() {
     let handle = match std::thread::Builder::new()
@@ -202,6 +205,7 @@ fn run_full_validation_report() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_validation_config() {
     let workspace_root = get_workspace_root();

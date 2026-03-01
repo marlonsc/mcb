@@ -9,8 +9,7 @@ use rmcp::model::CallToolRequestParams;
 use tempfile::TempDir;
 
 use crate::utils::test_fixtures::create_test_mcp_server;
-
-pub type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+use mcb_domain::test_utils::TestResult;
 
 pub struct McpTestContext {
     pub server: Arc<McpServer>,

@@ -1,3 +1,4 @@
+use rstest::rstest;
 use std::sync::atomic::{AtomicU64, Ordering};
 
 static COUNTER: AtomicU64 = AtomicU64::new(0);
@@ -11,7 +12,9 @@ pub fn unique_collection(prefix: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::unique_collection;
+    use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn unique_collection_generates_prefixed_name() {
         let name = unique_collection("abc");

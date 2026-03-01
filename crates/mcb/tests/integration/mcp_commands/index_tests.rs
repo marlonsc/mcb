@@ -6,9 +6,11 @@ use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
     is_error, shutdown_client,
 };
+use rstest::rstest;
 use serial_test::serial;
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_index_status() -> TestResult {
     let client = create_client().await?;
@@ -24,6 +26,7 @@ async fn test_index_status() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_index_clear_missing_collection() -> TestResult {
     let client = create_client().await?;
@@ -35,6 +38,7 @@ async fn test_index_clear_missing_collection() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_index_start_missing_path() -> TestResult {
     let client = create_client().await?;
@@ -46,6 +50,7 @@ async fn test_index_start_missing_path() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_index_invalid_action() -> TestResult {
     let client = create_client().await?;

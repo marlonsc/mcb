@@ -260,10 +260,11 @@ fn test_format_clear_index(
 // =============================================================================
 
 use crate::utils::text::extract_text;
+use mcb_domain::test_utils::TestResult;
 
 mod handler_error_tests {
-
-    type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+    use super::TestResult;
+    use rstest::rstest;
 
     use mcb_server::args::{IndexAction, IndexArgs};
     use mcb_server::handlers::IndexHandler;
@@ -274,6 +275,7 @@ mod handler_error_tests {
         Ok(IndexHandler::new(state.mcp_server.indexing_service()))
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_handler_service_error_handling() -> TestResult {
         let handler = create_handler().await?;

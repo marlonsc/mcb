@@ -12,6 +12,7 @@ mod yaml_metrics_tests {
     use tempfile::TempDir;
 
     /// Test that `MetricsConfig` can be converted to `MetricThresholds`
+    #[rstest]
     #[test]
     fn test_metrics_config_to_thresholds() {
         let config = MetricsConfig {
@@ -49,6 +50,7 @@ mod yaml_metrics_tests {
     }
 
     /// Test analyzing code with thresholds from `MetricsConfig`
+    #[rstest]
     #[test]
     fn test_analyze_with_metrics_config() {
         let config = MetricsConfig {
@@ -136,6 +138,7 @@ lint_select: ["F401"]
         "quality",
         false
     )]
+    #[rstest]
     #[tokio::test]
     async fn load_yaml_rule_cases(
         #[case] file_name: &str,
@@ -172,6 +175,7 @@ lint_select: ["F401"]
     }
 
     /// Test full pipeline: YAML rule → `MetricThresholds` → `RcaAnalyzer` → violations
+    #[rstest]
     #[tokio::test]
     async fn test_full_yaml_metrics_pipeline() {
         let temp_dir = TempDir::new().unwrap();

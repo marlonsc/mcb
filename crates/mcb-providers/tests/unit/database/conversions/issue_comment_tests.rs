@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::IssueComment;
 use mcb_providers::database::seaorm::entities::issue_comment;
+use rstest::rstest;
 
 fn sample_issue_comment() -> issue_comment::Model {
     issue_comment::Model {
@@ -13,6 +14,7 @@ fn sample_issue_comment() -> issue_comment::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_issue_comment() {
     let model = sample_issue_comment();

@@ -77,6 +77,7 @@ async fn memory_store_missing_content_returns_expected_error(
     assert_error_shape(&response, "Missing required field: content");
 }
 
+#[rstest]
 #[tokio::test]
 async fn session_create_missing_data_returns_expected_error() {
     let Some((handler, _temp_dir)) = session_handler().await else {

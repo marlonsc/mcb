@@ -3,11 +3,11 @@ use crate::utils::test_fixtures::{
     test_team, test_user,
 };
 use crate::utils::text::extract_text;
+use mcb_domain::test_utils::TestResult;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::Value;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 fn org_args(action: OrgEntityAction, resource: OrgEntityResource) -> OrgEntityArgs {
     OrgEntityArgs {
@@ -106,6 +106,7 @@ async fn list_count(
     parse_list_len(&text)
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_isolation_users_scoped_to_org() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -119,6 +120,7 @@ async fn golden_isolation_users_scoped_to_org() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_isolation_teams_scoped_to_org() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -132,6 +134,7 @@ async fn golden_isolation_teams_scoped_to_org() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_isolation_api_keys_scoped_to_org() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -146,6 +149,7 @@ async fn golden_isolation_api_keys_scoped_to_org() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_isolation_org_a_invisible_to_org_b() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -167,6 +171,7 @@ async fn golden_isolation_org_a_invisible_to_org_b() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_isolation_cross_org_get_fails() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -201,6 +206,7 @@ async fn golden_isolation_cross_org_get_fails() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_isolation_both_orgs_coexist() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;

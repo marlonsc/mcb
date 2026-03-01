@@ -12,18 +12,19 @@ use mcb_domain::entities::{
 };
 use mcb_domain::ports::{EmbeddingProvider, IndexingResult, VectorStoreProvider};
 use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
+use mcb_domain::registry::events::{EventBusProviderConfig, resolve_event_bus_provider};
 use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
 use mcb_domain::utils::time::epoch_secs_i64;
 use mcb_domain::value_objects::TeamMemberId;
 use mcb_infrastructure::config::TestConfigBuilder;
-use mcb_infrastructure::events::BroadcastEventBus;
 use mcb_infrastructure::repositories::connect_sqlite_with_migrations;
 use mcb_infrastructure::resolution_context::ServiceResolutionContext;
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::tools::ExecutionFlow;
+use rstest::rstest;
 use tempfile::TempDir;
 use uuid::Uuid;
 
@@ -327,10 +328,11 @@ async fn create_test_resolution_context() -> Option<(ServiceResolutionContext, T
         .unwrap_or_else(|| temp_dir.path().join("test.db"));
 
     let db = connect_sqlite_with_migrations(&db_path).await.ok()?;
+    let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;
     let resolution_ctx = ServiceResolutionContext {
         db,
         config: Arc::new(config),
-        event_bus: Arc::new(BroadcastEventBus::new()),
+        event_bus,
     };
     Some((resolution_ctx, temp_dir))
 }
@@ -472,8 +474,10 @@ pub fn test_api_key(user_id: &str, org_id: &str, name: &str) -> ApiKey {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
     /// Smoke test so fixture helpers are not reported as dead code in the unit test target.
+    #[rstest]
     #[test]
     fn test_fixture_helpers_used_in_unit_target() {
         let (_temp, path) = create_temp_codebase();

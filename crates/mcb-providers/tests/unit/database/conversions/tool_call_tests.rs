@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::ToolCall;
 use mcb_providers::database::seaorm::entities::tool_call;
+use rstest::rstest;
 
 fn sample_tool_call() -> tool_call::Model {
     tool_call::Model {
@@ -19,6 +20,7 @@ fn sample_tool_call() -> tool_call::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_tool_call() {
     let model = sample_tool_call();

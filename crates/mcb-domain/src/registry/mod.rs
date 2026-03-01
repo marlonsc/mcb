@@ -53,6 +53,8 @@
 //! }
 //! ```
 
+#[allow(missing_docs)]
+pub mod admin_operations;
 pub mod database;
 pub mod embedding;
 pub mod events;
@@ -62,12 +64,19 @@ pub mod project_detection;
 /// Service registry (context, indexing, search, memory, agent session, validation).
 pub mod services;
 
+pub use admin_operations::{
+    INDEXING_OPERATIONS_PROVIDERS, IndexingOperationsProviderConfig,
+    IndexingOperationsProviderEntry, VALIDATION_OPERATIONS_PROVIDERS,
+    ValidationOperationsProviderConfig, ValidationOperationsProviderEntry,
+    list_indexing_operations_providers, list_validation_operations_providers,
+    resolve_indexing_operations_provider, resolve_validation_operations_provider,
+};
 pub use services::{
-    AGENT_SESSION_SERVICE_NAME, CONTEXT_SERVICE_NAME, INDEXING_SERVICE_NAME, MEMORY_SERVICE_NAME,
-    SEARCH_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
-    VALIDATION_SERVICE_NAME, resolve_agent_session_service, resolve_context_service,
-    resolve_indexing_service, resolve_memory_service, resolve_search_service,
-    resolve_validation_service,
+    AGENT_SESSION_SERVICE_NAME, CONTEXT_SERVICE_NAME, HIGHLIGHT_SERVICE_NAME,
+    INDEXING_SERVICE_NAME, MEMORY_SERVICE_NAME, SEARCH_SERVICE_NAME, SERVICES_REGISTRY,
+    ServiceBuilder, ServiceRegistryEntry, VALIDATION_SERVICE_NAME, resolve_agent_session_service,
+    resolve_context_service, resolve_highlight_service, resolve_indexing_service,
+    resolve_memory_service, resolve_search_service, resolve_validation_service,
 };
 pub mod validation;
 pub use validation::{

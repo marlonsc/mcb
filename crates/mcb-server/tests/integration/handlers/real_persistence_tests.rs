@@ -19,8 +19,7 @@ use serde_json::json;
 
 use crate::utils::test_fixtures::create_test_mcp_server;
 use crate::utils::text::{extract_text, parse_count_from_json_text};
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+use mcb_domain::test_utils::TestResult;
 
 async fn list_observation_count(
     memory_h: &mcb_server::handlers::MemoryHandler,
@@ -58,6 +57,7 @@ async fn list_observation_count(
 
 /// Stores an observation via the memory handler and verifies it was actually
 /// persisted by retrieving it back through a list query.
+#[rstest]
 #[tokio::test]
 async fn test_real_memory_store_observation_persists() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -142,6 +142,7 @@ async fn test_real_memory_store_observation_persists() -> TestResult {
 }
 
 /// Stores multiple observations and verifies the count matches.
+#[rstest]
 #[tokio::test]
 async fn test_real_memory_store_multiple_observations_counted() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -226,6 +227,7 @@ async fn test_real_memory_store_multiple_observations_counted() -> TestResult {
 
 /// Attempts to store an observation with missing required fields.
 /// Verifies the error message is contextual (not the old "internal error").
+#[rstest]
 #[tokio::test]
 async fn test_real_memory_store_missing_data_returns_contextual_error() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -279,6 +281,7 @@ async fn test_real_memory_store_missing_data_returns_contextual_error() -> TestR
 /// Creates a `session_summary` (memory resource) and verifies it can be retrieved.
 /// Tests the full store → get round-trip on real `SQLite`.
 /// No observation seed needed — `store_session_summary` auto-creates org + project (honesty fix v0.2.1).
+#[rstest]
 #[tokio::test]
 async fn test_real_session_summary_store_and_retrieve() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -367,6 +370,7 @@ async fn test_real_session_summary_store_and_retrieve() -> TestResult {
 // =============================================================================
 
 /// Passes an invalid `agent_type` and verifies the error lists valid types.
+#[rstest]
 #[tokio::test]
 async fn test_real_session_create_invalid_agent_type_contextual_error() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -404,6 +408,7 @@ async fn test_real_session_create_invalid_agent_type_contextual_error() -> TestR
 // =============================================================================
 
 /// Searches an empty project and verifies it returns empty results (not an error).
+#[rstest]
 #[tokio::test]
 async fn test_real_search_empty_project_returns_empty_not_error() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -442,6 +447,7 @@ async fn test_real_search_empty_project_returns_empty_not_error() -> TestResult 
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_real_search_memory_enriches_origin_context_fields() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -540,6 +546,7 @@ async fn test_real_search_memory_enriches_origin_context_fields() -> TestResult 
 /// Full round-trip: store `session_summary` → create `agent_session` → get `agent_session`.
 /// Proves the entire FK chain (org → project → `session_summary` → `agent_session`) works
 /// with auto-create, no observation seed needed.
+#[rstest]
 #[tokio::test]
 async fn test_real_agent_session_create_and_retrieve() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -666,6 +673,7 @@ async fn test_real_agent_session_create_and_retrieve() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_real_agent_session_create_without_summary_id_succeeds() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -737,6 +745,7 @@ async fn test_real_agent_session_create_without_summary_id_succeeds() -> TestRes
 
 /// Lists sessions on a fresh (empty) database.
 /// Verifies honest behavior: empty results, not an error or fake data.
+#[rstest]
 #[tokio::test]
 async fn test_real_session_list_empty_returns_gracefully() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -765,6 +774,7 @@ async fn test_real_session_list_empty_returns_gracefully() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_real_session_list_filters_by_parent_session_id() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -934,6 +944,7 @@ async fn test_real_memory_store_conflicting_ids_rejected_without_side_effect(
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_real_session_create_conflicting_project_rejected_without_side_effect() -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;

@@ -10,6 +10,7 @@ use tracing::info;
 use mcb_validate::ValidationConfig;
 use mcb_validate::filters::LanguageId;
 use mcb_validate::unified_registry::{RuleOrigin, UnifiedRuleRegistry};
+use rstest::rstest;
 
 fn test_workspace_root() -> Option<PathBuf> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -24,6 +25,7 @@ fn root_or_err() -> io::Result<PathBuf> {
         .ok_or_else(|| io::Error::new(io::ErrorKind::NotFound, "workspace root not found"))
 }
 
+#[rstest]
 #[test]
 fn test_list_all_rules_discovers_both_systems() -> io::Result<()> {
     let root = root_or_err()?;
@@ -63,6 +65,7 @@ fn test_list_all_rules_discovers_both_systems() -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_rust_validator_count() -> io::Result<()> {
     let root = root_or_err()?;
@@ -76,6 +79,7 @@ fn test_rust_validator_count() -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_yaml_rule_count() -> io::Result<()> {
     let root = root_or_err()?;
@@ -89,6 +93,7 @@ fn test_yaml_rule_count() -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_total_rule_count() -> io::Result<()> {
     let root = root_or_err()?;
@@ -104,6 +109,7 @@ fn test_total_rule_count() -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_rule_info_has_correct_origins() -> io::Result<()> {
     let root = root_or_err()?;
@@ -135,6 +141,7 @@ fn test_rule_info_has_correct_origins() -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_execute_all_produces_violations_from_both_systems() -> io::Result<()> {
     let root = root_or_err()?;
@@ -151,6 +158,7 @@ fn test_execute_all_produces_violations_from_both_systems() -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_execute_by_category() -> io::Result<()> {
     let root = root_or_err()?;
@@ -163,6 +171,7 @@ fn test_execute_by_category() -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_execute_by_language() -> io::Result<()> {
     let root = root_or_err()?;
@@ -175,6 +184,7 @@ fn test_execute_by_language() -> io::Result<()> {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_accessors() -> io::Result<()> {
     let root = root_or_err()?;

@@ -1,7 +1,8 @@
+use mcb_domain::test_utils::TestResult;
 use mcb_validate::rules::templates::TemplateEngine;
+use rstest::rstest;
 
-type TestResult = Result<(), Box<dyn std::error::Error>>;
-
+#[rstest]
 #[tokio::test]
 async fn test_apply_cargo_dependency_template() -> TestResult {
     let mut engine = TemplateEngine::new();

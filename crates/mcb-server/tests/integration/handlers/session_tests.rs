@@ -7,6 +7,7 @@ use serde_json::json;
 use crate::utils::domain_services::create_real_domain_services;
 use crate::utils::test_fixtures::TEST_PROJECT_ID;
 use crate::utils::text::extract_text;
+use rstest::rstest;
 
 async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
     let (state, temp_dir) = create_real_domain_services().await?;
@@ -21,6 +22,7 @@ async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
 
 macro_rules! session_test {
     ($test_name:ident, $action:expr, session_id: $session_id:expr, expect_ok) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() {
             let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -50,6 +52,7 @@ macro_rules! session_test {
     };
 
     ($test_name:ident, $action:expr, data: $data:expr, $(agent_type: $agent_type:expr,)? expect_ok) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() {
             let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -78,6 +81,7 @@ macro_rules! session_test {
     };
 
     ($test_name:ident, $action:expr, data: $data:expr, $(agent_type: $agent_type:expr,)? expect_error) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() {
             let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -173,6 +177,7 @@ session_test!(
     expect_ok
 );
 
+#[rstest]
 #[tokio::test]
 async fn test_session_update_conflicting_project_id_rejected() {
     let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -231,6 +236,7 @@ async fn test_session_update_conflicting_project_id_rejected() {
     assert!(err.message.contains("conflicting project_id"));
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_session_create_missing_data_returns_invalid_params() {
     let Some((handler, _services_temp_dir)) = create_handler().await else {

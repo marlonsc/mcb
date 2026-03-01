@@ -150,6 +150,7 @@ async fn test_each_tool_has_non_null_object_input_schema_with_properties()
 #[case("index")]
 #[case("search")]
 #[case("memory")]
+#[rstest]
 #[tokio::test]
 async fn test_provenance_gating_requires_full_provenance_fields(
     #[case] tool_name: &str,
@@ -193,6 +194,7 @@ async fn test_provenance_gating_requires_full_provenance_fields(
 #[case("index")]
 #[case("search")]
 #[case("memory")]
+#[rstest]
 #[tokio::test]
 async fn test_delegation_requires_parent_session_id_when_delegated_true(
     #[case] tool_name: &str,
@@ -271,6 +273,7 @@ async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid()
 #[case("project")]
 #[case("vcs")]
 #[case("entity")]
+#[rstest]
 #[tokio::test]
 async fn test_operation_mode_matrix_allows_tools_in_client_hybrid(
     #[case] tool_name: &str,

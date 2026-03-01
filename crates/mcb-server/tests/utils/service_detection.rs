@@ -1,4 +1,5 @@
 use mcb_domain::test_services_config::test_service_url;
+use rstest::rstest;
 use std::net::TcpStream;
 use std::time::Duration;
 
@@ -141,7 +142,9 @@ macro_rules! skip_if_any_service_unavailable {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn test_service_detection_logic() {
         let _ = is_ci();
@@ -159,6 +162,7 @@ mod tests {
         println!("✓ Service detection logic verified");
     }
 
+    #[rstest]
     #[test]
     fn test_get_host_port_from_url() {
         // Standard HTTP/HTTPS

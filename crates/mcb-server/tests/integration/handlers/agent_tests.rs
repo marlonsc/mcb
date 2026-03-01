@@ -52,6 +52,7 @@ fn build_args(action: AgentAction, session_id: &str, data: serde_json::Value) ->
         })
     )
 )]
+#[rstest]
 #[tokio::test]
 async fn test_agent_actions_return_mcp_response(#[case] args: AgentArgs) {
     let (state, temp_dir) = match create_real_domain_services().await {
@@ -102,6 +103,7 @@ async fn test_agent_actions_return_mcp_response(#[case] args: AgentArgs) {
     assert!(!response.is_error.unwrap_or(false));
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_agent_log_tool_missing_tool_name_returns_error() {
     let Some((handler, _temp_dir)) = create_handler().await else {
@@ -119,6 +121,7 @@ async fn test_agent_log_tool_missing_tool_name_returns_error() {
     assert!(response.is_error.unwrap_or(false));
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_agent_log_tool_empty_session_id() {
     let Some((handler, _temp_dir)) = create_handler().await else {

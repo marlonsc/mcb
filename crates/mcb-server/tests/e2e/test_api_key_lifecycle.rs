@@ -2,12 +2,12 @@ use crate::utils::test_fixtures::{
     create_test_mcp_server, golden_content_to_string, test_api_key, test_organization, test_user,
 };
 use mcb_domain::entities::ApiKey;
+use mcb_domain::test_utils::TestResult;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use mcb_server::mcp_server::McpServer;
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::json;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 fn api_key_from_result(result: &rmcp::model::CallToolResult) -> ApiKey {
     let text = golden_content_to_string(result);
@@ -91,6 +91,7 @@ async fn create_api_key(server: &McpServer, org_id: &str, user_id: &str, name: &
     api_key_from_result(&create_ok)
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_api_key_create_and_get() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -125,6 +126,7 @@ async fn golden_api_key_create_and_get() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_api_key_list_by_org() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -158,6 +160,7 @@ async fn golden_api_key_list_by_org() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_api_key_revoke() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -206,6 +209,7 @@ async fn golden_api_key_revoke() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_api_key_delete() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -247,6 +251,7 @@ async fn golden_api_key_delete() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_api_key_create_with_scopes() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -298,6 +303,7 @@ async fn golden_api_key_create_with_scopes() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_api_key_create_with_expiration() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -349,6 +355,7 @@ async fn golden_api_key_create_with_expiration() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_api_key_revoke_sets_timestamp() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -396,6 +403,7 @@ async fn golden_api_key_revoke_sets_timestamp() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_api_key_create_missing_data() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -416,6 +424,7 @@ async fn golden_api_key_create_missing_data() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_api_key_full_lifecycle() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;

@@ -15,9 +15,10 @@ use serde_json::json;
 
 use crate::utils::test_fixtures::TEST_PROJECT_ID;
 use crate::utils::text::extract_text;
+use mcb_domain::test_utils::TestResult;
+use rstest::rstest;
 
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
-
+#[rstest]
 #[tokio::test]
 async fn test_validation_agent_sql_storage_flow() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -74,6 +75,7 @@ async fn test_validation_agent_sql_storage_flow() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_validation_session_create_schema_fallback() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
@@ -112,6 +114,7 @@ async fn test_validation_session_create_schema_fallback() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_validation_memory_observation_enum_error() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;

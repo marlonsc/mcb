@@ -6,9 +6,11 @@ use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
     is_error, shutdown_client,
 };
+use rstest::rstest;
 use serial_test::serial;
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_session_list() -> TestResult {
     let client = create_client().await?;
@@ -29,6 +31,7 @@ async fn test_session_list() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_session_create() -> TestResult {
     let client = create_client().await?;
@@ -47,6 +50,7 @@ async fn test_session_create() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_session_get_nonexistent() -> TestResult {
     let client = create_client().await?;
@@ -65,6 +69,7 @@ async fn test_session_get_nonexistent() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_session_summarize_without_id() -> TestResult {
     let client = create_client().await?;
@@ -81,6 +86,7 @@ async fn test_session_summarize_without_id() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_session_invalid_action() -> TestResult {
     let client = create_client().await?;

@@ -6,9 +6,11 @@ use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
     is_error, shutdown_client,
 };
+use rstest::rstest;
 use serial_test::serial;
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_vcs_list_repositories() -> TestResult {
     let client = create_client().await?;
@@ -29,6 +31,7 @@ async fn test_vcs_list_repositories() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_vcs_search_branch() -> TestResult {
     let client = create_client().await?;
@@ -48,6 +51,7 @@ async fn test_vcs_search_branch() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_vcs_compare_default_branches() -> TestResult {
     let client = create_client().await?;
@@ -69,6 +73,7 @@ async fn test_vcs_compare_default_branches() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_vcs_invalid_action() -> TestResult {
     let client = create_client().await?;

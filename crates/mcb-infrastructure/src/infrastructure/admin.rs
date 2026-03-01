@@ -10,6 +10,10 @@ use mcb_domain::ports::{
     IndexingOperation, IndexingOperationStatus, IndexingOperationsInterface, ValidationOperation,
     ValidationOperationResult, ValidationOperationsInterface, ValidationStatus,
 };
+use mcb_domain::registry::admin_operations::{
+    INDEXING_OPERATIONS_PROVIDERS, IndexingOperationsProviderEntry,
+    VALIDATION_OPERATIONS_PROVIDERS, ValidationOperationsProviderEntry,
+};
 use mcb_domain::value_objects::{CollectionId, OperationId};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -223,3 +227,19 @@ impl ValidationOperationsInterface for DefaultValidationOperations {
         })
     }
 }
+
+#[linkme::distributed_slice(INDEXING_OPERATIONS_PROVIDERS)]
+static DEFAULT_INDEXING_OPERATIONS_PROVIDER_ENTRY: IndexingOperationsProviderEntry =
+    IndexingOperationsProviderEntry {
+        name: "default",
+        description: "In-memory indexing operations tracker",
+        build: |_config| Ok(Arc::new(DefaultIndexingOperations::new())),
+    };
+
+#[linkme::distributed_slice(VALIDATION_OPERATIONS_PROVIDERS)]
+static DEFAULT_VALIDATION_OPERATIONS_PROVIDER_ENTRY: ValidationOperationsProviderEntry =
+    ValidationOperationsProviderEntry {
+        name: "default",
+        description: "In-memory validation operations tracker",
+        build: |_config| Ok(Arc::new(DefaultValidationOperations::new())),
+    };

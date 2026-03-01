@@ -3,9 +3,9 @@
 use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 use sea_orm_migration::MigratorTrait;
 
+use mcb_domain::test_utils::TestResult;
 use mcb_providers::migration::Migrator;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+use rstest::rstest;
 
 async fn query_names(db: &DatabaseConnection, sql: &str) -> TestResult<Vec<String>> {
     let stmt = Statement::from_string(DatabaseBackend::Sqlite, sql);
@@ -17,6 +17,7 @@ async fn query_names(db: &DatabaseConnection, sql: &str) -> TestResult<Vec<Strin
     Ok(names)
 }
 
+#[rstest]
 #[tokio::test]
 async fn migration_creates_all_tables() -> TestResult {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;
@@ -69,6 +70,7 @@ async fn migration_creates_all_tables() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn migration_creates_fts5_triggers() -> TestResult {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;
@@ -96,6 +98,7 @@ async fn migration_creates_fts5_triggers() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn migration_creates_indexes() -> TestResult {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;
@@ -123,6 +126,7 @@ async fn migration_creates_indexes() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn migration_down_drops_all_tables() -> TestResult {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;
@@ -142,6 +146,7 @@ async fn migration_down_drops_all_tables() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn migration_is_idempotent() -> TestResult {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;

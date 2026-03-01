@@ -6,9 +6,11 @@ use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
     shutdown_client,
 };
+use rstest::rstest;
 use serial_test::serial;
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_search_memory() -> TestResult {
     let client = create_client().await?;
@@ -28,6 +30,7 @@ async fn test_search_memory() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_search_code_missing_collection() -> TestResult {
     let client = create_client().await?;
@@ -44,6 +47,7 @@ async fn test_search_code_missing_collection() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_search_missing_query() -> TestResult {
     let client = create_client().await?;
@@ -55,6 +59,7 @@ async fn test_search_missing_query() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_search_invalid_resource() -> TestResult {
     let client = create_client().await?;

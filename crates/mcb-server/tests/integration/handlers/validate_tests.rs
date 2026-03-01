@@ -31,6 +31,7 @@ fn create_temp_dir() -> Result<(TempDir, PathBuf), std::io::Error> {
 /// - `validate_test!(test_name, action, path_expr, scope: Some(scope), rules: Some(vec![...]), expect_ok)`
 macro_rules! validate_test {
     ($test_name:ident, $action:expr, expect_mcp_error) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() {
             let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
@@ -57,6 +58,7 @@ macro_rules! validate_test {
     };
 
     ($test_name:ident, $action:expr, $path_expr:expr, $(scope: $scope:expr,)? $(rules: $rules:expr,)? $(category: $category:expr,)? expect_ok) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
             let (_temp_dir, path) = $path_expr?;
@@ -82,6 +84,7 @@ macro_rules! validate_test {
     };
 
     ($test_name:ident, $action:expr, path: $path:expr, $(scope: $scope:expr,)? expect_error) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
             let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
@@ -107,6 +110,7 @@ macro_rules! validate_test {
     };
 
     ($test_name:ident, $action:expr, $path_expr:expr, expect_error) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
             let (_temp_dir, path) = $path_expr?;
@@ -178,6 +182,7 @@ validate_test!(
     expect_ok
 );
 
+#[rstest]
 #[tokio::test]
 async fn test_validate_run_with_specific_rules() -> Result<(), Box<dyn std::error::Error>> {
     let (_temp_dir, path) = create_temp_file()?;

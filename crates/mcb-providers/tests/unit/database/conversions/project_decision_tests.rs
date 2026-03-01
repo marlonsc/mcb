@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::ProjectDecision;
 use mcb_providers::database::seaorm::entities::project_decision;
+use rstest::rstest;
 
 fn sample_project_decision() -> project_decision::Model {
     project_decision::Model {
@@ -16,6 +17,7 @@ fn sample_project_decision() -> project_decision::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_project_decision() {
     let model = sample_project_decision();

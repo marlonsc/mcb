@@ -1,10 +1,11 @@
 use crate::utils::test_fixtures::{create_test_mcp_server, sample_codebase_path};
+use mcb_domain::test_utils::TestResult;
 use mcb_server::args::{ValidateAction, ValidateArgs, ValidateScope};
 use rmcp::handler::server::wrapper::Parameters;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+use rstest::rstest;
 
 /// Validate with action=Analyze on a sample codebase file → verify success response.
+#[rstest]
 #[tokio::test]
 async fn golden_validate_analyze() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -34,6 +35,7 @@ async fn golden_validate_analyze() -> TestResult {
 }
 
 /// Validate with action=ListRules → verify response shape contains validators/count.
+#[rstest]
 #[tokio::test]
 async fn golden_validate_status() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -62,6 +64,7 @@ async fn golden_validate_status() -> TestResult {
 }
 
 /// Validate with an invalid (non-existent) path → verify error response.
+#[rstest]
 #[tokio::test]
 async fn golden_validate_missing_path() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -93,6 +96,7 @@ async fn golden_validate_missing_path() -> TestResult {
 }
 
 /// Validate with no action args (empty path for Analyze) → verify error.
+#[rstest]
 #[tokio::test]
 async fn golden_validate_empty_args() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;

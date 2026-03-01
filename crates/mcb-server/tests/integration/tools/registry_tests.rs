@@ -19,6 +19,7 @@ fn test_tool_definitions_create_valid_tools(#[case] expected_name: &str) {
     assert!(names.contains(&expected_name));
 }
 
+#[rstest]
 #[test]
 fn test_each_tool_has_description() {
     let tools = create_tool_list().expect("should create tool list");

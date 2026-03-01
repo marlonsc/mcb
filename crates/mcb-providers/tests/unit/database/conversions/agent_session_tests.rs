@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::AgentSession;
 use mcb_providers::database::seaorm::entities::agent_session;
+use rstest::rstest;
 
 fn sample_agent_session() -> agent_session::Model {
     agent_session::Model {
@@ -24,6 +25,7 @@ fn sample_agent_session() -> agent_session::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_agent_session() {
     let model = sample_agent_session();

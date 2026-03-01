@@ -9,7 +9,9 @@ use mcb_providers::vector_store::milvus::to_milvus_name;
 use milvus::data::FieldColumn;
 use milvus::proto::schema::DataType;
 use milvus::value::ValueVec;
+use rstest::rstest;
 
+#[rstest]
 #[test]
 fn test_to_milvus_name_starts_with_letter() {
     let id = CollectionId::from_name("test-collection");
@@ -20,6 +22,7 @@ fn test_to_milvus_name_starts_with_letter() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_to_milvus_name_no_hyphens() {
     let id = CollectionId::from_name("test-collection");
@@ -27,6 +30,7 @@ fn test_to_milvus_name_no_hyphens() {
     assert!(!name.contains('-'), "name must not contain hyphens: {name}");
 }
 
+#[rstest]
 #[test]
 fn test_to_milvus_name_valid_pattern() {
     let id = CollectionId::from_name("test-collection");
@@ -38,6 +42,7 @@ fn test_to_milvus_name_valid_pattern() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_to_milvus_name_under_255_chars() {
     let id = CollectionId::from_name("test-collection");
@@ -71,6 +76,7 @@ fn make_long_column(name: &str, values: Vec<i64>) -> FieldColumn {
     }
 }
 
+#[rstest]
 #[test]
 fn test_extract_string_field_missing_column_returns_error() {
     let fields: Vec<FieldColumn> = vec![];
@@ -83,6 +89,7 @@ fn test_extract_string_field_missing_column_returns_error() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_extract_string_field_out_of_bounds_returns_error() {
     let fields = vec![make_string_column(
@@ -98,6 +105,7 @@ fn test_extract_string_field_out_of_bounds_returns_error() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_extract_string_field_valid_returns_ok() {
     let fields = vec![make_string_column(
@@ -108,6 +116,7 @@ fn test_extract_string_field_valid_returns_ok() {
     assert_eq!(result.unwrap(), "src/main.rs");
 }
 
+#[rstest]
 #[test]
 fn test_extract_long_field_missing_column_returns_error() {
     let fields: Vec<FieldColumn> = vec![];
@@ -120,6 +129,7 @@ fn test_extract_long_field_missing_column_returns_error() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_extract_long_field_valid_returns_ok() {
     let fields = vec![make_long_column(VECTOR_FIELD_START_LINE, vec![42])];
@@ -127,6 +137,7 @@ fn test_extract_long_field_valid_returns_ok() {
     assert_eq!(result.unwrap(), 42);
 }
 
+#[rstest]
 #[test]
 fn test_convert_query_results_missing_fields_returns_error() {
     // Empty field columns — extract_string_field should fail
@@ -143,6 +154,7 @@ fn test_convert_query_results_missing_fields_returns_error() {
 
 // --- Error propagation tests for query/search failure paths ---
 
+#[rstest]
 #[test]
 fn test_error_collection_not_found_listing_file_paths() {
     let collection = CollectionId::from_name("test-col");
@@ -156,6 +168,7 @@ fn test_error_collection_not_found_listing_file_paths() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_error_query_file_paths_propagates_cause() {
     let collection = CollectionId::from_name("my-collection");
@@ -173,6 +186,7 @@ fn test_error_query_file_paths_propagates_cause() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_error_query_chunks_by_file_propagates_cause() {
     let collection = CollectionId::from_name("chunks-col");
@@ -191,6 +205,7 @@ fn test_error_query_chunks_by_file_propagates_cause() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_error_collection_not_found_chunks_by_file() {
     let collection = CollectionId::from_name("missing-col");
@@ -204,6 +219,7 @@ fn test_error_collection_not_found_chunks_by_file() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_default_output_fields_contains_all_extraction_fields() {
     use mcb_providers::vector_store::milvus::DEFAULT_OUTPUT_FIELDS;

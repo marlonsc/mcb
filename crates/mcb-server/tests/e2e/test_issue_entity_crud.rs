@@ -1,9 +1,9 @@
 use crate::utils::test_fixtures::*;
+use mcb_domain::test_utils::TestResult;
 use mcb_server::args::{IssueEntityAction, IssueEntityArgs, IssueEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::json;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 fn base_args(action: IssueEntityAction, resource: IssueEntityResource) -> IssueEntityArgs {
     IssueEntityArgs {
@@ -115,6 +115,7 @@ async fn create_label(
 // Issue CRUD (5 tests)
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_create_and_get() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -151,6 +152,7 @@ async fn golden_issue_create_and_get() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_list() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -179,6 +181,7 @@ async fn golden_issue_list() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_update_status() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -225,6 +228,7 @@ async fn golden_issue_update_status() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_update_assignee() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -271,6 +275,7 @@ async fn golden_issue_update_assignee() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_delete() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -309,6 +314,7 @@ async fn golden_issue_delete() -> TestResult {
 // IssueComment CRUD (3 tests)
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_comment_create_and_get() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -353,6 +359,7 @@ async fn golden_issue_comment_create_and_get() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_comment_list() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -389,6 +396,7 @@ async fn golden_issue_comment_list() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_comment_delete() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -435,6 +443,7 @@ async fn golden_issue_comment_delete() -> TestResult {
 // IssueLabel CRUD (3 tests)
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_label_create_and_get() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -471,6 +480,7 @@ async fn golden_issue_label_create_and_get() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_label_list() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -499,6 +509,7 @@ async fn golden_issue_label_list() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_label_assign_to_issue() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -573,6 +584,7 @@ async fn golden_issue_label_assign_to_issue() -> TestResult {
 // Error paths (2 tests)
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_create_missing_fields() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -583,6 +595,7 @@ async fn golden_issue_create_missing_fields() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_issue_get_nonexistent() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;

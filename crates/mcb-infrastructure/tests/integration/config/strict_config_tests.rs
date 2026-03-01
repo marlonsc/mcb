@@ -7,6 +7,7 @@ use std::path::{Path, PathBuf};
 use crate::utils::workspace::{scan_rs_files, workspace_root};
 use mcb_domain::error::{Error, Result as DomainResult};
 use mcb_infrastructure::config::{AppConfig, validate_app_config};
+use rstest::rstest;
 use tempfile::TempDir;
 
 fn workspace_development_yaml() -> Result<PathBuf, Box<dyn std::error::Error>> {
@@ -81,6 +82,7 @@ fn load_app_config_from_yaml_path(path: &Path) -> DomainResult<AppConfig> {
     Ok(config)
 }
 
+#[rstest]
 #[test]
 fn test_missing_yaml_config_fails() {
     let result =
@@ -97,6 +99,7 @@ fn test_missing_yaml_config_fails() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_unknown_key_rejected() {
     // AppConfig uses #[serde(deny_unknown_fields)] — unknown keys are rejected at parse time.
@@ -111,6 +114,7 @@ fn test_unknown_key_rejected() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_missing_required_key_fails() {
     // Write a YAML config with a required key removed and load via explicit path.
@@ -139,6 +143,7 @@ fn test_missing_required_key_fails() {
 
 // ── Enforcement: no config bypass ────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_no_direct_env_var_in_production_code() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
@@ -199,6 +204,7 @@ fn test_no_direct_env_var_in_production_code() -> Result<(), Box<dyn std::error:
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_no_impl_default_in_config_types() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
@@ -240,6 +246,7 @@ fn test_no_impl_default_in_config_types() -> Result<(), Box<dyn std::error::Erro
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_no_serde_default_in_config_types() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
@@ -270,6 +277,7 @@ fn test_no_serde_default_in_config_types() -> Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_no_hardcoded_fallback_for_security_ids() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
@@ -328,6 +336,7 @@ fn test_no_hardcoded_fallback_for_security_ids() -> Result<(), Box<dyn std::erro
 
 // ── Enforcement: no duplicated domain constants outside mcb-domain ───────────
 
+#[rstest]
 #[test]
 fn test_no_lang_constants_outside_domain() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
@@ -383,6 +392,7 @@ fn test_no_lang_constants_outside_domain() -> Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_no_bm25_constants_outside_domain() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
@@ -442,6 +452,7 @@ fn test_no_bm25_constants_outside_domain() -> Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn test_no_hardcoded_provider_defaults() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;

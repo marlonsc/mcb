@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::IssueLabel;
 use mcb_providers::database::seaorm::entities::issue_label;
+use rstest::rstest;
 
 fn sample_issue_label() -> issue_label::Model {
     issue_label::Model {
@@ -14,6 +15,7 @@ fn sample_issue_label() -> issue_label::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_issue_label() {
     let model = sample_issue_label();

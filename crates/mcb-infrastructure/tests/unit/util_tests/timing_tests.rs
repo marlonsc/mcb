@@ -4,7 +4,9 @@ use std::thread::sleep;
 use std::time::Duration;
 
 use mcb_infrastructure::utils::TimedOperation;
+use rstest::rstest;
 
+#[rstest]
 #[test]
 fn test_timed_operation() {
     let timer = TimedOperation::start();
@@ -12,6 +14,7 @@ fn test_timed_operation() {
     assert!(timer.elapsed_ms() >= 10);
 }
 
+#[rstest]
 #[test]
 fn test_elapsed_secs() {
     let timer = TimedOperation::start();

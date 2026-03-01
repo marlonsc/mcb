@@ -8,11 +8,13 @@ use mcb_validate::{OrganizationViolation, Severity, Violation};
 
 use crate::utils::test_constants::*;
 use crate::utils::*;
+use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_organization_full_workspace() {
     let (_temp, root) =
@@ -66,6 +68,7 @@ fn test_organization_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_clean_organization_no_violations() {
     let (_temp, root) = with_inline_crate(
@@ -87,6 +90,7 @@ pub fn retry(attempts: u32) -> bool {
     );
 }
 
+#[rstest]
 #[test]
 fn test_organization_violation_severity_is_non_recursive() {
     let violation = OrganizationViolation::MagicNumber {

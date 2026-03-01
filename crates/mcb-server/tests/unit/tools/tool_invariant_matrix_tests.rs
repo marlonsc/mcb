@@ -1,8 +1,6 @@
 use rstest::rstest;
 extern crate mcb_providers;
 
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
-
 use std::sync::Arc;
 
 use axum::http::StatusCode;
@@ -12,6 +10,7 @@ use rmcp::model::CallToolRequestParams;
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp_str, tools_call_request};
 use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::test_utils::TestResult;
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
     server.tool_handlers()
@@ -54,6 +53,7 @@ fn full_provenance_context() -> ToolExecutionContext {
 #[case("project")]
 #[case("vcs")]
 #[case("entity")]
+#[rstest]
 #[tokio::test]
 async fn empty_args_returns_invalid_params(#[case] tool_name: &str) -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -84,6 +84,7 @@ async fn empty_args_returns_invalid_params(#[case] tool_name: &str) -> TestResul
 #[case("index")]
 #[case("search")]
 #[case("memory")]
+#[rstest]
 #[tokio::test]
 async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -110,6 +111,7 @@ async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) ->
 #[case("project")]
 #[case("vcs")]
 #[case("entity")]
+#[rstest]
 #[tokio::test]
 async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str) -> TestResult {
     let (server, _temp) = create_test_mcp_server().await?;
@@ -140,6 +142,7 @@ async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str)
 #[case("project")]
 #[case("vcs")]
 #[case("entity")]
+#[rstest]
 #[tokio::test]
 async fn client_hybrid_allows_server_side_tools(
     #[case] tool_name: &str,
@@ -166,6 +169,7 @@ async fn client_hybrid_allows_server_side_tools(
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn server_hybrid_blocks_validate() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;

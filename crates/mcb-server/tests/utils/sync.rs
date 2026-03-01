@@ -1,5 +1,6 @@
 //! Shared test helpers to reduce code duplication
 
+use rstest::rstest;
 use std::sync::{Arc, Mutex};
 
 /// Creates an Arc<Mutex<T>> with the given initial value
@@ -26,19 +27,23 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn test_arc_mutex() {
         let value = arc_mutex(42);
         assert_eq!(*value.lock().unwrap(), 42);
     }
 
+    #[rstest]
     #[test]
     fn test_arc_mutex_vec() {
         let vec: Arc<Mutex<Vec<String>>> = arc_mutex_vec();
         assert!(vec.lock().unwrap().is_empty());
     }
 
+    #[rstest]
     #[test]
     fn test_arc_mutex_hashmap() {
         let map: Arc<Mutex<std::collections::HashMap<String, i32>>> = arc_mutex_hashmap();

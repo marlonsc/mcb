@@ -5,13 +5,12 @@ use std::collections::BTreeSet;
 use std::error::Error;
 use std::path::PathBuf;
 
+use mcb_domain::test_utils::TestResult;
 use mcb_validate::EmbeddedRules;
 use mcb_validate::FileConfig;
 use mcb_validate::rules::yaml_loader::YamlRuleLoader;
 use rstest::*;
 use tempfile::TempDir;
-
-type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 #[fixture]
 fn workspace_root() -> Result<PathBuf, Box<dyn Error>> {

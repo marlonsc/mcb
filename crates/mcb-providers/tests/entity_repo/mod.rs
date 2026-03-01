@@ -12,8 +12,6 @@
 
 #![allow(missing_docs)]
 
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
-
 use std::sync::Arc;
 
 use sea_orm::{ConnectionTrait, DatabaseConnection};
@@ -34,8 +32,10 @@ use mcb_domain::ports::{
 };
 use mcb_domain::value_objects::ids::{IssueLabelAssignmentId, TeamMemberId};
 
+use mcb_domain::test_utils::TestResult;
 use mcb_providers::database::seaorm::repos::entity::SeaOrmEntityRepository;
 use mcb_providers::migration::Migrator;
+use rstest::rstest;
 
 async fn setup_db() -> TestResult<Arc<DatabaseConnection>> {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;
@@ -93,6 +93,7 @@ async fn seed_project(repo: &SeaOrmEntityRepository) -> TestResult {
 // VCS: Repository
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn vcs_repository_crud() -> TestResult {
     let db = setup_db().await?;
@@ -136,6 +137,7 @@ async fn vcs_repository_crud() -> TestResult {
 // VCS: Branch
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn vcs_branch_crud() -> TestResult {
     let db = setup_db().await?;
@@ -191,6 +193,7 @@ async fn vcs_branch_crud() -> TestResult {
 // VCS: Worktree
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn vcs_worktree_crud() -> TestResult {
     let db = setup_db().await?;
@@ -257,6 +260,7 @@ async fn vcs_worktree_crud() -> TestResult {
 // VCS: Assignment
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn vcs_assignment_crud() -> TestResult {
     let db = setup_db().await?;
@@ -351,6 +355,7 @@ async fn vcs_assignment_crud() -> TestResult {
 // Org: Organization
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn org_organization_crud() -> TestResult {
     let db = setup_db().await?;
@@ -388,6 +393,7 @@ async fn org_organization_crud() -> TestResult {
 // Org: User
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn org_user_crud() -> TestResult {
     let db = setup_db().await?;
@@ -433,6 +439,7 @@ async fn org_user_crud() -> TestResult {
 // Org: Team
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn org_team_crud() -> TestResult {
     let db = setup_db().await?;
@@ -463,6 +470,7 @@ async fn org_team_crud() -> TestResult {
 // Org: TeamMember
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn org_team_member_crud() -> TestResult {
     let db = setup_db().await?;
@@ -500,6 +508,7 @@ async fn org_team_member_crud() -> TestResult {
 // Org: ApiKey
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn org_api_key_crud() -> TestResult {
     let db = setup_db().await?;
@@ -540,6 +549,7 @@ async fn org_api_key_crud() -> TestResult {
 // Plan: Plan
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn plan_plan_crud() -> TestResult {
     let db = setup_db().await?;
@@ -583,6 +593,7 @@ async fn plan_plan_crud() -> TestResult {
 // Plan: PlanVersion
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn plan_version_crud() -> TestResult {
     let db = setup_db().await?;
@@ -627,6 +638,7 @@ async fn plan_version_crud() -> TestResult {
 // Plan: PlanReview
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn plan_review_crud() -> TestResult {
     let db = setup_db().await?;
@@ -695,6 +707,7 @@ async fn plan_review_crud() -> TestResult {
 // Issue: ProjectIssue
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn issue_project_issue_crud() -> TestResult {
     let db = setup_db().await?;
@@ -750,6 +763,7 @@ async fn issue_project_issue_crud() -> TestResult {
 // Issue: IssueComment
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn issue_comment_crud() -> TestResult {
     let db = setup_db().await?;
@@ -807,6 +821,7 @@ async fn issue_comment_crud() -> TestResult {
 // Issue: IssueLabel
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn issue_label_crud() -> TestResult {
     let db = setup_db().await?;
@@ -841,6 +856,7 @@ async fn issue_label_crud() -> TestResult {
 // Issue: IssueLabelAssignment
 // ======================================================================
 
+#[rstest]
 #[tokio::test]
 async fn issue_label_assignment_crud() -> TestResult {
     let db = setup_db().await?;

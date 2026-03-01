@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::Branch;
 use mcb_providers::database::seaorm::entities::branch;
+use rstest::rstest;
 
 fn sample_branch() -> branch::Model {
     branch::Model {
@@ -18,6 +19,7 @@ fn sample_branch() -> branch::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_branch() {
     let model = sample_branch();

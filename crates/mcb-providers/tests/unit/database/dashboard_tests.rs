@@ -4,12 +4,12 @@
 //! verifying aggregation queries return correct results.
 
 use mcb_domain::ports::DashboardQueryPort;
+use mcb_domain::test_utils::TestResult;
 use mcb_providers::database::seaorm::dashboard::SeaOrmDashboardAdapter;
 use mcb_providers::migration::Migrator;
+use rstest::rstest;
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 /// Setup helper — create in-memory `SQLite` with migrations.
 async fn setup() -> TestResult<DatabaseConnection> {
@@ -52,6 +52,7 @@ async fn insert_agent_session(db: &DatabaseConnection, id: &str, agent_type: &st
 // Observations by month/day
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn test_observations_by_month_empty_db() -> TestResult {
     let db = setup().await?;
@@ -62,6 +63,7 @@ async fn test_observations_by_month_empty_db() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_observations_by_month_with_data() -> TestResult {
     let db = setup().await?;
@@ -83,6 +85,7 @@ async fn test_observations_by_month_with_data() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_observations_by_day_with_data() -> TestResult {
     let db = setup().await?;
@@ -100,6 +103,7 @@ async fn test_observations_by_day_with_data() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_observations_by_day_respects_limit() -> TestResult {
     let db = setup().await?;
@@ -122,6 +126,7 @@ async fn test_observations_by_day_respects_limit() -> TestResult {
 // Tool call counts
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn test_tool_call_counts_empty_db() -> TestResult {
     let db = setup().await?;
@@ -132,6 +137,7 @@ async fn test_tool_call_counts_empty_db() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_tool_call_counts_aggregates_by_name() -> TestResult {
     let db = setup().await?;
@@ -156,6 +162,7 @@ async fn test_tool_call_counts_aggregates_by_name() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_tool_call_counts_ordered_by_count_desc() -> TestResult {
     let db = setup().await?;
@@ -181,6 +188,7 @@ async fn test_tool_call_counts_ordered_by_count_desc() -> TestResult {
 // Agent session stats
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn test_agent_session_stats_empty_db() -> TestResult {
     let db = setup().await?;
@@ -192,6 +200,7 @@ async fn test_agent_session_stats_empty_db() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_agent_session_stats_counts_sessions() -> TestResult {
     let db = setup().await?;
@@ -208,6 +217,7 @@ async fn test_agent_session_stats_counts_sessions() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_agent_session_stats_counts_unique_agents() -> TestResult {
     let db = setup().await?;

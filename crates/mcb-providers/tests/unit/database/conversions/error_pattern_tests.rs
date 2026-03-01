@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::memory::ErrorPattern;
 use mcb_providers::database::seaorm::entities::error_pattern;
+use rstest::rstest;
 
 fn sample_error_pattern() -> error_pattern::Model {
     error_pattern::Model {
@@ -20,6 +21,7 @@ fn sample_error_pattern() -> error_pattern::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_error_pattern() {
     let model = sample_error_pattern();

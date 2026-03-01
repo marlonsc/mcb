@@ -36,6 +36,7 @@ fn expression_evaluation(
     assert_eq!(value, expected);
 }
 
+#[rstest]
 #[test]
 fn test_custom_variables() {
     let engine = ExpressionEngine::new();
@@ -52,6 +53,7 @@ fn test_custom_variables() {
     assert!(value);
 }
 
+#[rstest]
 #[test]
 fn test_invalid_expression() {
     let engine = ExpressionEngine::new();

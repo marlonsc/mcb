@@ -1,10 +1,10 @@
 /// Golden tests: Project operations handler
 /// Verifies project handler routing, unsupported action errors, and input validation
 use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::test_utils::TestResult;
 use mcb_server::args::{ProjectAction, ProjectArgs, ProjectResource};
 use rmcp::handler::server::wrapper::Parameters;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
+use rstest::rstest;
 
 fn base_args(action: ProjectAction, resource: ProjectResource) -> ProjectArgs {
     ProjectArgs {
@@ -16,6 +16,7 @@ fn base_args(action: ProjectAction, resource: ProjectResource) -> ProjectArgs {
     }
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_project_create_phase() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -44,6 +45,7 @@ async fn golden_project_create_phase() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_project_list_phases() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -66,6 +68,7 @@ async fn golden_project_list_phases() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_project_create_decision() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
@@ -94,6 +97,7 @@ async fn golden_project_create_decision() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn golden_project_missing_project_id() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;

@@ -3,7 +3,9 @@ use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
 use crate::utils::domain_services::create_real_domain_services;
+use rstest::rstest;
 
+#[rstest]
 #[tokio::test]
 async fn test_get_indexing_status_success() {
     let Some((state, _services_temp_dir)) = create_real_domain_services().await else {

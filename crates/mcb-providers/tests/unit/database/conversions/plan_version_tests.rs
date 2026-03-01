@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::PlanVersion;
 use mcb_providers::database::seaorm::entities::plan_version;
+use rstest::rstest;
 
 fn sample_plan_version() -> plan_version::Model {
     plan_version::Model {
@@ -16,6 +17,7 @@ fn sample_plan_version() -> plan_version::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_plan_version() {
     let model = sample_plan_version();

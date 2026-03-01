@@ -50,6 +50,7 @@ fn tokenize(#[case] input: &str, #[case] token: &str, #[case] should_contain: bo
     assert_eq!(tokens.contains(&token.to_owned()), should_contain);
 }
 
+#[rstest]
 #[test]
 fn test_bm25_scorer_creation() {
     let chunks = vec![
@@ -170,6 +171,7 @@ async fn index_and_clear_collection(
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_hybrid_search() -> Result<(), Box<dyn std::error::Error>> {
     let engine = HybridSearchEngine::new();

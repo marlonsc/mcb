@@ -22,8 +22,10 @@ where
 #[cfg(test)]
 mod tests {
     use super::{TEST_TIMEOUT, eventually};
+    use rstest::rstest;
     use std::time::Duration;
 
+    #[rstest]
     #[tokio::test]
     async fn eventually_returns_value() {
         assert!(TEST_TIMEOUT >= Duration::from_secs(30));

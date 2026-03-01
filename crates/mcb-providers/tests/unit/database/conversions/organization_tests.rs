@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::Organization;
 use mcb_providers::database::seaorm::entities::organization;
+use rstest::rstest;
 
 fn sample_organization() -> organization::Model {
     organization::Model {
@@ -14,6 +15,7 @@ fn sample_organization() -> organization::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_organization() {
     let model = sample_organization();

@@ -58,6 +58,7 @@ fn transition_happy_paths(
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn terminal_state_no_transitions() {
     let mut session = WorkflowSession::new("s1".to_owned(), "p1".to_owned());

@@ -1,9 +1,9 @@
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
-
+use mcb_domain::test_utils::TestResult;
 use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::hooks::{HookProcessor, PostToolUseContext, SessionStartContext};
 use rstest::rstest;
 
+#[rstest]
 #[tokio::test]
 async fn test_hook_processor_creation() -> TestResult {
     let processor = HookProcessor::new(None);
@@ -29,6 +29,7 @@ async fn test_post_tool_use_hook_graceful_degradation(#[case] tool_name: &str) -
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_session_start_hook_graceful_degradation() -> TestResult {
     let processor = HookProcessor::new(None);
@@ -44,6 +45,7 @@ async fn test_session_start_hook_graceful_degradation() -> TestResult {
 #[case("search", false, false)]
 #[case("index", true, false)]
 #[case("validate", false, true)]
+#[rstest]
 #[tokio::test]
 async fn test_post_tool_use_context_enrichment(
     #[case] tool_name: &str,
@@ -76,6 +78,7 @@ async fn test_post_tool_use_context_enrichment(
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_session_start_context_creation() -> TestResult {
     let sid = SessionId::from("session_456");
@@ -85,6 +88,7 @@ async fn test_session_start_context_creation() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_hook_processor_default() -> TestResult {
     let processor = HookProcessor::default();
@@ -96,6 +100,7 @@ async fn test_hook_processor_default() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_post_tool_use_error_status() -> TestResult {
     let context = PostToolUseContext::new("failing_tool".to_owned(), true)?;

@@ -150,6 +150,7 @@ rstest = { workspace = true }
 mockall = { workspace = true }
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
+mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
 
 [[test]]
 name = "unit"

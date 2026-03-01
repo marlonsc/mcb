@@ -11,6 +11,7 @@ fn test_jsonrpc_constants_exist(#[case] actual: i32, #[case] expected: i32) {
     assert_eq!(actual, expected);
 }
 
+#[rstest]
 #[test]
 fn test_highlight_names_length() {
     assert_eq!(

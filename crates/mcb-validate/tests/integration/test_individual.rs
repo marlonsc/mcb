@@ -1,4 +1,5 @@
 use mcb_validate::{ValidationConfig, ValidatorRegistry};
+use rstest::rstest;
 use std::path::{Path, PathBuf};
 
 fn get_workspace_root() -> PathBuf {
@@ -8,6 +9,7 @@ fn get_workspace_root() -> PathBuf {
         .map_or_else(|| PathBuf::from("."), Path::to_path_buf)
 }
 
+#[rstest]
 #[test]
 fn test_just_dependency() {
     println!("Testing ONLY dependency validator...");

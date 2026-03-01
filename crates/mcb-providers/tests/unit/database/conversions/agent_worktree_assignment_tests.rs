@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::AgentWorktreeAssignment;
 use mcb_providers::database::seaorm::entities::agent_worktree_assignment;
+use rstest::rstest;
 
 fn sample_agent_worktree_assignment() -> agent_worktree_assignment::Model {
     agent_worktree_assignment::Model {
@@ -14,6 +15,7 @@ fn sample_agent_worktree_assignment() -> agent_worktree_assignment::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_agent_worktree_assignment() {
     let model = sample_agent_worktree_assignment();

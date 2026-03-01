@@ -1,7 +1,9 @@
 use serde_json::json;
 
 use crate::common::{call_tool, snapshot_payload, tool_call_request};
+use rstest::rstest;
 
+#[rstest]
 #[tokio::test]
 async fn project_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
@@ -21,6 +23,7 @@ async fn project_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn project_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(

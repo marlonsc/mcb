@@ -9,6 +9,7 @@ use std::path::{Path, PathBuf};
 use mcb_validate::ValidationConfig;
 use mcb_validate::engines::RuleContext;
 use mcb_validate::engines::rete_engine::ReteEngine;
+use rstest::rstest;
 
 fn get_workspace_root() -> PathBuf {
     let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_owned());
@@ -18,6 +19,7 @@ fn get_workspace_root() -> PathBuf {
         .map_or_else(|| PathBuf::from("."), Path::to_path_buf)
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_ca001_detects_mcb_domain_violations() {
     let mut engine = ReteEngine::new();
@@ -59,6 +61,7 @@ rule "DomainIndependence" salience 10 {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_ca001_allows_clean_dependencies() {
     let mut engine = ReteEngine::new();

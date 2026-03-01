@@ -1,10 +1,9 @@
 use std::fs;
 
+use mcb_domain::test_utils::TestResult;
 use mcb_validate::{DependencyValidator, DependencyViolation};
 use rstest::*;
 use tempfile::TempDir;
-
-type TestResult = Result<(), Box<dyn std::error::Error>>;
 
 fn create_test_workspace() -> Result<TempDir, Box<dyn std::error::Error>> {
     let temp = TempDir::new()?;

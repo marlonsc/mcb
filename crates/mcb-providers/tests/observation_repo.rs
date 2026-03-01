@@ -4,9 +4,11 @@ use mcb_domain::entities::memory::{
     MemoryFilter, Observation, ObservationMetadata, ObservationType,
 };
 use mcb_domain::ports::MemoryRepository;
+use mcb_domain::test_utils::TestResult;
 use mcb_domain::utils::compute_content_hash;
 use mcb_domain::value_objects::ObservationId;
 use mcb_providers::database::seaorm::repos::SeaOrmObservationRepository;
+use rstest::rstest;
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection};
 
 fn make_observation(
@@ -39,8 +41,6 @@ fn make_observation(
     }
 }
 
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
-
 async fn setup_repo() -> TestResult<SeaOrmObservationRepository> {
     let db: DatabaseConnection = Database::connect("sqlite::memory:").await?;
 
@@ -62,6 +62,7 @@ async fn setup_repo() -> TestResult<SeaOrmObservationRepository> {
     Ok(SeaOrmObservationRepository::new(db))
 }
 
+#[rstest]
 #[tokio::test]
 async fn observation_repo_round_trip_store_get_list_timeline_and_inject() -> TestResult {
     let repo = setup_repo().await?;
@@ -158,6 +159,7 @@ async fn observation_repo_round_trip_store_get_list_timeline_and_inject() -> Tes
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn search_handles_empty_query_for_memory_list_bug_regression() -> TestResult {
     let repo = setup_repo().await?;

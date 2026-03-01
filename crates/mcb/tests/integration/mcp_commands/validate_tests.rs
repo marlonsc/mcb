@@ -6,9 +6,11 @@ use super::common::{
     TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
     is_error, shutdown_client,
 };
+use rstest::rstest;
 use serial_test::serial;
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_validate_list_rules() -> TestResult {
     let client = create_client().await?;
@@ -27,6 +29,7 @@ async fn test_validate_list_rules() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_validate_list_rules_with_category() -> TestResult {
     let client = create_client().await?;
@@ -47,6 +50,7 @@ async fn test_validate_list_rules_with_category() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_validate_run_missing_path() -> TestResult {
     let client = create_client().await?;
@@ -58,6 +62,7 @@ async fn test_validate_run_missing_path() -> TestResult {
 }
 
 #[serial]
+#[rstest]
 #[tokio::test]
 async fn test_validate_invalid_action() -> TestResult {
     let client = create_client().await?;

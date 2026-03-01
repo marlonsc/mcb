@@ -56,6 +56,7 @@ pub async fn process() -> Result<(), Error> {
     file_contents.insert(
         "tests/test_main.rs".to_owned(),
         "
+#[rstest]
 #[test]
 fn test_main() {
     let x = get_value().unwrap(); // OK in tests
@@ -84,6 +85,7 @@ mod expression_engine_tests {
     use super::*;
     use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn test_expression_engine_creation() {
         let engine = ExpressionEngine::new();
@@ -109,6 +111,7 @@ mod expression_engine_tests {
         assert_eq!(value, expected, "{message}");
     }
 
+    #[rstest]
     #[test]
     fn test_custom_variables() {
         let engine = ExpressionEngine::new();
@@ -125,6 +128,7 @@ mod expression_engine_tests {
         assert!(!value);
     }
 
+    #[rstest]
     #[test]
     fn test_invalid_expression() {
         let engine = ExpressionEngine::new();
@@ -138,6 +142,7 @@ mod expression_engine_tests {
         );
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_expression_rule_execution() {
         let engine = ExpressionEngine::new();
@@ -164,7 +169,9 @@ mod expression_engine_tests {
 
 mod rete_engine_tests {
     use super::*;
+    use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn test_rete_engine_creation() {
         let engine = ReteEngine::new();
@@ -172,6 +179,7 @@ mod rete_engine_tests {
         drop(engine);
     }
 
+    #[rstest]
     #[test]
     fn test_load_grl_rule() {
         let mut engine = ReteEngine::new();
@@ -202,6 +210,7 @@ rule "DomainIndependence" salience 10 {
     // Note: extract_crate_name and extract_dependencies are tested
     // via internal unit tests in rete_engine.rs module
 
+    #[rstest]
     #[tokio::test]
     async fn test_grl_rule_execution() {
         let engine = ReteEngine::new();
@@ -242,6 +251,7 @@ mod router_tests {
         create_test_context()
     }
 
+    #[rstest]
     #[test]
     fn test_router_creation() {
         let router = RuleEngineRouter::new();
@@ -349,6 +359,7 @@ mod router_tests {
             }
         "#
     }))]
+    #[rstest]
     #[tokio::test]
     async fn router_execute(
         router: RuleEngineRouter,
@@ -379,6 +390,7 @@ mod hybrid_engine_tests {
         create_test_context()
     }
 
+    #[rstest]
     #[test]
     fn test_hybrid_engine_creation() {
         let engine = HybridRuleEngine::new();
@@ -386,6 +398,7 @@ mod hybrid_engine_tests {
         drop(engine);
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_execute_with_expression_engine() {
         let engine = HybridRuleEngine::new();
@@ -417,6 +430,7 @@ mod hybrid_engine_tests {
             }
         "#
     }))]
+    #[rstest]
     #[tokio::test]
     async fn execute_with_auto_detection(
         engine: HybridRuleEngine,
@@ -431,6 +445,7 @@ mod hybrid_engine_tests {
         assert!(report.execution_time_ms < 60_000);
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_execute_auto() {
         let engine = HybridRuleEngine::new();
@@ -459,6 +474,7 @@ mod hybrid_engine_tests {
         assert_eq!(engine.detect_engine(&rule), expected);
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_execute_rules_batch() {
         let engine = HybridRuleEngine::new();
@@ -493,6 +509,7 @@ mod hybrid_engine_tests {
 
 mod ca001_domain_independence_tests {
     use super::*;
+    use rstest::rstest;
 
     fn create_domain_context() -> RuleContext {
         let mut file_contents = HashMap::new();
@@ -519,6 +536,7 @@ pub mod errors;
         }
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_ca001_grl_loading() {
         let mut engine = ReteEngine::new();
@@ -546,6 +564,7 @@ rule "DomainIndependence" salience 10 {
         // Test completed successfully
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_ca001_via_hybrid_engine() {
         let engine = HybridRuleEngine::new();
@@ -580,6 +599,7 @@ rule "DomainIndependence" salience 10 {
         // Test completed successfully
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_ca001_auto_detection() {
         let engine = HybridRuleEngine::new();

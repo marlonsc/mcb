@@ -68,6 +68,7 @@ fn test_unknown_provider_error_message(
 // Search on Empty/Missing Collections
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_search_empty_collection_returns_empty_not_error()
 -> Result<(), Box<dyn std::error::Error>> {
@@ -109,6 +110,7 @@ async fn test_search_empty_collection_returns_empty_not_error()
 // Configuration Validation
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_init_app_with_default_config_succeeds() -> Result<(), Box<dyn std::error::Error>> {
     // Verify the shared (OnceLock) AppContext initialised successfully.
@@ -116,6 +118,7 @@ async fn test_init_app_with_default_config_succeeds() -> Result<(), Box<dyn std:
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_provider_handles_return_valid_instances() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context()?;
@@ -142,6 +145,7 @@ async fn test_provider_handles_return_valid_instances() -> Result<(), Box<dyn st
 // Multiple Operation Error Isolation
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_failed_search_doesnt_corrupt_state() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context()?;
@@ -204,6 +208,7 @@ async fn test_failed_search_doesnt_corrupt_state() -> Result<(), Box<dyn std::er
 // Registry Robustness
 // ============================================================================
 
+#[rstest]
 #[test]
 fn test_list_providers_never_panics() {
     // These should never panic, even if registry is empty
@@ -226,6 +231,7 @@ fn test_list_providers_never_panics() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_resolve_with_empty_config_values() {
     // Config with empty strings should fail gracefully
@@ -239,6 +245,7 @@ fn test_resolve_with_empty_config_values() {
 // Concurrent Access Safety
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_concurrent_provider_access() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = shared_app_context()?;

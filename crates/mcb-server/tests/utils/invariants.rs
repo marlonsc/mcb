@@ -52,7 +52,9 @@ pub fn assert_invalid_params(error: &rmcp::ErrorData, expected_substring: &str) 
 mod tests {
     use super::{assert_error_shape, assert_invalid_params, error_text};
     use rmcp::model::CallToolResult;
+    use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn invariants_helpers_are_linked() {
         let _ = error_text as fn(&CallToolResult) -> String;

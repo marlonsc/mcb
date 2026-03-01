@@ -77,6 +77,7 @@ fn domain_event_variants(#[case] event: DomainEvent, #[case] expected_debug_frag
     assert!(debug_str.contains(expected_debug_fragment));
 }
 
+#[rstest]
 #[test]
 fn test_domain_event_clone() {
     let event1 = DomainEvent::SyncCompleted {
@@ -89,6 +90,7 @@ fn test_domain_event_clone() {
     assert_eq!(event1, event2);
 }
 
+#[rstest]
 #[test]
 fn test_event_publisher_creation() {
     let publisher = TestEventPublisher::new();
@@ -118,6 +120,7 @@ fn has_subscribers(#[case] expected_has_subscribers: bool) {
     ],
     3
 )]
+#[rstest]
 #[tokio::test]
 async fn publish_events(#[case] events: Vec<DomainEvent>, #[case] expected_len: usize) {
     let publisher = TestEventPublisher::new();
@@ -138,6 +141,7 @@ async fn publish_events(#[case] events: Vec<DomainEvent>, #[case] expected_len: 
     }
 }
 
+#[rstest]
 #[test]
 fn test_event_publisher_trait_object() {
     // Test that we can use EventPublisher as a trait object
@@ -145,6 +149,7 @@ fn test_event_publisher_trait_object() {
     assert!(publisher.has_subscribers());
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_event_serialization() -> Result<(), Box<dyn std::error::Error>> {
     // Events should be serializable (for transport/logging)

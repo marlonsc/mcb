@@ -22,6 +22,7 @@ fn test_tool_definitions_core(#[case] tool_name: &str) {
     }
 }
 
+#[rstest]
 #[test]
 fn test_create_tool_list() {
     let tools = create_tool_list().expect("Should create tool list");

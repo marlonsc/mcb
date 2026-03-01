@@ -5,6 +5,7 @@
 use serial_test::serial;
 
 use mcb_infrastructure::config::{CacheProvider, CacheSystemConfig, TestConfigBuilder};
+use rstest::rstest;
 
 fn loaded_config() -> Result<mcb_infrastructure::config::AppConfig, Box<dyn std::error::Error>> {
     TestConfigBuilder::new()
@@ -12,6 +13,7 @@ fn loaded_config() -> Result<mcb_infrastructure::config::AppConfig, Box<dyn std:
         .map_err(Into::into)
 }
 
+#[rstest]
 #[test]
 #[serial]
 fn test_auth_config_jwt_secret_length() -> Result<(), Box<dyn std::error::Error>> {
@@ -40,6 +42,7 @@ fn test_auth_config_jwt_secret_length() -> Result<(), Box<dyn std::error::Error>
     Ok(())
 }
 
+#[rstest]
 #[test]
 #[serial]
 fn test_cache_config_ttl_when_enabled() -> Result<(), Box<dyn std::error::Error>> {
@@ -96,6 +99,7 @@ fn test_cache_config_ttl_when_enabled() -> Result<(), Box<dyn std::error::Error>
     Ok(())
 }
 
+#[rstest]
 #[test]
 #[serial]
 fn test_default_config_is_valid() -> Result<(), Box<dyn std::error::Error>> {

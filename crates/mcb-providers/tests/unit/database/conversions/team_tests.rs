@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::Team;
 use mcb_providers::database::seaorm::entities::team;
+use rstest::rstest;
 
 fn sample_team() -> team::Model {
     team::Model {
@@ -12,6 +13,7 @@ fn sample_team() -> team::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_team() {
     let model = sample_team();

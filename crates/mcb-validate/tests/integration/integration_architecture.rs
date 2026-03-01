@@ -68,6 +68,7 @@ mod architecture_integration_tests {
     }
 
     /// Test that validator creates successfully
+    #[rstest]
     #[test]
     fn test_validator_creation() {
         let dir = TempDir::new().unwrap();
@@ -79,6 +80,7 @@ mod architecture_integration_tests {
     }
 
     /// Test that clean code produces no violations
+    #[rstest]
     #[test]
     fn test_clean_code_no_violations() {
         let dir = TempDir::new().unwrap();
@@ -142,6 +144,7 @@ impl Email {
     }
 
     /// Test detection of handler creating service directly
+    #[rstest]
     #[test]
     fn test_detects_handler_creating_service() {
         let dir = TempDir::new().unwrap();
@@ -194,6 +197,7 @@ impl SearchHandler {
     }
 
     /// Test detection of entity missing identity field
+    #[rstest]
     #[test]
     fn test_detects_entity_missing_identity() {
         let dir = TempDir::new().unwrap();
@@ -241,6 +245,7 @@ impl Product {
     }
 
     /// Test detection of mutable value object
+    #[rstest]
     #[test]
     fn test_detects_mutable_value_object() {
         let dir = TempDir::new().unwrap();
@@ -301,6 +306,7 @@ impl Money {
     }
 
     /// Test detection of server importing provider directly
+    #[rstest]
     #[test]
     fn test_detects_server_imports_provider() {
         let dir = TempDir::new().unwrap();
@@ -356,6 +362,7 @@ impl Server {
     }
 
     /// Test Violation trait implementation
+    #[rstest]
     #[test]
     fn test_violation_trait_implementation() {
         let violation = CleanArchitectureViolation::HandlerCreatesService {
@@ -456,6 +463,7 @@ impl Server {
     }
 
     /// Test Validator trait integration
+    #[rstest]
     #[test]
     fn test_validator_trait() {
         let dir = TempDir::new().unwrap();
@@ -480,6 +488,7 @@ impl Server {
     }
 
     /// Test with real workspace structure (integration with actual codebase)
+    #[rstest]
     #[test]
     fn test_with_workspace_root() {
         // This test uses the actual workspace if available

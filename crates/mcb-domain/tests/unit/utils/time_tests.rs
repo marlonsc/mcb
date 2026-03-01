@@ -1,7 +1,8 @@
+use mcb_domain::test_utils::TestResult;
 use mcb_domain::utils::time::{epoch_nanos_u128, epoch_secs_i64, epoch_secs_u64};
+use rstest::rstest;
 
-type TestResult = Result<(), Box<dyn std::error::Error>>;
-
+#[rstest]
 #[test]
 fn epoch_secs_i64_returns_positive() -> TestResult {
     let ts = epoch_secs_i64()?;
@@ -9,6 +10,7 @@ fn epoch_secs_i64_returns_positive() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn epoch_secs_u64_returns_positive() -> TestResult {
     let ts = epoch_secs_u64()?;
@@ -16,6 +18,7 @@ fn epoch_secs_u64_returns_positive() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn epoch_nanos_u128_returns_positive() -> TestResult {
     let nanos = epoch_nanos_u128()?;
@@ -23,6 +26,7 @@ fn epoch_nanos_u128_returns_positive() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn epoch_secs_i64_monotonic() -> TestResult {
     let a = epoch_secs_i64()?;
@@ -31,6 +35,7 @@ fn epoch_secs_i64_monotonic() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn epoch_secs_u64_monotonic() -> TestResult {
     let a = epoch_secs_u64()?;
@@ -39,6 +44,7 @@ fn epoch_secs_u64_monotonic() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn epoch_nanos_u128_monotonic() -> TestResult {
     let a = epoch_nanos_u128()?;
@@ -47,6 +53,7 @@ fn epoch_nanos_u128_monotonic() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn epoch_secs_i64_reasonable_range() -> TestResult {
     use mcb_domain::constants::time::{TIMESTAMP_MAX_BOUNDARY, TIMESTAMP_MIN_BOUNDARY};

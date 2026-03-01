@@ -2,6 +2,7 @@
 
 use mcb_domain::entities::PlanReview;
 use mcb_providers::database::seaorm::entities::plan_review;
+use rstest::rstest;
 
 fn sample_plan_review() -> plan_review::Model {
     plan_review::Model {
@@ -15,6 +16,7 @@ fn sample_plan_review() -> plan_review::Model {
     }
 }
 
+#[rstest]
 #[test]
 fn round_trip_plan_review() {
     let model = sample_plan_review();

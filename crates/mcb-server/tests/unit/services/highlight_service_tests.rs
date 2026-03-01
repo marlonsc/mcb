@@ -4,18 +4,21 @@ use std::time::Instant;
 
 use mcb_domain::error::Error;
 use mcb_domain::ports::{HighlightError, HighlightServiceInterface};
+use mcb_domain::registry::services::resolve_highlight_service;
 use mcb_domain::value_objects::browse::HighlightCategory;
-use mcb_infrastructure::services::highlight_service::{
-    HighlightServiceImpl, map_highlight_to_category,
-};
+use mcb_infrastructure::services::highlight_service::map_highlight_to_category;
 use rstest::rstest;
+
+fn highlight_service() -> std::sync::Arc<dyn HighlightServiceInterface> {
+    resolve_highlight_service(&()).expect("highlight service should resolve")
+}
 
 async fn assert_highlight_success(
     code: &str,
     language: &str,
     expect_non_empty_spans: bool,
 ) -> mcb_domain::error::Result<()> {
-    let service = HighlightServiceImpl::new();
+    let service = highlight_service();
     let result = service.highlight(code, language).await?;
 
     assert_eq!(result.original, code);
@@ -38,6 +41,7 @@ async fn assert_highlight_success(
 #[case("def hello; end", "ruby", false)]
 #[case("<?php echo 'hello'; ?>", "php", false)]
 #[case("func main() {}", "swift", false)]
+#[rstest]
 #[tokio::test]
 async fn test_highlight_language_samples(
     #[case] code: &str,
@@ -49,9 +53,10 @@ async fn test_highlight_language_samples(
         .expect("Failed to highlight");
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_highlight_rust_keyword() {
-    let service = HighlightServiceImpl::new();
+    let service = highlight_service();
     let code = "fn main() {}";
     let result = service
         .highlight(code, "rust")
@@ -66,9 +71,10 @@ async fn test_highlight_rust_keyword() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_highlight_empty_code() {
-    let service = HighlightServiceImpl::new();
+    let service = highlight_service();
     let result = service
         .highlight("", "rust")
         .await
@@ -78,9 +84,10 @@ async fn test_highlight_empty_code() {
     assert!(result.spans.is_empty());
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_highlight_unsupported_language() {
-    let service = HighlightServiceImpl::new();
+    let service = highlight_service();
     let result = service.highlight("code", "brainfuck").await;
 
     let err = result.expect_err("unsupported language should fail");
@@ -93,18 +100,20 @@ async fn test_highlight_unsupported_language() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_highlight_fallback_to_plain_text() {
-    let service = HighlightServiceImpl::new();
+    let service = highlight_service();
     let code = "some code";
     let result = service.highlight(code, "plaintext").await;
 
     let _err = result.expect_err("plaintext should not be a supported highlight language");
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_highlight_performance_under_500ms() {
-    let service = HighlightServiceImpl::new();
+    let service = highlight_service();
     let code = "fn main() {\n    println!(\"Hello, world!\");\n}\n".repeat(50);
 
     let start = Instant::now();
@@ -122,9 +131,10 @@ async fn test_highlight_performance_under_500ms() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_highlight_multiline_rust() {
-    let service = HighlightServiceImpl::new();
+    let service = highlight_service();
     let code = "
 fn factorial(n: u32) -> u32 {
     match n {
@@ -143,9 +153,10 @@ fn factorial(n: u32) -> u32 {
     assert!(!result.spans.is_empty());
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_highlight_case_insensitive_language() {
-    let service = HighlightServiceImpl::new();
+    let service = highlight_service();
     let code = "fn main() {}";
 
     let result_lower = service
@@ -161,9 +172,10 @@ async fn test_highlight_case_insensitive_language() {
     assert_eq!(result_lower.spans.len(), result_upper.spans.len());
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_highlight_with_comments() {
-    let service = HighlightServiceImpl::new();
+    let service = highlight_service();
     let code = r#"// This is a comment
 fn main() {
     /* Multi-line

@@ -9,6 +9,7 @@ use http_body_util::BodyExt;
 use serde_json::Value;
 
 use crate::utils::domain_services::create_real_domain_services;
+use rstest::rstest;
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -30,6 +31,7 @@ async fn json_body(
 // T6: Health API
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn test_health_endpoint_returns_json_with_status() -> Result<(), Box<dyn std::error::Error>> {
     let Some((state, _tmp)) = create_real_domain_services().await else {
@@ -49,6 +51,7 @@ async fn test_health_endpoint_returns_json_with_status() -> Result<(), Box<dyn s
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_health_endpoint_includes_provider_metadata() -> Result<(), Box<dyn std::error::Error>>
 {
@@ -82,6 +85,7 @@ async fn test_health_endpoint_includes_provider_metadata() -> Result<(), Box<dyn
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_health_endpoint_provider_name_is_nonempty() -> Result<(), Box<dyn std::error::Error>>
 {
@@ -101,6 +105,7 @@ async fn test_health_endpoint_provider_name_is_nonempty() -> Result<(), Box<dyn 
 // T7: Jobs API
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn test_jobs_endpoint_returns_empty_operations() -> Result<(), Box<dyn std::error::Error>> {
     let Some((state, _tmp)) = create_real_domain_services().await else {
@@ -118,6 +123,7 @@ async fn test_jobs_endpoint_returns_empty_operations() -> Result<(), Box<dyn std
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_jobs_endpoint_json_structure() -> Result<(), Box<dyn std::error::Error>> {
     let Some((state, _tmp)) = create_real_domain_services().await else {
@@ -144,6 +150,7 @@ async fn test_jobs_endpoint_json_structure() -> Result<(), Box<dyn std::error::E
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_jobs_total_matches_operations_count() -> Result<(), Box<dyn std::error::Error>> {
     let Some((state, _tmp)) = create_real_domain_services().await else {
@@ -173,6 +180,7 @@ async fn test_jobs_total_matches_operations_count() -> Result<(), Box<dyn std::e
 // T8: Collections API
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
 async fn test_collections_endpoint_returns_list() -> Result<(), Box<dyn std::error::Error>> {
     let Some((state, _tmp)) = create_real_domain_services().await else {
@@ -188,6 +196,7 @@ async fn test_collections_endpoint_returns_list() -> Result<(), Box<dyn std::err
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_collections_endpoint_graceful_on_fresh_server()
 -> Result<(), Box<dyn std::error::Error>> {

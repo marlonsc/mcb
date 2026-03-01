@@ -25,6 +25,7 @@ fn build_search_args(query: &str, min_score: Option<f32>, collection: Option<&st
 )]
 #[case(build_search_args("", None, None), false)]
 #[case(build_search_args("test", Some(2.0), None), false)]
+#[rstest]
 #[test]
 fn test_search_args_validation(#[case] args: SearchArgs, #[case] expected_valid: bool) {
     assert_eq!(args.validate().is_ok(), expected_valid);

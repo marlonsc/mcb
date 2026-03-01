@@ -6,12 +6,12 @@ use mcb_domain::entities::project::{
     ProjectDependency, ProjectIssue, ProjectPhase,
 };
 use mcb_domain::ports::ProjectRepository;
+use mcb_domain::test_utils::TestResult;
 use mcb_providers::database::seaorm::repos::project::SeaOrmProjectRepository;
 use mcb_providers::migration::Migrator;
+use rstest::rstest;
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 const ORG_ID: &str = "org-test";
 const PROJECT_ID: &str = "proj-1";
@@ -110,6 +110,7 @@ fn sample_decision() -> ProjectDecision {
     }
 }
 
+#[rstest]
 #[tokio::test]
 async fn project_crud_works() -> TestResult {
     let (_db, repo) = setup().await?;
@@ -144,6 +145,7 @@ async fn project_crud_works() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn phase_crud_works() -> TestResult {
     let (_db, repo) = setup().await?;
@@ -168,6 +170,7 @@ async fn phase_crud_works() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn issue_crud_and_filters_work() -> TestResult {
     let (_db, repo) = setup().await?;
@@ -215,6 +218,7 @@ async fn issue_crud_and_filters_work() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn dependency_crud_and_traversal_work() -> TestResult {
     let (_db, repo) = setup().await?;
@@ -247,6 +251,7 @@ async fn dependency_crud_and_traversal_work() -> TestResult {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn decision_crud_works() -> TestResult {
     let (_db, repo) = setup().await?;

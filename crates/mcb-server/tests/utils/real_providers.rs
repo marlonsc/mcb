@@ -15,6 +15,7 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider};
 
 use super::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, try_shared_app_context};
+use rstest::rstest;
 
 /// Get the real `EdgeVec` vector store provider from the shared context.
 pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> {
@@ -53,6 +54,7 @@ mod tests {
     use crate::utils::collection::unique_collection;
 
     use super::*;
+    use rstest::rstest;
 
     fn should_run_integration_tests() -> bool {
         // Check for CI environment
@@ -65,6 +67,7 @@ mod tests {
         std::env::var("MCB_RUN_DOCKER_INTEGRATION_TESTS").map_or(true, |v| v != "0" && v != "false")
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_real_vector_store_creation() {
         if !should_run_integration_tests() {
@@ -81,6 +84,7 @@ mod tests {
         assert_eq!(store.provider_name(), "edgevec");
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_real_vector_store_basic_operations() {
         if !should_run_integration_tests() {
@@ -126,6 +130,7 @@ mod tests {
         assert!(!exists);
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_real_embedding_provider_creation() {
         if !should_run_integration_tests() {
@@ -150,6 +155,7 @@ mod tests {
         assert_eq!(embeddings[0].vector.len(), TEST_EMBEDDING_DIMENSIONS);
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_real_embedding_provider_with_model() {
         if !should_run_integration_tests() {
@@ -177,6 +183,7 @@ mod tests {
         assert_eq!(embeddings[0].vector.len(), TEST_EMBEDDING_DIMENSIONS);
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_real_embedding_provider_embed_batch() {
         if !should_run_integration_tests() {
