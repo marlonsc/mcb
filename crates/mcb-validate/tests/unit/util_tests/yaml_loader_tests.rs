@@ -14,7 +14,7 @@ use tempfile::TempDir;
 
 #[fixture]
 fn workspace_root() -> Result<PathBuf, Box<dyn Error>> {
-    Ok(mcb_domain::test_utils::workspace_root()?)
+    mcb_domain::test_utils::workspace_root()
 }
 
 #[fixture]

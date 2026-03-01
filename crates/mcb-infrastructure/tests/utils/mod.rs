@@ -1,7 +1,7 @@
 //! Test utilities for mcb-infrastructure
 //!
 //! ALL shared test helpers live here. No helpers outside this directory.
-//! Generic guards (EnvVarGuard, CurrentDirGuard, RestoreFileGuard) and
+//! Generic guards (`EnvVarGuard`, `CurrentDirGuard`, `RestoreFileGuard`) and
 //! filesystem scanners are centralized in `mcb_domain::test_guards` /
 //! `mcb_domain::test_fs_scan`. This module re-exports them.
 #![allow(dead_code, clippy::missing_errors_doc, missing_docs, unused_imports)]

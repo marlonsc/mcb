@@ -52,7 +52,7 @@ async fn test_ide_probe_runtime_defaults() {
         return;
     }
 
-    let provider = GitProvider::default();
+    let provider = GitProvider;
     let defaults =
         RuntimeDefaults::discover_from_path(&provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
 
@@ -201,7 +201,7 @@ async fn test_search_with_explicit_collection_still_works() {
 #[rstest]
 #[tokio::test]
 async fn test_context_fields_populated_in_defaults() {
-    let provider = GitProvider::default();
+    let provider = GitProvider;
     let defaults =
         RuntimeDefaults::discover_from_path(&provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
 
@@ -214,7 +214,7 @@ async fn test_context_fields_populated_in_defaults() {
 #[rstest]
 #[tokio::test]
 async fn test_org_id_from_git_remote() {
-    let provider = GitProvider::default();
+    let provider = GitProvider;
     let defaults =
         RuntimeDefaults::discover_from_path(&provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
 

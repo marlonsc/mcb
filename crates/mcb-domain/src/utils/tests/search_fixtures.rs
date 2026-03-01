@@ -5,6 +5,7 @@
 use crate::SearchResult;
 
 /// Create a single test search result.
+#[must_use]
 pub fn create_test_search_result(
     file_path: &str,
     content: &str,
@@ -22,6 +23,7 @@ pub fn create_test_search_result(
 }
 
 /// Create multiple test search results.
+#[must_use]
 pub fn create_test_search_results(count: usize) -> Vec<SearchResult> {
     (0..count)
         .map(|i| {

@@ -27,6 +27,7 @@ pub fn rust_files_under(path: &Path, out: &mut Vec<PathBuf>) {
 ///
 /// Filters out paths containing `/tests/` or `/test_` to focus on production source.
 /// Requires `walkdir` (available in `mcb-domain`'s dev-dependencies).
+#[must_use]
 pub fn scan_rs_files(dir: &Path) -> Vec<PathBuf> {
     let mut results = Vec::new();
     if !dir.exists() {

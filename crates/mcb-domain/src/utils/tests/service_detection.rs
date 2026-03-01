@@ -53,7 +53,7 @@ pub fn is_redis_available() -> bool {
     is_service_available_from_config("redis")
 }
 
-/// PostgreSQL service.
+/// `PostgreSQL` service.
 #[must_use]
 pub fn is_postgres_available() -> bool {
     is_service_available_from_config("postgres")
@@ -66,6 +66,7 @@ pub fn is_ci() -> bool {
 }
 
 /// Check if Docker integration tests should run.
+#[must_use]
 pub fn should_run_docker_integration_tests() -> bool {
     match std::env::var("MCB_RUN_DOCKER_INTEGRATION_TESTS") {
         Ok(value) => match value.trim().to_ascii_lowercase().as_str() {
