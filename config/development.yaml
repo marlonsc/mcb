@@ -56,21 +56,27 @@ settings:
           provider: sqlite
           path: ""
     embedding:
-      provider: fastembed
-      cache_dir: "./.cache/mcb/fastembed"
+      provider: ollama
+      model: nomic-embed-text
+      base_url: "http://localhost:11434"
+      dimensions: 768
       configs:
         default:
-          provider: fastembed
-          model: AllMiniLML6V2
-          dimensions: 384
+          provider: ollama
+          model: nomic-embed-text
+          dimensions: 768
+          base_url: "http://localhost:11434"
     vector_store:
-      provider: edgevec
+      provider: milvus
+      address: "http://localhost:29530"
+      dimensions: 768
       collection: default
       configs:
         default:
-          provider: edgevec
-          dimensions: 384
+          provider: milvus
+          dimensions: 768
           collection: default
+          address: "http://localhost:29530"
 
   mcp:
     indexing:
