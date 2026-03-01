@@ -21,6 +21,8 @@ pub struct ToolExecutionContext {
     pub session_id: Option<String>,
     /// Optional parent session identifier for delegated/subagent calls.
     pub parent_session_id: Option<String>,
+    /// Optional organization identifier associated with this execution.
+    pub org_id: Option<String>,
     /// Optional project identifier associated with this execution.
     pub project_id: Option<String>,
     /// Optional worktree identifier associated with this execution.
@@ -75,7 +77,10 @@ impl ToolExecutionContext {
             .or_else(|| defaults.session_id.clone());
         let parent_session_id =
             resolve_override_value(overrides, field_aliases("parent_session_id"));
-        let project_id = resolve_override_value(overrides, field_aliases("project_id"));
+        let org_id = resolve_override_value(overrides, field_aliases("org_id"))
+            .or_else(|| defaults.org_id.clone());
+        let project_id = resolve_override_value(overrides, field_aliases("project_id"))
+            .or_else(|| defaults.project_id.clone());
         let worktree_id = resolve_override_value(overrides, field_aliases("worktree_id"));
         let repo_id = resolve_override_value(overrides, field_aliases("repo_id"))
             .or_else(|| defaults.repo_id.clone());
@@ -99,6 +104,7 @@ impl ToolExecutionContext {
         Self {
             session_id,
             parent_session_id,
+            org_id,
             project_id,
             worktree_id,
             repo_id,
@@ -126,6 +132,12 @@ impl ToolExecutionContext {
             (
                 "parent_session_id",
                 self.parent_session_id
+                    .as_deref()
+                    .map(crate::tools::field_aliases::str_value),
+            ),
+            (
+                "org_id",
+                self.org_id
                     .as_deref()
                     .map(crate::tools::field_aliases::str_value),
             ),

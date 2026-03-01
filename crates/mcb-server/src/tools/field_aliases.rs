@@ -22,6 +22,7 @@ pub const STRING_FIELD_ALIASES: &[(&str, &[&str])] = &[
             "x_parent_session_id",
         ],
     ),
+    ("org_id", &["org_id", "orgId", "x-org-id", "x_org_id"]),
     (
         "project_id",
         &["project_id", "projectId", "x-project-id", "x_project_id"],

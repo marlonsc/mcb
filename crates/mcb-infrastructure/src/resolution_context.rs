@@ -1,5 +1,7 @@
 use crate::config::AppConfig;
-use mcb_domain::ports::{EmbeddingProvider, EventBusProvider, VectorStoreProvider};
+use mcb_domain::ports::{
+    EmbeddingProvider, EventBusProvider, HybridSearchProvider, VectorStoreProvider,
+};
 use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
@@ -93,4 +95,13 @@ pub fn resolve_vector_store_from_config(
     }
     resolve_vector_store_provider(&vec_cfg)
         .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))
+}
+
+/// Create a default [`HybridSearchProvider`] with standard BM25/semantic weights.
+///
+/// This is a lightweight in-memory provider that requires no external dependencies.
+/// Used by the composition root to wire hybrid search into the MCP server.
+#[must_use]
+pub fn create_default_hybrid_search_provider() -> Arc<dyn HybridSearchProvider> {
+    Arc::new(mcb_providers::hybrid_search::engine::HybridSearchEngine::new())
 }

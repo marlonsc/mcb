@@ -45,6 +45,7 @@ async fn test_index_codebase(
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
 
     let result = handler.handle(Parameters(args)).await;

@@ -18,7 +18,7 @@ async fn rejects_empty_project_id_for_get() -> TestResult {
     let args = ProjectArgs {
         action: ProjectAction::Get,
         resource: ProjectResource::Project,
-        project_id: "  ".to_owned(),
+        project_id: Some("  ".to_owned()),
         data: None,
         filters: None,
     };

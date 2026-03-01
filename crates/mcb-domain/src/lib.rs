@@ -65,11 +65,25 @@ pub mod ports;
 pub mod registry;
 
 #[cfg(any(test, feature = "test-utils"))]
-/// Test-only configuration helpers for external service endpoints.
-pub mod test_services_config;
+pub use utils::test_assertions;
 #[cfg(any(test, feature = "test-utils"))]
-/// Shared test fixtures and utilities.
-pub mod test_utils;
+pub use utils::test_collection;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::test_fs_scan;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::test_guards;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::test_search_fixtures;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::test_service_detection;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::test_services_config;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::test_sync_helpers;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::test_timeouts;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::test_utils;
 /// Common utilities
 pub mod utils;
 /// Immutable value objects

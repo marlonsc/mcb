@@ -5,6 +5,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
+use crate::args::schema_helpers::ObjectDataSchema;
+
 tool_enum! {
 /// CRUD actions for organization-related entity resources.
 pub enum OrgEntityAction {
@@ -63,7 +65,7 @@ pub struct OrgEntityArgs {
     pub email: Option<String>,
     /// Data payload for create/update (JSON object)
     #[schemars(description = "Data payload for create/update (JSON object)")]
-    #[schemars(with = "serde_json::Value")]
+    #[schemars(with = "ObjectDataSchema")]
     pub data: Option<serde_json::Value>,
 }
 }

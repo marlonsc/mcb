@@ -25,6 +25,7 @@ async fn test_clear_index(#[case] collection: Option<String>, #[case] should_suc
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
 
     let result = handler.handle(Parameters(args)).await;

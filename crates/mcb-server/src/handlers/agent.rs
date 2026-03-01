@@ -43,13 +43,27 @@ impl AgentHandler {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
-        let session_id = args.session_id.as_str();
-        if session_id.is_empty()
-            || args.session_id.inner() == uuid::Uuid::nil()
-            || args.session_id == mcb_domain::value_objects::SessionId::from_name("")
-        {
-            return Err(McpError::invalid_params("session_id is required", None));
-        }
+        let session_id = match &args.session_id {
+            Some(id) => {
+                if id.as_str().is_empty()
+                    || id.inner() == uuid::Uuid::nil()
+                    || *id == mcb_domain::value_objects::SessionId::from_name("")
+                {
+                    return Err(McpError::invalid_params(
+                        "session_id resolved but is invalid (nil or empty-derived)",
+                        None,
+                    ));
+                }
+                id
+            }
+            None => {
+                return Err(McpError::invalid_params(
+                    "session_id is required (not resolved from context)",
+                    None,
+                ));
+            }
+        };
+        let session_id_str = session_id.as_str();
 
         let data = match args.data.as_object() {
             Some(data) => data,
@@ -74,7 +88,7 @@ impl AgentHandler {
                 };
                 let tool_call = ToolCall {
                     id: format!("tc_{}", domain_id::generate()),
-                    session_id: session_id.clone(),
+                    session_id: session_id_str.clone(),
                     tool_name: tool_name.clone(),
                     params_summary: data
                         .get("params_summary")
@@ -91,7 +105,7 @@ impl AgentHandler {
                 match self.agent_service.store_tool_call(tool_call).await {
                     Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                         "tool_call_id": id,
-                        "session_id": session_id,
+                        "session_id": session_id_str,
                         "tool_name": tool_name,
                     })),
                     Err(e) => Ok(to_contextual_tool_error(e)),
@@ -110,7 +124,7 @@ impl AgentHandler {
                 };
                 let delegation = Delegation {
                     id: format!("del_{}", domain_id::generate()),
-                    parent_session_id: session_id.clone(),
+                    parent_session_id: session_id_str.clone(),
                     child_session_id: child_session_id.clone(),
                     prompt: data
                         .get("prompt")
@@ -134,7 +148,7 @@ impl AgentHandler {
                 match self.agent_service.store_delegation(delegation).await {
                     Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                         "delegation_id": id,
-                        "parent_session_id": session_id,
+                        "parent_session_id": session_id_str,
                         "child_session_id": child_session_id,
                     })),
                     Err(e) => Ok(to_contextual_tool_error(e)),

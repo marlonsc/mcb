@@ -29,6 +29,7 @@ fn full_provenance_context() -> ToolExecutionContext {
     ToolExecutionContext {
         session_id: Some("ses-test".to_owned()),
         parent_session_id: Some("ses-parent".to_owned()),
+        org_id: None,
         project_id: Some("proj-test".to_owned()),
         worktree_id: Some("wt-test".to_owned()),
         repo_id: Some("repo-test".to_owned()),

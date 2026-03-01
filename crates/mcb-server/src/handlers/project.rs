@@ -34,11 +34,14 @@ impl ProjectHandler {
         &self,
         Parameters(args): Parameters<ProjectArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let project_id = &args.project_id;
+        let project_id = args.project_id.as_deref().unwrap_or("");
         let org_id = resolve_org_id(None);
 
         if project_id.trim().is_empty() && !matches!(args.action, ProjectAction::List) {
-            return Err(McpError::invalid_params("project_id is required", None));
+            return Err(McpError::invalid_params(
+                "project_id is required (not resolved from context)",
+                None,
+            ));
         }
 
         info!(

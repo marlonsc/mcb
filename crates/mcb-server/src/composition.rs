@@ -8,6 +8,7 @@
 //!
 //! All services are resolved via the linkme registry. Shared providers (embedding,
 //! vector store) are pre-resolved at startup and stored in `ServiceResolutionContext`.
+use mcb_infrastructure::resolution_context::create_default_hybrid_search_provider;
 use std::sync::Arc;
 
 use mcb_domain::ports::{IndexingOperationsInterface, ValidationOperationsInterface};
@@ -90,6 +91,7 @@ pub fn build_mcp_server_bootstrap(
         ))?,
         project_workflow: Arc::clone(&repos.project),
         vcs: resolve_vcs_provider(&VcsProviderConfig::new(VCS_PROVIDER))?,
+        hybrid_search: create_default_hybrid_search_provider(),
         entities: McpEntityRepositories {
             vcs: Arc::clone(&repos.vcs_entity),
             plan: Arc::clone(&repos.plan_entity),

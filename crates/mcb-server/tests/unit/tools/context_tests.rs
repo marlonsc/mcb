@@ -19,6 +19,9 @@ fn test_resolve_uses_override_when_present() {
         agent_program: Some("default-agent".to_owned()),
         model_id: Some("default-model".to_owned()),
         execution_flow: Some(ExecutionFlow::StdioOnly),
+        client_session_id: None,
+        org_id: None,
+        project_id: None,
     };
 
     let mut overrides = HashMap::new();
@@ -42,6 +45,9 @@ fn test_resolve_falls_back_to_default_when_override_missing() {
         agent_program: Some("default-agent".to_owned()),
         model_id: Some("default-model".to_owned()),
         execution_flow: Some(ExecutionFlow::StdioOnly),
+        client_session_id: None,
+        org_id: None,
+        project_id: None,
     };
 
     let overrides = HashMap::new();
@@ -64,6 +70,9 @@ fn test_resolve_prefers_override_over_default() {
         agent_program: Some("default-agent".to_owned()),
         model_id: Some("default-model".to_owned()),
         execution_flow: Some(ExecutionFlow::StdioOnly),
+        client_session_id: None,
+        org_id: None,
+        project_id: None,
     };
 
     let mut overrides = HashMap::new();
@@ -87,6 +96,9 @@ fn test_resolve_handles_multiple_overrides() {
         agent_program: Some("default-agent".to_owned()),
         model_id: Some("default-model".to_owned()),
         execution_flow: Some(ExecutionFlow::StdioOnly),
+        client_session_id: None,
+        org_id: None,
+        project_id: None,
     };
 
     let mut overrides = HashMap::new();
@@ -114,6 +126,9 @@ fn test_resolve_sets_delegated_true_when_parent_session_id_present() {
         agent_program: None,
         model_id: None,
         execution_flow: None,
+        client_session_id: None,
+        org_id: None,
+        project_id: None,
     };
 
     let mut overrides = HashMap::new();
@@ -138,6 +153,9 @@ fn test_resolve_respects_explicit_delegated_override() {
         agent_program: None,
         model_id: None,
         execution_flow: None,
+        client_session_id: None,
+        org_id: None,
+        project_id: None,
     };
 
     let mut overrides = HashMap::new();
@@ -154,6 +172,7 @@ fn test_apply_to_request_if_missing_injects_missing_values() {
     let context = ToolExecutionContext {
         session_id: Some("sess-123".to_owned()),
         parent_session_id: None,
+        org_id: None,
         project_id: Some("proj-456".to_owned()),
         worktree_id: None,
         repo_id: Some("repo-789".to_owned()),
@@ -188,6 +207,7 @@ fn test_apply_to_request_if_missing_does_not_overwrite_existing_values() {
     let context = ToolExecutionContext {
         session_id: Some("context-session".to_owned()),
         parent_session_id: None,
+        org_id: None,
         project_id: Some("context-project".to_owned()),
         worktree_id: None,
         repo_id: None,
@@ -240,6 +260,7 @@ fn test_apply_to_request_if_missing_injects_boolean_values() {
     let context = ToolExecutionContext {
         session_id: None,
         parent_session_id: None,
+        org_id: None,
         project_id: None,
         worktree_id: None,
         repo_id: None,
@@ -272,6 +293,7 @@ fn test_apply_to_request_if_missing_injects_timestamp() {
     let context = ToolExecutionContext {
         session_id: None,
         parent_session_id: None,
+        org_id: None,
         project_id: None,
         worktree_id: None,
         repo_id: None,
@@ -304,6 +326,7 @@ fn test_apply_to_request_if_missing_does_not_inject_none_values() {
     let context = ToolExecutionContext {
         session_id: None,
         parent_session_id: None,
+        org_id: None,
         project_id: None,
         worktree_id: None,
         repo_id: None,
@@ -336,6 +359,7 @@ fn test_apply_to_request_if_missing_creates_arguments_map_if_needed() {
     let context = ToolExecutionContext {
         session_id: Some("sess-123".to_owned()),
         parent_session_id: None,
+        org_id: None,
         project_id: None,
         worktree_id: None,
         repo_id: None,

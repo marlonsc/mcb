@@ -154,6 +154,7 @@ async fn test_golden_context_search_basic() -> TestResult {
         tags: None,
         session_id: None,
         token: None,
+        repo_id: None,
     };
 
     let result = search_h.handle(Parameters(search_args)).await;

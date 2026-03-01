@@ -5,6 +5,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
+use crate::args::schema_helpers::ObjectDataSchema;
+
 tool_enum! {
 /// CRUD actions available for entity resources.
 pub enum EntityAction {
@@ -69,7 +71,7 @@ pub struct EntityArgs {
     /// Target resource type for consolidated entity operations.
     pub resource: EntityResource,
     /// JSON payload for create/update actions.
-    #[schemars(with = "serde_json::Value")]
+    #[schemars(with = "ObjectDataSchema")]
     pub data: Option<serde_json::Value>,
     /// Resource ID (for get/update/delete/release).
     pub id: Option<String>,

@@ -290,6 +290,7 @@ mod handler_error_tests {
             max_file_size: None,
             follow_symlinks: None,
             token: None,
+            repo_id: None,
         };
 
         let result = handler.handle(Parameters(args)).await;

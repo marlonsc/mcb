@@ -5,6 +5,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
+use crate::args::schema_helpers::ObjectDataSchema;
+
 tool_enum! {
 /// Actions available for project resource management
 pub enum ProjectAction {
@@ -50,19 +52,19 @@ pub struct ProjectArgs {
 
     /// Project ID
     #[schemars(description = "Project ID")]
-    pub project_id: String,
+    pub project_id: Option<String>,
 
     /// Data payload for create/update (JSON object)
     #[schemars(
         description = "Data payload for create/update (JSON object)",
-        with = "serde_json::Value"
+        with = "ObjectDataSchema"
     )]
     pub data: Option<serde_json::Value>,
 
     /// Additional filters for list action
     #[schemars(
         description = "Additional filters for list action",
-        with = "serde_json::Value"
+        with = "ObjectDataSchema"
     )]
     pub filters: Option<serde_json::Value>,
 }

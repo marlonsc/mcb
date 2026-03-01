@@ -1,3 +1,4 @@
+use mcb_infrastructure::resolution_context::create_default_hybrid_search_provider;
 use mcb_server::args::{SearchArgs, SearchResource};
 use mcb_server::handlers::SearchHandler;
 use rmcp::handler::server::wrapper::Parameters;
@@ -14,6 +15,7 @@ async fn test_search_code_success() {
     let handler = SearchHandler::new(
         state.mcp_server.search_service(),
         state.mcp_server.memory_service(),
+        create_default_hybrid_search_provider(),
     );
 
     let args = SearchArgs {
@@ -28,6 +30,7 @@ async fn test_search_code_success() {
         extensions: None,
         filters: None,
         token: None,
+        repo_id: None,
     };
 
     let result = handler.handle(Parameters(args)).await;
@@ -46,6 +49,7 @@ async fn test_search_code_empty_query() {
     let handler = SearchHandler::new(
         state.mcp_server.search_service(),
         state.mcp_server.memory_service(),
+        create_default_hybrid_search_provider(),
     );
 
     let args = SearchArgs {
@@ -60,6 +64,7 @@ async fn test_search_code_empty_query() {
         extensions: None,
         filters: None,
         token: None,
+        repo_id: None,
     };
 
     let result = handler.handle(Parameters(args)).await;

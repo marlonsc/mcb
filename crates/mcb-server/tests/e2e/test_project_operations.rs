@@ -10,7 +10,7 @@ fn base_args(action: ProjectAction, resource: ProjectResource) -> ProjectArgs {
     ProjectArgs {
         action,
         resource,
-        project_id: "test-project".to_owned(),
+        project_id: Some("test-project".to_owned()),
         data: None,
         filters: None,
     }
@@ -103,7 +103,7 @@ async fn golden_project_missing_project_id() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(ProjectAction::Get, ProjectResource::Project);
-    args.project_id = String::new();
+    args.project_id = Some(String::new());
 
     let result = server.project_handler().handle(Parameters(args)).await;
 

@@ -426,6 +426,7 @@ async fn test_real_search_empty_project_returns_empty_not_error() -> TestResult 
         tags: None,
         session_id: None,
         token: None,
+        repo_id: None,
     };
 
     let result = search_h.handle(Parameters(search_args)).await;
@@ -504,6 +505,7 @@ async fn test_real_search_memory_enriches_origin_context_fields() -> TestResult 
         tags: None,
         session_id: None,
         token: None,
+        repo_id: None,
     };
 
     let result = search_h.handle(Parameters(search_args)).await;

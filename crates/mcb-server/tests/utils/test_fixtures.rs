@@ -3,17 +3,15 @@
 //! Provides factory functions for creating test data and temporary directories.
 //! MCP server and state are built via [`mcb_server::build_mcp_server_bootstrap`]
 //! from a [`ServiceResolutionContext`] (Loco-style composition). No manual bootstrap.
+//!
+//! **Entity fixtures and constants are centralized in `mcb_domain::test_utils`.**
+//! This module re-exports them and adds mcb-server-specific helpers.
 
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use mcb_domain::entities::{
-    ApiKey, Organization, Team, TeamMember, TeamMemberRole, User, UserRole,
-};
-use mcb_domain::ports::{EmbeddingProvider, IndexingResult, VectorStoreProvider};
+use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider};
 use mcb_domain::registry::events::{EventBusProviderConfig, resolve_event_bus_provider};
-use mcb_domain::utils::time::epoch_secs_i64;
-use mcb_domain::value_objects::TeamMemberId;
 use mcb_infrastructure::config::TestConfigBuilder;
 use mcb_infrastructure::repositories::connect_sqlite_with_migrations;
 use mcb_infrastructure::resolution_context::{
@@ -24,30 +22,46 @@ use mcb_server::mcp_server::McpServer;
 use mcb_server::tools::ExecutionFlow;
 use rstest::rstest;
 use tempfile::TempDir;
-use uuid::Uuid;
 
 // -----------------------------------------------------------------------------
-// Common test fixture constants — re-export from mcb-domain SSOT
+// Re-export ALL centralized constants and fixtures from mcb-domain SSOT
 // -----------------------------------------------------------------------------
-pub use mcb_domain::test_utils::{TEST_ORG_ID, TEST_PROJECT_ID, TEST_SESSION_ID};
+pub use mcb_domain::test_utils::{
+    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, TEST_EMBEDDING_DIMENSIONS, TEST_ORG_ID,
+    TEST_ORG_ID_A, TEST_ORG_ID_B, TEST_PROJECT_ID, TEST_REPO_NAME, TEST_SESSION_ID,
+    create_temp_codebase, create_test_admin_user, create_test_api_key, create_test_indexing_result,
+    create_test_organization, create_test_team, create_test_team_member, create_test_user_with,
+};
 
-/// Test fixture: default repository name.
-pub const TEST_REPO_NAME: &str = "test-repo";
-
-/// Test fixture: default embedding dimensions (`FastEmbed` BGE-small-en-v1.5).
-pub const TEST_EMBEDDING_DIMENSIONS: usize = 384;
-
-/// Test fixture: organization A identifier for multi-tenant tests.
-pub const TEST_ORG_ID_A: &str = "test-org-a";
-
-/// Test fixture: organization B identifier for multi-tenant tests.
-pub const TEST_ORG_ID_B: &str = "test-org-b";
+// Backward-compat aliases used by e2e tests (delegate to centralized SSOT)
+/// Alias for [`create_test_organization`].
+pub fn test_organization(id: &str) -> mcb_domain::entities::Organization {
+    create_test_organization(id)
+}
+/// Alias for [`create_test_user_with`].
+pub fn test_user(org_id: &str, email: &str) -> mcb_domain::entities::User {
+    create_test_user_with(org_id, email)
+}
+/// Alias for [`create_test_admin_user`].
+pub fn test_admin_user(org_id: &str, email: &str) -> mcb_domain::entities::User {
+    create_test_admin_user(org_id, email)
+}
+/// Alias for [`create_test_team`].
+pub fn test_team(org_id: &str, name: &str) -> mcb_domain::entities::Team {
+    create_test_team(org_id, name)
+}
+/// Alias for [`create_test_team_member`].
+pub fn test_team_member(team_id: &str, user_id: &str) -> mcb_domain::entities::TeamMember {
+    create_test_team_member(team_id, user_id)
+}
+/// Alias for [`create_test_api_key`].
+pub fn test_api_key(user_id: &str, org_id: &str, name: &str) -> mcb_domain::entities::ApiKey {
+    create_test_api_key(user_id, org_id, name)
+}
 
 // -----------------------------------------------------------------------------
 // Golden test helpers (shared by tests/golden and integration)
 // -----------------------------------------------------------------------------
-
-pub const GOLDEN_COLLECTION: &str = "mcb_golden_test";
 
 /// Path to `sample_codebase` fixture (used by golden tests).
 pub fn sample_codebase_path() -> PathBuf {
@@ -74,88 +88,10 @@ pub fn golden_count_result_entries(text: &str) -> usize {
     text.lines().filter(|line| line.contains("📁")).count()
 }
 
-/// Expected files in `sample_codebase` for search assertions.
-pub const SAMPLE_CODEBASE_FILES: &[&str] = &[
-    "embedding.rs",
-    "vector_store.rs",
-    "handlers.rs",
-    "cache.rs",
-    "di.rs",
-    "error.rs",
-    "chunking.rs",
-];
+// SAMPLE_CODEBASE_FILES is now re-exported from mcb_domain::test_utils.
 
-/// Create a temporary codebase directory with sample code files
-pub fn create_temp_codebase() -> (TempDir, PathBuf) {
-    let temp_dir_result = TempDir::new();
-    assert!(temp_dir_result.is_ok(), "Failed to create temp directory");
-    let temp_dir = match temp_dir_result {
-        Ok(value) => value,
-        Err(_) => {
-            return (
-                TempDir::new().unwrap_or_else(|_| unreachable!()),
-                PathBuf::new(),
-            );
-        }
-    };
-    let codebase_path = temp_dir.path().to_path_buf();
-
-    // Create sample Rust files
-    let write_lib = std::fs::write(
-        codebase_path.join("lib.rs"),
-        r#"//! Sample library
-pub fn hello() {
-    println!("Hello, world!");
-}
-"#,
-    );
-    assert!(write_lib.is_ok(), "Failed to write lib.rs");
-
-    let write_main = std::fs::write(
-        codebase_path.join("main.rs"),
-        "fn main() {
-    mylib::hello();
-}
-",
-    );
-    assert!(write_main.is_ok(), "Failed to write main.rs");
-
-    // Create a subdirectory with more files
-    let src_dir = codebase_path.join("src");
-    let mkdir_src = std::fs::create_dir_all(&src_dir);
-    assert!(mkdir_src.is_ok(), "Failed to create src directory");
-
-    let write_utils = std::fs::write(
-        src_dir.join("utils.rs"),
-        r#"pub fn helper() -> String {
-    "helper".to_string()
-}
-"#,
-    );
-    assert!(write_utils.is_ok(), "Failed to write utils.rs");
-
-    (temp_dir, codebase_path)
-}
-
-/// Create a test indexing result
-pub fn create_test_indexing_result(
-    files_processed: usize,
-    chunks_created: usize,
-    error_count: usize,
-) -> IndexingResult {
-    let errors = (0..error_count)
-        .map(|i| format!("Test error {i}"))
-        .collect();
-
-    IndexingResult {
-        files_processed,
-        chunks_created,
-        files_skipped: 0,
-        errors,
-        operation_id: None,
-        status: "completed".to_owned(),
-    }
-}
+// NOTE: create_temp_codebase and create_test_indexing_result are now
+// re-exported from mcb_domain::test_utils (see re-exports above).
 
 // ---------------------------------------------------------------------------
 // Shared AppContext (process-wide) with FastEmbed fallback
@@ -341,85 +277,9 @@ pub fn shared_mcb_state() -> Result<&'static mcb_server::state::McbState, &'stat
     try_shared_mcb_state().ok_or("shared McbState init failed")
 }
 
-// -----------------------------------------------------------------------------
-// Test Fixture Builders — Org/User/ApiKey/Team/TeamMember (used by e2e/contract/integration)
-// -----------------------------------------------------------------------------
-
-/// Create a test organization with sensible defaults.
-pub fn test_organization(id: &str) -> Organization {
-    Organization {
-        id: id.to_owned(),
-        name: format!("Test Org {id}"),
-        slug: format!("test-org-{id}"),
-        settings_json: "{}".to_owned(),
-        created_at: epoch_secs_i64().unwrap_or(0),
-        updated_at: epoch_secs_i64().unwrap_or(0),
-    }
-}
-
-/// Create a test user with Member role.
-pub fn test_user(org_id: &str, email: &str) -> User {
-    User {
-        id: Uuid::new_v4().to_string(),
-        org_id: org_id.to_owned(),
-        email: email.to_owned(),
-        display_name: email.split('@').next().unwrap_or("Test User").to_owned(),
-        role: UserRole::Member,
-        api_key_hash: None,
-        created_at: epoch_secs_i64().unwrap_or(0),
-        updated_at: epoch_secs_i64().unwrap_or(0),
-    }
-}
-
-/// Create a test user with Admin role.
-pub fn test_admin_user(org_id: &str, email: &str) -> User {
-    User {
-        id: Uuid::new_v4().to_string(),
-        org_id: org_id.to_owned(),
-        email: email.to_owned(),
-        display_name: email.split('@').next().unwrap_or("Test Admin").to_owned(),
-        role: UserRole::Admin,
-        api_key_hash: None,
-        created_at: epoch_secs_i64().unwrap_or(0),
-        updated_at: epoch_secs_i64().unwrap_or(0),
-    }
-}
-
-/// Create a test team.
-pub fn test_team(org_id: &str, name: &str) -> Team {
-    Team {
-        id: Uuid::new_v4().to_string(),
-        org_id: org_id.to_owned(),
-        name: name.to_owned(),
-        created_at: epoch_secs_i64().unwrap_or(0),
-    }
-}
-
-/// Create a test team member.
-pub fn test_team_member(team_id: &str, user_id: &str) -> TeamMember {
-    TeamMember {
-        id: TeamMemberId::from_string(&format!("{team_id}:{user_id}")),
-        team_id: team_id.to_owned(),
-        user_id: user_id.to_owned(),
-        role: TeamMemberRole::Member,
-        joined_at: epoch_secs_i64().unwrap_or(0),
-    }
-}
-
-/// Create a test API key.
-pub fn test_api_key(user_id: &str, org_id: &str, name: &str) -> ApiKey {
-    ApiKey {
-        id: Uuid::new_v4().to_string(),
-        user_id: user_id.to_owned(),
-        org_id: org_id.to_owned(),
-        name: name.to_owned(),
-        key_hash: format!("hash_{}", Uuid::new_v4()),
-        scopes_json: "[\"read\", \"write\"]".to_owned(),
-        expires_at: None,
-        revoked_at: None,
-        created_at: epoch_secs_i64().unwrap_or(0),
-    }
-}
+// NOTE: Entity fixture builders (test_organization, test_user, test_admin_user,
+// test_team, test_team_member, test_api_key) are now thin wrappers that delegate
+// to mcb_domain::test_utils. See the backward-compat aliases at the top of this file.
 
 #[cfg(test)]
 mod tests {

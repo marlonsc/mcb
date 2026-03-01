@@ -15,6 +15,7 @@ fn build_search_args(query: &str, min_score: Option<f32>, collection: Option<&st
         tags: None,
         session_id: None,
         token: None,
+        repo_id: None,
     }
 }
 
@@ -42,6 +43,7 @@ fn build_index_args(path: Option<&str>, collection: Option<&str>) -> IndexArgs {
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     }
 }
 

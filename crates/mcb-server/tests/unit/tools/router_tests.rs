@@ -83,6 +83,7 @@ fn valid_context() -> ToolExecutionContext {
     ToolExecutionContext {
         session_id: Some("session-1".to_owned()),
         parent_session_id: Some("parent-1".to_owned()),
+        org_id: None,
         project_id: Some("project-1".to_owned()),
         worktree_id: Some("wt-1".to_owned()),
         repo_id: Some("repo-1".to_owned()),
@@ -137,6 +138,7 @@ fn non_provenance_tool_bypasses_scope_gate() {
     let context = ToolExecutionContext {
         session_id: None,
         parent_session_id: None,
+        org_id: None,
         project_id: None,
         worktree_id: None,
         repo_id: None,
@@ -244,6 +246,9 @@ fn test_resolve_overrides_beat_defaults() {
         agent_program: Some("mcb-stdio".to_owned()),
         model_id: Some("unknown".to_owned()),
         execution_flow: Some(ExecutionFlow::StdioOnly),
+        client_session_id: None,
+        org_id: None,
+        project_id: None,
     };
 
     let overrides = HashMap::from([
@@ -285,6 +290,9 @@ fn test_resolve_with_empty_overrides_uses_defaults() {
         agent_program: Some("mcb-stdio".to_owned()),
         model_id: Some("unknown".to_owned()),
         execution_flow: Some(ExecutionFlow::StdioOnly),
+        client_session_id: None,
+        org_id: None,
+        project_id: None,
     };
 
     let context = ToolExecutionContext::resolve(&defaults, &HashMap::new());
@@ -312,6 +320,9 @@ fn test_resolve_workspace_root_maps_to_repo_path() {
         agent_program: None,
         model_id: None,
         execution_flow: None,
+        client_session_id: None,
+        org_id: None,
+        project_id: None,
     };
     let overrides = HashMap::from([(
         "workspace_root".to_owned(),

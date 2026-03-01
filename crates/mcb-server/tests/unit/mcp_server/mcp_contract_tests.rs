@@ -205,6 +205,7 @@ async fn test_delegation_requires_parent_session_id_when_delegated_true(
     let execution_context = ToolExecutionContext {
         session_id: Some("session-1".to_owned()),
         parent_session_id: None,
+        org_id: None,
         project_id: Some("project-1".to_owned()),
         worktree_id: Some("worktree-1".to_owned()),
         repo_id: Some("repo-1".to_owned()),

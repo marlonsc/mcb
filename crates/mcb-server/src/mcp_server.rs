@@ -9,6 +9,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use mcb_domain::ports::AgentSessionServiceInterface;
+use mcb_domain::ports::HybridSearchProvider;
 use mcb_domain::ports::VcsProvider;
 use mcb_domain::ports::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
@@ -90,6 +91,8 @@ pub struct McpServices {
     pub project_workflow: Arc<dyn ProjectRepository>,
     /// VCS provider
     pub vcs: Arc<dyn VcsProvider>,
+    /// Hybrid search provider for BM25+semantic re-ranking.
+    pub hybrid_search: Arc<dyn HybridSearchProvider>,
     /// Entity repositories shared by CRUD handlers.
     pub entities: McpEntityRepositories,
 }
@@ -126,6 +129,7 @@ impl McpServer {
             search: Arc::new(SearchHandler::new(
                 Arc::clone(&services.search),
                 Arc::clone(&services.memory),
+                Arc::clone(&services.hybrid_search),
             )),
             validate: Arc::new(ValidateHandler::new(Arc::clone(&services.validation))),
             memory: Arc::new(MemoryHandler::new(Arc::clone(&services.memory))),

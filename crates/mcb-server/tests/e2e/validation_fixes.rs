@@ -55,7 +55,9 @@ async fn test_validation_agent_sql_storage_flow() -> TestResult {
         .handle(Parameters(AgentArgs {
             action: AgentAction::LogTool,
             org_id: None,
-            session_id: mcb_domain::value_objects::SessionId::from_name(session_id_str),
+            session_id: Some(mcb_domain::value_objects::SessionId::from_name(
+                session_id_str,
+            )),
             data: json!({
                 "tool_name": "test",
                 "success": true,

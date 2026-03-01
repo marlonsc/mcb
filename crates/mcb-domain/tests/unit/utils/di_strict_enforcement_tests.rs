@@ -1,30 +1,9 @@
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::test_fs_scan::rust_files_under;
+use mcb_domain::test_utils::{TestResult, workspace_root};
 use rstest::rstest;
 use std::collections::BTreeMap;
 use std::fs;
-use std::path::{Path, PathBuf};
-
-fn workspace_root() -> Result<PathBuf, Box<dyn std::error::Error>> {
-    Path::new(env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .nth(2)
-        .ok_or("workspace root not found")
-        .map(Path::to_path_buf)
-        .map_err(Into::into)
-}
-
-fn rust_files_under(path: &Path, out: &mut Vec<PathBuf>) {
-    if let Ok(entries) = fs::read_dir(path) {
-        for entry in entries.flatten() {
-            let p = entry.path();
-            if p.is_dir() {
-                rust_files_under(&p, out);
-            } else if p.extension().and_then(|e| e.to_str()) == Some("rs") {
-                out.push(p);
-            }
-        }
-    }
-}
+use std::path::PathBuf;
 
 #[rstest]
 #[test]

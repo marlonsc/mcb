@@ -44,6 +44,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
     let r = index_h.handle(Parameters(clear_args)).await;
     assert!(r.is_ok(), "index clear should succeed");
@@ -66,6 +67,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
     let r = index_h.handle(Parameters(status_args)).await;
     assert!(r.is_ok());
@@ -87,6 +89,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
     let r = index_h.handle(Parameters(index_args)).await;
     assert!(r.is_ok(), "index should succeed");
@@ -115,6 +118,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
         tags: None,
         session_id: None,
         token: None,
+        repo_id: None,
     };
     let r = search_h.handle(Parameters(search_args)).await;
     assert!(r.is_ok());
@@ -137,6 +141,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
     let r = index_h.handle(Parameters(clear_args)).await;
     assert!(r.is_ok());
@@ -166,6 +171,7 @@ async fn test_golden_index_variants(
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
 
     let result = handler.handle(Parameters(args)).await;
@@ -201,6 +207,7 @@ async fn test_golden_search_returns_relevant_results() -> TestResult {
             max_file_size: None,
             follow_symlinks: None,
             token: None,
+            repo_id: None,
         }))
         .await
         .expect("index");
@@ -219,6 +226,7 @@ async fn test_golden_search_returns_relevant_results() -> TestResult {
             tags: None,
             session_id: None,
             token: None,
+            repo_id: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed after index");
@@ -242,6 +250,7 @@ async fn test_golden_search_handles_empty_query() -> TestResult {
         tags: None,
         session_id: None,
         token: None,
+        repo_id: None,
     }));
     let result = r.await;
     let response = result.expect("empty query should return an error response");
@@ -276,6 +285,7 @@ async fn test_golden_search_respects_limit_parameter() -> TestResult {
             max_file_size: None,
             follow_symlinks: None,
             token: None,
+            repo_id: None,
         }))
         .await
         .expect("index for limit test");
@@ -294,6 +304,7 @@ async fn test_golden_search_respects_limit_parameter() -> TestResult {
             tags: None,
             session_id: None,
             token: None,
+            repo_id: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed");

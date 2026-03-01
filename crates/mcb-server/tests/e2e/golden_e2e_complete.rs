@@ -27,6 +27,7 @@ fn index_args(action: IndexAction, path: Option<String>, collection: Option<Stri
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     }
 }
 
@@ -43,6 +44,7 @@ fn search_args(query: &str, collection: Option<String>, limit: Option<u32>) -> S
         tags: None,
         session_id: None,
         token: None,
+        repo_id: None,
     }
 }
 

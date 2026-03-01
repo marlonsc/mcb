@@ -1,8 +1,8 @@
 //! Unit tests for validation service filtering and validator selection.
 
-use crate::utils::workspace::workspace_root;
 use mcb_domain::ports::ValidationServiceInterface;
 use mcb_domain::registry::services::resolve_validation_service;
+use mcb_domain::test_utils::workspace_root;
 use rstest::rstest;
 
 fn validation_service()
