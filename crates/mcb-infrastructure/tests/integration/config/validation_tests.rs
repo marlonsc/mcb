@@ -42,7 +42,7 @@ fn test_auth_config_jwt_secret_length() -> Result<(), Box<dyn std::error::Error>
 
 #[test]
 #[serial]
-fn test_cache_config_ttl_when_enabled() {
+fn test_cache_config_ttl_when_enabled() -> Result<(), Box<dyn std::error::Error>> {
     // When cache is enabled, TTL should be positive
     let enabled_cache = CacheSystemConfig {
         enabled: true,
@@ -93,6 +93,7 @@ fn test_cache_config_ttl_when_enabled() {
     };
     assert!(redis_cache.redis_url.is_some());
     assert!(redis_cache.redis_pool_size > 0);
+    Ok(())
 }
 
 #[test]
