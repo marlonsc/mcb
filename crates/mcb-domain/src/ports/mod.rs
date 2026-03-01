@@ -53,16 +53,15 @@ pub use infrastructure::{
 };
 
 // --- Providers ---
-pub use providers::vector_store::{VectorStoreAdmin, VectorStoreBrowser};
 pub use providers::{
     ComplexityAnalyzer, ComplexityFinding, CryptoProvider, DeadCodeDetector, DeadCodeFinding,
     EmbeddingProvider, EncryptedData, HttpClientConfig, HttpClientProvider, HybridSearchProvider,
     HybridSearchResult, LanguageChunkingProvider, MetricLabels, MetricsError, MetricsProvider,
     MetricsResult, PROJECT_DETECTORS, ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
     ProviderConfigManagerInterface, RuleValidator, RuleValidatorRequest, TdgFinding, TdgScorer,
-    ValidationOptions, ValidationProvider, ValidatorInfo, VcsProvider, VectorStoreProvider,
+    ValidationOptions, ValidationProvider, ValidatorInfo, VcsProvider, VectorStoreAdmin,
+    VectorStoreBrowser, VectorStoreProvider,
 };
-
 // --- Repositories ---
 pub use repositories::{
     AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,

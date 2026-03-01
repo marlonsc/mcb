@@ -29,13 +29,13 @@ macro_rules! provider_admin_interface {
             /// # Errors
             ///
             /// Returns an error if the provider cannot be initialized with the given config.
-            fn switch_provider(&self, config: $config_ty) -> Result<(), String>;
+            fn switch_provider(&self, config: $config_ty) -> std::result::Result<(), String>;
             /// Reload provider from current application config.
             ///
             /// # Errors
             ///
             /// Returns an error if the config is invalid or the provider fails to reinitialize.
-            fn reload_from_config(&self) -> Result<(), String>;
+            fn reload_from_config(&self) -> std::result::Result<(), String>;
         }
     };
 }
