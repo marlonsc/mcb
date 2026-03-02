@@ -7,11 +7,6 @@
 //!
 //! The output is used to set exact assertion counts in the real test files.
 
-use mcb_validate::{
-    AsyncPatternValidator, DocumentationValidator, ErrorBoundaryValidator, HygieneValidator,
-    ImplementationQualityValidator, KissValidator, OrganizationValidator, PatternValidator,
-    PerformanceValidator, QualityValidator, RefactoringValidator, SolidValidator,
-};
 use rstest::rstest;
 
 use crate::utils::test_constants::*;
@@ -70,85 +65,73 @@ impl DiscoveryValidatorKind {
     fn validate(self, root: &std::path::Path) -> Vec<String> {
         match self {
             DiscoveryValidatorKind::Quality => {
-                let validator = QualityValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "quality"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
             }
             DiscoveryValidatorKind::Kiss => {
-                let validator = KissValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "kiss"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
             }
             DiscoveryValidatorKind::AsyncPattern => {
-                let validator = AsyncPatternValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "async_patterns"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
             }
             DiscoveryValidatorKind::Documentation => {
-                let validator = DocumentationValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "documentation"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
             }
             DiscoveryValidatorKind::Performance => {
-                let validator = PerformanceValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "performance"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
             }
             DiscoveryValidatorKind::ImplementationQuality => {
-                let validator = ImplementationQualityValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "implementation"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
             }
             DiscoveryValidatorKind::Organization => {
-                let validator = OrganizationValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "organization"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
             }
             DiscoveryValidatorKind::Solid => {
-                let validator = SolidValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "solid"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
             }
             DiscoveryValidatorKind::Pattern => {
-                let validator = PatternValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "patterns"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
             }
             DiscoveryValidatorKind::Refactoring => {
-                let validator = RefactoringValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "refactoring"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
             }
             DiscoveryValidatorKind::Hygiene => {
-                let validator = HygieneValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "hygiene"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
             }
             DiscoveryValidatorKind::ErrorBoundary => {
-                let validator = ErrorBoundaryValidator::new(root);
-                expect_validation_ok(self.name(), validator.validate_all())
+                expect_validation_ok(self.name(), run_named_validator(root, "error_boundary"))
                     .into_iter()
                     .map(|v| v.to_string())
                     .collect()
