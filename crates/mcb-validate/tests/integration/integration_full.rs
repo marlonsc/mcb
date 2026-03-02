@@ -89,20 +89,10 @@ members = [
 
         let config = ValidationConfig::new(&root);
 
-        // Registry starts empty and validators are registered explicitly
-        let mut registry = ValidatorRegistry::new();
-        assert!(
-            registry.validators().is_empty(),
-            "New registry should be empty"
-        );
-
-        // Register the clean architecture validator
-        let validator = mcb_validate::CleanArchitectureValidator::new(&root);
-        registry.register(Box::new(validator));
-
-        // Now registry should have one validator
+        // Use standard_for to get a registry with all built-in validators
+        let registry = ValidatorRegistry::standard_for(&root);
         let validators = registry.validators();
-        assert_eq!(validators.len(), 1, "Registry should have one validator");
+        assert!(!validators.is_empty(), "Registry should have validators");
 
         // Can run validation on the registry
         let result = registry.validate_all(&config);

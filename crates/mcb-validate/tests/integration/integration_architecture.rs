@@ -24,6 +24,7 @@ mod architecture_integration_tests {
     use std::io::Write;
     use std::path::{Path, PathBuf};
 
+    use crate::utils::run_named_validator;
     use mcb_validate::ValidationConfig;
     use mcb_validate::Validator;
     use mcb_validate::config::NamingRulesConfig;
@@ -133,13 +134,14 @@ impl Email {
             vo_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Clean code should produce no violations
         assert!(
             violations.is_empty(),
-            "Clean code should produce no violations, got: {violations:?}"
+            "Clean code should produce no violations, got {} violations",
+            violations.len()
         );
     }
 
@@ -176,14 +178,11 @@ impl SearchHandler {
             handler_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Should detect CA002 violations
-        let ca002_violations: Vec<_> = violations
-            .iter()
-            .filter(|v| matches!(v, CleanArchitectureViolation::HandlerCreatesService { .. }))
-            .collect();
+        let ca002_violations: Vec<_> = violations.iter().filter(|v| v.id() == "CA002").collect();
 
         // Note: Detection depends on implementation details
         // If no violations found, the validator may need different patterns
@@ -227,14 +226,11 @@ impl Product {
             entity_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Should detect CA004 violations
-        let ca004_violations: Vec<_> = violations
-            .iter()
-            .filter(|v| matches!(v, CleanArchitectureViolation::EntityMissingIdentity { .. }))
-            .collect();
+        let ca004_violations: Vec<_> = violations.iter().filter(|v| v.id() == "CA004").collect();
 
         if !ca004_violations.is_empty() {
             for v in &ca004_violations {
@@ -288,14 +284,11 @@ impl Money {
             vo_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Should detect CA005 violations
-        let ca005_violations: Vec<_> = violations
-            .iter()
-            .filter(|v| matches!(v, CleanArchitectureViolation::ValueObjectMutable { .. }))
-            .collect();
+        let ca005_violations: Vec<_> = violations.iter().filter(|v| v.id() == "CA005").collect();
 
         if !ca005_violations.is_empty() {
             for v in &ca005_violations {
@@ -505,11 +498,8 @@ impl Server {
         });
 
         if let Some(root) = workspace_root {
-            let validator = CleanArchitectureValidator::new(&root);
-            let result = validator.validate_all();
-
-            // Should not panic, even if violations exist
-            let violations = result.expect("validation should succeed");
+            let violations = run_named_validator(&root, "clean_architecture")
+                .expect("validation should succeed");
             assert!(violations.iter().all(|v| !v.id().is_empty()));
             // Log violations for informational purposes
             if !violations.is_empty() {
