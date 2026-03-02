@@ -6,7 +6,7 @@ use loco_rs::boot::{BootResult, StartMode, create_app};
 use loco_rs::config::Config as LocoConfig;
 use loco_rs::controller::AppRoutes;
 use loco_rs::environment::Environment;
-use mcb_providers::migration::Migrator;
+use mcb_infrastructure::infrastructure::DynamicMigrator;
 use std::path::{Path, PathBuf};
 
 /// Extract the filesystem path from a `SQLite` URI, returning `None` for
@@ -76,7 +76,7 @@ impl Hooks for McbApp {
         {
             recover_sqlite_before_boot(p);
         }
-        create_app::<Self, Migrator>(mode, environment, config).await
+        create_app::<Self, DynamicMigrator>(mode, environment, config).await
     }
     async fn load_config(env: &Environment) -> loco_rs::Result<LocoConfig> {
         if let Ok(folder) = std::env::var("MCB_CONFIG_FOLDER") {

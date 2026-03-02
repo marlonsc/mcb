@@ -26,8 +26,8 @@ use mcb_domain::value_objects::CollectionId;
 use rstest::rstest;
 use serde_json::json;
 
-use crate::utils::test_fixtures::shared_app_context;
 use mcb_domain::utils::tests::collection::unique_collection;
+use mcb_domain::utils::tests::fixtures::shared_app_context;
 
 /// Test query structure matching the JSON fixture format
 #[derive(Debug, Clone, serde::Deserialize)]

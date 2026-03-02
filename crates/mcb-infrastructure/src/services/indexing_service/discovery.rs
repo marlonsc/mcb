@@ -9,8 +9,6 @@ use ignore::WalkBuilder;
 
 use crate::constants::use_cases::SKIP_DIRS;
 
-use super::{IndexingProgress, IndexingServiceImpl};
-
 impl IndexingServiceImpl {
     /// Discover files recursively from a path
     pub(crate) async fn discover_files(

@@ -8,7 +8,7 @@ use axum::extract::Extension;
 use http_body_util::BodyExt;
 use serde_json::Value;
 
-use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 use rstest::rstest;
 
 // ---------------------------------------------------------------------------

@@ -20,7 +20,7 @@ pub const MEMORY_SERVICE_NAME: &str = "memory";
 pub const AGENT_SESSION_SERVICE_NAME: &str = "agent_session";
 /// Registry name for the validation service.
 pub const VALIDATION_SERVICE_NAME: &str = "validation";
-#[allow(missing_docs)]
+/// Registry name for the highlight service.
 pub const HIGHLIGHT_SERVICE_NAME: &str = "highlight";
 
 /// Typed factory enum for building domain services from a resolution context.
@@ -38,7 +38,7 @@ pub enum ServiceBuilder {
     AgentSession(fn(&dyn Any) -> Result<Arc<dyn AgentSessionServiceInterface>>),
     /// Build a validation service.
     Validation(fn(&dyn Any) -> Result<Arc<dyn ValidationServiceInterface>>),
-    #[allow(missing_docs)]
+    /// Build a highlight service.
     Highlight(fn(&dyn Any) -> Result<Arc<dyn HighlightServiceInterface>>),
 }
 

@@ -13,7 +13,6 @@
 use std::sync::Arc;
 
 use sea_orm::{ConnectionTrait, DatabaseConnection};
-use sea_orm_migration::MigratorTrait;
 
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanStatus, PlanVersion, ReviewVerdict};
@@ -31,14 +30,13 @@ use mcb_domain::ports::{
 use mcb_domain::value_objects::ids::{IssueLabelAssignmentId, TeamMemberId};
 
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::entity::SeaOrmEntityRepository;
 use rstest::rstest;
 
 async fn setup_db() -> TestResult<Arc<DatabaseConnection>> {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;
     db.execute_unprepared("PRAGMA foreign_keys = ON;").await?;
-    Migrator::up(&db, None).await?;
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     Ok(Arc::new(db))
 }
 
@@ -72,18 +70,11 @@ async fn seed_user(repo: &SeaOrmEntityRepository) -> TestResult {
 }
 
 async fn seed_project(repo: &SeaOrmEntityRepository) -> TestResult {
-    use mcb_providers::database::seaorm::entities::project;
-    use sea_orm::{ActiveModelTrait, ActiveValue};
-
-    let proj = project::ActiveModel {
-        id: ActiveValue::Set("proj-001".into()),
-        org_id: ActiveValue::Set("org-001".into()),
-        name: ActiveValue::Set("Test Project".into()),
-        path: ActiveValue::Set("/tmp/proj".into()),
-        created_at: ActiveValue::Set(1700000000),
-        updated_at: ActiveValue::Set(1700000000),
-    };
-    proj.insert(repo.db()).await?;
+    repo.db()
+        .execute_unprepared(
+            "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES ('proj-001', 'org-001', 'Test Project', '/tmp/proj', 1700000000, 1700000000)",
+        )
+        .await?;
     Ok(())
 }
 
@@ -305,27 +296,11 @@ async fn vcs_assignment_crud() -> TestResult {
     repo.create_worktree(&wt).await?;
 
     // Seed agent session
-    use mcb_providers::database::seaorm::entities::agent_session;
-    use sea_orm::{ActiveModelTrait, ActiveValue};
-    let ses = agent_session::ActiveModel {
-        id: ActiveValue::Set("ses-001".into()),
-        project_id: ActiveValue::Set(Some("proj-001".into())),
-        worktree_id: ActiveValue::Set(Some("wt-001".into())),
-        session_summary_id: ActiveValue::Set(String::new()),
-        parent_session_id: ActiveValue::Set(None),
-        agent_type: ActiveValue::Set("build".into()),
-        model: ActiveValue::Set("claude".into()),
-        status: ActiveValue::Set("active".into()),
-        prompt_summary: ActiveValue::Set(None),
-        result_summary: ActiveValue::Set(None),
-        started_at: ActiveValue::Set(1700000000),
-        ended_at: ActiveValue::Set(None),
-        duration_ms: ActiveValue::Set(None),
-        token_count: ActiveValue::Set(None),
-        tool_calls_count: ActiveValue::Set(None),
-        delegations_count: ActiveValue::Set(None),
-    };
-    ses.insert(repo.db()).await?;
+    repo.db()
+        .execute_unprepared(
+            "INSERT INTO agent_sessions (id, project_id, worktree_id, session_summary_id, agent_type, model, status, started_at, parent_session_id, prompt_summary, result_summary, ended_at, duration_ms, token_count, tool_calls_count, delegations_count) VALUES ('ses-001', 'proj-001', 'wt-001', '', 'build', 'claude', 'active', 1700000000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)",
+        )
+        .await?;
 
     let asgn = AgentWorktreeAssignment {
         id: "asgn-001".into(),

@@ -1,18 +1,23 @@
 //! Test infrastructure — centralized utilities and service configuration.
 //!
+//! This module serves as the **Centralized Test Scaffolding** for the entire project.
+//! It provides:
+//! - **DI-Ready Fixtures**: Reusable builders for domain entities (Users, Projects, Sessions).
+//! - **Centralized Constants**: Stable IDs and timestamps for consistent multi-tenant testing.
+//! - **Invariant Assertions**: Shared logic for verifying MCP tool result shapes and JSON-RPC compliance.
+//! - **Environment Guards**: RAII handlers for safe environment variable and filesystem manipulation in tests.
+//!
+//! **Architecture Pattern**: Instead of each crate defining its own test helpers,
+//! they MUST import from this module (re-exported via `mcb_domain::utils::tests`)
+//! to ensure that logic changes in the domain layer are automatically reflected across the test suite.
+//!
 //! **Documentation**: [docs/modules/domain.md#testing-utilities](../../../../docs/modules/domain.md#testing-utilities)
 //!
-//! Submodules:
-//! - [`utils`] — fixtures, constants, helpers, `require_service!` macro
-//! - [`services_config`] — `config/tests.toml` lookup for external service endpoints
-//! - [`guards`] — RAII guards for env vars, current dir, file backup
-//! - [`fs_scan`] — filesystem scanning helpers for architecture tests
-//! - [`assertions`] — generic test assertion helpers
-//! - [`service_detection`] — external service availability checks, CI detection
-//! - [`sync_helpers`] — `Arc<Mutex<T>>` helper constructors
-//! - [`collection`] — unique collection name generator
-//! - [`timeouts`] — test timeout constants and polling helpers
-//! - [`search_fixtures`] — `SearchResult` test fixture builders
+//! ### Submodules:
+//! - [`utils`] — Primary fixtures, constants, and the `require_service!` macro.
+//! - [`mcp_assertions`] — Canonical assertions for `CallToolResult` and text extraction.
+//! - [`json_helpers`] — Shared JSON parsing and validation for test outputs.
+//! - [`registry`] — (Internal) Registry of test-friendly provider factories.
 
 /// Centralized test fixtures, constants, helpers, and `require_service!` macro.
 pub mod utils;

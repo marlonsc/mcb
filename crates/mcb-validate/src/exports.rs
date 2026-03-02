@@ -15,8 +15,7 @@ pub use crate::metrics::*;
 pub use crate::rules::*;
 pub use crate::run_context::{FileInventorySource, InventoryEntry, ValidationRunContext};
 pub use crate::thresholds::{ValidationThresholds, thresholds};
-pub use crate::traits::{Validator, ValidatorRegistry, Violation, ViolationCategory};
-pub use crate::unified_registry::{RuleInfo, RuleOrigin, UnifiedRuleRegistry};
+
 pub use crate::validators::*;
 
 pub use mcb_domain::ports::ViolationEntry;

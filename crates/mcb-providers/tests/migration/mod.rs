@@ -1,8 +1,6 @@
 use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
-use sea_orm_migration::MigratorTrait;
 
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_providers::database::seaorm::migration::Migrator;
 use rstest::rstest;
 
 async fn query_names(db: &DatabaseConnection, sql: &str) -> TestResult<Vec<String>> {
@@ -20,7 +18,7 @@ async fn query_names(db: &DatabaseConnection, sql: &str) -> TestResult<Vec<Strin
 async fn migration_creates_all_tables() -> TestResult {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;
 
-    Migrator::up(&db, None).await?;
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
     let table_names = query_names(
         &db,
@@ -73,7 +71,7 @@ async fn migration_creates_all_tables() -> TestResult {
 async fn migration_creates_fts5_triggers() -> TestResult {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;
 
-    Migrator::up(&db, None).await?;
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
     let trigger_names = query_names(
         &db,
@@ -101,7 +99,7 @@ async fn migration_creates_fts5_triggers() -> TestResult {
 async fn migration_creates_indexes() -> TestResult {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;
 
-    Migrator::up(&db, None).await?;
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
     let index_names = query_names(
         &db,
@@ -129,8 +127,8 @@ async fn migration_creates_indexes() -> TestResult {
 async fn migration_down_drops_all_tables() -> TestResult {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;
 
-    Migrator::up(&db, None).await?;
-    Migrator::down(&db, None).await?;
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
+    mcb_domain::registry::database::migrate_down(Box::new(db.clone()), None).await?;
 
     let table_names = query_names(
         &db,
@@ -149,7 +147,7 @@ async fn migration_down_drops_all_tables() -> TestResult {
 async fn migration_is_idempotent() -> TestResult {
     let db = sea_orm::Database::connect("sqlite::memory:").await?;
 
-    Migrator::up(&db, None).await?;
-    Migrator::up(&db, None).await?;
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     Ok(())
 }

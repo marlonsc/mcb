@@ -17,7 +17,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use serde_json::json;
 
-use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::utils::tests::fixtures::create_test_mcp_server;
 use mcb_domain::utils::tests::json_helpers::parse_count_from_json_text;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::utils::text::extract_text;

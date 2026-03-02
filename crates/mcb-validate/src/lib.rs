@@ -18,14 +18,20 @@
 //! Validation can scan multiple source directories (e.g., workspace crates + extra src/ trees):
 //!
 //! ```
-//! use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
+//! use mcb_validate::{GenericReporter, ValidationConfig, Violation};
 //!
 //! let tmp = tempfile::tempdir().unwrap();
-//! let config = ValidationConfig::new(tmp.path())
-//!     .with_exclude_pattern("target/");
+//! let config = ValidationConfig::new(tmp.path()).with_exclude_pattern("target/");
+//! let validators = mcb_domain::registry::validation::build_all_validators(&config.workspace_root)
+//!     .unwrap();
 //!
-//! let registry = ValidatorRegistry::standard_for(&config.workspace_root);
-//! let violations = registry.validate_all(&config).unwrap();
+//! let mut violations: Vec<Box<dyn Violation>> = Vec::new();
+//! for validator in validators {
+//!     if let Ok(mut found) = validator.validate(&config) {
+//!         violations.append(&mut found);
+//!     }
+//! }
+//!
 //! let report = GenericReporter::create_report(&violations, config.workspace_root.clone());
 //! assert!(report.summary.total_violations >= 0);
 //! ```
@@ -35,10 +41,6 @@ pub mod constants;
 
 // === Centralized Thresholds (Phase 2 DRY) ===
 pub mod thresholds;
-
-// Traits
-/// Core traits for the validation system
-pub mod traits;
 
 /// Violation runtime types (field formatting, file path extraction).
 pub mod macros;
@@ -58,20 +60,11 @@ pub mod embedded_rules;
 pub mod engines;
 pub mod rules;
 
-// === Unified Rule Registry (bridges Rust validators + YAML rules + AST engines) ===
-pub mod unified_registry;
-
 // === Pattern Registry (YAML-driven patterns) ===
 pub mod pattern_registry;
-/// Validation provider adapter that exposes this crate through domain ports.
-pub mod provider;
-/// Linkme registration of all validators into mcb-domain registry.
-mod validator_entries;
 
-// === Rule Filtering System (Phase 6) ===
 pub mod filters;
 
-// === Linter Integration (Phase 1 - Pure Rust Pipeline) ===
 pub mod linters;
 
 // === AST Analysis (Phase 2 - Pure Rust Pipeline) ===
@@ -105,96 +98,25 @@ use thiserror::Error;
 /// Result type for validation operations
 pub type Result<T> = std::result::Result<T, ValidationError>;
 
-/// Configuration for multi-directory validation
-///
-/// Allows scanning multiple source directories beyond the standard `crates/` directory.
-/// Useful for validating additional source trees alongside workspace crates.
-///
-/// # Example
-///
-/// ```
-/// use mcb_validate::ValidationConfig;
-///
-/// let config = ValidationConfig::new("/workspace")
-///     .with_additional_path("../src")
-///     .with_exclude_pattern("target/")
-///     .with_exclude_pattern("tests/fixtures/");
-/// ```
-#[derive(Debug, Clone)]
-pub struct ValidationConfig {
-    /// Root directory of the workspace (contains Cargo.toml with workspace manifest)
-    pub workspace_root: PathBuf,
-    /// Additional source paths to validate.
-    pub additional_src_paths: Vec<PathBuf>,
-    /// Patterns to exclude from validation (e.g., "target/", "tests/")
-    pub exclude_patterns: Vec<String>,
+pub use mcb_domain::ports::validation::{
+    CheckFn, NamedCheck, ValidationConfig, Validator, ValidatorError, ValidatorResult, Violation,
+    ViolationCategory, run_checks,
+};
+
+pub trait ValidationConfigExt {
+    fn get_source_dirs(&self) -> Result<Vec<PathBuf>>;
+    fn get_scan_dirs(&self) -> Result<Vec<PathBuf>>;
 }
 
-impl ValidationConfig {
-    /// Create a new validation config for the given workspace root.
-    ///
-    /// The workspace root is canonicalized so that all downstream path
-    /// comparisons (inventory `starts_with`, `strip_prefix`, etc.) work
-    /// correctly on platforms where temp-dir symlinks differ from the
-    /// canonical form (macOS `/tmp` → `/private/tmp`, Windows `\\?\`).
-    pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        let raw: PathBuf = workspace_root.into();
-        let canonical = std::fs::canonicalize(&raw).unwrap_or(raw);
-        Self {
-            workspace_root: canonical,
-            additional_src_paths: Vec::new(),
-            exclude_patterns: Vec::new(),
-        }
-    }
-
-    /// Add an additional source path to validate
-    ///
-    /// Paths can be absolute or relative to `workspace_root`.
-    #[must_use]
-    pub fn with_additional_path(mut self, path: impl Into<PathBuf>) -> Self {
-        self.additional_src_paths.push(path.into());
-        self
-    }
-
-    /// Add an exclude pattern (files/directories matching this will be skipped)
-    #[must_use]
-    pub fn with_exclude_pattern(mut self, pattern: impl Into<String>) -> Self {
-        self.exclude_patterns.push(pattern.into());
-        self
-    }
-
-    /// Check if a path should be excluded based on patterns
-    #[must_use]
-    pub fn should_exclude(&self, path: &Path) -> bool {
-        let Some(path_str) = path.to_str() else {
-            return false;
-        };
-        self.exclude_patterns
-            .iter()
-            .any(|pattern| path_str.contains(pattern))
-    }
-
-    /// Get all source directories to validate
-    ///
-    /// Returns crates/ subdirectories plus any additional paths.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the crates directory cannot be read.
-    pub fn get_source_dirs(&self) -> Result<Vec<PathBuf>> {
+impl ValidationConfigExt for ValidationConfig {
+    fn get_source_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut dirs = Vec::new();
-
-        // Load file configuration to get skip_crates
-        let file_config = FileConfig::load(&self.workspace_root);
-
-        // Original crates/ scanning
+        let file_config = crate::config::FileConfig::load(&self.workspace_root);
         let crates_dir = self.workspace_root.join("crates");
         if crates_dir.exists() {
             for entry in std::fs::read_dir(&crates_dir)? {
                 let entry = entry?;
                 let path = entry.path();
-
-                // Skip crates specified in configuration (e.g., validate crate itself, facade crates)
                 if let Some(file_name) = path.file_name().and_then(|n| n.to_str())
                     && file_config
                         .general
@@ -204,14 +126,11 @@ impl ValidationConfig {
                 {
                     continue;
                 }
-
                 if path.is_dir() && !self.should_exclude(&path) {
                     dirs.push(path);
                 }
             }
         }
-
-        // Additional paths from config
         for path in &self.additional_src_paths {
             let full_path = if path.is_absolute() {
                 path.clone()
@@ -222,29 +141,17 @@ impl ValidationConfig {
                 dirs.push(full_path);
             }
         }
-
         Ok(dirs)
     }
 
-    /// Get actual source directories to scan for Rust files
-    ///
-    /// For crate directories (containing `src/` subdirectory), returns `<dir>/src/`.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if source directory enumeration fails.
-    pub fn get_scan_dirs(&self) -> Result<Vec<PathBuf>> {
+    fn get_scan_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut scan_dirs = Vec::new();
-
         for dir in self.get_source_dirs()? {
             let src_subdir = dir.join("src");
             if src_subdir.exists() && src_subdir.is_dir() {
-                // Crate-style: has src/ subdirectory
                 scan_dirs.push(src_subdir);
             }
-            // Standard crate without src/ directory yet - skip (implicit continue)
         }
-
         Ok(scan_dirs)
     }
 }
@@ -311,21 +218,7 @@ pub enum ValidationError {
     },
 }
 
-/// Severity level for violations
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, Display,
-)]
-pub enum Severity {
-    /// Error severity
-    #[display("ERROR")]
-    Error,
-    /// Warning severity
-    #[display("WARNING")]
-    Warning,
-    /// Info severity
-    #[display("INFO")]
-    Info,
-}
+pub use mcb_domain::ports::validation::Severity;
 
 /// Component type for strict directory validation
 ///

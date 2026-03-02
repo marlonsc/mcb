@@ -16,7 +16,6 @@ use crate::entities::CodeChunk;
 use crate::entities::project::ProjectType;
 use crate::entities::vcs::{RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository};
 use crate::error::Result;
-use crate::ports::{RuleInfo, ValidationReport};
 use crate::value_objects::{
     CollectionId, CollectionInfo, Embedding, FileInfo, Language, SearchResult,
 };
@@ -144,7 +143,9 @@ pub trait ProviderConfigManagerInterface: Send + Sync {
     /// # Errors
     /// Returns an error if the named provider is not configured.
     fn get_vector_store_config(&self, name: &str) -> Result<&VectorStoreConfig>;
+    /// List all available embedding provider implementation names.
     fn list_embedding_providers(&self) -> Vec<String>;
+    /// List all available vector store provider implementation names.
     fn list_vector_store_providers(&self) -> Vec<String>;
 
     fn has_embedding_provider(&self, name: &str) -> bool {
@@ -187,7 +188,9 @@ pub trait ProviderConfigManagerInterface: Send + Sync {
     nonce.len()
 )]
 pub struct EncryptedData {
+    /// The encrypted byte sequence.
     pub ciphertext: Vec<u8>,
+    /// The initialization vector/nonce used for encryption.
     pub nonce: Vec<u8>,
 }
 
@@ -213,6 +216,7 @@ pub trait CryptoProvider: Send + Sync {
     /// Returns an error if decryption fails or data is invalid.
     fn decrypt(&self, encrypted_data: &EncryptedData) -> Result<Vec<u8>>;
 
+    /// Get the name of this cryptographic provider.
     fn provider_name(&self) -> &str;
 }
 
@@ -231,8 +235,14 @@ pub trait EmbeddingProvider: Send + Sync {
             .ok_or_else(|| crate::error::Error::embedding("No embedding returned"))
     }
 
+    /// Create vector embeddings for a batch of strings.
+    ///
+    /// # Errors
+    /// Returns an error if the embedding provider fails.
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>>;
+    /// Get the number of dimensions in the output vectors.
     fn dimensions(&self) -> usize;
+    /// Get the name of this embedding provider.
     fn provider_name(&self) -> &str;
 
     async fn health_check(&self) -> Result<()> {
@@ -269,7 +279,9 @@ impl Default for HttpClientConfig {
 
 /// HTTP client provider trait
 pub trait HttpClientProvider: Send + Sync {
+    /// Get the internal raw reqwest client.
     fn client(&self) -> &Client;
+    /// Get the HTTP client configuration.
     fn config(&self) -> &HttpClientConfig;
 
     /// Create an HTTP client with a custom timeout.
@@ -281,6 +293,7 @@ pub trait HttpClientProvider: Send + Sync {
         timeout: Duration,
     ) -> std::result::Result<Client, Box<dyn std::error::Error + Send + Sync>>;
 
+    /// Return true if the HTTP client is configured and enabled.
     fn is_enabled(&self) -> bool;
 }
 
@@ -468,74 +481,6 @@ pub trait ProjectDetector: Send + Sync {
 
 #[linkme::distributed_slice]
 pub static PROJECT_DETECTORS: [ProjectDetectorEntry] = [..];
-
-// ============================================================================
-// Validation
-// ============================================================================
-
-/// Information about a validator available in a provider
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ValidatorInfo {
-    pub id: String,
-    pub name: String,
-    pub description: String,
-    pub rule_count: usize,
-    pub categories: Vec<String>,
-}
-
-/// Options for validation operations
-#[derive(Debug, Clone, Default)]
-pub struct ValidationOptions {
-    pub validators: Option<Vec<String>>,
-    pub severity_filter: Option<String>,
-    pub exclude_patterns: Option<Vec<String>>,
-    pub max_files: Option<usize>,
-    pub include_suggestions: bool,
-}
-
-/// Request for running one or more rule validators.
-#[derive(Debug, Clone)]
-pub struct RuleValidatorRequest {
-    pub workspace_root: std::path::PathBuf,
-    pub validator_names: Option<Vec<String>>,
-    pub severity_filter: Option<String>,
-    pub exclude_patterns: Option<Vec<String>>,
-}
-
-/// Port for a single rule validator
-pub trait RuleValidator: Send + Sync {
-    fn name(&self) -> &'static str;
-
-    /// Run the validator against the given request.
-    ///
-    /// # Errors
-    /// Returns an error if validation execution fails.
-    fn run(
-        &self,
-        request: &RuleValidatorRequest,
-    ) -> std::result::Result<ValidationReport, crate::error::Error>;
-}
-
-/// Pluggable Validation Provider
-#[async_trait]
-pub trait ValidationProvider: Send + Sync {
-    fn provider_name(&self) -> &str;
-    fn description(&self) -> &str;
-    fn list_validators(&self) -> Vec<ValidatorInfo>;
-    fn get_rules(&self, category: Option<&str>) -> Vec<RuleInfo>;
-    async fn validate(
-        &self,
-        workspace_root: &Path,
-        options: ValidationOptions,
-    ) -> Result<ValidationReport>;
-    async fn validate_file(
-        &self,
-        file_path: &Path,
-        options: ValidationOptions,
-    ) -> Result<ValidationReport>;
-    fn can_validate(&self, path: &Path) -> bool;
-    fn supported_extensions(&self) -> &[&str];
-}
 
 // ============================================================================
 // Version Control (VCS)

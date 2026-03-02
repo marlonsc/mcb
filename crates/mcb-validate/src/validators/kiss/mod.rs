@@ -17,8 +17,8 @@ use std::path::PathBuf;
 
 use crate::config::KISSRulesConfig;
 use crate::thresholds::thresholds;
-use crate::traits::violation::ViolationCategory;
 use crate::{Severity, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
 
 crate::define_validator! {
     name: "kiss",
@@ -167,3 +167,14 @@ impl KissValidator {
         self
     }
 }
+
+#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
+static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
+    mcb_domain::registry::validation::ValidatorEntry {
+        name: "kiss",
+        description: "Validates KISS principle (Keep It Simple, Stupid)",
+        build: |root| {
+            Ok(Box::new(KissValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
+    };

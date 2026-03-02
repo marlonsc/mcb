@@ -24,6 +24,18 @@
 //! - **No external dependencies** - only standard library and core traits
 //! - **Pure business logic** - no infrastructure or application concerns
 //!
+//! ## Focus: Architecture & Integration
+//!
+//! For developers (and agents) looking to integrate with MCB's dependency system:
+//!
+//! - **Static DI / Containerless Architecture (CA)**: See [`registry`] for the
+//!   `linkme`-based registration backbone. This is where providers are "linked" to the domain.
+//! - **Opaque DI Context**: See [`registry::ServiceResolutionContext`]. It carries
+//!   infrastructure dependencies (DB, Config) through the domain layer without creating
+//!   cyclic dependencies.
+//! - **Test Utilities**: See [`utils::tests`] for the centralized testing
+//!   scaffolding, including Golden Tests, Invariant Assertions, and DI-ready fixtures.
+//!
 //! ## Example
 //!
 //! ```

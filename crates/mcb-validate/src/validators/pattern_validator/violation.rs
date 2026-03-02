@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::traits::violation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 
 /// Pattern violation types
 #[derive(Debug, Clone, Serialize, Deserialize)]

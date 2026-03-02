@@ -1,6 +1,6 @@
 /// Golden tests: Git-aware indexing with .mcp-context.toml configuration
 /// Verifies multi-branch support, commit history, and configuration loading
-use crate::utils::test_fixtures::{
+use mcb_domain::utils::tests::fixtures::{
     create_test_mcp_server, golden_content_to_string, sample_codebase_path,
 };
 use mcb_server::args::{VcsAction, VcsArgs};

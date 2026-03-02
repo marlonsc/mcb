@@ -12,7 +12,7 @@ use crate::constants::ca::{
     CA_REPOSITORIES_DIR,
 };
 use crate::constants::common::STANDARD_SKIP_FILES;
-use crate::traits::violation::Severity;
+use mcb_domain::ports::validation::Severity;
 
 fn ca_violation(
     path: &Path,

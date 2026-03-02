@@ -42,20 +42,15 @@ fn make_observation(
 async fn setup_repo() -> TestResult<SeaOrmObservationRepository> {
     let db: DatabaseConnection = Database::connect("sqlite::memory:").await?;
 
-    let schema = [
-        "CREATE TABLE organizations (id TEXT PRIMARY KEY, name TEXT NOT NULL, slug TEXT NOT NULL UNIQUE, settings_json TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)",
-        "CREATE TABLE projects (id TEXT PRIMARY KEY, org_id TEXT NOT NULL, name TEXT NOT NULL, path TEXT NOT NULL, created_at INTEGER NOT NULL, updated_at INTEGER NOT NULL)",
-        "CREATE TABLE observations (id TEXT PRIMARY KEY, project_id TEXT NOT NULL, content TEXT NOT NULL, content_hash TEXT NOT NULL UNIQUE, tags TEXT, observation_type TEXT, metadata TEXT, created_at INTEGER NOT NULL, embedding_id TEXT)",
-        "CREATE TABLE session_summaries (id TEXT PRIMARY KEY, org_id TEXT, project_id TEXT NOT NULL, repo_id TEXT, session_id TEXT NOT NULL, topics TEXT, decisions TEXT, next_steps TEXT, key_files TEXT, origin_context TEXT, created_at INTEGER NOT NULL)",
-        "CREATE VIRTUAL TABLE observations_fts USING fts5(id UNINDEXED, content)",
-        "CREATE TRIGGER obs_ai AFTER INSERT ON observations BEGIN INSERT INTO observations_fts(rowid, id, content) VALUES (new.rowid, new.id, new.content); END;",
-        "CREATE TRIGGER obs_ad AFTER DELETE ON observations BEGIN DELETE FROM observations_fts WHERE rowid = old.rowid; END;",
-        "CREATE TRIGGER obs_au AFTER UPDATE ON observations BEGIN DELETE FROM observations_fts WHERE rowid = old.rowid; INSERT INTO observations_fts(rowid, id, content) VALUES (new.rowid, new.id, new.content); END;",
-    ];
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
-    for stmt in schema {
-        db.execute_unprepared(stmt).await?;
-    }
+    // Seed required parent data
+    db.execute_unprepared(
+        "INSERT INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES ('org-1', 'Test Org', 'test-org', '{}', 1, 1)",
+    ).await?;
+    db.execute_unprepared(
+        "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES ('proj-memory', 'org-1', 'Memory Project', '/tmp/proj', 1, 1)",
+    ).await?;
 
     Ok(SeaOrmObservationRepository::new(db))
 }

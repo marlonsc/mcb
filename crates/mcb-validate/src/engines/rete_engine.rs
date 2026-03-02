@@ -20,7 +20,7 @@ use crate::constants::rules::{
     DEFAULT_GRL_RULE_ID, DEFAULT_RETE_MESSAGE, YAML_FIELD_GRL, YAML_FIELD_RULE,
 };
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
-use crate::traits::violation::{Severity, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
 
 /// RETE Engine wrapper for rust-rule-engine library
 pub struct ReteEngine {

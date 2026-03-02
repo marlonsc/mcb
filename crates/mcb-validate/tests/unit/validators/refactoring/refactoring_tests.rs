@@ -6,8 +6,8 @@
 //! Note: `DuplicateDefinition` has no single line field; it references
 //! multiple files. We use line=0 to skip line check.
 
-use crate::utils::test_constants::*;
-use crate::utils::*;
+use mcb_domain::utils::test_constants::*;
+use mcb_domain::utils::*;
 use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────

@@ -1,4 +1,4 @@
-use crate::utils::test_fixtures::*;
+use mcb_domain::utils::tests::fixtures::*;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{PlanEntityAction, PlanEntityArgs, PlanEntityResource};
 use rmcp::handler::server::wrapper::Parameters;

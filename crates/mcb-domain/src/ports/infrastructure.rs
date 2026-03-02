@@ -153,6 +153,13 @@ pub enum LogLevel {
 
 /// Operation logger interface: one method for all levels, optional detail.
 pub trait OperationLogger: Send + Sync {
+    /// Logs a message with a specific level, context, and optional detail.
+    ///
+    /// # Parameters
+    /// - `level`: The severity level of the log message.
+    /// - `context`: The name of the module or component generating the log.
+    /// - `message`: The primary log message text.
+    /// - `detail`: An optional displayable value providing extra context (e.g., a struct).
     fn log(
         &self,
         level: LogLevel,
@@ -347,3 +354,77 @@ pub trait SyncCoordinator: Send + Sync {
 
 /// Shared sync coordinator for dependency injection
 pub type SharedSyncCoordinator = Arc<dyn SyncCoordinator>;
+
+// ============================================================================
+// Database Migrations
+// ============================================================================
+
+/// Domain port for database migration providers.
+///
+/// Implementations supply ordered migration objects as type-erased
+/// `Box<dyn Any + Send>`.  The concrete migration trait (e.g.
+/// `sea_orm_migration::MigrationTrait`) lives in the infrastructure layer;
+/// the domain remains free of ORM dependencies.
+#[async_trait::async_trait]
+pub trait MigrationProvider: Send + Sync {
+    /// Returns the ordered list of migrations as type-erased boxes.
+    ///
+    /// Each element is expected to be a `Box<dyn MigrationTrait>` from the
+    /// ORM framework used by the implementing provider.
+    fn migrations(&self) -> Vec<Box<dyn std::any::Any + Send>>;
+
+    /// Apply all pending migrations (up) to the given database connection.
+    ///
+    /// The `db` parameter is a type-erased database connection
+    /// (e.g. `DatabaseConnection` from SeaORM).
+    ///
+    /// `steps` limits how many pending migrations to apply; `None` applies all.
+    async fn migrate_up(
+        &self,
+        db: Box<dyn std::any::Any + Send + Sync>,
+        steps: Option<u32>,
+    ) -> crate::error::Result<()>;
+
+    /// Rollback applied migrations on the given database connection.
+    ///
+    /// `steps` limits how many migrations to rollback; `None` rolls back all.
+    async fn migrate_down(
+        &self,
+        db: Box<dyn std::any::Any + Send + Sync>,
+        steps: Option<u32>,
+    ) -> crate::error::Result<()>;
+}
+
+/// Shared migration provider for dependency injection.
+pub type SharedMigrationProvider = Arc<dyn MigrationProvider>;
+
+// ============================================================================
+// GraphQL Schema
+// ============================================================================
+
+/// Domain port for GraphQL schema providers.
+///
+/// Implementations build a GraphQL schema from the database connection
+/// and return it as a type-erased `Box<dyn Any + Send + Sync>`.
+/// The concrete schema type (e.g. `async_graphql::dynamic::Schema`) lives
+/// in the provider layer; the domain remains free of GraphQL dependencies.
+pub trait GraphQLSchemaProvider: Send + Sync {
+    /// Build a GraphQL schema using the given opaque database connection.
+    ///
+    /// # Arguments
+    /// * `db` - Database connection as `Box<dyn Any + Send + Sync>`
+    /// * `depth` - Optional query depth limit
+    /// * `complexity` - Optional query complexity limit
+    ///
+    /// # Errors
+    /// Returns an error if the schema build fails.
+    fn build_schema(
+        &self,
+        db: Box<dyn std::any::Any + Send + Sync>,
+        depth: Option<usize>,
+        complexity: Option<usize>,
+    ) -> crate::error::Result<Box<dyn std::any::Any + Send + Sync>>;
+}
+
+/// Shared GraphQL schema provider for dependency injection.
+pub type SharedGraphQLSchemaProvider = Arc<dyn GraphQLSchemaProvider>;

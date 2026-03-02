@@ -4,7 +4,7 @@
 //! Violation runtime types (field formatting, file path extraction) and declarative macros.
 //!
 //! - **Runtime**: `ExtractFilePath`, `violation_field_fmt` — used by `define_violations!` via `$crate::macros::*`.
-//! - **Declarative**: `naming` (`apply_ca_rule!`), `validators` (`mk_validators!`, `impl_validator!`, etc.),
+//! - **Declarative**: `naming` (`apply_ca_rule!`), `validators` (`impl_validator!`, etc.),
 //!   `violations` (`define_violations!`) — all exported at crate root via `#[macro_export]`.
 
 mod extract_file_path;

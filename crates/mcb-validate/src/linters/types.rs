@@ -12,8 +12,8 @@ use crate::constants::severities::{
     CATEGORY_PERFORMANCE, CATEGORY_PMAT, CATEGORY_REFACTORING, CATEGORY_SOLID, CATEGORY_TESTING,
     CATEGORY_WEB_FRAMEWORK, SEVERITY_ERROR, SEVERITY_INFO,
 };
-use crate::traits::violation::{Severity, Violation, ViolationCategory};
 use derive_more::Display;
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 
 /// Unified structure representing a code violation found by any linter.
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, Display)]

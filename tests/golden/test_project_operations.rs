@@ -1,6 +1,6 @@
 /// Golden tests: Project operations handler
 /// Verifies project handler routing, unsupported action errors, and input validation
-use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::utils::tests::fixtures::create_test_mcp_server;
 use mcb_server::args::{ProjectAction, ProjectArgs, ProjectResource};
 use rmcp::handler::server::wrapper::Parameters;
 

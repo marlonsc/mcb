@@ -8,6 +8,7 @@
 
 use std::path::Path;
 
+use crate::ValidationConfigExt;
 use crate::constants::common::{MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX};
 use crate::filters::LanguageId;
 use crate::run_context::{InventoryEntry, ValidationRunContext};

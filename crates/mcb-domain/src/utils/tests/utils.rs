@@ -331,6 +331,17 @@ pub fn create_test_api_key(user_id: &str, org_id: &str, name: &str) -> ApiKey {
 // Workspace / codebase helpers (migrated from mcb-server/tests/utils/test_fixtures)
 // ---------------------------------------------------------------------------
 
+/// Returns the path to the sample codebase fixture (workspace-relative).
+#[must_use]
+pub fn sample_codebase_path() -> std::path::PathBuf {
+    use std::path::Path;
+    Path::new(env!("CARGO_MANIFEST_DIR"))
+        .ancestors()
+        .nth(2)
+        .expect("workspace root not found")
+        .join("tests/fixtures/sample_codebase")
+}
+
 /// Create a temporary codebase directory with sample code files.
 ///
 /// Returns `(TempDir, PathBuf)` — keep `TempDir` alive for the test.

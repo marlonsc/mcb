@@ -149,7 +149,6 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 rstest = { workspace = true }
 mockall = { workspace = true }
 sea-orm = { workspace = true }
-sea-orm-migration = { workspace = true }
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
 
 [[test]]

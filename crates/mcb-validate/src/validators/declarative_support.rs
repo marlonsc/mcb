@@ -5,7 +5,7 @@ use derive_more::Display;
 use crate::config::FileConfig;
 use crate::filters::rule_filters::RuleFilterExecutor;
 use crate::rules::yaml_loader::ValidatedRule;
-use crate::traits::violation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 
 pub(crate) fn build_substitution_variables(workspace_root: &Path) -> serde_yaml::Value {
     let file_config = FileConfig::load(workspace_root);

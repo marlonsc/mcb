@@ -8,8 +8,8 @@ use std::path::{Path, PathBuf};
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
-use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
 
 crate::define_validator! {
     name: "ssot",

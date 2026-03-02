@@ -7,7 +7,7 @@ use mcb_server::handlers::{MemoryHandler, SessionHandler};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::{Value, json};
 
-use crate::utils::test_fixtures::{create_base_memory_args, create_test_mcb_state};
+use mcb_domain::utils::tests::fixtures::{create_base_memory_args, create_test_mcb_state};
 use mcb_domain::utils::tests::mcp_assertions::assert_error_shape;
 
 async fn memory_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {

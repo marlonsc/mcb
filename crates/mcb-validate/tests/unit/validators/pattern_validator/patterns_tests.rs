@@ -5,8 +5,8 @@
 //!
 //! Codes covered: PAT001 (`ConcreteTypeInDi`), PAT004 (`RawResultType`).
 
-use crate::utils::test_constants::*;
-use crate::utils::*;
+use mcb_domain::utils::test_constants::*;
+use mcb_domain::utils::*;
 use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────

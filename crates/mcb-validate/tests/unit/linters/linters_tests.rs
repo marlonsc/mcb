@@ -5,7 +5,7 @@
 use mcb_validate::linters::*;
 use rstest::rstest;
 
-use crate::utils::test_constants::*;
+use mcb_domain::utils::test_constants::*;
 
 #[rstest]
 fn linter_engine_creation() {

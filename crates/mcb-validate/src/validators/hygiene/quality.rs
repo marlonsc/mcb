@@ -9,6 +9,7 @@ use crate::{Result, Severity, ValidationConfig};
 use regex::Regex;
 
 use super::violation::HygieneViolation;
+use crate::ValidationConfigExt;
 
 struct QualityPatterns {
     mock_type: Regex,

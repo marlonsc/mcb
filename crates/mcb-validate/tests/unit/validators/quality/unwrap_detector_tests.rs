@@ -7,7 +7,7 @@ use mcb_validate::ast::UnwrapDetector;
 use rstest::rstest;
 use rstest::*;
 
-use crate::utils::test_constants::{EXPECT_METHOD, UNWRAP_METHOD};
+use mcb_domain::utils::test_constants::{EXPECT_METHOD, UNWRAP_METHOD};
 use mcb_domain::utils::tests::utils::TestResult;
 
 #[rstest]

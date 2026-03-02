@@ -170,3 +170,84 @@ pub fn list_database_providers() -> Vec<(&'static str, &'static str)> {
         .map(|entry| (entry.name, entry.description))
         .collect()
 }
+
+// ---------------------------------------------------------------------------
+// Database migration provider (linkme registry using MigrationProvider port)
+// ---------------------------------------------------------------------------
+
+/// Registry entry for a database migration provider.
+///
+/// Each provider registers a factory function that builds an
+/// `Arc<dyn MigrationProvider>`.  Domain consumers call
+/// [`resolve_migration_provider`] to resolve the first registered provider.
+pub struct MigrationProviderEntry {
+    /// Unique provider name (e.g. "seaorm").
+    pub name: &'static str,
+    /// Human-readable description.
+    pub description: &'static str,
+    /// Factory that builds a migration provider instance.
+    pub build: fn() -> Arc<dyn crate::ports::MigrationProvider>,
+}
+
+#[linkme::distributed_slice]
+/// Registered database migration providers.
+pub static MIGRATION_PROVIDERS: [MigrationProviderEntry] = [..];
+
+/// Resolve the first registered migration provider.
+///
+/// # Errors
+///
+/// Returns an error when no migration provider has been registered.
+pub fn resolve_migration_provider() -> crate::error::Result<Arc<dyn crate::ports::MigrationProvider>>
+{
+    if let Some(entry) = MIGRATION_PROVIDERS.iter().next() {
+        return Ok((entry.build)());
+    }
+    Err(crate::error::Error::configuration(
+        "No migration provider registered. Ensure mcb-providers is linked.",
+    ))
+}
+
+/// List all registered migration providers.
+#[must_use]
+pub fn list_migration_providers() -> Vec<(&'static str, &'static str)> {
+    MIGRATION_PROVIDERS
+        .iter()
+        .map(|entry| (entry.name, entry.description))
+        .collect()
+}
+
+/// Apply all pending migrations (up) using the DI-resolved provider.
+///
+/// The `db` parameter is a type-erased database connection
+/// (e.g. `Box<DatabaseConnection>` from SeaORM).
+///
+/// `steps` limits how many pending migrations to apply; `None` applies all.
+///
+/// # Errors
+///
+/// Returns an error when no migration provider has been registered or
+/// when the underlying migration fails.
+pub async fn migrate_up(
+    db: Box<dyn std::any::Any + Send + Sync>,
+    steps: Option<u32>,
+) -> crate::error::Result<()> {
+    let provider = resolve_migration_provider()?;
+    provider.migrate_up(db, steps).await
+}
+
+/// Rollback applied migrations using the DI-resolved provider.
+///
+/// `steps` limits how many migrations to rollback; `None` rolls back all.
+///
+/// # Errors
+///
+/// Returns an error when no migration provider has been registered or
+/// when the underlying rollback fails.
+pub async fn migrate_down(
+    db: Box<dyn std::any::Any + Send + Sync>,
+    steps: Option<u32>,
+) -> crate::error::Result<()> {
+    let provider = resolve_migration_provider()?;
+    provider.migrate_down(db, steps).await
+}

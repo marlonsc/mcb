@@ -8,7 +8,7 @@ use std::path::PathBuf;
 use derive_more::Display;
 
 use super::MetricType;
-use crate::traits::violation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 
 /// A metric violation when a threshold is exceeded
 #[derive(Debug, Clone, Display)]

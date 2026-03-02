@@ -7,8 +7,8 @@ use regex::Regex;
 
 use super::super::violation::ImplementationViolation;
 use crate::Result;
-use crate::traits::violation::Severity;
 use crate::utils::source::{compile_pattern_pairs, source_lines, track_fn_name};
+use mcb_domain::ports::validation::Severity;
 
 /// Detect empty method bodies
 pub fn validate_empty_methods(

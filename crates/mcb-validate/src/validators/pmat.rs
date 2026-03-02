@@ -21,7 +21,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::constants::defaults::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
-use crate::traits::violation::{Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Violation, ViolationCategory};
 use mcb_domain::ports::{AnalysisFinding, CodeAnalyzer, resolve_code_analyzer};
 
 use crate::define_violations;
@@ -287,7 +287,7 @@ impl PmatValidator {
     }
 }
 
-impl crate::traits::validator::Validator for PmatValidator {
+impl mcb_domain::ports::validation::Validator for PmatValidator {
     fn name(&self) -> &'static str {
         "pmat"
     }
@@ -296,7 +296,10 @@ impl crate::traits::validator::Validator for PmatValidator {
         "Native PMAT-style analysis for cyclomatic complexity, dead code detection, and TDG scoring"
     }
 
-    fn validate(&self, _config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
+    fn validate(
+        &self,
+        _config: &ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
         let violations = self.validate_all()?;
         Ok(violations
             .into_iter()

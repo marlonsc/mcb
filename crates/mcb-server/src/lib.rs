@@ -22,6 +22,7 @@ pub mod constants;
 pub mod controllers;
 pub mod error_mapping;
 pub mod formatter;
+pub mod graphql_store;
 pub mod handlers;
 pub mod hooks;
 

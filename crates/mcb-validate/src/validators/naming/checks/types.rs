@@ -7,8 +7,8 @@ use rust_code_analysis::SpaceKind;
 
 use super::super::violation::NamingViolation;
 use crate::ast::rca_helpers;
-use crate::traits::violation::Severity;
 use crate::utils::naming::is_camel_case;
+use mcb_domain::ports::validation::Severity;
 
 /// Validates that struct, enum, and trait names follow `CamelCase` convention using RCA AST.
 pub fn validate_type_names(path: &Path, content: &str) -> Vec<NamingViolation> {

@@ -6,15 +6,13 @@
 use mcb_domain::ports::DashboardQueryPort;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_providers::database::seaorm::dashboard::SeaOrmDashboardAdapter;
-use mcb_providers::database::seaorm::migration::Migrator;
 use rstest::rstest;
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection};
-use sea_orm_migration::MigratorTrait;
 
 /// Setup helper — create in-memory `SQLite` with migrations.
 async fn setup() -> TestResult<DatabaseConnection> {
     let db = Database::connect("sqlite::memory:").await?;
-    Migrator::up(&db, None).await?;
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     Ok(db)
 }
 

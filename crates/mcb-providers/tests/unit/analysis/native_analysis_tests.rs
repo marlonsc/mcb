@@ -28,7 +28,7 @@ mod tests {
     #[test]
     fn resolve_native_regex_by_name() {
         let result = resolve_code_analyzer("native-regex");
-        assert!(result.is_ok(), "Failed to resolve native-regex: {result:?}");
+        assert!(result.is_ok(), "Failed to resolve native-regex analyzer");
     }
 
     #[rstest]

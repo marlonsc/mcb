@@ -7,8 +7,8 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use serde_json::json;
 
-use crate::utils::test_fixtures::TEST_SESSION_ID;
-use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::utils::tests::fixtures::TEST_SESSION_ID;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 
 async fn create_handler() -> Option<(AgentHandler, tempfile::TempDir)> {
     let (state, temp_dir) = create_test_mcb_state().await?;

@@ -13,7 +13,7 @@ use rstest::rstest;
 use axum::http::StatusCode;
 use mcb_server::transport::types::McpRequest;
 
-use crate::utils::http_mcp::{McpTestContext, post_mcp};
+use mcb_domain::utils::http_mcp::{McpTestContext, post_mcp};
 
 // =============================================================================
 // PROTOCOL VERSION & INITIALIZE TESTS

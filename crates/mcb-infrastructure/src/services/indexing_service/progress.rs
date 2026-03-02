@@ -8,21 +8,6 @@ use std::path::Path;
 use mcb_domain::ports::IndexingResult;
 use mcb_domain::value_objects::OperationId;
 
-/// Accumulator for indexing progress and operational metrics.
-///
-/// Tracks the state of an active indexing operation, including success counts,
-/// skipped files, and encountered errors for final reporting.
-pub struct IndexingProgress {
-    /// Number of files successfully processed.
-    pub files_processed: usize,
-    /// Total number of chunks created across all processed files.
-    pub chunks_created: usize,
-    /// Number of files skipped (unchanged since last indexing).
-    pub files_skipped: usize,
-    /// Errors encountered during indexing.
-    pub errors: Vec<String>,
-}
-
 impl IndexingProgress {
     /// Create a new empty progress tracker.
     #[must_use]

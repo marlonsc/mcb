@@ -7,8 +7,8 @@
 //! PERF003 (`ArcMutexOveruse`), PERF004 (`InefficientIterator`),
 //! PERF005 (`InefficientString`).
 
-use crate::utils::test_constants::*;
-use crate::utils::*;
+use mcb_domain::utils::test_constants::*;
+use mcb_domain::utils::*;
 use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────

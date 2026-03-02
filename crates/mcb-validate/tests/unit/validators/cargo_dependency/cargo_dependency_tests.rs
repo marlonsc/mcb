@@ -9,8 +9,8 @@ use mcb_validate::engines::hybrid_engine::RuleEngine;
 use mcb_validate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
 use serde_json::json;
 
-use crate::utils::test_constants::*;
-use crate::utils::*;
+use mcb_domain::utils::test_constants::*;
+use mcb_domain::utils::*;
 use rstest::rstest;
 
 #[rstest]

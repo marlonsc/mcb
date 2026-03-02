@@ -125,3 +125,39 @@ pub fn assert_tool_error(
         }
     }
 }
+// ---------------------------------------------------------------------------
+// Golden test compatibility helpers
+// ---------------------------------------------------------------------------
+
+/// Extract all text content blocks from a tool result, joined by newlines.
+///
+/// Aliased as `golden_content_to_string` for backward compatibility with E2E tests.
+#[must_use]
+pub fn golden_content_to_string(result: &CallToolResult) -> String {
+    extract_text(result)
+}
+
+/// Parse "**Results found:** N" and return N.
+#[must_use]
+pub fn golden_parse_results_found(text: &str) -> Option<usize> {
+    text.lines()
+        .find(|l| l.contains("Results found"))
+        .and_then(|l| {
+            l.split(':')
+                .nth(1)?
+                .trim()
+                .chars()
+                .take_while(|c| c.is_ascii_digit())
+                .collect::<String>()
+                .parse::<usize>()
+                .ok()
+        })
+}
+
+/// Count lines starting with "📁" or "📄" tokens (rough approximation of results).
+#[must_use]
+pub fn golden_count_result_entries(text: &str) -> usize {
+    text.lines()
+        .filter(|l| l.contains('📁') || l.contains('📄'))
+        .count()
+}

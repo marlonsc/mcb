@@ -14,8 +14,8 @@ use crate::constants::documentation::{
 use crate::define_violations;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_crate_file;
-use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
 
 define_violations! {
     dynamic_severity,

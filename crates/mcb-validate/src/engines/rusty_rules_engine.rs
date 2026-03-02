@@ -27,7 +27,7 @@ use crate::constants::rules::{
 };
 use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO};
 use crate::engines::hybrid_engine::RuleViolation;
-use crate::traits::violation::{Severity, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
 
 /// Wrapper for rusty-rules engine
 pub struct RustyRulesEngineWrapper {

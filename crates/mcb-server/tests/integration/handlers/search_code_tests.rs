@@ -7,7 +7,7 @@ use mcb_server::args::{SearchArgs, SearchResource};
 use mcb_server::handlers::SearchHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 use rstest::rstest;
 
 /// Resolve hybrid search via domain registry instead of direct infra constructor

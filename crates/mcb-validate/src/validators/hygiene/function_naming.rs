@@ -7,6 +7,7 @@ use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
 
 use super::violation::HygieneViolation;
+use crate::ValidationConfigExt;
 
 const SMOKE_TEST_PATTERNS: [&str; 5] = [
     "_trait_object",

@@ -6,6 +6,7 @@ use rust_code_analysis::SpaceKind;
 use crate::Result;
 use crate::Severity;
 use crate::ValidationConfig;
+use crate::ValidationConfigExt;
 use crate::ast::rca_helpers;
 use crate::constants::solid::MAX_UNRELATED_STRUCTS_PER_FILE;
 use crate::filters::LanguageId;

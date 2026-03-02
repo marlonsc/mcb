@@ -30,6 +30,8 @@ mod providers;
 mod repositories;
 /// Application service ports
 mod services;
+/// Validation abstractions (Validator, Violation, Severity, LanguageId, ValidationConfig)
+pub mod validation;
 
 // ============================================================================
 // Canonical re-exports — the ONE import surface for all port traits/types.
@@ -47,8 +49,9 @@ pub use admin::{
 // --- Infrastructure ---
 pub use infrastructure::{
     DependencyHealth, DependencyHealthCheck, DomainEventStream, EventBusProvider,
-    ExtendedHealthResponse, LifecycleManaged, LogLevel, OperationLogger, PortServiceState,
-    ProviderContext, ProviderHealthStatus, ProviderRouter, SharedSyncCoordinator,
+    ExtendedHealthResponse, GraphQLSchemaProvider, LifecycleManaged, LogLevel, MigrationProvider,
+    OperationLogger, PortServiceState, ProviderContext, ProviderHealthStatus, ProviderRouter,
+    SharedGraphQLSchemaProvider, SharedMigrationProvider, SharedSyncCoordinator,
     ShutdownCoordinator, SnapshotProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult,
 };
 
@@ -58,8 +61,7 @@ pub use providers::{
     EmbeddingProvider, EncryptedData, HttpClientConfig, HttpClientProvider, HybridSearchProvider,
     HybridSearchResult, LanguageChunkingProvider, MetricLabels, MetricsError, MetricsProvider,
     MetricsResult, PROJECT_DETECTORS, ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
-    ProviderConfigManagerInterface, RuleValidator, RuleValidatorRequest, ValidationOptions,
-    ValidationProvider, ValidatorInfo, VcsProvider, VectorStoreAdmin, VectorStoreBrowser,
+    ProviderConfigManagerInterface, VcsProvider, VectorStoreAdmin, VectorStoreBrowser,
     VectorStoreProvider, list_code_analyzers, resolve_code_analyzer, resolve_default_code_analyzer,
 };
 // --- Repositories ---
@@ -84,4 +86,10 @@ pub use services::{
     JobResult, JobStatus, JobType, MemoryServiceInterface, ProjectDetectorService, RuleInfo,
     SearchFilters, SearchServiceInterface, ValidationReport, ValidationServiceInterface,
     ViolationEntry,
+};
+
+// --- Validation abstractions ---
+pub use validation::{
+    CheckFn, LanguageId, NamedCheck, Severity, ValidationConfig, Validator, ValidatorError,
+    ValidatorResult, Violation, ViolationCategory, run_checks,
 };

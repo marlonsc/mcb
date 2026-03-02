@@ -6,11 +6,11 @@
 use mcb_validate::{QualityValidator, QualityViolation};
 use rstest::rstest;
 
-use crate::utils::test_constants::{
+use mcb_domain::utils::test_constants::{
     DOMAIN_CRATE, FILE_SIZE_LOW_THRESHOLD, FIXTURE_DOMAIN_SERVICE_PATH,
     FIXTURE_SERVER_HANDLER_PATH, INFRA_CRATE, LIB_RS, SERVER_CRATE, TEST_CRATE,
 };
-use crate::utils::*;
+use mcb_domain::utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions

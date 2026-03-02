@@ -31,16 +31,13 @@ use mcb_domain::ports::{
     LanguageChunkingProvider,
 };
 
-mod deps;
 mod discovery;
 mod interface;
 mod processing;
 mod progress;
 mod registry;
 
-pub use deps::{IndexingServiceDeps, IndexingServiceWithHashDeps};
 pub use processing::*;
-pub use progress::IndexingProgress;
 
 /// Indexing service implementation - orchestrates file discovery and chunking.
 ///

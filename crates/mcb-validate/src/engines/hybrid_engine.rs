@@ -18,7 +18,7 @@ use super::router::{RoutedEngine, RuleEngineRouter};
 use super::validator_engine::ValidatorEngine;
 use crate::Result;
 use crate::ValidationConfig;
-use crate::traits::violation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 
 /// Types of rule engines supported
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]

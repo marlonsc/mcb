@@ -12,7 +12,7 @@ use mcb_server::tools::RuntimeDefaults;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
-use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 use mcb_domain::utils::tests::mcp_assertions::error_text;
 
 /// Resolve VCS provider via domain registry

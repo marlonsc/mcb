@@ -7,7 +7,7 @@ use mcb_validate::engines::{RoutedEngine, RuleEngineRouter};
 use rstest::rstest;
 use serde_json::json;
 
-use crate::utils::test_constants::*;
+use mcb_domain::utils::test_constants::*;
 
 #[rstest]
 #[case(

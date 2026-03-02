@@ -3,8 +3,8 @@ use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
-use crate::utils::test_fixtures::create_temp_codebase;
-use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::utils::tests::fixtures::create_temp_codebase;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 
 #[rstest]
 #[case(true, None, Some("test"), true)]

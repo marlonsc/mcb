@@ -56,7 +56,7 @@ impl QualityValidator {
     }
 }
 
-impl crate::traits::validator::Validator for QualityValidator {
+impl mcb_domain::ports::validation::Validator for QualityValidator {
     fn name(&self) -> &'static str {
         "quality"
     }
@@ -68,36 +68,38 @@ impl crate::traits::validator::Validator for QualityValidator {
     fn checks<'a>(
         &'a self,
         _config: &'a crate::ValidationConfig,
-    ) -> crate::Result<Vec<crate::traits::validator::NamedCheck<'a>>> {
+    ) -> mcb_domain::ports::validation::ValidatorResult<
+        Vec<mcb_domain::ports::validation::NamedCheck<'a>>,
+    > {
         Ok(vec![
-            crate::traits::validator::NamedCheck::new("unwrap", move || {
+            mcb_domain::ports::validation::NamedCheck::new("unwrap", move || {
                 Ok(unwrap::validate(self)?
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
                     .collect())
             }),
-            crate::traits::validator::NamedCheck::new("panic", move || {
+            mcb_domain::ports::validation::NamedCheck::new("panic", move || {
                 Ok(panic::validate(self)?
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
                     .collect())
             }),
-            crate::traits::validator::NamedCheck::new("metrics", move || {
+            mcb_domain::ports::validation::NamedCheck::new("metrics", move || {
                 Ok(metrics::validate(self)?
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
                     .collect())
             }),
-            crate::traits::validator::NamedCheck::new("comments", move || {
+            mcb_domain::ports::validation::NamedCheck::new("comments", move || {
                 Ok(comments::validate(self)?
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
                     .collect())
             }),
-            crate::traits::validator::NamedCheck::new("dead_code", move || {
+            mcb_domain::ports::validation::NamedCheck::new("dead_code", move || {
                 Ok(dead_code::validate(self)?
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
                     .collect())
             }),
         ])

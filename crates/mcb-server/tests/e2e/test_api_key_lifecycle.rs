@@ -1,5 +1,5 @@
-use crate::utils::test_fixtures::{create_test_mcp_server, golden_content_to_string};
 use mcb_domain::entities::ApiKey;
+use mcb_domain::utils::tests::fixtures::{create_test_mcp_server, golden_content_to_string};
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::utils::tests::utils::{
     create_test_api_key, create_test_organization, create_test_user_with,

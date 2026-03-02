@@ -1,12 +1,16 @@
 use std::collections::HashMap;
 
+/// Configuration for indexing operations providers.
 #[derive(Debug, Clone, Default)]
 pub struct IndexingOperationsProviderConfig {
+    /// Provider implementation name.
     pub provider: String,
+    /// Extra configuration parameters.
     pub extra: HashMap<String, String>,
 }
 
 impl IndexingOperationsProviderConfig {
+    /// Create a new configuration for the given provider.
     pub fn new(provider: impl Into<String>) -> Self {
         Self {
             provider: provider.into(),
@@ -24,13 +28,17 @@ crate::impl_registry!(
     list_fn: list_indexing_operations_providers
 );
 
+/// Configuration for validation operations providers.
 #[derive(Debug, Clone, Default)]
 pub struct ValidationOperationsProviderConfig {
+    /// Provider implementation name.
     pub provider: String,
+    /// Extra configuration parameters.
     pub extra: HashMap<String, String>,
 }
 
 impl ValidationOperationsProviderConfig {
+    /// Create a new configuration for the given provider.
     pub fn new(provider: impl Into<String>) -> Self {
         Self {
             provider: provider.into(),

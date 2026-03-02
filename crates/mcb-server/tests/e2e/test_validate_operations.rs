@@ -1,4 +1,4 @@
-use crate::utils::test_fixtures::{create_test_mcp_server, sample_codebase_path};
+use mcb_domain::utils::tests::fixtures::{create_test_mcp_server, sample_codebase_path};
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{ValidateAction, ValidateArgs, ValidateScope};
 use rmcp::handler::server::wrapper::Parameters;

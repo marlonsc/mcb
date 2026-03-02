@@ -3,10 +3,10 @@
 //! Validates `SolidValidator` against fixture crates with precise
 //! file + line + violation-type assertions.
 
-use crate::utils::test_constants::{
+use mcb_domain::utils::test_constants::{
     DOMAIN_CRATE, FIXTURE_DOMAIN_SERVICE_PATH, INFRA_CRATE, SERVER_CRATE, TEST_CRATE,
 };
-use crate::utils::*;
+use mcb_domain::utils::*;
 use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────

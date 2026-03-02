@@ -10,8 +10,8 @@ use std::collections::HashMap;
 use mcb_validate::engines::expression_engine::ExpressionEngine;
 use rstest::*;
 
-use crate::utils::create_rule_context_with_files;
-use crate::utils::test_constants::{SNIPPET_LIB_RS, SNIPPET_MAIN_RS};
+use mcb_domain::utils::create_rule_context_with_files;
+use mcb_domain::utils::test_constants::{SNIPPET_LIB_RS, SNIPPET_MAIN_RS};
 
 #[fixture]
 fn expression_context() -> mcb_validate::engines::hybrid_engine::RuleContext {

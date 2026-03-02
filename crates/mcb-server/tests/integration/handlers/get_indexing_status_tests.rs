@@ -2,7 +2,7 @@ use mcb_server::args::{IndexAction, IndexArgs};
 use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 use rstest::rstest;
 
 #[rstest]

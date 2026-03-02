@@ -15,6 +15,7 @@ use super::checks::{
     validate_module_name, validate_type_names,
 };
 use super::violation::NamingViolation;
+use crate::ValidationConfigExt;
 
 /// Validates naming conventions across Rust code.
 ///
@@ -203,7 +204,7 @@ impl NamingValidator {
     }
 }
 
-impl crate::traits::validator::Validator for NamingValidator {
+impl mcb_domain::ports::validation::Validator for NamingValidator {
     fn name(&self) -> &'static str {
         "naming"
     }
@@ -215,52 +216,54 @@ impl crate::traits::validator::Validator for NamingValidator {
     fn checks<'a>(
         &'a self,
         _config: &'a crate::ValidationConfig,
-    ) -> crate::Result<Vec<crate::traits::validator::NamedCheck<'a>>> {
+    ) -> mcb_domain::ports::validation::ValidatorResult<
+        Vec<mcb_domain::ports::validation::NamedCheck<'a>>,
+    > {
         if !self.rules.enabled {
             mcb_domain::debug!("naming", "Naming validator disabled, skipping");
             return Ok(Vec::new());
         }
         Ok(vec![
-            crate::traits::validator::NamedCheck::new("type_names", move || {
+            mcb_domain::ports::validation::NamedCheck::new("type_names", move || {
                 Ok(self
                     .run_type_name_check()?
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
                     .collect())
             }),
-            crate::traits::validator::NamedCheck::new("function_names", move || {
+            mcb_domain::ports::validation::NamedCheck::new("function_names", move || {
                 Ok(self
                     .run_function_name_check()?
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
                     .collect())
             }),
-            crate::traits::validator::NamedCheck::new("constant_names", move || {
+            mcb_domain::ports::validation::NamedCheck::new("constant_names", move || {
                 Ok(self
                     .run_constant_name_check()?
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
                     .collect())
             }),
-            crate::traits::validator::NamedCheck::new("module_names", move || {
+            mcb_domain::ports::validation::NamedCheck::new("module_names", move || {
                 Ok(self
                     .run_module_name_check()?
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
                     .collect())
             }),
-            crate::traits::validator::NamedCheck::new("file_suffix", move || {
+            mcb_domain::ports::validation::NamedCheck::new("file_suffix", move || {
                 Ok(self
                     .run_file_suffix_check()?
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
                     .collect())
             }),
-            crate::traits::validator::NamedCheck::new("ca_naming", move || {
+            mcb_domain::ports::validation::NamedCheck::new("ca_naming", move || {
                 Ok(self
                     .run_ca_naming_check()?
                     .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
                     .collect())
             }),
         ])

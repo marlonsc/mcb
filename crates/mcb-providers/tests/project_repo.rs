@@ -5,11 +5,9 @@ use mcb_domain::entities::project::{
 };
 use mcb_domain::ports::ProjectRepository;
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::project::SeaOrmProjectRepository;
 use rstest::rstest;
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection};
-use sea_orm_migration::MigratorTrait;
 
 const ORG_ID: &str = "org-test";
 const PROJECT_ID: &str = "proj-1";
@@ -17,7 +15,7 @@ const USER_ID: &str = "user-1";
 
 async fn setup() -> TestResult<(DatabaseConnection, SeaOrmProjectRepository)> {
     let db = Database::connect("sqlite::memory:").await?;
-    Migrator::up(&db, None).await?;
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
     db.execute_unprepared(
         "INSERT INTO organizations (id, name, slug, settings_json, created_at, updated_at) VALUES ('org-test', 'Org Test', 'org-test', '{}', 1, 1)",

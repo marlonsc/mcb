@@ -228,18 +228,18 @@ macro_rules! define_violations {
             ),* $(,)?
         }
     ) => {
-        impl $crate::traits::violation::Violation for $name {
+        impl $crate::Violation for $name {
             fn id(&self) -> &str {
                 match self {
                     $( Self::$variant { .. } => $id ),*
                 }
             }
 
-            fn category(&self) -> $crate::traits::violation::ViolationCategory {
+            fn category(&self) -> $crate::ViolationCategory {
                 $category
             }
 
-            fn severity(&self) -> $crate::traits::violation::Severity {
+            fn severity(&self) -> $crate::Severity {
                 match self {
                     $( Self::$variant { severity, .. } => *severity ),*
                 }
@@ -280,20 +280,20 @@ macro_rules! define_violations {
             ),* $(,)?
         }
     ) => {
-        impl $crate::traits::violation::Violation for $name {
+        impl $crate::Violation for $name {
             fn id(&self) -> &str {
                 match self {
                     $( Self::$variant { .. } => $id ),*
                 }
             }
 
-            fn category(&self) -> $crate::traits::violation::ViolationCategory {
+            fn category(&self) -> $crate::ViolationCategory {
                 $category
             }
 
-            fn severity(&self) -> $crate::traits::violation::Severity {
+            fn severity(&self) -> $crate::Severity {
                 match self {
-                    $( Self::$variant { .. } => $crate::traits::violation::Severity::$severity ),*
+                    $( Self::$variant { .. } => $crate::Severity::$severity ),*
                 }
             }
 

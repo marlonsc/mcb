@@ -8,7 +8,7 @@ use mcb_server::McpServer;
 use mcb_server::tools::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use rmcp::model::CallToolRequestParams;
 
-use crate::utils::http_mcp::{
+use mcb_domain::utils::http_mcp::{
     McpTestContext, post_mcp_str, tools_call_request, tools_list_request,
 };
 

@@ -20,12 +20,12 @@ use crate::metrics::{MetricThresholds, MetricViolation, RcaAnalyzer};
 use crate::pattern_registry::compile_regex;
 use crate::rules::yaml_loader::{ValidatedRule, YamlRuleLoader};
 use crate::scan::for_each_scan_file;
-use crate::traits::validator::Validator;
-use crate::traits::violation::Violation;
 use crate::validators::declarative_support::{
     PatternMatchViolation, build_substitution_variables, parse_category, parse_severity,
     validate_path_rules,
 };
+use mcb_domain::ports::validation::Validator;
+use mcb_domain::ports::validation::Violation;
 
 /// Executes embedded YAML declarative rules against the workspace.
 ///
@@ -276,7 +276,7 @@ impl DeclarativeValidator {
         &self,
         rules: &[ValidatedRule],
         files: &[PathBuf],
-    ) -> crate::Result<Vec<Box<dyn Violation>>> {
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
         let ast_rules: Vec<&ValidatedRule> = rules
             .iter()
             .filter(|r| r.enabled && (!r.selectors.is_empty() || r.ast_query.is_some()))
@@ -490,7 +490,10 @@ impl Validator for DeclarativeValidator {
         true
     }
 
-    fn validate(&self, config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
+    fn validate(
+        &self,
+        config: &ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
         let rules = self.load_rules()?;
         let enabled_count = rules.iter().filter(|r| r.enabled).count();
         mcb_domain::debug!(
@@ -556,3 +559,14 @@ impl Validator for DeclarativeValidator {
         Ok(violations)
     }
 }
+
+#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
+static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
+    mcb_domain::registry::validation::ValidatorEntry {
+        name: "declarative_rules",
+        description: "Executes embedded YAML declarative rules",
+        build: |root| {
+            Ok(Box::new(DeclarativeValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
+    };

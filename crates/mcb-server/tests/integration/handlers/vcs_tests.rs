@@ -6,7 +6,7 @@ use mcb_server::handlers::VcsHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::*;
 
-use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 
 async fn create_handler() -> Option<(VcsHandler, tempfile::TempDir)> {
     let (state, temp_dir) = create_test_mcb_state().await?;

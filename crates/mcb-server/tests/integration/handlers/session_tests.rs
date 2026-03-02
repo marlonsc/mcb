@@ -4,8 +4,8 @@ use mcb_server::handlers::SessionHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::utils::test_fixtures::TEST_PROJECT_ID;
-use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::utils::tests::fixtures::TEST_PROJECT_ID;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 use mcb_domain::utils::text::extract_text;
 use rstest::rstest;
 

@@ -12,9 +12,13 @@ use crate::ports::{EmbeddingProvider, EventBusProvider, VectorStoreProvider};
 
 /// Context passed to service factory functions during DI resolution.
 ///
-/// Defined in mcb-domain so **every** layer (domain, infrastructure, server,
-/// test utilities) can create and pass this type through the registry without
-/// importing concrete infrastructure crates.
+/// This structure implements the **Opaque DI** pattern, allowing `mcb-domain` to
+/// define the required dependencies for service instantiation without
+/// depending on the concrete types defined in `mcb-infrastructure` or `mcb-server`.
+///
+/// Each layer can create and pass this context through the registry, while
+/// specialized service builders "downcast" the internal `Arc<dyn Any>` types
+/// to the concrete implementations they require (such as `DatabaseConnection`).
 pub struct ServiceResolutionContext {
     /// Active database connection (typically `sea_orm::DatabaseConnection`).
     /// Infrastructure service builders downcast to the concrete type.

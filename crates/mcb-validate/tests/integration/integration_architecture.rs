@@ -24,7 +24,7 @@ mod architecture_integration_tests {
     use std::io::Write;
     use std::path::{Path, PathBuf};
 
-    use crate::utils::run_named_validator;
+    use mcb_domain::utils::run_named_validator;
     use mcb_validate::ValidationConfig;
     use mcb_validate::Validator;
     use mcb_validate::config::NamingRulesConfig;

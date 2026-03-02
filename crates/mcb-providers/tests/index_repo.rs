@@ -10,17 +10,15 @@ use mcb_domain::ports::IndexingOperationStatus;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::value_objects::CollectionId;
 use mcb_providers::database::seaorm::entities::{organization, project};
-use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::SeaOrmIndexRepository;
 use rstest::rstest;
 use sea_orm::{ActiveModelTrait, ActiveValue::Set, ConnectionTrait, Database, DatabaseConnection};
-use sea_orm_migration::MigratorTrait;
 
 const PROJECT_ID: &str = "proj-idx-001";
 
 async fn setup_db() -> TestResult<Arc<DatabaseConnection>> {
     let db = Database::connect("sqlite::memory:").await?;
-    Migrator::up(&db, None).await?;
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     Ok(Arc::new(db))
 }
 

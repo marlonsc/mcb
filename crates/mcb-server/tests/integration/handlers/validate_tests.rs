@@ -7,7 +7,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use tempfile::TempDir;
 
-use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 
 fn create_temp_file() -> Result<(TempDir, PathBuf), std::io::Error> {
     let temp_dir = TempDir::new()?;

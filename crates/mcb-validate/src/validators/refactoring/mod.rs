@@ -19,3 +19,14 @@ mod violation;
 
 pub use self::validator::RefactoringValidator;
 pub use self::violation::RefactoringViolation;
+
+#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
+static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
+    mcb_domain::registry::validation::ValidatorEntry {
+        name: "refactoring",
+        description: "Validates refactoring completeness (duplicate definitions, missing tests, stale references)",
+        build: |root| {
+            Ok(Box::new(RefactoringValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
+    };

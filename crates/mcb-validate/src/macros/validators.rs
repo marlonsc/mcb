@@ -5,18 +5,6 @@
 //!
 //! Used by `validators/` for building registries and implementing the `Validator` trait.
 
-/// Build a `ValidatorRegistry` from validator types that expose `new(&Path)`.
-#[macro_export]
-macro_rules! mk_validators {
-    ($root:expr; $( $validator:path ),+ $(,)?) => {{
-        let mut registry = $crate::traits::validator::ValidatorRegistry::new();
-        $(
-            registry = registry.with_validator(Box::new(<$validator>::new($root)));
-        )+
-        registry
-    }};
-}
-
 /// Generates `new(workspace_root)` and `with_config(config)` for simple validators
 /// that store only a `config: ValidationConfig` field.
 ///
@@ -84,7 +72,7 @@ macro_rules! impl_config_only_validator_new {
 #[macro_export]
 macro_rules! impl_validator {
     ($validator_ty:ty, $name:literal, $desc:literal) => {
-        impl $crate::traits::validator::Validator for $validator_ty {
+        impl $crate::Validator for $validator_ty {
             fn name(&self) -> &'static str {
                 $name
             }
@@ -96,17 +84,14 @@ macro_rules! impl_validator {
             fn checks<'a>(
                 &'a self,
                 _config: &'a $crate::ValidationConfig,
-            ) -> $crate::Result<Vec<$crate::traits::validator::NamedCheck<'a>>> {
-                Ok(vec![$crate::traits::validator::NamedCheck::new(
-                    "validate_all",
-                    move || {
-                        let violations = self.validate_all()?;
-                        Ok(violations
-                            .into_iter()
-                            .map(|v| Box::new(v) as Box<dyn $crate::traits::violation::Violation>)
-                            .collect())
-                    },
-                )])
+            ) -> $crate::ValidatorResult<Vec<$crate::NamedCheck<'a>>> {
+                Ok(vec![$crate::NamedCheck::new("validate_all", move || {
+                    let violations = self.validate_all()?;
+                    Ok(violations
+                        .into_iter()
+                        .map(|v| Box::new(v) as Box<dyn $crate::Violation>)
+                        .collect())
+                })])
             }
         }
     };
@@ -141,7 +126,7 @@ macro_rules! create_validator {
             }
         }
 
-        impl $crate::traits::validator::Validator for $name {
+        impl $crate::Validator for $name {
             fn name(&self) -> &'static str {
                 $id
             }
@@ -153,10 +138,10 @@ macro_rules! create_validator {
             fn checks<'a>(
                 &'a self,
                 _config: &'a $crate::ValidationConfig,
-            ) -> $crate::Result<Vec<$crate::traits::validator::NamedCheck<'a>>> {
+            ) -> $crate::ValidatorResult<Vec<$crate::NamedCheck<'a>>> {
                 Ok(vec![
                     $(
-                        $crate::traits::validator::NamedCheck::new(
+                        $crate::NamedCheck::new(
                             stringify!($func),
                             move || {
                                 let violations = $func(&self.config)?;
@@ -164,7 +149,7 @@ macro_rules! create_validator {
                                     .into_iter()
                                     .map(|v| {
                                         Box::new(v)
-                                            as Box<dyn $crate::traits::violation::Violation>
+                                            as Box<dyn $crate::Violation>
                                     })
                                     .collect())
                             },
@@ -256,7 +241,7 @@ macro_rules! define_validator {
             }
         }
 
-        impl $crate::traits::validator::Validator for $validator_name {
+        impl $crate::Validator for $validator_name {
             fn name(&self) -> &'static str {
                 $name_str
             }
@@ -268,7 +253,7 @@ macro_rules! define_validator {
             fn checks<'a>(
                 &'a self,
                 _config: &'a $crate::ValidationConfig,
-            ) -> $crate::Result<Vec<$crate::traits::validator::NamedCheck<'a>>> {
+            ) -> $crate::ValidatorResult<Vec<$crate::NamedCheck<'a>>> {
                 $(
                     if !(($enabled_expr)(self)) {
                         return Ok(Vec::new());
@@ -276,13 +261,13 @@ macro_rules! define_validator {
                 )?
                 Ok(vec![
                     $(
-                        $crate::traits::validator::NamedCheck::new(
+                        $crate::NamedCheck::new(
                             stringify!($check_name),
                             move || {
                                 let violations = $check_expr(self)?;
                                 Ok(violations
                                     .into_iter()
-                                    .map(|v| Box::new(v) as Box<dyn $crate::traits::violation::Violation>)
+                                    .map(|v| Box::new(v) as Box<dyn $crate::Violation>)
                                     .collect())
                             },
                         ),

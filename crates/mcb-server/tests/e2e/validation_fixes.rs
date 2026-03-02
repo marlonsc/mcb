@@ -13,7 +13,7 @@ use mcb_server::args::{
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::utils::test_fixtures::TEST_PROJECT_ID;
+use mcb_domain::utils::tests::fixtures::TEST_PROJECT_ID;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::utils::text::extract_text;
 use rstest::rstest;

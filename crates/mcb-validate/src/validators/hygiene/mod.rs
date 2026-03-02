@@ -19,3 +19,14 @@ mod violation;
 
 pub use self::validator::HygieneValidator;
 pub use self::violation::HygieneViolation;
+
+#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
+static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
+    mcb_domain::registry::validation::ValidatorEntry {
+        name: "hygiene",
+        description: "Validates test hygiene and quality",
+        build: |root| {
+            Ok(Box::new(HygieneValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
+    };
