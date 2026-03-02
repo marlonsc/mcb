@@ -79,7 +79,9 @@ async fn create_test_mcb_state() -> Option<(McbState, tempfile::TempDir)> {
     let embed_config = EmbeddingProviderConfig::new("fastembed");
     let embedding_provider = resolve_embedding_provider(&embed_config).ok()?;
 
-    let vec_config = VectorStoreProviderConfig::new("edgevec");
+    let vec_config = VectorStoreProviderConfig::new("edgevec")
+        .with_dimensions(384)
+        .with_collection("default");
     let vector_store_provider = resolve_vector_store_provider(&vec_config).ok()?;
 
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;

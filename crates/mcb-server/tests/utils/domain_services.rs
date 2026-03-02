@@ -101,7 +101,9 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
     };
 
     // 4. Vector store — resolved through linkme registry
-    let vs_config = VectorStoreProviderConfig::new("edgevec").with_dimensions(384);
+    let vs_config = VectorStoreProviderConfig::new("edgevec")
+        .with_dimensions(384)
+        .with_collection("default");
     let vector_store_provider = match resolve_vector_store_provider(&vs_config) {
         Ok(p) => p,
         Err(e) => {

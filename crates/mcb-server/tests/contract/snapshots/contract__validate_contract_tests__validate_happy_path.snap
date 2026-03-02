@@ -19,7 +19,7 @@ expression: "snapshot_payload(&request, status, &response)"
     "result": {
       "content": [
         {
-          "text": "{\n  \"count\": 19,\n  \"description\": \"Available validation rules\",\n  \"validators\": [\n    \"patterns\",\n    \"dependency\",\n    \"layer_flow\",\n    \"visibility\",\n    \"declarative\",\n    \"performance\",\n    \"refactoring\",\n    \"organization\",\n    \"port_adapter\",\n    \"documentation\",\n    \"async_patterns\",\n    \"error_boundary\",\n    \"implementation\",\n    \"clean_architecture\",\n    \"kiss\",\n    \"solid\",\n    \"naming\",\n    \"hygiene\",\n    \"quality\"\n  ]\n}",
+          "text": "{\n  \"count\": 19,\n  \"description\": \"Available validation rules\",\n  \"validators\": [\n    \"naming\",\n    \"port_adapter\",\n    \"dependency\",\n    \"kiss\",\n    \"implementation\",\n    \"refactoring\",\n    \"solid\",\n    \"clean_architecture\",\n    \"organization\",\n    \"performance\",\n    \"error_boundary\",\n    \"documentation\",\n    \"hygiene\",\n    \"layer_flow\",\n    \"quality\",\n    \"declarative_rules\",\n    \"visibility\",\n    \"pattern\",\n    \"async_patterns\"\n  ]\n}",
           "type": "text"
         }
       ],

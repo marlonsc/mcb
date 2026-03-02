@@ -20,6 +20,7 @@ use mcb_domain::registry::hybrid_search::{
 use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
+use mcb_infrastructure::config::TestConfigBuilder;
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::state::McbState;
@@ -170,7 +171,9 @@ fn create_shared_test_context() -> Option<SharedTestContext> {
         .with_dimensions(384);
     let embedding = resolve_embedding_provider(&embedding_config).ok()?;
 
-    let vs_config = VectorStoreProviderConfig::new("edgevec").with_dimensions(384);
+    let vs_config = VectorStoreProviderConfig::new("edgevec")
+        .with_dimensions(384)
+        .with_collection("default");
     let vector_store = resolve_vector_store_provider(&vs_config).ok()?;
 
     Some(SharedTestContext {
@@ -238,15 +241,28 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
         .with_dimensions(384);
     let embedding_provider = resolve_embedding_provider(&embedding_config)?;
 
-    let vs_config = VectorStoreProviderConfig::new("edgevec").with_dimensions(384);
+    let vs_config = VectorStoreProviderConfig::new("edgevec")
+        .with_dimensions(384)
+        .with_collection("default");
     let vector_store_provider = resolve_vector_store_provider(&vs_config)?;
 
     let hybrid_search =
         resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default"))?;
 
+    // Load a real AppConfig so service builders (e.g. IndexingService) can
+    // downcast the config from the resolution context.
+    let app_config = TestConfigBuilder::new()
+        .and_then(|b| b.with_temp_db("test-mcp.db"))
+        .and_then(|b| b.build())
+        .map(|(cfg, _temp)| cfg)
+        .unwrap_or_else(|_| {
+            // Fallback: build a minimal config if YAML not found
+            panic!("Failed to load test config via TestConfigBuilder")
+        });
+
     let resolution_ctx = ServiceResolutionContext {
         db: Arc::clone(&db),
-        config: Arc::new(()), // opaque — service builders use typed port fields
+        config: Arc::new(app_config),
         event_bus,
         embedding_provider: Arc::clone(&embedding_provider),
         vector_store_provider: Arc::clone(&vector_store_provider),

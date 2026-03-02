@@ -1,6 +1,8 @@
 //! `SeaORM` database layer: entities, migrations, repositories, and GraphQL.
 /// `SeaORM` adapter for `AuthRepositoryPort` (API key verification, user lookup by key hash).
 pub mod auth_repository;
+/// SeaORM database connection provider (sqlite, postgres) with auto-migration.
+pub mod connection;
 /// SeaQuery constraint builder for vector search filtering.
 pub mod constraints;
 pub mod conversions;
