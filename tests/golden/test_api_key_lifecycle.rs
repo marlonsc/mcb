@@ -1,7 +1,7 @@
-use crate::utils::test_fixtures::{
+use mcb_domain::entities::ApiKey;
+use mcb_domain::utils::tests::fixtures::{
     create_test_mcp_server, golden_content_to_string, test_api_key, test_organization, test_user,
 };
-use mcb_domain::entities::ApiKey;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use mcb_server::mcp_server::McpServer;
 use rmcp::handler::server::wrapper::Parameters;

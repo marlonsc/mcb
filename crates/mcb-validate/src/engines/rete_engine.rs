@@ -15,12 +15,12 @@ use rust_rule_engine::{Facts, GRLParser, KnowledgeBase, RustRuleEngine, Value as
 use serde_json::Value;
 
 use crate::Result;
+use crate::constants::linters::CARGO_TOML_FILENAME;
 use crate::constants::rules::{
     DEFAULT_GRL_RULE_ID, DEFAULT_RETE_MESSAGE, YAML_FIELD_GRL, YAML_FIELD_RULE,
 };
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
-use crate::linters::constants::CARGO_TOML_FILENAME;
-use crate::traits::violation::{Severity, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
 
 /// RETE Engine wrapper for rust-rule-engine library
 pub struct ReteEngine {

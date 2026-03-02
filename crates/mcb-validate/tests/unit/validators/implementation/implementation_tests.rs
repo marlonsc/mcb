@@ -3,21 +3,20 @@
 //! Validates `ImplementationQualityValidator` against fixture crates with precise
 //! file + line + violation-type assertions.
 
-use mcb_validate::ImplementationQualityValidator;
-
-use crate::utils::test_constants::*;
-use crate::utils::*;
+use mcb_domain::utils::test_constants::*;
+use mcb_domain::utils::*;
+use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_implementation_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = ImplementationQualityValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "implementation").unwrap();
 
     assert_violations_exact(
         &violations,
@@ -40,6 +39,7 @@ fn test_implementation_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_clean_implementation_no_violations() {
     let (_temp, root) = with_inline_crate(
@@ -51,8 +51,7 @@ pub fn compute(x: i32) -> i32 {
 }
 ",
     );
-    let validator = ImplementationQualityValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "implementation").unwrap();
 
     assert_no_violations(
         &violations,

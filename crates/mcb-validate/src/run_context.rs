@@ -1,7 +1,8 @@
+//! Execution context for validation runs.
+//!
+//! Provides the environment, file inventory, and caching for a single validation execution.
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
-//!
-#![allow(missing_docs)]
 
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -15,13 +16,17 @@ use crate::config::FileConfig;
 use crate::filters::{LanguageDetector, LanguageId};
 use crate::{Result, ValidationConfig};
 
+/// Source used to build the file inventory.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileInventorySource {
+    /// Inventory built using `git ls-files`
     Git,
+    /// Inventory built by walking the directory recursively
     WalkDir,
 }
 
 impl FileInventorySource {
+    /// Return the string representation of the source
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
@@ -31,14 +36,20 @@ impl FileInventorySource {
     }
 }
 
+/// A single file entry in the validation inventory.
 #[derive(Debug, Clone)]
 pub struct InventoryEntry {
+    /// Absolute path to the file on disk
     pub absolute_path: PathBuf,
+    /// Path relative to the workspace root
     pub relative_path: PathBuf,
     /// Language detected during inventory building (single-pass).
     pub detected_language: Option<LanguageId>,
 }
 
+/// Context for a single validation run.
+///
+/// Contains the workspace layout, file inventory, and shared caches used during validation.
 #[derive(Debug)]
 pub struct ValidationRunContext {
     workspace_root: PathBuf,
@@ -73,31 +84,37 @@ impl ValidationRunContext {
         })
     }
 
+    /// Get the absolute path to the workspace root
     #[must_use]
     pub fn workspace_root(&self) -> &Path {
         &self.workspace_root
     }
 
+    /// Get the unique trace identifier for this run
     #[must_use]
     pub fn trace_id(&self) -> &str {
         &self.trace_id
     }
 
+    /// Get the full list of files in the inventory
     #[must_use]
     pub fn file_inventory(&self) -> &[InventoryEntry] {
         &self.file_inventory
     }
 
+    /// Get the source used to build the inventory
     #[must_use]
     pub fn file_inventory_source(&self) -> FileInventorySource {
         self.file_inventory_source
     }
 
+    /// Get total number of files in the inventory
     #[must_use]
     pub fn file_inventory_count(&self) -> usize {
         self.file_inventory.len()
     }
 
+    /// Check if the inventory contains any files for the given language
     #[must_use]
     pub fn has_files_for_language(&self, lang: LanguageId) -> bool {
         self.file_inventory
@@ -105,6 +122,7 @@ impl ValidationRunContext {
             .any(|e| e.detected_language == Some(lang))
     }
 
+    /// Get all files in the inventory that match the given language
     #[must_use]
     pub fn files_for_language(&self, lang: LanguageId) -> Vec<&InventoryEntry> {
         self.file_inventory
@@ -113,6 +131,7 @@ impl ValidationRunContext {
             .collect()
     }
 
+    /// Get all files in the inventory that match any of the given languages
     #[must_use]
     pub fn files_matching_languages(&self, langs: &[LanguageId]) -> Vec<&InventoryEntry> {
         self.file_inventory
@@ -121,6 +140,7 @@ impl ValidationRunContext {
             .collect()
     }
 
+    /// Convenience method to get all Rust files in the inventory
     #[must_use]
     pub fn rs_files(&self) -> Vec<&InventoryEntry> {
         self.files_for_language(LanguageId::Rust)
@@ -148,6 +168,7 @@ impl ValidationRunContext {
         Ok(value)
     }
 
+    /// Execute a closure with the given context set as active for the current thread
     pub fn with_active<T>(context: &Arc<Self>, f: impl FnOnce() -> T) -> T {
         ACTIVE_RUN_CONTEXT.with(|slot| {
             let previous = slot.replace(Some(Arc::clone(context)));
@@ -157,6 +178,7 @@ impl ValidationRunContext {
         })
     }
 
+    /// Get the active validation context for the current thread
     #[must_use]
     pub fn active() -> Option<Arc<Self>> {
         ACTIVE_RUN_CONTEXT.with(|slot| slot.borrow().as_ref().map(Arc::clone))
@@ -305,81 +327,4 @@ fn build_trace_id() -> String {
 
 fn normalize_path(path: &Path) -> std::io::Result<PathBuf> {
     std::fs::canonicalize(path)
-}
-
-#[cfg(test)]
-mod tests {
-    use std::process::Command;
-
-    use tempfile::TempDir;
-
-    use super::*;
-
-    #[test]
-    fn walkdir_inventory_respects_exclude_patterns() {
-        let temp = TempDir::new().expect("tempdir");
-        let root = temp.path();
-
-        std::fs::create_dir_all(root.join("src")).expect("create src");
-        std::fs::create_dir_all(root.join("target/generated")).expect("create target");
-        std::fs::write(root.join("src/lib.rs"), "pub fn ok() {}\n").expect("write src");
-        std::fs::write(root.join("target/generated/out.rs"), "pub fn skip() {}\n")
-            .expect("write target");
-
-        let config = ValidationConfig::new(root).with_exclude_pattern("target/");
-        let context = ValidationRunContext::build(&config).expect("context");
-
-        assert_eq!(
-            context.file_inventory_source(),
-            FileInventorySource::WalkDir
-        );
-        assert!(
-            context
-                .file_inventory()
-                .iter()
-                .any(|entry| entry.relative_path == std::path::Path::new("src/lib.rs"))
-        );
-        assert!(context.file_inventory().iter().all(|entry| {
-            entry
-                .relative_path
-                .to_str()
-                .is_none_or(|path| !path.contains("target/"))
-        }));
-    }
-
-    #[test]
-    fn git_inventory_uses_git_source_when_repository_exists() {
-        let temp = TempDir::new().expect("tempdir");
-        let root = temp.path();
-
-        let init = Command::new("git")
-            .arg("init")
-            .arg(root)
-            .status()
-            .expect("run git init");
-        assert!(init.success());
-
-        std::fs::create_dir_all(root.join("src")).expect("create src");
-        std::fs::write(root.join("src/lib.rs"), "pub fn ok() {}\n").expect("write src");
-
-        let add = Command::new("git")
-            .arg("-C")
-            .arg(root)
-            .arg("add")
-            .arg("src/lib.rs")
-            .status()
-            .expect("run git add");
-        assert!(add.success());
-
-        let config = ValidationConfig::new(root);
-        let context = ValidationRunContext::build(&config).expect("context");
-
-        assert_eq!(context.file_inventory_source(), FileInventorySource::Git);
-        assert!(
-            context
-                .file_inventory()
-                .iter()
-                .any(|entry| entry.relative_path == std::path::Path::new("src/lib.rs"))
-        );
-    }
 }

@@ -2,10 +2,8 @@ use clap::Args;
 use loco_rs::app::Hooks;
 use loco_rs::boot::{self, ServeParams, StartMode};
 use loco_rs::environment::Environment;
-use mcb_server::McbApp;
-use mcb_server::loco_app::create_mcp_server;
-use mcb_server::tools::ExecutionFlow;
-use mcb_server::transport::stdio::StdioServerExt;
+
+use crate::loco_app::McbApp;
 
 /// Arguments for the `serve` subcommand.
 #[derive(Args, Debug, Clone)]
@@ -22,29 +20,37 @@ impl ServeArgs {
     /// # Errors
     /// Returns an error if Loco boot or MCP server initialization fails.
     pub async fn execute(self) -> Result<(), Box<dyn std::error::Error>> {
-        if self.server {
-            // SAFETY: called once at startup before any other threads are spawned.
-            #[allow(unsafe_code)]
-            unsafe {
-                std::env::set_var("MCB_NO_STDIO", "1");
+        let environment = Environment::from(loco_rs::environment::resolve_from_env());
+        let mut loco_config = McbApp::load_config(&environment).await?;
+
+        // Inject CLI mode flags into Loco config settings.
+        if (self.server || self.stdio)
+            && let Some(ref mut settings) = loco_config.settings
+            && let Some(mcp) = settings.pointer_mut("/mcp")
+            && let Some(mcp_obj) = mcp.as_object_mut()
+        {
+            if self.server {
+                mcp_obj.insert("no_stdio".to_owned(), serde_json::json!(true));
+            }
+            if self.stdio {
+                mcp_obj.insert("stdio_only".to_owned(), serde_json::json!(true));
             }
         }
-        let environment = Environment::from(loco_rs::environment::resolve_from_env());
-        let loco_config = McbApp::load_config(&environment).await?;
+
         let boot_result =
-            McbApp::boot(StartMode::ServerOnly, &environment, loco_config.clone()).await?;
-        if self.stdio {
-            // Stdio-only mode: create MCP server directly from Loco context, no HTTP.
-            let server = create_mcp_server(&boot_result.app_context, ExecutionFlow::StdioOnly).await?;
-            server.serve_stdio().await?;
-        } else {
-            // Default: HTTP server + background stdio (unless --server).
-            let serve = ServeParams {
-                port: loco_config.server.port,
-                binding: loco_config.server.binding.clone(),
-            };
-            boot::start::<McbApp>(boot_result, serve, false).await?;
-        }
+            McbApp::boot(StartMode::server_only(), &environment, loco_config.clone()).await?;
+
+        // Allow SERVER_PORT env var to override the config file port (used for E2E testing).
+        let port = std::env::var("SERVER_PORT")
+            .ok()
+            .and_then(|p| p.parse().ok())
+            .unwrap_or(loco_config.server.port);
+        let serve = ServeParams {
+            port,
+            binding: loco_config.server.binding.clone(),
+        };
+        boot::start::<McbApp>(boot_result, serve, self.stdio).await?;
+
         Ok(())
     }
 }

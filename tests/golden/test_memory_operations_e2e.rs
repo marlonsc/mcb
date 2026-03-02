@@ -1,6 +1,6 @@
 /// Golden tests: Session memory operations with auto-hooking
 /// Verifies store_observation, timeline, search, and hook integration
-use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::utils::tests::fixtures::create_test_mcp_server;
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
 use rmcp::handler::server::wrapper::Parameters;
 

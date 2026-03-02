@@ -28,23 +28,24 @@ path = "src/main.rs"
 workspace = true
 
 [dependencies]
-# Domain layer - re-exported for public API
+# Domain layer - re-exported for public API for domain layer
 mcb-domain = { path = "../mcb-domain" }
 
-# Server layer - re-exported for run_server entry point
+# Server layer - re-exported for run_server entry point for server layer
 mcb-server = { path = "../mcb-server" }
 
-# Infrastructure layer - re-exported for DI container
+# Infrastructure layer - re-exported for DI container for infrastructure layer
 mcb-infrastructure = { path = "../mcb-infrastructure" }
 
-# Providers - MUST be in dependencies (not dev-dependencies) for linkme inventory registration
+# Providers - re-exported for DI container for providers layer
 mcb-providers = { path = "../mcb-providers" }
 
-# Validation - for mcb validate subcommand
+# Validation - re-exported for DI container for mcb validate subcommand
 mcb-validate = { path = "../mcb-validate" }
 
 # Core async runtime
 tokio = { workspace = true }
+tokio-util = { workspace = true }
 
 # CLI
 clap = { workspace = true }
@@ -52,8 +53,20 @@ clap = { workspace = true }
 # Loco framework - boot, config, server lifecycle
 loco-rs = { workspace = true }
 
+# Async trait desugaring (required by Loco's Hooks/Initializer traits)
+async-trait = { workspace = true }
+
+# Axum router types (required by Loco Initializer::after_routes)
+axum = { workspace = true }
+
+# XDG config directory lookup for installed config fallback
+dirs = { workspace = true }
+
 # Re-export for doc examples
 serde_json = { workspace = true }
+
+# MCP protocol - rmcp transport for StreamableHttpService
+rmcp = { workspace = true }
 
 # Re-export key domain types for convenience
 [package.metadata.docs.rs]
@@ -68,6 +81,9 @@ insta = { workspace = true }
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
 uuid = { workspace = true, features = ["v4"] }
 
+serial_test = { workspace = true }
+serde_json = { workspace = true }
+tokio = { workspace = true, features = ["full"] }
 [[test]]
 name = "unit"
 path = "tests/unit/mod.rs"

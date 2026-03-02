@@ -17,11 +17,14 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::{HighlightError, HighlightServiceInterface};
+use mcb_domain::registry::services::{
+    HIGHLIGHT_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
+};
 use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, HighlightedCode};
 use tree_sitter::Language;
 use tree_sitter_highlight::{Highlight, HighlightConfiguration, HighlightEvent, Highlighter};
 
-use crate::constants::highlight::HIGHLIGHT_NAMES;
+use mcb_domain::value_objects::browse::HIGHLIGHT_NAMES;
 
 /// Language-specific highlighting configuration
 struct HighlightLanguageConfig {
@@ -250,3 +253,13 @@ impl HighlightServiceInterface for HighlightServiceImpl {
         result.map_err(mcb_domain::Error::from)
     }
 }
+
+// linkme distributed_slice uses unsafe link-section attributes internally
+#[allow(unsafe_code)]
+#[linkme::distributed_slice(SERVICES_REGISTRY)]
+static HIGHLIGHT_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
+    name: HIGHLIGHT_SERVICE_NAME,
+    build: ServiceBuilder::Highlight(|_context| {
+        Ok(std::sync::Arc::new(HighlightServiceImpl::new()))
+    }),
+};

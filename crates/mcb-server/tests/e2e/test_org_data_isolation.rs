@@ -1,10 +1,12 @@
-use crate::utils::test_fixtures::{
-    TEST_ORG_ID_A, TEST_ORG_ID_B, create_test_mcp_server, test_api_key, test_organization,
-    test_team, test_user,
+use mcb_domain::utils::tests::fixtures::{TEST_ORG_ID_A, TEST_ORG_ID_B, create_test_mcp_server};
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::tests::utils::{
+    create_test_api_key, create_test_organization, create_test_team, create_test_user_with,
 };
-use crate::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::Value;
 
 fn org_args(action: OrgEntityAction, resource: OrgEntityResource) -> OrgEntityArgs {
@@ -28,9 +30,9 @@ fn parse_list_len(text: &str) -> usize {
 }
 
 async fn create_org(server: &mcb_server::mcp_server::McpServer, org_id: &str) {
-    let org = test_organization(org_id);
+    let org = create_test_organization(org_id);
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::Org);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(serde_json::to_value(&org).expect("serialize org"));
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
@@ -42,10 +44,10 @@ async fn create_user_in_org(
     org_id: &str,
     email: &str,
 ) -> String {
-    let user = test_user(org_id, email);
+    let user = create_test_user_with(org_id, email);
     let user_id = user.id.clone();
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::User);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(serde_json::to_value(&user).expect("serialize user"));
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
@@ -58,10 +60,10 @@ async fn create_team_in_org(
     org_id: &str,
     name: &str,
 ) -> String {
-    let team = test_team(org_id, name);
+    let team = create_test_team(org_id, name);
     let team_id = team.id.clone();
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::Team);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(serde_json::to_value(&team).expect("serialize team"));
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
@@ -75,10 +77,10 @@ async fn create_api_key_in_org(
     org_id: &str,
     name: &str,
 ) -> String {
-    let key = test_api_key(user_id, org_id, name);
+    let key = create_test_api_key(user_id, org_id, name);
     let key_id = key.id.clone();
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::ApiKey);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(serde_json::to_value(&key).expect("serialize key"));
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
@@ -96,7 +98,7 @@ async fn list_count(
     org_id: &str,
 ) -> usize {
     let mut args = org_args(OrgEntityAction::List, resource);
-    args.org_id = Some(org_id.to_string());
+    args.org_id = Some(org_id.to_owned());
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_ok(), "list should succeed: {:?}", result);
@@ -104,9 +106,10 @@ async fn list_count(
     parse_list_len(&text)
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_isolation_users_scoped_to_org() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_users_scoped_to_org() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -114,11 +117,13 @@ async fn golden_isolation_users_scoped_to_org() {
 
     let count_b = list_count(&server, OrgEntityResource::User, TEST_ORG_ID_B).await;
     assert_eq!(count_b, 0, "org-B user list should be empty");
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_isolation_teams_scoped_to_org() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_teams_scoped_to_org() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -126,11 +131,13 @@ async fn golden_isolation_teams_scoped_to_org() {
 
     let count_b = list_count(&server, OrgEntityResource::Team, TEST_ORG_ID_B).await;
     assert_eq!(count_b, 0, "org-B team list should be empty");
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_isolation_api_keys_scoped_to_org() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_api_keys_scoped_to_org() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -139,11 +146,13 @@ async fn golden_isolation_api_keys_scoped_to_org() {
 
     let count_b = list_count(&server, OrgEntityResource::ApiKey, TEST_ORG_ID_B).await;
     assert_eq!(count_b, 0, "org-B api key list should be empty");
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_isolation_org_a_invisible_to_org_b() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_org_a_invisible_to_org_b() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -159,11 +168,13 @@ async fn golden_isolation_org_a_invisible_to_org_b() {
     assert_eq!(users_b, 0, "org-B user list should be empty");
     assert_eq!(teams_b, 0, "org-B team list should be empty");
     assert_eq!(keys_b, 0, "org-B api key list should be empty");
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_isolation_cross_org_get_fails() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_cross_org_get_fails() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -171,7 +182,7 @@ async fn golden_isolation_cross_org_get_fails() {
 
     let mut args = org_args(OrgEntityAction::Get, OrgEntityResource::User);
     args.id = Some(user_id);
-    args.org_id = Some(TEST_ORG_ID_B.to_string());
+    args.org_id = Some(TEST_ORG_ID_B.to_owned());
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     match result {
@@ -192,11 +203,13 @@ async fn golden_isolation_cross_org_get_fails() {
             );
         }
     }
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_isolation_both_orgs_coexist() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_isolation_both_orgs_coexist() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     create_org(&server, TEST_ORG_ID_A).await;
     create_org(&server, TEST_ORG_ID_B).await;
 
@@ -209,4 +222,5 @@ async fn golden_isolation_both_orgs_coexist() {
 
     assert_eq!(count_a, 2, "org-A should list only org-A users");
     assert_eq!(count_b, 1, "org-B should list only org-B users");
+    Ok(())
 }

@@ -13,8 +13,8 @@ use std::path::PathBuf;
 use crate::config::VisibilityRulesConfig;
 use crate::define_violations;
 use crate::scan::for_each_file_under_root;
-use crate::traits::violation::ViolationCategory;
 use crate::{Result, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
 
 define_violations! {
     ViolationCategory::Organization,
@@ -232,7 +232,7 @@ impl VisibilityValidator {
 }
 
 /// Validator trait implementation for visibility validation.
-impl crate::traits::validator::Validator for VisibilityValidator {
+impl mcb_domain::ports::validation::Validator for VisibilityValidator {
     fn name(&self) -> &'static str {
         "visibility"
     }
@@ -244,11 +244,21 @@ impl crate::traits::validator::Validator for VisibilityValidator {
     fn validate(
         &self,
         config: &crate::ValidationConfig,
-    ) -> crate::Result<Vec<Box<dyn crate::traits::violation::Violation>>> {
+    ) -> mcb_domain::ports::validation::ValidatorResult<
+        Vec<Box<dyn mcb_domain::ports::validation::Violation>>,
+    > {
         let violations = self.validate(config)?;
         Ok(violations
             .into_iter()
-            .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+            .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
             .collect())
     }
 }
+
+#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
+static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
+    mcb_domain::registry::validation::ValidatorEntry {
+        name: "visibility",
+        description: "Validates visibility modifiers for proper encapsulation",
+        build: |root| Ok(Box::new(VisibilityValidator::new(root))),
+    };

@@ -31,8 +31,6 @@ workspace = true
 [dependencies]
 # Domain layer - core contracts and types
 mcb-domain = { path = "../mcb-domain" }
-# Infrastructure layer - configuration and DI
-mcb-infrastructure = { path = "../mcb-infrastructure" }
 
 # Core async runtime
 tokio = { workspace = true }
@@ -123,9 +121,6 @@ sea-orm-pro = { workspace = true }
 async-graphql = { workspace = true }
 async-graphql-axum = { workspace = true }
 
-# Providers - MUST be in dependencies for linkme inventory registration
-mcb-providers = { path = "../mcb-providers" }
-
 [dev-dependencies]
 tempfile = { workspace = true }
 fastembed = { workspace = true }
@@ -135,7 +130,6 @@ insta = { workspace = true }
 tower = { workspace = true }
 http-body-util = { workspace = true }
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
-mcb-infrastructure = { path = "../mcb-infrastructure", features = ["test-utils"] }
 
 [[test]]
 name = "unit"

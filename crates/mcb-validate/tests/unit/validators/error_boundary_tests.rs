@@ -3,21 +3,20 @@
 //! Validates `ErrorBoundaryValidator` against fixture crates with precise
 //! file + line + violation-type assertions.
 
-use mcb_validate::ErrorBoundaryValidator;
-
-use crate::utils::test_constants::*;
-use crate::utils::*;
+use mcb_domain::utils::test_constants::*;
+use mcb_domain::utils::*;
+use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_error_boundary_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = ErrorBoundaryValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "error_boundary").unwrap();
 
     assert_violations_exact(
         &violations,
@@ -76,6 +75,7 @@ fn test_error_boundary_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_clean_error_boundary_no_violations() {
     let (_temp, root) = with_inline_crate(
@@ -87,8 +87,7 @@ pub fn parse_config(input: &str) -> Result<i32, String> {
 }
 "##,
     );
-    let validator = ErrorBoundaryValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "error_boundary").unwrap();
 
     assert_no_violations(
         &violations,

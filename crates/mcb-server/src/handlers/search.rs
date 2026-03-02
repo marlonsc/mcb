@@ -3,11 +3,14 @@
 //!
 //! Search handler for code and memory search operations.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Instant;
 
 use mcb_domain::entities::memory::MemoryFilter;
 use mcb_domain::error::Error;
+use mcb_domain::ports::HybridSearchProvider;
+use mcb_domain::ports::IndexingServiceInterface;
 use mcb_domain::ports::MemoryServiceInterface;
 use mcb_domain::ports::SearchServiceInterface;
 use mcb_domain::utils::id as domain_id;
@@ -33,11 +36,15 @@ use crate::utils::collections::normalize_collection_name;
 pub struct SearchHandler {
     search_service: Arc<dyn SearchServiceInterface>,
     memory_service: Arc<dyn MemoryServiceInterface>,
+    hybrid_search: Arc<dyn HybridSearchProvider>,
+    indexing_service: Arc<dyn IndexingServiceInterface>,
 }
 
 handler_new!(SearchHandler {
     search_service: Arc<dyn SearchServiceInterface>,
     memory_service: Arc<dyn MemoryServiceInterface>,
+    hybrid_search: Arc<dyn HybridSearchProvider>,
+    indexing_service: Arc<dyn IndexingServiceInterface>,
 });
 
 impl SearchHandler {
@@ -65,9 +72,16 @@ impl SearchHandler {
 
         match args.resource {
             SearchResource::Code => {
-                let collection_name = args.collection.as_deref().ok_or_else(|| {
-                    McpError::invalid_params("collection parameter is required", None)
-                })?;
+                // Auto-resolve collection: explicit param > repo_id > error
+                let resolved_name = args.collection.as_deref().or(args.repo_id.as_deref());
+                let collection_name = match resolved_name {
+                    Some(name) => name,
+                    None => {
+                        return Ok(to_contextual_tool_error(Error::invalid_argument(
+                            "collection could not be resolved: provide collection or ensure a repository is detected",
+                        )));
+                    }
+                };
                 let collection_id = match normalize_collection_name(collection_name) {
                     Ok(id) => id,
                     Err(reason) => {
@@ -81,13 +95,76 @@ impl SearchHandler {
                     .search(&collection_id, query, limit)
                     .await
                 {
-                    Ok(results) => ResponseFormatter::format_search_response(
-                        query,
-                        &results,
-                        timer.elapsed(),
-                        limit,
-                    ),
-                    Err(e) => Ok(to_contextual_tool_error(e)),
+                    Ok(results) => {
+                        // Attempt hybrid re-ranking (transparent enhancement)
+                        let final_results = match self
+                            .hybrid_search
+                            .search(collection_name, query, results.clone(), limit)
+                            .await
+                        {
+                            Ok(enhanced) if !enhanced.is_empty() => {
+                                tracing::info!(
+                                    "Hybrid search enhanced {} results for collection '{}'",
+                                    enhanced.len(),
+                                    collection_name
+                                );
+                                enhanced
+                            }
+                            _ => results,
+                        };
+                        ResponseFormatter::format_search_response(
+                            query,
+                            &final_results,
+                            timer.elapsed(),
+                            limit,
+                        )
+                    }
+                    Err(e) => {
+                        // Vector search failed — attempt hybrid fallback
+                        tracing::info!(
+                            "Vector search failed for '{}', attempting hybrid fallback: {}",
+                            collection_name,
+                            e
+                        );
+
+                        // T12: Trigger background auto-indexing (fire-and-forget)
+                        if let Some(repo_path) = args.repo_path.as_deref() {
+                            let path = PathBuf::from(repo_path);
+                            if path.is_dir() {
+                                let indexing = Arc::clone(&self.indexing_service);
+                                let coll_id = collection_id;
+                                tokio::spawn(async move {
+                                    tracing::info!(
+                                        "Auto-indexing triggered for '{}'",
+                                        coll_id.as_str()
+                                    );
+                                    if let Err(idx_err) =
+                                        indexing.index_codebase(&path, &coll_id).await
+                                    {
+                                        tracing::warn!(
+                                            "Auto-indexing failed (non-fatal): {idx_err}"
+                                        );
+                                    }
+                                });
+                            }
+                        }
+
+                        match self
+                            .hybrid_search
+                            .search(collection_name, query, vec![], limit)
+                            .await
+                        {
+                            Ok(fallback) if !fallback.is_empty() => {
+                                ResponseFormatter::format_search_response(
+                                    query,
+                                    &fallback,
+                                    timer.elapsed(),
+                                    limit,
+                                )
+                            }
+                            _ => Ok(to_contextual_tool_error(e)),
+                        }
+                    }
                 }
             }
             SearchResource::Memory | SearchResource::Context => {

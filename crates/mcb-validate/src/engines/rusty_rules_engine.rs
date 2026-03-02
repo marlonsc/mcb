@@ -13,13 +13,21 @@ use serde_json::Value;
 use super::hybrid_engine::{RuleContext, RuleEngine};
 use crate::Result;
 use crate::constants::common::{TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX};
+use crate::constants::engines::{
+    RUSTY_AST_PATTERN_VIOLATION_ID, RUSTY_CARGO_DEP_FORBIDDEN_MSG, RUSTY_CARGO_DEP_MISSING_MSG,
+    RUSTY_CARGO_DEP_VIOLATION_ID, RUSTY_CONDITION_EXISTS, RUSTY_CONDITION_NOT_EXISTS,
+    RUSTY_CUSTOM_ACTION_DEFAULT, RUSTY_DEFAULT_CARGO_CONDITION, RUSTY_DEFAULT_FACT_TYPE,
+    RUSTY_DEFAULT_FIELD, RUSTY_DEFAULT_FILE_SIZE_CONDITION, RUSTY_DEFAULT_FILE_SIZE_PATTERN,
+    RUSTY_DEFAULT_OPERATOR, RUSTY_DEFAULT_RULE_TYPE, RUSTY_RULE_TYPE_AST_PATTERN,
+    RUSTY_RULE_TYPE_CARGO_DEPENDENCIES, RUSTY_RULE_TYPE_FILE_SIZE, RUSTY_TARGET_DIR_FRAGMENT,
+};
 use crate::constants::rules::{
     DEFAULT_VIOLATION_MESSAGE, YAML_FIELD_ACTION, YAML_FIELD_CONDITION, YAML_FIELD_FIX_TYPE,
     YAML_FIELD_MESSAGE, YAML_FIELD_PATTERN, YAML_FIELD_SEVERITY,
 };
 use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO};
 use crate::engines::hybrid_engine::RuleViolation;
-use crate::traits::violation::{Severity, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
 
 /// Wrapper for rusty-rules engine
 pub struct RustyRulesEngineWrapper {
@@ -74,25 +82,6 @@ pub enum Action {
     Custom(String),
 }
 
-const DEFAULT_RULE_TYPE: &str = "generic";
-const DEFAULT_FACT_TYPE: &str = "generic";
-const DEFAULT_FIELD: &str = "value";
-const DEFAULT_OPERATOR: &str = "equals";
-const DEFAULT_CARGO_CONDITION: &str = "not_exists";
-const DEFAULT_FILE_SIZE_CONDITION: &str = "exceeds_limit";
-const DEFAULT_FILE_SIZE_PATTERN: &str = ".rs";
-const CUSTOM_ACTION_DEFAULT: &str = "Custom action";
-const CARGO_DEP_VIOLATION_ID: &str = "CARGO_DEP";
-const CARGO_DEP_MISSING_MSG: &str = "Required dependency not found";
-const CARGO_DEP_FORBIDDEN_MSG: &str = "Forbidden dependency found";
-const AST_PATTERN_VIOLATION_ID: &str = "AST_PATTERN";
-const TARGET_DIR_FRAGMENT: &str = "/target/";
-const RULE_TYPE_CARGO_DEPENDENCIES: &str = "cargo_dependencies";
-const RULE_TYPE_FILE_SIZE: &str = "file_size";
-const RULE_TYPE_AST_PATTERN: &str = "ast_pattern";
-const CONDITION_NOT_EXISTS: &str = "not_exists";
-const CONDITION_EXISTS: &str = "exists";
-
 impl Default for RustyRulesEngineWrapper {
     fn default() -> Self {
         Self::new()
@@ -120,11 +109,8 @@ impl RustyRulesEngineWrapper {
     }
 
     fn parse_rule_from_json(definition: &Value) -> Result<RustyRule> {
-        let rule_type = definition
-            .get(YAML_FIELD_FIX_TYPE)
-            .and_then(|v| v.as_str())
-            .unwrap_or(DEFAULT_RULE_TYPE)
-            .to_owned();
+        let rule_type =
+            json_str(definition, YAML_FIELD_FIX_TYPE, RUSTY_DEFAULT_RULE_TYPE).to_owned();
         let condition = Self::parse_optional_condition(definition)?;
         let action = Self::parse_optional_action(definition);
 
@@ -180,23 +166,11 @@ impl RustyRulesEngineWrapper {
         }
 
         // Simple condition
-        let fact_type = condition_json
-            .get("fact_type")
-            .and_then(|v| v.as_str())
-            .unwrap_or(DEFAULT_FACT_TYPE)
-            .to_owned();
+        let fact_type = json_str(condition_json, "fact_type", RUSTY_DEFAULT_FACT_TYPE).to_owned();
 
-        let field = condition_json
-            .get("field")
-            .and_then(|v| v.as_str())
-            .unwrap_or(DEFAULT_FIELD)
-            .to_owned();
+        let field = json_str(condition_json, "field", RUSTY_DEFAULT_FIELD).to_owned();
 
-        let operator = condition_json
-            .get("operator")
-            .and_then(|v| v.as_str())
-            .unwrap_or(DEFAULT_OPERATOR)
-            .to_owned();
+        let operator = json_str(condition_json, "operator", RUSTY_DEFAULT_OPERATOR).to_owned();
 
         let value = condition_json.get("value").cloned().unwrap_or(Value::Null);
 
@@ -210,21 +184,16 @@ impl RustyRulesEngineWrapper {
 
     fn parse_action(action_json: &Value) -> Action {
         if let Some(violation) = action_json.get("violation") {
-            let message = violation
-                .get(YAML_FIELD_MESSAGE)
-                .and_then(|v| v.as_str())
-                .unwrap_or(DEFAULT_VIOLATION_MESSAGE)
-                .to_owned();
+            let message =
+                json_str(violation, YAML_FIELD_MESSAGE, DEFAULT_VIOLATION_MESSAGE).to_owned();
 
-            let severity = violation
-                .get(YAML_FIELD_SEVERITY)
-                .and_then(|v| v.as_str())
+            let severity = json_opt_str(violation, YAML_FIELD_SEVERITY)
                 .map_or(Severity::Warning, Self::parse_severity);
 
             return Action::Violation { message, severity };
         }
 
-        Action::Custom(CUSTOM_ACTION_DEFAULT.to_owned())
+        Action::Custom(RUSTY_CUSTOM_ACTION_DEFAULT.to_owned())
     }
 
     fn parse_severity(raw: &str) -> Severity {
@@ -345,10 +314,7 @@ impl RuleEngine for RustyRulesEngineWrapper {
         rule_definition: &Value,
         context: &RuleContext,
     ) -> Result<Vec<RuleViolation>> {
-        let Some(rule_type) = rule_definition
-            .get(YAML_FIELD_FIX_TYPE)
-            .and_then(|v| v.as_str())
-        else {
+        let Some(rule_type) = json_opt_str(rule_definition, YAML_FIELD_FIX_TYPE) else {
             return Ok(vec![]);
         };
 
@@ -365,12 +331,14 @@ impl RustyRulesEngineWrapper {
         context: &RuleContext,
     ) -> Result<Vec<RuleViolation>> {
         match rule_type {
-            RULE_TYPE_CARGO_DEPENDENCIES => {
+            RUSTY_RULE_TYPE_CARGO_DEPENDENCIES => {
                 self.execute_cargo_dependency_rule(rule_definition, context)
                     .await
             }
-            RULE_TYPE_FILE_SIZE => self.execute_file_size_rule(rule_definition, context).await,
-            RULE_TYPE_AST_PATTERN => {
+            RUSTY_RULE_TYPE_FILE_SIZE => {
+                self.execute_file_size_rule(rule_definition, context).await
+            }
+            RUSTY_RULE_TYPE_AST_PATTERN => {
                 self.execute_ast_pattern_rule(rule_definition, context)
                     .await
             }
@@ -384,35 +352,33 @@ impl RustyRulesEngineWrapper {
         context: &RuleContext,
     ) -> Result<Vec<RuleViolation>> {
         let mut violations = Vec::new();
-        let condition = rule_definition
-            .get(YAML_FIELD_CONDITION)
-            .and_then(|v| v.as_str())
-            .unwrap_or(DEFAULT_CARGO_CONDITION);
-        let Some(forbidden_pattern) = rule_definition
-            .get(YAML_FIELD_PATTERN)
-            .and_then(|v| v.as_str())
-        else {
+        let condition = json_str(
+            rule_definition,
+            YAML_FIELD_CONDITION,
+            RUSTY_DEFAULT_CARGO_CONDITION,
+        );
+        let Some(forbidden_pattern) = json_opt_str(rule_definition, YAML_FIELD_PATTERN) else {
             return Ok(violations);
         };
 
         let has_forbidden = Self::has_forbidden_dependency(forbidden_pattern, context);
         let should_report = match condition {
-            CONDITION_NOT_EXISTS => has_forbidden,
-            CONDITION_EXISTS => !has_forbidden,
+            RUSTY_CONDITION_NOT_EXISTS => has_forbidden,
+            RUSTY_CONDITION_EXISTS => !has_forbidden,
             _ => false,
         };
         if !should_report {
             return Ok(violations);
         }
 
-        let message = if condition == CONDITION_EXISTS {
-            CARGO_DEP_MISSING_MSG
+        let message = if condition == RUSTY_CONDITION_EXISTS {
+            RUSTY_CARGO_DEP_MISSING_MSG
         } else {
-            CARGO_DEP_FORBIDDEN_MSG
+            RUSTY_CARGO_DEP_FORBIDDEN_MSG
         };
         violations.push(
             RuleViolation::new(
-                CARGO_DEP_VIOLATION_ID,
+                RUSTY_CARGO_DEP_VIOLATION_ID,
                 ViolationCategory::Architecture,
                 Severity::Error,
                 message,
@@ -442,20 +408,23 @@ impl RustyRulesEngineWrapper {
         context: &RuleContext,
     ) -> Result<Vec<RuleViolation>> {
         let mut violations = Vec::new();
-        let condition = rule_definition
-            .get(YAML_FIELD_CONDITION)
-            .and_then(|v| v.as_str())
-            .unwrap_or(DEFAULT_FILE_SIZE_CONDITION);
-        let pattern = rule_definition
-            .get(YAML_FIELD_PATTERN)
-            .and_then(|v| v.as_str())
-            .unwrap_or(DEFAULT_FILE_SIZE_PATTERN);
-        let message = rule_definition
-            .get(YAML_FIELD_MESSAGE)
-            .and_then(|v| v.as_str())
-            .unwrap_or("File exceeds size limit");
+        let condition = json_str(
+            rule_definition,
+            YAML_FIELD_CONDITION,
+            RUSTY_DEFAULT_FILE_SIZE_CONDITION,
+        );
+        let pattern = json_str(
+            rule_definition,
+            YAML_FIELD_PATTERN,
+            RUSTY_DEFAULT_FILE_SIZE_PATTERN,
+        );
+        let message = json_str(
+            rule_definition,
+            YAML_FIELD_MESSAGE,
+            "File exceeds size limit",
+        );
 
-        if condition != DEFAULT_FILE_SIZE_CONDITION {
+        if condition != RUSTY_DEFAULT_FILE_SIZE_CONDITION {
             return Ok(violations);
         }
 
@@ -487,7 +456,7 @@ impl RustyRulesEngineWrapper {
 
     fn is_size_check_excluded(file_path: &str) -> bool {
         file_path.contains(TEST_DIR_FRAGMENT)
-            || file_path.contains(TARGET_DIR_FRAGMENT)
+            || file_path.contains(RUSTY_TARGET_DIR_FRAGMENT)
             || file_path.ends_with(TEST_FILE_SUFFIX)
     }
 }
@@ -502,7 +471,16 @@ fn forbidden_patterns(rule_definition: &Value) -> Vec<&str> {
                 .filter_map(serde_json::Value::as_str)
                 .collect()
         })
+        // INTENTIONAL: Filter string collection; empty vec is safe if no filters
         .unwrap_or_default()
+}
+
+fn json_str<'a>(obj: &'a Value, key: &str, default: &'a str) -> &'a str {
+    obj.get(key).and_then(Value::as_str).unwrap_or(default)
+}
+
+fn json_opt_str<'a>(obj: &'a Value, key: &str) -> Option<&'a str> {
+    obj.get(key).and_then(Value::as_str)
 }
 
 fn ast_pattern_violations(context: &RuleContext, pattern: &str) -> Vec<RuleViolation> {
@@ -512,7 +490,7 @@ fn ast_pattern_violations(context: &RuleContext, pattern: &str) -> Vec<RuleViola
         .filter(|(_, content)| content.contains(pattern))
         .map(|(file_path, _)| {
             RuleViolation::new(
-                AST_PATTERN_VIOLATION_ID,
+                RUSTY_AST_PATTERN_VIOLATION_ID,
                 ViolationCategory::Quality,
                 Severity::Error,
                 format!("Found forbidden pattern: {pattern}"),

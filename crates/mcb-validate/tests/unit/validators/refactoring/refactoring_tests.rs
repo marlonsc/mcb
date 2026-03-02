@@ -6,21 +6,20 @@
 //! Note: `DuplicateDefinition` has no single line field; it references
 //! multiple files. We use line=0 to skip line check.
 
-use mcb_validate::RefactoringValidator;
-
-use crate::utils::test_constants::*;
-use crate::utils::*;
+use mcb_domain::utils::test_constants::*;
+use mcb_domain::utils::*;
+use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_refactoring_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = RefactoringValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "refactoring").unwrap();
 
     // 1 violation: DuplicateDefinition for 'User' across my-server and my-domain
     assert_violations_exact(
@@ -34,6 +33,7 @@ fn test_refactoring_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_clean_refactoring_no_violations() {
     let (_temp, root) = with_inline_crate(
@@ -46,8 +46,7 @@ pub struct UniqueType {
 }
 ",
     );
-    let validator = RefactoringValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "refactoring").unwrap();
 
     assert_no_violations(
         &violations,

@@ -1,15 +1,15 @@
 use rstest::rstest;
-extern crate mcb_providers;
 
 use std::sync::Arc;
 
 use axum::http::StatusCode;
 use mcb_server::McpServer;
-use mcb_server::tools::router::{ToolExecutionContext, ToolHandlers, route_tool_call};
+use mcb_server::tools::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use rmcp::model::CallToolRequestParams;
 
-use crate::utils::http_mcp::{McpTestContext, post_mcp, tools_call_request};
-use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::utils::http_mcp::{McpTestContext, post_mcp_str, tools_call_request};
+use mcb_domain::utils::tests::fixtures::create_test_mcp_server;
+use mcb_domain::utils::tests::utils::TestResult;
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
     server.tool_handlers()
@@ -28,6 +28,7 @@ fn full_provenance_context() -> ToolExecutionContext {
     ToolExecutionContext {
         session_id: Some("ses-test".to_owned()),
         parent_session_id: Some("ses-parent".to_owned()),
+        org_id: None,
         project_id: Some("proj-test".to_owned()),
         worktree_id: Some("wt-test".to_owned()),
         repo_id: Some("repo-test".to_owned()),
@@ -52,9 +53,10 @@ fn full_provenance_context() -> ToolExecutionContext {
 #[case("project")]
 #[case("vcs")]
 #[case("entity")]
+#[rstest]
 #[tokio::test]
-async fn empty_args_returns_invalid_params(#[case] tool_name: &str) {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn empty_args_returns_invalid_params(#[case] tool_name: &str) -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let handlers = tool_handlers(&Arc::new(server));
     let request = empty_call_request(tool_name);
     let context = full_provenance_context();
@@ -75,15 +77,17 @@ async fn empty_args_returns_invalid_params(#[case] tool_name: &str) {
         "{tool_name}: expected parse error, got: {}",
         error.message
     );
+    Ok(())
 }
 
 #[rstest]
 #[case("index")]
 #[case("search")]
 #[case("memory")]
+#[rstest]
 #[tokio::test]
-async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let handlers = tool_handlers(&Arc::new(server));
     let request = empty_call_request(tool_name);
 
@@ -97,6 +101,7 @@ async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) {
         "{tool_name}: expected provenance error, got: {}",
         error.message
     );
+    Ok(())
 }
 
 #[rstest]
@@ -106,9 +111,10 @@ async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) {
 #[case("project")]
 #[case("vcs")]
 #[case("entity")]
+#[rstest]
 #[tokio::test]
-async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str) {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str) -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let handlers = tool_handlers(&Arc::new(server));
     let request = empty_call_request(tool_name);
 
@@ -125,6 +131,7 @@ async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str)
         error.code.0, -32602,
         "{tool_name}: should still be -32602 from parse failure"
     );
+    Ok(())
 }
 
 #[rstest]
@@ -135,6 +142,7 @@ async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str)
 #[case("project")]
 #[case("vcs")]
 #[case("entity")]
+#[rstest]
 #[tokio::test]
 async fn client_hybrid_allows_server_side_tools(
     #[case] tool_name: &str,
@@ -145,7 +153,7 @@ async fn client_hybrid_allows_server_side_tools(
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "client-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers).await?;
+    let (status, response) = post_mcp_str(&ctx, &request, &headers).await?;
 
     assert_eq!(status, StatusCode::OK);
     let error_opt = response.error;
@@ -161,6 +169,7 @@ async fn client_hybrid_allows_server_side_tools(
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn server_hybrid_blocks_validate() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
@@ -169,7 +178,7 @@ async fn server_hybrid_blocks_validate() -> Result<(), Box<dyn std::error::Error
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "server-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers).await?;
+    let (status, response) = post_mcp_str(&ctx, &request, &headers).await?;
 
     assert_eq!(status, StatusCode::OK);
     let error_opt = response.error;

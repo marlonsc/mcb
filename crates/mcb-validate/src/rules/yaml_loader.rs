@@ -455,6 +455,7 @@ impl YamlRuleLoader {
                     })
                     .collect()
             })
+            // INTENTIONAL: YAML field extraction; missing field yields empty string
             .unwrap_or_default();
 
         // Extract lint_select codes (for Ruff/Clippy integration)
@@ -466,6 +467,7 @@ impl YamlRuleLoader {
                     .filter_map(|code| code.as_str().map(str::to_owned))
                     .collect()
             })
+            // INTENTIONAL: YAML field extraction; missing field yields empty string
             .unwrap_or_default();
 
         // Extract custom message
@@ -496,6 +498,7 @@ impl YamlRuleLoader {
                     })
                     .collect()
             })
+            // INTENTIONAL: YAML field extraction; missing field yields empty string
             .unwrap_or_default();
 
         // Extract ast_query (Phase 2)

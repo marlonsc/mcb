@@ -36,7 +36,7 @@ RestartSec=5
 
 # Environment
 Environment=RUST_LOG=info
-Environment=LOCO_ENV=development
+Environment=LOCO_ENV=production
 
 # Working directory for data storage
 WorkingDirectory=%h/.local/share/mcb

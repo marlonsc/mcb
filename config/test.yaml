@@ -36,21 +36,6 @@ settings:
     auto_reconnect: true
     max_reconnect_attempts: 5
 
-  server:
-    transport_mode: stdio
-    network:
-      host: "127.0.0.1"
-      port: 0
-    ssl:
-      https: false
-    timeouts:
-      request_timeout_secs: 5
-      connection_timeout_secs: 2
-      max_request_body_size: 10485760
-    cors:
-      cors_enabled: false
-      cors_origins: []
-
   providers:
     database:
       provider: sqlite
@@ -76,6 +61,8 @@ settings:
           collection: default
 
   mcp:
+    no_stdio: false
+    stdio_only: false
     indexing:
       supported_extensions:
         - rs
@@ -86,15 +73,6 @@ settings:
         - cpp
         - c
         - go
-
-  mcp_context:
-    git:
-      branches:
-        - main
-        - HEAD
-      depth: 50
-      ignore_patterns: []
-      include_submodules: true
 
   logging:
     level: info
@@ -107,7 +85,7 @@ settings:
     enabled: false
     password_algorithm: Argon2
     jwt:
-      secret: ""
+      secret: "{{ get_env(name='JWT_SECRET', default='test-jwt-secret-exactly-32bytes!') }}"
       expiration_secs: 86400
       refresh_expiration_secs: 604800
     api_key:

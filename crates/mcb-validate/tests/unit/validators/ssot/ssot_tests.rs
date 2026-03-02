@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use mcb_validate::{SsotValidator, SsotViolation, Violation, ViolationCategory};
+use rstest::rstest;
 
 fn synthetic_files(entries: &[(&str, &str)]) -> HashMap<String, String> {
     entries
@@ -9,6 +10,7 @@ fn synthetic_files(entries: &[(&str, &str)]) -> HashMap<String, String> {
         .collect()
 }
 
+#[rstest]
 #[test]
 fn detects_duplicate_port_declarations_from_synthetic_files() {
     let files = synthetic_files(&[
@@ -55,6 +57,7 @@ fn detects_duplicate_port_declarations_from_synthetic_files() {
     );
 }
 
+#[rstest]
 #[test]
 fn detects_forbidden_legacy_imports_from_synthetic_files() {
     let files = synthetic_files(&[(
@@ -92,6 +95,7 @@ fn detects_forbidden_legacy_imports_from_synthetic_files() {
     }
 }
 
+#[rstest]
 #[test]
 fn reports_both_ssot_violation_types_together() {
     let files = synthetic_files(&[
@@ -119,6 +123,7 @@ fn reports_both_ssot_violation_types_together() {
     );
 }
 
+#[rstest]
 #[test]
 fn returns_no_violations_for_clean_synthetic_files() {
     let files = synthetic_files(&[
@@ -137,6 +142,7 @@ fn returns_no_violations_for_clean_synthetic_files() {
     assert!(violations.is_empty());
 }
 
+#[rstest]
 #[test]
 fn detects_forbidden_legacy_schema_symbol_on_project_schema_struct() {
     let files = synthetic_files(&[(
@@ -177,6 +183,7 @@ fn detects_forbidden_legacy_schema_symbol_on_project_schema_struct() {
     }
 }
 
+#[rstest]
 #[test]
 fn detects_forbidden_legacy_schema_symbol_on_memory_schema_import() {
     let files = synthetic_files(&[(
@@ -211,6 +218,7 @@ fn detects_forbidden_legacy_schema_symbol_on_memory_schema_import() {
     }
 }
 
+#[rstest]
 #[test]
 fn detects_forbidden_schema_memory_macro_path() {
     let files = synthetic_files(&[(
@@ -256,6 +264,7 @@ fn detects_forbidden_schema_memory_macro_path() {
     }
 }
 
+#[rstest]
 #[test]
 fn detects_forbidden_legacy_schema_import_paths() {
     let files = synthetic_files(&[(
@@ -294,6 +303,7 @@ fn detects_forbidden_legacy_schema_import_paths() {
     }
 }
 
+#[rstest]
 #[test]
 fn detects_forbidden_legacy_schema_symbol_on_ddl_generator_struct() {
     let files = synthetic_files(&[(
@@ -328,6 +338,7 @@ fn detects_forbidden_legacy_schema_symbol_on_ddl_generator_struct() {
     }
 }
 
+#[rstest]
 #[test]
 fn detects_forbidden_root_schema_paths() {
     let files = synthetic_files(&[(
@@ -345,6 +356,7 @@ fn detects_forbidden_root_schema_paths() {
     assert_eq!(root_path_violations.len(), 2);
 }
 
+#[rstest]
 #[test]
 fn detects_forbidden_raw_id_field_type_in_domain_models() {
     let files = synthetic_files(&[(

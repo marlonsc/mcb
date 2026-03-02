@@ -4,6 +4,7 @@
 //! - Corrupted/incompatible databases are backed up and recreated
 //! - DDL errors surface with actionable source context
 
+use rstest::rstest;
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -54,9 +55,12 @@ fn unique_temp_path(name: &str) -> PathBuf {
 ///
 /// Panics if the process cannot be spawned.
 fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
+    // Set CWD to workspace root so Loco can find config/test.yaml.
+    let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     Command::new(get_mcb_path())
         .arg("serve")
         .arg("--server")
+        .current_dir(&workspace_root)
         // Use Loco test environment (config/test.yaml with Tera template for DATABASE_URL)
         .env("LOCO_ENV", "test")
         .env(
@@ -85,8 +89,8 @@ fn cleanup_temp_files(db_path: &std::path::Path, prefix: &str) {
     }
 }
 
+#[rstest]
 #[test]
-#[ignore = "SeaORM migration path needs recovery logic for corrupt DBs"]
 fn corrupted_db_is_backed_up_and_recreated() {
     let db_path = unique_temp_path("corrupt.db");
     fs::write(&db_path, b"this-is-not-a-valid-sqlite-database")
@@ -148,8 +152,8 @@ fn corrupted_db_is_backed_up_and_recreated() {
     );
 }
 
+#[rstest]
 #[test]
-#[ignore = "SeaORM migration path needs recovery logic for corrupt DBs"]
 fn ddl_error_messages_include_source_context() {
     let db_path = unique_temp_path("ddl-ctx.db");
     fs::write(&db_path, vec![0u8; 100]).unwrap_or_else(|e| unreachable!("write invalid db: {e}"));

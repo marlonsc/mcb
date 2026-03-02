@@ -1,6 +1,8 @@
-use crate::utils::test_fixtures::*;
+use mcb_domain::utils::tests::fixtures::*;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{IssueEntityAction, IssueEntityArgs, IssueEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::json;
 
 fn base_args(action: IssueEntityAction, resource: IssueEntityResource) -> IssueEntityArgs {
@@ -24,14 +26,14 @@ fn result_json(res: &rmcp::model::CallToolResult) -> serde_json::Value {
 
 fn test_issue_payload(project_id: &str, title: &str) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "org_id": "",
         "project_id": project_id,
         "created_by": "test-user",
         "title": title,
         "description": format!("Description for {title}"),
-        "issue_type": "task",
-        "status": "open",
+        "issue_type": "Task",
+        "status": "Open",
         "priority": 2,
         "labels": [],
         "notes": "",
@@ -44,7 +46,7 @@ fn test_issue_payload(project_id: &str, title: &str) -> serde_json::Value {
 
 fn test_comment_payload(issue_id: &str, content: &str) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "issue_id": issue_id,
         "author_id": "test-user",
         "content": content,
@@ -54,7 +56,7 @@ fn test_comment_payload(issue_id: &str, content: &str) -> serde_json::Value {
 
 fn test_label_payload(project_id: &str, name: &str) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "org_id": "",
         "project_id": project_id,
         "name": name,
@@ -71,7 +73,7 @@ async fn create_issue(
     let payload = test_issue_payload(project_id, title);
 
     let mut args = base_args(IssueEntityAction::Create, IssueEntityResource::Issue);
-    args.project_id = Some(project_id.to_string());
+    args.project_id = Some(project_id.to_owned());
     args.data = Some(payload);
 
     let result = server.issue_entity_handler().handle(Parameters(args)).await;
@@ -113,9 +115,10 @@ async fn create_label(
 // Issue CRUD (5 tests)
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-issue-create-get-proj";
 
     let created = create_issue(&server, project_id, "Golden Issue Create Get").await;
@@ -123,7 +126,7 @@ async fn golden_issue_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "created issue id must be present");
 
     let mut get_args = base_args(IssueEntityAction::Get, IssueEntityResource::Issue);
@@ -146,18 +149,20 @@ async fn golden_issue_create_and_get() {
         body.get("title").and_then(serde_json::Value::as_str),
         Some("Golden Issue Create Get")
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-issue-list-proj";
 
     let _ = create_issue(&server, project_id, "Golden Issue List 1").await;
     let _ = create_issue(&server, project_id, "Golden Issue List 2").await;
 
     let mut list_args = base_args(IssueEntityAction::List, IssueEntityResource::Issue);
-    list_args.project_id = Some(project_id.to_string());
+    list_args.project_id = Some(project_id.to_owned());
     let list_result = server
         .issue_entity_handler()
         .handle(Parameters(list_args))
@@ -173,11 +178,13 @@ async fn golden_issue_list() {
         count >= 2,
         "issue list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_update_status() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_update_status() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-issue-update-status-proj";
 
     let created = create_issue(&server, project_id, "Golden Issue Update Status").await;
@@ -185,11 +192,11 @@ async fn golden_issue_update_status() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "created issue id must be present");
 
     let mut updated = created.clone();
-    updated["status"] = json!("in_progress");
+    updated["status"] = json!("InProgress");
 
     let mut update_args = base_args(IssueEntityAction::Update, IssueEntityResource::Issue);
     update_args.data = Some(updated);
@@ -216,13 +223,15 @@ async fn golden_issue_update_status() {
     let body = result_json(&get_result.expect("issue get after update response"));
     assert_eq!(
         body.get("status").and_then(serde_json::Value::as_str),
-        Some("in_progress")
+        Some("InProgress")
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_update_assignee() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_update_assignee() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-issue-update-assignee-proj";
 
     let created = create_issue(&server, project_id, "Golden Issue Update Assignee").await;
@@ -230,7 +239,7 @@ async fn golden_issue_update_assignee() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "created issue id must be present");
 
     let mut updated = created.clone();
@@ -263,11 +272,13 @@ async fn golden_issue_update_assignee() {
         body.get("assignee").and_then(serde_json::Value::as_str),
         Some("golden-assignee-user")
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-issue-delete-proj";
 
     let created = create_issue(&server, project_id, "Golden Issue Delete").await;
@@ -275,7 +286,7 @@ async fn golden_issue_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "created issue id must be present");
 
     let mut delete_args = base_args(IssueEntityAction::Delete, IssueEntityResource::Issue);
@@ -296,15 +307,17 @@ async fn golden_issue_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "issue get should fail after delete");
+    Ok(())
 }
 
 // ============================================================================
 // IssueComment CRUD (3 tests)
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_comment_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_comment_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-comment-create-get-proj";
 
     let issue = create_issue(&server, project_id, "Golden Comment Host Issue").await;
@@ -312,7 +325,7 @@ async fn golden_issue_comment_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "host issue id must be present");
 
     let created = create_comment(&server, &issue_id, "Golden comment content").await;
@@ -320,7 +333,7 @@ async fn golden_issue_comment_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!comment_id.is_empty(), "created comment id must be present");
 
     let mut get_args = base_args(IssueEntityAction::Get, IssueEntityResource::Comment);
@@ -343,11 +356,13 @@ async fn golden_issue_comment_create_and_get() {
         body.get("content").and_then(serde_json::Value::as_str),
         Some("Golden comment content")
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_comment_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_comment_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-comment-list-proj";
 
     let issue = create_issue(&server, project_id, "Golden Comment List Host").await;
@@ -355,7 +370,7 @@ async fn golden_issue_comment_list() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "host issue id must be present");
 
     let _ = create_comment(&server, &issue_id, "Comment list 1").await;
@@ -378,11 +393,13 @@ async fn golden_issue_comment_list() {
         count >= 2,
         "comment list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_comment_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_comment_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-comment-delete-proj";
 
     let issue = create_issue(&server, project_id, "Golden Comment Delete Host").await;
@@ -390,7 +407,7 @@ async fn golden_issue_comment_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "host issue id must be present");
 
     let created = create_comment(&server, &issue_id, "Comment to delete").await;
@@ -398,7 +415,7 @@ async fn golden_issue_comment_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!comment_id.is_empty(), "created comment id must be present");
 
     let mut delete_args = base_args(IssueEntityAction::Delete, IssueEntityResource::Comment);
@@ -419,15 +436,17 @@ async fn golden_issue_comment_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "comment get should fail after delete");
+    Ok(())
 }
 
 // ============================================================================
 // IssueLabel CRUD (3 tests)
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_label_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_label_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-label-create-get-proj";
 
     let created = create_label(&server, project_id, "golden-label-create-get").await;
@@ -435,7 +454,7 @@ async fn golden_issue_label_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!label_id.is_empty(), "created label id must be present");
 
     let mut get_args = base_args(IssueEntityAction::Get, IssueEntityResource::Label);
@@ -458,18 +477,20 @@ async fn golden_issue_label_create_and_get() {
         body.get("name").and_then(serde_json::Value::as_str),
         Some("golden-label-create-get")
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_label_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_label_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-label-list-proj";
 
     let _ = create_label(&server, project_id, "golden-label-list-1").await;
     let _ = create_label(&server, project_id, "golden-label-list-2").await;
 
     let mut list_args = base_args(IssueEntityAction::List, IssueEntityResource::Label);
-    list_args.project_id = Some(project_id.to_string());
+    list_args.project_id = Some(project_id.to_owned());
     let list_result = server
         .issue_entity_handler()
         .handle(Parameters(list_args))
@@ -485,11 +506,13 @@ async fn golden_issue_label_list() {
         count >= 2,
         "label list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_label_assign_to_issue() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_label_assign_to_issue() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-label-assign-proj";
 
     let issue = create_issue(&server, project_id, "Golden Label Assign Host").await;
@@ -497,7 +520,7 @@ async fn golden_issue_label_assign_to_issue() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!issue_id.is_empty(), "host issue id must be present");
 
     let label = create_label(&server, project_id, "golden-assign-label").await;
@@ -505,7 +528,7 @@ async fn golden_issue_label_assign_to_issue() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!label_id.is_empty(), "created label id must be present");
 
     let assignment_payload = json!({
@@ -543,35 +566,43 @@ async fn golden_issue_label_assign_to_issue() {
     );
 
     let body = result_json(&list_result.expect("label assignment list response"));
-    let labels = body.as_array().cloned().unwrap_or_default();
+    let labels = body
+        .as_array()
+        .expect("labels response should be a JSON array")
+        .clone();
     let has_label = labels.iter().any(|entry| {
-        entry.get("label_id").and_then(serde_json::Value::as_str) == Some(label_id.as_str())
+        entry.get("id").and_then(serde_json::Value::as_str) == Some(label_id.as_str())
     });
     assert!(
         has_label,
         "label assignment list should include the assigned label"
     );
+    Ok(())
 }
 
 // ============================================================================
 // Error paths (2 tests)
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_create_missing_fields() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_create_missing_fields() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let args = base_args(IssueEntityAction::Create, IssueEntityResource::Issue);
     let result = server.issue_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "issue create without data should fail");
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_issue_get_nonexistent() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_issue_get_nonexistent() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(IssueEntityAction::Get, IssueEntityResource::Issue);
-    args.id = Some("00000000-0000-0000-0000-000000000000".to_string());
+    args.id = Some("00000000-0000-0000-0000-000000000000".to_owned());
     let result = server.issue_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "issue get with nonexistent id should fail");
+    Ok(())
 }

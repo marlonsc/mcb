@@ -19,8 +19,7 @@ use std::path::Path;
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{
-    ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,
-    ViolationEntry,
+    ComplexityReport, RuleInfo, ValidationReport, ValidationServiceInterface, ViolationEntry,
 };
 
 /// Infrastructure validation service using mcb-validate.
@@ -55,12 +54,7 @@ impl ValidationServiceInterface for InfraValidationService {
     }
 
     async fn list_validators(&self) -> Result<Vec<String>> {
-        use mcb_validate::ValidatorRegistry;
-
-        Ok(ValidatorRegistry::standard_validator_names()
-            .iter()
-            .map(|name| (*name).to_owned())
-            .collect())
+        Ok(mcb_domain::registry::validation::list_validator_names())
     }
 
     async fn validate_file(
@@ -71,8 +65,11 @@ impl ValidationServiceInterface for InfraValidationService {
         run_file_validation(file_path, validators)
     }
 
-    async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>> {
-        Ok(mcb_validate::utils::yaml::get_validation_rules(category))
+    async fn get_rules(&self, _category: Option<&str>) -> Result<Vec<RuleInfo>> {
+        // TODO(CA): Rules provided by mcb-validate; infra cannot import validate.
+        // When the binary links mcb-validate, the validate crate registers its own rules
+        // via linkme. A future registry-based approach will resolve this properly.
+        Ok(vec![])
     }
 
     async fn analyze_complexity(
@@ -89,32 +86,39 @@ fn run_validation(
     validators: Option<&[String]>,
     severity_filter: Option<&str>,
 ) -> Result<ValidationReport> {
-    use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
-
-    let config = ValidationConfig::new(workspace_root);
-    let registry = ValidatorRegistry::standard_for(workspace_root);
-
-    let report = if let Some(names) = validators {
-        let names_ref: Vec<&str> = names.iter().map(String::as_str).collect();
-        let violations = registry
-            .validate_named(&config, &names_ref)
-            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-        GenericReporter::create_report(&violations, workspace_root.to_path_buf())
-    } else {
-        let violations = registry
-            .validate_all(&config)
-            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-        GenericReporter::create_report(&violations, workspace_root.to_path_buf())
+    use mcb_domain::ports::RuleValidatorRequest;
+    use mcb_domain::registry::validation::{
+        build_named_validators, build_validators, run_validators,
     };
 
-    Ok(convert_report(report, severity_filter))
+    let root = workspace_root.to_path_buf();
+    let validators_list = if let Some(names) = validators {
+        build_named_validators(&root, names)?
+    } else {
+        build_validators(&root)?
+    };
+    let request = RuleValidatorRequest {
+        workspace_root: root,
+        validator_names: validators.map(<[String]>::to_vec),
+        severity_filter: severity_filter.map(Into::into),
+        exclude_patterns: None,
+    };
+    run_validators(&validators_list, &request)
 }
 
-fn convert_report(
-    report: mcb_validate::GenericReport,
-    severity_filter: Option<&str>,
-) -> ValidationReport {
-    mcb_validate::utils::validation_report::from_generic_report(report, severity_filter, true)
+/// Traverse parent directories to find the workspace root (directory containing Cargo.toml).
+fn find_workspace_root_from(start: &Path) -> Option<std::path::PathBuf> {
+    let mut current = if start.is_file() {
+        start.parent()?
+    } else {
+        start
+    };
+    loop {
+        if current.join("Cargo.toml").exists() {
+            return Some(current.to_path_buf());
+        }
+        current = current.parent()?;
+    }
 }
 
 fn run_file_validation(
@@ -123,7 +127,7 @@ fn run_file_validation(
 ) -> Result<ValidationReport> {
     // For single file validation, we need to find the workspace root
     // and run validation scoped to that file
-    let workspace_root = mcb_validate::find_workspace_root_from(file_path)
+    let workspace_root = find_workspace_root_from(file_path)
         .unwrap_or_else(|| file_path.parent().unwrap_or(file_path).to_path_buf());
 
     // Run standard validation - mcb-validate doesn't have single-file mode yet
@@ -137,47 +141,49 @@ fn run_file_validation(
         .filter(|v| v.file.as_ref().is_some_and(|f| f.contains(&file_str)))
         .collect();
 
-    Ok(mcb_validate::utils::validation_report::from_violations(
-        file_violations,
+    let total = file_violations.len();
+    let errors = file_violations
+        .iter()
+        .filter(|v| v.severity == "ERROR")
+        .count();
+    let warnings = file_violations
+        .iter()
+        .filter(|v| v.severity == "WARNING")
+        .count();
+    let infos = total.saturating_sub(errors).saturating_sub(warnings);
+    Ok(ValidationReport {
+        total_violations: total,
+        errors,
+        warnings,
+        infos,
+        passed: errors == 0,
+        violations: file_violations,
+    })
+}
+fn analyze_file_complexity(
+    _file_path: &Path,
+    _include_functions: bool,
+) -> Result<ComplexityReport> {
+    // Complexity analysis depends on mcb-validate::RcaAnalyzer which is not available
+    // from the infrastructure layer (CA boundary). When the full binary links mcb-validate,
+    // a richer implementation can be registered via linkme.
+    Err(mcb_domain::error::Error::internal(
+        "Complexity analysis requires mcb-validate (not linked in infrastructure layer)",
     ))
 }
 
-fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<ComplexityReport> {
-    use mcb_validate::RcaAnalyzer;
+// ---------------------------------------------------------------------------
+// Linkme Registration
+// ---------------------------------------------------------------------------
+use mcb_domain::registry::services::{
+    SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry, VALIDATION_SERVICE_NAME,
+};
 
-    let analyzer = RcaAnalyzer::new();
-
-    // Get aggregate metrics for the file
-    let aggregate = analyzer
-        .analyze_file_aggregate(file_path)
-        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-
-    let functions = if include_functions {
-        // Get function-level metrics
-        let func_metrics = analyzer
-            .analyze_file(file_path)
-            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-
-        func_metrics
-            .into_iter()
-            .map(|f| FunctionComplexity {
-                name: f.name,
-                line: f.start_line,
-                cyclomatic: f.metrics.cyclomatic,
-                cognitive: f.metrics.cognitive,
-                sloc: f.metrics.sloc,
-            })
-            .collect()
-    } else {
-        Vec::new()
-    };
-
-    Ok(ComplexityReport {
-        file: file_path.to_str().unwrap_or_default().to_owned(),
-        cyclomatic: aggregate.cyclomatic,
-        cognitive: aggregate.cognitive,
-        maintainability_index: aggregate.maintainability_index,
-        sloc: aggregate.sloc,
-        functions,
-    })
-}
+#[allow(unsafe_code)]
+#[linkme::distributed_slice(SERVICES_REGISTRY)]
+static VALIDATION_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
+    name: VALIDATION_SERVICE_NAME,
+    build: ServiceBuilder::Validation(|_context| {
+        Ok(std::sync::Arc::new(InfraValidationService::new()))
+    }),
+};

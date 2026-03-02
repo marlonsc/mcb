@@ -30,14 +30,12 @@
 //! - **VoyageAI**: Optimized for code embeddings
 //! - **Gemini**: Google ecosystem integration
 
-pub mod anthropic;
-pub mod fastembed;
-pub mod gemini;
-/// Macros for embedding provider implementation
-pub mod macros;
-pub mod ollama;
-pub mod openai;
-pub mod voyageai;
+mod anthropic;
+mod fastembed;
+mod gemini;
+mod ollama;
+mod openai;
+mod voyageai;
 
 // Re-export for convenience
 pub use anthropic::AnthropicEmbeddingProvider;

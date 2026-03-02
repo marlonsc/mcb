@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use crate::Severity;
 use crate::define_violations;
-use crate::traits::violation::ViolationCategory;
+use mcb_domain::ports::validation::ViolationCategory;
 
 define_violations! {
     ViolationCategory::Testing,

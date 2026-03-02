@@ -18,13 +18,13 @@
 //! - **ADR-033**: Native Handler Consolidation
 
 use std::path::PathBuf;
+use std::sync::Arc;
 
 use crate::constants::defaults::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
-use crate::traits::violation::{Violation, ViolationCategory};
-use mcb_domain::ports::{ComplexityAnalyzer, DeadCodeDetector, TdgScorer};
+use mcb_domain::ports::validation::{Violation, ViolationCategory};
+use mcb_domain::ports::{AnalysisFinding, CodeAnalyzer, resolve_code_analyzer};
 
 use crate::define_violations;
-use crate::validators::pmat_native::NativePmatAnalyzer;
 use crate::{Result, Severity, ValidationConfig};
 
 define_violations! {
@@ -122,12 +122,8 @@ pub struct PmatValidator {
     complexity_threshold: u32,
     /// Configured threshold for technical debt gradient.
     tdg_threshold: u32,
-    /// Provider for complexity analysis logic (Strategy pattern).
-    complexity_analyzer: Box<dyn ComplexityAnalyzer>,
-    /// Provider for dead code detection logic.
-    dead_code_detector: Box<dyn DeadCodeDetector>,
-    /// Provider for TDG scoring logic.
-    tdg_scorer: Box<dyn TdgScorer>,
+    /// Provider for all code analysis logic (Strategy pattern).
+    analyzer: Option<Arc<dyn CodeAnalyzer>>,
 }
 
 impl PmatValidator {
@@ -143,12 +139,9 @@ impl PmatValidator {
             config,
             complexity_threshold: DEFAULT_COMPLEXITY_THRESHOLD,
             tdg_threshold: DEFAULT_TDG_THRESHOLD,
-            complexity_analyzer: Box::new(NativePmatAnalyzer),
-            dead_code_detector: Box::new(NativePmatAnalyzer),
-            tdg_scorer: Box::new(NativePmatAnalyzer),
+            analyzer: resolve_code_analyzer("native-rca").ok(),
         }
     }
-
     /// Sets the cyclomatic complexity threshold (builder pattern).
     #[must_use]
     pub fn with_complexity_threshold(mut self, threshold: u32) -> Self {
@@ -166,7 +159,7 @@ impl PmatValidator {
     /// Native analyzer path is always available.
     #[must_use]
     pub fn is_available(&self) -> bool {
-        true
+        self.analyzer.is_some()
     }
 
     /// Runs all PMAT validations and returns detected violations.
@@ -188,23 +181,35 @@ impl PmatValidator {
     ///
     /// Returns an error if the complexity analyzer fails.
     pub fn validate_complexity(&self) -> Result<Vec<PmatViolation>> {
-        let findings = self
-            .complexity_analyzer
+        let Some(ref analyzer) = self.analyzer else {
+            return Ok(vec![PmatViolation::PmatUnavailable {
+                message: "No code analyzer registered".to_owned(),
+                severity: Severity::Info,
+            }]);
+        };
+        let findings = analyzer
             .analyze_complexity(&self.config.workspace_root, self.complexity_threshold)
             .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
 
         Ok(findings
             .into_iter()
-            .map(|f| PmatViolation::HighComplexity {
-                file: f.file,
-                function: f.function,
-                complexity: f.complexity,
-                threshold: self.complexity_threshold,
-                severity: if f.complexity > self.complexity_threshold * 2 {
-                    Severity::Warning
-                } else {
-                    Severity::Info
-                },
+            .filter_map(|f| match f {
+                AnalysisFinding::Complexity {
+                    file,
+                    function,
+                    complexity,
+                } => Some(PmatViolation::HighComplexity {
+                    file,
+                    function,
+                    complexity,
+                    threshold: self.complexity_threshold,
+                    severity: if complexity > self.complexity_threshold * 2 {
+                        Severity::Warning
+                    } else {
+                        Severity::Info
+                    },
+                }),
+                _ => None,
             })
             .collect())
     }
@@ -215,19 +220,32 @@ impl PmatValidator {
     ///
     /// Returns an error if the dead code detector fails.
     pub fn validate_dead_code(&self) -> Result<Vec<PmatViolation>> {
-        let findings = self
-            .dead_code_detector
+        let Some(ref analyzer) = self.analyzer else {
+            return Ok(vec![PmatViolation::PmatUnavailable {
+                message: "No code analyzer registered".to_owned(),
+                severity: Severity::Info,
+            }]);
+        };
+        let findings = analyzer
             .detect_dead_code(&self.config.workspace_root)
             .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
 
         Ok(findings
             .into_iter()
-            .map(|f| PmatViolation::DeadCode {
-                file: f.file,
-                line: f.line,
-                item_type: f.item_type,
-                name: f.name,
-                severity: Severity::Info,
+            .filter_map(|f| match f {
+                AnalysisFinding::DeadCode {
+                    file,
+                    line,
+                    item_type,
+                    name,
+                } => Some(PmatViolation::DeadCode {
+                    file,
+                    line,
+                    item_type,
+                    name,
+                    severity: Severity::Info,
+                }),
+                _ => None,
             })
             .collect())
     }
@@ -238,28 +256,38 @@ impl PmatValidator {
     ///
     /// Returns an error if the TDG scorer fails.
     pub fn validate_tdg(&self) -> Result<Vec<PmatViolation>> {
-        let findings = self
-            .tdg_scorer
+        let Some(ref analyzer) = self.analyzer else {
+            return Ok(vec![PmatViolation::PmatUnavailable {
+                message: "No code analyzer registered".to_owned(),
+                severity: Severity::Info,
+            }]);
+        };
+        let findings = analyzer
             .score_tdg(&self.config.workspace_root, self.tdg_threshold)
             .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
 
         Ok(findings
             .into_iter()
-            .map(|f| PmatViolation::LowTdgScore {
-                file: f.file,
-                score: f.score,
-                threshold: self.tdg_threshold,
-                severity: if f.score > self.tdg_threshold + 25 {
-                    Severity::Warning
-                } else {
-                    Severity::Info
-                },
+            .filter_map(|f| match f {
+                AnalysisFinding::TechnicalDebt { file, score } => {
+                    Some(PmatViolation::LowTdgScore {
+                        file,
+                        score,
+                        threshold: self.tdg_threshold,
+                        severity: if score > self.tdg_threshold + 25 {
+                            Severity::Warning
+                        } else {
+                            Severity::Info
+                        },
+                    })
+                }
+                _ => None,
             })
             .collect())
     }
 }
 
-impl crate::traits::validator::Validator for PmatValidator {
+impl mcb_domain::ports::validation::Validator for PmatValidator {
     fn name(&self) -> &'static str {
         "pmat"
     }
@@ -268,7 +296,10 @@ impl crate::traits::validator::Validator for PmatValidator {
         "Native PMAT-style analysis for cyclomatic complexity, dead code detection, and TDG scoring"
     }
 
-    fn validate(&self, _config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
+    fn validate(
+        &self,
+        _config: &ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
         let violations = self.validate_all()?;
         Ok(violations
             .into_iter()

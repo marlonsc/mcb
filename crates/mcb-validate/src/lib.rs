@@ -18,14 +18,20 @@
 //! Validation can scan multiple source directories (e.g., workspace crates + extra src/ trees):
 //!
 //! ```
-//! use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
+//! use mcb_validate::{GenericReporter, ValidationConfig, Violation};
 //!
 //! let tmp = tempfile::tempdir().unwrap();
-//! let config = ValidationConfig::new(tmp.path())
-//!     .with_exclude_pattern("target/");
+//! let config = ValidationConfig::new(tmp.path()).with_exclude_pattern("target/");
+//! let validators = mcb_domain::registry::validation::build_all_validators(&config.workspace_root)
+//!     .unwrap();
 //!
-//! let registry = ValidatorRegistry::standard_for(&config.workspace_root);
-//! let violations = registry.validate_all(&config).unwrap();
+//! let mut violations: Vec<Box<dyn Violation>> = Vec::new();
+//! for validator in validators {
+//!     if let Ok(mut found) = validator.validate(&config) {
+//!         violations.append(&mut found);
+//!     }
+//! }
+//!
 //! let report = GenericReporter::create_report(&violations, config.workspace_root.clone());
 //! assert!(report.summary.total_violations >= 0);
 //! ```
@@ -35,10 +41,6 @@ pub mod constants;
 
 // === Centralized Thresholds (Phase 2 DRY) ===
 pub mod thresholds;
-
-// Traits
-/// Core traits for the validation system
-pub mod traits;
 
 /// Violation runtime types (field formatting, file path extraction).
 pub mod macros;
@@ -58,18 +60,11 @@ pub mod embedded_rules;
 pub mod engines;
 pub mod rules;
 
-// === Unified Rule Registry (bridges Rust validators + YAML rules + AST engines) ===
-pub mod unified_registry;
-
 // === Pattern Registry (YAML-driven patterns) ===
 pub mod pattern_registry;
-/// Validation provider adapter that exposes this crate through domain ports.
-pub mod provider;
 
-// === Rule Filtering System (Phase 6) ===
 pub mod filters;
 
-// === Linter Integration (Phase 1 - Pure Rust Pipeline) ===
 pub mod linters;
 
 // === AST Analysis (Phase 2 - Pure Rust Pipeline) ===
@@ -88,184 +83,40 @@ pub mod duplication;
 // === Centralized Utilities ===
 pub mod utils;
 
-// === New Validators (using new system) ===
-// Moved to validators module
-
-// === Validators ===
-// Moved to validators module
+// === Public API surface (single re-export list in exports.rs) ===
+mod exports;
+pub use exports::*;
 
 use std::path::{Path, PathBuf};
 
-// Re-export AST module types (RCA-based)
-pub use ast::{
-    AstDecoder, AstNode, AstParseResult, AstQuery, AstQueryBuilder, AstQueryPatterns, AstViolation,
-    Position, QueryCondition, Span, UnwrapDetection, UnwrapDetector,
-};
-// Re-export RCA types for direct usage (NO wrappers)
-pub use ast::{Callback, LANG, Node, ParserTrait, Search, action, find, guess_language};
-// New validators for PMAT integration
-pub use validators::async_patterns::{AsyncPatternValidator, AsyncViolation};
-// Re-export new validators
-pub use validators::clean_architecture::{CleanArchitectureValidator, CleanArchitectureViolation};
-// Re-export configuration system
-pub use config::{
-    ArchitectureRulesConfig, FileConfig, GeneralConfig, OrganizationRulesConfig,
-    QualityRulesConfig, RulesConfig, SolidRulesConfig, ValidatorsConfig,
-};
-pub use validators::config_quality::{ConfigQualityValidator, ConfigQualityViolation};
-// Re-export validators
-pub use embedded_rules::EmbeddedRules;
-pub use validators::dependency::{DependencyValidator, DependencyViolation};
-pub use validators::documentation::{DocumentationValidator, DocumentationViolation};
-// Re-export rule registry and YAML system
-pub use engines::{HybridRuleEngine, RuleEngineType};
-pub use validators::error_boundary::{ErrorBoundaryValidator, ErrorBoundaryViolation};
-// Re-export new DRY violation system
-pub use generic_reporter::{GenericReport, GenericReporter, GenericSummary};
-pub use mcb_domain::ports::ViolationEntry;
-pub use validators::implementation::{ImplementationQualityValidator, ImplementationViolation};
-pub use validators::kiss::{KissValidator, KissViolation};
-pub use validators::layer_flow::{LayerFlowValidator, LayerFlowViolation};
-// Re-export linter integration
-pub use linters::{
-    ClippyLinter, LintViolation, LinterEngine, LinterType, RuffLinter, YamlRuleExecutor,
-};
-// Re-export Metrics module types (Phase 4) - RCA-based
-pub use metrics::{
-    MetricThreshold, MetricThresholds, MetricType, MetricViolation, RcaAnalyzer,
-    RcaFunctionMetrics, RcaMetrics,
-};
-pub use validators::naming::{NamingValidator, NamingViolation};
-pub use validators::organization::{OrganizationValidator, OrganizationViolation};
-pub use validators::pattern_validator::{PatternValidator, PatternViolation};
-pub use validators::performance::{PerformanceValidator, PerformanceViolation};
-pub use validators::pmat::{PmatValidator, PmatViolation};
-pub use validators::port_adapter::{PortAdapterValidator, PortAdapterViolation};
-pub use validators::quality::{QualityValidator, QualityViolation};
-// Re-export ComponentType for strict directory validation
-pub use run_context::{FileInventorySource, InventoryEntry, ValidationRunContext};
-pub use validators::refactoring::{RefactoringValidator, RefactoringViolation};
-
-pub use rules::templates::TemplateEngine;
-pub use rules::yaml_loader::{
-    AstSelector, MetricThresholdConfig, MetricsConfig, RuleFix, ValidatedRule, YamlRuleLoader,
-};
-pub use rules::yaml_validator::YamlRuleValidator;
-
+use crate::constants::linters::CARGO_TOML_FILENAME;
 use derive_more::Display;
 use thiserror::Error;
 
-use crate::linters::constants::CARGO_TOML_FILENAME;
-pub use validators::hygiene::{HygieneValidator, HygieneViolation};
-pub use validators::solid::{SolidValidator, SolidViolation};
-pub use validators::ssot::{SsotValidator, SsotViolation};
-pub use validators::test_quality::{TestQualityValidator, TestQualityViolation};
-// Re-export centralized thresholds
-pub use thresholds::{ValidationThresholds, thresholds};
-pub use validators::declarative_validator::DeclarativeValidator;
-
-pub use traits::{Validator, ValidatorRegistry};
-pub use traits::{Violation, ViolationCategory};
-pub use validators::visibility::{VisibilityValidator, VisibilityViolation};
-// Re-export unified registry
-pub use unified_registry::{RuleInfo, RuleOrigin, UnifiedRuleRegistry};
-
-// Re-export ValidationConfig for multi-directory support
-// ValidationConfig is defined in this module
+// --- Crate-owned types (defined here; not in a submodule) ---
 
 /// Result type for validation operations
 pub type Result<T> = std::result::Result<T, ValidationError>;
 
-/// Configuration for multi-directory validation
-///
-/// Allows scanning multiple source directories beyond the standard `crates/` directory.
-/// Useful for validating additional source trees alongside workspace crates.
-///
-/// # Example
-///
-/// ```
-/// use mcb_validate::ValidationConfig;
-///
-/// let config = ValidationConfig::new("/workspace")
-///     .with_additional_path("../src")
-///     .with_exclude_pattern("target/")
-///     .with_exclude_pattern("tests/fixtures/");
-/// ```
-#[derive(Debug, Clone)]
-pub struct ValidationConfig {
-    /// Root directory of the workspace (contains Cargo.toml with workspace manifest)
-    pub workspace_root: PathBuf,
-    /// Additional source paths to validate.
-    pub additional_src_paths: Vec<PathBuf>,
-    /// Patterns to exclude from validation (e.g., "target/", "tests/")
-    pub exclude_patterns: Vec<String>,
+pub use mcb_domain::ports::validation::{
+    CheckFn, NamedCheck, ValidationConfig, Validator, ValidatorError, ValidatorResult, Violation,
+    ViolationCategory, run_checks,
+};
+
+pub trait ValidationConfigExt {
+    fn get_source_dirs(&self) -> Result<Vec<PathBuf>>;
+    fn get_scan_dirs(&self) -> Result<Vec<PathBuf>>;
 }
 
-impl ValidationConfig {
-    /// Create a new validation config for the given workspace root.
-    ///
-    /// The workspace root is canonicalized so that all downstream path
-    /// comparisons (inventory `starts_with`, `strip_prefix`, etc.) work
-    /// correctly on platforms where temp-dir symlinks differ from the
-    /// canonical form (macOS `/tmp` → `/private/tmp`, Windows `\\?\`).
-    pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
-        let raw: PathBuf = workspace_root.into();
-        let canonical = std::fs::canonicalize(&raw).unwrap_or(raw);
-        Self {
-            workspace_root: canonical,
-            additional_src_paths: Vec::new(),
-            exclude_patterns: Vec::new(),
-        }
-    }
-
-    /// Add an additional source path to validate
-    ///
-    /// Paths can be absolute or relative to `workspace_root`.
-    #[must_use]
-    pub fn with_additional_path(mut self, path: impl Into<PathBuf>) -> Self {
-        self.additional_src_paths.push(path.into());
-        self
-    }
-
-    /// Add an exclude pattern (files/directories matching this will be skipped)
-    #[must_use]
-    pub fn with_exclude_pattern(mut self, pattern: impl Into<String>) -> Self {
-        self.exclude_patterns.push(pattern.into());
-        self
-    }
-
-    /// Check if a path should be excluded based on patterns
-    #[must_use]
-    pub fn should_exclude(&self, path: &Path) -> bool {
-        let Some(path_str) = path.to_str() else {
-            return false;
-        };
-        self.exclude_patterns
-            .iter()
-            .any(|pattern| path_str.contains(pattern))
-    }
-
-    /// Get all source directories to validate
-    ///
-    /// Returns crates/ subdirectories plus any additional paths.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the crates directory cannot be read.
-    pub fn get_source_dirs(&self) -> Result<Vec<PathBuf>> {
+impl ValidationConfigExt for ValidationConfig {
+    fn get_source_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut dirs = Vec::new();
-
-        // Load file configuration to get skip_crates
-        let file_config = FileConfig::load(&self.workspace_root);
-
-        // Original crates/ scanning
+        let file_config = crate::config::FileConfig::load(&self.workspace_root);
         let crates_dir = self.workspace_root.join("crates");
         if crates_dir.exists() {
             for entry in std::fs::read_dir(&crates_dir)? {
                 let entry = entry?;
                 let path = entry.path();
-
-                // Skip crates specified in configuration (e.g., validate crate itself, facade crates)
                 if let Some(file_name) = path.file_name().and_then(|n| n.to_str())
                     && file_config
                         .general
@@ -275,14 +126,11 @@ impl ValidationConfig {
                 {
                     continue;
                 }
-
                 if path.is_dir() && !self.should_exclude(&path) {
                     dirs.push(path);
                 }
             }
         }
-
-        // Additional paths from config
         for path in &self.additional_src_paths {
             let full_path = if path.is_absolute() {
                 path.clone()
@@ -293,29 +141,17 @@ impl ValidationConfig {
                 dirs.push(full_path);
             }
         }
-
         Ok(dirs)
     }
 
-    /// Get actual source directories to scan for Rust files
-    ///
-    /// For crate directories (containing `src/` subdirectory), returns `<dir>/src/`.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if source directory enumeration fails.
-    pub fn get_scan_dirs(&self) -> Result<Vec<PathBuf>> {
+    fn get_scan_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut scan_dirs = Vec::new();
-
         for dir in self.get_source_dirs()? {
             let src_subdir = dir.join("src");
             if src_subdir.exists() && src_subdir.is_dir() {
-                // Crate-style: has src/ subdirectory
                 scan_dirs.push(src_subdir);
             }
-            // Standard crate without src/ directory yet - skip (implicit continue)
         }
-
         Ok(scan_dirs)
     }
 }
@@ -382,21 +218,7 @@ pub enum ValidationError {
     },
 }
 
-/// Severity level for violations
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize, Display,
-)]
-pub enum Severity {
-    /// Error severity
-    #[display("ERROR")]
-    Error,
-    /// Warning severity
-    #[display("WARNING")]
-    Warning,
-    /// Info severity
-    #[display("INFO")]
-    Info,
-}
+pub use mcb_domain::ports::validation::Severity;
 
 /// Component type for strict directory validation
 ///

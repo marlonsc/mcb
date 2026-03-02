@@ -3,23 +3,22 @@
 //! Validates `SolidValidator` against fixture crates with precise
 //! file + line + violation-type assertions.
 
-use mcb_validate::SolidValidator;
-
-use crate::utils::test_constants::{
+use mcb_domain::utils::test_constants::{
     DOMAIN_CRATE, FIXTURE_DOMAIN_SERVICE_PATH, INFRA_CRATE, SERVER_CRATE, TEST_CRATE,
 };
-use crate::utils::*;
+use mcb_domain::utils::*;
+use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_solid_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = SolidValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "solid").unwrap();
 
     let domain_service = format!("{DOMAIN_CRATE}/src/{FIXTURE_DOMAIN_SERVICE_PATH}");
     assert_violations_exact(
@@ -41,6 +40,7 @@ fn test_solid_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_clean_solid_no_violations() {
     let (_temp, root) = with_inline_crate(
@@ -61,8 +61,7 @@ impl Greeter for SimpleGreeter {
 }
 "#,
     );
-    let validator = SolidValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "solid").unwrap();
 
     assert_no_violations(&violations, "Clean SOLID code should produce no violations");
 }

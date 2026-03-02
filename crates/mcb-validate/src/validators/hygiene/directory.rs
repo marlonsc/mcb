@@ -2,6 +2,7 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use super::violation::HygieneViolation;
+use crate::ValidationConfigExt;
 use crate::filters::LanguageId;
 use crate::run_context::ValidationRunContext;
 use crate::{Result, Severity, ValidationConfig};

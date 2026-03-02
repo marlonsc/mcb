@@ -8,15 +8,18 @@ use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource, SearchArgs, Sea
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::utils::text::extract_text;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text;
+use rstest::rstest;
 
 // =============================================================================
 // Memory E2E Tests
 // =============================================================================
 
+#[rstest]
 #[tokio::test]
-async fn test_golden_memory_store_with_default_project() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_golden_memory_store_with_default_project() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let memory_h = server.memory_handler();
 
     // Store observation with a test project
@@ -54,11 +57,13 @@ async fn test_golden_memory_store_with_default_project() {
     let text = extract_text(&resp.content);
     // Response format is JSON with observation_id
     assert!(text.contains("observation_id"), "response: {text}");
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_golden_memory_list_empty_graceful() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_golden_memory_list_empty_graceful() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let memory_h = server.memory_handler();
 
     // List memories for a project with no data
@@ -92,15 +97,17 @@ async fn test_golden_memory_list_empty_graceful() {
         text.contains("\"count\": 0") || text.contains("[]"),
         "response: {text}"
     );
+    Ok(())
 }
 
 // =============================================================================
 // Context Search E2E Tests
 // =============================================================================
 
+#[rstest]
 #[tokio::test]
-async fn test_golden_context_search_basic() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_golden_context_search_basic() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let memory_h = server.memory_handler();
     let search_h = server.search_handler();
     let project_id = "search-project";
@@ -147,6 +154,8 @@ async fn test_golden_context_search_basic() {
         tags: None,
         session_id: None,
         token: None,
+        repo_id: None,
+        repo_path: None,
     };
 
     let result = search_h.handle(Parameters(search_args)).await;
@@ -157,4 +166,5 @@ async fn test_golden_context_search_basic() {
         text.contains("reactor core temperature"),
         "Search results missing content: {text}"
     );
+    Ok(())
 }

@@ -46,6 +46,7 @@ impl GitProvider {
             .push_head()
             .map_err(|e| Error::vcs_with_source("Failed to push HEAD to revwalk", e))?;
 
+        // INTENTIONAL: Sorting preference is non-critical; default ordering is acceptable
         revwalk.set_sorting(Sort::TIME | Sort::REVERSE).ok();
 
         let first_oid = revwalk
@@ -58,6 +59,7 @@ impl GitProvider {
 
     fn get_default_branch(repo: &Repository) -> Result<String> {
         repo.head()
+            // INTENTIONAL: Best-effort default branch detection; falls back to None
             .ok()
             .and_then(|head| head.shorthand().map(String::from))
             .ok_or_else(|| {
@@ -69,6 +71,7 @@ impl GitProvider {
 
     fn get_remote_url(repo: &Repository) -> Option<String> {
         repo.find_remote("origin")
+            // INTENTIONAL: Best-effort remote URL detection; falls back to None
             .ok()
             .and_then(|remote| remote.url().map(String::from))
     }
@@ -82,6 +85,7 @@ impl GitProvider {
         for branch_result in branches {
             let (branch, _) =
                 branch_result.map_err(|e| Error::vcs_with_source("Failed to read branch", e))?;
+            // INTENTIONAL: Optional branch name extraction; None means detached HEAD
             if let Some(name) = branch.name().ok().flatten() {
                 names.push(name.to_owned());
             }
@@ -136,9 +140,10 @@ impl VcsProvider for GitProvider {
             let name = match branch.name() {
                 Ok(Some(n)) => n.to_owned(),
                 _ => {
-                    tracing::warn!(
-                        branch_id = ?branch.name(),
-                        "skipping branch with invalid name"
+                    mcb_domain::warn!(
+                        "vcs_git",
+                        "skipping branch with invalid name",
+                        &format!("branch_id={:?}", branch.name())
                     );
                     continue;
                 }
@@ -147,10 +152,10 @@ impl VcsProvider for GitProvider {
             let head_commit = match branch.get().peel_to_commit() {
                 Ok(c) => c.id().to_string(),
                 Err(e) => {
-                    tracing::warn!(
-                        error = %e,
-                        branch_name = %name,
-                        "skipping branch with invalid head commit"
+                    mcb_domain::warn!(
+                        "vcs_git",
+                        "skipping branch with invalid head commit",
+                        &format!("branch_name={name} error={e}")
                     );
                     continue;
                 }
@@ -160,7 +165,9 @@ impl VcsProvider for GitProvider {
 
             let upstream = branch
                 .upstream()
+                // INTENTIONAL: Optional upstream detection; None means no tracking branch
                 .ok()
+                // INTENTIONAL: Optional upstream name; None means no tracking branch
                 .and_then(|u| u.name().ok().flatten().map(String::from));
 
             result.push(VcsBranch::new(
@@ -206,6 +213,7 @@ impl VcsProvider for GitProvider {
             .push(branch_commit.id())
             .map_err(|e| Error::vcs_with_source("Failed to push commit to revwalk", e))?;
 
+        // INTENTIONAL: Sorting preference is non-critical; default ordering is acceptable
         revwalk.set_sorting(Sort::TIME).ok();
 
         let mut commits = Vec::new();
@@ -449,3 +457,15 @@ impl VcsProvider for GitProvider {
         Ok(repositories)
     }
 }
+
+// ---------------------------------------------------------------------------
+// Linkme Registration
+// ---------------------------------------------------------------------------
+use mcb_domain::registry::vcs::{VCS_PROVIDERS, VcsProviderEntry};
+
+#[linkme::distributed_slice(VCS_PROVIDERS)]
+static GIT_VCS_PROVIDER_ENTRY: VcsProviderEntry = VcsProviderEntry {
+    name: "git",
+    description: "Git repository provider using libgit2",
+    build: |_config| Ok(std::sync::Arc::new(GitProvider::new())),
+};

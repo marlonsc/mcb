@@ -3,22 +3,23 @@
 //! Validates `OrganizationValidator` against fixture crates with precise
 //! file + line + violation-type assertions.
 
-use mcb_validate::OrganizationValidator;
-use mcb_validate::{OrganizationViolation, Severity, Violation};
-
-use crate::utils::test_constants::*;
-use crate::utils::*;
+use mcb_domain::utils::test_constants::*;
+use mcb_domain::utils::*;
+use mcb_validate::Severity;
+use mcb_validate::Violation;
+use mcb_validate::organization::OrganizationViolation;
+use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_organization_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = OrganizationValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "organization").unwrap();
 
     assert_violations_exact(
         &violations,
@@ -66,6 +67,7 @@ fn test_organization_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_clean_organization_no_violations() {
     let (_temp, root) = with_inline_crate(
@@ -78,8 +80,7 @@ pub fn retry(attempts: u32) -> bool {
 }
 ",
     );
-    let validator = OrganizationValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "organization").unwrap();
 
     assert_no_violations(
         &violations,
@@ -87,6 +88,7 @@ pub fn retry(attempts: u32) -> bool {
     );
 }
 
+#[rstest]
 #[test]
 fn test_organization_violation_severity_is_non_recursive() {
     let violation = OrganizationViolation::MagicNumber {

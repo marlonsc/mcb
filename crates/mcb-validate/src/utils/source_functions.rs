@@ -3,7 +3,10 @@
 //!
 use regex::Regex;
 
-use crate::constants::common::{ATTRIBUTE_PREFIX, COMMENT_PREFIX, FN_PREFIX};
+use crate::constants::common::{
+    ATTRIBUTE_PREFIX, COMMENT_PREFIX, CONTROL_FLOW_CONTAINS_TOKENS,
+    CONTROL_FLOW_STARTS_WITH_TOKENS, FN_PREFIX,
+};
 
 use super::FunctionInfo;
 
@@ -22,6 +25,7 @@ pub(super) fn extract_functions_impl(
             let fn_name = cap
                 .get(1)
                 .map(|m| m.as_str().to_owned())
+                // INTENTIONAL: Regex capture group; no match yields empty string
                 .unwrap_or_default();
             let fn_start = orig_idx + 1;
 
@@ -72,6 +76,7 @@ pub(super) fn extract_functions_with_body_impl(
             *current_struct = cap
                 .get(1)
                 .map(|m| m.as_str().to_owned())
+                // INTENTIONAL: Regex capture group; no match yields empty string
                 .unwrap_or_default();
         }
 
@@ -81,6 +86,7 @@ pub(super) fn extract_functions_with_body_impl(
             current_fn_name = cap
                 .get(1)
                 .map(|m| m.as_str().to_owned())
+                // INTENTIONAL: Regex capture group; no match yields empty string
                 .unwrap_or_default();
             fn_start_line = orig_idx + 1;
             fn_body_lines.clear();
@@ -138,13 +144,12 @@ fn is_structural_line(line: &str) -> bool {
 }
 
 fn has_control_flow(body: &[String]) -> bool {
-    const CONTAINS_TOKENS: [&str; 4] = [" if ", "} else", " match ", " else {"];
-    const STARTS_WITH_TOKENS: [&str; 5] = ["if ", "match ", "for ", "while ", "loop "];
-
     body.iter().any(|line| {
         line.contains("else {")
-            || CONTAINS_TOKENS.iter().any(|token| line.contains(token))
-            || STARTS_WITH_TOKENS
+            || CONTROL_FLOW_CONTAINS_TOKENS
+                .iter()
+                .any(|token| line.contains(token))
+            || CONTROL_FLOW_STARTS_WITH_TOKENS
                 .iter()
                 .any(|token| line.starts_with(token))
     })

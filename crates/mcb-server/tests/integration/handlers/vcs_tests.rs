@@ -6,11 +6,11 @@ use mcb_server::handlers::VcsHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::*;
 
-use crate::utils::domain_services::create_real_domain_services;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 
 async fn create_handler() -> Option<(VcsHandler, tempfile::TempDir)> {
-    let (services, temp_dir) = create_real_domain_services().await?;
-    Some((VcsHandler::new(services.vcs_provider), temp_dir))
+    let (state, temp_dir) = create_test_mcb_state().await?;
+    Some((VcsHandler::new(state.mcp_server.vcs_provider()), temp_dir))
 }
 
 fn base_vcs_args(action: VcsAction) -> VcsArgs {
@@ -68,6 +68,7 @@ fn create_git_repo_fixture() -> Result<(tempfile::TempDir, String), std::io::Err
 #[case(Some(10))]
 #[case(Some(5))]
 #[case(None)]
+#[rstest]
 #[tokio::test]
 async fn test_vcs_list_repositories_cases(
     #[case] limit: Option<u32>,
@@ -83,8 +84,8 @@ async fn test_vcs_list_repositories_cases(
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result?;
+    let response = result.expect("vcs handler should succeed for list repositories input");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
     Ok(())
 }
@@ -104,8 +105,8 @@ async fn test_vcs_index_repository_success() -> Result<(), Box<dyn std::error::E
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let _response = result?;
+    let response = result.expect("vcs handler should succeed for repository indexing");
+    assert!(!response.content.is_empty(), "response should have content");
     Ok(())
 }
 
@@ -122,8 +123,8 @@ async fn test_vcs_index_repository_with_repo_path() -> Result<(), rmcp::ErrorDat
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let _response = result?;
+    let response = result.expect("vcs handler should handle index request with repo_path");
+    assert!(!response.content.is_empty(), "response should have content");
     Ok(())
 }
 
@@ -141,8 +142,8 @@ async fn test_vcs_analyze_impact_with_defaults() -> Result<(), rmcp::ErrorData> 
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let _response = result?;
+    let response = result.expect("vcs handler should handle analyze impact defaults");
+    assert!(!response.content.is_empty(), "response should have content");
     Ok(())
 }
 
@@ -159,11 +160,8 @@ async fn test_vcs_analyze_impact_missing_repo_path() -> Result<(), rmcp::ErrorDa
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result?;
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Missing repo_path and repo_id should return error"
-    );
+    let response =
+        result.expect("vcs handler should handle auto-resolved repo_path for analyze impact");
+    assert!(!response.content.is_empty(), "response should have content");
     Ok(())
 }

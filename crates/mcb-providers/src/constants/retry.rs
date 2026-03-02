@@ -1,16 +1,13 @@
 //!
 //! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
 //!
-//! Retry configuration constants for provider API requests.
+//! Unified retry policy constants for all provider API requests.
+//!
+//! All providers (embedding, vector store, database) use the same retry
+//! behaviour to ensure consistent failure recovery across the system.
 
-/// Default retry count for embedding API requests.
-pub const EMBEDDING_RETRY_COUNT: usize = 3;
+/// Default retry count for all provider API requests.
+pub const PROVIDER_RETRY_COUNT: usize = 3;
 
-/// Default retry backoff for embedding API requests (milliseconds).
-pub const EMBEDDING_RETRY_BACKOFF_MS: u64 = 500;
-
-/// Default retry count for vector store API requests.
-pub const VECTOR_STORE_RETRY_COUNT: usize = 2;
-
-/// Default retry backoff for vector store API requests (seconds).
-pub const VECTOR_STORE_RETRY_BACKOFF_SECS: u64 = 1;
+/// Default retry backoff for all provider API requests (milliseconds).
+pub const PROVIDER_RETRY_BACKOFF_MS: u64 = 500;

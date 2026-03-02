@@ -39,7 +39,6 @@ use std::path::PathBuf;
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use serde::{Deserialize, Serialize};
-use tracing::{error, warn};
 
 use crate::Severity;
 use crate::constants::validators::{
@@ -88,15 +87,19 @@ impl FileConfig {
         let mut config: Self = match figment.extract() {
             Ok(config) => config,
             Err(err) => {
-                warn!(
-                    error = %err,
-                    "failed to load validation config; using embedded defaults"
+                mcb_domain::warn!(
+                    "validate_config",
+                    "failed to load validation config; using embedded defaults",
+                    &err
                 );
                 let mut fallback: Self = Figment::new()
                     .merge(Toml::string(EMBEDDED_VALIDATE_DEFAULTS))
                     .extract()
                     .unwrap_or_else(|_| {
-                        error!("embedded mcb-validate defaults are invalid");
+                        mcb_domain::error!(
+                            "validate_config",
+                            "embedded mcb-validate defaults are invalid"
+                        );
                         std::process::exit(2);
                     });
                 fallback.general.workspace_root = Some(root.clone());

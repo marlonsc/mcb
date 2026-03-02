@@ -19,7 +19,6 @@ implementation_status: Partial
 
 > **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
 
-
 **Proposed** (Planned for v0.2.0)
 
 > **Amendment 2026-02-02**: Tool naming convention updated to use `memory_`

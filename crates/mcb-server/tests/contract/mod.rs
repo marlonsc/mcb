@@ -1,11 +1,3 @@
-#![allow(missing_docs)]
-
-extern crate mcb_providers;
-
-#[path = "../utils/mod.rs"]
-#[allow(dead_code, unused_imports)]
-mod utils;
-
 mod agent_contract_tests;
 mod common;
 mod entity_contract_tests;

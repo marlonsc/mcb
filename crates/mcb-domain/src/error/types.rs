@@ -360,6 +360,49 @@ impl Error {
         }
     }
 
+    /// Create a database error with source
+    pub fn database_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Database {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create a configuration error with source
+    pub fn config_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Configuration {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create an infrastructure error with source
+    pub fn infrastructure_with_source<
+        S: Into<String>,
+        E: std::error::Error + Send + Sync + 'static,
+    >(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Infrastructure {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create a config invalid error
+    pub fn config_invalid<S1: Into<String>, S2: Into<String>>(key: S1, message: S2) -> Self {
+        Self::ConfigInvalid {
+            key: key.into(),
+            message: message.into(),
+        }
+    }
     /// Create a repository not found error
     pub fn repository_not_found<S: Into<String>>(path: S) -> Self {
         Self::RepositoryNotFound { path: path.into() }

@@ -41,27 +41,20 @@ macro_rules! impl_registry {
 
             for entry in $slice {
                 if entry.name == provider_name {
-                    return (entry.build)(config).map_err(|e| {
-                        $crate::error::Error::Configuration {
-                            message: e.to_string(),
-                            source: None,
-                        }
-                    });
+                    return (entry.build)(config)
+                        .map_err(|e| $crate::error::Error::configuration(e.to_string()));
                 }
             }
 
             let available: Vec<&str> = $slice.iter().map(|e| e.name).collect();
 
-            Err($crate::error::Error::Configuration {
-                message: format!(
-                    "Unknown provider '{}'. Available providers: {:?}",
-                    provider_name, available
-                ),
-                source: None,
-            })
+            Err($crate::error::Error::configuration(format!(
+                "Unknown provider '{}'. Available providers: {:?}",
+                provider_name, available
+            )))
         }
 
-        /// List all registered providers
+        /// List all registered providers as `(name, description)` pairs.
         pub fn $list() -> Vec<(&'static str, &'static str)> {
             $slice.iter().map(|e| (e.name, e.description)).collect()
         }

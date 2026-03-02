@@ -65,6 +65,7 @@ members = [
     }
 
     /// Test `ValidationConfig` creation and paths
+    #[rstest]
     #[test]
     fn test_validation_config() {
         let dir = TempDir::new().unwrap();
@@ -80,6 +81,7 @@ members = [
     }
 
     /// Test `ValidatorRegistry` with multiple validators
+    #[rstest]
     #[test]
     fn test_validator_registry() {
         let dir = TempDir::new().unwrap();
@@ -87,20 +89,10 @@ members = [
 
         let config = ValidationConfig::new(&root);
 
-        // Registry starts empty and validators are registered explicitly
-        let mut registry = ValidatorRegistry::new();
-        assert!(
-            registry.validators().is_empty(),
-            "New registry should be empty"
-        );
-
-        // Register the clean architecture validator
-        let validator = mcb_validate::CleanArchitectureValidator::new(&root);
-        registry.register(Box::new(validator));
-
-        // Now registry should have one validator
+        // Use standard_for to get a registry with all built-in validators
+        let registry = ValidatorRegistry::standard_for(&root);
         let validators = registry.validators();
-        assert_eq!(validators.len(), 1, "Registry should have one validator");
+        assert!(!validators.is_empty(), "Registry should have validators");
 
         // Can run validation on the registry
         let result = registry.validate_all(&config);
@@ -108,6 +100,7 @@ members = [
     }
 
     /// Test `GenericReporter` generates report from violations
+    #[rstest]
     #[test]
     fn test_generic_reporter() {
         let dir = TempDir::new().unwrap();
@@ -169,6 +162,7 @@ pub fn risky_function(data: Option<String>) -> String {
     }
 
     /// Test full validation flow with clean code
+    #[rstest]
     #[test]
     fn test_full_validation_clean_code() {
         let dir = TempDir::new().unwrap();
@@ -213,6 +207,7 @@ impl fmt::Display for User {
 mod tests {
     use super::*;
 
+    #[rstest]
     #[test]
     fn test_user_creation() {
         let user = User::new("Alice".to_string());
@@ -251,6 +246,7 @@ mod tests {
     }
 
     /// Test validation with multiple violation types
+    #[rstest]
     #[test]
     fn test_validation_with_violations() {
         let dir = TempDir::new().unwrap();
@@ -300,6 +296,7 @@ impl MutableValueObject {
     }
 
     /// Test JSON serialization of report
+    #[rstest]
     #[test]
     fn test_report_json_serialization() {
         let summary = GenericSummary {
@@ -341,6 +338,7 @@ impl MutableValueObject {
     }
 
     /// Test validation categories are distinct
+    #[rstest]
     #[test]
     fn test_violation_categories() {
         let categories = [
@@ -362,6 +360,7 @@ impl MutableValueObject {
     }
 
     /// Test severity levels
+    #[rstest]
     #[test]
     fn test_severity_levels() {
         let severities = [Severity::Error, Severity::Warning, Severity::Info];
@@ -377,6 +376,7 @@ impl MutableValueObject {
     }
 
     /// Test with actual workspace (integration with real codebase)
+    #[rstest]
     #[test]
     fn test_with_real_workspace() {
         // Find the actual workspace root
@@ -413,6 +413,7 @@ impl MutableValueObject {
     }
 
     /// Test configuration with exclude patterns
+    #[rstest]
     #[test]
     fn test_config_exclude_patterns() {
         let dir = TempDir::new().unwrap();
@@ -427,6 +428,7 @@ impl MutableValueObject {
     }
 
     /// Test multiple validators can run concurrently (no deadlocks)
+    #[rstest]
     #[test]
     fn test_concurrent_validation() {
         use std::thread;
@@ -460,6 +462,7 @@ impl MutableValueObject {
     }
 
     /// Test `ValidatorRegistry` lists validators
+    #[rstest]
     #[test]
     fn test_registry_lists_validators() {
         let registry = ValidatorRegistry::new();

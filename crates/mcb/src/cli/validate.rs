@@ -1,7 +1,8 @@
 //! Validate command - runs architecture validation
-#![allow(clippy::print_stdout)]
 
+use std::io::Write;
 use std::path::PathBuf;
+use std::time::Instant;
 
 use clap::Args;
 
@@ -35,6 +36,18 @@ pub struct ValidateArgs {
     /// Output format: text, json
     #[arg(long, default_value = "text")]
     pub format: String,
+
+    /// Silent mode: suppress all progress output on stderr
+    #[arg(long, short = 's')]
+    pub silent: bool,
+
+    /// Debug mode: show detailed validator internals
+    #[arg(long, short = 'd')]
+    pub debug: bool,
+
+    /// Trace mode: show everything including per-file processing
+    #[arg(long, short = 't')]
+    pub trace: bool,
 }
 
 /// Validation result for exit code determination
@@ -62,11 +75,41 @@ impl ValidationResult {
 }
 
 impl ValidateArgs {
+    /// Initialize logging based on verbosity flags
+    fn init_logging(&self) {
+        use mcb_domain::ports::LogLevel;
+
+        if self.silent {
+            // No logging at all — set_log_fn is never called, so dispatch is a no-op
+            return;
+        }
+
+        let level = if self.trace {
+            LogLevel::Trace
+        } else if self.debug {
+            LogLevel::Debug
+        } else {
+            LogLevel::Info
+        };
+
+        mcb_infrastructure::logging::set_stderr_log_level(level);
+        mcb_domain::infra::logging::set_log_fn(mcb_infrastructure::logging::stderr_log_fn);
+    }
+
+    /// Print a progress message to stderr (respects --silent)
+    fn progress(&self, msg: &str) {
+        if !self.silent {
+            let _ = writeln!(std::io::stderr(), "{msg}");
+        }
+    }
+
     /// Execute the validate command
     /// # Errors
     /// Returns an error if validation setup or execution fails.
     pub fn execute(self) -> Result<ValidationResult, Box<dyn std::error::Error>> {
         use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
+
+        self.init_logging();
 
         // Resolve workspace root
         let workspace_root = if self.path.is_absolute() {
@@ -75,10 +118,25 @@ impl ValidateArgs {
             std::env::current_dir()?.join(&self.path)
         };
 
+        self.progress(&format!(
+            "● Validating workspace: {}",
+            workspace_root.display()
+        ));
+
         // Build validation config
         let config = ValidationConfig::new(&workspace_root);
 
         let registry = ValidatorRegistry::standard_for(&workspace_root);
+
+        let validator_count = if let Some(ref v) = self.validators {
+            v.len()
+        } else {
+            registry.validators().len()
+        };
+
+        self.progress(&format!("● Running {validator_count} validator(s)..."));
+
+        let started = Instant::now();
 
         // Run validation
         let report = if let Some(ref validators) = self.validators {
@@ -89,6 +147,10 @@ impl ValidateArgs {
             let violations = registry.validate_all(&config)?;
             GenericReporter::create_report(&violations, workspace_root.clone())
         };
+
+        let elapsed = started.elapsed();
+
+        self.progress(&format!("● Done in {elapsed:.2?}"));
 
         // Format output
         match self.format.as_str() {
@@ -112,7 +174,7 @@ impl ValidateArgs {
     /// Print report as JSON
     fn print_json(report: &mcb_validate::GenericReport) -> Result<(), Box<dyn std::error::Error>> {
         let json = serde_json::to_string_pretty(report)?;
-        println!("{json}");
+        writeln!(std::io::stdout(), "{json}")?;
         Ok(())
     }
 
@@ -150,7 +212,7 @@ impl ValidateArgs {
         }
 
         if has_violations {
-            println!();
+            let _ = writeln!(std::io::stdout());
         }
     }
 
@@ -167,26 +229,34 @@ impl ValidateArgs {
         let file_display = violation.file.as_deref().unwrap_or("-");
         let line = violation.line.unwrap_or(0);
 
-        println!(
+        let _ = writeln!(
+            std::io::stdout(),
             "[{}] {}: {} ({}:{})",
-            violation.severity, violation.id, violation.message, file_display, line
+            violation.severity,
+            violation.id,
+            violation.message,
+            file_display,
+            line
         );
         if let Some(ref suggestion) = violation.suggestion {
-            println!("  → {suggestion}");
+            let _ = writeln!(std::io::stdout(), "  → {suggestion}");
         }
     }
 
     fn print_summary(&self, report: &mcb_validate::GenericReport) {
-        println!(
+        let _ = writeln!(
+            std::io::stdout(),
             "Validation complete: {} error(s), {} warning(s), {} info(s)",
-            report.summary.errors, report.summary.warnings, report.summary.infos
+            report.summary.errors,
+            report.summary.warnings,
+            report.summary.infos
         );
 
         // Print category breakdown (unless quick mode)
         if !self.quick && !report.summary.by_category.is_empty() {
-            println!("\nBy category:");
+            let _ = writeln!(std::io::stdout(), "\nBy category:");
             for (category, count) in &report.summary.by_category {
-                println!("  {category}: {count}");
+                let _ = writeln!(std::io::stdout(), "  {category}: {count}");
             }
         }
     }

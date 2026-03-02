@@ -9,7 +9,6 @@ pub mod config;
 pub mod constants;
 pub mod detection;
 pub mod engine;
-pub mod macros;
 pub mod processor;
 pub mod traverser;
 

@@ -6,8 +6,9 @@ use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
-use crate::utils::test_fixtures::GOLDEN_COLLECTION;
-use crate::utils::text::extract_text;
+use mcb_domain::utils::tests::fixtures::GOLDEN_COLLECTION;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text;
 
 fn sample_codebase_path() -> std::path::PathBuf {
     crate::utils::test_fixtures::sample_codebase_path()
@@ -17,15 +18,16 @@ fn sample_codebase_path() -> std::path::PathBuf {
 // E2E: Complete workflow (clear -> status -> index -> status -> search -> clear)
 // =============================================================================
 
+#[rstest]
 #[tokio::test]
-async fn test_golden_e2e_complete_workflow() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_golden_e2e_complete_workflow() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let path = sample_codebase_path();
     assert!(
         path.exists(),
         "sample_codebase fixture must exist: {path:?}"
     );
-    let path_str = path.to_string_lossy().to_string();
+    let path_str = path.to_string_lossy().into_owned();
     let coll = GOLDEN_COLLECTION;
 
     let index_h = server.index_handler();
@@ -42,6 +44,7 @@ async fn test_golden_e2e_complete_workflow() {
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
     let r = index_h.handle(Parameters(clear_args)).await;
     assert!(r.is_ok(), "index clear should succeed");
@@ -64,6 +67,7 @@ async fn test_golden_e2e_complete_workflow() {
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
     let r = index_h.handle(Parameters(status_args)).await;
     assert!(r.is_ok());
@@ -85,6 +89,7 @@ async fn test_golden_e2e_complete_workflow() {
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
     let r = index_h.handle(Parameters(index_args)).await;
     assert!(r.is_ok(), "index should succeed");
@@ -113,6 +118,8 @@ async fn test_golden_e2e_complete_workflow() {
         tags: None,
         session_id: None,
         token: None,
+        repo_id: None,
+        repo_path: None,
     };
     let r = search_h.handle(Parameters(search_args)).await;
     assert!(r.is_ok());
@@ -135,9 +142,11 @@ async fn test_golden_e2e_complete_workflow() {
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
     let r = index_h.handle(Parameters(clear_args)).await;
     assert!(r.is_ok());
+    Ok(())
 }
 
 #[rstest]
@@ -147,15 +156,15 @@ async fn test_golden_e2e_complete_workflow() {
 async fn test_golden_index_variants(
     #[case] collection: Option<String>,
     #[case] extensions: Option<Vec<String>>,
-) {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+) -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let path = sample_codebase_path();
     assert!(path.exists(), "sample_codebase must exist: {path:?}");
 
     let handler = server.index_handler();
     let args = IndexArgs {
         action: IndexAction::Start,
-        path: Some(path.to_string_lossy().to_string()),
+        path: Some(path.to_string_lossy().into_owned()),
         collection,
         extensions,
         exclude_dirs: None,
@@ -163,11 +172,12 @@ async fn test_golden_index_variants(
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
 
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    let response = result.unwrap();
+    let response = result.expect("index variants should succeed");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
 
     let text = extract_text(&response.content);
@@ -177,18 +187,20 @@ async fn test_golden_index_variants(
             || text.contains("started"),
         "response: {text}"
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_golden_search_returns_relevant_results() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_golden_search_returns_relevant_results() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let path = sample_codebase_path();
     let collection = "golden_search_relevance";
     server
         .index_handler()
         .handle(Parameters(IndexArgs {
             action: IndexAction::Start,
-            path: Some(path.to_string_lossy().to_string()),
+            path: Some(path.to_string_lossy().into_owned()),
             collection: Some(collection.to_owned()),
             extensions: None,
             exclude_dirs: None,
@@ -196,6 +208,7 @@ async fn test_golden_search_returns_relevant_results() {
             max_file_size: None,
             follow_symlinks: None,
             token: None,
+            repo_id: None,
         }))
         .await
         .expect("index");
@@ -214,14 +227,18 @@ async fn test_golden_search_returns_relevant_results() {
             tags: None,
             session_id: None,
             token: None,
+            repo_id: None,
+            repo_path: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed after index");
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_golden_search_handles_empty_query() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_golden_search_handles_empty_query() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let search_h = server.search_handler();
     let r = search_h.handle(Parameters(SearchArgs {
         query: "   ".to_owned(),
@@ -235,23 +252,35 @@ async fn test_golden_search_handles_empty_query() {
         tags: None,
         session_id: None,
         token: None,
+        repo_id: None,
+        repo_path: None,
     }));
     let result = r.await;
-    assert!(result.is_ok());
-    let response = result.unwrap();
+    let response = result.expect("empty query should return an error response");
+    assert!(
+        !response.content.is_empty(),
+        "error response should have content"
+    );
     assert!(response.is_error.unwrap_or(false));
+    let text = extract_text(&response.content);
+    assert!(
+        text.to_lowercase().contains("empty") || text.to_lowercase().contains("query"),
+        "error response should mention empty query: {text}"
+    );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_golden_search_respects_limit_parameter() {
-    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await;
+async fn test_golden_search_respects_limit_parameter() -> TestResult {
+    let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let path = sample_codebase_path();
     let collection = "golden_limit_test";
     server
         .index_handler()
         .handle(Parameters(IndexArgs {
             action: IndexAction::Start,
-            path: Some(path.to_string_lossy().to_string()),
+            path: Some(path.to_string_lossy().into_owned()),
             collection: Some(collection.to_owned()),
             extensions: None,
             exclude_dirs: None,
@@ -259,6 +288,7 @@ async fn test_golden_search_respects_limit_parameter() {
             max_file_size: None,
             follow_symlinks: None,
             token: None,
+            repo_id: None,
         }))
         .await
         .expect("index for limit test");
@@ -277,7 +307,10 @@ async fn test_golden_search_respects_limit_parameter() {
             tags: None,
             session_id: None,
             token: None,
+            repo_id: None,
+            repo_path: None,
         }))
         .await;
     assert!(r.is_ok(), "search must succeed");
+    Ok(())
 }

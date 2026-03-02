@@ -19,3 +19,11 @@ mod violation;
 
 pub use self::validator::DependencyValidator;
 pub use self::violation::{DependencyCycle, DependencyViolation};
+
+#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
+static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
+    mcb_domain::registry::validation::ValidatorEntry {
+        name: "dependency",
+        description: "Validates Clean Architecture layer dependencies",
+        build: |root| Ok(Box::new(DependencyValidator::new(root))),
+    };

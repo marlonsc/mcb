@@ -4,20 +4,25 @@ use mcb_server::handlers::SessionHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::utils::domain_services::create_real_domain_services;
-use crate::utils::test_fixtures::TEST_PROJECT_ID;
-use crate::utils::text::extract_text;
+use mcb_domain::utils::tests::fixtures::TEST_PROJECT_ID;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
+use mcb_domain::utils::text::extract_text;
+use rstest::rstest;
 
 async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
-    let (services, temp_dir) = create_real_domain_services().await?;
+    let (state, temp_dir) = create_test_mcb_state().await?;
     Some((
-        SessionHandler::new(services.agent_session_service, services.memory_service),
+        SessionHandler::new(
+            state.mcp_server.agent_session_service(),
+            state.mcp_server.memory_service(),
+        ),
         temp_dir,
     ))
 }
 
 macro_rules! session_test {
     ($test_name:ident, $action:expr, session_id: $session_id:expr, expect_ok) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() {
             let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -38,12 +43,16 @@ macro_rules! session_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let _response = result.expect("Expected response");
+            let response = result.expect("session handler should succeed for valid session action");
+            assert!(
+                !response.content.is_empty(),
+                "response should have content"
+            );
         }
     };
 
     ($test_name:ident, $action:expr, data: $data:expr, $(agent_type: $agent_type:expr,)? expect_ok) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() {
             let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -64,13 +73,15 @@ macro_rules! session_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let response = result.expect("Expected successful response");
+            let response =
+                result.expect("session handler should succeed for valid create input");
+            assert!(!response.content.is_empty(), "response should have content");
             assert!(!response.is_error.unwrap_or(false));
         }
     };
 
     ($test_name:ident, $action:expr, data: $data:expr, $(agent_type: $agent_type:expr,)? expect_error) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() {
             let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -91,8 +102,9 @@ macro_rules! session_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let response = result.expect("Expected response");
+            let response =
+                result.expect("session handler should return structured error response");
+            assert!(!response.content.is_empty(), "response should have content");
             assert!(response.is_error.unwrap_or(false), "Should return error");
         }
     };
@@ -165,6 +177,7 @@ session_test!(
     expect_ok
 );
 
+#[rstest]
 #[tokio::test]
 async fn test_session_update_conflicting_project_id_rejected() {
     let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -223,6 +236,7 @@ async fn test_session_update_conflicting_project_id_rejected() {
     assert!(err.message.contains("conflicting project_id"));
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_session_create_missing_data_returns_invalid_params() {
     let Some((handler, _services_temp_dir)) = create_handler().await else {
@@ -243,6 +257,7 @@ async fn test_session_create_missing_data_returns_invalid_params() {
     };
 
     let result = handler.handle(Parameters(args)).await;
-    let err = result.expect_err("missing data must return invalid_params error");
-    assert!(err.message.contains("missing required field: data"));
+    let response = result.expect("session handler should return structured error response");
+    assert!(!response.content.is_empty(), "response should have content");
+    assert!(response.is_error.unwrap_or(false), "Should return error");
 }

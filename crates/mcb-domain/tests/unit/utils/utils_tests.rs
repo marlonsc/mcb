@@ -1,7 +1,7 @@
 use mcb_domain::utils::id;
 use rstest::rstest;
 
-#[test]
+#[rstest]
 fn correlate_id_is_deterministic() {
     let first = id::correlate_id("session", "ses_1234567890");
     let second = id::correlate_id("session", "ses_1234567890");
@@ -22,6 +22,7 @@ fn correlate_id_changes_with_input(
     assert_ne!(first, second);
 }
 
+#[rstest]
 #[test]
 fn correlate_id_returns_valid_uuid_format() {
     let result = id::correlate_id("session", "ses_abcdef");
@@ -33,6 +34,7 @@ fn correlate_id_returns_valid_uuid_format() {
     assert_eq!(parsed.unwrap().get_version_num(), 5);
 }
 
+#[rstest]
 #[test]
 fn correlate_id_pinned_value() {
     let result = id::correlate_id("session", "ses_1234567890");
@@ -42,18 +44,21 @@ fn correlate_id_pinned_value() {
     );
 }
 
+#[rstest]
 #[test]
 fn deterministic_uuid_is_v5() {
     let uuid = id::deterministic("session", "ses_1234567890");
     assert_eq!(uuid.get_version_num(), 5);
 }
 
+#[rstest]
 #[test]
 fn generate_returns_v4() {
     let uuid = id::generate();
     assert_eq!(uuid.get_version_num(), 4);
 }
 
+#[rstest]
 #[test]
 fn generate_is_unique() {
     let a = id::generate();

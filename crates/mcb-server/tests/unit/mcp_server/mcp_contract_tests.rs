@@ -1,15 +1,16 @@
 use rstest::rstest;
-extern crate mcb_providers;
 
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
 use axum::http::StatusCode;
 use mcb_server::McpServer;
-use mcb_server::tools::router::{ToolExecutionContext, ToolHandlers, route_tool_call};
+use mcb_server::tools::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use rmcp::model::CallToolRequestParams;
 
-use crate::utils::http_mcp::{McpTestContext, post_mcp, tools_call_request, tools_list_request};
+use mcb_domain::utils::http_mcp::{
+    McpTestContext, post_mcp_str, tools_call_request, tools_list_request,
+};
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
     server.tool_handlers()
@@ -29,7 +30,7 @@ fn direct_tool_call_request(tool_name: &str) -> CallToolRequestParams {
 async fn test_tool_name_set_stability() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = tools_list_request();
-    let (status, response) = post_mcp(&ctx, &request, &[]).await?;
+    let (status, response) = post_mcp_str(&ctx, &request, &[]).await?;
 
     assert_eq!(status, StatusCode::OK);
     assert!(response.error.is_none(), "tools/list should not error");
@@ -68,7 +69,7 @@ async fn test_tool_name_set_stability() -> Result<(), Box<dyn std::error::Error>
 async fn test_tool_count_stability() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = tools_list_request();
-    let (status, response) = post_mcp(&ctx, &request, &[]).await?;
+    let (status, response) = post_mcp_str(&ctx, &request, &[]).await?;
 
     assert_eq!(status, StatusCode::OK);
     assert!(response.error.is_none(), "tools/list should not error");
@@ -95,7 +96,7 @@ async fn test_each_tool_has_non_null_object_input_schema_with_properties()
 -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = tools_list_request();
-    let (status, response) = post_mcp(&ctx, &request, &[]).await?;
+    let (status, response) = post_mcp_str(&ctx, &request, &[]).await?;
 
     assert_eq!(status, StatusCode::OK);
     assert!(response.error.is_none(), "tools/list should not error");
@@ -148,6 +149,7 @@ async fn test_each_tool_has_non_null_object_input_schema_with_properties()
 #[case("index")]
 #[case("search")]
 #[case("memory")]
+#[rstest]
 #[tokio::test]
 async fn test_provenance_gating_requires_full_provenance_fields(
     #[case] tool_name: &str,
@@ -191,6 +193,7 @@ async fn test_provenance_gating_requires_full_provenance_fields(
 #[case("index")]
 #[case("search")]
 #[case("memory")]
+#[rstest]
 #[tokio::test]
 async fn test_delegation_requires_parent_session_id_when_delegated_true(
     #[case] tool_name: &str,
@@ -201,6 +204,7 @@ async fn test_delegation_requires_parent_session_id_when_delegated_true(
     let execution_context = ToolExecutionContext {
         session_id: Some("session-1".to_owned()),
         parent_session_id: None,
+        org_id: None,
         project_id: Some("project-1".to_owned()),
         worktree_id: Some("worktree-1".to_owned()),
         repo_id: Some("repo-1".to_owned()),
@@ -242,7 +246,7 @@ async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid()
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "server-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers).await?;
+    let (status, response) = post_mcp_str(&ctx, &request, &headers).await?;
 
     assert_eq!(status, StatusCode::OK);
     let error_opt = response.error;
@@ -269,6 +273,7 @@ async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid()
 #[case("project")]
 #[case("vcs")]
 #[case("entity")]
+#[rstest]
 #[tokio::test]
 async fn test_operation_mode_matrix_allows_tools_in_client_hybrid(
     #[case] tool_name: &str,
@@ -279,7 +284,7 @@ async fn test_operation_mode_matrix_allows_tools_in_client_hybrid(
         ("X-Workspace-Root", "/tmp"),
         ("X-Execution-Flow", "client-hybrid"),
     ];
-    let (status, response) = post_mcp(&ctx, &request, &headers).await?;
+    let (status, response) = post_mcp_str(&ctx, &request, &headers).await?;
 
     assert_eq!(status, StatusCode::OK);
     let error_opt = response.error;

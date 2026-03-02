@@ -9,9 +9,11 @@ use mcb_validate::engines::hybrid_engine::RuleEngine;
 use mcb_validate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
 use serde_json::json;
 
-use crate::utils::test_constants::*;
-use crate::utils::*;
+use mcb_domain::utils::test_constants::*;
+use mcb_domain::utils::*;
+use rstest::rstest;
 
+#[rstest]
 #[test]
 fn test_cargo_dependency_detection() {
     let engine = RustyRulesEngineWrapper::new();
@@ -40,6 +42,7 @@ fn test_cargo_dependency_detection() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_cargo_dependency_detection_with_violation() {
     let temp_dir = tempfile::TempDir::new().unwrap();

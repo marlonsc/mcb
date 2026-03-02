@@ -24,6 +24,18 @@
 //! - **No external dependencies** - only standard library and core traits
 //! - **Pure business logic** - no infrastructure or application concerns
 //!
+//! ## Focus: Architecture & Integration
+//!
+//! For developers (and agents) looking to integrate with MCB's dependency system:
+//!
+//! - **Static DI / Containerless Architecture (CA)**: See [`registry`] for the
+//!   `linkme`-based registration backbone. This is where providers are "linked" to the domain.
+//! - **Opaque DI Context**: See [`registry::ServiceResolutionContext`]. It carries
+//!   infrastructure dependencies (DB, Config) through the domain layer without creating
+//!   cyclic dependencies.
+//! - **Test Utilities**: See [`utils::tests`] for the centralized testing
+//!   scaffolding, including Golden Tests, Invariant Assertions, and DI-ready fixtures.
+//!
 //! ## Example
 //!
 //! ```
@@ -63,13 +75,6 @@ pub mod infra;
 pub mod ports;
 /// Provider auto-registration registry
 pub mod registry;
-
-#[cfg(any(test, feature = "test-utils"))]
-/// Test-only configuration helpers for external service endpoints.
-pub mod test_services_config;
-#[cfg(any(test, feature = "test-utils"))]
-/// Shared test fixtures and utilities.
-pub mod test_utils;
 /// Common utilities
 pub mod utils;
 /// Immutable value objects
@@ -80,5 +85,4 @@ pub use constants::values::*;
 pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};
-pub use utils::{compute_content_hash, project_type, vcs_context};
 pub use value_objects::*;

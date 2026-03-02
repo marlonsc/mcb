@@ -3,9 +3,8 @@
 //!
 //! C++ language processor for AST-based code chunking.
 
-use crate::language::common::{
-    AST_NODE_STRUCT_SPECIFIER, CHUNK_SIZE_CPP, TS_NODE_FUNCTION_DEFINITION,
-};
+use crate::language::common::CHUNK_SIZE_CPP;
+use mcb_domain::constants::ast::{AST_NODE_STRUCT_SPECIFIER, TS_NODE_FUNCTION_DEFINITION};
 
 crate::impl_simple_language_processor!(
     CppProcessor,

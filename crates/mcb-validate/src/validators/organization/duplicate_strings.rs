@@ -1,12 +1,12 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
 //!
-use super::constants::{
-    DUPLICATE_STRING_MIN_FILES, DUPLICATE_STRING_REGEX, DUPLICATE_STRING_SKIP_PATTERNS,
-};
 use super::violation::OrganizationViolation;
 use crate::constants::common::{
     ATTRIBUTE_PREFIX, CONST_DECLARATION_PREFIXES, CONSTANTS_FILE_KEYWORDS,
+};
+use crate::constants::organization::{
+    DUPLICATE_STRING_MIN_FILES, DUPLICATE_STRING_REGEX, DUPLICATE_STRING_SKIP_PATTERNS,
 };
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;

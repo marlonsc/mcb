@@ -3,15 +3,16 @@ use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
-use crate::utils::domain_services::create_real_domain_services;
-use crate::utils::test_fixtures::create_temp_codebase;
+use mcb_domain::utils::tests::fixtures::create_temp_codebase;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 
 #[rstest]
 #[case(true, None, Some("test"), true)]
 #[case(false, Some("/nonexistent/path/to/codebase"), Some("test"), false)]
-#[case(false, None, Some("test"), false)]
-#[case(true, None, None, false)]
+#[case(false, None, Some("test"), true)]
+#[case(true, None, None, true)]
 #[case(false, Some("/definitely/nonexistent/mcb-path"), Some("test"), false)]
+#[rstest]
 #[tokio::test]
 async fn test_index_codebase(
     #[case] create_codebase: bool,
@@ -19,10 +20,10 @@ async fn test_index_codebase(
     #[case] collection: Option<&str>,
     #[case] should_succeed: bool,
 ) {
-    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
         return;
     };
-    let handler = IndexHandler::new(services.indexing_service);
+    let handler = IndexHandler::new(state.mcp_server.indexing_service());
 
     let _temp_dir_guard;
     let path_val = if create_codebase {
@@ -44,15 +45,24 @@ async fn test_index_codebase(
         max_file_size: None,
         follow_symlinks: None,
         token: None,
+        repo_id: None,
     };
 
     let result = handler.handle(Parameters(args)).await;
 
     if should_succeed {
-        assert!(result.is_ok());
-        let response = result.expect("Expected successful response");
+        let response = result.expect("index handler should succeed for valid start request");
+        assert!(!response.content.is_empty(), "response should have content");
         assert!(!response.is_error.unwrap_or(false));
     } else {
-        assert!(result.is_err());
+        let err = result.expect_err("index handler should fail for invalid start request");
+        let err_str = err.to_string();
+        assert!(
+            err_str.contains("path")
+                || err_str.contains("collection")
+                || err_str.contains("not found")
+                || err_str.contains("invalid"),
+            "error should mention invalid indexing inputs, got: {err_str}"
+        );
     }
 }

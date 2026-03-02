@@ -7,18 +7,24 @@ use mcb_server::handlers::{MemoryHandler, SessionHandler};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::{Value, json};
 
-use crate::utils::domain_services::{create_base_memory_args, create_real_domain_services};
-use crate::utils::invariants::assert_error_shape;
+use mcb_domain::utils::tests::fixtures::{create_base_memory_args, create_test_mcb_state};
+use mcb_domain::utils::tests::mcp_assertions::assert_error_shape;
 
 async fn memory_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
-    let (services, temp_dir) = create_real_domain_services().await?;
-    Some((MemoryHandler::new(services.memory_service), temp_dir))
+    let (state, temp_dir) = create_test_mcb_state().await?;
+    Some((
+        MemoryHandler::new(state.mcp_server.memory_service()),
+        temp_dir,
+    ))
 }
 
 async fn session_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
-    let (services, temp_dir) = create_real_domain_services().await?;
+    let (state, temp_dir) = create_test_mcb_state().await?;
     Some((
-        SessionHandler::new(services.agent_session_service, services.memory_service),
+        SessionHandler::new(
+            state.mcp_server.agent_session_service(),
+            state.mcp_server.memory_service(),
+        ),
         temp_dir,
     ))
 }
@@ -71,6 +77,7 @@ async fn memory_store_missing_content_returns_expected_error(
     assert_error_shape(&response, "Missing required field: content");
 }
 
+#[rstest]
 #[tokio::test]
 async fn session_create_missing_data_returns_expected_error() {
     let Some((handler, _temp_dir)) = session_handler().await else {

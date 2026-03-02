@@ -16,27 +16,27 @@ impl From<session_summary::Model> for SessionSummary {
             topics: m
                 .topics
                 .as_deref()
-                .and_then(|s| serde_json::from_str(s).ok())
+                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "topics", error = %e, "malformed JSON in DB column")).ok())
                 .unwrap_or_default(),
             decisions: m
                 .decisions
                 .as_deref()
-                .and_then(|s| serde_json::from_str(s).ok())
+                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "decisions", error = %e, "malformed JSON in DB column")).ok())
                 .unwrap_or_default(),
             next_steps: m
                 .next_steps
                 .as_deref()
-                .and_then(|s| serde_json::from_str(s).ok())
+                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "next_steps", error = %e, "malformed JSON in DB column")).ok())
                 .unwrap_or_default(),
             key_files: m
                 .key_files
                 .as_deref()
-                .and_then(|s| serde_json::from_str(s).ok())
+                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "key_files", error = %e, "malformed JSON in DB column")).ok())
                 .unwrap_or_default(),
             origin_context: m
                 .origin_context
                 .as_deref()
-                .and_then(|s| serde_json::from_str::<OriginContext>(s).ok()),
+                .and_then(|s| serde_json::from_str::<OriginContext>(s).map_err(|e| tracing::warn!(field = "origin_context", error = %e, "malformed JSON in DB column")).ok()),
         }
     }
 }

@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType, OriginContext};
 use mcb_domain::ports::MemoryServiceInterface;
-use mcb_domain::utils::mask_id;
+use mcb_domain::utils::id::mask_id;
 
 use mcb_domain::debug;
 use mcb_domain::utils::id as domain_id;

@@ -13,7 +13,9 @@ use mcb_domain::ports::{IndexingResult, IndexingStatus};
 use mcb_server::formatter::ResponseFormatter;
 use rstest::rstest;
 
-use crate::utils::search_fixtures::{create_test_search_result, create_test_search_results};
+use mcb_domain::utils::tests::search_fixtures::{
+    create_test_search_result, create_test_search_results,
+};
 
 // =============================================================================
 // ERROR RESPONSE TESTS
@@ -259,27 +261,26 @@ fn test_format_clear_index(
 // HELPER FUNCTIONS
 // =============================================================================
 
-use crate::utils::text::extract_text;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text;
 
 mod handler_error_tests {
+    use super::TestResult;
+    use rstest::rstest;
+
     use mcb_server::args::{IndexAction, IndexArgs};
     use mcb_server::handlers::IndexHandler;
     use rmcp::handler::server::wrapper::Parameters;
 
-    async fn create_handler() -> IndexHandler {
-        let ctx = crate::utils::shared_context::shared_app_context();
-        let services_res = ctx.build_domain_services().await;
-        assert!(services_res.is_ok(), "build domain services");
-        let services = match services_res {
-            Ok(services) => services,
-            Err(_) => unreachable!(),
-        };
-        IndexHandler::new(services.indexing_service)
+    async fn create_handler() -> TestResult<IndexHandler> {
+        let state = crate::utils::test_fixtures::shared_mcb_state()?;
+        Ok(IndexHandler::new(state.mcp_server.indexing_service()))
     }
 
+    #[rstest]
     #[tokio::test]
-    async fn test_handler_service_error_handling() {
-        let handler = create_handler().await;
+    async fn test_handler_service_error_handling() -> TestResult {
+        let handler = create_handler().await?;
 
         let args = IndexArgs {
             action: IndexAction::Start,
@@ -291,6 +292,7 @@ mod handler_error_tests {
             max_file_size: None,
             follow_symlinks: None,
             token: None,
+            repo_id: None,
         };
 
         let result = handler.handle(Parameters(args)).await;
@@ -303,5 +305,6 @@ mod handler_error_tests {
                 || err_str.contains("not found"),
             "Expected path-related error. Got: {err_str}"
         );
+        Ok(())
     }
 }

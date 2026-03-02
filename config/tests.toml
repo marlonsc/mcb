@@ -1,0 +1,10 @@
+# External service URLs for integration test availability detection.
+# Tests using require_service!("key") will auto-skip if the key is missing.
+#
+# Uncomment and configure the services available in your environment.
+
+[test_services]
+# milvus = "http://localhost:19530"
+# pinecone_api_key = "pk-test-..."
+# pinecone_uri = "https://my-index.svc.pinecone.io"
+# ollama = "http://localhost:11434"

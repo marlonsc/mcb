@@ -1,26 +1,35 @@
-use crate::utils::test_fixtures::{
-    create_test_mcp_server, golden_content_to_string, test_api_key, test_organization, test_user,
-};
 use mcb_domain::entities::ApiKey;
+use mcb_domain::utils::tests::fixtures::{create_test_mcp_server, golden_content_to_string};
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::tests::utils::{
+    create_test_api_key, create_test_organization, create_test_user_with,
+};
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use mcb_server::mcp_server::McpServer;
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::json;
 
 fn api_key_from_result(result: &rmcp::model::CallToolResult) -> ApiKey {
     let text = golden_content_to_string(result);
-    serde_json::from_str(&text).expect("api key response json")
+    match serde_json::from_str(&text) {
+        Ok(k) => k,
+        Err(e) => panic!("api key response json: {e}"),
+    }
 }
 
 fn api_key_list_from_result(result: &rmcp::model::CallToolResult) -> Vec<ApiKey> {
     let text = golden_content_to_string(result);
-    serde_json::from_str(&text).expect("api key list response json")
+    match serde_json::from_str(&text) {
+        Ok(k) => k,
+        Err(e) => panic!("api key list response json: {e}"),
+    }
 }
 
 async fn create_org_and_user(server: &McpServer, org_id: &str, email: &str) -> (String, String) {
     let org_h = server.org_entity_handler();
 
-    let org = test_organization(org_id);
+    let org = create_test_organization(org_id);
     let create_org = org_h
         .handle(Parameters(OrgEntityArgs {
             action: OrgEntityAction::Create,
@@ -38,14 +47,14 @@ async fn create_org_and_user(server: &McpServer, org_id: &str, email: &str) -> (
         "org create should succeed: {create_org:?}"
     );
 
-    let user = test_user(org_id, email);
+    let user = create_test_user_with(org_id, email);
     let user_id = user.id.clone();
     let create_user = org_h
         .handle(Parameters(OrgEntityArgs {
             action: OrgEntityAction::Create,
             resource: OrgEntityResource::User,
             id: None,
-            org_id: Some(org_id.to_string()),
+            org_id: Some(org_id.to_owned()),
             team_id: None,
             user_id: None,
             email: None,
@@ -57,18 +66,18 @@ async fn create_org_and_user(server: &McpServer, org_id: &str, email: &str) -> (
         "user create should succeed: {create_user:?}"
     );
 
-    (org_id.to_string(), user_id)
+    (org_id.to_owned(), user_id)
 }
 
 async fn create_api_key(server: &McpServer, org_id: &str, user_id: &str, name: &str) -> ApiKey {
     let org_h = server.org_entity_handler();
-    let key = test_api_key(user_id, org_id, name);
+    let key = create_test_api_key(user_id, org_id, name);
     let create = org_h
         .handle(Parameters(OrgEntityArgs {
             action: OrgEntityAction::Create,
             resource: OrgEntityResource::ApiKey,
             id: None,
-            org_id: Some(org_id.to_string()),
+            org_id: Some(org_id.to_owned()),
             team_id: None,
             user_id: None,
             email: None,
@@ -76,12 +85,17 @@ async fn create_api_key(server: &McpServer, org_id: &str, user_id: &str, name: &
         }))
         .await;
     assert!(create.is_ok(), "api key create should succeed: {create:?}");
-    api_key_from_result(&create.expect("api key create result"))
+    let create_ok = match create {
+        Ok(c) => c,
+        Err(e) => panic!("api key create result: {e}"),
+    };
+    api_key_from_result(&create_ok)
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_api_key_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_api_key_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let (org_id, user_id) =
         create_org_and_user(&server, "golden-org-key-cg", "cg@example.com").await;
     let created_key = create_api_key(&server, &org_id, &user_id, "primary-key").await;
@@ -101,17 +115,22 @@ async fn golden_api_key_create_and_get() {
         .await;
     assert!(get.is_ok(), "api key get should succeed: {get:?}");
 
-    let fetched_key = api_key_from_result(&get.expect("api key get result"));
+    let fetched_key = api_key_from_result(&match get {
+        Ok(g) => g,
+        Err(e) => panic!("api key get result: {e}"),
+    });
     assert_eq!(fetched_key.id, created_key.id);
     assert_eq!(fetched_key.user_id, user_id);
     assert_eq!(fetched_key.org_id, org_id);
     assert_eq!(fetched_key.name, "primary-key");
     assert_eq!(fetched_key.key_hash, created_key.key_hash);
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_api_key_list_by_org() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_api_key_list_by_org() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let (org_id, user_id) =
         create_org_and_user(&server, "golden-org-key-list", "list@example.com").await;
 
@@ -134,13 +153,18 @@ async fn golden_api_key_list_by_org() {
         .await;
     assert!(list.is_ok(), "api key list should succeed: {list:?}");
 
-    let keys = api_key_list_from_result(&list.expect("api key list result"));
+    let keys = api_key_list_from_result(&match list {
+        Ok(l) => l,
+        Err(e) => panic!("api key list result: {e}"),
+    });
     assert_eq!(keys.len(), 3);
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_api_key_revoke() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_api_key_revoke() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let (org_id, user_id) =
         create_org_and_user(&server, "golden-org-key-revoke", "revoke@example.com").await;
     let created_key = create_api_key(&server, &org_id, &user_id, "revoke-key").await;
@@ -178,13 +202,18 @@ async fn golden_api_key_revoke() {
         "api key get after revoke should succeed: {get:?}"
     );
 
-    let revoked_key = api_key_from_result(&get.expect("api key get after revoke"));
+    let revoked_key = api_key_from_result(&match get {
+        Ok(g) => g,
+        Err(e) => panic!("api key get after revoke: {e}"),
+    });
     assert_eq!(revoked_key.revoked_at, Some(revoke_at));
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_api_key_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_api_key_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let (org_id, user_id) =
         create_org_and_user(&server, "golden-org-key-delete", "delete@example.com").await;
     let created_key = create_api_key(&server, &org_id, &user_id, "delete-key").await;
@@ -220,15 +249,17 @@ async fn golden_api_key_delete() {
         get_after_delete.is_err(),
         "deleted api key must not be found"
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_api_key_create_with_scopes() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_api_key_create_with_scopes() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let (org_id, user_id) =
         create_org_and_user(&server, "golden-org-key-scopes", "scopes@example.com").await;
-    let mut key = test_api_key(&user_id, &org_id, "scoped-key");
-    key.scopes_json = "[\"read\",\"write\"]".to_string();
+    let mut key = create_test_api_key(&user_id, &org_id, "scoped-key");
+    key.scopes_json = "[\"read\",\"write\"]".to_owned();
 
     let org_h = server.org_entity_handler();
     let create = org_h
@@ -247,7 +278,10 @@ async fn golden_api_key_create_with_scopes() {
         create.is_ok(),
         "api key create with scopes should succeed: {create:?}"
     );
-    let created = api_key_from_result(&create.expect("create scoped key"));
+    let created = api_key_from_result(&match create {
+        Ok(c) => c,
+        Err(e) => panic!("create scoped key: {e}"),
+    });
 
     let get = org_h
         .handle(Parameters(OrgEntityArgs {
@@ -262,16 +296,21 @@ async fn golden_api_key_create_with_scopes() {
         }))
         .await;
     assert!(get.is_ok(), "api key get should succeed: {get:?}");
-    let fetched = api_key_from_result(&get.expect("get scoped key"));
+    let fetched = api_key_from_result(&match get {
+        Ok(g) => g,
+        Err(e) => panic!("get scoped key: {e}"),
+    });
     assert_eq!(fetched.scopes_json, "[\"read\",\"write\"]");
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_api_key_create_with_expiration() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_api_key_create_with_expiration() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let (org_id, user_id) =
         create_org_and_user(&server, "golden-org-key-exp", "exp@example.com").await;
-    let mut key = test_api_key(&user_id, &org_id, "expiring-key");
+    let mut key = create_test_api_key(&user_id, &org_id, "expiring-key");
     key.expires_at = Some(1_800_000_000i64);
 
     let org_h = server.org_entity_handler();
@@ -291,7 +330,10 @@ async fn golden_api_key_create_with_expiration() {
         create.is_ok(),
         "api key create with expiration should succeed: {create:?}"
     );
-    let created = api_key_from_result(&create.expect("create expiring key"));
+    let created = api_key_from_result(&match create {
+        Ok(c) => c,
+        Err(e) => panic!("create expiring key: {e}"),
+    });
 
     let get = org_h
         .handle(Parameters(OrgEntityArgs {
@@ -306,13 +348,18 @@ async fn golden_api_key_create_with_expiration() {
         }))
         .await;
     assert!(get.is_ok(), "api key get should succeed: {get:?}");
-    let fetched = api_key_from_result(&get.expect("get expiring key"));
+    let fetched = api_key_from_result(&match get {
+        Ok(g) => g,
+        Err(e) => panic!("get expiring key: {e}"),
+    });
     assert_eq!(fetched.expires_at, Some(1_800_000_000i64));
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_api_key_revoke_sets_timestamp() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_api_key_revoke_sets_timestamp() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let (org_id, user_id) =
         create_org_and_user(&server, "golden-org-key-revoke-ts", "revokets@example.com").await;
     let created_key = create_api_key(&server, &org_id, &user_id, "revoke-ts-key").await;
@@ -349,20 +396,25 @@ async fn golden_api_key_revoke_sets_timestamp() {
         get.is_ok(),
         "api key get after revoke should succeed: {get:?}"
     );
-    let revoked_key = api_key_from_result(&get.expect("api key after revoke"));
+    let revoked_key = api_key_from_result(&match get {
+        Ok(g) => g,
+        Err(e) => panic!("api key after revoke: {e}"),
+    });
     assert!(revoked_key.revoked_at.unwrap_or(0) > 0);
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_api_key_create_missing_data() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_api_key_create_missing_data() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_h = server.org_entity_handler();
     let create = org_h
         .handle(Parameters(OrgEntityArgs {
             action: OrgEntityAction::Create,
             resource: OrgEntityResource::ApiKey,
             id: None,
-            org_id: Some("golden-org-key-missing-data".to_string()),
+            org_id: Some("golden-org-key-missing-data".to_owned()),
             team_id: None,
             user_id: None,
             email: None,
@@ -370,11 +422,13 @@ async fn golden_api_key_create_missing_data() {
         }))
         .await;
     assert!(create.is_err(), "create without data must fail");
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_api_key_full_lifecycle() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_api_key_full_lifecycle() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let (org_id, user_id) =
         create_org_and_user(&server, "golden-org-key-full", "full@example.com").await;
     let created_key = create_api_key(&server, &org_id, &user_id, "full-lifecycle-key").await;
@@ -396,7 +450,10 @@ async fn golden_api_key_full_lifecycle() {
         list_before.is_ok(),
         "list after create should succeed: {list_before:?}"
     );
-    let keys_before = api_key_list_from_result(&list_before.expect("list after create"));
+    let keys_before = api_key_list_from_result(&match list_before {
+        Ok(l) => l,
+        Err(e) => panic!("list after create: {e}"),
+    });
     assert_eq!(keys_before.len(), 1);
 
     let revoke = org_h
@@ -429,8 +486,10 @@ async fn golden_api_key_full_lifecycle() {
         list_after_revoke.is_ok(),
         "list after revoke should succeed: {list_after_revoke:?}"
     );
-    let keys_after_revoke =
-        api_key_list_from_result(&list_after_revoke.expect("list after revoke"));
+    let keys_after_revoke = api_key_list_from_result(&match list_after_revoke {
+        Ok(l) => l,
+        Err(e) => panic!("list after revoke: {e}"),
+    });
     assert_eq!(keys_after_revoke.len(), 1);
     assert!(keys_after_revoke[0].revoked_at.unwrap_or(0) > 0);
 
@@ -464,7 +523,10 @@ async fn golden_api_key_full_lifecycle() {
         list_after_delete.is_ok(),
         "list after delete should succeed: {list_after_delete:?}"
     );
-    let keys_after_delete =
-        api_key_list_from_result(&list_after_delete.expect("list after delete"));
+    let keys_after_delete = api_key_list_from_result(&match list_after_delete {
+        Ok(l) => l,
+        Err(e) => panic!("list after delete: {e}"),
+    });
     assert_eq!(keys_after_delete.len(), 0);
+    Ok(())
 }

@@ -1,6 +1,8 @@
-use crate::utils::test_fixtures::*;
+use mcb_domain::utils::tests::fixtures::*;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::json;
 
 fn base_args(action: VcsEntityAction, resource: VcsEntityResource) -> VcsEntityArgs {
@@ -42,25 +44,30 @@ async fn create_repo(
     });
 
     let mut args = base_args(VcsEntityAction::Create, VcsEntityResource::Repository);
-    args.org_id = Some(org_id.to_string());
-    args.project_id = Some(project_id.to_string());
+    args.org_id = Some(org_id.to_owned());
+    args.project_id = Some(project_id.to_owned());
     args.data = Some(payload);
 
     let result = server.vcs_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_ok(), "repo create should succeed: {result:?}");
-    result_json(&result.expect("repo create response"))
+    let result_ok = match result {
+        Ok(r) => r,
+        Err(e) => panic!("repo create response: {e}"),
+    };
+    result_json(&result_ok)
 }
 
 /// Helper: create a branch and return the JSON response body.
 async fn create_branch(
     server: &mcb_server::mcp_server::McpServer,
+    org_id: &str,
     repo_id: &str,
     branch_id: &str,
     branch_name: &str,
 ) -> serde_json::Value {
     let payload = json!({
         "id": branch_id,
-        "org_id": "default",
+        "org_id": org_id,
         "created_at": 0,
         "repository_id": repo_id,
         "name": branch_name,
@@ -70,11 +77,16 @@ async fn create_branch(
     });
 
     let mut args = base_args(VcsEntityAction::Create, VcsEntityResource::Branch);
+    args.org_id = Some(org_id.to_owned());
     args.data = Some(payload);
 
     let result = server.vcs_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_ok(), "branch create should succeed: {result:?}");
-    result_json(&result.expect("branch create response"))
+    let result_ok = match result {
+        Ok(r) => r,
+        Err(e) => panic!("branch create response: {e}"),
+    };
+    result_json(&result_ok)
 }
 
 /// Helper: create a worktree and return the JSON response body.
@@ -100,16 +112,21 @@ async fn create_worktree(
 
     let result = server.vcs_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_ok(), "worktree create should succeed: {result:?}");
-    result_json(&result.expect("worktree create response"))
+    let result_ok = match result {
+        Ok(r) => r,
+        Err(e) => panic!("worktree create response: {e}"),
+    };
+    result_json(&result_ok)
 }
 
 // ---------------------------------------------------------------------------
 // Repository CRUD
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
-async fn golden_vcs_repo_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_repo_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-repo-cg";
     let project_id = "golden-vcs-proj-cg";
     let repo_id = "golden-vcs-repo-cg-1";
@@ -121,8 +138,8 @@ async fn golden_vcs_repo_create_and_get() {
     );
 
     let mut get_args = base_args(VcsEntityAction::Get, VcsEntityResource::Repository);
-    get_args.id = Some(repo_id.to_string());
-    get_args.org_id = Some(org_id.to_string());
+    get_args.id = Some(repo_id.to_owned());
+    get_args.org_id = Some(org_id.to_owned());
     let get_result = server
         .vcs_entity_handler()
         .handle(Parameters(get_args))
@@ -132,7 +149,10 @@ async fn golden_vcs_repo_create_and_get() {
         "repo get should succeed: {get_result:?}"
     );
 
-    let body = result_json(&get_result.expect("repo get response"));
+    let body = result_json(&match get_result {
+        Ok(r) => r,
+        Err(e) => panic!("repo get response: {e}"),
+    });
     assert_eq!(
         body.get("id").and_then(serde_json::Value::as_str),
         Some(repo_id)
@@ -141,11 +161,13 @@ async fn golden_vcs_repo_create_and_get() {
         body.get("name").and_then(serde_json::Value::as_str),
         Some(format!("repo-{repo_id}").as_str())
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_vcs_repo_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_repo_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-repo-list";
     let project_id = "golden-vcs-proj-list";
 
@@ -153,8 +175,8 @@ async fn golden_vcs_repo_list() {
     let _ = create_repo(&server, org_id, project_id, "golden-vcs-repo-list-2").await;
 
     let mut list_args = base_args(VcsEntityAction::List, VcsEntityResource::Repository);
-    list_args.org_id = Some(org_id.to_string());
-    list_args.project_id = Some(project_id.to_string());
+    list_args.org_id = Some(org_id.to_owned());
+    list_args.project_id = Some(project_id.to_owned());
     let list_result = server
         .vcs_entity_handler()
         .handle(Parameters(list_args))
@@ -164,17 +186,22 @@ async fn golden_vcs_repo_list() {
         "repo list should succeed: {list_result:?}"
     );
 
-    let body = result_json(&list_result.expect("repo list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let body = result_json(&match list_result {
+        Ok(r) => r,
+        Err(e) => panic!("repo list response: {e}"),
+    });
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "repo list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_vcs_repo_update() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_repo_update() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-repo-upd";
     let project_id = "golden-vcs-proj-upd";
     let repo_id = "golden-vcs-repo-upd-1";
@@ -194,8 +221,8 @@ async fn golden_vcs_repo_update() {
     });
 
     let mut update_args = base_args(VcsEntityAction::Update, VcsEntityResource::Repository);
-    update_args.org_id = Some(org_id.to_string());
-    update_args.project_id = Some(project_id.to_string());
+    update_args.org_id = Some(org_id.to_owned());
+    update_args.project_id = Some(project_id.to_owned());
     update_args.data = Some(updated_payload);
     let update_result = server
         .vcs_entity_handler()
@@ -207,8 +234,8 @@ async fn golden_vcs_repo_update() {
     );
 
     let mut get_args = base_args(VcsEntityAction::Get, VcsEntityResource::Repository);
-    get_args.id = Some(repo_id.to_string());
-    get_args.org_id = Some(org_id.to_string());
+    get_args.id = Some(repo_id.to_owned());
+    get_args.org_id = Some(org_id.to_owned());
     let get_result = server
         .vcs_entity_handler()
         .handle(Parameters(get_args))
@@ -218,16 +245,21 @@ async fn golden_vcs_repo_update() {
         "repo get should succeed after update: {get_result:?}"
     );
 
-    let body = result_json(&get_result.expect("repo get after update response"));
+    let body = result_json(&match get_result {
+        Ok(r) => r,
+        Err(e) => panic!("repo get after update response: {e}"),
+    });
     assert_eq!(
         body.get("name").and_then(serde_json::Value::as_str),
         Some("Updated Repo Name")
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_vcs_repo_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_repo_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-repo-del";
     let project_id = "golden-vcs-proj-del";
     let repo_id = "golden-vcs-repo-del-1";
@@ -235,9 +267,9 @@ async fn golden_vcs_repo_delete() {
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
 
     let mut delete_args = base_args(VcsEntityAction::Delete, VcsEntityResource::Repository);
-    delete_args.id = Some(repo_id.to_string());
-    delete_args.org_id = Some(org_id.to_string());
-    delete_args.project_id = Some(project_id.to_string());
+    delete_args.id = Some(repo_id.to_owned());
+    delete_args.org_id = Some(org_id.to_owned());
+    delete_args.project_id = Some(project_id.to_owned());
     let delete_result = server
         .vcs_entity_handler()
         .handle(Parameters(delete_args))
@@ -248,36 +280,39 @@ async fn golden_vcs_repo_delete() {
     );
 
     let mut get_args = base_args(VcsEntityAction::Get, VcsEntityResource::Repository);
-    get_args.id = Some(repo_id.to_string());
-    get_args.org_id = Some(org_id.to_string());
+    get_args.id = Some(repo_id.to_owned());
+    get_args.org_id = Some(org_id.to_owned());
     let get_result = server
         .vcs_entity_handler()
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "repo get should fail after delete");
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
 // Branch CRUD
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
-async fn golden_vcs_branch_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_branch_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-branch-cg";
     let project_id = "golden-vcs-proj-bcg";
     let repo_id = "golden-vcs-repo-bcg";
     let branch_id = "golden-vcs-branch-cg-1";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let created = create_branch(&server, repo_id, branch_id, "feat/golden-branch").await;
+    let created = create_branch(&server, org_id, repo_id, branch_id, "feat/golden-branch").await;
     assert_eq!(
         created.get("id").and_then(serde_json::Value::as_str),
         Some(branch_id)
     );
 
     let mut get_args = base_args(VcsEntityAction::Get, VcsEntityResource::Branch);
-    get_args.id = Some(branch_id.to_string());
+    get_args.org_id = Some(org_id.to_owned());
+    get_args.id = Some(branch_id.to_owned());
     let get_result = server
         .vcs_entity_handler()
         .handle(Parameters(get_args))
@@ -287,7 +322,10 @@ async fn golden_vcs_branch_create_and_get() {
         "branch get should succeed: {get_result:?}"
     );
 
-    let body = result_json(&get_result.expect("branch get response"));
+    let body = result_json(&match get_result {
+        Ok(r) => r,
+        Err(e) => panic!("branch get response: {e}"),
+    });
     assert_eq!(
         body.get("id").and_then(serde_json::Value::as_str),
         Some(branch_id)
@@ -296,21 +334,31 @@ async fn golden_vcs_branch_create_and_get() {
         body.get("name").and_then(serde_json::Value::as_str),
         Some("feat/golden-branch")
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_vcs_branch_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_branch_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-branch-list";
     let project_id = "golden-vcs-proj-bl";
     let repo_id = "golden-vcs-repo-bl";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let _ = create_branch(&server, repo_id, "golden-vcs-branch-list-1", "main").await;
-    let _ = create_branch(&server, repo_id, "golden-vcs-branch-list-2", "develop").await;
+    let _ = create_branch(&server, org_id, repo_id, "golden-vcs-branch-list-1", "main").await;
+    let _ = create_branch(
+        &server,
+        org_id,
+        repo_id,
+        "golden-vcs-branch-list-2",
+        "develop",
+    )
+    .await;
 
     let mut list_args = base_args(VcsEntityAction::List, VcsEntityResource::Branch);
-    list_args.repository_id = Some(repo_id.to_string());
+    list_args.org_id = Some(org_id.to_owned());
+    list_args.repository_id = Some(repo_id.to_owned());
     let list_result = server
         .vcs_entity_handler()
         .handle(Parameters(list_args))
@@ -320,27 +368,32 @@ async fn golden_vcs_branch_list() {
         "branch list should succeed: {list_result:?}"
     );
 
-    let body = result_json(&list_result.expect("branch list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let body = result_json(&match list_result {
+        Ok(r) => r,
+        Err(e) => panic!("branch list response: {e}"),
+    });
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "branch list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_vcs_branch_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_branch_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-branch-del";
     let project_id = "golden-vcs-proj-bd";
     let repo_id = "golden-vcs-repo-bd";
     let branch_id = "golden-vcs-branch-del-1";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let _ = create_branch(&server, repo_id, branch_id, "feat/to-delete").await;
+    let _ = create_branch(&server, org_id, repo_id, branch_id, "feat/to-delete").await;
 
     let mut delete_args = base_args(VcsEntityAction::Delete, VcsEntityResource::Branch);
-    delete_args.id = Some(branch_id.to_string());
+    delete_args.id = Some(branch_id.to_owned());
     let delete_result = server
         .vcs_entity_handler()
         .handle(Parameters(delete_args))
@@ -351,21 +404,24 @@ async fn golden_vcs_branch_delete() {
     );
 
     let mut get_args = base_args(VcsEntityAction::Get, VcsEntityResource::Branch);
-    get_args.id = Some(branch_id.to_string());
+    get_args.org_id = Some(org_id.to_owned());
+    get_args.id = Some(branch_id.to_owned());
     let get_result = server
         .vcs_entity_handler()
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "branch get should fail after delete");
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
 // Worktree CRUD
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
-async fn golden_vcs_worktree_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_worktree_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-wt-cg";
     let project_id = "golden-vcs-proj-wcg";
     let repo_id = "golden-vcs-repo-wcg";
@@ -373,7 +429,7 @@ async fn golden_vcs_worktree_create_and_get() {
     let worktree_id = "golden-vcs-wt-cg-1";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let _ = create_branch(&server, repo_id, branch_id, "main").await;
+    let _ = create_branch(&server, org_id, repo_id, branch_id, "main").await;
     let created = create_worktree(&server, repo_id, branch_id, worktree_id).await;
     assert_eq!(
         created.get("id").and_then(serde_json::Value::as_str),
@@ -381,7 +437,7 @@ async fn golden_vcs_worktree_create_and_get() {
     );
 
     let mut get_args = base_args(VcsEntityAction::Get, VcsEntityResource::Worktree);
-    get_args.id = Some(worktree_id.to_string());
+    get_args.id = Some(worktree_id.to_owned());
     let get_result = server
         .vcs_entity_handler()
         .handle(Parameters(get_args))
@@ -391,7 +447,10 @@ async fn golden_vcs_worktree_create_and_get() {
         "worktree get should succeed: {get_result:?}"
     );
 
-    let body = result_json(&get_result.expect("worktree get response"));
+    let body = result_json(&match get_result {
+        Ok(r) => r,
+        Err(e) => panic!("worktree get response: {e}"),
+    });
     assert_eq!(
         body.get("id").and_then(serde_json::Value::as_str),
         Some(worktree_id)
@@ -401,23 +460,25 @@ async fn golden_vcs_worktree_create_and_get() {
             .and_then(serde_json::Value::as_str),
         Some(repo_id)
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_vcs_worktree_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_worktree_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-wt-list";
     let project_id = "golden-vcs-proj-wl";
     let repo_id = "golden-vcs-repo-wl";
     let branch_id = "golden-vcs-branch-wl";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let _ = create_branch(&server, repo_id, branch_id, "main").await;
+    let _ = create_branch(&server, org_id, repo_id, branch_id, "main").await;
     let _ = create_worktree(&server, repo_id, branch_id, "golden-vcs-wt-list-1").await;
     let _ = create_worktree(&server, repo_id, branch_id, "golden-vcs-wt-list-2").await;
 
     let mut list_args = base_args(VcsEntityAction::List, VcsEntityResource::Worktree);
-    list_args.repository_id = Some(repo_id.to_string());
+    list_args.repository_id = Some(repo_id.to_owned());
     let list_result = server
         .vcs_entity_handler()
         .handle(Parameters(list_args))
@@ -427,17 +488,22 @@ async fn golden_vcs_worktree_list() {
         "worktree list should succeed: {list_result:?}"
     );
 
-    let body = result_json(&list_result.expect("worktree list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let body = result_json(&match list_result {
+        Ok(r) => r,
+        Err(e) => panic!("worktree list response: {e}"),
+    });
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "worktree list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_vcs_worktree_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_vcs_worktree_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let org_id = "golden-vcs-wt-del";
     let project_id = "golden-vcs-proj-wd";
     let repo_id = "golden-vcs-repo-wd";
@@ -445,11 +511,11 @@ async fn golden_vcs_worktree_delete() {
     let worktree_id = "golden-vcs-wt-del-1";
 
     let _ = create_repo(&server, org_id, project_id, repo_id).await;
-    let _ = create_branch(&server, repo_id, branch_id, "main").await;
+    let _ = create_branch(&server, org_id, repo_id, branch_id, "main").await;
     let _ = create_worktree(&server, repo_id, branch_id, worktree_id).await;
 
     let mut delete_args = base_args(VcsEntityAction::Delete, VcsEntityResource::Worktree);
-    delete_args.id = Some(worktree_id.to_string());
+    delete_args.id = Some(worktree_id.to_owned());
     let delete_result = server
         .vcs_entity_handler()
         .handle(Parameters(delete_args))
@@ -460,10 +526,11 @@ async fn golden_vcs_worktree_delete() {
     );
 
     let mut get_args = base_args(VcsEntityAction::Get, VcsEntityResource::Worktree);
-    get_args.id = Some(worktree_id.to_string());
+    get_args.id = Some(worktree_id.to_owned());
     let get_result = server
         .vcs_entity_handler()
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "worktree get should fail after delete");
+    Ok(())
 }

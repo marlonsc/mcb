@@ -5,7 +5,7 @@
 use mcb_validate::linters::*;
 use rstest::rstest;
 
-use crate::utils::test_constants::*;
+use mcb_domain::utils::test_constants::*;
 
 #[rstest]
 fn linter_engine_creation() {
@@ -35,7 +35,8 @@ async fn linter_engine_execution() {
     let engine = LinterEngine::new();
 
     let result = engine.check_files(&[]).await;
-    assert!(result.is_ok());
+    let output = result.expect("linter should execute successfully");
+    assert_eq!(output.len(), 0);
 }
 
 #[rstest]

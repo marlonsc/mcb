@@ -15,7 +15,7 @@ repository = "https://github.com/marlonsc/mcb"
 authors = ["Marlon Costa <marlonsc@gmail.com>"]
 homepage = "https://github.com/marlonsc/mcb"
 license = "MIT"
-version = "0.3.0-dev"
+version = "0.3.0"
 rust-version = "1.92"
 edition = "2024"
 
@@ -352,9 +352,11 @@ sea-orm-pro = "0.1"
 # ============================================
 
 [profile.release]
-# Link-time optimization for smaller/faster binaries
-lto = true
-# Single codegen unit for better optimization
+# Thin LTO: preserves linkme distributed-slice registrations that full LTO strips.
+# Full LTO (lto = true) is incompatible with linkme's #[distributed_slice] entries
+# because the linker eliminates them as "unused" data.
+lto = "thin"
+# Single codegen unit for better optimization within each crate
 codegen-units = 1
 
 [profile.dev]

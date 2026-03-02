@@ -95,7 +95,7 @@ macro_rules! entity_args_schema {
                 #[doc = "Data payload for create/update (JSON object)"]
                 #[schemars(
                     description = "Data payload for create/update (JSON object)",
-                    with = "serde_json::Value"
+                    with = "crate::args::schema_helpers::ObjectDataSchema"
                 )]
                 pub data: Option<serde_json::Value>,
             }

@@ -16,7 +16,7 @@ use std::time::Duration;
 
 use hostname;
 use mcb_domain::utils::id as domain_id;
-use mcb_domain::utils::mask_id;
+use mcb_domain::utils::id::mask_id;
 use mcb_domain::{debug, error, info, warn};
 
 use super::types::{McpRequest, McpResponse};
@@ -145,7 +145,11 @@ impl HttpClientTransport {
     /// a loopback address (`127.0.0.1`, `localhost`, `[::1]`), since the
     /// traffic never leaves the local machine. Any other combination is
     /// rejected to prevent cleartext transmission of sensitive data.
-    fn require_secure_transport(url: &str) -> Result<(), String> {
+    ///
+    /// # Errors
+    ///
+    /// Returns `Err` when the URL uses plain HTTP with a non-loopback host.
+    pub fn require_secure_transport(url: &str) -> Result<(), String> {
         let lower = url.to_ascii_lowercase();
 
         if lower.starts_with("https://") {
@@ -376,151 +380,4 @@ async fn post_mcp_request(
     builder = builder.header("X-Delegated", "false");
 
     builder.json(request).send().await
-}
-
-#[cfg(test)]
-mod tests {
-    use super::HttpClientTransport;
-    use std::fs;
-    use std::time::Duration;
-
-    #[test]
-    fn session_id_override_takes_precedence_over_file() {
-        let temp_dir = match tempfile::tempdir() {
-            Ok(dir) => dir,
-            Err(_) => return,
-        };
-        let session_file = temp_dir.path().join("session.id");
-
-        let session_file_value = match session_file.to_str() {
-            Some(value) => value.to_owned(),
-            None => return,
-        };
-
-        let client = match HttpClientTransport::new_with_session_source(
-            "http://127.0.0.1:18080".to_owned(),
-            Some("prefix".to_owned()),
-            Duration::from_secs(10),
-            Some("explicit-session-id".to_owned()),
-            Some(session_file_value),
-        ) {
-            Ok(client) => client,
-            Err(_) => return,
-        };
-
-        drop(client);
-        assert!(!session_file.exists());
-    }
-
-    #[test]
-    fn session_id_persists_via_session_file() {
-        let temp_dir = tempfile::tempdir().expect("failed to create temp dir");
-        let session_file = temp_dir.path().join("session.id");
-        let session_file_str = session_file
-            .to_str()
-            .expect("session file path is not valid UTF-8")
-            .to_owned();
-
-        let first = HttpClientTransport::new_with_session_source(
-            "http://127.0.0.1:18080".to_owned(),
-            Some("persist".to_owned()),
-            Duration::from_secs(10),
-            None,
-            Some(session_file_str.clone()),
-        )
-        .expect("failed to create first client");
-        drop(first);
-
-        let first_session =
-            fs::read_to_string(&session_file).expect("failed to read first session");
-
-        let second = HttpClientTransport::new_with_session_source(
-            "http://127.0.0.1:18080".to_owned(),
-            Some("persist".to_owned()),
-            Duration::from_secs(10),
-            None,
-            Some(session_file_str),
-        )
-        .expect("failed to create second client");
-        drop(second);
-
-        let second_session =
-            fs::read_to_string(&session_file).expect("failed to read second session");
-
-        assert!(!first_session.trim().is_empty());
-        assert_eq!(first_session, second_session);
-    }
-
-    #[test]
-    fn secure_transport_allows_loopback_http() {
-        for url in [
-            "http://127.0.0.1:8080",
-            "http://localhost:3000",
-            "http://[::1]:9090",
-        ] {
-            assert!(
-                HttpClientTransport::require_secure_transport(url).is_ok(),
-                "should allow loopback URL: {url}"
-            );
-        }
-    }
-
-    #[test]
-    fn secure_transport_allows_https() {
-        for url in [
-            "https://api.example.com",
-            "https://10.0.0.1:443",
-            "https://remote-server:8443/path",
-        ] {
-            assert!(
-                HttpClientTransport::require_secure_transport(url).is_ok(),
-                "should allow HTTPS URL: {url}"
-            );
-        }
-    }
-
-    #[test]
-    fn secure_transport_rejects_remote_http() {
-        for url in [
-            "http://api.example.com",
-            "http://10.0.0.1:8080",
-            "http://192.168.1.1:3000",
-        ] {
-            assert!(
-                HttpClientTransport::require_secure_transport(url).is_err(),
-                "should reject remote HTTP URL: {url}"
-            );
-        }
-    }
-
-    #[test]
-    fn secure_transport_rejects_unknown_scheme() {
-        assert!(HttpClientTransport::require_secure_transport("ftp://files.example.com").is_err());
-    }
-
-    #[test]
-    fn machine_id_detected_from_gethostname_without_env() {
-        let expected_hostname = hostname::get()
-            .ok()
-            .and_then(|h| h.into_string().ok())
-            .unwrap_or_else(|| "unknown".to_owned());
-
-        assert!(
-            !expected_hostname.is_empty(),
-            "hostname should not be empty"
-        );
-    }
-
-    #[test]
-    fn machine_id_prefers_gethostname_over_env() {
-        let gethostname_result = hostname::get()
-            .ok()
-            .and_then(|h| h.into_string().ok())
-            .unwrap_or_else(|| "unknown".to_owned());
-
-        assert!(
-            !gethostname_result.is_empty(),
-            "gethostname should return a value"
-        );
-    }
 }

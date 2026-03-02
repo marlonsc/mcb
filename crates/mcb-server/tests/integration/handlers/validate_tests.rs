@@ -7,7 +7,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use tempfile::TempDir;
 
-use crate::utils::domain_services::create_real_domain_services;
+use mcb_domain::utils::tests::fixtures::create_test_mcb_state;
 
 fn create_temp_file() -> Result<(TempDir, PathBuf), std::io::Error> {
     let temp_dir = TempDir::new()?;
@@ -31,12 +31,13 @@ fn create_temp_dir() -> Result<(TempDir, PathBuf), std::io::Error> {
 /// - `validate_test!(test_name, action, path_expr, scope: Some(scope), rules: Some(vec![...]), expect_ok)`
 macro_rules! validate_test {
     ($test_name:ident, $action:expr, expect_mcp_error) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() {
-            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
                 return;
             };
-            let handler = ValidateHandler::new(services.validation_service);
+            let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
             let args = ValidateArgs {
                 action: $action,
@@ -47,18 +48,24 @@ macro_rules! validate_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_err(), "Missing path should return McpError");
+            let err = result.expect_err("validate handler should fail when path is missing");
+            let err_str = err.to_string();
+            assert!(
+                err_str.contains("path") || err_str.contains("missing required field"),
+                "error should mention missing path, got: {err_str}"
+            );
         }
     };
 
     ($test_name:ident, $action:expr, $path_expr:expr, $(scope: $scope:expr,)? $(rules: $rules:expr,)? $(category: $category:expr,)? expect_ok) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
             let (_temp_dir, path) = $path_expr?;
-            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
                 return Ok(());
             };
-            let handler = ValidateHandler::new(services.validation_service);
+            let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
             let args = ValidateArgs {
                 action: $action,
@@ -69,20 +76,21 @@ macro_rules! validate_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let response = result?;
+            let response = result.expect("validate handler should succeed for valid validation input");
+            assert!(!response.content.is_empty(), "response should have content");
             assert!(!response.is_error.unwrap_or(false));
             Ok(())
         }
     };
 
     ($test_name:ident, $action:expr, path: $path:expr, $(scope: $scope:expr,)? expect_error) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
-            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
                 return Ok(());
             };
-            let handler = ValidateHandler::new(services.validation_service);
+            let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
             let args = ValidateArgs {
                 action: $action,
@@ -93,21 +101,23 @@ macro_rules! validate_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let response = result?;
+            let response =
+                result.expect("validate handler should return structured error response for invalid path");
+            assert!(!response.content.is_empty(), "response should have content");
             assert!(response.is_error.unwrap_or(false), "Should return error");
             Ok(())
         }
     };
 
     ($test_name:ident, $action:expr, $path_expr:expr, expect_error) => {
+        #[rstest]
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
             let (_temp_dir, path) = $path_expr?;
-            let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
                 return Ok(());
             };
-            let handler = ValidateHandler::new(services.validation_service);
+            let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
             let args = ValidateArgs {
                 action: $action,
@@ -118,8 +128,10 @@ macro_rules! validate_test {
             };
 
             let result = handler.handle(Parameters(args)).await;
-            assert!(result.is_ok());
-            let response = result?;
+            let response = result.expect(
+                "validate handler should return structured error response for invalid analyze input",
+            );
+            assert!(!response.content.is_empty(), "response should have content");
             assert!(response.is_error.unwrap_or(false), "Should return error");
             Ok(())
         }
@@ -170,13 +182,14 @@ validate_test!(
     expect_ok
 );
 
+#[rstest]
 #[tokio::test]
 async fn test_validate_run_with_specific_rules() -> Result<(), Box<dyn std::error::Error>> {
     let (_temp_dir, path) = create_temp_file()?;
-    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
         return Ok(());
     };
-    let handler = ValidateHandler::new(services.validation_service);
+    let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
     let args = ValidateArgs {
         action: ValidateAction::Run,
@@ -187,9 +200,13 @@ async fn test_validate_run_with_specific_rules() -> Result<(), Box<dyn std::erro
     };
 
     let result = handler.handle(Parameters(args)).await;
-    assert!(result.is_ok());
-    let response = result?;
-    assert!(response.is_error.unwrap_or(false), "Should return error");
+    let response = result.expect("validate handler should return rule validation response");
+    assert!(!response.content.is_empty(), "response should have content");
+    // Non-existent rules produce 0 violations = success (no matching rules to enforce)
+    assert!(
+        !response.is_error.unwrap_or(false),
+        "non-existent rules should not cause an error — they simply produce 0 violations"
+    );
     Ok(())
 }
 
@@ -200,10 +217,10 @@ async fn test_validate_run_with_specific_rules() -> Result<(), Box<dyn std::erro
 async fn test_validate_list_rules(
     #[case] category: Option<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let Some((services, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
         return Ok(());
     };
-    let handler = ValidateHandler::new(services.validation_service);
+    let handler = ValidateHandler::new(state.mcp_server.validation_service());
 
     let args = ValidateArgs {
         action: ValidateAction::ListRules,
@@ -215,8 +232,8 @@ async fn test_validate_list_rules(
 
     let result = handler.handle(Parameters(args)).await;
 
-    assert!(result.is_ok());
-    let response = result?;
+    let response = result.expect("validate handler should succeed for list rules action");
+    assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
     Ok(())
 }

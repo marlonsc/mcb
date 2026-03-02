@@ -73,6 +73,7 @@ fn from_shebang_mapping(#[case] first_line: &str, #[case] expected: LanguageId) 
     assert_eq!(LanguageId::from_shebang(first_line), Some(expected));
 }
 
+#[rstest]
 #[test]
 fn test_content_detection() {
     let detector = LanguageDetector::new();
@@ -84,12 +85,14 @@ fn test_content_detection() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_unknown_extension() {
     let detector = LanguageDetector::new();
     assert_eq!(detector.detect_name(Path::new("file.unknown"), None), None);
 }
 
+#[rstest]
 #[test]
 fn test_filename_detection() {
     let detector = LanguageDetector::new();
@@ -103,6 +106,7 @@ fn test_filename_detection() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_shebang_detection() {
     let detector = LanguageDetector::new();
@@ -114,6 +118,7 @@ fn test_shebang_detection() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_unknown_existing_file_returns_none() {
     let detector = LanguageDetector::new();
@@ -148,6 +153,7 @@ fn matches_languages(
     );
 }
 
+#[rstest]
 #[test]
 fn test_supported_languages() {
     let detector = LanguageDetector::new();

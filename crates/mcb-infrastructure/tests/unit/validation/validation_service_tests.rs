@@ -3,13 +3,21 @@
 use std::fs;
 use std::path::PathBuf;
 
-use crate::utils::workspace::workspace_root;
 use mcb_domain::ports::ValidationServiceInterface;
-use mcb_infrastructure::validation::InfraValidationService;
+use mcb_domain::registry::services::resolve_validation_service;
+use mcb_domain::utils::tests::utils::workspace_root;
+use rstest::{fixture, rstest};
 
+#[fixture]
+fn validation_service()
+-> Result<std::sync::Arc<dyn ValidationServiceInterface>, Box<dyn std::error::Error>> {
+    Ok(resolve_validation_service(&())?)
+}
+
+#[rstest]
 #[tokio::test]
 async fn test_list_validators() -> Result<(), Box<dyn std::error::Error>> {
-    let service = InfraValidationService::new();
+    let service = validation_service()?;
     let validators = service.list_validators().await?;
 
     assert!(validators.contains(&"clean_architecture".to_owned()));
@@ -18,10 +26,11 @@ async fn test_list_validators() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_validate_mcb_workspace_quality_only() -> Result<(), Box<dyn std::error::Error>> {
     let workspace_root = workspace_root()?;
-    let service = InfraValidationService::new();
+    let service = validation_service()?;
 
     let result = std::thread::Builder::new()
         .name("validate-quality".into())
@@ -40,14 +49,19 @@ async fn test_validate_mcb_workspace_quality_only() -> Result<(), Box<dyn std::e
         .join()
         .map_err(|_| "thread panicked")?;
 
-    assert!(result.is_ok());
+    let report = result.expect("quality validation should succeed");
+    assert!(
+        report.passed || !report.violations.is_empty(),
+        "report should have a definitive result"
+    );
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_validate_with_specific_validator() -> Result<(), Box<dyn std::error::Error>> {
     let workspace_root = workspace_root()?;
-    let service = InfraValidationService::new();
+    let service = validation_service()?;
 
     let result = std::thread::Builder::new()
         .name("validate-specific".into())
@@ -71,6 +85,7 @@ async fn test_validate_with_specific_validator() -> Result<(), Box<dyn std::erro
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_validate_detects_inline_tests_in_src_via_registry_path()
 -> Result<(), Box<dyn std::error::Error>> {
@@ -91,7 +106,7 @@ async fn test_validate_detects_inline_tests_in_src_via_registry_path()
         "#[cfg(test)]\nmod tests {\n    #[test]\n    fn smoke() {\n        assert_eq!(1, 1);\n    }\n}\n",
     )?;
 
-    let service = InfraValidationService::new();
+    let service = validation_service()?;
     let report = service
         .validate(workspace, Some(&["hygiene".to_owned()]), Some("warning"))
         .await?;

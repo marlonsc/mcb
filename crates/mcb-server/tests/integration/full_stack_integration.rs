@@ -13,9 +13,6 @@
 //!
 //! Uses real providers (Null/InMemory) for deterministic testing.
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
-
 use std::sync::Arc;
 
 use mcb_domain::entities::CodeChunk;
@@ -23,39 +20,23 @@ use mcb_domain::value_objects::CollectionId;
 use rstest::rstest;
 use serde_json::json;
 
-use crate::utils::collection::unique_collection;
-use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
+use mcb_domain::utils::tests::chunk_fixtures::create_test_chunk;
+use mcb_domain::utils::tests::collection::unique_collection;
+use mcb_domain::utils::tests::fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
 
 /// Create test code chunks for full-stack testing
 fn create_test_chunks() -> Vec<CodeChunk> {
     vec![
-        CodeChunk {
-            id: "full_stack_chunk_1".to_owned(),
-            file_path: "src/config.rs".to_owned(),
-            content: "pub struct AppConfig {
-    pub host: String,
-    pub port: u16,
-}"
-            .to_owned(),
-            start_line: 1,
-            end_line: 4,
-            language: "rust".to_owned(),
-            metadata: json!({"type": "struct", "name": "AppConfig"}),
-        },
-        CodeChunk {
-            id: "full_stack_chunk_2".to_owned(),
-            file_path: "src/main.rs".to_owned(),
-            content: "#[tokio::main]
-async fn main() {
-    let config = AppConfig::fallback();
-    run_server(&config).await;
-}"
-            .to_owned(),
-            start_line: 1,
-            end_line: 5,
-            language: "rust".to_owned(),
-            metadata: json!({"type": "function", "name": "main"}),
-        },
+        create_test_chunk(
+            "pub struct AppConfig {\n    pub host: String,\n    pub port: u16,\n}",
+            "src/config.rs",
+            1,
+        ),
+        create_test_chunk(
+            "#[tokio::main]\nasync fn main() {\n    let config = TestConfigBuilder::new()?.build()?.0;\n    run_server(&config).await;\n}",
+            "src/main.rs",
+            1,
+        ),
     ]
 }
 
@@ -71,7 +52,7 @@ async fn assert_embedding_batch_shape(
         assert_eq!(emb.dimensions, expected_dim);
         assert_eq!(emb.vector.len(), expected_dim);
         assert!(
-            emb.model == "AllMiniLML6V2" || emb.model == "fastembed-test-fallback",
+            emb.model == "AllMiniLML6V2" || emb.model == "fastembed-test",
             "unexpected model: {}",
             emb.model
         );
@@ -83,9 +64,10 @@ async fn assert_embedding_batch_shape(
 // Full-Stack Flow Tests
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_init_app_creates_working_context() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     // Verify embedding handle returns a real provider
     let embedding = ctx.embedding_provider();
@@ -113,20 +95,22 @@ async fn test_init_app_creates_working_context() -> Result<(), Box<dyn std::erro
 #[case(vec!["authentication middleware".to_owned(), "database connection pool".to_owned()])]
 #[case(vec!["first text".to_owned()])]
 #[case(vec!["second text".to_owned(), "third text".to_owned()])]
+#[rstest]
 #[tokio::test]
 async fn test_embedding_generates_real_vectors(
     #[case] texts: Vec<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     assert_embedding_batch_shape(&embedding, &texts).await?;
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_full_index_and_search_flow() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();
@@ -195,9 +179,10 @@ async fn test_full_index_and_search_flow() -> Result<(), Box<dyn std::error::Err
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_provider_accessors_return_same_instance() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
     // Get embedding provider twice via accessor
     let provider1 = ctx.embedding_provider();
     let provider2 = ctx.embedding_provider();
@@ -209,9 +194,10 @@ async fn test_provider_accessors_return_same_instance() -> Result<(), Box<dyn st
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_multiple_collections_isolated() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();

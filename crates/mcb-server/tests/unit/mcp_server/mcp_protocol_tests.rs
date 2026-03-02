@@ -9,12 +9,11 @@
 //! Run with: `cargo test -p mcb-server --test unit mcp_protocol`
 
 use rstest::rstest;
-extern crate mcb_providers;
 
 use axum::http::StatusCode;
 use mcb_server::transport::types::McpRequest;
 
-use crate::utils::http_mcp::{McpTestContext, post_mcp};
+use mcb_domain::utils::http_mcp::{McpTestContext, post_mcp};
 
 // =============================================================================
 // PROTOCOL VERSION & INITIALIZE TESTS
@@ -242,6 +241,7 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
 #[case("initialize")]
 #[case("tools/list")]
 #[case("ping")]
+#[rstest]
 #[tokio::test]
 async fn test_response_has_jsonrpc_field(
     #[case] method: &str,

@@ -1,10 +1,10 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
 //!
-use super::constants::{
+use super::violation::OrganizationViolation;
+use crate::constants::organization::{
     DOMAIN_ALLOWED_METHODS, DOMAIN_ALLOWED_PREFIXES, DOMAIN_CRATE_PATH, PORTS_DIR_PATH,
 };
-use super::violation::OrganizationViolation;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::{for_each_scan_file, is_test_path};

@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::Result;
-use crate::linters::constants::CARGO_TOML_FILENAME;
+use crate::constants::linters::CARGO_TOML_FILENAME;
 
 /// Information about a dependency
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -247,6 +247,7 @@ impl CargoDependencyParser {
                             .filter_map(|v| v.as_str().map(str::to_owned))
                             .collect()
                     })
+                    // INTENTIONAL: TOML array extraction; empty deps is valid
                     .unwrap_or_default();
 
                 let optional = table
