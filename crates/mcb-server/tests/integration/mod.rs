@@ -1,8 +1,10 @@
 //! Integration tests — `cargo test -p mcb-server --test integration`
 
+/// Shared test utilities.
 #[path = "../utils/mod.rs"]
 pub mod utils;
 
+/// Handler integration tests.
 pub mod handlers;
 
 mod error_recovery_integration;

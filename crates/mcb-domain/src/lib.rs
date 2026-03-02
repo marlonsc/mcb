@@ -73,6 +73,8 @@ pub mod events;
 pub mod infra;
 /// External provider port interfaces
 pub mod ports;
+/// MCP JSON-RPC protocol types (domain-level contract)
+pub mod protocol;
 /// Provider auto-registration registry
 pub mod registry;
 /// Common utilities
@@ -119,3 +121,6 @@ pub use utils::tests::sync_helpers as test_sync_helpers;
 pub use utils::tests::timeouts as test_timeouts;
 #[cfg(any(test, feature = "test-utils"))]
 pub use utils::tests::utils as test_utils;
+
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::http_mcp as test_http_mcp;

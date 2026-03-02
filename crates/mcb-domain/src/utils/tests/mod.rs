@@ -63,3 +63,6 @@ pub mod fixtures;
 
 /// Git test repository helpers (create_test_repo, run_git).
 pub mod git_helpers;
+
+/// MCP HTTP test request builders and response assertions.
+pub mod http_mcp;

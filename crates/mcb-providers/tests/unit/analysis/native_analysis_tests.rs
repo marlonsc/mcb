@@ -56,7 +56,9 @@ fn complex(a: i32) {
         assert_eq!(findings.len(), 1);
         match &findings[0] {
             AnalysisFinding::Complexity { function, .. } => assert_eq!(function, "complex"),
-            other => panic!("Expected Complexity finding, got {other:?}"),
+            other @ (AnalysisFinding::DeadCode { .. } | AnalysisFinding::TechnicalDebt { .. }) => {
+                panic!("Expected Complexity finding, got {other:?}")
+            }
         }
         Ok(())
     }
@@ -114,7 +116,9 @@ fn heavy(x: i32) {
         assert_eq!(findings.len(), 1);
         match &findings[0] {
             AnalysisFinding::TechnicalDebt { score, .. } => assert!(*score > 15),
-            other => panic!("Expected TechnicalDebt finding, got {other:?}"),
+            other @ (AnalysisFinding::Complexity { .. } | AnalysisFinding::DeadCode { .. }) => {
+                panic!("Expected TechnicalDebt finding, got {other:?}")
+            }
         }
         Ok(())
     }

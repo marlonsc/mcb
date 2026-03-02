@@ -1,22 +1,39 @@
+//! MCP HTTP test context — server-specific test infrastructure.
+//!
+//! Provides [`McpTestContext`], [`post_mcp`], and [`post_mcp_str`] for running
+//! MCP requests through the full server stack in tests.
+//!
+//! These helpers depend on `McpServer` and `route_tool_call` which are
+//! server-layer types. Request builders and protocol assertions are
+//! centralized in `mcb_domain::test_http_mcp`.
+
 use std::sync::Arc;
 
 use axum::http::StatusCode;
+use mcb_domain::protocol::{McpError, McpRequest, McpResponse};
+use mcb_domain::test_utils::TestResult;
 use mcb_server::McpServer;
 use mcb_server::tools::create_tool_list;
 use mcb_server::tools::{ToolExecutionContext, route_tool_call};
-use mcb_server::transport::types::{McpError, McpRequest, McpResponse};
 use rmcp::model::CallToolRequestParams;
 use tempfile::TempDir;
 
 use crate::utils::test_fixtures::create_test_mcp_server;
-use mcb_domain::test_utils::TestResult;
 
+/// Test context wrapping an MCP server and its temporary directory.
 pub struct McpTestContext {
+    /// The MCP server instance.
     pub server: Arc<McpServer>,
+    /// Temp directory holding the test database (keep alive for test lifetime).
     pub _temp: TempDir,
 }
 
 impl McpTestContext {
+    /// Create a new test context with a fresh MCP server.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the MCP server could not be created.
     pub async fn new() -> TestResult<Self> {
         let (server_instance, temp) = create_test_mcp_server().await?;
         let server = Arc::new(server_instance);
@@ -37,6 +54,13 @@ fn header_value<'a>(headers: &'a [(String, String)], name: &str) -> Option<&'a s
         .map(|(_, v)| v.as_str())
 }
 
+/// Send an MCP request through the server and return the response.
+///
+/// Routes `tools/list`, `initialize`, `tools/call`, and unknown methods.
+///
+/// # Errors
+///
+/// Returns an error if the request processing or response serialization fails.
 pub async fn post_mcp(
     ctx: &McpTestContext,
     request: &McpRequest,
@@ -155,7 +179,11 @@ pub async fn post_mcp(
     }
 }
 
-/// Helper for tests using static string slices
+/// Helper for tests using static string slices.
+///
+/// # Errors
+///
+/// Returns an error if the underlying [`post_mcp`] call fails.
 pub async fn post_mcp_str(
     ctx: &McpTestContext,
     request: &McpRequest,
@@ -166,23 +194,4 @@ pub async fn post_mcp_str(
         .map(|(k, v)| (k.to_string(), v.to_string()))
         .collect();
     post_mcp(ctx, request, &owned_headers).await
-}
-
-pub fn tools_list_request() -> McpRequest {
-    McpRequest {
-        method: "tools/list".to_owned(),
-        params: None,
-        id: Some(serde_json::json!(1)),
-    }
-}
-
-pub fn tools_call_request(tool_name: &str) -> McpRequest {
-    McpRequest {
-        method: "tools/call".to_owned(),
-        params: Some(serde_json::json!({
-            "name": tool_name,
-            "arguments": {}
-        })),
-        id: Some(serde_json::json!(1)),
-    }
 }

@@ -21,6 +21,10 @@ use std::path::Path;
 
 use tempfile::TempDir;
 
+/// Runs a single named validator against the given workspace root.
+///
+/// # Errors
+/// Returns an error if the validator is not found or validation itself fails.
 pub fn run_named_validator(
     root: &Path,
     validator_name: &str,
@@ -29,6 +33,10 @@ pub fn run_named_validator(
     run_named_validator_with_config(&config, validator_name)
 }
 
+/// Runs a single named validator using a pre-built [`ValidationConfig`].
+///
+/// # Errors
+/// Returns an error if the validator is not found or validation itself fails.
 pub fn run_named_validator_with_config(
     config: &mcb_validate::ValidationConfig,
     validator_name: &str,

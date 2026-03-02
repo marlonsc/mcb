@@ -95,12 +95,12 @@ impl FileConfig {
                 let mut fallback: Self = Figment::new()
                     .merge(Toml::string(EMBEDDED_VALIDATE_DEFAULTS))
                     .extract()
-                    .unwrap_or_else(|_| {
+                    .unwrap_or_else(|e| {
                         mcb_domain::error!(
                             "validate_config",
                             "embedded mcb-validate defaults are invalid"
                         );
-                        std::process::exit(2);
+                        unreachable!("embedded mcb-validate defaults are invalid: {e}");
                     });
                 fallback.general.workspace_root = Some(root.clone());
                 fallback

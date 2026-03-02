@@ -4406,6 +4406,7 @@ dependencies = [
  "linkme",
  "loco-rs",
  "mcb-domain",
+ "mcb-providers",
  "mockall",
  "normpath",
  "notify 8.2.0",

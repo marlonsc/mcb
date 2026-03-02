@@ -10,6 +10,7 @@
     clippy::uninlined_format_args
 )]
 
+/// Shared test utilities.
 #[path = "../utils/mod.rs"]
 pub mod utils;
 

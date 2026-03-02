@@ -1,10 +1,10 @@
-//! Real provider fixtures for integration testing
+//! Real provider fixtures for integration testing.
 //!
 //! Provides factory functions for creating real local providers (`InMemory`, `FastEmbed`, Moka)
 //! for use in tests that should verify real behavior instead of mocking.
 //!
-//! Uses a process-wide shared `AppContext` to avoid re-loading the ONNX model
-//! (~5-10s) per test.
+//! Uses a process-wide shared `SharedTestContext` to avoid re-loading the ONNX model
+//! (~5-10s) per test. All providers resolved through domain registry (CA/DI/Linkme).
 
 // Force linkme registration of all providers
 extern crate mcb_providers;
@@ -15,9 +15,12 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider};
 
 use super::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, try_shared_app_context};
-use rstest::rstest;
 
 /// Get the real `EdgeVec` vector store provider from the shared context.
+///
+/// # Errors
+///
+/// Returns an error if the shared context is unavailable.
 pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> {
     let Some(ctx) = try_shared_app_context() else {
         return Err(Error::embedding(
@@ -30,6 +33,10 @@ pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> 
 /// Get the real `FastEmbed` provider from the shared context.
 ///
 /// The ONNX model is loaded once on first access and reused across all tests.
+///
+/// # Errors
+///
+/// Returns an error if the shared context is unavailable.
 pub async fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvider>> {
     let Some(ctx) = try_shared_app_context() else {
         return Err(Error::embedding(
@@ -40,6 +47,10 @@ pub async fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvide
 }
 
 /// Get a real `FastEmbed` provider (model parameter is accepted for API compat).
+///
+/// # Errors
+///
+/// Returns an error if the shared context is unavailable.
 pub async fn create_real_embedding_provider_with_model(
     model: fastembed::EmbeddingModel,
 ) -> Result<Arc<dyn EmbeddingProvider>> {
@@ -49,16 +60,12 @@ pub async fn create_real_embedding_provider_with_model(
 
 #[cfg(test)]
 mod tests {
+    use mcb_domain::test_collection::unique_collection;
+    use mcb_domain::test_service_detection::should_run_docker_integration_tests;
     use mcb_domain::value_objects::CollectionId;
 
-    use mcb_domain::test_collection::unique_collection;
-
     use super::*;
-    use rstest::rstest;
 
-    use mcb_domain::test_service_detection::should_run_docker_integration_tests;
-
-    #[rstest]
     #[tokio::test]
     async fn test_real_vector_store_creation() {
         if !should_run_docker_integration_tests() {
@@ -75,7 +82,6 @@ mod tests {
         assert_eq!(store.provider_name(), "edgevec");
     }
 
-    #[rstest]
     #[tokio::test]
     async fn test_real_vector_store_basic_operations() {
         if !should_run_docker_integration_tests() {
@@ -121,7 +127,6 @@ mod tests {
         assert!(!exists);
     }
 
-    #[rstest]
     #[tokio::test]
     async fn test_real_embedding_provider_creation() {
         if !should_run_docker_integration_tests() {
@@ -146,7 +151,6 @@ mod tests {
         assert_eq!(embeddings[0].vector.len(), TEST_EMBEDDING_DIMENSIONS);
     }
 
-    #[rstest]
     #[tokio::test]
     async fn test_real_embedding_provider_with_model() {
         if !should_run_docker_integration_tests() {
@@ -174,7 +178,6 @@ mod tests {
         assert_eq!(embeddings[0].vector.len(), TEST_EMBEDDING_DIMENSIONS);
     }
 
-    #[rstest]
     #[tokio::test]
     async fn test_real_embedding_provider_embed_batch() {
         if !should_run_docker_integration_tests() {

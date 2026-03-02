@@ -8,9 +8,9 @@ use mcb_server::McpServer;
 use mcb_server::tools::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use rmcp::model::CallToolRequestParams;
 
-use mcb_domain::utils::tests::http_mcp::{
-    McpTestContext, post_mcp_str, tools_call_request, tools_list_request,
-};
+use mcb_domain::test_http_mcp::{tools_call_request, tools_list_request};
+
+use crate::utils::http_mcp::{McpTestContext, post_mcp_str};
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
     server.tool_handlers()

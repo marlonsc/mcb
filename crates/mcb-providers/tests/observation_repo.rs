@@ -1,3 +1,4 @@
+//! Observation repository integration tests.
 use mcb_domain::entities::memory::{
     MemoryFilter, Observation, ObservationMetadata, ObservationType,
 };

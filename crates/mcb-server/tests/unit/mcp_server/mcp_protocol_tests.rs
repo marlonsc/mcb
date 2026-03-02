@@ -13,7 +13,7 @@ use rstest::rstest;
 use axum::http::StatusCode;
 use mcb_server::transport::types::McpRequest;
 
-use mcb_domain::utils::http_mcp::{McpTestContext, post_mcp};
+use crate::utils::http_mcp::{McpTestContext, post_mcp};
 
 // =============================================================================
 // PROTOCOL VERSION & INITIALIZE TESTS
@@ -222,7 +222,7 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
         .and_then(|v| v.get("required"))
         .and_then(serde_json::Value::as_array);
     assert!(required.is_some(), "req array");
-    let required = match required {
+    let required: &Vec<serde_json::Value> = match required {
         Some(value) => value,
         None => return Ok(()),
     };
@@ -241,7 +241,6 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
 #[case("initialize")]
 #[case("tools/list")]
 #[case("ping")]
-#[rstest]
 #[tokio::test]
 async fn test_response_has_jsonrpc_field(
     #[case] method: &str,

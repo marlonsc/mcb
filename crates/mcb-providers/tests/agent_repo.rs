@@ -1,3 +1,4 @@
+//! Agent repository integration tests.
 use std::sync::Arc;
 
 use mcb_domain::ports::AgentEventRepository;

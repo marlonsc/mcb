@@ -1,8 +1,8 @@
 use axum::http::StatusCode;
-use mcb_server::transport::types::{McpRequest, McpResponse};
+use mcb_domain::protocol::{McpRequest, McpResponse};
 use serde_json::{Value, json};
 
-use mcb_domain::utils::http_mcp::{McpTestContext, post_mcp};
+use crate::utils::http_mcp::{McpTestContext, post_mcp};
 
 /// Get the workspace root dynamically (works locally and in CI)
 pub fn workspace_root() -> String {

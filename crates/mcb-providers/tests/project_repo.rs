@@ -1,3 +1,4 @@
+//! Project repository integration tests.
 use mcb_domain::entities::Project;
 use mcb_domain::entities::project::{
     DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus, ProjectDecision,

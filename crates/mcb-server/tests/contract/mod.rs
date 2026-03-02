@@ -1,4 +1,6 @@
+//! Contract tests — `cargo test -p mcb-server --test contract`
 #[path = "../utils/mod.rs"]
+/// Shared test utilities.
 pub mod utils;
 
 mod agent_contract_tests;

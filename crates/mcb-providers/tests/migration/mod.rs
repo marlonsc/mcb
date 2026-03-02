@@ -1,3 +1,4 @@
+//! Database migration tests.
 use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 
 use mcb_domain::utils::tests::utils::TestResult;
