@@ -23,10 +23,17 @@ use sea_orm_migration::prelude::*;
 /// [`MIGRATION_PROVIDERS`](mcb_domain::registry::database::MIGRATION_PROVIDERS)
 /// distributed slice and the [`MigrationProvider`](mcb_domain::ports::MigrationProvider)
 /// port trait.
+///
+/// # Panics
+///
+/// [`DynamicMigrator::migrations()`] panics if no migration provider is registered
+/// in the `MIGRATION_PROVIDERS` distributed slice. The `MigratorTrait` interface
+/// does not support fallible resolution.
 pub struct DynamicMigrator;
 
 #[async_trait::async_trait]
 impl MigratorTrait for DynamicMigrator {
+    #[allow(clippy::expect_used)] // MigratorTrait::migrations() is infallible
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
         let provider = mcb_domain::registry::database::resolve_migration_provider()
             .expect("No migration provider registered");

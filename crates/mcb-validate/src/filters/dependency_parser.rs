@@ -150,6 +150,7 @@ impl CargoDependencyParser {
         crates
     }
 
+    /// Internal recursive helper to collect all directories containing Cargo.toml files.
     fn collect_cargo_dirs(
         root: &Path,
         current: &Path,
@@ -183,7 +184,10 @@ impl CargoDependencyParser {
         }
     }
 
-    /// Parse a single Cargo.toml file
+    /// Parse a single Cargo.toml file and extract all defined dependencies.
+    ///
+    /// # Errors
+    /// Returns a validation error if the file cannot be read or is invalid TOML.
     fn parse_cargo_toml(path: &Path) -> Result<CrateDependencies> {
         let content = fs::read_to_string(path)?;
         let value: toml::Value =
@@ -207,7 +211,7 @@ impl CargoDependencyParser {
         Ok(CrateDependencies { deps })
     }
 
-    /// Parse a dependency table (dependencies, dev-dependencies, etc.)
+    /// Parse a specific dependency table (e.g., `dependencies` or `dev-dependencies`).
     fn parse_dependency_table(
         deps_section: &toml::Value,
         deps: &mut HashMap<String, DependencyInfo>,
@@ -221,7 +225,7 @@ impl CargoDependencyParser {
         }
     }
 
-    /// Parse individual dependency configuration
+    /// Parse the configuration for a single dependency entry.
     fn parse_dependency_config(config: &toml::Value, is_optional: bool) -> DependencyInfo {
         match config {
             // Simple version string: serde = "1.0"

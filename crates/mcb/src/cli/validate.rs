@@ -92,8 +92,8 @@ impl ValidateArgs {
             LogLevel::Info
         };
 
-        crate::logging::set_stderr_log_level(level);
-        mcb_domain::infra::logging::set_log_fn(crate::logging::stderr_log_fn);
+        mcb_domain::infra::logging::set_stderr_log_level(level);
+        mcb_domain::infra::logging::set_log_fn(mcb_domain::infra::logging::stderr_log_fn);
     }
 
     /// Print a progress message to stderr (respects --silent)

@@ -8,6 +8,19 @@ use std::path::Path;
 use mcb_domain::ports::IndexingResult;
 use mcb_domain::value_objects::OperationId;
 
+/// Mutable accumulator for indexing metrics during a single run.
+#[derive(Debug, Clone)]
+pub struct IndexingProgress {
+    /// Files fully processed.
+    pub files_processed: usize,
+    /// Total chunks generated.
+    pub chunks_created: usize,
+    /// Files skipped (unchanged hash).
+    pub files_skipped: usize,
+    /// Non-fatal errors collected.
+    pub errors: Vec<String>,
+}
+
 impl IndexingProgress {
     /// Create a new empty progress tracker.
     #[must_use]

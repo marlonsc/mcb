@@ -209,7 +209,7 @@ impl PmatValidator {
                         Severity::Info
                     },
                 }),
-                _ => None,
+                AnalysisFinding::DeadCode { .. } | AnalysisFinding::TechnicalDebt { .. } => None,
             })
             .collect())
     }
@@ -245,7 +245,7 @@ impl PmatValidator {
                     name,
                     severity: Severity::Info,
                 }),
-                _ => None,
+                AnalysisFinding::Complexity { .. } | AnalysisFinding::TechnicalDebt { .. } => None,
             })
             .collect())
     }
@@ -281,7 +281,7 @@ impl PmatValidator {
                         },
                     })
                 }
-                _ => None,
+                AnalysisFinding::Complexity { .. } | AnalysisFinding::DeadCode { .. } => None,
             })
             .collect())
     }

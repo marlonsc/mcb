@@ -63,30 +63,10 @@ pub fn test_api_key(user_id: &str, org_id: &str, name: &str) -> mcb_domain::enti
 // Golden test helpers (shared by tests/golden and integration)
 // -----------------------------------------------------------------------------
 
-/// Path to `sample_codebase` fixture (used by golden tests).
-pub fn sample_codebase_path() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample_codebase")
-}
-
-/// Extract text content from `CallToolResult` for assertions (joined by space).
-pub fn golden_content_to_string(res: &rmcp::model::CallToolResult) -> String {
-    super::text::extract_text_with_sep(&res.content, " ")
-}
-
-/// Parse "**Results found:** N" from search response text.
-pub fn golden_parse_results_found(text: &str) -> Option<usize> {
-    let prefix = "**Results found:**";
-    text.find(prefix).and_then(|i| {
-        let rest = text[i + prefix.len()..].trim_start();
-        let num_str: String = rest.chars().take_while(char::is_ascii_digit).collect();
-        num_str.parse().ok()
-    })
-}
-
-/// Count result lines (each has "📁") in search response.
-pub fn golden_count_result_entries(text: &str) -> usize {
-    text.lines().filter(|line| line.contains("📁")).count()
-}
+pub use mcb_domain::test_fixtures::{
+    golden_content_to_string, golden_count_result_entries, golden_parse_results_found,
+    sample_codebase_path,
+};
 
 // SAMPLE_CODEBASE_FILES is now re-exported from mcb_domain::test_utils.
 

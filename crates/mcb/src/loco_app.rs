@@ -1,3 +1,9 @@
+//! Loco application implementation for MCB.
+//!
+//! Provides the `McbApp` struct which implements Loco `Hooks` to setup
+//! the server, routes, and initializers.
+//!
+
 use async_trait::async_trait;
 use axum::Router as AxumRouter;
 use loco_rs::Result;

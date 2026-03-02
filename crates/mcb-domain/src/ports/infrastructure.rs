@@ -27,17 +27,17 @@ pub type DomainEventStream = Pin<Box<dyn Stream<Item = DomainEvent> + Send + Syn
 /// Event bus provider interface for typed event pub/sub
 #[async_trait]
 pub trait EventBusProvider: Send + Sync {
-    /// Publish a domain event to the bus
+    /// Publish a domain event to the bus.
     async fn publish_event(&self, event: DomainEvent) -> Result<()>;
-    /// Subscribe to all domain events
+    /// Subscribe to all domain events.
     async fn subscribe_events(&self) -> Result<DomainEventStream>;
-    /// Check if there are any active subscribers
+    /// Check if there are any active subscribers.
     fn has_subscribers(&self) -> bool;
 
     // Low-Level Raw API
-    /// Publish raw payload to a specific topic
+    /// Publish raw payload to a specific topic.
     async fn publish(&self, topic: &str, payload: &[u8]) -> Result<()>;
-    /// Subscribe to a specific topic
+    /// Subscribe to a specific topic.
     async fn subscribe(&self, topic: &str) -> Result<String>;
 }
 
@@ -48,9 +48,13 @@ pub trait EventBusProvider: Send + Sync {
 /// Current state of a port service
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum PortServiceState {
+    /// Service is in the process of starting up
     Starting,
+    /// Service is active and running correctly
     Running,
+    /// Service is in the process of shutting down
     Stopping,
+    /// Service is inactive and fully stopped
     #[default]
     Stopped,
 }
@@ -58,9 +62,13 @@ pub enum PortServiceState {
 /// Health status for a system dependency
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq, Default)]
 pub enum DependencyHealth {
+    /// Dependency is operational and communicating correctly
     Healthy,
+    /// Dependency is responding but with issues or high latency
     Degraded,
+    /// Dependency is not responding or in a failed state
     Unhealthy,
+    /// Health status is not yet determined
     #[default]
     Unknown,
 }
@@ -97,29 +105,29 @@ pub struct ExtendedHealthResponse {
 
 /// Interface for graceful shutdown coordination
 pub trait ShutdownCoordinator: Send + Sync {
-    /// Signal that a shutdown has been initiated
+    /// Signal that a shutdown has been initiated.
     fn signal_shutdown(&self);
-    /// Check if the system is currently shutting down
+    /// Check if the system is currently shutting down.
     fn is_shutting_down(&self) -> bool;
 }
 
 /// Managed lifecycle for background services
 #[async_trait::async_trait]
 pub trait LifecycleManaged: Send + Sync {
-    /// Human-readable name of the service
+    /// Human-readable name of the service.
     fn name(&self) -> &str;
-    /// Start the service
+    /// Start the service.
     async fn start(&self) -> Result<()>;
-    /// Stop the service gracefully
+    /// Stop the service gracefully.
     async fn stop(&self) -> Result<()>;
-    /// Restart the service by calling stop then start
+    /// Restart the service by calling stop then start.
     async fn restart(&self) -> Result<()> {
         self.stop().await?;
         self.start().await
     }
-    /// Get the current operational state
+    /// Get the current operational state.
     fn state(&self) -> PortServiceState;
-    /// Perform a health check on the service
+    /// Perform a health check on the service.
     async fn health_check(&self) -> DependencyHealthCheck {
         DependencyHealthCheck {
             name: self.name().to_owned(),
@@ -144,10 +152,15 @@ pub trait LifecycleManaged: Send + Sync {
 /// Log level for the unified `log` method.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogLevel {
+    /// Critical error that requires immediate attention.
     Error,
+    /// Potentially problematic situation that doesn't prevent operation.
     Warn,
+    /// Significant informational event for monitoring purposes.
     Info,
+    /// Detailed information useful for debugging.
     Debug,
+    /// Extremely fine-grained information for tracing execution flow.
     Trace,
 }
 
@@ -176,9 +189,12 @@ pub trait OperationLogger: Send + Sync {
 /// Health status for a provider
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum ProviderHealthStatus {
+    /// Provider is responding optimally.
     #[default]
     Healthy,
+    /// Provider is responding but with errors or latency.
     Degraded,
+    /// Provider is unreachable or failing consistently.
     Unhealthy,
 }
 
@@ -200,23 +216,27 @@ pub struct ProviderContext {
 }
 
 impl ProviderContext {
+    /// Create a new empty provider context with default sensitivities.
     #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Set the operation type for this context.
     #[must_use]
     pub fn with_operation(mut self, operation: impl Into<String>) -> Self {
         self.operation_type = operation.into();
         self
     }
 
+    /// Add a provider to the preferred list.
     #[must_use]
     pub fn prefer(mut self, provider: impl Into<String>) -> Self {
         self.preferred_providers.push(provider.into());
         self
     }
 
+    /// Add a provider to the excluded list.
     #[must_use]
     pub fn exclude(mut self, provider: impl Into<String>) -> Self {
         self.excluded_providers.push(provider.into());
@@ -227,19 +247,19 @@ impl ProviderContext {
 /// Provider routing interface
 #[async_trait]
 pub trait ProviderRouter: Send + Sync {
-    /// Select the best embedding provider for the given context
+    /// Select the best embedding provider for the given context.
     async fn select_embedding_provider(&self, context: &ProviderContext) -> Result<String>;
-    /// Select the best vector store provider for the given context
+    /// Select the best vector store provider for the given context.
     async fn select_vector_store_provider(&self, context: &ProviderContext) -> Result<String>;
-    /// Get health status of a specific provider
+    /// Get health status of a specific provider.
     async fn get_provider_health(&self, provider_id: &str) -> Result<ProviderHealthStatus>;
-    /// Report an operation failure for a provider
+    /// Report an operation failure for a provider.
     async fn report_failure(&self, provider_id: &str, error: &str) -> Result<()>;
-    /// Report an operation success for a provider
+    /// Report an operation success for a provider.
     async fn report_success(&self, provider_id: &str) -> Result<()>;
-    /// Get health status of all known providers
+    /// Get health status of all known providers.
     async fn get_all_health(&self) -> Result<HashMap<String, ProviderHealthStatus>>;
-    /// Get detailed statistics for all providers
+    /// Get detailed statistics for all providers.
     async fn get_stats(&self) -> HashMap<String, serde_json::Value>;
 }
 
@@ -250,36 +270,36 @@ pub trait ProviderRouter: Send + Sync {
 /// Sync Provider Interface
 #[async_trait]
 pub trait SyncProvider: Send + Sync {
-    /// Check if a sync operation should be debounced for the given path
+    /// Check if a sync operation should be debounced for the given path.
     async fn should_debounce(&self, codebase_path: &Path) -> Result<bool>;
-    /// Update the timestamp of the last successful sync
+    /// Update the timestamp of the last successful sync.
     async fn update_last_sync(&self, codebase_path: &Path);
-    /// Attempt to acquire a slot for a sync batch
+    /// Attempt to acquire a slot for a sync batch.
     async fn acquire_sync_slot(&self, codebase_path: &Path) -> Result<Option<SyncBatch>>;
-    /// Release a previously acquired sync slot
+    /// Release a previously acquired sync slot.
     async fn release_sync_slot(&self, codebase_path: &Path, batch: SyncBatch) -> Result<()>;
-    /// Get list of files that have changed since last sync
+    /// Get list of files that have changed since last sync.
     async fn get_changed_files(&self, codebase_path: &Path) -> Result<Vec<String>>;
-    /// Desired interval between syncs
+    /// Desired interval between syncs.
     fn sync_interval(&self) -> Duration;
-    /// Desired debounce duration
+    /// Desired debounce duration.
     fn debounce_interval(&self) -> Duration;
 }
 
 /// Snapshot Provider Interface
 #[async_trait]
 pub trait SnapshotProvider: Send + Sync {
-    /// Create a new snapshot of the filesystem at root_path
+    /// Create a new snapshot of the filesystem at `root_path`.
     async fn create_snapshot(&self, root_path: &Path) -> Result<CodebaseSnapshot>;
-    /// Load a previously saved snapshot for root_path
+    /// Load a previously saved snapshot for `root_path`.
     async fn load_snapshot(&self, root_path: &Path) -> Result<Option<CodebaseSnapshot>>;
-    /// Compare two snapshots and find the differences
+    /// Compare two snapshots and find the differences.
     async fn compare_snapshots(
         &self,
         old_snapshot: &CodebaseSnapshot,
         new_snapshot: &CodebaseSnapshot,
     ) -> Result<SnapshotChanges>;
-    /// Efficiently get files changed on disk since last snapshot
+    /// Efficiently get files changed on disk since last snapshot.
     async fn get_changed_files(&self, root_path: &Path) -> Result<Vec<String>>;
 }
 
@@ -317,6 +337,7 @@ pub struct SyncResult {
 }
 
 impl SyncResult {
+    /// Create a result representing a skipped operation (e.g., due to debouncing).
     #[must_use]
     pub fn skipped() -> Self {
         Self {
@@ -326,6 +347,7 @@ impl SyncResult {
         }
     }
 
+    /// Create a result for a completed operation with the list of changes.
     #[must_use]
     pub fn completed(changed_files: Vec<String>) -> Self {
         let files_changed = changed_files.len();
@@ -340,15 +362,15 @@ impl SyncResult {
 /// Domain Port for File Synchronization Coordination
 #[async_trait]
 pub trait SyncCoordinator: Send + Sync {
-    /// Check if a sync should be debounced for the given path
+    /// Check if a sync should be debounced for the given path.
     async fn should_debounce(&self, codebase_path: &Path) -> Result<bool>;
-    /// Perform the synchronization operation
+    /// Perform the synchronization operation.
     async fn sync(&self, codebase_path: &Path, options: SyncOptions) -> Result<SyncResult>;
-    /// Get list of changed files according to the coordinator's state
+    /// Get list of changed files according to the coordinator's state.
     async fn get_changed_files(&self, codebase_path: &Path) -> Result<Vec<String>>;
-    /// Explicitly mark a path as successfully synced
+    /// Explicitly mark a path as successfully synced.
     async fn mark_synced(&self, codebase_path: &Path) -> Result<()>;
-    /// Total number of files currently tracked by the coordinator
+    /// Total number of files currently tracked by the coordinator.
     fn tracked_file_count(&self) -> usize;
 }
 
@@ -376,7 +398,7 @@ pub trait MigrationProvider: Send + Sync {
     /// Apply all pending migrations (up) to the given database connection.
     ///
     /// The `db` parameter is a type-erased database connection
-    /// (e.g. `DatabaseConnection` from SeaORM).
+    /// (e.g. `DatabaseConnection` from `SeaORM`).
     ///
     /// `steps` limits how many pending migrations to apply; `None` applies all.
     async fn migrate_up(

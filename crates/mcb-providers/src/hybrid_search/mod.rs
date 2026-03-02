@@ -85,7 +85,7 @@ use mcb_domain::registry::hybrid_search::{
     HYBRID_SEARCH_PROVIDERS, HybridSearchProviderConfig, HybridSearchProviderEntry,
 };
 
-/// Factory function for creating HybridSearchEngine instances.
+/// Factory function for creating `HybridSearchEngine` instances.
 fn hybrid_search_factory(
     _config: &HybridSearchProviderConfig,
 ) -> std::result::Result<Arc<dyn HybridSearchProviderPort>, String> {

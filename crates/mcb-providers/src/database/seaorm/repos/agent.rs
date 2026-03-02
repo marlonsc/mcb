@@ -20,11 +20,14 @@ use crate::database::seaorm::entities::{
 /// Default limit for agent session queries to prevent unbounded result sets.
 const DEFAULT_SESSION_LIMIT: u64 = 100;
 
+/// A SeaORM-based implementation of the agent repository.
 pub struct SeaOrmAgentRepository {
+    /// Database connection pool.
     db: Arc<DatabaseConnection>,
 }
 
 impl SeaOrmAgentRepository {
+    /// Creates a new `SeaOrmAgentRepository` with the given database connection.
     #[must_use]
     pub fn new(db: Arc<DatabaseConnection>) -> Self {
         Self { db }

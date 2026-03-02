@@ -4,6 +4,8 @@ use rust_code_analysis::{LANG, guess_language};
 
 pub use mcb_domain::ports::validation::LanguageId;
 
+/// Map a `LanguageId` to its `rust-code-analysis` (RCA) equivalent.
+#[must_use]
 pub fn language_to_rca(lang: LanguageId) -> LANG {
     match lang {
         LanguageId::Rust => LANG::Rust,
@@ -29,6 +31,8 @@ pub fn language_to_rca(lang: LanguageId) -> LANG {
     }
 }
 
+/// Map a `rust-code-analysis` (RCA) language to our `LanguageId`.
+#[must_use]
 pub fn language_from_rca(lang: LANG) -> Option<LanguageId> {
     match lang {
         LANG::Rust => Some(LanguageId::Rust),
@@ -42,6 +46,7 @@ pub fn language_from_rca(lang: LANG) -> Option<LanguageId> {
     }
 }
 
+/// Component for detecting the programming language of a file.
 pub struct LanguageDetector {
     _private: (),
 }
@@ -53,11 +58,13 @@ impl Default for LanguageDetector {
 }
 
 impl LanguageDetector {
+    /// Create a new language detector instance.
     #[must_use]
     pub fn new() -> Self {
         Self { _private: () }
     }
 
+    /// Detect the language of a file at the given path, optionally using its content.
     pub fn detect(&self, path: &Path, content: Option<&str>) -> Option<LanguageId> {
         let source = content.map_or_else(
             || std::fs::read(path).unwrap_or_default(),
@@ -89,11 +96,13 @@ impl LanguageDetector {
         first_line.and_then(LanguageId::from_shebang)
     }
 
+    /// Detect language and return its name.
     #[must_use]
     pub fn detect_name(&self, path: &Path, content: Option<&str>) -> Option<String> {
         self.detect(path, content).map(|id| id.name().to_owned())
     }
 
+    /// Detect language and return the specific RCA enum if supported.
     #[must_use]
     pub fn detect_rca_lang(&self, path: &Path, content: Option<&str>) -> Option<LANG> {
         let source = content.map_or_else(
@@ -104,6 +113,7 @@ impl LanguageDetector {
         rca_lang.and_then(|lang| language_from_rca(lang).map(|_| lang))
     }
 
+    /// Get a list of all human-readable language names supported by this detector.
     #[must_use]
     pub fn supported_language_names(&self) -> Vec<String> {
         vec![
@@ -130,6 +140,7 @@ impl LanguageDetector {
         ]
     }
 
+    /// Check if the detected language of a file is in the allowed list.
     #[must_use]
     pub fn matches_languages(
         &self,

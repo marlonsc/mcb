@@ -147,7 +147,7 @@ pub fn golden_parse_results_found(text: &str) -> Option<usize> {
                 .nth(1)?
                 .trim()
                 .chars()
-                .take_while(|c| c.is_ascii_digit())
+                .take_while(char::is_ascii_digit)
                 .collect::<String>()
                 .parse::<usize>()
                 .ok()

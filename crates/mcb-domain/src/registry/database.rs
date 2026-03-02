@@ -26,7 +26,7 @@ use crate::ports::{
 pub struct DatabaseProviderConfig {
     /// Provider name (e.g. "sqlite", "postgres").
     pub provider: String,
-    /// Optional path for file-based databases like SQLite.
+    /// Optional path for file-based databases like `SQLite`.
     pub path: Option<PathBuf>,
 }
 
@@ -40,7 +40,7 @@ impl DatabaseProviderConfig {
         }
     }
 
-    /// Set the database file path (for SQLite etc.).
+    /// Set the database file path (for `SQLite` etc.).
     #[must_use]
     pub fn with_path(mut self, path: PathBuf) -> Self {
         self.path = Some(path);
@@ -48,20 +48,18 @@ impl DatabaseProviderConfig {
     }
 }
 
+/// Type-erased future for database connection building.
+pub type DatabaseBuildFuture = std::pin::Pin<
+    Box<dyn std::future::Future<Output = crate::error::Result<Arc<dyn Any + Send + Sync>>> + Send>,
+>;
+
 /// Registry entry for a database connection provider.
 pub struct DatabaseConnectionEntry {
     /// Unique provider name.
     pub name: &'static str,
     /// Factory that builds a connection and runs migrations.
     /// Returns an opaque `Arc<dyn Any + Send + Sync>` wrapping the connection.
-    pub build: fn(
-        &DatabaseProviderConfig,
-    ) -> std::pin::Pin<
-        Box<
-            dyn std::future::Future<Output = crate::error::Result<Arc<dyn Any + Send + Sync>>>
-                + Send,
-        >,
-    >,
+    pub build: fn(&DatabaseProviderConfig) -> DatabaseBuildFuture,
 }
 
 #[linkme::distributed_slice]
@@ -217,10 +215,8 @@ pub fn list_migration_providers() -> Vec<(&'static str, &'static str)> {
         .collect()
 }
 
-/// Apply all pending migrations (up) using the DI-resolved provider.
-///
 /// The `db` parameter is a type-erased database connection
-/// (e.g. `Box<DatabaseConnection>` from SeaORM).
+/// (e.g. `Box<DatabaseConnection>` from `SeaORM`).
 ///
 /// `steps` limits how many pending migrations to apply; `None` applies all.
 ///

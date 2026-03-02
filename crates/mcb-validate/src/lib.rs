@@ -103,8 +103,18 @@ pub use mcb_domain::ports::validation::{
     ViolationCategory, run_checks,
 };
 
+/// Extension trait for `ValidationConfig` providing file system scanning capabilities.
 pub trait ValidationConfigExt {
+    /// Get the list of source directories to scan based on the configuration.
+    ///
+    /// # Errors
+    /// Returns an I/O error if reading the directory fails.
     fn get_source_dirs(&self) -> Result<Vec<PathBuf>>;
+
+    /// Get the specific subdirectories (usually `src/` inside each crate) to scan.
+    ///
+    /// # Errors
+    /// Returns an I/O error if reading the directory fails.
     fn get_scan_dirs(&self) -> Result<Vec<PathBuf>>;
 }
 

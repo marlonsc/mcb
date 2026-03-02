@@ -11,9 +11,13 @@
 //! This prevents rules from running on irrelevant files, improving performance
 //! and reducing false positives.
 
+/// Parser for `Cargo.toml` dependencies.
 pub mod dependency_parser;
+/// Matching system for file and directory glob patterns.
 pub mod file_matcher;
+/// Detection system for programming languages in source files.
 pub mod language_detector;
+/// High-level rule filter execution and coordination.
 pub mod rule_filters;
 
 pub use dependency_parser::{

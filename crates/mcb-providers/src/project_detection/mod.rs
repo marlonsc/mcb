@@ -34,13 +34,15 @@ use mcb_domain::registry::project_detection::{
     PROJECT_DETECTION_SERVICES, ProjectDetectionServiceEntry,
 };
 
+/// An async function that detects project types at a given path.
+type DetectFn = dyn for<'a> Fn(&'a Path) -> Pin<Box<dyn Future<Output = Vec<ProjectType>> + Send + 'a>>
+    + Send
+    + Sync;
+
 /// Thin adapter implementing the domain port via the detect-all facade.
 struct UniversalProjectDetector {
-    detect_fn: Arc<
-        dyn for<'a> Fn(&'a Path) -> Pin<Box<dyn Future<Output = Vec<ProjectType>> + Send + 'a>>
-            + Send
-            + Sync,
-    >,
+    /// The detection function used to discover project types.
+    detect_fn: Arc<DetectFn>,
 }
 
 #[async_trait]
@@ -56,14 +58,7 @@ static UNIVERSAL_PROJECT_DETECTION_ENTRY: ProjectDetectionServiceEntry =
         name: "universal",
         description: "Universal project detector using all language-specific detectors",
         build: |_config| {
-            let detect_fn: Arc<
-                dyn for<'a> Fn(
-                        &'a Path,
-                    )
-                        -> Pin<Box<dyn Future<Output = Vec<ProjectType>> + Send + 'a>>
-                    + Send
-                    + Sync,
-            > = Arc::new(|path| Box::pin(detect_all_projects(path)));
+            let detect_fn: Arc<DetectFn> = Arc::new(|path| Box::pin(detect_all_projects(path)));
             Ok(Arc::new(UniversalProjectDetector { detect_fn }))
         },
     };

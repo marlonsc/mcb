@@ -86,3 +86,36 @@ pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};
 pub use value_objects::*;
+
+// ── Test utilities: crate-level re-exports ─────────────────────────────
+// Enables canonical paths: `mcb_domain::test_utils`, `mcb_domain::test_collection`, etc.
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::assertions as test_assertions;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::chunk_fixtures as test_chunk_fixtures;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::collection as test_collection;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::fixtures as test_fixtures;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::fs_scan as test_fs_scan;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::git_helpers as test_git_helpers;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::guards as test_guards;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::json_helpers as test_json_helpers;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::mcp_assertions as test_mcp_assertions;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::search_fixtures as test_search_fixtures;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::service_detection as test_service_detection;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::services_config as test_services_config;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::sync_helpers as test_sync_helpers;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::timeouts as test_timeouts;
+#[cfg(any(test, feature = "test-utils"))]
+pub use utils::tests::utils as test_utils;

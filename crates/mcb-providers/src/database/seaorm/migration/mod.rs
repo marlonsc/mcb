@@ -31,7 +31,7 @@ impl MigratorTrait for Migrator {
 // CA/DI: MigrationProvider port implementation + linkme registration
 // ---------------------------------------------------------------------------
 
-/// SeaORM migration provider implementing the domain `MigrationProvider` port.
+/// `SeaORM` migration provider implementing the domain `MigrationProvider` port.
 struct SeaOrmMigrationProvider;
 
 #[async_trait::async_trait]
@@ -53,7 +53,7 @@ impl MigrationProvider for SeaOrmMigrationProvider {
         })?;
         Migrator::up(&*conn, steps)
             .await
-            .map_err(|e| mcb_domain::error::Error::configuration(&e.to_string()))
+            .map_err(|e| mcb_domain::error::Error::configuration(e.to_string()))
     }
 
     async fn migrate_down(
@@ -66,16 +66,16 @@ impl MigrationProvider for SeaOrmMigrationProvider {
         })?;
         Migrator::down(&*conn, steps)
             .await
-            .map_err(|e| mcb_domain::error::Error::configuration(&e.to_string()))
+            .map_err(|e| mcb_domain::error::Error::configuration(e.to_string()))
     }
 }
 
-/// Build the SeaORM migration provider.
+/// Build the `SeaORM` migration provider.
 fn build_seaorm_migration_provider() -> Arc<dyn MigrationProvider> {
     Arc::new(SeaOrmMigrationProvider)
 }
 
-/// SeaORM migration provider registration.
+/// `SeaORM` migration provider registration.
 #[linkme::distributed_slice(MIGRATION_PROVIDERS)]
 static SEAORM_MIGRATIONS: MigrationProviderEntry = MigrationProviderEntry {
     name: "seaorm",

@@ -34,19 +34,19 @@ use crate::value_objects::{
 /// Manages agent session lifecycle.
 #[async_trait]
 pub trait AgentSessionManager: Send + Sync {
-    /// Performs the create session operation.
+    /// Create a new agent session.
     async fn create_session(&self, session: AgentSession) -> Result<String>;
-    /// Performs the get session operation.
+    /// Get an agent session by ID.
     async fn get_session(&self, id: &str) -> Result<Option<AgentSession>>;
-    /// Performs the update session operation.
+    /// Update an existing agent session.
     async fn update_session(&self, session: AgentSession) -> Result<()>;
-    /// Performs the list sessions operation.
+    /// List agent sessions matching query filters.
     async fn list_sessions(&self, query: AgentSessionQuery) -> Result<Vec<AgentSession>>;
-    /// Performs the list sessions by project operation.
+    /// List agent sessions associated with a project.
     async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>>;
-    /// Performs the list sessions by worktree operation.
+    /// List agent sessions associated with a worktree.
     async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>>;
-    /// Performs the end session operation.
+    /// Mark a session as ended with final status.
     async fn end_session(
         &self,
         id: &str,
@@ -58,20 +58,20 @@ pub trait AgentSessionManager: Send + Sync {
 /// Tracks delegations and tool calls.
 #[async_trait]
 pub trait DelegationTracker: Send + Sync {
-    /// Performs the store delegation operation.
+    /// Store a delegation record.
     async fn store_delegation(&self, delegation: Delegation) -> Result<String>;
-    /// Performs the store tool call operation.
+    /// Store a tool call record.
     async fn store_tool_call(&self, tool_call: ToolCall) -> Result<String>;
 }
 
 /// Manages checkpoints and restoration.
 #[async_trait]
 pub trait CheckpointManager: Send + Sync {
-    /// Performs the store checkpoint operation.
+    /// Store an agent checkpoint.
     async fn store_checkpoint(&self, checkpoint: Checkpoint) -> Result<String>;
-    /// Performs the get checkpoint operation.
+    /// Get a checkpoint by its ID.
     async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>>;
-    /// Performs the restore checkpoint operation.
+    /// Restore an agent state from a checkpoint.
     async fn restore_checkpoint(&self, id: &str) -> Result<()>;
 }
 
@@ -125,23 +125,23 @@ pub enum HighlightError {
 /// Browse service trait (agnóstico interface)
 #[async_trait]
 pub trait BrowseServiceInterface: Send + Sync {
-    /// Get file tree from given root path
+    /// Get file tree from given root path.
     async fn get_file_tree(&self, root: &Path, max_depth: usize) -> Result<FileNode>;
 
-    /// Get raw code from file
+    /// Get raw code from file.
     async fn get_code(&self, path: &Path) -> Result<String>;
 
-    /// Highlight code with given language
+    /// Highlight code with given language.
     async fn highlight(&self, code: &str, language: &str) -> Result<HighlightedCode>;
 
-    /// Get code with highlighting
+    /// Get code with highlighting.
     async fn get_highlighted_code(&self, path: &Path) -> Result<HighlightedCode>;
 }
 
 /// Highlight service trait (agnóstico interface)
 #[async_trait]
 pub trait HighlightServiceInterface: Send + Sync {
-    /// Highlight code with given language
+    /// Highlight code with given language.
     ///
     /// Returns structured highlight spans with byte offsets.
     /// Falls back to empty spans if highlighting fails.
@@ -191,27 +191,27 @@ pub struct ChunkingResult {
 /// Coordinates batch code chunking operations.
 #[async_trait]
 pub trait ChunkingOrchestratorInterface: Send + Sync {
-    /// Process multiple files and return chunks
+    /// Process multiple files and return chunks.
     async fn process_files(&self, files: Vec<(String, String)>) -> Result<Vec<CodeChunk>>;
 
-    /// Process a single file with content
+    /// Process a single file with content.
     async fn process_file(&self, path: &Path, content: &str) -> Result<Vec<CodeChunk>>;
 
-    /// Read and chunk a file from disk
+    /// Read and chunk a file from disk.
     async fn chunk_file(&self, path: &Path) -> Result<Vec<CodeChunk>>;
 }
 
 /// Domain Port for Code Chunking Operations
 #[async_trait]
 pub trait CodeChunker: Send + Sync {
-    /// Performs the chunk file operation.
+    /// Analyze a file and split it into semantic chunks.
     async fn chunk_file(
         &self,
         file_path: &Path,
         options: ChunkingOptions,
     ) -> Result<ChunkingResult>;
 
-    /// Performs the chunk content operation.
+    /// Split raw text content into semantic chunks.
     async fn chunk_content(
         &self,
         content: &str,
@@ -220,17 +220,17 @@ pub trait CodeChunker: Send + Sync {
         options: ChunkingOptions,
     ) -> Result<ChunkingResult>;
 
-    /// Performs the chunk batch operation.
+    /// Batch process multiple files into semantic chunks.
     async fn chunk_batch(
         &self,
         file_paths: &[&Path],
         options: ChunkingOptions,
     ) -> Result<Vec<ChunkingResult>>;
 
-    /// Performs the supported languages operation.
+    /// List all programming languages supported by this chunker.
     fn supported_languages(&self) -> Vec<Language>;
 
-    /// Performs the is language supported operation.
+    /// Check if a specific language is supported for semantic chunking.
     fn is_language_supported(&self, language: &Language) -> bool {
         self.supported_languages().contains(language)
     }
@@ -245,13 +245,13 @@ pub trait CodeChunker: Send + Sync {
 /// Defines the contract for semantic code understanding operations.
 #[async_trait]
 pub trait ContextServiceInterface: Send + Sync {
-    /// Initialize the service for a collection
+    /// Initialize the service for a collection.
     async fn initialize(&self, collection: &CollectionId) -> Result<()>;
 
-    /// Store code chunks in the repository
+    /// Store code chunks in the repository.
     async fn store_chunks(&self, collection: &CollectionId, chunks: &[CodeChunk]) -> Result<()>;
 
-    /// Search for code similar to the query
+    /// Search for code similar to the query string.
     async fn search_similar(
         &self,
         collection: &CollectionId,
@@ -259,16 +259,16 @@ pub trait ContextServiceInterface: Send + Sync {
         limit: usize,
     ) -> Result<Vec<SearchResult>>;
 
-    /// Get embedding for text
+    /// Get embedding for the given text.
     async fn embed_text(&self, text: &str) -> Result<Embedding>;
 
-    /// Clear/delete a collection
+    /// Clear/delete all data in a collection.
     async fn clear_collection(&self, collection: &CollectionId) -> Result<()>;
 
-    /// Get combined stats for the service
+    /// Get combined statistics for the service.
     async fn get_stats(&self) -> Result<(i64, i64)>;
 
-    /// Get embedding dimensions
+    /// Get the number of dimensions for embeddings produced by this service.
     fn embedding_dimensions(&self) -> usize;
 }
 
@@ -279,7 +279,7 @@ pub trait ContextServiceInterface: Send + Sync {
 /// File hash state management port
 #[async_trait]
 pub trait FileHashService: Send + Sync {
-    /// Check whether the file hash differs from what is stored or if it's new
+    /// Check whether the file hash differs from what is stored or if it's new.
     async fn has_changed(
         &self,
         collection: &str,
@@ -287,13 +287,13 @@ pub trait FileHashService: Send + Sync {
         current_hash: &str,
     ) -> Result<bool>;
 
-    /// Insert or update the stored hash for a file
+    /// Insert or update the stored hash for a file.
     async fn upsert_hash(&self, collection: &str, file_path: &str, hash: &str) -> Result<()>;
 
-    /// List all files currently tracked in a collection
+    /// List all files currently tracked in a collection.
     async fn get_indexed_files(&self, collection: &str) -> Result<Vec<String>>;
 
-    /// Mark a file as deleted so it will be re-indexed later
+    /// Mark a file as deleted so it will be re-indexed later.
     async fn mark_deleted(&self, collection: &str, file_path: &str) -> Result<()>;
 
     /// Compute the hash value for a file path.
@@ -313,17 +313,17 @@ pub trait FileHashService: Send + Sync {
 /// Defines the contract for codebase indexing operations.
 #[async_trait]
 pub trait IndexingServiceInterface: Send + Sync {
-    /// Index a codebase at the given path
+    /// Index a codebase at the given path.
     async fn index_codebase(
         &self,
         path: &Path,
         collection: &CollectionId,
     ) -> Result<IndexingResult>;
 
-    /// Get the current indexing status
+    /// Get the current indexing status.
     fn get_status(&self) -> IndexingStatus;
 
-    /// Clear all indexed data from a collection
+    /// Clear all indexed data from a collection.
     async fn clear_collection(&self, collection: &CollectionId) -> Result<()>;
 }
 
@@ -365,19 +365,19 @@ pub struct IndexingStatus {
 /// incremental updates, rebuilds, and detailed statistics.
 #[async_trait]
 pub trait BatchIndexingServiceInterface: Send + Sync {
-    /// Index a batch of code chunks
+    /// Index a batch of code chunks.
     async fn index_chunks(&self, chunks: &[CodeChunk]) -> Result<()>;
 
-    /// Index files from a directory
+    /// Index all files within a directory.
     async fn index_directory(&self, path: &Path) -> Result<()>;
 
-    /// Process a synchronization batch
+    /// Process a batch of changes from a synchronization operation.
     async fn process_sync_batch(&self, batch: &SyncBatch) -> Result<()>;
 
-    /// Rebuild index for a collection
+    /// Completely rebuild the index for a collection.
     async fn rebuild_index(&self, collection: &CollectionId) -> Result<()>;
 
-    /// Get indexing statistics
+    /// Get current indexing throughput and statistics.
     async fn get_indexing_stats(&self) -> Result<IndexingStats>;
 }
 
@@ -525,31 +525,31 @@ pub struct JobProgressUpdate {
 /// Implementations track creation, progress, completion, and cancellation
 /// of jobs across all job types.
 pub trait JobManagerInterface: Send + Sync {
-    /// List all tracked jobs, optionally filtered by type
+    /// List all tracked jobs, optionally filtered by type.
     fn list_jobs(&self, job_type: Option<&JobType>) -> Vec<Job>;
 
-    /// Get a specific job by ID
+    /// Get a specific job by its ID.
     fn get_job(&self, job_id: &JobId) -> Option<Job>;
 
-    /// Submit a new job and return its assigned ID
+    /// Submit a new job and return its assigned ID.
     fn submit_job(&self, job_type: JobType, label: &str, total_items: usize) -> JobId;
 
-    /// Mark a queued job as running
+    /// Mark a queued job as running.
     fn start_job(&self, job_id: &JobId);
 
-    /// Update progress on a running job
+    /// Update progress indicators on a running job.
     fn update_progress(&self, job_id: &JobId, update: JobProgressUpdate);
 
-    /// Mark a job as successfully completed
+    /// Mark a job as successfully completed with optional results.
     fn complete_job(&self, job_id: &JobId, result: Option<JobResult>);
 
-    /// Mark a job as failed with an error message
+    /// Mark a job as failed with an error message.
     fn fail_job(&self, job_id: &JobId, error: &str);
 
-    /// Cancel a queued or running job
+    /// Cancel a queued or running job.
     fn cancel_job(&self, job_id: &JobId);
 
-    /// Get counts of jobs by status (for dashboard summaries)
+    /// Get aggregate counts of jobs grouped by status.
     fn job_counts(&self) -> JobCounts;
 }
 
@@ -682,7 +682,7 @@ pub trait MemoryServiceInterface: Send + Sync {
 /// Defines behavior for `ProjectDetectorService`.
 #[async_trait]
 pub trait ProjectDetectorService: Send + Sync {
-    /// Performs the detect all operation.
+    /// Perform project detection on all subdirectories within `path`.
     async fn detect_all(&self, path: &Path) -> Vec<ProjectType>;
 }
 
@@ -695,7 +695,7 @@ pub trait ProjectDetectorService: Send + Sync {
 /// Provides semantic code search capabilities.
 #[async_trait]
 pub trait SearchServiceInterface: Send + Sync {
-    /// Search for code similar to the query
+    /// Search for code similar to the query.
     async fn search(
         &self,
         collection: &CollectionId,
@@ -703,7 +703,7 @@ pub trait SearchServiceInterface: Send + Sync {
         limit: usize,
     ) -> Result<Vec<SearchResult>>;
 
-    /// Search with optional filters for more refined results
+    /// Search with optional filters for more refined results.
     async fn search_with_filters(
         &self,
         collection: &CollectionId,
@@ -817,7 +817,7 @@ pub struct FunctionComplexity {
 /// Architecture Validation Service Interface
 #[async_trait]
 pub trait ValidationServiceInterface: Send + Sync {
-    /// Performs the validate operation.
+    /// Perform architectural validation on the given workspace.
     async fn validate(
         &self,
         workspace_root: &Path,
@@ -825,20 +825,20 @@ pub trait ValidationServiceInterface: Send + Sync {
         severity_filter: Option<&str>,
     ) -> Result<ValidationReport>;
 
-    /// Performs the list validators operation.
+    /// List all available validators.
     async fn list_validators(&self) -> Result<Vec<String>>;
 
-    /// Performs the validate file operation.
+    /// Perform validation on a single file.
     async fn validate_file(
         &self,
         file_path: &Path,
         validators: Option<&[String]>,
     ) -> Result<ValidationReport>;
 
-    /// Performs the get rules operation.
+    /// Get technical rules optionally filtered by category.
     async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>>;
 
-    /// Performs the analyze complexity operation.
+    /// Analyze code complexity for the given file.
     async fn analyze_complexity(
         &self,
         file_path: &Path,

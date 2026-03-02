@@ -59,16 +59,16 @@ pub struct AgentSessionStats {
 /// for dashboard and admin UI consumption.
 #[async_trait]
 pub trait DashboardQueryPort: Send + Sync {
-    /// Get observations aggregated by month
+    /// Get observations aggregated by month.
     async fn get_observations_by_month(&self, limit: usize) -> Result<Vec<MonthlyCount>>;
 
-    /// Get observations aggregated by day
+    /// Get observations aggregated by day.
     async fn get_observations_by_day(&self, limit: usize) -> Result<Vec<DailyCount>>;
 
-    /// Get tool call counts
+    /// Get tool call counts.
     async fn get_tool_call_counts(&self) -> Result<Vec<ToolCallCount>>;
 
-    /// Get agent session statistics
+    /// Get agent session statistics.
     async fn get_agent_session_stats(&self) -> Result<AgentSessionStats>;
 }
 
@@ -110,18 +110,18 @@ pub struct IndexingOperation {
 
 /// Interface for tracking indexing operations
 pub trait IndexingOperationsInterface: Send + Sync {
-    /// Get all tracked indexing operations
+    /// Get all tracked indexing operations.
     fn get_operations(&self) -> HashMap<OperationId, IndexingOperation>;
-    /// Start a new indexing operation
+    /// Start a new indexing operation.
     fn start_operation(&self, collection: &CollectionId, total_files: usize) -> OperationId;
-    /// Update progress of an operation
+    /// Update progress of an operation.
     fn update_progress(
         &self,
         operation_id: &OperationId,
         current_file: Option<String>,
         processed: usize,
     );
-    /// Mark an operation as completed
+    /// Mark an operation as completed.
     fn complete_operation(&self, operation_id: &OperationId);
 }
 
@@ -132,10 +132,15 @@ pub trait IndexingOperationsInterface: Send + Sync {
 /// Status of a validation operation
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ValidationStatus {
+    /// Validation is queued and waiting for execution
     Queued,
+    /// Validation is currently running
     InProgress,
+    /// Validation has finished successfully
     Completed,
+    /// Validation has failed with an error
     Failed(String),
+    /// Validation was manually canceled
     Canceled,
 }
 
@@ -181,13 +186,13 @@ pub struct ValidationOperation {
 
 /// Interface for tracking validation operations
 pub trait ValidationOperationsInterface: Send + Sync {
-    /// Get all tracked validation operations
+    /// Get all tracked validation operations.
     fn get_operations(&self) -> HashMap<OperationId, ValidationOperation>;
-    /// Get a specific validation operation by ID
+    /// Get a specific validation operation by ID.
     fn get_operation(&self, operation_id: &OperationId) -> Option<ValidationOperation>;
-    /// Start a new validation operation
+    /// Start a new validation operation.
     fn start_operation(&self, workspace: &str, validators: &[String]) -> OperationId;
-    /// Update progress of an operation
+    /// Update progress of an operation.
     fn update_progress(
         &self,
         operation_id: &OperationId,
@@ -195,11 +200,11 @@ pub trait ValidationOperationsInterface: Send + Sync {
         processed: usize,
         total: usize,
     );
-    /// Mark an operation as completed with its result
+    /// Mark an operation as completed with its result.
     fn complete_operation(&self, operation_id: &OperationId, result: ValidationOperationResult);
-    /// Cancel a running validation operation
+    /// Cancel a running validation operation.
     fn cancel_operation(&self, operation_id: &OperationId);
-    /// Check if a validation operation is currently in progress
+    /// Check if a validation operation is currently in progress.
     fn is_in_progress(&self, operation_id: &OperationId) -> bool;
 }
 
@@ -226,7 +231,7 @@ pub struct ProviderInfo {
 }
 
 impl ProviderInfo {
-    /// Create a new ProviderInfo instance
+    /// Create a new `ProviderInfo` instance
     pub fn new(name: impl Into<String>, description: impl Into<String>) -> Self {
         Self {
             name: name.into(),

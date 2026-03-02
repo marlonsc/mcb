@@ -3,30 +3,43 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a project phase.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "project_phases")]
 pub struct Model {
+    /// Unique identifier for the project phase.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the project this phase belongs to.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Name of the phase.
     #[sea_orm(column_type = "Text")]
     pub name: String,
+    /// Detailed description of the phase's objectives.
     #[sea_orm(column_type = "Text")]
     pub description: String,
+    /// Sequential order of the phase within the project.
     pub sequence: i64,
+    /// Current status of the phase (e.g., `pending`, `in_progress`, `completed`).
     #[sea_orm(column_type = "Text")]
     pub status: String,
+    /// Optional timestamp when the phase was started.
     pub started_at: Option<i64>,
+    /// Optional timestamp when the phase was completed.
     pub completed_at: Option<i64>,
+    /// Timestamp when the phase record was created.
     pub created_at: i64,
+    /// Timestamp when the phase record was last updated.
     pub updated_at: i64,
 }
 
+/// Relations for the project phase model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the project phase model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

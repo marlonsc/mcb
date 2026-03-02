@@ -3,30 +3,41 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a project decision (Architectural Decision Record).
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "project_decisions")]
 pub struct Model {
+    /// Unique identifier for the project decision.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the project this decision belongs to.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Optional reference to the issue that prompted this decision.
     #[sea_orm(column_type = "Text", nullable)]
     pub issue_id: Option<String>,
+    /// Title of the decision.
     #[sea_orm(column_type = "Text")]
     pub title: String,
+    /// Context and problem statement that led to this decision.
     #[sea_orm(column_type = "Text")]
     pub context: String,
+    /// The actual decision that was made.
     #[sea_orm(column_type = "Text")]
     pub decision: String,
+    /// Consequences (both positive and negative) of the decision.
     #[sea_orm(column_type = "Text")]
     pub consequences: String,
+    /// Timestamp when the decision was recorded.
     pub created_at: i64,
 }
 
+/// Relations for the project decision model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the project decision model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

@@ -30,8 +30,11 @@ use crate::value_objects::{EmbeddingConfig, VectorStoreConfig};
 pub enum AnalysisFinding {
     /// High cyclomatic complexity in a function.
     Complexity {
+        /// File containing the complex function.
         file: PathBuf,
+        /// Name of the function.
         function: String,
+        /// Calculated complexity score.
         complexity: u32,
     },
     /// Dead code symbol detected.
@@ -104,15 +107,14 @@ pub fn resolve_code_analyzer(name: &str) -> Result<std::sync::Arc<dyn CodeAnalyz
     for entry in CODE_ANALYZERS.iter() {
         if entry.name == name {
             return (entry.build)().map_err(|e| {
-                crate::error::Error::configuration(format!("code analyzer '{}': {}", name, e))
+                crate::error::Error::configuration(format!("code analyzer '{name}': {e}"))
             });
         }
     }
 
     let available: Vec<&str> = CODE_ANALYZERS.iter().map(|e| e.name).collect();
     Err(crate::error::Error::configuration(format!(
-        "Unknown code analyzer '{}'. Available: {:?}",
-        name, available
+        "Unknown code analyzer '{name}'. Available: {available:?}"
     )))
 }
 
@@ -267,6 +269,10 @@ pub trait EmbeddingProvider: Send + Sync {
     /// Get the name of this embedding provider.
     fn provider_name(&self) -> &str;
 
+    /// Perform a basic health check on the embedding provider.
+    ///
+    /// # Errors
+    /// Returns an error if the health check fails.
     async fn health_check(&self) -> Result<()> {
         self.embed("health check").await?;
         Ok(())
@@ -458,6 +464,7 @@ pub trait MetricsProvider: Send + Sync {
     /// Record a value in a histogram distribution.
     async fn histogram(&self, name: &str, value: f64, labels: &MetricLabels) -> MetricsResult<()>;
 
+    /// Record the duration of an indexing operation.
     async fn record_index_time(&self, duration: Duration, collection: &str) -> MetricsResult<()> {
         let labels = labels_from([("collection", collection)]);
         self.histogram(
@@ -468,6 +475,7 @@ pub trait MetricsProvider: Send + Sync {
         .await
     }
 
+    /// Record the latency of a search operation.
     async fn record_search_latency(
         &self,
         duration: Duration,
@@ -482,6 +490,7 @@ pub trait MetricsProvider: Send + Sync {
         .await
     }
 
+    /// Record the latency of an embedding operation.
     async fn record_embedding_latency(
         &self,
         duration: Duration,
@@ -496,28 +505,33 @@ pub trait MetricsProvider: Send + Sync {
         .await
     }
 
+    /// Increment the count of indexed files in a collection.
     async fn increment_indexed_files(&self, collection: &str, count: u64) -> MetricsResult<()> {
         let labels = labels_from([("collection", collection)]);
         self.increment_by("mcb_indexed_files_total", count as f64, &labels)
             .await
     }
 
+    /// Increment the search request counter for a collection.
     async fn increment_search_requests(&self, collection: &str) -> MetricsResult<()> {
         let labels = labels_from([("collection", collection)]);
         self.increment("mcb_search_requests_total", &labels).await
     }
 
+    /// Set the number of concurrent active indexing jobs.
     async fn set_active_indexing_jobs(&self, count: u64) -> MetricsResult<()> {
         self.gauge("mcb_active_indexing_jobs", count as f64, &HashMap::new())
             .await
     }
 
+    /// Set the current size (vector count) of a collection.
     async fn set_vector_store_size(&self, collection: &str, vectors: u64) -> MetricsResult<()> {
         let labels = labels_from([("collection", collection)]);
         self.gauge("mcb_vector_store_size", vectors as f64, &labels)
             .await
     }
 
+    /// Record a cache hit or miss for a specific cache type.
     async fn record_cache_access(&self, hit: bool, cache_type: &str) -> MetricsResult<()> {
         let labels = labels_from([
             ("cache_type", cache_type),

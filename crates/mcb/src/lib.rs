@@ -8,13 +8,13 @@
 //! mcb serve --transport http
 //! mcb serve --transport stdio
 //! ```
+
+/// CLI subcommand handlers and arguments.
 pub mod cli;
-mod logging;
-
-pub use mcb_server::McpServer;
-
-pub use crate::loco_app::McbApp;
 /// Loco initializers for the MCP server.
 pub mod initializers;
-/// Loco application hook implementation.
+/// Loco application hooks and specialized application logic.
 pub mod loco_app;
+
+pub use crate::loco_app::McbApp;
+pub use mcb_server::McpServer;

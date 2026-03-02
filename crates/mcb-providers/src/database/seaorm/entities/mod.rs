@@ -66,6 +66,7 @@ pub use tool_calls as tool_call;
 pub use users as user;
 pub use worktrees as worktree;
 
+// Register entity modules for Seaography metadata generation.
 seaography::register_entity_modules!([
     agent_sessions,
     agent_worktree_assignments,

@@ -3,51 +3,75 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a project issue (task, bug, feature).
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "project_issues")]
 pub struct Model {
+    /// Unique identifier for the issue.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the organization this issue belongs to.
     #[sea_orm(column_type = "Text")]
     pub org_id: String,
+    /// Reference to the project this issue belongs to.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Optional reference to the project phase this issue is part of.
     #[sea_orm(column_type = "Text", nullable)]
     pub phase_id: Option<String>,
+    /// Short title of the issue.
     #[sea_orm(column_type = "Text")]
     pub title: String,
+    /// Detailed description of the issue.
     #[sea_orm(column_type = "Text")]
     pub description: String,
+    /// Type of the issue (e.g., "bug", "feature", "task").
     #[sea_orm(column_type = "Text")]
     pub issue_type: String,
+    /// Current status of the issue (e.g., `todo`, `in_progress`, `done`).
     #[sea_orm(column_type = "Text")]
     pub status: String,
+    /// Numerical priority of the issue (e.g., 0 for low, 1 for medium, 2 for high).
     pub priority: i64,
+    /// Optional identifier of the user assigned to this issue.
     #[sea_orm(column_type = "Text", nullable)]
     pub assignee: Option<String>,
+    /// JSON list of label IDs associated with the issue.
     #[sea_orm(column_type = "Text")]
     pub labels: String,
+    /// Timestamp when the issue was created.
     pub created_at: i64,
+    /// Timestamp when the issue was last updated.
     pub updated_at: i64,
+    /// Optional timestamp when the issue was closed.
     pub closed_at: Option<i64>,
+    /// Identifier of the user who created the issue.
     #[sea_orm(column_type = "Text")]
     pub created_by: String,
+    /// Optional estimated time in minutes to complete the issue.
     pub estimated_minutes: Option<i64>,
+    /// Optional actual time in minutes spent on the issue.
     pub actual_minutes: Option<i64>,
+    /// General notes or remarks about the issue.
     #[sea_orm(column_type = "Text")]
     pub notes: String,
+    /// Design specifications or references related to the issue.
     #[sea_orm(column_type = "Text")]
     pub design: String,
+    /// Optional reference to a parent issue (for sub-tasks).
     #[sea_orm(column_type = "Text", nullable)]
     pub parent_issue_id: Option<String>,
+    /// Reason why the issue was closed (e.g., "fixed", "duplicate", "wontfix").
     #[sea_orm(column_type = "Text")]
     pub closed_reason: String,
 }
 
+/// Relations for the project issue model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the project issue model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

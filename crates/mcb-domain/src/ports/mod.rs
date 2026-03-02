@@ -30,7 +30,7 @@ mod providers;
 mod repositories;
 /// Application service ports
 mod services;
-/// Validation abstractions (Validator, Violation, Severity, LanguageId, ValidationConfig)
+/// Validation abstractions (Validator, Violation, Severity, `LanguageId`, `ValidationConfig`)
 pub mod validation;
 
 // ============================================================================

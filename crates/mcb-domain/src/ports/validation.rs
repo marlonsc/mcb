@@ -185,6 +185,7 @@ pub struct ValidationConfig {
 }
 
 impl ValidationConfig {
+    /// Create a new validation configuration for the specified workspace.
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
         let raw: PathBuf = workspace_root.into();
         let canonical = std::fs::canonicalize(&raw).unwrap_or(raw);
@@ -195,18 +196,21 @@ impl ValidationConfig {
         }
     }
 
+    /// Add an extra directory to include in the validation scan.
     #[must_use]
     pub fn with_additional_path(mut self, path: impl Into<PathBuf>) -> Self {
         self.additional_src_paths.push(path.into());
         self
     }
 
+    /// Add a glob pattern for excluding files or directories from the validation scan.
     #[must_use]
     pub fn with_exclude_pattern(mut self, pattern: impl Into<String>) -> Self {
         self.exclude_patterns.push(pattern.into());
         self
     }
 
+    /// Check if a specific path should be excluded according to the configured patterns.
     #[must_use]
     pub fn should_exclude(&self, path: &Path) -> bool {
         let Some(path_str) = path.to_str() else {
@@ -218,14 +222,19 @@ impl ValidationConfig {
     }
 }
 
+/// Function type for a validation check.
 pub type CheckFn<'a> = Box<dyn FnOnce() -> ValidatorResult<Vec<Box<dyn Violation>>> + 'a>;
 
+/// A named validation check entry.
 pub struct NamedCheck<'a> {
+    /// The human-readable name of the check.
     pub name: &'static str,
+    /// The logic of the check.
     pub run: CheckFn<'a>,
 }
 
 impl<'a> NamedCheck<'a> {
+    /// Create a new named check.
     pub fn new(
         name: &'static str,
         run: impl FnOnce() -> ValidatorResult<Vec<Box<dyn Violation>>> + 'a,
@@ -237,6 +246,10 @@ impl<'a> NamedCheck<'a> {
     }
 }
 
+/// Runs a series of named checks and returns the combined violations.
+///
+/// # Errors
+/// Returns a `ValidatorError` if any individual check fails or returns an error.
 pub fn run_checks(
     validator_name: &str,
     checks: Vec<NamedCheck<'_>>,
@@ -255,13 +268,26 @@ pub fn run_checks(
     Ok(violations)
 }
 
+/// Interface for implementing codebase validation rules.
+///
+/// Validators are responsible for checking certain aspects of the code (naming, SOLID, cleanliness)
+/// and returning a list of violations found.
 pub trait Validator: Send + Sync {
+    /// Returns the unique name of this validator.
     fn name(&self) -> &'static str;
 
+    /// Returns a list of individual named checks for this validator.
+    ///
+    /// # Errors
+    /// Returns a `ValidatorResult` which may contain an error if check preparation fails.
     fn checks<'a>(&'a self, _config: &'a ValidationConfig) -> ValidatorResult<Vec<NamedCheck<'a>>> {
         Ok(Vec::new())
     }
 
+    /// Performs the full validation scan for this validator.
+    ///
+    /// # Errors
+    /// Returns a `ValidatorResult` error if the validation process fails.
     fn validate(&self, config: &ValidationConfig) -> ValidatorResult<Vec<Box<dyn Violation>>> {
         run_checks(self.name(), self.checks(config)?)
     }

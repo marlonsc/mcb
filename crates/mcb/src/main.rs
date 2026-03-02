@@ -1,3 +1,7 @@
+//! MCP Context Browser (MCB)
+//!
+//! A semantic code search server and context browser for Model Context Protocol (MCP).
+
 extern crate mcb_providers;
 
 use clap::{Parser, Subcommand};
