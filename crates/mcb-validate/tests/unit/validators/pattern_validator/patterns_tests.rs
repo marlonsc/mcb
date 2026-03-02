@@ -5,8 +5,6 @@
 //!
 //! Codes covered: PAT001 (`ConcreteTypeInDi`), PAT004 (`RawResultType`).
 
-use mcb_validate::PatternValidator;
-
 use crate::utils::test_constants::*;
 use crate::utils::*;
 use rstest::rstest;
@@ -20,8 +18,7 @@ use rstest::rstest;
 fn test_patterns_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = PatternValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "patterns").unwrap();
 
     assert_violations_exact(
         &violations,
@@ -51,8 +48,7 @@ pub trait CacheService {
 }
 ",
     );
-    let validator = PatternValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "patterns").unwrap();
 
     assert_no_violations(
         &violations,

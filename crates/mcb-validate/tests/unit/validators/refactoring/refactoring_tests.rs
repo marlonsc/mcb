@@ -6,8 +6,6 @@
 //! Note: `DuplicateDefinition` has no single line field; it references
 //! multiple files. We use line=0 to skip line check.
 
-use mcb_validate::RefactoringValidator;
-
 use crate::utils::test_constants::*;
 use crate::utils::*;
 use rstest::rstest;
@@ -21,8 +19,7 @@ use rstest::rstest;
 fn test_refactoring_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = RefactoringValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "refactoring").unwrap();
 
     // 1 violation: DuplicateDefinition for 'User' across my-server and my-domain
     assert_violations_exact(
@@ -49,8 +46,7 @@ pub struct UniqueType {
 }
 ",
     );
-    let validator = RefactoringValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "refactoring").unwrap();
 
     assert_no_violations(
         &violations,
