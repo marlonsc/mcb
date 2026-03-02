@@ -6,7 +6,7 @@
 //! Uses a process-wide shared `SharedTestContext` to avoid re-loading the ONNX model
 //! (~5-10s) per test. All providers resolved through domain registry (CA/DI/Linkme).
 
-// Force linkme registration of all providers
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
 
 use std::sync::Arc;

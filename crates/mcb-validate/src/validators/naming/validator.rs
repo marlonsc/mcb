@@ -4,11 +4,11 @@
 use std::path::{Path, PathBuf};
 
 use crate::config::NamingRulesConfig;
-use mcb_utils::constants::validate::MCB_CRATE_PREFIX;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::run_context::ValidationRunContext;
 use crate::{Result, ValidationConfig};
+use mcb_utils::constants::validate::MCB_CRATE_PREFIX;
 
 use super::checks::{
     validate_ca_naming, validate_constant_names, validate_file_suffix, validate_function_names,

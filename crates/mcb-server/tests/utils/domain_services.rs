@@ -21,7 +21,7 @@ use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::state::McbState;
 use mcb_server::tools::ExecutionFlow;
 
-// Force linkme registration of all concrete providers
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
 
 /// Helper to create a base `MemoryArgs` with common defaults.

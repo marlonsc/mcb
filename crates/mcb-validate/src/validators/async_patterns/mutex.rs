@@ -1,12 +1,12 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use mcb_utils::constants::validate::WRONG_MUTEX_PATTERNS;
-use mcb_utils::constants::validate::TEST_PATH_PATTERNS;
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regex_triples, required_pattern};
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_utils::constants::validate::TEST_PATH_PATTERNS;
+use mcb_utils::constants::validate::WRONG_MUTEX_PATTERNS;
 
 use super::violation::AsyncViolation;
 

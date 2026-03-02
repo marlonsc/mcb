@@ -2,13 +2,13 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
 //!
 use super::{QualityValidator, QualityViolation};
-use mcb_utils::constants::validate::{
-    PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
-};
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::{
+    PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
+};
 
 /// Scans for pending task comments matching `PENDING_LABEL_*` constants.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {

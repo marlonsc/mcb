@@ -5,9 +5,9 @@ use std::collections::{HashMap, HashSet};
 
 use super::DependencyValidator;
 use super::violation::{DependencyCycle, DependencyViolation};
-use mcb_utils::constants::validate::MCB_DEPENDENCY_PREFIX;
-use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
+use mcb_utils::constants::validate::MCB_DEPENDENCY_PREFIX;
 
 /// Detect circular dependencies using topological sort
 pub fn detect_circular_dependencies(

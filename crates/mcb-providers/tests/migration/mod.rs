@@ -1,11 +1,9 @@
 //! Database migration tests.
 
-// Force-link mcb_providers so that its linkme-registered migration provider
-// populates the MIGRATION_PROVIDERS distributed slice.
-// The explicit Migrator reference prevents linker gc-sections from stripping the module.
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
 #[allow(unused_imports)]
-use mcb_providers::database::seaorm::migration::Migrator;
+use mcb_providers::database::seaorm::migration::Migrator; // linkme force-link
 use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 
 use mcb_domain::utils::tests::utils::TestResult;

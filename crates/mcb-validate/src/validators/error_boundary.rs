@@ -8,6 +8,7 @@
 //! - Context preservation across layers
 //! - Error type placement (right layer)
 
+use crate::filters::LanguageId;
 use mcb_utils::constants::validate::{
     ARCH_PATH_ADAPTERS, ARCH_PATH_DOMAIN, ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES,
 };
@@ -15,7 +16,6 @@ use mcb_utils::constants::validate::{
     CFG_TEST_MARKER, COMMENT_PREFIX, ERROR_FILE_PREFIX, ERROR_MODULE_FILE, HANDLER_FILE_SUFFIX,
     SHORT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT,
 };
-use crate::filters::LanguageId;
 use std::path::{Path, PathBuf};
 
 use crate::define_violations;

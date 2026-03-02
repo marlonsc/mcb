@@ -12,6 +12,8 @@ use serde_json::Value;
 
 use super::hybrid_engine::{RuleContext, RuleEngine};
 use crate::Result;
+use crate::engines::hybrid_engine::RuleViolation;
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
 use mcb_utils::constants::validate::{
     DEFAULT_MAX_FILE_LINES, DEFAULT_VIOLATION_MESSAGE, RUSTY_AST_PATTERN_VIOLATION_ID,
     RUSTY_CARGO_DEP_FORBIDDEN_MSG, RUSTY_CARGO_DEP_MISSING_MSG, RUSTY_CARGO_DEP_VIOLATION_ID,
@@ -23,8 +25,6 @@ use mcb_utils::constants::validate::{
     TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, YAML_FIELD_ACTION, YAML_FIELD_CONDITION,
     YAML_FIELD_FIX_TYPE, YAML_FIELD_MESSAGE, YAML_FIELD_PATTERN, YAML_FIELD_SEVERITY,
 };
-use crate::engines::hybrid_engine::RuleViolation;
-use mcb_domain::ports::validation::{Severity, ViolationCategory};
 
 /// Wrapper for rusty-rules engine
 pub struct RustyRulesEngineWrapper {

@@ -2,16 +2,16 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
 //!
 use super::violation::OrganizationViolation;
+use crate::filters::LanguageId;
+use crate::pattern_registry::compile_regex;
+use crate::scan::{for_each_crate_file, is_test_path};
+use crate::{Result, Severity, ValidationConfig};
 use mcb_utils::constants::validate::{
     ATTRIBUTE_PREFIX, CONST_DECLARATION_PREFIXES, CONSTANTS_FILE_KEYWORDS,
 };
 use mcb_utils::constants::validate::{
     DUPLICATE_STRING_MIN_FILES, DUPLICATE_STRING_REGEX, DUPLICATE_STRING_SKIP_PATTERNS,
 };
-use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
-use crate::scan::{for_each_crate_file, is_test_path};
-use crate::{Result, Severity, ValidationConfig};
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 

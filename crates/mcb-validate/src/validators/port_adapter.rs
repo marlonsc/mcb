@@ -5,9 +5,9 @@
 //!
 //! Validates Clean Architecture port/adapter patterns.
 
-use mcb_utils::constants::validate::COMMENT_PREFIX;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
+use mcb_utils::constants::validate::COMMENT_PREFIX;
 use regex::Regex;
 use std::path::Path;
 use std::path::PathBuf;

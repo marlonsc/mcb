@@ -12,8 +12,7 @@ use serde::{Deserialize, Serialize};
 use mcb_utils::constants::validate::{
     DEFAULT_EXCLUDE_PATTERNS, DEFAULT_LANGUAGES, DEFAULT_MAX_GAP_SIZE, DEFAULT_MIN_LINES,
     DEFAULT_MIN_TOKENS, DEFAULT_SIMILARITY_THRESHOLD, LENIENT_MIN_LINES, LENIENT_MIN_TOKENS,
-    LENIENT_SIMILARITY_THRESHOLD, STRICT_MIN_LINES, STRICT_MIN_TOKENS,
-    STRICT_SIMILARITY_THRESHOLD,
+    LENIENT_SIMILARITY_THRESHOLD, STRICT_MIN_LINES, STRICT_MIN_TOKENS, STRICT_SIMILARITY_THRESHOLD,
 };
 
 /// Clone type classification following established taxonomy
@@ -108,10 +107,7 @@ impl Default for DuplicationThresholds {
             detect_renamed: true,
             detect_gapped: true,
             detect_semantic: false, // Disabled by default (experimental)
-            languages: DEFAULT_LANGUAGES
-                .iter()
-                .map(|s| (*s).to_owned())
-                .collect(),
+            languages: DEFAULT_LANGUAGES.iter().map(|s| (*s).to_owned()).collect(),
             exclude_patterns: DEFAULT_EXCLUDE_PATTERNS
                 .iter()
                 .map(|s| (*s).to_owned())

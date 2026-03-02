@@ -7,9 +7,9 @@
 
 use std::collections::HashMap;
 
+use mcb_domain::ports::validation::Severity;
 use mcb_utils::constants::validate::{METRICS_FIELD_MAX, METRICS_FIELD_SEVERITY};
 use mcb_utils::constants::validate::{SEVERITY_ERROR, SEVERITY_INFO};
-use mcb_domain::ports::validation::Severity;
 
 /// Types of metrics we can measure
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

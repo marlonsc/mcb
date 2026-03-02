@@ -13,6 +13,8 @@ use evalexpr::{ContextWithMutableVariables, HashMapContext, Value as EvalValue};
 use serde_json::Value;
 
 use crate::Result;
+use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
 use mcb_utils::constants::validate::{
     ASYNC_FN_PREFIX, EXPECT_CALL, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, UNWRAP_CALL,
 };
@@ -21,8 +23,6 @@ use mcb_utils::constants::validate::{
     YAML_FIELD_ID, YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY,
 };
 use mcb_utils::constants::validate::{SEVERITY_ERROR, SEVERITY_WARNING};
-use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
-use mcb_domain::ports::validation::{Severity, ViolationCategory};
 
 /// Wrapper for evalexpr engine
 ///

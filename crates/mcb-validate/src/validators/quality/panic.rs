@@ -2,12 +2,12 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
 //!
 use super::{QualityValidator, QualityViolation};
-use mcb_utils::constants::validate::{CFG_TEST_MARKER, COMMENT_PREFIX};
-use mcb_utils::constants::validate::PANIC_REGEX;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::PANIC_REGEX;
+use mcb_utils::constants::validate::{CFG_TEST_MARKER, COMMENT_PREFIX};
 
 /// Scans production code for usage of the `panic!()` macro.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {

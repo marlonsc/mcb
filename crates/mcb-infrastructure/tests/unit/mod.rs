@@ -1,7 +1,6 @@
 //! Unit tests — `cargo test -p mcb-infrastructure --test unit`
 
-// Force-link mcb-validate so that its linkme-registered validators
-// populate the VALIDATOR_ENTRIES distributed slice.
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_validate;
 
 pub mod config;

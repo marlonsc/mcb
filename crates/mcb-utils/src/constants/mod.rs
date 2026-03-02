@@ -32,13 +32,13 @@ pub mod search;
 pub mod time;
 /// Use case / business logic constants.
 pub mod use_cases;
+/// Validation constants centralized from mcb-validate.
+pub mod validate;
 /// Commonly used constant values.
 pub mod values;
 /// VCS and git-related constants.
 pub mod vcs;
 /// Vector store configuration constants.
 pub mod vector_store;
-/// Validation constants centralized from mcb-validate.
-pub mod validate;
 /// Re-export all values for convenience.
 pub use values::*;

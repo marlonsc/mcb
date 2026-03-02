@@ -13,6 +13,8 @@ use serde_yaml;
 use super::templates::TemplateEngine;
 use super::yaml_validator::YamlRuleValidator;
 use crate::Result;
+use crate::filters::rule_filters::RuleFilters;
+use crate::utils::fs::collect_yaml_files;
 use mcb_utils::constants::validate::{
     DEFAULT_RULE_CATEGORY, DEFAULT_RULE_DESCRIPTION, DEFAULT_RULE_ENGINE, DEFAULT_RULE_NAME,
     DEFAULT_RULE_RATIONALE, DEFAULT_RULE_SEVERITY, YAML_FIELD_AST_QUERY, YAML_FIELD_BASE,
@@ -23,8 +25,6 @@ use mcb_utils::constants::validate::{
     YAML_FIELD_PATTERN, YAML_FIELD_RATIONALE, YAML_FIELD_RULE, YAML_FIELD_SELECTORS,
     YAML_FIELD_SEVERITY, YAML_FIELD_TEMPLATE,
 };
-use crate::filters::rule_filters::RuleFilters;
-use crate::utils::fs::collect_yaml_files;
 
 /// Loaded and validated YAML rule
 #[derive(Debug, Clone)]

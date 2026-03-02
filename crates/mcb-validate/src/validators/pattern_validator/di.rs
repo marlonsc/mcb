@@ -6,8 +6,8 @@ use std::path::Path;
 use regex::Regex;
 
 use super::violation::PatternViolation;
-use mcb_utils::constants::validate::{COMMENT_PREFIX, DI_IMPL_SUFFIXES, VALIDATE_IGNORE_PREFIX};
 use mcb_domain::ports::validation::Severity;
+use mcb_utils::constants::validate::{COMMENT_PREFIX, DI_IMPL_SUFFIXES, VALIDATE_IGNORE_PREFIX};
 
 /// Checks for Arc<Concrete> usage in a single file.
 pub fn check_arc_usage(

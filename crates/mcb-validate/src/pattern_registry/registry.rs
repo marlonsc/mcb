@@ -11,13 +11,13 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use crate::Result;
+use crate::rules::templates::TemplateEngine;
+use mcb_domain::error;
 use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 use mcb_utils::constants::validate::{
     YAML_FIELD_ALLOWED_DEPS, YAML_FIELD_CONFIG, YAML_FIELD_CRATE_NAME, YAML_FIELD_ID,
     YAML_FIELD_PATTERNS, YAML_FIELD_REGEX, YAML_FIELD_SELECTORS,
 };
-use crate::rules::templates::TemplateEngine;
-use mcb_domain::error;
 
 /// Registry of compiled regex patterns and configurations loaded from YAML rules
 pub struct PatternRegistry {

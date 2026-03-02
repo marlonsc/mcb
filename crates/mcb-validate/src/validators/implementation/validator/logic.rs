@@ -9,8 +9,8 @@ use super::hardcoded::validate_hardcoded_returns;
 use super::logging::validate_log_only_methods;
 use super::stubs::validate_stub_macros;
 use super::wrappers::validate_pass_through_wrappers;
-use mcb_utils::constants::validate::TEST_DIR_FRAGMENT;
 use crate::pattern_registry::required_pattern;
+use mcb_utils::constants::validate::TEST_DIR_FRAGMENT;
 
 use crate::config::ImplementationRulesConfig;
 use crate::filters::LanguageId;

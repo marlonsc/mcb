@@ -8,12 +8,12 @@ use crate::Severity;
 use crate::ValidationConfig;
 use crate::ValidationConfigExt;
 use crate::ast::rca_helpers;
-use mcb_utils::constants::validate::MAX_UNRELATED_STRUCTS_PER_FILE;
 use crate::filters::LanguageId;
 use crate::run_context::ValidationRunContext;
 use crate::scan::for_each_scan_file;
 use crate::utils::source::structs_seem_related;
 use crate::validators::solid::violation::SolidViolation;
+use mcb_utils::constants::validate::MAX_UNRELATED_STRUCTS_PER_FILE;
 
 /// SRP: Check for impl blocks that are too large (via RCA AST metrics).
 ///

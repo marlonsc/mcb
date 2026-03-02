@@ -2,13 +2,13 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
 //!
 use super::violation::OrganizationViolation;
-use mcb_utils::constants::validate::{
-    DOMAIN_ALLOWED_METHODS, DOMAIN_ALLOWED_PREFIXES, DOMAIN_CRATE_PATH, PORTS_DIR_PATH,
-};
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::{for_each_scan_file, is_test_path};
 use crate::{Result, Severity, ValidationConfig};
+use mcb_utils::constants::validate::{
+    DOMAIN_ALLOWED_METHODS, DOMAIN_ALLOWED_PREFIXES, DOMAIN_CRATE_PATH, PORTS_DIR_PATH,
+};
 
 /// Verifies that the domain layer contains only trait definitions and data structures, free of implementation logic.
 ///

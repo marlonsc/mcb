@@ -2,11 +2,11 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
 //!
 use super::{QualityValidator, QualityViolation};
-use mcb_utils::constants::validate::{FORWARD_SEARCH_LINES, TEST_DIR_FRAGMENT};
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::{FORWARD_SEARCH_LINES, TEST_DIR_FRAGMENT};
 use regex::Regex;
 
 /// Scans for and reports usage of `allow(dead_code)` attributes.

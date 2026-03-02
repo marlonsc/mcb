@@ -1,9 +1,9 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use mcb_utils::constants::validate::MCB_DEPENDENCY_PREFIX;
-use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
+use mcb_utils::constants::validate::MCB_DEPENDENCY_PREFIX;
 
 use super::DependencyValidator;
 use super::violation::DependencyViolation;

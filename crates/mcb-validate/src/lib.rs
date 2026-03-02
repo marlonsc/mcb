@@ -36,7 +36,6 @@
 //! assert!(report.summary.total_violations >= 0);
 //! ```
 
-
 // === Centralized Thresholds (Phase 2 DRY) ===
 pub mod thresholds;
 
@@ -87,8 +86,8 @@ pub use exports::*;
 
 use std::path::{Path, PathBuf};
 
-use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 use derive_more::Display;
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 use thiserror::Error;
 
 // --- Crate-owned types (defined here; not in a submodule) ---

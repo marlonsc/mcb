@@ -7,9 +7,9 @@ use rust_code_analysis::SpaceKind;
 
 use super::super::violation::NamingViolation;
 use crate::ast::rca_helpers;
+use mcb_domain::ports::validation::Severity;
 use mcb_utils::constants::validate::TEST_FUNCTION_PREFIX;
 use mcb_utils::utils::naming::is_snake_case;
-use mcb_domain::ports::validation::Severity;
 
 /// Validates that function names follow `snake_case` convention using RCA AST.
 pub fn validate_function_names(path: &Path, content: &str) -> Vec<NamingViolation> {

@@ -1,12 +1,12 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use mcb_utils::constants::validate::{FN_PREFIX, HEAP_ALLOC_PREFIXES, LET_PREFIX, PUB_FN_PREFIX};
+use crate::pattern_registry::{compile_regex, compile_regexes};
+use crate::{Result, Severity};
 use mcb_utils::constants::validate::{
     CLONE_REGEX, CONTEXT_TRUNCATION_LENGTH, LOOP_ALLOCATION_PATTERNS,
 };
-use crate::pattern_registry::{compile_regex, compile_regexes};
-use crate::{Result, Severity};
+use mcb_utils::constants::validate::{FN_PREFIX, HEAP_ALLOC_PREFIXES, LET_PREFIX, PUB_FN_PREFIX};
 
 use super::PerformanceValidator;
 use super::loops::scan_files_with_patterns_in_loops;

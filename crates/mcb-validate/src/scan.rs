@@ -9,10 +9,12 @@
 use std::path::Path;
 
 use crate::ValidationConfigExt;
-use mcb_utils::constants::validate::{MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX};
 use crate::filters::LanguageId;
 use crate::run_context::{InventoryEntry, ValidationRunContext};
 use crate::{Result, ValidationConfig};
+use mcb_utils::constants::validate::{
+    MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX,
+};
 
 /// True if a path points to a test file or tests directory.
 #[must_use]

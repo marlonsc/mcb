@@ -5,17 +5,17 @@ use super::helpers::{
     DocItemContext, DocRegexContext, MissingDocSpec, ScanLineContext, SimplePubItemSpec,
     get_doc_comment_section, has_doc_comment,
 };
+use crate::define_violations;
+use crate::pattern_registry::compile_regex;
+use crate::scan::for_each_crate_file;
+use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
 use mcb_utils::constants::validate::{
     ATTR_REGEX, DI_MODULES_PATH, DOC_COMMENT_CAPTURE_REGEX, DOC_COMMENT_REGEX,
     EXAMPLE_SECTION_REGEX, ITEM_KIND_ENUM, ITEM_KIND_FUNCTION, ITEM_KIND_STRUCT, ITEM_KIND_TRAIT,
     MODULE_DOC_REGEX, MODULE_FILE_NAMES, PORTS_PATH, PUB_ENUM_REGEX, PUB_FN_REGEX,
     PUB_STRUCT_REGEX, PUB_TRAIT_REGEX,
 };
-use crate::define_violations;
-use crate::pattern_registry::compile_regex;
-use crate::scan::for_each_crate_file;
-use crate::{Result, Severity, ValidationConfig};
-use mcb_domain::ports::validation::ViolationCategory;
 
 define_violations! {
     dynamic_severity,

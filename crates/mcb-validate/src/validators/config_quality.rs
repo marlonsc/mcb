@@ -13,14 +13,14 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
-use mcb_utils::constants::validate::ARCH_PATH_CONFIG;
-use mcb_utils::constants::validate::{COMMENT_PREFIX, DOC_COMMENT_PREFIX};
 use crate::define_violations;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
 use mcb_domain::ports::validation::{Violation, ViolationCategory};
+use mcb_utils::constants::validate::ARCH_PATH_CONFIG;
+use mcb_utils::constants::validate::{COMMENT_PREFIX, DOC_COMMENT_PREFIX};
 
 define_violations! {
     dynamic_severity,

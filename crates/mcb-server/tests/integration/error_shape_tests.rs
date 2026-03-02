@@ -4,7 +4,7 @@
 //! Server-specific helpers (`MemoryArgs` factory, `McbState` bootstrap) are defined
 //! locally since they depend on `mcb_server` types.
 
-// Force linkme registration of all providers
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
 
 use std::sync::Arc;

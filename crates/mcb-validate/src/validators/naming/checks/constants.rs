@@ -6,8 +6,8 @@ use std::path::Path;
 use regex::Regex;
 
 use super::super::violation::NamingViolation;
-use mcb_utils::utils::naming::is_screaming_snake_case;
 use mcb_domain::ports::validation::Severity;
+use mcb_utils::utils::naming::is_screaming_snake_case;
 
 pub fn validate_constant_names(
     path: &Path,
