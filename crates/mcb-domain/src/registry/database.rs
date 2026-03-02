@@ -8,6 +8,7 @@
 //! discovered at runtime.
 
 use std::any::Any;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use crate::ports::{
@@ -15,6 +16,86 @@ use crate::ports::{
     IssueEntityRepository, MemoryRepository, OrgEntityRepository, PlanEntityRepository,
     ProjectRepository, VcsEntityRepository,
 };
+
+// ---------------------------------------------------------------------------
+// Database connection provider (factory for opaque DB connections)
+// ---------------------------------------------------------------------------
+
+/// Configuration for resolving a database connection provider.
+#[derive(Debug, Clone)]
+pub struct DatabaseProviderConfig {
+    /// Provider name (e.g. "sqlite", "postgres").
+    pub provider: String,
+    /// Optional path for file-based databases like SQLite.
+    pub path: Option<PathBuf>,
+}
+
+impl DatabaseProviderConfig {
+    /// Create a new config with only a provider name.
+    #[must_use]
+    pub fn new(provider: &str) -> Self {
+        Self {
+            provider: provider.to_owned(),
+            path: None,
+        }
+    }
+
+    /// Set the database file path (for SQLite etc.).
+    #[must_use]
+    pub fn with_path(mut self, path: PathBuf) -> Self {
+        self.path = Some(path);
+        self
+    }
+}
+
+/// Registry entry for a database connection provider.
+pub struct DatabaseConnectionEntry {
+    /// Unique provider name.
+    pub name: &'static str,
+    /// Factory that builds a connection and runs migrations.
+    /// Returns an opaque `Arc<dyn Any + Send + Sync>` wrapping the connection.
+    pub build: fn(
+        &DatabaseProviderConfig,
+    ) -> std::pin::Pin<
+        Box<
+            dyn std::future::Future<Output = crate::error::Result<Arc<dyn Any + Send + Sync>>>
+                + Send,
+        >,
+    >,
+}
+
+#[linkme::distributed_slice]
+/// Registered database connection providers.
+pub static DATABASE_CONNECTION_PROVIDERS: [DatabaseConnectionEntry] = [..];
+
+/// Resolve a database connection provider by config and build a connection.
+///
+/// # Errors
+///
+/// Returns an error when the provider name is unknown or when connection fails.
+pub async fn resolve_database_provider(
+    config: &DatabaseProviderConfig,
+) -> crate::error::Result<Arc<dyn Any + Send + Sync>> {
+    for entry in DATABASE_CONNECTION_PROVIDERS.iter() {
+        if entry.name == config.provider {
+            return (entry.build)(config).await;
+        }
+    }
+
+    let available: Vec<&str> = DATABASE_CONNECTION_PROVIDERS
+        .iter()
+        .map(|entry| entry.name)
+        .collect();
+
+    Err(crate::error::Error::configuration(format!(
+        "Unknown database connection provider '{}'. Available: {available:?}",
+        config.provider,
+    )))
+}
+
+// ---------------------------------------------------------------------------
+// Database repository bundle provider
+// ---------------------------------------------------------------------------
 
 /// Complete set of database-backed repositories required by the application.
 pub struct DatabaseRepositories {
@@ -47,7 +128,7 @@ pub struct DatabaseRepositoryEntry {
     /// Human-readable provider description.
     pub description: &'static str,
     /// Factory that builds a full repository bundle.
-    pub build: fn(Box<dyn Any + Send + Sync>, String) -> crate::error::Result<DatabaseRepositories>,
+    pub build: fn(Arc<dyn Any + Send + Sync>, String) -> crate::error::Result<DatabaseRepositories>,
 }
 
 #[linkme::distributed_slice]
@@ -62,7 +143,7 @@ pub static DATABASE_REPOSITORY_PROVIDERS: [DatabaseRepositoryEntry] = [..];
 /// provider fails to construct repository instances.
 pub fn resolve_database_repositories(
     provider_name: &str,
-    connection: Box<dyn Any + Send + Sync>,
+    connection: Arc<dyn Any + Send + Sync>,
     namespace: String,
 ) -> crate::error::Result<DatabaseRepositories> {
     for entry in DATABASE_REPOSITORY_PROVIDERS {

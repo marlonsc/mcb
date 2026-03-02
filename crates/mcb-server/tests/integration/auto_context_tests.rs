@@ -1,16 +1,31 @@
 use std::path::Path;
 use std::process::Command;
+use std::sync::Arc;
 
-use mcb_infrastructure::resolution_context::create_default_hybrid_search_provider;
-use mcb_providers::vcs::GitProvider;
+use mcb_domain::registry::hybrid_search::{
+    HybridSearchProviderConfig, resolve_hybrid_search_provider,
+};
+use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
 use mcb_server::args::{SearchArgs, SearchResource};
 use mcb_server::handlers::SearchHandler;
 use mcb_server::tools::RuntimeDefaults;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
-use crate::utils::domain_services::create_real_domain_services;
-use crate::utils::invariants::error_text;
+use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::utils::tests::mcp_assertions::error_text;
+
+/// Resolve VCS provider via domain registry
+fn resolve_default_vcs() -> Arc<dyn mcb_domain::ports::VcsProvider> {
+    resolve_vcs_provider(&VcsProviderConfig::new("git"))
+        .expect("git VCS provider should be registered")
+}
+
+/// Resolve hybrid search via domain registry
+fn resolve_default_hybrid_search() -> Arc<dyn mcb_domain::ports::HybridSearchProvider> {
+    resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default"))
+        .expect("default hybrid search provider should be registered")
+}
 
 const MCB_REPO_ROOT: &str = "/home/marlonsc/mcb";
 
@@ -52,9 +67,9 @@ async fn test_ide_probe_runtime_defaults() {
         return;
     }
 
-    let provider = GitProvider;
+    let provider = resolve_default_vcs();
     let defaults =
-        RuntimeDefaults::discover_from_path(&provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
+        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
 
     let agent_program = defaults.agent_program.unwrap_or_default();
     println!("AGENT_PROGRAM={agent_program}");
@@ -128,13 +143,13 @@ async fn test_ide_detection_from_env_vars() {
 #[rstest]
 #[tokio::test]
 async fn test_search_without_collection_auto_resolves() {
-    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
         return;
     };
     let handler = SearchHandler::new(
         state.mcp_server.search_service(),
         state.mcp_server.memory_service(),
-        create_default_hybrid_search_provider(),
+        resolve_default_hybrid_search(),
         state.mcp_server.indexing_service(),
     );
 
@@ -164,13 +179,13 @@ async fn test_search_without_collection_auto_resolves() {
 #[rstest]
 #[tokio::test]
 async fn test_search_with_explicit_collection_still_works() {
-    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
         return;
     };
     let handler = SearchHandler::new(
         state.mcp_server.search_service(),
         state.mcp_server.memory_service(),
-        create_default_hybrid_search_provider(),
+        resolve_default_hybrid_search(),
         state.mcp_server.indexing_service(),
     );
 
@@ -201,9 +216,9 @@ async fn test_search_with_explicit_collection_still_works() {
 #[rstest]
 #[tokio::test]
 async fn test_context_fields_populated_in_defaults() {
-    let provider = GitProvider;
+    let provider = resolve_default_vcs();
     let defaults =
-        RuntimeDefaults::discover_from_path(&provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
+        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
 
     assert!(defaults.session_id.is_some());
     assert!(defaults.repo_id.is_some());
@@ -214,9 +229,9 @@ async fn test_context_fields_populated_in_defaults() {
 #[rstest]
 #[tokio::test]
 async fn test_org_id_from_git_remote() {
-    let provider = GitProvider;
+    let provider = resolve_default_vcs();
     let defaults =
-        RuntimeDefaults::discover_from_path(&provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
+        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
 
     assert!(defaults.org_id.is_some());
 }

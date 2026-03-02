@@ -1,5 +1,5 @@
-use mcb_domain::test_fs_scan::rust_files_under;
-use mcb_domain::test_utils::{TestResult, workspace_root};
+use mcb_domain::utils::tests::fs_scan::rust_files_under;
+use mcb_domain::utils::tests::utils::{TestResult, workspace_root};
 use rstest::rstest;
 use std::collections::BTreeMap;
 use std::fs;

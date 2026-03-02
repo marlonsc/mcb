@@ -10,10 +10,12 @@ use axum::Extension;
 use axum::Router as AxumRouter;
 use loco_rs::prelude::*;
 
-use mcb_infrastructure::config::{AppConfig, validate_app_config};
-use mcb_infrastructure::resolution_context::{
-    ServiceResolutionContext, resolve_embedding_from_config, resolve_vector_store_from_config,
+use mcb_domain::registry::ServiceResolutionContext;
+use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
+use mcb_domain::registry::vector_store::{
+    VectorStoreProviderConfig, resolve_vector_store_provider,
 };
+use mcb_infrastructure::config::{AppConfig, validate_app_config};
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::tools::ExecutionFlow;
 use mcb_server::transport::stdio::StdioServerExt;
@@ -57,16 +59,58 @@ impl Initializer for McpServerInitializer {
         )
         .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
-        let embedding_provider = resolve_embedding_from_config(&app_config)
+        // Resolve providers via mcb-domain registries — no infrastructure helpers
+        let mut embed_cfg = EmbeddingProviderConfig::new(
+            app_config
+                .providers
+                .embedding
+                .provider
+                .as_deref()
+                .unwrap_or("null"),
+        );
+        if let Some(ref v) = app_config.providers.embedding.cache_dir {
+            embed_cfg = embed_cfg.with_cache_dir(v.clone());
+        }
+        if let Some(ref v) = app_config.providers.embedding.model {
+            embed_cfg = embed_cfg.with_model(v.clone());
+        }
+        if let Some(ref v) = app_config.providers.embedding.base_url {
+            embed_cfg = embed_cfg.with_base_url(v.clone());
+        }
+        if let Some(ref v) = app_config.providers.embedding.api_key {
+            embed_cfg = embed_cfg.with_api_key(v.clone());
+        }
+        if let Some(d) = app_config.providers.embedding.dimensions {
+            embed_cfg = embed_cfg.with_dimensions(d);
+        }
+        let embedding_provider = resolve_embedding_provider(&embed_cfg)
             .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
-        let vector_store_provider = resolve_vector_store_from_config(&app_config)
+
+        let mut vec_cfg = VectorStoreProviderConfig::new(
+            app_config
+                .providers
+                .vector_store
+                .provider
+                .as_deref()
+                .unwrap_or("null"),
+        );
+        if let Some(ref v) = app_config.providers.vector_store.address {
+            vec_cfg = vec_cfg.with_uri(v.clone());
+        }
+        if let Some(ref v) = app_config.providers.vector_store.collection {
+            vec_cfg = vec_cfg.with_collection(v.clone());
+        }
+        if let Some(d) = app_config.providers.vector_store.dimensions {
+            vec_cfg = vec_cfg.with_dimensions(d);
+        }
+        let vector_store_provider = resolve_vector_store_provider(&vec_cfg)
             .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
         let stdio_only = app_config.mcp.stdio_only;
         let no_stdio = app_config.mcp.no_stdio;
 
         let resolution_ctx = ServiceResolutionContext {
-            db: ctx.db.clone(),
+            db: Arc::new(ctx.db.clone()),
             config: Arc::new(app_config),
             event_bus,
             embedding_provider,
@@ -79,8 +123,18 @@ impl Initializer for McpServerInitializer {
             ExecutionFlow::ServerHybrid
         };
 
-        let bootstrap = build_mcp_server_bootstrap(&resolution_ctx, execution_flow)
-            .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+        let hybrid_search: Arc<dyn mcb_domain::ports::HybridSearchProvider> =
+            Arc::new(mcb_providers::hybrid_search::engine::HybridSearchEngine::new());
+
+        let bootstrap = build_mcp_server_bootstrap(
+            &resolution_ctx,
+            Arc::clone(&resolution_ctx.db),
+            Arc::clone(&resolution_ctx.embedding_provider),
+            Arc::clone(&resolution_ctx.vector_store_provider),
+            hybrid_search,
+            execution_flow,
+        )
+        .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
         let mcp_server_for_stdio = Arc::clone(&bootstrap.mcp_server);
         if stdio_only || !no_stdio {

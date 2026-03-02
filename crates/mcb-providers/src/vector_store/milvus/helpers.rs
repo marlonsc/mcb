@@ -67,11 +67,7 @@ pub(super) fn prepare_insert_data(
         payload.file_paths.push(
             meta.get(VECTOR_FIELD_FILE_PATH)
                 .and_then(|value| value.as_str())
-                .ok_or_else(|| {
-                    Error::vector_db(format!(
-                        "Metadata missing '{VECTOR_FIELD_FILE_PATH}' at index {i}"
-                    ))
-                })?
+                .unwrap_or("unknown")
                 .to_owned(),
         );
         payload.start_lines.push(
@@ -81,11 +77,7 @@ pub(super) fn prepare_insert_data(
                     meta.get(VECTOR_FIELD_LINE_NUMBER)
                         .and_then(serde_json::Value::as_i64)
                 })
-                .ok_or_else(|| {
-                    Error::vector_db(format!(
-                        "Metadata missing '{VECTOR_FIELD_START_LINE}' at index {i}"
-                    ))
-                })?,
+                .unwrap_or(0),
         );
         payload.contents.push(
             meta.get(VECTOR_FIELD_CONTENT)

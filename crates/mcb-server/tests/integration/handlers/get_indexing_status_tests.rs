@@ -2,13 +2,13 @@ use mcb_server::args::{IndexAction, IndexArgs};
 use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 
-use crate::utils::domain_services::create_real_domain_services;
+use crate::utils::test_fixtures::create_test_mcb_state;
 use rstest::rstest;
 
 #[rstest]
 #[tokio::test]
 async fn test_get_indexing_status_success() {
-    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
         return;
     };
     let handler = IndexHandler::new(state.mcp_server.indexing_service());

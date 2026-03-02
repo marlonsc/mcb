@@ -3,14 +3,14 @@ use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
-use crate::utils::domain_services::create_real_domain_services;
+use crate::utils::test_fixtures::create_test_mcb_state;
 
 #[rstest]
 #[case(Some("test_collection".to_owned()), true)]
 #[case(None, false)]
 #[tokio::test]
 async fn test_clear_index(#[case] collection: Option<String>, #[case] should_succeed: bool) {
-    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
         return;
     };
     let handler = IndexHandler::new(state.mcp_server.indexing_service());

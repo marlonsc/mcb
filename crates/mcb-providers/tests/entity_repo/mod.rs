@@ -10,8 +10,6 @@
 //! Plan: `plan`, `plan_version`, `plan_review`
 //! Issue: `project_issue`, `issue_comment`, `issue_label`, `issue_label_assignment`
 
-#![allow(missing_docs)]
-
 use std::sync::Arc;
 
 use sea_orm::{ConnectionTrait, DatabaseConnection};
@@ -32,9 +30,9 @@ use mcb_domain::ports::{
 };
 use mcb_domain::value_objects::ids::{IssueLabelAssignmentId, TeamMemberId};
 
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::entity::SeaOrmEntityRepository;
-use mcb_providers::migration::Migrator;
 use rstest::rstest;
 
 async fn setup_db() -> TestResult<Arc<DatabaseConnection>> {

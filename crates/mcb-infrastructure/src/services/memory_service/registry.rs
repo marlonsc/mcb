@@ -23,7 +23,7 @@ fn build_memory_service_from_registry(
     context: &dyn std::any::Any,
 ) -> Result<Arc<dyn MemoryServiceInterface>> {
     let ctx = context
-        .downcast_ref::<crate::resolution_context::ServiceResolutionContext>()
+        .downcast_ref::<mcb_domain::registry::ServiceResolutionContext>()
         .ok_or_else(|| {
             mcb_domain::error::Error::internal(
                 "Memory service builder requires ServiceResolutionContext",
@@ -36,7 +36,7 @@ fn build_memory_service_from_registry(
     // Resolve memory repository from database providers
     let repos = mcb_domain::registry::database::resolve_database_repositories(
         DATABASE_PROVIDER,
-        Box::new(ctx.db.clone()),
+        Arc::clone(&ctx.db),
         DEFAULT_NAMESPACE.to_owned(),
     )?;
 

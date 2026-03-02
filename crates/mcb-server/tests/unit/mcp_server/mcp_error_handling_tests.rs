@@ -13,7 +13,9 @@ use mcb_domain::ports::{IndexingResult, IndexingStatus};
 use mcb_server::formatter::ResponseFormatter;
 use rstest::rstest;
 
-use mcb_domain::test_search_fixtures::{create_test_search_result, create_test_search_results};
+use mcb_domain::utils::tests::search_fixtures::{
+    create_test_search_result, create_test_search_results,
+};
 
 // =============================================================================
 // ERROR RESPONSE TESTS
@@ -259,8 +261,8 @@ fn test_format_clear_index(
 // HELPER FUNCTIONS
 // =============================================================================
 
-use crate::utils::text::extract_text;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text;
 
 mod handler_error_tests {
     use super::TestResult;
@@ -271,7 +273,7 @@ mod handler_error_tests {
     use rmcp::handler::server::wrapper::Parameters;
 
     async fn create_handler() -> TestResult<IndexHandler> {
-        let state = crate::utils::shared_context::shared_mcb_state()?;
+        let state = crate::utils::test_fixtures::shared_mcb_state()?;
         Ok(IndexHandler::new(state.mcp_server.indexing_service()))
     }
 

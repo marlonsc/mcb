@@ -8,8 +8,8 @@ use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource, SearchArgs, Sea
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::utils::text::extract_text;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text;
 use rstest::rstest;
 
 // =============================================================================

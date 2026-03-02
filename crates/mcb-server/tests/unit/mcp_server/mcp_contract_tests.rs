@@ -1,5 +1,4 @@
 use rstest::rstest;
-extern crate mcb_providers;
 
 use std::collections::BTreeSet;
 use std::sync::Arc;

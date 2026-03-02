@@ -16,7 +16,7 @@ use std::time::Duration;
 
 use hostname;
 use mcb_domain::utils::id as domain_id;
-use mcb_domain::utils::mask_id;
+use mcb_domain::utils::id::mask_id;
 use mcb_domain::{debug, error, info, warn};
 
 use super::types::{McpRequest, McpResponse};

@@ -1,4 +1,4 @@
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_validate::rules::templates::TemplateEngine;
 use rstest::rstest;
 

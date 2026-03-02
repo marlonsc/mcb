@@ -8,7 +8,6 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
 use mcb_domain::ports::VcsProvider;
-use mcb_infrastructure::config::McpContextConfig;
 
 use super::responses::{IndexResult, repo_path};
 use crate::args::VcsArgs;
@@ -33,7 +32,7 @@ pub async fn index_repository(
     };
 
     // Load config from repository path
-    let config = McpContextConfig::load_from_path_or_default(Path::new(&path));
+    let config = load_repo_context_config(Path::new(&path));
 
     // Determine depth: args.depth > config.git.depth > default 1000
     let depth = args.depth.unwrap_or(config.git.depth);
@@ -127,4 +126,46 @@ fn should_ignore_file(file: &Path, patterns: &[String]) -> bool {
     }
 
     false
+}
+
+// ---------------------------------------------------------------------------
+// Repository-local .mcp-context.toml config (inlined to avoid cross-crate dep)
+// ---------------------------------------------------------------------------
+
+/// Git section of .mcp-context.toml.
+#[derive(serde::Deserialize)]
+struct GitContextConfig {
+    #[serde(default = "default_git_depth")]
+    depth: usize,
+    #[serde(default)]
+    ignore_patterns: Vec<String>,
+}
+
+fn default_git_depth() -> usize {
+    50
+}
+
+impl Default for GitContextConfig {
+    fn default() -> Self {
+        Self {
+            depth: default_git_depth(),
+            ignore_patterns: Vec::new(),
+        }
+    }
+}
+
+/// Root .mcp-context.toml config.
+#[derive(Default, serde::Deserialize)]
+struct RepoContextConfig {
+    #[serde(default)]
+    git: GitContextConfig,
+}
+
+/// Load `.mcp-context.toml` from the given directory, returning defaults on any error.
+fn load_repo_context_config(path: &Path) -> RepoContextConfig {
+    let config_path = path.join(".mcp-context.toml");
+    std::fs::read_to_string(&config_path)
+        .ok()
+        .and_then(|content| toml::from_str(&content).ok())
+        .unwrap_or_default()
 }

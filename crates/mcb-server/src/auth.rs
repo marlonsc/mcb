@@ -10,8 +10,8 @@ use argon2::{Argon2, PasswordVerifier};
 use axum::http::HeaderMap;
 use loco_rs::errors::Error;
 use loco_rs::prelude::Result;
+use mcb_domain::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
 use mcb_domain::ports::AuthRepositoryPort;
-use mcb_infrastructure::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
 
 /// Authenticated admin principal.
 #[derive(Debug, Clone, PartialEq, Eq)]

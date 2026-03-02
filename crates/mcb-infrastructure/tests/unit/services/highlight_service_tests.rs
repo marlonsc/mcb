@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use mcb_domain::ports::HighlightServiceInterface;
-    use mcb_domain::test_utils::TestResult;
+    use mcb_domain::utils::tests::utils::TestResult;
     use rstest::{fixture, rstest};
 
     #[fixture]

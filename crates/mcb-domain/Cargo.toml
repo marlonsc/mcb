@@ -66,11 +66,12 @@ linkme = { workspace = true }
 reqwest = { workspace = true }
 toml = { workspace = true, optional = true }
 tempfile = { workspace = true, optional = true }
-rmcp = { workspace = true, optional = true }
+# MCP SDK types — used by domain utils (extract_text, etc.)
+rmcp = { workspace = true }
 
 [features]
 default = []
-test-utils = ["dep:toml", "dep:tempfile", "dep:rmcp"]
+test-utils = ["dep:toml", "dep:tempfile"]
 
 [lints]
 workspace = true

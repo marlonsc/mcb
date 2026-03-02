@@ -3,12 +3,11 @@
 //!
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use rust_code_analysis::SpaceKind;
 
-use mcb_domain::ports::{
-    ComplexityAnalyzer, ComplexityFinding, DeadCodeDetector, DeadCodeFinding, TdgFinding, TdgScorer,
-};
+use mcb_domain::ports::{AnalysisFinding, CODE_ANALYZERS, CodeAnalyzer, CodeAnalyzerEntry};
 use mcb_domain::utils::analysis::{self, FunctionRecord};
 
 use crate::ast::rca_helpers;
@@ -17,7 +16,7 @@ use crate::scan::for_each_scan_file;
 use crate::{Result, ValidationConfig};
 
 #[derive(Debug, Default, Clone, Copy)]
-pub struct NativePmatAnalyzer;
+struct NativePmatAnalyzer;
 
 impl NativePmatAnalyzer {
     fn load_rust_files(workspace_root: &Path) -> Result<Vec<(PathBuf, String)>> {
@@ -71,38 +70,34 @@ impl NativePmatAnalyzer {
     }
 }
 
-impl ComplexityAnalyzer for NativePmatAnalyzer {
+impl CodeAnalyzer for NativePmatAnalyzer {
     fn analyze_complexity(
         &self,
         workspace_root: &Path,
         threshold: u32,
-    ) -> std::result::Result<Vec<ComplexityFinding>, mcb_domain::error::Error> {
+    ) -> std::result::Result<Vec<AnalysisFinding>, mcb_domain::error::Error> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
         let functions = Self::collect_functions_rca(&files);
         Ok(analysis::filter_complex_functions(functions, threshold))
     }
-}
 
-impl DeadCodeDetector for NativePmatAnalyzer {
     fn detect_dead_code(
         &self,
         workspace_root: &Path,
-    ) -> std::result::Result<Vec<DeadCodeFinding>, mcb_domain::error::Error> {
+    ) -> std::result::Result<Vec<AnalysisFinding>, mcb_domain::error::Error> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
         let functions = Self::collect_functions_rca(&files);
         let contents: Vec<String> = files.iter().map(|(_, c)| c.clone()).collect();
         analysis::detect_dead_functions(functions, &contents)
     }
-}
 
-impl TdgScorer for NativePmatAnalyzer {
     fn score_tdg(
         &self,
         workspace_root: &Path,
         threshold: u32,
-    ) -> std::result::Result<Vec<TdgFinding>, mcb_domain::error::Error> {
+    ) -> std::result::Result<Vec<AnalysisFinding>, mcb_domain::error::Error> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
         let functions = Self::collect_functions_rca(&files);
@@ -112,3 +107,12 @@ impl TdgScorer for NativePmatAnalyzer {
         ))
     }
 }
+
+// Auto-registration via linkme distributed slice
+#[allow(unsafe_code)]
+#[linkme::distributed_slice(CODE_ANALYZERS)]
+static NATIVE_RCA_ANALYZER: CodeAnalyzerEntry = CodeAnalyzerEntry {
+    name: "native-rca",
+    description: "RCA/tree-sitter code analyzer",
+    build: || Ok(Arc::new(NativePmatAnalyzer)),
+};

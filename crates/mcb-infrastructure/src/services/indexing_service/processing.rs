@@ -124,7 +124,7 @@ impl IndexingServiceImpl {
             .map_err(|e| mcb_domain::error::Error::internal(format!("Failed to read file: {e}")))?;
 
         // Incremental check using file hashes
-        let current_hash = mcb_domain::utils::compute_content_hash(&content);
+        let current_hash = mcb_domain::utils::id::compute_content_hash(&content);
         match &self.file_hash_repository {
             Some(repo)
                 if !repo

@@ -3,12 +3,12 @@ use mcb_server::handlers::entities::VcsEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::utils::text::extract_text;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text;
 use rstest::rstest;
 
 fn create_handler() -> TestResult<VcsEntityHandler> {
-    let state = crate::utils::shared_context::shared_mcb_state()?;
+    let state = crate::utils::test_fixtures::shared_mcb_state()?;
     Ok(VcsEntityHandler::new(
         state.mcp_server.vcs_entity_repository(),
     ))

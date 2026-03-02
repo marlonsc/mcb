@@ -1,7 +1,6 @@
 //! RAII guards for test isolation — environment variables, current directory, file backup.
 //!
 //! Centralized in `mcb-domain` so every crate can reuse the same primitives.
-#![allow(unsafe_code)]
 
 use std::env;
 use std::fs;
@@ -26,6 +25,7 @@ pub struct EnvVarGuard {
 impl EnvVarGuard {
     /// Set multiple env vars at once; all are removed on drop.
     #[must_use]
+    #[allow(unsafe_code)]
     pub fn new(vars: &[(&str, &str)]) -> Self {
         for (k, v) in vars {
             // SAFETY: Test-only helper; tests using env vars run serially
@@ -46,6 +46,7 @@ impl EnvVarGuard {
     }
 
     /// Remove env vars without a guard (immediate).
+    #[allow(unsafe_code)]
     pub fn remove(vars: &[&str]) {
         for key in vars {
             // SAFETY: Test-only helper; tests using env vars run serially.
@@ -56,6 +57,7 @@ impl EnvVarGuard {
     }
 }
 
+#[allow(unsafe_code)]
 impl Drop for EnvVarGuard {
     fn drop(&mut self) {
         for key in &self.keys {

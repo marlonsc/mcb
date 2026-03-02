@@ -4,7 +4,7 @@
 //! through the `SessionHandler` MCP tool interface.
 
 use crate::utils::test_fixtures::{create_test_mcp_server, golden_content_to_string};
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{SessionAction, SessionArgs};
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;

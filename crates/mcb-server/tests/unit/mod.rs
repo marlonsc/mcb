@@ -1,14 +1,7 @@
 //! Unit tests — `cargo test -p mcb-server --test unit`
-#![allow(missing_docs)]
-
-extern crate mcb_infrastructure;
-extern crate mcb_providers;
 
 pub mod auth_tests;
 pub mod state_tests;
-#[path = "../utils/mod.rs"]
-#[allow(dead_code, unused_imports)]
-mod utils;
 
 pub mod constants;
 pub mod context_resolution;

@@ -20,7 +20,7 @@ use serde_json::json;
 /// Uses the actual project workspace root so `cargo_metadata` works.
 #[allow(clippy::unwrap_used)]
 fn create_test_context() -> RuleContext {
-    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
 
     let mut file_contents = HashMap::new();
     file_contents.insert(

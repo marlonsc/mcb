@@ -2,8 +2,6 @@
 //!
 //! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
 
-#![allow(missing_docs)]
-
 use std::collections::HashMap;
 use std::path::Path;
 use std::pin::Pin;
@@ -29,12 +27,17 @@ pub type DomainEventStream = Pin<Box<dyn Stream<Item = DomainEvent> + Send + Syn
 /// Event bus provider interface for typed event pub/sub
 #[async_trait]
 pub trait EventBusProvider: Send + Sync {
+    /// Publish a domain event to the bus
     async fn publish_event(&self, event: DomainEvent) -> Result<()>;
+    /// Subscribe to all domain events
     async fn subscribe_events(&self) -> Result<DomainEventStream>;
+    /// Check if there are any active subscribers
     fn has_subscribers(&self) -> bool;
 
     // Low-Level Raw API
+    /// Publish raw payload to a specific topic
     async fn publish(&self, topic: &str, payload: &[u8]) -> Result<()>;
+    /// Subscribe to a specific topic
     async fn subscribe(&self, topic: &str) -> Result<String>;
 }
 
@@ -65,40 +68,58 @@ pub enum DependencyHealth {
 /// Health information for a system dependency
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct DependencyHealthCheck {
+    /// Name of the dependency
     pub name: String,
+    /// Current health status
     pub status: DependencyHealth,
+    /// Optional status message or error detail
     pub message: Option<String>,
+    /// Latency of the last check in milliseconds, if applicable
     pub latency_ms: Option<u64>,
+    /// Timestamp (epoch seconds) of the last check
     pub last_check: u64,
 }
 
 /// Extended health response with detailed dependency info
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExtendedHealthResponse {
+    /// Overall system status
     pub status: &'static str,
+    /// System uptime in seconds
     pub uptime_seconds: u64,
+    /// Number of indexing operations currently running
     pub active_indexing_operations: usize,
+    /// List of individual dependency health reports
     pub dependencies: Vec<DependencyHealthCheck>,
+    /// Combined status of all dependencies
     pub dependencies_status: DependencyHealth,
 }
 
 /// Interface for graceful shutdown coordination
 pub trait ShutdownCoordinator: Send + Sync {
+    /// Signal that a shutdown has been initiated
     fn signal_shutdown(&self);
+    /// Check if the system is currently shutting down
     fn is_shutting_down(&self) -> bool;
 }
 
 /// Managed lifecycle for background services
 #[async_trait::async_trait]
 pub trait LifecycleManaged: Send + Sync {
+    /// Human-readable name of the service
     fn name(&self) -> &str;
+    /// Start the service
     async fn start(&self) -> Result<()>;
+    /// Stop the service gracefully
     async fn stop(&self) -> Result<()>;
+    /// Restart the service by calling stop then start
     async fn restart(&self) -> Result<()> {
         self.stop().await?;
         self.start().await
     }
+    /// Get the current operational state
     fn state(&self) -> PortServiceState;
+    /// Perform a health check on the service
     async fn health_check(&self) -> DependencyHealthCheck {
         DependencyHealthCheck {
             name: self.name().to_owned(),
@@ -157,11 +178,17 @@ pub enum ProviderHealthStatus {
 /// Context for provider selection decisions
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ProviderContext {
+    /// Type of operation being performed (e.g., "fast", "accurate")
     pub operation_type: String,
+    /// Importance of cost (0.0 to 1.0)
     pub cost_sensitivity: f64,
+    /// Minimum quality threshold (0.0 to 1.0)
     pub quality_requirement: f64,
+    /// Importance of low latency (0.0 to 1.0)
     pub latency_sensitivity: f64,
+    /// List of providers to prefer if available
     pub preferred_providers: Vec<String>,
+    /// List of providers that should not be used
     pub excluded_providers: Vec<String>,
 }
 
@@ -193,12 +220,19 @@ impl ProviderContext {
 /// Provider routing interface
 #[async_trait]
 pub trait ProviderRouter: Send + Sync {
+    /// Select the best embedding provider for the given context
     async fn select_embedding_provider(&self, context: &ProviderContext) -> Result<String>;
+    /// Select the best vector store provider for the given context
     async fn select_vector_store_provider(&self, context: &ProviderContext) -> Result<String>;
+    /// Get health status of a specific provider
     async fn get_provider_health(&self, provider_id: &str) -> Result<ProviderHealthStatus>;
+    /// Report an operation failure for a provider
     async fn report_failure(&self, provider_id: &str, error: &str) -> Result<()>;
+    /// Report an operation success for a provider
     async fn report_success(&self, provider_id: &str) -> Result<()>;
+    /// Get health status of all known providers
     async fn get_all_health(&self) -> Result<HashMap<String, ProviderHealthStatus>>;
+    /// Get detailed statistics for all providers
     async fn get_stats(&self) -> HashMap<String, serde_json::Value>;
 }
 
@@ -209,25 +243,36 @@ pub trait ProviderRouter: Send + Sync {
 /// Sync Provider Interface
 #[async_trait]
 pub trait SyncProvider: Send + Sync {
+    /// Check if a sync operation should be debounced for the given path
     async fn should_debounce(&self, codebase_path: &Path) -> Result<bool>;
+    /// Update the timestamp of the last successful sync
     async fn update_last_sync(&self, codebase_path: &Path);
+    /// Attempt to acquire a slot for a sync batch
     async fn acquire_sync_slot(&self, codebase_path: &Path) -> Result<Option<SyncBatch>>;
+    /// Release a previously acquired sync slot
     async fn release_sync_slot(&self, codebase_path: &Path, batch: SyncBatch) -> Result<()>;
+    /// Get list of files that have changed since last sync
     async fn get_changed_files(&self, codebase_path: &Path) -> Result<Vec<String>>;
+    /// Desired interval between syncs
     fn sync_interval(&self) -> Duration;
+    /// Desired debounce duration
     fn debounce_interval(&self) -> Duration;
 }
 
 /// Snapshot Provider Interface
 #[async_trait]
 pub trait SnapshotProvider: Send + Sync {
+    /// Create a new snapshot of the filesystem at root_path
     async fn create_snapshot(&self, root_path: &Path) -> Result<CodebaseSnapshot>;
+    /// Load a previously saved snapshot for root_path
     async fn load_snapshot(&self, root_path: &Path) -> Result<Option<CodebaseSnapshot>>;
+    /// Compare two snapshots and find the differences
     async fn compare_snapshots(
         &self,
         old_snapshot: &CodebaseSnapshot,
         new_snapshot: &CodebaseSnapshot,
     ) -> Result<SnapshotChanges>;
+    /// Efficiently get files changed on disk since last snapshot
     async fn get_changed_files(&self, root_path: &Path) -> Result<Vec<String>>;
 }
 
@@ -238,7 +283,9 @@ pub trait SnapshotProvider: Send + Sync {
 /// Configuration for sync operations
 #[derive(Debug, Clone)]
 pub struct SyncOptions {
+    /// Minimum time between consecutive sync attempts
     pub debounce_duration: Duration,
+    /// Whether to force a sync even if debouncing would normally skip it
     pub force: bool,
 }
 
@@ -254,8 +301,11 @@ impl Default for SyncOptions {
 /// Result of a sync operation
 #[derive(Debug, Clone)]
 pub struct SyncResult {
+    /// Whether the sync operation actually ran
     pub performed: bool,
+    /// Number of files identified as changed
     pub files_changed: usize,
+    /// List of paths for the changed files
     pub changed_files: Vec<String>,
 }
 
@@ -283,10 +333,15 @@ impl SyncResult {
 /// Domain Port for File Synchronization Coordination
 #[async_trait]
 pub trait SyncCoordinator: Send + Sync {
+    /// Check if a sync should be debounced for the given path
     async fn should_debounce(&self, codebase_path: &Path) -> Result<bool>;
+    /// Perform the synchronization operation
     async fn sync(&self, codebase_path: &Path, options: SyncOptions) -> Result<SyncResult>;
+    /// Get list of changed files according to the coordinator's state
     async fn get_changed_files(&self, codebase_path: &Path) -> Result<Vec<String>>;
+    /// Explicitly mark a path as successfully synced
     async fn mark_synced(&self, codebase_path: &Path) -> Result<()>;
+    /// Total number of files currently tracked by the coordinator
     fn tracked_file_count(&self) -> usize;
 }
 

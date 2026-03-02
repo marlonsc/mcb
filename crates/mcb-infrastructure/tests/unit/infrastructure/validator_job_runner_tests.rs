@@ -16,7 +16,7 @@ use mcb_domain::ports::{
 use mcb_domain::registry::admin_operations::{
     ValidationOperationsProviderConfig, resolve_validation_operations_provider,
 };
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_infrastructure::infrastructure::DefaultValidatorJobRunner;
 use rstest::{fixture, rstest};
 

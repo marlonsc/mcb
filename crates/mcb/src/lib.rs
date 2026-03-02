@@ -10,24 +10,9 @@
 //! ```
 pub mod cli;
 
-/// Re-export of the domain layer.
-pub mod domain {
-    pub use mcb_domain::*;
-}
-
-/// Re-export of the server layer.
-pub mod server {
-    pub use mcb_server::*;
-}
-
-/// Re-export of the infrastructure layer.
-pub mod infrastructure {
-    pub use mcb_infrastructure::*;
-}
+pub use mcb_server::McpServer;
 
 pub use crate::loco_app::McbApp;
-pub use domain::*;
-pub use server::McpServer;
 /// Loco initializers for the MCP server.
 pub mod initializers;
 /// Loco application hook implementation.

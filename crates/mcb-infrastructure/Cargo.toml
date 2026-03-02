@@ -144,11 +144,6 @@ tree-sitter-ruby = { workspace = true }
 tree-sitter-php = { workspace = true }
 tree-sitter-swift = { workspace = true }
 
-# CA-EXCEPTION: composition root — mcb-infrastructure wires concrete providers to domain ports
-mcb-providers = { path = "../mcb-providers" }
-
-# CA-EXCEPTION: composition root — validation service implementation needs mcb-validate
-mcb-validate = { path = "../mcb-validate" }
 [features]
 default = []
 test-utils = []

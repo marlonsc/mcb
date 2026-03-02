@@ -9,7 +9,7 @@ use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::{
     DomainEventStream, EventBusProvider, TransitionRepository, WorkflowSessionRepository,
 };
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_providers::workflow::{
     InMemoryTransitionRepository, InMemoryWorkflowSessionRepository, WorkflowEventPublisher,
     WorkflowOrchestrator,

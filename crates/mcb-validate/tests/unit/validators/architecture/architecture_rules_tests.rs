@@ -13,7 +13,7 @@ use crate::utils::test_constants::*;
 #[rstest]
 #[tokio::test]
 async fn test_ca001_rule_loading() {
-    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
     let rules_dir = workspace_root.join("crates/mcb-validate/rules");
 
     assert!(

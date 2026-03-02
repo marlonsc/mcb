@@ -3,7 +3,7 @@
 use rstest::rstest;
 use std::path::Path;
 
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use tokio::fs::write as tokio_write;
 
 use super::common::{create_test_repo, run_git, vcs_provider};
@@ -13,7 +13,7 @@ use super::common::{create_test_repo, run_git, vcs_provider};
 #[case("files")]
 #[tokio::test]
 async fn list_repository_entities(#[case] entity_kind: &str) -> TestResult<()> {
-    let dir = create_test_repo().await?;
+    let dir = create_test_repo()?;
     let provider = vcs_provider()?;
     let repo = provider.open_repository(dir.path()).await?;
 
@@ -40,7 +40,7 @@ async fn commit_history_variants(
     #[case] limit: Option<usize>,
     #[case] expected_min_len: usize,
 ) -> TestResult<()> {
-    let dir = create_test_repo().await?;
+    let dir = create_test_repo()?;
     let provider = vcs_provider()?;
     let repo = provider.open_repository(dir.path()).await?;
 
@@ -64,7 +64,7 @@ async fn read_file_variants(
     #[case] file_name: &str,
     #[case] should_succeed: bool,
 ) -> TestResult<()> {
-    let dir = create_test_repo().await?;
+    let dir = create_test_repo()?;
     let provider = vcs_provider()?;
     let repo = provider.open_repository(dir.path()).await?;
 
@@ -85,7 +85,7 @@ async fn read_file_variants(
 #[rstest]
 #[tokio::test]
 async fn diff_refs() -> TestResult<()> {
-    let dir = create_test_repo().await?;
+    let dir = create_test_repo()?;
 
     tokio_write(dir.path().join("new_file.txt"), "New content\n").await?;
 
@@ -117,7 +117,7 @@ async fn diff_refs() -> TestResult<()> {
 #[rstest]
 #[tokio::test]
 async fn list_branches_skips_invalid_entries() -> TestResult<()> {
-    let dir = create_test_repo().await?;
+    let dir = create_test_repo()?;
     let provider = vcs_provider()?;
     let repo = provider.open_repository(dir.path()).await?;
 

@@ -12,8 +12,8 @@ use mcb_domain::entities::memory::{
     MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
 };
 use mcb_domain::error::Result;
-use mcb_domain::utils::compute_content_hash;
 use mcb_domain::utils::id;
+use mcb_domain::utils::id::compute_content_hash;
 use mcb_domain::value_objects::{CollectionId, ObservationId};
 
 use crate::constants::use_cases::OBSERVATION_PREVIEW_LENGTH;

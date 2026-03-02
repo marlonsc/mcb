@@ -10,13 +10,6 @@
     clippy::uninlined_format_args
 )]
 
-extern crate mcb_infrastructure;
-extern crate mcb_providers;
-
-#[path = "../utils/mod.rs"]
-#[allow(dead_code, unused_imports)]
-mod utils;
-
 mod gap_fixes;
 mod golden_e2e_complete;
 mod golden_highlight_service;

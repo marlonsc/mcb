@@ -36,26 +36,30 @@ fn build_indexing_service_from_registry(
     context: &dyn std::any::Any,
 ) -> Result<Arc<dyn IndexingServiceInterface>> {
     let ctx = context
-        .downcast_ref::<crate::resolution_context::ServiceResolutionContext>()
+        .downcast_ref::<mcb_domain::registry::ServiceResolutionContext>()
         .ok_or_else(|| {
             mcb_domain::error::Error::internal(
                 "Indexing registry builder requires ServiceResolutionContext",
             )
         })?;
 
-    let app_config = &ctx.config;
-    let db = ctx.db.clone();
+    let app_config = ctx
+        .config
+        .downcast_ref::<crate::config::AppConfig>()
+        .ok_or_else(|| {
+            mcb_domain::error::Error::internal(
+                "Indexing service requires AppConfig in resolution context",
+            )
+        })?;
+    let db = Arc::clone(&ctx.db);
 
     let context_service = resolve_context_service(context)?;
     let language_chunker =
         resolve_language_provider(&LanguageProviderConfig::new(LANGUAGE_PROVIDER))?;
 
     // Use "seaorm" — the actual registry provider — not the user-facing config name.
-    let repositories = resolve_database_repositories(
-        DATABASE_PROVIDER,
-        Box::new(db),
-        DEFAULT_NAMESPACE.to_owned(),
-    )?;
+    let repositories =
+        resolve_database_repositories(DATABASE_PROVIDER, db, DEFAULT_NAMESPACE.to_owned())?;
 
     let indexing_ops: Arc<dyn mcb_domain::ports::IndexingOperationsInterface> =
         resolve_indexing_operations_provider(&IndexingOperationsProviderConfig::new(

@@ -1,3 +1,4 @@
+//! Transport layer implementations for the MCB server.
 pub mod http_client;
 pub mod stdio;
 pub mod streamable_http;

@@ -1,11 +1,11 @@
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{ProjectAction, ProjectArgs, ProjectResource};
 use mcb_server::handlers::project::ProjectHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
 fn create_handler() -> TestResult<ProjectHandler> {
-    let state = crate::utils::shared_context::shared_mcb_state()?;
+    let state = crate::utils::test_fixtures::shared_mcb_state()?;
     Ok(ProjectHandler::new(
         state.mcp_server.project_workflow_repository(),
     ))

@@ -1,7 +1,7 @@
-use mcb_domain::test_utils::TestResult;
 use mcb_domain::utils::path::{
     path_to_utf8_string, strict_canonicalize, strict_strip_prefix, workspace_relative_path,
 };
+use mcb_domain::utils::tests::utils::TestResult;
 use rstest::rstest;
 use std::path::{Path, PathBuf};
 

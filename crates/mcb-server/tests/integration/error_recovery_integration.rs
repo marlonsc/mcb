@@ -10,8 +10,7 @@
 //! 3. Invalid configurations fail fast with clear messages
 //! 4. Partial failures don't corrupt state
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
+// Providers are resolved via DI registries in mcb-domain
 
 use std::sync::Arc;
 
@@ -22,7 +21,7 @@ use mcb_domain::value_objects::CollectionId;
 use rstest::rstest;
 
 use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
-use mcb_domain::test_collection::unique_collection;
+use mcb_domain::utils::tests::collection::unique_collection;
 
 // ============================================================================
 // Provider Resolution Error Handling

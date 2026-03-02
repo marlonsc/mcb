@@ -1,9 +1,9 @@
-use crate::utils::test_fixtures::{
-    TEST_ORG_ID_A, TEST_ORG_ID_B, create_test_mcp_server, test_api_key, test_organization,
-    test_team, test_user,
+use crate::utils::test_fixtures::{TEST_ORG_ID_A, TEST_ORG_ID_B, create_test_mcp_server};
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::tests::utils::{
+    create_test_api_key, create_test_organization, create_test_team, create_test_user_with,
 };
-use crate::utils::text::extract_text;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::text::extract_text;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
@@ -30,7 +30,7 @@ fn parse_list_len(text: &str) -> usize {
 }
 
 async fn create_org(server: &mcb_server::mcp_server::McpServer, org_id: &str) {
-    let org = test_organization(org_id);
+    let org = create_test_organization(org_id);
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::Org);
     args.org_id = Some(org_id.to_owned());
     args.data = Some(serde_json::to_value(&org).expect("serialize org"));
@@ -44,7 +44,7 @@ async fn create_user_in_org(
     org_id: &str,
     email: &str,
 ) -> String {
-    let user = test_user(org_id, email);
+    let user = create_test_user_with(org_id, email);
     let user_id = user.id.clone();
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::User);
     args.org_id = Some(org_id.to_owned());
@@ -60,7 +60,7 @@ async fn create_team_in_org(
     org_id: &str,
     name: &str,
 ) -> String {
-    let team = test_team(org_id, name);
+    let team = create_test_team(org_id, name);
     let team_id = team.id.clone();
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::Team);
     args.org_id = Some(org_id.to_owned());
@@ -77,7 +77,7 @@ async fn create_api_key_in_org(
     org_id: &str,
     name: &str,
 ) -> String {
-    let key = test_api_key(user_id, org_id, name);
+    let key = create_test_api_key(user_id, org_id, name);
     let key_id = key.id.clone();
     let mut args = org_args(OrgEntityAction::Create, OrgEntityResource::ApiKey);
     args.org_id = Some(org_id.to_owned());

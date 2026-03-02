@@ -6,13 +6,12 @@
 //! - **Crate creation**:  `create_test_crate`, `create_test_crate_with_file`, etc.
 //! - **Fixture loading**: `copy_fixture_crate`, `setup_fixture_workspace`
 //! - **DRY helpers**:     `with_fixture_crate`, `with_inline_crate`, `with_fixture_workspace`
-//! - **Assertions**:      Re-exported from `mcb_domain::test_assertions`
-#![allow(dead_code)]
+//! - **Assertions**:      Re-exported from `mcb_domain::utils::tests::assertions`
 
 pub mod test_constants;
 
 // Re-export centralized assertion helpers — single source of truth
-pub use mcb_domain::test_assertions::{
+pub use mcb_domain::utils::tests::assertions::{
     assert_has_violation_matching, assert_no_violation_from_file, assert_no_violations,
     assert_violations_exact,
 };
@@ -88,7 +87,7 @@ version = "{DEFAULT_VERSION}"
 // ---------------------------------------------------------------------------
 
 // NOTE: assert_no_violations, assert_has_violation_matching, assert_no_violation_from_file,
-// and assert_violations_exact are now re-exported from mcb_domain::test_assertions above.
+// and assert_violations_exact are now re-exported from mcb_domain::utils::tests::assertions above.
 
 // ---------------------------------------------------------------------------
 // Fixture loading utilities

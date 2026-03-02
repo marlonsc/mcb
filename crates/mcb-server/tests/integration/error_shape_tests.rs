@@ -7,11 +7,11 @@ use mcb_server::handlers::{MemoryHandler, SessionHandler};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::{Value, json};
 
-use crate::utils::domain_services::{create_base_memory_args, create_real_domain_services};
-use crate::utils::invariants::assert_error_shape;
+use crate::utils::test_fixtures::{create_base_memory_args, create_test_mcb_state};
+use mcb_domain::utils::tests::mcp_assertions::assert_error_shape;
 
 async fn memory_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
-    let (state, temp_dir) = create_real_domain_services().await?;
+    let (state, temp_dir) = create_test_mcb_state().await?;
     Some((
         MemoryHandler::new(state.mcp_server.memory_service()),
         temp_dir,
@@ -19,7 +19,7 @@ async fn memory_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
 }
 
 async fn session_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
-    let (state, temp_dir) = create_real_domain_services().await?;
+    let (state, temp_dir) = create_test_mcb_state().await?;
     Some((
         SessionHandler::new(
             state.mcp_server.agent_session_service(),

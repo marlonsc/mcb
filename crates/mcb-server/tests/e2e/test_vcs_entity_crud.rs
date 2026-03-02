@@ -1,5 +1,5 @@
 use crate::utils::test_fixtures::*;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;

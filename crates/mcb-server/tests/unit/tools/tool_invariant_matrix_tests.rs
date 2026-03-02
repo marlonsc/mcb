@@ -1,5 +1,4 @@
 use rstest::rstest;
-extern crate mcb_providers;
 
 use std::sync::Arc;
 
@@ -10,7 +9,7 @@ use rmcp::model::CallToolRequestParams;
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp_str, tools_call_request};
 use crate::utils::test_fixtures::create_test_mcp_server;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
     server.tool_handlers()

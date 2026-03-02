@@ -13,9 +13,6 @@
 //!
 //! Uses real providers (Null/InMemory) for deterministic testing.
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
-
 use std::sync::Arc;
 
 use mcb_domain::entities::CodeChunk;
@@ -24,38 +21,22 @@ use rstest::rstest;
 use serde_json::json;
 
 use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
-use mcb_domain::test_collection::unique_collection;
+use mcb_domain::utils::tests::chunk_fixtures::create_test_chunk;
+use mcb_domain::utils::tests::collection::unique_collection;
 
 /// Create test code chunks for full-stack testing
 fn create_test_chunks() -> Vec<CodeChunk> {
     vec![
-        CodeChunk {
-            id: "full_stack_chunk_1".to_owned(),
-            file_path: "src/config.rs".to_owned(),
-            content: "pub struct AppConfig {
-    pub host: String,
-    pub port: u16,
-}"
-            .to_owned(),
-            start_line: 1,
-            end_line: 4,
-            language: "rust".to_owned(),
-            metadata: json!({"type": "struct", "name": "AppConfig"}),
-        },
-        CodeChunk {
-            id: "full_stack_chunk_2".to_owned(),
-            file_path: "src/main.rs".to_owned(),
-            content: "#[tokio::main]
-async fn main() {
-    let config = TestConfigBuilder::new()?.build()?.0;
-    run_server(&config).await;
-}"
-            .to_owned(),
-            start_line: 1,
-            end_line: 5,
-            language: "rust".to_owned(),
-            metadata: json!({"type": "function", "name": "main"}),
-        },
+        create_test_chunk(
+            "pub struct AppConfig {\n    pub host: String,\n    pub port: u16,\n}",
+            "src/config.rs",
+            1,
+        ),
+        create_test_chunk(
+            "#[tokio::main]\nasync fn main() {\n    let config = TestConfigBuilder::new()?.build()?.0;\n    run_server(&config).await;\n}",
+            "src/main.rs",
+            1,
+        ),
     ]
 }
 

@@ -1,5 +1,5 @@
 use crate::utils::test_fixtures::*;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
@@ -25,7 +25,7 @@ fn result_json(res: &rmcp::model::CallToolResult) -> serde_json::Value {
 }
 
 async fn create_org(server: &mcb_server::mcp_server::McpServer, org_id: &str) {
-    let org = test_organization(org_id);
+    let org = create_test_organization(org_id);
     let payload = serde_json::to_value(&org).expect("serialize org payload");
 
     let mut args = base_args(OrgEntityAction::Create, OrgEntityResource::Org);
@@ -41,7 +41,7 @@ async fn create_user(
     org_id: &str,
     email: &str,
 ) -> serde_json::Value {
-    let user = test_user(org_id, email);
+    let user = create_test_user_with(org_id, email);
     let payload = serde_json::to_value(&user).expect("serialize user payload");
 
     let mut args = base_args(OrgEntityAction::Create, OrgEntityResource::User);
@@ -58,7 +58,7 @@ async fn create_team(
     org_id: &str,
     name: &str,
 ) -> serde_json::Value {
-    let team = test_team(org_id, name);
+    let team = create_test_team(org_id, name);
     let payload = serde_json::to_value(&team).expect("serialize team payload");
 
     let mut args = base_args(OrgEntityAction::Create, OrgEntityResource::Team);
@@ -74,7 +74,7 @@ async fn create_team(
 #[tokio::test]
 async fn golden_org_create_and_get() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
-    let org = test_organization("golden-org-create-get");
+    let org = create_test_organization("golden-org-create-get");
     let payload = serde_json::to_value(&org).expect("serialize org payload");
 
     let mut create_args = base_args(OrgEntityAction::Create, OrgEntityResource::Org);
@@ -141,7 +141,7 @@ async fn golden_org_list() -> TestResult {
 #[tokio::test]
 async fn golden_org_update() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
-    let mut org = test_organization("golden-org-update");
+    let mut org = create_test_organization("golden-org-update");
     create_org(&server, &org.id).await;
 
     org.name = "Golden Org Updated".to_owned();
@@ -180,7 +180,7 @@ async fn golden_org_update() -> TestResult {
 #[tokio::test]
 async fn golden_org_delete() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
-    let org = test_organization("golden-org-delete");
+    let org = create_test_organization("golden-org-delete");
     create_org(&server, &org.id).await;
 
     let mut delete_args = base_args(OrgEntityAction::Delete, OrgEntityResource::Org);
@@ -303,7 +303,7 @@ async fn golden_user_list_by_org() -> TestResult {
 
     let _ = create_user(&server, org_id, "golden-user-list-1@example.com").await;
 
-    let admin_user = test_admin_user(org_id, "golden-user-list-admin@example.com");
+    let admin_user = create_test_admin_user(org_id, "golden-user-list-admin@example.com");
     let mut create_admin_args = base_args(OrgEntityAction::Create, OrgEntityResource::User);
     create_admin_args.org_id = Some(org_id.to_owned());
     create_admin_args.data =
@@ -590,7 +590,7 @@ async fn golden_team_member_add_and_list() -> TestResult {
         .to_owned();
     assert!(!team_id.is_empty(), "created team id must be present");
 
-    let member = test_team_member(&team_id, &user_id);
+    let member = create_test_team_member(&team_id, &user_id);
     let mut add_args = base_args(OrgEntityAction::Create, OrgEntityResource::TeamMember);
     add_args.data = Some(serde_json::to_value(&member).expect("serialize team member payload"));
     let add_result = server
@@ -651,7 +651,7 @@ async fn golden_team_member_remove() -> TestResult {
         .to_owned();
     assert!(!team_id.is_empty(), "created team id must be present");
 
-    let member = test_team_member(&team_id, &user_id);
+    let member = create_test_team_member(&team_id, &user_id);
     let mut add_args = base_args(OrgEntityAction::Create, OrgEntityResource::TeamMember);
     add_args.data = Some(serde_json::to_value(&member).expect("serialize team member payload"));
     let add_result = server

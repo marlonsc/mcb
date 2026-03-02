@@ -3,7 +3,7 @@
 use rstest::rstest;
 use std::path::Path;
 
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 
 use super::common::{create_test_repo, vcs_provider};
 
@@ -27,7 +27,7 @@ fn git_provider_basics(#[case] check_object_safety: bool) {
 #[rstest]
 #[tokio::test]
 async fn open_repository() -> TestResult<()> {
-    let dir = create_test_repo().await?;
+    let dir = create_test_repo()?;
     let provider = vcs_provider()?;
 
     let repo = provider.open_repository(dir.path()).await?;
@@ -54,7 +54,7 @@ async fn open_repository_not_found(#[case] repo_path: &str) {
 #[rstest]
 #[tokio::test]
 async fn repository_id_stable() -> TestResult<()> {
-    let dir = create_test_repo().await?;
+    let dir = create_test_repo()?;
     let provider = vcs_provider()?;
 
     let repo1 = provider.open_repository(dir.path()).await?;

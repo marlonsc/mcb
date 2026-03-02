@@ -7,11 +7,11 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use serde_json::json;
 
-use crate::utils::domain_services::create_real_domain_services;
 use crate::utils::test_fixtures::TEST_SESSION_ID;
+use crate::utils::test_fixtures::create_test_mcb_state;
 
 async fn create_handler() -> Option<(AgentHandler, tempfile::TempDir)> {
-    let (state, temp_dir) = create_real_domain_services().await?;
+    let (state, temp_dir) = create_test_mcb_state().await?;
     Some((
         AgentHandler::new(state.mcp_server.agent_session_service()),
         temp_dir,
@@ -55,7 +55,7 @@ fn build_args(action: AgentAction, session_id: &str, data: serde_json::Value) ->
 #[rstest]
 #[tokio::test]
 async fn test_agent_actions_return_mcp_response(#[case] args: AgentArgs) {
-    let (state, temp_dir) = match create_real_domain_services().await {
+    let (state, temp_dir) = match create_test_mcb_state().await {
         Some(v) => v,
         None => return,
     };

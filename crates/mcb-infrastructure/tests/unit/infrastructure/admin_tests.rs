@@ -2,7 +2,7 @@ use mcb_domain::ports::IndexingOperationsInterface;
 use mcb_domain::registry::admin_operations::{
     IndexingOperationsProviderConfig, resolve_indexing_operations_provider,
 };
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::value_objects::CollectionId;
 use rstest::{fixture, rstest};
 

@@ -6,12 +6,13 @@
 use std::collections::HashMap;
 
 use mcb_domain::constants::keys::{
-    METADATA_KEY_CONTENT, METADATA_KEY_SESSION_ID, METADATA_KEY_TAGS, METADATA_KEY_TYPE,
+    METADATA_KEY_CONTENT, METADATA_KEY_FILE_PATH, METADATA_KEY_SESSION_ID, METADATA_KEY_START_LINE,
+    METADATA_KEY_TAGS, METADATA_KEY_TYPE,
 };
 use mcb_domain::entities::memory::{Observation, ObservationMetadata, ObservationType};
 use mcb_domain::error::Result;
-use mcb_domain::utils::compute_content_hash;
 use mcb_domain::utils::id;
+use mcb_domain::utils::id::compute_content_hash;
 use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::CollectionId;
 
@@ -67,6 +68,23 @@ impl MemoryServiceImpl {
                 serde_json::Value::String(session_id.clone()),
             );
         }
+
+        // Vector stores (Milvus) require file_path and start_line columns
+        // for all vectors. For observations, use the origin file_path if available,
+        // otherwise default to "memory" sentinel so the insert doesn't fail.
+        vector_metadata.insert(
+            METADATA_KEY_FILE_PATH.to_owned(),
+            serde_json::Value::String(
+                metadata
+                    .file_path
+                    .clone()
+                    .unwrap_or_else(|| "memory".to_owned()),
+            ),
+        );
+        vector_metadata.insert(
+            METADATA_KEY_START_LINE.to_owned(),
+            serde_json::Value::Number(serde_json::Number::from(0)),
+        );
 
         let collection_id =
             CollectionId::from_uuid(id::deterministic("collection", MEMORY_COLLECTION_NAME));

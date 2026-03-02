@@ -417,7 +417,7 @@ fn test_clippy_real_execution() {
             "-W",
             "clippy::all",
         ])
-        .current_dir(mcb_domain::test_utils::workspace_root().unwrap())
+        .current_dir(mcb_domain::utils::tests::utils::workspace_root().unwrap())
         .output()
         .expect("Failed to execute cargo clippy");
 

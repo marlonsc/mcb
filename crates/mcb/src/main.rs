@@ -1,4 +1,3 @@
-#![allow(missing_docs)]
 extern crate mcb_providers;
 
 use clap::{Parser, Subcommand};

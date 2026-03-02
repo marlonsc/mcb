@@ -5,7 +5,7 @@ use std::collections::BTreeSet;
 use std::error::Error;
 use std::path::PathBuf;
 
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_validate::EmbeddedRules;
 use mcb_validate::FileConfig;
 use mcb_validate::rules::yaml_loader::YamlRuleLoader;
@@ -14,7 +14,7 @@ use tempfile::TempDir;
 
 #[fixture]
 fn workspace_root() -> Result<PathBuf, Box<dyn Error>> {
-    mcb_domain::test_utils::workspace_root()
+    mcb_domain::utils::tests::utils::workspace_root()
 }
 
 #[fixture]

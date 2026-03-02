@@ -1,9 +1,7 @@
-#![allow(missing_docs)]
-
 use std::sync::Arc;
 
 use mcb_domain::ports::AgentEventRepository;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_providers::database::seaorm::entities::{agent_session, delegation, tool_call};
 use mcb_providers::database::seaorm::repos::agent::SeaOrmAgentRepository;
 use rstest::rstest;

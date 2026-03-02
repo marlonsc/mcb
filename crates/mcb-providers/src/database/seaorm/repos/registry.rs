@@ -21,7 +21,7 @@ use crate::database::seaorm::repos::{
 ///
 /// Returns an error when the boxed connection is not a `sea_orm::DatabaseConnection`.
 fn create_seaorm_repositories(
-    connection: Box<dyn Any + Send + Sync>,
+    connection: Arc<dyn Any + Send + Sync>,
     project_id: String,
 ) -> mcb_domain::error::Result<DatabaseRepositories> {
     let db = connection.downcast::<DatabaseConnection>().map_err(|_| {
@@ -29,7 +29,7 @@ fn create_seaorm_repositories(
             "Expected sea_orm::DatabaseConnection but received different type",
         )
     })?;
-    let db = Arc::new(*db);
+    let db = db;
 
     let observation_repo = SeaOrmObservationRepository::new((*db).clone());
     let agent_repo = SeaOrmAgentRepository::new(Arc::clone(&db));
@@ -58,7 +58,7 @@ static SEAORM_REPOS: DatabaseRepositoryEntry = DatabaseRepositoryEntry {
     description: "SeaORM database repositories (SQLite, PostgreSQL, MySQL)",
     build: create_seaorm_repositories
         as fn(
-            Box<dyn Any + Send + Sync>,
+            Arc<dyn Any + Send + Sync>,
             String,
         ) -> mcb_domain::error::Result<DatabaseRepositories>,
 };

@@ -22,6 +22,8 @@ pub mod project_type;
 pub mod sensitivity;
 /// Submodule path helpers.
 pub mod submodule;
+/// MCP text extraction utilities (extract_text, extract_text_with_sep).
+pub mod text;
 /// Canonical time utilities — strict, no fallbacks.
 pub mod time;
 /// VCS context data types for memory observations.
@@ -30,36 +32,3 @@ pub mod vcs_context;
 #[cfg(any(test, feature = "test-utils"))]
 /// Test infrastructure — fixtures, constants, service-config helpers.
 pub mod tests;
-
-// Re-export test submodules at their expected paths for backward compatibility.
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::assertions as test_assertions;
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::collection as test_collection;
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::fs_scan as test_fs_scan;
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::guards as test_guards;
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::json_helpers as test_json_helpers;
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::mcp_assertions as test_mcp_assertions;
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::search_fixtures as test_search_fixtures;
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::service_detection as test_service_detection;
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::services_config as test_services_config;
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::sync_helpers as test_sync_helpers;
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::timeouts as test_timeouts;
-#[cfg(any(test, feature = "test-utils"))]
-pub use tests::utils as test_utils;
-
-pub use fs::find_files_by_extensions;
-pub use id::{compute_content_hash, compute_file_hash, correlate_id, mask_id};
-pub use naming::{
-    get_suffix, is_camel_case, is_screaming_snake_case, is_snake_case, split_camel_case,
-};
-pub use sensitivity::{REDACTED, Sensitive};

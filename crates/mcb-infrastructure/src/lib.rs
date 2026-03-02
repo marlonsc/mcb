@@ -29,24 +29,14 @@
 
 // Clippy allows for complex patterns in infrastructure code
 
-#[macro_use]
-pub(crate) mod macros;
 pub mod config;
 pub mod constants;
 pub mod crypto;
 pub mod infrastructure;
 
-pub mod logging;
 pub mod project;
 pub mod routing;
 pub mod services;
-pub mod utils;
 pub mod validation;
 
-mod exports;
-pub use exports::*;
 pub mod events;
-/// Repository trait re-exports for infrastructure consumers.
-pub mod repositories;
-/// DI resolution context for service factory functions.
-pub mod resolution_context;

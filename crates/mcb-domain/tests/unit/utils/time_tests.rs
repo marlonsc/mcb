@@ -1,4 +1,4 @@
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::utils::time::{epoch_nanos_u128, epoch_secs_i64, epoch_secs_u64};
 use rstest::rstest;
 

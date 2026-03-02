@@ -83,7 +83,12 @@ pub use validation::{
     VALIDATION_PROVIDERS, VALIDATOR_ENTRIES, ValidationProviderConfig, ValidatorEntry,
     build_validators, list_validator_entries, list_validator_names, run_validators,
 };
+/// Hybrid search provider registry.
+pub mod hybrid_search;
+/// DI resolution context (opaque DB/config, domain ports).
+pub mod resolution_context;
 /// VCS provider registry.
 pub mod vcs;
 /// Vector store provider registry.
 pub mod vector_store;
+pub use resolution_context::ServiceResolutionContext;

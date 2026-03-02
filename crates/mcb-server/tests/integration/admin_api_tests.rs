@@ -1,6 +1,6 @@
 //! Admin API controller integration tests (T6: Health, T7: Jobs, T8: Collections).
 //!
-//! Tests use `create_real_domain_services()` to build a full `McbState` with real
+//! Tests use `create_test_mcb_state()` to build a full `McbState` with real
 //! `SQLite` database, `FastEmbed` embeddings, and in-memory vector store. This matches
 //! the existing handler integration test pattern.
 
@@ -8,7 +8,7 @@ use axum::extract::Extension;
 use http_body_util::BodyExt;
 use serde_json::Value;
 
-use crate::utils::domain_services::create_real_domain_services;
+use crate::utils::test_fixtures::create_test_mcb_state;
 use rstest::rstest;
 
 // ---------------------------------------------------------------------------
@@ -34,7 +34,7 @@ async fn json_body(
 #[rstest]
 #[tokio::test]
 async fn test_health_endpoint_returns_json_with_status() -> Result<(), Box<dyn std::error::Error>> {
-    let Some((state, _tmp)) = create_real_domain_services().await else {
+    let Some((state, _tmp)) = create_test_mcb_state().await else {
         return Ok(()); // skip if providers not available
     };
 
@@ -55,7 +55,7 @@ async fn test_health_endpoint_returns_json_with_status() -> Result<(), Box<dyn s
 #[tokio::test]
 async fn test_health_endpoint_includes_provider_metadata() -> Result<(), Box<dyn std::error::Error>>
 {
-    let Some((state, _tmp)) = create_real_domain_services().await else {
+    let Some((state, _tmp)) = create_test_mcb_state().await else {
         return Ok(());
     };
 
@@ -89,7 +89,7 @@ async fn test_health_endpoint_includes_provider_metadata() -> Result<(), Box<dyn
 #[tokio::test]
 async fn test_health_endpoint_provider_name_is_nonempty() -> Result<(), Box<dyn std::error::Error>>
 {
-    let Some((state, _tmp)) = create_real_domain_services().await else {
+    let Some((state, _tmp)) = create_test_mcb_state().await else {
         return Ok(());
     };
 
@@ -108,7 +108,7 @@ async fn test_health_endpoint_provider_name_is_nonempty() -> Result<(), Box<dyn 
 #[rstest]
 #[tokio::test]
 async fn test_jobs_endpoint_returns_empty_operations() -> Result<(), Box<dyn std::error::Error>> {
-    let Some((state, _tmp)) = create_real_domain_services().await else {
+    let Some((state, _tmp)) = create_test_mcb_state().await else {
         return Ok(());
     };
 
@@ -126,7 +126,7 @@ async fn test_jobs_endpoint_returns_empty_operations() -> Result<(), Box<dyn std
 #[rstest]
 #[tokio::test]
 async fn test_jobs_endpoint_json_structure() -> Result<(), Box<dyn std::error::Error>> {
-    let Some((state, _tmp)) = create_real_domain_services().await else {
+    let Some((state, _tmp)) = create_test_mcb_state().await else {
         return Ok(());
     };
 
@@ -153,7 +153,7 @@ async fn test_jobs_endpoint_json_structure() -> Result<(), Box<dyn std::error::E
 #[rstest]
 #[tokio::test]
 async fn test_jobs_total_matches_operations_count() -> Result<(), Box<dyn std::error::Error>> {
-    let Some((state, _tmp)) = create_real_domain_services().await else {
+    let Some((state, _tmp)) = create_test_mcb_state().await else {
         return Ok(());
     };
 
@@ -183,7 +183,7 @@ async fn test_jobs_total_matches_operations_count() -> Result<(), Box<dyn std::e
 #[rstest]
 #[tokio::test]
 async fn test_collections_endpoint_returns_list() -> Result<(), Box<dyn std::error::Error>> {
-    let Some((state, _tmp)) = create_real_domain_services().await else {
+    let Some((state, _tmp)) = create_test_mcb_state().await else {
         return Ok(());
     };
 
@@ -200,7 +200,7 @@ async fn test_collections_endpoint_returns_list() -> Result<(), Box<dyn std::err
 #[tokio::test]
 async fn test_collections_endpoint_graceful_on_fresh_server()
 -> Result<(), Box<dyn std::error::Error>> {
-    let Some((state, _tmp)) = create_real_domain_services().await else {
+    let Some((state, _tmp)) = create_test_mcb_state().await else {
         return Ok(());
     };
 

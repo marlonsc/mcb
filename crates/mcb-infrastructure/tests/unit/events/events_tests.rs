@@ -6,7 +6,7 @@
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::EventBusProvider;
 use mcb_domain::registry::events::{EventBusProviderConfig, resolve_event_bus_provider};
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use rstest::{fixture, rstest};
 use std::sync::Arc;
 

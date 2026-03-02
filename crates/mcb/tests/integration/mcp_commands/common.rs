@@ -16,8 +16,8 @@ use std::sync::{Arc, Mutex, OnceLock};
 use tokio::process::Command;
 use tokio::time::{Duration, timeout};
 
-pub use mcb_domain::test_mcp_assertions::{assert_tool_error, extract_text, is_error};
-pub use mcb_domain::test_utils::TestResult;
+pub use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
+pub use mcb_domain::utils::tests::utils::TestResult;
 
 /// Per-operation timeout -- prevents any single MCP call or shutdown from hanging.
 const OP_TIMEOUT: Duration = Duration::from_secs(10);

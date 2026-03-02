@@ -1,10 +1,8 @@
-#![allow(missing_docs)]
-
 use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 use sea_orm_migration::MigratorTrait;
 
-use mcb_domain::test_utils::TestResult;
-use mcb_providers::migration::Migrator;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_providers::database::seaorm::migration::Migrator;
 use rstest::rstest;
 
 async fn query_names(db: &DatabaseConnection, sql: &str) -> TestResult<Vec<String>> {

@@ -4,13 +4,13 @@ use mcb_server::handlers::SessionHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::utils::domain_services::create_real_domain_services;
 use crate::utils::test_fixtures::TEST_PROJECT_ID;
-use crate::utils::text::extract_text;
+use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::utils::text::extract_text;
 use rstest::rstest;
 
 async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
-    let (state, temp_dir) = create_real_domain_services().await?;
+    let (state, temp_dir) = create_test_mcb_state().await?;
     Some((
         SessionHandler::new(
             state.mcp_server.agent_session_service(),

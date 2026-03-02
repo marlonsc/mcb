@@ -7,7 +7,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use tempfile::TempDir;
 
-use crate::utils::domain_services::create_real_domain_services;
+use crate::utils::test_fixtures::create_test_mcb_state;
 
 fn create_temp_file() -> Result<(TempDir, PathBuf), std::io::Error> {
     let temp_dir = TempDir::new()?;
@@ -34,7 +34,7 @@ macro_rules! validate_test {
         #[rstest]
         #[tokio::test]
         async fn $test_name() {
-            let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
                 return;
             };
             let handler = ValidateHandler::new(state.mcp_server.validation_service());
@@ -62,7 +62,7 @@ macro_rules! validate_test {
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
             let (_temp_dir, path) = $path_expr?;
-            let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
                 return Ok(());
             };
             let handler = ValidateHandler::new(state.mcp_server.validation_service());
@@ -87,7 +87,7 @@ macro_rules! validate_test {
         #[rstest]
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
-            let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
                 return Ok(());
             };
             let handler = ValidateHandler::new(state.mcp_server.validation_service());
@@ -114,7 +114,7 @@ macro_rules! validate_test {
         #[tokio::test]
         async fn $test_name() -> Result<(), Box<dyn std::error::Error>> {
             let (_temp_dir, path) = $path_expr?;
-            let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
+            let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
                 return Ok(());
             };
             let handler = ValidateHandler::new(state.mcp_server.validation_service());
@@ -186,7 +186,7 @@ validate_test!(
 #[tokio::test]
 async fn test_validate_run_with_specific_rules() -> Result<(), Box<dyn std::error::Error>> {
     let (_temp_dir, path) = create_temp_file()?;
-    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
         return Ok(());
     };
     let handler = ValidateHandler::new(state.mcp_server.validation_service());
@@ -217,7 +217,7 @@ async fn test_validate_run_with_specific_rules() -> Result<(), Box<dyn std::erro
 async fn test_validate_list_rules(
     #[case] category: Option<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let Some((state, _services_temp_dir)) = create_real_domain_services().await else {
+    let Some((state, _services_temp_dir)) = create_test_mcb_state().await else {
         return Ok(());
     };
     let handler = ValidateHandler::new(state.mcp_server.validation_service());

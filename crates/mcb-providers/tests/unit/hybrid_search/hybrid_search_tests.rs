@@ -5,36 +5,14 @@
 use mcb_domain::constants::search::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::ports::HybridSearchProvider;
+use mcb_domain::utils::tests::chunk_fixtures::create_test_chunk;
+use mcb_domain::utils::tests::search_fixtures::create_test_search_result;
 use mcb_domain::value_objects::SearchResult;
 use mcb_providers::hybrid_search::{BM25Params, BM25Scorer, HybridSearchEngine};
 use rstest::rstest;
 
-// ============================================================================
-// Test Helpers
-// ============================================================================
-
-fn create_test_chunk(content: &str, file_path: &str, start_line: u32) -> CodeChunk {
-    CodeChunk {
-        id: format!("{file_path}:{start_line}"),
-        content: content.to_owned(),
-        file_path: file_path.to_owned(),
-        start_line,
-        end_line: start_line + content.lines().count() as u32,
-        language: "Rust".to_owned(),
-        metadata: serde_json::json!({}),
-    }
-}
-
-fn create_test_search_result(file_path: &str, start_line: u32, score: f64) -> SearchResult {
-    SearchResult {
-        id: format!("{file_path}:{start_line}"),
-        content: format!("Content of {file_path}:{start_line}"),
-        file_path: file_path.to_owned(),
-        start_line,
-        score,
-        language: "Rust".to_owned(),
-    }
-}
+// Test helpers now centralized in mcb_domain::utils::tests::chunk_fixtures and
+// mcb_domain::utils::tests::search_fixtures.
 
 // ============================================================================
 // BM25 Scorer Tests
@@ -194,8 +172,8 @@ async fn test_hybrid_search() -> Result<(), Box<dyn std::error::Error>> {
     // Semantic results: data.rs has slightly higher semantic score
     // But auth.rs has much better BM25 match for the query
     let semantic_results = vec![
-        create_test_search_result("auth.rs", 1, 0.7), // Lower semantic
-        create_test_search_result("data.rs", 1, 0.75), // Higher semantic
+        create_test_search_result("auth.rs", "Content of auth.rs:1", 0.7, 1), // Lower semantic
+        create_test_search_result("data.rs", "Content of data.rs:1", 0.75, 1), // Higher semantic
     ];
 
     // Query matches auth.rs content perfectly
@@ -226,8 +204,8 @@ async fn search_without_index(#[case] limit: usize) -> Result<(), Box<dyn std::e
 
     // Search without indexing should return semantic results as-is
     let semantic_results = vec![
-        create_test_search_result("a.rs", 1, 0.9),
-        create_test_search_result("b.rs", 1, 0.8),
+        create_test_search_result("a.rs", "Content of a.rs:1", 0.9, 1),
+        create_test_search_result("b.rs", "Content of b.rs:1", 0.8, 1),
     ];
 
     let results = engine

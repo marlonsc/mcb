@@ -14,7 +14,7 @@ use rstest::rstest;
 #[tokio::test]
 async fn test_ca001_detects_mcb_domain_violations() {
     let mut engine = ReteEngine::new();
-    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
 
     let context = RuleContext {
         workspace_root: workspace_root.clone(),
@@ -56,7 +56,7 @@ rule "DomainIndependence" salience 10 {
 #[tokio::test]
 async fn test_ca001_allows_clean_dependencies() {
     let mut engine = ReteEngine::new();
-    let workspace_root = mcb_domain::test_utils::workspace_root().unwrap();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
 
     let context = RuleContext {
         workspace_root: workspace_root.clone(),

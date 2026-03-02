@@ -49,3 +49,9 @@ pub mod json_helpers;
 
 /// MCP `CallToolResult` assertion helpers (error_text, is_error, assert_error_shape, etc.).
 pub mod mcp_assertions;
+
+/// `CodeChunk` test fixture builders.
+pub mod chunk_fixtures;
+
+/// Git test repository helpers (create_test_repo, run_git).
+pub mod git_helpers;

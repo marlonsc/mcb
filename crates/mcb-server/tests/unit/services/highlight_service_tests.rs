@@ -5,9 +5,9 @@ use std::time::Instant;
 use mcb_domain::error::Error;
 use mcb_domain::ports::{HighlightError, HighlightServiceInterface};
 use mcb_domain::registry::services::resolve_highlight_service;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::value_objects::browse::HighlightCategory;
-use mcb_infrastructure::services::highlight_service::map_highlight_to_category;
+use mcb_domain::value_objects::browse::map_highlight_to_category;
 use rstest::{fixture, rstest};
 
 #[fixture]

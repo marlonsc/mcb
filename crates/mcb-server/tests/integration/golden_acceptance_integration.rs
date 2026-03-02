@@ -11,10 +11,9 @@
 //! 3. Search returns results matching `expected_files`
 //! 4. The architecture works end-to-end without external dependencies
 //!
-//! Uses `extern crate mcb_providers` to force linkme registration.
+//! Uses DI registries in mcb-domain for provider resolution.
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
+// Providers are resolved via DI registries in mcb-domain
 
 use std::collections::HashMap;
 use std::fs;
@@ -28,7 +27,7 @@ use rstest::rstest;
 use serde_json::json;
 
 use crate::utils::test_fixtures::shared_app_context;
-use mcb_domain::test_collection::unique_collection;
+use mcb_domain::utils::tests::collection::unique_collection;
 
 /// Test query structure matching the JSON fixture format
 #[derive(Debug, Clone, serde::Deserialize)]

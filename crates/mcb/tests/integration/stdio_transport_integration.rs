@@ -10,7 +10,7 @@
 //!
 //! Run with: `cargo test -p mcb --test integration stdio_transport`
 
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use rmcp::ServiceExt;
 use rmcp::transport::child_process::TokioChildProcess;
 use rstest::rstest;

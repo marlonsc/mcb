@@ -1,6 +1,6 @@
 use mcb_server::transport::http_client::HttpClientTransport;
 
-use mcb_domain::test_timeouts::TEST_TIMEOUT;
+use mcb_domain::utils::tests::timeouts::TEST_TIMEOUT;
 
 #[rstest]
 #[test]

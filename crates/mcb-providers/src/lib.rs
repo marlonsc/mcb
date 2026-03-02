@@ -35,9 +35,6 @@
 //! ```
 //!
 
-mod exports;
-pub use exports::*;
-
 /// Centralized macros for provider implementations (embedding, language, vector_store).
 #[macro_use]
 pub mod macros;

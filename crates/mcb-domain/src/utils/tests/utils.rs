@@ -10,7 +10,7 @@
 ///
 /// # Example
 /// ```rust,ignore
-/// use mcb_domain::test_utils::TestResult;
+/// use mcb_domain::utils::tests::utils::TestResult;
 ///
 /// #[test]
 /// fn my_test() -> TestResult {
@@ -32,7 +32,7 @@ pub type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 ///
 /// # Example
 /// ```rust,ignore
-/// use mcb_domain::test_utils::workspace_root;
+/// use mcb_domain::utils::tests::utils::workspace_root;
 ///
 /// let root = workspace_root()?;
 /// assert!(root.join("Cargo.toml").exists());

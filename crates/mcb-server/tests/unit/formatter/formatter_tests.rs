@@ -7,7 +7,9 @@ use mcb_domain::ports::{IndexingResult, IndexingStatus};
 use mcb_server::formatter::ResponseFormatter;
 use rstest::rstest;
 
-use mcb_domain::test_search_fixtures::{create_test_search_result, create_test_search_results};
+use mcb_domain::utils::tests::search_fixtures::{
+    create_test_search_result, create_test_search_results,
+};
 
 fn build_indexing_result(
     files_processed: usize,

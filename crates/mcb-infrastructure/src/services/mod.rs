@@ -18,7 +18,6 @@
 
 pub mod agent_session_service;
 pub mod context_service;
-pub mod highlight_renderer;
 pub mod highlight_service;
 pub mod indexing_service;
 pub mod memory_service;

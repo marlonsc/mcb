@@ -139,7 +139,7 @@ static CONTEXT_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEnt
     name: CONTEXT_SERVICE_NAME,
     build: ServiceBuilder::Context(|context| {
         let ctx = context
-            .downcast_ref::<crate::resolution_context::ServiceResolutionContext>()
+            .downcast_ref::<mcb_domain::registry::ServiceResolutionContext>()
             .ok_or_else(|| {
                 mcb_domain::error::Error::internal(
                     "Context service builder requires ServiceResolutionContext",

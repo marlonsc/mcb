@@ -6,14 +6,14 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::*;
 use serde_json::json;
 
-use crate::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text;
 
-use crate::utils::domain_services::create_base_memory_args;
-use crate::utils::domain_services::create_real_domain_services;
+use crate::utils::test_fixtures::create_base_memory_args;
+use crate::utils::test_fixtures::create_test_mcb_state;
 use crate::utils::test_fixtures::{TEST_PROJECT_ID, TEST_SESSION_ID};
 
 async fn create_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
-    let (state, temp_dir) = create_real_domain_services().await?;
+    let (state, temp_dir) = create_test_mcb_state().await?;
     Some((
         MemoryHandler::new(state.mcp_server.memory_service()),
         temp_dir,

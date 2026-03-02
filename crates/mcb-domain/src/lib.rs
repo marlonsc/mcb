@@ -63,31 +63,6 @@ pub mod infra;
 pub mod ports;
 /// Provider auto-registration registry
 pub mod registry;
-
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_assertions;
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_collection;
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_fs_scan;
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_guards;
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_json_helpers;
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_mcp_assertions;
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_search_fixtures;
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_service_detection;
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_services_config;
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_sync_helpers;
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_timeouts;
-#[cfg(any(test, feature = "test-utils"))]
-pub use utils::test_utils;
 /// Common utilities
 pub mod utils;
 /// Immutable value objects
@@ -98,5 +73,4 @@ pub use constants::values::*;
 pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};
-pub use utils::{compute_content_hash, project_type, vcs_context};
 pub use value_objects::*;

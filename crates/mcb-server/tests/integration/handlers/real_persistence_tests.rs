@@ -18,8 +18,9 @@ use rstest::rstest;
 use serde_json::json;
 
 use crate::utils::test_fixtures::create_test_mcp_server;
-use crate::utils::text::{extract_text, parse_count_from_json_text};
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::json_helpers::parse_count_from_json_text;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text;
 
 async fn list_observation_count(
     memory_h: &mcb_server::handlers::MemoryHandler,

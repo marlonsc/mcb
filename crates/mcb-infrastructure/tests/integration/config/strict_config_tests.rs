@@ -1,12 +1,10 @@
-#![allow(unsafe_code)]
-
 use std::env;
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use mcb_domain::error::{Error, Result as DomainResult};
-use mcb_domain::test_fs_scan::scan_rs_files;
-use mcb_domain::test_utils::workspace_root;
+use mcb_domain::utils::tests::fs_scan::scan_rs_files;
+use mcb_domain::utils::tests::utils::workspace_root;
 use mcb_infrastructure::config::{AppConfig, validate_app_config};
 use rstest::rstest;
 use tempfile::TempDir;

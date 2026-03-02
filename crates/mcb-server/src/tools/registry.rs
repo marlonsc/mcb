@@ -1,6 +1,5 @@
 //! Registry-backed tool definitions and dispatch for MCP protocol.
 // linkme distributed_slice uses #[link_section] internally
-#![allow(unsafe_code)]
 
 use std::borrow::Cow;
 use std::collections::HashSet;
@@ -38,6 +37,7 @@ pub struct ToolDescriptor {
     pub call: ToolCallFn,
 }
 
+#[allow(unsafe_code)]
 #[linkme::distributed_slice]
 /// All registered tool descriptors.
 pub static TOOL_DESCRIPTORS: [ToolDescriptor];
@@ -57,6 +57,7 @@ macro_rules! register_tool {
                 handlers.$handler.handle(Parameters(args)).await
             })
         }
+        #[allow(unsafe_code)]
         #[linkme::distributed_slice(TOOL_DESCRIPTORS)]
         static $descriptor: ToolDescriptor = ToolDescriptor {
             name: $name,

@@ -1,14 +1,12 @@
-#![allow(missing_docs)]
-
 use mcb_domain::entities::Project;
 use mcb_domain::entities::project::{
     DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus, ProjectDecision,
     ProjectDependency, ProjectIssue, ProjectPhase,
 };
 use mcb_domain::ports::ProjectRepository;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::project::SeaOrmProjectRepository;
-use mcb_providers::migration::Migrator;
 use rstest::rstest;
 use sea_orm::{ConnectionTrait, Database, DatabaseConnection};
 use sea_orm_migration::MigratorTrait;

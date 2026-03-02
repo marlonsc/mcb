@@ -1,6 +1,6 @@
 use std::fs;
 
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_validate::{DependencyValidator, DependencyViolation};
 use rstest::*;
 use tempfile::TempDir;

@@ -2,8 +2,6 @@
 //!
 //! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
 
-#![allow(missing_docs)]
-
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
@@ -28,32 +26,31 @@ use crate::value_objects::{EmbeddingConfig, VectorStoreConfig};
 // Analysis
 // ============================================================================
 
-/// Complexity finding for a single function.
+/// Unified analysis finding - all code analysis results use this type.
 #[derive(Debug, Clone)]
-pub struct ComplexityFinding {
-    pub file: PathBuf,
-    pub function: String,
-    pub complexity: u32,
+pub enum AnalysisFinding {
+    /// High cyclomatic complexity in a function.
+    Complexity {
+        file: PathBuf,
+        function: String,
+        complexity: u32,
+    },
+    /// Dead code symbol detected.
+    DeadCode {
+        file: PathBuf,
+        line: usize,
+        item_type: String,
+        name: String,
+    },
+    /// Technical debt gradient score for a file.
+    TechnicalDebt { file: PathBuf, score: u32 },
 }
 
-/// Dead code finding for a single symbol.
-#[derive(Debug, Clone)]
-pub struct DeadCodeFinding {
-    pub file: PathBuf,
-    pub line: usize,
-    pub item_type: String,
-    pub name: String,
-}
-
-/// TDG finding for a single file.
-#[derive(Debug, Clone)]
-pub struct TdgFinding {
-    pub file: PathBuf,
-    pub score: u32,
-}
-
-/// Complexity analysis provider.
-pub trait ComplexityAnalyzer: Send + Sync {
+/// Unified code analysis provider.
+///
+/// Covers complexity analysis, dead code detection, and technical debt scoring.
+/// Implementations register via the `CODE_ANALYZERS` linkme distributed slice.
+pub trait CodeAnalyzer: Send + Sync {
     /// Analyze code complexity in the workspace.
     ///
     /// # Errors
@@ -62,25 +59,71 @@ pub trait ComplexityAnalyzer: Send + Sync {
         &self,
         workspace_root: &Path,
         threshold: u32,
-    ) -> Result<Vec<ComplexityFinding>>;
-}
+    ) -> Result<Vec<AnalysisFinding>>;
 
-/// Dead code detection provider.
-pub trait DeadCodeDetector: Send + Sync {
     /// Detect dead code symbols in the workspace.
     ///
     /// # Errors
     /// Returns an error if workspace scanning fails.
-    fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<DeadCodeFinding>>;
-}
+    fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<AnalysisFinding>>;
 
-/// Technical Debt Gradient scoring provider.
-pub trait TdgScorer: Send + Sync {
     /// Calculate technical debt gradient scores for workspace files.
     ///
     /// # Errors
     /// Returns an error if workspace scanning or scoring fails.
-    fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<TdgFinding>>;
+    fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<AnalysisFinding>>;
+}
+
+/// Registry entry for code analyzers.
+pub struct CodeAnalyzerEntry {
+    pub name: &'static str,
+    pub description: &'static str,
+    pub build: fn() -> Result<Arc<dyn CodeAnalyzer>>,
+}
+
+#[linkme::distributed_slice]
+pub static CODE_ANALYZERS: [CodeAnalyzerEntry] = [..];
+
+/// Resolve a code analyzer by name from the registry.
+///
+/// # Errors
+/// Returns an error if the named analyzer is not registered or its build function fails.
+pub fn resolve_code_analyzer(name: &str) -> Result<std::sync::Arc<dyn CodeAnalyzer>> {
+    for entry in CODE_ANALYZERS.iter() {
+        if entry.name == name {
+            return (entry.build)().map_err(|e| {
+                crate::error::Error::configuration(format!("code analyzer '{}': {}", name, e))
+            });
+        }
+    }
+
+    let available: Vec<&str> = CODE_ANALYZERS.iter().map(|e| e.name).collect();
+    Err(crate::error::Error::configuration(format!(
+        "Unknown code analyzer '{}'. Available: {:?}",
+        name, available
+    )))
+}
+
+/// Resolve the first available code analyzer from the registry.
+///
+/// # Errors
+/// Returns an error if no analyzers are registered or the build function fails.
+pub fn resolve_default_code_analyzer() -> Result<std::sync::Arc<dyn CodeAnalyzer>> {
+    let entry = CODE_ANALYZERS.iter().next().ok_or_else(|| {
+        crate::error::Error::configuration("No code analyzers registered".to_owned())
+    })?;
+    (entry.build)().map_err(|e| {
+        crate::error::Error::configuration(format!("code analyzer '{}': {}", entry.name, e))
+    })
+}
+
+/// List all registered code analyzers as `(name, description)` pairs.
+#[must_use]
+pub fn list_code_analyzers() -> Vec<(&'static str, &'static str)> {
+    CODE_ANALYZERS
+        .iter()
+        .map(|e| (e.name, e.description))
+        .collect()
 }
 
 // ============================================================================

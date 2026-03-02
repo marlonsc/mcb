@@ -12,9 +12,9 @@ use crate::utils::test_fixtures::{
     GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, golden_content_to_string,
     golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
 };
-use crate::utils::text::extract_text;
-use mcb_domain::test_timeouts::TEST_TIMEOUT;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::timeouts::TEST_TIMEOUT;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text;
 
 fn index_args(action: IndexAction, path: Option<String>, collection: Option<String>) -> IndexArgs {
     IndexArgs {
