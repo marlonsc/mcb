@@ -1,12 +1,12 @@
 //!
 //! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
 //!
-use mcb_domain::constants::keys as schema;
+use mcb_utils::constants::keys as schema;
 use std::sync::Arc;
 
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
 use mcb_domain::ports::AgentSessionServiceInterface;
-use mcb_domain::utils::id as domain_id;
+use mcb_utils::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde::Deserialize;
@@ -66,7 +66,7 @@ pub async fn create_session(
             ));
         }
     };
-    let now = mcb_domain::utils::time::epoch_secs_i64()
+    let now = mcb_utils::utils::time::epoch_secs_i64()
         .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
     let session_id = domain_id::generate().to_string();
     let session_summary_id = payload

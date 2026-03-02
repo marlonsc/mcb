@@ -12,10 +12,10 @@
 
 use std::sync::Arc;
 
-use mcb_domain::constants::search::SEARCH_OVERFETCH_MULTIPLIER;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{ContextServiceInterface, SearchFilters, SearchServiceInterface};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
+use mcb_utils::constants::search::SEARCH_OVERFETCH_MULTIPLIER;
 
 /// Implementation of the `SearchServiceInterface`.
 ///

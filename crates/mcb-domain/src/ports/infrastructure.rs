@@ -140,7 +140,7 @@ pub trait LifecycleManaged: Send + Sync {
             },
             message: None,
             latency_ms: None,
-            last_check: crate::utils::time::epoch_secs_u64().unwrap_or(0),
+            last_check: mcb_utils::utils::time::epoch_secs_u64().unwrap_or(0),
         }
     }
 }

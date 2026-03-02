@@ -5,7 +5,7 @@
 **Status**: Baseline Documentation
 **Last Updated**: 2026-02-14
 
-This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 6 workspace crates.
+This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 7 workspace crates.
 
 ---
 
@@ -53,11 +53,12 @@ This release applies architecture optimization only (no net-new features).
 
 ## Crate Structure
 
-MCB follows a layered architecture across 6 Cargo workspace crates:
+MCB follows a layered architecture across 7 Cargo workspace crates:
 
 ```text
 crates/
 ├── mcb/                 # Facade (re-exports public API)
+├── mcb-utils/           # Layer 0: Pure utilities, constants (innermost)
 ├── mcb-domain/          # Layer 1: Entities, ports (traits), errors
 ├── mcb-providers/       # Layer 2: Provider implementations
 ├── mcb-infrastructure/  # Layer 3: DI, config, health, logging
@@ -69,12 +70,53 @@ crates/
 ### Dependency Direction (Inward Only)
 
 ```text
-mcb-server → mcb-infrastructure → mcb-providers → mcb-domain
+mcb-server → mcb-infrastructure → mcb-providers → mcb-domain → mcb-utils
 ```
 
 **Critical Rule**: Dependencies ALWAYS point inward. Outer layers depend on inner layers, never the reverse.
 
 ---
+### Layer 0: mcb-utils (Utilities)
+
+**Purpose**: Pure shared utilities and project-wide constants (SSOT)
+
+#### Allowed Dependencies
+
+- Standard library only
+- `thiserror` for error types
+- `serde` for serialization
+- Third-party utility crates (chrono, uuid, sha2, hex, walkdir, regex, etc.)
+
+#### Prohibited Dependencies
+
+- NO dependencies on ANY mcb-* crate (enforced by CA015)
+- NO domain knowledge (entities, ports, value objects)
+
+#### Exports
+
+- Constants: auth, crypto, embedding, events, http, io, keys, lang, limits, search, time, use_cases, values, ast
+- Utils: fs, id, naming, path, sensitivity, time, vcs_context
+- Errors: `UtilsError`
+
+#### Module Structure
+
+```text
+mcb-utils/src/
+├── constants/         # All project constants (SSOT)
+│   ├── auth.rs        # Authentication constants
+│   ├── events.rs      # Event type constants
+│   ├── keys.rs        # Storage keys
+│   └── ...            # 15 constant modules total
+├── utils/             # Pure utility functions
+│   ├── fs.rs          # Filesystem utilities
+│   ├── id.rs          # ID generation
+│   ├── time.rs        # Time formatting
+│   └── ...            # 7 utility modules total
+└── error.rs           # UtilsError types
+```
+
+---
+
 
 ## Layer Dependency Rules
 
@@ -87,10 +129,11 @@ mcb-server → mcb-infrastructure → mcb-providers → mcb-domain
 - Standard library only
 - `thiserror` for error types
 - `serde` for serialization (optional feature)
+- `mcb-utils` (shared constants and utilities)
 
 #### Prohibited Dependencies
 
-- NO dependencies on other MCB crates
+- NO dependencies on other MCB crates except `mcb-utils`
 - NO infrastructure concerns (HTTP, database, filesystem)
 - NO concrete implementations (only trait definitions)
 
@@ -121,6 +164,7 @@ mcb-domain/src/
 #### Allowed Dependencies
 
 - `mcb-domain` (implement port traits)
+- `mcb-utils` (shared constants and utilities)
 - External provider SDKs (OpenAI, Ollama, Milvus, etc.)
 - `linkme` for auto-registration
 
@@ -174,6 +218,7 @@ mcb-providers/src/
 
 - `mcb-domain` (port traits for DI)
 - `mcb-providers` (concrete implementations for DI)
+- `mcb-utils` (shared constants and utilities)
 - manual composition root via `AppContext` + `init_app()` with `linkme` discovery (ADR-050)
 - `figment` for configuration (ADR-025)
 - Infrastructure libraries (tracing, metrics, etc.)

@@ -4201,6 +4201,7 @@ dependencies = [
  "mcb-infrastructure",
  "mcb-providers",
  "mcb-server",
+ "mcb-utils",
  "mcb-validate",
  "mockall",
  "rmcp",
@@ -4224,6 +4225,7 @@ dependencies = [
  "hex",
  "insta",
  "linkme",
+ "mcb-utils",
  "mockall",
  "regex",
  "reqwest 0.13.2",
@@ -4276,6 +4278,7 @@ dependencies = [
  "linkme",
  "loco-rs",
  "mcb-domain",
+ "mcb-utils",
  "mcb-validate",
  "mockall",
  "pbkdf2",
@@ -4340,6 +4343,7 @@ dependencies = [
  "git2",
  "linkme",
  "mcb-domain",
+ "mcb-utils",
  "milvus-sdk-rust",
  "mockall",
  "moka",
@@ -4409,6 +4413,7 @@ dependencies = [
  "mcb-domain",
  "mcb-infrastructure",
  "mcb-providers",
+ "mcb-utils",
  "mcb-validate",
  "mockall",
  "normpath",
@@ -4441,6 +4446,30 @@ dependencies = [
 ]
 
 [[package]]
+name = "mcb-utils"
+version = "0.3.0"
+dependencies = [
+ "base64 0.22.1",
+ "chrono",
+ "globset",
+ "hex",
+ "hmac",
+ "insta",
+ "normpath",
+ "regex",
+ "rstest",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "unicode-segmentation",
+ "uuid",
+ "walkdir",
+]
+
+[[package]]
 name = "mcb-validate"
 version = "0.3.0"
 dependencies = [
@@ -4457,6 +4486,7 @@ dependencies = [
  "jsonschema",
  "linkme",
  "mcb-domain",
+ "mcb-utils",
  "mockall",
  "petgraph",
  "regex",

@@ -83,7 +83,10 @@ impl IndexingServiceImpl {
     ///
     /// Returns an error if the file is not under the workspace root.
     pub fn workspace_relative_path(file_path: &Path, workspace_root: &Path) -> Result<String> {
-        mcb_domain::utils::path::workspace_relative_path(file_path, workspace_root)
+        Ok(mcb_utils::utils::path::workspace_relative_path(
+            file_path,
+            workspace_root,
+        )?)
     }
 
     /// Create new indexing service with injected dependencies

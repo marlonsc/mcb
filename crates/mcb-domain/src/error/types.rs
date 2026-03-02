@@ -468,3 +468,10 @@ impl Error {
         opt.ok_or_else(|| Error::not_found(format!("{entity_type} with id {id} not found")))
     }
 }
+
+// ── Conversion from mcb-utils error types ──────────────────────────
+impl From<mcb_utils::UtilsError> for Error {
+    fn from(err: mcb_utils::UtilsError) -> Self {
+        Self::internal(err.to_string())
+    }
+}

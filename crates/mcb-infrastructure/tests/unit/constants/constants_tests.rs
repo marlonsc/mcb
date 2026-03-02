@@ -3,10 +3,10 @@
 //! Validates that infrastructure constants have reasonable values
 //! and maintain expected relationships.
 
-use mcb_domain::constants::embedding::*;
-use mcb_infrastructure::constants::auth::*;
-use mcb_infrastructure::constants::crypto::*;
-use mcb_infrastructure::constants::http::*;
+use mcb_utils::constants::auth::*;
+use mcb_utils::constants::crypto::*;
+use mcb_utils::constants::embedding::*;
+use mcb_utils::constants::http::*;
 use rstest::rstest;
 
 // ============================================================================

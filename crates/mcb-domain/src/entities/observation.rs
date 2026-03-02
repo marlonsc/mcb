@@ -80,7 +80,7 @@ impl Default for ObservationMetadata {
     /// Creates a new `ObservationMetadata` with a generated UUID and all optional fields set to `None`.
     fn default() -> Self {
         Self {
-            id: crate::utils::id::generate().to_string(),
+            id: mcb_utils::utils::id::generate().to_string(),
             session_id: None,
             repo_id: None,
             file_path: None,

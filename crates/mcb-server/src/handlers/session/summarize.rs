@@ -50,7 +50,7 @@ pub async fn summarize_session(
                 org_id: args
                     .org_id
                     .clone()
-                    .unwrap_or(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_owned()),
+                    .unwrap_or(mcb_utils::constants::keys::DEFAULT_ORG_ID.to_owned()),
                 session_id: *session_id,
                 topics,
                 decisions,

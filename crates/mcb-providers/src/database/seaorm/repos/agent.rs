@@ -1,12 +1,12 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use mcb_domain::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, Delegation, ToolCall};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{
     AgentCheckpointRepository, AgentEventRepository, AgentSessionQuery, AgentSessionRepository,
 };
+use mcb_utils::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder,
     QuerySelect, Set,

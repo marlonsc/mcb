@@ -5,18 +5,18 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use mcb_domain::constants::search::{
-    HYBRID_SEARCH_MULTIPLIER, RRF_K, RRF_MAX_SCORE_STREAMS, RRF_NORMALIZED_MAX, RRF_SCORE_NUMERATOR,
-};
 use mcb_domain::entities::memory::{
     MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
 };
 use mcb_domain::error::Result;
-use mcb_domain::utils::id;
-use mcb_domain::utils::id::compute_content_hash;
 use mcb_domain::value_objects::{CollectionId, ObservationId};
+use mcb_utils::constants::search::{
+    HYBRID_SEARCH_MULTIPLIER, RRF_K, RRF_MAX_SCORE_STREAMS, RRF_NORMALIZED_MAX, RRF_SCORE_NUMERATOR,
+};
+use mcb_utils::utils::id;
+use mcb_utils::utils::id::compute_content_hash;
 
-use crate::constants::use_cases::OBSERVATION_PREVIEW_LENGTH;
+use mcb_utils::constants::use_cases::OBSERVATION_PREVIEW_LENGTH;
 
 use super::MemoryServiceImpl;
 
@@ -33,7 +33,7 @@ impl MemoryServiceImpl {
         let query_embedding = self.embedding_provider.embed(query).await?;
         let collection_id = CollectionId::from_uuid(id::deterministic(
             "collection",
-            crate::constants::use_cases::MEMORY_COLLECTION_NAME,
+            mcb_utils::constants::use_cases::MEMORY_COLLECTION_NAME,
         ));
 
         let (fts_result, vector_result) = tokio::join!(

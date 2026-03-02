@@ -1,8 +1,8 @@
 //! Unit tests for jobs domain ports.
 
 use mcb_domain::ports::{Job, JobCounts, JobStatus, JobType};
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::OperationId;
+use mcb_utils::utils::id;
 use rstest::rstest;
 
 #[rstest]

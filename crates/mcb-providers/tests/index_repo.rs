@@ -4,13 +4,13 @@
 
 use std::sync::Arc;
 
-use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::ports::IndexRepository;
 use mcb_domain::ports::IndexingOperationStatus;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::value_objects::CollectionId;
 use mcb_providers::database::seaorm::entities::{organization, project};
 use mcb_providers::database::seaorm::repos::SeaOrmIndexRepository;
+use mcb_utils::constants::keys::DEFAULT_ORG_ID;
 use rstest::rstest;
 use sea_orm::{ActiveModelTrait, ActiveValue::Set, ConnectionTrait, Database, DatabaseConnection};
 

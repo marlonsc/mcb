@@ -1,5 +1,5 @@
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_domain::utils::time::{epoch_nanos_u128, epoch_secs_i64, epoch_secs_u64};
+use mcb_utils::utils::time::{epoch_nanos_u128, epoch_secs_i64, epoch_secs_u64};
 use rstest::rstest;
 
 #[rstest]
@@ -56,7 +56,7 @@ fn epoch_nanos_u128_monotonic() -> TestResult {
 #[rstest]
 #[test]
 fn epoch_secs_i64_reasonable_range() -> TestResult {
-    use mcb_domain::constants::time::{TIMESTAMP_MAX_BOUNDARY, TIMESTAMP_MIN_BOUNDARY};
+    use mcb_utils::constants::time::{TIMESTAMP_MAX_BOUNDARY, TIMESTAMP_MIN_BOUNDARY};
     let ts = epoch_secs_i64()?;
     // Should be after 2020-01-01 and before 2100-01-01
     assert!(ts > TIMESTAMP_MIN_BOUNDARY, "timestamp too old: {ts}");

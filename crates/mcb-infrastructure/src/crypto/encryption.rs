@@ -10,7 +10,7 @@ use aes_gcm::{
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{CryptoProvider, EncryptedData};
 
-use crate::constants::crypto::{AES_GCM_KEY_SIZE, AES_GCM_NONCE_SIZE};
+use mcb_utils::constants::crypto::{AES_GCM_KEY_SIZE, AES_GCM_NONCE_SIZE};
 
 /// Encryption/decryption service
 ///

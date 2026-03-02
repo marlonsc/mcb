@@ -1,9 +1,9 @@
 //! Tests for strong-typed ID value objects
 
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::ids::{
     ChunkId, CollectionId, ObservationId, OperationId, RepositoryId, SessionId,
 };
+use mcb_utils::utils::id;
 use rstest::rstest;
 
 #[rstest]

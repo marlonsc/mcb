@@ -6,7 +6,7 @@
 use crate::language::common::{
     BaseProcessor, CHUNK_SIZE_JAVASCRIPT, LanguageConfig, NodeExtractionRule,
 };
-use mcb_domain::constants::ast::{
+use mcb_utils::constants::ast::{
     AST_NODE_INTERFACE_DECLARATION, TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION,
 };
 

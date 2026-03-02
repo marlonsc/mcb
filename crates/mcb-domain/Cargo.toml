@@ -16,6 +16,9 @@ name = "mcb_domain"
 path = "src/lib.rs"
 
 [dependencies]
+# Shared utilities layer (Layer 0)
+mcb-utils = { workspace = true }
+
 # Serialization - pure lib acceptable for domain
 serde = { workspace = true }
 serde_json = { workspace = true }

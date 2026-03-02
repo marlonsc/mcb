@@ -11,9 +11,9 @@ use dashmap::DashMap;
 use reqwest::Client;
 use serde_json::Value;
 
-use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
+use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
 use crate::constants::{HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT};
 use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};

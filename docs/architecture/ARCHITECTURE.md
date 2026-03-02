@@ -555,11 +555,15 @@ Memory Context Browser implements Robert C. Martin's Clean Architecture with str
 ├─────────────────────────────────────────────────────────┤
 │                      Domain Layer                        │
 │                    (mcb-domain)                          │
+├─────────────────────────────────────────────────────────┤
+│                      Utils Layer                         │
+│                    (mcb-utils)                           │
 └─────────────────────────────────────────────────────────┘
-         Dependency flow: domain → providers → infrastructure → server
+         Dependency flow: utils → domain → providers → infrastructure → server
 ```
 
 For complete architectural details, see [ADR-013: Clean Architecture Crate Separation](../adr/013-clean-architecture-crate-separation.md).
+
 
 ### Dependency Validation Rules
 
@@ -569,10 +573,12 @@ The project enforces strict dependency rules to maintain Clean Architecture comp
 
 | Crate | MUST NOT depend on | Allowed Dependencies |
 | ------- | -------------------- | ---------------------- |
-| mcb-domain | Any internal crate | None (pure domain) |
-| mcb-providers | mcb-infrastructure, mcb-server | mcb-domain only |
-| mcb-infrastructure | mcb-server | mcb-domain, mcb-providers |
-| mcb-server | None | mcb-infrastructure |
+| mcb-utils | Any internal crate | None (pure utilities) |
+| mcb-domain | Any internal crate except mcb-utils | mcb-utils only |
+| mcb-providers | mcb-infrastructure, mcb-server | mcb-domain, mcb-utils |
+| mcb-infrastructure | mcb-server | mcb-domain, mcb-providers, mcb-utils |
+| mcb-server | None | mcb-infrastructure, mcb-utils |
+
 
 **Note**: Provider implementations import contracts from `mcb-domain` and are wired by
 `mcb-infrastructure`.
@@ -833,7 +839,7 @@ async fn test_full_flow() {
 
 ### Crate Structure (Clean Architecture Monorepo)
 
-The system follows Clean Architecture principles with 6 crates organized as a Cargo workspace:
+The system follows Clean Architecture principles with 7 crates organized as a Cargo workspace:
 
 #### 📦 Domain Layer (`crates/mcb-domain/`)
 
@@ -846,10 +852,19 @@ The system follows Clean Architecture principles with 6 crates organized as a Ca
 - `ports/providers/`: Provider port traits (EmbeddingProvider, VectorStoreProvider, CacheProvider, etc.)
 - `repositories/`: Repository port traits (ChunkRepository, SearchRepository)
 - `value_objects/`: Value objects (Embedding, Config, Search, Types)
-- `constants.rs`: Domain constants
 - `error.rs`: Domain error types
 
-> **Note**: All port traits (providers, infrastructure, admin, repositories, services) are defined in mcb-domain (single source of truth per ADR-029).
+#### 📦 Utils Layer (`crates/mcb-utils/`)
+
+**Purpose**: Shared pure utilities, constants, and helpers with zero domain knowledge. Innermost crate (Layer 0).
+
+### Key Components
+
+- `constants/`: All project-wide constants (SSOT — auth, crypto, embedding, events, http, io, keys, lang, limits, search, time, use_cases, values, ast)
+- `utils/`: Pure utility functions (fs, id, naming, path, sensitivity, time, vcs_context)
+- `error.rs`: Utils-specific error types (UtilsError)
+
+> **Note**: mcb-utils has ZERO dependencies on any other mcb-* crate. All constants were consolidated here following SSOT principle (ADR-054).
 
 #### 🔧 Use Case Modules (`crates/mcb-infrastructure/src/di/modules/use_cases/`)
 

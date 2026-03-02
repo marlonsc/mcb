@@ -4,7 +4,7 @@ use rstest::rstest;
 use std::path::PathBuf;
 
 use mcb_domain::entities::vcs::{RepositoryId, VcsBranch, VcsRepository};
-use mcb_domain::utils::id;
+use mcb_utils::utils::id;
 
 #[rstest]
 #[case("abc123")]

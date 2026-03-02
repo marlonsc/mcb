@@ -12,7 +12,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
 use serde_json::Value;
 
-use mcb_domain::utils::id as domain_id;
+use mcb_utils::utils::id as domain_id;
 use validator::Validate;
 
 use crate::args::{AgentAction, AgentArgs};
@@ -71,7 +71,7 @@ impl AgentHandler {
                 return Ok(tool_error("Data must be a JSON object"));
             }
         };
-        let now = mcb_domain::utils::time::epoch_secs_i64()
+        let now = mcb_utils::utils::time::epoch_secs_i64()
             .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
 
         match args.action {

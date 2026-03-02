@@ -47,7 +47,9 @@ fn get_default_substitution_variables() -> serde_yaml::Value {
         "server_module": "mcb_server",
         "providers_module": "mcb_providers",
         "validate_crate": "mcb-validate",
-        "validate_module": "mcb_validate"
+        "validate_module": "mcb_validate",
+        "utils_crate": "mcb-utils",
+        "utils_module": "mcb_utils"
     });
     match serde_yaml::to_value(json) {
         Ok(value) => value,

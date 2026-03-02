@@ -8,13 +8,13 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use mcb_domain::constants::embedding::{
-    EMBEDDING_DIMENSION_OPENAI_ADA, EMBEDDING_DIMENSION_OPENAI_LARGE,
-    EMBEDDING_DIMENSION_OPENAI_SMALL,
-};
 use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use mcb_utils::constants::embedding::{
+    EMBEDDING_DIMENSION_OPENAI_ADA, EMBEDDING_DIMENSION_OPENAI_LARGE,
+    EMBEDDING_DIMENSION_OPENAI_SMALL,
+};
 use reqwest::Client;
 
 use crate::constants::{
@@ -25,7 +25,7 @@ use crate::constants::{
 use crate::utils::embedding::{HttpEmbeddingClient, parse_standard_embedding, process_batch};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
 
-use mcb_domain::constants::http::CONTENT_TYPE_JSON;
+use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
 define_http_embedding_provider!(
     /// `OpenAI` embedding provider

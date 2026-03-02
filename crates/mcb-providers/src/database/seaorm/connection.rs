@@ -12,7 +12,7 @@ use mcb_domain::registry::database::{
     DatabaseProviderConfig,
 };
 
-/// Build a SQLite connection string from the provider configuration.
+/// Build a `SQLite` connection string from the provider configuration.
 fn sqlite_url(config: &DatabaseProviderConfig) -> String {
     match &config.path {
         Some(path) => format!("sqlite:{}?mode=rwc", path.display()),
@@ -20,7 +20,7 @@ fn sqlite_url(config: &DatabaseProviderConfig) -> String {
     }
 }
 
-/// Build a PostgreSQL connection string from the provider configuration.
+/// Build a `PostgreSQL` connection string from the provider configuration.
 fn postgres_url(config: &DatabaseProviderConfig) -> String {
     config
         .path
@@ -55,14 +55,14 @@ fn build_seaorm_connection(config: &DatabaseProviderConfig) -> DatabaseBuildFutu
     })
 }
 
-/// SeaORM SQLite connection provider registration.
+/// `SeaORM` `SQLite` connection provider registration.
 #[linkme::distributed_slice(DATABASE_CONNECTION_PROVIDERS)]
 static SEAORM_SQLITE: DatabaseConnectionEntry = DatabaseConnectionEntry {
     name: "sqlite",
     build: build_seaorm_connection,
 };
 
-/// SeaORM PostgreSQL connection provider registration.
+/// `SeaORM` `PostgreSQL` connection provider registration.
 #[linkme::distributed_slice(DATABASE_CONNECTION_PROVIDERS)]
 static SEAORM_POSTGRES: DatabaseConnectionEntry = DatabaseConnectionEntry {
     name: "postgres",

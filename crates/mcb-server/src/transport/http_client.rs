@@ -15,10 +15,10 @@ use std::path::Path;
 use std::time::Duration;
 
 use hostname;
-use mcb_domain::constants::http::CONTENT_TYPE_JSON;
-use mcb_domain::utils::id as domain_id;
-use mcb_domain::utils::id::mask_id;
 use mcb_domain::{debug, error, info, warn};
+use mcb_utils::constants::http::CONTENT_TYPE_JSON;
+use mcb_utils::utils::id as domain_id;
+use mcb_utils::utils::id::mask_id;
 
 use super::types::{McpRequest, McpResponse};
 use crate::constants::protocol::{

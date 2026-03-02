@@ -3,17 +3,18 @@
 //!
 //! Generic filesystem utilities for the MCB workspace.
 
-use crate::error::{Error, Result};
+use crate::error::UtilsError;
 use std::path::{Path, PathBuf};
 
-fn read_entries(dir: &Path) -> Result<std::fs::ReadDir> {
-    std::fs::read_dir(dir)
-        .map_err(|e| Error::internal(format!("Failed to read directory {}: {}", dir.display(), e)))
+fn read_entries(dir: &Path) -> Result<std::fs::ReadDir, UtilsError> {
+    std::fs::read_dir(dir).map_err(|e| {
+        UtilsError::Filesystem(format!("Failed to read directory {}: {}", dir.display(), e))
+    })
 }
 
-fn read_file_type(entry: &std::fs::DirEntry, path: &Path) -> Result<std::fs::FileType> {
+fn read_file_type(entry: &std::fs::DirEntry, path: &Path) -> Result<std::fs::FileType, UtilsError> {
     entry.file_type().map_err(|e| {
-        Error::internal(format!(
+        UtilsError::Filesystem(format!(
             "Failed to get file type for {}: {}",
             path.display(),
             e
@@ -32,7 +33,10 @@ fn has_matching_extension(path: &Path, extensions: &[&str]) -> bool {
 /// # Errors
 ///
 /// Returns an error if directory traversal fails.
-pub fn find_files_by_extensions(root: &Path, extensions: &[&str]) -> Result<Vec<PathBuf>> {
+pub fn find_files_by_extensions(
+    root: &Path,
+    extensions: &[&str],
+) -> Result<Vec<PathBuf>, UtilsError> {
     if !root.exists() {
         return Ok(Vec::new());
     }
@@ -45,7 +49,7 @@ pub fn find_files_by_extensions(root: &Path, extensions: &[&str]) -> Result<Vec<
 
         for entry in entries {
             let entry = entry.map_err(|e| {
-                Error::internal(format!(
+                UtilsError::Filesystem(format!(
                     "Failed to read directory entry in {}: {}",
                     dir.display(),
                     e

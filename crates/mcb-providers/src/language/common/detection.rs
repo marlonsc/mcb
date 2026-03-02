@@ -8,7 +8,7 @@
 //! configuration values.
 
 use super::constants::{CHUNK_SIZE_GENERIC, EXTENSION_LANG_MAP, LANG_CHUNK_SIZE_MAP};
-use mcb_domain::constants::lang::*;
+use mcb_utils::constants::lang::*;
 
 /// Detect language from file extension
 ///

@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use git2::{BranchType, Repository, Sort};
-use mcb_domain::utils::id;
 use mcb_domain::{
     entities::vcs::{
         DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsCommitInput,
@@ -16,6 +15,7 @@ use mcb_domain::{
     error::{Error, Result},
     ports::VcsProvider,
 };
+use mcb_utils::utils::id;
 
 /// Git repository provider.
 pub struct GitProvider;
@@ -303,7 +303,7 @@ impl VcsProvider for GitProvider {
             .peel_to_tree()
             .map_err(|e| Error::vcs_with_source("Failed to get branch tree", e))?;
 
-        let path_str = mcb_domain::utils::path::path_to_utf8_string(path)
+        let path_str = mcb_utils::utils::path::path_to_utf8_string(path)
             .map_err(|e| Error::vcs_with_source("non-UTF-8 path", e))?;
         let entry = tree.get_path(path).map_err(|e| {
             Error::vcs_with_source(format!("File not found in branch: {path_str}"), e)

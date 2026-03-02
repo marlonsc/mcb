@@ -99,7 +99,7 @@ impl ProjectHandler {
             .get("path")
             .and_then(|v| v.as_str())
             .ok_or_else(|| McpError::invalid_params("path is required in data", None))?;
-        let now = mcb_domain::utils::time::epoch_secs_i64()
+        let now = mcb_utils::utils::time::epoch_secs_i64()
             .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
         let project = Project {
             id: project_id.to_owned(),
@@ -129,7 +129,7 @@ impl ProjectHandler {
                 project.path = path.to_owned();
             }
         }
-        let now = mcb_domain::utils::time::epoch_secs_i64()
+        let now = mcb_utils::utils::time::epoch_secs_i64()
             .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
         project.updated_at = now;
         map_opaque_error(self.repo.update(&project).await)?;

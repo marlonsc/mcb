@@ -3,6 +3,7 @@
 //! Builds [`McbState`] from pure registry DI — no infrastructure imports.
 //! All providers resolved through `mcb_domain::registry::*` linkme slices.
 
+use mcb_infrastructure::config::load_app_config;
 use std::sync::Arc;
 
 use mcb_domain::registry::ServiceResolutionContext;
@@ -123,7 +124,7 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
     // 6. Build ServiceResolutionContext (domain-level opaque DI context)
     let resolution_ctx = ServiceResolutionContext {
         db: Arc::clone(&db),
-        config: Arc::new(()), // opaque — service builders use typed port fields above
+        config: Arc::new(load_app_config().ok()?), // Real AppConfig loaded via production serde_json path
         event_bus,
         embedding_provider: Arc::clone(&embedding_provider),
         vector_store_provider: Arc::clone(&vector_store_provider),

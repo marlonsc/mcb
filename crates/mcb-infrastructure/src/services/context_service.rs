@@ -6,14 +6,14 @@
 use std::collections::HashMap;
 use std::sync::Arc;
 
-use mcb_domain::constants::keys::{
-    METADATA_KEY_CONTENT, METADATA_KEY_END_LINE, METADATA_KEY_FILE_PATH, METADATA_KEY_LANGUAGE,
-    METADATA_KEY_START_LINE,
-};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{ContextServiceInterface, EmbeddingProvider, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
+use mcb_utils::constants::keys::{
+    METADATA_KEY_CONTENT, METADATA_KEY_END_LINE, METADATA_KEY_FILE_PATH, METADATA_KEY_LANGUAGE,
+    METADATA_KEY_START_LINE,
+};
 use serde_json::Value;
 
 /// Context service that delegates directly to embedding and vector store providers.

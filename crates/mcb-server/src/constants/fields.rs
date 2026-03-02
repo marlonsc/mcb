@@ -4,7 +4,7 @@
 //! JSON response field name constants.
 //!
 //! Shared field names used across handler response formatting.
-//! Domain-level schema keys live in `mcb_domain::constants::keys`.
+//! Domain-level schema keys live in `mcb_utils::constants::keys`.
 
 /// JSON field: observation ID.
 pub const FIELD_OBSERVATION_ID: &str = "observation_id";

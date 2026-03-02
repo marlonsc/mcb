@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::{ExecutionMetadata, MemorySearchResult, ObservationType};
 use mcb_domain::ports::MemoryServiceInterface;
-use mcb_domain::utils::id as domain_id;
+use mcb_utils::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Value;

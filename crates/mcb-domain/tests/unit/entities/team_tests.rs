@@ -28,8 +28,8 @@ fn team_serialization_roundtrip() {
     assert_eq!(deserialized.name, "Backend");
 }
 
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::ids::TeamMemberId;
+use mcb_utils::utils::id;
 
 #[rstest]
 fn team_member_construction() {

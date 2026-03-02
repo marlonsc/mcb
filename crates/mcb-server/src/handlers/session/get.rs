@@ -3,8 +3,8 @@
 //!
 use std::sync::Arc;
 
-use mcb_domain::constants::keys as schema;
 use mcb_domain::ports::AgentSessionServiceInterface;
+use mcb_utils::constants::keys as schema;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 

@@ -8,8 +8,8 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use mcb_domain::constants::embedding::EMBEDDING_DIMENSION_GEMINI;
-use mcb_domain::constants::http::CONTENT_TYPE_JSON;
+use mcb_utils::constants::embedding::EMBEDDING_DIMENSION_GEMINI;
+use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
 use crate::constants::{HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT};
 use mcb_domain::error::Result;

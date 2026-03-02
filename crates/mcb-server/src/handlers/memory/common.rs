@@ -4,12 +4,12 @@
 use mcb_domain::entities::memory::{ExecutionMetadata, ObservationMetadata, QualityGateResult};
 use std::sync::Arc;
 
-use mcb_domain::utils::id as domain_id;
-use mcb_domain::utils::vcs_context::capture_vcs_context;
 use mcb_domain::{
     entities::memory::{MemoryFilter, MemorySearchResult, ObservationType},
     ports::MemoryServiceInterface,
 };
+use mcb_utils::utils::id as domain_id;
+use mcb_utils::utils::vcs_context::capture_vcs_context;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::{Map, Value};

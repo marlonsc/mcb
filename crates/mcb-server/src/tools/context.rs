@@ -114,7 +114,7 @@ impl ToolExecutionContext {
             agent_program,
             model_id,
             delegated,
-            timestamp: mcb_domain::utils::time::epoch_secs_i64().ok(),
+            timestamp: mcb_utils::utils::time::epoch_secs_i64().ok(),
             execution_flow,
         }
     }

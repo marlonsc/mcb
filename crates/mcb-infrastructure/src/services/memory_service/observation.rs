@@ -5,18 +5,18 @@
 
 use std::collections::HashMap;
 
-use mcb_domain::constants::keys::{
+use mcb_domain::entities::memory::{Observation, ObservationMetadata, ObservationType};
+use mcb_domain::error::Result;
+use mcb_domain::value_objects::CollectionId;
+use mcb_utils::constants::keys::{
     METADATA_KEY_CONTENT, METADATA_KEY_FILE_PATH, METADATA_KEY_SESSION_ID, METADATA_KEY_START_LINE,
     METADATA_KEY_TAGS, METADATA_KEY_TYPE,
 };
-use mcb_domain::entities::memory::{Observation, ObservationMetadata, ObservationType};
-use mcb_domain::error::Result;
-use mcb_domain::utils::id;
-use mcb_domain::utils::id::compute_content_hash;
-use mcb_domain::utils::time as domain_time;
-use mcb_domain::value_objects::CollectionId;
+use mcb_utils::utils::id;
+use mcb_utils::utils::id::compute_content_hash;
+use mcb_utils::utils::time as domain_time;
 
-use crate::constants::use_cases::MEMORY_COLLECTION_NAME;
+use mcb_utils::constants::use_cases::MEMORY_COLLECTION_NAME;
 
 use super::MemoryServiceImpl;
 

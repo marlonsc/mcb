@@ -1,4 +1,4 @@
-use mcb_domain::utils::id;
+use mcb_utils::utils::id;
 use rstest::rstest;
 
 #[rstest]

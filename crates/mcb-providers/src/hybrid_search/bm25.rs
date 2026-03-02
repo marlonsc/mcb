@@ -19,10 +19,10 @@
 
 use std::collections::{HashMap, HashSet};
 
-use mcb_domain::constants::search::{
+use mcb_domain::entities::CodeChunk;
+use mcb_utils::constants::search::{
     BM25_TOKEN_MIN_LENGTH, HYBRID_SEARCH_BM25_B, HYBRID_SEARCH_BM25_K1,
 };
-use mcb_domain::entities::CodeChunk;
 
 /// BM25 parameters for tuning the algorithm
 #[derive(Debug, Clone)]

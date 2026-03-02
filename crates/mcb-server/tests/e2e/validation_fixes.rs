@@ -6,10 +6,10 @@
 //! 3. Memory Observation Enum Validation - P2
 
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
-use mcb_domain::utils::time::epoch_secs_i64;
 use mcb_server::args::{
     AgentAction, AgentArgs, MemoryAction, MemoryArgs, MemoryResource, SessionAction, SessionArgs,
 };
+use mcb_utils::utils::time::epoch_secs_i64;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 

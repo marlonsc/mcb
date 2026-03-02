@@ -8,10 +8,10 @@
 
 use async_trait::async_trait;
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
-use mcb_domain::constants::embedding::EMBEDDING_DIMENSION_FASTEMBED_DEFAULT;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use mcb_utils::constants::embedding::EMBEDDING_DIMENSION_FASTEMBED_DEFAULT;
 use tokio::sync::{mpsc, oneshot};
 
 /// Messages for the `FastEmbed` actor

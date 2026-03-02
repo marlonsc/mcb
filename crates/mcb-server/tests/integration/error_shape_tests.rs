@@ -7,6 +7,7 @@
 // Force linkme registration of all providers
 extern crate mcb_providers;
 
+use mcb_infrastructure::config::load_app_config;
 use std::sync::Arc;
 
 use rstest::{fixture, rstest};
@@ -88,10 +89,11 @@ async fn create_test_mcb_state() -> Option<(McbState, tempfile::TempDir)> {
     let hybrid_search =
         resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default")).ok()?;
 
-    let config: Arc<dyn std::any::Any + Send + Sync> = Arc::new(());
+    // Real AppConfig loaded via production serde_json path
+    let app_config = load_app_config().ok()?;
     let resolution_ctx = ServiceResolutionContext {
         db,
-        config,
+        config: Arc::new(app_config),
         event_bus,
         embedding_provider,
         vector_store_provider,

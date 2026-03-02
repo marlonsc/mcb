@@ -10,9 +10,11 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use mcb_domain::constants::events::EVENT_BUS_DEFAULT_CAPACITY;
+use mcb_utils::constants::events::EVENT_BUS_DEFAULT_CAPACITY;
 
-use crate::constants::events::{EVENT_BUS_CONNECTION_TIMEOUT_MS, EVENT_BUS_MAX_RECONNECT_ATTEMPTS};
+use mcb_utils::constants::events::{
+    EVENT_BUS_CONNECTION_TIMEOUT_MS, EVENT_BUS_MAX_RECONNECT_ATTEMPTS,
+};
 
 // ============================================================================
 // Authentication Configuration

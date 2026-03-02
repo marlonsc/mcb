@@ -30,6 +30,7 @@ workspace = true
 [dependencies]
 # Domain layer - re-exported for public API for domain layer
 mcb-domain = { path = "../mcb-domain" }
+mcb-utils = { path = "../mcb-utils" }
 
 # Server layer - re-exported for run_server entry point for server layer
 mcb-server = { path = "../mcb-server" }
@@ -79,6 +80,7 @@ rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+mcb-utils = { path = "../mcb-utils" }
 uuid = { workspace = true, features = ["v4"] }
 
 serial_test = { workspace = true }

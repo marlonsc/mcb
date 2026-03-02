@@ -2,13 +2,13 @@
 
 #![cfg(feature = "hybrid-search")]
 
-use mcb_domain::constants::search::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
 use mcb_domain::entities::CodeChunk;
 use mcb_domain::ports::HybridSearchProvider;
 use mcb_domain::utils::tests::chunk_fixtures::create_test_chunk;
 use mcb_domain::utils::tests::search_fixtures::create_test_search_result;
 use mcb_domain::value_objects::SearchResult;
 use mcb_providers::hybrid_search::{BM25Params, BM25Scorer, HybridSearchEngine};
+use mcb_utils::constants::search::{HYBRID_SEARCH_BM25_WEIGHT, HYBRID_SEARCH_SEMANTIC_WEIGHT};
 use rstest::rstest;
 
 // Test helpers now centralized in mcb_domain::utils::tests::chunk_fixtures and

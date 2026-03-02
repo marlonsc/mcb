@@ -1,4 +1,4 @@
-use mcb_domain::utils::vcs_context::VcsContext;
+use mcb_utils::utils::vcs_context::VcsContext;
 use rstest::rstest;
 
 #[rstest]

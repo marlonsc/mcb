@@ -8,12 +8,12 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use mcb_domain::constants::embedding::{
-    EMBEDDING_DIMENSION_VOYAGEAI_CODE, EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
-};
 use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use mcb_utils::constants::embedding::{
+    EMBEDDING_DIMENSION_VOYAGEAI_CODE, EMBEDDING_DIMENSION_VOYAGEAI_DEFAULT,
+};
 use reqwest::Client;
 
 use crate::constants::VOYAGEAI_MAX_INPUT_TOKENS;
@@ -25,7 +25,7 @@ use crate::constants::{
     PROVIDER_RETRY_COUNT,
 };
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
-use mcb_domain::constants::http::CONTENT_TYPE_JSON;
+use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
 define_http_embedding_provider!(
     /// `VoyageAI` embedding provider

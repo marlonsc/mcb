@@ -18,6 +18,7 @@ path = "src/lib.rs"
 [dependencies]
 # Domain layer - core business logic and port traits
 mcb-domain = { path = "../mcb-domain" }
+mcb-utils = { path = "../mcb-utils" }
 
 # Core async runtime
 tokio = { workspace = true }
@@ -153,6 +154,7 @@ workspace = true
 
 [dev-dependencies]
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+mcb-utils = { path = "../mcb-utils" }
 tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 serial_test = { workspace = true }

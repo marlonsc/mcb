@@ -5,7 +5,7 @@
 //!
 //! Language-specific chunk sizes and node extraction rule defaults.
 
-use mcb_domain::constants::lang::{
+use mcb_utils::constants::lang::{
     LANG_C, LANG_CPP, LANG_CSHARP, LANG_GO, LANG_JAVA, LANG_JAVASCRIPT, LANG_KOTLIN, LANG_PHP,
     LANG_PYTHON, LANG_RUBY, LANG_RUST, LANG_SWIFT, LANG_TYPESCRIPT,
 };

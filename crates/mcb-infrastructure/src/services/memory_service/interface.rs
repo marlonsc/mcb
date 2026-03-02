@@ -42,7 +42,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
 
         let metadata = mcb_domain::entities::memory::ObservationMetadata {
-            id: mcb_domain::utils::id::generate().to_string(),
+            id: mcb_utils::utils::id::generate().to_string(),
             ..Default::default()
         };
 

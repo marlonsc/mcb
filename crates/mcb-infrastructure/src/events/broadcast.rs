@@ -5,10 +5,10 @@ use futures::stream;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::ports::{DomainEventStream, EventBusProvider};
-use mcb_domain::utils::id;
+use mcb_utils::utils::id;
 use tokio::sync::broadcast;
 
-use crate::constants::events::EVENT_BUS_BUFFER_SIZE;
+use mcb_utils::constants::events::EVENT_BUS_BUFFER_SIZE;
 
 /// In-process domain event bus backed by a broadcast channel.
 #[derive(Clone)]

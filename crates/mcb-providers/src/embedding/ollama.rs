@@ -8,14 +8,14 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use mcb_domain::constants::embedding::{
+use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::EmbeddingProvider;
+use mcb_domain::value_objects::Embedding;
+use mcb_utils::constants::embedding::{
     EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
     EMBEDDING_DIMENSION_OLLAMA_MINILM, EMBEDDING_DIMENSION_OLLAMA_MXBAI,
     EMBEDDING_DIMENSION_OLLAMA_NOMIC,
 };
-use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::EmbeddingProvider;
-use mcb_domain::value_objects::Embedding;
 use reqwest::Client;
 
 use crate::constants::{EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_MODEL, HTTP_HEADER_CONTENT_TYPE};
@@ -23,7 +23,7 @@ use crate::utils::embedding::{
     HttpEmbeddingClient, HttpEmbeddingClientConfig, parse_float_array_lossy,
 };
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
-use mcb_domain::constants::http::CONTENT_TYPE_JSON;
+use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
 define_http_embedding_provider!(
     /// Ollama embedding provider

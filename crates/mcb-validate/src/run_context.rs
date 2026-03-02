@@ -321,7 +321,7 @@ fn should_ignore(path: &str, ignore_patterns: &[String]) -> bool {
 }
 
 fn build_trace_id() -> String {
-    let nanos = mcb_domain::utils::time::epoch_nanos_u128().unwrap_or(0);
+    let nanos = mcb_utils::utils::time::epoch_nanos_u128().unwrap_or(0);
     format!("validate-run-{nanos}")
 }
 

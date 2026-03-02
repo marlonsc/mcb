@@ -7,8 +7,8 @@ use serde_json::Value;
 
 use mcb_domain::error::Result;
 use mcb_domain::ports::VectorStoreProvider;
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
+use mcb_utils::utils::id;
 
 use super::QdrantVectorStoreProvider;
 

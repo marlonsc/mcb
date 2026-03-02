@@ -30,7 +30,6 @@
 // Clippy allows for complex patterns in infrastructure code
 
 pub mod config;
-pub mod constants;
 pub mod crypto;
 pub mod infrastructure;
 

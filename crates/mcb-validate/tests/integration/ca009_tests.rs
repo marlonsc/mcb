@@ -33,6 +33,7 @@ fn test_ca009_infrastructure_imports_application() {
             infrastructure_crate: "mcb-infrastructure".to_owned(),
             server_crate: "mcb-server".to_owned(),
             validate_crate: "mcb-validate".to_owned(),
+            utils_crate: "mcb-utils".to_owned(),
 
             enabled: true,
         },

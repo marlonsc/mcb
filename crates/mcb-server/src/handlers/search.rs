@@ -13,7 +13,7 @@ use mcb_domain::ports::HybridSearchProvider;
 use mcb_domain::ports::IndexingServiceInterface;
 use mcb_domain::ports::MemoryServiceInterface;
 use mcb_domain::ports::SearchServiceInterface;
-use mcb_domain::utils::id as domain_id;
+use mcb_utils::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;

@@ -7,7 +7,7 @@ use std::path::Path;
 
 use ignore::WalkBuilder;
 
-use crate::constants::use_cases::SKIP_DIRS;
+use mcb_utils::constants::use_cases::SKIP_DIRS;
 
 use super::{IndexingProgress, IndexingServiceImpl};
 

@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/mcb",
+    "crates/mcb-utils",
     "crates/mcb-domain",
     "crates/mcb-infrastructure",
     "crates/mcb-providers",
@@ -84,6 +85,7 @@ used_underscore_binding = "warn"         # don't use bindings prefixed with _
 error_impl_error = "allow"               # our domain Error type is idiomatic Rust
 
 [workspace.dependencies]
+mcb-utils = { path = "crates/mcb-utils" }
 # Core async runtime
 tokio = { version = "1.49", features = ["full"] }
 

@@ -38,6 +38,7 @@ impl EmbeddedRules {
             rule!("clean-architecture/CA012_server-boundaries.yml"),
             rule!("clean-architecture/CA013_mcb-boundaries.yml"),
             rule!("clean-architecture/CA014_validate-boundaries.yml"),
+            rule!("clean-architecture/CA015_utils-boundaries.yml"),
             rule!("clean-architecture/CA017_di-patterns.yml"),
             rule!("clean-architecture/LAYER001_layer-flow-rules.yml"),
             rule!("clean-architecture/PORT001_port-adapter-config.yml"),

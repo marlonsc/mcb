@@ -30,7 +30,7 @@ use mcb_domain::ports::{
 use mcb_domain::registry::services::{
     AGENT_SESSION_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
 };
-use mcb_domain::utils::time as domain_time;
+use mcb_utils::utils::time as domain_time;
 
 /// Application service for managing agent session lifecycle and persistence.
 ///

@@ -426,6 +426,9 @@ pub struct NamingRulesConfig {
 
     /// Target crate for validation logic (e.g., "mcb-validate")
     pub validate_crate: String,
+
+    /// Target crate for shared utilities (e.g., "mcb-utils")
+    pub utils_crate: String,
 }
 
 /// KISS rules configuration

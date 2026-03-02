@@ -81,8 +81,8 @@ fn test_issue_label_serialization_roundtrip() {
     assert_eq!(parsed.created_at, 123);
 }
 
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::ids::IssueLabelAssignmentId;
+use mcb_utils::utils::id;
 
 #[rstest]
 fn test_issue_label_assignment_construction() {

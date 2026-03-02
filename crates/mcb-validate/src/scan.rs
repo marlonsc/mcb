@@ -126,7 +126,7 @@ where
 
     let context = ValidationRunContext::active_or_build(config)?;
     let inventory = context.file_inventory();
-    let normalized_root = mcb_domain::utils::path::strict_canonicalize(root)
+    let normalized_root = mcb_utils::utils::path::strict_canonicalize(root)
         .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
 
     for entry in inventory {

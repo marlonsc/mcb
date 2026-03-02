@@ -1,6 +1,10 @@
 //!
-//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
 //!
+//! HTTP constants -- Single Source of Truth
+
+/// MIME type for JSON content
+pub const CONTENT_TYPE_JSON: &str = "application/json";
 /// Default HTTP server port.
 pub const DEFAULT_HTTP_PORT: u16 = 8080;
 

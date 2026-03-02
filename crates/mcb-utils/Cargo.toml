@@ -1,0 +1,67 @@
+[package]
+name = "mcb-utils"
+keywords = ["utils", "helpers", "mcp", "semantic-search"]
+categories = ["development-tools"]
+description = "Shared utilities and constants for MCP Context Browser workspace"
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "mcb_utils"
+path = "src/lib.rs"
+
+[dependencies]
+# Error handling
+thiserror = { workspace = true }
+
+# Serialization (needed for constants and utility types)
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Hashing utilities
+sha2 = { workspace = true }
+hex = { workspace = true }
+
+# Date/time handling
+chrono = { workspace = true }
+
+# UUID generation
+uuid = { workspace = true }
+
+# Regex for text processing
+regex = { workspace = true }
+
+# Text processing
+unicode-segmentation = { workspace = true }
+
+# File operations
+walkdir = { workspace = true }
+normpath = { workspace = true }
+globset = { workspace = true }
+
+# Async runtime (for async utility functions)
+tokio = { workspace = true }
+
+# Base64 encoding
+base64 = { workspace = true }
+
+# HMAC for hash-based auth
+hmac = { workspace = true }
+
+[features]
+default = []
+test-utils = []
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+rstest = { workspace = true }
+insta = { workspace = true }

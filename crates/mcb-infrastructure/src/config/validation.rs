@@ -1,6 +1,6 @@
 use crate::config::AppConfig;
-use crate::constants::auth::*;
 use mcb_domain::error::{Error, Result};
+use mcb_utils::constants::auth::*;
 
 /// Validate the application configuration at startup.
 ///

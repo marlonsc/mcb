@@ -93,7 +93,7 @@ impl IndexingServiceInterface for IndexingServiceImpl {
             files_skipped: 0,
             errors: vec![],
             operation_id: Some(operation_id),
-            status: mcb_domain::constants::INDEXING_STATUS_STARTED.to_owned(),
+            status: mcb_utils::constants::INDEXING_STATUS_STARTED.to_owned(),
         })
     }
 

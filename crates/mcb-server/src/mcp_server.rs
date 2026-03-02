@@ -348,7 +348,7 @@ async fn auto_create_session_and_project(
 ) {
     // T10: Auto-create agent session with IDE identity
     if let Some(ref session_id) = ctx.session_id {
-        let now = mcb_domain::utils::time::epoch_secs_i64().unwrap_or(0);
+        let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
         let ide_label = defaults
             .agent_program
             .as_deref()
@@ -356,7 +356,7 @@ async fn auto_create_session_and_project(
             .unwrap_or("mcb-stdio");
         let session = AgentSession {
             id: session_id.clone(),
-            session_summary_id: format!("auto_{}", mcb_domain::utils::id::generate().simple()),
+            session_summary_id: format!("auto_{}", mcb_utils::utils::id::generate().simple()),
             agent_type: AgentType::Sisyphus,
             model: ctx.model_id.clone().unwrap_or_else(|| "unknown".to_owned()),
             parent_session_id: ctx.parent_session_id.clone(),
@@ -393,9 +393,9 @@ async fn auto_create_session_and_project(
                 tracing::debug!("Project '{project_name}' already exists for org '{org_id}'");
             }
             Err(_) => {
-                let now = mcb_domain::utils::time::epoch_secs_i64().unwrap_or(0);
+                let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
                 let project = Project {
-                    id: mcb_domain::utils::id::generate().to_string(),
+                    id: mcb_utils::utils::id::generate().to_string(),
                     org_id: org_id.clone(),
                     name: project_name.to_owned(),
                     path: repo_path.clone(),

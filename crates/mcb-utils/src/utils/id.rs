@@ -2,7 +2,7 @@
 //! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
 //!
 use crate::constants::io::{FILE_READ_BUFFER_SIZE, MASKED_ID_PREFIX_LENGTH};
-use crate::error::{Error, Result};
+use crate::error::UtilsError;
 use sha2::{Digest, Sha256};
 use std::fs::File;
 use std::io::{BufReader, Read};
@@ -54,16 +54,16 @@ pub fn mask_id(id: &str) -> String {
 /// # Errors
 ///
 /// Returns an error if the file cannot be opened or read.
-pub fn compute_file_hash(path: &Path) -> Result<String> {
-    let file =
-        File::open(path).map_err(|e| Error::io(format!("Failed to open file {path:?}: {e}")))?;
+pub fn compute_file_hash(path: &Path) -> Result<String, UtilsError> {
+    let file = File::open(path)
+        .map_err(|e| UtilsError::Filesystem(format!("Failed to open file {path:?}: {e}")))?;
     let mut reader = BufReader::new(file);
     let mut hasher = Sha256::new();
     let mut buffer = [0u8; FILE_READ_BUFFER_SIZE];
     loop {
         let count = reader
             .read(&mut buffer)
-            .map_err(|e| Error::io(format!("Failed to read file {path:?}: {e}")))?;
+            .map_err(|e| UtilsError::Filesystem(format!("Failed to read file {path:?}: {e}")))?;
         if count == 0 {
             break;
         }

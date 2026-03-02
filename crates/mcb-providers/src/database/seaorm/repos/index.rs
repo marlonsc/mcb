@@ -39,7 +39,7 @@ impl SeaOrmIndexRepository {
     }
 
     fn now() -> Result<i64> {
-        mcb_domain::utils::time::epoch_secs_i64()
+        Ok(mcb_utils::utils::time::epoch_secs_i64()?)
     }
 
     fn status_to_string(status: &IndexingOperationStatus) -> String {

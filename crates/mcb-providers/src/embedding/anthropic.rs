@@ -6,13 +6,13 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use mcb_domain::constants::embedding::{
-    EMBEDDING_DIMENSION_ANTHROPIC_CODE, EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT,
-    EMBEDDING_DIMENSION_ANTHROPIC_LITE,
-};
 use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use mcb_utils::constants::embedding::{
+    EMBEDDING_DIMENSION_ANTHROPIC_CODE, EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT,
+    EMBEDDING_DIMENSION_ANTHROPIC_LITE,
+};
 use reqwest::Client;
 
 use crate::constants::ANTHROPIC_MAX_INPUT_TOKENS;
@@ -24,7 +24,7 @@ use crate::constants::{
 };
 use crate::utils::embedding::{HttpEmbeddingClient, parse_standard_embedding, process_batch};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
-use mcb_domain::constants::http::CONTENT_TYPE_JSON;
+use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
 define_http_embedding_provider!(
     /// Anthropic embedding provider

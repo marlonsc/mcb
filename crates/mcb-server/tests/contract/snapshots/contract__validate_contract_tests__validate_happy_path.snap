@@ -19,7 +19,7 @@ expression: "snapshot_payload(&request, status, &response)"
     "result": {
       "content": [
         {
-          "text": "{\n  \"count\": 19,\n  \"description\": \"Available validation rules\",\n  \"validators\": [\n    \"naming\",\n    \"port_adapter\",\n    \"dependency\",\n    \"kiss\",\n    \"implementation\",\n    \"refactoring\",\n    \"solid\",\n    \"clean_architecture\",\n    \"organization\",\n    \"performance\",\n    \"error_boundary\",\n    \"documentation\",\n    \"hygiene\",\n    \"layer_flow\",\n    \"quality\",\n    \"declarative_rules\",\n    \"visibility\",\n    \"pattern\",\n    \"async_patterns\"\n  ]\n}",
+          "text": "{\n  \"count\": 19,\n  \"description\": \"Available validation rules\",\n  \"validators\": [\n    \"documentation\",\n    \"async_patterns\",\n    \"clean_architecture\",\n    \"kiss\",\n    \"organization\",\n    \"performance\",\n    \"declarative_rules\",\n    \"refactoring\",\n    \"visibility\",\n    \"hygiene\",\n    \"quality\",\n    \"naming\",\n    \"error_boundary\",\n    \"port_adapter\",\n    \"dependency\",\n    \"pattern\",\n    \"layer_flow\",\n    \"implementation\",\n    \"solid\"\n  ]\n}",
           "type": "text"
         }
       ],

@@ -6,10 +6,10 @@
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use mcb_domain::constants::INDEXING_STATUS_COMPLETED;
 use mcb_domain::error::Result;
 use mcb_domain::events::DomainEvent;
 use mcb_domain::value_objects::{CollectionId, OperationId};
+use mcb_utils::constants::INDEXING_STATUS_COMPLETED;
 
 use super::{IndexingProgress, IndexingServiceImpl, ProcessResult};
 
@@ -124,7 +124,7 @@ impl IndexingServiceImpl {
             .map_err(|e| mcb_domain::error::Error::internal(format!("Failed to read file: {e}")))?;
 
         // Incremental check using file hashes
-        let current_hash = mcb_domain::utils::id::compute_content_hash(&content);
+        let current_hash = mcb_utils::utils::id::compute_content_hash(&content);
         match &self.file_hash_repository {
             Some(repo)
                 if !repo
