@@ -14,8 +14,8 @@ use sea_orm::{
 };
 
 use super::common::db_error;
-use crate::constants::database::OBSERVATION_LIST_MAX_LIMIT;
 use crate::database::seaorm::entities::{observation, organization, project, session_summary};
+use mcb_utils::constants::limits::OBSERVATION_LIST_MAX_LIMIT;
 
 /// SeaORM-backed implementation for observation persistence and retrieval.
 pub struct SeaOrmObservationRepository {
