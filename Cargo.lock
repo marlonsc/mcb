@@ -4276,6 +4276,7 @@ dependencies = [
  "linkme",
  "loco-rs",
  "mcb-domain",
+ "mcb-validate",
  "mockall",
  "pbkdf2",
  "rand 0.10.0",
