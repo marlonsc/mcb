@@ -1,8 +1,8 @@
-use crate::utils::test_fixtures::{
+use mcb_domain::utils::tests::fixtures::{
     TEST_ORG_ID_A, TEST_ORG_ID_B, create_test_mcp_server, test_api_key, test_organization,
     test_team, test_user,
 };
-use crate::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::Value;

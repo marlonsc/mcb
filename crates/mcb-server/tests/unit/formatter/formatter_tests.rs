@@ -7,7 +7,9 @@ use mcb_domain::ports::{IndexingResult, IndexingStatus};
 use mcb_server::formatter::ResponseFormatter;
 use rstest::rstest;
 
-use crate::utils::search_fixtures::{create_test_search_result, create_test_search_results};
+use mcb_domain::utils::tests::search_fixtures::{
+    create_test_search_result, create_test_search_results,
+};
 
 fn build_indexing_result(
     files_processed: usize,
@@ -62,6 +64,7 @@ fn test_format_search_response(#[case] count: usize, #[case] duration_ms: u64, #
     8_000
 )]
 #[case(build_indexing_result(100, 500, 0, Vec::new()), "/project", 100)]
+#[rstest]
 #[test]
 fn test_format_indexing_success(
     #[case] result: IndexingResult,
@@ -76,6 +79,7 @@ fn test_format_indexing_success(
     assert!(!response.is_error.unwrap_or(false));
 }
 
+#[rstest]
 #[test]
 fn test_format_indexing_error() {
     let path = Path::new("/nonexistent/path");
@@ -111,12 +115,14 @@ fn test_format_indexing_error() {
     total_files: 100,
     processed_files: 100,
 })]
+#[rstest]
 #[test]
 fn test_format_indexing_status(#[case] status: IndexingStatus) {
     let response = ResponseFormatter::format_indexing_status(&status);
     assert!(!response.is_error.unwrap_or(false));
 }
 
+#[rstest]
 #[test]
 fn test_format_clear_index() {
     let response = ResponseFormatter::format_clear_index("test-collection");
@@ -124,6 +130,7 @@ fn test_format_clear_index() {
     assert!(!response.is_error.unwrap_or(false));
 }
 
+#[rstest]
 #[test]
 fn test_format_search_result_code_preview() {
     // Test with Rust code
@@ -142,6 +149,7 @@ fn test_format_search_result_code_preview() {
     assert!(response.is_ok());
 }
 
+#[rstest]
 #[test]
 fn test_format_search_result_long_content() {
     // Create content with more than 10 lines

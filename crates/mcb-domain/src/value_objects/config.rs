@@ -11,10 +11,6 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-use crate::value_objects::types::{
-    CacheProviderKind, EmbeddingProviderKind, VectorStoreProviderKind,
-};
-
 const REDACTED: &str = "REDACTED";
 
 /// Value Object: Embedding Provider Configuration
@@ -24,7 +20,7 @@ const REDACTED: &str = "REDACTED";
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct EmbeddingConfig {
     /// Provider name (openai, ollama, fastembed, etc.)
-    pub provider: EmbeddingProviderKind,
+    pub provider: String,
     /// Model identifier specific to the provider
     pub model: String,
     /// API key for cloud providers
@@ -57,7 +53,7 @@ impl fmt::Debug for EmbeddingConfig {
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct VectorStoreConfig {
     /// Provider name (edgevec, milvus, qdrant, pinecone)
-    pub provider: VectorStoreProviderKind,
+    pub provider: String,
     /// Server address for remote providers (e.g., Milvus)
     pub address: Option<String>,
     /// Authentication token for remote providers
@@ -90,7 +86,7 @@ impl fmt::Debug for VectorStoreConfig {
 #[derive(Clone, Serialize, Deserialize, PartialEq)]
 pub struct CacheConfig {
     /// Provider name (moka, redis, null)
-    pub provider: CacheProviderKind,
+    pub provider: String,
     /// Server address for remote providers (e.g., Redis)
     pub address: Option<String>,
     /// Authentication password for remote providers

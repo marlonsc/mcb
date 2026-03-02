@@ -3,7 +3,6 @@
 //! All test crate names, fixture paths, file names, and commonly used
 //! string literals live here. Tests MUST import from this module instead
 //! of hardcoding values.
-#![allow(dead_code)]
 
 // ---------------------------------------------------------------------------
 // Test crate names

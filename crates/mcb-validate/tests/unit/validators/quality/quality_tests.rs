@@ -16,6 +16,7 @@ use crate::utils::*;
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_quality_full_workspace() {
     let (_temp, root) =
@@ -108,6 +109,7 @@ fn file_size_threshold_behavior(
 // Exemptions
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_unwrap_exempt_in_test_code() {
     let (_temp, root) = with_fixture_crate(TEST_CRATE);
@@ -122,6 +124,7 @@ fn test_unwrap_exempt_in_test_code() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
+#[rstest]
 #[test]
 fn test_clean_code_no_violations() {
     let (_temp, root) = with_inline_crate(

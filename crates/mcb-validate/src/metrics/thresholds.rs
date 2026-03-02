@@ -9,7 +9,7 @@ use std::collections::HashMap;
 
 use crate::constants::rules::{METRICS_FIELD_MAX, METRICS_FIELD_SEVERITY};
 use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO};
-use crate::traits::violation::Severity;
+use mcb_domain::ports::validation::Severity;
 
 /// Types of metrics we can measure
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

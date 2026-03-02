@@ -3,8 +3,10 @@ use crate::utils::test_fixtures::{
     golden_content_to_string, golden_count_result_entries, golden_parse_results_found,
     sample_codebase_path,
 };
-use crate::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text;
+use rstest::rstest;
 
+#[rstest]
 #[test]
 fn test_fixtures_referenced() {
     assert!(!GOLDEN_COLLECTION.is_empty());

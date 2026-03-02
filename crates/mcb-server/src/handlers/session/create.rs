@@ -21,7 +21,6 @@ use crate::utils::mcp::{
 
 /// Payload for creating an agent session from JSON data.
 #[derive(Deserialize, Default)]
-#[serde(default)]
 struct CreateSessionPayload {
     agent_type: Option<String>,
     session_summary_id: Option<String>,
@@ -52,7 +51,7 @@ pub async fn create_session(
             .clone()
             .ok_or_else(|| McpError::invalid_params("missing required field: data", None))?,
     )
-    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+    .map_err(|e| McpError::invalid_params(format!("invalid session data: {e}"), None))?;
 
     let agent_type_value = resolve_identifier_precedence(
         "agent_type",

@@ -31,6 +31,9 @@ fn test_validate_execution(clean_workspace: std::path::PathBuf) {
         validators: None,
         severity: "warning".to_owned(),
         format: "text".to_owned(),
+        silent: true,
+        debug: false,
+        trace: false,
     };
 
     let result = args.execute();
@@ -56,6 +59,9 @@ fn test_validate_strict_mode(clean_workspace: std::path::PathBuf) {
         validators: None,
         severity: "warning".to_owned(),
         format: "text".to_owned(),
+        silent: true,
+        debug: false,
+        trace: false,
     };
 
     let result = args.execute();

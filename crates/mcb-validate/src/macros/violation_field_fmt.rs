@@ -6,6 +6,29 @@ mod core_impls;
 mod domain_impls;
 mod scalar_impls;
 
+macro_rules! impl_violation_field_fmt {
+    ($($type:ty),+ $(,)?) => {
+        $(
+            impl $crate::macros::violation_field_fmt::ViolationFieldFmt for $type {
+                fn fmt_field(&self) -> String {
+                    self.to_string()
+                }
+            }
+        )+
+    };
+    ($( $type:ty => $body:expr ),+ $(,)?) => {
+        $(
+            impl $crate::macros::violation_field_fmt::ViolationFieldFmt for $type {
+                fn fmt_field(&self) -> String {
+                    ($body)(self)
+                }
+            }
+        )+
+    };
+}
+
+pub(crate) use impl_violation_field_fmt;
+
 /// Formats violation fields into stable template strings.
 ///
 /// # Example

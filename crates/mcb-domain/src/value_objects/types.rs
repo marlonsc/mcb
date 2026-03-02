@@ -170,12 +170,3 @@ impl_from_str!(SupportedLanguage, "Unsupported language: {}", {
 
 /// System operation type identifier.
 pub type OperationType = String;
-
-/// Embedding provider identifier.
-pub type EmbeddingProviderKind = String;
-
-/// Vector store provider identifier.
-pub type VectorStoreProviderKind = String;
-
-/// Cache provider identifier.
-pub type CacheProviderKind = String;

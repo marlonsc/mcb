@@ -33,6 +33,7 @@ mod duplication_integration_tests {
     }
 
     /// Test that tokenizer correctly extracts tokens from Rust code
+    #[rstest]
     #[test]
     fn test_tokenize_rust_code() {
         let code = "fn calculate_sum(numbers: &[i32]) -> i32 {
@@ -69,6 +70,7 @@ mod duplication_integration_tests {
     }
 
     /// Test fingerprinting identifies duplicate token sequences
+    #[rstest]
     #[test]
     fn test_fingerprinter_finds_duplicates() {
         let code1 = "fn process_data(items: &[i32]) -> i32 {
@@ -112,6 +114,7 @@ mod duplication_integration_tests {
     }
 
     /// Test `DuplicationAnalyzer` detects exact clones across files
+    #[rstest]
     #[test]
     fn test_analyzer_detects_exact_clones() {
         let dir = TempDir::new().unwrap();
@@ -168,6 +171,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     }
 
     /// Test that small code snippets below threshold are not flagged
+    #[rstest]
     #[test]
     fn test_respects_minimum_thresholds() {
         let dir = TempDir::new().unwrap();
@@ -197,6 +201,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     }
 
     /// Test analyzer works with different file types
+    #[rstest]
     #[test]
     fn test_analyzer_handles_multiple_languages() {
         let dir = TempDir::new().unwrap();
@@ -216,6 +221,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     }
 
     /// Test duplication statistics calculation
+    #[rstest]
     #[test]
     fn test_duplication_stats() {
         use mcb_validate::Severity;
@@ -265,6 +271,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     }
 
     /// Test Violation trait implementation
+    #[rstest]
     #[test]
     fn test_violation_trait_implementation() {
         use mcb_validate::duplication::DuplicationViolation;
@@ -309,6 +316,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     }
 
     /// Test that exclude patterns affect analysis
+    #[rstest]
     #[test]
     fn test_exclude_patterns_applied() {
         let dir = TempDir::new().unwrap();

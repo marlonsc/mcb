@@ -11,9 +11,7 @@ use async_trait::async_trait;
 use mcb_domain::constants::embedding::EMBEDDING_DIMENSION_GEMINI;
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
-use crate::constants::{
-    EMBEDDING_RETRY_BACKOFF_MS, EMBEDDING_RETRY_COUNT, HTTP_HEADER_CONTENT_TYPE,
-};
+use crate::constants::{HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT};
 use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
@@ -21,7 +19,6 @@ use reqwest::Client;
 
 use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
-use crate::{define_http_embedding_provider, impl_http_provider_base, register_http_provider};
 
 define_http_embedding_provider!(
     /// Gemini embedding provider
@@ -86,8 +83,8 @@ impl GeminiEmbeddingProvider {
             headers: &headers,
             body: Some(&payload),
             retry: Some(RetryConfig::new(
-                EMBEDDING_RETRY_COUNT,
-                std::time::Duration::from_millis(EMBEDDING_RETRY_BACKOFF_MS),
+                PROVIDER_RETRY_COUNT,
+                std::time::Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
             )),
         })
         .await

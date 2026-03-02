@@ -9,10 +9,10 @@
 use std::path::PathBuf;
 use std::str::Chars;
 
-use super::constants::{OPERATOR_CHARS, PUNCTUATION_CHARS};
 use super::fingerprint::{FingerprintMatch, Token, TokenType};
 use super::thresholds::{DuplicationThresholds, DuplicationType};
-use super::utils::lines_overlap;
+use crate::constants::duplication::{OPERATOR_CHARS, PUNCTUATION_CHARS};
+use crate::utils::range::lines_overlap;
 
 /// Result of comparing two code fragments
 #[derive(Debug, Clone)]

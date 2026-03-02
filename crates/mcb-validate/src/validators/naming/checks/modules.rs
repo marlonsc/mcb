@@ -4,9 +4,9 @@
 use std::path::Path;
 
 use super::super::violation::NamingViolation;
-use crate::traits::violation::Severity;
+use crate::constants::ca::{MODULE_FILE_NAME, MODULE_SPECIAL_FILES};
 use crate::utils::naming::is_snake_case;
-use crate::validators::naming::constants::{MODULE_FILE_NAME, MODULE_SPECIAL_FILES};
+use mcb_domain::ports::validation::Severity;
 
 pub fn validate_module_name(path: &Path) -> Option<NamingViolation> {
     let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");

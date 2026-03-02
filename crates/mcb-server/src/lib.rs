@@ -8,8 +8,7 @@
 //! - `transport` - HTTP and stdio transport adapters
 //! - `session` - runtime session lifecycle and context handling
 //!
-//! ## Entry point
-//! [`loco_app::create_mcp_server`] is the composition-root helper that wires
+//! [`composition::build_mcp_server_bootstrap`] is the composition-root that wires
 //! domain services and repositories from the Loco application context.
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
@@ -18,22 +17,23 @@ mod macros;
 
 pub mod args;
 pub mod auth;
-pub mod builder;
+pub mod composition;
 pub mod constants;
 pub mod controllers;
 pub mod error_mapping;
 pub mod formatter;
+pub mod graphql_store;
 pub mod handlers;
 pub mod hooks;
-pub mod initializers;
-pub mod loco_app;
+
+/// Loco app hooks and MCP server composition root.
 pub mod mcp_server;
 pub mod session;
+pub mod state;
 pub mod tools;
 /// Transport layer for MCP protocol communication.
 pub mod transport;
 pub mod utils;
 
-pub use builder::McpServerBuilder;
-pub use loco_app::McbApp;
-pub use mcp_server::McpServer;
+mod exports;
+pub use exports::*;

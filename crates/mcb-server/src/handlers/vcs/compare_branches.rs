@@ -48,6 +48,7 @@ pub async fn compare_branches(
         .files
         .iter()
         .map(|file| BranchDiffFile {
+            // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
             path: file.path.to_str().unwrap_or_default().to_owned(),
             status: file.status.to_string(),
         })

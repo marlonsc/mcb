@@ -9,7 +9,6 @@
 //! Run with: `cargo test -p mcb-server --test unit mcp_protocol`
 
 use rstest::rstest;
-extern crate mcb_providers;
 
 use axum::http::StatusCode;
 use mcb_server::transport::types::McpRequest;
@@ -223,7 +222,7 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
         .and_then(|v| v.get("required"))
         .and_then(serde_json::Value::as_array);
     assert!(required.is_some(), "req array");
-    let required = match required {
+    let required: &Vec<serde_json::Value> = match required {
         Some(value) => value,
         None => return Ok(()),
     };

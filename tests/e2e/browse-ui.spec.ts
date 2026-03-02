@@ -1,7 +1,109 @@
 import { test, expect, Page } from '@playwright/test';
+import path from 'path';
+import * as http from 'http';
 
 test.describe('MCB Browse UI - E2E Tests', () => {
   let page: Page;
+
+  test.beforeAll(async ({ request }) => {
+    test.setTimeout(120000); // 2 min — indexing can take a while
+
+    // Check if chunks are already indexed
+    const checkResp = await request.get('/chunks').catch(() => null);
+    if (checkResp?.ok()) {
+      const chunks = await checkResp.json().catch(() => []);
+      if (Array.isArray(chunks) && chunks.length > 0) return;
+    }
+
+    // Resolve fixture codebase path
+    const fixturePath = path.resolve(__dirname, '../..', 'crates/mcb-server/tests/fixtures/sample_codebase');
+
+    // Helper: POST to MCP endpoint, reads until first SSE data event or timeout
+    function mcpPost(body: string): Promise<string> {
+      return new Promise((resolve) => {
+        const data = Buffer.from(body, 'utf8');
+        const req = http.request({
+          hostname: 'localhost',
+          port: 18080,
+          path: '/mcp',
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json, text/event-stream',
+            'Content-Length': data.length,
+          },
+        }, (res) => {
+          let acc = '';
+          res.setEncoding('utf8');
+          res.on('data', (chunk: string) => {
+            acc += chunk;
+            if (acc.includes('\n\n')) { res.destroy(); resolve(acc); }
+          });
+          res.on('end', () => resolve(acc));
+          const timer = setTimeout(() => { res.destroy(); resolve(acc); }, 12000);
+          res.on('close', () => clearTimeout(timer));
+        });
+        req.on('error', () => resolve(''));
+        req.setTimeout(15000, () => { req.destroy(); resolve(''); });
+        req.write(data);
+        req.end();
+      });
+    }
+
+    // 1. Initialize MCP session
+    await mcpPost(JSON.stringify({
+      jsonrpc: '2.0', id: 1, method: 'initialize',
+      params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'e2e-setup', version: '1.0' } },
+    }));
+
+    // 2. Clear stale hashes so incremental indexing doesn't skip files
+    await mcpPost(JSON.stringify({
+      jsonrpc: '2.0', id: 2, method: 'tools/call',
+      params: {
+        name: 'index',
+        arguments: {
+          action: 'clear',
+          path: fixturePath,
+          collection: 'sample',
+          extensions: ['rs'],
+          exclude_dirs: [],
+          ignore_patterns: [],
+          max_file_size: 1048576,
+          follow_symlinks: false,
+          token: '',
+        },
+      },
+    }));
+
+    // 3. Trigger fresh indexing of fixture codebase
+    await mcpPost(JSON.stringify({
+      jsonrpc: '2.0', id: 3, method: 'tools/call',
+      params: {
+        name: 'index',
+        arguments: {
+          action: 'start',
+          path: fixturePath,
+          collection: 'sample',
+          extensions: ['rs', 'ts', 'js', 'py', 'go'],
+          exclude_dirs: [],
+          ignore_patterns: [],
+          max_file_size: 1048576,
+          follow_symlinks: false,
+          token: '',
+        },
+      },
+    }));
+
+    // 4. Poll /chunks until data appears (max 90 s)
+    for (let attempt = 0; attempt < 45; attempt++) {
+      await new Promise(r => setTimeout(r, 2000));
+      const r = await request.get('/chunks').catch(() => null);
+      if (r?.ok()) {
+        const c = await r.json().catch(() => []);
+        if (Array.isArray(c) && c.length > 0) break;
+      }
+    }
+  });
 
   test.beforeEach(async ({ browser }) => {
     page = await browser.newPage();
@@ -70,7 +172,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
         expect(firstId).not.toBe(lastId);
       }
 
-      await page.keyboard.press('shift+g');
+      await page.keyboard.press('Shift+g');
       await page.waitForTimeout(100);
 
       activeChunk = page.locator('[data-active="true"]');
@@ -470,7 +572,8 @@ test.describe('MCB Browse UI - E2E Tests', () => {
         content?.includes('No collections') ||
           content?.includes('Loading') ||
           content?.includes('Error') ||
-          collectionCards > 0
+          collectionCards > 0 ||
+          (await page.locator('#collections-grid [data-chunk-id]').count()) > 0
       ).toBe(true);
     });
 

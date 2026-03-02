@@ -258,6 +258,7 @@ fn parser_finds_node(
 
 // ==================== AST Query Tests ====================
 
+#[rstest]
 #[test]
 fn test_ast_query_builder() {
     let query = AstQueryBuilder::new("rust", "function_item")
@@ -275,6 +276,7 @@ fn test_ast_query_builder() {
     assert_eq!(query.conditions.len(), 1);
 }
 
+#[rstest]
 #[test]
 fn test_ast_query_patterns_undocumented_functions() {
     let query = AstQueryPatterns::undocumented_functions("rust");
@@ -284,6 +286,7 @@ fn test_ast_query_patterns_undocumented_functions() {
     assert_eq!(query.severity, "warning");
 }
 
+#[rstest]
 #[test]
 fn test_ast_query_patterns_unwrap_usage() {
     let query = AstQueryPatterns::unwrap_usage("rust");
@@ -293,6 +296,7 @@ fn test_ast_query_patterns_unwrap_usage() {
     assert_eq!(query.severity, "error");
 }
 
+#[rstest]
 #[test]
 fn test_ast_query_patterns_async_functions() {
     let query = AstQueryPatterns::async_functions("rust");
@@ -302,6 +306,7 @@ fn test_ast_query_patterns_async_functions() {
     assert_eq!(query.severity, "info");
 }
 
+#[rstest]
 #[test]
 fn test_ast_query_node_type_matching() {
     let query = AstQuery::new("rust", "identifier", "Found identifier", "info");
@@ -330,6 +335,7 @@ fn test_ast_query_node_type_matching() {
     assert!(violations[0].message.contains("Found identifier"));
 }
 
+#[rstest]
 #[test]
 fn test_ast_query_no_match() {
     let query = AstQuery::new("rust", "function_item", "Found function", "info");
@@ -357,6 +363,7 @@ fn test_ast_query_no_match() {
     assert_eq!(violations.len(), 0, "Should not match non-function node");
 }
 
+#[rstest]
 #[test]
 fn test_ast_query_recursive_matching() {
     let query = AstQuery::new("rust", "identifier", "Found identifier", "info");
@@ -405,6 +412,7 @@ fn test_ast_query_recursive_matching() {
 
 // ==================== Query Condition Tests ====================
 
+#[rstest]
 #[test]
 fn test_query_condition_has_child() {
     let query = AstQueryBuilder::new("rust", "function_item")
@@ -461,6 +469,7 @@ fn test_query_condition_has_child() {
     );
 }
 
+#[rstest]
 #[test]
 fn test_query_condition_no_child() {
     let query = AstQueryBuilder::new("rust", "function_item")

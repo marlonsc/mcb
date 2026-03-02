@@ -24,6 +24,7 @@ pub async fn list_observations(
 ) -> Result<CallToolResult, McpError> {
     let filter = build_memory_filter(args, None, args.tags.clone());
     let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIMIT as u32) as usize;
+    // INTENTIONAL: Optional query parameter; empty string means no filter
     let query = args.query.clone().unwrap_or_default();
     match memory_service
         .memory_search(&query, Some(filter), limit)

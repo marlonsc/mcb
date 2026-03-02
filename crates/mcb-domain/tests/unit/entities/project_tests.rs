@@ -2,7 +2,7 @@ use mcb_domain::entities::project::{
     DependencyType, DetectedProject, IssueStatus, IssueType, PhaseStatus, ProjectDecision,
     ProjectDependency, ProjectType,
 };
-use mcb_domain::test_utils::{create_test_issue, create_test_phase};
+use mcb_domain::utils::tests::utils::{create_test_issue, create_test_phase};
 use rstest::rstest;
 
 #[rstest]

@@ -4,8 +4,8 @@
 use std::path::PathBuf;
 
 use crate::config::CleanArchitectureRulesConfig;
-use crate::traits::violation::Violation;
 use crate::{Result, ValidationConfig};
+use mcb_domain::ports::validation::Violation;
 
 use super::super::violation::CleanArchitectureViolation;
 
@@ -53,7 +53,7 @@ impl CleanArchitectureValidator {
     }
 }
 
-impl crate::traits::validator::Validator for CleanArchitectureValidator {
+impl mcb_domain::ports::validation::Validator for CleanArchitectureValidator {
     fn name(&self) -> &'static str {
         "clean_architecture"
     }
@@ -62,7 +62,10 @@ impl crate::traits::validator::Validator for CleanArchitectureValidator {
         "Validates Clean Architecture compliance: layer boundaries, DI patterns, entity identity, value object immutability (Delegated to DeclarativeValidator)"
     }
 
-    fn validate(&self, _config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
+    fn validate(
+        &self,
+        _config: &ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
         Ok(Vec::new())
     }
 }

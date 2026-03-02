@@ -56,8 +56,52 @@ impl QualityValidator {
     }
 }
 
-crate::impl_validator!(
-    QualityValidator,
-    "quality",
-    "Validates code quality (no unwrap/expect)"
-);
+impl mcb_domain::ports::validation::Validator for QualityValidator {
+    fn name(&self) -> &'static str {
+        "quality"
+    }
+
+    fn description(&self) -> &'static str {
+        "Validates code quality (no unwrap/expect)"
+    }
+
+    fn checks<'a>(
+        &'a self,
+        _config: &'a crate::ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<
+        Vec<mcb_domain::ports::validation::NamedCheck<'a>>,
+    > {
+        Ok(vec![
+            mcb_domain::ports::validation::NamedCheck::new("unwrap", move || {
+                Ok(unwrap::validate(self)?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
+                    .collect())
+            }),
+            mcb_domain::ports::validation::NamedCheck::new("panic", move || {
+                Ok(panic::validate(self)?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
+                    .collect())
+            }),
+            mcb_domain::ports::validation::NamedCheck::new("metrics", move || {
+                Ok(metrics::validate(self)?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
+                    .collect())
+            }),
+            mcb_domain::ports::validation::NamedCheck::new("comments", move || {
+                Ok(comments::validate(self)?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
+                    .collect())
+            }),
+            mcb_domain::ports::validation::NamedCheck::new("dead_code", move || {
+                Ok(dead_code::validate(self)?
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
+                    .collect())
+            }),
+        ])
+    }
+}

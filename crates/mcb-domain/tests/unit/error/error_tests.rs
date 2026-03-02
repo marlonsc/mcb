@@ -49,6 +49,7 @@ fn error_generic(#[case] message: &str) {
     assert!(display_str.contains(message));
 }
 
+#[rstest]
 #[test]
 fn test_error_equality_discrimination() {
     let not_found = Error::not_found("resource");

@@ -11,9 +11,8 @@ use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
 use serde::Deserialize;
-use tokio::fs::read_to_string;
 
-use super::PROJECT_DETECTORS;
+use super::common::{parse_json_opt, read_file_opt};
 
 #[derive(Deserialize)]
 struct PackageJson {
@@ -43,28 +42,12 @@ impl ProjectDetector for NpmDetector {
             return Ok(None);
         }
 
-        let content = match read_to_string(&package_path).await {
-            Ok(c) => c,
-            Err(e) => {
-                mcb_domain::debug!(
-                    "npm",
-                    "Failed to read package.json",
-                    &format!("path = {package_path:?}, error = {e}")
-                );
-                return Ok(None);
-            }
+        let Some(content) = read_file_opt(&package_path, "npm").await else {
+            return Ok(None);
         };
 
-        let package: PackageJson = match serde_json::from_str(&content) {
-            Ok(p) => p,
-            Err(e) => {
-                mcb_domain::debug!(
-                    "npm",
-                    "Failed to parse package.json",
-                    &format!("path = {package_path:?}, error = {e}")
-                );
-                return Ok(None);
-            }
+        let Some(package) = parse_json_opt::<PackageJson>(&content, &package_path, "npm") else {
+            return Ok(None);
         };
 
         let name = package.name.unwrap_or_default();
@@ -109,7 +92,7 @@ fn npm_factory(
 
 // linkme distributed_slice uses #[link_section] internally
 #[allow(unsafe_code)]
-#[linkme::distributed_slice(PROJECT_DETECTORS)]
+#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
 static NPM_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "npm",
     description: "Detects Node.js projects with package.json",

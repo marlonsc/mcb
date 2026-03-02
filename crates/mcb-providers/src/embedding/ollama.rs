@@ -25,8 +25,6 @@ use crate::utils::embedding::{
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
-use crate::define_http_embedding_provider;
-
 define_http_embedding_provider!(
     /// Ollama embedding provider
     ///

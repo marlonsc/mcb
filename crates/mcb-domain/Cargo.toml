@@ -31,6 +31,7 @@ typed-builder = { workspace = true }
 # Async traits - needed for port definitions
 async-trait = { workspace = true }
 
+tracing = { workspace = true }
 # Dependency injection interfaces - port traits (linkme + AppContext)
 
 # Schema generation for MCP - pure lib acceptable for domain
@@ -65,10 +66,13 @@ linkme = { workspace = true }
 # HTTP Client types for providers
 reqwest = { workspace = true }
 toml = { workspace = true, optional = true }
+tempfile = { workspace = true, optional = true }
+# MCP SDK types — used by domain utils (extract_text, etc.)
+rmcp = { workspace = true }
 
 [features]
 default = []
-test-utils = ["dep:toml"]
+test-utils = ["dep:toml", "dep:tempfile"]
 
 [lints]
 workspace = true
@@ -79,6 +83,7 @@ tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 rstest = { workspace = true }
 mockall = { workspace = true }
+rmcp = { workspace = true }
 insta = { workspace = true }
 toml = { workspace = true }
 

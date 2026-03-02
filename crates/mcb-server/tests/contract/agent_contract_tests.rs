@@ -1,6 +1,7 @@
 use serde_json::json;
 
 use crate::common::{call_tool, snapshot_payload, tool_call_request};
+use rstest::rstest;
 
 fn normalize_tool_call_ids(mut payload: serde_json::Value) -> serde_json::Value {
     if let Some(text) = payload
@@ -26,11 +27,12 @@ fn normalize_tool_call_ids(mut payload: serde_json::Value) -> serde_json::Value 
     payload
 }
 
+#[rstest]
 #[tokio::test]
 async fn agent_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
         "agent",
-        json!({
+        &json!({
             "action": "log_tool",
             "session_id": "00000000-0000-0000-0000-000000000001",
             "data": {
@@ -49,11 +51,12 @@ async fn agent_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn agent_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
         "agent",
-        json!({
+        &json!({
             "action": 123,
             "session_id": "00000000-0000-0000-0000-000000000001",
             "data": {"tool_name": "search"},
@@ -63,6 +66,30 @@ async fn agent_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error
 
     insta::assert_json_snapshot!(
         "agent_invalid_args",
+        snapshot_payload(&request, status, &response)
+    );
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn agent_store_without_session_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
+    let request = tool_call_request(
+        "agent",
+        &json!({
+            "action": "log_tool",
+            "session_id": "nonexistent-session-00000",
+            "data": {
+                "tool_name": "search",
+                "success": true,
+                "duration_ms": 5,
+            }
+        }),
+    );
+    let (status, response) = call_tool(&request).await?;
+
+    insta::assert_json_snapshot!(
+        "agent_store_without_session",
         snapshot_payload(&request, status, &response)
     );
     Ok(())

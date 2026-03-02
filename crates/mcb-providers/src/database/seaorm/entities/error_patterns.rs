@@ -3,36 +3,51 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an error pattern.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "error_patterns")]
 pub struct Model {
+    /// Unique identifier for the error pattern.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the project where this pattern was identified.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Unique signature representing the error pattern.
     #[sea_orm(column_type = "Text")]
     pub pattern_signature: String,
+    /// Human-readable description of the error pattern.
     #[sea_orm(column_type = "Text")]
     pub description: String,
+    /// Category of the error (e.g., "syntax", "runtime").
     #[sea_orm(column_type = "Text")]
     pub category: String,
+    /// Optional JSON list of potential solutions for this pattern.
     #[sea_orm(column_type = "Text", nullable)]
     pub solutions: Option<String>,
+    /// Optional JSON list of files affected by this pattern.
     #[sea_orm(column_type = "Text", nullable)]
     pub affected_files: Option<String>,
+    /// Optional JSON list of tags associated with the pattern.
     #[sea_orm(column_type = "Text", nullable)]
     pub tags: Option<String>,
+    /// Number of times this pattern has been observed.
     pub occurrence_count: i64,
+    /// Timestamp when the pattern was first observed.
     pub first_seen_at: i64,
+    /// Timestamp when the pattern was last observed.
     pub last_seen_at: i64,
+    /// Optional identifier for the pattern's embedding in a vector database.
     #[sea_orm(column_type = "Text", nullable)]
     pub embedding_id: Option<String>,
 }
 
+/// Relations for the error pattern model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the error pattern model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

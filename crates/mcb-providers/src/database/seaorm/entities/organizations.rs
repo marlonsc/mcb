@@ -3,25 +3,34 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an organization.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "organizations")]
 pub struct Model {
+    /// Unique identifier for the organization.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Display name of the organization.
     #[sea_orm(column_type = "Text")]
     pub name: String,
+    /// Unique URL-friendly slug for the organization.
     #[sea_orm(column_type = "Text", unique)]
     pub slug: String,
+    /// JSON string containing organization-specific settings.
     #[sea_orm(column_type = "Text")]
     pub settings_json: String,
+    /// Timestamp when the organization was created.
     pub created_at: i64,
+    /// Timestamp when the organization was last updated.
     pub updated_at: i64,
 }
 
+/// Relations for the organization model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the organization model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

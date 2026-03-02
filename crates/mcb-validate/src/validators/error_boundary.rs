@@ -21,8 +21,8 @@ use std::path::{Path, PathBuf};
 use crate::define_violations;
 use crate::pattern_registry::{compile_regex, compile_regex_pairs};
 use crate::scan::for_each_scan_file;
-use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
 
 define_violations! {
     dynamic_severity,
@@ -274,3 +274,14 @@ impl ErrorBoundaryValidator {
         Ok(violations)
     }
 }
+
+#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
+static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
+    mcb_domain::registry::validation::ValidatorEntry {
+        name: "error_boundary",
+        description: "Validates error handling patterns across layer boundaries",
+        build: |root| {
+            Ok(Box::new(ErrorBoundaryValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
+    };

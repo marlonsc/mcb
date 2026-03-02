@@ -8,7 +8,7 @@ use std::path::Path;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::ports::ProjectDetectorConfig;
 
-use super::registry::PROJECT_DETECTORS;
+use mcb_domain::ports::PROJECT_DETECTORS;
 
 /// Detect all project types at a given path
 /// Returns multiple `ProjectTypes` if overlapping (e.g., Cargo.toml + package.json)

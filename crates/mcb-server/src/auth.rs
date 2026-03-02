@@ -8,17 +8,10 @@
 use argon2::password_hash::PasswordHash;
 use argon2::{Argon2, PasswordVerifier};
 use axum::http::HeaderMap;
-use loco_rs::app::AppContext;
 use loco_rs::errors::Error;
 use loco_rs::prelude::Result;
-use mcb_infrastructure::config::AppConfig;
-use mcb_providers::database::seaorm::entities::users;
-use sea_orm::ColumnTrait;
-use sea_orm::EntityTrait;
-use sea_orm::QueryFilter;
-
-const DEFAULT_API_KEY_HEADER: &str = "x-api-key";
-const BEARER_PREFIX: &str = "Bearer ";
+use mcb_domain::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
+use mcb_domain::ports::AuthRepositoryPort;
 
 /// Authenticated admin principal.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -40,25 +33,28 @@ pub struct AdminPrincipal {
 ///
 /// Returns `Unauthorized` when the key is missing or invalid.
 pub async fn authorize_admin_api_key(
-    ctx: &AppContext,
+    auth_repo: &dyn AuthRepositoryPort,
     headers: &HeaderMap,
+    settings: Option<&serde_json::Value>,
 ) -> Result<AdminPrincipal> {
-    let api_key_header = configured_api_key_header(ctx);
+    let api_key_header = configured_api_key_header(settings);
     let api_key = extract_api_key(headers, &api_key_header)?;
 
-    let users_with_keys = users::Entity::find()
-        .filter(users::Column::ApiKeyHash.is_not_null())
-        .all(&ctx.db)
-        .await?;
+    let users_with_keys = auth_repo
+        .find_users_by_api_key_hash(&api_key)
+        .await
+        .map_err(|e| {
+            mcb_domain::error!("auth", "auth repository lookup failed", &e);
+            Error::InternalServerError
+        })?;
 
-    for user in users_with_keys {
-        if let Some(hash) = user.api_key_hash.as_deref()
-            && verify_api_key(hash, &api_key)?
-        {
+    for user_with_key in users_with_keys {
+        if verify_api_key(&user_with_key.api_key_hash, &api_key)? {
+            let user = user_with_key.user;
             return Ok(AdminPrincipal {
                 user_id: user.id,
                 email: user.email,
-                role: user.role,
+                role: user.role.to_string(),
             });
         }
     }
@@ -66,18 +62,25 @@ pub async fn authorize_admin_api_key(
     Err(Error::Unauthorized("invalid api key".to_owned()))
 }
 
-fn configured_api_key_header(ctx: &AppContext) -> String {
-    ctx.config
-        .settings
-        .as_ref()
-        .and_then(|settings| serde_json::from_value::<AppConfig>(settings.clone()).ok())
-        .map_or_else(
-            || DEFAULT_API_KEY_HEADER.to_owned(),
-            |cfg| cfg.auth.api_key.header.to_ascii_lowercase(),
-        )
+pub(crate) fn configured_api_key_header(settings: Option<&serde_json::Value>) -> String {
+    settings
+        .and_then(|raw_settings| raw_settings.get("auth"))
+        .and_then(|auth| auth.get("api_key"))
+        .and_then(|api_key| api_key.get("header"))
+        .and_then(serde_json::Value::as_str)
+        .map_or_else(|| API_KEY_HEADER.to_owned(), str::to_ascii_lowercase)
 }
 
-fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String> {
+/// Extract API key from headers, checking both custom header and Authorization bearer.
+///
+/// # Arguments
+/// * `headers` - HTTP headers to search
+/// * `header_name` - Name of the custom header to check first
+///
+/// # Errors
+///
+/// Returns `Unauthorized` when the key is missing or header value is invalid.
+pub fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String> {
     if let Some(value) = headers.get(header_name) {
         let key = value
             .to_str()
@@ -113,44 +116,12 @@ fn verify_api_key(hash: &str, candidate: &str) -> Result<bool> {
     }
 
     if hash.starts_with("$2a$") || hash.starts_with("$2b$") || hash.starts_with("$2y$") {
-        return bcrypt::verify(candidate, hash)
-            .map_err(|e| {
-                tracing::error!("bcrypt verification failed: {e}");
-                Error::InternalServerError
-            });
+        return bcrypt::verify(candidate, hash).map_err(|e| {
+            mcb_domain::error!("auth", "bcrypt verification failed", &e);
+            Error::InternalServerError
+        });
     }
 
+    tracing::warn!(hash_prefix = %hash.chars().take(4).collect::<String>(), "unrecognized password hash format");
     Ok(false)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use axum::http::HeaderValue;
-
-    #[test]
-    fn extract_api_key_reads_x_api_key() {
-        let mut headers = HeaderMap::new();
-        headers.insert("x-api-key", HeaderValue::from_static("abc123"));
-        assert_eq!(
-            extract_api_key(&headers, "x-api-key").expect("api key"),
-            "abc123"
-        );
-    }
-
-    #[test]
-    fn extract_api_key_reads_authorization_bearer() {
-        let mut headers = HeaderMap::new();
-        headers.insert("authorization", HeaderValue::from_static("Bearer abc123"));
-        assert_eq!(
-            extract_api_key(&headers, "x-api-key").expect("api key"),
-            "abc123"
-        );
-    }
-
-    #[test]
-    fn extract_api_key_rejects_missing_headers() {
-        let headers = HeaderMap::new();
-        assert!(extract_api_key(&headers, "x-api-key").is_err());
-    }
 }

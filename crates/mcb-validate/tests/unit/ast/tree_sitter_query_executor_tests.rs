@@ -1,6 +1,7 @@
 use mcb_validate::ValidationError;
 use mcb_validate::ast::TreeSitterQueryExecutor;
 use mcb_validate::rules::yaml_loader::ValidatedRule;
+use rstest::rstest;
 use serde_json::json;
 use tempfile::TempDir;
 
@@ -26,6 +27,7 @@ fn build_rule(query: Option<&str>) -> ValidatedRule {
     }
 }
 
+#[rstest]
 #[test]
 fn tree_sitter_query_executor_matches_function_names() {
     let temp_dir = TempDir::new().unwrap();
@@ -41,6 +43,7 @@ fn tree_sitter_query_executor_matches_function_names() {
     assert_eq!(matches[0].line, 1);
 }
 
+#[rstest]
 #[test]
 fn tree_sitter_query_executor_returns_config_error_for_invalid_query() {
     let temp_dir = TempDir::new().unwrap();

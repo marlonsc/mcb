@@ -5,8 +5,8 @@ use std::path::PathBuf;
 
 use super::super::violation::ImplementationViolation;
 use crate::Result;
-use crate::traits::violation::Severity;
 use crate::utils::source::{required_patterns, source_lines};
+use mcb_domain::ports::validation::Severity;
 
 pub fn validate_empty_catch_alls(
     files: &[(PathBuf, String)],

@@ -3,16 +3,21 @@ use mcb_server::handlers::entities::VcsEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::utils::text::extract_text;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text;
+use rstest::rstest;
 
-fn create_handler() -> VcsEntityHandler {
-    let ctx = crate::utils::shared_context::shared_app_context();
-    VcsEntityHandler::new(ctx.vcs_entity_repository())
+fn create_handler() -> TestResult<VcsEntityHandler> {
+    let state = crate::utils::test_fixtures::shared_mcb_state()?;
+    Ok(VcsEntityHandler::new(
+        state.mcp_server.vcs_entity_repository(),
+    ))
 }
 
+#[rstest]
 #[tokio::test]
-async fn list_repositories_requires_project_id() {
-    let handler = create_handler();
+async fn list_repositories_requires_project_id() -> TestResult {
+    let handler = create_handler()?;
     let args = VcsEntityArgs {
         action: VcsEntityAction::List,
         resource: VcsEntityResource::Repository,
@@ -29,6 +34,7 @@ async fn list_repositories_requires_project_id() {
         .await
         .expect_err("must reject missing project_id");
     assert!(err.message.contains("project_id required for list"));
+    Ok(())
 }
 
 fn repo_payload(id: &str, project_id: &str) -> serde_json::Value {
@@ -69,9 +75,10 @@ async fn list_repo_count(handler: &VcsEntityHandler, project_id: &str) -> usize 
         .unwrap_or(0)
 }
 
+#[rstest]
 #[tokio::test]
-async fn create_repository_conflicting_project_id_rejected_without_side_effect() {
-    let handler = create_handler();
+async fn create_repository_conflicting_project_id_rejected_without_side_effect() -> TestResult {
+    let handler = create_handler()?;
     let before_count = list_repo_count(&handler, "project-a").await;
 
     let create_args = VcsEntityArgs {
@@ -94,11 +101,13 @@ async fn create_repository_conflicting_project_id_rejected_without_side_effect()
     let after_count = list_repo_count(&handler, "project-a").await;
 
     assert_eq!(after_count, before_count);
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn update_repository_conflicting_project_id_rejected_without_side_effect() {
-    let handler = create_handler();
+async fn update_repository_conflicting_project_id_rejected_without_side_effect() -> TestResult {
+    let handler = create_handler()?;
 
     let before_count = list_repo_count(&handler, "project-a").await;
 
@@ -120,11 +129,13 @@ async fn update_repository_conflicting_project_id_rejected_without_side_effect()
 
     let after_count = list_repo_count(&handler, "project-a").await;
     assert_eq!(after_count, before_count);
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn delete_repository_requires_project_id() {
-    let handler = create_handler();
+async fn delete_repository_requires_project_id() -> TestResult {
+    let handler = create_handler()?;
 
     let delete_args = VcsEntityArgs {
         action: VcsEntityAction::Delete,
@@ -145,4 +156,5 @@ async fn delete_repository_requires_project_id() {
         err.message
             .contains("project_id required for repository delete")
     );
+    Ok(())
 }

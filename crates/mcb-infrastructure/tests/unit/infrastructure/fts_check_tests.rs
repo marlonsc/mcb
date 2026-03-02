@@ -1,7 +1,9 @@
 #[cfg(test)]
 mod tests {
+    use rstest::rstest;
     use sqlx::sqlite::SqlitePool;
 
+    #[rstest]
     #[tokio::test]
     async fn test_fts5_availability() {
         let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();

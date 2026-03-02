@@ -29,6 +29,7 @@ fn job_type_display(#[case] job_type: JobType, #[case] expected: &str) {
     assert_eq!(job_type.to_string(), expected);
 }
 
+#[rstest]
 #[test]
 fn new_job_defaults() {
     let job = Job::new(
@@ -45,6 +46,7 @@ fn new_job_defaults() {
     assert!(job.result.is_none());
 }
 
+#[rstest]
 #[test]
 fn job_counts_default() {
     let counts = JobCounts::default();

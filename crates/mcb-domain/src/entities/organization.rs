@@ -20,27 +20,14 @@ crate::define_entity! {
     }
 }
 
-/// Status of an organization in its lifecycle.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
-pub enum OrgStatus {
-    /// Organization is active and operational.
-    Active,
-    /// Organization is suspended (e.g. billing issue).
-    Suspended,
-    /// Organization has been archived / soft-deleted.
-    Archived,
+crate::define_string_enum! {
+    /// Status of an organization in its lifecycle.
+    pub enum OrgStatus [strum = "lowercase", schema] {
+        /// Organization is active and operational.
+        Active,
+        /// Organization is suspended (e.g. billing issue).
+        Suspended,
+        /// Organization has been archived / soft-deleted.
+        Archived,
+    }
 }
-
-crate::impl_as_str_from_as_ref!(OrgStatus);

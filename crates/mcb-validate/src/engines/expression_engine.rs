@@ -22,7 +22,7 @@ use crate::constants::rules::{
 };
 use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_WARNING};
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
-use crate::traits::violation::{Severity, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
 
 /// Wrapper for evalexpr engine
 ///

@@ -9,6 +9,9 @@
 pub(crate) mod validation;
 pub(crate) use validation::{validate_collection_name, validate_file_path};
 
+/// Schema helper types for argument definitions.
+pub mod schema_helpers;
+
 /// Consolidated argument types (legacy, re-exports from split modules).
 pub mod consolidated;
 

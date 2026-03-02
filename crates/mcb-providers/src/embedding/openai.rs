@@ -19,15 +19,11 @@ use reqwest::Client;
 
 use crate::constants::{
     EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_INPUT, EMBEDDING_PARAM_MODEL,
-    EMBEDDING_RETRY_BACKOFF_MS, EMBEDDING_RETRY_COUNT, HTTP_HEADER_AUTHORIZATION,
-    HTTP_HEADER_CONTENT_TYPE,
+    HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS,
+    PROVIDER_RETRY_COUNT,
 };
 use crate::utils::embedding::{HttpEmbeddingClient, parse_standard_embedding, process_batch};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
-use crate::{
-    define_http_embedding_provider, impl_embedding_provider_trait, impl_http_provider_base,
-    register_http_provider,
-};
 
 use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 
@@ -78,8 +74,8 @@ impl OpenAIEmbeddingProvider {
             headers: &headers,
             body: Some(&payload),
             retry: Some(RetryConfig::new(
-                EMBEDDING_RETRY_COUNT,
-                Duration::from_millis(EMBEDDING_RETRY_BACKOFF_MS),
+                PROVIDER_RETRY_COUNT,
+                Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
             )),
         })
         .await

@@ -1,0 +1,104 @@
+use crate::config::AppConfig;
+use crate::constants::auth::*;
+use mcb_domain::error::{Error, Result};
+
+/// Validate the application configuration at startup.
+///
+/// # Errors
+///
+/// Returns an error if any configuration constraint is violated.
+pub fn validate_app_config(config: &AppConfig) -> Result<()> {
+    validate_auth_config(config)?;
+    validate_cache_config(config)?;
+    validate_limits_config(config)?;
+    validate_daemon_config(config)?;
+    validate_backup_config(config)?;
+    validate_operations_config(config)?;
+    Ok(())
+}
+
+fn validate_auth_config(config: &AppConfig) -> Result<()> {
+    if config.auth.enabled {
+        if config.auth.jwt.secret.is_empty() {
+            return Err(Error::config_invalid(
+                "auth.jwt.secret",
+                "JWT secret cannot be empty when authentication is enabled",
+            ));
+        }
+        if config.auth.jwt.secret.len() < MIN_JWT_SECRET_LENGTH {
+            return Err(Error::config_invalid(
+                "auth.jwt.secret",
+                format!("JWT secret should be at least {MIN_JWT_SECRET_LENGTH} characters long"),
+            ));
+        }
+    }
+    Ok(())
+}
+
+fn validate_cache_config(config: &AppConfig) -> Result<()> {
+    if config.system.infrastructure.cache.enabled
+        && config.system.infrastructure.cache.default_ttl_secs == 0
+    {
+        return Err(Error::config_invalid(
+            "system.infrastructure.cache.default_ttl_secs",
+            "Cache TTL cannot be 0 when cache is enabled".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_limits_config(config: &AppConfig) -> Result<()> {
+    if config.system.infrastructure.limits.memory_limit == 0 {
+        return Err(Error::config_invalid(
+            "system.infrastructure.limits.memory_limit",
+            "Memory limit cannot be 0".to_owned(),
+        ));
+    }
+    if config.system.infrastructure.limits.cpu_limit == 0 {
+        return Err(Error::config_invalid(
+            "system.infrastructure.limits.cpu_limit",
+            "CPU limit cannot be 0".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_daemon_config(config: &AppConfig) -> Result<()> {
+    if config.operations_daemon.daemon.enabled
+        && config.operations_daemon.daemon.max_restart_attempts == 0
+    {
+        return Err(Error::config_invalid(
+            "operations_daemon.daemon.max_restart_attempts",
+            "Maximum restart attempts cannot be 0 when daemon is enabled".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_backup_config(config: &AppConfig) -> Result<()> {
+    if config.system.data.backup.enabled && config.system.data.backup.interval_secs == 0 {
+        return Err(Error::config_invalid(
+            "system.data.backup.interval_secs",
+            "Backup interval cannot be 0 when backup is enabled".to_owned(),
+        ));
+    }
+    Ok(())
+}
+
+fn validate_operations_config(config: &AppConfig) -> Result<()> {
+    if config.operations_daemon.operations.tracking_enabled {
+        if config.operations_daemon.operations.cleanup_interval_secs == 0 {
+            return Err(Error::config_invalid(
+                "operations_daemon.operations.cleanup_interval_secs",
+                "Operations cleanup interval cannot be 0 when tracking is enabled".to_owned(),
+            ));
+        }
+        if config.operations_daemon.operations.retention_secs == 0 {
+            return Err(Error::config_invalid(
+                "operations_daemon.operations.retention_secs",
+                "Operations retention period cannot be 0 when tracking is enabled".to_owned(),
+            ));
+        }
+    }
+    Ok(())
+}

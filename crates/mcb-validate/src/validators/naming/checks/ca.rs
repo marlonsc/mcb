@@ -4,9 +4,15 @@
 use std::path::Path;
 
 use super::super::violation::NamingViolation;
+use crate::apply_ca_rule;
+use crate::constants::ca::{
+    CA_ADAPTERS_DIR, CA_ADAPTERS_REPOSITORY_DIR, CA_DI_DIR, CA_DOMAIN_PROVIDER_KEYWORD,
+    CA_DOMAIN_REPOSITORY_KEYWORD, CA_HANDLER_DIRS, CA_HANDLER_KEYWORD, CA_INFRA_ADAPTER_KEYWORD,
+    CA_INFRA_IMPL_SUFFIX, CA_MODULE_KEYWORD, CA_PORTS_DIR, CA_PORTS_PROVIDERS_DIR,
+    CA_REPOSITORIES_DIR,
+};
 use crate::constants::common::STANDARD_SKIP_FILES;
-use crate::traits::violation::Severity;
-use crate::validators::naming::constants::*;
+use mcb_domain::ports::validation::Severity;
 
 fn ca_violation(
     path: &Path,
@@ -39,13 +45,6 @@ fn name_matches(file_name: &str, matcher: NameMatch<'_>) -> bool {
 
 fn in_any_dir(path_str: &str, dirs: &[&str]) -> bool {
     dirs.iter().any(|dir| path_str.contains(dir))
-}
-
-macro_rules! apply_ca_rule {
-    ($path:expr, $file_name:expr, $path_str:expr, $matcher:expr, $required_dirs:expr, $detected_type:expr, $issue:expr, $suggestion:expr, $severity:expr) => {
-        (name_matches($file_name, $matcher) && !in_any_dir($path_str, $required_dirs))
-            .then(|| ca_violation($path, $detected_type, $issue, $suggestion, $severity))
-    };
 }
 
 pub fn validate_ca_naming(

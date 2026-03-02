@@ -7,7 +7,7 @@ use regex::Regex;
 
 use super::violation::PatternViolation;
 use crate::constants::common::{COMMENT_PREFIX, DI_IMPL_SUFFIXES, VALIDATE_IGNORE_PREFIX};
-use crate::traits::violation::Severity;
+use mcb_domain::ports::validation::Severity;
 
 /// Checks for Arc<Concrete> usage in a single file.
 pub fn check_arc_usage(

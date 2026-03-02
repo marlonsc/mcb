@@ -7,6 +7,8 @@
 pub mod fs;
 /// Naming convention checks (`CamelCase`, `snake_case`, `SCREAMING_SNAKE_CASE`).
 pub mod naming;
+/// Line/interval range helpers (overlap checks).
+pub mod range;
 /// Source code analysis utilities (function extraction, brace tracking, block scanning).
 pub mod source;
 /// Validation report utilities (conversion, filtering).

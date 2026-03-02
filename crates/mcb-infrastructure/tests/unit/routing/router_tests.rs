@@ -96,11 +96,11 @@ fn test_get_all_health(monitor: InMemoryHealthMonitor) {
 // =============================================================================
 
 #[fixture]
-#[allow(clippy::clone_on_ref_ptr)]
 fn router_setup() -> (Arc<InMemoryHealthMonitor>, DefaultProviderRouter) {
     let monitor = Arc::new(InMemoryHealthMonitor::new());
+    let health: Arc<dyn HealthMonitor> = Arc::clone(&monitor) as _;
     let router = DefaultProviderRouter::new(
-        monitor.clone(),
+        health,
         vec!["provider-a".to_owned(), "provider-b".to_owned()],
         vec![],
     );

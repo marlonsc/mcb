@@ -17,6 +17,7 @@ use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder, Set,
 };
 
+use super::common::db_error;
 use crate::database::seaorm::entities::{collection, file_hash, index_operation};
 
 /// `SeaORM` implementation of `IndexRepository`.
@@ -35,16 +36,6 @@ impl SeaOrmIndexRepository {
     #[must_use]
     pub fn new(db: Arc<DatabaseConnection>, project_id: String) -> Self {
         Self { db, project_id }
-    }
-
-    fn db_err<E>(context: &str, source: E) -> Error
-    where
-        E: std::error::Error + Send + Sync + 'static,
-    {
-        Error::Database {
-            message: context.to_owned(),
-            source: Some(Box::new(source)),
-        }
     }
 
     fn now() -> Result<i64> {
@@ -113,7 +104,7 @@ impl IndexRepository for SeaOrmIndexRepository {
         index_operation::Entity::insert(model)
             .exec(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("start indexing operation", e))?;
+            .map_err(db_error("start indexing operation"))?;
 
         Ok(op_id)
     }
@@ -122,7 +113,7 @@ impl IndexRepository for SeaOrmIndexRepository {
         let result = index_operation::Entity::find_by_id(operation_id.as_str())
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("get indexing operation", e))?;
+            .map_err(db_error("get indexing operation"))?;
 
         Ok(result.map(Self::model_to_domain))
     }
@@ -132,7 +123,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .order_by_desc(index_operation::Column::StartedAt)
             .all(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("list indexing operations", e))?;
+            .map_err(db_error("list indexing operations"))?;
 
         Ok(results.into_iter().map(Self::model_to_domain).collect())
     }
@@ -147,7 +138,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .order_by_desc(index_operation::Column::StartedAt)
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("get active indexing operation", e))?;
+            .map_err(db_error("get active indexing operation"))?;
 
         Ok(result.map(Self::model_to_domain))
     }
@@ -161,7 +152,7 @@ impl IndexRepository for SeaOrmIndexRepository {
         let existing = index_operation::Entity::find_by_id(operation_id.as_str())
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("find operation for progress update", e))?
+            .map_err(db_error("find operation for progress update"))?
             .ok_or_else(|| Error::NotFound {
                 resource: format!("IndexOperation:{operation_id}"),
             })?;
@@ -174,7 +165,7 @@ impl IndexRepository for SeaOrmIndexRepository {
         active
             .update(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("update indexing progress", e))?;
+            .map_err(db_error("update indexing progress"))?;
 
         Ok(())
     }
@@ -185,7 +176,7 @@ impl IndexRepository for SeaOrmIndexRepository {
         let existing = index_operation::Entity::find_by_id(operation_id.as_str())
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("find operation for completion", e))?
+            .map_err(db_error("find operation for completion"))?
             .ok_or_else(|| Error::NotFound {
                 resource: format!("IndexOperation:{operation_id}"),
             })?;
@@ -197,7 +188,7 @@ impl IndexRepository for SeaOrmIndexRepository {
         active
             .update(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("complete indexing operation", e))?;
+            .map_err(db_error("complete indexing operation"))?;
 
         Ok(())
     }
@@ -208,7 +199,7 @@ impl IndexRepository for SeaOrmIndexRepository {
         let existing = index_operation::Entity::find_by_id(operation_id.as_str())
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("find operation for failure", e))?
+            .map_err(db_error("find operation for failure"))?
             .ok_or_else(|| Error::NotFound {
                 resource: format!("IndexOperation:{operation_id}"),
             })?;
@@ -223,7 +214,7 @@ impl IndexRepository for SeaOrmIndexRepository {
         active
             .update(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("fail indexing operation", e))?;
+            .map_err(db_error("fail indexing operation"))?;
 
         Ok(())
     }
@@ -237,7 +228,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .filter(file_hash::Column::Collection.eq(&collection_str))
             .all(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("count file hashes for clear", e))?;
+            .map_err(db_error("count file hashes for clear"))?;
 
         let count = file_hashes.len() as u64;
 
@@ -247,14 +238,14 @@ impl IndexRepository for SeaOrmIndexRepository {
             .filter(file_hash::Column::Collection.eq(&collection_str))
             .exec(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("clear file hashes", e))?;
+            .map_err(db_error("clear file hashes"))?;
 
         // Delete collection metadata
         let collection_id_str = format!("{}:{}", self.project_id, collection_str);
         collection::Entity::delete_by_id(&collection_id_str)
             .exec(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("clear collection metadata", e))?;
+            .map_err(db_error("clear collection metadata"))?;
 
         // Mark any active operations for this collection as failed
         let active_ops = index_operation::Entity::find()
@@ -262,7 +253,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .filter(index_operation::Column::Status.is_in(["starting", "in_progress"]))
             .all(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("find active ops for clear", e))?;
+            .map_err(db_error("find active ops for clear"))?;
 
         let now = Self::now()?;
         for op in active_ops {
@@ -274,7 +265,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             active
                 .update(self.db.as_ref())
                 .await
-                .map_err(|e| Self::db_err("cancel active op during clear", e))?;
+                .map_err(db_error("cancel active op during clear"))?;
         }
 
         Ok(count)
@@ -289,7 +280,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .filter(file_hash::Column::DeletedAt.is_null())
             .all(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("count indexed files", e))?;
+            .map_err(db_error("count indexed files"))?;
 
         let last_op = index_operation::Entity::find()
             .filter(index_operation::Column::CollectionId.eq(&collection_str))
@@ -297,14 +288,14 @@ impl IndexRepository for SeaOrmIndexRepository {
             .order_by_desc(index_operation::Column::CompletedAt)
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("get last completed operation", e))?;
+            .map_err(db_error("get last completed operation"))?;
 
         let active_op = index_operation::Entity::find()
             .filter(index_operation::Column::CollectionId.eq(&collection_str))
             .filter(index_operation::Column::Status.is_in(["starting", "in_progress"]))
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("check active indexing", e))?;
+            .map_err(db_error("check active indexing"))?;
 
         Ok(IndexStats {
             indexed_files: indexed_files.len() as u64,
@@ -324,7 +315,7 @@ impl FileHashRepository for SeaOrmIndexRepository {
             .filter(file_hash::Column::DeletedAt.is_null())
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("get file hash", e))?;
+            .map_err(db_error("get file hash"))?;
 
         Ok(result.map(|m| m.content_hash))
     }
@@ -385,7 +376,10 @@ impl FileHashRepository for SeaOrmIndexRepository {
                 })
             })
             .await
-            .map_err(|e| Self::db_err("upsert file hash", e))
+            .map_err(|e| match e {
+                sea_orm::TransactionError::Connection(err)
+                | sea_orm::TransactionError::Transaction(err) => db_error("upsert file hash")(err),
+            })
     }
 
     async fn mark_deleted(&self, collection: &str, file_path: &str) -> Result<()> {
@@ -398,7 +392,7 @@ impl FileHashRepository for SeaOrmIndexRepository {
             .filter(file_hash::Column::DeletedAt.is_null())
             .one(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("find file hash for tombstone", e))?;
+            .map_err(db_error("find file hash for tombstone"))?;
 
         if let Some(model) = existing {
             let mut active: file_hash::ActiveModel = model.into();
@@ -406,7 +400,7 @@ impl FileHashRepository for SeaOrmIndexRepository {
             active
                 .update(self.db.as_ref())
                 .await
-                .map_err(|e| Self::db_err("mark file hash deleted", e))?;
+                .map_err(db_error("mark file hash deleted"))?;
         }
 
         Ok(())
@@ -419,7 +413,7 @@ impl FileHashRepository for SeaOrmIndexRepository {
             .filter(file_hash::Column::DeletedAt.is_null())
             .all(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("get indexed files", e))?;
+            .map_err(db_error("get indexed files"))?;
 
         Ok(results.into_iter().map(|m| m.file_path).collect())
     }
@@ -439,7 +433,7 @@ impl FileHashRepository for SeaOrmIndexRepository {
             .filter(file_hash::Column::DeletedAt.lt(cutoff))
             .exec(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("cleanup tombstones", e))?;
+            .map_err(db_error("cleanup tombstones"))?;
 
         Ok(result.rows_affected)
     }
@@ -451,7 +445,7 @@ impl FileHashRepository for SeaOrmIndexRepository {
             .filter(file_hash::Column::DeletedAt.is_not_null())
             .all(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("count tombstones", e))?;
+            .map_err(db_error("count tombstones"))?;
 
         Ok(results.len() as i64)
     }
@@ -462,7 +456,7 @@ impl FileHashRepository for SeaOrmIndexRepository {
             .filter(file_hash::Column::Collection.eq(collection))
             .exec(self.db.as_ref())
             .await
-            .map_err(|e| Self::db_err("clear collection file hashes", e))?;
+            .map_err(db_error("clear collection file hashes"))?;
 
         Ok(result.rows_affected)
     }
@@ -472,17 +466,15 @@ impl FileHashRepository for SeaOrmIndexRepository {
 
         use sha2::{Digest, Sha256};
 
-        let file = std::fs::File::open(path).map_err(|e| Error::Database {
-            message: format!("open file for hashing: {}", path.display()),
-            source: Some(Box::new(e)),
+        let file = std::fs::File::open(path).map_err(|e| {
+            Error::database_with_source(format!("open file for hashing: {}", path.display()), e)
         })?;
         let mut reader = BufReader::new(file);
         let mut hasher = Sha256::new();
         let mut buf = [0u8; 8192];
         loop {
-            let n = reader.read(&mut buf).map_err(|e| Error::Database {
-                message: format!("read file for hashing: {}", path.display()),
-                source: Some(Box::new(e)),
+            let n = reader.read(&mut buf).map_err(|e| {
+                Error::database_with_source(format!("read file for hashing: {}", path.display()), e)
             })?;
             if n == 0 {
                 break;

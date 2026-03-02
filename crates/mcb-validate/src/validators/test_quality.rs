@@ -18,8 +18,8 @@ use crate::define_violations;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
-use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
 
 define_violations! {
     dynamic_severity,
@@ -100,9 +100,9 @@ pub struct TestQualityValidator {
     rules: TestQualityRulesConfig,
 }
 
-impl crate::traits::validator::Validator for TestQualityValidator {
+impl mcb_domain::ports::validation::Validator for TestQualityValidator {
     fn name(&self) -> &'static str {
-        "test-quality"
+        "test_quality"
     }
 
     fn description(&self) -> &'static str {
@@ -112,11 +112,13 @@ impl crate::traits::validator::Validator for TestQualityValidator {
     fn validate(
         &self,
         _config: &crate::ValidationConfig,
-    ) -> crate::Result<Vec<Box<dyn crate::traits::violation::Violation>>> {
+    ) -> mcb_domain::ports::validation::ValidatorResult<
+        Vec<Box<dyn mcb_domain::ports::validation::Violation>>,
+    > {
         let violations = self.validate()?;
         Ok(violations
             .into_iter()
-            .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+            .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
             .collect())
     }
 }

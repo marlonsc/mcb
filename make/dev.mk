@@ -2,7 +2,7 @@
 # Development
 # =============================================================================
 
-.PHONY: build test clean update dev docker-up docker-down docker-logs _test-e2e
+.PHONY: build test test-rust test-e2e clean update dev docker-up docker-down docker-logs docker-test _test-e2e
 
 # Test ports (avoid conflicts with production on 8080)
 export MCB_TEST_PORT ?= 18080
@@ -73,3 +73,12 @@ _test-e2e:
 	fi
 	@cargo build --release --bin mcb
 	@MCB_TEST_PORT=$(MCB_TEST_PORT) tests/node_modules/.bin/playwright test --config=tests/playwright.config.ts --reporter=list
+
+test-rust: ## Run all Rust tests (used by CI and docker test-runner)
+	@echo "Running full Rust test suite..."
+	RUST_TEST_THREADS=$(THREADS) cargo test --workspace --all-targets
+
+docker-test: ## Run tests inside docker test-runner container
+	@echo "Starting docker test-runner..."
+	docker-compose -f tests/docker-compose.yml --profile test up --build --abort-on-container-exit test-runner
+	docker-compose -f tests/docker-compose.yml --profile test rm -f test-runner

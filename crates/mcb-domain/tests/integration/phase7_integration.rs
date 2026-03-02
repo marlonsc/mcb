@@ -57,6 +57,7 @@ mod phase7_integration_tests {
         assert_eq!(filter.commit.as_deref(), commit);
     }
 
+    #[rstest]
     #[test]
     fn test_mem05_vcs_bootstrap_context_for_session_start() {
         let metadata1 = ObservationMetadata {
@@ -87,6 +88,7 @@ mod phase7_integration_tests {
         assert!(metadata1.commit.is_some() && metadata2.commit.is_some());
     }
 
+    #[rstest]
     #[test]
     fn test_memory_filter_creates_vcs_aware_queries() {
         let filter = MemoryFilter {
@@ -108,6 +110,7 @@ mod phase7_integration_tests {
         assert_eq!(filter.commit, Some("abc123".to_string()));
     }
 
+    #[rstest]
     #[test]
     fn test_observation_metadata_serialization() {
         let metadata = ObservationMetadata {

@@ -4,24 +4,17 @@
 //! Uses the actual workspace so `cargo_metadata` works correctly.
 
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 
 use mcb_validate::ValidationConfig;
 use mcb_validate::engines::RuleContext;
 use mcb_validate::engines::rete_engine::ReteEngine;
+use rstest::rstest;
 
-fn get_workspace_root() -> PathBuf {
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_owned());
-    PathBuf::from(manifest_dir)
-        .parent()
-        .and_then(|p| p.parent())
-        .map_or_else(|| PathBuf::from("."), Path::to_path_buf)
-}
-
+#[rstest]
 #[tokio::test]
 async fn test_ca001_detects_mcb_domain_violations() {
     let mut engine = ReteEngine::new();
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
 
     let context = RuleContext {
         workspace_root: workspace_root.clone(),
@@ -59,10 +52,11 @@ rule "DomainIndependence" salience 10 {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_ca001_allows_clean_dependencies() {
     let mut engine = ReteEngine::new();
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
 
     let context = RuleContext {
         workspace_root: workspace_root.clone(),

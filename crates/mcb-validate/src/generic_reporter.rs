@@ -14,7 +14,7 @@ use std::path::PathBuf;
 use serde::Serialize;
 
 use crate::Severity;
-use crate::traits::violation::Violation;
+use mcb_domain::ports::validation::Violation;
 
 /// Report containing all violations with summary
 #[derive(Debug, Clone, Serialize)]

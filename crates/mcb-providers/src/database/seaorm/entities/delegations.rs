@@ -3,31 +3,44 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an agent delegation.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "delegations")]
 pub struct Model {
+    /// Unique identifier for the delegation.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Identifier of the parent session that delegated.
     #[sea_orm(column_type = "Text")]
     pub parent_session_id: String,
+    /// Identifier of the child session that performed the task.
     #[sea_orm(column_type = "Text")]
     pub child_session_id: String,
+    /// The prompt or instruction delegated.
     #[sea_orm(column_type = "Text")]
     pub prompt: String,
+    /// Optional embedding reference for the prompt.
     #[sea_orm(column_type = "Text", nullable)]
     pub prompt_embedding_id: Option<String>,
+    /// Result of the delegated task.
     #[sea_orm(column_type = "Text", nullable)]
     pub result: Option<String>,
+    /// Boolean-ish (0 or 1) indicating success.
     pub success: i64,
+    /// Timestamp when the delegation was created.
     pub created_at: i64,
+    /// Optional timestamp when the delegation completed.
     pub completed_at: Option<i64>,
+    /// Duration of the delegated task in milliseconds.
     pub duration_ms: Option<i64>,
 }
 
+/// Relations for the delegation model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the delegation model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

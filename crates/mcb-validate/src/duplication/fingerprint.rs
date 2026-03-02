@@ -10,10 +10,10 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 
-use super::constants::{
+use crate::constants::duplication::{
     NORMALIZED_IDENTIFIER, NORMALIZED_LITERAL, RABIN_KARP_BASE, RABIN_KARP_MODULUS,
 };
-use super::utils::lines_overlap;
+use crate::utils::range::lines_overlap;
 
 /// A fingerprint represents a hash of a code fragment
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

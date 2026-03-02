@@ -7,8 +7,10 @@ use mcb_domain::{
     entities::{CodebaseSnapshot, FileSnapshot},
     value_objects::config::SyncBatch,
 };
+use rstest::rstest;
 
 /// End-to-end test simulating the complete semantic code search workflow
+#[rstest]
 #[test]
 fn test_complete_semantic_search_workflow() {
     // Phase 1: Code Parsing and Chunking
@@ -195,6 +197,7 @@ fn create_sync_batch() -> SyncBatch {
 }
 
 /// Test error handling in the workflow
+#[rstest]
 #[test]
 fn test_workflow_error_handling() {
     // Test that invalid data is properly rejected
@@ -218,6 +221,7 @@ fn test_workflow_error_handling() {
 }
 
 /// Test workflow performance characteristics
+#[rstest]
 #[test]
 fn test_workflow_performance_characteristics() {
     // Create a larger dataset to test performance characteristics

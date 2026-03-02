@@ -77,11 +77,6 @@ pub const NODE_EXTRACTION_MAX_DEPTH: usize = 3;
 pub const NODE_EXTRACTION_DEFAULT_PRIORITY: i32 = 5;
 
 // ============================================================================
-// Tree-Sitter Node Types -- re-exported from mcb-domain (Single Source of Truth)
-// ============================================================================
-pub use mcb_domain::constants::ast::*;
-
-// ============================================================================
 // Extension and chunk size mapping tables
 // ============================================================================
 

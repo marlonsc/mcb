@@ -73,9 +73,6 @@ hex = { workspace = true }
 uuid = { workspace = true }
 dirs = { workspace = true }
 
-# System metrics
-sysinfo = { workspace = true }
-
 # Fast globbing
 glob = { workspace = true }
 
@@ -108,6 +105,7 @@ async-trait = { workspace = true }
 downcast-rs = { workspace = true }
 futures-util = { workspace = true }
 delegate = { workspace = true }
+linkme.workspace = true
 
 # Service layer improvements
 itertools = { workspace = true }
@@ -126,7 +124,7 @@ tracing-appender = { workspace = true }
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
 
-loco-rs = { path = "../../third-party/loco", default-features = false, features = ["cache_inmem"] }
+loco-rs = { workspace = true }
 
 # SQLite for legacy/direct queries
 sqlx = { workspace = true }
@@ -146,12 +144,6 @@ tree-sitter-ruby = { workspace = true }
 tree-sitter-php = { workspace = true }
 tree-sitter-swift = { workspace = true }
 
-# Links providers into linkme distributed slices
-mcb-providers = { path = "../mcb-providers" }
-
-# Architecture validation (for MCP tool integration)
-mcb-validate = { path = "../mcb-validate" }
-
 [features]
 default = []
 test-utils = []
@@ -166,6 +158,7 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 serial_test = { workspace = true }
 rstest = { workspace = true }
 mockall = { workspace = true }
+mcb-validate = { path = "../mcb-validate" }
 insta = { workspace = true }
 
 [[test]]

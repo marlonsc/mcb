@@ -2,7 +2,7 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::constants::common::MCB_DEPENDENCY_PREFIX;
-use crate::linters::constants::CARGO_TOML_FILENAME;
+use crate::constants::linters::CARGO_TOML_FILENAME;
 use crate::{Result, Severity};
 
 use super::DependencyValidator;

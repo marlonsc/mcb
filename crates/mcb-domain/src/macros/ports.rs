@@ -29,14 +29,39 @@ macro_rules! provider_admin_interface {
             /// # Errors
             ///
             /// Returns an error if the provider cannot be initialized with the given config.
-            fn switch_provider(&self, config: $config_ty) -> Result<(), String>;
+            fn switch_provider(&self, config: $config_ty) -> std::result::Result<(), String>;
             /// Reload provider from current application config.
             ///
             /// # Errors
             ///
             /// Returns an error if the config is invalid or the provider fails to reinitialize.
-            fn reload_from_config(&self) -> Result<(), String>;
+            fn reload_from_config(&self) -> std::result::Result<(), String>;
         }
+    };
+}
+
+/// Define an aggregate trait with automatic blanket implementation.
+///
+/// Generates a supertrait + blanket `impl<T>` for any `T` that satisfies all components.
+///
+/// # Example
+///
+/// ```ignore
+/// define_aggregate! {
+///     /// Aggregate for org entity management.
+///     pub trait OrgEntityRepository = OrgRegistry + UserRegistry + TeamRegistry;
+/// }
+/// ```
+#[macro_export]
+macro_rules! define_aggregate {
+    (
+        $(#[$meta:meta])*
+        $vis:vis trait $name:ident = $first:ident $(+ $rest:ident)*;
+    ) => {
+        $(#[$meta])*
+        $vis trait $name: $first $(+ $rest)* + Send + Sync {}
+
+        impl<T> $name for T where T: $first $(+ $rest)* + Send + Sync {}
     };
 }
 

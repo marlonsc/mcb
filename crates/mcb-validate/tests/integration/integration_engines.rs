@@ -6,7 +6,6 @@
 //! - Router for automatic engine selection
 
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
 
 use mcb_validate::engines::{
     ExpressionEngine, HybridRuleEngine, ReteEngine, RoutedEngine, RuleContext, RuleEngine,
@@ -16,21 +15,12 @@ use mcb_validate::{ValidationConfig, Violation};
 use rstest::*;
 use serde_json::json;
 
-/// Get the workspace root for tests (the actual project root)
-fn get_workspace_root() -> PathBuf {
-    // Use CARGO_MANIFEST_DIR to find crate root, then go up to workspace root
-    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_else(|_| ".".to_owned());
-    PathBuf::from(manifest_dir)
-        .parent() // crates/
-        .and_then(|p| p.parent()) // workspace root
-        .map_or_else(|| PathBuf::from("."), Path::to_path_buf)
-}
-
 /// Create a test context with sample files
 ///
 /// Uses the actual project workspace root so `cargo_metadata` works.
+#[allow(clippy::unwrap_used)]
 fn create_test_context() -> RuleContext {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
 
     let mut file_contents = HashMap::new();
     file_contents.insert(
@@ -56,6 +46,7 @@ pub async fn process() -> Result<(), Error> {
     file_contents.insert(
         "tests/test_main.rs".to_owned(),
         "
+#[rstest]
 #[test]
 fn test_main() {
     let x = get_value().unwrap(); // OK in tests
@@ -84,6 +75,7 @@ mod expression_engine_tests {
     use super::*;
     use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn test_expression_engine_creation() {
         let engine = ExpressionEngine::new();
@@ -105,10 +97,11 @@ mod expression_engine_tests {
         let context = create_test_context();
 
         let result = engine.evaluate_expression(expression, &context);
-        assert!(result.is_ok());
-        assert_eq!(result.unwrap(), expected, "{message}");
+        let value = result.expect("expression should evaluate");
+        assert_eq!(value, expected, "{message}");
     }
 
+    #[rstest]
     #[test]
     fn test_custom_variables() {
         let engine = ExpressionEngine::new();
@@ -117,23 +110,29 @@ mod expression_engine_tests {
         vars.insert("count".to_owned(), json!(50));
 
         let result = engine.evaluate_with_variables("count < threshold", &vars);
-        assert!(result.is_ok());
-        assert!(result.unwrap());
+        let value = result.expect("count < threshold should evaluate");
+        assert!(value);
 
         let result = engine.evaluate_with_variables("count > threshold", &vars);
-        assert!(result.is_ok());
-        assert!(!result.unwrap());
+        let value = result.expect("count > threshold should evaluate");
+        assert!(!value);
     }
 
+    #[rstest]
     #[test]
     fn test_invalid_expression() {
         let engine = ExpressionEngine::new();
         let context = create_test_context();
 
         let result = engine.evaluate_expression("undefined_variable > 0", &context);
-        assert!(result.is_err());
+        let err = result.expect_err("invalid expression should fail");
+        assert!(
+            err.to_string().contains("Expression evaluation error"),
+            "unexpected error: {err}"
+        );
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_expression_rule_execution() {
         let engine = ExpressionEngine::new();
@@ -148,9 +147,7 @@ mod expression_engine_tests {
         });
 
         let result = engine.execute(&rule, &context).await;
-        assert!(result.is_ok());
-
-        let violations = result.unwrap();
+        let violations = result.expect("expression rule should execute");
         assert_eq!(violations.len(), 1);
         assert!(violations[0].message().contains("unwrap"));
     }
@@ -162,7 +159,9 @@ mod expression_engine_tests {
 
 mod rete_engine_tests {
     use super::*;
+    use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn test_rete_engine_creation() {
         let engine = ReteEngine::new();
@@ -170,6 +169,7 @@ mod rete_engine_tests {
         drop(engine);
     }
 
+    #[rstest]
     #[test]
     fn test_load_grl_rule() {
         let mut engine = ReteEngine::new();
@@ -200,6 +200,7 @@ rule "DomainIndependence" salience 10 {
     // Note: extract_crate_name and extract_dependencies are tested
     // via internal unit tests in rete_engine.rs module
 
+    #[rstest]
     #[tokio::test]
     async fn test_grl_rule_execution() {
         let engine = ReteEngine::new();
@@ -217,7 +218,8 @@ rule "DomainIndependence" salience 10 {
         });
 
         let result = engine.execute(&rule, &context).await;
-        assert!(result.is_ok());
+        let violations = result.expect("grl rule execution should succeed");
+        assert!(violations.iter().all(|v| !v.message().is_empty()));
     }
 }
 
@@ -239,6 +241,7 @@ mod router_tests {
         create_test_context()
     }
 
+    #[rstest]
     #[test]
     fn test_router_creation() {
         let router = RuleEngineRouter::new();
@@ -346,6 +349,7 @@ mod router_tests {
             }
         "#
     }))]
+    #[rstest]
     #[tokio::test]
     async fn router_execute(
         router: RuleEngineRouter,
@@ -353,7 +357,8 @@ mod router_tests {
         #[case] rule: serde_json::Value,
     ) {
         let result = router.execute(&rule, &context).await;
-        assert!(result.is_ok());
+        let violations = result.expect("router should execute successfully");
+        assert!(violations.iter().all(|v| !v.message().is_empty()));
     }
 }
 
@@ -375,6 +380,7 @@ mod hybrid_engine_tests {
         create_test_context()
     }
 
+    #[rstest]
     #[test]
     fn test_hybrid_engine_creation() {
         let engine = HybridRuleEngine::new();
@@ -382,6 +388,7 @@ mod hybrid_engine_tests {
         drop(engine);
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_execute_with_expression_engine() {
         let engine = HybridRuleEngine::new();
@@ -395,7 +402,8 @@ mod hybrid_engine_tests {
         let result = engine
             .execute_rule("TEST001", RuleEngineType::Expression, &rule, &context)
             .await;
-        assert!(result.is_ok());
+        let report = result.expect("expression engine execution should succeed");
+        assert!(!report.violations.is_empty());
     }
 
     #[rstest]
@@ -412,6 +420,7 @@ mod hybrid_engine_tests {
             }
         "#
     }))]
+    #[rstest]
     #[tokio::test]
     async fn execute_with_auto_detection(
         engine: HybridRuleEngine,
@@ -422,9 +431,11 @@ mod hybrid_engine_tests {
         let result = engine
             .execute_rule(rule_id, RuleEngineType::Auto, &rule, &context)
             .await;
-        assert!(result.is_ok());
+        let report = result.expect("auto-detection execution should succeed");
+        assert!(report.execution_time_ms < 60_000);
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_execute_auto() {
         let engine = HybridRuleEngine::new();
@@ -436,9 +447,8 @@ mod hybrid_engine_tests {
         });
 
         let result = engine.execute_auto(&rule, &context).await;
-        assert!(result.is_ok());
-
-        let violations = result.unwrap().violations;
+        let report = result.expect("auto execution should succeed");
+        let violations = report.violations;
         assert!(!violations.is_empty());
     }
 
@@ -454,6 +464,7 @@ mod hybrid_engine_tests {
         assert_eq!(engine.detect_engine(&rule), expected);
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_execute_rules_batch() {
         let engine = HybridRuleEngine::new();
@@ -488,8 +499,10 @@ mod hybrid_engine_tests {
 
 mod ca001_domain_independence_tests {
     use super::*;
+    use rstest::rstest;
 
     fn create_domain_context() -> RuleContext {
+        use std::path::PathBuf;
         let mut file_contents = HashMap::new();
         file_contents.insert(
             "crates/mcb-domain/src/lib.rs".to_owned(),
@@ -514,6 +527,7 @@ pub mod errors;
         }
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_ca001_grl_loading() {
         let mut engine = ReteEngine::new();
@@ -541,6 +555,7 @@ rule "DomainIndependence" salience 10 {
         // Test completed successfully
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_ca001_via_hybrid_engine() {
         let engine = HybridRuleEngine::new();
@@ -575,6 +590,7 @@ rule "DomainIndependence" salience 10 {
         // Test completed successfully
     }
 
+    #[rstest]
     #[tokio::test]
     async fn test_ca001_auto_detection() {
         let engine = HybridRuleEngine::new();

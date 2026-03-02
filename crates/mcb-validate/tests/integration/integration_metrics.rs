@@ -14,6 +14,7 @@ mod integration_metrics_tests {
     use tempfile::TempDir;
 
     /// Test analyzing a simple function that should pass all thresholds
+    #[rstest]
     #[test]
     fn test_simple_function_passes() {
         let analyzer = RcaAnalyzer::new();
@@ -137,6 +138,7 @@ fn long_function() {
     }
 
     /// Test analyzing impl block methods
+    #[rstest]
     #[test]
     fn test_analyzes_impl_methods() {
         let thresholds = MetricThresholds::new().with_threshold(
@@ -181,6 +183,7 @@ impl Calculator {
     }
 
     /// Test analyzing a real file
+    #[rstest]
     #[test]
     fn test_analyze_real_file() {
         let temp_dir = TempDir::new().unwrap();
@@ -208,6 +211,7 @@ fn test_function(x: i32) -> i32 {
     }
 
     /// Test multiple files analysis
+    #[rstest]
     #[test]
     fn test_analyze_multiple_files() {
         let temp_dir = TempDir::new().unwrap();
@@ -250,6 +254,7 @@ fn complex(x: i32) {
     }
 
     /// Test thresholds from YAML config
+    #[rstest]
     #[test]
     fn test_thresholds_from_yaml_config() {
         let yaml = serde_json::json!({
@@ -282,6 +287,7 @@ fn complex(x: i32) {
     }
 
     /// Test violation message format
+    #[rstest]
     #[test]
     fn test_violation_message_format() {
         // Use threshold of 0 so any if/for/while triggers a violation
@@ -321,6 +327,7 @@ fn with_if(x: i32) {
     }
 
     /// Test suggestion text via Violation trait
+    #[rstest]
     #[test]
     fn test_suggestion_text() {
         use mcb_validate::Violation;

@@ -23,10 +23,40 @@
 
 use std::path::PathBuf;
 
-use mcb_domain::error::Result;
+use mcb_domain::error::{Error, Result};
 use tempfile::TempDir;
 
-use super::{AppConfig, ConfigLoader, DatabaseConfig};
+use super::{AppConfig, DatabaseConfig, validation::validate_app_config};
+
+fn load_test_config() -> Result<AppConfig> {
+    let env_name = std::env::var("LOCO_ENV").unwrap_or_else(|_| "test".to_owned());
+
+    let filenames = [format!("{env_name}.local.yaml"), format!("{env_name}.yaml")];
+
+    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    for dir in manifest_dir.ancestors() {
+        for filename in &filenames {
+            let candidate = dir.join("config").join(filename);
+            if candidate.exists() {
+                let content = std::fs::read_to_string(&candidate).map_err(|e| {
+                    Error::config_with_source(format!("Failed to read {}", candidate.display()), e)
+                })?;
+                let yaml: serde_yaml::Value = serde_yaml::from_str(&content)
+                    .map_err(|e| Error::config_with_source("Failed to parse YAML", e))?;
+                let settings = yaml
+                    .get("settings")
+                    .ok_or_else(|| Error::ConfigMissing("No 'settings' key in config".into()))?;
+                let config: AppConfig = serde_yaml::from_value(settings.clone())
+                    .map_err(|e| Error::config_with_source("Failed to deserialize AppConfig", e))?;
+                return Ok(config);
+            }
+        }
+    }
+
+    Err(Error::ConfigMissing(format!(
+        "No config file found for env '{env_name}'"
+    )))
+}
 
 /// Fluent builder for test configurations.
 ///
@@ -44,7 +74,7 @@ impl TestConfigBuilder {
     ///
     /// Returns an error if the default config file is missing or invalid.
     pub fn new() -> Result<Self> {
-        let config = ConfigLoader::new().load()?;
+        let config = load_test_config()?;
         Ok(Self {
             config,
             temp_dir: None,
@@ -130,7 +160,7 @@ impl TestConfigBuilder {
     /// Returns an error if the overridden config fails validation (fail-fast).
     pub fn build(self) -> Result<(AppConfig, Option<TempDir>)> {
         // Re-validate after overrides to ensure fail-fast on bad config
-        ConfigLoader::validate_for_test(&self.config)?;
+        validate_app_config(&self.config)?;
         Ok((self.config, self.temp_dir))
     }
 }

@@ -1,9 +1,9 @@
-#[cfg(test)]
 mod tests {
     use std::path::PathBuf;
 
     use mcb_infrastructure::config::{AuthConfig, DatabaseConfigContainer};
-
+    use rstest::rstest;
+    #[rstest]
     #[test]
     fn test_database_config_container_path() {
         let toml = r#"
@@ -25,6 +25,7 @@ mod tests {
         assert_eq!(default.path, Some(PathBuf::from("/tmp/mcb-test.db")));
     }
 
+    #[rstest]
     #[test]
     fn test_auth_config_deserialization_without_user_db_path() {
         let toml = r#"

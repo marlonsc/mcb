@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
 //!
-use crate::validators::solid::constants::{
+use crate::constants::solid::{
     MAX_AFFIX_LENGTH, MIN_AFFIX_LENGTH, MIN_NAMES_FOR_RELATION_CHECK,
     MIN_WORD_LENGTH_FOR_COMPARISON,
 };

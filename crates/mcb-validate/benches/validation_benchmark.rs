@@ -20,6 +20,7 @@ const SAMPLE_RUST_CODE: &str = r#"
 
 use std::collections::HashMap;
 use std::sync::Arc;
+use rstest::rstest;
 
 /// A user entity with identity
 pub struct User {
@@ -75,7 +76,9 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn test_user_creation() {
         let user = User::new("Alice".to_string(), "alice@example.com".to_string());
