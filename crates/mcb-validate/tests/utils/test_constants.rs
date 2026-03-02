@@ -95,6 +95,7 @@ pub const CRATE_LAYER_MAPPINGS: &[(&str, &str, &str)] = &[
     ("infrastructure", "my-infrastructure", "my_infrastructure"),
     ("server", "my-server", "my_server"),
     ("validate", "my-validate", "my_validate"),
+    ("utils", "my-utils", "my_utils"),
 ];
 
 // ---------------------------------------------------------------------------
