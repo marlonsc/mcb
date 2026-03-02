@@ -110,7 +110,7 @@ rule:
   type: regex_scan
 config:
   patterns:
-    unwrap_call: "\\.unwrap\\(\\)"
+    unwrap_call: "\.unwrap\(\)"
 message: "Unwrap detected"
 "#,
     )?;
