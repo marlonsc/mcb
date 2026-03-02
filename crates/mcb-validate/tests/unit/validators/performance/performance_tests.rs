@@ -7,8 +7,6 @@
 //! PERF003 (`ArcMutexOveruse`), PERF004 (`InefficientIterator`),
 //! PERF005 (`InefficientString`).
 
-use mcb_validate::PerformanceValidator;
-
 use crate::utils::test_constants::*;
 use crate::utils::*;
 use rstest::rstest;
@@ -22,8 +20,7 @@ use rstest::rstest;
 fn test_performance_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = PerformanceValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "performance").unwrap();
 
     assert_violations_exact(
         &violations,
@@ -59,8 +56,7 @@ pub fn process_items(items: &[String]) -> usize {
 }
 ",
     );
-    let validator = PerformanceValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "performance").unwrap();
 
     assert_no_violations(
         &violations,
