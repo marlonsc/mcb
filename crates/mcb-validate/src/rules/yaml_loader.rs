@@ -13,7 +13,7 @@ use serde_yaml;
 use super::templates::TemplateEngine;
 use super::yaml_validator::YamlRuleValidator;
 use crate::Result;
-use crate::constants::rules::{
+use mcb_utils::constants::validate::{
     DEFAULT_RULE_CATEGORY, DEFAULT_RULE_DESCRIPTION, DEFAULT_RULE_ENGINE, DEFAULT_RULE_NAME,
     DEFAULT_RULE_RATIONALE, DEFAULT_RULE_SEVERITY, YAML_FIELD_AST_QUERY, YAML_FIELD_BASE,
     YAML_FIELD_CATEGORY, YAML_FIELD_CONFIG, YAML_FIELD_DESCRIPTION, YAML_FIELD_ENABLED,

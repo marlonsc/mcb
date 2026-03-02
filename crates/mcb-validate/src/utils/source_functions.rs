@@ -3,7 +3,7 @@
 //!
 use regex::Regex;
 
-use crate::constants::common::{
+use mcb_utils::constants::validate::{
     ATTRIBUTE_PREFIX, COMMENT_PREFIX, CONTROL_FLOW_CONTAINS_TOKENS,
     CONTROL_FLOW_STARTS_WITH_TOKENS, FN_PREFIX,
 };

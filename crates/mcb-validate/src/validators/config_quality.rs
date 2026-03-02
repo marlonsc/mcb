@@ -13,8 +13,8 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
-use crate::constants::architecture::ARCH_PATH_CONFIG;
-use crate::constants::common::{COMMENT_PREFIX, DOC_COMMENT_PREFIX};
+use mcb_utils::constants::validate::ARCH_PATH_CONFIG;
+use mcb_utils::constants::validate::{COMMENT_PREFIX, DOC_COMMENT_PREFIX};
 use crate::define_violations;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;

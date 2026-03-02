@@ -4,7 +4,7 @@
 use std::path::{Path, PathBuf};
 
 use crate::config::NamingRulesConfig;
-use crate::constants::common::MCB_CRATE_PREFIX;
+use mcb_utils::constants::validate::MCB_CRATE_PREFIX;
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::run_context::ValidationRunContext;

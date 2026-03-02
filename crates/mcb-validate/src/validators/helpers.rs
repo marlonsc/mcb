@@ -1,4 +1,4 @@
-use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX};
+use mcb_utils::constants::validate::{CFG_TEST_MARKER, COMMENT_PREFIX};
 
 pub(crate) fn for_each_non_test_non_comment_line<F>(content: &str, mut visit: F)
 where

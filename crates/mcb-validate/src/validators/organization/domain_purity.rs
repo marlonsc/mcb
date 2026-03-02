@@ -2,7 +2,7 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
 //!
 use super::violation::OrganizationViolation;
-use crate::constants::organization::{
+use mcb_utils::constants::validate::{
     DOMAIN_ALLOWED_METHODS, DOMAIN_ALLOWED_PREFIXES, DOMAIN_CRATE_PATH, PORTS_DIR_PATH,
 };
 use crate::filters::LanguageId;

@@ -8,7 +8,7 @@ use crate::Severity;
 use crate::ValidationConfig;
 use crate::ValidationConfigExt;
 use crate::ast::rca_helpers;
-use crate::constants::solid::MAX_UNRELATED_STRUCTS_PER_FILE;
+use mcb_utils::constants::validate::MAX_UNRELATED_STRUCTS_PER_FILE;
 use crate::filters::LanguageId;
 use crate::run_context::ValidationRunContext;
 use crate::scan::for_each_scan_file;

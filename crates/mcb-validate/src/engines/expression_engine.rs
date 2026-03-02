@@ -13,14 +13,14 @@ use evalexpr::{ContextWithMutableVariables, HashMapContext, Value as EvalValue};
 use serde_json::Value;
 
 use crate::Result;
-use crate::constants::common::{
+use mcb_utils::constants::validate::{
     ASYNC_FN_PREFIX, EXPECT_CALL, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, UNWRAP_CALL,
 };
-use crate::constants::rules::{
+use mcb_utils::constants::validate::{
     DEFAULT_EXPR_MESSAGE, DEFAULT_EXPR_RULE_ID, YAML_FIELD_CATEGORY, YAML_FIELD_EXPRESSION,
     YAML_FIELD_ID, YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY,
 };
-use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_WARNING};
+use mcb_utils::constants::validate::{SEVERITY_ERROR, SEVERITY_WARNING};
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
 use mcb_domain::ports::validation::{Severity, ViolationCategory};
 
@@ -273,10 +273,10 @@ impl RuleEngine for ExpressionEngine {
             .get(YAML_FIELD_CATEGORY)
             .and_then(|v| v.as_str())
             .map_or(ViolationCategory::Quality, |c| match c {
-                crate::constants::severities::CATEGORY_ARCHITECTURE => {
+                mcb_utils::constants::validate::CATEGORY_ARCHITECTURE => {
                     ViolationCategory::Architecture
                 }
-                crate::constants::severities::CATEGORY_PERFORMANCE => {
+                mcb_utils::constants::validate::CATEGORY_PERFORMANCE => {
                     ViolationCategory::Performance
                 }
                 _ => ViolationCategory::Quality,

@@ -15,8 +15,8 @@ use rust_rule_engine::{Facts, GRLParser, KnowledgeBase, RustRuleEngine, Value as
 use serde_json::Value;
 
 use crate::Result;
-use crate::constants::linters::CARGO_TOML_FILENAME;
-use crate::constants::rules::{
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
+use mcb_utils::constants::validate::{
     DEFAULT_GRL_RULE_ID, DEFAULT_RETE_MESSAGE, YAML_FIELD_GRL, YAML_FIELD_RULE,
 };
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};

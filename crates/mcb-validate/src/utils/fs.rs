@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
 //!
-//! Filesystem utilities re-exported from `mcb-domain`.
+//! Filesystem utilities for file collection and traversal.
 
 use crate::Result;
 use std::path::{Path, PathBuf};

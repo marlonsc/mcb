@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use crate::config::TestQualityRulesConfig;
-use crate::constants::common::{
+use mcb_utils::constants::validate::{
     FORWARD_SEARCH_LINES, FUNCTION_NAME_SEARCH_LINES, MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT,
 };
 use crate::define_violations;
@@ -215,7 +215,7 @@ impl TestQualityValidator {
                     let prev_line = lines[i - 1];
                     prev_line.contains("Requires")
                         || prev_line.contains("requires")
-                        || prev_line.contains(crate::constants::labels::PENDING_LABEL_TODO)
+                        || prev_line.contains(mcb_utils::constants::validate::PENDING_LABEL_TODO)
                         || prev_line.contains("WIP")
                 };
 

@@ -1,8 +1,8 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::constants::common::{FN_PREFIX, HEAP_ALLOC_PREFIXES, LET_PREFIX, PUB_FN_PREFIX};
-use crate::constants::performance::{
+use mcb_utils::constants::validate::{FN_PREFIX, HEAP_ALLOC_PREFIXES, LET_PREFIX, PUB_FN_PREFIX};
+use mcb_utils::constants::validate::{
     CLONE_REGEX, CONTEXT_TRUNCATION_LENGTH, LOOP_ALLOCATION_PATTERNS,
 };
 use crate::pattern_registry::{compile_regex, compile_regexes};

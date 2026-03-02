@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::constants::common::{CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT};
+use mcb_utils::constants::validate::{CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT};
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regexes, required_pattern};
 use crate::scan::for_each_scan_file;

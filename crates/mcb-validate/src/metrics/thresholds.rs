@@ -7,8 +7,8 @@
 
 use std::collections::HashMap;
 
-use crate::constants::rules::{METRICS_FIELD_MAX, METRICS_FIELD_SEVERITY};
-use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO};
+use mcb_utils::constants::validate::{METRICS_FIELD_MAX, METRICS_FIELD_SEVERITY};
+use mcb_utils::constants::validate::{SEVERITY_ERROR, SEVERITY_INFO};
 use mcb_domain::ports::validation::Severity;
 
 /// Types of metrics we can measure

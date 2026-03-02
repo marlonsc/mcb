@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use super::violation::PatternViolation;
-use crate::constants::common::{COMMENT_PREFIX, ERROR_FILE_PREFIX, ERROR_MODULE_FILE, USE_PREFIX};
+use mcb_utils::constants::validate::{COMMENT_PREFIX, ERROR_FILE_PREFIX, ERROR_MODULE_FILE, USE_PREFIX};
 use crate::pattern_registry::compile_regex;
 use mcb_domain::ports::validation::Severity;
 

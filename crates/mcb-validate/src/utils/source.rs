@@ -11,7 +11,7 @@ use std::path::PathBuf;
 use regex::Regex;
 
 use crate::ValidationConfigExt;
-use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX, FN_PREFIXES};
+use mcb_utils::constants::validate::{CFG_TEST_MARKER, COMMENT_PREFIX, FN_PREFIXES};
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_file_under_root;

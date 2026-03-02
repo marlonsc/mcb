@@ -4,8 +4,8 @@
 use std::path::Path;
 
 use super::super::violation::NamingViolation;
-use crate::constants::ca::{MODULE_FILE_NAME, MODULE_SPECIAL_FILES};
-use crate::utils::naming::is_snake_case;
+use mcb_utils::constants::validate::{MODULE_FILE_NAME, MODULE_SPECIAL_FILES};
+use mcb_utils::utils::naming::is_snake_case;
 use mcb_domain::ports::validation::Severity;
 
 pub fn validate_module_name(path: &Path) -> Option<NamingViolation> {

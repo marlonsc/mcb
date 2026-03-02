@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::constants::common::COMMENT_PREFIX;
+use mcb_utils::constants::validate::COMMENT_PREFIX;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity};
 

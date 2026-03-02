@@ -2,7 +2,7 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
 //!
 use super::{QualityValidator, QualityViolation};
-use crate::constants::labels::{
+use mcb_utils::constants::validate::{
     PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
 };
 use crate::filters::LanguageId;

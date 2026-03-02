@@ -38,5 +38,7 @@ pub mod values;
 pub mod vcs;
 /// Vector store configuration constants.
 pub mod vector_store;
+/// Validation constants centralized from mcb-validate.
+pub mod validate;
 /// Re-export all values for convenience.
 pub use values::*;

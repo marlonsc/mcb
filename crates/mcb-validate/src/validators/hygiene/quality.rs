@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::constants::common::{COMMENT_PREFIX, FN_PREFIX, MODULE_DOC_PREFIX};
+use mcb_utils::constants::validate::{COMMENT_PREFIX, FN_PREFIX, MODULE_DOC_PREFIX};
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regex, compile_regex_pairs};
 use crate::scan::for_each_file_under_root;

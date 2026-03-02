@@ -20,7 +20,6 @@ use mcb_domain::registry::hybrid_search::{
 use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
-use mcb_infrastructure::config::load_app_config;
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::state::McbState;
@@ -250,7 +249,7 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
         resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default"))?;
 
     // Real AppConfig loaded via production serde_json path (YAML → JSON → AppConfig → validate)
-    let app_config = load_app_config()?;
+    let app_config = mcb_infrastructure::config::load_app_config()?;
 
     let resolution_ctx = ServiceResolutionContext {
         db: Arc::clone(&db),

@@ -2,11 +2,11 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
 //!
 use super::violation::OrganizationViolation;
-use crate::constants::common::{
+use mcb_utils::constants::validate::{
     ATTRIBUTE_PREFIX, CONST_DECLARATION_PREFIXES, CONSTANTS_FILE_KEYWORDS, DOC_COMMENT_PREFIX,
     MODULE_DOC_PREFIX,
 };
-use crate::constants::organization::{ALLOWED_MAGIC_NUMBERS, MAGIC_NUMBER_REGEX};
+use mcb_utils::constants::validate::{ALLOWED_MAGIC_NUMBERS, MAGIC_NUMBER_REGEX};
 use crate::filters::LanguageId;
 use crate::pattern_registry::compile_regex;
 use crate::scan::{for_each_crate_file, is_test_path};

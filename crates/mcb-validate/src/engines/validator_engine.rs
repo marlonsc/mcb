@@ -10,11 +10,11 @@ use serde_json::Value;
 use validator::{Validate, ValidationErrors};
 
 use crate::Result;
-use crate::constants::engines::{
+use mcb_utils::constants::validate::{
     ENGINE_TYPE_EVALEXPR, ENGINE_TYPE_EXPRESSION, ENGINE_TYPE_GRL, ENGINE_TYPE_JSON_DSL,
     ENGINE_TYPE_RETE, ENGINE_TYPE_RUST_RULE, ENGINE_TYPE_RUSTY_RULES,
 };
-use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO, SEVERITY_WARNING};
+use mcb_utils::constants::validate::{SEVERITY_ERROR, SEVERITY_INFO, SEVERITY_WARNING};
 
 /// Engine for field validations using validator and garde
 #[derive(Clone)]

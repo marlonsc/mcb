@@ -36,8 +36,6 @@
 //! assert!(report.summary.total_violations >= 0);
 //! ```
 
-// === Centralized Constants ===
-pub mod constants;
 
 // === Centralized Thresholds (Phase 2 DRY) ===
 pub mod thresholds;
@@ -89,7 +87,7 @@ pub use exports::*;
 
 use std::path::{Path, PathBuf};
 
-use crate::constants::linters::CARGO_TOML_FILENAME;
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 use derive_more::Display;
 use thiserror::Error;
 

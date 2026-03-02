@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 use super::engine::LinterEngine;
 use super::types::{LintViolation, LinterType};
 use crate::Result;
-use crate::constants::linters::CLIPPY_PREFIX;
+use mcb_utils::constants::validate::CLIPPY_PREFIX;
 use crate::rules::yaml_loader::ValidatedRule;
 
 /// Execute a YAML rule that uses `lint_select` for linter-based validation

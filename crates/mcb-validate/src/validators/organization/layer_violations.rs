@@ -2,8 +2,8 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
 //!
 use super::violation::OrganizationViolation;
-use crate::constants::common::PUB_USE_PREFIX;
-use crate::constants::organization::{
+use mcb_utils::constants::validate::PUB_USE_PREFIX;
+use mcb_utils::constants::validate::{
     APPLICATION_LAYER_PATH, ARC_NEW_SERVICE_REGEX, INFRASTRUCTURE_LAYER_PATH, SERVER_IMPORT_REGEX,
     SERVER_LAYER_PATH, SERVICE_CREATION_BYPASS_FILES,
 };

@@ -41,7 +41,7 @@ use figment::providers::{Env, Format, Toml};
 use serde::{Deserialize, Serialize};
 
 use crate::Severity;
-use crate::constants::validators::{
+use mcb_utils::constants::validate::{
     VALIDATOR_ARCHITECTURE, VALIDATOR_ASYNC_PATTERNS, VALIDATOR_CLEAN_ARCHITECTURE,
     VALIDATOR_DEPENDENCY, VALIDATOR_DOCUMENTATION, VALIDATOR_ERROR_BOUNDARY,
     VALIDATOR_IMPLEMENTATION, VALIDATOR_KISS, VALIDATOR_NAMING, VALIDATOR_ORGANIZATION,

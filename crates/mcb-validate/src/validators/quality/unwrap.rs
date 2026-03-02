@@ -3,8 +3,8 @@
 //!
 use super::{QualityValidator, QualityViolation};
 use crate::ast::UnwrapDetector;
-use crate::constants::common::TEST_PATH_PATTERNS;
-use crate::constants::quality::{
+use mcb_utils::constants::validate::TEST_PATH_PATTERNS;
+use mcb_utils::constants::validate::{
     COMMENT_SEARCH_RADIUS, IGNORE_HINT_KEYWORDS, LOCK_POISONING_STRINGS, SAFETY_COMMENT_MARKERS,
 };
 use crate::filters::LanguageId;

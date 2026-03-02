@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use super::violation::PatternViolation;
-use crate::constants::common::ATTR_SEARCH_LINES;
+use mcb_utils::constants::validate::ATTR_SEARCH_LINES;
 use crate::pattern_registry::compile_regex;
 use mcb_domain::ports::validation::Severity;
 

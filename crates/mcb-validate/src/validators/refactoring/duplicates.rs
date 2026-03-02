@@ -11,7 +11,7 @@ use crate::{Result, Severity};
 
 use super::RefactoringValidator;
 use super::violation::RefactoringViolation;
-use crate::constants::refactoring::{
+use mcb_utils::constants::validate::{
     CRATE_PATH_DELIMITER, MIGRATION_TYPE_SUFFIXES, REFACTORING_SKIP_PATTERNS, TYPE_DEFINITION_REGEX,
 };
 

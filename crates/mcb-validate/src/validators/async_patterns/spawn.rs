@@ -1,14 +1,14 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::constants::common::{CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT};
+use mcb_utils::constants::validate::{CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT};
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
 
 use super::violation::AsyncViolation;
-use crate::constants::async_patterns::BACKGROUND_FN_PATTERNS;
+use mcb_utils::constants::validate::BACKGROUND_FN_PATTERNS;
 
 /// Detect spawn without await patterns
 pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncViolation>> {

@@ -7,7 +7,7 @@ use regex::Regex;
 
 use super::super::violation::ImplementationViolation;
 use crate::Result;
-use crate::constants::implementation::{HARDCODED_RETURN_PATTERNS, STUB_SKIP_FILE_KEYWORDS};
+use mcb_utils::constants::validate::{HARDCODED_RETURN_PATTERNS, STUB_SKIP_FILE_KEYWORDS};
 use crate::utils::source::{
     compile_pattern_pairs, extract_functions, is_fn_signature_or_brace, non_test_lines,
 };

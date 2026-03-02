@@ -11,7 +11,7 @@ use std::path::Path;
 use serde_yaml;
 
 use crate::Result;
-use crate::constants::rules::{YAML_FIELD_BASE, YAML_FIELD_NAME};
+use mcb_utils::constants::validate::{YAML_FIELD_BASE, YAML_FIELD_NAME};
 use crate::pattern_registry::compile_regex;
 use crate::utils::fs::collect_yaml_files;
 

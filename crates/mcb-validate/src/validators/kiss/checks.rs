@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::constants::common::{
+use mcb_utils::constants::validate::{
     CFG_TEST_MARKER, COMMENT_PREFIX, SHORT_PREVIEW_LENGTH, TEST_FUNCTION_PREFIX,
 };
 use crate::filters::LanguageId;
@@ -17,7 +17,7 @@ use crate::thresholds::thresholds;
 use crate::{Result, Severity};
 
 use super::{KissValidator, KissViolation};
-use crate::constants::kiss::{
+use mcb_utils::constants::validate::{
     DI_CONTAINER_CONTAINS, DI_CONTAINER_SUFFIXES, NESTING_PROXIMITY_THRESHOLD,
 };
 

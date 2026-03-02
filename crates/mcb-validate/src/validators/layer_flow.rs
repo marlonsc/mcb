@@ -10,7 +10,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use crate::config::LayerFlowRulesConfig;
-use crate::constants::linters::CARGO_TOML_FILENAME;
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 use crate::define_violations;
 use crate::{Result, ValidationConfig};
 use mcb_domain::ports::validation::{Violation, ViolationCategory};

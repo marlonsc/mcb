@@ -14,7 +14,7 @@
 //! | [`entities`] | Core business entities with identity |
 //! | [`value_objects`] | Immutable value objects |
 //! | [`ports`] | External provider port interfaces |
-//! | [`constants`] | Workspace constants (re-exported from mcb-utils) |
+//! | [`utils`] | Shared utilities and helpers |
 //! | [`error`] | Domain error types |
 //!
 //! ## Clean Architecture Principles
@@ -84,7 +84,6 @@ pub mod value_objects;
 pub use entities::*;
 pub use error::{Error, Result};
 pub use events::{DomainEvent, EventPublisher, ServiceState};
-pub use mcb_utils::constants::values::*;
 pub use value_objects::*;
 
 // ── Test utilities: crate-level re-exports ─────────────────────────────

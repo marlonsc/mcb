@@ -11,7 +11,7 @@ use std::str::Chars;
 
 use super::fingerprint::{FingerprintMatch, Token, TokenType};
 use super::thresholds::{DuplicationThresholds, DuplicationType};
-use crate::constants::duplication::{OPERATOR_CHARS, PUNCTUATION_CHARS};
+use mcb_utils::constants::validate::{OPERATOR_CHARS, PUNCTUATION_CHARS};
 use crate::utils::range::lines_overlap;
 
 /// Result of comparing two code fragments
@@ -406,5 +406,5 @@ pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
 
 /// Check if a word is a common keyword (simplified, multi-language)
 fn is_keyword(word: &str) -> bool {
-    crate::constants::duplication::DUPLICATION_KEYWORDS.contains(&word)
+    mcb_utils::constants::validate::DUPLICATION_KEYWORDS.contains(&word)
 }

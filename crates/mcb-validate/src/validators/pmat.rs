@@ -20,7 +20,7 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use crate::constants::defaults::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
+use mcb_utils::constants::validate::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 use mcb_domain::ports::validation::{Violation, ViolationCategory};
 use mcb_domain::ports::{AnalysisFinding, CodeAnalyzer, resolve_code_analyzer};
 

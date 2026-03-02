@@ -3,7 +3,7 @@
 //!
 use super::{QualityValidator, QualityViolation};
 use crate::ast::rca_helpers;
-use crate::constants::common::TEST_PATH_PATTERNS;
+use mcb_utils::constants::validate::TEST_PATH_PATTERNS;
 use crate::filters::LanguageId;
 use crate::run_context::ValidationRunContext;
 use crate::scan::for_each_scan_file;

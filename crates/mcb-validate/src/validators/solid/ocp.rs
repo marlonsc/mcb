@@ -4,8 +4,8 @@
 use crate::Result;
 use crate::Severity;
 use crate::ValidationConfig;
-use crate::constants::common::SHORT_PREVIEW_LENGTH;
-use crate::constants::solid::MIN_STRING_MATCH_ARMS_FOR_DISPATCH;
+use mcb_utils::constants::validate::SHORT_PREVIEW_LENGTH;
+use mcb_utils::constants::validate::MIN_STRING_MATCH_ARMS_FOR_DISPATCH;
 use crate::pattern_registry::required_pattern;
 use crate::utils::source::{count_match_arms, count_matches_in_block, for_each_rust_file};
 use crate::validators::solid::violation::SolidViolation;
