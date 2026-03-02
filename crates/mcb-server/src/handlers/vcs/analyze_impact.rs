@@ -10,12 +10,11 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{ImpactFile, ImpactResponse, ImpactSummary, repo_path};
 use crate::args::VcsArgs;
-use crate::constants::git::GIT_REF_HEAD;
-use crate::constants::vcs::{
-    IMPACT_CHANGE_COUNT_WEIGHT, IMPACT_FILE_COUNT_WEIGHT, MAX_IMPACT_SCORE,
-};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use mcb_utils::constants::vcs::{
+    GIT_REF_HEAD, IMPACT_CHANGE_COUNT_WEIGHT, IMPACT_FILE_COUNT_WEIGHT, MAX_IMPACT_SCORE,
+};
 
 /// Analyzes the impact of changes between branches.
 #[tracing::instrument(skip_all)]

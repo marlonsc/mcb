@@ -21,10 +21,10 @@ use mcb_utils::utils::id as domain_id;
 use mcb_utils::utils::id::mask_id;
 
 use super::types::{McpRequest, McpResponse};
-use crate::constants::protocol::{
-    EXECUTION_FLOW_HYBRID, HTTP_HEADER_EXECUTION_FLOW, JSONRPC_VERSION, MCP_ENDPOINT_PATH,
+use mcb_utils::constants::protocol::{
+    EXECUTION_FLOW_HYBRID, HTTP_HEADER_EXECUTION_FLOW, JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR,
+    JSONRPC_VERSION, MCP_ENDPOINT_PATH,
 };
-use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR};
 
 /// MCP client transport configuration
 #[derive(Debug, Clone)]

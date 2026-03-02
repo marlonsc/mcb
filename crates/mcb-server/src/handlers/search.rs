@@ -22,14 +22,14 @@ use validator::Validate;
 use crate::error_mapping::safe_internal_error;
 
 use crate::args::{SearchArgs, SearchResource};
-use crate::constants::fields::{
-    FIELD_BRANCH, FIELD_COMMIT, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE,
-    FIELD_QUERY, FIELD_RESULTS,
-};
-use crate::constants::limits::DEFAULT_SEARCH_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::collections::normalize_collection_name;
+use mcb_utils::constants::keys::{
+    FIELD_BRANCH, FIELD_COMMIT, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE,
+    FIELD_QUERY, FIELD_RESULTS,
+};
+use mcb_utils::constants::limits::DEFAULT_SEARCH_LIMIT;
 
 /// Handler for code and memory search MCP tool operations.
 #[derive(Clone)]

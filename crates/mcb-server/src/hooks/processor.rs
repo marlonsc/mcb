@@ -14,7 +14,7 @@ use mcb_utils::utils::id::mask_id;
 use mcb_domain::debug;
 use mcb_utils::utils::id as domain_id;
 
-use crate::constants::fields::TAG_TOOL;
+use mcb_utils::constants::keys::TAG_TOOL;
 
 use super::types::{
     HookError, HookResult, PostToolUseContext, SessionStartContext, ToolExecutionStatus,

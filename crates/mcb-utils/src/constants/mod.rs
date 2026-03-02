@@ -8,6 +8,8 @@ pub mod ast;
 pub mod auth;
 /// Cryptographic constants (AES-GCM, key sizes).
 pub mod crypto;
+/// Display formatting and presentation constants.
+pub mod display;
 /// Embedding dimension constants for each provider and model family.
 pub mod embedding;
 /// Event bus and messaging constants.
@@ -22,6 +24,8 @@ pub mod keys;
 pub mod lang;
 /// Resource limits constants.
 pub mod limits;
+/// MCP and JSON-RPC protocol constants.
+pub mod protocol;
 /// Search and BM25 algorithmic constants.
 pub mod search;
 /// Time validation and boundary constants.
@@ -30,5 +34,7 @@ pub mod time;
 pub mod use_cases;
 /// Commonly used constant values.
 pub mod values;
+/// VCS and git-related constants.
+pub mod vcs;
 /// Re-export all values for convenience.
 pub use values::*;

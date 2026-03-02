@@ -7,7 +7,7 @@ use async_trait::async_trait;
 use axum::Router as AxumRouter;
 use loco_rs::prelude::*;
 
-use mcb_server::constants::graphql::{SCHEMA_COMPLEXITY, SCHEMA_DEPTH};
+use mcb_utils::constants::limits::{SCHEMA_COMPLEXITY, SCHEMA_DEPTH};
 
 /// Loco initializer that builds the GraphQL schema and stores it
 /// in [`AppContext::shared_store`] for use by the GraphQL controller.

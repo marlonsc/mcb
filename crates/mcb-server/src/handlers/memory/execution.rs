@@ -16,9 +16,9 @@ use super::common::{
     search_memories_as_json, str_vec,
 };
 use crate::args::MemoryArgs;
-use crate::constants::fields::{FIELD_OBSERVATION_ID, TAG_EXECUTION, TAG_FAILURE, TAG_SUCCESS};
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
+use mcb_utils::constants::keys::{FIELD_OBSERVATION_ID, TAG_EXECUTION, TAG_FAILURE, TAG_SUCCESS};
 
 /// Validated execution data extracted from JSON payload
 struct ValidatedExecutionData {

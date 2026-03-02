@@ -18,7 +18,6 @@ mod macros;
 pub mod args;
 pub mod auth;
 pub mod composition;
-pub mod constants;
 pub mod controllers;
 pub mod error_mapping;
 pub mod formatter;

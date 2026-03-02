@@ -19,7 +19,8 @@ use std::path::Path;
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{
-    ComplexityReport, RuleInfo, ValidationReport, ValidationServiceInterface, ViolationEntry,
+    ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,
+    ViolationEntry,
 };
 
 /// Infrastructure validation service using mcb-validate.
@@ -65,11 +66,20 @@ impl ValidationServiceInterface for InfraValidationService {
         run_file_validation(file_path, validators)
     }
 
-    async fn get_rules(&self, _category: Option<&str>) -> Result<Vec<RuleInfo>> {
-        // TODO(CA): Rules provided by mcb-validate; infra cannot import validate.
-        // When the binary links mcb-validate, the validate crate registers its own rules
-        // via linkme. A future registry-based approach will resolve this properly.
-        Ok(vec![])
+    async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>> {
+        let entries = mcb_domain::registry::validation::list_validator_entries();
+        let rules: Vec<RuleInfo> = entries
+            .iter()
+            .filter(|(name, _)| category.is_none_or(|c| *name == c))
+            .map(|(name, description)| RuleInfo {
+                id: (*name).to_owned(),
+                category: (*name).to_owned(),
+                severity: "warning".to_owned(),
+                description: (*description).to_owned(),
+                engine: "linkme".to_owned(),
+            })
+            .collect();
+        Ok(rules)
     }
 
     async fn analyze_complexity(
@@ -169,16 +179,64 @@ fn run_file_validation(
         violations: file_violations,
     })
 }
-fn analyze_file_complexity(
-    _file_path: &Path,
-    _include_functions: bool,
-) -> Result<ComplexityReport> {
-    // Complexity analysis depends on mcb-validate::RcaAnalyzer which is not available
-    // from the infrastructure layer (CA boundary). When the full binary links mcb-validate,
-    // a richer implementation can be registered via linkme.
-    Err(mcb_domain::error::Error::internal(
-        "Complexity analysis requires mcb-validate (not linked in infrastructure layer)",
-    ))
+fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<ComplexityReport> {
+    let content = std::fs::read_to_string(file_path).map_err(|e| {
+        mcb_domain::error::Error::io_with_source(
+            format!("failed to read {}", file_path.display()),
+            e,
+        )
+    })?;
+
+    let sloc = content
+        .lines()
+        .filter(|line| {
+            let trimmed = line.trim();
+            !trimmed.is_empty() && !trimmed.starts_with("//")
+        })
+        .count();
+
+    let files = vec![(file_path.to_path_buf(), content)];
+    let functions = mcb_domain::utils::analysis::collect_functions(&files)?;
+
+    let total_cyclomatic: f64 = functions.iter().map(|f| f64::from(f.complexity)).sum();
+    let fn_count = functions.len().max(1) as f64;
+    let avg_cyclomatic = total_cyclomatic / fn_count;
+    let cognitive = avg_cyclomatic * 1.2;
+
+    // Simplified Maintainability Index (Microsoft variant)
+    let mi = if sloc > 0 {
+        let raw = 171.0
+            - 5.2 * avg_cyclomatic.max(1.0).ln()
+            - 0.23 * avg_cyclomatic
+            - 16.2 * (sloc as f64).ln();
+        (raw * 100.0 / 171.0).clamp(0.0, 100.0)
+    } else {
+        100.0
+    };
+
+    let function_metrics = if include_functions {
+        functions
+            .iter()
+            .map(|f| FunctionComplexity {
+                name: f.name.clone(),
+                line: f.line,
+                cyclomatic: f64::from(f.complexity),
+                cognitive: f64::from(f.complexity) * 1.2,
+                sloc: 0,
+            })
+            .collect()
+    } else {
+        vec![]
+    };
+
+    Ok(ComplexityReport {
+        file: file_path.display().to_string(),
+        cyclomatic: avg_cyclomatic,
+        cognitive,
+        maintainability_index: mi,
+        sloc,
+        functions: function_metrics,
+    })
 }
 
 // ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
-//!
-//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
-//!
-//! VCS impact analysis constants.
+//! VCS and git-related constants.
+
+/// Git HEAD reference name.
+pub const GIT_REF_HEAD: &str = "HEAD";
 
 /// Weight applied to the file-count term in impact score calculation.
 pub const IMPACT_FILE_COUNT_WEIGHT: f64 = 10.0;

@@ -18,7 +18,7 @@ use mcb_domain::{error, info};
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
-use crate::constants::display::{CODE_PREVIEW_MAX_LINES, SEARCH_SLOW_THRESHOLD_MS};
+use mcb_utils::constants::{display::CODE_PREVIEW_MAX_LINES, search::SEARCH_SLOW_THRESHOLD_MS};
 use serde::Serialize;
 
 /// Response formatter for MCP server tools

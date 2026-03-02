@@ -14,12 +14,12 @@ use validator::Validate;
 
 use super::{execution, inject, list_timeline, observation, quality_gate, session};
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
-use crate::constants::fields::FIELD_COUNT;
-use crate::constants::limits::DEFAULT_MEMORY_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::json;
 use crate::utils::mcp::{resolve_identifier_precedence, tool_error};
+use mcb_utils::constants::keys::FIELD_COUNT;
+use mcb_utils::constants::limits::DEFAULT_MEMORY_LIST_LIMIT;
 
 /// Handler for memory-related MCP tool operations.
 ///
@@ -162,7 +162,7 @@ impl MemoryHandler {
 
         // INTENTIONAL: Optional query parameter; empty string means no filter
         let query = args.query.clone().unwrap_or_default();
-        let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIMIT as u32) as usize;
+        let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIST_LIMIT as u32) as usize;
 
         match self
             .memory_service

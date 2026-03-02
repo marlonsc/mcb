@@ -15,11 +15,11 @@ use rmcp::model::CallToolResult;
 use serde_json::{Map, Value};
 
 use crate::args::MemoryArgs;
-use crate::constants::limits::{DEFAULT_MEMORY_LIMIT, MEMORY_FETCH_MULTIPLIER};
 use crate::utils::mcp::{OriginPayloadFields, resolve_origin_context};
 pub(super) use crate::utils::mcp::{
     opt_str, require_bool, require_data_map, require_i32, require_i64, require_str, str_vec,
 };
+use mcb_utils::constants::limits::{DEFAULT_MEMORY_LIST_LIMIT, MEMORY_FETCH_MULTIPLIER};
 
 pub(super) struct MemoryOriginResolution {
     pub project_id: String,
@@ -125,7 +125,7 @@ where
 {
     let filter = build_memory_filter(args, Some(spec.obs_type), None);
 
-    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIMIT as u32) as usize;
+    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIST_LIMIT as u32) as usize;
     let fetch_limit = limit * MEMORY_FETCH_MULTIPLIER;
     match memory_service
         .search_memories(spec.query, Some(filter), fetch_limit)

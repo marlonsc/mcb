@@ -39,3 +39,6 @@ pub const RRF_MAX_SCORE_STREAMS: f32 = 2.0;
 
 /// Normalized RRF score ceiling
 pub const RRF_NORMALIZED_MAX: f32 = 1.0;
+
+/// Search duration threshold (milliseconds) for showing a slow-query warning.
+pub const SEARCH_SLOW_THRESHOLD_MS: u128 = 1000;
