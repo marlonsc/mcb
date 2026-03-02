@@ -8,8 +8,8 @@
 
 use rstest::*;
 
-use mcb_domain::utils::test_constants::*;
-use mcb_domain::utils::*;
+use crate::utils::test_constants::*;
+use crate::utils::*;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions

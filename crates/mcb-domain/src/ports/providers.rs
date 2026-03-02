@@ -36,13 +36,22 @@ pub enum AnalysisFinding {
     },
     /// Dead code symbol detected.
     DeadCode {
+        /// File containing the dead code.
         file: PathBuf,
+        /// Line number where the item is defined.
         line: usize,
+        /// Type of the dead item (e.g., function, struct).
         item_type: String,
+        /// Name of the dead item.
         name: String,
     },
     /// Technical debt gradient score for a file.
-    TechnicalDebt { file: PathBuf, score: u32 },
+    TechnicalDebt {
+        /// File being scored.
+        file: PathBuf,
+        /// Normalized debt score.
+        score: u32,
+    },
 }
 
 /// Unified code analysis provider.
@@ -75,11 +84,15 @@ pub trait CodeAnalyzer: Send + Sync {
 
 /// Registry entry for code analyzers.
 pub struct CodeAnalyzerEntry {
+    /// Unique name of the analyzer.
     pub name: &'static str,
+    /// Human-readable description of what it detects.
     pub description: &'static str,
+    /// Factory function to build the analyzer instance.
     pub build: fn() -> Result<Arc<dyn CodeAnalyzer>>,
 }
 
+/// Distributed slice of registered code analyzers.
 #[linkme::distributed_slice]
 pub static CODE_ANALYZERS: [CodeAnalyzerEntry] = [..];
 
@@ -148,15 +161,18 @@ pub trait ProviderConfigManagerInterface: Send + Sync {
     /// List all available vector store provider implementation names.
     fn list_vector_store_providers(&self) -> Vec<String>;
 
+    /// Check if a specific embedding provider is available.
     fn has_embedding_provider(&self, name: &str) -> bool {
         self.list_embedding_providers().contains(&name.to_owned())
     }
 
+    /// Check if a specific vector store provider is available.
     fn has_vector_store_provider(&self, name: &str) -> bool {
         self.list_vector_store_providers()
             .contains(&name.to_owned())
     }
 
+    /// Get the configuration for the default embedding provider.
     fn get_default_embedding_config(&self) -> Option<&EmbeddingConfig> {
         let providers = self.list_embedding_providers();
         if providers.is_empty() {
@@ -166,6 +182,7 @@ pub trait ProviderConfigManagerInterface: Send + Sync {
         }
     }
 
+    /// Get the configuration for the default vector store provider.
     fn get_default_vector_store_config(&self) -> Option<&VectorStoreConfig> {
         let providers = self.list_vector_store_providers();
         if providers.is_empty() {
@@ -195,6 +212,7 @@ pub struct EncryptedData {
 }
 
 impl EncryptedData {
+    /// Create new encrypted data from ciphertext and nonce.
     #[must_use]
     pub fn new(ciphertext: Vec<u8>, nonce: Vec<u8>) -> Self {
         Self { ciphertext, nonce }
@@ -224,9 +242,13 @@ pub trait CryptoProvider: Send + Sync {
 // Embedding
 // ============================================================================
 
-/// AI Semantic Understanding Interface
+/// AI Semantic Understanding Interface.
 #[async_trait]
 pub trait EmbeddingProvider: Send + Sync {
+    /// Create a single vector embedding for the given text.
+    ///
+    /// # Errors
+    /// Returns an error if the embedding provider fails.
     async fn embed(&self, text: &str) -> Result<Embedding> {
         let embeddings = self.embed_batch(&[text.to_owned()]).await?;
         embeddings
@@ -255,13 +277,18 @@ pub trait EmbeddingProvider: Send + Sync {
 // HTTP
 // ============================================================================
 
-/// HTTP client configuration
+/// HTTP client configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HttpClientConfig {
+    /// Maximum number of idle connections per host.
     pub max_idle_per_host: usize,
+    /// Maximum idle time for a connection.
     pub idle_timeout: Duration,
+    /// Connection keep-alive interval.
     pub keepalive: Duration,
+    /// Request timeout.
     pub timeout: Duration,
+    /// User agent string for outgoing requests.
     pub user_agent: String,
 }
 
@@ -301,19 +328,32 @@ pub trait HttpClientProvider: Send + Sync {
 // Hybrid Search
 // ============================================================================
 
-/// Result of a hybrid search operation
+/// Result of a hybrid search operation.
 #[derive(Debug, Clone)]
 pub struct HybridSearchResult {
+    /// The base search result metadata.
     pub result: SearchResult,
+    /// BM25 keyword matching score.
     pub bm25_score: f32,
+    /// Vector similarity score.
     pub semantic_score: f32,
+    /// Fused score using Reciprocal Rank Fusion or similar.
     pub hybrid_score: f32,
 }
 
-/// Port for hybrid search operations
+/// Port for hybrid search operations.
 #[async_trait]
 pub trait HybridSearchProvider: Send + Sync {
+    /// Index multiple code chunks in the search collection.
+    ///
+    /// # Errors
+    /// Returns an error if indexing fails.
     async fn index_chunks(&self, collection: &str, chunks: &[CodeChunk]) -> Result<()>;
+
+    /// Perform a hybrid search combining keyword and semantic matching.
+    ///
+    /// # Errors
+    /// Returns an error if search fails.
     async fn search(
         &self,
         collection: &str,
@@ -321,7 +361,14 @@ pub trait HybridSearchProvider: Send + Sync {
         semantic_results: Vec<SearchResult>,
         limit: usize,
     ) -> Result<Vec<SearchResult>>;
+
+    /// Clear all data in the search collection.
+    ///
+    /// # Errors
+    /// Returns an error if deletion fails.
     async fn clear_collection(&self, collection: &str) -> Result<()>;
+
+    /// Get usage statistics for the hybrid search provider.
     async fn get_stats(&self) -> HashMap<String, serde_json::Value>;
 }
 
@@ -329,19 +376,25 @@ pub trait HybridSearchProvider: Send + Sync {
 // Language Chunking
 // ============================================================================
 
-/// Language-Specific Code Chunking Provider
+/// Language-Specific Code Chunking Provider.
 pub trait LanguageChunkingProvider: Send + Sync {
+    /// Get the primary language supported by this chunker.
     fn language(&self) -> Language;
+    /// Get the list of file extensions this provider can process.
     fn extensions(&self) -> &[&'static str];
+    /// Split source code into semantically relevant chunks.
     fn chunk(&self, content: &str, file_path: &str) -> Vec<CodeChunk>;
+    /// Get the unique name of this chunking implementation.
     fn provider_name(&self) -> &str;
 
+    /// Check if this provider supports a specific file extension.
     fn supports_extension(&self, ext: &str) -> bool {
         self.extensions()
             .iter()
             .any(|e| e.eq_ignore_ascii_case(ext))
     }
 
+    /// Get the recommended maximum size for chunks in tokens or characters.
     fn max_chunk_size(&self) -> usize {
         50
     }
@@ -351,17 +404,32 @@ pub trait LanguageChunkingProvider: Send + Sync {
 // Metrics
 // ============================================================================
 
+/// Key-value pairs for metric categorization.
 pub type MetricLabels = HashMap<String, String>;
+/// Specialized result for metrics operations.
 pub type MetricsResult<T> = crate::Result<T>;
 
+/// Errors occurring during metrics collection or submission.
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum MetricsError {
+    /// The specified metric name does not exist.
     #[error("Metric not found: {name}")]
-    NotFound { name: String },
+    NotFound {
+        /// Name of the missing metric.
+        name: String,
+    },
+    /// The metric configuration or value is invalid.
     #[error("Invalid metric: {message}")]
-    Invalid { message: String },
+    Invalid {
+        /// Human-readable error message.
+        message: String,
+    },
+    /// The underlying metrics collection system failed.
     #[error("Metrics backend error: {message}")]
-    Backend { message: String },
+    Backend {
+        /// Human-readable error message.
+        message: String,
+    },
 }
 
 pub(crate) fn labels_from<const N: usize>(pairs: [(&str, &str); N]) -> MetricLabels {
@@ -371,17 +439,23 @@ pub(crate) fn labels_from<const N: usize>(pairs: [(&str, &str); N]) -> MetricLab
         .collect()
 }
 
+/// Common interface for recording system metrics.
 #[async_trait]
 pub trait MetricsProvider: Send + Sync {
+    /// Get the name of this metrics provider implementation.
     fn name(&self) -> &str;
+    /// Increment a counter metric by 1.
     async fn increment(&self, name: &str, labels: &MetricLabels) -> MetricsResult<()>;
+    /// Increment a counter metric by a specific amount.
     async fn increment_by(
         &self,
         name: &str,
         value: f64,
         labels: &MetricLabels,
     ) -> MetricsResult<()>;
+    /// Set the current value of a gauge metric.
     async fn gauge(&self, name: &str, value: f64, labels: &MetricLabels) -> MetricsResult<()>;
+    /// Record a value in a histogram distribution.
     async fn histogram(&self, name: &str, value: f64, labels: &MetricLabels) -> MetricsResult<()>;
 
     async fn record_index_time(&self, duration: Duration, collection: &str) -> MetricsResult<()> {
@@ -457,28 +531,37 @@ pub trait MetricsProvider: Send + Sync {
 // Project Detection
 // ============================================================================
 
-/// Configuration for project detector initialization
+/// Configuration for project detector initialization.
 #[derive(Debug, Clone)]
 pub struct ProjectDetectorConfig {
+    /// Absolute path to the repository being analyzed.
     pub repo_path: String,
 }
 
-/// Registry entry for project detectors
+/// Registry entry for project detectors.
 pub struct ProjectDetectorEntry {
+    /// Unique name of the detector (e.g., "rust-cargo").
     pub name: &'static str,
+    /// Human-readable explanation of what it identifies.
     pub description: &'static str,
+    /// List of file names that indicate this project type.
     pub marker_files: &'static [&'static str],
+    /// Factory function to build the detector instance.
     pub build: fn(&ProjectDetectorConfig) -> Result<Arc<dyn ProjectDetector>>,
 }
 
-/// Project detector trait
+/// Project detector trait.
 #[async_trait]
 pub trait ProjectDetector: Send + Sync {
+    /// Attempt to identify the project type at the given path.
     async fn detect(&self, path: &Path) -> Result<Option<ProjectType>>;
+    /// Get the marker files used by this detector.
     fn marker_files(&self) -> &[&str];
+    /// Get the unique name of this detector implementation.
     fn detector_name(&self) -> &str;
 }
 
+/// Distributed slice of registered project detectors.
 #[linkme::distributed_slice]
 pub static PROJECT_DETECTORS: [ProjectDetectorEntry] = [..];
 
@@ -489,24 +572,41 @@ pub static PROJECT_DETECTORS: [ProjectDetectorEntry] = [..];
 /// Version Control System provider for repository operations.
 #[async_trait]
 pub trait VcsProvider: Send + Sync {
+    /// Open an existing repository at the specified filesystem path.
     async fn open_repository(&self, path: &Path) -> Result<VcsRepository>;
+
+    /// Extract a unique identifier from a repository object.
     fn repository_id(&self, repo: &VcsRepository) -> RepositoryId;
+
+    /// List all local and remote branches for the repository.
     async fn list_branches(&self, repo: &VcsRepository) -> Result<Vec<VcsBranch>>;
+
+    /// Retrieve the commit history for a specific branch.
     async fn commit_history(
         &self,
         repo: &VcsRepository,
         branch: &str,
         limit: Option<usize>,
     ) -> Result<Vec<VcsCommit>>;
+
+    /// List all tracked files in the given branch.
     async fn list_files(&self, repo: &VcsRepository, branch: &str) -> Result<Vec<PathBuf>>;
+
+    /// Read the full content of a file from a specific commit/branch.
     async fn read_file(&self, repo: &VcsRepository, branch: &str, path: &Path) -> Result<String>;
+
+    /// Get the unique name of this VCS implementation (e.g., "git").
     fn vcs_name(&self) -> &str;
+
+    /// Calculate the difference between two references (branches, tags, or SHAs).
     async fn diff_refs(
         &self,
         repo: &VcsRepository,
         base_ref: &str,
         head_ref: &str,
     ) -> Result<RefDiff>;
+
+    /// Recursive search for all repositories within a root directory.
     async fn list_repositories(&self, root: &Path) -> Result<Vec<VcsRepository>>;
 }
 
@@ -514,16 +614,25 @@ pub trait VcsProvider: Send + Sync {
 // Vector Store
 // ============================================================================
 
+/// Administrative operations for vector database collections.
 #[async_trait]
 pub trait VectorStoreAdmin: Send + Sync {
+    /// Check if the specified collection exists in the vector store.
     async fn collection_exists(&self, collection: &CollectionId) -> Result<bool>;
+
+    /// Retrieve performance and storage statistics for a collection.
     async fn get_stats(
         &self,
         collection: &CollectionId,
     ) -> Result<HashMap<String, serde_json::Value>>;
+
+    /// Ensure all pending writes are committed and searchable.
     async fn flush(&self, collection: &CollectionId) -> Result<()>;
+
+    /// Get the unique name of this vector store implementation.
     fn provider_name(&self) -> &str;
 
+    /// Perform a basic health check on the connection.
     async fn health_check(&self) -> Result<()> {
         let health_check_id = CollectionId::from_name("__health_check__");
         self.collection_exists(&health_check_id).await?;
@@ -531,14 +640,20 @@ pub trait VectorStoreAdmin: Send + Sync {
     }
 }
 
+/// Read-only discovery and browsing of the vector database.
 #[async_trait]
 pub trait VectorStoreBrowser: Send + Sync {
+    /// List all collections available in the vector store.
     async fn list_collections(&self) -> Result<Vec<CollectionInfo>>;
+
+    /// List unique file paths present in a collection (paginated).
     async fn list_file_paths(
         &self,
         collection: &CollectionId,
         limit: usize,
     ) -> Result<Vec<FileInfo>>;
+
+    /// Retrieve all stored code chunks for a specific file.
     async fn get_chunks_by_file(
         &self,
         collection: &CollectionId,
@@ -546,16 +661,24 @@ pub trait VectorStoreBrowser: Send + Sync {
     ) -> Result<Vec<SearchResult>>;
 }
 
+/// Unified interface for vector store operations.
 #[async_trait]
 pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sync {
+    /// Create a new collection with specified embedding dimensions.
     async fn create_collection(&self, collection: &CollectionId, dimensions: usize) -> Result<()>;
+
+    /// Permanently delete a collection and all its vectors.
     async fn delete_collection(&self, collection: &CollectionId) -> Result<()>;
+
+    /// Insert a batch of vectors with associated metadata.
     async fn insert_vectors(
         &self,
         collection: &CollectionId,
         vectors: &[Embedding],
         metadata: Vec<HashMap<String, serde_json::Value>>,
     ) -> Result<Vec<String>>;
+
+    /// Find vectors similar to the provided query vector.
     async fn search_similar(
         &self,
         collection: &CollectionId,
@@ -563,12 +686,18 @@ pub trait VectorStoreProvider: VectorStoreAdmin + VectorStoreBrowser + Send + Sy
         limit: usize,
         filter: Option<&str>,
     ) -> Result<Vec<SearchResult>>;
+
+    /// Delete specific vectors by their unique IDs.
     async fn delete_vectors(&self, collection: &CollectionId, ids: &[String]) -> Result<()>;
+
+    /// Retrieve specific search results by their vector record IDs.
     async fn get_vectors_by_ids(
         &self,
         collection: &CollectionId,
         ids: &[String],
     ) -> Result<Vec<SearchResult>>;
+
+    /// List vectors in a collection (paginated).
     async fn list_vectors(
         &self,
         collection: &CollectionId,

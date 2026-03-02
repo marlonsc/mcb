@@ -53,6 +53,44 @@ pub struct IndexingServiceImpl {
     supported_extensions: Vec<String>,
 }
 
+/// Constructor dependency bundle for `IndexingServiceImpl`.
+///
+/// Keeps DI wiring explicit and avoids positional argument shortcuts in
+/// linkme registry builders.
+pub struct IndexingServiceDeps {
+    /// Context service used for collection lifecycle and chunk persistence.
+    pub context_service: Arc<dyn ContextServiceInterface>,
+    /// Language chunking provider resolved from domain registry.
+    pub language_chunker: Arc<dyn LanguageChunkingProvider>,
+    /// Indexing operations tracker used for async progress/status.
+    pub indexing_ops: Arc<dyn IndexingOperationsInterface>,
+    /// Event bus for publishing indexing lifecycle domain events.
+    pub event_bus: Arc<dyn EventBusProvider>,
+    /// Normalized list of supported file extensions.
+    pub supported_extensions: Vec<String>,
+}
+
+/// Extended dependency bundle that enables incremental indexing via file hashes.
+pub struct IndexingServiceWithHashDeps {
+    /// Core indexing service dependencies.
+    pub service: IndexingServiceDeps,
+    /// Optional hash repository for change detection persistence.
+    pub file_hash_repository: Arc<dyn FileHashRepository>,
+}
+
+/// Mutable progress accumulator used during discovery and processing.
+#[derive(Debug, Clone)]
+pub struct IndexingProgress {
+    /// Number of files fully processed.
+    pub files_processed: usize,
+    /// Number of chunks generated across all processed files.
+    pub chunks_created: usize,
+    /// Number of files skipped due to unchanged hash/content.
+    pub files_skipped: usize,
+    /// Non-fatal errors collected during the run.
+    pub errors: Vec<String>,
+}
+
 impl IndexingServiceImpl {
     /// Compute the relative path of a file within the workspace.
     ///

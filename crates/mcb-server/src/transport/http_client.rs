@@ -15,14 +15,14 @@ use std::path::Path;
 use std::time::Duration;
 
 use hostname;
+use mcb_domain::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::utils::id as domain_id;
 use mcb_domain::utils::id::mask_id;
 use mcb_domain::{debug, error, info, warn};
 
 use super::types::{McpRequest, McpResponse};
 use crate::constants::protocol::{
-    CONTENT_TYPE_JSON, EXECUTION_FLOW_HYBRID, HTTP_HEADER_EXECUTION_FLOW, JSONRPC_VERSION,
-    MCP_ENDPOINT_PATH,
+    EXECUTION_FLOW_HYBRID, HTTP_HEADER_EXECUTION_FLOW, JSONRPC_VERSION, MCP_ENDPOINT_PATH,
 };
 use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR};
 

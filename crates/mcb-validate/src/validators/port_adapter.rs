@@ -326,5 +326,8 @@ static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
     mcb_domain::registry::validation::ValidatorEntry {
         name: "port_adapter",
         description: "Validates port/adapter patterns for Clean Architecture compliance",
-        build: |root| Ok(Box::new(PortAdapterValidator::new(root))),
+        build: |root| {
+            Ok(Box::new(PortAdapterValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
     };

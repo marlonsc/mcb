@@ -1,5 +1,8 @@
 //! Integration tests — `cargo test -p mcb-server --test integration`
 
+#[path = "../utils/mod.rs"]
+pub mod utils;
+
 pub mod handlers;
 
 mod error_recovery_integration;

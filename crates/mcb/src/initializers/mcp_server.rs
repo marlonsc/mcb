@@ -34,7 +34,7 @@ impl Initializer for McpServerInitializer {
     }
 
     async fn after_routes(&self, router: AxumRouter, ctx: &AppContext) -> Result<AxumRouter> {
-        mcb_domain::infra::logging::set_log_fn(mcb_infrastructure::logging::tracing_log_fn);
+        mcb_domain::infra::logging::set_log_fn(crate::logging::tracing_log_fn);
 
         let settings = ctx
             .config

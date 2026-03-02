@@ -21,7 +21,7 @@
 use std::path::PathBuf;
 
 use mcb_validate::Severity;
-use mcb_validate::traits::violation::Violation;
+use mcb_validate::Violation;
 use rstest::rstest;
 
 // ============================================================================

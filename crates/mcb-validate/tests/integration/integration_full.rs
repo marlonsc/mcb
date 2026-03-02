@@ -18,7 +18,6 @@ mod full_integration_tests {
     use std::path::{Path, PathBuf};
 
     use mcb_validate::ValidationConfig;
-    use mcb_validate::ValidatorRegistry;
     use mcb_validate::generic_reporter::{GenericReport, GenericReporter, GenericSummary};
     use mcb_validate::{Severity, Violation, ViolationCategory};
     use tempfile::TempDir;
@@ -80,7 +79,7 @@ members = [
         assert!(config.exclude_patterns.is_empty());
     }
 
-    /// Test `ValidatorRegistry` with multiple validators
+    /// Test validator registration with multiple validators
     #[rstest]
     #[test]
     fn test_validator_registry() {
@@ -89,13 +88,10 @@ members = [
 
         let config = ValidationConfig::new(&root);
 
-        // Use standard_for to get a registry with all built-in validators
-        let registry = ValidatorRegistry::standard_for(&root);
-        let validators = registry.validators();
-        assert!(!validators.is_empty(), "Registry should have validators");
+        let names = mcb_validate::validators::standard_validator_names();
+        assert!(!names.is_empty(), "Registry should have validators");
 
-        // Can run validation on the registry
-        let result = registry.validate_all(&config);
+        let result = mcb_validate::validators::validate_all(&config);
         assert!(result.is_ok(), "Validation should succeed");
     }
 
@@ -461,21 +457,15 @@ impl MutableValueObject {
         }
     }
 
-    /// Test `ValidatorRegistry` lists validators
+    /// Test validator registry lists validators
     #[rstest]
     #[test]
     fn test_registry_lists_validators() {
-        let registry = ValidatorRegistry::new();
-        let validators = registry.validators();
+        let names = mcb_validate::validators::standard_validator_names();
 
         // Verify we have at least some validators
-        eprintln!("Available validators: {} registered", validators.len());
+        eprintln!("Available validators: {} registered", names.len());
 
-        // Registry should always return a valid slice (even if empty)
-        // Just verify the registry was created and validators() works
-        let _ = validators;
-
-        // Ensure test executed successfully
-        // Validation completed successfully
+        assert!(!names.is_empty(), "expected at least one validator");
     }
 }

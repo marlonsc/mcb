@@ -9,6 +9,7 @@
 //! mcb serve --transport stdio
 //! ```
 pub mod cli;
+mod logging;
 
 pub use mcb_server::McpServer;
 

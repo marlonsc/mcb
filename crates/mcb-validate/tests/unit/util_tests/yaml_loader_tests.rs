@@ -181,13 +181,11 @@ config:
 async fn test_yaml_rule_execution_detects_violations(
     workspace_root: Result<PathBuf, Box<dyn Error>>,
 ) -> TestResult {
-    use mcb_validate::{ValidationConfig, ValidatorRegistry};
+    use mcb_validate::ValidationConfig;
 
     let workspace_root = workspace_root?;
     let config = ValidationConfig::new(&workspace_root);
-    let registry = ValidatorRegistry::standard_for(&workspace_root);
-
-    match registry.validate_named(&config, &["quality"]) {
+    match mcb_validate::validators::validate_named(&config, &["quality"]) {
         Ok(report) => {
             println!(
                 "YAML validation completed successfully. Violations: {}",

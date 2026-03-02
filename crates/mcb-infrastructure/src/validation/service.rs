@@ -86,24 +86,33 @@ fn run_validation(
     validators: Option<&[String]>,
     severity_filter: Option<&str>,
 ) -> Result<ValidationReport> {
-    use mcb_domain::ports::RuleValidatorRequest;
-    use mcb_domain::registry::validation::{
-        build_named_validators, build_validators, run_validators,
-    };
-
     let root = workspace_root.to_path_buf();
     let validators_list = if let Some(names) = validators {
-        build_named_validators(&root, names)?
+        mcb_domain::registry::validation::build_named_validators(&root, names)?
     } else {
-        build_validators(&root)?
+        mcb_domain::registry::validation::build_all_validators(&root)?
     };
-    let request = RuleValidatorRequest {
-        workspace_root: root,
-        validator_names: validators.map(<[String]>::to_vec),
-        severity_filter: severity_filter.map(Into::into),
-        exclude_patterns: None,
-    };
-    run_validators(&validators_list, &request)
+
+    let config = mcb_domain::ports::validation::ValidationConfig::new(&root);
+
+    let mut all_violations: Vec<Box<dyn mcb_domain::ports::validation::Violation>> = Vec::new();
+    for v in &validators_list {
+        match v.validate(&config) {
+            Ok(violations) => all_violations.extend(violations),
+            Err(e) => {
+                return Err(mcb_domain::error::Error::internal(format!(
+                    "validator '{}' failed: {}",
+                    v.name(),
+                    e
+                )));
+            }
+        }
+    }
+
+    Ok(mcb_domain::registry::validation::build_report(
+        &all_violations,
+        severity_filter,
+    ))
 }
 
 /// Traverse parent directories to find the workspace root (directory containing Cargo.toml).

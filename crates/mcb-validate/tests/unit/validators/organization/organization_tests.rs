@@ -3,8 +3,8 @@
 //! Validates `OrganizationValidator` against fixture crates with precise
 //! file + line + violation-type assertions.
 
-use mcb_domain::utils::test_constants::*;
-use mcb_domain::utils::*;
+use crate::utils::test_constants::*;
+use crate::utils::*;
 use mcb_validate::Severity;
 use mcb_validate::Violation;
 use mcb_validate::organization::OrganizationViolation;

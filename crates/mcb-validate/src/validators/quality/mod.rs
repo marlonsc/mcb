@@ -18,5 +18,8 @@ static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
     mcb_domain::registry::validation::ValidatorEntry {
         name: "quality",
         description: "Validates code quality (no unwrap/expect)",
-        build: |root| Ok(Box::new(QualityValidator::new(root))),
+        build: |root| {
+            Ok(Box::new(QualityValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
     };

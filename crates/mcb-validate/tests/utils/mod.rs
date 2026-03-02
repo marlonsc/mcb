@@ -24,7 +24,7 @@ use tempfile::TempDir;
 pub fn run_named_validator(
     root: &Path,
     validator_name: &str,
-) -> mcb_validate::Result<Vec<Box<dyn mcb_validate::traits::violation::Violation>>> {
+) -> mcb_validate::Result<Vec<Box<dyn mcb_validate::Violation>>> {
     let config = mcb_validate::ValidationConfig::new(root);
     run_named_validator_with_config(&config, validator_name)
 }
@@ -32,9 +32,8 @@ pub fn run_named_validator(
 pub fn run_named_validator_with_config(
     config: &mcb_validate::ValidationConfig,
     validator_name: &str,
-) -> mcb_validate::Result<Vec<Box<dyn mcb_validate::traits::violation::Violation>>> {
-    let registry = mcb_validate::ValidatorRegistry::standard_for(&config.workspace_root);
-    registry.validate_named(config, &[validator_name])
+) -> mcb_validate::Result<Vec<Box<dyn mcb_validate::Violation>>> {
+    mcb_validate::validators::validate_named(config, &[validator_name])
 }
 
 use self::test_constants::{

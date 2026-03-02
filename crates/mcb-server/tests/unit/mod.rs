@@ -1,5 +1,8 @@
 //! Unit tests — `cargo test -p mcb-server --test unit`
 
+#[path = "../utils/mod.rs"]
+pub mod utils;
+
 pub mod auth_tests;
 pub mod state_tests;
 

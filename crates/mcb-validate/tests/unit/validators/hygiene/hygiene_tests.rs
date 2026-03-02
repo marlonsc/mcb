@@ -6,8 +6,8 @@
 //! Note: `BadTestFileName` violations have no line field, so line=0
 //! is used (skips line check).
 
-use mcb_domain::utils::test_constants::*;
-use mcb_domain::utils::*;
+use crate::utils::test_constants::*;
+use crate::utils::*;
 use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────

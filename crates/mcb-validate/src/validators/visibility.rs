@@ -260,5 +260,8 @@ static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
     mcb_domain::registry::validation::ValidatorEntry {
         name: "visibility",
         description: "Validates visibility modifiers for proper encapsulation",
-        build: |root| Ok(Box::new(VisibilityValidator::new(root))),
+        build: |root| {
+            Ok(Box::new(VisibilityValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
     };

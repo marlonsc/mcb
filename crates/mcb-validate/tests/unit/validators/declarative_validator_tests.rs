@@ -4,10 +4,9 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
-use mcb_domain::utils::run_named_validator;
+use crate::utils::run_named_validator;
 use mcb_validate::ValidationConfig;
-use mcb_validate::ValidationError;
-use mcb_validate::traits::validator::Validator;
+use mcb_validate::Validator;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;
 use rstest::rstest;
 use tempfile::TempDir;
@@ -196,11 +195,6 @@ ast_query: "(function_item name: (identifier) @name"
     let config = ValidationConfig::new(root);
     let result = validator.validate(&config);
 
-    match result {
-        Err(ValidationError::Config(message)) => {
-            assert!(message.contains("Invalid tree-sitter query"));
-        }
-        Err(other) => panic!("expected ValidationError::Config, got {other:?}"),
-        Ok(_) => panic!("expected validation to fail for invalid tree-sitter query"),
-    }
+    let err = result.expect_err("expected validation to fail for invalid tree-sitter query");
+    assert!(err.to_string().contains("Invalid tree-sitter query"));
 }

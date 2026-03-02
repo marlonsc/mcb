@@ -20,5 +20,8 @@ static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
     mcb_domain::registry::validation::ValidatorEntry {
         name: "naming",
         description: "Validates naming conventions",
-        build: |root| Ok(Box::new(NamingValidator::new(root))),
+        build: |root| {
+            Ok(Box::new(NamingValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
     };

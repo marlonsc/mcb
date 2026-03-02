@@ -58,5 +58,8 @@ pub mod mcp_assertions;
 /// `CodeChunk` test fixture builders.
 pub mod chunk_fixtures;
 
+/// Contains golden test fixtures, constants, etc.
+pub mod fixtures;
+
 /// Git test repository helpers (create_test_repo, run_git).
 pub mod git_helpers;

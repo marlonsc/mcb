@@ -1,3 +1,6 @@
+#[path = "../utils/mod.rs"]
+pub mod utils;
+
 mod agent_contract_tests;
 mod common;
 mod entity_contract_tests;

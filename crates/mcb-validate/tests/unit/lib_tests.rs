@@ -3,7 +3,7 @@
 use rstest::rstest;
 use std::path::PathBuf;
 
-use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry};
+use mcb_validate::{Severity, ValidationConfig};
 
 #[rstest]
 #[test]
@@ -54,9 +54,10 @@ fn test_validator_registry_with_config() {
         .with_additional_path("../legacy-src")
         .with_exclude_pattern("target/");
 
-    let registry = ValidatorRegistry::standard_for(&config.workspace_root);
+    let names = mcb_validate::validators::standard_validator_names();
+    let _ = mcb_validate::validators::validate_all(&config);
 
     assert_eq!(config.additional_src_paths.len(), 1);
     assert_eq!(config.exclude_patterns.len(), 1);
-    assert!(!registry.validators().is_empty());
+    assert!(!names.is_empty());
 }

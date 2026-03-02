@@ -21,5 +21,8 @@ static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
     mcb_domain::registry::validation::ValidatorEntry {
         name: "solid",
         description: "Validates SOLID principles",
-        build: |root| Ok(Box::new(SolidValidator::new(root))),
+        build: |root| {
+            Ok(Box::new(SolidValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
     };

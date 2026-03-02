@@ -25,5 +25,8 @@ static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
     mcb_domain::registry::validation::ValidatorEntry {
         name: "dependency",
         description: "Validates Clean Architecture layer dependencies",
-        build: |root| Ok(Box::new(DependencyValidator::new(root))),
+        build: |root| {
+            Ok(Box::new(DependencyValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
     };

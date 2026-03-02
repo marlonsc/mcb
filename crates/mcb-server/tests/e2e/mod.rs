@@ -10,6 +10,9 @@
     clippy::uninlined_format_args
 )]
 
+#[path = "../utils/mod.rs"]
+pub mod utils;
+
 mod gap_fixes;
 mod golden_e2e_complete;
 mod golden_highlight_service;

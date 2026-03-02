@@ -3,14 +3,20 @@ use std::path::{Path, PathBuf};
 
 use serde::{Deserialize, Serialize};
 
+/// Opaque error type for validator failures.
 pub type ValidatorError = Box<dyn std::error::Error + Send + Sync>;
+/// Specialized result for validation operations.
 pub type ValidatorResult<T> = std::result::Result<T, ValidatorError>;
 
+/// Severity level of a code violation.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "UPPERCASE")]
 pub enum Severity {
+    /// Blocking issue that must be fixed.
     Error,
+    /// Non-blocking issue that should be fixed.
     Warning,
+    /// Suggestion for improvement or informational note.
     Info,
 }
 
@@ -89,21 +95,30 @@ impl Display for ViolationCategory {
     }
 }
 
+/// Shared interface for all code violations.
 pub trait Violation: Display + Send + Sync + std::fmt::Debug {
+    /// Unique identifier for the violation type (e.g., "ARCH001").
     fn id(&self) -> &str;
+    /// Category used for grouping violations in reports.
     fn category(&self) -> ViolationCategory;
+    /// Importance of the violation.
     fn severity(&self) -> Severity;
+    /// Path to the file containing the violation, if applicable.
     fn file(&self) -> Option<&PathBuf>;
+    /// Line number where the violation occurs, if applicable.
     fn line(&self) -> Option<usize>;
 
+    /// Human-readable description of the violation.
     fn message(&self) -> String {
         self.to_string()
     }
 
+    /// Actionable advice on how to fix the violation.
     fn suggestion(&self) -> Option<String> {
         None
     }
 
+    /// Helper to convert the violation into a trait object.
     fn boxed(self) -> Box<dyn Violation>
     where
         Self: Sized + 'static,
@@ -112,28 +127,49 @@ pub trait Violation: Display + Send + Sync + std::fmt::Debug {
     }
 }
 
+/// Supported programming languages for scanners and validators.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum LanguageId {
+    /// Rust source code.
     Rust,
+    /// Python source code.
     Python,
+    /// JavaScript source code.
     JavaScript,
+    /// TypeScript source code.
     TypeScript,
+    /// Java source code.
     Java,
+    /// C/C++ source code.
     Cpp,
+    /// Kotlin source code.
     Kotlin,
+    /// Go source code.
     Go,
+    /// Ruby source code.
     Ruby,
+    /// Shell scripts (Bash, Sh, etc.).
     Shell,
+    /// YAML configuration files.
     Yaml,
+    /// TOML configuration files.
     Toml,
+    /// JSON data files.
     Json,
+    /// Markdown documentation.
     Markdown,
+    /// HTML templates or pages.
     Html,
+    /// CSS stylesheets.
     Css,
+    /// SQL database scripts.
     Sql,
+    /// Docker configuration files.
     Dockerfile,
+    /// Build system Makefiles.
     Makefile,
+    /// Protocol Buffer definitions.
     Protobuf,
 }
 
@@ -230,14 +266,17 @@ pub trait Validator: Send + Sync {
         run_checks(self.name(), self.checks(config)?)
     }
 
+    /// Check if this validator should run by default in a standard scan.
     fn enabled_by_default(&self) -> bool {
         true
     }
 
+    /// Get a human-readable description of what this validator checks.
     fn description(&self) -> &'static str {
         ""
     }
 
+    /// Get the list of languages supported by this validator.
     fn supported_languages(&self) -> &[LanguageId] {
         &[LanguageId::Rust]
     }
@@ -295,6 +334,7 @@ impl LanguageId {
         ("proto", Self::Protobuf),
     ];
 
+    /// Get the primary lowercase name of the language.
     #[must_use]
     pub fn name(&self) -> &'static str {
         match self {
@@ -321,6 +361,7 @@ impl LanguageId {
         }
     }
 
+    /// Get typical file extensions associated with this language.
     #[must_use]
     pub fn extensions(&self) -> &'static [&'static str] {
         match self {
@@ -347,6 +388,7 @@ impl LanguageId {
         }
     }
 
+    /// Resolve a language ID from its human-readable name or alias.
     #[must_use]
     pub fn from_name(name: &str) -> Option<Self> {
         let lower = name.to_ascii_lowercase();
@@ -355,6 +397,7 @@ impl LanguageId {
             .find_map(|(n, lang)| (*n == lower).then_some(*lang))
     }
 
+    /// Infer the language from a file extension.
     #[must_use]
     pub fn from_extension(ext: &str) -> Option<Self> {
         let normalized = ext.trim().trim_start_matches('.').to_ascii_lowercase();
@@ -382,6 +425,7 @@ impl LanguageId {
         }
     }
 
+    /// Infer the language from a specific filename (e.g., "Dockerfile").
     #[must_use]
     pub fn from_filename(filename: &str) -> Option<Self> {
         let lower = filename.to_ascii_lowercase();
@@ -393,6 +437,7 @@ impl LanguageId {
         }
     }
 
+    /// Identify the language by checking the file shebang line.
     #[must_use]
     pub fn from_shebang(first_line: &str) -> Option<Self> {
         let line = first_line.trim().to_ascii_lowercase();

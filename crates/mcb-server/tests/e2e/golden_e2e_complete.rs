@@ -8,7 +8,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use serde::Deserialize;
 
-use mcb_domain::utils::tests::fixtures::{
+use crate::utils::test_fixtures::{
     GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, golden_content_to_string,
     golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
 };

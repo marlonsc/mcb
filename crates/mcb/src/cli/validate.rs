@@ -92,8 +92,8 @@ impl ValidateArgs {
             LogLevel::Info
         };
 
-        mcb_infrastructure::logging::set_stderr_log_level(level);
-        mcb_domain::infra::logging::set_log_fn(mcb_infrastructure::logging::stderr_log_fn);
+        crate::logging::set_stderr_log_level(level);
+        mcb_domain::infra::logging::set_log_fn(crate::logging::stderr_log_fn);
     }
 
     /// Print a progress message to stderr (respects --silent)
@@ -107,7 +107,7 @@ impl ValidateArgs {
     /// # Errors
     /// Returns an error if validation setup or execution fails.
     pub fn execute(self) -> Result<ValidationResult, Box<dyn std::error::Error>> {
-        use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
+        use mcb_validate::{GenericReporter, ValidationConfig};
 
         self.init_logging();
 
@@ -126,12 +126,10 @@ impl ValidateArgs {
         // Build validation config
         let config = ValidationConfig::new(&workspace_root);
 
-        let registry = ValidatorRegistry::standard_for(&workspace_root);
-
         let validator_count = if let Some(ref v) = self.validators {
             v.len()
         } else {
-            registry.validators().len()
+            mcb_domain::registry::validation::validator_count()
         };
 
         self.progress(&format!("● Running {validator_count} validator(s)..."));
@@ -141,10 +139,10 @@ impl ValidateArgs {
         // Run validation
         let report = if let Some(ref validators) = self.validators {
             let validator_names: Vec<&str> = validators.iter().map(String::as_str).collect();
-            let violations = registry.validate_named(&config, &validator_names)?;
+            let violations = mcb_validate::validators::validate_named(&config, &validator_names)?;
             GenericReporter::create_report(&violations, workspace_root.clone())
         } else {
-            let violations = registry.validate_all(&config)?;
+            let violations = mcb_validate::validators::validate_all(&config)?;
             GenericReporter::create_report(&violations, workspace_root.clone())
         };
 
