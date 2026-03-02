@@ -66,6 +66,7 @@ pub use self::ssot::{SsotValidator, SsotViolation};
 pub use self::test_quality::{TestQualityValidator, TestQualityViolation};
 pub use self::visibility::{VisibilityValidator, VisibilityViolation};
 
+use rayon::prelude::*;
 use std::sync::Arc;
 
 use crate::run_context::ValidationRunContext;
@@ -83,7 +84,6 @@ pub fn validate_all(config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>
         let validators =
             mcb_domain::registry::validation::build_all_validators(&config.workspace_root)
                 .map_err(|e| ValidationError::Config(e.to_string()))?;
-        let mut all_violations = Vec::new();
         mcb_domain::info!(
             "validators",
             "Validation run started",
@@ -94,21 +94,21 @@ pub fn validate_all(config: &ValidationConfig) -> Result<Vec<Box<dyn Violation>>
                 active.file_inventory_count()
             )
         );
-        for validator in &validators {
-            if !validator.enabled_by_default() {
-                continue;
-            }
-            let langs = validator.supported_languages();
-            if !langs.is_empty() && !langs.iter().any(|l| active.has_files_for_language(*l)) {
-                continue;
-            }
-            run_single_validator(
-                validator.as_ref(),
-                config,
-                active.trace_id(),
-                &mut all_violations,
-            );
-        }
+        let all_violations: Vec<Box<dyn Violation>> = validators
+            .par_iter()
+            .filter(|v| {
+                if !v.enabled_by_default() {
+                    return false;
+                }
+                let langs = v.supported_languages();
+                langs.is_empty() || langs.iter().any(|l| active.has_files_for_language(*l))
+            })
+            .flat_map_iter(|validator| {
+                ValidationRunContext::with_active(&context, || {
+                    run_single_validator(validator.as_ref(), config, active.trace_id())
+                })
+            })
+            .collect();
         Ok(all_violations)
     })
 }
@@ -150,12 +150,11 @@ pub fn validate_named(
         let mut all_violations = Vec::new();
         for validator in &validators {
             if names.contains(&validator.name()) {
-                run_single_validator(
+                all_violations.extend(run_single_validator(
                     validator.as_ref(),
                     config,
                     active.trace_id(),
-                    &mut all_violations,
-                );
+                ));
             }
         }
         Ok(all_violations)
@@ -166,8 +165,7 @@ fn run_single_validator(
     validator: &dyn Validator,
     config: &ValidationConfig,
     trace_id: &str,
-    all_violations: &mut Vec<Box<dyn Violation>>,
-) {
+) -> Vec<Box<dyn Violation>> {
     let started = std::time::Instant::now();
     match validator.validate(config) {
         Ok(violations) => {
@@ -183,7 +181,7 @@ fn run_single_validator(
                     elapsed
                 )
             );
-            all_violations.extend(violations);
+            violations
         }
         Err(e) => {
             mcb_domain::warn!(
@@ -196,6 +194,7 @@ fn run_single_validator(
                     e
                 )
             );
+            Vec::new()
         }
     }
 }

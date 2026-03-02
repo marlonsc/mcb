@@ -44,5 +44,23 @@ pub const HTTP_HEADER_ACCEPT: &str = "Accept";
 /// HTTP header name for User-Agent.
 pub const HTTP_HEADER_USER_AGENT: &str = "User-Agent";
 
+/// HTTP header name for Authorization.
+pub const HTTP_HEADER_AUTHORIZATION: &str = "Authorization";
+
+/// HTTP header name for Content-Type.
+pub const HTTP_HEADER_CONTENT_TYPE: &str = "Content-Type";
+
+/// Pinecone API key header name.
+pub const PINECONE_API_KEY_HEADER: &str = "Api-Key";
+
+/// HTTP request timeout error message template.
+pub const ERROR_MSG_REQUEST_TIMEOUT: &str = "Request timed out after {:?}";
+
 /// Default CORS origin (allow all).
 pub const DEFAULT_CORS_ORIGIN: &str = "*";
+
+/// Default retry count for all provider API requests.
+pub const PROVIDER_RETRY_COUNT: usize = 3;
+
+/// Default retry backoff for all provider API requests (milliseconds).
+pub const PROVIDER_RETRY_BACKOFF_MS: u64 = 500;

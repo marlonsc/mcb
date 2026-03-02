@@ -5,12 +5,13 @@ use mcb_domain::ports::VectorStoreProvider;
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
 use std::collections::HashMap;
 
-use crate::constants::{
-    MILVUS_ERROR_COLLECTION_NOT_EXISTS, MILVUS_IVFFLAT_NLIST, MILVUS_PARAM_NLIST,
-    MILVUS_VECTOR_INDEX_NAME, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT,
-};
 use crate::utils::retry::{RetryConfig, retry_with_backoff};
 use helpers::{build_insert_columns, parse_milvus_ids, prepare_insert_data, validate_insert_input};
+use mcb_utils::constants::http::{PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT};
+use mcb_utils::constants::vector_store::{
+    MILVUS_ERROR_COLLECTION_NOT_EXISTS, MILVUS_IVFFLAT_NLIST, MILVUS_PARAM_NLIST,
+    MILVUS_VECTOR_INDEX_NAME, VECTOR_FIELD_VECTOR,
+};
 use schema::build_collection_schema;
 
 impl MilvusVectorStoreProvider {
@@ -35,11 +36,7 @@ impl MilvusVectorStoreProvider {
                     nlist_params,
                 );
                 self.client
-                    .create_index(
-                        &name_str,
-                        crate::constants::VECTOR_FIELD_VECTOR,
-                        index_params,
-                    )
+                    .create_index(&name_str, VECTOR_FIELD_VECTOR, index_params)
                     .await
             },
             |e| {

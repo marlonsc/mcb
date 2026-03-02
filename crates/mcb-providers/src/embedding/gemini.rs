@@ -11,10 +11,12 @@ use async_trait::async_trait;
 use mcb_utils::constants::embedding::EMBEDDING_DIMENSION_GEMINI;
 use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
-use crate::constants::{HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT};
 use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use mcb_utils::constants::http::{
+    HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT,
+};
 use reqwest::Client;
 
 use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
@@ -30,7 +32,7 @@ define_http_embedding_provider!(
 
 impl_http_provider_base!(
     GeminiEmbeddingProvider,
-    crate::constants::GEMINI_API_BASE_URL
+    mcb_utils::constants::embedding::GEMINI_API_BASE_URL
 );
 
 impl GeminiEmbeddingProvider {
@@ -46,7 +48,7 @@ impl GeminiEmbeddingProvider {
     /// Get the maximum tokens supported by this provider
     #[must_use]
     pub fn max_tokens(&self) -> usize {
-        crate::constants::GEMINI_MAX_TOKENS
+        mcb_utils::constants::embedding::GEMINI_MAX_TOKENS
     }
 
     /// Get the API key for this provider

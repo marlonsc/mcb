@@ -1,3 +1,9 @@
+use crate::utils::vector_store::search_result_from_json_metadata;
+use mcb_utils::constants::vector_store::{
+    STATS_FIELD_COLLECTION, STATS_FIELD_VECTORS_COUNT, VECTOR_FIELD_FILE_PATH,
+    VECTOR_FIELD_LANGUAGE,
+};
+
 use super::*;
 
 pub struct EdgeVecActor {

@@ -1,7 +1,7 @@
 use super::*;
 use mcb_domain::value_objects::{CollectionId, SearchResult};
 
-use crate::constants::MILVUS_QUERY_BATCH_SIZE;
+use mcb_utils::constants::vector_store::MILVUS_QUERY_BATCH_SIZE;
 
 impl MilvusVectorStoreProvider {
     pub(super) async fn fetch_list_vectors_batch(

@@ -3,12 +3,11 @@
 //!
 //! JavaScript/TypeScript language processor for AST-based code chunking.
 
-use crate::language::common::{
-    BaseProcessor, CHUNK_SIZE_JAVASCRIPT, LanguageConfig, NodeExtractionRule,
-};
+use crate::language::common::{BaseProcessor, LanguageConfig, NodeExtractionRule};
 use mcb_utils::constants::ast::{
     AST_NODE_INTERFACE_DECLARATION, TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION,
 };
+use mcb_utils::constants::lang::CHUNK_SIZE_JAVASCRIPT;
 
 /// JavaScript/TypeScript language processor.
 pub struct JavaScriptProcessor {

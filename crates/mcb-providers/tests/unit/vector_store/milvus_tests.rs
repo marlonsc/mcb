@@ -1,11 +1,11 @@
 use mcb_domain::value_objects::CollectionId;
-use mcb_providers::constants::{
-    MILVUS_COLLECTION_NAME_PATTERN, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_ID,
-    VECTOR_FIELD_START_LINE,
-};
 use mcb_providers::vector_store::milvus::browser::convert_query_results;
 use mcb_providers::vector_store::milvus::schema::{extract_long_field, extract_string_field};
 use mcb_providers::vector_store::milvus::to_milvus_name;
+use mcb_utils::constants::vector_store::{
+    MILVUS_COLLECTION_NAME_PATTERN, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_ID,
+    VECTOR_FIELD_START_LINE,
+};
 use milvus::data::FieldColumn;
 use milvus::proto::schema::DataType;
 use milvus::value::ValueVec;
@@ -229,7 +229,7 @@ fn test_error_message_contains_expected_substrings(
 #[case(VECTOR_FIELD_ID)]
 #[case(VECTOR_FIELD_FILE_PATH)]
 #[case(VECTOR_FIELD_START_LINE)]
-#[case(mcb_providers::constants::VECTOR_FIELD_CONTENT)]
+#[case(mcb_utils::constants::vector_store::VECTOR_FIELD_CONTENT)]
 fn test_default_output_fields_contains_field(#[case] field: &str) {
     use mcb_providers::vector_store::milvus::DEFAULT_OUTPUT_FIELDS;
     assert!(

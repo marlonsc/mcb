@@ -62,7 +62,10 @@ impl NamingValidator {
     fn run_type_name_check(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
         self.for_each_crate_src_rs_path(|path| {
-            let content = std::fs::read_to_string(path)?;
+            let ctx = ValidationRunContext::active_or_build(&self.config)?;
+            let content = ctx
+                .read_cached(path)
+                .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
             violations.extend(validate_type_names(path, &content));
             Ok(())
         })?;
@@ -73,7 +76,10 @@ impl NamingValidator {
     fn run_function_name_check(&self) -> Result<Vec<NamingViolation>> {
         let mut violations = Vec::new();
         self.for_each_crate_src_rs_path(|path| {
-            let content = std::fs::read_to_string(path)?;
+            let ctx = ValidationRunContext::active_or_build(&self.config)?;
+            let content = ctx
+                .read_cached(path)
+                .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
             violations.extend(validate_function_names(path, &content));
             Ok(())
         })?;
@@ -87,7 +93,10 @@ impl NamingValidator {
 
         let mut violations = Vec::new();
         self.for_each_crate_src_rs_path(|path| {
-            let content = std::fs::read_to_string(path)?;
+            let ctx = ValidationRunContext::active_or_build(&self.config)?;
+            let content = ctx
+                .read_cached(path)
+                .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
             violations.extend(validate_constant_names(
                 path,
                 &content,

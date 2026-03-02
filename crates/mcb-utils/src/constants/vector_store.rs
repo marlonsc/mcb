@@ -1,52 +1,62 @@
 //!
-//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
 //!
-/// `EdgeVec` HNSW M parameter (max connections per node in layers > 0)
+//! Vector store constants -- Single Source of Truth
+
+// ============================================================================
+// EdgeVec Configuration
+// ============================================================================
+
+/// `EdgeVec` HNSW M parameter (max connections per node in layers > 0).
 pub const EDGEVEC_HNSW_M: u32 = 16;
 
-/// `EdgeVec` HNSW M0 parameter (max connections per node in layer 0)
+/// `EdgeVec` HNSW M0 parameter (max connections per node in layer 0).
 pub const EDGEVEC_HNSW_M0: u32 = 32;
 
-/// `EdgeVec` HNSW `ef_construction` parameter
+/// `EdgeVec` HNSW `ef_construction` parameter.
 pub const EDGEVEC_HNSW_EF_CONSTRUCTION: u32 = 200;
 
-/// `EdgeVec` HNSW `ef_search` parameter
+/// `EdgeVec` HNSW `ef_search` parameter.
 pub const EDGEVEC_HNSW_EF_SEARCH: u32 = 64;
 
-/// `EdgeVec` default dimensions (for `OpenAI` embeddings)
+/// `EdgeVec` default dimensions (for `OpenAI` embeddings).
 pub const EDGEVEC_DEFAULT_DIMENSIONS: usize = 1536;
 
 /// `EdgeVec` quantization type for scalar quantization.
 pub const EDGEVEC_QUANTIZATION_TYPE: &str = "scalar";
 
-/// Milvus field varchar max length
+// ============================================================================
+// Milvus Configuration
+// ============================================================================
+
+/// Milvus field varchar max length.
 pub const MILVUS_FIELD_VARCHAR_MAX_LENGTH: i32 = 512;
 
-/// Milvus metadata varchar max length
+/// Milvus metadata varchar max length.
 pub const MILVUS_METADATA_VARCHAR_MAX_LENGTH: i32 = 65535;
 
 /// Milvus collection name pattern: must match `^[a-zA-Z_][a-zA-Z0-9_]*$` (max 255 chars).
 pub const MILVUS_COLLECTION_NAME_PATTERN: &str = "^[a-zA-Z_][a-zA-Z0-9_]*$";
 
-/// Milvus `IvfFlat` nlist parameter
+/// Milvus `IvfFlat` nlist parameter.
 pub const MILVUS_IVFFLAT_NLIST: u32 = 128;
 
-/// Milvus default port
+/// Milvus default port.
 pub const MILVUS_DEFAULT_PORT: u16 = 19530;
 
-/// Milvus default connection timeout in seconds
+/// Milvus default connection timeout in seconds.
 pub const MILVUS_DEFAULT_TIMEOUT_SECS: u64 = 10;
 
-/// Milvus default query limit for aggregation queries
+/// Milvus default query limit for aggregation queries.
 pub const MILVUS_DEFAULT_QUERY_LIMIT: i64 = 10_000;
 
-/// Milvus pagination batch size (keeps gRPC responses under 4MB limit)
+/// Milvus pagination batch size (keeps gRPC responses under 4MB limit).
 pub const MILVUS_QUERY_BATCH_SIZE: usize = 100;
 
-/// Milvus distance metric type for search
+/// Milvus distance metric type for search.
 pub const MILVUS_DISTANCE_METRIC: &str = "L2";
 
-/// Milvus vector index name
+/// Milvus vector index name.
 pub const MILVUS_VECTOR_INDEX_NAME: &str = "vector_index";
 
 /// Milvus error: collection does not exist (gRPC error message).
@@ -61,14 +71,26 @@ pub const MILVUS_PARAM_METRIC_TYPE: &str = "metric_type";
 /// Milvus index parameter: IVF nlist value.
 pub const MILVUS_PARAM_NLIST: &str = "nlist";
 
-/// Qdrant default server port
+// ============================================================================
+// Qdrant Configuration
+// ============================================================================
+
+/// Qdrant default server port.
 pub const QDRANT_DEFAULT_PORT: u16 = 6333;
 
-/// Qdrant distance metric
+/// Qdrant distance metric.
 pub const QDRANT_DISTANCE_METRIC: &str = "Cosine";
 
-/// Pinecone upsert batch size
+// ============================================================================
+// Pinecone Configuration
+// ============================================================================
+
+/// Pinecone upsert batch size.
 pub const PINECONE_UPSERT_BATCH_SIZE: usize = 100;
+
+// ============================================================================
+// Stats Fields
+// ============================================================================
 
 /// Stats JSON field: collection name.
 pub const STATS_FIELD_COLLECTION: &str = "collection";
@@ -90,6 +112,10 @@ pub const STATUS_ACTIVE: &str = "active";
 
 /// Status value: unknown/unavailable.
 pub const STATUS_UNKNOWN: &str = "unknown";
+
+// ============================================================================
+// Vector Store Fields
+// ============================================================================
 
 /// Vector store field: document identifier.
 pub const VECTOR_FIELD_ID: &str = "id";

@@ -71,7 +71,8 @@ impl FastEmbedProvider {
         let text_embedding = TextEmbedding::try_new(init_options)
             .map_err(|e| Error::embedding(format!("Failed to initialize FastEmbed model: {e}")))?;
 
-        let (tx, rx) = mpsc::channel(crate::constants::FASTEMBED_ACTOR_CHANNEL_CAPACITY);
+        let (tx, rx) =
+            mpsc::channel(mcb_utils::constants::embedding::FASTEMBED_ACTOR_CHANNEL_CAPACITY);
         let mut actor = FastEmbedActor::new(rx, text_embedding, model_name.clone());
         tokio::spawn(async move {
             actor.run().await;
@@ -92,7 +93,7 @@ impl FastEmbedProvider {
     /// Get the maximum tokens supported by this model (approximate)
     #[must_use]
     pub fn max_tokens(&self) -> usize {
-        crate::constants::FASTEMBED_MAX_TOKENS
+        mcb_utils::constants::embedding::FASTEMBED_MAX_TOKENS
     }
 }
 
@@ -223,7 +224,7 @@ fn fastembed_factory(
     let model_name = config
         .model
         .clone()
-        .unwrap_or_else(|| crate::constants::FASTEMBED_DEFAULT_MODEL.to_owned());
+        .unwrap_or_else(|| mcb_utils::constants::embedding::FASTEMBED_DEFAULT_MODEL.to_owned());
 
     let model = parse_embedding_model(&model_name);
 

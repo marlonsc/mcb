@@ -15,9 +15,11 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
 use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
-use crate::constants::{HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT};
 use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
 use crate::utils::vector_store::search_result_from_json_metadata;
+use mcb_utils::constants::http::{
+    HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT,
+};
 
 mod admin;
 mod browser;
@@ -179,7 +181,7 @@ impl QdrantVectorStoreProvider {
     }
 }
 
-use crate::constants::QDRANT_DEFAULT_PORT;
+use mcb_utils::constants::vector_store::QDRANT_DEFAULT_PORT;
 
 crate::register_vector_store_provider!(
     qdrant_factory,

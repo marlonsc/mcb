@@ -36,5 +36,7 @@ pub mod use_cases;
 pub mod values;
 /// VCS and git-related constants.
 pub mod vcs;
+/// Vector store configuration constants.
+pub mod vector_store;
 /// Re-export all values for convenience.
 pub use values::*;

@@ -17,8 +17,8 @@ use mcb_domain::ports::{ChunkingOptions, ChunkingResult, CodeChunker};
 use mcb_domain::value_objects::Language;
 
 use self::processors::LANGUAGE_PROCESSORS;
-use super::constants::CHUNK_SIZE_GENERIC;
 use super::detection::{is_language_supported, language_from_extension};
+use mcb_utils::constants::lang::CHUNK_SIZE_GENERIC;
 /// Intelligent chunking engine using tree-sitter
 #[derive(Default)]
 pub struct IntelligentChunker;

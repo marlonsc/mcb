@@ -5,7 +5,7 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, FileInfo, SearchResult};
 
-use crate::constants::VECTOR_FIELD_FILE_PATH;
+use mcb_utils::constants::vector_store::VECTOR_FIELD_FILE_PATH;
 
 use super::PineconeVectorStoreProvider;
 

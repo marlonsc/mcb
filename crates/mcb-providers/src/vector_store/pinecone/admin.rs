@@ -8,7 +8,7 @@ use mcb_domain::ports::VectorStoreAdmin;
 use mcb_domain::value_objects::CollectionId;
 use serde_json::Value;
 
-use crate::constants::{
+use mcb_utils::constants::vector_store::{
     STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS, STATS_FIELD_VECTORS_COUNT,
     STATUS_ACTIVE, STATUS_UNKNOWN,
 };

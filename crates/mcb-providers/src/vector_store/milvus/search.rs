@@ -4,7 +4,7 @@ use mcb_domain::value_objects::{CollectionId, SearchResult};
 use milvus::value::Value;
 use std::borrow::Cow;
 
-use crate::constants::{
+use mcb_utils::constants::vector_store::{
     MILVUS_DISTANCE_METRIC, MILVUS_PARAM_METRIC_TYPE, VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH,
     VECTOR_FIELD_START_LINE,
 };

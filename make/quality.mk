@@ -2,8 +2,11 @@
 # Quality
 # =============================================================================
 
-.PHONY: fmt lint validate audit coverage
+# Binary lookup chain: MCB_BIN env > PATH mcb > target/release > target/debug > cargo run
+MCB_BIN ?= $(or $(shell command -v mcb 2>/dev/null),$(wildcard target/release/mcb),$(wildcard target/debug/mcb))
+MCB_CMD := $(if $(MCB_BIN),$(MCB_BIN),cargo run --package mcb --)
 
+.PHONY: fmt lint validate audit coverage
 ##@ Quality
 
 fmt: ## Format Rust and Markdown (mutating)
@@ -31,14 +34,14 @@ endif
 
 validate: ## Architecture validation (QUICK=1 for fast mode)
 ifeq ($(QUICK),1)
-	@echo "Quick architecture validation (internal mcb config)..."
+	@echo "Quick architecture validation ($(MCB_CMD))..."
 	@mkdir -p reports
-	@cargo run --package mcb -- validate . --quick --format json > reports/mcb-validate-internal-report.json
+	@$(MCB_CMD) validate . --quick --format json > reports/mcb-validate-internal-report.json
 	@echo "Report generated: reports/mcb-validate-internal-report.json"
 else
-	@echo "Architecture validation (internal mcb config)..."
+	@echo "Architecture validation ($(MCB_CMD))..."
 	@mkdir -p reports
-	@cargo run --package mcb -- validate . --format json > reports/mcb-validate-internal-report.json
+	@$(MCB_CMD) validate . --format json > reports/mcb-validate-internal-report.json
 	@echo "Report generated: reports/mcb-validate-internal-report.json"
 endif
 

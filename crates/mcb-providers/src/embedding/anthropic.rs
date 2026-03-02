@@ -15,16 +15,17 @@ use mcb_utils::constants::embedding::{
 };
 use reqwest::Client;
 
-use crate::constants::ANTHROPIC_MAX_INPUT_TOKENS;
-
-use crate::constants::{
-    EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_INPUT, EMBEDDING_PARAM_MODEL,
+use crate::utils::embedding::{HttpEmbeddingClient, parse_standard_embedding, process_batch};
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
+use mcb_utils::constants::embedding::{
+    ANTHROPIC_MAX_INPUT_TOKENS, EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME,
+    EMBEDDING_PARAM_INPUT, EMBEDDING_PARAM_MODEL,
+};
+use mcb_utils::constants::http::CONTENT_TYPE_JSON;
+use mcb_utils::constants::http::{
     HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS,
     PROVIDER_RETRY_COUNT,
 };
-use crate::utils::embedding::{HttpEmbeddingClient, parse_standard_embedding, process_batch};
-use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
-use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
 define_http_embedding_provider!(
     /// Anthropic embedding provider
@@ -37,7 +38,7 @@ define_http_embedding_provider!(
 
 impl_http_provider_base!(
     AnthropicEmbeddingProvider,
-    crate::constants::VOYAGEAI_API_BASE_URL
+    mcb_utils::constants::embedding::VOYAGEAI_API_BASE_URL
 );
 
 impl AnthropicEmbeddingProvider {

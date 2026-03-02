@@ -10,8 +10,6 @@ use mcb_domain::error::Result;
 use mcb_domain::value_objects::CollectionId;
 use milvus::client::Client;
 
-use crate::constants::MILVUS_DEFAULT_TIMEOUT_SECS;
-
 /// Milvus admin operations (create, drop, health).
 pub mod admin;
 /// Milvus collection browsing operations.
@@ -30,10 +28,10 @@ pub struct MilvusVectorStoreProvider {
 
 /// Default output fields for Milvus queries.
 pub const DEFAULT_OUTPUT_FIELDS: &[&str] = &[
-    crate::constants::VECTOR_FIELD_ID,
-    crate::constants::VECTOR_FIELD_FILE_PATH,
-    crate::constants::VECTOR_FIELD_START_LINE,
-    crate::constants::VECTOR_FIELD_CONTENT,
+    mcb_utils::constants::vector_store::VECTOR_FIELD_ID,
+    mcb_utils::constants::vector_store::VECTOR_FIELD_FILE_PATH,
+    mcb_utils::constants::vector_store::VECTOR_FIELD_START_LINE,
+    mcb_utils::constants::vector_store::VECTOR_FIELD_CONTENT,
 ];
 
 /// Convert a `CollectionId` to a valid Milvus collection name.
@@ -50,7 +48,7 @@ pub fn to_milvus_name(collection: &CollectionId) -> String {
 }
 
 pub(super) fn is_collection_not_found(msg: &str) -> bool {
-    msg.contains(crate::constants::MILVUS_ERROR_COLLECTION_NOT_EXISTS)
+    msg.contains(mcb_utils::constants::vector_store::MILVUS_ERROR_COLLECTION_NOT_EXISTS)
         || msg.contains("collection not found")
         || msg.contains("not exist")
 }
@@ -87,7 +85,8 @@ impl MilvusVectorStoreProvider {
             format!("http://{address}")
         };
 
-        let timeout = timeout_secs.unwrap_or(MILVUS_DEFAULT_TIMEOUT_SECS);
+        let timeout =
+            timeout_secs.unwrap_or(mcb_utils::constants::vector_store::MILVUS_DEFAULT_TIMEOUT_SECS);
         let timeout_duration = std::time::Duration::from_secs(timeout);
 
         let client = tokio::time::timeout(timeout_duration, Client::new(endpoint.clone()))
@@ -126,7 +125,7 @@ crate::register_vector_store_provider!(
         let uri = config.uri.clone().ok_or_else(|| {
             format!(
                 "Milvus requires 'uri' configuration (e.g., http://localhost:{})",
-                crate::constants::MILVUS_DEFAULT_PORT
+                mcb_utils::constants::vector_store::MILVUS_DEFAULT_PORT
             )
         })?;
         let token = config.api_key.clone();

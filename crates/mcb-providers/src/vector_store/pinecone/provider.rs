@@ -64,7 +64,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
 
         let mut ids = Vec::with_capacity(vectors.len());
         let mut pinecone_vectors = Vec::with_capacity(vectors.len());
-        let batch_size = crate::constants::PINECONE_UPSERT_BATCH_SIZE;
+        let batch_size = mcb_utils::constants::vector_store::PINECONE_UPSERT_BATCH_SIZE;
 
         for (i, (embedding, meta)) in vectors.iter().zip(metadata.iter()).enumerate() {
             let id = format!("vec_{}", id::generate());

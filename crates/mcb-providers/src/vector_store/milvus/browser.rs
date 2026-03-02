@@ -6,7 +6,7 @@ use mcb_domain::value_objects::{CollectionId, CollectionInfo, FileInfo, SearchRe
 use milvus::data::FieldColumn;
 use std::collections::HashMap;
 
-use crate::constants::{
+use mcb_utils::constants::vector_store::{
     VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_ID, VECTOR_FIELD_START_LINE,
 };
 use schema::{extract_long_field, extract_string_field};
@@ -141,7 +141,7 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
 
         let expr = "id >= 0".to_owned();
         let query_options = QueryOptions::new()
-            .limit(crate::constants::MILVUS_DEFAULT_QUERY_LIMIT)
+            .limit(mcb_utils::constants::vector_store::MILVUS_DEFAULT_QUERY_LIMIT)
             .output_fields(vec![VECTOR_FIELD_FILE_PATH.to_owned()]);
 
         let query_results = match self.client.query(&name_str, &expr, &query_options).await {

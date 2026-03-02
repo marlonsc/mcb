@@ -20,12 +20,13 @@ use mcb_domain::value_objects::SearchResult;
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::constants::{
-    EDGEVEC_DEFAULT_DIMENSIONS, HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER,
-    PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT,
-};
 use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
 use crate::utils::vector_store::search_result_from_json_metadata;
+use mcb_utils::constants::http::{
+    HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER, PROVIDER_RETRY_BACKOFF_MS,
+    PROVIDER_RETRY_COUNT,
+};
+use mcb_utils::constants::vector_store::EDGEVEC_DEFAULT_DIMENSIONS;
 
 mod admin;
 mod browser;

@@ -19,13 +19,6 @@ use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInf
 use mcb_utils::utils::id;
 use tokio::sync::{mpsc, oneshot};
 
-use crate::constants::{
-    EDGEVEC_DEFAULT_DIMENSIONS, EDGEVEC_HNSW_EF_CONSTRUCTION, EDGEVEC_HNSW_EF_SEARCH,
-    EDGEVEC_HNSW_M, EDGEVEC_HNSW_M0, EDGEVEC_QUANTIZATION_TYPE, STATS_FIELD_COLLECTION,
-    STATS_FIELD_VECTORS_COUNT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE,
-};
-use crate::utils::vector_store::search_result_from_json_metadata;
-
 mod actor;
 mod config;
 mod provider;

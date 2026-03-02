@@ -18,12 +18,13 @@ use mcb_utils::constants::embedding::{
 };
 use reqwest::Client;
 
-use crate::constants::{EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_MODEL, HTTP_HEADER_CONTENT_TYPE};
 use crate::utils::embedding::{
     HttpEmbeddingClient, HttpEmbeddingClientConfig, parse_float_array_lossy,
 };
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
+use mcb_utils::constants::embedding::{EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_MODEL};
 use mcb_utils::constants::http::CONTENT_TYPE_JSON;
+use mcb_utils::constants::http::HTTP_HEADER_CONTENT_TYPE;
 
 define_http_embedding_provider!(
     /// Ollama embedding provider
@@ -47,7 +48,8 @@ impl OllamaEmbeddingProvider {
             client: HttpEmbeddingClient::new(HttpEmbeddingClientConfig {
                 api_key: String::new(),
                 base_url: Some(base_url),
-                default_base_url: crate::constants::OLLAMA_DEFAULT_BASE_URL.to_owned(),
+                default_base_url: mcb_utils::constants::embedding::OLLAMA_DEFAULT_BASE_URL
+                    .to_owned(),
                 model,
                 timeout,
                 client: http_client,
@@ -66,9 +68,9 @@ impl OllamaEmbeddingProvider {
     pub fn max_tokens(&self) -> usize {
         match self.client.model.as_str() {
             "all-minilm" | "mxbai-embed-large" | "snowflake-arctic-embed" => {
-                crate::constants::OLLAMA_MAX_TOKENS_LIMITED
+                mcb_utils::constants::embedding::OLLAMA_MAX_TOKENS_LIMITED
             }
-            _ => crate::constants::OLLAMA_MAX_TOKENS_DEFAULT,
+            _ => mcb_utils::constants::embedding::OLLAMA_MAX_TOKENS_DEFAULT,
         }
     }
 
@@ -176,14 +178,16 @@ fn ollama_factory(
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
     use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
-    let base_url = config
-        .base_url
-        .clone()
-        .unwrap_or_else(|| format!("http://localhost:{}", crate::constants::OLLAMA_DEFAULT_PORT));
+    let base_url = config.base_url.clone().unwrap_or_else(|| {
+        format!(
+            "http://localhost:{}",
+            mcb_utils::constants::embedding::OLLAMA_DEFAULT_PORT
+        )
+    });
     let model = config
         .model
         .clone()
-        .unwrap_or_else(|| crate::constants::OLLAMA_DEFAULT_MODEL.to_owned());
+        .unwrap_or_else(|| mcb_utils::constants::embedding::OLLAMA_DEFAULT_MODEL.to_owned());
     let http_client = create_default_client()?;
 
     Ok(Arc::new(OllamaEmbeddingProvider::new(

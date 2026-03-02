@@ -21,7 +21,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
             Some(serde_json::json!({
                 "vectors": {
                     "size": dimensions,
-                    "distance": crate::constants::QDRANT_DISTANCE_METRIC
+                    "distance": mcb_utils::constants::vector_store::QDRANT_DISTANCE_METRIC
                 }
             })),
         )

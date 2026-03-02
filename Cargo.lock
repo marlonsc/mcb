@@ -4489,6 +4489,7 @@ dependencies = [
  "mcb-utils",
  "mockall",
  "petgraph",
+ "rayon",
  "regex",
  "rstest",
  "rust-code-analysis",
