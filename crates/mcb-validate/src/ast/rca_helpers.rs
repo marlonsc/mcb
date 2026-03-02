@@ -6,19 +6,35 @@
 //! Thin utility layer over RCA's native types — no wrappers, no duplication.
 //! Provides file→FuncSpace parsing and recursive traversal with test-module detection.
 //!
+use std::cell::RefCell;
 use std::path::Path;
 
 use rust_code_analysis::{FuncSpace, SpaceKind, get_function_spaces};
 
 use crate::filters::LanguageDetector;
 
+thread_local! {
+    static LANG_DETECTOR: RefCell<LanguageDetector> = RefCell::new(LanguageDetector::new());
+}
+
 /// Parse source code and return the root [`FuncSpace`].
+/// Uses ValidationRunContext cache when available.
 ///
 /// Returns `None` when the language cannot be detected or analysis fails.
 #[must_use]
 pub fn parse_file_spaces(path: &Path, content: &str) -> Option<FuncSpace> {
-    let detector = LanguageDetector::new();
-    let lang = detector.detect_rca_lang(path, Some(content))?;
+    // Try cached version if context is active
+    if let Some(ctx) = crate::run_context::ValidationRunContext::active() {
+        return ctx.parse_rca_cached(path, content);
+    }
+    // Fallback to uncached
+    parse_file_spaces_raw(path, content)
+}
+
+/// Raw (uncached) RCA parse.
+#[must_use]
+pub fn parse_file_spaces_raw(path: &Path, content: &str) -> Option<FuncSpace> {
+    let lang = LANG_DETECTOR.with(|d| d.borrow().detect_rca_lang(path, Some(content)))?;
     mcb_domain::trace!(
         "rca_helpers",
         "Parsing file with RCA",
@@ -43,7 +59,8 @@ pub fn parse_file_spaces(path: &Path, content: &str) -> Option<FuncSpace> {
 /// Visit every [`FuncSpace`] recursively, calling `f` with the space and
 /// whether it is inside a `#[cfg(test)]` module.
 pub fn visit_spaces(root: &FuncSpace, content: &str, mut f: impl FnMut(&FuncSpace, bool)) {
-    walk(root, content, false, &mut f);
+    let lines: Vec<&str> = content.lines().collect();
+    walk(root, &lines, false, &mut f);
 }
 
 /// Collect all spaces matching a given [`SpaceKind`], skipping test modules.
@@ -54,9 +71,8 @@ pub fn collect_spaces_of_kind<'a>(
     kind: SpaceKind,
 ) -> Vec<&'a FuncSpace> {
     let mut results = Vec::new();
-    // We can't use visit_spaces directly because of lifetime issues with mut closure + vec,
-    // so inline the walk.
-    collect_walk(root, content, false, kind, &mut results);
+    let lines: Vec<&str> = content.lines().collect();
+    collect_walk(root, &lines, false, kind, &mut results);
     results
 }
 
@@ -64,38 +80,37 @@ pub fn collect_spaces_of_kind<'a>(
 
 fn walk(
     space: &FuncSpace,
-    content: &str,
+    lines: &[&str],
     parent_is_test: bool,
     f: &mut impl FnMut(&FuncSpace, bool),
 ) {
-    let is_test = parent_is_test || is_test_module(space, content);
+    let is_test = parent_is_test || is_test_module(space, lines);
     f(space, is_test);
     for child in &space.spaces {
-        walk(child, content, is_test, f);
+        walk(child, lines, is_test, f);
     }
 }
 
 fn collect_walk<'a>(
     space: &'a FuncSpace,
-    content: &str,
+    lines: &[&str],
     parent_is_test: bool,
     kind: SpaceKind,
     results: &mut Vec<&'a FuncSpace>,
 ) {
-    let is_test = parent_is_test || is_test_module(space, content);
+    let is_test = parent_is_test || is_test_module(space, lines);
     if !is_test && space.kind == kind {
         results.push(space);
     }
     for child in &space.spaces {
-        collect_walk(child, content, is_test, kind, results);
+        collect_walk(child, lines, is_test, kind, results);
     }
 }
 
-fn is_test_module(space: &FuncSpace, content: &str) -> bool {
+fn is_test_module(space: &FuncSpace, lines: &[&str]) -> bool {
     if space.kind == SpaceKind::Function {
         return false;
     }
-    let lines: Vec<&str> = content.lines().collect();
     let start_idx = space.start_line.saturating_sub(1);
     let search_start = start_idx.saturating_sub(3);
     lines[search_start..=start_idx.min(lines.len().saturating_sub(1))]

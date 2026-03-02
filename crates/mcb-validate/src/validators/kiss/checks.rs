@@ -5,6 +5,7 @@ use crate::constants::common::{
     CFG_TEST_MARKER, COMMENT_PREFIX, SHORT_PREVIEW_LENGTH, TEST_FUNCTION_PREFIX,
 };
 use crate::filters::LanguageId;
+use crate::run_context::ValidationRunContext;
 use std::path::PathBuf;
 
 use rust_code_analysis::SpaceKind;
@@ -59,7 +60,11 @@ impl KissValidator {
                     return Ok(());
                 }
 
-                let content = std::fs::read_to_string(path)?;
+                let ctx = ValidationRunContext::active_or_build(&self.config)?;
+                let cached = ctx
+                    .read_cached(path)
+                    .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
+                let content = cached.to_string();
                 f(path.clone(), content)
             },
         )

@@ -5,6 +5,7 @@ use super::{QualityValidator, QualityViolation};
 use crate::ast::rca_helpers;
 use crate::constants::common::TEST_PATH_PATTERNS;
 use crate::filters::LanguageId;
+use crate::run_context::ValidationRunContext;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
 
@@ -44,7 +45,10 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                 return Ok(());
             }
 
-            let content = std::fs::read_to_string(&entry.absolute_path)?;
+            let ctx = ValidationRunContext::active_or_build(&validator.config)?;
+            let content = ctx
+                .read_cached(&entry.absolute_path)
+                .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
 
             // Use RCA's SLOC for accurate source line counting (excludes blanks/comments)
             let line_count = rca_helpers::parse_file_spaces(&entry.absolute_path, &content)

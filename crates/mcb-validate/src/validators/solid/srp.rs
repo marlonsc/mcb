@@ -10,6 +10,7 @@ use crate::ValidationConfigExt;
 use crate::ast::rca_helpers;
 use crate::constants::solid::MAX_UNRELATED_STRUCTS_PER_FILE;
 use crate::filters::LanguageId;
+use crate::run_context::ValidationRunContext;
 use crate::scan::for_each_scan_file;
 use crate::utils::source::structs_seem_related;
 use crate::validators::solid::violation::SolidViolation;
@@ -35,7 +36,10 @@ pub fn validate_srp(
             if !entry.absolute_path.starts_with(&src_dir) {
                 return Ok(());
             }
-            let content = std::fs::read_to_string(&entry.absolute_path)?;
+            let ctx = ValidationRunContext::active_or_build(config)?;
+            let content = ctx
+                .read_cached(&entry.absolute_path)
+                .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
             let Some(root) = rca_helpers::parse_file_spaces(&entry.absolute_path, &content) else {
                 return Ok(());
             };
@@ -111,7 +115,10 @@ pub fn validate_impl_method_count(
             if !entry.absolute_path.starts_with(&src_dir) {
                 return Ok(());
             }
-            let content = std::fs::read_to_string(&entry.absolute_path)?;
+            let ctx = ValidationRunContext::active_or_build(config)?;
+            let content = ctx
+                .read_cached(&entry.absolute_path)
+                .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
             let Some(root) = rca_helpers::parse_file_spaces(&entry.absolute_path, &content) else {
                 return Ok(());
             };

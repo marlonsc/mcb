@@ -4,6 +4,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
 
+use rust_code_analysis::FuncSpace;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -57,6 +58,7 @@ pub struct ValidationRunContext {
     file_inventory: Arc<Vec<InventoryEntry>>,
     file_inventory_source: FileInventorySource,
     content_cache: Mutex<HashMap<PathBuf, Arc<str>>>,
+    rca_cache: Mutex<HashMap<PathBuf, Option<FuncSpace>>>,
 }
 
 thread_local! {
@@ -81,6 +83,7 @@ impl ValidationRunContext {
             file_inventory: Arc::new(entries),
             file_inventory_source: source,
             content_cache: Mutex::new(HashMap::new()),
+            rca_cache: Mutex::new(HashMap::new()),
         })
     }
 
@@ -166,6 +169,30 @@ impl ValidationRunContext {
         }
 
         Ok(value)
+    }
+
+    /// Parse file with RCA, using cache if available.
+    /// Returns cached FuncSpace clone on cache hit, otherwise parses and caches.
+    #[must_use]
+    pub fn parse_rca_cached(&self, path: &Path, content: &str) -> Option<FuncSpace> {
+        let normalized = std::fs::canonicalize(path).ok()?;
+
+        // Check cache
+        if let Ok(cache) = self.rca_cache.lock() {
+            if let Some(result) = cache.get(&normalized) {
+                return result.clone();
+            }
+        }
+
+        // Parse (uncached)
+        let result = crate::ast::rca_helpers::parse_file_spaces_raw(path, content);
+
+        // Store in cache
+        if let Ok(mut cache) = self.rca_cache.lock() {
+            cache.insert(normalized, result.clone());
+        }
+
+        result
     }
 
     /// Execute a closure with the given context set as active for the current thread
