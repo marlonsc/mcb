@@ -6,7 +6,11 @@ use mcb_domain::ports::RuleInfo;
 pub fn get_validation_rules(category: Option<&str>) -> Vec<RuleInfo> {
     let all_rules: Vec<RuleInfo> = EmbeddedRules::all_yaml()
         .into_iter()
-        .filter(|(path, _)| path.ends_with(".yml") && !path.contains("/templates/"))
+        .filter(|(path, _)| {
+            path.ends_with(".yml")
+                && !path.contains("/templates/")
+                && !path.starts_with("templates/")
+        })
         .filter_map(|(_, content)| {
             if extract_yaml_scalar(content, "_base").as_deref() == Some("true") {
                 return None;

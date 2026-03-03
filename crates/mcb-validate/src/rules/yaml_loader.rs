@@ -126,6 +126,12 @@ pub struct YamlRuleLoader {
 }
 
 impl YamlRuleLoader {
+    fn is_template_path(path: &str) -> bool {
+        path.contains("/templates/")
+            || path.starts_with("templates/")
+            || path.contains("\\templates\\")
+    }
+
     /// Create a new YAML rule loader
     ///
     /// # Errors
@@ -208,7 +214,7 @@ impl YamlRuleLoader {
                 .load_templates_from_embedded(embedded_rules)?;
 
             for (path, content) in embedded_rules {
-                if path.ends_with(".yml") && !path.contains("/templates/") {
+                if path.ends_with(".yml") && !Self::is_template_path(path) {
                     let loaded_rules = self.load_rule_from_str(Path::new(path), content)?;
                     rules.extend(loaded_rules);
                 }
@@ -376,7 +382,7 @@ impl YamlRuleLoader {
     /// Check if a file is a rule file
     fn is_rule_file(path: &Path) -> bool {
         path.extension().and_then(|ext| ext.to_str()) == Some("yml")
-            && !path.to_str().is_some_and(|s| s.contains("/templates/"))
+            && !path.to_str().is_some_and(Self::is_template_path)
     }
 
     /// Convert YAML/JSON value to `ValidatedRule`

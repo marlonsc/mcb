@@ -444,14 +444,36 @@ impl DeclarativeValidator {
     }
 
     fn has_rule_patterns(rule: &ValidatedRule) -> bool {
-        rule.config
+        Self::effective_regex_config(rule)
             .get("patterns")
             .and_then(|v| v.as_object())
             .is_some()
     }
 
+    fn effective_regex_config(rule: &ValidatedRule) -> &serde_json::Value {
+        let top_level_has_patterns = rule
+            .config
+            .get("patterns")
+            .and_then(|v| v.as_object())
+            .is_some();
+        let top_level_has_ignore = rule
+            .config
+            .get("ignore_patterns")
+            .and_then(|v| v.as_array())
+            .is_some();
+
+        if top_level_has_patterns || top_level_has_ignore {
+            return &rule.config;
+        }
+
+        rule.rule_definition.get("config").unwrap_or(&rule.config)
+    }
+
     fn compile_rule_patterns(rule: &ValidatedRule) -> Vec<Regex> {
-        let Some(patterns_obj) = rule.config.get("patterns").and_then(|v| v.as_object()) else {
+        let Some(patterns_obj) = Self::effective_regex_config(rule)
+            .get("patterns")
+            .and_then(|v| v.as_object())
+        else {
             return Vec::new();
         };
 
@@ -478,8 +500,7 @@ impl DeclarativeValidator {
     }
 
     fn compile_ignore_patterns(rule: &ValidatedRule) -> Vec<Regex> {
-        let Some(ignore_arr) = rule
-            .config
+        let Some(ignore_arr) = Self::effective_regex_config(rule)
             .get("ignore_patterns")
             .and_then(|v| v.as_array())
         else {

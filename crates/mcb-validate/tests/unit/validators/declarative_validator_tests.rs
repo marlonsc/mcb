@@ -32,6 +32,10 @@ fn write_validator_config(root: &Path) -> io::Result<()> {
 fn write_source_file(root: &Path, content: &str) -> io::Result<()> {
     let src_dir = root.join("crates/demo/src");
     fs::create_dir_all(&src_dir)?;
+    fs::write(
+        root.join("crates/demo/Cargo.toml"),
+        "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2024\"\n",
+    )?;
     fs::write(src_dir.join("lib.rs"), content)?;
     Ok(())
 }
@@ -110,14 +114,13 @@ rule:
   type: regex_scan
 config:
   patterns:
-    unwrap_call: "\.unwrap\(\)"
+    unwrap_call: '\.unwrap\(\)'
 message: "Unwrap detected"
 "#,
     )?;
 
     let violations = run_named_validator(root, "declarative_rules")
         .map_err(|e| io::Error::other(e.to_string()))?;
-
     assert!(
         violations.iter().any(|v| v.id() == "REG001"),
         "expected regex rule to execute when selectors are absent"
