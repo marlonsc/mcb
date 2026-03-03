@@ -3,7 +3,8 @@
 use rstest::rstest;
 use std::path::Path;
 
-use mcb_validate::filters::{LanguageDetector, LanguageId};
+use mcb_domain::ports::validation::LanguageId;
+use mcb_validate::filters::LanguageDetector;
 
 #[rstest]
 #[case("main.rs", "rust")]

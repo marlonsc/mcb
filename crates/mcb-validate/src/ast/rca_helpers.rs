@@ -18,7 +18,7 @@ thread_local! {
 }
 
 /// Parse source code and return the root [`FuncSpace`].
-/// Uses ValidationRunContext cache when available.
+/// Uses `ValidationRunContext` cache when available.
 ///
 /// Returns `None` when the language cannot be detected or analysis fails.
 #[must_use]

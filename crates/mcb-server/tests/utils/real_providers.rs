@@ -13,8 +13,9 @@ use std::sync::Arc;
 
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider};
+use mcb_domain::test_utils::TEST_EMBEDDING_DIMENSIONS;
 
-use super::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, try_shared_app_context};
+use super::test_fixtures::try_shared_app_context;
 
 /// Get the real `EdgeVec` vector store provider from the shared context.
 ///

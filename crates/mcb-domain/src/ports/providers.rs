@@ -14,10 +14,10 @@ use serde::{Deserialize, Serialize};
 
 use crate::entities::CodeChunk;
 use crate::entities::project::ProjectType;
-use crate::entities::vcs::{RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository};
+use crate::entities::vcs::{RefDiff, VcsBranch, VcsCommit, VcsRepository};
 use crate::error::Result;
 use crate::value_objects::{
-    CollectionId, CollectionInfo, Embedding, FileInfo, Language, SearchResult,
+    CollectionId, CollectionInfo, Embedding, FileInfo, Language, RepositoryId, SearchResult,
 };
 use crate::value_objects::{EmbeddingConfig, VectorStoreConfig};
 

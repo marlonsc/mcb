@@ -7,6 +7,7 @@ use crate::utils::test_constants::{
     DOMAIN_CRATE, FIXTURE_DOMAIN_SERVICE_PATH, INFRA_CRATE, SERVER_CRATE, TEST_CRATE,
 };
 use crate::utils::*;
+use mcb_domain::utils::tests::assertions::{assert_no_violations, assert_violations_exact};
 use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────

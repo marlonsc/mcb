@@ -10,6 +10,7 @@ use rstest::*;
 
 use crate::utils::test_constants::*;
 use crate::utils::*;
+use mcb_domain::utils::tests::assertions::{assert_no_violations, assert_violations_exact};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions

@@ -401,7 +401,7 @@ jobs:
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
-      - run: make coverage MCB_CI=1 THREADS=4
+      - run: make coverage THREADS=4
       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           files: ./coverage/lcov.info

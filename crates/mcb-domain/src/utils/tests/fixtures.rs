@@ -1,10 +1,3 @@
-pub use super::utils::GOLDEN_COLLECTION;
-pub use super::utils::SAMPLE_CODEBASE_FILES;
-
-pub use super::mcp_assertions::{
-    golden_content_to_string, golden_count_result_entries, golden_parse_results_found,
-};
-
 use std::path::{Path, PathBuf};
 
 /// Path to `sample_codebase` fixture (used by golden tests).

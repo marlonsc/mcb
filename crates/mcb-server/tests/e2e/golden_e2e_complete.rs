@@ -8,9 +8,10 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use serde::Deserialize;
 
-use crate::utils::test_fixtures::{
-    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, golden_content_to_string,
-    golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
+use mcb_domain::test_fixtures::sample_codebase_path;
+use mcb_domain::test_utils::{GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES};
+use mcb_domain::utils::tests::mcp_assertions::{
+    extract_text as extract_result_text, golden_count_result_entries, golden_parse_results_found,
 };
 use mcb_domain::utils::tests::timeouts::TEST_TIMEOUT;
 use mcb_domain::utils::tests::utils::TestResult;
@@ -380,7 +381,7 @@ async fn test_golden_search_returns_relevant_results() -> TestResult {
     assert!(r.is_ok(), "search must succeed after index");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = golden_content_to_string(&res);
+    let text = extract_result_text(&res);
     let count =
         golden_parse_results_found(&text).unwrap_or_else(|| golden_count_result_entries(&text));
     if count > 0 {
@@ -446,7 +447,7 @@ async fn test_golden_search_respects_limit_parameter() -> TestResult {
         )))
         .await;
     assert!(r.is_ok(), "search must succeed");
-    let text = golden_content_to_string(&r.unwrap());
+    let text = extract_result_text(&r.unwrap());
     let n = golden_parse_results_found(&text).unwrap_or_else(|| golden_count_result_entries(&text));
     assert!(n <= 2, "search must respect limit: got {n} results");
     Ok(())

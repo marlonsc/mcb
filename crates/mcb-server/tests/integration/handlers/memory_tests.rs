@@ -8,9 +8,9 @@ use serde_json::json;
 
 use mcb_domain::utils::text::extract_text;
 
-use crate::utils::test_fixtures::create_base_memory_args;
+use crate::utils::domain_services::create_base_memory_args;
 use crate::utils::test_fixtures::create_test_mcb_state;
-use crate::utils::test_fixtures::{TEST_PROJECT_ID, TEST_SESSION_ID};
+use mcb_domain::test_utils::{TEST_PROJECT_ID, TEST_SESSION_ID};
 
 async fn create_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
     let (state, temp_dir) = create_test_mcb_state().await?;

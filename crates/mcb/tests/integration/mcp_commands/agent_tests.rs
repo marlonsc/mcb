@@ -2,9 +2,9 @@
 //!
 //! Actions: `log_tool`, `log_delegation`
 
-use super::common::{
-    TestResult, call_tool, cleanup_temp_dbs, create_client, extract_text, is_error, shutdown_client,
-};
+use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
+use mcb_domain::utils::tests::mcp_assertions::{extract_text, is_error};
+use mcb_domain::utils::tests::utils::TestResult;
 use rstest::rstest;
 use serial_test::serial;
 

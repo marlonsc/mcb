@@ -1,5 +1,5 @@
 //!
-//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//! **Documentation**: [docs/modules/utils.md](../../../../docs/modules/utils.md)
 //!
 //! Retry utilities with exponential backoff.
 

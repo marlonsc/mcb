@@ -67,16 +67,18 @@ impl WorkspaceDependencies {
     /// Find dependencies for a specific file's crate
     #[must_use]
     pub fn find_crate_deps(&self, file_path: &Path) -> Option<&CrateDependencies> {
-        // Find the crate directory containing this file
         let mut current = file_path.parent()?;
         loop {
-            // Check if this directory contains Cargo.toml
-            if current.join(CARGO_TOML_FILENAME).exists() {
-                return self.deps.get(current);
+            if let Some(deps) = self.deps.get(current) {
+                return Some(deps);
             }
 
-            // Move up one directory
-            current = current.parent()?;
+            current.file_name()?;
+
+            match current.parent() {
+                Some(parent) => current = parent,
+                None => return None,
+            }
         }
     }
 

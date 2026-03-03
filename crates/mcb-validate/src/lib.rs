@@ -95,9 +95,8 @@ use thiserror::Error;
 /// Result type for validation operations
 pub type Result<T> = std::result::Result<T, ValidationError>;
 
-pub use mcb_domain::ports::validation::{
-    CheckFn, NamedCheck, ValidationConfig, Validator, ValidatorError, ValidatorResult, Violation,
-    ViolationCategory, run_checks,
+pub(crate) use mcb_domain::ports::validation::{
+    NamedCheck, ValidationConfig, Validator, ValidatorResult, Violation, ViolationCategory,
 };
 
 /// Extension trait for `ValidationConfig` providing file system scanning capabilities.
@@ -225,7 +224,7 @@ pub enum ValidationError {
     },
 }
 
-pub use mcb_domain::ports::validation::Severity;
+pub(crate) use mcb_domain::ports::validation::Severity;
 
 /// Component type for strict directory validation
 ///

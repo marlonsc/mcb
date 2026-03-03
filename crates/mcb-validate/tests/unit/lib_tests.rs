@@ -3,14 +3,14 @@
 use rstest::rstest;
 use std::path::PathBuf;
 
-use mcb_validate::{Severity, ValidationConfig};
+use mcb_domain::ports::validation::{Severity, ValidationConfig};
 
 #[rstest]
 #[test]
 fn test_severity_serialization() {
     let severity = Severity::Error;
     let json = serde_json::to_string(&severity).unwrap();
-    assert_eq!(json, "\"Error\"");
+    assert_eq!(json, "\"ERROR\"");
 }
 
 #[rstest]

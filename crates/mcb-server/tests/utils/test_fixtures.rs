@@ -4,8 +4,8 @@
 //! MCP server and state are built via [`mcb_server::build_mcp_server_bootstrap`]
 //! with pure registry DI through `mcb_domain::registry::*`.
 //!
-//! **Entity fixtures and constants are centralized in `mcb_domain::test_utils`.**
-//! This module re-exports them and adds mcb-server-specific helpers.
+//! **Entity fixtures and constants live in `mcb_domain::test_utils`.**
+//! This module provides mcb-server-specific test infrastructure (DI, MCP server).
 
 use std::sync::Arc;
 
@@ -29,65 +29,14 @@ use tempfile::TempDir;
 // linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
 
-// -----------------------------------------------------------------------------
-// Re-export ALL centralized constants and fixtures from mcb-domain SSOT
-// -----------------------------------------------------------------------------
-pub use mcb_domain::test_utils::{
-    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, TEST_EMBEDDING_DIMENSIONS, TEST_ORG_ID,
-    TEST_ORG_ID_A, TEST_ORG_ID_B, TEST_PROJECT_ID, TEST_REPO_NAME, TEST_SESSION_ID,
-    create_temp_codebase, create_test_admin_user, create_test_api_key, create_test_indexing_result,
-    create_test_organization, create_test_team, create_test_team_member, create_test_user_with,
+// Import centralized constants and fixtures from mcb-domain SSOT
+use mcb_domain::test_utils::{
+    TEST_ORG_ID, TEST_REPO_NAME, TEST_SESSION_ID, create_temp_codebase, create_test_indexing_result,
 };
-
-// Re-export domain_services helpers for integration tests
-pub use super::domain_services::create_base_memory_args;
-
-// Backward-compat aliases used by e2e tests (delegate to centralized SSOT)
-
-/// Alias for [`create_test_organization`].
-#[must_use]
-pub fn test_organization(id: &str) -> mcb_domain::entities::Organization {
-    create_test_organization(id)
-}
-
-/// Alias for [`create_test_user_with`].
-#[must_use]
-pub fn test_user(org_id: &str, email: &str) -> mcb_domain::entities::User {
-    create_test_user_with(org_id, email)
-}
-
-/// Alias for [`create_test_admin_user`].
-#[must_use]
-pub fn test_admin_user(org_id: &str, email: &str) -> mcb_domain::entities::User {
-    create_test_admin_user(org_id, email)
-}
-
-/// Alias for [`create_test_team`].
-#[must_use]
-pub fn test_team(org_id: &str, name: &str) -> mcb_domain::entities::Team {
-    create_test_team(org_id, name)
-}
-
-/// Alias for [`create_test_team_member`].
-#[must_use]
-pub fn test_team_member(team_id: &str, user_id: &str) -> mcb_domain::entities::TeamMember {
-    create_test_team_member(team_id, user_id)
-}
-
-/// Alias for [`create_test_api_key`].
-#[must_use]
-pub fn test_api_key(user_id: &str, org_id: &str, name: &str) -> mcb_domain::entities::ApiKey {
-    create_test_api_key(user_id, org_id, name)
-}
 
 // -----------------------------------------------------------------------------
 // Golden test helpers (shared by tests/golden and integration)
 // -----------------------------------------------------------------------------
-
-pub use mcb_domain::test_fixtures::{
-    golden_content_to_string, golden_count_result_entries, golden_parse_results_found,
-    sample_codebase_path,
-};
 
 // ---------------------------------------------------------------------------
 // Shared FastEmbed cache directory

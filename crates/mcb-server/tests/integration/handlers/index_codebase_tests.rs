@@ -3,14 +3,14 @@ use mcb_server::handlers::IndexHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
-use crate::utils::test_fixtures::create_temp_codebase;
 use crate::utils::test_fixtures::create_test_mcb_state;
+use mcb_domain::test_utils::create_temp_codebase;
 
 #[rstest]
 #[case(true, None, Some("test"), true)]
 #[case(false, Some("/nonexistent/path/to/codebase"), Some("test"), false)]
 #[case(false, None, Some("test"), true)]
-#[case(true, None, None, true)]
+#[case(true, None, None, false)]
 #[case(false, Some("/definitely/nonexistent/mcb-path"), Some("test"), false)]
 #[rstest]
 #[tokio::test]

@@ -5,8 +5,6 @@
 
 /// Filesystem utilities (YAML collection, directory traversal).
 pub mod fs;
-/// Line/interval range helpers (overlap checks).
-pub mod range;
 /// Source code analysis utilities (function extraction, brace tracking, block scanning).
 pub mod source;
 /// Validation report utilities (conversion, filtering).

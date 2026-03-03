@@ -1,5 +1,6 @@
-use crate::utils::test_fixtures::{create_test_mcp_server, golden_content_to_string};
+use crate::utils::test_fixtures::create_test_mcp_server;
 use mcb_domain::entities::ApiKey;
+use mcb_domain::utils::tests::mcp_assertions::extract_text;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::utils::tests::utils::{
     create_test_api_key, create_test_organization, create_test_user_with,
@@ -11,7 +12,7 @@ use rstest::rstest;
 use serde_json::json;
 
 fn api_key_from_result(result: &rmcp::model::CallToolResult) -> ApiKey {
-    let text = golden_content_to_string(result);
+    let text = extract_text(result);
     match serde_json::from_str(&text) {
         Ok(k) => k,
         Err(e) => panic!("api key response json: {e}"),
@@ -19,7 +20,7 @@ fn api_key_from_result(result: &rmcp::model::CallToolResult) -> ApiKey {
 }
 
 fn api_key_list_from_result(result: &rmcp::model::CallToolResult) -> Vec<ApiKey> {
-    let text = golden_content_to_string(result);
+    let text = extract_text(result);
     match serde_json::from_str(&text) {
         Ok(k) => k,
         Err(e) => panic!("api key list response json: {e}"),

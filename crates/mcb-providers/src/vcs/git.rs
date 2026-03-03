@@ -9,11 +9,11 @@ use async_trait::async_trait;
 use git2::{BranchType, Repository, Sort};
 use mcb_domain::{
     entities::vcs::{
-        DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsCommitInput,
-        VcsRepository,
+        DiffStatus, FileDiff, RefDiff, VcsBranch, VcsCommit, VcsCommitInput, VcsRepository,
     },
     error::{Error, Result},
     ports::VcsProvider,
+    value_objects::RepositoryId,
 };
 use mcb_utils::utils::id;
 

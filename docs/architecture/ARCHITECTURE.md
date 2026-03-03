@@ -564,7 +564,6 @@ Memory Context Browser implements Robert C. Martin's Clean Architecture with str
 
 For complete architectural details, see [ADR-013: Clean Architecture Crate Separation](../adr/013-clean-architecture-crate-separation.md).
 
-
 ### Dependency Validation Rules
 
 The project enforces strict dependency rules to maintain Clean Architecture compliance.
@@ -578,7 +577,6 @@ The project enforces strict dependency rules to maintain Clean Architecture comp
 | mcb-providers | mcb-infrastructure, mcb-server | mcb-domain, mcb-utils |
 | mcb-infrastructure | mcb-server | mcb-domain, mcb-providers, mcb-utils |
 | mcb-server | None | mcb-infrastructure, mcb-utils |
-
 
 **Note**: Provider implementations import contracts from `mcb-domain` and are wired by
 `mcb-infrastructure`.

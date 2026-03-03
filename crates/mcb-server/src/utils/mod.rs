@@ -11,5 +11,3 @@ pub mod collections;
 pub mod json;
 /// Shared helper functions for MCP tool handlers.
 pub mod mcp;
-/// Text extraction and processing utilities.
-pub mod text;

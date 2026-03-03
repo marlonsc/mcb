@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
-use mcb_validate::{SsotValidator, SsotViolation, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Violation, ViolationCategory};
+use mcb_validate::{SsotValidator, SsotViolation};
 use rstest::rstest;
 
 fn synthetic_files(entries: &[(&str, &str)]) -> HashMap<String, String> {

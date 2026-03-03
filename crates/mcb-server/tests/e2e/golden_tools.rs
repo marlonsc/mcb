@@ -6,13 +6,10 @@ use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
-use crate::utils::test_fixtures::GOLDEN_COLLECTION;
+use mcb_domain::test_fixtures::sample_codebase_path;
+use mcb_domain::test_utils::GOLDEN_COLLECTION;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::utils::text::extract_text;
-
-fn sample_codebase_path() -> std::path::PathBuf {
-    crate::utils::test_fixtures::sample_codebase_path()
-}
 
 // =============================================================================
 // E2E: Complete workflow (clear -> status -> index -> status -> search -> clear)

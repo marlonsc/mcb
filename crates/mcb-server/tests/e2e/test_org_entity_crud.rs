@@ -1,4 +1,9 @@
-use crate::utils::test_fixtures::*;
+use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::test_utils::{
+    create_test_admin_user, create_test_organization, create_test_team, create_test_team_member,
+    create_test_user_with,
+};
+use mcb_domain::utils::tests::mcp_assertions::extract_text;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
@@ -19,7 +24,7 @@ fn base_args(action: OrgEntityAction, resource: OrgEntityResource) -> OrgEntityA
 }
 
 fn result_json(res: &rmcp::model::CallToolResult) -> serde_json::Value {
-    let text = golden_content_to_string(res);
+    let text = extract_text(res);
     serde_json::from_str(&text)
         .unwrap_or_else(|e| panic!("response should be valid JSON: {text}; error: {e}"))
 }

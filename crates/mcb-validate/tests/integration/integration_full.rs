@@ -17,9 +17,9 @@ mod full_integration_tests {
     use std::io::Write;
     use std::path::{Path, PathBuf};
 
-    use mcb_validate::ValidationConfig;
+    use mcb_domain::ports::validation::ValidationConfig;
+    use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
     use mcb_validate::generic_reporter::{GenericReport, GenericReporter, GenericSummary};
-    use mcb_validate::{Severity, Violation, ViolationCategory};
     use tempfile::TempDir;
 
     fn create_test_workspace(dir: &TempDir) -> PathBuf {
@@ -307,7 +307,7 @@ impl MutableValueObject {
         let mut violations_by_category = HashMap::new();
         violations_by_category.insert(
             "quality".to_owned(),
-            vec![mcb_validate::generic_reporter::ViolationEntry {
+            vec![mcb_domain::ports::ViolationEntry {
                 id: "TEST001".to_owned(),
                 category: "quality".to_owned(),
                 severity: "warning".to_owned(),

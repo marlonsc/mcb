@@ -5,7 +5,6 @@
 export RELEASE ?= 1
 export SCOPE ?=
 export FIX ?= 0
-export MCB_CI ?= 0
 export QUICK ?= 0
 export THREADS ?= 1
 export BUMP ?=

@@ -5,8 +5,8 @@ use std::io;
 use std::path::Path;
 
 use crate::utils::run_named_validator;
-use mcb_validate::ValidationConfig;
-use mcb_validate::Validator;
+use mcb_domain::ports::validation::ValidationConfig;
+use mcb_domain::ports::validation::Validator;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;
 use rstest::rstest;
 use tempfile::TempDir;
@@ -71,8 +71,8 @@ message: "Function node detected"
 "#,
     )?;
 
-    let violations =
-        run_named_validator(root, "declarative").map_err(|e| io::Error::other(e.to_string()))?;
+    let violations = run_named_validator(root, "declarative_rules")
+        .map_err(|e| io::Error::other(e.to_string()))?;
 
     let ast_count = violations.iter().filter(|v| v.id() == "AST001").count();
     assert!(
@@ -115,8 +115,8 @@ message: "Unwrap detected"
 "#,
     )?;
 
-    let violations =
-        run_named_validator(root, "declarative").map_err(|e| io::Error::other(e.to_string()))?;
+    let violations = run_named_validator(root, "declarative_rules")
+        .map_err(|e| io::Error::other(e.to_string()))?;
 
     assert!(
         violations.iter().any(|v| v.id() == "REG001"),
@@ -155,7 +155,7 @@ message: "Function detected"
     )
     .unwrap();
 
-    let violations = run_named_validator(root, "declarative").unwrap();
+    let violations = run_named_validator(root, "declarative_rules").unwrap();
 
     let ast_violations: Vec<_> = violations.iter().filter(|v| v.id() == "AST002").collect();
     assert_eq!(

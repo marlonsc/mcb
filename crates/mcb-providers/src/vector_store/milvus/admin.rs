@@ -5,12 +5,12 @@ use mcb_domain::ports::VectorStoreAdmin;
 use mcb_domain::value_objects::CollectionId;
 use std::collections::HashMap;
 
-use crate::utils::retry::{RetryConfig, retry_with_backoff};
 use mcb_utils::constants::http::{PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT};
 use mcb_utils::constants::vector_store::{
     MILVUS_ERROR_RATE_LIMIT, STATS_FIELD_COLLECTION, STATS_FIELD_PROVIDER, STATS_FIELD_STATUS,
     STATS_FIELD_VECTORS_COUNT, STATUS_ACTIVE,
 };
+use mcb_utils::utils::retry::{RetryConfig, retry_with_backoff};
 
 #[async_trait]
 impl VectorStoreAdmin for MilvusVectorStoreProvider {

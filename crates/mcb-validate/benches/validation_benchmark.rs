@@ -3,7 +3,7 @@
 //! Run with: cargo bench -p mcb-validate
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use mcb_validate::ValidationConfig;
+use mcb_domain::ports::validation::ValidationConfig;
 use mcb_validate::ast::UnwrapDetector;
 use mcb_validate::clean_architecture::CleanArchitectureValidator;
 use mcb_validate::duplication::{DuplicationAnalyzer, DuplicationThresholds, tokenize_source};

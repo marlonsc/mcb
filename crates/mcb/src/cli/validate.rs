@@ -107,7 +107,8 @@ impl ValidateArgs {
     /// # Errors
     /// Returns an error if validation setup or execution fails.
     pub fn execute(self) -> Result<ValidationResult, Box<dyn std::error::Error>> {
-        use mcb_validate::{GenericReporter, ValidationConfig};
+        use mcb_domain::ports::validation::ValidationConfig;
+        use mcb_validate::GenericReporter;
 
         self.init_logging();
 
@@ -214,7 +215,10 @@ impl ValidateArgs {
         }
     }
 
-    fn should_print_violation(violation: &mcb_validate::ViolationEntry, threshold: u8) -> bool {
+    fn should_print_violation(
+        violation: &mcb_domain::ports::ViolationEntry,
+        threshold: u8,
+    ) -> bool {
         let sev_level = match violation.severity.as_str() {
             "ERROR" => 0,
             "WARNING" => 1,
@@ -223,7 +227,7 @@ impl ValidateArgs {
         sev_level <= threshold
     }
 
-    fn print_single_violation(violation: &mcb_validate::ViolationEntry) {
+    fn print_single_violation(violation: &mcb_domain::ports::ViolationEntry) {
         let file_display = violation.file.as_deref().unwrap_or("-");
         let line = violation.line.unwrap_or(0);
 

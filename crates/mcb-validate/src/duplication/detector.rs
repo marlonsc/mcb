@@ -11,8 +11,8 @@ use std::str::Chars;
 
 use super::fingerprint::{FingerprintMatch, Token, TokenType};
 use super::thresholds::{DuplicationThresholds, DuplicationType};
-use crate::utils::range::lines_overlap;
 use mcb_utils::constants::validate::{OPERATOR_CHARS, PUNCTUATION_CHARS};
+use mcb_utils::utils::range::lines_overlap;
 
 /// Result of comparing two code fragments
 #[derive(Debug, Clone)]

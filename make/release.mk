@@ -28,7 +28,7 @@ NEXT_MAJOR := $(shell echo $(VERSION) | awk -F. '{print ($$1+1)".0.0"}')
 
 release: ## Full release pipeline (lint + test + validate + build)
 	@echo "Creating release v$(VERSION)..."
-	@$(MAKE) lint MCB_CI=1
+	@$(MAKE) lint
 	@$(MAKE) test
 	@$(MAKE) validate QUICK=1
 	@$(MAKE) build RELEASE=1

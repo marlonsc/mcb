@@ -2,7 +2,8 @@
 
 use rstest::rstest;
 
-use mcb_validate::{Severity, ValidationConfig, ValidationConfigExt, Violation};
+use mcb_domain::ports::validation::{Severity, ValidationConfig, Violation};
+use mcb_validate::ValidationConfigExt;
 
 #[rstest]
 #[case("dependency", "Dependency Violations", true)]

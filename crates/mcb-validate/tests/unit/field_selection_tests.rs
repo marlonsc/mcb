@@ -20,8 +20,8 @@
 
 use std::path::PathBuf;
 
-use mcb_validate::Severity;
-use mcb_validate::Violation;
+use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::Violation;
 use rstest::rstest;
 
 // ============================================================================
@@ -393,5 +393,5 @@ fn id_and_category_correct() {
         severity: Severity::Warning,
     };
     assert_eq!(v.id(), "KISS004");
-    assert_eq!(v.category(), mcb_validate::ViolationCategory::Kiss);
+    assert_eq!(v.category(), mcb_domain::ports::validation::ViolationCategory::Kiss);
 }

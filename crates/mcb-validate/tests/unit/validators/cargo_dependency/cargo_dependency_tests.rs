@@ -4,7 +4,7 @@
 //! - `create_rule_context` — eliminates duplicated `RuleContext` construction
 //! - `cargo_toml_with_deps` — eliminates inline Cargo.toml template strings
 
-use mcb_validate::ValidationConfig;
+use mcb_domain::ports::validation::ValidationConfig;
 use mcb_validate::engines::hybrid_engine::RuleEngine;
 use mcb_validate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
 use serde_json::json;

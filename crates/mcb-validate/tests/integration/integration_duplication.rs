@@ -18,7 +18,7 @@ mod duplication_integration_tests {
     use std::io::Write;
     use std::path::PathBuf;
 
-    use mcb_validate::Violation;
+    use mcb_domain::ports::validation::Violation;
     use mcb_validate::duplication::{
         DuplicationAnalyzer, DuplicationThresholds, DuplicationType, TokenFingerprinter,
         tokenize_source,
@@ -224,7 +224,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     #[rstest]
     #[test]
     fn test_duplication_stats() {
-        use mcb_validate::Severity;
+        use mcb_domain::ports::validation::Severity;
 
         let violations = vec![
             mcb_validate::duplication::DuplicationViolation {
@@ -274,8 +274,8 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     #[rstest]
     #[test]
     fn test_violation_trait_implementation() {
+        use mcb_domain::ports::validation::{Severity, ViolationCategory};
         use mcb_validate::duplication::DuplicationViolation;
-        use mcb_validate::{Severity, ViolationCategory};
 
         let violation = DuplicationViolation {
             file: PathBuf::from("src/utils.rs"),

@@ -25,17 +25,35 @@ impl AstSelectorEngine {
             return Vec::new();
         }
 
-        let source = match std::fs::read_to_string(file) {
-            Ok(source) => source,
-            Err(e) => {
-                mcb_domain::warn!(
-                    "validate",
-                    "Failed to read file for AST selector validation",
-                    &format!("file = {}, error = {:?}", file.display(), e)
-                );
-                return Vec::new();
-            }
+        let source = match crate::run_context::ValidationRunContext::active()
+            .and_then(|ctx| ctx.read_cached(file).ok())
+        {
+            Some(cached) => cached.to_string(),
+            None => match std::fs::read_to_string(file) {
+                Ok(s) => s,
+                Err(e) => {
+                    mcb_domain::warn!(
+                        "validate",
+                        "Failed to read file for AST selector validation",
+                        &format!("file = {}, error = {:?}", file.display(), e)
+                    );
+                    return Vec::new();
+                }
+            },
         };
+
+        Self::execute_on_source(rule, file, &source)
+    }
+
+    #[must_use]
+    pub(crate) fn execute_on_source(
+        rule: &ValidatedRule,
+        file: &Path,
+        source: &str,
+    ) -> Vec<AstSelectorMatch> {
+        if rule.selectors.is_empty() {
+            return Vec::new();
+        }
 
         let mut matches = Vec::new();
         for selector in &rule.selectors {
@@ -43,7 +61,7 @@ impl AstSelectorEngine {
                 continue;
             }
 
-            let Some(root) = Self::parse_ast(selector, &source) else {
+            let Some(root) = Self::parse_ast(selector, source) else {
                 continue;
             };
 

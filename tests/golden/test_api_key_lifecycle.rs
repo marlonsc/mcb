@@ -1,26 +1,28 @@
+use crate::utils::test_fixtures::create_test_mcp_server;
 use mcb_domain::entities::ApiKey;
-use mcb_domain::utils::tests::fixtures::{
-    create_test_mcp_server, golden_content_to_string, test_api_key, test_organization, test_user,
+use mcb_domain::test_utils::{
+    create_test_api_key, create_test_organization, create_test_user_with,
 };
+use mcb_domain::utils::tests::mcp_assertions::extract_text;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use mcb_server::mcp_server::McpServer;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 fn api_key_from_result(result: &rmcp::model::CallToolResult) -> ApiKey {
-    let text = golden_content_to_string(result);
+    let text = extract_text(result);
     serde_json::from_str(&text).expect("api key response json")
 }
 
 fn api_key_list_from_result(result: &rmcp::model::CallToolResult) -> Vec<ApiKey> {
-    let text = golden_content_to_string(result);
+    let text = extract_text(result);
     serde_json::from_str(&text).expect("api key list response json")
 }
 
 async fn create_org_and_user(server: &McpServer, org_id: &str, email: &str) -> (String, String) {
     let org_h = server.org_entity_handler();
 
-    let org = test_organization(org_id);
+    let org = create_test_organization(org_id);
     let create_org = org_h
         .handle(Parameters(OrgEntityArgs {
             action: OrgEntityAction::Create,
@@ -38,7 +40,7 @@ async fn create_org_and_user(server: &McpServer, org_id: &str, email: &str) -> (
         "org create should succeed: {create_org:?}"
     );
 
-    let user = test_user(org_id, email);
+    let user = create_test_user_with(org_id, email);
     let user_id = user.id.clone();
     let create_user = org_h
         .handle(Parameters(OrgEntityArgs {
@@ -62,7 +64,7 @@ async fn create_org_and_user(server: &McpServer, org_id: &str, email: &str) -> (
 
 async fn create_api_key(server: &McpServer, org_id: &str, user_id: &str, name: &str) -> ApiKey {
     let org_h = server.org_entity_handler();
-    let key = test_api_key(user_id, org_id, name);
+    let key = create_test_api_key(user_id, org_id, name);
     let create = org_h
         .handle(Parameters(OrgEntityArgs {
             action: OrgEntityAction::Create,
@@ -227,7 +229,7 @@ async fn golden_api_key_create_with_scopes() {
     let (server, _td) = create_test_mcp_server().await;
     let (org_id, user_id) =
         create_org_and_user(&server, "golden-org-key-scopes", "scopes@example.com").await;
-    let mut key = test_api_key(&user_id, &org_id, "scoped-key");
+    let mut key = create_test_api_key(&user_id, &org_id, "scoped-key");
     key.scopes_json = "[\"read\",\"write\"]".to_string();
 
     let org_h = server.org_entity_handler();
@@ -271,7 +273,7 @@ async fn golden_api_key_create_with_expiration() {
     let (server, _td) = create_test_mcp_server().await;
     let (org_id, user_id) =
         create_org_and_user(&server, "golden-org-key-exp", "exp@example.com").await;
-    let mut key = test_api_key(&user_id, &org_id, "expiring-key");
+    let mut key = create_test_api_key(&user_id, &org_id, "expiring-key");
     key.expires_at = Some(1_800_000_000i64);
 
     let org_h = server.org_entity_handler();

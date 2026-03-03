@@ -7,6 +7,7 @@
 
 use std::path::{Path, PathBuf};
 
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_yaml;
 
@@ -232,13 +233,22 @@ impl YamlRuleLoader {
         if self.rules_dir.exists() {
             self.template_engine.load_templates_sync(&self.rules_dir)?;
 
-            for path in collect_yaml_files(&self.rules_dir)? {
-                if Self::is_rule_file(&path) {
+            let rule_files: Vec<PathBuf> = collect_yaml_files(&self.rules_dir)?
+                .into_iter()
+                .filter(|path| Self::is_rule_file(path))
+                .collect();
+
+            let loaded: Result<Vec<Vec<ValidatedRule>>> = rule_files
+                .par_iter()
+                .map(|path| {
                     let content =
-                        std::fs::read_to_string(&path).map_err(crate::ValidationError::Io)?;
-                    let loaded_rules = self.load_rule_from_str(&path, &content)?;
-                    rules.extend(loaded_rules);
-                }
+                        std::fs::read_to_string(path).map_err(crate::ValidationError::Io)?;
+                    self.load_rule_from_str(path, &content)
+                })
+                .collect();
+
+            for loaded_rules in loaded? {
+                rules.extend(loaded_rules);
             }
         }
 

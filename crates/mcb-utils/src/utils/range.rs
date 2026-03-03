@@ -1,5 +1,5 @@
 //!
-//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//! **Documentation**: [docs/modules/utils.md](../../../../docs/modules/utils.md)
 //!
 //! Range and interval utilities.
 //!

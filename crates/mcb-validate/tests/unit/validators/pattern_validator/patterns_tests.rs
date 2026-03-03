@@ -7,6 +7,7 @@
 
 use crate::utils::test_constants::*;
 use crate::utils::*;
+use mcb_domain::utils::tests::assertions::{assert_no_violations, assert_violations_exact};
 use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -18,7 +19,7 @@ use rstest::rstest;
 fn test_patterns_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let violations = run_named_validator(&root, "patterns").unwrap();
+    let violations = run_named_validator(&root, "pattern").unwrap();
 
     assert_violations_exact(
         &violations,
@@ -48,7 +49,7 @@ pub trait CacheService {
 }
 ",
     );
-    let violations = run_named_validator(&root, "patterns").unwrap();
+    let violations = run_named_validator(&root, "pattern").unwrap();
 
     assert_no_violations(
         &violations,

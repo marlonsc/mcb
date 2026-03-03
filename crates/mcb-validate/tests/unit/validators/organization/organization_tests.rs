@@ -5,8 +5,9 @@
 
 use crate::utils::test_constants::*;
 use crate::utils::*;
-use mcb_validate::Severity;
-use mcb_validate::Violation;
+use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::Violation;
+use mcb_domain::utils::tests::assertions::{assert_no_violations, assert_violations_exact};
 use mcb_validate::organization::OrganizationViolation;
 use rstest::rstest;
 

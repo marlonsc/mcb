@@ -1,4 +1,5 @@
-use crate::utils::test_fixtures::{TEST_REPO_NAME, create_test_mcp_server};
+use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::test_utils::TEST_REPO_NAME;
 use mcb_domain::test_utils::TestResult;
 use mcb_domain::utils::text::extract_text;
 use mcb_server::args::SessionAction;

@@ -13,11 +13,11 @@ use reqwest::Client;
 use serde_json::Value;
 
 use super::http_response::HttpResponseUtils;
-use super::retry::retry_with_backoff;
 use mcb_utils::constants::http::ERROR_MSG_REQUEST_TIMEOUT;
+use mcb_utils::utils::retry::retry_with_backoff;
 
 // Re-export so callers of `send_json_request` can build `JsonRequestParams.retry`.
-pub(crate) use super::retry::RetryConfig;
+pub(crate) use mcb_utils::utils::retry::RetryConfig;
 
 /// Default timeout for HTTP requests (30 seconds)
 pub(crate) const DEFAULT_HTTP_TIMEOUT: Duration =

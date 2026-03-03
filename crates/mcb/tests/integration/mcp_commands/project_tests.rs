@@ -3,10 +3,9 @@
 //! Actions: create, get, update, list, delete
 //! Resources: project, phase, issue, dependency, decision
 
-use super::common::{
-    TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
-    shutdown_client,
-};
+use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
+use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text};
+use mcb_domain::utils::tests::utils::TestResult;
 use rstest::rstest;
 use serial_test::serial;
 

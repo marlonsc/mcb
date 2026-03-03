@@ -64,8 +64,8 @@ This installs `.git/hooks/pre-commit` which runs validation checks automatically
 The pre-commit hook runs the same checks as the CI pipeline but **skips tests** for fast feedback (\u003c 30 seconds typical):
 
 ```bash
-# Step 1: Lint checks (Rust 2024 compliance)
-make lint MCB_CI=1
+# Step 1: Lint checks
+make lint
 
 # Step 2: Architecture validation (QUICK mode, no tests)
 make validate QUICK=1
@@ -84,7 +84,7 @@ To run pre-commit validation without committing:
 
 ```bash
 # Run exactly what pre-commit hook runs
-make lint MCB_CI=1 && make validate QUICK=1
+make lint && make validate QUICK=1
 
 # Or run full CI pipeline locally (matches GitHub exactly)
 make ci
@@ -660,18 +660,18 @@ gh api /repos/marlonsc/mcb/pages/builds/latest
 cp scripts/hooks/pre-commit .git/hooks/ && chmod +x .git/hooks/pre-commit
 
 # Pre-commit validation (lint + validate QUICK)
-make lint MCB_CI=1 && make validate QUICK=1
+make lint && make validate QUICK=1
 
 # Full CI pipeline (matches Ready PR)
 make ci
 
 # Individual checks
-make lint MCB_CI=1        # Format & clippy
+make lint                 # Format & clippy
 make test                 # All tests
 make validate             # Architecture validation
 make audit                # Security audit
 make docs                 # Documentation build
-make coverage MCB_CI=1    # Code coverage
+make coverage             # Code coverage
 ```
 
 ### PR Management

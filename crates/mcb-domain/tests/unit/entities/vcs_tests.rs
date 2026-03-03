@@ -3,7 +3,8 @@
 use rstest::rstest;
 use std::path::PathBuf;
 
-use mcb_domain::entities::vcs::{RepositoryId, VcsBranch, VcsRepository};
+use mcb_domain::entities::vcs::{VcsBranch, VcsRepository};
+use mcb_domain::value_objects::RepositoryId;
 use mcb_utils::utils::id;
 
 #[rstest]

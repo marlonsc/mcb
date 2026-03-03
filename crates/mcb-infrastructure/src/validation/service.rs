@@ -55,7 +55,9 @@ impl ValidationServiceInterface for InfraValidationService {
     }
 
     async fn list_validators(&self) -> Result<Vec<String>> {
-        Ok(mcb_domain::registry::validation::list_validator_names())
+        let mut validators = mcb_domain::registry::validation::list_validator_names();
+        validators.sort_unstable();
+        Ok(validators)
     }
 
     async fn validate_file(
@@ -68,7 +70,7 @@ impl ValidationServiceInterface for InfraValidationService {
 
     async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>> {
         let entries = mcb_domain::registry::validation::list_validator_entries();
-        let rules: Vec<RuleInfo> = entries
+        let mut rules: Vec<RuleInfo> = entries
             .iter()
             .filter(|(name, _)| category.is_none_or(|c| *name == c))
             .map(|(name, description)| RuleInfo {
@@ -79,6 +81,7 @@ impl ValidationServiceInterface for InfraValidationService {
                 engine: "linkme".to_owned(),
             })
             .collect();
+        rules.sort_unstable_by(|a, b| a.id.cmp(&b.id));
         Ok(rules)
     }
 

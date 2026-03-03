@@ -18,3 +18,8 @@ pub mod id;
 pub mod path;
 /// Canonical time utilities (epoch seconds/nanos, strict).
 pub mod time;
+
+/// Range and interval utilities (line overlap checks).
+pub mod range;
+/// Retry utilities with exponential backoff.
+pub mod retry;

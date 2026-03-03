@@ -6,8 +6,9 @@
 
 use std::path::PathBuf;
 
+use mcb_domain::ports::validation::ValidationConfig;
+use mcb_validate::CleanArchitectureValidator;
 use mcb_validate::config::NamingRulesConfig;
-use mcb_validate::{CleanArchitectureValidator, ValidationConfig};
 use rstest::rstest;
 
 /// Test that CA009 allows composition root (di/) and flags only non-di imports

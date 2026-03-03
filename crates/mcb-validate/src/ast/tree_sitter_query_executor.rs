@@ -79,19 +79,35 @@ impl TreeSitterQueryExecutor {
     ///
     /// Returns an error if the file cannot be read or the tree-sitter query fails.
     pub fn execute(rule: &ValidatedRule, file: &Path) -> crate::Result<Vec<TreeSitterQueryMatch>> {
+        if rule.ast_query.is_none() {
+            return Ok(Vec::new());
+        }
+
+        let source = match crate::run_context::ValidationRunContext::active()
+            .and_then(|ctx| ctx.read_cached(file).ok())
+        {
+            Some(cached) => cached.as_bytes().to_vec(),
+            None => std::fs::read(file).map_err(ValidationError::Io)?,
+        };
+        Self::execute_on_source(rule, file, &source)
+    }
+
+    pub(crate) fn execute_on_source(
+        rule: &ValidatedRule,
+        file: &Path,
+        source: &[u8],
+    ) -> crate::Result<Vec<TreeSitterQueryMatch>> {
         let Some(query) = &rule.ast_query else {
             return Ok(Vec::new());
         };
-
-        let source = std::fs::read(file).map_err(ValidationError::Io)?;
-        let (lang, _) = guess_language(&source, file);
+        let (lang, _) = guess_language(source, file);
         let Some(lang) = lang else {
             return Ok(Vec::new());
         };
 
         let mut matches = action::<QueryExecutionCallback>(
             &lang,
-            source,
+            source.to_vec(),
             file,
             None,
             QueryExecutionCfg {

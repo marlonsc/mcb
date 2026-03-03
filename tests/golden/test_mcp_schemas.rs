@@ -1,4 +1,5 @@
-use mcb_domain::utils::tests::fixtures::{create_test_mcp_server, golden_content_to_string};
+use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::utils::tests::mcp_assertions::extract_text;
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
 
@@ -21,7 +22,7 @@ async fn golden_mcp_index_schema() {
         }))
         .await;
     assert!(r.is_ok(), "index must succeed");
-    let text = golden_content_to_string(&r.unwrap());
+    let text = extract_text(&r.unwrap());
     assert!(!text.is_empty());
 }
 

@@ -11,6 +11,10 @@ use crate::utils::test_constants::{
     FIXTURE_SERVER_HANDLER_PATH, INFRA_CRATE, LIB_RS, SERVER_CRATE, TEST_CRATE,
 };
 use crate::utils::*;
+use mcb_domain::utils::tests::assertions::{
+    assert_has_violation_matching, assert_no_violation_from_file, assert_no_violations,
+    assert_violations_exact,
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions

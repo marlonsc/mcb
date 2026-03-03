@@ -1,4 +1,5 @@
-use crate::utils::test_fixtures::{TEST_ORG_ID_A, TEST_ORG_ID_B, create_test_mcp_server};
+use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::test_utils::{TEST_ORG_ID_A, TEST_ORG_ID_B};
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::utils::tests::utils::{
     create_test_api_key, create_test_organization, create_test_team, create_test_user_with,

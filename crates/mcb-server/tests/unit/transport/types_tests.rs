@@ -1,6 +1,6 @@
 //! Tests for transport layer types
 
-use mcb_server::transport::types::{McpRequest, McpResponse};
+use mcb_domain::protocol::{McpRequest, McpResponse};
 use rstest::rstest;
 
 #[rstest]

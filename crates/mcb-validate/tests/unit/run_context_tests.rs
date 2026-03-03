@@ -2,7 +2,7 @@ use std::process::Command;
 
 use tempfile::TempDir;
 
-use mcb_validate::ValidationConfig;
+use mcb_domain::ports::validation::ValidationConfig;
 use mcb_validate::run_context::{FileInventorySource, ValidationRunContext};
 use rstest::rstest;
 

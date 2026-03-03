@@ -181,7 +181,7 @@ config:
 async fn test_yaml_rule_execution_detects_violations(
     workspace_root: Result<PathBuf, Box<dyn Error>>,
 ) -> TestResult {
-    use mcb_validate::ValidationConfig;
+    use mcb_domain::ports::validation::ValidationConfig;
 
     let workspace_root = workspace_root?;
     let config = ValidationConfig::new(&workspace_root);

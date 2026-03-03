@@ -25,7 +25,7 @@ fn full_workspace() -> (tempfile::TempDir, std::path::PathBuf) {
 #[case("implementation", true)]
 #[case("organization", true)]
 #[case("solid", true)]
-#[case("patterns", false)]
+#[case("pattern", false)]
 #[case("refactoring", false)]
 #[case("hygiene", true)]
 #[case("error_boundary", true)]

@@ -6,7 +6,7 @@
 
 use std::path::PathBuf;
 
-use mcb_validate::Severity;
+use mcb_domain::ports::validation::Severity;
 use rstest::rstest;
 
 // ============================================================================

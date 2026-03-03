@@ -5,8 +5,8 @@ use std::io;
 use std::path::Path;
 
 use crate::utils::run_named_validator;
-use mcb_validate::ValidationConfig;
-use mcb_validate::Validator;
+use mcb_domain::ports::validation::ValidationConfig;
+use mcb_domain::ports::validation::Validator;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;
 use rstest::rstest;
 use tempfile::TempDir;
@@ -118,8 +118,8 @@ fn test_org020_domain_adapters_violation() -> io::Result<()> {
     }
     fs::write(&adapter_file, "pub struct SqlRepository;")?;
 
-    let violations =
-        run_named_validator(root, "declarative").map_err(|e| io::Error::other(e.to_string()))?;
+    let violations = run_named_validator(root, "declarative_rules")
+        .map_err(|e| io::Error::other(e.to_string()))?;
 
     let violation = violations
         .iter()
@@ -153,8 +153,8 @@ fn test_org021_infra_ports_violation() -> io::Result<()> {
     }
     fs::write(&port_file, "pub trait ServicePort {}")?;
 
-    let violations =
-        run_named_validator(root, "declarative").map_err(|e| io::Error::other(e.to_string()))?;
+    let violations = run_named_validator(root, "declarative_rules")
+        .map_err(|e| io::Error::other(e.to_string()))?;
 
     let violation = violations
         .iter()
@@ -185,8 +185,8 @@ fn test_org019_trait_placement_violation() -> io::Result<()> {
     let factory_file = infra_src.join("my_factory.rs");
     fs::write(&factory_file, "pub trait MyProviderFactory {}")?;
 
-    let violations =
-        run_named_validator(root, "declarative").map_err(|e| io::Error::other(e.to_string()))?;
+    let violations = run_named_validator(root, "declarative_rules")
+        .map_err(|e| io::Error::other(e.to_string()))?;
 
     let provider_violation = violations
         .iter()
@@ -273,8 +273,8 @@ fn test_ast_query_and_selector_execute_together() -> io::Result<()> {
     }
     fs::write(&source_file, "fn one() {}\nfn two() {}\nfn three() {}\n")?;
 
-    let violations =
-        run_named_validator(root, "declarative").map_err(|e| io::Error::other(e.to_string()))?;
+    let violations = run_named_validator(root, "declarative_rules")
+        .map_err(|e| io::Error::other(e.to_string()))?;
 
     let ast_count = violations.iter().filter(|v| v.id() == "AST001").count();
     assert_eq!(

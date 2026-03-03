@@ -7,11 +7,11 @@
 
 use std::collections::HashMap;
 
+use mcb_domain::ports::validation::{ValidationConfig, Violation};
 use mcb_validate::engines::{
     ExpressionEngine, HybridRuleEngine, ReteEngine, RoutedEngine, RuleContext, RuleEngine,
     RuleEngineRouter, RuleEngineType,
 };
-use mcb_validate::{ValidationConfig, Violation};
 use rstest::*;
 use serde_json::json;
 

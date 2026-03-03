@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 use derive_more::Display;
 
 use crate::config::FileConfig;
+use crate::filters::dependency_parser::WorkspaceDependencies;
 use crate::filters::rule_filters::RuleFilterExecutor;
 use crate::rules::yaml_loader::ValidatedRule;
 use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
@@ -120,9 +121,10 @@ pub(crate) fn parse_category(s: &str) -> ViolationCategory {
 }
 
 pub(crate) fn validate_path_rules(
-    workspace_root: &Path,
     rules: &[ValidatedRule],
     files: &[PathBuf],
+    filter_executor: &RuleFilterExecutor,
+    workspace_deps: &WorkspaceDependencies,
 ) -> Vec<Box<dyn Violation>> {
     let path_rules: Vec<&ValidatedRule> = rules
         .iter()
@@ -133,29 +135,16 @@ pub(crate) fn validate_path_rules(
         return Vec::new();
     }
 
-    let filter_executor = RuleFilterExecutor::new(workspace_root.to_path_buf());
-    let workspace_deps = match filter_executor.parse_workspace_dependencies() {
-        Ok(deps) => deps,
-        Err(e) => {
-            mcb_domain::warn!(
-                "validate",
-                "Failed to parse workspace dependencies for path rules",
-                &e.to_string()
-            );
-            return Vec::new();
-        }
-    };
-
     let mut violations: Vec<Box<dyn Violation>> = Vec::new();
 
-    for rule in &path_rules {
-        for file in files {
+    for file in files {
+        for rule in &path_rules {
             let Some(filters) = &rule.filters else {
                 continue;
             };
 
             let should_exec = filter_executor
-                .should_execute_rule(filters, file, None, &workspace_deps)
+                .should_execute_rule(filters, file, None, workspace_deps)
                 .unwrap_or(false);
 
             if should_exec {

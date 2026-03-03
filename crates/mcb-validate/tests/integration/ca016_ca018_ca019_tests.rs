@@ -7,18 +7,18 @@
 
 use std::path::PathBuf;
 
+use mcb_domain::ports::validation::ValidationConfig;
 use mcb_domain::ports::validation::Validator;
-use mcb_validate::ValidationConfig;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;
 use rstest::rstest;
 
 fn workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .to_path_buf()
+    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+    manifest_dir
+        .ancestors()
+        .nth(2)
+        .map(std::path::Path::to_path_buf)
+        .unwrap_or(manifest_dir)
 }
 
 /// CA016: No `pub mod constants;` outside mcb-utils in the real workspace.
