@@ -66,6 +66,8 @@
 
 /// Admin operations provider registry.
 pub mod admin_operations;
+/// Configuration provider registry.
+pub mod config;
 /// Database provider registry.
 pub mod database;
 /// Embedding provider registry.

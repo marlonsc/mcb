@@ -126,6 +126,7 @@ async-graphql-axum = { workspace = true }
 tempfile = { workspace = true }
 fastembed = { workspace = true }
 rstest = { workspace = true }
+serial_test = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
 tower = { workspace = true }

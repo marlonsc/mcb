@@ -1,13 +1,26 @@
 //! Configuration Validation Tests
 //!
 //! Tests for configuration validation across all config types.
+//! All validation goes through `ConfigProvider` (CA/DI pattern).
 
 use serial_test::serial;
 
-use mcb_infrastructure::config::{CacheProvider, CacheSystemConfig, TestConfigBuilder};
+use mcb_domain::ports::ConfigProvider;
+use mcb_domain::registry::config::{ConfigProviderConfig, resolve_config_provider};
+use mcb_infrastructure::config::app::AppConfig;
+use mcb_infrastructure::config::infrastructure::{CacheProvider, CacheSystemConfig};
 use rstest::rstest;
 
-fn loaded_config() -> Result<mcb_infrastructure::config::AppConfig, Box<dyn std::error::Error>> {
+use super::test_builder::TestConfigBuilder;
+
+/// Resolve the default `ConfigProvider` via CA/DI registry.
+#[allow(clippy::expect_used)]
+fn config_provider() -> std::sync::Arc<dyn ConfigProvider> {
+    resolve_config_provider(&ConfigProviderConfig::new("loco_yaml"))
+        .expect("loco_yaml config provider must be registered")
+}
+
+fn loaded_config() -> Result<AppConfig, Box<dyn std::error::Error>> {
     TestConfigBuilder::new()
         .and_then(|b| b.build().map(|(config, _)| config))
         .map_err(Into::into)
@@ -103,17 +116,21 @@ fn test_cache_config_ttl_when_enabled() -> Result<(), Box<dyn std::error::Error>
 #[test]
 #[serial]
 fn test_default_config_is_valid() -> Result<(), Box<dyn std::error::Error>> {
-    let auth_config = loaded_config()?.auth;
+    // Load via CA/DI and validate
+    let config_any = config_provider().load_config()?;
+    let config = config_any
+        .downcast::<AppConfig>()
+        .map_err(|_| "unexpected type")?;
+
     assert!(
-        !auth_config.jwt.secret.is_empty(),
+        !config.auth.jwt.secret.is_empty(),
         "JWT secret must be configured in test profile"
     );
-    assert!(auth_config.jwt.secret.len() >= 32);
-    assert!(auth_config.jwt.expiration_secs > 0);
+    assert!(config.auth.jwt.secret.len() >= 32);
+    assert!(config.auth.jwt.expiration_secs > 0);
 
     // Default cache config should have valid values
-    let cache_config = loaded_config()?.system.infrastructure.cache;
-    assert!(cache_config.default_ttl_secs > 0);
-    assert!(cache_config.max_size > 0);
+    assert!(config.system.infrastructure.cache.default_ttl_secs > 0);
+    assert!(config.system.infrastructure.cache.max_size > 0);
     Ok(())
 }

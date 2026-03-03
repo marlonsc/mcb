@@ -9,7 +9,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use derive_more::Display;
-use reqwest::Client;
+
 use serde::{Deserialize, Serialize};
 
 use crate::entities::CodeChunk;
@@ -310,21 +310,26 @@ impl Default for HttpClientConfig {
     }
 }
 
-/// HTTP client provider trait
+/// HTTP client provider trait.
+///
+/// Provides an abstract HTTP client interface without coupling to any
+/// concrete HTTP library. Implementations live in the provider or
+/// infrastructure layer and wrap a real HTTP client.
 pub trait HttpClientProvider: Send + Sync {
-    /// Get the internal raw reqwest client.
-    fn client(&self) -> &Client;
     /// Get the HTTP client configuration.
     fn config(&self) -> &HttpClientConfig;
 
-    /// Create an HTTP client with a custom timeout.
+    /// Execute a GET request and return the response body as bytes.
     ///
     /// # Errors
-    /// Returns an error if client construction fails.
-    fn client_with_timeout(
-        &self,
-        timeout: Duration,
-    ) -> std::result::Result<Client, Box<dyn std::error::Error + Send + Sync>>;
+    /// Returns an error if the request fails.
+    fn get(&self, url: &str) -> Result<Vec<u8>>;
+
+    /// Execute a POST request with a JSON body and return the response body.
+    ///
+    /// # Errors
+    /// Returns an error if the request fails.
+    fn post(&self, url: &str, body: &[u8]) -> Result<Vec<u8>>;
 
     /// Return true if the HTTP client is configured and enabled.
     fn is_enabled(&self) -> bool;

@@ -3,6 +3,8 @@
 //!
 //! Infrastructure service implementations for port traits defined in mcb-domain.
 //! Concrete types are composed in the DI bootstrap module or `loco_app.rs`.
+
+pub mod events;
 pub mod indexing;
 
 /// DI-resolved database migrator (CA pattern via domain registry).

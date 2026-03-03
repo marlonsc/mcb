@@ -11,7 +11,7 @@ use std::path::{Path, PathBuf};
 
 use mcb_domain::error::{Error, Result};
 
-use super::{AppConfig, validation::validate_app_config};
+use super::app::AppConfig;
 
 /// Load `AppConfig` using the production Loco deserialization path.
 ///
@@ -66,7 +66,7 @@ fn load_from_path(path: &Path) -> Result<AppConfig> {
     let config: AppConfig = serde_json::from_value(json_settings)
         .map_err(|e| Error::config_with_source("Failed to deserialize AppConfig", e))?;
 
-    validate_app_config(&config)?;
+    super::validation::validate_app_config(&config)?;
 
     Ok(config)
 }

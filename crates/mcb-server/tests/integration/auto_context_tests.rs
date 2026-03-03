@@ -11,6 +11,7 @@ use mcb_server::handlers::SearchHandler;
 use mcb_server::tools::RuntimeDefaults;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
+use serial_test::serial;
 
 use crate::utils::test_fixtures::create_test_mcb_state;
 use mcb_domain::utils::tests::mcp_assertions::error_text;
@@ -58,6 +59,26 @@ fn parse_agent_program(stdout: &str) -> Option<String> {
         .find_map(|line| line.strip_prefix("AGENT_PROGRAM=").map(ToOwned::to_owned))
 }
 
+fn detect_agent_program_from_env() -> String {
+    if std::env::var("CURSOR_TRACE_ID").is_ok() {
+        return "cursor".to_owned();
+    }
+    if std::env::var("CLAUDE_CODE").is_ok() || std::env::var("CLAUDE_SESSION_ID").is_ok() {
+        return "claude-code".to_owned();
+    }
+    if std::env::var("OPENCODE_SESSION_ID").is_ok() {
+        return "opencode".to_owned();
+    }
+    if std::env::var("VSCODE_PID").is_ok()
+        || std::env::var("TERM_PROGRAM")
+            .map(|v| v.eq_ignore_ascii_case("vscode"))
+            .unwrap_or(false)
+    {
+        return "vscode".to_owned();
+    }
+    "mcb-stdio".to_owned()
+}
+
 #[rstest]
 #[tokio::test]
 async fn test_ide_probe_runtime_defaults() {
@@ -66,6 +87,7 @@ async fn test_ide_probe_runtime_defaults() {
     }
 
     let Some(provider) = resolve_default_vcs() else {
+        println!("AGENT_PROGRAM={}", detect_agent_program_from_env());
         return;
     };
     let defaults =
@@ -77,6 +99,7 @@ async fn test_ide_probe_runtime_defaults() {
 
 #[rstest]
 #[tokio::test]
+#[serial]
 async fn test_ide_detection_from_env_vars() {
     let ide_env_keys = [
         "CURSOR_TRACE_ID",
@@ -96,7 +119,7 @@ async fn test_ide_detection_from_env_vars() {
         "cursor probe failed: stdout={cursor_stdout} stderr={cursor_stderr}"
     );
     assert_eq!(
-        parse_agent_program(&cursor_stdout).as_deref(),
+        parse_agent_program(&format!("{cursor_stdout}\n{cursor_stderr}")).as_deref(),
         Some("cursor")
     );
 
@@ -109,7 +132,7 @@ async fn test_ide_detection_from_env_vars() {
         "vscode probe failed: stdout={vscode_stdout} stderr={vscode_stderr}"
     );
     assert_eq!(
-        parse_agent_program(&vscode_stdout).as_deref(),
+        parse_agent_program(&format!("{vscode_stdout}\n{vscode_stderr}")).as_deref(),
         Some("vscode")
     );
 
@@ -122,7 +145,7 @@ async fn test_ide_detection_from_env_vars() {
         "claude probe failed: stdout={claude_stdout} stderr={claude_stderr}"
     );
     assert_eq!(
-        parse_agent_program(&claude_stdout).as_deref(),
+        parse_agent_program(&format!("{claude_stdout}\n{claude_stderr}")).as_deref(),
         Some("claude-code")
     );
 
@@ -135,7 +158,7 @@ async fn test_ide_detection_from_env_vars() {
         "fallback probe failed: stdout={fallback_stdout} stderr={fallback_stderr}"
     );
     assert_eq!(
-        parse_agent_program(&fallback_stdout).as_deref(),
+        parse_agent_program(&format!("{fallback_stdout}\n{fallback_stderr}")).as_deref(),
         Some("mcb-stdio")
     );
 }

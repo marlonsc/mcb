@@ -123,7 +123,16 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
     // 6. Build ServiceResolutionContext (domain-level opaque DI context)
     let resolution_ctx = ServiceResolutionContext {
         db: Arc::clone(&db),
-        config: Arc::new(mcb_infrastructure::config::load_app_config().ok()?), // Real AppConfig loaded via production serde_json path
+        config: Arc::new(
+            *mcb_domain::registry::config::resolve_config_provider(
+                &mcb_domain::registry::config::ConfigProviderConfig::new("loco_yaml"),
+            )
+            .ok()?
+            .load_config()
+            .ok()?
+            .downcast::<mcb_infrastructure::config::app::AppConfig>()
+            .ok()?,
+        ), // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
         event_bus,
         embedding_provider: Arc::clone(&embedding_provider),
         vector_store_provider: Arc::clone(&vector_store_provider),

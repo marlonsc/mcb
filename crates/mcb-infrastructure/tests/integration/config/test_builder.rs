@@ -1,11 +1,8 @@
+//! Fluent builder for test configurations (CA/DI pattern).
 //!
-//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
-//!
-//! Fluent builder for test configurations.
-//!
-//! Loads from `config/{env}.yaml` (Loco convention), then applies
-//! test-specific mutations. If any override produces an invalid config,
-//! `build()` fails — the test cannot start with bad config.
+//! Resolves `ConfigProvider` via `mcb_domain::registry::config` and uses it
+//! to load + validate configuration. No direct access to infrastructure
+//! functions — all config operations go through the registry.
 //!
 //! # Usage
 //!
@@ -14,8 +11,6 @@
 //!     .with_temp_db("my-test.db")?
 //!     .with_fastembed_shared_cache()?
 //!     .build()?;
-//!
-//! let ctx = init_app(config).await?;
 //! ```
 //!
 //! **All test config customization MUST go through this builder.**
@@ -24,59 +19,44 @@
 use std::path::PathBuf;
 
 use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::ConfigProvider;
+use mcb_domain::registry::config::{ConfigProviderConfig, resolve_config_provider};
+use mcb_infrastructure::config::app::{AppConfig, DatabaseConfig};
 use tempfile::TempDir;
 
-use super::{AppConfig, DatabaseConfig, validation::validate_app_config};
-
-fn load_test_config() -> Result<AppConfig> {
-    let env_name = std::env::var("LOCO_ENV").unwrap_or_else(|_| "test".to_owned());
-
-    let filenames = [format!("{env_name}.local.yaml"), format!("{env_name}.yaml")];
-
-    let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-    for dir in manifest_dir.ancestors() {
-        for filename in &filenames {
-            let candidate = dir.join("config").join(filename);
-            if candidate.exists() {
-                let content = std::fs::read_to_string(&candidate).map_err(|e| {
-                    Error::config_with_source(format!("Failed to read {}", candidate.display()), e)
-                })?;
-                let yaml: serde_yaml::Value = serde_yaml::from_str(&content)
-                    .map_err(|e| Error::config_with_source("Failed to parse YAML", e))?;
-                let settings = yaml
-                    .get("settings")
-                    .ok_or_else(|| Error::ConfigMissing("No 'settings' key in config".into()))?;
-                let config: AppConfig = serde_yaml::from_value(settings.clone())
-                    .map_err(|e| Error::config_with_source("Failed to deserialize AppConfig", e))?;
-                return Ok(config);
-            }
-        }
-    }
-
-    Err(Error::ConfigMissing(format!(
-        "No config file found for env '{env_name}'"
-    )))
+/// Resolve the default `ConfigProvider` via CA/DI registry.
+fn resolve_default_config_provider() -> Result<std::sync::Arc<dyn ConfigProvider>> {
+    resolve_config_provider(&ConfigProviderConfig::new("loco_yaml"))
 }
 
 /// Fluent builder for test configurations.
 ///
-/// Loads from Loco YAML config on construction, then applies typed overrides.
-/// Call [`build`](Self::build) to validate and finalize.
+/// Uses `ConfigProvider` (resolved via CA/DI registry) to load
+/// config from YAML and validate after applying overrides.
 pub struct TestConfigBuilder {
     config: AppConfig,
+    config_provider: std::sync::Arc<dyn ConfigProvider>,
     temp_dir: Option<TempDir>,
 }
 
 impl TestConfigBuilder {
-    /// Create a builder seeded from Loco YAML config.
+    /// Create a builder seeded from Loco YAML config via CA/DI.
+    ///
+    /// Resolves `ConfigProvider` from the registry, then calls
+    /// `load_config()` to load + validate from YAML files.
     ///
     /// # Errors
     ///
-    /// Returns an error if the default config file is missing or invalid.
+    /// Returns an error if the provider cannot be resolved or config is invalid.
     pub fn new() -> Result<Self> {
-        let config = load_test_config()?;
+        let config_provider = resolve_default_config_provider()?;
+        let config_any = config_provider.load_config()?;
+        let config = config_any
+            .downcast::<AppConfig>()
+            .map_err(|_| Error::internal("ConfigProvider returned unexpected type"))?;
         Ok(Self {
-            config,
+            config: *config,
+            config_provider,
             temp_dir: None,
         })
     }
@@ -151,16 +131,16 @@ impl TestConfigBuilder {
 
     /// Validate and finalize the configuration.
     ///
+    /// Uses the resolved `ConfigProvider` to re-validate after overrides.
     /// Returns `(AppConfig, Option<TempDir>)`. The caller MUST keep the
-    /// `TempDir` alive for the duration of the test — dropping it deletes
-    /// the temporary database.
+    /// `TempDir` alive for the duration of the test.
     ///
     /// # Errors
     ///
     /// Returns an error if the overridden config fails validation (fail-fast).
     pub fn build(self) -> Result<(AppConfig, Option<TempDir>)> {
-        // Re-validate after overrides to ensure fail-fast on bad config
-        validate_app_config(&self.config)?;
+        // Validate via CA/DI — same path as production
+        self.config_provider.validate_config(&self.config)?;
         Ok((self.config, self.temp_dir))
     }
 }

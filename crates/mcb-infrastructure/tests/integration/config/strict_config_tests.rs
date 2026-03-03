@@ -3,11 +3,20 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use mcb_domain::error::{Error, Result as DomainResult};
+use mcb_domain::ports::ConfigProvider;
+use mcb_domain::registry::config::{ConfigProviderConfig, resolve_config_provider};
 use mcb_domain::utils::tests::fs_scan::scan_rs_files;
 use mcb_domain::utils::tests::utils::workspace_root;
-use mcb_infrastructure::config::{AppConfig, validate_app_config};
+use mcb_infrastructure::config::app::AppConfig;
 use rstest::rstest;
 use tempfile::TempDir;
+
+/// Resolve the default `ConfigProvider` via CA/DI registry.
+#[allow(clippy::expect_used)]
+fn config_provider() -> std::sync::Arc<dyn ConfigProvider> {
+    resolve_config_provider(&ConfigProviderConfig::new("loco_yaml"))
+        .expect("loco_yaml config provider must be registered")
+}
 
 fn workspace_development_yaml() -> Result<PathBuf, Box<dyn std::error::Error>> {
     let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
@@ -77,7 +86,8 @@ fn load_app_config_from_yaml_path(path: &Path) -> DomainResult<AppConfig> {
         let detail = e.to_string();
         Error::config_with_source(format!("Failed to deserialize AppConfig: {detail}"), e)
     })?;
-    validate_app_config(&config)?;
+    // Validate via CA/DI
+    config_provider().validate_config(&config)?;
     Ok(config)
 }
 
@@ -503,8 +513,8 @@ fn test_no_hardcoded_provider_defaults() -> Result<(), Box<dyn std::error::Error
 
 // ── Validation function coverage ─────────────────────────────────────────────
 
-/// Load `AppConfig` from development.yaml WITHOUT running `validate_app_config`.
-/// This lets us mutate fields and then call `validate_app_config` ourselves.
+/// Load `AppConfig` from development.yaml WITHOUT running validation.
+/// This lets us mutate fields and then call `ConfigProvider.validate_config()`.
 #[allow(clippy::expect_used)]
 fn load_valid_config_unvalidated() -> AppConfig {
     let path = workspace_development_yaml().expect("development.yaml must exist");
@@ -520,7 +530,7 @@ fn load_valid_config_unvalidated() -> AppConfig {
 #[test]
 fn test_valid_development_config_passes_all_validators() {
     let config = load_valid_config_unvalidated();
-    let result = validate_app_config(&config);
+    let result = config_provider().validate_config(&config);
     assert!(
         result.is_ok(),
         "valid development.yaml must pass all validators, got: {:?}",
@@ -542,7 +552,7 @@ fn test_auth_enabled_with_invalid_secret_fails(
     config.auth.enabled = true;
     config.auth.jwt.secret = secret_value.trim_matches('"').to_owned();
 
-    let result = validate_app_config(&config);
+    let result = config_provider().validate_config(&config);
     assert!(
         result.is_err(),
         "auth validation must fail for secret={secret_value}"
@@ -561,7 +571,7 @@ fn test_auth_disabled_skips_secret_validation() {
     config.auth.enabled = false;
     config.auth.jwt.secret = String::new(); // empty secret, but auth disabled
     assert!(
-        validate_app_config(&config).is_ok(),
+        config_provider().validate_config(&config).is_ok(),
         "auth disabled should skip JWT secret validation"
     );
 }
@@ -575,7 +585,7 @@ fn test_cache_enabled_with_zero_ttl_fails() {
     config.system.infrastructure.cache.enabled = true;
     config.system.infrastructure.cache.default_ttl_secs = 0;
 
-    let result = validate_app_config(&config);
+    let result = config_provider().validate_config(&config);
     assert!(result.is_err(), "cache TTL=0 with cache enabled must fail");
     let msg = result.unwrap_err().to_string();
     assert!(
@@ -591,7 +601,7 @@ fn test_cache_disabled_allows_zero_ttl() {
     config.system.infrastructure.cache.enabled = false;
     config.system.infrastructure.cache.default_ttl_secs = 0;
     assert!(
-        validate_app_config(&config).is_ok(),
+        config_provider().validate_config(&config).is_ok(),
         "cache disabled should allow TTL=0"
     );
 }
@@ -611,7 +621,7 @@ fn test_limits_zero_value_fails(
     config.system.infrastructure.limits.memory_limit = memory;
     config.system.infrastructure.limits.cpu_limit = cpu;
 
-    let result = validate_app_config(&config);
+    let result = config_provider().validate_config(&config);
     assert!(
         result.is_err(),
         "limits validation must fail for memory={memory}, cpu={cpu}"
@@ -630,7 +640,7 @@ fn test_limits_nonzero_passes() {
     config.system.infrastructure.limits.memory_limit = 1024;
     config.system.infrastructure.limits.cpu_limit = 1;
     assert!(
-        validate_app_config(&config).is_ok(),
+        config_provider().validate_config(&config).is_ok(),
         "nonzero limits must pass validation"
     );
 }
@@ -644,7 +654,7 @@ fn test_daemon_enabled_with_zero_restart_attempts_fails() {
     config.operations_daemon.daemon.enabled = true;
     config.operations_daemon.daemon.max_restart_attempts = 0;
 
-    let result = validate_app_config(&config);
+    let result = config_provider().validate_config(&config);
     assert!(result.is_err(), "daemon with 0 restart attempts must fail");
     let msg = result.unwrap_err().to_string();
     assert!(
@@ -660,7 +670,7 @@ fn test_daemon_disabled_allows_zero_restart_attempts() {
     config.operations_daemon.daemon.enabled = false;
     config.operations_daemon.daemon.max_restart_attempts = 0;
     assert!(
-        validate_app_config(&config).is_ok(),
+        config_provider().validate_config(&config).is_ok(),
         "daemon disabled should allow 0 restart attempts"
     );
 }
@@ -674,7 +684,7 @@ fn test_backup_enabled_with_zero_interval_fails() {
     config.system.data.backup.enabled = true;
     config.system.data.backup.interval_secs = 0;
 
-    let result = validate_app_config(&config);
+    let result = config_provider().validate_config(&config);
     assert!(result.is_err(), "backup with 0 interval must fail");
     let msg = result.unwrap_err().to_string();
     assert!(
@@ -690,7 +700,7 @@ fn test_backup_disabled_allows_zero_interval() {
     config.system.data.backup.enabled = false;
     config.system.data.backup.interval_secs = 0;
     assert!(
-        validate_app_config(&config).is_ok(),
+        config_provider().validate_config(&config).is_ok(),
         "backup disabled should allow 0 interval"
     );
 }
@@ -711,7 +721,7 @@ fn test_operations_tracking_enabled_with_zero_value_fails(
     config.operations_daemon.operations.cleanup_interval_secs = cleanup;
     config.operations_daemon.operations.retention_secs = retention;
 
-    let result = validate_app_config(&config);
+    let result = config_provider().validate_config(&config);
     assert!(
         result.is_err(),
         "operations tracking with cleanup={cleanup}, retention={retention} must fail"
@@ -731,7 +741,7 @@ fn test_operations_tracking_disabled_allows_zero_values() {
     config.operations_daemon.operations.cleanup_interval_secs = 0;
     config.operations_daemon.operations.retention_secs = 0;
     assert!(
-        validate_app_config(&config).is_ok(),
+        config_provider().validate_config(&config).is_ok(),
         "tracking disabled should allow zero cleanup/retention"
     );
 }

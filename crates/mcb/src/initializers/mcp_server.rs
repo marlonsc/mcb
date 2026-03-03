@@ -11,11 +11,11 @@ use axum::Router as AxumRouter;
 use loco_rs::prelude::*;
 
 use mcb_domain::registry::ServiceResolutionContext;
+use mcb_domain::registry::config::{ConfigProviderConfig, resolve_config_provider};
 use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
-use mcb_infrastructure::config::{AppConfig, validate_app_config};
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::tools::ExecutionFlow;
 use mcb_server::transport::stdio::StdioServerExt;
@@ -41,11 +41,19 @@ impl Initializer for McpServerInitializer {
             .settings
             .clone()
             .ok_or_else(|| loco_rs::Error::string("missing loco settings for AppConfig"))?;
-        let app_config: AppConfig = serde_json::from_value(settings)
-            .map_err(|e| loco_rs::Error::string(&format!("invalid AppConfig settings: {e}")))?;
 
-        validate_app_config(&app_config)
-            .map_err(|e| loco_rs::Error::string(&format!("AppConfig validation failed: {e}")))?;
+        // Resolve config provider via CA/DI registry
+        let config_provider = resolve_config_provider(&ConfigProviderConfig::new("loco_yaml"))
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+
+        // Deserialize + validate via resolved provider (production path)
+        let app_config_any = config_provider
+            .deserialize_from_value(&settings)
+            .map_err(|e| loco_rs::Error::string(&format!("AppConfig: {e}")))?;
+
+        let app_config = app_config_any
+            .downcast::<mcb_infrastructure::config::app::AppConfig>()
+            .map_err(|_| loco_rs::Error::string("ConfigProvider returned unexpected type"))?;
 
         let event_bus = mcb_domain::registry::events::resolve_event_bus_provider(
             &mcb_domain::registry::events::EventBusProviderConfig::new(

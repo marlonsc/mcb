@@ -45,7 +45,7 @@ fn build_indexing_service_from_registry(
 
     let app_config = ctx
         .config
-        .downcast_ref::<crate::config::AppConfig>()
+        .downcast_ref::<crate::config::app::AppConfig>()
         .ok_or_else(|| {
             mcb_domain::error::Error::internal(
                 "Indexing service requires AppConfig in resolution context",

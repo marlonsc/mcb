@@ -1,32 +1,78 @@
-//! Configuration Management - Type-safe, layered, Validated
+//! Configuration — concrete implementation (CA/DI).
 //!
-//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
+//! All access goes through `mcb_domain::utils::config` helpers →
+//! `mcb_domain::registry::config::resolve_config_provider()`.
 //!
-//! Provides YAML configuration loading (Loco convention), validation, and
-//! type-safe configuration for all system components.
+//! Types are `pub` (needed for downcast at composition root).
+//! Loader/validation are private implementation details.
 
-mod admin_config;
-pub mod loader;
-mod mcp_context_config;
-pub mod paths;
-pub mod test_builder;
-pub mod types;
-/// Application configuration validation at startup.
-pub mod validation;
+pub mod app;
+pub mod infrastructure;
+mod loader;
+pub mod mode;
+pub mod system;
+mod validation;
 
-// Re-export main configuration types
-pub use types::{
-    AppConfig, AuthConfig, CacheProvider, CacheSystemConfig, DatabaseConfig,
-    DatabaseConfigContainer, LoggingConfig,
+// ---------------------------------------------------------------------------
+// ConfigProvider Concrete Implementation
+// ---------------------------------------------------------------------------
+
+use std::any::Any;
+use std::sync::Arc;
+
+use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::ConfigProvider;
+
+/// Loco YAML configuration provider.
+///
+/// Registered via `#[linkme::distributed_slice]` in `CONFIG_PROVIDERS`.
+pub(crate) struct LocoYamlConfigProvider;
+
+impl ConfigProvider for LocoYamlConfigProvider {
+    fn load_config(&self) -> Result<Box<dyn Any + Send + Sync>> {
+        let config = loader::load_app_config()?;
+        Ok(Box::new(config))
+    }
+
+    fn deserialize_from_value(&self, settings: &dyn Any) -> Result<Box<dyn Any + Send + Sync>> {
+        let json_value = settings
+            .downcast_ref::<serde_json::Value>()
+            .ok_or_else(|| {
+                Error::internal(
+                    "ConfigProvider::deserialize_from_value: expected serde_json::Value",
+                )
+            })?;
+
+        let config: app::AppConfig = serde_json::from_value(json_value.clone()).map_err(|e| {
+            Error::config_with_source("Failed to deserialize AppConfig from JSON", e)
+        })?;
+
+        validation::validate_app_config(&config)?;
+
+        Ok(Box::new(config))
+    }
+
+    fn validate_config(&self, config: &dyn Any) -> Result<()> {
+        let app_config = config.downcast_ref::<app::AppConfig>().ok_or_else(|| {
+            Error::internal("ConfigProvider::validate_config: expected AppConfig")
+        })?;
+        validation::validate_app_config(app_config)
+    }
+
+    fn provider_name(&self) -> &str {
+        "loco_yaml"
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Linkme Registration
+// ---------------------------------------------------------------------------
+use mcb_domain::registry::config::{CONFIG_PROVIDERS, ConfigProviderEntry};
+
+#[allow(unsafe_code)]
+#[linkme::distributed_slice(CONFIG_PROVIDERS)]
+static LOCO_YAML_CONFIG_ENTRY: ConfigProviderEntry = ConfigProviderEntry {
+    name: "loco_yaml",
+    description: "YAML configuration loader following Loco conventions",
+    build: |_config| Ok(Arc::new(LocoYamlConfigProvider)),
 };
-
-pub use admin_config::resolve_admin_config_root;
-pub use mcp_context_config::{GitConfig, McpContextConfig};
-
-pub use loader::load_app_config;
-pub use paths::{
-    COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, VCS_LOCK_FILENAME,
-    VCS_REGISTRY_FILENAME, config_dir,
-};
-pub use test_builder::TestConfigBuilder;
-pub use validation::validate_app_config;

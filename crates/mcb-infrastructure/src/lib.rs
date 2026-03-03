@@ -16,10 +16,9 @@
 //! | -------- | ------------- |
 //! | [`crypto`] | AES-GCM encryption, secure key generation |
 //!
-//! ### Configuration & DI
+//! ### Infrastructure
 //! | Module | Description |
 //! | -------- | ------------- |
-//! | [`config`] | YAML configuration with hot-reload |
 //! | [`constants`] | Centralized configuration constants |
 //!
 //! ### Routing & Selection
@@ -37,5 +36,3 @@ pub mod project;
 pub mod routing;
 pub mod services;
 pub mod validation;
-
-pub mod events;

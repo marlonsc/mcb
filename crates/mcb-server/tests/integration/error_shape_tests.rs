@@ -88,8 +88,15 @@ async fn create_test_mcb_state() -> Option<(McbState, tempfile::TempDir)> {
     let hybrid_search =
         resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default")).ok()?;
 
-    // Real AppConfig loaded via production serde_json path
-    let app_config = mcb_infrastructure::config::load_app_config().ok()?;
+    // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
+    let app_config = *mcb_domain::registry::config::resolve_config_provider(
+        &mcb_domain::registry::config::ConfigProviderConfig::new("loco_yaml"),
+    )
+    .ok()?
+    .load_config()
+    .ok()?
+    .downcast::<mcb_infrastructure::config::app::AppConfig>()
+    .ok()?;
     let resolution_ctx = ServiceResolutionContext {
         db,
         config: Arc::new(app_config),

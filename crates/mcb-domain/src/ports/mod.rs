@@ -48,7 +48,7 @@ pub use admin::{
 
 // --- Infrastructure ---
 pub use infrastructure::{
-    DependencyHealth, DependencyHealthCheck, DomainEventStream, EventBusProvider,
+    ConfigProvider, DependencyHealth, DependencyHealthCheck, DomainEventStream, EventBusProvider,
     ExtendedHealthResponse, GraphQLSchemaProvider, LifecycleManaged, LogLevel, MigrationProvider,
     OperationLogger, PortServiceState, ProviderContext, ProviderHealthStatus, ProviderRouter,
     SharedGraphQLSchemaProvider, SharedMigrationProvider, SharedSyncCoordinator,

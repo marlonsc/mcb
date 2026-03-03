@@ -197,8 +197,16 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
     let hybrid_search =
         resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default"))?;
 
-    // Real AppConfig loaded via production serde_json path (YAML → JSON → AppConfig → validate)
-    let app_config = mcb_infrastructure::config::load_app_config()?;
+    // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
+    let config_provider = mcb_domain::registry::config::resolve_config_provider(
+        &mcb_domain::registry::config::ConfigProviderConfig::new("loco_yaml"),
+    )?;
+    let app_config = *config_provider
+        .load_config()?
+        .downcast::<mcb_infrastructure::config::app::AppConfig>()
+        .map_err(|_| {
+            mcb_domain::error::Error::internal("ConfigProvider returned unexpected type")
+        })?;
 
     let resolution_ctx = ServiceResolutionContext {
         db: Arc::clone(&db),

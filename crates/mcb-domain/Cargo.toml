@@ -66,16 +66,14 @@ futures = { workspace = true }
 # Plugin registration
 linkme = { workspace = true }
 
-# HTTP Client types for providers
-reqwest = { workspace = true }
 toml = { workspace = true, optional = true }
 tempfile = { workspace = true, optional = true }
-# MCP SDK types — used by domain utils (extract_text, etc.)
-rmcp = { workspace = true }
+# MCP SDK types — optional, only for test utilities
+rmcp = { workspace = true, optional = true }
 
 [features]
 default = []
-test-utils = ["dep:toml", "dep:tempfile"]
+test-utils = ["dep:toml", "dep:tempfile", "dep:rmcp"]
 
 [lints]
 workspace = true

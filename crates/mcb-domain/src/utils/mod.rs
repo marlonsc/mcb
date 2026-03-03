@@ -8,6 +8,8 @@
 
 /// Complexity and analysis utilities.
 pub mod analysis;
+/// Configuration helpers — simplified CA/DI access.
+pub mod config;
 /// Project type detection helpers.
 pub mod project_type;
 /// Submodule path helpers.

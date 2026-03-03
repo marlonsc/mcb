@@ -3,7 +3,6 @@
 // linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_validate;
 
-pub mod config;
 pub mod constants;
 pub mod crypto;
 pub mod error;

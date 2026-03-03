@@ -1,3 +1,5 @@
+//! In-process domain event bus.
+
 use std::sync::Arc;
 
 use async_trait::async_trait;

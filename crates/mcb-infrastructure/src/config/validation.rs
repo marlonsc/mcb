@@ -1,4 +1,4 @@
-use crate::config::AppConfig;
+use super::app::AppConfig;
 use mcb_domain::error::{Error, Result};
 use mcb_utils::constants::auth::*;
 
