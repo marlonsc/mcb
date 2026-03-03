@@ -15,7 +15,7 @@ use serde_json::json;
 
 use mcb_domain::test_utils::TEST_PROJECT_ID;
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_domain::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text_from;
 use rstest::rstest;
 
 #[rstest]
@@ -68,7 +68,7 @@ async fn test_validation_agent_sql_storage_flow() -> TestResult {
 
     let resp = result.expect("agent log_tool should return a response");
     assert!(!resp.content.is_empty(), "response should have content");
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     assert!(
         text.contains("tool_call_id") && text.contains("tool_name"),
         "LogTool should succeed and return tool_call_id. Got: {text}"
@@ -107,7 +107,7 @@ async fn test_validation_session_create_schema_fallback() -> TestResult {
     // Should NOT fail with "Missing agent_type"
     let resp = result.expect("session create with fallback agent_type should return a response");
     assert!(!resp.content.is_empty(), "response should have content");
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     assert!(
         !text.contains("Missing agent_type"),
         "Fallback failed: {text}"
@@ -154,7 +154,7 @@ async fn test_validation_memory_observation_enum_error() -> TestResult {
         "error response should have content"
     );
     assert!(resp.is_error.unwrap_or(false));
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     assert!(
         text.contains("Invalid observation_type:") || text.contains("Unknown observation type:"),
         "Error message validation failed: {text}"

@@ -9,7 +9,7 @@ use rstest::rstest;
 use mcb_domain::test_fixtures::sample_codebase_path;
 use mcb_domain::test_utils::GOLDEN_COLLECTION;
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_domain::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text_from;
 
 // =============================================================================
 // E2E: Complete workflow (clear -> status -> index -> status -> search -> clear)
@@ -46,7 +46,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     let r = index_h.handle(Parameters(clear_args)).await;
     assert!(r.is_ok(), "index clear should succeed");
     let resp = r.unwrap();
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     assert!(
         text.contains("cleared") || text.contains("Cleared"),
         "{}",
@@ -68,7 +68,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     };
     let r = index_h.handle(Parameters(status_args)).await;
     assert!(r.is_ok());
-    let text = extract_text(&r.unwrap().content);
+    let text = extract_text_from(&r.unwrap().content);
     assert!(
         text.contains("Indexing Status") || text.contains("Status"),
         "{}",
@@ -92,7 +92,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     assert!(r.is_ok(), "index should succeed");
     let resp = r.unwrap();
     assert!(!resp.is_error.unwrap_or(false));
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     assert!(
         text.contains("Files processed")
             || text.contains("Chunks created")
@@ -121,7 +121,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     let r = search_h.handle(Parameters(search_args)).await;
     assert!(r.is_ok());
     let resp = r.unwrap();
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     assert!(
         text.contains("Search") || text.contains("Results") || text.contains("results"),
         "{}",
@@ -177,7 +177,7 @@ async fn test_golden_index_variants(
     assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
 
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     assert!(
         text.contains("Files processed")
             || text.contains("Indexing Started")
@@ -259,7 +259,7 @@ async fn test_golden_search_handles_empty_query() -> TestResult {
         "error response should have content"
     );
     assert!(response.is_error.unwrap_or(false));
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     assert!(
         text.to_lowercase().contains("empty") || text.to_lowercase().contains("query"),
         "error response should mention empty query: {text}"

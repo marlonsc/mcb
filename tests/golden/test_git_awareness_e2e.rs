@@ -2,7 +2,7 @@
 /// Verifies multi-branch support, commit history, and configuration loading
 use crate::utils::test_fixtures::create_test_mcp_server;
 use mcb_domain::test_fixtures::sample_codebase_path;
-use mcb_domain::utils::tests::mcp_assertions::extract_text;
+use mcb_domain::utils::tests::mcp_assertions::extract_text_from;
 use mcb_server::args::{VcsAction, VcsArgs};
 use rmcp::handler::server::wrapper::Parameters;
 
@@ -35,7 +35,7 @@ async fn golden_index_repository_with_config() {
         "Response should not be error"
     );
 
-    let text = extract_text(&response);
+    let text = extract_text_from(&response);
     assert!(
         text.contains("repository_id") || text.contains("indexed"),
         "Response should contain indexing results"

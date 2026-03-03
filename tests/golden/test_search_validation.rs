@@ -4,7 +4,7 @@ use crate::utils::test_fixtures::create_test_mcp_server;
 use mcb_domain::test_fixtures::sample_codebase_path;
 use mcb_domain::test_utils::{GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES};
 use mcb_domain::utils::tests::mcp_assertions::{
-    extract_text, golden_count_result_entries, golden_parse_results_found,
+    extract_text_from, golden_count_result_entries, golden_parse_results_found,
 };
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
@@ -50,7 +50,7 @@ async fn golden_search_returns_relevant_results() {
         !res.is_error.unwrap_or(true),
         "search response must not be error"
     );
-    let text = extract_text(&res);
+    let text = extract_text_from(&res);
     assert!(
         text.contains("Search")
             || text.contains("Results")
@@ -109,7 +109,7 @@ async fn golden_search_ranking_is_correct() {
         }))
         .await;
     assert!(r.is_ok(), "search must succeed");
-    let text = extract_text(&r.unwrap());
+    let text = extract_text_from(&r.unwrap());
     assert!(
         text.contains("Search")
             || text.contains("Results")
@@ -180,7 +180,7 @@ async fn golden_search_respects_limit_parameter() {
         }))
         .await;
     assert!(r.is_ok(), "search must succeed");
-    let text = extract_text(&r.unwrap());
+    let text = extract_text_from(&r.unwrap());
     let n = golden_parse_results_found(&text).unwrap_or_else(|| golden_count_result_entries(&text));
     assert!(
         n <= limit,
@@ -228,7 +228,7 @@ async fn golden_search_respects_index_extensions() {
         }))
         .await;
     assert!(r.is_ok(), "search with indexed extensions must succeed");
-    let text = extract_text(&r.unwrap());
+    let text = extract_text_from(&r.unwrap());
     let entries = golden_count_result_entries(&text);
     assert!(entries <= 5, "limit respected: {}", entries);
 }
@@ -345,7 +345,7 @@ async fn golden_search_with_min_limit() {
         .await;
 
     assert!(search_result.is_ok(), "search with limit=1 should succeed");
-    let text = extract_text(&search_result.unwrap());
+    let text = extract_text_from(&search_result.unwrap());
     let count = golden_count_result_entries(&text);
     assert!(
         count <= 1,
@@ -419,7 +419,7 @@ async fn golden_collection_isolation_multiple_searches() {
             .await;
 
         assert!(result.is_ok(), "search for '{}' should succeed", query);
-        let count = golden_count_result_entries(&extract_text(&result.unwrap()));
+        let count = golden_count_result_entries(&extract_text_from(&result.unwrap()));
 
         if collection == col_a {
             col_a_count = count;

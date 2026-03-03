@@ -3,7 +3,7 @@
 use crate::utils::test_fixtures::create_test_mcp_server;
 use mcb_domain::test_fixtures::sample_codebase_path;
 use mcb_domain::test_utils::GOLDEN_COLLECTION;
-use mcb_domain::utils::tests::mcp_assertions::extract_text;
+use mcb_domain::utils::tests::mcp_assertions::extract_text_from;
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rmcp::handler::server::wrapper::Parameters;
 
@@ -27,7 +27,7 @@ async fn golden_e2e_complete_workflow() {
         }))
         .await;
     assert!(r.is_ok(), "index clear should succeed: {:?}", r);
-    let clear_text = extract_text(&r.unwrap());
+    let clear_text = extract_text_from(&r.unwrap());
     assert!(
         clear_text.to_lowercase().contains("clear"),
         "clear response must mention clear/cleared: {}",
@@ -50,7 +50,7 @@ async fn golden_e2e_complete_workflow() {
     assert!(r.is_ok(), "index status should succeed: {:?}", r);
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text(&res);
+    let text = extract_text_from(&res);
     assert!(text.contains("Indexing Status") || text.contains("Idle") || text.contains("indexing"));
 
     let path = sample_codebase_path();
@@ -71,7 +71,7 @@ async fn golden_e2e_complete_workflow() {
     assert!(r.is_ok(), "index should succeed: {:?}", r);
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text(&res);
+    let text = extract_text_from(&res);
     assert!(
         text.contains("chunks") || text.contains("Indexing") || text.contains("files"),
         "expected chunks/indexing in response: {}",
@@ -109,7 +109,7 @@ async fn golden_e2e_complete_workflow() {
     assert!(r.is_ok(), "search should succeed: {:?}", r);
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text(&res);
+    let text = extract_text_from(&res);
     assert!(
         text.contains("Search") || text.contains("Results") || text.contains("result"),
         "expected search result text: {}",

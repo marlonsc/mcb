@@ -4,7 +4,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_domain::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text_from;
 use rstest::rstest;
 
 fn create_handler() -> TestResult<VcsEntityHandler> {
@@ -68,7 +68,7 @@ async fn list_repo_count(handler: &VcsEntityHandler, project_id: &str) -> usize 
         .ok()
         .map(|r| r.content)
         .unwrap_or_default();
-    let text = extract_text(&content);
+    let text = extract_text_from(&content);
     serde_json::from_str::<serde_json::Value>(&text)
         .ok()
         .and_then(|v| v.as_array().map(std::vec::Vec::len))

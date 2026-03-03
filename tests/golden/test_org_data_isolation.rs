@@ -3,7 +3,7 @@ use mcb_domain::test_utils::{
     TEST_ORG_ID_A, TEST_ORG_ID_B, create_test_api_key, create_test_organization, create_test_team,
     create_test_user_with,
 };
-use mcb_domain::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text_from;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::Value;
@@ -101,7 +101,7 @@ async fn list_count(
 
     let result = server.org_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_ok(), "list should succeed: {:?}", result);
-    let text = extract_text(&result.expect("checked ok").content);
+    let text = extract_text_from(&result.expect("checked ok").content);
     parse_list_len(&text)
 }
 
@@ -178,7 +178,7 @@ async fn golden_isolation_cross_org_get_fails() {
     match result {
         Err(_) => {}
         Ok(resp) => {
-            let text = extract_text(&resp.content);
+            let text = extract_text_from(&resp.content);
             let parsed = serde_json::from_str::<Value>(&text).unwrap_or(Value::Null);
             let is_empty = parsed.is_null()
                 || parsed.as_array().is_some_and(std::vec::Vec::is_empty)

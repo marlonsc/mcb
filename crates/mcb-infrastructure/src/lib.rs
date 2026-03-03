@@ -31,6 +31,7 @@
 pub mod config;
 pub mod crypto;
 pub mod infrastructure;
+pub mod logging;
 
 pub mod project;
 pub mod routing;

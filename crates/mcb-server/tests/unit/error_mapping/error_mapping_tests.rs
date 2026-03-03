@@ -4,7 +4,7 @@ use mcb_server::error_mapping::{
 };
 use rstest::rstest;
 
-use mcb_domain::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text_from;
 
 #[rstest]
 #[case(Error::NotFound { resource: "test".to_owned() }, "Not found: test")]
@@ -26,7 +26,7 @@ fn test_to_opaque_mcp_error(#[case] err: Error, #[case] expected_message: &str) 
 fn test_to_contextual_tool_error(#[case] err: Error, #[case] expected: &str) {
     let result = to_contextual_tool_error(err);
     assert!(result.is_error.unwrap_or(false));
-    let text = extract_text(&result.content);
+    let text = extract_text_from(&result.content);
     assert_eq!(text, expected);
 }
 

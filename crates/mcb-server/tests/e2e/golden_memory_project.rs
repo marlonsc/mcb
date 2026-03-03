@@ -9,7 +9,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_domain::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text_from;
 use rstest::rstest;
 
 // =============================================================================
@@ -54,7 +54,7 @@ async fn test_golden_memory_store_with_default_project() -> TestResult {
     let result = memory_h.handle(Parameters(store_args)).await;
     assert!(result.is_ok(), "memory store should succeed");
     let resp = result.unwrap();
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     // Response format is JSON with observation_id
     assert!(text.contains("observation_id"), "response: {text}");
     Ok(())
@@ -91,7 +91,7 @@ async fn test_golden_memory_list_empty_graceful() -> TestResult {
     let result = memory_h.handle(Parameters(list_args)).await;
     assert!(result.is_ok(), "memory list should succeed (empty result)");
     let resp = result.unwrap();
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     // Should return valid JSON with empty results, not error
     assert!(
         text.contains("\"count\": 0") || text.contains("[]"),
@@ -161,7 +161,7 @@ async fn test_golden_context_search_basic() -> TestResult {
     let result = search_h.handle(Parameters(search_args)).await;
     assert!(result.is_ok(), "context search should succeed");
     let resp = result.unwrap();
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     assert!(
         text.contains("reactor core temperature"),
         "Search results missing content: {text}"

@@ -3,19 +3,19 @@ use mcb_domain::entities::ApiKey;
 use mcb_domain::test_utils::{
     create_test_api_key, create_test_organization, create_test_user_with,
 };
-use mcb_domain::utils::tests::mcp_assertions::extract_text;
+use mcb_domain::utils::tests::mcp_assertions::extract_text_from;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use mcb_server::mcp_server::McpServer;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 fn api_key_from_result(result: &rmcp::model::CallToolResult) -> ApiKey {
-    let text = extract_text(result);
+    let text = extract_text_from(result);
     serde_json::from_str(&text).expect("api key response json")
 }
 
 fn api_key_list_from_result(result: &rmcp::model::CallToolResult) -> Vec<ApiKey> {
-    let text = extract_text(result);
+    let text = extract_text_from(result);
     serde_json::from_str(&text).expect("api key list response json")
 }
 

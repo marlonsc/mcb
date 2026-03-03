@@ -42,7 +42,7 @@ fn test_format_indexing_error(
         "is_error mismatch"
     );
 
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     for content in expected_content {
         assert!(
             text.contains(content),
@@ -103,7 +103,7 @@ fn test_format_indexing_success(
         "is_error mismatch"
     );
 
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     for content in expected_content {
         assert!(
             text.contains(content),
@@ -171,7 +171,7 @@ fn test_format_search_response(
         "is_error mismatch"
     );
 
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     for content in expected_content {
         assert!(
             text.contains(content),
@@ -220,7 +220,7 @@ fn test_format_indexing_status(
         "is_error mismatch"
     );
 
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     for content in expected_content {
         assert!(
             text.contains(content),
@@ -248,7 +248,7 @@ fn test_format_clear_index(
         "is_error mismatch"
     );
 
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     for content in expected_content {
         assert!(
             text.contains(content),
@@ -262,7 +262,7 @@ fn test_format_clear_index(
 // =============================================================================
 
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_domain::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text_from;
 
 mod handler_error_tests {
     use super::TestResult;

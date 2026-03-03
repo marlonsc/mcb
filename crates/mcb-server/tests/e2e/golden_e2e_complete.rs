@@ -15,7 +15,7 @@ use mcb_domain::utils::tests::mcp_assertions::{
 };
 use mcb_domain::utils::tests::timeouts::TEST_TIMEOUT;
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_domain::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text_from;
 
 fn index_args(action: IndexAction, path: Option<String>, collection: Option<String>) -> IndexArgs {
     IndexArgs {
@@ -93,7 +93,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
         )))
         .await;
     assert!(r.is_ok(), "index clear should succeed: {r:?}");
-    let clear_text = extract_text(&r.unwrap().content);
+    let clear_text = extract_text_from(&r.unwrap().content);
     assert!(
         clear_text.to_lowercase().contains("clear"),
         "clear response must mention clear/cleared: {clear_text}"
@@ -109,7 +109,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     assert!(r.is_ok(), "index status should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text(&res.content);
+    let text = extract_text_from(&res.content);
     assert!(text.contains("Indexing Status") || text.contains("Idle") || text.contains("indexing"));
 
     let r = index_h
@@ -122,7 +122,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     assert!(r.is_ok(), "index should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text(&res.content);
+    let text = extract_text_from(&res.content);
     assert!(
         text.contains("chunks") || text.contains("Indexing") || text.contains("files"),
         "expected chunks/indexing in response: {text}"
@@ -138,7 +138,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     assert!(r.is_ok(), "search should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text(&res.content);
+    let text = extract_text_from(&res.content);
     assert!(
         text.contains("Search") || text.contains("Results") || text.contains("result"),
         "expected search result text: {text}"
@@ -244,7 +244,7 @@ async fn test_golden_index_variants(
     assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
 
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     assert!(
         text.contains("Files processed")
             || text.contains("Indexing Started")
@@ -271,7 +271,7 @@ async fn test_golden_index_respects_ignore_patterns() -> TestResult {
     assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
 
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     assert!(
         text.contains("Files processed")
             || text.contains("Indexing Started")
@@ -304,7 +304,7 @@ async fn test_golden_mcp_index_schema_actions(
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
     if assert_status_text {
-        let text = extract_text(&res.content);
+        let text = extract_text_from(&res.content);
         assert!(
             text.contains("Status") || text.contains("indexing") || text.contains("Idle"),
             "{}",
@@ -346,7 +346,7 @@ async fn test_golden_mcp_empty_query_error_responses(#[case] query: &str) -> Tes
         "error response should have content"
     );
     assert!(response.is_error.unwrap_or(false));
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     assert!(
         text.to_lowercase().contains("empty") || text.to_lowercase().contains("query"),
         "error response should mention empty query: {text}"
@@ -521,7 +521,7 @@ async fn test_golden_e2e_golden_queries_setup() -> TestResult {
                 )))
                 .await
                 .expect("status");
-            let text = extract_text(&r.content);
+            let text = extract_text_from(&r.content);
             if text.contains("Idle") || text.contains("completed") || text.contains("Status") {
                 return true;
             }

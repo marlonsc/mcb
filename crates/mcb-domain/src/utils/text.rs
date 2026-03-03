@@ -7,6 +7,8 @@
 //! The functions accept `serde_json::Value` slices, keeping the domain layer
 //! free from protocol-specific types like `rmcp::model::Content`.
 
+use serde::Serialize;
+
 /// Concatenate all text segments from a slice of JSON content values
 /// using a custom separator.
 ///
@@ -16,11 +18,7 @@
 pub fn extract_text_with_sep(content: &[serde_json::Value], sep: &str) -> String {
     content
         .iter()
-        .filter_map(|v| {
-            v.get("text")
-                .and_then(|t| t.as_str())
-                .map(ToOwned::to_owned)
-        })
+        .filter_map(|v| v.get("text").and_then(|t| t.as_str()))
         .collect::<Vec<_>>()
         .join(sep)
 }
@@ -30,4 +28,18 @@ pub fn extract_text_with_sep(content: &[serde_json::Value], sep: &str) -> String
 #[must_use]
 pub fn extract_text(content: &[serde_json::Value]) -> String {
     extract_text_with_sep(content, "\n")
+}
+
+/// Extract text from any serializable MCP content sequence.
+///
+/// Serializes the content to JSON, then extracts `"text"` fields.
+/// This allows callers to pass protocol-specific types (e.g. `rmcp::model::Content`)
+/// without the domain layer depending on those types directly.
+#[must_use]
+pub fn extract_text_from<T: Serialize>(content: &[T]) -> String {
+    let values: Vec<serde_json::Value> = content
+        .iter()
+        .filter_map(|c| serde_json::to_value(c).ok())
+        .collect();
+    extract_text(&values)
 }

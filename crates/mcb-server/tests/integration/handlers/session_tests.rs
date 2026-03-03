@@ -6,7 +6,7 @@ use serde_json::json;
 
 use crate::utils::test_fixtures::create_test_mcb_state;
 use mcb_domain::test_utils::TEST_PROJECT_ID;
-use mcb_domain::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text_from;
 use rstest::rstest;
 
 async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {
@@ -207,7 +207,7 @@ async fn test_session_update_conflicting_project_id_rejected() {
         .expect("create session must succeed");
     assert!(!create_result.is_error.unwrap_or(false));
 
-    let created_text = extract_text(&create_result.content);
+    let created_text = extract_text_from(&create_result.content);
     let created_json: serde_json::Value =
         serde_json::from_str(&created_text).expect("create response json");
     let session_id = created_json
