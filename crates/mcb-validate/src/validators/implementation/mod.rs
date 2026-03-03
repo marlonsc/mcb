@@ -7,7 +7,6 @@ mod violation;
 
 pub use self::validator::ImplementationQualityValidator;
 pub use self::violation::ImplementationViolation;
-pub use mcb_utils::constants::validate::{HARDCODED_RETURN_PATTERNS, STUB_SKIP_FILE_KEYWORDS};
 
 #[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
 static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =

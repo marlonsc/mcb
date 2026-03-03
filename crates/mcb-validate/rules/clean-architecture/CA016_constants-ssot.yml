@@ -1,0 +1,28 @@
+schema: "rule/v2"
+id: CA016
+name: Constants SSOT Enforcement
+category: architecture
+severity: error
+description: All workspace constants MUST be defined in mcb-utils. No other crate may declare its own constants module.
+rationale: |
+  Centralizing constants in mcb-utils (Layer 0) prevents duplication, ensures consistency,
+  and makes constants discoverable. Outer crates import from mcb_utils::constants::.
+engine: regex
+rule:
+  type: regex_scan
+config:
+  patterns:
+    constants_module: 'pub\s+mod\s+constants\s*;'
+  ignore_patterns:
+    - '^\s*//'
+filters:
+  file_patterns:
+    - "crates/mcb-server/src/**/*.rs"
+    - "crates/mcb-providers/src/**/*.rs"
+    - "crates/mcb-validate/src/**/*.rs"
+    - "crates/mcb-infrastructure/src/**/*.rs"
+    - "crates/mcb-domain/src/**/*.rs"
+    - "crates/mcb/src/**/*.rs"
+  skip:
+    file_patterns:
+      - "**/tests/**"
