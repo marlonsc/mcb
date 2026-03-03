@@ -76,6 +76,7 @@ mcb-server → mcb-infrastructure → mcb-providers → mcb-domain → mcb-utils
 **Critical Rule**: Dependencies ALWAYS point inward. Outer layers depend on inner layers, never the reverse.
 
 ---
+
 ### Layer 0: mcb-utils (Utilities)
 
 **Purpose**: Pure shared utilities and project-wide constants (SSOT)
@@ -94,7 +95,7 @@ mcb-server → mcb-infrastructure → mcb-providers → mcb-domain → mcb-utils
 
 #### Exports
 
-- Constants: auth, crypto, embedding, events, http, io, keys, lang, limits, search, time, use_cases, values, ast
+- `constants/`: All project-wide constants (SSOT — ast, auth, crypto, display, embedding, events, http, io, keys, lang, limits, protocol, search, time, use_cases, validate, values, vcs, vector_store)
 - Utils: fs, id, naming, path, sensitivity, time, vcs_context
 - Errors: `UtilsError`
 
@@ -116,7 +117,6 @@ mcb-utils/src/
 ```
 
 ---
-
 
 ## Layer Dependency Rules
 
@@ -408,7 +408,7 @@ impl ContextService {
 ### Ownership Map
 
 | Concept | Owner | Importers |
-| --------- | ------- | ----------- |
+|---------|-------|-----------|
 | Port traits | `mcb-domain` | `mcb-providers`, `mcb-infrastructure` |
 | Domain entities | `mcb-domain` | All layers |
 | Services | `mcb-infrastructure` | `mcb-server` |
@@ -447,6 +447,21 @@ impl ContextService {
 
 - **Example**: Admin service using `Arc<ConcreteType>` instead of `Arc<dyn Trait>`
 - **Fix**: Use trait objects for runtime polymorphism
+
+**CA016**: Constants SSOT Enforcement
+
+- **Example**: `mcb-server` defining `pub mod constants;` instead of using `mcb-utils`
+- **Fix**: Remove local constants module, import from `mcb_utils::constants`
+
+**CA018**: No Proxy/Wrapper Re-exports
+
+- **Example**: `pub use mcb_utils::constants::*;` in non-mcb-utils crates
+- **Fix**: Import directly from `mcb_utils`, remove re-exports
+
+**CA019**: Outer Crate Isolation
+
+- **Example**: `mcb-server` importing from `mcb-providers::embedding::ollama`
+- **Fix**: Import domain traits from `mcb-domain`, not provider implementations
 
 **LAYER002**: Cross-Layer Import Violation
 
@@ -555,7 +570,7 @@ make validate QUICK=1  # Fast validation
 ## Version History
 
 | Version | Date | Changes |
-| --------- | ------ | --------- |
+|---------|------|---------|
 | v0.2.0 | 2026-01-28 | Baseline documentation for architecture boundaries |
 | v0.2.1 | 2026-02-15 | Fixed crate count to 6, removed non-existent mcb-ast-utils and mcb-language-support |
 

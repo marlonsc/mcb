@@ -860,11 +860,11 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 ### Key Components
 
-- `constants/`: All project-wide constants (SSOT — auth, crypto, embedding, events, http, io, keys, lang, limits, search, time, use_cases, values, ast)
+- `constants/`: All project-wide constants (SSOT — ast, auth, crypto, display, embedding, events, http, io, keys, lang, limits, protocol, search, time, use_cases, validate, values, vcs, vector_store)
 - `utils/`: Pure utility functions (fs, id, naming, path, sensitivity, time, vcs_context)
 - `error.rs`: Utils-specific error types (UtilsError)
 
-> **Note**: mcb-utils has ZERO dependencies on any other mcb-* crate. All constants were consolidated here following SSOT principle (ADR-054).
+> **Note**: mcb-utils has ZERO dependencies on any other mcb-* crate. All constants were consolidated here following SSOT principle (ADR-054, ADR-055).
 
 #### 🔧 Use Case Modules (`crates/mcb-infrastructure/src/di/modules/use_cases/`)
 
