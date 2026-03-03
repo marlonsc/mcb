@@ -142,7 +142,7 @@ aes-gcm = "0.10"
 rand = "0.10"
 
 # Authentication
-bcrypt = "0.18"
+bcrypt = "0.19"
 argon2 = "0.5"
 base64 = "0.22"
 
@@ -205,7 +205,7 @@ schemars = "1.2"
 validator = { version = "0.20", features = ["derive"] }
 
 # MCP SDK
-rmcp = { version = "0.16", features = [
+rmcp = { version = "1.0", features = [
     "server",
     "client",
     "macros",
@@ -306,7 +306,7 @@ rust-rule-engine = "1.19"
 evalexpr = "13"
 
 # JSON Schema validation
-jsonschema = "0.42"
+jsonschema = "0.44"
 
 # JSON Path navigation
 jsonpath-rust = "1.0.4"
