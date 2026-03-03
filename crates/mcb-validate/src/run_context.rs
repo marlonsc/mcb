@@ -172,16 +172,16 @@ impl ValidationRunContext {
     }
 
     /// Parse file with RCA, using cache if available.
-    /// Returns cached FuncSpace clone on cache hit, otherwise parses and caches.
+    /// Returns cached `FuncSpace` clone on cache hit, otherwise parses and caches.
     #[must_use]
     pub fn parse_rca_cached(&self, path: &Path, content: &str) -> Option<FuncSpace> {
         let normalized = std::fs::canonicalize(path).ok()?;
 
         // Check cache
-        if let Ok(cache) = self.rca_cache.lock() {
-            if let Some(result) = cache.get(&normalized) {
-                return result.clone();
-            }
+        if let Ok(cache) = self.rca_cache.lock()
+            && let Some(result) = cache.get(&normalized)
+        {
+            return result.clone();
         }
 
         // Parse (uncached)
