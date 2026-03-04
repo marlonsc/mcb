@@ -11,7 +11,7 @@ use sea_orm::{ConnectionTrait, Database, DatabaseConnection};
 
 /// Setup helper — create in-memory `SQLite` with migrations.
 async fn setup() -> TestResult<DatabaseConnection> {
-    let db = Database::connect("sqlite::memory:").await?;
+    let db = Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     Ok(db)
 }

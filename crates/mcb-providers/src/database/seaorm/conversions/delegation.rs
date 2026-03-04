@@ -1,4 +1,4 @@
-//! Delegation entity ↔ SeaORM model conversions via `impl_conversion!`.
+//! Delegation entity ↔ `SeaORM` model conversions via `impl_conversion!`.
 
 use sea_orm::ActiveValue;
 

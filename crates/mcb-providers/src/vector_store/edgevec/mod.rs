@@ -211,7 +211,7 @@ fn edgevec_factory(
 
 #[linkme::distributed_slice(VECTOR_STORE_PROVIDERS)]
 static EDGEVEC_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {
-    name: "edgevec",
+    name: mcb_utils::constants::PROVIDER_SLUG_EDGEVEC,
     description: "EdgeVec in-memory HNSW vector store (high-performance)",
     build: edgevec_factory,
 };

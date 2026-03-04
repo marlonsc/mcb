@@ -43,8 +43,10 @@ impl Initializer for McpServerInitializer {
             .ok_or_else(|| loco_rs::Error::string("missing loco settings for AppConfig"))?;
 
         // Resolve config provider via CA/DI registry
-        let config_provider = resolve_config_provider(&ConfigProviderConfig::new("loco_yaml"))
-            .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+        let config_provider = resolve_config_provider(&ConfigProviderConfig::new(
+            mcb_domain::utils::config::DEFAULT_PROVIDER,
+        ))
+        .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
         // Deserialize + validate via resolved provider (production path)
         let app_config_any = config_provider

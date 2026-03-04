@@ -54,7 +54,7 @@ pub struct McpError {
 impl McpResponse {
     /// Create a success response.
     #[must_use]
-    pub fn success(id: Option<serde_json::Value>, result: serde_json::Value) -> Self {
+    pub fn from_success(id: Option<serde_json::Value>, result: serde_json::Value) -> Self {
         Self {
             jsonrpc: JSONRPC_VERSION.to_owned(),
             result: Some(result),
@@ -64,7 +64,11 @@ impl McpResponse {
     }
 
     /// Create an error response.
-    pub fn error(id: Option<serde_json::Value>, code: i32, message: impl Into<String>) -> Self {
+    pub fn from_error(
+        id: Option<serde_json::Value>,
+        code: i32,
+        message: impl Into<String>,
+    ) -> Self {
         Self {
             jsonrpc: JSONRPC_VERSION.to_owned(),
             result: None,

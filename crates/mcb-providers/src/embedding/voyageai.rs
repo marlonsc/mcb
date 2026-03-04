@@ -20,7 +20,7 @@ use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
 
 define_standard_embedding_provider! {
     struct_name: VoyageAIEmbeddingProvider,
-    doc: "VoyageAI embedding provider — wraps the standard /v1/embeddings API with Bearer auth.",
+    doc: "`VoyageAI` embedding provider — wraps the standard `/v1/embeddings` API with Bearer auth.",
     provider_name: "VoyageAI",
     provider_slug: "voyageai",
     base_url: mcb_utils::constants::embedding::VOYAGEAI_API_BASE_URL,

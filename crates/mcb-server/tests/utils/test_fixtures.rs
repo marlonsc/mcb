@@ -199,7 +199,9 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
 
     // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
     let config_provider = mcb_domain::registry::config::resolve_config_provider(
-        &mcb_domain::registry::config::ConfigProviderConfig::new("loco_yaml"),
+        &mcb_domain::registry::config::ConfigProviderConfig::new(
+            mcb_domain::utils::config::DEFAULT_PROVIDER,
+        ),
     )?;
     let app_config = *config_provider
         .load_config()?

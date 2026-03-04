@@ -55,7 +55,7 @@ impl ProjectDetectorService for UniversalProjectDetector {
 #[linkme::distributed_slice(PROJECT_DETECTION_SERVICES)]
 static UNIVERSAL_PROJECT_DETECTION_ENTRY: ProjectDetectionServiceEntry =
     ProjectDetectionServiceEntry {
-        name: "universal",
+        name: mcb_utils::constants::DEFAULT_LANGUAGE_PROVIDER,
         description: "Universal project detector using all language-specific detectors",
         build: |_config| {
             let detect_fn: Arc<DetectFn> = Arc::new(|path| Box::pin(detect_all_projects(path)));

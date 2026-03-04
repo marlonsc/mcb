@@ -1,4 +1,4 @@
-//! User entity ↔ SeaORM model conversions via `impl_conversion!`.
+//! User entity ↔ `SeaORM` model conversions via `impl_conversion!`.
 
 use sea_orm::ActiveValue;
 

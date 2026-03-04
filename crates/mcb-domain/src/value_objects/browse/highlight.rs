@@ -80,3 +80,39 @@ impl HighlightedCode {
         }
     }
 }
+
+/// Tree-sitter highlight capture names (order must match `HighlightConfiguration`)
+pub const HIGHLIGHT_NAMES: [&str; 13] = [
+    "keyword",
+    "function",
+    "string",
+    "comment",
+    "type",
+    "variable",
+    "constant",
+    "operator",
+    "attribute",
+    "number",
+    "punctuation",
+    "property",
+    "tag",
+];
+
+/// Maps tree-sitter highlight token names to domain highlight categories.
+#[must_use]
+pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
+    match name {
+        "keyword" => HighlightCategory::Keyword,
+        "string" => HighlightCategory::String,
+        "comment" => HighlightCategory::Comment,
+        "function" => HighlightCategory::Function,
+        "variable" => HighlightCategory::Variable,
+        "type" => HighlightCategory::Type,
+        "number" => HighlightCategory::Number,
+        "operator" => HighlightCategory::Operator,
+        "punctuation" | "punctuation.bracket" | "punctuation.delimiter" => {
+            HighlightCategory::Punctuation
+        }
+        _ => HighlightCategory::Other,
+    }
+}

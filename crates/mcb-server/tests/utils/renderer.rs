@@ -1,25 +1,4 @@
-//! HTML renderer for highlighted code.
-//!
-//! Pure domain utility — operates only on `HighlightedCode` value objects.
-
-use super::{HighlightCategory, HighlightedCode};
-
-/// Tree-sitter highlight capture names (order must match `HighlightConfiguration`)
-pub const HIGHLIGHT_NAMES: [&str; 13] = [
-    "keyword",
-    "function",
-    "string",
-    "comment",
-    "type",
-    "variable",
-    "constant",
-    "operator",
-    "attribute",
-    "number",
-    "punctuation",
-    "property",
-    "tag",
-];
+use mcb_domain::value_objects::browse::{HighlightCategory, HighlightedCode};
 
 /// Renders highlighted code to HTML with CSS classes.
 pub struct HtmlRenderer;
@@ -87,22 +66,5 @@ impl HtmlRenderer {
             .replace('>', "&gt;")
             .replace('"', "&quot;")
             .replace('\'', "&#39;")
-    }
-}
-
-/// Maps tree-sitter highlight token names to domain highlight categories.
-#[must_use]
-pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
-    match name {
-        "keyword" => HighlightCategory::Keyword,
-        "string" => HighlightCategory::String,
-        "comment" => HighlightCategory::Comment,
-        "function" => HighlightCategory::Function,
-        "type" => HighlightCategory::Type,
-        "variable" => HighlightCategory::Variable,
-        "number" => HighlightCategory::Number,
-        "operator" => HighlightCategory::Operator,
-        "punctuation" => HighlightCategory::Punctuation,
-        _ => HighlightCategory::Other,
     }
 }

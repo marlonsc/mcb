@@ -41,7 +41,7 @@ impl Default for UniversalLanguageChunkingProvider {
 
 impl mcb_domain::ports::LanguageChunkingProvider for UniversalLanguageChunkingProvider {
     fn language(&self) -> mcb_domain::value_objects::Language {
-        "universal".to_owned()
+        mcb_utils::constants::DEFAULT_LANGUAGE_PROVIDER.to_owned()
     }
 
     fn extensions(&self) -> &[&'static str] {
@@ -58,7 +58,7 @@ impl mcb_domain::ports::LanguageChunkingProvider for UniversalLanguageChunkingPr
     }
 
     fn provider_name(&self) -> &str {
-        "universal"
+        mcb_utils::constants::DEFAULT_LANGUAGE_PROVIDER
     }
 }
 
@@ -76,7 +76,7 @@ fn universal_language_factory(
 #[linkme::distributed_slice(LANGUAGE_PROVIDERS)]
 #[allow(unsafe_code)]
 static UNIVERSAL_LANGUAGE_PROVIDER: LanguageProviderEntry = LanguageProviderEntry {
-    name: "universal",
+    name: mcb_utils::constants::DEFAULT_LANGUAGE_PROVIDER,
     description: "Universal language chunker supporting all languages via tree-sitter",
     build: universal_language_factory,
 };

@@ -14,8 +14,10 @@ use tempfile::TempDir;
 /// Resolve the default `ConfigProvider` via CA/DI registry.
 #[allow(clippy::expect_used)]
 fn config_provider() -> std::sync::Arc<dyn ConfigProvider> {
-    resolve_config_provider(&ConfigProviderConfig::new("loco_yaml"))
-        .expect("loco_yaml config provider must be registered")
+    resolve_config_provider(&ConfigProviderConfig::new(
+        mcb_domain::utils::config::DEFAULT_PROVIDER,
+    ))
+    .expect("loco_yaml config provider must be registered")
 }
 
 fn workspace_development_yaml() -> Result<PathBuf, Box<dyn std::error::Error>> {

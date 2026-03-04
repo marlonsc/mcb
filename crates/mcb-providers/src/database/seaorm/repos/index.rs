@@ -44,24 +44,43 @@ impl SeaOrmIndexRepository {
 
     fn status_to_string(status: &IndexingOperationStatus) -> String {
         match status {
-            IndexingOperationStatus::Starting => "starting".to_owned(),
-            IndexingOperationStatus::InProgress => "in_progress".to_owned(),
-            IndexingOperationStatus::Completed => "completed".to_owned(),
-            IndexingOperationStatus::Failed(msg) => format!("failed:{msg}"),
+            IndexingOperationStatus::Starting => {
+                mcb_utils::constants::INDEX_OP_STATUS_STARTING.to_owned()
+            }
+            IndexingOperationStatus::InProgress => {
+                mcb_utils::constants::INDEX_OP_STATUS_IN_PROGRESS.to_owned()
+            }
+            IndexingOperationStatus::Completed => {
+                mcb_utils::constants::INDEX_OP_STATUS_COMPLETED.to_owned()
+            }
+            IndexingOperationStatus::Failed(msg) => {
+                format!("{}:{msg}", mcb_utils::constants::INDEX_OP_STATUS_FAILED)
+            }
         }
     }
 
     fn string_to_status(s: &str) -> IndexingOperationStatus {
         match s {
-            "starting" => IndexingOperationStatus::Starting,
-            "in_progress" => IndexingOperationStatus::InProgress,
-            "completed" => IndexingOperationStatus::Completed,
-            other if other.starts_with("failed:") => IndexingOperationStatus::Failed(
-                other
-                    .strip_prefix("failed:")
-                    .unwrap_or("error message missing from database")
-                    .to_owned(),
-            ),
+            s if s == mcb_utils::constants::INDEX_OP_STATUS_STARTING => {
+                IndexingOperationStatus::Starting
+            }
+            s if s == mcb_utils::constants::INDEX_OP_STATUS_IN_PROGRESS => {
+                IndexingOperationStatus::InProgress
+            }
+            s if s == mcb_utils::constants::INDEX_OP_STATUS_COMPLETED => {
+                IndexingOperationStatus::Completed
+            }
+            other if other.starts_with(mcb_utils::constants::INDEX_OP_STATUS_FAILED) => {
+                IndexingOperationStatus::Failed(
+                    other
+                        .strip_prefix(&format!(
+                            "{}:",
+                            mcb_utils::constants::INDEX_OP_STATUS_FAILED
+                        ))
+                        .unwrap_or("error message missing from database")
+                        .to_owned(),
+                )
+            }
             _ => IndexingOperationStatus::Failed(format!("unknown status: {s}")),
         }
     }
@@ -134,7 +153,10 @@ impl IndexRepository for SeaOrmIndexRepository {
     ) -> Result<Option<IndexingOperation>> {
         let result = index_operation::Entity::find()
             .filter(index_operation::Column::CollectionId.eq(collection_id.as_str()))
-            .filter(index_operation::Column::Status.is_in(["starting", "in_progress"]))
+            .filter(index_operation::Column::Status.is_in([
+                mcb_utils::constants::INDEX_OP_STATUS_STARTING,
+                mcb_utils::constants::INDEX_OP_STATUS_IN_PROGRESS,
+            ]))
             .order_by_desc(index_operation::Column::StartedAt)
             .one(self.db.as_ref())
             .await
@@ -250,7 +272,10 @@ impl IndexRepository for SeaOrmIndexRepository {
         // Mark any active operations for this collection as failed
         let active_ops = index_operation::Entity::find()
             .filter(index_operation::Column::CollectionId.eq(&collection_str))
-            .filter(index_operation::Column::Status.is_in(["starting", "in_progress"]))
+            .filter(index_operation::Column::Status.is_in([
+                mcb_utils::constants::INDEX_OP_STATUS_STARTING,
+                mcb_utils::constants::INDEX_OP_STATUS_IN_PROGRESS,
+            ]))
             .all(self.db.as_ref())
             .await
             .map_err(db_error("find active ops for clear"))?;
@@ -284,7 +309,9 @@ impl IndexRepository for SeaOrmIndexRepository {
 
         let last_op = index_operation::Entity::find()
             .filter(index_operation::Column::CollectionId.eq(&collection_str))
-            .filter(index_operation::Column::Status.eq("completed"))
+            .filter(
+                index_operation::Column::Status.eq(mcb_utils::constants::INDEX_OP_STATUS_COMPLETED),
+            )
             .order_by_desc(index_operation::Column::CompletedAt)
             .one(self.db.as_ref())
             .await
@@ -292,7 +319,10 @@ impl IndexRepository for SeaOrmIndexRepository {
 
         let active_op = index_operation::Entity::find()
             .filter(index_operation::Column::CollectionId.eq(&collection_str))
-            .filter(index_operation::Column::Status.is_in(["starting", "in_progress"]))
+            .filter(index_operation::Column::Status.is_in([
+                mcb_utils::constants::INDEX_OP_STATUS_STARTING,
+                mcb_utils::constants::INDEX_OP_STATUS_IN_PROGRESS,
+            ]))
             .one(self.db.as_ref())
             .await
             .map_err(db_error("check active indexing"))?;

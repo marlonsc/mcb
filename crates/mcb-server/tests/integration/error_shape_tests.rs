@@ -90,7 +90,9 @@ async fn create_test_mcb_state() -> Option<(McbState, tempfile::TempDir)> {
 
     // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
     let app_config = *mcb_domain::registry::config::resolve_config_provider(
-        &mcb_domain::registry::config::ConfigProviderConfig::new("loco_yaml"),
+        &mcb_domain::registry::config::ConfigProviderConfig::new(
+            mcb_domain::utils::config::DEFAULT_PROVIDER,
+        ),
     )
     .ok()?
     .load_config()

@@ -115,7 +115,7 @@ crate::register_vector_store_provider!(
     milvus_factory,
     config,
     MILVUS_PROVIDER,
-    "milvus",
+    mcb_utils::constants::PROVIDER_SLUG_MILVUS,
     "Milvus distributed vector database",
     {
         let uri = config.uri.clone().ok_or_else(|| {

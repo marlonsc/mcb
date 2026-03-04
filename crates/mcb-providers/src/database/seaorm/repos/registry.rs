@@ -54,7 +54,7 @@ fn create_seaorm_repositories(
 /// `SeaORM` repository bundle provider registration.
 #[linkme::distributed_slice(DATABASE_REPOSITORY_PROVIDERS)]
 static SEAORM_REPOS: DatabaseRepositoryEntry = DatabaseRepositoryEntry {
-    name: "seaorm",
+    name: mcb_utils::constants::DEFAULT_DATABASE_PROVIDER,
     description: "SeaORM database repositories (SQLite, PostgreSQL, MySQL)",
     build: create_seaorm_repositories
         as fn(

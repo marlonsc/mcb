@@ -1,4 +1,4 @@
-//! Agent session entity ↔ SeaORM model conversions via `impl_conversion!`.
+//! Agent session entity ↔ `SeaORM` model conversions via `impl_conversion!`.
 
 use sea_orm::ActiveValue;
 

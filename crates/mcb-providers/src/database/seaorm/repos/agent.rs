@@ -118,14 +118,12 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
             self.require_session_exists(parent_session_id).await?;
         }
 
-        let active: agent_session::ActiveModel = session.clone().into();
-
-        agent_session::Entity::insert(active)
-            .exec(self.db.as_ref())
-            .await
-            .map_err(db_error("create agent session"))?;
-
-        Ok(())
+        sea_repo_insert!(
+            self.db.as_ref(),
+            agent_session,
+            session,
+            "create agent session"
+        )
     }
 
     async fn get_session(&self, id: &str) -> Result<Option<AgentSession>> {
@@ -147,13 +145,12 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
             self.require_session_exists(parent_session_id).await?;
         }
 
-        let active: agent_session::ActiveModel = session.clone().into();
-        active
-            .update(self.db.as_ref())
-            .await
-            .map_err(db_error("update agent session"))?;
-
-        Ok(())
+        sea_repo_update!(
+            self.db.as_ref(),
+            agent_session,
+            session,
+            "update agent session"
+        )
     }
 
     async fn list_sessions(&self, query: AgentSessionQuery) -> Result<Vec<AgentSession>> {
@@ -224,13 +221,7 @@ impl AgentEventRepository for SeaOrmAgentRepository {
         self.require_session_exists(&delegation.child_session_id)
             .await?;
 
-        let active: delegation::ActiveModel = delegation.clone().into();
-        delegation::Entity::insert(active)
-            .exec(self.db.as_ref())
-            .await
-            .map_err(db_error("store delegation"))?;
-
-        Ok(())
+        sea_repo_insert!(self.db.as_ref(), delegation, delegation, "store delegation")
     }
 
     async fn store_tool_call(&self, tool_call: &ToolCall) -> Result<()> {
@@ -260,13 +251,7 @@ impl AgentCheckpointRepository for SeaOrmAgentRepository {
     async fn store_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
         self.require_session_exists(&checkpoint.session_id).await?;
 
-        let active: checkpoint::ActiveModel = checkpoint.clone().into();
-        checkpoint::Entity::insert(active)
-            .exec(self.db.as_ref())
-            .await
-            .map_err(db_error("store checkpoint"))?;
-
-        Ok(())
+        sea_repo_insert!(self.db.as_ref(), checkpoint, checkpoint, "store checkpoint")
     }
 
     async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>> {
@@ -281,12 +266,11 @@ impl AgentCheckpointRepository for SeaOrmAgentRepository {
     async fn update_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {
         self.require_session_exists(&checkpoint.session_id).await?;
 
-        let active: checkpoint::ActiveModel = checkpoint.clone().into();
-        active
-            .update(self.db.as_ref())
-            .await
-            .map_err(db_error("update checkpoint"))?;
-
-        Ok(())
+        sea_repo_update!(
+            self.db.as_ref(),
+            checkpoint,
+            checkpoint,
+            "update checkpoint"
+        )
     }
 }

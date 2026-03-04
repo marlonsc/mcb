@@ -119,7 +119,7 @@ impl EmbeddingProvider for FastEmbedProvider {
     }
 
     fn provider_name(&self) -> &str {
-        "fastembed"
+        mcb_utils::constants::PROVIDER_SLUG_FASTEMBED
     }
 
     async fn health_check(&self) -> Result<()> {
@@ -245,7 +245,7 @@ fn fastembed_factory(
 
 #[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
 static FASTEMBED_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-    name: "fastembed",
+    name: mcb_utils::constants::PROVIDER_SLUG_FASTEMBED,
     description: "FastEmbed local provider (AllMiniLML6V2, BGESmallEN, etc.)",
     build: fastembed_factory,
 };

@@ -20,11 +20,11 @@ use mcb_domain::ports::{HighlightError, HighlightServiceInterface};
 use mcb_domain::registry::services::{
     HIGHLIGHT_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
 };
-use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, HighlightedCode};
+use mcb_domain::value_objects::browse::{HighlightSpan, HighlightedCode};
 use tree_sitter::Language;
 use tree_sitter_highlight::{Highlight, HighlightConfiguration, HighlightEvent, Highlighter};
 
-use mcb_domain::value_objects::browse::HIGHLIGHT_NAMES;
+use mcb_domain::value_objects::browse::{HIGHLIGHT_NAMES, map_highlight_to_category};
 
 /// Language-specific highlighting configuration
 struct HighlightLanguageConfig {
@@ -40,23 +40,6 @@ impl HighlightLanguageConfig {
             language,
             highlights_query,
         }
-    }
-}
-
-/// Maps tree-sitter highlight names to our category enum.
-#[must_use]
-pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
-    match name {
-        "keyword" => HighlightCategory::Keyword,
-        "string" => HighlightCategory::String,
-        "comment" => HighlightCategory::Comment,
-        "function" => HighlightCategory::Function,
-        "type" => HighlightCategory::Type,
-        "variable" => HighlightCategory::Variable,
-        "number" => HighlightCategory::Number,
-        "operator" => HighlightCategory::Operator,
-        "punctuation" => HighlightCategory::Punctuation,
-        _ => HighlightCategory::Other,
     }
 }
 

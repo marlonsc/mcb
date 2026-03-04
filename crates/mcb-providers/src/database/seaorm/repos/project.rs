@@ -37,12 +37,7 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the database insert fails.
     pub async fn create_phase(&self, phase: &ProjectPhase) -> Result<()> {
-        let active: project_phase::ActiveModel = phase.clone().into();
-        project_phase::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("create project phase"))?;
-        Ok(())
+        sea_repo_insert!(&self.db, project_phase, phase, "create project phase")
     }
 
     /// Fetches a project phase by id.
@@ -51,12 +46,14 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the query fails or the phase is not found.
     pub async fn get_phase_by_id(&self, id: &str) -> Result<ProjectPhase> {
-        let model = project_phase::Entity::find_by_id(id.to_owned())
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project phase by id"))?;
-
-        Error::not_found_or(model.map(Into::into), "ProjectPhase", id)
+        sea_repo_get!(
+            &self.db,
+            project_phase,
+            ProjectPhase,
+            "ProjectPhase",
+            id,
+            "get project phase by id"
+        )
     }
 
     /// Lists all phases for a project ordered by sequence.
@@ -107,11 +104,7 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the database delete fails.
     pub async fn delete_phase(&self, id: &str) -> Result<()> {
-        project_phase::Entity::delete_by_id(id.to_owned())
-            .exec(&self.db)
-            .await
-            .map_err(db_error("delete project phase"))?;
-        Ok(())
+        sea_repo_delete!(&self.db, project_phase, id, "delete project phase")
     }
 
     /// Persists a new project issue.
@@ -120,12 +113,7 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the database insert fails.
     pub async fn create_issue(&self, issue: &ProjectIssue) -> Result<()> {
-        let active: project_issue::ActiveModel = issue.clone().into();
-        project_issue::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("create project issue"))?;
-        Ok(())
+        sea_repo_insert!(&self.db, project_issue, issue, "create project issue")
     }
 
     /// Fetches a project issue by organization and issue id.
@@ -134,13 +122,8 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the query fails or the issue is not found.
     pub async fn get_issue_by_id(&self, org_id: &str, id: &str) -> Result<ProjectIssue> {
-        let model = project_issue::Entity::find_by_id(id.to_owned())
-            .filter(project_issue::Column::OrgId.eq(org_id.to_owned()))
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project issue by id"))?;
-
-        Error::not_found_or(model.map(Into::into), "ProjectIssue", id)
+        sea_repo_get_filtered!(&self.db, project_issue, ProjectIssue, "ProjectIssue", id, "get project issue by id",
+            project_issue::Column::OrgId => org_id)
     }
 
     /// Lists all issues for a project in an organization.
@@ -255,12 +238,12 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the database insert fails.
     pub async fn create_dependency(&self, dependency: &ProjectDependency) -> Result<()> {
-        let active: project_dependency::ActiveModel = dependency.clone().into();
-        project_dependency::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("create project dependency"))?;
-        Ok(())
+        sea_repo_insert!(
+            &self.db,
+            project_dependency,
+            dependency,
+            "create project dependency"
+        )
     }
 
     /// Lists all dependencies attached to an issue.
@@ -335,11 +318,12 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the database delete fails.
     pub async fn delete_dependency(&self, id: &str) -> Result<()> {
-        project_dependency::Entity::delete_by_id(id.to_owned())
-            .exec(&self.db)
-            .await
-            .map_err(db_error("delete project dependency"))?;
-        Ok(())
+        sea_repo_delete!(
+            &self.db,
+            project_dependency,
+            id,
+            "delete project dependency"
+        )
     }
 
     /// Persists a new project decision.
@@ -348,12 +332,12 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the database insert fails.
     pub async fn create_decision(&self, decision: &ProjectDecision) -> Result<()> {
-        let active: project_decision::ActiveModel = decision.clone().into();
-        project_decision::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("create project decision"))?;
-        Ok(())
+        sea_repo_insert!(
+            &self.db,
+            project_decision,
+            decision,
+            "create project decision"
+        )
     }
 
     /// Fetches a project decision by id.
@@ -362,12 +346,14 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the query fails or the decision is not found.
     pub async fn get_decision_by_id(&self, id: &str) -> Result<ProjectDecision> {
-        let model = project_decision::Entity::find_by_id(id.to_owned())
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project decision by id"))?;
-
-        Error::not_found_or(model.map(Into::into), "ProjectDecision", id)
+        sea_repo_get!(
+            &self.db,
+            project_decision,
+            ProjectDecision,
+            "ProjectDecision",
+            id,
+            "get project decision by id"
+        )
     }
 
     /// Lists all decisions for a project.
@@ -415,33 +401,19 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the database delete fails.
     pub async fn delete_decision(&self, id: &str) -> Result<()> {
-        project_decision::Entity::delete_by_id(id.to_owned())
-            .exec(&self.db)
-            .await
-            .map_err(db_error("delete project decision"))?;
-        Ok(())
+        sea_repo_delete!(&self.db, project_decision, id, "delete project decision")
     }
 }
 
 #[async_trait]
 impl ProjectRepository for SeaOrmProjectRepository {
     async fn create(&self, project: &Project) -> Result<()> {
-        let active: project::ActiveModel = project.clone().into();
-        project::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("create project"))?;
-        Ok(())
+        sea_repo_insert!(&self.db, project, project, "create project")
     }
 
     async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Project> {
-        let model = project::Entity::find_by_id(id.to_owned())
-            .filter(project::Column::OrgId.eq(org_id.to_owned()))
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project by id"))?;
-
-        Error::not_found_or(model.map(Into::into), "Project", id)
+        sea_repo_get_filtered!(&self.db, project, Project, "Project", id, "get project by id",
+            project::Column::OrgId => org_id)
     }
 
     async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Project> {
@@ -478,12 +450,7 @@ impl ProjectRepository for SeaOrmProjectRepository {
     }
 
     async fn update(&self, project: &Project) -> Result<()> {
-        let active: project::ActiveModel = project.clone().into();
-        active
-            .update(&self.db)
-            .await
-            .map_err(db_error("update project"))?;
-        Ok(())
+        sea_repo_update!(&self.db, project, project, "update project")
     }
 
     async fn delete(&self, org_id: &str, id: &str) -> Result<()> {

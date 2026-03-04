@@ -1,4 +1,4 @@
-//! Repository entity ↔ SeaORM model conversions via `impl_conversion!`.
+//! Repository entity ↔ `SeaORM` model conversions via `impl_conversion!`.
 
 use sea_orm::ActiveValue;
 

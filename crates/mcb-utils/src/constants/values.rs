@@ -68,3 +68,83 @@ pub const DEFAULT_SESSION_LIMIT: u64 = 100;
 
 /// Default limit for UI vector fetching.
 pub const DEFAULT_BROWSE_LIMIT: usize = 50;
+
+// ============================================================================
+// PROVIDER SLUGS
+// ============================================================================
+
+/// Embedding provider slug: `OpenAI`.
+pub const PROVIDER_SLUG_OPENAI: &str = "openai";
+
+/// Embedding provider slug: Voyage AI.
+pub const PROVIDER_SLUG_VOYAGEAI: &str = "voyageai";
+
+/// Embedding provider slug: Anthropic.
+pub const PROVIDER_SLUG_ANTHROPIC: &str = "anthropic";
+
+/// Embedding provider slug: `FastEmbed` (local).
+pub const PROVIDER_SLUG_FASTEMBED: &str = "fastembed";
+
+/// Vector-store provider slug: `EdgeVec` (local).
+pub const PROVIDER_SLUG_EDGEVEC: &str = "edgevec";
+
+/// Vector-store provider slug: Milvus.
+pub const PROVIDER_SLUG_MILVUS: &str = "milvus";
+
+/// Vector-store provider slug: Qdrant.
+pub const PROVIDER_SLUG_QDRANT: &str = "qdrant";
+
+// ============================================================================
+// CONFIG PROVIDER
+// ============================================================================
+
+/// Default configuration provider name (YAML file-based).
+pub const DEFAULT_CONFIG_PROVIDER: &str = "loco_yaml";
+
+// ============================================================================
+// SERVICE NAMES (CA/DI registry)
+// ============================================================================
+
+/// Registry name for the context service.
+pub const SERVICE_NAME_CONTEXT: &str = "context";
+
+/// Registry name for the indexing service.
+pub const SERVICE_NAME_INDEXING: &str = "indexing";
+
+/// Registry name for the search service.
+pub const SERVICE_NAME_SEARCH: &str = "search";
+
+/// Registry name for the memory service.
+pub const SERVICE_NAME_MEMORY: &str = "memory";
+
+/// Registry name for the agent session service.
+pub const SERVICE_NAME_AGENT_SESSION: &str = "agent_session";
+
+/// Registry name for the validation service.
+pub const SERVICE_NAME_VALIDATION: &str = "validation";
+
+/// Registry name for the highlight service.
+pub const SERVICE_NAME_HIGHLIGHT: &str = "highlight";
+
+// ============================================================================
+// DATABASE
+// ============================================================================
+
+/// `SQLite` in-memory DSN for test and fallback connections.
+pub const SQLITE_MEMORY_DSN: &str = "sqlite::memory:";
+
+// ============================================================================
+// INDEXING OPERATION STATUS (database string enums)
+// ============================================================================
+
+/// Indexing-operation status: starting.
+pub const INDEX_OP_STATUS_STARTING: &str = "starting";
+
+/// Indexing-operation status: in progress.
+pub const INDEX_OP_STATUS_IN_PROGRESS: &str = "in_progress";
+
+/// Indexing-operation status: completed.
+pub const INDEX_OP_STATUS_COMPLETED: &str = "completed";
+
+/// Indexing-operation status: failed.
+pub const INDEX_OP_STATUS_FAILED: &str = "failed";

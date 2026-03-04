@@ -1,4 +1,4 @@
-//! Team member entity ↔ SeaORM model conversions via `impl_conversion!`.
+//! Team member entity ↔ `SeaORM` model conversions via `impl_conversion!`.
 
 use sea_orm::ActiveValue;
 
@@ -10,5 +10,4 @@ crate::impl_conversion!(team_member, TeamMember,
     direct: [team_id, user_id, joined_at],
     enums: { role: TeamMemberRole = TeamMemberRole::Member },
     computed: { |m| id = TeamMemberId::from(format!("{}:{}", m.team_id, m.user_id).as_str()) },
-    not_set: [id],
 );

@@ -120,7 +120,8 @@ async fn test_ide_detection_from_env_vars() {
     );
     assert_eq!(
         parse_agent_program(&format!("{cursor_stdout}\n{cursor_stderr}")).as_deref(),
-        Some("cursor")
+        Some("cursor"),
+        "cursor stdout was: {cursor_stdout}, stderr was: {cursor_stderr}"
     );
 
     let vscode_probe = probe_agent_program(&[("VSCODE_PID", "12345")], &ide_env_keys);
@@ -133,7 +134,8 @@ async fn test_ide_detection_from_env_vars() {
     );
     assert_eq!(
         parse_agent_program(&format!("{vscode_stdout}\n{vscode_stderr}")).as_deref(),
-        Some("vscode")
+        Some("vscode"),
+        "vscode stdout was: {vscode_stdout}, stderr was: {vscode_stderr}"
     );
 
     let claude_probe = probe_agent_program(&[("CLAUDE_CODE", "1")], &ide_env_keys);
@@ -146,7 +148,8 @@ async fn test_ide_detection_from_env_vars() {
     );
     assert_eq!(
         parse_agent_program(&format!("{claude_stdout}\n{claude_stderr}")).as_deref(),
-        Some("claude-code")
+        Some("claude-code"),
+        "claude stdout was: {claude_stdout}, stderr was: {claude_stderr}"
     );
 
     let fallback_probe = probe_agent_program(&[], &ide_env_keys);
@@ -159,7 +162,8 @@ async fn test_ide_detection_from_env_vars() {
     );
     assert_eq!(
         parse_agent_program(&format!("{fallback_stdout}\n{fallback_stderr}")).as_deref(),
-        Some("mcb-stdio")
+        Some("mcb-stdio"),
+        "fallback stdout was: {fallback_stdout}, stderr was: {fallback_stderr}"
     );
 }
 

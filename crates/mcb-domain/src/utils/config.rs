@@ -28,7 +28,7 @@ use crate::error::{Error, Result};
 use crate::registry::config::{ConfigProviderConfig, resolve_config_provider};
 
 /// Default provider name for the project.
-pub const DEFAULT_PROVIDER: &str = "loco_yaml";
+pub const DEFAULT_PROVIDER: &str = mcb_utils::constants::DEFAULT_CONFIG_PROVIDER;
 
 /// Load application configuration via CA/DI registry.
 ///

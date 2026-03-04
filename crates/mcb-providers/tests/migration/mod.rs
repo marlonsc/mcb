@@ -22,7 +22,7 @@ async fn query_names(db: &DatabaseConnection, sql: &str) -> TestResult<Vec<Strin
 #[rstest]
 #[tokio::test]
 async fn migration_creates_all_tables() -> TestResult {
-    let db = sea_orm::Database::connect("sqlite::memory:").await?;
+    let db = sea_orm::Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
@@ -75,7 +75,7 @@ async fn migration_creates_all_tables() -> TestResult {
 #[rstest]
 #[tokio::test]
 async fn migration_creates_fts5_triggers() -> TestResult {
-    let db = sea_orm::Database::connect("sqlite::memory:").await?;
+    let db = sea_orm::Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
@@ -103,7 +103,7 @@ async fn migration_creates_fts5_triggers() -> TestResult {
 #[rstest]
 #[tokio::test]
 async fn migration_creates_indexes() -> TestResult {
-    let db = sea_orm::Database::connect("sqlite::memory:").await?;
+    let db = sea_orm::Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
@@ -131,7 +131,7 @@ async fn migration_creates_indexes() -> TestResult {
 #[rstest]
 #[tokio::test]
 async fn migration_down_drops_all_tables() -> TestResult {
-    let db = sea_orm::Database::connect("sqlite::memory:").await?;
+    let db = sea_orm::Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     mcb_domain::registry::database::migrate_down(Box::new(db.clone()), None).await?;
@@ -151,7 +151,7 @@ async fn migration_down_drops_all_tables() -> TestResult {
 #[rstest]
 #[tokio::test]
 async fn migration_is_idempotent() -> TestResult {
-    let db = sea_orm::Database::connect("sqlite::memory:").await?;
+    let db = sea_orm::Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;

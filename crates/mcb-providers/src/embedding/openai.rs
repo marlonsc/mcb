@@ -21,7 +21,7 @@ use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
 
 define_standard_embedding_provider! {
     struct_name: OpenAIEmbeddingProvider,
-    doc: "OpenAI embedding provider — wraps the standard /v1/embeddings API with Bearer auth.",
+    doc: "`OpenAI` embedding provider — wraps the standard `/v1/embeddings` API with Bearer auth.",
     provider_name: "OpenAI",
     provider_slug: "openai",
     base_url: mcb_utils::constants::embedding::OPENAI_API_BASE_URL,

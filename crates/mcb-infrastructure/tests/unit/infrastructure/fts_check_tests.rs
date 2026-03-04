@@ -6,7 +6,9 @@ mod tests {
     #[rstest]
     #[tokio::test]
     async fn test_fts5_availability() {
-        let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
+        let pool = SqlitePool::connect(mcb_utils::constants::SQLITE_MEMORY_DSN)
+            .await
+            .unwrap();
 
         // Try creating an FTS5 table
         let result = sqlx::query("CREATE VIRTUAL TABLE test_fts USING fts5(content)")

@@ -17,7 +17,7 @@ use sea_orm::{ActiveModelTrait, ActiveValue::Set, ConnectionTrait, Database, Dat
 const PROJECT_ID: &str = "proj-idx-001";
 
 async fn setup_db() -> TestResult<Arc<DatabaseConnection>> {
-    let db = Database::connect("sqlite::memory:").await?;
+    let db = Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     Ok(Arc::new(db))
 }

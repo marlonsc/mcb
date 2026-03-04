@@ -60,7 +60,7 @@ impl ConfigProvider for LocoYamlConfigProvider {
     }
 
     fn provider_name(&self) -> &str {
-        "loco_yaml"
+        mcb_utils::constants::DEFAULT_CONFIG_PROVIDER
     }
 }
 
@@ -72,7 +72,7 @@ use mcb_domain::registry::config::{CONFIG_PROVIDERS, ConfigProviderEntry};
 #[allow(unsafe_code)]
 #[linkme::distributed_slice(CONFIG_PROVIDERS)]
 static LOCO_YAML_CONFIG_ENTRY: ConfigProviderEntry = ConfigProviderEntry {
-    name: "loco_yaml",
+    name: mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
     description: "YAML configuration loader following Loco conventions",
     build: |_config| Ok(Arc::new(LocoYamlConfigProvider)),
 };

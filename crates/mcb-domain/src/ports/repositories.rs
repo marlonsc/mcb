@@ -100,6 +100,7 @@ pub trait ApiKeyRegistry: Send + Sync {
 
 define_aggregate! {
     /// Aggregate trait for org entity management.
+    #[async_trait]
     pub trait OrgEntityRepository = OrgRegistry + UserRegistry + TeamRegistry + TeamMemberManager + ApiKeyRegistry;
 }
 
@@ -218,6 +219,7 @@ pub trait AgentCheckpointRepository: Send + Sync {
 
 define_aggregate! {
     /// Aggregate trait for full agent persistence capabilities.
+    #[async_trait]
     pub trait AgentRepository = AgentSessionRepository + AgentEventRepository + AgentCheckpointRepository;
 }
 
@@ -281,6 +283,7 @@ pub trait IssueLabelAssignmentManager: Send + Sync {
 
 define_aggregate! {
     /// Aggregate trait for issue entity management.
+    #[async_trait]
     pub trait IssueEntityRepository = IssueRegistry + IssueCommentRegistry + IssueLabelRegistry + IssueLabelAssignmentManager;
 }
 
@@ -327,6 +330,7 @@ pub trait PlanReviewRegistry: Send + Sync {
 
 define_aggregate! {
     /// Aggregate trait for plan entity management.
+    #[async_trait]
     pub trait PlanEntityRepository = PlanRegistry + PlanVersionRegistry + PlanReviewRegistry;
 }
 

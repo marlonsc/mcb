@@ -60,7 +60,7 @@ impl std::fmt::Debug for ObservationMetadata {
             .field(
                 "session_id",
                 &if self.session_id.is_some() {
-                    "REDACTED"
+                    mcb_utils::utils::sensitivity::REDACTED
                 } else {
                     "NONE"
                 },

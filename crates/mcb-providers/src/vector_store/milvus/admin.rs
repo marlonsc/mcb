@@ -58,7 +58,10 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
             );
         }
 
-        result.insert(STATS_FIELD_PROVIDER.to_owned(), serde_json::json!("milvus"));
+        result.insert(
+            STATS_FIELD_PROVIDER.to_owned(),
+            serde_json::json!(mcb_utils::constants::PROVIDER_SLUG_MILVUS),
+        );
         Ok(result)
     }
 
@@ -88,6 +91,6 @@ impl VectorStoreAdmin for MilvusVectorStoreProvider {
     }
 
     fn provider_name(&self) -> &str {
-        "milvus"
+        mcb_utils::constants::PROVIDER_SLUG_MILVUS
     }
 }

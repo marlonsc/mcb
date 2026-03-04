@@ -3,9 +3,10 @@
 //! This module groups concrete persistence repositories used by the server and
 //! infrastructure layers.
 
+#[macro_use]
+mod common;
 /// Agent repository implementation.
 pub mod agent;
-mod common;
 /// Generic entity repository implementation.
 pub mod entity;
 /// Indexing repository implementation.

@@ -41,7 +41,7 @@ fn make_observation(
 }
 
 async fn setup_repo() -> TestResult<SeaOrmObservationRepository> {
-    let db: DatabaseConnection = Database::connect("sqlite::memory:").await?;
+    let db: DatabaseConnection = Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 

@@ -11,7 +11,7 @@ use std::fmt;
 
 use serde::{Deserialize, Serialize};
 
-const REDACTED: &str = "REDACTED";
+use mcb_utils::utils::sensitivity::REDACTED;
 
 /// Value Object: Embedding Provider Configuration
 ///

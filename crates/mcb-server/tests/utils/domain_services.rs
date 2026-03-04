@@ -125,7 +125,9 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
         db: Arc::clone(&db),
         config: Arc::new(
             *mcb_domain::registry::config::resolve_config_provider(
-                &mcb_domain::registry::config::ConfigProviderConfig::new("loco_yaml"),
+                &mcb_domain::registry::config::ConfigProviderConfig::new(
+                    mcb_domain::utils::config::DEFAULT_PROVIDER,
+                ),
             )
             .ok()?
             .load_config()

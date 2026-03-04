@@ -187,7 +187,7 @@ crate::register_vector_store_provider!(
     qdrant_factory,
     config,
     QDRANT_PROVIDER,
-    "qdrant",
+    mcb_utils::constants::PROVIDER_SLUG_QDRANT,
     "Qdrant vector search engine (open-source, cloud and self-hosted)",
     {
         use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};

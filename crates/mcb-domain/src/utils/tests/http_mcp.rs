@@ -120,7 +120,7 @@ pub fn assert_mcp_error(response: &McpResponse, expected_code: i32) -> TestResul
 /// Build an `initialize` success response (for mock/stub usage).
 #[must_use]
 pub fn initialize_response(id: Option<serde_json::Value>) -> McpResponse {
-    McpResponse::success(
+    McpResponse::from_success(
         id,
         serde_json::json!({
             "protocolVersion": "2024-11-05",

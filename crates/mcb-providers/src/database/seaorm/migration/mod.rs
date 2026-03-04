@@ -78,7 +78,7 @@ fn build_seaorm_migration_provider() -> Arc<dyn MigrationProvider> {
 /// `SeaORM` migration provider registration.
 #[linkme::distributed_slice(MIGRATION_PROVIDERS)]
 static SEAORM_MIGRATIONS: MigrationProviderEntry = MigrationProviderEntry {
-    name: "seaorm",
+    name: mcb_utils::constants::DEFAULT_DATABASE_PROVIDER,
     description: "SeaORM schema migrations (SQLite, PostgreSQL, MySQL)",
     build: build_seaorm_migration_provider,
 };

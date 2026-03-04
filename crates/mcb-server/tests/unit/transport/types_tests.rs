@@ -43,9 +43,9 @@ fn test_mcp_response_shapes(
     #[case] error_message: &str,
 ) {
     let response = if is_error {
-        McpResponse::error(id, error_code, error_message)
+        McpResponse::from_error(id, error_code, error_message)
     } else {
-        McpResponse::success(id, serde_json::json!({"result": "ok"}))
+        McpResponse::from_success(id, serde_json::json!({"result": "ok"}))
     };
 
     assert_eq!(response.jsonrpc, "2.0");
@@ -64,7 +64,7 @@ fn test_mcp_response_shapes(
 #[test]
 fn test_mcp_response_serialization_roundtrip() {
     let response =
-        McpResponse::success(Some(serde_json::json!(1)), serde_json::json!({"tools": []}));
+        McpResponse::from_success(Some(serde_json::json!(1)), serde_json::json!({"tools": []}));
     let json = serde_json::to_string(&response).unwrap();
     let deserialized: McpResponse = serde_json::from_str(&json).unwrap();
     assert_eq!(deserialized.jsonrpc, "2.0");

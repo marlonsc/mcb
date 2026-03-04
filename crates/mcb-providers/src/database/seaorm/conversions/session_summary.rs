@@ -1,4 +1,4 @@
-//! Session summary entity ↔ SeaORM model conversions via `impl_conversion!`.
+//! Session summary entity ↔ `SeaORM` model conversions via `impl_conversion!`.
 
 use sea_orm::ActiveValue;
 

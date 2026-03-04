@@ -1,4 +1,4 @@
-//! Checkpoint entity ↔ SeaORM model conversions via `impl_conversion!`.
+//! Checkpoint entity ↔ `SeaORM` model conversions via `impl_conversion!`.
 
 use sea_orm::ActiveValue;
 

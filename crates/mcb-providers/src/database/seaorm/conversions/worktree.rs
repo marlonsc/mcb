@@ -1,4 +1,4 @@
-//! Worktree entity ↔ SeaORM model conversions via `impl_conversion!`.
+//! Worktree entity ↔ `SeaORM` model conversions via `impl_conversion!`.
 
 use sea_orm::ActiveValue;
 

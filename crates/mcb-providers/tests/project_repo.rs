@@ -15,7 +15,7 @@ const PROJECT_ID: &str = "proj-1";
 const USER_ID: &str = "user-1";
 
 async fn setup() -> TestResult<(DatabaseConnection, SeaOrmProjectRepository)> {
-    let db = Database::connect("sqlite::memory:").await?;
+    let db = Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
     db.execute_unprepared(

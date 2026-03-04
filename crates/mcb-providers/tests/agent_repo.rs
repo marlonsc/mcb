@@ -40,7 +40,7 @@ fn sample_delegation(
 }
 
 async fn setup_repo() -> TestResult<(SeaOrmAgentRepository, Arc<sea_orm::DatabaseConnection>)> {
-    let db = Arc::new(Database::connect("sqlite::memory:").await?);
+    let db = Arc::new(Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?);
     db.execute_unprepared("PRAGMA foreign_keys = ON").await?;
     mcb_domain::registry::database::migrate_up(Box::new((*db).clone()), None).await?;
 

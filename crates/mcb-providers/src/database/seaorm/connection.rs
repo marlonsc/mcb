@@ -16,7 +16,7 @@ use mcb_domain::registry::database::{
 fn sqlite_url(config: &DatabaseProviderConfig) -> String {
     match &config.path {
         Some(path) => format!("sqlite:{}?mode=rwc", path.display()),
-        None => "sqlite::memory:".to_owned(),
+        None => mcb_utils::constants::SQLITE_MEMORY_DSN.to_owned(),
     }
 }
 

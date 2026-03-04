@@ -26,7 +26,9 @@ use tempfile::TempDir;
 
 /// Resolve the default `ConfigProvider` via CA/DI registry.
 fn resolve_default_config_provider() -> Result<std::sync::Arc<dyn ConfigProvider>> {
-    resolve_config_provider(&ConfigProviderConfig::new("loco_yaml"))
+    resolve_config_provider(&ConfigProviderConfig::new(
+        mcb_domain::utils::config::DEFAULT_PROVIDER,
+    ))
 }
 
 /// Fluent builder for test configurations.

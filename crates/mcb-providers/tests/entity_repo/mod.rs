@@ -34,7 +34,7 @@ use mcb_providers::database::seaorm::repos::entity::SeaOrmEntityRepository;
 use rstest::rstest;
 
 async fn setup_db() -> TestResult<Arc<DatabaseConnection>> {
-    let db = sea_orm::Database::connect("sqlite::memory:").await?;
+    let db = sea_orm::Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
     db.execute_unprepared("PRAGMA foreign_keys = ON;").await?;
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     Ok(Arc::new(db))
@@ -70,9 +70,10 @@ async fn seed_user(repo: &SeaOrmEntityRepository) -> TestResult {
 }
 
 async fn seed_project(repo: &SeaOrmEntityRepository) -> TestResult {
+    use mcb_utils::constants::testing::TEST_TIMESTAMP;
     repo.db()
         .execute_unprepared(
-            "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES ('proj-001', 'org-001', 'Test Project', '/tmp/proj', mcb_utils::constants::testing::TEST_TIMESTAMP, mcb_utils::constants::testing::TEST_TIMESTAMP)",
+            &format!("INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES ('proj-001', 'org-001', 'Test Project', '/tmp/proj', {TEST_TIMESTAMP}, {TEST_TIMESTAMP})")
         )
         .await?;
     Ok(())
@@ -296,9 +297,10 @@ async fn vcs_assignment_crud() -> TestResult {
     repo.create_worktree(&wt).await?;
 
     // Seed agent session
+    use mcb_utils::constants::testing::TEST_TIMESTAMP;
     repo.db()
         .execute_unprepared(
-            "INSERT INTO agent_sessions (id, project_id, worktree_id, session_summary_id, agent_type, model, status, started_at, parent_session_id, prompt_summary, result_summary, ended_at, duration_ms, token_count, tool_calls_count, delegations_count) VALUES ('ses-001', 'proj-001', 'wt-001', '', 'build', 'claude', 'active', mcb_utils::constants::testing::TEST_TIMESTAMP, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)",
+            &format!("INSERT INTO agent_sessions (id, project_id, worktree_id, session_summary_id, agent_type, model, status, started_at, parent_session_id, prompt_summary, result_summary, ended_at, duration_ms, token_count, tool_calls_count, delegations_count) VALUES ('ses-001', 'proj-001', 'wt-001', '', 'build', 'claude', 'active', {TEST_TIMESTAMP}, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)")
         )
         .await?;
 

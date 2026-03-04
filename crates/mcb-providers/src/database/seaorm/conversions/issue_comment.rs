@@ -1,4 +1,4 @@
-//! Issue comment entity ↔ SeaORM model conversions via `impl_conversion!`.
+//! Issue comment entity ↔ `SeaORM` model conversions via `impl_conversion!`.
 
 use sea_orm::ActiveValue;
 

@@ -1,4 +1,4 @@
-//! Project decision entity ↔ SeaORM model conversions via `impl_conversion!`.
+//! Project decision entity ↔ `SeaORM` model conversions via `impl_conversion!`.
 
 use sea_orm::ActiveValue;
 
