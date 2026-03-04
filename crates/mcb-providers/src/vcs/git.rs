@@ -132,6 +132,66 @@ impl GitProvider {
             parent_hashes,
         })
     }
+
+    /// Resolve two git refs into their tree objects for diffing.
+    fn resolve_trees<'r>(
+        repo: &'r Repository,
+        base_ref: &str,
+        head_ref: &str,
+    ) -> Result<(git2::Tree<'r>, git2::Tree<'r>)> {
+        let base_obj = repo
+            .revparse_single(base_ref)
+            .map_err(|e| Error::vcs_with_source(format!("Failed to resolve ref: {base_ref}"), e))?;
+        let head_obj = repo
+            .revparse_single(head_ref)
+            .map_err(|e| Error::vcs_with_source(format!("Failed to resolve ref: {head_ref}"), e))?;
+        let base_tree = base_obj
+            .peel_to_tree()
+            .map_err(|e| Error::vcs_with_source("Failed to get base tree", e))?;
+        let head_tree = head_obj
+            .peel_to_tree()
+            .map_err(|e| Error::vcs_with_source("Failed to get head tree", e))?;
+        Ok((base_tree, head_tree))
+    }
+
+    /// Collect file diffs and line counts from a git2 diff.
+    fn collect_diff_files(diff: &git2::Diff<'_>) -> Result<(Vec<FileDiff>, usize, usize)> {
+        let mut files = Vec::new();
+        let mut total_additions = 0;
+        let mut total_deletions = 0;
+
+        diff.foreach(
+            &mut |delta, _| {
+                let path = delta
+                    .new_file()
+                    .path()
+                    .or_else(|| delta.old_file().path())
+                    .map(PathBuf::from)
+                    .unwrap_or_default();
+                files.push(FileDiff {
+                    id: id::generate().to_string(),
+                    path,
+                    status: Self::delta_to_status(delta.status()),
+                    additions: 0,
+                    deletions: 0,
+                });
+                true
+            },
+            None,
+            None,
+            Some(&mut |_delta, _hunk, line| {
+                match line.origin() {
+                    '+' => total_additions += 1,
+                    '-' => total_deletions += 1,
+                    _ => {}
+                }
+                true
+            }),
+        )
+        .map_err(|e| Error::vcs_with_source("Failed to iterate diff", e))?;
+
+        Ok((files, total_additions, total_deletions))
+    }
 }
 
 impl Default for GitProvider {
@@ -317,59 +377,13 @@ impl VcsProvider for GitProvider {
         head_ref: &str,
     ) -> Result<RefDiff> {
         let git_repo = Self::open_repo(repo.path())?;
-
-        let base_obj = git_repo
-            .revparse_single(base_ref)
-            .map_err(|e| Error::vcs_with_source(format!("Failed to resolve ref: {base_ref}"), e))?;
-        let head_obj = git_repo
-            .revparse_single(head_ref)
-            .map_err(|e| Error::vcs_with_source(format!("Failed to resolve ref: {head_ref}"), e))?;
-
-        let base_tree = base_obj
-            .peel_to_tree()
-            .map_err(|e| Error::vcs_with_source("Failed to get base tree", e))?;
-        let head_tree = head_obj
-            .peel_to_tree()
-            .map_err(|e| Error::vcs_with_source("Failed to get head tree", e))?;
+        let (base_tree, head_tree) = Self::resolve_trees(&git_repo, base_ref, head_ref)?;
 
         let diff = git_repo
             .diff_tree_to_tree(Some(&base_tree), Some(&head_tree), None)
             .map_err(|e| Error::vcs_with_source("Failed to create diff", e))?;
 
-        let mut files = Vec::new();
-        let mut total_additions = 0;
-        let mut total_deletions = 0;
-
-        diff.foreach(
-            &mut |delta, _| {
-                let path = delta
-                    .new_file()
-                    .path()
-                    .or_else(|| delta.old_file().path())
-                    .map(PathBuf::from)
-                    .unwrap_or_default();
-
-                files.push(FileDiff {
-                    id: id::generate().to_string(),
-                    path,
-                    status: Self::delta_to_status(delta.status()),
-                    additions: 0,
-                    deletions: 0,
-                });
-                true
-            },
-            None,
-            None,
-            Some(&mut |_delta, _hunk, line| {
-                match line.origin() {
-                    '+' => total_additions += 1,
-                    '-' => total_deletions += 1,
-                    _ => {}
-                }
-                true
-            }),
-        )
-        .map_err(|e| Error::vcs_with_source("Failed to iterate diff", e))?;
+        let (files, total_additions, total_deletions) = Self::collect_diff_files(&diff)?;
 
         Ok(RefDiff {
             id: id::generate().to_string(),

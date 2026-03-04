@@ -5,17 +5,17 @@ use mcb_domain::entities::memory::{MemoryFilter, Observation, SessionSummary};
 use mcb_domain::error::Result;
 use mcb_domain::ports::{FtsSearchResult, MemoryRepository};
 use mcb_domain::value_objects::{ObservationId, SessionId};
-use mcb_utils::constants::values::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
+use mcb_utils::constants::limits::OBSERVATION_LIST_MAX_LIMIT;
+use mcb_utils::constants::values::DEFAULT_ORG_ID;
 use sea_orm::entity::prelude::*;
 use sea_orm::sea_query::{Expr, ExprTrait, OnConflict, Order, Query};
 use sea_orm::{
-    ActiveValue::Set, ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, QueryFilter,
-    QueryOrder, Statement, Value,
+    ColumnTrait, ConnectionTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder,
+    Statement, Value,
 };
 
-use super::common::db_error;
-use crate::database::seaorm::entities::{observation, organization, project, session_summary};
-use mcb_utils::constants::limits::OBSERVATION_LIST_MAX_LIMIT;
+use super::common::{db_error, ensure_org_and_project};
+use crate::database::seaorm::entities::{observation, session_summary};
 
 /// SeaORM-backed implementation for observation persistence and retrieval.
 pub struct SeaOrmObservationRepository {
@@ -23,74 +23,13 @@ pub struct SeaOrmObservationRepository {
 }
 
 impl SeaOrmObservationRepository {
+    /// Create a new `SeaOrmObservationRepository`.
     #[must_use]
-    /// Creates a new observation repository backed by the provided database connection.
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
 
-    fn ignore_not_inserted<T>(
-        result: std::result::Result<T, DbErr>,
-    ) -> std::result::Result<(), DbErr> {
-        match result {
-            Ok(_) | Err(DbErr::RecordNotInserted) => Ok(()),
-            Err(e) => Err(e),
-        }
-    }
-
-    async fn ensure_org_and_project(
-        &self,
-        org_id: &str,
-        project_id: &str,
-        timestamp: i64,
-    ) -> Result<()> {
-        let org = organization::ActiveModel {
-            id: Set(org_id.to_owned()),
-            name: Set(DEFAULT_ORG_NAME.to_owned()),
-            slug: Set(DEFAULT_ORG_NAME.to_owned()),
-            settings_json: Set("{}".to_owned()),
-            created_at: Set(timestamp),
-            updated_at: Set(timestamp),
-        };
-
-        Self::ignore_not_inserted(
-            organization::Entity::insert(org)
-                .on_conflict(
-                    OnConflict::column(organization::Column::Id)
-                        .do_nothing()
-                        .to_owned(),
-                )
-                .exec(&self.db)
-                .await,
-        )
-        .map_err(db_error("auto-create default org"))?;
-
-        let proj = project::ActiveModel {
-            id: Set(project_id.to_owned()),
-            org_id: Set(DEFAULT_ORG_ID.to_owned()),
-            name: Set(format!("Project {project_id}")),
-            path: Set(project_id.to_owned()),
-            created_at: Set(timestamp),
-            updated_at: Set(timestamp),
-        };
-
-        Self::ignore_not_inserted(
-            project::Entity::insert(proj)
-                .on_conflict(
-                    OnConflict::column(project::Column::Id)
-                        .do_nothing()
-                        .to_owned(),
-                )
-                .exec(&self.db)
-                .await,
-        )
-        .map_err(db_error("auto-create project"))?;
-
-        Ok(())
-    }
-
-    /// Returns the SQL expression for checking tag containment, appropriate for the
-    /// current database backend.
+    /// Returns the SQL expression for tag containment per database backend.
     fn tag_contains_sql(&self) -> &'static str {
         use sea_orm::DatabaseBackend;
         match self.db.get_database_backend() {
@@ -179,11 +118,9 @@ impl SeaOrmObservationRepository {
             .from(observation::Entity)
             .order_by(observation::Column::CreatedAt, Order::Desc)
             .limit(limit as u64);
-
         if let Some(f) = filter {
             Self::apply_filter(&mut query, f, self.tag_contains_sql());
         }
-
         self.db.get_database_backend().build(&query)
     }
 
@@ -197,7 +134,6 @@ impl SeaOrmObservationRepository {
             .query_all_raw(self.build_list_sql(filter, limit))
             .await
             .map_err(db_error("list observations"))?;
-
         rows.into_iter()
             .map(|row| {
                 let model = observation::Model {
@@ -217,11 +153,7 @@ impl SeaOrmObservationRepository {
             .map_err(db_error("decode observations"))
     }
 
-    /// Lists observations using the optional filter and result limit.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the database query fails.
+    /// List observations matching an optional filter, up to `limit`.
     pub async fn list_observations(
         &self,
         filter: Option<&MemoryFilter>,
@@ -230,11 +162,7 @@ impl SeaOrmObservationRepository {
         self.list_by_filter(filter, limit).await
     }
 
-    /// Selects observations for context injection, capped by `max_chars` content size.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the database query fails.
+    /// Inject observations matching a filter, capped by `max_chars` total content size.
     pub async fn inject_observations(
         &self,
         filter: Option<&MemoryFilter>,
@@ -244,7 +172,6 @@ impl SeaOrmObservationRepository {
         let candidates = self.list_by_filter(filter, limit).await?;
         let mut selected = Vec::new();
         let mut total_chars = 0usize;
-
         for obs in candidates {
             total_chars += obs.content.len();
             if total_chars > max_chars {
@@ -252,7 +179,6 @@ impl SeaOrmObservationRepository {
             }
             selected.push(obs);
         }
-
         Ok(selected)
     }
 }
@@ -260,15 +186,14 @@ impl SeaOrmObservationRepository {
 #[async_trait]
 impl MemoryRepository for SeaOrmObservationRepository {
     async fn store_observation(&self, observation: &Observation) -> Result<()> {
-        self.ensure_org_and_project(
+        ensure_org_and_project(
+            &self.db,
             DEFAULT_ORG_ID,
             &observation.project_id,
             observation.created_at,
         )
         .await?;
-
         let active: observation::ActiveModel = observation.clone().into();
-
         observation::Entity::insert(active)
             .on_conflict(
                 OnConflict::column(observation::Column::ContentHash)
@@ -278,7 +203,6 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .exec(&self.db)
             .await
             .map_err(db_error("store observation"))?;
-
         Ok(())
     }
 
@@ -313,7 +237,6 @@ impl MemoryRepository for SeaOrmObservationRepository {
                 })
                 .collect());
         }
-
         let sql = "SELECT id, bm25(observations_fts) AS rank FROM observations_fts \
                    WHERE observations_fts MATCH ? ORDER BY bm25(observations_fts) LIMIT ?";
         let stmt = Statement::from_sql_and_values(
@@ -321,13 +244,11 @@ impl MemoryRepository for SeaOrmObservationRepository {
             sql,
             vec![Value::from(query), Value::from(limit as i64)],
         );
-
         let rows = self
             .db
             .query_all_raw(stmt)
             .await
-            .map_err(db_error("search observations using FTS5"))?;
-
+            .map_err(db_error("search observations FTS5"))?;
         rows.into_iter()
             .map(|row| {
                 Ok(FtsSearchResult {
@@ -347,9 +268,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
         if ids.is_empty() {
             return Ok(Vec::new());
         }
-
         let id_values: Vec<String> = ids.iter().map(ToString::to_string).collect();
-
         observation::Entity::find()
             .filter(observation::Column::Id.is_in(id_values))
             .all(&self.db)
@@ -368,32 +287,30 @@ impl MemoryRepository for SeaOrmObservationRepository {
         let Some(anchor) = self.get_observation(anchor_id).await? else {
             return Ok(Vec::new());
         };
-
         let mut before_filter = filter.clone().unwrap_or_default();
         before_filter.time_range = Some((i64::MIN, anchor.created_at - 1));
-
         let mut after_filter = filter.unwrap_or_default();
         after_filter.time_range = Some((anchor.created_at + 1, i64::MAX));
 
         let mut before_items = self.list_by_filter(Some(&before_filter), before).await?;
         before_items.sort_by_key(|obs| obs.created_at);
-
         let mut timeline = before_items;
         timeline.push(anchor);
-
         let mut after_items = self.list_by_filter(Some(&after_filter), after).await?;
         after_items.sort_by_key(|obs| obs.created_at);
         timeline.extend(after_items);
-
         Ok(timeline)
     }
 
     async fn store_session_summary(&self, summary: &SessionSummary) -> Result<()> {
-        self.ensure_org_and_project(&summary.org_id, &summary.project_id, summary.created_at)
-            .await?;
-
+        ensure_org_and_project(
+            &self.db,
+            &summary.org_id,
+            &summary.project_id,
+            summary.created_at,
+        )
+        .await?;
         let active: session_summary::ActiveModel = summary.clone().into();
-
         session_summary::Entity::insert(active)
             .on_conflict(
                 OnConflict::column(session_summary::Column::Id)
@@ -409,7 +326,6 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .exec(&self.db)
             .await
             .map_err(db_error("store session summary"))?;
-
         Ok(())
     }
 

@@ -44,3 +44,13 @@ pub mod vcs;
 pub mod vector_store;
 /// Re-export all values for convenience.
 pub use values::*;
+
+/// Batch-define `pub const` string constants with optional doc comments.
+///
+/// Used by sub-modules to reduce boilerplate in constant definitions.
+macro_rules! define_str_consts {
+    ($($(#[doc = $doc:literal])? $name:ident = $val:literal;)*) => {
+        $($(#[doc = $doc])? pub const $name: &str = $val;)*
+    };
+}
+pub(crate) use define_str_consts;

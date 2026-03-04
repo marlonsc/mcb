@@ -2,6 +2,9 @@
 //!
 //! Implements all entity repository port traits from `mcb-domain` using `SeaORM`
 //! for type-safe database access. Covers VCS, Plan, Issue, and Org entity groups.
+//!
+//! Each sub-module contains the macro-generated implementations for its domain
+//! group; `SeaOrmEntityRepository` is defined here and shared via `use super::*`.
 
 use std::sync::Arc;
 
@@ -30,11 +33,14 @@ use crate::database::seaorm::entities::{
     user, worktree,
 };
 
+// Sub-modules containing the macro-generated trait implementations.
+mod issues;
+mod org;
+mod plans;
+mod teams;
+mod vcs;
+
 /// Unified SeaORM-backed entity repository implementing all entity CRUD traits.
-///
-/// This single struct implements `VcsEntityRepository`, `OrgEntityRepository`,
-/// `PlanEntityRepository`, and `IssueEntityRepository` — providing a unified
-/// persistence layer for all entity types through `SeaORM`.
 pub struct SeaOrmEntityRepository {
     db: Arc<DatabaseConnection>,
 }
@@ -52,9 +58,3 @@ impl SeaOrmEntityRepository {
         self.db.as_ref()
     }
 }
-
-mod issues;
-mod org;
-mod plans;
-mod teams;
-mod vcs;

@@ -16,28 +16,15 @@ sea_impl_crud_scoped!(VcsRepositoryRegistry for SeaOrmEntityRepository { db: db,
     delete: delete_repository
 });
 
-// VcsBranchRegistry has a mixed signature: get/list are org-scoped but delete takes only id.
-// Cannot use sea_impl_crud_scoped! here.
-#[async_trait]
-impl VcsBranchRegistry for SeaOrmEntityRepository {
-    async fn create_branch(&self, branch: &Branch) -> Result<()> {
-        sea_repo_insert!(self.db(), branch, branch, "create branch")
-    }
-    async fn get_branch(&self, org_id: &str, id: &str) -> Result<Branch> {
-        sea_repo_get_filtered!(self.db(), branch, Branch, "Branch", id, "get branch",
-            branch::Column::OrgId => org_id)
-    }
-    async fn list_branches(&self, org_id: &str, repository_id: &str) -> Result<Vec<Branch>> {
-        sea_repo_list!(self.db(), branch, Branch, "list branches",
-            branch::Column::OrgId => org_id, branch::Column::RepositoryId => repository_id)
-    }
-    async fn update_branch(&self, branch: &Branch) -> Result<()> {
-        sea_repo_update!(self.db(), branch, branch, "update branch")
-    }
-    async fn delete_branch(&self, id: &str) -> Result<()> {
-        sea_repo_delete!(self.db(), branch, id, "delete branch")
-    }
-}
+sea_impl_crud_mixed!(VcsBranchRegistry for SeaOrmEntityRepository { db: db,
+    entity: branch, domain: Branch, label: "Branch",
+    scope_col: branch::Column::OrgId,
+    create: create_branch(b),
+    get: get_branch,
+    list: list_branches(branch::Column::RepositoryId => repository_id),
+    update: update_branch(b),
+    delete: delete_branch(id),
+});
 
 sea_impl_crud!(VcsWorktreeRegistry for SeaOrmEntityRepository { db: db,
     entity: worktree, domain: Worktree, label: "Worktree",

@@ -71,153 +71,194 @@ impl SearchHandler {
         }
 
         match args.resource {
-            SearchResource::Code => {
-                // Auto-resolve collection: explicit param > repo_id > error
-                let resolved_name = args.collection.as_deref().or(args.repo_id.as_deref());
-                let collection_name = match resolved_name {
-                    Some(name) => name,
-                    None => {
-                        return Ok(to_contextual_tool_error(Error::invalid_argument(
-                            "collection could not be resolved: provide collection or ensure a repository is detected",
-                        )));
-                    }
-                };
-                let collection_id = match normalize_collection_name(collection_name) {
-                    Ok(id) => id,
-                    Err(reason) => {
-                        return Ok(to_contextual_tool_error(Error::invalid_argument(reason)));
-                    }
-                };
-                let timer = Instant::now();
-                let limit = args.limit.unwrap_or(DEFAULT_SEARCH_LIMIT as u32) as usize;
-                match self
-                    .search_service
-                    .search(&collection_id, query, limit)
-                    .await
-                {
-                    Ok(results) => {
-                        // Attempt hybrid re-ranking (transparent enhancement)
-                        let final_results = match self
-                            .hybrid_search
-                            .search(collection_name, query, results.clone(), limit)
-                            .await
-                        {
-                            Ok(enhanced) if !enhanced.is_empty() => {
-                                tracing::info!(
-                                    "Hybrid search enhanced {} results for collection '{}'",
-                                    enhanced.len(),
-                                    collection_name
-                                );
-                                enhanced
-                            }
-                            _ => results,
-                        };
-                        ResponseFormatter::format_search_response(
-                            query,
-                            &final_results,
-                            timer.elapsed(),
-                            limit,
-                        )
-                    }
-                    Err(e) => {
-                        // Vector search failed — attempt hybrid fallback
-                        tracing::info!(
-                            "Vector search failed for '{}', attempting hybrid fallback: {}",
-                            collection_name,
-                            e
-                        );
-
-                        // T12: Trigger background auto-indexing (fire-and-forget)
-                        if let Some(repo_path) = args.repo_path.as_deref() {
-                            let path = PathBuf::from(repo_path);
-                            if path.is_dir() {
-                                let indexing = Arc::clone(&self.indexing_service);
-                                let coll_id = collection_id;
-                                let _ = tokio::spawn(async move {
-                                    tracing::info!(
-                                        "Auto-indexing triggered for '{}'",
-                                        coll_id.as_str()
-                                    );
-                                    if let Err(idx_err) =
-                                        indexing.index_codebase(&path, &coll_id).await
-                                    {
-                                        tracing::warn!(
-                                            "Auto-indexing failed (non-fatal): {idx_err}"
-                                        );
-                                    }
-                                });
-                            }
-                        }
-
-                        match self
-                            .hybrid_search
-                            .search(collection_name, query, vec![], limit)
-                            .await
-                        {
-                            Ok(fallback) if !fallback.is_empty() => {
-                                ResponseFormatter::format_search_response(
-                                    query,
-                                    &fallback,
-                                    timer.elapsed(),
-                                    limit,
-                                )
-                            }
-                            _ => Ok(to_contextual_tool_error(e)),
-                        }
-                    }
-                }
-            }
+            SearchResource::Code => self.handle_code_search(query, &args).await,
             SearchResource::Memory | SearchResource::Context => {
-                let filter = MemoryFilter {
-                    tags: args.tags.clone(),
-                    r#type: if matches!(args.resource, SearchResource::Context) {
-                        Some(mcb_domain::entities::memory::ObservationType::Context)
-                    } else {
-                        None
-                    },
-                    session_id: args.session_id.map(|id| {
-                        let id_str = id.to_string();
-                        domain_id::correlate_id("session", &id_str)
-                    }),
-                    ..Default::default()
-                };
-                let limit = args.limit.unwrap_or(DEFAULT_SEARCH_LIMIT as u32) as usize;
-                match self
-                    .memory_service
-                    .search_memories(query, Some(filter), limit)
-                    .await
-                {
-                    Ok(results) => {
-                        let results: Vec<_> = results
-                            .into_iter()
-                            .map(|r| {
-                                serde_json::json!({
-                                    FIELD_OBSERVATION_ID: r.observation.id,
-                                    "project_id": r.observation.project_id,
-                                    "content": r.observation.content,
-                                    FIELD_OBSERVATION_TYPE: r.observation.r#type.as_str(),
-                                    "tags": r.observation.tags,
-                                    "similarity_score": r.similarity_score,
-                                    "session_id": r.observation.metadata.session_id.clone(),
-                                    "repo_id": r.observation.metadata.repo_id.clone(),
-                                    "file_path": r.observation.metadata.file_path,
-                                    (FIELD_BRANCH): r.observation.metadata.branch,
-                                    (FIELD_COMMIT): r.observation.metadata.commit,
-                                    "origin_context": r.observation.metadata.origin_context,
-                                })
-                            })
-                            .collect();
-                        let response = ResponseFormatter::json_success(&serde_json::json!({
-                            (FIELD_QUERY): query,
-                            (FIELD_COUNT): results.len(),
-                            (FIELD_RESULTS): results,
-                        }))
-                        .map_err(|e| safe_internal_error("format memory search results", &e))?;
-                        Ok(response)
-                    }
-                    Err(e) => Ok(to_contextual_tool_error(e)),
-                }
+                self.handle_memory_search(query, &args).await
             }
         }
+    }
+
+    async fn resolve_collection<'a>(args: &'a SearchArgs) -> Result<&'a str, CallToolResult> {
+        args.collection
+            .as_deref()
+            .or(args.repo_id.as_deref())
+            .ok_or_else(|| {
+                to_contextual_tool_error(Error::invalid_argument(
+                    "collection could not be resolved: provide collection or ensure a repository is detected",
+                ))
+            })
+    }
+
+    async fn handle_code_search(
+        &self,
+        query: &str,
+        args: &SearchArgs,
+    ) -> Result<CallToolResult, McpError> {
+        let collection_name = match Self::resolve_collection(args).await {
+            Ok(name) => name,
+            Err(err) => return Ok(err),
+        };
+        let collection_id = match normalize_collection_name(collection_name) {
+            Ok(id) => id,
+            Err(reason) => {
+                return Ok(to_contextual_tool_error(Error::invalid_argument(reason)));
+            }
+        };
+
+        let timer = Instant::now();
+        let limit = args.limit.unwrap_or(DEFAULT_SEARCH_LIMIT as u32) as usize;
+
+        match self
+            .search_service
+            .search(&collection_id, query, limit)
+            .await
+        {
+            Ok(results) => {
+                let final_results = self
+                    .try_hybrid_enhance(collection_name, query, results, limit)
+                    .await;
+                ResponseFormatter::format_search_response(
+                    query,
+                    &final_results,
+                    timer.elapsed(),
+                    limit,
+                )
+            }
+            Err(e) => {
+                tracing::info!(
+                    "Vector search failed for '{}', attempting hybrid fallback: {}",
+                    collection_name,
+                    e
+                );
+                self.trigger_auto_indexing(args.repo_path.as_deref(), collection_id);
+                self.hybrid_fallback_or_error(collection_name, query, limit, timer, e)
+                    .await
+            }
+        }
+    }
+
+    async fn try_hybrid_enhance(
+        &self,
+        collection_name: &str,
+        query: &str,
+        results: Vec<mcb_domain::value_objects::SearchResult>,
+        limit: usize,
+    ) -> Vec<mcb_domain::value_objects::SearchResult> {
+        match self
+            .hybrid_search
+            .search(collection_name, query, results.clone(), limit)
+            .await
+        {
+            Ok(enhanced) if !enhanced.is_empty() => {
+                tracing::info!(
+                    "Hybrid search enhanced {} results for collection '{}'",
+                    enhanced.len(),
+                    collection_name
+                );
+                enhanced
+            }
+            _ => results,
+        }
+    }
+
+    fn trigger_auto_indexing(
+        &self,
+        repo_path: Option<&str>,
+        collection_id: mcb_domain::value_objects::CollectionId,
+    ) {
+        if let Some(repo_path) = repo_path {
+            let path = PathBuf::from(repo_path);
+            if path.is_dir() {
+                let indexing = Arc::clone(&self.indexing_service);
+                tokio::spawn(async move {
+                    tracing::info!("Auto-indexing triggered for '{}'", collection_id.as_str());
+                    if let Err(idx_err) = indexing.index_codebase(&path, &collection_id).await {
+                        tracing::warn!("Auto-indexing failed (non-fatal): {idx_err}");
+                    }
+                });
+            }
+        }
+    }
+
+    async fn hybrid_fallback_or_error(
+        &self,
+        collection_name: &str,
+        query: &str,
+        limit: usize,
+        timer: Instant,
+        original_error: Error,
+    ) -> Result<CallToolResult, McpError> {
+        match self
+            .hybrid_search
+            .search(collection_name, query, vec![], limit)
+            .await
+        {
+            Ok(fallback) if !fallback.is_empty() => {
+                ResponseFormatter::format_search_response(query, &fallback, timer.elapsed(), limit)
+            }
+            _ => Ok(to_contextual_tool_error(original_error)),
+        }
+    }
+
+    async fn handle_memory_search(
+        &self,
+        query: &str,
+        args: &SearchArgs,
+    ) -> Result<CallToolResult, McpError> {
+        let filter = MemoryFilter {
+            tags: args.tags.clone(),
+            r#type: if matches!(args.resource, SearchResource::Context) {
+                Some(mcb_domain::entities::memory::ObservationType::Context)
+            } else {
+                None
+            },
+            session_id: args.session_id.map(|id| {
+                let id_str = id.to_string();
+                domain_id::correlate_id("session", &id_str)
+            }),
+            ..Default::default()
+        };
+        let limit = args.limit.unwrap_or(DEFAULT_SEARCH_LIMIT as u32) as usize;
+
+        match self
+            .memory_service
+            .search_memories(query, Some(filter), limit)
+            .await
+        {
+            Ok(results) => Self::format_memory_results(query, results),
+            Err(e) => Ok(to_contextual_tool_error(e)),
+        }
+    }
+
+    fn format_memory_results(
+        query: &str,
+        results: Vec<mcb_domain::entities::memory::MemorySearchResult>,
+    ) -> Result<CallToolResult, McpError> {
+        let results: Vec<_> = results
+            .into_iter()
+            .map(|r| {
+                serde_json::json!({
+                    FIELD_OBSERVATION_ID: r.observation.id,
+                    "project_id": r.observation.project_id,
+                    "content": r.observation.content,
+                    FIELD_OBSERVATION_TYPE: r.observation.r#type.as_str(),
+                    "tags": r.observation.tags,
+                    "similarity_score": r.similarity_score,
+                    "session_id": r.observation.metadata.session_id.clone(),
+                    "repo_id": r.observation.metadata.repo_id.clone(),
+                    "file_path": r.observation.metadata.file_path,
+                    (FIELD_BRANCH): r.observation.metadata.branch,
+                    (FIELD_COMMIT): r.observation.metadata.commit,
+                    "origin_context": r.observation.metadata.origin_context,
+                })
+            })
+            .collect();
+        let response = ResponseFormatter::json_success(&serde_json::json!({
+            (FIELD_QUERY): query,
+            (FIELD_COUNT): results.len(),
+            (FIELD_RESULTS): results,
+        }))
+        .map_err(|e| safe_internal_error("format memory search results", &e))?;
+        Ok(response)
     }
 }

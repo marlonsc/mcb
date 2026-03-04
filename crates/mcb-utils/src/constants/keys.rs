@@ -6,137 +6,111 @@
 //! Contains column names and other schema-related constants that are used
 //! across the domain, infrastructure, and server layers.
 
-/// Column/Field name for "`delegations_count`"
-pub const DELEGATIONS_COUNT: &str = "delegations_count";
-
-/// Column/Field name for "`tool_calls_count`"
-pub const TOOL_CALLS_COUNT: &str = "tool_calls_count";
-
-/// Column/Field name for "`token_count`"
-pub const TOKEN_COUNT: &str = "token_count";
-
-/// Column/Field name for "`duration_ms`"
-pub const DURATION_MS: &str = "duration_ms";
-
-/// Column/Field name for "id"
-pub const ID: &str = "id";
-
-/// Column/Field name for "name"
-pub const NAME: &str = "name";
-
-/// Column/Field name for "`created_at`"
-pub const CREATED_AT: &str = "created_at";
-
-/// Column/Field name for "status"
-pub const STATUS: &str = "status";
-
-/// Column/Field name for "model"
-pub const MODEL: &str = "model";
-
-/// Column/Field name for "`agent_type`"
-pub const AGENT_TYPE: &str = "agent_type";
-
-/// Column/Field name for "`parent_session_id`"
-pub const PARENT_SESSION_ID: &str = "parent_session_id";
-
-/// Column/Field name for "`started_at`"
-pub const STARTED_AT: &str = "started_at";
-
-/// Column/Field name for "`ended_at`"
-pub const ENDED_AT: &str = "ended_at";
-
-/// Column/Field name for "`prompt_summary`"
-pub const PROMPT_SUMMARY: &str = "prompt_summary";
-
-/// Column/Field name for "`result_summary`"
-pub const RESULT_SUMMARY: &str = "result_summary";
-
-/// Column/Field name for "`session_summary_id`"
-pub const SESSION_SUMMARY_ID: &str = "session_summary_id";
-
-/// Project ID column key.
-pub const PROJECT_ID: &str = "project_id";
-
-/// Worktree ID column key.
-pub const WORKTREE_ID: &str = "worktree_id";
-
-/// Repository ID column key.
-pub const REPO_ID: &str = "repo_id";
-
-/// Repository path column key.
-pub const REPO_PATH: &str = "repo_path";
-
-// Metadata keys for code chunks
-/// Metadata key for "`start_line`"
-pub const METADATA_KEY_START_LINE: &str = "start_line";
-
-/// Metadata key for "`end_line`"
-pub const METADATA_KEY_END_LINE: &str = "end_line";
-
-/// Metadata key for "`chunk_type`"
-pub const METADATA_KEY_CHUNK_TYPE: &str = "chunk_type";
-
-/// Metadata key for "`file_path`"
-pub const METADATA_KEY_FILE_PATH: &str = "file_path";
-
-/// Metadata key for "`vectors_count`"
-pub const METADATA_KEY_VECTORS_COUNT: &str = "vectors_count";
-
-/// Column/Field name for "`org_id`"
-pub const ORG_ID: &str = "org_id";
-
-// Metadata keys for vector/observation storage
-/// Metadata key for "content"
-pub const METADATA_KEY_CONTENT: &str = "content";
-
-/// Metadata key for "type"
-pub const METADATA_KEY_TYPE: &str = "type";
-
-/// Metadata key for "tags"
-pub const METADATA_KEY_TAGS: &str = "tags";
-
-/// Metadata key for "language"
-pub const METADATA_KEY_LANGUAGE: &str = "language";
-
-/// Metadata key for "`session_id`" (observation context)
-pub const METADATA_KEY_SESSION_ID: &str = "session_id";
-
-/// Metadata key for "`line_number`"
-pub const METADATA_KEY_LINE_NUMBER: &str = "line_number";
+use super::define_str_consts;
 
 // ============================================================================
-// JSON response field names (MCP tool handlers)
+// Column / Field Names (macro-generated)
 // ============================================================================
 
-/// JSON field: observation ID.
-pub const FIELD_OBSERVATION_ID: &str = "observation_id";
+define_str_consts! {
+    /// Column/Field name for "`delegations_count`".
+    DELEGATIONS_COUNT = "delegations_count";
+    /// Column/Field name for "`tool_calls_count`".
+    TOOL_CALLS_COUNT = "tool_calls_count";
+    /// Column/Field name for "`token_count`".
+    TOKEN_COUNT = "token_count";
+    /// Column/Field name for "`duration_ms`".
+    DURATION_MS = "duration_ms";
+    /// Column/Field name for "id".
+    ID = "id";
+    /// Column/Field name for "name".
+    NAME = "name";
+    /// Column/Field name for "`created_at`".
+    CREATED_AT = "created_at";
+    /// Column/Field name for "status".
+    STATUS = "status";
+    /// Column/Field name for "model".
+    MODEL = "model";
+    /// Column/Field name for "`agent_type`".
+    AGENT_TYPE = "agent_type";
+    /// Column/Field name for "`parent_session_id`".
+    PARENT_SESSION_ID = "parent_session_id";
+    /// Column/Field name for "`started_at`".
+    STARTED_AT = "started_at";
+    /// Column/Field name for "`ended_at`".
+    ENDED_AT = "ended_at";
+    /// Column/Field name for "`prompt_summary`".
+    PROMPT_SUMMARY = "prompt_summary";
+    /// Column/Field name for "`result_summary`".
+    RESULT_SUMMARY = "result_summary";
+    /// Column/Field name for "`session_summary_id`".
+    SESSION_SUMMARY_ID = "session_summary_id";
+    /// Project ID column key.
+    PROJECT_ID = "project_id";
+    /// Worktree ID column key.
+    WORKTREE_ID = "worktree_id";
+    /// Repository ID column key.
+    REPO_ID = "repo_id";
+    /// Repository path column key.
+    REPO_PATH = "repo_path";
+    /// Column/Field name for "`org_id`".
+    ORG_ID = "org_id";
+}
 
-/// JSON field: observation type.
-pub const FIELD_OBSERVATION_TYPE: &str = "observation_type";
+// ============================================================================
+// Metadata Keys (macro-generated)
+// ============================================================================
 
-/// JSON field: message text.
-pub const FIELD_MESSAGE: &str = "message";
+define_str_consts! {
+    /// Metadata key for "`start_line`".
+    METADATA_KEY_START_LINE = "start_line";
+    /// Metadata key for "`end_line`".
+    METADATA_KEY_END_LINE = "end_line";
+    /// Metadata key for "`chunk_type`".
+    METADATA_KEY_CHUNK_TYPE = "chunk_type";
+    /// Metadata key for "`file_path`".
+    METADATA_KEY_FILE_PATH = "file_path";
+    /// Metadata key for "`vectors_count`".
+    METADATA_KEY_VECTORS_COUNT = "vectors_count";
+    /// Metadata key for "content".
+    METADATA_KEY_CONTENT = "content";
+    /// Metadata key for "type".
+    METADATA_KEY_TYPE = "type";
+    /// Metadata key for "tags".
+    METADATA_KEY_TAGS = "tags";
+    /// Metadata key for "language".
+    METADATA_KEY_LANGUAGE = "language";
+    /// Metadata key for "`session_id`".
+    METADATA_KEY_SESSION_ID = "session_id";
+    /// Metadata key for "`line_number`".
+    METADATA_KEY_LINE_NUMBER = "line_number";
+}
 
-/// Response count field name.
-pub const FIELD_COUNT: &str = "count";
+// ============================================================================
+// JSON Response Field Names (macro-generated)
+// ============================================================================
 
-/// Response results array field name.
-pub const FIELD_RESULTS: &str = "results";
-
-/// Search query echo field name.
-pub const FIELD_QUERY: &str = "query";
-
-/// Updated flag field name.
-pub const FIELD_UPDATED: &str = "updated";
-
-/// Branch name field name.
-pub const FIELD_BRANCH: &str = "branch";
-
-/// Commit reference field name.
-pub const FIELD_COMMIT: &str = "commit";
-
-/// Sessions list field name.
-pub const FIELD_SESSIONS: &str = "sessions";
-
-/// Observations list field name.
-pub const FIELD_OBSERVATIONS: &str = "observations";
+define_str_consts! {
+    /// JSON field: observation ID.
+    FIELD_OBSERVATION_ID = "observation_id";
+    /// JSON field: observation type.
+    FIELD_OBSERVATION_TYPE = "observation_type";
+    /// JSON field: message text.
+    FIELD_MESSAGE = "message";
+    /// Response count field name.
+    FIELD_COUNT = "count";
+    /// Response results array field name.
+    FIELD_RESULTS = "results";
+    /// Search query echo field name.
+    FIELD_QUERY = "query";
+    /// Updated flag field name.
+    FIELD_UPDATED = "updated";
+    /// Branch name field name.
+    FIELD_BRANCH = "branch";
+    /// Commit reference field name.
+    FIELD_COMMIT = "commit";
+    /// Sessions list field name.
+    FIELD_SESSIONS = "sessions";
+    /// Observations list field name.
+    FIELD_OBSERVATIONS = "observations";
+}

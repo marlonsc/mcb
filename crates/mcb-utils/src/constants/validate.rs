@@ -263,222 +263,156 @@ pub const DEFAULT_TDG_THRESHOLD: u32 = 50;
 pub const DEFAULT_MAX_FILE_LINES: usize = 500;
 
 // ============================================================================
-// YAML Rule Field Names
+// YAML Rule Field Names (macro-generated)
 // ============================================================================
 
-/// YAML field: rule identifier.
-pub const YAML_FIELD_ID: &str = "id";
+use super::define_str_consts;
 
-/// YAML field: rule display name.
-pub const YAML_FIELD_NAME: &str = "name";
+define_str_consts! {
+    /// YAML field: rule identifier.
+    YAML_FIELD_ID = "id";
+    /// YAML field: rule display name.
+    YAML_FIELD_NAME = "name";
+    /// YAML field: rule category.
+    YAML_FIELD_CATEGORY = "category";
+    /// YAML field: rule severity level.
+    YAML_FIELD_SEVERITY = "severity";
+    /// YAML field: rule enabled flag.
+    YAML_FIELD_ENABLED = "enabled";
+    /// YAML field: rule description text.
+    YAML_FIELD_DESCRIPTION = "description";
+    /// YAML field: rule rationale text.
+    YAML_FIELD_RATIONALE = "rationale";
+    /// YAML field: rule engine type.
+    YAML_FIELD_ENGINE = "engine";
+    /// YAML field: rule configuration block.
+    YAML_FIELD_CONFIG = "config";
+    /// YAML field: rule definition block.
+    YAML_FIELD_RULE = "rule";
+    /// YAML field: auto-fix suggestions.
+    YAML_FIELD_FIXES = "fixes";
+    /// YAML field: fix type.
+    YAML_FIELD_FIX_TYPE = "type";
+    /// YAML field: pattern match string.
+    YAML_FIELD_PATTERN = "pattern";
+    /// YAML field: violation message.
+    YAML_FIELD_MESSAGE = "message";
+    /// YAML field: lint select rules.
+    YAML_FIELD_LINT_SELECT = "lint_select";
+    /// YAML field: selectors block.
+    YAML_FIELD_SELECTORS = "selectors";
+    /// YAML field: language filter.
+    YAML_FIELD_LANGUAGE = "language";
+    /// YAML field: AST node type.
+    YAML_FIELD_NODE_TYPE = "node_type";
+    /// YAML field: AST query string.
+    YAML_FIELD_AST_QUERY = "ast_query";
+    /// YAML field: metrics thresholds.
+    YAML_FIELD_METRICS = "metrics";
+    /// YAML field: file filters.
+    YAML_FIELD_FILTERS = "filters";
+    /// YAML field: template base marker.
+    YAML_FIELD_BASE = "_base";
+    /// YAML field: template reference.
+    YAML_FIELD_TEMPLATE = "_template";
+    /// YAML field: rule extension marker.
+    YAML_FIELD_EXTENDS = "_extends";
+    /// YAML field: regex pattern.
+    YAML_FIELD_REGEX = "regex";
+    /// YAML field: patterns array.
+    YAML_FIELD_PATTERNS = "patterns";
+    /// YAML field: crate name.
+    YAML_FIELD_CRATE_NAME = "crate_name";
+    /// YAML field: allowed dependencies list.
+    YAML_FIELD_ALLOWED_DEPS = "allowed_dependencies";
+    /// YAML field: rule expression.
+    YAML_FIELD_EXPRESSION = "expression";
+    /// YAML field: rule condition.
+    YAML_FIELD_CONDITION = "condition";
+    /// YAML field: rule action.
+    YAML_FIELD_ACTION = "action";
+    /// YAML field: GRL rule definition.
+    GRL = "grl";
+    /// YAML field: rule definition block reference.
+    YAML_FIELD_RULE_DEFINITION = "rule_definition";
+}
 
-/// YAML field: rule category.
-pub const YAML_FIELD_CATEGORY: &str = "category";
-
-/// YAML field: rule severity level.
-pub const YAML_FIELD_SEVERITY: &str = "severity";
-
-/// YAML field: rule enabled flag.
-pub const YAML_FIELD_ENABLED: &str = "enabled";
-
-/// YAML field: rule description text.
-pub const YAML_FIELD_DESCRIPTION: &str = "description";
-
-/// YAML field: rule rationale text.
-pub const YAML_FIELD_RATIONALE: &str = "rationale";
-
-/// YAML field: rule engine type.
-pub const YAML_FIELD_ENGINE: &str = "engine";
-
-/// YAML field: rule configuration block.
-pub const YAML_FIELD_CONFIG: &str = "config";
-
-/// YAML field: rule definition block.
-pub const YAML_FIELD_RULE: &str = "rule";
-
-/// YAML field: auto-fix suggestions.
-pub const YAML_FIELD_FIXES: &str = "fixes";
-
-/// YAML field: fix type.
-pub const YAML_FIELD_FIX_TYPE: &str = "type";
-
-/// YAML field: pattern match string.
-pub const YAML_FIELD_PATTERN: &str = "pattern";
-
-/// YAML field: violation message.
-pub const YAML_FIELD_MESSAGE: &str = "message";
-
-/// YAML field: lint select rules.
-pub const YAML_FIELD_LINT_SELECT: &str = "lint_select";
-
-/// YAML field: selectors block.
-pub const YAML_FIELD_SELECTORS: &str = "selectors";
-
-/// YAML field: language filter.
-pub const YAML_FIELD_LANGUAGE: &str = "language";
-
-/// YAML field: AST node type.
-pub const YAML_FIELD_NODE_TYPE: &str = "node_type";
-
-/// YAML field: AST query string.
-pub const YAML_FIELD_AST_QUERY: &str = "ast_query";
-
-/// YAML field: metrics thresholds.
-pub const YAML_FIELD_METRICS: &str = "metrics";
-
-/// YAML field: file filters.
-pub const YAML_FIELD_FILTERS: &str = "filters";
-
-/// YAML field: template base marker.
-pub const YAML_FIELD_BASE: &str = "_base";
-
-/// YAML field: template reference.
-pub const YAML_FIELD_TEMPLATE: &str = "_template";
-
-/// YAML field: rule extension marker.
-pub const YAML_FIELD_EXTENDS: &str = "_extends";
-
-/// YAML field: regex pattern.
-pub const YAML_FIELD_REGEX: &str = "regex";
-
-/// YAML field: patterns array.
-pub const YAML_FIELD_PATTERNS: &str = "patterns";
-
-/// YAML field: crate name.
-pub const YAML_FIELD_CRATE_NAME: &str = "crate_name";
-
-/// YAML field: allowed dependencies list.
-pub const YAML_FIELD_ALLOWED_DEPS: &str = "allowed_dependencies";
-
-/// YAML field: rule expression (for expression engine).
-pub const YAML_FIELD_EXPRESSION: &str = "expression";
-
-/// YAML field: rule condition (for condition-action engines).
-pub const YAML_FIELD_CONDITION: &str = "condition";
-
-/// YAML field: rule action (for condition-action engines).
-pub const YAML_FIELD_ACTION: &str = "action";
-
-/// YAML field: GRL rule definition.
-pub const GRL: &str = "grl";
-
-/// YAML field: rule definition block reference.
-pub const YAML_FIELD_RULE_DEFINITION: &str = "rule_definition";
-
-// --- GRL Keywords ---
-
-/// GRL keyword: "when" condition block.
-pub const GRL_KEYWORD_WHEN: &str = "when";
-
-/// GRL keyword: "then" action block.
-pub const GRL_KEYWORD_THEN: &str = "then";
-
-// --- Metrics Specific Fields ---
-
-/// YAML field: cognitive complexity metric.
-pub const YAML_FIELD_COGNITIVE_COMPLEXITY: &str = "cognitive_complexity";
-
-/// YAML field: cyclomatic complexity metric.
-pub const YAML_FIELD_CYCLOMATIC_COMPLEXITY: &str = "cyclomatic_complexity";
-
-/// YAML field: function length metric.
-pub const YAML_FIELD_FUNCTION_LENGTH: &str = "function_length";
-
-/// YAML field: nesting depth metric.
-pub const YAML_FIELD_NESTING_DEPTH: &str = "nesting_depth";
-
-// --- Rusty Rules specific fields ---
-
-/// Rusty Rules field: "all" logical operation.
-pub const RUSTY_FIELD_ALL: &str = "all";
-
-/// Rusty Rules field: "any" logical operation.
-pub const RUSTY_FIELD_ANY: &str = "any";
-
-/// Rusty Rules field: "not" logical operation.
-pub const RUSTY_FIELD_NOT: &str = "not";
-
-/// Rusty Rules field: fact type identifier.
-pub const RUSTY_FIELD_FACT_TYPE: &str = "fact_type";
-
-/// Rusty Rules field: field name indicator.
-pub const RUSTY_FIELD_FIELD: &str = "field";
-
-/// Rusty Rules field: matching operator.
-pub const RUSTY_FIELD_OPERATOR: &str = "operator";
-
-/// Rusty Rules field: expected value.
-pub const RUSTY_FIELD_VALUE: &str = "value";
-
-/// Rusty Rules field: violation details.
-pub const RUSTY_FIELD_VIOLATION: &str = "violation";
-
-// --- Metrics Threshold Field Names ---
-
-/// Metrics field: maximum threshold.
-pub const METRICS_FIELD_MAX: &str = "max";
-
-/// Metrics field: severity override.
-pub const METRICS_FIELD_SEVERITY_OVERRIDE: &str = "severity_override";
-
-// --- YAML Rule Default Values ---
-
-/// Default rule name when not specified.
-pub const DEFAULT_RULE_NAME: &str = "Unnamed Rule";
+define_str_consts! {
+    // --- GRL Keywords ---
+    /// GRL keyword: "when" condition block.
+    GRL_KEYWORD_WHEN = "when";
+    /// GRL keyword: "then" action block.
+    GRL_KEYWORD_THEN = "then";
+    // --- Metrics Specific Fields ---
+    /// YAML field: cognitive complexity metric.
+    YAML_FIELD_COGNITIVE_COMPLEXITY = "cognitive_complexity";
+    /// YAML field: cyclomatic complexity metric.
+    YAML_FIELD_CYCLOMATIC_COMPLEXITY = "cyclomatic_complexity";
+    /// YAML field: function length metric.
+    YAML_FIELD_FUNCTION_LENGTH = "function_length";
+    /// YAML field: nesting depth metric.
+    YAML_FIELD_NESTING_DEPTH = "nesting_depth";
+    // --- Rusty Rules specific fields ---
+    /// Rusty Rules field: "all" logical operation.
+    RUSTY_FIELD_ALL = "all";
+    /// Rusty Rules field: "any" logical operation.
+    RUSTY_FIELD_ANY = "any";
+    /// Rusty Rules field: "not" logical operation.
+    RUSTY_FIELD_NOT = "not";
+    /// Rusty Rules field: fact type identifier.
+    RUSTY_FIELD_FACT_TYPE = "fact_type";
+    /// Rusty Rules field: field name indicator.
+    RUSTY_FIELD_FIELD = "field";
+    /// Rusty Rules field: matching operator.
+    RUSTY_FIELD_OPERATOR = "operator";
+    /// Rusty Rules field: expected value.
+    RUSTY_FIELD_VALUE = "value";
+    /// Rusty Rules field: violation details.
+    RUSTY_FIELD_VIOLATION = "violation";
+    // --- Metrics Threshold Fields ---
+    /// Metrics field: maximum threshold.
+    METRICS_FIELD_MAX = "max";
+    /// Metrics field: severity override.
+    METRICS_FIELD_SEVERITY_OVERRIDE = "severity_override";
+    // --- Rule Defaults ---
+    /// Default rule name when not specified.
+    DEFAULT_RULE_NAME = "Unnamed Rule";
+    /// Default rule description.
+    DEFAULT_RULE_DESCRIPTION = "No description provided";
+    /// Default rule rationale.
+    DEFAULT_RULE_RATIONALE = "No rationale provided";
+    /// Default rule engine type.
+    RUSTY_RULES = "rusty-rules";
+    /// Default violation message for expression engine rules.
+    DEFAULT_EXPR_RULE_ID = "EXPR_RULE";
+    /// Default expression engine violation message.
+    DEFAULT_EXPR_MESSAGE = "Expression rule violation";
+    /// Default Rete engine violation message.
+    DEFAULT_RETE_MESSAGE = "Rule violation detected";
+    /// Default GRL rule ID.
+    DEFAULT_GRL_RULE_ID = "GRL_RULE";
+    /// Default violation message for rusty-rules engine.
+    DEFAULT_VIOLATION_MESSAGE = "Rule violation";
+    // --- Rule Engine Type Identifiers ---
+    /// Rete network engine type.
+    ENGINE_TYPE_RETE = "rete";
+    /// Rust Rule Engine type.
+    ENGINE_TYPE_RUST_RULE = "rust-rule-engine";
+    /// `EvalExpr` engine type.
+    ENGINE_TYPE_EVALEXPR = "evalexpr";
+    /// JSON DSL engine type.
+    ENGINE_TYPE_JSON_DSL = "json-dsl";
+    // --- Rusty Rules Engine Defaults ---
+    /// Default rule type when not specified.
+    GENERIC = "generic";
+    /// Default field name for condition checks.
+    RUSTY_DEFAULT_FIELD = "value";
+    /// Default operator for condition checks.
+    RUSTY_DEFAULT_OPERATOR = "equals";
+}
 
 /// Default rule category.
 pub const DEFAULT_RULE_CATEGORY: &str = TAG_QUALITY;
-
-/// Default rule description.
-pub const DEFAULT_RULE_DESCRIPTION: &str = "No description provided";
-
-/// Default rule rationale.
-pub const DEFAULT_RULE_RATIONALE: &str = "No rationale provided";
-
-/// Default rule engine type.
-pub const RUSTY_RULES: &str = "rusty-rules";
-
-/// Default violation message for expression engine rules.
-pub const DEFAULT_EXPR_RULE_ID: &str = "EXPR_RULE";
-
-/// Default expression engine violation message.
-pub const DEFAULT_EXPR_MESSAGE: &str = "Expression rule violation";
-
-/// Default Rete engine violation message.
-pub const DEFAULT_RETE_MESSAGE: &str = "Rule violation detected";
-
-/// Default GRL rule ID.
-pub const DEFAULT_GRL_RULE_ID: &str = "GRL_RULE";
-
-/// Default violation message for rusty-rules engine.
-pub const DEFAULT_VIOLATION_MESSAGE: &str = "Rule violation";
-
-// ============================================================================
-// Rule Engine Type Identifiers
-// ============================================================================
-
-/// Rete network engine type.
-pub const ENGINE_TYPE_RETE: &str = "rete";
-
-/// Rust Rule Engine type.
-pub const ENGINE_TYPE_RUST_RULE: &str = "rust-rule-engine";
-
-/// `EvalExpr` engine type.
-pub const ENGINE_TYPE_EVALEXPR: &str = "evalexpr";
-
-/// JSON DSL engine type.
-pub const ENGINE_TYPE_JSON_DSL: &str = "json-dsl";
-
-// --- Rusty Rules Engine Defaults ---
-
-/// Default rule type when not specified.
-pub const GENERIC: &str = "generic";
-
-/// Default field name for condition checks.
-pub const RUSTY_DEFAULT_FIELD: &str = "value";
-
-/// Default operator for condition checks.
-pub const RUSTY_DEFAULT_OPERATOR: &str = "equals";
 
 /// Cargo dependency condition: `not_exists`.
 pub const NOT_EXISTS: &str = "not_exists";
@@ -569,159 +503,118 @@ pub const SEVERITY_WARNING: &str = "warning";
 pub const SEVERITY_INFO: &str = VAL_INFO;
 
 // ============================================================================
-// Rule Categories
+// Rule Categories (tag aliases + unique categories)
 // ============================================================================
 
-/// Category: architecture violations.
+/// Category: architecture rules.
 pub const CATEGORY_ARCHITECTURE: &str = TAG_ARCHITECTURE;
-
-/// Category: clean architecture violations.
-pub const CATEGORY_CLEAN_ARCHITECTURE: &str = "clean-architecture";
-
-/// Category: code organization.
+/// Category: organization rules.
 pub const CATEGORY_ORGANIZATION: &str = TAG_ORGANIZATION;
-
 /// Category: SOLID principles.
 pub const CATEGORY_SOLID: &str = TAG_SOLID;
-
-/// Category: dependency injection.
-pub const CATEGORY_DI: &str = "di";
-
-/// Category: dependency injection (long name).
-pub const CATEGORY_DEPENDENCY_INJECTION: &str = "dependency_injection";
-
-/// Category: configuration quality.
-pub const CATEGORY_CONFIGURATION: &str = "configuration";
-
-/// Category: web framework patterns.
-pub const CATEGORY_WEB_FRAMEWORK: &str = "web-framework";
-
-/// Category: web framework patterns (underscore version).
-pub const CATEGORY_WEB_FRAMEWORK_UNDERSCORE: &str = "web_framework";
-
-/// Category: performance issues.
+/// Category: performance rules.
 pub const CATEGORY_PERFORMANCE: &str = TAG_PERFORMANCE;
-
 /// Category: async patterns.
 pub const CATEGORY_ASYNC: &str = TAG_ASYNC;
-
-/// Category: documentation completeness.
+/// Category: documentation rules.
 pub const CATEGORY_DOCUMENTATION: &str = TAG_DOCUMENTATION;
-
-/// Category: testing quality.
-pub const CATEGORY_TESTING: &str = "testing";
-
-/// Category: metrics and statistics.
-pub const CATEGORY_METRICS: &str = "metrics";
-
 /// Category: naming conventions.
 pub const CATEGORY_NAMING: &str = TAG_NAMING;
-
-/// Category: KISS principle.
-pub const CATEGORY_KISS: &str = "kiss";
-
-/// Category: refactoring opportunities.
-pub const CATEGORY_REFACTORING: &str = "refactoring";
-
-/// Category: migration issues.
-pub const CATEGORY_MIGRATION: &str = "migration";
-
-/// Category: error boundary patterns.
-pub const CATEGORY_ERROR_BOUNDARY: &str = "error_boundary";
-
-/// Category: implementation patterns.
-pub const CATEGORY_IMPLEMENTATION: &str = "implementation";
-
-/// Category: PMAT (process maturity).
-pub const CATEGORY_PMAT: &str = "pmat";
-
-/// Category: quality checks.
+/// Category: code quality.
 pub const CATEGORY_QUALITY: &str = TAG_QUALITY;
 
-/// Category: security checks.
-pub const CATEGORY_SECURITY: &str = "security";
+define_str_consts! {
+    /// Category: clean architecture violations.
+    CATEGORY_CLEAN_ARCHITECTURE = "clean-architecture";
+    /// Category: dependency injection.
+    CATEGORY_DI = "di";
+    /// Category: dependency injection (long name).
+    CATEGORY_DEPENDENCY_INJECTION = "dependency_injection";
+    /// Category: configuration quality.
+    CATEGORY_CONFIGURATION = "configuration";
+    /// Category: web framework patterns.
+    CATEGORY_WEB_FRAMEWORK = "web-framework";
+    /// Category: web framework patterns (underscore version).
+    CATEGORY_WEB_FRAMEWORK_UNDERSCORE = "web_framework";
+    /// Category: testing quality.
+    CATEGORY_TESTING = "testing";
+    /// Category: metrics and statistics.
+    CATEGORY_METRICS = "metrics";
+    /// Category: KISS principle.
+    CATEGORY_KISS = "kiss";
+    /// Category: refactoring opportunities.
+    CATEGORY_REFACTORING = "refactoring";
+    /// Category: migration issues.
+    CATEGORY_MIGRATION = "migration";
+    /// Category: error boundary patterns.
+    CATEGORY_ERROR_BOUNDARY = "error_boundary";
+    /// Category: implementation patterns.
+    CATEGORY_IMPLEMENTATION = "implementation";
+    /// Category: PMAT (process maturity).
+    CATEGORY_PMAT = "pmat";
+    /// Category: security checks.
+    CATEGORY_SECURITY = "security";
+}
 
 // ============================================================================
-// Validator Category Names
+// Validator Category Names (tag aliases + unique validators)
 // ============================================================================
 
-/// Validator: dependency analysis.
-pub const VALIDATOR_DEPENDENCY: &str = "dependency";
-
-/// Validator: code organization.
+/// Validator: organization rules.
 pub const VALIDATOR_ORGANIZATION: &str = TAG_ORGANIZATION;
-
-/// Validator: quality checks.
+/// Validator: code quality.
 pub const VALIDATOR_QUALITY: &str = TAG_QUALITY;
-
 /// Validator: SOLID principles.
 pub const VALIDATOR_SOLID: &str = TAG_SOLID;
-
 /// Validator: architecture rules.
 pub const VALIDATOR_ARCHITECTURE: &str = TAG_ARCHITECTURE;
-
-/// Validator: refactoring detection.
-pub const VALIDATOR_REFACTORING: &str = "refactoring";
-
 /// Validator: naming conventions.
 pub const VALIDATOR_NAMING: &str = TAG_NAMING;
-
-/// Validator: documentation checks.
+/// Validator: documentation rules.
 pub const VALIDATOR_DOCUMENTATION: &str = TAG_DOCUMENTATION;
 
-/// Validator: design patterns.
-pub const VALIDATOR_DESIGN_PATTERNS: &str = "design_patterns";
-
-/// Validator: KISS principle.
-pub const VALIDATOR_KISS: &str = "kiss";
-
-/// Validator: test quality.
-pub const VALIDATOR_TESTS: &str = "tests";
-
-/// Validator: async patterns.
-pub const VALIDATOR_ASYNC_PATTERNS: &str = "async_patterns";
-
-/// Validator: error boundary.
-pub const VALIDATOR_ERROR_BOUNDARY: &str = "error_boundary";
-
-/// Validator: performance rules.
-pub const VALIDATOR_PERFORMANCE: &str = "performance";
-
-/// Validator: implementation rules.
-pub const VALIDATOR_IMPLEMENTATION: &str = "implementation";
-
-/// Validator: PMAT maturity.
-pub const VALIDATOR_PMAT: &str = "pmat";
-
-/// Validator: clean architecture.
-pub const VALIDATOR_CLEAN_ARCHITECTURE: &str = "clean_architecture";
-
-/// Validator: declarative rules.
-pub const VALIDATOR_DECLARATIVE: &str = "declarative_rules";
-
-/// Validator: hygiene checks (TODOs, formatting).
-pub const VALIDATOR_HYGIENE: &str = "hygiene";
-
-/// Validator: pattern compliance (DI, trait bounds).
-pub const VALIDATOR_PATTERN: &str = "pattern";
-
-/// Validator: port/adapter compliance.
-pub const VALIDATOR_PORT_ADAPTER: &str = "port_adapter";
-
-/// Validator: configuration quality.
-pub const VALIDATOR_CONFIG_QUALITY: &str = "config_quality";
-
-/// Validator: SSOT invariants.
-pub const VALIDATOR_SSOT: &str = "ssot";
-
-/// Validator: visibility check.
-pub const VALIDATOR_VISIBILITY: &str = "visibility";
-
-/// Validator: layer flow.
-pub const VALIDATOR_LAYER_FLOW: &str = "layer_flow";
-
-/// Validator: test quality.
-pub const VALIDATOR_TEST_QUALITY: &str = "test_quality";
+define_str_consts! {
+    /// Validator: dependency analysis.
+    VALIDATOR_DEPENDENCY = "dependency";
+    /// Validator: refactoring detection.
+    VALIDATOR_REFACTORING = "refactoring";
+    /// Validator: design patterns.
+    VALIDATOR_DESIGN_PATTERNS = "design_patterns";
+    /// Validator: KISS principle.
+    VALIDATOR_KISS = "kiss";
+    /// Validator: test quality.
+    VALIDATOR_TESTS = "tests";
+    /// Validator: async patterns.
+    VALIDATOR_ASYNC_PATTERNS = "async_patterns";
+    /// Validator: error boundary.
+    VALIDATOR_ERROR_BOUNDARY = "error_boundary";
+    /// Validator: performance rules.
+    VALIDATOR_PERFORMANCE = "performance";
+    /// Validator: implementation rules.
+    VALIDATOR_IMPLEMENTATION = "implementation";
+    /// Validator: PMAT maturity.
+    VALIDATOR_PMAT = "pmat";
+    /// Validator: clean architecture.
+    VALIDATOR_CLEAN_ARCHITECTURE = "clean_architecture";
+    /// Validator: declarative rules.
+    VALIDATOR_DECLARATIVE = "declarative_rules";
+    /// Validator: hygiene checks.
+    VALIDATOR_HYGIENE = "hygiene";
+    /// Validator: pattern compliance.
+    VALIDATOR_PATTERN = "pattern";
+    /// Validator: port/adapter compliance.
+    VALIDATOR_PORT_ADAPTER = "port_adapter";
+    /// Validator: configuration quality.
+    VALIDATOR_CONFIG_QUALITY = "config_quality";
+    /// Validator: SSOT invariants.
+    VALIDATOR_SSOT = "ssot";
+    /// Validator: visibility check.
+    VALIDATOR_VISIBILITY = "visibility";
+    /// Validator: layer flow.
+    VALIDATOR_LAYER_FLOW = "layer_flow";
+    /// Validator: test quality.
+    VALIDATOR_TEST_QUALITY = "test_quality";
+}
 
 // ============================================================================
 // Linter Integration (Clippy / Cargo)
