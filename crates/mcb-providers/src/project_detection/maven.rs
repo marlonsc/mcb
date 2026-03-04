@@ -4,12 +4,12 @@
 //! Maven project detector.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
+use mcb_domain::ports::ProjectDetector;
+use mcb_domain::registry::ProjectDetectorConfig;
 use quick_xml::Reader;
 use quick_xml::events::Event;
 
@@ -183,19 +183,9 @@ impl ProjectDetector for MavenDetector {
     }
 }
 
-/// Factory function for creating Maven detector instances.
-fn maven_factory(
-    config: &ProjectDetectorConfig,
-) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
-    Ok(Arc::new(MavenDetector::new(config)))
-}
-
-// linkme distributed_slice uses #[link_section] internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
-static MAVEN_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
-    name: "maven",
-    description: "Detects Maven projects with pom.xml",
-    marker_files: &["pom.xml"],
-    build: maven_factory,
-};
+mcb_domain::register_project_detector!(
+    "maven",
+    "Detects Maven projects with pom.xml",
+    &["pom.xml"],
+    |_config| Ok(std::sync::Arc::new(MavenDetector))
+);

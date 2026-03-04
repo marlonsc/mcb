@@ -110,7 +110,8 @@ impl RuntimeDefaults {
         cwd: Option<&Path>,
         execution_flow: Option<ExecutionFlow>,
     ) -> Self {
-        let workspace_root = match cwd {
+        let resolved_cwd = cwd.and_then(|p| std::fs::canonicalize(p).ok());
+        let workspace_root = match resolved_cwd.as_deref() {
             Some(path) => discover_workspace_root(vcs, path).await,
             None => None,
         };

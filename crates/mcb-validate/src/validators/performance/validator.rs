@@ -48,13 +48,7 @@ impl PerformanceValidator {
 
     /// Check if a crate should be skipped based on configuration.
     pub(crate) fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
-        let Some(path_str) = src_dir.to_str() else {
-            return false;
-        };
-        self.rules
-            .excluded_crates
-            .iter()
-            .any(|excluded| path_str.contains(excluded))
+        crate::validators::helpers::should_skip_crate(src_dir, &self.rules.excluded_crates)
     }
 }
 

@@ -1,7 +1,7 @@
 //! Unit tests for configuration value objects.
 
 use mcb_domain::{EmbeddingConfig, VectorStoreConfig};
-use rstest::rstest;
+use rstest::{fixture, rstest};
 
 fn make_embedding_config(
     provider: &str,
@@ -39,23 +39,26 @@ fn make_vector_store_config(
     }
 }
 
-#[rstest]
-fn test_embedding_config_creation() {
-    let config = EmbeddingConfig {
+#[fixture]
+fn embedding_config() -> EmbeddingConfig {
+    EmbeddingConfig {
         provider: "openai".to_owned(),
         model: "text-embedding-ada-002".to_owned(),
         api_key: Some("sk-...".to_owned()),
         base_url: None,
         dimensions: Some(1536),
         max_tokens: Some(8191),
-    };
+    }
+}
 
-    assert_eq!(config.provider, "openai");
-    assert_eq!(config.model, "text-embedding-ada-002");
-    assert_eq!(config.api_key, Some("sk-...".to_owned()));
-    assert_eq!(config.base_url, None);
-    assert_eq!(config.dimensions, Some(1536));
-    assert_eq!(config.max_tokens, Some(8191));
+#[rstest]
+fn test_embedding_config_creation(embedding_config: EmbeddingConfig) {
+    assert_eq!(embedding_config.provider, "openai");
+    assert_eq!(embedding_config.model, "text-embedding-ada-002");
+    assert_eq!(embedding_config.api_key, Some("sk-...".to_owned()));
+    assert_eq!(embedding_config.base_url, None);
+    assert_eq!(embedding_config.dimensions, Some(1536));
+    assert_eq!(embedding_config.max_tokens, Some(8191));
 }
 
 #[rstest]
@@ -94,23 +97,32 @@ fn embedding_config_variants(
     assert_eq!(config.max_tokens, max_tokens);
 }
 
-#[rstest]
-fn test_vector_store_config_creation() {
-    let config = VectorStoreConfig {
+#[fixture]
+fn vector_store_config() -> VectorStoreConfig {
+    VectorStoreConfig {
         provider: "qdrant".to_owned(),
         address: Some("localhost:6334".to_owned()),
         token: None,
         collection: Some("my-collection".to_owned()),
         dimensions: Some(1536),
         timeout_secs: Some(30),
-    };
+    }
+}
 
-    assert_eq!(config.provider, "qdrant");
-    assert_eq!(config.address, Some("localhost:6334".to_owned()));
-    assert_eq!(config.token, None);
-    assert_eq!(config.collection, Some("my-collection".to_owned()));
-    assert_eq!(config.dimensions, Some(1536));
-    assert_eq!(config.timeout_secs, Some(30));
+#[rstest]
+fn test_vector_store_config_creation(vector_store_config: VectorStoreConfig) {
+    assert_eq!(vector_store_config.provider, "qdrant");
+    assert_eq!(
+        vector_store_config.address,
+        Some("localhost:6334".to_owned())
+    );
+    assert_eq!(vector_store_config.token, None);
+    assert_eq!(
+        vector_store_config.collection,
+        Some("my-collection".to_owned())
+    );
+    assert_eq!(vector_store_config.dimensions, Some(1536));
+    assert_eq!(vector_store_config.timeout_secs, Some(30));
 }
 
 #[rstest]

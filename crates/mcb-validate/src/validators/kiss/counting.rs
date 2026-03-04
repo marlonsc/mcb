@@ -4,7 +4,7 @@
 use regex::Regex;
 
 use super::KissValidator;
-use crate::pattern_registry::compile_regex;
+use mcb_utils::utils::regex::compile_regex;
 
 impl KissValidator {
     fn count_block_matches(

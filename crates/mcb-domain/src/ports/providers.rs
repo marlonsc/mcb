@@ -4,7 +4,6 @@
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -83,61 +82,6 @@ pub trait CodeAnalyzer: Send + Sync {
     /// # Errors
     /// Returns an error if workspace scanning or scoring fails.
     fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<AnalysisFinding>>;
-}
-
-/// Registry entry for code analyzers.
-pub struct CodeAnalyzerEntry {
-    /// Unique name of the analyzer.
-    pub name: &'static str,
-    /// Human-readable description of what it detects.
-    pub description: &'static str,
-    /// Factory function to build the analyzer instance.
-    pub build: fn() -> Result<Arc<dyn CodeAnalyzer>>,
-}
-
-/// Distributed slice of registered code analyzers.
-#[linkme::distributed_slice]
-pub static CODE_ANALYZERS: [CodeAnalyzerEntry] = [..];
-
-/// Resolve a code analyzer by name from the registry.
-///
-/// # Errors
-/// Returns an error if the named analyzer is not registered or its build function fails.
-pub fn resolve_code_analyzer(name: &str) -> Result<std::sync::Arc<dyn CodeAnalyzer>> {
-    for entry in CODE_ANALYZERS.iter() {
-        if entry.name == name {
-            return (entry.build)().map_err(|e| {
-                crate::error::Error::configuration(format!("code analyzer '{name}': {e}"))
-            });
-        }
-    }
-
-    let available: Vec<&str> = CODE_ANALYZERS.iter().map(|e| e.name).collect();
-    Err(crate::error::Error::configuration(format!(
-        "Unknown code analyzer '{name}'. Available: {available:?}"
-    )))
-}
-
-/// Resolve the first available code analyzer from the registry.
-///
-/// # Errors
-/// Returns an error if no analyzers are registered or the build function fails.
-pub fn resolve_default_code_analyzer() -> Result<std::sync::Arc<dyn CodeAnalyzer>> {
-    let entry = CODE_ANALYZERS.iter().next().ok_or_else(|| {
-        crate::error::Error::configuration("No code analyzers registered".to_owned())
-    })?;
-    (entry.build)().map_err(|e| {
-        crate::error::Error::configuration(format!("code analyzer '{}': {}", entry.name, e))
-    })
-}
-
-/// List all registered code analyzers as `(name, description)` pairs.
-#[must_use]
-pub fn list_code_analyzers() -> Vec<(&'static str, &'static str)> {
-    CODE_ANALYZERS
-        .iter()
-        .map(|e| (e.name, e.description))
-        .collect()
 }
 
 // ============================================================================
@@ -550,25 +494,6 @@ pub trait MetricsProvider: Send + Sync {
 // Project Detection
 // ============================================================================
 
-/// Configuration for project detector initialization.
-#[derive(Debug, Clone)]
-pub struct ProjectDetectorConfig {
-    /// Absolute path to the repository being analyzed.
-    pub repo_path: String,
-}
-
-/// Registry entry for project detectors.
-pub struct ProjectDetectorEntry {
-    /// Unique name of the detector (e.g., "rust-cargo").
-    pub name: &'static str,
-    /// Human-readable explanation of what it identifies.
-    pub description: &'static str,
-    /// List of file names that indicate this project type.
-    pub marker_files: &'static [&'static str],
-    /// Factory function to build the detector instance.
-    pub build: fn(&ProjectDetectorConfig) -> Result<Arc<dyn ProjectDetector>>,
-}
-
 /// Project detector trait.
 #[async_trait]
 pub trait ProjectDetector: Send + Sync {
@@ -579,10 +504,6 @@ pub trait ProjectDetector: Send + Sync {
     /// Get the unique name of this detector implementation.
     fn detector_name(&self) -> &str;
 }
-
-/// Distributed slice of registered project detectors.
-#[linkme::distributed_slice]
-pub static PROJECT_DETECTORS: [ProjectDetectorEntry] = [..];
 
 // ============================================================================
 // Version Control (VCS)

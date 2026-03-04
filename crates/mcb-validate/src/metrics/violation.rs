@@ -56,7 +56,7 @@ impl Violation for MetricViolation {
     }
 
     fn category(&self) -> ViolationCategory {
-        ViolationCategory::Quality
+        ViolationCategory::Metrics
     }
 
     fn severity(&self) -> Severity {

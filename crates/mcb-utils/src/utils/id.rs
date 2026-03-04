@@ -15,6 +15,12 @@ pub fn generate() -> Uuid {
     Uuid::new_v4()
 }
 
+/// Generates a new random UUID v4 as a String.
+#[must_use]
+pub fn generate_string() -> String {
+    generate().to_string()
+}
+
 /// Generates a deterministic UUID v5 from a namespace string and key.
 #[must_use]
 pub fn deterministic(namespace: &str, key: &str) -> Uuid {

@@ -57,12 +57,11 @@ pub use infrastructure::{
 
 // --- Providers ---
 pub use providers::{
-    AnalysisFinding, CODE_ANALYZERS, CodeAnalyzer, CodeAnalyzerEntry, CryptoProvider,
-    EmbeddingProvider, EncryptedData, HttpClientConfig, HttpClientProvider, HybridSearchProvider,
-    HybridSearchResult, LanguageChunkingProvider, MetricLabels, MetricsError, MetricsProvider,
-    MetricsResult, PROJECT_DETECTORS, ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
-    ProviderConfigManagerInterface, VcsProvider, VectorStoreAdmin, VectorStoreBrowser,
-    VectorStoreProvider, list_code_analyzers, resolve_code_analyzer, resolve_default_code_analyzer,
+    AnalysisFinding, CodeAnalyzer, CryptoProvider, EmbeddingProvider, EncryptedData,
+    HttpClientConfig, HttpClientProvider, HybridSearchProvider, HybridSearchResult,
+    LanguageChunkingProvider, MetricLabels, MetricsError, MetricsProvider, MetricsResult,
+    ProjectDetector, ProviderConfigManagerInterface, VcsProvider, VectorStoreAdmin,
+    VectorStoreBrowser, VectorStoreProvider,
 };
 // --- Repositories ---
 pub use repositories::{

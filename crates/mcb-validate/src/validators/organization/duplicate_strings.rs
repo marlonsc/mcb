@@ -3,7 +3,6 @@
 //!
 use super::violation::OrganizationViolation;
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::{for_each_crate_file, is_test_path};
 use crate::{Result, Severity, ValidationConfig};
 use mcb_utils::constants::validate::{
@@ -12,6 +11,7 @@ use mcb_utils::constants::validate::{
 use mcb_utils::constants::validate::{
     DUPLICATE_STRING_MIN_FILES, DUPLICATE_STRING_REGEX, DUPLICATE_STRING_SKIP_PATTERNS,
 };
+use mcb_utils::utils::regex::compile_regex;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 

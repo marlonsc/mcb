@@ -4,13 +4,12 @@
 //! Cargo/Rust project detector.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use cargo_toml::Manifest;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
+use mcb_domain::ports::ProjectDetector;
 
 use super::common::{parse_toml_opt, read_file_opt};
 
@@ -20,7 +19,7 @@ pub struct CargoDetector;
 impl CargoDetector {
     /// Create a new Cargo detector
     #[must_use]
-    pub fn new(_config: &ProjectDetectorConfig) -> Self {
+    pub fn new(_config: &mcb_domain::registry::project_detector::ProjectDetectorConfig) -> Self {
         Self
     }
 }
@@ -76,18 +75,9 @@ impl ProjectDetector for CargoDetector {
     }
 }
 
-fn cargo_factory(
-    config: &ProjectDetectorConfig,
-) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
-    Ok(Arc::new(CargoDetector::new(config)))
-}
-
-// linkme distributed_slice uses #[link_section] internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
-static CARGO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
-    name: "cargo",
-    description: "Detects Rust projects with Cargo.toml",
-    marker_files: &["Cargo.toml"],
-    build: cargo_factory,
-};
+mcb_domain::register_project_detector!(
+    "cargo",
+    "Detects Rust projects with Cargo.toml",
+    &["Cargo.toml"],
+    |config| Ok(std::sync::Arc::new(CargoDetector::new(config)))
+);

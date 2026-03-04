@@ -66,6 +66,9 @@
 
 /// Admin operations provider registry.
 pub mod admin_operations;
+/// Code analyzers registry.
+pub mod code_analysis;
+pub use code_analysis::*;
 /// Configuration provider registry.
 pub mod config;
 /// Database provider registry.
@@ -78,6 +81,9 @@ pub mod events;
 pub mod language;
 /// Project detection provider registry.
 pub mod project_detection;
+/// Project detector backend providers registry.
+pub mod project_detector;
+pub use project_detector::*;
 /// Service registry (context, indexing, search, memory, agent session, validation).
 pub mod services;
 

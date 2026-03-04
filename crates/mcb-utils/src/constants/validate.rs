@@ -144,7 +144,10 @@ pub const FACTORY_FILE_SUFFIX: &str = "_factory";
 pub const ERROR_MODULE_FILE: &str = "error.rs";
 
 /// Error module name prefix.
-pub const ERROR_FILE_PREFIX: &str = "error";
+pub const ERROR_PREFIX: &str = "error";
+
+/// Error string literal.
+pub const ERROR_STR: &str = "error";
 
 // --- Allocation Detection ---
 
@@ -173,7 +176,7 @@ pub const ARCH_PATH_SERVICES: &str = "/services/";
 pub const ARCH_PATH_DOMAIN: &str = "/domain/";
 
 /// Path fragment identifying the adapters directory.
-pub const ARCH_PATH_ADAPTERS: &str = "/adapters/";
+pub const ADAPTERS_DIR: &str = "/adapters/";
 
 /// Path fragment identifying the config directory.
 pub const ARCH_PATH_CONFIG: &str = "/config/";
@@ -192,7 +195,7 @@ pub const CA_DOMAIN_REPOSITORY_KEYWORD: &str = "repository";
 pub const CA_PORTS_PROVIDERS_DIR: &str = "/ports/providers/";
 
 /// Expected directory for ports (general).
-pub const CA_PORTS_DIR: &str = "/ports/";
+pub const PORTS_DIR: &str = "/ports/";
 
 /// Expected directory for repositories.
 pub const CA_REPOSITORIES_DIR: &str = "/repositories/";
@@ -205,9 +208,6 @@ pub const CA_INFRA_IMPL_SUFFIX: &str = "_impl";
 
 /// Infrastructure adapter file name keyword.
 pub const CA_INFRA_ADAPTER_KEYWORD: &str = "adapter";
-
-/// Expected directory for adapters.
-pub const CA_ADAPTERS_DIR: &str = "/adapters/";
 
 /// Infrastructure DI module file keyword.
 pub const CA_MODULE_KEYWORD: &str = "module";
@@ -357,10 +357,58 @@ pub const YAML_FIELD_CONDITION: &str = "condition";
 pub const YAML_FIELD_ACTION: &str = "action";
 
 /// YAML field: GRL rule definition.
-pub const YAML_FIELD_GRL: &str = "grl";
+pub const GRL: &str = "grl";
 
 /// YAML field: rule definition block reference.
 pub const YAML_FIELD_RULE_DEFINITION: &str = "rule_definition";
+
+// --- GRL Keywords ---
+
+/// GRL keyword: "when" condition block.
+pub const GRL_KEYWORD_WHEN: &str = "when";
+
+/// GRL keyword: "then" action block.
+pub const GRL_KEYWORD_THEN: &str = "then";
+
+// --- Metrics Specific Fields ---
+
+/// YAML field: cognitive complexity metric.
+pub const YAML_FIELD_COGNITIVE_COMPLEXITY: &str = "cognitive_complexity";
+
+/// YAML field: cyclomatic complexity metric.
+pub const YAML_FIELD_CYCLOMATIC_COMPLEXITY: &str = "cyclomatic_complexity";
+
+/// YAML field: function length metric.
+pub const YAML_FIELD_FUNCTION_LENGTH: &str = "function_length";
+
+/// YAML field: nesting depth metric.
+pub const YAML_FIELD_NESTING_DEPTH: &str = "nesting_depth";
+
+// --- Rusty Rules specific fields ---
+
+/// Rusty Rules field: "all" logical operation.
+pub const RUSTY_FIELD_ALL: &str = "all";
+
+/// Rusty Rules field: "any" logical operation.
+pub const RUSTY_FIELD_ANY: &str = "any";
+
+/// Rusty Rules field: "not" logical operation.
+pub const RUSTY_FIELD_NOT: &str = "not";
+
+/// Rusty Rules field: fact type identifier.
+pub const RUSTY_FIELD_FACT_TYPE: &str = "fact_type";
+
+/// Rusty Rules field: field name indicator.
+pub const RUSTY_FIELD_FIELD: &str = "field";
+
+/// Rusty Rules field: matching operator.
+pub const RUSTY_FIELD_OPERATOR: &str = "operator";
+
+/// Rusty Rules field: expected value.
+pub const RUSTY_FIELD_VALUE: &str = "value";
+
+/// Rusty Rules field: violation details.
+pub const RUSTY_FIELD_VIOLATION: &str = "violation";
 
 // --- Metrics Threshold Field Names ---
 
@@ -368,7 +416,7 @@ pub const YAML_FIELD_RULE_DEFINITION: &str = "rule_definition";
 pub const METRICS_FIELD_MAX: &str = "max";
 
 /// Metrics field: severity override.
-pub const METRICS_FIELD_SEVERITY: &str = "severity";
+pub const METRICS_FIELD_SEVERITY_OVERRIDE: &str = "severity_override";
 
 // --- YAML Rule Default Values ---
 
@@ -376,10 +424,7 @@ pub const METRICS_FIELD_SEVERITY: &str = "severity";
 pub const DEFAULT_RULE_NAME: &str = "Unnamed Rule";
 
 /// Default rule category.
-pub const DEFAULT_RULE_CATEGORY: &str = "quality";
-
-/// Default rule severity.
-pub const DEFAULT_RULE_SEVERITY: &str = "warning";
+pub const CATEGORY_QUALITY: &str = "quality";
 
 /// Default rule description.
 pub const DEFAULT_RULE_DESCRIPTION: &str = "No description provided";
@@ -388,7 +433,7 @@ pub const DEFAULT_RULE_DESCRIPTION: &str = "No description provided";
 pub const DEFAULT_RULE_RATIONALE: &str = "No rationale provided";
 
 /// Default rule engine type.
-pub const DEFAULT_RULE_ENGINE: &str = "rusty-rules";
+pub const RUSTY_RULES: &str = "rusty-rules";
 
 /// Default violation message for expression engine rules.
 pub const DEFAULT_EXPR_RULE_ID: &str = "EXPR_RULE";
@@ -415,17 +460,8 @@ pub const ENGINE_TYPE_RETE: &str = "rete";
 /// Rust Rule Engine type.
 pub const ENGINE_TYPE_RUST_RULE: &str = "rust-rule-engine";
 
-/// GRL (Grule Rule Language) engine type.
-pub const ENGINE_TYPE_GRL: &str = "grl";
-
-/// Expression evaluator engine type.
-pub const ENGINE_TYPE_EXPRESSION: &str = "expression";
-
 /// `EvalExpr` engine type.
 pub const ENGINE_TYPE_EVALEXPR: &str = "evalexpr";
-
-/// Rusty Rules engine type.
-pub const ENGINE_TYPE_RUSTY_RULES: &str = "rusty-rules";
 
 /// JSON DSL engine type.
 pub const ENGINE_TYPE_JSON_DSL: &str = "json-dsl";
@@ -433,10 +469,7 @@ pub const ENGINE_TYPE_JSON_DSL: &str = "json-dsl";
 // --- Rusty Rules Engine Defaults ---
 
 /// Default rule type when not specified.
-pub const RUSTY_DEFAULT_RULE_TYPE: &str = "generic";
-
-/// Default fact type for conditions.
-pub const RUSTY_DEFAULT_FACT_TYPE: &str = "generic";
+pub const GENERIC: &str = "generic";
 
 /// Default field name for condition checks.
 pub const RUSTY_DEFAULT_FIELD: &str = "value";
@@ -445,7 +478,7 @@ pub const RUSTY_DEFAULT_FIELD: &str = "value";
 pub const RUSTY_DEFAULT_OPERATOR: &str = "equals";
 
 /// Cargo dependency condition: `not_exists`.
-pub const RUSTY_DEFAULT_CARGO_CONDITION: &str = "not_exists";
+pub const NOT_EXISTS: &str = "not_exists";
 
 /// File size rule condition: `exceeds_limit`.
 pub const RUSTY_DEFAULT_FILE_SIZE_CONDITION: &str = "exceeds_limit";
@@ -479,9 +512,6 @@ pub const RUSTY_RULE_TYPE_FILE_SIZE: &str = "file_size";
 
 /// Rule type: `ast_pattern`.
 pub const RUSTY_RULE_TYPE_AST_PATTERN: &str = "ast_pattern";
-
-/// Condition: `not_exists`.
-pub const RUSTY_CONDITION_NOT_EXISTS: &str = "not_exists";
 
 /// Condition: exists.
 pub const RUSTY_CONDITION_EXISTS: &str = "exists";
@@ -522,11 +552,17 @@ pub const CATEGORY_SOLID: &str = "solid";
 /// Category: dependency injection.
 pub const CATEGORY_DI: &str = "di";
 
+/// Category: dependency injection (long name).
+pub const CATEGORY_DEPENDENCY_INJECTION: &str = "dependency_injection";
+
 /// Category: configuration quality.
 pub const CATEGORY_CONFIGURATION: &str = "configuration";
 
 /// Category: web framework patterns.
 pub const CATEGORY_WEB_FRAMEWORK: &str = "web-framework";
+
+/// Category: web framework patterns (underscore version).
+pub const CATEGORY_WEB_FRAMEWORK_UNDERSCORE: &str = "web_framework";
 
 /// Category: performance issues.
 pub const CATEGORY_PERFORMANCE: &str = "performance";
@@ -539,6 +575,9 @@ pub const CATEGORY_DOCUMENTATION: &str = "documentation";
 
 /// Category: testing quality.
 pub const CATEGORY_TESTING: &str = "testing";
+
+/// Category: metrics and statistics.
+pub const CATEGORY_METRICS: &str = "metrics";
 
 /// Category: naming conventions.
 pub const CATEGORY_NAMING: &str = "naming";
@@ -590,7 +629,7 @@ pub const VALIDATOR_NAMING: &str = "naming";
 pub const VALIDATOR_DOCUMENTATION: &str = "documentation";
 
 /// Validator: design patterns.
-pub const VALIDATOR_PATTERNS: &str = "patterns";
+pub const VALIDATOR_DESIGN_PATTERNS: &str = "design_patterns";
 
 /// Validator: KISS principle.
 pub const VALIDATOR_KISS: &str = "kiss";
@@ -615,6 +654,30 @@ pub const VALIDATOR_PMAT: &str = "pmat";
 
 /// Validator: clean architecture.
 pub const VALIDATOR_CLEAN_ARCHITECTURE: &str = "clean_architecture";
+
+/// Validator: declarative rules.
+pub const VALIDATOR_DECLARATIVE: &str = "declarative_rules";
+
+/// Validator: hygiene checks (TODOs, formatting).
+pub const VALIDATOR_HYGIENE: &str = "hygiene";
+
+/// Validator: pattern compliance (DI, trait bounds).
+pub const VALIDATOR_PATTERN: &str = "pattern";
+
+/// Validator: port/adapter compliance.
+pub const VALIDATOR_PORT_ADAPTER: &str = "port_adapter";
+
+/// Validator: configuration quality.
+pub const VALIDATOR_CONFIG_QUALITY: &str = "config_quality";
+
+/// Validator: SSOT invariants.
+pub const VALIDATOR_SSOT: &str = "ssot";
+
+/// Validator: visibility check.
+pub const VALIDATOR_VISIBILITY: &str = "visibility";
+
+/// Validator: layer flow.
+pub const VALIDATOR_LAYER_FLOW: &str = "layer_flow";
 
 // ============================================================================
 // Linter Integration (Clippy / Cargo)
@@ -780,9 +843,6 @@ pub const MODULE_FILE_NAMES: &[&str] = &["lib.rs", "mod.rs"];
 
 /// Paths identifying DI module traits (skip example checking).
 pub const DI_MODULES_PATH: &str = "/di/modules/";
-
-/// Paths identifying port traits (skip example checking).
-pub const PORTS_PATH: &str = "/ports/";
 
 /// Label for struct items in violation messages.
 pub const ITEM_KIND_STRUCT: &str = "struct";
@@ -1022,9 +1082,6 @@ pub const DOMAIN_ALLOWED_PREFIXES: &[&str] = &[
 
 /// Path fragment identifying the domain crate.
 pub const DOMAIN_CRATE_PATH: &str = "domain";
-
-/// Path fragment identifying the ports directory (skip in domain purity check).
-pub const PORTS_DIR_PATH: &str = "/ports/";
 
 /// Regex for detecting direct service instantiation via `Arc::new(Service::new`.
 pub const ARC_NEW_SERVICE_REGEX: &str =

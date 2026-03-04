@@ -3,11 +3,10 @@
 //!
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use mcb_domain::error::Error;
 use mcb_domain::error::Result;
-use mcb_domain::ports::{AnalysisFinding, CODE_ANALYZERS, CodeAnalyzer, CodeAnalyzerEntry};
+use mcb_domain::ports::{AnalysisFinding, CodeAnalyzer};
 use mcb_domain::utils::analysis;
 use walkdir::WalkDir;
 
@@ -66,11 +65,6 @@ impl CodeAnalyzer for NativePmatAnalyzer {
     }
 }
 
-// Auto-registration via linkme distributed slice
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(CODE_ANALYZERS)]
-static NATIVE_REGEX_ANALYZER: CodeAnalyzerEntry = CodeAnalyzerEntry {
-    name: "native-regex",
-    description: "Regex-based code analyzer",
-    build: || Ok(Arc::new(NativePmatAnalyzer)),
-};
+mcb_domain::register_code_analyzer!("native-regex", "Regex-based code analyzer", || Ok(
+    std::sync::Arc::new(NativePmatAnalyzer)
+));

@@ -1,33 +1,41 @@
 use mcb_domain::entities::organization::{OrgStatus, Organization};
-use rstest::rstest;
+use rstest::{fixture, rstest};
 
-#[rstest]
-fn organization_construction() {
-    let org = Organization {
+#[fixture]
+fn org() -> Organization {
+    Organization {
         id: "org-001".to_owned(),
         name: "Acme Corp".to_owned(),
         slug: "acme-corp".to_owned(),
         settings_json: "{}".to_owned(),
         created_at: 1000,
         updated_at: 1000,
-    };
+    }
+}
+
+#[rstest]
+fn organization_construction(org: Organization) {
     assert_eq!(org.id, "org-001");
     assert_eq!(org.name, "Acme Corp");
     assert_eq!(org.slug, "acme-corp");
     assert_eq!(org.settings_json, "{}");
 }
 
-#[rstest]
-fn organization_serialization_roundtrip() {
-    let org = Organization {
+#[fixture]
+fn org_for_serialization() -> Organization {
+    Organization {
         id: "org-002".to_owned(),
         name: "Test Org".to_owned(),
         slug: "test-org".to_owned(),
         settings_json: r#"{"max_projects":10}"#.to_owned(),
         created_at: 2000,
         updated_at: 3000,
-    };
-    let json = serde_json::to_string(&org).expect("serialize");
+    }
+}
+
+#[rstest]
+fn organization_serialization_roundtrip(org_for_serialization: Organization) {
+    let json = serde_json::to_string(&org_for_serialization).expect("serialize");
     let deserialized: Organization = serde_json::from_str(&json).expect("deserialize");
     assert_eq!(deserialized.id, "org-002");
     assert_eq!(deserialized.slug, "test-org");

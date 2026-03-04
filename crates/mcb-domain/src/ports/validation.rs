@@ -69,6 +69,8 @@ pub enum ViolationCategory {
     Implementation,
     /// PMAT (Persistence, Models, Actions, Tasks) pattern.
     Pmat,
+    /// Metrics and thresholds.
+    Metrics,
 }
 
 impl Display for ViolationCategory {
@@ -91,6 +93,7 @@ impl Display for ViolationCategory {
             Self::ErrorBoundary => write!(f, "Error Boundary"),
             Self::Implementation => write!(f, "Implementation"),
             Self::Pmat => write!(f, "PMAT"),
+            Self::Metrics => write!(f, "Metrics"),
         }
     }
 }

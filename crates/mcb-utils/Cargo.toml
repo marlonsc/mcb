@@ -52,6 +52,8 @@ base64 = { workspace = true }
 
 # HMAC for hash-based auth
 hmac = { workspace = true }
+aes-gcm.workspace = true
+pbkdf2.workspace = true
 
 [features]
 default = []

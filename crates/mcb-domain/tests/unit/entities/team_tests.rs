@@ -1,55 +1,59 @@
 use mcb_domain::entities::team::{Team, TeamMember, TeamMemberRole};
-use rstest::rstest;
+use mcb_domain::value_objects::ids::TeamMemberId;
+use mcb_utils::utils::id;
+use rstest::{fixture, rstest};
 
-#[rstest]
-fn team_construction() {
-    let team = Team {
+#[fixture]
+fn team() -> Team {
+    Team {
         id: "team-001".to_owned(),
         org_id: "org-001".to_owned(),
         name: "Platform".to_owned(),
         created_at: 1000,
-    };
+    }
+}
+
+#[fixture]
+fn team_member(team: Team) -> TeamMember {
+    let id_uuid = id::deterministic("team_member", format!("{}:usr-001", team.id).as_str());
+    TeamMember {
+        id: TeamMemberId::from_uuid(id_uuid),
+        team_id: team.id,
+        user_id: "usr-001".to_owned(),
+        role: TeamMemberRole::Lead,
+        joined_at: 1000,
+    }
+}
+
+#[rstest]
+fn test_team_construction(team: Team) {
     assert_eq!(team.id, "team-001");
-    assert_eq!(team.org_id, "org-001");
     assert_eq!(team.name, "Platform");
 }
 
 #[rstest]
-fn team_serialization_roundtrip() {
-    let team = Team {
-        id: "team-002".to_owned(),
-        org_id: "org-001".to_owned(),
-        name: "Backend".to_owned(),
-        created_at: 2000,
-    };
+fn test_team_serialization_roundtrip(team: Team) {
     let json = serde_json::to_string(&team).expect("serialize");
     let deserialized: Team = serde_json::from_str(&json).expect("deserialize");
-    assert_eq!(deserialized.id, "team-002");
-    assert_eq!(deserialized.name, "Backend");
+    assert_eq!(deserialized.id, team.id);
 }
 
-use mcb_domain::value_objects::ids::TeamMemberId;
-use mcb_utils::utils::id;
+#[rstest]
+fn test_team_member_construction(team_member: TeamMember) {
+    assert_eq!(team_member.role, TeamMemberRole::Lead);
+}
 
 #[rstest]
-fn team_member_construction() {
-    let id_uuid = id::deterministic("team_member", "team-001:usr-001");
-    let member = TeamMember {
-        id: TeamMemberId::from_uuid(id_uuid),
-        team_id: "team-001".to_owned(),
-        user_id: "usr-001".to_owned(),
-        role: TeamMemberRole::Lead,
-        joined_at: 1000,
-    };
-    assert_eq!(member.team_id, "team-001");
-    assert_eq!(member.user_id, "usr-001");
-    assert_eq!(member.role, TeamMemberRole::Lead);
+fn test_team_member_serialization_roundtrip(team_member: TeamMember) {
+    let json = serde_json::to_string(&team_member).expect("serialize");
+    let deserialized: TeamMember = serde_json::from_str(&json).expect("deserialize");
+    assert_eq!(deserialized.id, team_member.id);
 }
 
 #[rstest]
 #[case(TeamMemberRole::Lead, "lead")]
 #[case(TeamMemberRole::Member, "member")]
-fn team_member_role_as_str(#[case] role: TeamMemberRole, #[case] expected: &str) {
+fn test_team_member_role_as_str(#[case] role: TeamMemberRole, #[case] expected: &str) {
     assert_eq!(role.as_str(), expected);
 }
 
@@ -59,7 +63,10 @@ fn team_member_role_as_str(#[case] role: TeamMemberRole, #[case] expected: &str)
 #[case("LEAD", Ok(TeamMemberRole::Lead))]
 #[case("Member", Ok(TeamMemberRole::Member))]
 #[case("invalid", Err(()))]
-fn team_member_role_from_str(#[case] input: &str, #[case] expected: Result<TeamMemberRole, ()>) {
+fn test_team_member_role_from_str(
+    #[case] input: &str,
+    #[case] expected: Result<TeamMemberRole, ()>,
+) {
     match expected {
         Ok(role) => assert_eq!(input.parse::<TeamMemberRole>(), Ok(role)),
         Err(()) => assert!(input.parse::<TeamMemberRole>().is_err()),

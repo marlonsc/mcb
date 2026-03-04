@@ -11,10 +11,13 @@ use validator::{Validate, ValidationErrors};
 
 use crate::Result;
 use mcb_utils::constants::validate::{
-    ENGINE_TYPE_EVALEXPR, ENGINE_TYPE_EXPRESSION, ENGINE_TYPE_GRL, ENGINE_TYPE_JSON_DSL,
-    ENGINE_TYPE_RETE, ENGINE_TYPE_RUST_RULE, ENGINE_TYPE_RUSTY_RULES,
+    CATEGORY_ARCHITECTURE, CATEGORY_CONFIGURATION, CATEGORY_DEPENDENCY_INJECTION,
+    CATEGORY_DOCUMENTATION, CATEGORY_METRICS, CATEGORY_MIGRATION, CATEGORY_ORGANIZATION,
+    CATEGORY_PERFORMANCE, CATEGORY_QUALITY, CATEGORY_SOLID, CATEGORY_TESTING,
+    CATEGORY_WEB_FRAMEWORK_UNDERSCORE, ENGINE_TYPE_EVALEXPR, ENGINE_TYPE_JSON_DSL,
+    ENGINE_TYPE_RETE, ENGINE_TYPE_RUST_RULE, GRL, RUSTY_RULES, SEVERITY_ERROR, SEVERITY_INFO,
+    SEVERITY_WARNING, YAML_FIELD_EXPRESSION,
 };
-use mcb_utils::constants::validate::{SEVERITY_ERROR, SEVERITY_INFO, SEVERITY_WARNING};
 
 /// Engine for field validations using validator and garde
 #[derive(Clone)]
@@ -126,18 +129,18 @@ pub struct RuleConfigFields {
 /// Validator functions for custom validations
 fn validate_category(category: &str) -> std::result::Result<(), ValidationErrors> {
     let valid_categories = [
-        "architecture",
-        "configuration",
-        "dependency_injection",
-        "documentation",
-        "metrics",
-        "migration",
-        "organization",
-        "performance",
-        "quality",
-        "solid",
-        "testing",
-        "web_framework",
+        CATEGORY_ARCHITECTURE,
+        CATEGORY_CONFIGURATION,
+        CATEGORY_DEPENDENCY_INJECTION,
+        CATEGORY_DOCUMENTATION,
+        CATEGORY_METRICS,
+        CATEGORY_MIGRATION,
+        CATEGORY_ORGANIZATION,
+        CATEGORY_PERFORMANCE,
+        CATEGORY_QUALITY,
+        CATEGORY_SOLID,
+        CATEGORY_TESTING,
+        CATEGORY_WEB_FRAMEWORK_UNDERSCORE,
     ];
 
     if valid_categories.contains(&category) {
@@ -171,10 +174,10 @@ fn validate_engine(engine: &str) -> std::result::Result<(), ValidationErrors> {
     let valid_engines = [
         ENGINE_TYPE_RUST_RULE,
         ENGINE_TYPE_RETE,
-        ENGINE_TYPE_GRL,
-        ENGINE_TYPE_RUSTY_RULES,
+        GRL,
+        RUSTY_RULES,
         ENGINE_TYPE_JSON_DSL,
-        ENGINE_TYPE_EXPRESSION,
+        YAML_FIELD_EXPRESSION,
         ENGINE_TYPE_EVALEXPR,
     ];
 

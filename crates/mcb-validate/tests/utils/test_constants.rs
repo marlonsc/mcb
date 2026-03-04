@@ -129,10 +129,10 @@ pub const RUFF_EXTENSION: &str = "py";
 pub const CLIPPY_EXTENSION: &str = "rs";
 
 /// Severity level: error.
-pub const SEVERITY_ERROR: &str = "error";
+pub const ERROR_STR: &str = "error";
 
 /// Severity level: warning.
-pub const SEVERITY_WARNING: &str = "warning";
+pub const WARNING_STR: &str = "warning";
 
 /// Severity level: info.
 pub const SEVERITY_INFO: &str = "info";

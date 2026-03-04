@@ -21,7 +21,8 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use mcb_domain::ports::validation::{Violation, ViolationCategory};
-use mcb_domain::ports::{AnalysisFinding, CodeAnalyzer, resolve_code_analyzer};
+use mcb_domain::ports::{AnalysisFinding, CodeAnalyzer};
+use mcb_domain::registry::resolve_code_analyzer;
 use mcb_utils::constants::validate::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 
 use crate::define_violations;

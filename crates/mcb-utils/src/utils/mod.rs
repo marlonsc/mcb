@@ -23,3 +23,8 @@ pub mod time;
 pub mod range;
 /// Retry utilities with exponential backoff.
 pub mod retry;
+
+/// Cryptographic hashing and token utilities.
+pub mod crypto;
+/// Regular expression compilation helpers.
+pub mod regex;

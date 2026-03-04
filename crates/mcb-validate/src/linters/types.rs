@@ -8,12 +8,12 @@ use derive_more::Display;
 use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 use mcb_utils::constants::validate::{
     CATEGORY_ARCHITECTURE, CATEGORY_ASYNC, CATEGORY_CLEAN_ARCHITECTURE, CATEGORY_CONFIGURATION,
-    CATEGORY_DI, CATEGORY_DOCUMENTATION, CATEGORY_ERROR_BOUNDARY, CATEGORY_IMPLEMENTATION,
-    CATEGORY_KISS, CATEGORY_MIGRATION, CATEGORY_NAMING, CATEGORY_ORGANIZATION,
-    CATEGORY_PERFORMANCE, CATEGORY_PMAT, CATEGORY_REFACTORING, CATEGORY_SOLID, CATEGORY_TESTING,
-    CATEGORY_WEB_FRAMEWORK, SEVERITY_ERROR, SEVERITY_INFO,
+    CATEGORY_DEPENDENCY_INJECTION, CATEGORY_DI, CATEGORY_DOCUMENTATION, CATEGORY_ERROR_BOUNDARY,
+    CATEGORY_IMPLEMENTATION, CATEGORY_KISS, CATEGORY_METRICS, CATEGORY_MIGRATION, CATEGORY_NAMING,
+    CATEGORY_ORGANIZATION, CATEGORY_PERFORMANCE, CATEGORY_PMAT, CATEGORY_REFACTORING,
+    CATEGORY_SOLID, CATEGORY_TESTING, CATEGORY_WEB_FRAMEWORK, CATEGORY_WEB_FRAMEWORK_UNDERSCORE,
+    LINTER_CMD_CARGO, LINTER_CMD_RUFF, SEVERITY_ERROR, SEVERITY_INFO,
 };
-use mcb_utils::constants::validate::{LINTER_CMD_CARGO, LINTER_CMD_RUFF};
 
 /// Unified structure representing a code violation found by any linter.
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, Display)]
@@ -59,9 +59,11 @@ impl LintViolation {
             CATEGORY_ARCHITECTURE | CATEGORY_CLEAN_ARCHITECTURE => ViolationCategory::Architecture,
             CATEGORY_ORGANIZATION => ViolationCategory::Organization,
             CATEGORY_SOLID => ViolationCategory::Solid,
-            CATEGORY_DI => ViolationCategory::DependencyInjection,
+            CATEGORY_DI | CATEGORY_DEPENDENCY_INJECTION => ViolationCategory::DependencyInjection,
             CATEGORY_CONFIGURATION => ViolationCategory::Configuration,
-            CATEGORY_WEB_FRAMEWORK => ViolationCategory::WebFramework,
+            CATEGORY_WEB_FRAMEWORK | CATEGORY_WEB_FRAMEWORK_UNDERSCORE => {
+                ViolationCategory::WebFramework
+            }
             CATEGORY_PERFORMANCE => ViolationCategory::Performance,
             CATEGORY_ASYNC => ViolationCategory::Async,
             CATEGORY_DOCUMENTATION => ViolationCategory::Documentation,
@@ -72,6 +74,7 @@ impl LintViolation {
             CATEGORY_ERROR_BOUNDARY => ViolationCategory::ErrorBoundary,
             CATEGORY_IMPLEMENTATION => ViolationCategory::Implementation,
             CATEGORY_PMAT => ViolationCategory::Pmat,
+            CATEGORY_METRICS => ViolationCategory::Metrics,
             _ => ViolationCategory::Quality,
         }
     }

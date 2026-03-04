@@ -17,6 +17,7 @@ macro_rules! impl_registry {
         list_fn: $list:ident
     ) => {
         /// Registry entry for providers
+        #[doc(hidden)]
         pub struct $entry {
             /// Unique provider name
             pub name: &'static str,
@@ -26,6 +27,7 @@ macro_rules! impl_registry {
             pub build: fn(&$config) -> std::result::Result<std::sync::Arc<dyn $trait>, String>,
         }
 
+        #[doc(hidden)]
         #[linkme::distributed_slice]
         /// Stores the static value static value.
         pub static $slice: [$entry] = [..];
@@ -118,5 +120,36 @@ macro_rules! impl_config_builder {
             self.$field = Some(value);
             self
         }
+    };
+}
+
+/// Register a project detector in the distributed slice.
+#[macro_export]
+macro_rules! register_project_detector {
+    ($name:expr, $desc:expr, $markers:expr, $build:expr $(,)?) => {
+        #[allow(unsafe_code)]
+        #[linkme::distributed_slice($crate::registry::project_detector::PROJECT_DETECTORS)]
+        static DETECTOR: $crate::registry::project_detector::ProjectDetectorEntry =
+            $crate::registry::project_detector::ProjectDetectorEntry {
+                name: $name,
+                description: $desc,
+                marker_files: $markers,
+                build: $build,
+            };
+    };
+}
+
+/// Register a code analyzer in the distributed slice.
+#[macro_export]
+macro_rules! register_code_analyzer {
+    ($name:expr, $desc:expr, $build:expr $(,)?) => {
+        #[allow(unsafe_code)]
+        #[linkme::distributed_slice($crate::registry::code_analysis::CODE_ANALYZERS)]
+        static ANALYZER: $crate::registry::code_analysis::CodeAnalyzerEntry =
+            $crate::registry::code_analysis::CodeAnalyzerEntry {
+                name: $name,
+                description: $desc,
+                build: $build,
+            };
     };
 }

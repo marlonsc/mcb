@@ -20,3 +20,12 @@ where
         visit(line_num, line, trimmed);
     }
 }
+
+pub(crate) fn should_skip_crate(src_dir: &std::path::Path, excluded_crates: &[String]) -> bool {
+    let Some(path_str) = src_dir.to_str() else {
+        return false;
+    };
+    excluded_crates
+        .iter()
+        .any(|excluded| path_str.contains(excluded))
+}

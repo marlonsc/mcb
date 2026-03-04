@@ -14,11 +14,11 @@ fn linter_engine_creation() {
 }
 
 #[rstest]
-#[case("ruff", RUFF_CODE_ERROR, SEVERITY_ERROR)]
-#[case("ruff", RUFF_CODE_WARNING, SEVERITY_WARNING)]
+#[case("ruff", RUFF_CODE_ERROR, ERROR_STR)]
+#[case("ruff", RUFF_CODE_WARNING, WARNING_STR)]
 #[case("ruff", RUFF_CODE_INFO, SEVERITY_INFO)]
-#[case("clippy", SEVERITY_ERROR, SEVERITY_ERROR)]
-#[case("clippy", SEVERITY_WARNING, SEVERITY_WARNING)]
+#[case("clippy", ERROR_STR, ERROR_STR)]
+#[case("clippy", WARNING_STR, WARNING_STR)]
 #[case("clippy", CLIPPY_LEVEL_NOTE, SEVERITY_INFO)]
 fn linter_level_mapping(#[case] linter: &str, #[case] input_level: &str, #[case] expected: &str) {
     let actual = if linter == "ruff" {

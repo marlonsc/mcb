@@ -43,10 +43,11 @@ use serde::{Deserialize, Serialize};
 use crate::Severity;
 use mcb_utils::constants::validate::{
     VALIDATOR_ARCHITECTURE, VALIDATOR_ASYNC_PATTERNS, VALIDATOR_CLEAN_ARCHITECTURE,
-    VALIDATOR_DEPENDENCY, VALIDATOR_DOCUMENTATION, VALIDATOR_ERROR_BOUNDARY,
-    VALIDATOR_IMPLEMENTATION, VALIDATOR_KISS, VALIDATOR_NAMING, VALIDATOR_ORGANIZATION,
-    VALIDATOR_PATTERNS, VALIDATOR_PERFORMANCE, VALIDATOR_PMAT, VALIDATOR_QUALITY,
-    VALIDATOR_REFACTORING, VALIDATOR_SOLID, VALIDATOR_TESTS,
+    VALIDATOR_CONFIG_QUALITY, VALIDATOR_DECLARATIVE, VALIDATOR_DEPENDENCY, VALIDATOR_DOCUMENTATION,
+    VALIDATOR_ERROR_BOUNDARY, VALIDATOR_HYGIENE, VALIDATOR_IMPLEMENTATION, VALIDATOR_KISS,
+    VALIDATOR_LAYER_FLOW, VALIDATOR_NAMING, VALIDATOR_ORGANIZATION, VALIDATOR_PATTERN,
+    VALIDATOR_PERFORMANCE, VALIDATOR_PMAT, VALIDATOR_PORT_ADAPTER, VALIDATOR_QUALITY,
+    VALIDATOR_REFACTORING, VALIDATOR_SOLID, VALIDATOR_SSOT, VALIDATOR_TESTS, VALIDATOR_VISIBILITY,
 };
 
 /// Embedded default configuration (baked into binary at compile time)
@@ -131,7 +132,7 @@ impl FileConfig {
             VALIDATOR_REFACTORING => self.validators.refactoring,
             VALIDATOR_NAMING => self.validators.naming,
             VALIDATOR_DOCUMENTATION => self.validators.documentation,
-            VALIDATOR_PATTERNS => self.validators.patterns,
+            VALIDATOR_PATTERN => self.validators.patterns,
             VALIDATOR_KISS => self.validators.kiss,
             VALIDATOR_TESTS => self.validators.tests,
             VALIDATOR_ASYNC_PATTERNS => self.validators.async_patterns,
@@ -140,6 +141,13 @@ impl FileConfig {
             VALIDATOR_IMPLEMENTATION => self.validators.implementation,
             VALIDATOR_PMAT => self.validators.pmat,
             VALIDATOR_CLEAN_ARCHITECTURE => self.validators.clean_architecture,
+            VALIDATOR_CONFIG_QUALITY => self.validators.config_quality,
+            VALIDATOR_HYGIENE => self.validators.hygiene,
+            VALIDATOR_LAYER_FLOW => self.validators.layer_flow,
+            VALIDATOR_PORT_ADAPTER => self.validators.port_adapter,
+            VALIDATOR_SSOT => self.validators.ssot,
+            VALIDATOR_VISIBILITY => self.validators.visibility,
+            VALIDATOR_DECLARATIVE => self.validators.declarative,
             _ => true, // Unknown validators enabled by default
         }
     }
@@ -589,4 +597,29 @@ pub struct ValidatorsConfig {
     pub pmat: bool,
     /// Enable clean architecture validation
     pub clean_architecture: bool,
+    /// Enable configuration quality validation
+    #[serde(default = "default_true")]
+    pub config_quality: bool,
+    /// Enable hygiene validation
+    #[serde(default = "default_true")]
+    pub hygiene: bool,
+    /// Enable layer flow validation
+    #[serde(default = "default_true")]
+    pub layer_flow: bool,
+    /// Enable port/adapter validation
+    #[serde(default = "default_true")]
+    pub port_adapter: bool,
+    /// Enable SSOT validation
+    #[serde(default = "default_true")]
+    pub ssot: bool,
+    /// Enable visibility validation
+    #[serde(default = "default_true")]
+    pub visibility: bool,
+    /// Enable declarative rules validation
+    #[serde(default = "default_true")]
+    pub declarative: bool,
+}
+
+fn default_true() -> bool {
+    true
 }

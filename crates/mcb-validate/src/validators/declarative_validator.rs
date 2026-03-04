@@ -20,7 +20,6 @@ use crate::filters::dependency_parser::WorkspaceDependencies;
 use crate::filters::rule_filters::RuleFilterExecutor;
 use crate::linters::YamlRuleExecutor;
 use crate::metrics::{MetricThresholds, MetricViolation, RcaAnalyzer};
-use crate::pattern_registry::compile_regex;
 use crate::rules::yaml_loader::{ValidatedRule, YamlRuleLoader};
 use crate::scan::for_each_scan_file;
 use crate::validators::declarative_support::{
@@ -29,6 +28,7 @@ use crate::validators::declarative_support::{
 };
 use mcb_domain::ports::validation::Validator;
 use mcb_domain::ports::validation::Violation;
+use mcb_utils::utils::regex::compile_regex;
 
 /// Run `f` with the optional `ValidationRunContext` set on the current thread.
 fn with_ctx<T>(

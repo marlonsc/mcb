@@ -194,6 +194,10 @@ pub enum ValidationError {
     #[error("Invalid regex pattern: {0}")]
     InvalidRegex(#[from] regex::Error),
 
+    /// Utilities error
+    #[error("Utilities error: {0}")]
+    Utils(#[from] mcb_utils::error::UtilsError),
+
     /// Pattern not found
     #[error("Pattern not found: {0}")]
     PatternNotFound(String),

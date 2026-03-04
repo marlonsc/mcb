@@ -8,10 +8,10 @@ use crate::apply_ca_rule;
 use mcb_domain::ports::validation::Severity;
 use mcb_utils::constants::validate::STANDARD_SKIP_FILES;
 use mcb_utils::constants::validate::{
-    CA_ADAPTERS_DIR, CA_ADAPTERS_REPOSITORY_DIR, CA_DI_DIR, CA_DOMAIN_PROVIDER_KEYWORD,
+    ADAPTERS_DIR, CA_ADAPTERS_REPOSITORY_DIR, CA_DI_DIR, CA_DOMAIN_PROVIDER_KEYWORD,
     CA_DOMAIN_REPOSITORY_KEYWORD, CA_HANDLER_DIRS, CA_HANDLER_KEYWORD, CA_INFRA_ADAPTER_KEYWORD,
-    CA_INFRA_IMPL_SUFFIX, CA_MODULE_KEYWORD, CA_PORTS_DIR, CA_PORTS_PROVIDERS_DIR,
-    CA_REPOSITORIES_DIR,
+    CA_INFRA_IMPL_SUFFIX, CA_MODULE_KEYWORD, CA_PORTS_PROVIDERS_DIR, CA_REPOSITORIES_DIR,
+    PORTS_DIR,
 };
 
 fn ca_violation(
@@ -68,7 +68,7 @@ pub fn validate_ca_naming(
             file_name,
             path_str,
             NameMatch::Contains(CA_DOMAIN_PROVIDER_KEYWORD),
-            &[CA_PORTS_PROVIDERS_DIR, CA_PORTS_DIR],
+            &[CA_PORTS_PROVIDERS_DIR, PORTS_DIR],
             "Provider Port",
             "Provider file outside ports/ directory",
             "Move to ports/providers/",
@@ -95,7 +95,7 @@ pub fn validate_ca_naming(
             file_name,
             path_str,
             NameMatch::EndsWith(CA_INFRA_IMPL_SUFFIX),
-            &[CA_ADAPTERS_DIR],
+            &[ADAPTERS_DIR],
             "Adapter",
             "Adapter/implementation file outside adapters/ directory",
             "Move to adapters/",
@@ -107,7 +107,7 @@ pub fn validate_ca_naming(
                 file_name,
                 path_str,
                 NameMatch::Contains(CA_INFRA_ADAPTER_KEYWORD),
-                &[CA_ADAPTERS_DIR],
+                &[ADAPTERS_DIR],
                 "Adapter",
                 "Adapter/implementation file outside adapters/ directory",
                 "Move to adapters/",

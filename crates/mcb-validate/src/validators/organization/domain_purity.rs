@@ -3,12 +3,12 @@
 //!
 use super::violation::OrganizationViolation;
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::{for_each_scan_file, is_test_path};
 use crate::{Result, Severity, ValidationConfig};
 use mcb_utils::constants::validate::{
-    DOMAIN_ALLOWED_METHODS, DOMAIN_ALLOWED_PREFIXES, DOMAIN_CRATE_PATH, PORTS_DIR_PATH,
+    DOMAIN_ALLOWED_METHODS, DOMAIN_ALLOWED_PREFIXES, DOMAIN_CRATE_PATH, PORTS_DIR,
 };
+use mcb_utils::utils::regex::compile_regex;
 
 /// Verifies that the domain layer contains only trait definitions and data structures, free of implementation logic.
 ///
@@ -39,7 +39,7 @@ pub fn validate_domain_traits_only(
             .to_str()
             .is_some_and(|s| s.contains(DOMAIN_CRATE_PATH))
             || is_test_path(path_str)
-            || path_str.contains(PORTS_DIR_PATH)
+            || path_str.contains(PORTS_DIR)
         {
             return Ok(());
         }

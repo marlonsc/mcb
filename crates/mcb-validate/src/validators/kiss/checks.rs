@@ -11,10 +11,10 @@ use std::path::PathBuf;
 use rust_code_analysis::SpaceKind;
 
 use crate::ast::rca_helpers;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::thresholds::thresholds;
 use crate::{Result, Severity};
+use mcb_utils::utils::regex::compile_regex;
 
 use super::{KissValidator, KissViolation};
 use mcb_utils::constants::validate::{

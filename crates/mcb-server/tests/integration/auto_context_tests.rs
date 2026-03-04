@@ -56,10 +56,16 @@ fn probe_agent_program(
     Some((output.status, stdout, stderr))
 }
 
-fn parse_agent_program(stdout: &str) -> Option<String> {
-    stdout
-        .lines()
-        .find_map(|line| line.strip_prefix("AGENT_PROGRAM=").map(ToOwned::to_owned))
+fn parse_agent_program(output: &str) -> Option<String> {
+    // With --nocapture the test harness may embed the println on the same
+    // line as the test name, e.g.:
+    //   "test auto_context_tests::test_ide_probe_runtime_defaults ... AGENT_PROGRAM=cursor"
+    // So we search for the marker anywhere in each line, not just at the start.
+    const MARKER: &str = "AGENT_PROGRAM=";
+    output.lines().find_map(|line| {
+        line.find(MARKER)
+            .map(|pos| line[pos + MARKER.len()..].trim().to_owned())
+    })
 }
 
 fn detect_agent_program_from_env() -> String {

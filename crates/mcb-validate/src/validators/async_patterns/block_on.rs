@@ -2,10 +2,11 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::filters::LanguageId;
-use crate::pattern_registry::{compile_regexes, required_pattern};
+use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
 use mcb_utils::constants::validate::{CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT};
+use mcb_utils::utils::regex::compile_regexes;
 
 use super::for_each_async_fn_line;
 use super::violation::AsyncViolation;

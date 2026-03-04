@@ -3,8 +3,8 @@
 //!
 //! Cryptographic utilities
 
+use crate::error::{Result, UtilsError};
 use aes_gcm::aead::{OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore};
-use mcb_domain::error::{Error, Result};
 use sha2::Sha256;
 
 /// Convert bytes to hex string
@@ -79,11 +79,8 @@ impl HashUtils {
     pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Result<Vec<u8>> {
         use hmac::{Hmac, Mac};
         type HmacSha256 = Hmac<Sha256>;
-        let mut mac =
-            <HmacSha256 as Mac>::new_from_slice(key).map_err(|e| Error::Infrastructure {
-                message: format!("HMAC initialization failed: {e}"),
-                source: None,
-            })?;
+        let mut mac = <HmacSha256 as Mac>::new_from_slice(key)
+            .map_err(|e| UtilsError::Hash(format!("HMAC initialization failed: {e}")))?;
         mac.update(data);
         Ok(mac.finalize().into_bytes().to_vec())
     }

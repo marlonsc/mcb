@@ -4,12 +4,12 @@
 //! Go project detector.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
+use mcb_domain::ports::ProjectDetector;
+use mcb_domain::registry::ProjectDetectorConfig;
 use regex::Regex;
 
 use super::common::read_file_opt;
@@ -126,23 +126,15 @@ impl ProjectDetector for GoDetector {
     }
 }
 
-/// Factory function for creating Go detector instances.
-fn go_factory(
-    config: &ProjectDetectorConfig,
-) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
-    GoDetector::new(config)
-        .map(|detector| Arc::new(detector) as Arc<dyn ProjectDetector>)
-        .map_err(|e| {
-            mcb_domain::Error::configuration(format!("Failed to initialize Go detector: {e}"))
-        })
-}
-
-// linkme distributed_slice uses #[link_section] internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
-static GO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
-    name: "go",
-    description: "Detects Go projects with go.mod",
-    marker_files: &["go.mod"],
-    build: go_factory,
-};
+mcb_domain::register_project_detector!(
+    "go",
+    "Detects Go projects with go.mod",
+    &["go.mod"],
+    |config| {
+        GoDetector::new(config)
+            .map(|detector| std::sync::Arc::new(detector) as std::sync::Arc<dyn ProjectDetector>)
+            .map_err(|e| {
+                mcb_domain::Error::configuration(format!("Failed to initialize Go detector: {e}"))
+            })
+    }
+);

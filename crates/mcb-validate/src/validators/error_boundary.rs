@@ -10,19 +10,19 @@
 
 use crate::filters::LanguageId;
 use mcb_utils::constants::validate::{
-    ARCH_PATH_ADAPTERS, ARCH_PATH_DOMAIN, ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES,
+    ADAPTERS_DIR, ARCH_PATH_DOMAIN, ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES,
 };
 use mcb_utils::constants::validate::{
-    CFG_TEST_MARKER, COMMENT_PREFIX, ERROR_FILE_PREFIX, ERROR_MODULE_FILE, HANDLER_FILE_SUFFIX,
+    CFG_TEST_MARKER, COMMENT_PREFIX, ERROR_MODULE_FILE, ERROR_PREFIX, HANDLER_FILE_SUFFIX,
     SHORT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT,
 };
 use std::path::{Path, PathBuf};
 
 use crate::define_violations;
-use crate::pattern_registry::{compile_regex, compile_regex_pairs};
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
 use mcb_domain::ports::validation::ViolationCategory;
+use mcb_utils::utils::regex::{compile_regex, compile_regex_pairs};
 
 define_violations! {
     dynamic_severity,
@@ -149,7 +149,7 @@ impl ErrorBoundaryValidator {
         let context_pattern = compile_regex(r"\.(context|with_context|map_err|ok_or_else)\s*\(")?;
 
         // Files that are likely error boundary crossing points
-        let boundary_paths = [ARCH_PATH_HANDLERS, ARCH_PATH_ADAPTERS, ARCH_PATH_SERVICES];
+        let boundary_paths = [ARCH_PATH_HANDLERS, ADAPTERS_DIR, ARCH_PATH_SERVICES];
 
         Self::scan_relevant_lines(
             config,
@@ -204,7 +204,7 @@ impl ErrorBoundaryValidator {
                     return false;
                 }
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                file_name != ERROR_MODULE_FILE && !file_name.starts_with(ERROR_FILE_PREFIX)
+                file_name != ERROR_MODULE_FILE && !file_name.starts_with(ERROR_PREFIX)
             },
             |path, line_num, line, _trimmed| {
                 for (pattern, desc) in &compiled_errors {

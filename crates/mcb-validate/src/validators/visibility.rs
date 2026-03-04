@@ -6,7 +6,7 @@
 //! Validates proper use of pub(crate), pub, and private visibility.
 
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
+use mcb_utils::utils::regex::compile_regex;
 use std::collections::HashSet;
 use std::path::PathBuf;
 

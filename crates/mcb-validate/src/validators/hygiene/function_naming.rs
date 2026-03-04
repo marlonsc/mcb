@@ -2,9 +2,9 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_utils::utils::regex::compile_regex;
 
 use super::violation::HygieneViolation;
 use crate::ValidationConfigExt;

@@ -1,9 +1,9 @@
 use mcb_domain::entities::api_key::ApiKey;
-use rstest::rstest;
+use rstest::{fixture, rstest};
 
-#[rstest]
-fn api_key_construction() {
-    let key = ApiKey {
+#[fixture]
+fn default_api_key() -> ApiKey {
+    ApiKey {
         id: "key-001".to_owned(),
         user_id: "usr-001".to_owned(),
         org_id: "org-001".to_owned(),
@@ -13,18 +13,22 @@ fn api_key_construction() {
         expires_at: Some(1800000000),
         created_at: 1000,
         revoked_at: None,
-    };
-    assert_eq!(key.id, "key-001");
-    assert_eq!(key.user_id, "usr-001");
-    assert_eq!(key.org_id, "org-001");
-    assert_eq!(key.name, "CI pipeline");
-    assert!(key.expires_at.is_some());
-    assert!(key.revoked_at.is_none());
+    }
 }
 
 #[rstest]
-fn api_key_serialization_roundtrip() {
-    let key = ApiKey {
+fn api_key_construction(default_api_key: ApiKey) {
+    assert_eq!(default_api_key.id, "key-001");
+    assert_eq!(default_api_key.user_id, "usr-001");
+    assert_eq!(default_api_key.org_id, "org-001");
+    assert_eq!(default_api_key.name, "CI pipeline");
+    assert!(default_api_key.expires_at.is_some());
+    assert!(default_api_key.revoked_at.is_none());
+}
+
+#[fixture]
+fn api_key_for_serialization() -> ApiKey {
+    ApiKey {
         id: "key-002".to_owned(),
         user_id: "usr-002".to_owned(),
         org_id: "org-001".to_owned(),
@@ -34,17 +38,21 @@ fn api_key_serialization_roundtrip() {
         expires_at: None,
         created_at: 2000,
         revoked_at: None,
-    };
-    let json = serde_json::to_string(&key).expect("serialize");
+    }
+}
+
+#[rstest]
+fn api_key_serialization_roundtrip(api_key_for_serialization: ApiKey) {
+    let json = serde_json::to_string(&api_key_for_serialization).expect("serialize");
     let deserialized: ApiKey = serde_json::from_str(&json).expect("deserialize");
     assert_eq!(deserialized.id, "key-002");
     assert_eq!(deserialized.name, "dev laptop");
     assert!(deserialized.expires_at.is_none());
 }
 
-#[rstest]
-fn api_key_revoked() {
-    let key = ApiKey {
+#[fixture]
+fn revoked_api_key() -> ApiKey {
+    ApiKey {
         id: "key-003".to_owned(),
         user_id: "usr-001".to_owned(),
         org_id: "org-001".to_owned(),
@@ -54,7 +62,11 @@ fn api_key_revoked() {
         expires_at: None,
         created_at: 1000,
         revoked_at: Some(2000),
-    };
-    assert!(key.revoked_at.is_some());
-    assert_eq!(key.revoked_at.unwrap(), 2000);
+    }
+}
+
+#[rstest]
+fn api_key_revoked(revoked_api_key: ApiKey) {
+    assert!(revoked_api_key.revoked_at.is_some());
+    assert_eq!(revoked_api_key.revoked_at.unwrap(), 2000);
 }

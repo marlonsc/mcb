@@ -15,12 +15,13 @@ use crate::Result;
 use crate::engines::hybrid_engine::RuleViolation;
 use mcb_domain::ports::validation::{Severity, ViolationCategory};
 use mcb_utils::constants::validate::{
-    DEFAULT_MAX_FILE_LINES, DEFAULT_VIOLATION_MESSAGE, RUSTY_AST_PATTERN_VIOLATION_ID,
-    RUSTY_CARGO_DEP_FORBIDDEN_MSG, RUSTY_CARGO_DEP_MISSING_MSG, RUSTY_CARGO_DEP_VIOLATION_ID,
-    RUSTY_CONDITION_EXISTS, RUSTY_CONDITION_NOT_EXISTS, RUSTY_CUSTOM_ACTION_DEFAULT,
-    RUSTY_DEFAULT_CARGO_CONDITION, RUSTY_DEFAULT_FACT_TYPE, RUSTY_DEFAULT_FIELD,
-    RUSTY_DEFAULT_FILE_SIZE_CONDITION, RUSTY_DEFAULT_FILE_SIZE_PATTERN, RUSTY_DEFAULT_OPERATOR,
-    RUSTY_DEFAULT_RULE_TYPE, RUSTY_RULE_TYPE_AST_PATTERN, RUSTY_RULE_TYPE_CARGO_DEPENDENCIES,
+    DEFAULT_MAX_FILE_LINES, DEFAULT_VIOLATION_MESSAGE, GENERIC, NOT_EXISTS,
+    RUSTY_AST_PATTERN_VIOLATION_ID, RUSTY_CARGO_DEP_FORBIDDEN_MSG, RUSTY_CARGO_DEP_MISSING_MSG,
+    RUSTY_CARGO_DEP_VIOLATION_ID, RUSTY_CONDITION_EXISTS, RUSTY_CUSTOM_ACTION_DEFAULT,
+    RUSTY_DEFAULT_FIELD, RUSTY_DEFAULT_FILE_SIZE_CONDITION, RUSTY_DEFAULT_FILE_SIZE_PATTERN,
+    RUSTY_DEFAULT_OPERATOR, RUSTY_FIELD_ALL, RUSTY_FIELD_ANY, RUSTY_FIELD_FACT_TYPE,
+    RUSTY_FIELD_FIELD, RUSTY_FIELD_NOT, RUSTY_FIELD_OPERATOR, RUSTY_FIELD_VALUE,
+    RUSTY_FIELD_VIOLATION, RUSTY_RULE_TYPE_AST_PATTERN, RUSTY_RULE_TYPE_CARGO_DEPENDENCIES,
     RUSTY_RULE_TYPE_FILE_SIZE, RUSTY_TARGET_DIR_FRAGMENT, SEVERITY_ERROR, SEVERITY_INFO,
     TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, YAML_FIELD_ACTION, YAML_FIELD_CONDITION,
     YAML_FIELD_FIX_TYPE, YAML_FIELD_MESSAGE, YAML_FIELD_PATTERN, YAML_FIELD_SEVERITY,
@@ -106,8 +107,7 @@ impl RustyRulesEngineWrapper {
     }
 
     fn parse_rule_from_json(definition: &Value) -> Result<RustyRule> {
-        let rule_type =
-            json_str(definition, YAML_FIELD_FIX_TYPE, RUSTY_DEFAULT_RULE_TYPE).to_owned();
+        let rule_type = json_str(definition, YAML_FIELD_FIX_TYPE, GENERIC).to_owned();
         let condition = Self::parse_optional_condition(definition)?;
         let action = Self::parse_optional_action(definition);
 
@@ -137,7 +137,7 @@ impl RustyRulesEngineWrapper {
     }
 
     fn parse_condition_value(condition_json: &Value) -> Result<Condition> {
-        if let Some(all_conditions) = condition_json.get("all")
+        if let Some(all_conditions) = condition_json.get(RUSTY_FIELD_ALL)
             && let Some(conditions_array) = all_conditions.as_array()
         {
             let conditions = conditions_array
@@ -147,7 +147,7 @@ impl RustyRulesEngineWrapper {
             return Ok(Condition::All(conditions));
         }
 
-        if let Some(any_conditions) = condition_json.get("any")
+        if let Some(any_conditions) = condition_json.get(RUSTY_FIELD_ANY)
             && let Some(conditions_array) = any_conditions.as_array()
         {
             let conditions = conditions_array
@@ -157,19 +157,23 @@ impl RustyRulesEngineWrapper {
             return Ok(Condition::Any(conditions));
         }
 
-        if let Some(not_condition) = condition_json.get("not") {
+        if let Some(not_condition) = condition_json.get(RUSTY_FIELD_NOT) {
             let condition = Self::parse_condition_value(not_condition)?;
             return Ok(Condition::Not(Box::new(condition)));
         }
 
         // Simple condition
-        let fact_type = json_str(condition_json, "fact_type", RUSTY_DEFAULT_FACT_TYPE).to_owned();
+        let fact_type = json_str(condition_json, RUSTY_FIELD_FACT_TYPE, GENERIC).to_owned();
 
-        let field = json_str(condition_json, "field", RUSTY_DEFAULT_FIELD).to_owned();
+        let field = json_str(condition_json, RUSTY_FIELD_FIELD, RUSTY_DEFAULT_FIELD).to_owned();
 
-        let operator = json_str(condition_json, "operator", RUSTY_DEFAULT_OPERATOR).to_owned();
+        let operator =
+            json_str(condition_json, RUSTY_FIELD_OPERATOR, RUSTY_DEFAULT_OPERATOR).to_owned();
 
-        let value = condition_json.get("value").cloned().unwrap_or(Value::Null);
+        let value = condition_json
+            .get(RUSTY_FIELD_VALUE)
+            .cloned()
+            .unwrap_or(Value::Null);
 
         Ok(Condition::Simple {
             fact_type,
@@ -180,7 +184,7 @@ impl RustyRulesEngineWrapper {
     }
 
     fn parse_action(action_json: &Value) -> Action {
-        if let Some(violation) = action_json.get("violation") {
+        if let Some(violation) = action_json.get(RUSTY_FIELD_VIOLATION) {
             let message =
                 json_str(violation, YAML_FIELD_MESSAGE, DEFAULT_VIOLATION_MESSAGE).to_owned();
 
@@ -349,18 +353,14 @@ impl RustyRulesEngineWrapper {
         context: &RuleContext,
     ) -> Result<Vec<RuleViolation>> {
         let mut violations = Vec::new();
-        let condition = json_str(
-            rule_definition,
-            YAML_FIELD_CONDITION,
-            RUSTY_DEFAULT_CARGO_CONDITION,
-        );
+        let condition = json_str(rule_definition, YAML_FIELD_CONDITION, NOT_EXISTS);
         let Some(forbidden_pattern) = json_opt_str(rule_definition, YAML_FIELD_PATTERN) else {
             return Ok(violations);
         };
 
         let has_forbidden = Self::has_forbidden_dependency(forbidden_pattern, context);
         let should_report = match condition {
-            RUSTY_CONDITION_NOT_EXISTS => has_forbidden,
+            NOT_EXISTS => has_forbidden,
             RUSTY_CONDITION_EXISTS => !has_forbidden,
             _ => false,
         };
