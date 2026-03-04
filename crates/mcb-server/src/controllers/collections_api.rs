@@ -44,7 +44,7 @@ pub async fn chunks(Extension(state): Extension<McbState>) -> Result<Response> {
         let id = CollectionId::from_string(&collection.name);
         let vecs = state
             .vector_store
-            .list_vectors(&id, 50)
+            .list_vectors(&id, mcb_utils::constants::values::DEFAULT_BROWSE_LIMIT)
             .await
             .unwrap_or_default();
         all_chunks.extend(vecs);

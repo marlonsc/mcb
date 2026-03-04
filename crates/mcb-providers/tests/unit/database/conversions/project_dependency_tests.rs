@@ -10,7 +10,7 @@ fn sample_project_dependency() -> project_dependency::Model {
         from_issue_id: "ref_from_issue_id_001".into(),
         to_issue_id: "ref_to_issue_id_001".into(),
         dependency_type: "RelatesTo".into(),
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 

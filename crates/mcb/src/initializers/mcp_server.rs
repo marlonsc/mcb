@@ -51,7 +51,7 @@ impl Initializer for McpServerInitializer {
             .deserialize_from_value(&settings)
             .map_err(|e| loco_rs::Error::string(&format!("AppConfig: {e}")))?;
 
-        let app_config = app_config_any
+        let app_config = *app_config_any
             .downcast::<mcb_infrastructure::config::app::AppConfig>()
             .map_err(|_| loco_rs::Error::string("ConfigProvider returned unexpected type"))?;
 

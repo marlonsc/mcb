@@ -10,8 +10,8 @@ fn sample_organization() -> organization::Model {
         name: "test_name".into(),
         slug: "test-organization".into(),
         settings_json: "{}".into(),
-        created_at: 1_700_000_000,
-        updated_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 

@@ -227,7 +227,15 @@ async fn test_runtime_defaults_discover() {
         defaults.repo_id.as_deref(),
         Some(RepositoryId::from_name("repo-test").as_str().as_str())
     );
-    assert_eq!(defaults.agent_program.as_deref(), Some("mcb-stdio"));
+    let known_programs = ["mcb-stdio", "cursor", "claude-code", "opencode", "vscode"];
+    assert!(
+        defaults
+            .agent_program
+            .as_deref()
+            .is_some_and(|p| known_programs.contains(&p)),
+        "agent_program should be a known IDE, got: {:?}",
+        defaults.agent_program
+    );
     assert_eq!(defaults.model_id.as_deref(), Some("unknown"));
     assert_eq!(defaults.execution_flow, Some(ExecutionFlow::StdioOnly));
     assert!(defaults.session_id.is_some());

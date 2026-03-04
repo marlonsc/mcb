@@ -28,6 +28,8 @@ pub mod limits;
 pub mod protocol;
 /// Search and BM25 algorithmic constants.
 pub mod search;
+/// Test constants, fixture values, and timeout defaults.
+pub mod testing;
 /// Time validation and boundary constants.
 pub mod time;
 /// Use case / business logic constants.

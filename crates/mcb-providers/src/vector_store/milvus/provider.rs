@@ -42,7 +42,9 @@ impl MilvusVectorStoreProvider {
             |e| {
                 let err_str = e.to_string();
                 err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
-                    || err_str.contains("collection not found")
+                    || err_str.contains(
+                        mcb_utils::constants::vector_store::MILVUS_ERROR_COLLECTION_NOT_FOUND,
+                    )
             },
         )
         .await;
@@ -50,7 +52,8 @@ impl MilvusVectorStoreProvider {
         if let Err(e) = index_result {
             let err_str = e.to_string();
             if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
-                || err_str.contains("collection not found")
+                || err_str
+                    .contains(mcb_utils::constants::vector_store::MILVUS_ERROR_COLLECTION_NOT_FOUND)
             {
                 return Err(Error::vector_db(format!(
                     "Failed to create index after retries: {e}"
@@ -71,7 +74,10 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
             self.client.create_collection(schema, None).await,
             "create collection",
         )?;
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(
+            mcb_utils::constants::vector_store::MILVUS_COLLECTION_CREATE_DELAY_MS,
+        ))
+        .await;
         self.create_vector_index_with_retry(name).await?;
         Ok(())
     }

@@ -17,12 +17,14 @@ use tokio::process::Command;
 use tokio::time::{Duration, timeout};
 
 /// Per-operation timeout -- prevents any single MCP call or shutdown from hanging.
-const OP_TIMEOUT: Duration = Duration::from_secs(10);
+const OP_TIMEOUT: Duration =
+    Duration::from_secs(mcb_utils::constants::testing::TEST_OP_TIMEOUT_SECS);
 
 /// Server startup timeout -- longer to allow fastembed model download on first cold CI run.
 /// The `AllMiniLML6V2` ONNX model (~90MB) must be downloaded from `HuggingFace` on first run.
 /// Subsequent runs use the cached model and start in <3s.
-const STARTUP_TIMEOUT: Duration = Duration::from_secs(120);
+const STARTUP_TIMEOUT: Duration =
+    Duration::from_secs(mcb_utils::constants::testing::TEST_STARTUP_TIMEOUT_SECS);
 
 // --- Temp DB cleanup ---
 

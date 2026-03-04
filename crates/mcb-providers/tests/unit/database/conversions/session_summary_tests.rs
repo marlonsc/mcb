@@ -16,7 +16,7 @@ fn sample_session_summary() -> session_summary::Model {
         next_steps: Some(r#"["tag1","tag2"]"#.into()),
         key_files: Some(r#"["tag1","tag2"]"#.into()),
         origin_context: Some(r#"{"key":"val"}"#.into()),
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 

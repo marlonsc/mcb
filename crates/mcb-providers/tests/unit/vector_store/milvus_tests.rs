@@ -3,8 +3,8 @@ use mcb_providers::vector_store::milvus::browser::convert_query_results;
 use mcb_providers::vector_store::milvus::schema::{extract_long_field, extract_string_field};
 use mcb_providers::vector_store::milvus::to_milvus_name;
 use mcb_utils::constants::vector_store::{
-    MILVUS_COLLECTION_NAME_PATTERN, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_ID,
-    VECTOR_FIELD_START_LINE,
+    MILVUS_COLLECTION_NAME_PATTERN, MILVUS_COLLECTION_PREFIX, VECTOR_FIELD_FILE_PATH,
+    VECTOR_FIELD_ID, VECTOR_FIELD_START_LINE,
 };
 use milvus::data::FieldColumn;
 use milvus::proto::schema::DataType;
@@ -33,8 +33,8 @@ fn milvus_name(collection_id: CollectionId) -> String {
 #[test]
 fn test_to_milvus_name_starts_with_letter(milvus_name: String) {
     assert!(
-        milvus_name.starts_with("mcb_"),
-        "name must start with mcb_ prefix: {milvus_name}"
+        milvus_name.starts_with(MILVUS_COLLECTION_PREFIX),
+        "name must start with {MILVUS_COLLECTION_PREFIX} prefix: {milvus_name}",
     );
 }
 
@@ -231,9 +231,9 @@ fn test_error_message_contains_expected_substrings(
 #[case(VECTOR_FIELD_START_LINE)]
 #[case(mcb_utils::constants::vector_store::VECTOR_FIELD_CONTENT)]
 fn test_default_output_fields_contains_field(#[case] field: &str) {
-    use mcb_providers::vector_store::milvus::DEFAULT_OUTPUT_FIELDS;
+    use mcb_utils::constants::vector_store::MILVUS_DEFAULT_OUTPUT_FIELDS;
     assert!(
-        DEFAULT_OUTPUT_FIELDS.contains(&field),
-        "DEFAULT_OUTPUT_FIELDS must contain '{field}' for extraction to work"
+        MILVUS_DEFAULT_OUTPUT_FIELDS.contains(&field),
+        "MILVUS_DEFAULT_OUTPUT_FIELDS must contain '{field}' for extraction to work"
     );
 }

@@ -8,7 +8,7 @@ fn sample_issue_label_assignment() -> issue_label_assignment::Model {
     issue_label_assignment::Model {
         issue_id: "ref_issue_id_001".into(),
         label_id: "ref_label_id_001".into(),
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 

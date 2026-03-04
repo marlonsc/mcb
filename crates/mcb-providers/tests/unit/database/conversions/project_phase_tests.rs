@@ -12,10 +12,10 @@ fn sample_project_phase() -> project_phase::Model {
         description: "test_description".into(),
         sequence: 2,
         status: "Planned".into(),
-        started_at: Some(1_700_000_000),
-        completed_at: Some(1_700_000_000),
-        created_at: 1_700_000_000,
-        updated_at: 1_700_000_000,
+        started_at: Some(mcb_utils::constants::testing::TEST_TIMESTAMP),
+        completed_at: Some(mcb_utils::constants::testing::TEST_TIMESTAMP),
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 

@@ -118,7 +118,8 @@ impl AgentSessionManager for AgentSessionServiceImpl {
         if let Some(mut session) = session {
             let now = domain_time::epoch_secs_i64()?;
             session.ended_at = Some(now);
-            session.duration_ms = Some((now - session.started_at) * 1000);
+            session.duration_ms =
+                Some((now - session.started_at) * mcb_utils::constants::values::MS_PER_SEC);
             session.status = status;
             session.result_summary = result_summary;
             self.repository.update_session(&session).await?;
@@ -195,9 +196,9 @@ fn build_agent_session_service_from_registry(
         })?;
 
     let repos = mcb_domain::registry::database::resolve_database_repositories(
-        "seaorm",
+        mcb_utils::constants::values::DEFAULT_DATABASE_PROVIDER,
         Arc::clone(&ctx.db),
-        "default".to_owned(),
+        mcb_utils::constants::values::DEFAULT_NAMESPACE.to_owned(),
     )?;
 
     Ok(Arc::new(AgentSessionServiceImpl::new(repos.agent)))

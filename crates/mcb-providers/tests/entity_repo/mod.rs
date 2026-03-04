@@ -46,8 +46,8 @@ async fn seed_org(repo: &SeaOrmEntityRepository) -> TestResult {
         name: "Test Org".into(),
         slug: "test-org".into(),
         settings_json: "{}".into(),
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_org(&org).await?;
     Ok(())
@@ -62,8 +62,8 @@ async fn seed_user(repo: &SeaOrmEntityRepository) -> TestResult {
         display_name: "Alice".into(),
         role: UserRole::Admin,
         api_key_hash: None,
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_user(&user).await?;
     Ok(())
@@ -72,7 +72,7 @@ async fn seed_user(repo: &SeaOrmEntityRepository) -> TestResult {
 async fn seed_project(repo: &SeaOrmEntityRepository) -> TestResult {
     repo.db()
         .execute_unprepared(
-            "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES ('proj-001', 'org-001', 'Test Project', '/tmp/proj', 1700000000, 1700000000)",
+            "INSERT INTO projects (id, org_id, name, path, created_at, updated_at) VALUES ('proj-001', 'org-001', 'Test Project', '/tmp/proj', mcb_utils::constants::testing::TEST_TIMESTAMP, mcb_utils::constants::testing::TEST_TIMESTAMP)",
         )
         .await?;
     Ok(())
@@ -98,7 +98,7 @@ async fn vcs_repository_crud() -> TestResult {
         url: "https://github.com/user/mcb.git".into(),
         local_path: "/home/user/mcb".into(),
         vcs_type: VcsType::Git,
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
         updated_at: 1700000001,
     };
 
@@ -142,8 +142,8 @@ async fn vcs_branch_crud() -> TestResult {
         url: "https://github.com/user/mcb.git".into(),
         local_path: "/home/user/mcb".into(),
         vcs_type: VcsType::Git,
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_repository(&r).await?;
 
@@ -155,7 +155,7 @@ async fn vcs_branch_crud() -> TestResult {
         is_default: true,
         head_commit: "abc123".into(),
         upstream: Some("origin/main".into()),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
 
     repo.create_branch(&b).await?;
@@ -198,8 +198,8 @@ async fn vcs_worktree_crud() -> TestResult {
         url: "https://github.com/user/mcb.git".into(),
         local_path: "/home/user/mcb".into(),
         vcs_type: VcsType::Git,
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_repository(&r).await?;
 
@@ -211,7 +211,7 @@ async fn vcs_worktree_crud() -> TestResult {
         is_default: true,
         head_commit: "abc123".into(),
         upstream: None,
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_branch(&b).await?;
 
@@ -222,8 +222,8 @@ async fn vcs_worktree_crud() -> TestResult {
         path: "/tmp/worktree".into(),
         status: WorktreeStatus::Active,
         assigned_agent_id: None,
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
 
     repo.create_worktree(&wt).await?;
@@ -266,8 +266,8 @@ async fn vcs_assignment_crud() -> TestResult {
         url: "https://github.com/user/mcb.git".into(),
         local_path: "/home/user/mcb".into(),
         vcs_type: VcsType::Git,
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_repository(&r).await?;
 
@@ -279,7 +279,7 @@ async fn vcs_assignment_crud() -> TestResult {
         is_default: true,
         head_commit: "abc123".into(),
         upstream: None,
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_branch(&b).await?;
 
@@ -290,15 +290,15 @@ async fn vcs_assignment_crud() -> TestResult {
         path: "/tmp/worktree".into(),
         status: WorktreeStatus::Active,
         assigned_agent_id: None,
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_worktree(&wt).await?;
 
     // Seed agent session
     repo.db()
         .execute_unprepared(
-            "INSERT INTO agent_sessions (id, project_id, worktree_id, session_summary_id, agent_type, model, status, started_at, parent_session_id, prompt_summary, result_summary, ended_at, duration_ms, token_count, tool_calls_count, delegations_count) VALUES ('ses-001', 'proj-001', 'wt-001', '', 'build', 'claude', 'active', 1700000000, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)",
+            "INSERT INTO agent_sessions (id, project_id, worktree_id, session_summary_id, agent_type, model, status, started_at, parent_session_id, prompt_summary, result_summary, ended_at, duration_ms, token_count, tool_calls_count, delegations_count) VALUES ('ses-001', 'proj-001', 'wt-001', '', 'build', 'claude', 'active', mcb_utils::constants::testing::TEST_TIMESTAMP, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL)",
         )
         .await?;
 
@@ -306,7 +306,7 @@ async fn vcs_assignment_crud() -> TestResult {
         id: "asgn-001".into(),
         agent_session_id: "ses-001".into(),
         worktree_id: "wt-001".into(),
-        assigned_at: 1700000000,
+        assigned_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
         released_at: None,
     };
 
@@ -339,7 +339,7 @@ async fn org_organization_crud() -> TestResult {
         name: "Acme Corp".into(),
         slug: "acme-corp".into(),
         settings_json: r#"{"theme":"dark"}"#.into(),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
         updated_at: 1700000001,
     };
 
@@ -380,7 +380,7 @@ async fn org_user_crud() -> TestResult {
         display_name: "Alice".into(),
         role: UserRole::Admin,
         api_key_hash: Some("hash123".into()),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
         updated_at: 1700000001,
     };
 
@@ -423,7 +423,7 @@ async fn org_team_crud() -> TestResult {
         id: "team-001".into(),
         org_id: "org-001".into(),
         name: "Backend Team".into(),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
 
     repo.create_team(&t).await?;
@@ -454,7 +454,7 @@ async fn org_team_member_crud() -> TestResult {
         id: "team-001".into(),
         org_id: "org-001".into(),
         name: "Backend Team".into(),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_team(&t).await?;
 
@@ -463,7 +463,7 @@ async fn org_team_member_crud() -> TestResult {
         team_id: "team-001".into(),
         user_id: "usr-001".into(),
         role: TeamMemberRole::Lead,
-        joined_at: 1700000000,
+        joined_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
 
     repo.add_team_member(&member).await?;
@@ -496,7 +496,7 @@ async fn org_api_key_crud() -> TestResult {
         name: "CI Key".into(),
         scopes_json: r#"["read","write"]"#.into(),
         expires_at: Some(1800000000),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
         revoked_at: None,
     };
 
@@ -538,7 +538,7 @@ async fn plan_plan_crud() -> TestResult {
         description: "SeaORM migration plan".into(),
         status: PlanStatus::Active,
         created_by: "usr-001".into(),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
         updated_at: 1700000001,
     };
 
@@ -582,8 +582,8 @@ async fn plan_version_crud() -> TestResult {
         description: "Plan".into(),
         status: PlanStatus::Draft,
         created_by: "usr-001".into(),
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_plan(&p).await?;
 
@@ -595,7 +595,7 @@ async fn plan_version_crud() -> TestResult {
         content_json: r#"{"tasks":[]}"#.into(),
         change_summary: "Initial version".into(),
         created_by: "usr-001".into(),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
 
     repo.create_plan_version(&v).await?;
@@ -627,8 +627,8 @@ async fn plan_review_crud() -> TestResult {
         description: "Plan".into(),
         status: PlanStatus::Draft,
         created_by: "usr-001".into(),
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_plan(&p).await?;
 
@@ -640,7 +640,7 @@ async fn plan_review_crud() -> TestResult {
         content_json: "{}".into(),
         change_summary: "Init".into(),
         created_by: "usr-001".into(),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_plan_version(&v).await?;
 
@@ -652,8 +652,8 @@ async fn plan_review_crud() -> TestResult {
         display_name: "Bob".into(),
         role: UserRole::Member,
         api_key_hash: None,
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_user(&reviewer).await?;
 
@@ -664,7 +664,7 @@ async fn plan_review_crud() -> TestResult {
         reviewer_id: "usr-002".into(),
         verdict: ReviewVerdict::Approved,
         feedback: "Looks good!".into(),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
 
     repo.create_plan_review(&review).await?;
@@ -706,7 +706,7 @@ async fn issue_project_issue_crud() -> TestResult {
         notes: String::new(),
         design: String::new(),
         parent_issue_id: None,
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
         updated_at: 1700000001,
         closed_at: None,
         closed_reason: String::new(),
@@ -762,8 +762,8 @@ async fn issue_comment_crud() -> TestResult {
         notes: String::new(),
         design: String::new(),
         parent_issue_id: None,
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
         closed_at: None,
         closed_reason: String::new(),
     };
@@ -774,7 +774,7 @@ async fn issue_comment_crud() -> TestResult {
         issue_id: "iss-001".into(),
         author_id: "usr-001".into(),
         content: "This looks like a race condition".into(),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
 
     repo.create_comment(&comment).await?;
@@ -808,7 +808,7 @@ async fn issue_label_crud() -> TestResult {
         project_id: "proj-001".into(),
         name: "bug".into(),
         color: "#ff0000".into(),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
 
     repo.create_label(&label).await?;
@@ -855,8 +855,8 @@ async fn issue_label_assignment_crud() -> TestResult {
         notes: String::new(),
         design: String::new(),
         parent_issue_id: None,
-        created_at: 1700000000,
-        updated_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
         closed_at: None,
         closed_reason: String::new(),
     };
@@ -868,7 +868,7 @@ async fn issue_label_assignment_crud() -> TestResult {
         project_id: "proj-001".into(),
         name: "bug".into(),
         color: "#ff0000".into(),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
     repo.create_label(&label).await?;
 
@@ -876,7 +876,7 @@ async fn issue_label_assignment_crud() -> TestResult {
         id: IssueLabelAssignmentId::from("iss-001:lbl-001"),
         issue_id: "iss-001".into(),
         label_id: "lbl-001".into(),
-        created_at: 1700000000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     };
 
     repo.assign_label(&assignment).await?;

@@ -29,6 +29,10 @@ pub const METRICS_PATH: &str = "/metrics";
 /// HTTP request timeout in seconds.
 pub const HTTP_REQUEST_TIMEOUT_SECS: u64 = 30;
 
+/// Default timeout for HTTP requests as Duration
+pub const DEFAULT_HTTP_TIMEOUT: std::time::Duration =
+    std::time::Duration::from_secs(HTTP_REQUEST_TIMEOUT_SECS);
+
 /// HTTP client idle timeout in seconds.
 pub const HTTP_CLIENT_IDLE_TIMEOUT_SECS: u64 = 90;
 

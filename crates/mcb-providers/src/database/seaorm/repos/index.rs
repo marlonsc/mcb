@@ -419,8 +419,10 @@ impl FileHashRepository for SeaOrmIndexRepository {
     }
 
     async fn cleanup_tombstones(&self) -> Result<u64> {
-        self.cleanup_tombstones_with_ttl(Duration::from_secs(7 * 24 * 3600))
-            .await
+        self.cleanup_tombstones_with_ttl(Duration::from_secs(
+            mcb_utils::constants::values::TOMBSTONE_TTL_SECS,
+        ))
+        .await
     }
 
     async fn cleanup_tombstones_with_ttl(&self, ttl: Duration) -> Result<u64> {

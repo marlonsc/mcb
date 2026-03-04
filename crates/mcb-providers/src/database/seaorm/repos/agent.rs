@@ -7,6 +7,7 @@ use mcb_domain::ports::{
     AgentCheckpointRepository, AgentEventRepository, AgentSessionQuery, AgentSessionRepository,
 };
 use mcb_utils::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
+use mcb_utils::constants::values::DEFAULT_SESSION_LIMIT;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder,
     QuerySelect, Set,
@@ -16,9 +17,6 @@ use super::common::db_error;
 use crate::database::seaorm::entities::{
     agent_session, checkpoint, delegation, organization, project, tool_call,
 };
-
-/// Default limit for agent session queries to prevent unbounded result sets.
-const DEFAULT_SESSION_LIMIT: u64 = 100;
 
 /// A SeaORM-based implementation of the agent repository.
 pub struct SeaOrmAgentRepository {

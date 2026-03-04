@@ -162,7 +162,11 @@ impl HookProcessor {
         };
 
         let results = memory_service
-            .memory_search("session context", Some(filter), 10)
+            .memory_search(
+                "session context",
+                Some(filter),
+                mcb_utils::constants::values::SESSION_SEARCH_LIMIT,
+            )
             .await
             .map_err(|e| HookError::FailedToInjectContext(e.to_string()))?;
 

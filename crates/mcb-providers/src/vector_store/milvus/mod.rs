@@ -8,6 +8,7 @@
 
 use mcb_domain::error::Result;
 use mcb_domain::value_objects::CollectionId;
+use mcb_utils::constants::vector_store::MILVUS_DEFAULT_OUTPUT_FIELDS;
 use milvus::client::Client;
 
 /// Milvus admin operations (create, drop, health).
@@ -26,14 +27,6 @@ pub struct MilvusVectorStoreProvider {
     client: Client,
 }
 
-/// Default output fields for Milvus queries.
-pub const DEFAULT_OUTPUT_FIELDS: &[&str] = &[
-    mcb_utils::constants::vector_store::VECTOR_FIELD_ID,
-    mcb_utils::constants::vector_store::VECTOR_FIELD_FILE_PATH,
-    mcb_utils::constants::vector_store::VECTOR_FIELD_START_LINE,
-    mcb_utils::constants::vector_store::VECTOR_FIELD_CONTENT,
-];
-
 /// Convert a `CollectionId` to a valid Milvus collection name.
 ///
 /// Milvus requires collection names matching `^[a-zA-Z_][a-zA-Z0-9_]*$` (max 255 chars).
@@ -44,13 +37,16 @@ pub const DEFAULT_OUTPUT_FIELDS: &[&str] = &[
 pub fn to_milvus_name(collection: &CollectionId) -> String {
     let raw = collection.to_string();
     let sanitized = raw.replace('-', "");
-    format!("mcb_{sanitized}")
+    format!(
+        "{}{sanitized}",
+        mcb_utils::constants::vector_store::MILVUS_COLLECTION_PREFIX
+    )
 }
 
 pub(super) fn is_collection_not_found(msg: &str) -> bool {
     msg.contains(mcb_utils::constants::vector_store::MILVUS_ERROR_COLLECTION_NOT_EXISTS)
-        || msg.contains("collection not found")
-        || msg.contains("not exist")
+        || msg.contains(mcb_utils::constants::vector_store::MILVUS_ERROR_COLLECTION_NOT_FOUND)
+        || msg.contains(mcb_utils::constants::vector_store::MILVUS_ERROR_NOT_EXIST)
 }
 
 impl MilvusVectorStoreProvider {
@@ -104,7 +100,7 @@ impl MilvusVectorStoreProvider {
     }
 
     pub(super) fn default_output_fields() -> Vec<String> {
-        DEFAULT_OUTPUT_FIELDS
+        MILVUS_DEFAULT_OUTPUT_FIELDS
             .iter()
             .map(|field| (*field).to_owned())
             .collect()

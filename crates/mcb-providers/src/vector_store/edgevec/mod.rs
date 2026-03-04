@@ -146,7 +146,7 @@ impl EdgeVecVectorStoreProvider {
     ///
     /// Returns an error if the `EdgeVec` actor fails to initialize.
     pub fn new(config: &EdgeVecConfig) -> Result<Self> {
-        let (tx, rx) = mpsc::channel(100);
+        let (tx, rx) = mpsc::channel(mcb_utils::constants::vector_store::EDGEVEC_CHANNEL_CAPACITY);
         let config_clone = config.clone();
 
         let actor = actor::EdgeVecActor::new(rx, config_clone)?;
@@ -168,7 +168,7 @@ impl EdgeVecVectorStoreProvider {
     ///
     /// Returns an error if the `EdgeVec` actor fails to initialize.
     pub fn with_collection(config: &EdgeVecConfig, collection: CollectionId) -> Result<Self> {
-        let (tx, rx) = mpsc::channel(100);
+        let (tx, rx) = mpsc::channel(mcb_utils::constants::vector_store::EDGEVEC_CHANNEL_CAPACITY);
         let config_clone = config.clone();
 
         let actor = actor::EdgeVecActor::new(rx, config_clone)?;
@@ -191,7 +191,9 @@ use mcb_domain::registry::vector_store::{
 fn edgevec_factory(
     config: &VectorStoreProviderConfig,
 ) -> std::result::Result<Arc<dyn VectorStoreProvider>, String> {
-    let dimensions = config.dimensions.unwrap_or(384);
+    let dimensions = config
+        .dimensions
+        .unwrap_or(mcb_utils::constants::embedding::EMBEDDING_DIMENSION_NULL);
     let collection_name = config.collection.clone().ok_or_else(|| {
         "EdgeVec provider requires a collection name in vector_store config".to_owned()
     })?;

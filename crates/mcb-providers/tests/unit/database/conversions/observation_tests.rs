@@ -13,7 +13,7 @@ fn sample_observation() -> observation::Model {
         tags: Some(r#"["tag1","tag2"]"#.into()),
         observation_type: Some("Context".into()),
         metadata: Some(r#"{"key":"val"}"#.into()),
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
         embedding_id: Some("test_embedding_id".into()),
     }
 }

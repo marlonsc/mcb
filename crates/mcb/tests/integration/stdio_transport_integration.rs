@@ -23,7 +23,8 @@ use tokio::time::{Duration, timeout};
 
 /// Startup timeout -- longer to allow fastembed model download on first cold CI run.
 /// The `AllMiniLML6V2` ONNX model (~90MB) must be downloaded from `HuggingFace` on first run.
-const STARTUP_TIMEOUT: Duration = Duration::from_secs(120);
+const STARTUP_TIMEOUT: Duration =
+    Duration::from_secs(mcb_utils::constants::testing::TEST_STARTUP_TIMEOUT_SECS);
 
 // =============================================================================
 // TEMP DB CLEANUP INFRASTRUCTURE

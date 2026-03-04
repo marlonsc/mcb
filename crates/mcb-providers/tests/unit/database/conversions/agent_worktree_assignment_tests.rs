@@ -9,8 +9,8 @@ fn sample_agent_worktree_assignment() -> agent_worktree_assignment::Model {
         id: "agent_worktree_assignment_test_001".into(),
         agent_session_id: "ref_agent_session_id_001".into(),
         worktree_id: "ref_worktree_id_001".into(),
-        assigned_at: 1_700_000_000,
-        released_at: Some(1_700_000_000),
+        assigned_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        released_at: Some(mcb_utils::constants::testing::TEST_TIMESTAMP),
         origin_context: None,
     }
 }

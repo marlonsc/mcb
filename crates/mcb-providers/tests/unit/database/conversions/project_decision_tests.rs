@@ -13,7 +13,7 @@ fn sample_project_decision() -> project_decision::Model {
         context: "test_context".into(),
         decision: "test_decision".into(),
         consequences: "test_consequences".into(),
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 

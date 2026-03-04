@@ -15,7 +15,7 @@ fn sample_branch() -> branch::Model {
         head_commit: "test_head_commit".into(),
         upstream: Some("test_upstream".into()),
         origin_context: None,
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 

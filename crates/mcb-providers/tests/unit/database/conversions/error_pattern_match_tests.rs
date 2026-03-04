@@ -12,8 +12,8 @@ fn sample_error_pattern_match() -> error_pattern_match::Model {
         confidence: 85,
         solution_applied: Some(3),
         resolution_successful: Some(1),
-        matched_at: 1_700_000_000,
-        resolved_at: Some(1_700_000_000),
+        matched_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        resolved_at: Some(mcb_utils::constants::testing::TEST_TIMESTAMP),
     }
 }
 

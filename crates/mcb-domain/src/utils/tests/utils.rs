@@ -52,23 +52,16 @@ pub fn workspace_root() -> TestResult<std::path::PathBuf> {
 }
 
 // ---------------------------------------------------------------------------
-// Common test identity constants
+// Common test identity constants — single source of truth in mcb-utils
 // ---------------------------------------------------------------------------
 
-/// Default test organization ID — use across all crates for consistency.
-pub const TEST_ORG_ID: &str = "test-org";
-
-/// Default test project ID.
-pub const TEST_PROJECT_ID: &str = "test-project";
-
-/// Default test session ID.
-pub const TEST_SESSION_ID: &str = "test-session";
-
-/// Default test user email.
-pub const TEST_USER_EMAIL: &str = "test@example.com";
-
-/// Default test timestamp (`2023-11-14T22:13:20Z`).
-pub const TEST_TIMESTAMP: i64 = 1_700_000_000;
+pub use mcb_utils::constants::testing::TEST_ORG_ID;
+pub use mcb_utils::constants::testing::TEST_PROJECT_ID;
+pub use mcb_utils::constants::testing::TEST_SESSION_ID;
+pub use mcb_utils::constants::testing::TEST_TIMESTAMP;
+pub use mcb_utils::constants::testing::TEST_TIMESTAMP_SMALL;
+pub use mcb_utils::constants::testing::TEST_USER_EMAIL;
+pub use mcb_utils::constants::testing::TEST_USER_ID;
 
 use crate::entities::agent::{
     AgentSession, AgentSessionStatus, AgentType, Checkpoint, CheckpointType, ToolCall,
@@ -132,7 +125,7 @@ pub fn create_test_issue(id: &str, project_id: &str) -> ProjectIssue {
         id: id.to_owned(),
         org_id: TEST_ORG_ID.to_owned(),
         project_id: project_id.to_owned(),
-        created_by: "test-user".to_owned(),
+        created_by: TEST_USER_ID.to_owned(),
         phase_id: None,
         title: format!("Issue {id}"),
         description: "Test Issue Description".to_owned(),
@@ -160,13 +153,13 @@ pub fn create_test_agent_session(id: &str) -> AgentSession {
         id: id.to_owned(),
         session_summary_id: Uuid::new_v4().to_string(),
         agent_type: AgentType::Sisyphus,
-        model: "claude-sonnet".to_owned(),
+        model: mcb_utils::constants::testing::TEST_MODEL_NAME.to_owned(),
         parent_session_id: None,
         started_at: TEST_TIMESTAMP,
         ended_at: None,
         duration_ms: None,
         status: AgentSessionStatus::Active,
-        prompt_summary: Some("Test Prompt".to_owned()),
+        prompt_summary: Some(mcb_utils::constants::testing::TEST_PROMPT_SUMMARY.to_owned()),
         result_summary: None,
         token_count: Some(0),
         tool_calls_count: Some(0),
@@ -182,7 +175,7 @@ pub fn create_test_tool_call(id: &str) -> ToolCall {
     ToolCall {
         id: id.to_owned(),
         session_id: TEST_SESSION_ID.to_owned(),
-        tool_name: "test_tool".to_owned(),
+        tool_name: mcb_utils::constants::testing::TEST_TOOL_NAME.to_owned(),
         params_summary: Some("check=true".to_owned()),
         success: true,
         error_message: None,
@@ -207,34 +200,15 @@ pub fn create_test_checkpoint(id: &str) -> Checkpoint {
 }
 
 // ---------------------------------------------------------------------------
-// Extended test constants (migrated from mcb-server/tests/utils/test_fixtures)
+// Extended test constants — re-exported from mcb-utils
 // ---------------------------------------------------------------------------
 
-/// Default test repository name.
-pub const TEST_REPO_NAME: &str = "test-repo";
-
-/// Default embedding dimensions (`FastEmbed` BGE-small-en-v1.5).
-pub const TEST_EMBEDDING_DIMENSIONS: usize = 384;
-
-/// Organization A identifier for multi-tenant tests.
-pub const TEST_ORG_ID_A: &str = "test-org-a";
-
-/// Organization B identifier for multi-tenant tests.
-pub const TEST_ORG_ID_B: &str = "test-org-b";
-
-/// Default golden-test collection name.
-pub const GOLDEN_COLLECTION: &str = "mcb_golden_test";
-
-/// Expected files in `sample_codebase` for search assertions.
-pub const SAMPLE_CODEBASE_FILES: &[&str] = &[
-    "embedding.rs",
-    "vector_store.rs",
-    "handlers.rs",
-    "cache.rs",
-    "di.rs",
-    "error.rs",
-    "chunking.rs",
-];
+pub use mcb_utils::constants::testing::GOLDEN_COLLECTION;
+pub use mcb_utils::constants::testing::SAMPLE_CODEBASE_FILES;
+pub use mcb_utils::constants::testing::TEST_EMBEDDING_DIMENSIONS;
+pub use mcb_utils::constants::testing::TEST_ORG_ID_A;
+pub use mcb_utils::constants::testing::TEST_ORG_ID_B;
+pub use mcb_utils::constants::testing::TEST_REPO_NAME;
 
 // ---------------------------------------------------------------------------
 // Entity fixture builders (migrated from mcb-server/tests/utils/test_fixtures)

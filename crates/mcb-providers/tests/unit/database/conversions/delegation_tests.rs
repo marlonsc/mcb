@@ -13,8 +13,8 @@ fn sample_delegation() -> delegation::Model {
         prompt_embedding_id: Some("test_prompt_embedding_id".into()),
         result: Some("test_result".into()),
         success: 1,
-        created_at: 1_700_000_000,
-        completed_at: Some(1_700_000_000),
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        completed_at: Some(mcb_utils::constants::testing::TEST_TIMESTAMP),
         duration_ms: Some(1500),
     }
 }

@@ -18,14 +18,9 @@ use mcb_domain::registry::services::{
 
 use super::{IndexingServiceDeps, IndexingServiceImpl, IndexingServiceWithHashDeps};
 
-/// Registry provider name for `SeaORM` database repositories.
-const DATABASE_PROVIDER: &str = "seaorm";
-
-/// Default namespace for database repositories.
-const DEFAULT_NAMESPACE: &str = "default";
-
-/// Registry provider name for universal language chunking.
-const LANGUAGE_PROVIDER: &str = "universal";
+use mcb_utils::constants::values::{
+    DEFAULT_DATABASE_PROVIDER, DEFAULT_LANGUAGE_PROVIDER, DEFAULT_NAMESPACE,
+};
 
 /// Build the `IndexingService` from the application registry.
 ///
@@ -55,11 +50,11 @@ fn build_indexing_service_from_registry(
 
     let context_service = resolve_context_service(context)?;
     let language_chunker =
-        resolve_language_provider(&LanguageProviderConfig::new(LANGUAGE_PROVIDER))?;
+        resolve_language_provider(&LanguageProviderConfig::new(DEFAULT_LANGUAGE_PROVIDER))?;
 
     // Use "seaorm" — the actual registry provider — not the user-facing config name.
     let repositories =
-        resolve_database_repositories(DATABASE_PROVIDER, db, DEFAULT_NAMESPACE.to_owned())?;
+        resolve_database_repositories(DEFAULT_DATABASE_PROVIDER, db, DEFAULT_NAMESPACE.to_owned())?;
 
     let indexing_ops: Arc<dyn mcb_domain::ports::IndexingOperationsInterface> =
         resolve_indexing_operations_provider(&IndexingOperationsProviderConfig::new(

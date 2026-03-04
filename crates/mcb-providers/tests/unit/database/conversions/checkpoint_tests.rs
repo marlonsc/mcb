@@ -11,8 +11,8 @@ fn sample_checkpoint() -> checkpoint::Model {
         checkpoint_type: "File".into(),
         description: "test_description".into(),
         snapshot_data: r#"{"test":true}"#.into(),
-        created_at: 1_700_000_000,
-        restored_at: Some(1_700_000_000),
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        restored_at: Some(mcb_utils::constants::testing::TEST_TIMESTAMP),
         expired: Some(1),
     }
 }

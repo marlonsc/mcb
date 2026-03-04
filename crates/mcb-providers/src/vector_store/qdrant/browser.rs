@@ -67,7 +67,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
                             "match": { "value": file_path }
                         }]
                     },
-                    "limit": 100,
+                    "limit": mcb_utils::constants::values::BROWSE_MAX_CHUNKS_PER_FILE,
                     "with_payload": true
                 })),
             )

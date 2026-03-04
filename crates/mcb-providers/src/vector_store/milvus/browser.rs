@@ -180,7 +180,11 @@ impl VectorStoreBrowser for MilvusVectorStoreProvider {
         // Query with filter on file_path
         let expr = format!("file_path == \"{}\"", file_path.replace('"', "\\\""));
         let query_options = QueryOptions::new()
-            .limit(1000) // Reasonable limit for chunks per file
+            .limit(
+                mcb_utils::constants::values::BROWSE_MAX_CHUNKS_PER_FILE
+                    .try_into()
+                    .unwrap_or(1000),
+            ) // Reasonable limit for chunks per file
             .output_fields(Self::default_output_fields());
 
         let query_results = match self.client.query(&name_str, &expr, &query_options).await {

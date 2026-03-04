@@ -14,8 +14,8 @@ fn sample_repository() -> repository::Model {
         local_path: "/tmp/test-path".into(),
         vcs_type: "Git".into(),
         origin_context: None,
-        created_at: 1_700_000_000,
-        updated_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 

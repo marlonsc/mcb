@@ -131,8 +131,14 @@ pub fn golden_parse_results_found(text: &str) -> Option<usize> {
     text.lines()
         .find(|l| l.contains("Results found"))
         .and_then(|l| {
-            l.split(':')
-                .nth(1)?
+            // Handle markdown bold: "**Results found:** 5"
+            // Split on ":**" first, fallback to ":"
+            let after = if let Some(pos) = l.find(":**") {
+                &l[pos + 3..]
+            } else {
+                l.split(':').nth(1)?
+            };
+            after
                 .trim()
                 .chars()
                 .take_while(char::is_ascii_digit)

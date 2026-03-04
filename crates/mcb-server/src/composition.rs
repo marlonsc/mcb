@@ -31,17 +31,9 @@ use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
 use crate::mcp_server::{McpEntityRepositories, McpServer, McpServices};
 use crate::state::McpServerBootstrap;
 use crate::tools::ExecutionFlow;
-/// Registry provider name for `SeaORM` database repositories.
-const DATABASE_PROVIDER: &str = "seaorm";
-
-/// Default namespace for database repositories.
-const DEFAULT_NAMESPACE: &str = "default";
-
-/// Registry provider name for universal language chunking.
-const LANGUAGE_PROVIDER: &str = "universal";
-
-/// Registry provider name for Git VCS.
-const VCS_PROVIDER: &str = "git";
+use mcb_utils::constants::values::{
+    DEFAULT_DATABASE_PROVIDER, DEFAULT_LANGUAGE_PROVIDER, DEFAULT_NAMESPACE, DEFAULT_VCS_PROVIDER,
+};
 
 /// Build MCP server and dashboard/auth ports from decomposed DI parts.
 ///
@@ -72,7 +64,7 @@ pub fn build_mcp_server_bootstrap(
 ) -> mcb_domain::Result<McpServerBootstrap> {
     // 1. Resolve DB repos
     let repos = resolve_database_repositories(
-        DATABASE_PROVIDER,
+        DEFAULT_DATABASE_PROVIDER,
         db_connection,
         DEFAULT_NAMESPACE.to_owned(),
     )?;
@@ -100,10 +92,10 @@ pub fn build_mcp_server_bootstrap(
         memory: memory_service,
         agent_session: resolve_agent_session_service(registry_ctx)?,
         project: resolve_project_detection_service(&ProjectDetectionServiceConfig::new(
-            LANGUAGE_PROVIDER,
+            DEFAULT_LANGUAGE_PROVIDER,
         ))?,
         project_workflow: Arc::clone(&repos.project),
-        vcs: resolve_vcs_provider(&VcsProviderConfig::new(VCS_PROVIDER))?,
+        vcs: resolve_vcs_provider(&VcsProviderConfig::new(DEFAULT_VCS_PROVIDER))?,
         hybrid_search,
         entities: McpEntityRepositories {
             vcs: Arc::clone(&repos.vcs_entity),

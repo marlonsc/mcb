@@ -9,7 +9,7 @@ fn sample_team_member() -> team_member::Model {
         team_id: "ref_team_id_001".into(),
         user_id: "ref_user_id_001".into(),
         role: "Member".into(),
-        joined_at: 1_700_000_000,
+        joined_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 

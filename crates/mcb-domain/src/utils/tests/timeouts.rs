@@ -5,7 +5,8 @@
 use std::time::{Duration, Instant};
 
 /// Default timeout for integration/e2e tests.
-pub const TEST_TIMEOUT: Duration = Duration::from_secs(30);
+pub const TEST_TIMEOUT: Duration =
+    Duration::from_secs(mcb_utils::constants::testing::TEST_TIMEOUT_SECS);
 
 /// Poll a sync check function until it returns `Some(T)` or timeout expires.
 pub fn eventually<T, F>(timeout: Duration, interval: Duration, check: F) -> Option<T>

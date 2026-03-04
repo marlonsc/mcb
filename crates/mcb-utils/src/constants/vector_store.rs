@@ -25,6 +25,9 @@ pub const EDGEVEC_DEFAULT_DIMENSIONS: usize = 1536;
 /// `EdgeVec` quantization type for scalar quantization.
 pub const EDGEVEC_QUANTIZATION_TYPE: &str = "scalar";
 
+/// `EdgeVec` indexing channel capacity.
+pub const EDGEVEC_CHANNEL_CAPACITY: usize = 100;
+
 // ============================================================================
 // Milvus Configuration
 // ============================================================================
@@ -50,6 +53,9 @@ pub const MILVUS_DEFAULT_TIMEOUT_SECS: u64 = 10;
 /// Milvus default query limit for aggregation queries.
 pub const MILVUS_DEFAULT_QUERY_LIMIT: i64 = 10_000;
 
+/// Milvus delay (ms) after collection creation before indexing.
+pub const MILVUS_COLLECTION_CREATE_DELAY_MS: u64 = 500;
+
 /// Milvus pagination batch size (keeps gRPC responses under 4MB limit).
 pub const MILVUS_QUERY_BATCH_SIZE: usize = 100;
 
@@ -62,6 +68,15 @@ pub const MILVUS_VECTOR_INDEX_NAME: &str = "vector_index";
 /// Milvus error: collection does not exist (gRPC error message).
 pub const MILVUS_ERROR_COLLECTION_NOT_EXISTS: &str = "CollectionNotExists";
 
+/// Milvus error substring: collection not found.
+pub const MILVUS_ERROR_COLLECTION_NOT_FOUND: &str = "collection not found";
+
+/// Milvus error substring: not exist.
+pub const MILVUS_ERROR_NOT_EXIST: &str = "not exist";
+
+/// Milvus collection prefix required for valid names matching the regex.
+pub const MILVUS_COLLECTION_PREFIX: &str = "mcb_";
+
 /// Milvus error: rate limit exceeded.
 pub const MILVUS_ERROR_RATE_LIMIT: &str = "RateLimit";
 
@@ -70,6 +85,14 @@ pub const MILVUS_PARAM_METRIC_TYPE: &str = "metric_type";
 
 /// Milvus index parameter: IVF nlist value.
 pub const MILVUS_PARAM_NLIST: &str = "nlist";
+
+/// Default output fields for Milvus queries.
+pub const MILVUS_DEFAULT_OUTPUT_FIELDS: &[&str] = &[
+    VECTOR_FIELD_ID,
+    VECTOR_FIELD_FILE_PATH,
+    VECTOR_FIELD_START_LINE,
+    VECTOR_FIELD_CONTENT,
+];
 
 // ============================================================================
 // Qdrant Configuration

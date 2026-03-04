@@ -13,15 +13,11 @@ use reqwest::Client;
 use serde_json::Value;
 
 use super::http_response::HttpResponseUtils;
-use mcb_utils::constants::http::ERROR_MSG_REQUEST_TIMEOUT;
+pub(crate) use mcb_utils::constants::http::{DEFAULT_HTTP_TIMEOUT, ERROR_MSG_REQUEST_TIMEOUT};
 use mcb_utils::utils::retry::retry_with_backoff;
 
 // Re-export so callers of `send_json_request` can build `JsonRequestParams.retry`.
 pub(crate) use mcb_utils::utils::retry::RetryConfig;
-
-/// Default timeout for HTTP requests (30 seconds)
-pub(crate) const DEFAULT_HTTP_TIMEOUT: Duration =
-    Duration::from_secs(mcb_utils::constants::http::HTTP_REQUEST_TIMEOUT_SECS);
 
 #[derive(Debug, Clone, Copy)]
 /// Classification used to map HTTP request failures to domain errors.
@@ -55,7 +51,7 @@ pub(crate) fn create_client(timeout_secs: u64) -> std::result::Result<Client, St
 
 /// Create an HTTP client with the default 30-second timeout
 pub(crate) fn create_default_client() -> std::result::Result<Client, String> {
-    create_client(30)
+    create_client(mcb_utils::constants::http::HTTP_REQUEST_TIMEOUT_SECS)
 }
 
 pub(crate) fn handle_request_error_with_kind(

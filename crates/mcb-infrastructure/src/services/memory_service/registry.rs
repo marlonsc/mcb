@@ -12,11 +12,7 @@ use mcb_domain::registry::services::{
 
 use super::MemoryServiceImpl;
 
-/// Registry provider name for `SeaORM` database repositories.
-const DATABASE_PROVIDER: &str = "seaorm";
-
-/// Default namespace for database repositories.
-const DEFAULT_NAMESPACE: &str = "default";
+use mcb_utils::constants::values::{DEFAULT_DATABASE_PROVIDER, DEFAULT_NAMESPACE};
 
 /// Build a `MemoryService` from the service resolution context.
 fn build_memory_service_from_registry(
@@ -35,7 +31,7 @@ fn build_memory_service_from_registry(
 
     // Resolve memory repository from database providers
     let repos = mcb_domain::registry::database::resolve_database_repositories(
-        DATABASE_PROVIDER,
+        DEFAULT_DATABASE_PROVIDER,
         Arc::clone(&ctx.db),
         DEFAULT_NAMESPACE.to_owned(),
     )?;

@@ -43,7 +43,9 @@ pub async fn dashboard(
     Extension(state): Extension<McbState>,
     Json(body): Json<DashboardBody>,
 ) -> Result<Response> {
-    let limit = body.limit.unwrap_or(30);
+    let limit = body
+        .limit
+        .unwrap_or(mcb_utils::constants::values::DEFAULT_DASHBOARD_LIMIT);
     let data = match body.graph.as_str() {
         "observations_by_month" => state
             .dashboard

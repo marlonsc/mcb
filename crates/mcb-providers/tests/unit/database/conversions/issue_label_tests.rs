@@ -11,7 +11,7 @@ fn sample_issue_label() -> issue_label::Model {
         project_id: "ref_project_id_001".into(),
         name: "test_name".into(),
         color: "test_color".into(),
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 

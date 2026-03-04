@@ -93,7 +93,9 @@ pub async fn config_page(Extension(state): Extension<McbState>) -> Result<Respon
         .and_then(|v| v.get("vector_store"))
         .and_then(|v| v.get("port"))
         .and_then(serde_json::Value::as_i64)
-        .unwrap_or(19530);
+        .unwrap_or(i64::from(
+            mcb_utils::constants::vector_store::MILVUS_DEFAULT_PORT,
+        ));
 
     let body = format!(
         r#"
@@ -229,7 +231,7 @@ pub async fn browse_page(Extension(state): Extension<McbState>) -> Result<Respon
         let id = CollectionId::from_string(&collection.name);
         let vecs = state
             .vector_store
-            .list_vectors(&id, 50)
+            .list_vectors(&id, mcb_utils::constants::values::DEFAULT_BROWSE_LIMIT)
             .await
             .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
         all_chunks.extend(vecs);

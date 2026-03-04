@@ -50,7 +50,7 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         let mut results = self
             .query_match_results(serde_json::json!({
                 "vector": zero_vector,
-                "topK": 100,
+                "topK": mcb_utils::constants::values::BROWSE_MAX_CHUNKS_PER_FILE,
                 "namespace": collection_str,
                 "includeMetadata": true,
                 "filter": filter

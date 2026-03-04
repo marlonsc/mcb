@@ -20,7 +20,7 @@
 //! | `json_object_opt`  | `from_str::<T>(m.f?)…`                      | `Set(e.f.as_ref()…to_string…ok())`       |
 //! | `json_value`       | `from_str(&m.f)…unwrap_or(Null)`            | `Set(to_string(&e.f)…)`                 |
 //! | `unwrap_default`   | `m.f.unwrap_or_default()`                   | `Set(Some(e.f))`                         |
-//! | `computed`         | custom expression using `m`                 | *(field skipped in ActiveModel)*         |
+//! | `computed`         | custom expression via `|binding|`           | *(field skipped in ActiveModel)*         |
 //! | `not_set`          | *(field skipped in Model)*                  | `NotSet`                                 |
 
 /// Generate `From<entity::Model> for DomainType` and
@@ -71,12 +71,15 @@ macro_rules! impl_conversion {
         $(, json_objects_opt: { $($joo_field:ident : $JOOType:ty),* $(,)? } )?
         $(, json_values: [$($jv_field:ident),* $(,)?] )?
         $(, unwrap_defaults: [$($ud_field:ident),* $(,)?] )?
-        $(, computed: { $($cf_domain:tt = $cf_expr:expr),* $(,)? } )?
+        $(, computed: { |$cf_model:ident| $($cf_domain:tt = $cf_expr:expr),* $(,)? } )?
         $(, not_set: [$($ns_field:ident),* $(,)?] )?
         $(,)?
     ) => {
         impl From<$entity_mod::Model> for $DomainType {
             fn from(m: $entity_mod::Model) -> Self {
+                // Pre-compute computed fields (caller names the model binding for hygiene)
+                $(let $cf_model = &m; $( let $cf_domain = $cf_expr; )*)?
+
                 Self {
                     // direct
                     $($( $d: m.$d, )*)?
@@ -156,8 +159,8 @@ macro_rules! impl_conversion {
                     // unwrap_defaults
                     $($( $ud_field: m.$ud_field.unwrap_or_default(), )*)?
 
-                    // computed (custom expression, has access to `m`)
-                    $($( $cf_domain: $cf_expr, )*)?
+                    // computed (pre-computed above, just assign the bindings)
+                    $($( $cf_domain, )*)?
                 }
             }
         }

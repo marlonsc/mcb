@@ -15,8 +15,8 @@ fn sample_worktree() -> worktree::Model {
         status: "Active".into(),
         assigned_agent_id: Some("test_assigned_agent_id".into()),
         origin_context: None,
-        created_at: 1_700_000_000,
-        updated_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 
