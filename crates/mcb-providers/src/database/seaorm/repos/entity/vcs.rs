@@ -1,85 +1,52 @@
 //! VCS entity repository implementation.
 //!
-//! Implements `VcsEntityRepository` for managing repositories, branches, worktrees,
+//! Implements `VcsRepositoryRegistry`, `VcsBranchRegistry`, `VcsWorktreeRegistry`,
+//! and `AgentAssignmentManager` for managing repositories, branches, worktrees,
 //! and agent worktree assignments.
 
 use super::*;
 
-#[async_trait]
-impl VcsRepositoryRegistry for SeaOrmEntityRepository {
-    async fn create_repository(&self, repo: &Repository) -> Result<()> {
-        sea_repo_insert!(self.db(), repository, repo, "create repository")
-    }
+sea_impl_crud_scoped!(VcsRepositoryRegistry for SeaOrmEntityRepository { db: db,
+    entity: repository, domain: Repository, label: "Repository",
+    scope_col: repository::Column::OrgId,
+    create: create_repository(repo),
+    get: get_repository,
+    list: list_repositories(repository::Column::ProjectId => project_id),
+    update: update_repository(repo),
+    delete: delete_repository
+});
 
-    async fn get_repository(&self, org_id: &str, id: &str) -> Result<Repository> {
-        sea_repo_get_filtered!(self.db(), repository, Repository, "Repository", id, "get repository", repository::Column::OrgId => org_id)
-    }
-
-    async fn list_repositories(&self, org_id: &str, project_id: &str) -> Result<Vec<Repository>> {
-        sea_repo_list!(self.db(), repository, Repository, "list repositories", repository::Column::OrgId => org_id, repository::Column::ProjectId => project_id)
-    }
-
-    async fn update_repository(&self, repo: &Repository) -> Result<()> {
-        sea_repo_update!(self.db(), repository, repo, "update repository")
-    }
-
-    async fn delete_repository(&self, org_id: &str, id: &str) -> Result<()> {
-        sea_repo_delete_filtered!(self.db(), repository, id, "delete repository", repository::Column::OrgId => org_id)
-    }
-}
-
+// VcsBranchRegistry has a mixed signature: get/list are org-scoped but delete takes only id.
+// Cannot use sea_impl_crud_scoped! here.
 #[async_trait]
 impl VcsBranchRegistry for SeaOrmEntityRepository {
     async fn create_branch(&self, branch: &Branch) -> Result<()> {
         sea_repo_insert!(self.db(), branch, branch, "create branch")
     }
-
     async fn get_branch(&self, org_id: &str, id: &str) -> Result<Branch> {
-        sea_repo_get_filtered!(self.db(), branch, Branch, "Branch", id, "get branch", branch::Column::OrgId => org_id)
+        sea_repo_get_filtered!(self.db(), branch, Branch, "Branch", id, "get branch",
+            branch::Column::OrgId => org_id)
     }
-
     async fn list_branches(&self, org_id: &str, repository_id: &str) -> Result<Vec<Branch>> {
-        sea_repo_list!(self.db(), branch, Branch, "list branches", branch::Column::OrgId => org_id, branch::Column::RepositoryId => repository_id)
+        sea_repo_list!(self.db(), branch, Branch, "list branches",
+            branch::Column::OrgId => org_id, branch::Column::RepositoryId => repository_id)
     }
-
     async fn update_branch(&self, branch: &Branch) -> Result<()> {
         sea_repo_update!(self.db(), branch, branch, "update branch")
     }
-
     async fn delete_branch(&self, id: &str) -> Result<()> {
         sea_repo_delete!(self.db(), branch, id, "delete branch")
     }
 }
 
-#[async_trait]
-impl VcsWorktreeRegistry for SeaOrmEntityRepository {
-    async fn create_worktree(&self, wt: &Worktree) -> Result<()> {
-        sea_repo_insert!(self.db(), worktree, wt, "create worktree")
-    }
-
-    async fn get_worktree(&self, id: &str) -> Result<Worktree> {
-        sea_repo_get!(
-            self.db(),
-            worktree,
-            Worktree,
-            "Worktree",
-            id,
-            "get worktree"
-        )
-    }
-
-    async fn list_worktrees(&self, repository_id: &str) -> Result<Vec<Worktree>> {
-        sea_repo_list!(self.db(), worktree, Worktree, "list worktrees", worktree::Column::RepositoryId => repository_id)
-    }
-
-    async fn update_worktree(&self, wt: &Worktree) -> Result<()> {
-        sea_repo_update!(self.db(), worktree, wt, "update worktree")
-    }
-
-    async fn delete_worktree(&self, id: &str) -> Result<()> {
-        sea_repo_delete!(self.db(), worktree, id, "delete worktree")
-    }
-}
+sea_impl_crud!(VcsWorktreeRegistry for SeaOrmEntityRepository { db: db,
+    entity: worktree, domain: Worktree, label: "Worktree",
+    create: create_worktree(wt),
+    get: get_worktree(id),
+    list: list_worktrees(worktree::Column::RepositoryId => repository_id),
+    update: update_worktree(wt),
+    delete: delete_worktree(id)
+});
 
 #[async_trait]
 impl AgentAssignmentManager for SeaOrmEntityRepository {
@@ -107,25 +74,18 @@ impl AgentAssignmentManager for SeaOrmEntityRepository {
         &self,
         worktree_id: &str,
     ) -> Result<Vec<AgentWorktreeAssignment>> {
-        sea_repo_list!(self.db(), agent_worktree_assignment, AgentWorktreeAssignment, "list assignments", agent_worktree_assignment::Column::WorktreeId => worktree_id)
+        sea_repo_list!(self.db(), agent_worktree_assignment, AgentWorktreeAssignment, "list assignments",
+            agent_worktree_assignment::Column::WorktreeId => worktree_id)
     }
 
     async fn release_assignment(&self, id: &str, released_at: i64) -> Result<()> {
-        use sea_orm::ActiveValue;
-
-        let model = agent_worktree_assignment::Entity::find_by_id(id)
-            .one(self.db())
-            .await
-            .map_err(crate::database::seaorm::repos::common::db_error(
-                "release assignment",
-            ))?;
-        let m = Error::not_found_or(model, "Assignment", id)?;
-
-        let mut active: agent_worktree_assignment::ActiveModel = m.into();
-        active.released_at = ActiveValue::Set(Some(released_at));
-        active.update(self.db()).await.map_err(
-            crate::database::seaorm::repos::common::db_error("release assignment"),
-        )?;
-        Ok(())
+        sea_repo_set_field!(
+            self.db(),
+            agent_worktree_assignment,
+            id,
+            "Assignment",
+            "release assignment",
+            released_at = Some(released_at)
+        )
     }
 }

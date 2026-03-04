@@ -127,33 +127,29 @@ impl SeaOrmProjectRepository {
         Ok(models.into_iter().map(Into::into).collect())
     }
 
-    /// Lists issues using a rich filter.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the database query fails or the project is not found.
-    pub async fn list_issues_filtered(
-        &self,
-        org_id: &str,
-        filter: &IssueFilter,
-    ) -> Result<Vec<ProjectIssue>> {
-        let mut q = project_issue::Entity::find()
-            .filter(project_issue::Column::OrgId.eq(org_id.to_owned()))
-            .order_by_desc(project_issue::Column::UpdatedAt);
+    /// Verifies a project exists in the given org; returns an error if not found.
+    async fn verify_project_exists(&self, org_id: &str, project_id: &str) -> Result<()> {
+        let exists = project::Entity::find()
+            .filter(project::Column::Id.eq(project_id))
+            .filter(project::Column::OrgId.eq(org_id))
+            .count(&self.db)
+            .await
+            .map_err(db_error("verify project ownership"))?
+            > 0;
+        if !exists {
+            return Err(Error::not_found(format!(
+                "Project with id {project_id} not found in org"
+            )));
+        }
+        Ok(())
+    }
 
+    /// Applies `IssueFilter` fields to a SeaORM `Select` query.
+    fn apply_issue_filter(
+        mut q: sea_orm::Select<project_issue::Entity>,
+        filter: &IssueFilter,
+    ) -> sea_orm::Select<project_issue::Entity> {
         if let Some(project_id) = &filter.project_id {
-            let project_exists = project::Entity::find()
-                .filter(project::Column::Id.eq(project_id.as_str()))
-                .filter(project::Column::OrgId.eq(org_id))
-                .count(&self.db)
-                .await
-                .map_err(db_error("verify project ownership"))?
-                > 0;
-            if !project_exists {
-                return Err(Error::not_found(format!(
-                    "Project with id {project_id} not found in org"
-                )));
-            }
             q = q.filter(project_issue::Column::ProjectId.eq(project_id.to_owned()));
         }
         if let Some(phase_id) = &filter.phase_id {
@@ -178,8 +174,28 @@ impl SeaOrmProjectRepository {
         if let Some(limit) = filter.limit {
             q = q.limit(limit as u64);
         }
+        q
+    }
 
-        let models = q
+    /// Lists issues using a rich filter.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query fails or the project is not found.
+    pub async fn list_issues_filtered(
+        &self,
+        org_id: &str,
+        filter: &IssueFilter,
+    ) -> Result<Vec<ProjectIssue>> {
+        if let Some(project_id) = &filter.project_id {
+            self.verify_project_exists(org_id, project_id).await?;
+        }
+
+        let q = project_issue::Entity::find()
+            .filter(project_issue::Column::OrgId.eq(org_id.to_owned()))
+            .order_by_desc(project_issue::Column::UpdatedAt);
+
+        let models = Self::apply_issue_filter(q, filter)
             .all(&self.db)
             .await
             .map_err(db_error("list filtered project issues"))?;
@@ -381,25 +397,15 @@ impl ProjectRepository for SeaOrmProjectRepository {
     }
 
     async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Project> {
-        let model = project::Entity::find()
-            .filter(project::Column::OrgId.eq(org_id.to_owned()))
-            .filter(project::Column::Name.eq(name.to_owned()))
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project by name"))?;
-
-        Error::not_found_or(model.map(Into::into), "Project", name)
+        sea_repo_find_by_column!(&self.db, project, Project, "Project", name,
+            "get project by name",
+            project::Column::OrgId => org_id, project::Column::Name => name)
     }
 
     async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Project> {
-        let model = project::Entity::find()
-            .filter(project::Column::OrgId.eq(org_id.to_owned()))
-            .filter(project::Column::Path.eq(path.to_owned()))
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project by path"))?;
-
-        Error::not_found_or(model.map(Into::into), "Project", path)
+        sea_repo_find_by_column!(&self.db, project, Project, "Project", path,
+            "get project by path",
+            project::Column::OrgId => org_id, project::Column::Path => path)
     }
 
     async fn list(&self, org_id: &str) -> Result<Vec<Project>> {

@@ -7,6 +7,12 @@ use seaography::{
 use async_graphql::dynamic::{Schema, SchemaError};
 use sea_orm::DatabaseConnection;
 
+use std::any::Any;
+use std::sync::Arc;
+
+use mcb_domain::ports::GraphQLSchemaProvider;
+use mcb_domain::registry::graphql::GraphQLSchemaProviderConfig;
+
 lazy_static::lazy_static! {
     static ref CONTEXT: BuilderContext = {
         BuilderContext {
@@ -42,12 +48,6 @@ pub fn schema(
 // ============================================================================
 // CA/DI: GraphQLSchemaProvider port implementation + linkme registration
 // ============================================================================
-
-use std::any::Any;
-use std::sync::Arc;
-
-use mcb_domain::ports::GraphQLSchemaProvider;
-use mcb_domain::registry::graphql::GraphQLSchemaProviderConfig;
 
 /// Seaography GraphQL schema provider implementing the domain port.
 struct SeaographyGraphQLSchemaProvider;

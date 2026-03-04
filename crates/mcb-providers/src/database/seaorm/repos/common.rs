@@ -28,7 +28,7 @@ pub(crate) fn db_error(context: &str) -> impl FnOnce(DbErr) -> Error + '_ {
 /// sea_repo_insert!(&self.db, project_phase, phase, "create project phase")
 /// ```
 macro_rules! sea_repo_insert {
-    ($db:expr, $mod:ident, $item:expr, $ctx:literal) => {{
+    ($db:expr, $mod:ident, $item:expr, $ctx:expr) => {{
         let active: $mod::ActiveModel = $item.clone().into();
         $mod::Entity::insert(active)
             .exec($db)
@@ -46,7 +46,7 @@ macro_rules! sea_repo_insert {
 /// sea_repo_get!(&self.db, project_phase, ProjectPhase, "ProjectPhase", id, "get project phase")
 /// ```
 macro_rules! sea_repo_get {
-    ($db:expr, $mod:ident, $type:ty, $label:literal, $id:expr, $ctx:literal) => {{
+    ($db:expr, $mod:ident, $type:ty, $label:literal, $id:expr, $ctx:expr) => {{
         let model = $mod::Entity::find_by_id($id.to_owned())
             .one($db)
             .await
@@ -61,7 +61,7 @@ macro_rules! sea_repo_get {
 /// sea_repo_get_opt!(&self.db, project_phase, ProjectPhase, id, "get project phase")
 /// ```
 macro_rules! sea_repo_get_opt {
-    ($db:expr, $mod:ident, $type:ty, $id:expr, $ctx:literal) => {{
+    ($db:expr, $mod:ident, $type:ty, $id:expr, $ctx:expr) => {{
         let model = $mod::Entity::find_by_id($id.to_owned())
             .one($db)
             .await
@@ -79,7 +79,7 @@ macro_rules! sea_repo_get_opt {
 ///     project_issue::Column::OrgId => org_id)
 /// ```
 macro_rules! sea_repo_get_filtered {
-    ($db:expr, $mod:ident, $type:ty, $label:literal, $id:expr, $ctx:literal, $($col:expr => $val:expr),+) => {{
+    ($db:expr, $mod:ident, $type:ty, $label:literal, $id:expr, $ctx:expr, $($col:expr => $val:expr),+) => {{
         let model = $mod::Entity::find_by_id($id.to_owned())
             $(.filter($col.eq($val)))+
             .one($db)
@@ -95,7 +95,7 @@ macro_rules! sea_repo_get_filtered {
 /// sea_repo_update!(&self.db, project_phase, phase, "update phase")
 /// ```
 macro_rules! sea_repo_update {
-    ($db:expr, $mod:ident, $item:expr, $ctx:literal) => {{
+    ($db:expr, $mod:ident, $item:expr, $ctx:expr) => {{
         let active: $mod::ActiveModel = $item.clone().into();
         active
             .update($db)
@@ -111,7 +111,7 @@ macro_rules! sea_repo_update {
 /// sea_repo_delete!(&self.db, project_phase, id, "delete phase")
 /// ```
 macro_rules! sea_repo_delete {
-    ($db:expr, $mod:ident, $id:expr, $ctx:literal) => {{
+    ($db:expr, $mod:ident, $id:expr, $ctx:expr) => {{
         $mod::Entity::delete_by_id($id.to_owned())
             .exec($db)
             .await
@@ -126,7 +126,7 @@ macro_rules! sea_repo_delete {
 /// sea_repo_delete_filtered!(&self.db, project_issue, id, "delete issue", project_issue::Column::OrgId => org_id)
 /// ```
 macro_rules! sea_repo_delete_filtered {
-    ($db:expr, $mod:ident, $id:expr, $ctx:literal, $($col:expr => $val:expr),+) => {{
+    ($db:expr, $mod:ident, $id:expr, $ctx:expr, $($col:expr => $val:expr),+) => {{
         use sea_orm::ModelTrait;
         if let Some(m) = $mod::Entity::find_by_id($id.to_owned())
             $(.filter($col.eq($val)))+
@@ -146,7 +146,7 @@ macro_rules! sea_repo_delete_filtered {
 /// sea_repo_list!(&self.db, project_issue, ProjectIssue, "list issues", project_issue::Column::OrgId => org_id)
 /// ```
 macro_rules! sea_repo_list {
-    ($db:expr, $mod:ident, $type:ty, $ctx:literal $(, $col:expr => $val:expr)*) => {{
+    ($db:expr, $mod:ident, $type:ty, $ctx:expr $(, $col:expr => $val:expr)*) => {{
         let models = $mod::Entity::find()
             $(.filter($col.eq($val)))*
             .all($db)
@@ -154,4 +154,183 @@ macro_rules! sea_repo_list {
             .map_err(crate::database::seaorm::repos::common::db_error($ctx))?;
         Ok(models.into_iter().map(<$type>::from).collect())
     }};
+}
+
+/// Find-by-id, set a single field, and update.
+///
+/// Handles the common pattern of "find → not_found → set field → save".
+///
+/// ```rust,ignore
+/// sea_repo_set_field!(self.db(), api_key, id, "ApiKey", "revoke api key",
+///     revoked_at = Some(revoked_at))
+/// ```
+macro_rules! sea_repo_set_field {
+    ($db:expr, $mod:ident, $id:expr, $label:literal, $ctx:expr, $field:ident = $val:expr) => {{
+        use sea_orm::ActiveValue;
+        let model = $mod::Entity::find_by_id($id.to_owned())
+            .one($db)
+            .await
+            .map_err(crate::database::seaorm::repos::common::db_error($ctx))?;
+        let m = Error::not_found_or(model, $label, $id)?;
+        let mut active: $mod::ActiveModel = m.into();
+        active.$field = ActiveValue::Set($val);
+        active
+            .update($db)
+            .await
+            .map_err(crate::database::seaorm::repos::common::db_error($ctx))?;
+        Ok(())
+    }};
+}
+
+/// Find a single entity by a specific column and return a required result.
+///
+/// Returns `Error::not_found` if the entity doesn't exist.
+///
+/// ```rust,ignore
+/// sea_repo_find_by_column!(&self.db, project, Project, "Project", name,
+///     "get project by name", project::Column::OrgId => org_id, project::Column::Name => name)
+/// ```
+macro_rules! sea_repo_find_by_column {
+    ($db:expr, $mod:ident, $type:ty, $label:literal, $key:expr, $ctx:expr, $($col:expr => $val:expr),+) => {{
+        let model = $mod::Entity::find()
+            $(.filter($col.eq($val.to_owned())))+
+            .one($db)
+            .await
+            .map_err(crate::database::seaorm::repos::common::db_error($ctx))?;
+        Error::not_found_or(model.map(<$type>::from), $label, $key)
+    }};
+}
+
+// ============================================================================
+// High-level trait implementation macros
+// ============================================================================
+//
+// Generate entire trait implementations from a compact declaration.
+// These eliminate the repetitive create/get/list/update/delete boilerplate.
+//
+// The `db` parameter is the method name on `self` that returns a `&DatabaseConnection`,
+// e.g. `db: db` will expand to `self.db()` inside the generated methods.
+
+/// Generate a simple CRUD trait impl (no org_id scoping).
+///
+/// ```rust,ignore
+/// sea_impl_crud!(TeamRegistry for SeaOrmEntityRepository { db: db,
+///     entity: team, domain: Team, label: "Team",
+///     create: create_team(t),
+///     get: get_team(id),
+///     list: list_teams(team::Column::OrgId => org_id),
+///     delete: delete_team(id),
+/// });
+/// ```
+macro_rules! sea_impl_crud {
+    // Variant with filtered list
+    (
+        $trait:ident for $repo:ty { db: $db_method:ident,
+            entity: $mod:ident, domain: $dtype:ty, label: $label:literal,
+            create: $create_fn:ident($create_p:ident),
+            get: $get_fn:ident($get_id:ident),
+            list: $list_fn:ident($($list_col:expr => $list_param:ident),+),
+            $(update: $upd_fn:ident($upd_p:ident),)?
+            delete: $del_fn:ident($del_id:ident)
+        }
+    ) => {
+        #[async_trait]
+        impl $trait for $repo {
+            async fn $create_fn(&self, $create_p: &$dtype) -> Result<()> {
+                sea_repo_insert!(self.$db_method(), $mod, $create_p, concat!(stringify!($create_fn)))
+            }
+            async fn $get_fn(&self, $get_id: &str) -> Result<$dtype> {
+                sea_repo_get!(self.$db_method(), $mod, $dtype, $label, $get_id, concat!(stringify!($get_fn)))
+            }
+            async fn $list_fn(&self, $($list_param: &str),+) -> Result<Vec<$dtype>> {
+                sea_repo_list!(self.$db_method(), $mod, $dtype, concat!(stringify!($list_fn)),
+                    $($list_col => $list_param),+)
+            }
+            $(async fn $upd_fn(&self, $upd_p: &$dtype) -> Result<()> {
+                sea_repo_update!(self.$db_method(), $mod, $upd_p, concat!(stringify!($upd_fn)))
+            })?
+            async fn $del_fn(&self, $del_id: &str) -> Result<()> {
+                sea_repo_delete!(self.$db_method(), $mod, $del_id, concat!(stringify!($del_fn)))
+            }
+        }
+    };
+    // Variant with unfiltered list (no parameters)
+    (
+        $trait:ident for $repo:ty { db: $db_method:ident,
+            entity: $mod:ident, domain: $dtype:ty, label: $label:literal,
+            create: $create_fn:ident($create_p:ident),
+            get: $get_fn:ident($get_id:ident),
+            list: $list_fn:ident(),
+            $(update: $upd_fn:ident($upd_p:ident),)?
+            delete: $del_fn:ident($del_id:ident)
+        }
+    ) => {
+        #[async_trait]
+        impl $trait for $repo {
+            async fn $create_fn(&self, $create_p: &$dtype) -> Result<()> {
+                sea_repo_insert!(self.$db_method(), $mod, $create_p, concat!(stringify!($create_fn)))
+            }
+            async fn $get_fn(&self, $get_id: &str) -> Result<$dtype> {
+                sea_repo_get!(self.$db_method(), $mod, $dtype, $label, $get_id, concat!(stringify!($get_fn)))
+            }
+            async fn $list_fn(&self) -> Result<Vec<$dtype>> {
+                sea_repo_list!(self.$db_method(), $mod, $dtype, concat!(stringify!($list_fn)))
+            }
+            $(async fn $upd_fn(&self, $upd_p: &$dtype) -> Result<()> {
+                sea_repo_update!(self.$db_method(), $mod, $upd_p, concat!(stringify!($upd_fn)))
+            })?
+            async fn $del_fn(&self, $del_id: &str) -> Result<()> {
+                sea_repo_delete!(self.$db_method(), $mod, $del_id, concat!(stringify!($del_fn)))
+            }
+        }
+    };
+}
+
+/// Generate an org-scoped CRUD trait impl (get/delete filtered by org_id).
+///
+/// ```rust,ignore
+/// sea_impl_crud_scoped!(IssueRegistry for SeaOrmEntityRepository { db: db,
+///     entity: project_issue, domain: ProjectIssue, label: "Issue",
+///     scope_col: project_issue::Column::OrgId,
+///     create: create_issue(issue),
+///     get: get_issue,
+///     list: list_issues(project_issue::Column::ProjectId => project_id),
+///     update: update_issue(issue),
+///     delete: delete_issue,
+/// });
+/// ```
+macro_rules! sea_impl_crud_scoped {
+    (
+        $trait:ident for $repo:ty { db: $db_method:ident,
+            entity: $mod:ident, domain: $dtype:ty, label: $label:literal,
+            scope_col: $scope_col:expr,
+            create: $create_fn:ident($create_p:ident),
+            get: $get_fn:ident,
+            list: $list_fn:ident($($list_col:expr => $list_param:ident),+),
+            update: $upd_fn:ident($upd_p:ident),
+            delete: $del_fn:ident
+        }
+    ) => {
+        #[async_trait]
+        impl $trait for $repo {
+            async fn $create_fn(&self, $create_p: &$dtype) -> Result<()> {
+                sea_repo_insert!(self.$db_method(), $mod, $create_p, concat!(stringify!($create_fn)))
+            }
+            async fn $get_fn(&self, org_id: &str, id: &str) -> Result<$dtype> {
+                sea_repo_get_filtered!(self.$db_method(), $mod, $dtype, $label, id,
+                    concat!(stringify!($get_fn)), $scope_col => org_id)
+            }
+            async fn $list_fn(&self, org_id: &str, $($list_param: &str),+) -> Result<Vec<$dtype>> {
+                sea_repo_list!(self.$db_method(), $mod, $dtype, concat!(stringify!($list_fn)),
+                    $scope_col => org_id, $($list_col => $list_param),+)
+            }
+            async fn $upd_fn(&self, $upd_p: &$dtype) -> Result<()> {
+                sea_repo_update!(self.$db_method(), $mod, $upd_p, concat!(stringify!($upd_fn)))
+            }
+            async fn $del_fn(&self, org_id: &str, id: &str) -> Result<()> {
+                sea_repo_delete_filtered!(self.$db_method(), $mod, id,
+                    concat!(stringify!($del_fn)), $scope_col => org_id)
+            }
+        }
+    };
 }

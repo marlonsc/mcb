@@ -6,80 +6,31 @@
 
 use super::*;
 
-#[async_trait]
-impl IssueRegistry for SeaOrmEntityRepository {
-    async fn create_issue(&self, issue: &ProjectIssue) -> Result<()> {
-        sea_repo_insert!(self.db(), project_issue, issue, "create project issue")
-    }
+sea_impl_crud_scoped!(IssueRegistry for SeaOrmEntityRepository { db: db,
+    entity: project_issue, domain: ProjectIssue, label: "Issue",
+    scope_col: project_issue::Column::OrgId,
+    create: create_issue(issue),
+    get: get_issue,
+    list: list_issues(project_issue::Column::ProjectId => project_id),
+    update: update_issue(issue),
+    delete: delete_issue
+});
 
-    async fn get_issue(&self, org_id: &str, id: &str) -> Result<ProjectIssue> {
-        sea_repo_get_filtered!(self.db(), project_issue, ProjectIssue, "Issue", id, "get project issue", project_issue::Column::OrgId => org_id)
-    }
+sea_impl_crud!(IssueCommentRegistry for SeaOrmEntityRepository { db: db,
+    entity: issue_comment, domain: IssueComment, label: "IssueComment",
+    create: create_comment(comment),
+    get: get_comment(id),
+    list: list_comments_by_issue(issue_comment::Column::IssueId => issue_id),
+    delete: delete_comment(id)
+});
 
-    async fn list_issues(&self, org_id: &str, project_id: &str) -> Result<Vec<ProjectIssue>> {
-        sea_repo_list!(self.db(), project_issue, ProjectIssue, "list project issues", project_issue::Column::OrgId => org_id, project_issue::Column::ProjectId => project_id)
-    }
-
-    async fn update_issue(&self, issue: &ProjectIssue) -> Result<()> {
-        sea_repo_update!(self.db(), project_issue, issue, "update project issue")
-    }
-
-    async fn delete_issue(&self, org_id: &str, id: &str) -> Result<()> {
-        sea_repo_delete_filtered!(self.db(), project_issue, id, "delete project issue", project_issue::Column::OrgId => org_id)
-    }
-}
-
-#[async_trait]
-impl IssueCommentRegistry for SeaOrmEntityRepository {
-    async fn create_comment(&self, comment: &IssueComment) -> Result<()> {
-        sea_repo_insert!(self.db(), issue_comment, comment, "create issue comment")
-    }
-
-    async fn get_comment(&self, id: &str) -> Result<IssueComment> {
-        sea_repo_get!(
-            self.db(),
-            issue_comment,
-            IssueComment,
-            "IssueComment",
-            id,
-            "get issue comment"
-        )
-    }
-
-    async fn list_comments_by_issue(&self, issue_id: &str) -> Result<Vec<IssueComment>> {
-        sea_repo_list!(self.db(), issue_comment, IssueComment, "list issue comments", issue_comment::Column::IssueId => issue_id)
-    }
-
-    async fn delete_comment(&self, id: &str) -> Result<()> {
-        sea_repo_delete!(self.db(), issue_comment, id, "delete issue comment")
-    }
-}
-
-#[async_trait]
-impl IssueLabelRegistry for SeaOrmEntityRepository {
-    async fn create_label(&self, label: &IssueLabel) -> Result<()> {
-        sea_repo_insert!(self.db(), issue_label, label, "create issue label")
-    }
-
-    async fn get_label(&self, id: &str) -> Result<IssueLabel> {
-        sea_repo_get!(
-            self.db(),
-            issue_label,
-            IssueLabel,
-            "IssueLabel",
-            id,
-            "get issue label"
-        )
-    }
-
-    async fn list_labels(&self, org_id: &str, project_id: &str) -> Result<Vec<IssueLabel>> {
-        sea_repo_list!(self.db(), issue_label, IssueLabel, "list issue labels", issue_label::Column::OrgId => org_id, issue_label::Column::ProjectId => project_id)
-    }
-
-    async fn delete_label(&self, id: &str) -> Result<()> {
-        sea_repo_delete!(self.db(), issue_label, id, "delete issue label")
-    }
-}
+sea_impl_crud!(IssueLabelRegistry for SeaOrmEntityRepository { db: db,
+    entity: issue_label, domain: IssueLabel, label: "IssueLabel",
+    create: create_label(label),
+    get: get_label(id),
+    list: list_labels(issue_label::Column::OrgId => org_id, issue_label::Column::ProjectId => project_id),
+    delete: delete_label(id)
+});
 
 #[async_trait]
 impl IssueLabelAssignmentManager for SeaOrmEntityRepository {

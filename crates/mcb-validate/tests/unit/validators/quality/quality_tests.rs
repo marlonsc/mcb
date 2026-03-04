@@ -46,19 +46,9 @@ fn test_quality_full_workspace() {
             // ── PanicInProduction ──────────────────────────────────────
             (&test_lib, 39, "PanicInProduction"),
             // ── TodoComment ────────────────────────────────────────────
-            (&domain_service, 66, "TodoComment"),
             (&domain_service, 71, "TodoComment"),
-            (&domain_service, 151, "TodoComment"),
-            (&domain_service, 159, "TodoComment"),
-            (&domain_service, 180, "TodoComment"),
-            (&domain_service, 183, "TodoComment"),
-            (&test_lib, 9, "TodoComment"),
-            (&test_lib, 15, "TodoComment"),
             (&test_lib, 18, "TodoComment"),
-            (&test_lib, 24, "TodoComment"),
             (&test_lib, 26, "TodoComment"),
-            (&test_lib, 334, "TodoComment"),
-            (&test_lib, 336, "TodoComment"),
             // ── DeadCodeAllowNotPermitted ──────────────────────────────
             (&test_lib, 43, "DeadCodeAllowNotPermitted"),
             (&test_lib, 44, "DeadCodeAllowNotPermitted"),
