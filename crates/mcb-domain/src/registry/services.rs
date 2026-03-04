@@ -9,19 +9,19 @@ use crate::ports::{
 };
 
 /// Registry name for the context service.
-pub const CONTEXT_SERVICE_NAME: &str = "context";
+pub const CONTEXT_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_CONTEXT;
 /// Registry name for the indexing service.
-pub const INDEXING_SERVICE_NAME: &str = "indexing";
+pub const INDEXING_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_INDEXING;
 /// Registry name for the search service.
-pub const SEARCH_SERVICE_NAME: &str = "search";
+pub const SEARCH_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_SEARCH;
 /// Registry name for the memory service.
-pub const MEMORY_SERVICE_NAME: &str = "memory";
+pub const MEMORY_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_MEMORY;
 /// Registry name for the agent session service.
-pub const AGENT_SESSION_SERVICE_NAME: &str = "agent_session";
+pub const AGENT_SESSION_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_AGENT_SESSION;
 /// Registry name for the validation service.
-pub const VALIDATION_SERVICE_NAME: &str = "validation";
+pub const VALIDATION_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_VALIDATION;
 /// Registry name for the highlight service.
-pub const HIGHLIGHT_SERVICE_NAME: &str = "highlight";
+pub const HIGHLIGHT_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_HIGHLIGHT;
 
 /// Typed factory enum for building domain services from a resolution context.
 #[derive(Clone, Copy)]

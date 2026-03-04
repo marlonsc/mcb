@@ -60,6 +60,15 @@ pub const DEFAULT_LANGUAGE_PROVIDER: &str = "universal";
 /// Registry provider name for Git VCS.
 pub const DEFAULT_VCS_PROVIDER: &str = "git";
 
+/// Registry provider name for hybrid search.
+pub const DEFAULT_HYBRID_SEARCH_PROVIDER: &str = "default";
+
+/// Registry provider name for indexing operations.
+pub const DEFAULT_INDEXING_OP_PROVIDER: &str = "default";
+
+/// Registry provider name for validation operations.
+pub const DEFAULT_VALIDATION_OP_PROVIDER: &str = "default";
+
 /// Default namespace for database repositories.
 pub const DEFAULT_NAMESPACE: &str = "default";
 

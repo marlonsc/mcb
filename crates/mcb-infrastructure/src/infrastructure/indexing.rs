@@ -118,7 +118,7 @@ impl IndexingOperationsInterface for DefaultIndexingOperations {
 #[linkme::distributed_slice(INDEXING_OPERATIONS_PROVIDERS)]
 static DEFAULT_INDEXING_OPERATIONS_PROVIDER_ENTRY: IndexingOperationsProviderEntry =
     IndexingOperationsProviderEntry {
-        name: "default",
+        name: mcb_utils::constants::DEFAULT_INDEXING_OP_PROVIDER,
         description: "In-memory indexing operations tracker",
         build: |_config| Ok(Arc::new(DefaultIndexingOperations::default())),
     };

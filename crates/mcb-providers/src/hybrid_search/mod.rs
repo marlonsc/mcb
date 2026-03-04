@@ -94,7 +94,7 @@ fn hybrid_search_factory(
 
 #[linkme::distributed_slice(HYBRID_SEARCH_PROVIDERS)]
 static HYBRID_SEARCH_ENGINE_PROVIDER: HybridSearchProviderEntry = HybridSearchProviderEntry {
-    name: "default",
+    name: mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
     description: "Hybrid BM25 + semantic search engine (default)",
     build: hybrid_search_factory,
 };

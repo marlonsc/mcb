@@ -117,8 +117,10 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
     };
 
     // 5. Hybrid search — resolved through linkme registry
-    let hybrid_search =
-        resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default")).ok()?;
+    let hybrid_search = resolve_hybrid_search_provider(&HybridSearchProviderConfig::new(
+        mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+    ))
+    .ok()?;
 
     // 6. Build ServiceResolutionContext (domain-level opaque DI context)
     let resolution_ctx = ServiceResolutionContext {

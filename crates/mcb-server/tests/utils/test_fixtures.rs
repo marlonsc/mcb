@@ -194,8 +194,9 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
         .with_collection("default");
     let vector_store_provider = resolve_vector_store_provider(&vs_config)?;
 
-    let hybrid_search =
-        resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default"))?;
+    let hybrid_search = resolve_hybrid_search_provider(&HybridSearchProviderConfig::new(
+        mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+    ))?;
 
     // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
     let config_provider = mcb_domain::registry::config::resolve_config_provider(

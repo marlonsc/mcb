@@ -135,7 +135,9 @@ impl Initializer for McpServerInitializer {
 
         let hybrid_search: Arc<dyn mcb_domain::ports::HybridSearchProvider> =
             mcb_domain::registry::hybrid_search::resolve_hybrid_search_provider(
-                &mcb_domain::registry::hybrid_search::HybridSearchProviderConfig::new("default"),
+                &mcb_domain::registry::hybrid_search::HybridSearchProviderConfig::new(
+                    mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+                ),
             )
             .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 

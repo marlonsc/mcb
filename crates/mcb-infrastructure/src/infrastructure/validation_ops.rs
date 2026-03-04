@@ -121,7 +121,7 @@ impl ValidationOperationsInterface for DefaultValidationOperations {
 #[linkme::distributed_slice(VALIDATION_OPERATIONS_PROVIDERS)]
 static DEFAULT_VALIDATION_OPERATIONS_PROVIDER_ENTRY: ValidationOperationsProviderEntry =
     ValidationOperationsProviderEntry {
-        name: "default",
+        name: mcb_utils::constants::DEFAULT_VALIDATION_OP_PROVIDER,
         description: "In-memory validation operations tracker",
         build: |_config| Ok(Arc::new(DefaultValidationOperations::default())),
     };

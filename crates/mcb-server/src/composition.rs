@@ -70,11 +70,12 @@ pub fn build_mcp_server_bootstrap(
     )?;
 
     // 2. Create shared operation trackers for admin endpoints
-    let indexing_ops: Arc<dyn IndexingOperationsInterface> =
-        resolve_indexing_operations_provider(&IndexingOperationsProviderConfig::new("default"))?;
+    let indexing_ops: Arc<dyn IndexingOperationsInterface> = resolve_indexing_operations_provider(
+        &IndexingOperationsProviderConfig::new(mcb_utils::constants::DEFAULT_INDEXING_OP_PROVIDER),
+    )?;
     let validation_ops: Arc<dyn ValidationOperationsInterface> =
         resolve_validation_operations_provider(&ValidationOperationsProviderConfig::new(
-            "default",
+            mcb_utils::constants::DEFAULT_VALIDATION_OP_PROVIDER,
         ))?;
 
     // 3. Resolve ALL services via registry (shared providers from ServiceResolutionContext)

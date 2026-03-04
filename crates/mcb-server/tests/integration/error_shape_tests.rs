@@ -85,8 +85,10 @@ async fn create_test_mcb_state() -> Option<(McbState, tempfile::TempDir)> {
     let vector_store_provider = resolve_vector_store_provider(&vec_config).ok()?;
 
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;
-    let hybrid_search =
-        resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default")).ok()?;
+    let hybrid_search = resolve_hybrid_search_provider(&HybridSearchProviderConfig::new(
+        mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+    ))
+    .ok()?;
 
     // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
     let app_config = *mcb_domain::registry::config::resolve_config_provider(

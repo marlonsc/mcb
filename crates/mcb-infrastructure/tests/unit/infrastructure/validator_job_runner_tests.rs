@@ -142,8 +142,10 @@ impl ValidationServiceInterface for FailingValidationService {
 
 #[fixture]
 fn validation_ops() -> TestResult<Arc<dyn ValidationOperationsInterface>> {
-    resolve_validation_operations_provider(&ValidationOperationsProviderConfig::new("default"))
-        .map_err(Into::into)
+    resolve_validation_operations_provider(&ValidationOperationsProviderConfig::new(
+        mcb_utils::constants::DEFAULT_VALIDATION_OP_PROVIDER,
+    ))
+    .map_err(Into::into)
 }
 
 #[rstest]

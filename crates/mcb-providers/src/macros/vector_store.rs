@@ -64,8 +64,8 @@ macro_rules! register_vector_store_provider {
         $factory_fn:ident,
         $config_var:ident,
         $static_name:ident,
-        $provider_slug:literal,
-        $description:literal,
+        $provider_slug:expr,
+        $description:expr,
         $body:block
     ) => {
         /// Factory function for creating provider instances.

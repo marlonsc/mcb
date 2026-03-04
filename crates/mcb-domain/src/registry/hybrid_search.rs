@@ -7,7 +7,7 @@ use std::collections::HashMap;
 /// Configuration for hybrid search provider resolution.
 #[derive(Debug, Clone, Default)]
 pub struct HybridSearchProviderConfig {
-    /// Provider name (e.g. "default").
+    /// Provider name (e.g. `mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER`).
     pub provider: String,
     /// Additional provider-specific configuration.
     pub extra: HashMap<String, String>,

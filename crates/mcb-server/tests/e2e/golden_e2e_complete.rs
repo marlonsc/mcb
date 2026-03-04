@@ -163,12 +163,12 @@ async fn test_golden_e2e_handles_concurrent_operations() -> TestResult {
     let r1 = status_h.handle(Parameters(index_args(
         IndexAction::Status,
         None,
-        Some("default".to_owned()),
+        Some(mcb_utils::constants::DEFAULT_NAMESPACE.to_owned()),
     )));
     let r2 = status_h.handle(Parameters(index_args(
         IndexAction::Status,
         None,
-        Some("default".to_owned()),
+        Some(mcb_utils::constants::DEFAULT_NAMESPACE.to_owned()),
     )));
     let (a, b) = tokio::join!(r1, r2);
     assert!(a.is_ok());
@@ -297,7 +297,7 @@ async fn test_golden_mcp_index_schema_actions(
         .handle(Parameters(index_args(
             action,
             None,
-            Some("default".to_owned()),
+            Some(mcb_utils::constants::DEFAULT_NAMESPACE.to_owned()),
         )))
         .await;
     assert!(r.is_ok());
@@ -322,7 +322,7 @@ async fn test_golden_mcp_search_code_schema() -> TestResult {
     let r = search_h
         .handle(Parameters(search_args(
             "test",
-            Some("default".to_owned()),
+            Some(mcb_utils::constants::DEFAULT_NAMESPACE.to_owned()),
             Some(5),
         )))
         .await;
