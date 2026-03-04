@@ -25,7 +25,7 @@ use mcb_domain::entities::{ApiKey, Organization};
 use mcb_domain::ports::{
     ApiKeyRegistry, IssueCommentRegistry, IssueLabelAssignmentManager, IssueLabelRegistry,
     IssueRegistry, OrgRegistry, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry,
-    TeamMemberManager, TeamRegistry, UserRegistry, VcsEntityRepository,
+    TeamMemberManager, TeamRegistry, UserRegistry,
 };
 use mcb_domain::value_objects::ids::{IssueLabelAssignmentId, TeamMemberId};
 

@@ -231,7 +231,7 @@ pub async fn browse_page(Extension(state): Extension<McbState>) -> Result<Respon
         let id = CollectionId::from_string(&collection.name);
         let vecs = state
             .vector_store
-            .list_vectors(&id, mcb_utils::constants::values::DEFAULT_BROWSE_LIMIT)
+            .list_vectors(&id, mcb_utils::constants::DEFAULT_BROWSE_LIMIT)
             .await
             .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
         all_chunks.extend(vecs);

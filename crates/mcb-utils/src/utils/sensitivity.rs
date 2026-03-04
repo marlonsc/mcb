@@ -3,7 +3,7 @@
 
 use std::fmt;
 
-pub use crate::constants::values::REDACTED;
+use crate::constants::values::REDACTED;
 
 /// Wraps a value so that `Debug` and `Display` output `REDACTED`.
 #[derive(Clone, Copy)]

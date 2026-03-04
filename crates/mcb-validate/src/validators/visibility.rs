@@ -234,7 +234,7 @@ impl VisibilityValidator {
 /// Validator trait implementation for visibility validation.
 impl mcb_domain::ports::validation::Validator for VisibilityValidator {
     fn name(&self) -> &'static str {
-        "visibility"
+        mcb_utils::constants::validate::VALIDATOR_VISIBILITY
     }
 
     fn description(&self) -> &'static str {
@@ -255,13 +255,11 @@ impl mcb_domain::ports::validation::Validator for VisibilityValidator {
     }
 }
 
-#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
-static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
-    mcb_domain::registry::validation::ValidatorEntry {
-        name: "visibility",
-        description: "Validates visibility modifiers for proper encapsulation",
-        build: |root| {
-            Ok(Box::new(VisibilityValidator::new(root))
-                as Box<dyn mcb_domain::ports::validation::Validator>)
-        },
-    };
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_VISIBILITY,
+    "Validates visibility modifiers for proper encapsulation",
+    |root| {
+        Ok(Box::new(VisibilityValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

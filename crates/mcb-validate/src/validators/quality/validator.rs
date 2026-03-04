@@ -58,7 +58,7 @@ impl QualityValidator {
 
 impl mcb_domain::ports::validation::Validator for QualityValidator {
     fn name(&self) -> &'static str {
-        "quality"
+        mcb_utils::constants::validate::VALIDATOR_QUALITY
     }
 
     fn description(&self) -> &'static str {

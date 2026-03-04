@@ -12,7 +12,7 @@ use mcb_domain::ports::validation::ViolationCategory;
 use mcb_utils::utils::regex::compile_regex;
 
 crate::define_validator! {
-    name: "ssot",
+    name: mcb_utils::constants::validate::VALIDATOR_SSOT,
     description: "Detects duplicate declarations and forbidden legacy schema/repository references",
 
     /// Validator for single-source-of-truth invariants.

@@ -11,7 +11,7 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::ProjectRepository;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter,
-    QueryOrder, QuerySelect, Set,
+    QueryOrder, QuerySelect,
 };
 
 use super::common::db_error;
@@ -79,23 +79,7 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the database update fails.
     pub async fn update_phase(&self, phase: &ProjectPhase) -> Result<()> {
-        let active = project_phase::ActiveModel {
-            id: Set(phase.id.clone()),
-            project_id: Set(phase.project_id.clone()),
-            name: Set(phase.name.clone()),
-            description: Set(phase.description.clone()),
-            sequence: Set(i64::from(phase.sequence)),
-            status: Set(phase.status.to_string()),
-            started_at: Set(phase.started_at),
-            completed_at: Set(phase.completed_at),
-            created_at: Set(phase.created_at),
-            updated_at: Set(phase.updated_at),
-        };
-        active
-            .update(&self.db)
-            .await
-            .map_err(db_error("update project phase"))?;
-        Ok(())
+        sea_repo_update!(&self.db, project_phase, phase, "update project phase")
     }
 
     /// Deletes a project phase by id.
@@ -209,12 +193,7 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the database update fails.
     pub async fn update_issue(&self, issue: &ProjectIssue) -> Result<()> {
-        let active: project_issue::ActiveModel = issue.clone().into();
-        project_issue::Entity::update(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("update project issue"))?;
-        Ok(())
+        sea_repo_update!(&self.db, project_issue, issue, "update project issue")
     }
 
     /// Deletes an issue by organization and id.
@@ -223,13 +202,7 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the database delete fails.
     pub async fn delete_issue(&self, org_id: &str, id: &str) -> Result<()> {
-        project_issue::Entity::delete_many()
-            .filter(project_issue::Column::OrgId.eq(org_id.to_owned()))
-            .filter(project_issue::Column::Id.eq(id.to_owned()))
-            .exec(&self.db)
-            .await
-            .map_err(db_error("delete project issue"))?;
-        Ok(())
+        sea_repo_delete_filtered!(&self.db, project_issue, id, "delete project issue", project_issue::Column::OrgId => org_id.to_owned())
     }
 
     /// Persists a dependency edge between issues.
@@ -378,21 +351,12 @@ impl SeaOrmProjectRepository {
     ///
     /// Returns an error if the database update fails.
     pub async fn update_decision(&self, decision: &ProjectDecision) -> Result<()> {
-        let active = project_decision::ActiveModel {
-            id: Set(decision.id.clone()),
-            project_id: Set(decision.project_id.clone()),
-            issue_id: Set(decision.issue_id.clone()),
-            title: Set(decision.title.clone()),
-            context: Set(decision.context.clone()),
-            decision: Set(decision.decision.clone()),
-            consequences: Set(decision.consequences.clone()),
-            created_at: Set(decision.created_at),
-        };
-        active
-            .update(&self.db)
-            .await
-            .map_err(db_error("update project decision"))?;
-        Ok(())
+        sea_repo_update!(
+            &self.db,
+            project_decision,
+            decision,
+            "update project decision"
+        )
     }
 
     /// Deletes a project decision by id.
@@ -454,12 +418,6 @@ impl ProjectRepository for SeaOrmProjectRepository {
     }
 
     async fn delete(&self, org_id: &str, id: &str) -> Result<()> {
-        project::Entity::delete_many()
-            .filter(project::Column::OrgId.eq(org_id.to_owned()))
-            .filter(project::Column::Id.eq(id.to_owned()))
-            .exec(&self.db)
-            .await
-            .map_err(db_error("delete project"))?;
-        Ok(())
+        sea_repo_delete_filtered!(&self.db, project, id, "delete project", project::Column::OrgId => org_id.to_owned())
     }
 }

@@ -18,7 +18,10 @@ use mcb_domain::utils::tests::mcp_assertions::error_text;
 
 /// Resolve VCS provider via domain registry
 fn resolve_default_vcs() -> Option<Arc<dyn mcb_domain::ports::VcsProvider>> {
-    resolve_vcs_provider(&VcsProviderConfig::new("git")).ok()
+    resolve_vcs_provider(&VcsProviderConfig::new(
+        mcb_utils::constants::DEFAULT_VCS_PROVIDER,
+    ))
+    .ok()
 }
 
 /// Resolve hybrid search via domain registry

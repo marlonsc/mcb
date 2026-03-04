@@ -290,7 +290,7 @@ impl PmatValidator {
 
 impl mcb_domain::ports::validation::Validator for PmatValidator {
     fn name(&self) -> &'static str {
-        "pmat"
+        mcb_utils::constants::validate::VALIDATOR_PMAT
     }
 
     fn description(&self) -> &'static str {

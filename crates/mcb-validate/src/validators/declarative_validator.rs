@@ -586,7 +586,7 @@ impl DeclarativeValidator {
 
 impl Validator for DeclarativeValidator {
     fn name(&self) -> &'static str {
-        "declarative_rules"
+        mcb_utils::constants::validate::VALIDATOR_DECLARATIVE
     }
 
     fn description(&self) -> &'static str {
@@ -753,13 +753,11 @@ impl Validator for DeclarativeValidator {
     }
 }
 
-#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
-static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
-    mcb_domain::registry::validation::ValidatorEntry {
-        name: "declarative_rules",
-        description: "Executes embedded YAML declarative rules",
-        build: |root| {
-            Ok(Box::new(DeclarativeValidator::new(root))
-                as Box<dyn mcb_domain::ports::validation::Validator>)
-        },
-    };
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_DECLARATIVE,
+    "Executes embedded YAML declarative rules",
+    |root| {
+        Ok(Box::new(DeclarativeValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

@@ -412,7 +412,11 @@ pub trait MetricsProvider: Send + Sync {
     async fn gauge(&self, name: &str, value: f64, labels: &MetricLabels) -> MetricsResult<()>;
     /// Record a value in a histogram distribution.
     async fn histogram(&self, name: &str, value: f64, labels: &MetricLabels) -> MetricsResult<()>;
+}
 
+/// Extension trait providing common metrics operations.
+#[async_trait]
+pub trait MetricsProviderExt: MetricsProvider {
     /// Record the duration of an indexing operation.
     async fn record_index_time(&self, duration: Duration, collection: &str) -> MetricsResult<()> {
         let labels = labels_from([("collection", collection)]);
@@ -469,8 +473,12 @@ pub trait MetricsProvider: Send + Sync {
 
     /// Set the number of concurrent active indexing jobs.
     async fn set_active_indexing_jobs(&self, count: u64) -> MetricsResult<()> {
-        self.gauge("mcb_active_indexing_jobs", count as f64, &HashMap::new())
-            .await
+        self.gauge(
+            "mcb_active_indexing_jobs",
+            count as f64,
+            &std::collections::HashMap::new(),
+        )
+        .await
     }
 
     /// Set the current size (vector count) of a collection.
@@ -489,6 +497,9 @@ pub trait MetricsProvider: Send + Sync {
         self.increment("mcb_cache_accesses_total", &labels).await
     }
 }
+
+// Implement extension trait for any type that implements MetricsProvider
+impl<T: ?Sized + MetricsProvider> MetricsProviderExt for T {}
 
 // ============================================================================
 // Project Detection

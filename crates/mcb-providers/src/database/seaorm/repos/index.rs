@@ -84,12 +84,14 @@ impl SeaOrmIndexRepository {
             _ => IndexingOperationStatus::Failed(format!("unknown status: {s}")),
         }
     }
+}
 
-    fn model_to_domain(model: index_operation::Model) -> IndexingOperation {
-        IndexingOperation {
+impl From<index_operation::Model> for IndexingOperation {
+    fn from(model: index_operation::Model) -> Self {
+        Self {
             id: OperationId::from_string(&model.id),
             collection: CollectionId::from_string(&model.collection_id),
-            status: Self::string_to_status(&model.status),
+            status: SeaOrmIndexRepository::string_to_status(&model.status),
             total_files: model.total_files as usize,
             processed_files: model.processed_files as usize,
             current_file: model.current_file,
@@ -129,12 +131,13 @@ impl IndexRepository for SeaOrmIndexRepository {
     }
 
     async fn get_operation(&self, operation_id: &OperationId) -> Result<Option<IndexingOperation>> {
-        let result = index_operation::Entity::find_by_id(operation_id.as_str())
-            .one(self.db.as_ref())
-            .await
-            .map_err(db_error("get indexing operation"))?;
-
-        Ok(result.map(Self::model_to_domain))
+        sea_repo_get_opt!(
+            self.db.as_ref(),
+            index_operation,
+            IndexingOperation,
+            operation_id.as_str(),
+            "get indexing operation"
+        )
     }
 
     async fn list_operations(&self) -> Result<Vec<IndexingOperation>> {
@@ -144,7 +147,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .await
             .map_err(db_error("list indexing operations"))?;
 
-        Ok(results.into_iter().map(Self::model_to_domain).collect())
+        Ok(results.into_iter().map(Into::into).collect())
     }
 
     async fn get_active_operation(
@@ -162,7 +165,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .await
             .map_err(db_error("get active indexing operation"))?;
 
-        Ok(result.map(Self::model_to_domain))
+        Ok(result.map(Into::into))
     }
 
     async fn update_progress(
@@ -450,7 +453,7 @@ impl FileHashRepository for SeaOrmIndexRepository {
 
     async fn cleanup_tombstones(&self) -> Result<u64> {
         self.cleanup_tombstones_with_ttl(Duration::from_secs(
-            mcb_utils::constants::values::TOMBSTONE_TTL_SECS,
+            mcb_utils::constants::TOMBSTONE_TTL_SECS,
         ))
         .await
     }

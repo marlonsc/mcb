@@ -21,9 +21,9 @@ use rstest::rstest;
 use serde_json::json;
 
 use crate::utils::test_fixtures::shared_app_context;
-use mcb_domain::test_utils::TEST_EMBEDDING_DIMENSIONS;
 use mcb_domain::utils::tests::chunk_fixtures::create_test_chunk;
 use mcb_domain::utils::tests::collection::unique_collection;
+use mcb_utils::constants::testing::TEST_EMBEDDING_DIMENSIONS;
 
 /// Create test code chunks for full-stack testing
 fn create_test_chunks() -> Vec<CodeChunk> {

@@ -6,8 +6,7 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{
     AgentCheckpointRepository, AgentEventRepository, AgentSessionQuery, AgentSessionRepository,
 };
-use mcb_utils::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
-use mcb_utils::constants::values::DEFAULT_SESSION_LIMIT;
+use mcb_utils::constants::values::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME, DEFAULT_SESSION_LIMIT};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter, QueryOrder,
     QuerySelect, Set,
@@ -127,12 +126,13 @@ impl AgentSessionRepository for SeaOrmAgentRepository {
     }
 
     async fn get_session(&self, id: &str) -> Result<Option<AgentSession>> {
-        let session = agent_session::Entity::find_by_id(id.to_owned())
-            .one(self.db.as_ref())
-            .await
-            .map_err(db_error("get agent session"))?;
-
-        Ok(session.map(Into::into))
+        sea_repo_get_opt!(
+            self.db.as_ref(),
+            agent_session,
+            AgentSession,
+            id,
+            "get agent session"
+        )
     }
 
     async fn update_session(&self, session: &AgentSession) -> Result<()> {
@@ -255,12 +255,13 @@ impl AgentCheckpointRepository for SeaOrmAgentRepository {
     }
 
     async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>> {
-        let checkpoint = checkpoint::Entity::find_by_id(id.to_owned())
-            .one(self.db.as_ref())
-            .await
-            .map_err(db_error("get checkpoint"))?;
-
-        Ok(checkpoint.map(Into::into))
+        sea_repo_get_opt!(
+            self.db.as_ref(),
+            checkpoint,
+            Checkpoint,
+            id,
+            "get checkpoint"
+        )
     }
 
     async fn update_checkpoint(&self, checkpoint: &Checkpoint) -> Result<()> {

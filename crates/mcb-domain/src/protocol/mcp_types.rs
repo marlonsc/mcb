@@ -9,7 +9,7 @@
 use serde::{Deserialize, Serialize};
 
 /// JSON-RPC version constant.
-pub use mcb_utils::constants::protocol::JSONRPC_VERSION;
+pub const JSONRPC_VERSION: &str = mcb_utils::constants::protocol::JSONRPC_VERSION;
 
 /// MCP request payload (JSON-RPC format).
 #[derive(Debug, Clone, Serialize, Deserialize)]

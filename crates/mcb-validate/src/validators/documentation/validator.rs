@@ -65,7 +65,7 @@ define_violations! {
 
 crate::create_validator!(
     DocumentationValidator,
-    "documentation",
+    mcb_utils::constants::validate::VALIDATOR_DOCUMENTATION,
     "Validates documentation standards",
     DocumentationViolation,
     [Self::validate_module_docs, Self::validate_pub_item_docs,]

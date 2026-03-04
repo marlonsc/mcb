@@ -15,13 +15,11 @@ mod violation;
 pub use self::validator::NamingValidator;
 pub use self::violation::NamingViolation;
 
-#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
-static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
-    mcb_domain::registry::validation::ValidatorEntry {
-        name: "naming",
-        description: "Validates naming conventions",
-        build: |root| {
-            Ok(Box::new(NamingValidator::new(root))
-                as Box<dyn mcb_domain::ports::validation::Validator>)
-        },
-    };
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_NAMING,
+    "Validates naming conventions",
+    |root| {
+        Ok(Box::new(NamingValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

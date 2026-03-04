@@ -5,7 +5,7 @@ use mcb_domain::entities::memory::{MemoryFilter, Observation, SessionSummary};
 use mcb_domain::error::Result;
 use mcb_domain::ports::{FtsSearchResult, MemoryRepository};
 use mcb_domain::value_objects::{ObservationId, SessionId};
-use mcb_utils::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
+use mcb_utils::constants::values::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
 use sea_orm::entity::prelude::*;
 use sea_orm::sea_query::{Expr, ExprTrait, OnConflict, Order, Query};
 use sea_orm::{
@@ -278,11 +278,13 @@ impl MemoryRepository for SeaOrmObservationRepository {
     }
 
     async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
-        observation::Entity::find_by_id(id.to_string())
-            .one(&self.db)
-            .await
-            .map(|model| model.map(Into::into))
-            .map_err(db_error("get observation"))
+        sea_repo_get_opt!(
+            &self.db,
+            observation,
+            Observation,
+            id.to_string(),
+            "get observation"
+        )
     }
 
     async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
@@ -333,11 +335,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
     }
 
     async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
-        observation::Entity::delete_by_id(id.to_string())
-            .exec(&self.db)
-            .await
-            .map_err(db_error("delete observation"))?;
-        Ok(())
+        sea_repo_delete!(&self.db, observation, id.to_string(), "delete observation")
     }
 
     async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {

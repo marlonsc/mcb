@@ -13,7 +13,7 @@ use std::sync::Arc;
 
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider};
-use mcb_domain::test_utils::TEST_EMBEDDING_DIMENSIONS;
+use mcb_utils::constants::testing::TEST_EMBEDDING_DIMENSIONS;
 
 use super::test_fixtures::try_shared_app_context;
 

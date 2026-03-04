@@ -33,69 +33,81 @@ impl Display for Severity {
 /// Categories of code violations identified by validators.
 ///
 /// Used for grouping and filtering results in the validation report.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize)]
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    PartialEq,
+    Eq,
+    Hash,
+    Serialize,
+    strum_macros::Display,
+    strum_macros::EnumString,
+)]
+#[strum(ascii_case_insensitive)]
 pub enum ViolationCategory {
     /// Architectural integrity, layering, and boundary violations.
+    #[strum(serialize = "Architecture", serialize = "clean-architecture")]
     Architecture,
     /// General code quality and maintainability issues.
+    #[strum(serialize = "Quality")]
     Quality,
     /// Project organization and module structure.
+    #[strum(serialize = "Organization")]
     Organization,
     /// SOLID principles violations.
+    #[strum(serialize = "SOLID")]
     Solid,
     /// Dependency Injection (linkme) registration and wiring issues.
+    #[strum(
+        serialize = "DI/linkme",
+        serialize = "di",
+        serialize = "dependency_injection"
+    )]
     DependencyInjection,
     /// Configuration management and environment setup.
+    #[strum(serialize = "Configuration")]
     Configuration,
     /// Web framework (Loco/Axum) specific patterns.
+    #[strum(
+        serialize = "Web Framework",
+        serialize = "web-framework",
+        serialize = "web_framework"
+    )]
     WebFramework,
     /// Performance bottlenecks and inefficient patterns.
+    #[strum(serialize = "Performance")]
     Performance,
     /// Async/await usage and potential deadlocks.
+    #[strum(serialize = "Async")]
     Async,
     /// Missing or insufficient documentation (KISS).
+    #[strum(serialize = "Documentation")]
     Documentation,
     /// Testing standards and coverage.
+    #[strum(serialize = "Testing")]
     Testing,
     /// Naming conventions and style guide.
+    #[strum(serialize = "Naming")]
     Naming,
     /// KISS (Keep It Simple, Stupid) principle violations.
+    #[strum(serialize = "KISS")]
     Kiss,
     /// Refactoring opportunities and legacy code smells.
+    #[strum(serialize = "Refactoring", serialize = "migration")]
     Refactoring,
     /// Error boundary and graceful degradation.
+    #[strum(serialize = "Error Boundary", serialize = "error_boundary")]
     ErrorBoundary,
     /// Implementation details and best practices.
+    #[strum(serialize = "Implementation")]
     Implementation,
     /// PMAT (Persistence, Models, Actions, Tasks) pattern.
+    #[strum(serialize = "PMAT")]
     Pmat,
     /// Metrics and thresholds.
+    #[strum(serialize = "Metrics")]
     Metrics,
-}
-
-impl Display for ViolationCategory {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Architecture => write!(f, "Architecture"),
-            Self::Quality => write!(f, "Quality"),
-            Self::Organization => write!(f, "Organization"),
-            Self::Solid => write!(f, "SOLID"),
-            Self::DependencyInjection => write!(f, "DI/linkme"),
-            Self::Configuration => write!(f, "Configuration"),
-            Self::WebFramework => write!(f, "Web Framework"),
-            Self::Performance => write!(f, "Performance"),
-            Self::Async => write!(f, "Async"),
-            Self::Documentation => write!(f, "Documentation"),
-            Self::Testing => write!(f, "Testing"),
-            Self::Naming => write!(f, "Naming"),
-            Self::Kiss => write!(f, "KISS"),
-            Self::Refactoring => write!(f, "Refactoring"),
-            Self::ErrorBoundary => write!(f, "Error Boundary"),
-            Self::Implementation => write!(f, "Implementation"),
-            Self::Pmat => write!(f, "PMAT"),
-            Self::Metrics => write!(f, "Metrics"),
-        }
-    }
 }
 
 /// Shared interface for all code violations.
@@ -142,8 +154,12 @@ pub enum LanguageId {
     JavaScript,
     /// TypeScript source code.
     TypeScript,
+    /// TypeScript with JSX.
+    Tsx,
     /// Java source code.
     Java,
+    /// C source code.
+    C,
     /// C/C++ source code.
     Cpp,
     /// Kotlin source code.
@@ -174,6 +190,10 @@ pub enum LanguageId {
     Makefile,
     /// Protocol Buffer definitions.
     Protobuf,
+    /// PHP source code.
+    Php,
+    /// Swift source code.
+    Swift,
 }
 
 /// Configuration for a validation run.
@@ -311,6 +331,13 @@ pub trait Validator: Send + Sync {
     }
 }
 
+struct LanguageData {
+    id: LanguageId,
+    name: &'static str,
+    extensions: &'static [&'static str],
+    filenames: &'static [&'static str],
+}
+
 impl LanguageId {
     const NAME_EQUIVALENTS: &'static [(&'static str, Self)] = &[
         ("rust", Self::Rust),
@@ -361,60 +388,176 @@ impl LanguageId {
         ("gnumake", Self::Makefile),
         ("protobuf", Self::Protobuf),
         ("proto", Self::Protobuf),
+        ("php", Self::Php),
+        ("swift", Self::Swift),
+        ("tsx", Self::Tsx),
+        ("c", Self::C),
     ];
 
+    const LANGUAGE_DATA: &'static [LanguageData] = &[
+        LanguageData {
+            id: Self::Rust,
+            name: "rust",
+            extensions: &["rs"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Python,
+            name: "python",
+            extensions: &["py", "pyi", "pyw"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::JavaScript,
+            name: "javascript",
+            extensions: &["js", "mjs", "cjs", "jsx"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::TypeScript,
+            name: "typescript",
+            extensions: &["ts", "mts", "cts", "tsx"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Tsx,
+            name: "tsx",
+            extensions: &["tsx"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Java,
+            name: "java",
+            extensions: &["java"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::C,
+            name: "c",
+            extensions: &["c", "h"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Cpp,
+            name: "cpp",
+            extensions: &["cpp", "cc", "cxx", "hpp", "hxx", "mm", "m"],
+            filenames: &["cmakelists.txt"],
+        },
+        LanguageData {
+            id: Self::Kotlin,
+            name: "kotlin",
+            extensions: &["kt", "kts"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Go,
+            name: "go",
+            extensions: &["go"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Ruby,
+            name: "ruby",
+            extensions: &["rb", "rake", "gemspec"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Shell,
+            name: "shell",
+            extensions: &["sh", "bash", "zsh", "ksh"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Yaml,
+            name: "yaml",
+            extensions: &["yaml", "yml"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Toml,
+            name: "toml",
+            extensions: &["toml"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Json,
+            name: "json",
+            extensions: &["json", "jsonc"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Markdown,
+            name: "markdown",
+            extensions: &["md", "markdown", "mdown", "mkd"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Html,
+            name: "html",
+            extensions: &["html", "htm", "xhtml"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Css,
+            name: "css",
+            extensions: &["css", "scss", "sass", "less"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Sql,
+            name: "sql",
+            extensions: &["sql"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Dockerfile,
+            name: "dockerfile",
+            extensions: &["dockerfile"],
+            filenames: &["dockerfile"],
+        },
+        LanguageData {
+            id: Self::Makefile,
+            name: "makefile",
+            extensions: &["makefile", "mk"],
+            filenames: &["makefile", "gnumakefile"],
+        },
+        LanguageData {
+            id: Self::Protobuf,
+            name: "protobuf",
+            extensions: &["proto"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Php,
+            name: "php",
+            extensions: &["php", "php4", "php5", "phtml"],
+            filenames: &[],
+        },
+        LanguageData {
+            id: Self::Swift,
+            name: "swift",
+            extensions: &["swift"],
+            filenames: &[],
+        },
+    ];
     /// Get the primary lowercase name of the language.
     #[must_use]
     pub fn name(&self) -> &'static str {
-        match self {
-            Self::Rust => "rust",
-            Self::Python => "python",
-            Self::JavaScript => "javascript",
-            Self::TypeScript => "typescript",
-            Self::Java => "java",
-            Self::Cpp => "cpp",
-            Self::Kotlin => "kotlin",
-            Self::Go => "go",
-            Self::Ruby => "ruby",
-            Self::Shell => "shell",
-            Self::Yaml => "yaml",
-            Self::Toml => "toml",
-            Self::Json => "json",
-            Self::Markdown => "markdown",
-            Self::Html => "html",
-            Self::Css => "css",
-            Self::Sql => "sql",
-            Self::Dockerfile => "dockerfile",
-            Self::Makefile => "makefile",
-            Self::Protobuf => "protobuf",
-        }
+        Self::LANGUAGE_DATA
+            .iter()
+            .find(|d| d.id == *self)
+            .map(|d| d.name)
+            .unwrap_or("unknown")
     }
 
     /// Get typical file extensions associated with this language.
     #[must_use]
     pub fn extensions(&self) -> &'static [&'static str] {
-        match self {
-            Self::Rust => &["rs"],
-            Self::Python => &["py", "pyi", "pyw"],
-            Self::JavaScript => &["js", "mjs", "cjs", "jsx"],
-            Self::TypeScript => &["ts", "mts", "cts", "tsx"],
-            Self::Java => &["java"],
-            Self::Cpp => &["c", "h", "cpp", "cc", "cxx", "hpp", "hxx", "mm", "m"],
-            Self::Kotlin => &["kt", "kts"],
-            Self::Go => &["go"],
-            Self::Ruby => &["rb", "rake", "gemspec"],
-            Self::Shell => &["sh", "bash", "zsh", "ksh"],
-            Self::Yaml => &["yaml", "yml"],
-            Self::Toml => &["toml"],
-            Self::Json => &["json", "jsonc"],
-            Self::Markdown => &["md", "markdown", "mdown", "mkd"],
-            Self::Html => &["html", "htm", "xhtml"],
-            Self::Css => &["css", "scss", "sass", "less"],
-            Self::Sql => &["sql"],
-            Self::Dockerfile => &["dockerfile"],
-            Self::Makefile => &["makefile", "mk"],
-            Self::Protobuf => &["proto"],
-        }
+        Self::LANGUAGE_DATA
+            .iter()
+            .find(|d| d.id == *self)
+            .map(|d| d.extensions)
+            .unwrap_or(&[])
     }
 
     /// Resolve a language ID from its human-readable name or alias.
@@ -430,40 +573,20 @@ impl LanguageId {
     #[must_use]
     pub fn from_extension(ext: &str) -> Option<Self> {
         let normalized = ext.trim().trim_start_matches('.').to_ascii_lowercase();
-        match normalized.as_str() {
-            "rs" => Some(Self::Rust),
-            "py" | "pyi" | "pyw" => Some(Self::Python),
-            "js" | "mjs" | "cjs" | "jsx" => Some(Self::JavaScript),
-            "ts" | "mts" | "cts" | "tsx" => Some(Self::TypeScript),
-            "java" => Some(Self::Java),
-            "c" | "h" | "cpp" | "cc" | "cxx" | "hpp" | "hxx" | "mm" | "m" => Some(Self::Cpp),
-            "kt" | "kts" => Some(Self::Kotlin),
-            "go" => Some(Self::Go),
-            "rb" | "rake" | "gemspec" => Some(Self::Ruby),
-            "sh" | "bash" | "zsh" | "ksh" => Some(Self::Shell),
-            "yaml" | "yml" => Some(Self::Yaml),
-            "toml" => Some(Self::Toml),
-            "json" | "jsonc" => Some(Self::Json),
-            "md" | "markdown" | "mdown" | "mkd" => Some(Self::Markdown),
-            "html" | "htm" | "xhtml" => Some(Self::Html),
-            "css" | "scss" | "sass" | "less" => Some(Self::Css),
-            "sql" => Some(Self::Sql),
-            "proto" => Some(Self::Protobuf),
-            "mk" => Some(Self::Makefile),
-            _ => None,
-        }
+        Self::LANGUAGE_DATA
+            .iter()
+            .find(|d| d.extensions.contains(&normalized.as_str()))
+            .map(|d| d.id)
     }
 
     /// Infer the language from a specific filename (e.g., "Dockerfile").
     #[must_use]
     pub fn from_filename(filename: &str) -> Option<Self> {
         let lower = filename.to_ascii_lowercase();
-        match lower.as_str() {
-            "dockerfile" => Some(Self::Dockerfile),
-            "makefile" | "gnumakefile" => Some(Self::Makefile),
-            "cmakelists.txt" => Some(Self::Cpp),
-            _ => None,
-        }
+        Self::LANGUAGE_DATA
+            .iter()
+            .find(|d| d.filenames.contains(&lower.as_str()))
+            .map(|d| d.id)
     }
 
     /// Identify the language by checking the file shebang line.

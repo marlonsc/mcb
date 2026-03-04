@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::ids::OrgId;
-use mcb_utils::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
+use mcb_utils::constants::values::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
 
 /// Tenant context for row-level isolation.
 ///

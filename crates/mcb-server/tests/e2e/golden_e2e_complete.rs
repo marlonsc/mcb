@@ -9,13 +9,13 @@ use rstest::rstest;
 use serde::Deserialize;
 
 use mcb_domain::test_fixtures::sample_codebase_path;
-use mcb_domain::test_utils::{GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES};
 use mcb_domain::utils::tests::mcp_assertions::{
     extract_text as extract_result_text, golden_count_result_entries, golden_parse_results_found,
 };
 use mcb_domain::utils::tests::timeouts::TEST_TIMEOUT;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::utils::text::extract_text_from;
+use mcb_utils::constants::testing::{GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES};
 
 fn index_args(action: IndexAction, path: Option<String>, collection: Option<String>) -> IndexArgs {
     IndexArgs {

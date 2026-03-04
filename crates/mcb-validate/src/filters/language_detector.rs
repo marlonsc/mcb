@@ -12,7 +12,9 @@ pub fn language_to_rca(lang: LanguageId) -> LANG {
         LanguageId::Python => LANG::Python,
         LanguageId::JavaScript => LANG::Mozjs,
         LanguageId::TypeScript => LANG::Typescript,
+        LanguageId::Tsx => LANG::Tsx,
         LanguageId::Java => LANG::Java,
+        LanguageId::C => LANG::Cpp,
         LanguageId::Cpp => LANG::Cpp,
         LanguageId::Kotlin => LANG::Kotlin,
         LanguageId::Go
@@ -27,6 +29,8 @@ pub fn language_to_rca(lang: LanguageId) -> LANG {
         | LanguageId::Sql
         | LanguageId::Dockerfile
         | LanguageId::Makefile
+        | LanguageId::Php
+        | LanguageId::Swift
         | LanguageId::Protobuf => LANG::Preproc,
     }
 }
@@ -38,7 +42,8 @@ pub fn language_from_rca(lang: LANG) -> Option<LanguageId> {
         LANG::Rust => Some(LanguageId::Rust),
         LANG::Python => Some(LanguageId::Python),
         LANG::Mozjs | LANG::Javascript => Some(LanguageId::JavaScript),
-        LANG::Typescript | LANG::Tsx => Some(LanguageId::TypeScript),
+        LANG::Typescript => Some(LanguageId::TypeScript),
+        LANG::Tsx => Some(LanguageId::Tsx),
         LANG::Java => Some(LanguageId::Java),
         LANG::Cpp => Some(LanguageId::Cpp),
         LANG::Kotlin => Some(LanguageId::Kotlin),

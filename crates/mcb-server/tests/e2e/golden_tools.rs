@@ -7,9 +7,9 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
 use mcb_domain::test_fixtures::sample_codebase_path;
-use mcb_domain::test_utils::GOLDEN_COLLECTION;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::utils::text::extract_text_from;
+use mcb_utils::constants::testing::GOLDEN_COLLECTION;
 
 // =============================================================================
 // E2E: Complete workflow (clear -> status -> index -> status -> search -> clear)

@@ -31,7 +31,7 @@ use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
 use crate::mcp_server::{McpEntityRepositories, McpServer, McpServices};
 use crate::state::McpServerBootstrap;
 use crate::tools::ExecutionFlow;
-use mcb_utils::constants::values::{
+use mcb_utils::constants::{
     DEFAULT_DATABASE_PROVIDER, DEFAULT_LANGUAGE_PROVIDER, DEFAULT_NAMESPACE, DEFAULT_VCS_PROVIDER,
 };
 

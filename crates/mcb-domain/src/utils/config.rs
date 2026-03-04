@@ -27,7 +27,7 @@ use std::any::Any;
 use crate::error::{Error, Result};
 use crate::registry::config::{ConfigProviderConfig, resolve_config_provider};
 
-/// Default provider name for the project.
+/// Default configuration provider name.
 pub const DEFAULT_PROVIDER: &str = mcb_utils::constants::DEFAULT_CONFIG_PROVIDER;
 
 /// Load application configuration via CA/DI registry.
@@ -45,13 +45,13 @@ pub fn load(provider_name: &str) -> Result<Box<dyn Any + Send + Sync>> {
 
 /// Load application configuration using the default provider.
 ///
-/// Shorthand for `load(DEFAULT_PROVIDER)`.
+/// Shorthand for `load(mcb_utils::constants::DEFAULT_CONFIG_PROVIDER)`.
 ///
 /// # Errors
 ///
 /// Returns an error if the provider cannot be resolved or config loading fails.
 pub fn load_default() -> Result<Box<dyn Any + Send + Sync>> {
-    load(DEFAULT_PROVIDER)
+    load(mcb_utils::constants::DEFAULT_CONFIG_PROVIDER)
 }
 
 /// Deserialize configuration from a pre-loaded `serde_json::Value`.
@@ -94,13 +94,13 @@ pub fn load_as<T: 'static + Send + Sync>(provider_name: &str) -> Result<T> {
 
 /// Load and downcast using the default provider.
 ///
-/// Shorthand for `load_as::<T>(DEFAULT_PROVIDER)`.
+/// Shorthand for `load_as::<T>(mcb_utils::constants::DEFAULT_CONFIG_PROVIDER)`.
 ///
 /// # Errors
 ///
 /// Returns an error if loading fails or the concrete type doesn't match.
 pub fn load_default_as<T: 'static + Send + Sync>() -> Result<T> {
-    load_as::<T>(DEFAULT_PROVIDER)
+    load_as::<T>(mcb_utils::constants::DEFAULT_CONFIG_PROVIDER)
 }
 
 /// Deserialize from value and downcast in one call.

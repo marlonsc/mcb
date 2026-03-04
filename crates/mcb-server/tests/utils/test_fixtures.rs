@@ -29,10 +29,10 @@ use tempfile::TempDir;
 // linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
 
-// Import centralized constants and fixtures from mcb-domain SSOT
-use mcb_domain::test_utils::{
-    TEST_ORG_ID, TEST_REPO_NAME, TEST_SESSION_ID, create_temp_codebase, create_test_indexing_result,
-};
+// Import centralized fixtures from mcb-domain
+use mcb_domain::test_utils::{create_temp_codebase, create_test_indexing_result};
+// Import test constants from canonical source (mcb-utils)
+use mcb_utils::constants::testing::{TEST_ORG_ID, TEST_REPO_NAME, TEST_SESSION_ID};
 
 // -----------------------------------------------------------------------------
 // Golden test helpers (shared by tests/golden and integration)
@@ -121,7 +121,7 @@ fn create_shared_test_context() -> Option<SharedTestContext> {
 
     let vs_config = VectorStoreProviderConfig::new("edgevec")
         .with_dimensions(384)
-        .with_collection("default");
+        .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
     let vector_store = resolve_vector_store_provider(&vs_config).ok()?;
 
     Some(SharedTestContext {
@@ -191,7 +191,7 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
 
     let vs_config = VectorStoreProviderConfig::new("edgevec")
         .with_dimensions(384)
-        .with_collection("default");
+        .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
     let vector_store_provider = resolve_vector_store_provider(&vs_config)?;
 
     let hybrid_search = resolve_hybrid_search_provider(&HybridSearchProviderConfig::new(
@@ -201,7 +201,7 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
     // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
     let config_provider = mcb_domain::registry::config::resolve_config_provider(
         &mcb_domain::registry::config::ConfigProviderConfig::new(
-            mcb_domain::utils::config::DEFAULT_PROVIDER,
+            mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
         ),
     )?;
     let app_config = *config_provider

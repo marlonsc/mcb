@@ -1,5 +1,5 @@
 //!
-//! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md#clean-architecture)
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#clean-architecture)
 //!
 use std::path::PathBuf;
 
@@ -7,7 +7,7 @@ use crate::config::CleanArchitectureRulesConfig;
 use crate::{Result, ValidationConfig};
 use mcb_domain::ports::validation::Violation;
 
-use super::super::violation::CleanArchitectureViolation;
+use super::violation::CleanArchitectureViolation;
 
 /// Clean Architecture validator
 pub struct CleanArchitectureValidator {
@@ -55,7 +55,7 @@ impl CleanArchitectureValidator {
 
 impl mcb_domain::ports::validation::Validator for CleanArchitectureValidator {
     fn name(&self) -> &'static str {
-        "clean_architecture"
+        mcb_utils::constants::validate::VALIDATOR_CLEAN_ARCHITECTURE
     }
 
     fn description(&self) -> &'static str {

@@ -9,9 +9,7 @@ use dashmap::DashMap;
 use mcb_domain::ports::{
     ValidationOperation, ValidationOperationResult, ValidationOperationsInterface, ValidationStatus,
 };
-use mcb_domain::registry::admin_operations::{
-    VALIDATION_OPERATIONS_PROVIDERS, ValidationOperationsProviderEntry,
-};
+
 use mcb_domain::value_objects::OperationId;
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -118,10 +116,10 @@ impl ValidationOperationsInterface for DefaultValidationOperations {
     }
 }
 
-#[linkme::distributed_slice(VALIDATION_OPERATIONS_PROVIDERS)]
-static DEFAULT_VALIDATION_OPERATIONS_PROVIDER_ENTRY: ValidationOperationsProviderEntry =
-    ValidationOperationsProviderEntry {
-        name: mcb_utils::constants::DEFAULT_VALIDATION_OP_PROVIDER,
-        description: "In-memory validation operations tracker",
-        build: |_config| Ok(Arc::new(DefaultValidationOperations::default())),
-    };
+use mcb_domain::register_validation_operations_provider;
+
+register_validation_operations_provider!(
+    mcb_utils::constants::DEFAULT_VALIDATION_OP_PROVIDER,
+    "In-memory validation operations tracker",
+    |_config| Ok(Arc::new(DefaultValidationOperations::default())),
+);

@@ -127,17 +127,9 @@ impl ContextServiceInterface for ContextServiceImpl {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Linkme Registration
-// ---------------------------------------------------------------------------
-use mcb_domain::registry::services::{
-    CONTEXT_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
-};
-
-#[linkme::distributed_slice(SERVICES_REGISTRY)]
-static CONTEXT_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
-    name: CONTEXT_SERVICE_NAME,
-    build: ServiceBuilder::Context(|context| {
+mcb_domain::register_service!(
+    mcb_utils::constants::SERVICE_NAME_CONTEXT,
+    mcb_domain::registry::services::ServiceBuilder::Context(|context| {
         let ctx = context
             .downcast_ref::<mcb_domain::registry::ServiceResolutionContext>()
             .ok_or_else(|| {
@@ -151,4 +143,4 @@ static CONTEXT_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEnt
 
         Ok(Arc::new(ContextServiceImpl::new(embedding, vector_store)))
     }),
-};
+);

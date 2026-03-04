@@ -18,7 +18,8 @@ use super::common::{
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
-use mcb_utils::constants::keys::{FIELD_OBSERVATION_ID, TAG_EXECUTION, TAG_FAILURE, TAG_SUCCESS};
+use mcb_utils::constants::keys::FIELD_OBSERVATION_ID;
+use mcb_utils::constants::values::{TAG_EXECUTION, TAG_FAILURE, TAG_SUCCESS};
 
 /// Validated execution data extracted from JSON payload
 struct ValidatedExecutionData {

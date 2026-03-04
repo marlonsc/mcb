@@ -1,3 +1,5 @@
+#![allow(clippy::expect_used)]
+
 use rstest::{fixture, rstest};
 use sqlx::sqlite::SqlitePool;
 

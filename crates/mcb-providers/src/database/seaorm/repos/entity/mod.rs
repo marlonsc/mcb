@@ -6,9 +6,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, ModelTrait, QueryFilter,
-};
+use sea_orm::{ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
 
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
@@ -19,9 +17,10 @@ use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
 use mcb_domain::entities::{ApiKey, Organization, Team, User};
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{
-    ApiKeyRegistry, IssueCommentRegistry, IssueLabelAssignmentManager, IssueLabelRegistry,
-    IssueRegistry, OrgRegistry, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry,
-    TeamMemberManager, TeamRegistry, UserRegistry, VcsEntityRepository,
+    AgentAssignmentManager, ApiKeyRegistry, IssueCommentRegistry, IssueLabelAssignmentManager,
+    IssueLabelRegistry, IssueRegistry, OrgRegistry, PlanRegistry, PlanReviewRegistry,
+    PlanVersionRegistry, TeamMemberManager, TeamRegistry, UserRegistry, VcsBranchRegistry,
+    VcsRepositoryRegistry, VcsWorktreeRegistry,
 };
 
 use super::common::db_err;

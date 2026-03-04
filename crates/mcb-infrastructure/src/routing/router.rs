@@ -130,7 +130,10 @@ impl ProviderRouter for DefaultProviderRouter {
 
     async fn get_stats(&self) -> HashMap<String, serde_json::Value> {
         let mut stats = HashMap::new();
-        stats.insert("provider".to_owned(), serde_json::json!("default"));
+        stats.insert(
+            "provider".to_owned(),
+            serde_json::json!(mcb_utils::constants::DEFAULT_NAMESPACE),
+        );
         stats.insert(
             "embedding_providers".to_owned(),
             serde_json::json!(self.embedding_providers),

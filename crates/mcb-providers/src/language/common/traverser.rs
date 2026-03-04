@@ -48,7 +48,7 @@ impl<'a> AstTraverser<'a> {
         Self {
             rules,
             language,
-            max_chunks: mcb_utils::constants::values::INDEXING_CHUNKS_MAX_PER_FILE,
+            max_chunks: mcb_utils::constants::INDEXING_CHUNKS_MAX_PER_FILE,
         }
     }
 

@@ -54,6 +54,6 @@ impl PerformanceValidator {
 
 crate::impl_validator!(
     PerformanceValidator,
-    "performance",
+    mcb_utils::constants::validate::VALIDATOR_PERFORMANCE,
     "Validates performance patterns (clones, allocations, Arc/Mutex usage)"
 );

@@ -1,5 +1,4 @@
 use crate::utils::test_fixtures::create_test_mcp_server;
-use mcb_domain::test_utils::TEST_REPO_NAME;
 use mcb_domain::test_utils::TestResult;
 use mcb_domain::utils::text::extract_text_from;
 use mcb_server::args::SessionAction;
@@ -8,6 +7,7 @@ use mcb_server::args::ValidateAction;
 use mcb_server::args::ValidateArgs;
 use mcb_server::args::VcsAction;
 use mcb_server::args::VcsArgs;
+use mcb_utils::constants::testing::TEST_REPO_NAME;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use std::fs;

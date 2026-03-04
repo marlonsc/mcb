@@ -532,28 +532,28 @@ pub const LINTER_CMD_CARGO: &str = "cargo";
 // ============================================================================
 
 /// Tag for architecture-related items.
-pub use crate::constants::values::TAG_ARCHITECTURE;
+pub const TAG_ARCHITECTURE: &str = "architecture";
 
 /// Tag for organization-related items.
-pub use crate::constants::values::TAG_ORGANIZATION;
+pub const TAG_ORGANIZATION: &str = "organization";
 
 /// Tag for quality-related items.
-pub use crate::constants::values::TAG_QUALITY;
+pub const TAG_QUALITY: &str = "quality";
 
 /// Tag for SOLID-related items.
-pub use crate::constants::values::TAG_SOLID;
+pub const TAG_SOLID: &str = "solid";
 
 /// Tag for naming-related items.
-pub use crate::constants::values::TAG_NAMING;
+pub const TAG_NAMING: &str = "naming";
 
 /// Tag for documentation-related items.
-pub use crate::constants::values::TAG_DOCUMENTATION;
+pub const TAG_DOCUMENTATION: &str = "documentation";
 
 /// Tag for performance-related items.
-pub use crate::constants::values::TAG_PERFORMANCE;
+pub const TAG_PERFORMANCE: &str = "performance";
 
 /// Tag for async-related items.
-pub use crate::constants::values::TAG_ASYNC;
+pub const TAG_ASYNC: &str = "async";
 
 // ============================================================================
 // Severity Levels
@@ -639,9 +639,7 @@ pub const CATEGORY_PMAT: &str = "pmat";
 pub const CATEGORY_QUALITY: &str = TAG_QUALITY;
 
 /// Category: security checks.
-pub use crate::constants::values::TAG_SECURITY as CATEGORY_SECURITY;
-
-// ============================================================================
+pub const CATEGORY_SECURITY: &str = "security";
 
 // ============================================================================
 // Validator Category Names
@@ -721,6 +719,9 @@ pub const VALIDATOR_VISIBILITY: &str = "visibility";
 
 /// Validator: layer flow.
 pub const VALIDATOR_LAYER_FLOW: &str = "layer_flow";
+
+/// Validator: test quality.
+pub const VALIDATOR_TEST_QUALITY: &str = "test_quality";
 
 // ============================================================================
 // Linter Integration (Clippy / Cargo)

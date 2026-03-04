@@ -74,7 +74,7 @@ define_violations! {
 
 crate::create_validator!(
     ErrorBoundaryValidator,
-    "error_boundary",
+    mcb_utils::constants::validate::VALIDATOR_ERROR_BOUNDARY,
     "Validates error handling patterns across layer boundaries",
     ErrorBoundaryViolation,
     [
@@ -275,13 +275,11 @@ impl ErrorBoundaryValidator {
     }
 }
 
-#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
-static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
-    mcb_domain::registry::validation::ValidatorEntry {
-        name: "error_boundary",
-        description: "Validates error handling patterns across layer boundaries",
-        build: |root| {
-            Ok(Box::new(ErrorBoundaryValidator::new(root))
-                as Box<dyn mcb_domain::ports::validation::Validator>)
-        },
-    };
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_ERROR_BOUNDARY,
+    "Validates error handling patterns across layer boundaries",
+    |root| {
+        Ok(Box::new(ErrorBoundaryValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

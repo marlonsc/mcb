@@ -300,7 +300,7 @@ fn is_forbidden_adapter_import(imported: &str, adapter_suffixes: &[String]) -> b
 
 impl mcb_domain::ports::validation::Validator for PortAdapterValidator {
     fn name(&self) -> &'static str {
-        "port_adapter"
+        mcb_utils::constants::validate::VALIDATOR_PORT_ADAPTER
     }
 
     fn description(&self) -> &'static str {
@@ -321,13 +321,11 @@ impl mcb_domain::ports::validation::Validator for PortAdapterValidator {
     }
 }
 
-#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
-static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
-    mcb_domain::registry::validation::ValidatorEntry {
-        name: "port_adapter",
-        description: "Validates port/adapter patterns for Clean Architecture compliance",
-        build: |root| {
-            Ok(Box::new(PortAdapterValidator::new(root))
-                as Box<dyn mcb_domain::ports::validation::Validator>)
-        },
-    };
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_PORT_ADAPTER,
+    "Validates port/adapter patterns for Clean Architecture compliance",
+    |root| {
+        Ok(Box::new(PortAdapterValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

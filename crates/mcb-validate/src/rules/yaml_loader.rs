@@ -17,7 +17,7 @@ use crate::Result;
 use crate::filters::rule_filters::RuleFilters;
 use crate::utils::fs::collect_yaml_files;
 use mcb_utils::constants::validate::{
-    CATEGORY_QUALITY, DEFAULT_RULE_DESCRIPTION, DEFAULT_RULE_NAME, DEFAULT_RULE_RATIONALE,
+    DEFAULT_RULE_CATEGORY, DEFAULT_RULE_DESCRIPTION, DEFAULT_RULE_NAME, DEFAULT_RULE_RATIONALE,
     RUSTY_RULES, SEVERITY_WARNING, YAML_FIELD_AST_QUERY, YAML_FIELD_BASE, YAML_FIELD_CATEGORY,
     YAML_FIELD_CONFIG, YAML_FIELD_DESCRIPTION, YAML_FIELD_ENABLED, YAML_FIELD_ENGINE,
     YAML_FIELD_EXTENDS, YAML_FIELD_FILTERS, YAML_FIELD_FIX_TYPE, YAML_FIELD_FIXES, YAML_FIELD_ID,
@@ -407,7 +407,7 @@ impl YamlRuleLoader {
         let category = obj
             .get(YAML_FIELD_CATEGORY)
             .and_then(|v| v.as_str())
-            .unwrap_or(CATEGORY_QUALITY)
+            .unwrap_or(DEFAULT_RULE_CATEGORY)
             .to_owned();
 
         let severity = obj

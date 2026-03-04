@@ -55,6 +55,21 @@ macro_rules! sea_repo_get {
     }};
 }
 
+/// Find a single entity by primary key and return an optional result.
+///
+/// ```rust,ignore
+/// sea_repo_get_opt!(&self.db, project_phase, ProjectPhase, id, "get project phase")
+/// ```
+macro_rules! sea_repo_get_opt {
+    ($db:expr, $mod:ident, $type:ty, $id:expr, $ctx:literal) => {{
+        let model = $mod::Entity::find_by_id($id.to_owned())
+            .one($db)
+            .await
+            .map_err(crate::database::seaorm::repos::common::db_error($ctx))?;
+        Ok(model.map(<$type>::from))
+    }};
+}
+
 /// Find a single entity by primary key with additional column filters.
 ///
 /// Returns `Error::not_found` if the entity doesn't exist.
@@ -112,6 +127,7 @@ macro_rules! sea_repo_delete {
 /// ```
 macro_rules! sea_repo_delete_filtered {
     ($db:expr, $mod:ident, $id:expr, $ctx:literal, $($col:expr => $val:expr),+) => {{
+        use sea_orm::ModelTrait;
         if let Some(m) = $mod::Entity::find_by_id($id.to_owned())
             $(.filter($col.eq($val)))+
             .one($db)

@@ -215,7 +215,7 @@ impl NamingValidator {
 
 impl mcb_domain::ports::validation::Validator for NamingValidator {
     fn name(&self) -> &'static str {
-        "naming"
+        mcb_utils::constants::validate::VALIDATOR_NAMING
     }
 
     fn description(&self) -> &'static str {

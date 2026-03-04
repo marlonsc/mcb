@@ -21,7 +21,7 @@ use crate::{Severity, ValidationConfig};
 use mcb_domain::ports::validation::ViolationCategory;
 
 crate::define_validator! {
-    name: "kiss",
+    name: mcb_utils::constants::validate::VALIDATOR_KISS,
     description: "Validates KISS principle (Keep It Simple, Stupid)",
 
 
@@ -168,13 +168,10 @@ impl KissValidator {
     }
 }
 
-#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
-static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
-    mcb_domain::registry::validation::ValidatorEntry {
-        name: "kiss",
-        description: "Validates KISS principle (Keep It Simple, Stupid)",
-        build: |root| {
-            Ok(Box::new(KissValidator::new(root))
-                as Box<dyn mcb_domain::ports::validation::Validator>)
-        },
-    };
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_KISS,
+    "Validates KISS principle (Keep It Simple, Stupid)",
+    |root| {
+        Ok(Box::new(KissValidator::new(root)) as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

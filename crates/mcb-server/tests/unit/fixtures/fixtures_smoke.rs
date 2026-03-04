@@ -1,11 +1,10 @@
 use mcb_domain::test_fixtures::sample_codebase_path;
-use mcb_domain::test_utils::{
-    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, create_temp_codebase, create_test_indexing_result,
-};
+use mcb_domain::test_utils::{create_temp_codebase, create_test_indexing_result};
 use mcb_domain::utils::tests::mcp_assertions::{
     extract_text as extract_result_text, golden_count_result_entries, golden_parse_results_found,
 };
 use mcb_domain::utils::text::extract_text_from;
+use mcb_utils::constants::testing::{GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES};
 use rstest::rstest;
 
 #[rstest]

@@ -81,7 +81,7 @@ async fn create_test_mcb_state() -> Option<(McbState, tempfile::TempDir)> {
 
     let vec_config = VectorStoreProviderConfig::new("edgevec")
         .with_dimensions(384)
-        .with_collection("default");
+        .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
     let vector_store_provider = resolve_vector_store_provider(&vec_config).ok()?;
 
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;
@@ -93,7 +93,7 @@ async fn create_test_mcb_state() -> Option<(McbState, tempfile::TempDir)> {
     // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
     let app_config = *mcb_domain::registry::config::resolve_config_provider(
         &mcb_domain::registry::config::ConfigProviderConfig::new(
-            mcb_domain::utils::config::DEFAULT_PROVIDER,
+            mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
         ),
     )
     .ok()?

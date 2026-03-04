@@ -70,7 +70,14 @@ fn test_embedding_config_creation(embedding_config: EmbeddingConfig) {
     Some(1536),
     Some(8191)
 )]
-#[case("fastembed", "default-model", None, None, None, None)]
+#[case(
+    mcb_utils::constants::PROVIDER_SLUG_FASTEMBED,
+    "default-model",
+    None,
+    None,
+    None,
+    None
+)]
 #[case(
     "ollama",
     "llama2",
@@ -100,7 +107,7 @@ fn embedding_config_variants(
 #[fixture]
 fn vector_store_config() -> VectorStoreConfig {
     VectorStoreConfig {
-        provider: "qdrant".to_owned(),
+        provider: mcb_utils::constants::PROVIDER_SLUG_QDRANT.to_owned(),
         address: Some("localhost:6334".to_owned()),
         token: None,
         collection: Some("my-collection".to_owned()),
@@ -111,7 +118,10 @@ fn vector_store_config() -> VectorStoreConfig {
 
 #[rstest]
 fn test_vector_store_config_creation(vector_store_config: VectorStoreConfig) {
-    assert_eq!(vector_store_config.provider, "qdrant");
+    assert_eq!(
+        vector_store_config.provider,
+        mcb_utils::constants::PROVIDER_SLUG_QDRANT
+    );
     assert_eq!(
         vector_store_config.address,
         Some("localhost:6334".to_owned())
@@ -127,16 +137,23 @@ fn test_vector_store_config_creation(vector_store_config: VectorStoreConfig) {
 
 #[rstest]
 #[case(
-    "qdrant",
+    mcb_utils::constants::PROVIDER_SLUG_QDRANT,
     Some("localhost:6334"),
     None,
     Some("my-collection"),
     Some(1536),
     Some(30)
 )]
-#[case("edgevec", None, None, Some("local-vectors"), Some(384), None)]
 #[case(
-    "milvus",
+    mcb_utils::constants::PROVIDER_SLUG_EDGEVEC,
+    None,
+    None,
+    Some("local-vectors"),
+    Some(384),
+    None
+)]
+#[case(
+    mcb_utils::constants::PROVIDER_SLUG_MILVUS,
     Some("http://localhost:19530"),
     Some("root:Milvus"),
     Some("embeddings"),

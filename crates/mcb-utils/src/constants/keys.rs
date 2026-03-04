@@ -85,9 +85,6 @@ pub const METADATA_KEY_VECTORS_COUNT: &str = "vectors_count";
 /// Column/Field name for "`org_id`"
 pub const ORG_ID: &str = "org_id";
 
-pub use crate::constants::values::DEFAULT_ORG_ID;
-pub use crate::constants::values::DEFAULT_ORG_NAME;
-
 // Metadata keys for vector/observation storage
 /// Metadata key for "content"
 pub const METADATA_KEY_CONTENT: &str = "content";
@@ -119,21 +116,6 @@ pub const FIELD_OBSERVATION_TYPE: &str = "observation_type";
 
 /// JSON field: message text.
 pub const FIELD_MESSAGE: &str = "message";
-
-/// JSON field: success tag.
-pub use crate::constants::values::TAG_SUCCESS;
-
-/// JSON field: failure tag.
-pub use crate::constants::values::TAG_FAILURE;
-
-/// JSON field: tool activity tag.
-pub use crate::constants::values::TAG_TOOL;
-
-/// JSON field: quality gate tag.
-pub use crate::constants::values::TAG_QUALITY_GATE;
-
-/// JSON field: execution tag.
-pub use crate::constants::values::TAG_EXECUTION;
 
 /// Response count field name.
 pub const FIELD_COUNT: &str = "count";

@@ -95,41 +95,30 @@ impl AstSelectorEngine {
     }
 
     fn tree_sitter_language(language: &str) -> Option<Language> {
-        match language.to_ascii_lowercase().as_str() {
-            "rust" => Some(tree_sitter_rust::LANGUAGE.into()),
-            "python" => Some(tree_sitter_python::LANGUAGE.into()),
-            "javascript" | "js" => Some(tree_sitter_javascript::LANGUAGE.into()),
-            "typescript" | "ts" => Some(tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()),
-            "go" => Some(tree_sitter_go::LANGUAGE.into()),
-            "java" => Some(tree_sitter_java::LANGUAGE.into()),
-            "c" => Some(tree_sitter_c::LANGUAGE.into()),
-            "cpp" | "c++" => Some(tree_sitter_cpp::LANGUAGE.into()),
+        use mcb_domain::ports::validation::LanguageId;
+
+        let id = LanguageId::from_name(language)?;
+        match id {
+            LanguageId::Rust => Some(tree_sitter_rust::LANGUAGE.into()),
+            LanguageId::Python => Some(tree_sitter_python::LANGUAGE.into()),
+            LanguageId::JavaScript => Some(tree_sitter_javascript::LANGUAGE.into()),
+            LanguageId::TypeScript => Some(tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()),
+            LanguageId::Go => Some(tree_sitter_go::LANGUAGE.into()),
+            LanguageId::Java => Some(tree_sitter_java::LANGUAGE.into()),
+            LanguageId::Cpp => Some(tree_sitter_cpp::LANGUAGE.into()),
             _ => None,
         }
     }
 
     fn selector_matches_file_language(selector: &AstSelector, file: &Path) -> bool {
-        let expected = selector.language.to_ascii_lowercase();
-        let from_ext = file
-            .extension()
-            .and_then(|ext| ext.to_str())
-            .map(str::to_ascii_lowercase);
+        use mcb_domain::ports::validation::LanguageId;
 
-        match from_ext.as_deref() {
-            Some("rs") => expected == "rust",
-            Some("py") => expected == "python",
-            Some("js") | Some("jsx") | Some("mjs") | Some("cjs") => {
-                expected == "javascript" || expected == "js"
-            }
-            Some("ts") | Some("tsx") | Some("mts") | Some("cts") => {
-                expected == "typescript" || expected == "ts"
-            }
-            Some("go") => expected == "go",
-            Some("java") => expected == "java",
-            Some("c") | Some("h") => expected == "c" || expected == "cpp" || expected == "c++",
-            Some("cc") | Some("cpp") | Some("cxx") | Some("hpp") | Some("hxx") => {
-                expected == "cpp" || expected == "c++"
-            }
+        let expected_lang = LanguageId::from_name(&selector.language);
+        let file_ext = file.extension().and_then(|e| e.to_str()).unwrap_or("");
+        let file_lang = LanguageId::from_extension(file_ext);
+
+        match (expected_lang, file_lang) {
+            (Some(e), Some(f)) => e == f,
             _ => false,
         }
     }

@@ -52,16 +52,10 @@ pub fn workspace_root() -> TestResult<std::path::PathBuf> {
 }
 
 // ---------------------------------------------------------------------------
-// Common test identity constants — single source of truth in mcb-utils
+// Common test identity constants — imported from the canonical source
 // ---------------------------------------------------------------------------
 
-pub use mcb_utils::constants::testing::TEST_ORG_ID;
-pub use mcb_utils::constants::testing::TEST_PROJECT_ID;
-pub use mcb_utils::constants::testing::TEST_SESSION_ID;
-pub use mcb_utils::constants::testing::TEST_TIMESTAMP;
-pub use mcb_utils::constants::testing::TEST_TIMESTAMP_SMALL;
-pub use mcb_utils::constants::testing::TEST_USER_EMAIL;
-pub use mcb_utils::constants::testing::TEST_USER_ID;
+use mcb_utils::constants::testing::*;
 
 use crate::entities::agent::{
     AgentSession, AgentSessionStatus, AgentType, Checkpoint, CheckpointType, ToolCall,
@@ -80,7 +74,7 @@ pub fn create_test_project(id: &str) -> Project {
         id: id.to_owned(),
         org_id: TEST_ORG_ID.to_owned(),
         name: TEST_PROJECT_ID.to_owned(),
-        path: "/tmp/test-project".to_owned(),
+        path: TEST_PROJECT_PATH.to_owned(),
         created_at: 0,
         updated_at: 0,
     }
@@ -93,7 +87,7 @@ pub fn create_test_user() -> User {
         id: Uuid::new_v4().to_string(),
         org_id: TEST_ORG_ID.to_owned(),
         email: TEST_USER_EMAIL.to_owned(),
-        display_name: "Test User".to_owned(),
+        display_name: TEST_DISPLAY_NAME.to_owned(),
         role: crate::entities::user::UserRole::Member,
         api_key_hash: None,
         created_at: 0,
@@ -108,13 +102,13 @@ pub fn create_test_phase(id: &str, project_id: &str) -> ProjectPhase {
         id: id.to_owned(),
         project_id: project_id.to_owned(),
         name: format!("Phase {id}"),
-        description: "Test Phase Description".to_owned(),
+        description: TEST_PHASE_DESCRIPTION.to_owned(),
         sequence: 1,
         status: PhaseStatus::Planned,
         started_at: None,
         completed_at: None,
-        created_at: 1000,
-        updated_at: 1000,
+        created_at: TEST_TIMESTAMP_SMALL,
+        updated_at: TEST_TIMESTAMP_SMALL,
     }
 }
 
@@ -128,7 +122,7 @@ pub fn create_test_issue(id: &str, project_id: &str) -> ProjectIssue {
         created_by: TEST_USER_ID.to_owned(),
         phase_id: None,
         title: format!("Issue {id}"),
-        description: "Test Issue Description".to_owned(),
+        description: TEST_ISSUE_DESCRIPTION.to_owned(),
         issue_type: IssueType::Task,
         status: IssueStatus::Open,
         priority: 2,
@@ -139,8 +133,8 @@ pub fn create_test_issue(id: &str, project_id: &str) -> ProjectIssue {
         notes: String::new(),
         design: String::new(),
         parent_issue_id: None,
-        created_at: 1000,
-        updated_at: 1000,
+        created_at: TEST_TIMESTAMP_SMALL,
+        updated_at: TEST_TIMESTAMP_SMALL,
         closed_at: None,
         closed_reason: String::new(),
     }
@@ -153,13 +147,13 @@ pub fn create_test_agent_session(id: &str) -> AgentSession {
         id: id.to_owned(),
         session_summary_id: Uuid::new_v4().to_string(),
         agent_type: AgentType::Sisyphus,
-        model: mcb_utils::constants::testing::TEST_MODEL_NAME.to_owned(),
+        model: TEST_MODEL_NAME.to_owned(),
         parent_session_id: None,
         started_at: TEST_TIMESTAMP,
         ended_at: None,
         duration_ms: None,
         status: AgentSessionStatus::Active,
-        prompt_summary: Some(mcb_utils::constants::testing::TEST_PROMPT_SUMMARY.to_owned()),
+        prompt_summary: Some(TEST_PROMPT_SUMMARY.to_owned()),
         result_summary: None,
         token_count: Some(0),
         tool_calls_count: Some(0),
@@ -175,7 +169,7 @@ pub fn create_test_tool_call(id: &str) -> ToolCall {
     ToolCall {
         id: id.to_owned(),
         session_id: TEST_SESSION_ID.to_owned(),
-        tool_name: mcb_utils::constants::testing::TEST_TOOL_NAME.to_owned(),
+        tool_name: TEST_TOOL_NAME.to_owned(),
         params_summary: Some("check=true".to_owned()),
         success: true,
         error_message: None,
@@ -191,7 +185,7 @@ pub fn create_test_checkpoint(id: &str) -> Checkpoint {
         id: id.to_owned(),
         session_id: TEST_SESSION_ID.to_owned(),
         checkpoint_type: CheckpointType::Git,
-        description: "Test Checkpoint".to_owned(),
+        description: TEST_CHECKPOINT_DESCRIPTION.to_owned(),
         snapshot_data: serde_json::json!({"status": "clean"}),
         created_at: TEST_TIMESTAMP,
         restored_at: None,
@@ -200,15 +194,8 @@ pub fn create_test_checkpoint(id: &str) -> Checkpoint {
 }
 
 // ---------------------------------------------------------------------------
-// Extended test constants — re-exported from mcb-utils
+// Extended test constants — imported from the canonical source
 // ---------------------------------------------------------------------------
-
-pub use mcb_utils::constants::testing::GOLDEN_COLLECTION;
-pub use mcb_utils::constants::testing::SAMPLE_CODEBASE_FILES;
-pub use mcb_utils::constants::testing::TEST_EMBEDDING_DIMENSIONS;
-pub use mcb_utils::constants::testing::TEST_ORG_ID_A;
-pub use mcb_utils::constants::testing::TEST_ORG_ID_B;
-pub use mcb_utils::constants::testing::TEST_REPO_NAME;
 
 // ---------------------------------------------------------------------------
 // Entity fixture builders (migrated from mcb-server/tests/utils/test_fixtures)
@@ -226,7 +213,7 @@ pub fn create_test_organization(id: &str) -> Organization {
         id: id.to_owned(),
         name: format!("Test Org {id}"),
         slug: format!("test-org-{id}"),
-        settings_json: "{}".to_owned(),
+        settings_json: TEST_SETTINGS_JSON.to_owned(),
         created_at: TEST_TIMESTAMP,
         updated_at: TEST_TIMESTAMP,
     }
@@ -239,7 +226,11 @@ pub fn create_test_admin_user(org_id: &str, email: &str) -> User {
         id: Uuid::new_v4().to_string(),
         org_id: org_id.to_owned(),
         email: email.to_owned(),
-        display_name: email.split('@').next().unwrap_or("Test Admin").to_owned(),
+        display_name: email
+            .split('@')
+            .next()
+            .unwrap_or(TEST_ADMIN_DISPLAY_NAME)
+            .to_owned(),
         role: crate::entities::user::UserRole::Admin,
         api_key_hash: None,
         created_at: TEST_TIMESTAMP,
@@ -254,7 +245,11 @@ pub fn create_test_user_with(org_id: &str, email: &str) -> User {
         id: Uuid::new_v4().to_string(),
         org_id: org_id.to_owned(),
         email: email.to_owned(),
-        display_name: email.split('@').next().unwrap_or("Test User").to_owned(),
+        display_name: email
+            .split('@')
+            .next()
+            .unwrap_or(TEST_DISPLAY_NAME)
+            .to_owned(),
         role: crate::entities::user::UserRole::Member,
         api_key_hash: None,
         created_at: TEST_TIMESTAMP,
@@ -294,7 +289,7 @@ pub fn create_test_api_key(user_id: &str, org_id: &str, name: &str) -> ApiKey {
         org_id: org_id.to_owned(),
         name: name.to_owned(),
         key_hash: format!("hash_{}", Uuid::new_v4()),
-        scopes_json: "[\"read\", \"write\"]".to_owned(),
+        scopes_json: TEST_API_KEY_SCOPES.to_owned(),
         expires_at: None,
         revoked_at: None,
         created_at: TEST_TIMESTAMP,
@@ -359,7 +354,7 @@ pub fn create_test_indexing_result(
         files_skipped: 0,
         errors,
         operation_id: None,
-        status: "completed".to_owned(),
+        status: mcb_utils::constants::INDEX_OP_STATUS_COMPLETED.to_owned(),
     }
 }
 

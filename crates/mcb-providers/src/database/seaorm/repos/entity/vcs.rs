@@ -6,9 +6,7 @@
 use super::*;
 
 #[async_trait]
-impl VcsEntityRepository for SeaOrmEntityRepository {
-    // -- Repository --
-
+impl VcsRepositoryRegistry for SeaOrmEntityRepository {
     async fn create_repository(&self, repo: &Repository) -> Result<()> {
         sea_repo_insert!(self.db(), repository, repo, "create repository")
     }
@@ -28,9 +26,10 @@ impl VcsEntityRepository for SeaOrmEntityRepository {
     async fn delete_repository(&self, org_id: &str, id: &str) -> Result<()> {
         sea_repo_delete_filtered!(self.db(), repository, id, "delete repository", repository::Column::OrgId => org_id)
     }
+}
 
-    // -- Branch --
-
+#[async_trait]
+impl VcsBranchRegistry for SeaOrmEntityRepository {
     async fn create_branch(&self, branch: &Branch) -> Result<()> {
         sea_repo_insert!(self.db(), branch, branch, "create branch")
     }
@@ -50,9 +49,10 @@ impl VcsEntityRepository for SeaOrmEntityRepository {
     async fn delete_branch(&self, id: &str) -> Result<()> {
         sea_repo_delete!(self.db(), branch, id, "delete branch")
     }
+}
 
-    // -- Worktree --
-
+#[async_trait]
+impl VcsWorktreeRegistry for SeaOrmEntityRepository {
     async fn create_worktree(&self, wt: &Worktree) -> Result<()> {
         sea_repo_insert!(self.db(), worktree, wt, "create worktree")
     }
@@ -79,9 +79,10 @@ impl VcsEntityRepository for SeaOrmEntityRepository {
     async fn delete_worktree(&self, id: &str) -> Result<()> {
         sea_repo_delete!(self.db(), worktree, id, "delete worktree")
     }
+}
 
-    // -- Assignment --
-
+#[async_trait]
+impl AgentAssignmentManager for SeaOrmEntityRepository {
     async fn create_assignment(&self, asgn: &AgentWorktreeAssignment) -> Result<()> {
         sea_repo_insert!(
             self.db(),

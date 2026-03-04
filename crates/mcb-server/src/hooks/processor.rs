@@ -14,7 +14,7 @@ use mcb_utils::utils::id::mask_id;
 use mcb_domain::debug;
 use mcb_utils::utils::id as domain_id;
 
-use mcb_utils::constants::keys::TAG_TOOL;
+use mcb_utils::constants::TAG_TOOL;
 
 use super::types::{
     HookError, HookResult, PostToolUseContext, SessionStartContext, ToolExecutionStatus,
@@ -165,7 +165,7 @@ impl HookProcessor {
             .memory_search(
                 "session context",
                 Some(filter),
-                mcb_utils::constants::values::SESSION_SEARCH_LIMIT,
+                mcb_utils::constants::SESSION_SEARCH_LIMIT,
             )
             .await
             .map_err(|e| HookError::FailedToInjectContext(e.to_string()))?;

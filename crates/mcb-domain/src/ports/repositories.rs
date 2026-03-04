@@ -108,9 +108,9 @@ define_aggregate! {
 // VCS
 // ============================================================================
 
-/// Unified repository for VCS entities.
+/// Registry for VCS repositories.
 #[async_trait]
-pub trait VcsEntityRepository: Send + Sync {
+pub trait VcsRepositoryRegistry: Send + Sync {
     /// Create a repository.
     async fn create_repository(&self, repo: &Repository) -> Result<()>;
     /// Get a repository by ID.
@@ -121,7 +121,11 @@ pub trait VcsEntityRepository: Send + Sync {
     async fn update_repository(&self, repo: &Repository) -> Result<()>;
     /// Delete a repository.
     async fn delete_repository(&self, org_id: &str, id: &str) -> Result<()>;
+}
 
+/// Registry for VCS branches.
+#[async_trait]
+pub trait VcsBranchRegistry: Send + Sync {
     /// Create a branch.
     async fn create_branch(&self, branch: &Branch) -> Result<()>;
     /// Get a branch by ID.
@@ -132,7 +136,11 @@ pub trait VcsEntityRepository: Send + Sync {
     async fn update_branch(&self, branch: &Branch) -> Result<()>;
     /// Delete a branch.
     async fn delete_branch(&self, id: &str) -> Result<()>;
+}
 
+/// Registry for VCS worktrees.
+#[async_trait]
+pub trait VcsWorktreeRegistry: Send + Sync {
     /// Create a worktree.
     async fn create_worktree(&self, wt: &Worktree) -> Result<()>;
     /// Get a worktree by ID.
@@ -143,7 +151,11 @@ pub trait VcsEntityRepository: Send + Sync {
     async fn update_worktree(&self, wt: &Worktree) -> Result<()>;
     /// Delete a worktree.
     async fn delete_worktree(&self, id: &str) -> Result<()>;
+}
 
+/// Manager for agent-worktree assignments.
+#[async_trait]
+pub trait AgentAssignmentManager: Send + Sync {
     /// Create an agent-worktree assignment.
     async fn create_assignment(&self, asgn: &AgentWorktreeAssignment) -> Result<()>;
     /// Get an assignment by ID.
@@ -155,6 +167,12 @@ pub trait VcsEntityRepository: Send + Sync {
     ) -> Result<Vec<AgentWorktreeAssignment>>;
     /// Release an assignment.
     async fn release_assignment(&self, id: &str, released_at: i64) -> Result<()>;
+}
+
+define_aggregate! {
+    /// Aggregate trait for VCS entity management.
+    #[async_trait]
+    pub trait VcsEntityRepository = VcsRepositoryRegistry + VcsBranchRegistry + VcsWorktreeRegistry + AgentAssignmentManager;
 }
 
 // ============================================================================

@@ -102,7 +102,7 @@ pub struct TestQualityValidator {
 
 impl mcb_domain::ports::validation::Validator for TestQualityValidator {
     fn name(&self) -> &'static str {
-        "test_quality"
+        mcb_utils::constants::validate::VALIDATOR_TEST_QUALITY
     }
 
     fn description(&self) -> &'static str {

@@ -95,9 +95,7 @@ pub use admin_operations::{
     resolve_indexing_operations_provider, resolve_validation_operations_provider,
 };
 pub use services::{
-    AGENT_SESSION_SERVICE_NAME, CONTEXT_SERVICE_NAME, HIGHLIGHT_SERVICE_NAME,
-    INDEXING_SERVICE_NAME, MEMORY_SERVICE_NAME, SEARCH_SERVICE_NAME, SERVICES_REGISTRY,
-    ServiceBuilder, ServiceRegistryEntry, VALIDATION_SERVICE_NAME, resolve_agent_session_service,
+    SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry, resolve_agent_session_service,
     resolve_context_service, resolve_highlight_service, resolve_indexing_service,
     resolve_memory_service, resolve_search_service, resolve_validation_service,
 };

@@ -8,13 +8,11 @@ mod violation;
 pub use self::validator::ImplementationQualityValidator;
 pub use self::violation::ImplementationViolation;
 
-#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
-static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
-    mcb_domain::registry::validation::ValidatorEntry {
-        name: "implementation",
-        description: "Validates implementation quality patterns (empty methods, hardcoded returns, stubs)",
-        build: |root| {
-            Ok(Box::new(ImplementationQualityValidator::new(root))
-                as Box<dyn mcb_domain::ports::validation::Validator>)
-        },
-    };
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_IMPLEMENTATION,
+    "Validates implementation quality patterns (empty methods, hardcoded returns, stubs)",
+    |root| {
+        Ok(Box::new(ImplementationQualityValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

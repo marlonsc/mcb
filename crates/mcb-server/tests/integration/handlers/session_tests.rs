@@ -5,8 +5,8 @@ use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
 use crate::utils::test_fixtures::create_test_mcb_state;
-use mcb_domain::test_utils::TEST_PROJECT_ID;
 use mcb_domain::utils::text::extract_text_from;
+use mcb_utils::constants::testing::TEST_PROJECT_ID;
 use rstest::rstest;
 
 async fn create_handler() -> Option<(SessionHandler, tempfile::TempDir)> {

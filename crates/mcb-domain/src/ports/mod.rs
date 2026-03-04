@@ -59,19 +59,20 @@ pub use infrastructure::{
 pub use providers::{
     AnalysisFinding, CodeAnalyzer, CryptoProvider, EmbeddingProvider, EncryptedData,
     HttpClientConfig, HttpClientProvider, HybridSearchProvider, HybridSearchResult,
-    LanguageChunkingProvider, MetricLabels, MetricsError, MetricsProvider, MetricsResult,
-    ProjectDetector, ProviderConfigManagerInterface, VcsProvider, VectorStoreAdmin,
+    LanguageChunkingProvider, MetricLabels, MetricsError, MetricsProvider, MetricsProviderExt,
+    MetricsResult, ProjectDetector, ProviderConfigManagerInterface, VcsProvider, VectorStoreAdmin,
     VectorStoreBrowser, VectorStoreProvider,
 };
 // --- Repositories ---
 pub use repositories::{
-    AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
-    AgentSessionRepository, ApiKeyInfo, ApiKeyRegistry, AuthRepositoryPort, FileHashRepository,
-    FtsSearchResult, IndexRepository, IndexStats, IssueCommentRegistry, IssueEntityRepository,
-    IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry, MemoryRepository,
-    OrgEntityRepository, OrgRegistry, PlanEntityRepository, PlanRegistry, PlanReviewRegistry,
-    PlanVersionRegistry, ProjectRepository, TeamMemberManager, TeamRegistry, TransitionRepository,
-    UserRegistry, UserWithApiKey, VcsEntityRepository, WorkflowSessionRepository,
+    AgentAssignmentManager, AgentCheckpointRepository, AgentEventRepository, AgentRepository,
+    AgentSessionQuery, AgentSessionRepository, ApiKeyInfo, ApiKeyRegistry, AuthRepositoryPort,
+    FileHashRepository, FtsSearchResult, IndexRepository, IndexStats, IssueCommentRegistry,
+    IssueEntityRepository, IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry,
+    MemoryRepository, OrgEntityRepository, OrgRegistry, PlanEntityRepository, PlanRegistry,
+    PlanReviewRegistry, PlanVersionRegistry, ProjectRepository, TeamMemberManager, TeamRegistry,
+    TransitionRepository, UserRegistry, UserWithApiKey, VcsBranchRegistry, VcsEntityRepository,
+    VcsRepositoryRegistry, VcsWorktreeRegistry, WorkflowSessionRepository,
 };
 
 // --- Services ---
@@ -79,11 +80,12 @@ pub use services::{
     AgentSessionManager, AgentSessionServiceInterface, BatchIndexingServiceInterface, BrowseError,
     BrowseServiceInterface, CheckpointManager, ChunkingOptions, ChunkingOrchestratorInterface,
     ChunkingResult, CodeChunker, ComplexityReport, ContextServiceInterface,
-    CreateSessionSummaryInput, DelegationTracker, FileHashService, FunctionComplexity,
-    HighlightError, HighlightServiceInterface, IndexingResult, IndexingServiceInterface,
-    IndexingStats, IndexingStatus, Job, JobCounts, JobId, JobManagerInterface, JobProgressUpdate,
-    JobResult, JobStatus, JobType, MemoryServiceInterface, ProjectDetectorService, RuleInfo,
-    SearchFilters, SearchServiceInterface, ValidationReport, ValidationServiceInterface,
+    CreateSessionSummaryInput, DelegationTracker, ErrorPatternManager, FileHashService,
+    FunctionComplexity, HighlightError, HighlightServiceInterface, IndexingResult,
+    IndexingServiceInterface, IndexingStats, IndexingStatus, Job, JobCounts, JobId,
+    JobManagerInterface, JobProgressUpdate, JobResult, JobStatus, JobType, MemorySearcher,
+    MemoryServiceInterface, ObservationManager, ProjectDetectorService, RuleInfo, SearchFilters,
+    SearchServiceInterface, SessionSummaryManager, ValidationReport, ValidationServiceInterface,
     ViolationEntry,
 };
 

@@ -38,7 +38,13 @@ impl fmt::Debug for QdrantVectorStoreProvider {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("QdrantVectorStoreProvider")
             .field("base_url", &self.base_url)
-            .field("api_key", &self.api_key.as_ref().map(|_| "REDACTED"))
+            .field(
+                "api_key",
+                &self
+                    .api_key
+                    .as_ref()
+                    .map(|_| mcb_utils::constants::REDACTED),
+            )
             .field("timeout", &self.timeout)
             .finish()
     }

@@ -306,7 +306,7 @@ impl ConfigQualityValidator {
 
 impl mcb_domain::ports::validation::Validator for ConfigQualityValidator {
     fn name(&self) -> &'static str {
-        "config_quality"
+        mcb_utils::constants::validate::VALIDATOR_CONFIG_QUALITY
     }
 
     fn description(&self) -> &'static str {

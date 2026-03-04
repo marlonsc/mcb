@@ -16,15 +16,9 @@ use crate::Result;
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
 use mcb_domain::ports::validation::{Severity, ViolationCategory};
 use mcb_utils::constants::validate::{
-    ASYNC_FN_PREFIX, CATEGORY_ARCHITECTURE, CATEGORY_ASYNC, CATEGORY_CLEAN_ARCHITECTURE,
-    CATEGORY_CONFIGURATION, CATEGORY_DEPENDENCY_INJECTION, CATEGORY_DI, CATEGORY_DOCUMENTATION,
-    CATEGORY_ERROR_BOUNDARY, CATEGORY_IMPLEMENTATION, CATEGORY_KISS, CATEGORY_METRICS,
-    CATEGORY_MIGRATION, CATEGORY_NAMING, CATEGORY_ORGANIZATION, CATEGORY_PERFORMANCE,
-    CATEGORY_PMAT, CATEGORY_REFACTORING, CATEGORY_SOLID, CATEGORY_TESTING, CATEGORY_WEB_FRAMEWORK,
-    CATEGORY_WEB_FRAMEWORK_UNDERSCORE, DEFAULT_EXPR_MESSAGE, DEFAULT_EXPR_RULE_ID, EXPECT_CALL,
-    SEVERITY_ERROR, SEVERITY_WARNING, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, UNWRAP_CALL,
-    YAML_FIELD_CATEGORY, YAML_FIELD_EXPRESSION, YAML_FIELD_ID, YAML_FIELD_MESSAGE,
-    YAML_FIELD_SEVERITY,
+    ASYNC_FN_PREFIX, DEFAULT_EXPR_MESSAGE, DEFAULT_EXPR_RULE_ID, EXPECT_CALL, SEVERITY_ERROR,
+    SEVERITY_WARNING, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, UNWRAP_CALL, YAML_FIELD_CATEGORY,
+    YAML_FIELD_EXPRESSION, YAML_FIELD_ID, YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY,
 };
 
 /// Wrapper for evalexpr engine
@@ -274,31 +268,8 @@ impl RuleEngine for ExpressionEngine {
         let category = rule_definition
             .get(YAML_FIELD_CATEGORY)
             .and_then(|v| v.as_str())
-            .map_or(ViolationCategory::Quality, |c| match c {
-                CATEGORY_ARCHITECTURE | CATEGORY_CLEAN_ARCHITECTURE => {
-                    ViolationCategory::Architecture
-                }
-                CATEGORY_ORGANIZATION => ViolationCategory::Organization,
-                CATEGORY_SOLID => ViolationCategory::Solid,
-                CATEGORY_DI | CATEGORY_DEPENDENCY_INJECTION => {
-                    ViolationCategory::DependencyInjection
-                }
-                CATEGORY_CONFIGURATION => ViolationCategory::Configuration,
-                CATEGORY_WEB_FRAMEWORK | CATEGORY_WEB_FRAMEWORK_UNDERSCORE => {
-                    ViolationCategory::WebFramework
-                }
-                CATEGORY_PERFORMANCE => ViolationCategory::Performance,
-                CATEGORY_ASYNC => ViolationCategory::Async,
-                CATEGORY_DOCUMENTATION => ViolationCategory::Documentation,
-                CATEGORY_TESTING => ViolationCategory::Testing,
-                CATEGORY_METRICS => ViolationCategory::Metrics,
-                CATEGORY_NAMING => ViolationCategory::Naming,
-                CATEGORY_KISS => ViolationCategory::Kiss,
-                CATEGORY_REFACTORING | CATEGORY_MIGRATION => ViolationCategory::Refactoring,
-                CATEGORY_ERROR_BOUNDARY => ViolationCategory::ErrorBoundary,
-                CATEGORY_IMPLEMENTATION => ViolationCategory::Implementation,
-                CATEGORY_PMAT => ViolationCategory::Pmat,
-                _ => ViolationCategory::Quality,
+            .map_or(ViolationCategory::Quality, |c| {
+                c.parse().unwrap_or(ViolationCategory::Quality)
             });
 
         self.execute_expression_rule(ExpressionRuleInput {

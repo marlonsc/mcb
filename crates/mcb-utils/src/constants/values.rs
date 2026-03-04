@@ -22,9 +22,10 @@ pub const INDEX_OP_STATUS_COMPLETED: &str = "completed";
 /// Indexing-operation status: failed.
 pub const INDEX_OP_STATUS_FAILED: &str = "failed";
 
-// Aliases for transition
-pub use INDEX_OP_STATUS_COMPLETED as INDEXING_STATUS_COMPLETED;
-pub use INDEX_OP_STATUS_STARTING as INDEXING_STATUS_STARTED;
+/// Alias: indexing completed status.
+pub const INDEXING_STATUS_COMPLETED: &str = "completed";
+/// Alias: indexing started status.
+pub const INDEXING_STATUS_STARTED: &str = "starting";
 
 /// Minimum character length for a code chunk to be indexed
 pub const INDEXING_CHUNK_MIN_LENGTH: usize = 25;
@@ -55,7 +56,7 @@ pub const MS_PER_SEC: i64 = 1000;
 // ============================================================================
 
 /// Default language identifier when language cannot be determined
-pub use crate::constants::lang::LANG_UNKNOWN as DEFAULT_LANGUAGE;
+pub const DEFAULT_LANGUAGE: &str = "unknown";
 
 // ============================================================================
 // PROVIDER DEFAULTS
@@ -68,7 +69,7 @@ pub const DEFAULT_DATABASE_PROVIDER: &str = "seaorm";
 pub const DEFAULT_LANGUAGE_PROVIDER: &str = "universal";
 
 /// Registry provider name for Git VCS.
-pub use crate::constants::vcs::GIT_COMMAND as DEFAULT_VCS_PROVIDER;
+pub const DEFAULT_VCS_PROVIDER: &str = "git";
 
 /// Registry provider name for hybrid search.
 pub const DEFAULT_HYBRID_SEARCH_PROVIDER: &str = "default";

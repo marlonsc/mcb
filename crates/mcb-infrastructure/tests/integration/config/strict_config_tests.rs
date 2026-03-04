@@ -15,7 +15,7 @@ use tempfile::TempDir;
 #[allow(clippy::expect_used)]
 fn config_provider() -> std::sync::Arc<dyn ConfigProvider> {
     resolve_config_provider(&ConfigProviderConfig::new(
-        mcb_domain::utils::config::DEFAULT_PROVIDER,
+        mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
     ))
     .expect("loco_yaml config provider must be registered")
 }

@@ -12,14 +12,13 @@ use mcb_domain::registry::admin_operations::{
 };
 use mcb_domain::registry::database::resolve_database_repositories;
 use mcb_domain::registry::language::{LanguageProviderConfig, resolve_language_provider};
-use mcb_domain::registry::services::{
-    INDEXING_SERVICE_NAME, ServiceBuilder, ServiceRegistryEntry, resolve_context_service,
-};
+use mcb_domain::registry::services::{ServiceBuilder, resolve_context_service};
 
 use super::{IndexingServiceDeps, IndexingServiceImpl, IndexingServiceWithHashDeps};
 
-use mcb_utils::constants::values::{
-    DEFAULT_DATABASE_PROVIDER, DEFAULT_LANGUAGE_PROVIDER, DEFAULT_NAMESPACE,
+use mcb_utils::constants::{
+    DEFAULT_DATABASE_PROVIDER, DEFAULT_INDEXING_OP_PROVIDER, DEFAULT_LANGUAGE_PROVIDER,
+    DEFAULT_NAMESPACE,
 };
 
 /// Build the `IndexingService` from the application registry.
@@ -58,7 +57,7 @@ fn build_indexing_service_from_registry(
 
     let indexing_ops: Arc<dyn mcb_domain::ports::IndexingOperationsInterface> =
         resolve_indexing_operations_provider(&IndexingOperationsProviderConfig::new(
-            DEFAULT_NAMESPACE,
+            DEFAULT_INDEXING_OP_PROVIDER,
         ))?;
     let event_bus = Arc::clone(&ctx.event_bus);
 
@@ -76,15 +75,7 @@ fn build_indexing_service_from_registry(
     ))
 }
 
-/// Registry entry for the `IndexingService`.
-///
-/// This is registered via linkme's distributed slice mechanism, allowing
-/// the service to be discovered and instantiated at runtime without explicit
-/// registration code.
-// linkme distributed_slice uses unsafe link-section attributes internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(mcb_domain::registry::services::SERVICES_REGISTRY)]
-static INDEXING_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
-    name: INDEXING_SERVICE_NAME,
-    build: ServiceBuilder::Indexing(build_indexing_service_from_registry),
-};
+mcb_domain::register_service!(
+    mcb_utils::constants::SERVICE_NAME_INDEXING,
+    ServiceBuilder::Indexing(build_indexing_service_from_registry),
+);

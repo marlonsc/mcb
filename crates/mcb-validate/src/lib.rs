@@ -18,7 +18,8 @@
 //! Validation can scan multiple source directories (e.g., workspace crates + extra src/ trees):
 //!
 //! ```
-//! use mcb_validate::{GenericReporter, ValidationConfig, Violation};
+//! use mcb_validate::GenericReporter;
+//! use mcb_domain::ports::validation::{ValidationConfig, Violation};
 //!
 //! let tmp = tempfile::tempdir().unwrap();
 //! let config = ValidationConfig::new(tmp.path()).with_exclude_pattern("target/");

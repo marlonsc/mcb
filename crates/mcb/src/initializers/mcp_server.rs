@@ -44,7 +44,7 @@ impl Initializer for McpServerInitializer {
 
         // Resolve config provider via CA/DI registry
         let config_provider = resolve_config_provider(&ConfigProviderConfig::new(
-            mcb_domain::utils::config::DEFAULT_PROVIDER,
+            mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
         ))
         .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 

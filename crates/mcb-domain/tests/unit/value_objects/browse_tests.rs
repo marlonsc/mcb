@@ -5,14 +5,20 @@ use rstest::rstest;
 
 #[rstest]
 fn test_collection_info_new() {
-    let info = CollectionInfo::new("test-collection", 100, 10, Some(1705680000), "milvus");
+    let info = CollectionInfo::new(
+        "test-collection",
+        100,
+        10,
+        Some(1705680000),
+        mcb_utils::constants::PROVIDER_SLUG_MILVUS,
+    );
 
     assert_eq!(info.name, "test-collection");
     assert_eq!(info.id, CollectionId::from_name("test-collection"));
     assert_eq!(info.vector_count, 100);
     assert_eq!(info.file_count, 10);
     assert_eq!(info.last_indexed, Some(1705680000));
-    assert_eq!(info.provider, "milvus");
+    assert_eq!(info.provider, mcb_utils::constants::PROVIDER_SLUG_MILVUS);
 }
 
 #[rstest]

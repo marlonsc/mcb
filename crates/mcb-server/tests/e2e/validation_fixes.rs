@@ -13,9 +13,9 @@ use mcb_utils::utils::time::epoch_secs_i64;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use mcb_domain::test_utils::TEST_PROJECT_ID;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::utils::text::extract_text_from;
+use mcb_utils::constants::testing::TEST_PROJECT_ID;
 use rstest::rstest;
 
 #[rstest]

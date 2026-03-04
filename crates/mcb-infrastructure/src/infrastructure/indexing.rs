@@ -7,9 +7,7 @@
 
 use dashmap::DashMap;
 use mcb_domain::ports::{IndexingOperation, IndexingOperationStatus, IndexingOperationsInterface};
-use mcb_domain::registry::admin_operations::{
-    INDEXING_OPERATIONS_PROVIDERS, IndexingOperationsProviderEntry,
-};
+
 use mcb_domain::value_objects::{CollectionId, OperationId};
 use std::collections::HashMap;
 use std::sync::Arc;
@@ -115,10 +113,10 @@ impl IndexingOperationsInterface for DefaultIndexingOperations {
     }
 }
 
-#[linkme::distributed_slice(INDEXING_OPERATIONS_PROVIDERS)]
-static DEFAULT_INDEXING_OPERATIONS_PROVIDER_ENTRY: IndexingOperationsProviderEntry =
-    IndexingOperationsProviderEntry {
-        name: mcb_utils::constants::DEFAULT_INDEXING_OP_PROVIDER,
-        description: "In-memory indexing operations tracker",
-        build: |_config| Ok(Arc::new(DefaultIndexingOperations::default())),
-    };
+use mcb_domain::register_indexing_operations_provider;
+
+register_indexing_operations_provider!(
+    mcb_utils::constants::DEFAULT_INDEXING_OP_PROVIDER,
+    "In-memory indexing operations tracker",
+    |_config| Ok(Arc::new(DefaultIndexingOperations::default())),
+);

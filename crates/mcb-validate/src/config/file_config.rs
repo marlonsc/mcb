@@ -123,33 +123,39 @@ impl FileConfig {
     /// Check if a validator is enabled
     #[must_use]
     pub fn is_validator_enabled(&self, name: &str) -> bool {
-        match name {
-            VALIDATOR_DEPENDENCY => self.validators.dependency,
-            VALIDATOR_ORGANIZATION => self.validators.organization,
-            VALIDATOR_QUALITY => self.validators.quality,
-            VALIDATOR_SOLID => self.validators.solid,
-            VALIDATOR_ARCHITECTURE => self.validators.architecture,
-            VALIDATOR_REFACTORING => self.validators.refactoring,
-            VALIDATOR_NAMING => self.validators.naming,
-            VALIDATOR_DOCUMENTATION => self.validators.documentation,
-            VALIDATOR_PATTERN => self.validators.patterns,
-            VALIDATOR_KISS => self.validators.kiss,
-            VALIDATOR_TESTS => self.validators.tests,
-            VALIDATOR_ASYNC_PATTERNS => self.validators.async_patterns,
-            VALIDATOR_ERROR_BOUNDARY => self.validators.error_boundary,
-            VALIDATOR_PERFORMANCE => self.validators.performance,
-            VALIDATOR_IMPLEMENTATION => self.validators.implementation,
-            VALIDATOR_PMAT => self.validators.pmat,
-            VALIDATOR_CLEAN_ARCHITECTURE => self.validators.clean_architecture,
-            VALIDATOR_CONFIG_QUALITY => self.validators.config_quality,
-            VALIDATOR_HYGIENE => self.validators.hygiene,
-            VALIDATOR_LAYER_FLOW => self.validators.layer_flow,
-            VALIDATOR_PORT_ADAPTER => self.validators.port_adapter,
-            VALIDATOR_SSOT => self.validators.ssot,
-            VALIDATOR_VISIBILITY => self.validators.visibility,
-            VALIDATOR_DECLARATIVE => self.validators.declarative,
-            _ => true, // Unknown validators enabled by default
+        const CHECKS: &[(&str, fn(&ValidatorsConfig) -> bool)] = &[
+            (VALIDATOR_DEPENDENCY, |c| c.dependency),
+            (VALIDATOR_ORGANIZATION, |c| c.organization),
+            (VALIDATOR_QUALITY, |c| c.quality),
+            (VALIDATOR_SOLID, |c| c.solid),
+            (VALIDATOR_ARCHITECTURE, |c| c.architecture),
+            (VALIDATOR_REFACTORING, |c| c.refactoring),
+            (VALIDATOR_NAMING, |c| c.naming),
+            (VALIDATOR_DOCUMENTATION, |c| c.documentation),
+            (VALIDATOR_PATTERN, |c| c.patterns),
+            (VALIDATOR_KISS, |c| c.kiss),
+            (VALIDATOR_TESTS, |c| c.tests),
+            (VALIDATOR_ASYNC_PATTERNS, |c| c.async_patterns),
+            (VALIDATOR_ERROR_BOUNDARY, |c| c.error_boundary),
+            (VALIDATOR_PERFORMANCE, |c| c.performance),
+            (VALIDATOR_IMPLEMENTATION, |c| c.implementation),
+            (VALIDATOR_PMAT, |c| c.pmat),
+            (VALIDATOR_CLEAN_ARCHITECTURE, |c| c.clean_architecture),
+            (VALIDATOR_CONFIG_QUALITY, |c| c.config_quality),
+            (VALIDATOR_HYGIENE, |c| c.hygiene),
+            (VALIDATOR_LAYER_FLOW, |c| c.layer_flow),
+            (VALIDATOR_PORT_ADAPTER, |c| c.port_adapter),
+            (VALIDATOR_SSOT, |c| c.ssot),
+            (VALIDATOR_VISIBILITY, |c| c.visibility),
+            (VALIDATOR_DECLARATIVE, |c| c.declarative),
+        ];
+
+        for (v_name, check) in CHECKS {
+            if name == *v_name {
+                return check(&self.validators);
+            }
         }
+        true // Unknown validators enabled by default
     }
 }
 

@@ -245,15 +245,10 @@ fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<
 // ---------------------------------------------------------------------------
 // Linkme Registration
 // ---------------------------------------------------------------------------
-use mcb_domain::registry::services::{
-    SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry, VALIDATION_SERVICE_NAME,
-};
 
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(SERVICES_REGISTRY)]
-static VALIDATION_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
-    name: VALIDATION_SERVICE_NAME,
-    build: ServiceBuilder::Validation(|_context| {
+mcb_domain::register_service!(
+    mcb_utils::constants::SERVICE_NAME_VALIDATION,
+    mcb_domain::registry::services::ServiceBuilder::Validation(|_context| {
         Ok(std::sync::Arc::new(InfraValidationService::new()))
     }),
-};
+);

@@ -17,9 +17,7 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::{HighlightError, HighlightServiceInterface};
-use mcb_domain::registry::services::{
-    HIGHLIGHT_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
-};
+use mcb_domain::registry::services::ServiceBuilder;
 use mcb_domain::value_objects::browse::{HighlightSpan, HighlightedCode};
 use tree_sitter::Language;
 use tree_sitter_highlight::{Highlight, HighlightConfiguration, HighlightEvent, Highlighter};
@@ -62,65 +60,70 @@ impl HighlightServiceImpl {
 
     /// Get language configuration for supported languages
     fn get_language_config(language: &str) -> Result<HighlightLanguageConfig, HighlightError> {
-        let normalized = language.trim().to_lowercase();
+        let lang_id = mcb_domain::ports::validation::LanguageId::from_name(language)
+            .ok_or_else(|| HighlightError::UnsupportedLanguage(language.to_owned()))?;
 
-        match normalized.as_str() {
-            "rust" => Ok(HighlightLanguageConfig::new(
+        match lang_id {
+            mcb_domain::ports::validation::LanguageId::Rust => Ok(HighlightLanguageConfig::new(
                 "rust",
                 tree_sitter_rust::LANGUAGE.into(),
                 tree_sitter_rust::HIGHLIGHTS_QUERY,
             )),
-            "python" => Ok(HighlightLanguageConfig::new(
+            mcb_domain::ports::validation::LanguageId::Python => Ok(HighlightLanguageConfig::new(
                 "python",
                 tree_sitter_python::LANGUAGE.into(),
                 tree_sitter_python::HIGHLIGHTS_QUERY,
             )),
-            "javascript" | "js" => Ok(HighlightLanguageConfig::new(
-                "javascript",
-                tree_sitter_javascript::LANGUAGE.into(),
-                tree_sitter_javascript::HIGHLIGHT_QUERY,
-            )),
-            "typescript" | "ts" => Ok(HighlightLanguageConfig::new(
-                "typescript",
-                tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
-                tree_sitter_typescript::HIGHLIGHTS_QUERY,
-            )),
-            "tsx" => Ok(HighlightLanguageConfig::new(
+            mcb_domain::ports::validation::LanguageId::JavaScript => {
+                Ok(HighlightLanguageConfig::new(
+                    "javascript",
+                    tree_sitter_javascript::LANGUAGE.into(),
+                    tree_sitter_javascript::HIGHLIGHT_QUERY,
+                ))
+            }
+            mcb_domain::ports::validation::LanguageId::TypeScript => {
+                Ok(HighlightLanguageConfig::new(
+                    "typescript",
+                    tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
+                    tree_sitter_typescript::HIGHLIGHTS_QUERY,
+                ))
+            }
+            mcb_domain::ports::validation::LanguageId::Tsx => Ok(HighlightLanguageConfig::new(
                 "tsx",
                 tree_sitter_typescript::LANGUAGE_TSX.into(),
                 tree_sitter_typescript::HIGHLIGHTS_QUERY,
             )),
-            "go" => Ok(HighlightLanguageConfig::new(
+            mcb_domain::ports::validation::LanguageId::Go => Ok(HighlightLanguageConfig::new(
                 "go",
                 tree_sitter_go::LANGUAGE.into(),
                 tree_sitter_go::HIGHLIGHTS_QUERY,
             )),
-            "java" => Ok(HighlightLanguageConfig::new(
+            mcb_domain::ports::validation::LanguageId::Java => Ok(HighlightLanguageConfig::new(
                 "java",
                 tree_sitter_java::LANGUAGE.into(),
                 tree_sitter_java::HIGHLIGHTS_QUERY,
             )),
-            "c" => Ok(HighlightLanguageConfig::new(
+            mcb_domain::ports::validation::LanguageId::C => Ok(HighlightLanguageConfig::new(
                 "c",
                 tree_sitter_c::LANGUAGE.into(),
                 tree_sitter_c::HIGHLIGHT_QUERY,
             )),
-            "cpp" | "c++" => Ok(HighlightLanguageConfig::new(
+            mcb_domain::ports::validation::LanguageId::Cpp => Ok(HighlightLanguageConfig::new(
                 "cpp",
                 tree_sitter_cpp::LANGUAGE.into(),
                 tree_sitter_cpp::HIGHLIGHT_QUERY,
             )),
-            "ruby" => Ok(HighlightLanguageConfig::new(
+            mcb_domain::ports::validation::LanguageId::Ruby => Ok(HighlightLanguageConfig::new(
                 "ruby",
                 tree_sitter_ruby::LANGUAGE.into(),
                 tree_sitter_ruby::HIGHLIGHTS_QUERY,
             )),
-            "php" => Ok(HighlightLanguageConfig::new(
+            mcb_domain::ports::validation::LanguageId::Php => Ok(HighlightLanguageConfig::new(
                 "php",
                 tree_sitter_php::LANGUAGE_PHP.into(),
                 tree_sitter_php::HIGHLIGHTS_QUERY,
             )),
-            "swift" => Ok(HighlightLanguageConfig::new(
+            mcb_domain::ports::validation::LanguageId::Swift => Ok(HighlightLanguageConfig::new(
                 "swift",
                 tree_sitter_swift::LANGUAGE.into(),
                 tree_sitter_swift::HIGHLIGHTS_QUERY,
@@ -237,12 +240,7 @@ impl HighlightServiceInterface for HighlightServiceImpl {
     }
 }
 
-// linkme distributed_slice uses unsafe link-section attributes internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(SERVICES_REGISTRY)]
-static HIGHLIGHT_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
-    name: HIGHLIGHT_SERVICE_NAME,
-    build: ServiceBuilder::Highlight(|_context| {
-        Ok(std::sync::Arc::new(HighlightServiceImpl::new()))
-    }),
-};
+mcb_domain::register_service!(
+    mcb_utils::constants::SERVICE_NAME_HIGHLIGHT,
+    ServiceBuilder::Highlight(|_context| { Ok(std::sync::Arc::new(HighlightServiceImpl::new())) }),
+);

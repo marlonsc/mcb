@@ -6,13 +6,11 @@ use std::sync::Arc;
 
 use mcb_domain::error::Result;
 use mcb_domain::ports::MemoryServiceInterface;
-use mcb_domain::registry::services::{
-    MEMORY_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
-};
+use mcb_domain::registry::services::ServiceBuilder;
 
 use super::MemoryServiceImpl;
 
-use mcb_utils::constants::values::{DEFAULT_DATABASE_PROVIDER, DEFAULT_NAMESPACE};
+use mcb_utils::constants::{DEFAULT_DATABASE_PROVIDER, DEFAULT_NAMESPACE};
 
 /// Build a `MemoryService` from the service resolution context.
 fn build_memory_service_from_registry(
@@ -44,9 +42,7 @@ fn build_memory_service_from_registry(
     )))
 }
 
-/// Linkme distributed slice entry for `MemoryService` registration.
-#[linkme::distributed_slice(SERVICES_REGISTRY)]
-static MEMORY_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
-    name: MEMORY_SERVICE_NAME,
-    build: ServiceBuilder::Memory(build_memory_service_from_registry),
-};
+mcb_domain::register_service!(
+    mcb_utils::constants::SERVICE_NAME_MEMORY,
+    ServiceBuilder::Memory(build_memory_service_from_registry),
+);

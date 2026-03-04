@@ -103,7 +103,7 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
     // 4. Vector store — resolved through linkme registry
     let vs_config = VectorStoreProviderConfig::new("edgevec")
         .with_dimensions(384)
-        .with_collection("default");
+        .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
     let vector_store_provider = match resolve_vector_store_provider(&vs_config) {
         Ok(p) => p,
         Err(e) => {
@@ -128,7 +128,7 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
         config: Arc::new(
             *mcb_domain::registry::config::resolve_config_provider(
                 &mcb_domain::registry::config::ConfigProviderConfig::new(
-                    mcb_domain::utils::config::DEFAULT_PROVIDER,
+                    mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
                 ),
             )
             .ok()?

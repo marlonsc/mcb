@@ -149,7 +149,7 @@ impl LayerFlowValidator {
 
 impl mcb_domain::ports::validation::Validator for LayerFlowValidator {
     fn name(&self) -> &'static str {
-        "layer_flow"
+        mcb_utils::constants::validate::VALIDATOR_LAYER_FLOW
     }
 
     fn description(&self) -> &'static str {
@@ -168,13 +168,11 @@ impl mcb_domain::ports::validation::Validator for LayerFlowValidator {
     }
 }
 
-#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
-static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
-    mcb_domain::registry::validation::ValidatorEntry {
-        name: "layer_flow",
-        description: "Validates Clean Architecture layer dependency rules",
-        build: |root| {
-            Ok(Box::new(LayerFlowValidator::new(root))
-                as Box<dyn mcb_domain::ports::validation::Validator>)
-        },
-    };
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_LAYER_FLOW,
+    "Validates Clean Architecture layer dependency rules",
+    |root| {
+        Ok(Box::new(LayerFlowValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

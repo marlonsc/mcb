@@ -7,14 +7,7 @@ use crate::filters::dependency_parser::WorkspaceDependencies;
 use crate::filters::rule_filters::RuleFilterExecutor;
 use crate::rules::yaml_loader::ValidatedRule;
 use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
-use mcb_utils::constants::validate::{
-    CATEGORY_ARCHITECTURE, CATEGORY_ASYNC, CATEGORY_CLEAN_ARCHITECTURE, CATEGORY_CONFIGURATION,
-    CATEGORY_DEPENDENCY_INJECTION, CATEGORY_DI, CATEGORY_DOCUMENTATION, CATEGORY_ERROR_BOUNDARY,
-    CATEGORY_IMPLEMENTATION, CATEGORY_KISS, CATEGORY_METRICS, CATEGORY_MIGRATION, CATEGORY_NAMING,
-    CATEGORY_ORGANIZATION, CATEGORY_PERFORMANCE, CATEGORY_PMAT, CATEGORY_REFACTORING,
-    CATEGORY_SOLID, CATEGORY_TESTING, CATEGORY_WEB_FRAMEWORK, CATEGORY_WEB_FRAMEWORK_UNDERSCORE,
-    SEVERITY_ERROR, SEVERITY_WARNING,
-};
+use mcb_utils::constants::validate::{SEVERITY_ERROR, SEVERITY_WARNING};
 
 pub(crate) fn build_substitution_variables(workspace_root: &Path) -> serde_yaml::Value {
     let file_config = FileConfig::load(workspace_root);
@@ -114,28 +107,7 @@ pub(crate) fn parse_severity(s: &str) -> Severity {
 }
 
 pub(crate) fn parse_category(s: &str) -> ViolationCategory {
-    match s.to_lowercase().as_str() {
-        CATEGORY_ARCHITECTURE | CATEGORY_CLEAN_ARCHITECTURE => ViolationCategory::Architecture,
-        CATEGORY_ORGANIZATION => ViolationCategory::Organization,
-        CATEGORY_SOLID => ViolationCategory::Solid,
-        CATEGORY_DI | CATEGORY_DEPENDENCY_INJECTION => ViolationCategory::DependencyInjection,
-        CATEGORY_CONFIGURATION => ViolationCategory::Configuration,
-        CATEGORY_WEB_FRAMEWORK | CATEGORY_WEB_FRAMEWORK_UNDERSCORE => {
-            ViolationCategory::WebFramework
-        }
-        CATEGORY_PERFORMANCE => ViolationCategory::Performance,
-        CATEGORY_ASYNC => ViolationCategory::Async,
-        CATEGORY_DOCUMENTATION => ViolationCategory::Documentation,
-        CATEGORY_TESTING => ViolationCategory::Testing,
-        CATEGORY_NAMING => ViolationCategory::Naming,
-        CATEGORY_KISS => ViolationCategory::Kiss,
-        CATEGORY_REFACTORING | CATEGORY_MIGRATION => ViolationCategory::Refactoring,
-        CATEGORY_ERROR_BOUNDARY => ViolationCategory::ErrorBoundary,
-        CATEGORY_IMPLEMENTATION => ViolationCategory::Implementation,
-        CATEGORY_PMAT => ViolationCategory::Pmat,
-        CATEGORY_METRICS => ViolationCategory::Metrics,
-        _ => ViolationCategory::Quality,
-    }
+    s.parse().unwrap_or(ViolationCategory::Quality)
 }
 
 pub(crate) fn validate_path_rules(

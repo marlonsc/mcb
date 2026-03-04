@@ -8,21 +8,6 @@ use crate::ports::{
     ValidationServiceInterface,
 };
 
-/// Registry name for the context service.
-pub const CONTEXT_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_CONTEXT;
-/// Registry name for the indexing service.
-pub const INDEXING_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_INDEXING;
-/// Registry name for the search service.
-pub const SEARCH_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_SEARCH;
-/// Registry name for the memory service.
-pub const MEMORY_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_MEMORY;
-/// Registry name for the agent session service.
-pub const AGENT_SESSION_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_AGENT_SESSION;
-/// Registry name for the validation service.
-pub const VALIDATION_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_VALIDATION;
-/// Registry name for the highlight service.
-pub const HIGHLIGHT_SERVICE_NAME: &str = mcb_utils::constants::SERVICE_NAME_HIGHLIGHT;
-
 /// Typed factory enum for building domain services from a resolution context.
 #[derive(Clone, Copy)]
 pub enum ServiceBuilder {
@@ -44,7 +29,7 @@ pub enum ServiceBuilder {
 
 /// Entry in the service registry pairing a name with its builder.
 pub struct ServiceRegistryEntry {
-    /// Registry name (must match one of the `*_SERVICE_NAME` constants).
+    /// Registry name (must match one of the `SERVICE_NAME_*` constants in `mcb_utils`).
     pub name: &'static str,
     /// Factory for this service.
     pub build: ServiceBuilder,
@@ -63,18 +48,18 @@ fn find_builder(name: &str) -> Result<ServiceBuilder> {
 }
 
 macro_rules! resolve_service {
-    ($fn_name:ident, $const:ident, $variant:ident, $trait_obj:ty) => {
+    ($fn_name:ident, $const_expr:expr, $variant:ident, $trait_obj:ty) => {
         /// Resolve a service by name from the registry.
         ///
         /// # Errors
         ///
         /// Returns an error if the service provider is not registered or has the wrong variant.
         pub fn $fn_name(context: &dyn std::any::Any) -> Result<std::sync::Arc<$trait_obj>> {
-            match find_builder($const)? {
+            match find_builder($const_expr)? {
                 ServiceBuilder::$variant(build) => build(context),
                 _ => Err(Error::internal(format!(
                     "Service provider '{}' is not a {} builder",
-                    $const,
+                    $const_expr,
                     stringify!($variant)
                 ))),
             }
@@ -84,43 +69,43 @@ macro_rules! resolve_service {
 
 resolve_service!(
     resolve_context_service,
-    CONTEXT_SERVICE_NAME,
+    mcb_utils::constants::SERVICE_NAME_CONTEXT,
     Context,
     dyn ContextServiceInterface
 );
 resolve_service!(
     resolve_indexing_service,
-    INDEXING_SERVICE_NAME,
+    mcb_utils::constants::SERVICE_NAME_INDEXING,
     Indexing,
     dyn IndexingServiceInterface
 );
 resolve_service!(
     resolve_search_service,
-    SEARCH_SERVICE_NAME,
+    mcb_utils::constants::SERVICE_NAME_SEARCH,
     Search,
     dyn SearchServiceInterface
 );
 resolve_service!(
     resolve_memory_service,
-    MEMORY_SERVICE_NAME,
+    mcb_utils::constants::SERVICE_NAME_MEMORY,
     Memory,
     dyn MemoryServiceInterface
 );
 resolve_service!(
     resolve_agent_session_service,
-    AGENT_SESSION_SERVICE_NAME,
+    mcb_utils::constants::SERVICE_NAME_AGENT_SESSION,
     AgentSession,
     dyn AgentSessionServiceInterface
 );
 resolve_service!(
     resolve_validation_service,
-    VALIDATION_SERVICE_NAME,
+    mcb_utils::constants::SERVICE_NAME_VALIDATION,
     Validation,
     dyn ValidationServiceInterface
 );
 resolve_service!(
     resolve_highlight_service,
-    HIGHLIGHT_SERVICE_NAME,
+    mcb_utils::constants::SERVICE_NAME_HIGHLIGHT,
     Highlight,
     dyn HighlightServiceInterface
 );

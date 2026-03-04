@@ -82,6 +82,6 @@ impl PatternValidator {
 
 crate::impl_validator!(
     PatternValidator,
-    "pattern",
+    mcb_utils::constants::validate::VALIDATOR_PATTERN,
     "Validates code patterns (DI, Async, Result types)"
 );

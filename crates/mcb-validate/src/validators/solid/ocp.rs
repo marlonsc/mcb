@@ -23,6 +23,9 @@ pub fn validate_ocp(
 
     for_each_rust_file(config, |path, lines| {
         for (line_num, line) in lines.iter().enumerate() {
+            if line.trim().starts_with("//") {
+                continue;
+            }
             if match_pattern.is_match(line) {
                 let arm_count = count_match_arms(&lines, line_num)?;
 
@@ -58,6 +61,9 @@ pub fn validate_string_dispatch(config: &ValidationConfig) -> Result<Vec<SolidVi
     for_each_rust_file(config, |path, lines| {
         for (line_num, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
+            if trimmed.starts_with("//") {
+                continue;
+            }
 
             if string_match_pattern.is_match(line) {
                 let string_arm_count = count_matches_in_block(&lines, line_num, string_arm_pattern);

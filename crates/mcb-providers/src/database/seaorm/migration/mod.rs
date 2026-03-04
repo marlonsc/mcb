@@ -3,7 +3,6 @@ use std::any::Any;
 use std::sync::Arc;
 
 use mcb_domain::ports::MigrationProvider;
-use mcb_domain::registry::database::{MIGRATION_PROVIDERS, MigrationProviderEntry};
 use sea_orm_migration::prelude::*;
 
 mod m20260301_000001_initial_schema;
@@ -75,10 +74,8 @@ fn build_seaorm_migration_provider() -> Arc<dyn MigrationProvider> {
     Arc::new(SeaOrmMigrationProvider)
 }
 
-/// `SeaORM` migration provider registration.
-#[linkme::distributed_slice(MIGRATION_PROVIDERS)]
-static SEAORM_MIGRATIONS: MigrationProviderEntry = MigrationProviderEntry {
-    name: mcb_utils::constants::DEFAULT_DATABASE_PROVIDER,
-    description: "SeaORM schema migrations (SQLite, PostgreSQL, MySQL)",
-    build: build_seaorm_migration_provider,
-};
+mcb_domain::register_migration_provider!(
+    mcb_utils::constants::DEFAULT_DATABASE_PROVIDER,
+    "SeaORM schema migrations (SQLite, PostgreSQL, MySQL)",
+    build_seaorm_migration_provider,
+);

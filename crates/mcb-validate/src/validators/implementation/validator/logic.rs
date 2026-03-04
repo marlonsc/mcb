@@ -98,6 +98,6 @@ fn is_test_path(path: &Path) -> bool {
 
 crate::impl_validator!(
     ImplementationQualityValidator,
-    "implementation",
+    mcb_utils::constants::validate::VALIDATOR_IMPLEMENTATION,
     "Validates implementation quality patterns (empty methods, hardcoded returns, stubs)"
 );

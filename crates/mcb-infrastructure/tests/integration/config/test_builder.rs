@@ -27,7 +27,7 @@ use tempfile::TempDir;
 /// Resolve the default `ConfigProvider` via CA/DI registry.
 fn resolve_default_config_provider() -> Result<std::sync::Arc<dyn ConfigProvider>> {
     resolve_config_provider(&ConfigProviderConfig::new(
-        mcb_domain::utils::config::DEFAULT_PROVIDER,
+        mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
     ))
 }
 
@@ -76,7 +76,7 @@ impl TestConfigBuilder {
         let temp_dir = tempfile::tempdir()?;
         let db_path = temp_dir.path().join(db_name);
         self.config.providers.database.configs.insert(
-            "default".to_owned(),
+            mcb_utils::constants::DEFAULT_NAMESPACE.to_owned(),
             DatabaseConfig {
                 provider: "sqlite".to_owned(),
                 path: Some(db_path),
@@ -90,7 +90,7 @@ impl TestConfigBuilder {
     #[must_use]
     pub fn with_db_path(mut self, path: PathBuf) -> Self {
         self.config.providers.database.configs.insert(
-            "default".to_owned(),
+            mcb_utils::constants::DEFAULT_NAMESPACE.to_owned(),
             DatabaseConfig {
                 provider: "sqlite".to_owned(),
                 path: Some(path),

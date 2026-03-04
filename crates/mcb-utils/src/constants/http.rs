@@ -49,7 +49,7 @@ pub const HTTP_HEADER_ACCEPT: &str = "Accept";
 pub const HTTP_HEADER_USER_AGENT: &str = "User-Agent";
 
 /// HTTP header name for Authorization.
-pub const HTTP_HEADER_AUTHORIZATION: &str = "Authorization";
+pub const HTTP_HEADER_AUTHORIZATION: &str = "authorization";
 
 /// HTTP header name for Content-Type.
 pub const HTTP_HEADER_CONTENT_TYPE: &str = "Content-Type";

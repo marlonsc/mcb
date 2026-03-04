@@ -94,7 +94,6 @@ fn test_bcrypt_cost_range(#[case] value: u32, #[case] min: u32, #[case] max: u32
 
 #[rstest]
 #[case(API_KEY_HEADER)]
-#[case(AUTHORIZATION_HEADER)]
 fn test_auth_headers_lowercase(#[case] header: &str) {
     assert_eq!(header.to_lowercase(), header);
 }

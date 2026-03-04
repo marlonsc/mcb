@@ -27,9 +27,7 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::{
     AgentRepository, AgentSessionManager, AgentSessionQuery, CheckpointManager, DelegationTracker,
 };
-use mcb_domain::registry::services::{
-    AGENT_SESSION_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
-};
+use mcb_domain::registry::services::ServiceBuilder;
 use mcb_utils::utils::time as domain_time;
 
 /// Application service for managing agent session lifecycle and persistence.
@@ -119,7 +117,7 @@ impl AgentSessionManager for AgentSessionServiceImpl {
             let now = domain_time::epoch_secs_i64()?;
             session.ended_at = Some(now);
             session.duration_ms =
-                Some((now - session.started_at) * mcb_utils::constants::values::MS_PER_SEC);
+                Some((now - session.started_at) * mcb_utils::constants::MS_PER_SEC);
             session.status = status;
             session.result_summary = result_summary;
             self.repository.update_session(&session).await?;
@@ -196,18 +194,15 @@ fn build_agent_session_service_from_registry(
         })?;
 
     let repos = mcb_domain::registry::database::resolve_database_repositories(
-        mcb_utils::constants::values::DEFAULT_DATABASE_PROVIDER,
+        mcb_utils::constants::DEFAULT_DATABASE_PROVIDER,
         Arc::clone(&ctx.db),
-        mcb_utils::constants::values::DEFAULT_NAMESPACE.to_owned(),
+        mcb_utils::constants::DEFAULT_NAMESPACE.to_owned(),
     )?;
 
     Ok(Arc::new(AgentSessionServiceImpl::new(repos.agent)))
 }
 
-// linkme distributed_slice uses unsafe link-section attributes internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(SERVICES_REGISTRY)]
-static AGENT_SESSION_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
-    name: AGENT_SESSION_SERVICE_NAME,
-    build: ServiceBuilder::AgentSession(build_agent_session_service_from_registry),
-};
+mcb_domain::register_service!(
+    mcb_utils::constants::SERVICE_NAME_AGENT_SESSION,
+    ServiceBuilder::AgentSession(build_agent_session_service_from_registry),
+);

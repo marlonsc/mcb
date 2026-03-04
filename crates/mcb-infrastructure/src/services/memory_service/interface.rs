@@ -8,13 +8,16 @@ use mcb_domain::entities::memory::{
     ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation, ObservationType,
 };
 use mcb_domain::error::Result;
-use mcb_domain::ports::{CreateSessionSummaryInput, MemoryServiceInterface};
+use mcb_domain::ports::{
+    CreateSessionSummaryInput, ErrorPatternManager, MemorySearcher, ObservationManager,
+    SessionSummaryManager,
+};
 use mcb_domain::value_objects::{Embedding, ObservationId, SessionId};
 
 use super::MemoryServiceImpl;
 
 #[async_trait::async_trait]
-impl MemoryServiceInterface for MemoryServiceImpl {
+impl ObservationManager for MemoryServiceImpl {
     /// # Errors
     ///
     /// Returns an error if embedding generation, vector storage, or repository persistence fails.
@@ -34,6 +37,30 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         Ok((obs_id, new))
     }
 
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
+    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
+        self.repository.get_observation(id).await
+    }
+
+    /// # Errors
+    ///
+    /// Returns an error if the repository fails to delete the observation.
+    async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
+        self.repository.delete_observation(id).await
+    }
+
+    /// # Errors
+    ///
+    /// Returns an error if the repository query fails.
+    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
+        self.get_observations_by_ids_impl(ids).await
+    }
+}
+
+#[async_trait::async_trait]
+impl ErrorPatternManager for MemoryServiceImpl {
     /// # Errors
     ///
     /// Returns an error if serialization or observation storage fails.
@@ -84,19 +111,10 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         }
         Ok(patterns)
     }
+}
 
-    /// # Errors
-    ///
-    /// Returns an error if the hybrid search (FTS or vector) fails.
-    async fn search_memories(
-        &self,
-        query: &str,
-        filter: Option<MemoryFilter>,
-        limit: usize,
-    ) -> Result<Vec<MemorySearchResult>> {
-        self.search_memories_impl(query, filter, limit).await
-    }
-
+#[async_trait::async_trait]
+impl SessionSummaryManager for MemoryServiceImpl {
     /// # Errors
     ///
     /// Returns an error if the repository query fails.
@@ -113,12 +131,20 @@ impl MemoryServiceInterface for MemoryServiceImpl {
     async fn create_session_summary(&self, input: CreateSessionSummaryInput) -> Result<String> {
         self.create_session_summary_impl(input).await
     }
+}
 
+#[async_trait::async_trait]
+impl MemorySearcher for MemoryServiceImpl {
     /// # Errors
     ///
-    /// Returns an error if the repository query fails.
-    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
-        self.repository.get_observation(id).await
+    /// Returns an error if the hybrid search (FTS or vector) fails.
+    async fn search_memories(
+        &self,
+        query: &str,
+        filter: Option<MemoryFilter>,
+        limit: usize,
+    ) -> Result<Vec<MemorySearchResult>> {
+        self.search_memories_impl(query, filter, limit).await
     }
 
     /// # Errors
@@ -144,13 +170,6 @@ impl MemoryServiceInterface for MemoryServiceImpl {
 
     /// # Errors
     ///
-    /// Returns an error if the repository query fails.
-    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
-        self.get_observations_by_ids_impl(ids).await
-    }
-
-    /// # Errors
-    ///
     /// Returns an error if the hybrid search fails.
     async fn memory_search(
         &self,
@@ -159,12 +178,5 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         limit: usize,
     ) -> Result<Vec<MemorySearchIndex>> {
         self.memory_search_impl(query, filter, limit).await
-    }
-
-    /// # Errors
-    ///
-    /// Returns an error if the repository fails to delete the observation.
-    async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
-        self.repository.delete_observation(id).await
     }
 }

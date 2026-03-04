@@ -3,9 +3,7 @@
 use std::any::Any;
 use std::sync::Arc;
 
-use mcb_domain::registry::database::{
-    DATABASE_REPOSITORY_PROVIDERS, DatabaseRepositories, DatabaseRepositoryEntry,
-};
+use mcb_domain::registry::database::DatabaseRepositories;
 use sea_orm::DatabaseConnection;
 
 use crate::database::seaorm::auth_repository::SeaOrmAuthRepositoryAdapter;
@@ -51,14 +49,12 @@ fn create_seaorm_repositories(
     })
 }
 
-/// `SeaORM` repository bundle provider registration.
-#[linkme::distributed_slice(DATABASE_REPOSITORY_PROVIDERS)]
-static SEAORM_REPOS: DatabaseRepositoryEntry = DatabaseRepositoryEntry {
-    name: mcb_utils::constants::DEFAULT_DATABASE_PROVIDER,
-    description: "SeaORM database repositories (SQLite, PostgreSQL, MySQL)",
-    build: create_seaorm_repositories
+mcb_domain::register_database_repository!(
+    mcb_utils::constants::DEFAULT_DATABASE_PROVIDER,
+    "SeaORM database repositories (SQLite, PostgreSQL, MySQL)",
+    create_seaorm_repositories
         as fn(
             Arc<dyn Any + Send + Sync>,
             String,
         ) -> mcb_domain::error::Result<DatabaseRepositories>,
-};
+);
