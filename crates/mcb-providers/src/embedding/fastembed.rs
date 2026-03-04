@@ -195,9 +195,7 @@ impl FastEmbedActor {
 use std::sync::Arc;
 
 use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::embedding::{
-    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
-};
+use mcb_domain::registry::embedding::EmbeddingProviderConfig;
 
 /// Parse model name string to `EmbeddingModel` enum
 fn parse_embedding_model(model_name: &str) -> EmbeddingModel {
@@ -243,9 +241,8 @@ fn fastembed_factory(
     Ok(Arc::new(provider))
 }
 
-#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-static FASTEMBED_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-    name: mcb_utils::constants::PROVIDER_SLUG_FASTEMBED,
-    description: "FastEmbed local provider (AllMiniLML6V2, BGESmallEN, etc.)",
-    build: fastembed_factory,
-};
+mcb_domain::register_embedding_provider!(
+    mcb_utils::constants::PROVIDER_SLUG_FASTEMBED,
+    "FastEmbed local provider (AllMiniLML6V2, BGESmallEN, etc.)",
+    fastembed_factory
+);

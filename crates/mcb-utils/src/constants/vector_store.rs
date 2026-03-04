@@ -141,25 +141,25 @@ pub const STATUS_UNKNOWN: &str = "unknown";
 // ============================================================================
 
 /// Vector store field: document identifier.
-pub const VECTOR_FIELD_ID: &str = "id";
+pub use crate::constants::keys::ID as VECTOR_FIELD_ID;
 
 /// Vector store field: source file path.
-pub const VECTOR_FIELD_FILE_PATH: &str = "file_path";
+pub use crate::constants::keys::METADATA_KEY_FILE_PATH as VECTOR_FIELD_FILE_PATH;
 
 /// Vector store field: start line number.
-pub const VECTOR_FIELD_START_LINE: &str = "start_line";
+pub use crate::constants::keys::METADATA_KEY_START_LINE as VECTOR_FIELD_START_LINE;
 
 /// Vector store field: line number (legacy/fallback field name).
-pub const VECTOR_FIELD_LINE_NUMBER: &str = "line_number";
+pub use crate::constants::keys::METADATA_KEY_LINE_NUMBER as VECTOR_FIELD_LINE_NUMBER;
 
 /// Vector store field: content text.
-pub const VECTOR_FIELD_CONTENT: &str = "content";
+pub use crate::constants::keys::METADATA_KEY_CONTENT as VECTOR_FIELD_CONTENT;
 
 /// Vector store field: embedding vector.
 pub const VECTOR_FIELD_VECTOR: &str = "vector";
 
 /// Vector store field: programming language.
-pub const VECTOR_FIELD_LANGUAGE: &str = "language";
+pub use crate::constants::keys::METADATA_KEY_LANGUAGE as VECTOR_FIELD_LANGUAGE;
 
 /// Vector store field: metadata JSON blob.
 pub const VECTOR_FIELD_METADATA: &str = "metadata";

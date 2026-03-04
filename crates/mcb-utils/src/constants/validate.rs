@@ -143,11 +143,14 @@ pub const FACTORY_FILE_SUFFIX: &str = "_factory";
 /// Error module file name.
 pub const ERROR_MODULE_FILE: &str = "error.rs";
 
-/// Error module name prefix.
-pub const ERROR_PREFIX: &str = "error";
+/// Standard "error" identifier.
+pub const VAL_ERROR: &str = "error";
 
-/// Error string literal.
-pub const ERROR_STR: &str = "error";
+/// Standard "warn" identifier.
+pub const VAL_WARN: &str = "warn";
+
+/// Standard "info" identifier.
+pub const VAL_INFO: &str = "info";
 
 // --- Allocation Detection ---
 
@@ -424,7 +427,7 @@ pub const METRICS_FIELD_SEVERITY_OVERRIDE: &str = "severity_override";
 pub const DEFAULT_RULE_NAME: &str = "Unnamed Rule";
 
 /// Default rule category.
-pub const CATEGORY_QUALITY: &str = "quality";
+pub const DEFAULT_RULE_CATEGORY: &str = TAG_QUALITY;
 
 /// Default rule description.
 pub const DEFAULT_RULE_DESCRIPTION: &str = "No description provided";
@@ -525,29 +528,61 @@ pub const LINTER_CMD_RUFF: &str = "ruff";
 pub const LINTER_CMD_CARGO: &str = "cargo";
 
 // ============================================================================
-// Severity and Category Strings
+// COMMON IDENTIFIERS AND TAGS
+// ============================================================================
+
+/// Tag for architecture-related items.
+pub use crate::constants::values::TAG_ARCHITECTURE;
+
+/// Tag for organization-related items.
+pub use crate::constants::values::TAG_ORGANIZATION;
+
+/// Tag for quality-related items.
+pub use crate::constants::values::TAG_QUALITY;
+
+/// Tag for SOLID-related items.
+pub use crate::constants::values::TAG_SOLID;
+
+/// Tag for naming-related items.
+pub use crate::constants::values::TAG_NAMING;
+
+/// Tag for documentation-related items.
+pub use crate::constants::values::TAG_DOCUMENTATION;
+
+/// Tag for performance-related items.
+pub use crate::constants::values::TAG_PERFORMANCE;
+
+/// Tag for async-related items.
+pub use crate::constants::values::TAG_ASYNC;
+
+// ============================================================================
+// Severity Levels
 // ============================================================================
 
 /// Severity string: error.
-pub const SEVERITY_ERROR: &str = "error";
+pub const SEVERITY_ERROR: &str = VAL_ERROR;
 
 /// Severity string: warning.
 pub const SEVERITY_WARNING: &str = "warning";
 
 /// Severity string: info/informational.
-pub const SEVERITY_INFO: &str = "info";
+pub const SEVERITY_INFO: &str = VAL_INFO;
+
+// ============================================================================
+// Rule Categories
+// ============================================================================
 
 /// Category: architecture violations.
-pub const CATEGORY_ARCHITECTURE: &str = "architecture";
+pub const CATEGORY_ARCHITECTURE: &str = TAG_ARCHITECTURE;
 
 /// Category: clean architecture violations.
 pub const CATEGORY_CLEAN_ARCHITECTURE: &str = "clean-architecture";
 
 /// Category: code organization.
-pub const CATEGORY_ORGANIZATION: &str = "organization";
+pub const CATEGORY_ORGANIZATION: &str = TAG_ORGANIZATION;
 
 /// Category: SOLID principles.
-pub const CATEGORY_SOLID: &str = "solid";
+pub const CATEGORY_SOLID: &str = TAG_SOLID;
 
 /// Category: dependency injection.
 pub const CATEGORY_DI: &str = "di";
@@ -565,13 +600,13 @@ pub const CATEGORY_WEB_FRAMEWORK: &str = "web-framework";
 pub const CATEGORY_WEB_FRAMEWORK_UNDERSCORE: &str = "web_framework";
 
 /// Category: performance issues.
-pub const CATEGORY_PERFORMANCE: &str = "performance";
+pub const CATEGORY_PERFORMANCE: &str = TAG_PERFORMANCE;
 
 /// Category: async patterns.
-pub const CATEGORY_ASYNC: &str = "async";
+pub const CATEGORY_ASYNC: &str = TAG_ASYNC;
 
 /// Category: documentation completeness.
-pub const CATEGORY_DOCUMENTATION: &str = "documentation";
+pub const CATEGORY_DOCUMENTATION: &str = TAG_DOCUMENTATION;
 
 /// Category: testing quality.
 pub const CATEGORY_TESTING: &str = "testing";
@@ -580,7 +615,7 @@ pub const CATEGORY_TESTING: &str = "testing";
 pub const CATEGORY_METRICS: &str = "metrics";
 
 /// Category: naming conventions.
-pub const CATEGORY_NAMING: &str = "naming";
+pub const CATEGORY_NAMING: &str = TAG_NAMING;
 
 /// Category: KISS principle.
 pub const CATEGORY_KISS: &str = "kiss";
@@ -600,6 +635,14 @@ pub const CATEGORY_IMPLEMENTATION: &str = "implementation";
 /// Category: PMAT (process maturity).
 pub const CATEGORY_PMAT: &str = "pmat";
 
+/// Category: quality checks.
+pub const CATEGORY_QUALITY: &str = TAG_QUALITY;
+
+/// Category: security checks.
+pub use crate::constants::values::TAG_SECURITY as CATEGORY_SECURITY;
+
+// ============================================================================
+
 // ============================================================================
 // Validator Category Names
 // ============================================================================
@@ -608,25 +651,25 @@ pub const CATEGORY_PMAT: &str = "pmat";
 pub const VALIDATOR_DEPENDENCY: &str = "dependency";
 
 /// Validator: code organization.
-pub const VALIDATOR_ORGANIZATION: &str = "organization";
+pub const VALIDATOR_ORGANIZATION: &str = TAG_ORGANIZATION;
 
 /// Validator: quality checks.
-pub const VALIDATOR_QUALITY: &str = "quality";
+pub const VALIDATOR_QUALITY: &str = TAG_QUALITY;
 
 /// Validator: SOLID principles.
-pub const VALIDATOR_SOLID: &str = "solid";
+pub const VALIDATOR_SOLID: &str = TAG_SOLID;
 
 /// Validator: architecture rules.
-pub const VALIDATOR_ARCHITECTURE: &str = "architecture";
+pub const VALIDATOR_ARCHITECTURE: &str = TAG_ARCHITECTURE;
 
 /// Validator: refactoring detection.
 pub const VALIDATOR_REFACTORING: &str = "refactoring";
 
 /// Validator: naming conventions.
-pub const VALIDATOR_NAMING: &str = "naming";
+pub const VALIDATOR_NAMING: &str = TAG_NAMING;
 
 /// Validator: documentation checks.
-pub const VALIDATOR_DOCUMENTATION: &str = "documentation";
+pub const VALIDATOR_DOCUMENTATION: &str = TAG_DOCUMENTATION;
 
 /// Validator: design patterns.
 pub const VALIDATOR_DESIGN_PATTERNS: &str = "design_patterns";

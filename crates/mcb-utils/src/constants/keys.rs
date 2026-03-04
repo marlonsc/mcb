@@ -85,12 +85,8 @@ pub const METADATA_KEY_VECTORS_COUNT: &str = "vectors_count";
 /// Column/Field name for "`org_id`"
 pub const ORG_ID: &str = "org_id";
 
-/// Default organization ID (hardcoded UUID for single-tenant bootstrap).
-/// All data created before multi-tenant is enabled uses this org.
-pub const DEFAULT_ORG_ID: &str = "00000000-0000-0000-0000-000000000001";
-
-/// Default organization name.
-pub const DEFAULT_ORG_NAME: &str = "default";
+pub use crate::constants::values::DEFAULT_ORG_ID;
+pub use crate::constants::values::DEFAULT_ORG_NAME;
 
 // Metadata keys for vector/observation storage
 /// Metadata key for "content"
@@ -125,19 +121,19 @@ pub const FIELD_OBSERVATION_TYPE: &str = "observation_type";
 pub const FIELD_MESSAGE: &str = "message";
 
 /// JSON field: success tag.
-pub const TAG_SUCCESS: &str = "success";
+pub use crate::constants::values::TAG_SUCCESS;
 
 /// JSON field: failure tag.
-pub const TAG_FAILURE: &str = "failure";
+pub use crate::constants::values::TAG_FAILURE;
 
 /// JSON field: tool activity tag.
-pub const TAG_TOOL: &str = "tool";
+pub use crate::constants::values::TAG_TOOL;
 
 /// JSON field: quality gate tag.
-pub const TAG_QUALITY_GATE: &str = "quality_gate";
+pub use crate::constants::values::TAG_QUALITY_GATE;
 
 /// JSON field: execution tag.
-pub const TAG_EXECUTION: &str = "execution";
+pub use crate::constants::values::TAG_EXECUTION;
 
 /// Response count field name.
 pub const FIELD_COUNT: &str = "count";

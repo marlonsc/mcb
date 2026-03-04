@@ -30,9 +30,6 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::ports::ProjectDetectorService;
-use mcb_domain::registry::project_detection::{
-    PROJECT_DETECTION_SERVICES, ProjectDetectionServiceEntry,
-};
 
 /// An async function that detects project types at a given path.
 type DetectFn = dyn for<'a> Fn(&'a Path) -> Pin<Box<dyn Future<Output = Vec<ProjectType>> + Send + 'a>>
@@ -52,13 +49,11 @@ impl ProjectDetectorService for UniversalProjectDetector {
     }
 }
 
-#[linkme::distributed_slice(PROJECT_DETECTION_SERVICES)]
-static UNIVERSAL_PROJECT_DETECTION_ENTRY: ProjectDetectionServiceEntry =
-    ProjectDetectionServiceEntry {
-        name: mcb_utils::constants::DEFAULT_LANGUAGE_PROVIDER,
-        description: "Universal project detector using all language-specific detectors",
-        build: |_config| {
-            let detect_fn: Arc<DetectFn> = Arc::new(|path| Box::pin(detect_all_projects(path)));
-            Ok(Arc::new(UniversalProjectDetector { detect_fn }))
-        },
-    };
+mcb_domain::register_project_detection_service!(
+    mcb_utils::constants::DEFAULT_LANGUAGE_PROVIDER,
+    "Universal project detector using all language-specific detectors",
+    |_config| {
+        let detect_fn: Arc<DetectFn> = Arc::new(|path| Box::pin(detect_all_projects(path)));
+        Ok(Arc::new(UniversalProjectDetector { detect_fn }))
+    }
+);

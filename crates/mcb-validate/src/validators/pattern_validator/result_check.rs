@@ -5,7 +5,7 @@ use std::path::Path;
 
 use super::violation::PatternViolation;
 use mcb_domain::ports::validation::Severity;
-use mcb_utils::constants::validate::{COMMENT_PREFIX, ERROR_MODULE_FILE, ERROR_STR, USE_PREFIX};
+use mcb_utils::constants::validate::{COMMENT_PREFIX, ERROR_MODULE_FILE, USE_PREFIX, VAL_ERROR};
 use mcb_utils::utils::regex::compile_regex;
 
 /// Checks for result type usage violations in a single file.
@@ -25,8 +25,8 @@ pub fn check_result_types(path: &Path, content: &str) -> crate::Result<Vec<Patte
         .and_then(|p| p.file_name())
         .and_then(|n| n.to_str());
     if file_name
-        .is_some_and(|n| n == ERROR_MODULE_FILE || n == "error_ext.rs" || n.starts_with(ERROR_STR))
-        || parent_name.is_some_and(|p| p == ERROR_STR)
+        .is_some_and(|n| n == ERROR_MODULE_FILE || n == "error_ext.rs" || n.starts_with(VAL_ERROR))
+        || parent_name.is_some_and(|p| p == VAL_ERROR)
     {
         return Ok(violations);
     }

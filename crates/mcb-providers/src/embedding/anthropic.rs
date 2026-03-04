@@ -90,6 +90,10 @@ impl AnthropicEmbeddingProvider {
     }
 }
 
+// ============================================================================
+// Auto-registration via linkme distributed slice
+// ============================================================================
+
 impl_embedding_provider_trait!(
     AnthropicEmbeddingProvider,
     "anthropic",
@@ -99,17 +103,6 @@ impl_embedding_provider_trait!(
         _ => EMBEDDING_DIMENSION_ANTHROPIC_DEFAULT,
     }
 );
-
-// ============================================================================
-// Auto-registration via linkme distributed slice
-// ============================================================================
-
-use std::sync::Arc;
-
-use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::embedding::{
-    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
-};
 
 register_http_provider!(
     AnthropicEmbeddingProvider,

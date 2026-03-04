@@ -6,20 +6,6 @@ use mcb_domain::utils::tests::utils::{
 };
 use rstest::{fixture, rstest};
 
-#[rstest]
-#[case(AgentType::Sisyphus.as_str().to_owned(), "sisyphus")]
-#[case(AgentType::Oracle.as_str().to_owned(), "oracle")]
-#[case(AgentType::Explore.as_str().to_owned(), "explore")]
-#[case(AgentSessionStatus::Active.as_str().to_owned(), "active")]
-#[case(AgentSessionStatus::Completed.as_str().to_owned(), "completed")]
-#[case(AgentSessionStatus::Failed.as_str().to_owned(), "failed")]
-#[case(CheckpointType::Git.as_str().to_owned(), "git")]
-#[case(CheckpointType::File.as_str().to_owned(), "file")]
-#[case(CheckpointType::Config.as_str().to_owned(), "config")]
-fn agent_enums_as_str(#[case] actual: String, #[case] expected: &str) {
-    assert_eq!(actual, expected);
-}
-
 #[fixture]
 fn agent_session() -> AgentSession {
     let mut session = create_test_agent_session("sess-123");
@@ -29,14 +15,6 @@ fn agent_session() -> AgentSession {
     session.tool_calls_count = Some(5);
     session.delegations_count = Some(2);
     session
-}
-
-#[rstest]
-fn test_agent_session_serialization(agent_session: AgentSession) {
-    let json = serde_json::to_string(&agent_session).expect("serialize");
-    let deserialized: AgentSession = serde_json::from_str(&json).expect("deserialize");
-    assert_eq!(deserialized.id, "sess-123");
-    assert_eq!(deserialized.agent_type, AgentType::Sisyphus);
 }
 
 #[fixture]
@@ -55,21 +33,9 @@ fn delegation() -> Delegation {
     }
 }
 
-#[rstest]
-fn test_delegation_serialization(delegation: Delegation) {
-    let json = serde_json::to_string(&delegation).expect("serialize");
-    assert!(json.contains("del-001"));
-}
-
 #[fixture]
 fn tool_call() -> ToolCall {
     create_test_tool_call("tc-001")
-}
-
-#[rstest]
-fn test_tool_call_serialization(tool_call: ToolCall) {
-    let json = serde_json::to_string(&tool_call).expect("serialize");
-    assert!(json.contains("tc-001"));
 }
 
 #[fixture]
@@ -78,7 +44,54 @@ fn checkpoint() -> Checkpoint {
 }
 
 #[rstest]
+fn test_agent_session_serialization(agent_session: AgentSession) {
+    let json = serde_json::to_string(&agent_session).expect("serialize");
+    let deserialized: AgentSession = serde_json::from_str(&json).expect("deserialize");
+    assert_eq!(deserialized.id, "sess-123");
+    assert_eq!(deserialized.agent_type, AgentType::Sisyphus);
+}
+
+#[rstest]
+fn test_delegation_serialization(delegation: Delegation) {
+    let json = serde_json::to_string(&delegation).expect("serialize");
+    let deserialized: Delegation = serde_json::from_str(&json).expect("deserialize");
+    assert_eq!(deserialized.id, delegation.id);
+}
+
+#[rstest]
+fn test_tool_call_serialization(tool_call: ToolCall) {
+    let json = serde_json::to_string(&tool_call).expect("serialize");
+    let deserialized: ToolCall = serde_json::from_str(&json).expect("deserialize");
+    assert_eq!(deserialized.id, tool_call.id);
+}
+
+#[rstest]
 fn test_checkpoint_serialization(checkpoint: Checkpoint) {
     let json = serde_json::to_string(&checkpoint).expect("serialize");
-    assert!(json.contains("ckpt-001"));
+    let deserialized: Checkpoint = serde_json::from_str(&json).expect("deserialize");
+    assert_eq!(deserialized.id, checkpoint.id);
+}
+
+#[rstest]
+#[case(AgentType::Sisyphus, "sisyphus")]
+#[case(AgentType::Oracle, "oracle")]
+#[case(AgentType::Explore, "explore")]
+fn test_agent_type_as_str(#[case] agent_type: AgentType, #[case] expected: &str) {
+    assert_eq!(agent_type.as_str(), expected);
+}
+
+#[rstest]
+#[case(AgentSessionStatus::Active, "active")]
+#[case(AgentSessionStatus::Completed, "completed")]
+#[case(AgentSessionStatus::Failed, "failed")]
+fn test_agent_session_status_as_str(#[case] status: AgentSessionStatus, #[case] expected: &str) {
+    assert_eq!(status.as_str(), expected);
+}
+
+#[rstest]
+#[case(CheckpointType::Git, "git")]
+#[case(CheckpointType::File, "file")]
+#[case(CheckpointType::Config, "config")]
+fn test_checkpoint_type_as_str(#[case] checkpoint_type: CheckpointType, #[case] expected: &str) {
+    assert_eq!(checkpoint_type.as_str(), expected);
 }

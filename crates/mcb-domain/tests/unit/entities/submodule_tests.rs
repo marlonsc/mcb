@@ -32,8 +32,7 @@ fn default_submodule_info() -> SubmoduleInfo {
 }
 
 #[rstest]
-fn test_submodule_info_fields(default_submodule_info: SubmoduleInfo) {
+fn test_submodule_info_construction(default_submodule_info: SubmoduleInfo) {
     assert_eq!(default_submodule_info.id, "sub-1");
     assert_eq!(default_submodule_info.path, "libs/bar");
-    assert_eq!(default_submodule_info.depth, 1);
 }

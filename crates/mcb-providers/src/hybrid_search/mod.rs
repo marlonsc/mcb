@@ -81,9 +81,7 @@ pub use engine::HybridSearchEngine;
 use std::sync::Arc;
 
 use mcb_domain::ports::HybridSearchProvider as HybridSearchProviderPort;
-use mcb_domain::registry::hybrid_search::{
-    HYBRID_SEARCH_PROVIDERS, HybridSearchProviderConfig, HybridSearchProviderEntry,
-};
+use mcb_domain::registry::hybrid_search::HybridSearchProviderConfig;
 
 /// Factory function for creating `HybridSearchEngine` instances.
 fn hybrid_search_factory(
@@ -92,9 +90,8 @@ fn hybrid_search_factory(
     Ok(Arc::new(HybridSearchEngine::new()))
 }
 
-#[linkme::distributed_slice(HYBRID_SEARCH_PROVIDERS)]
-static HYBRID_SEARCH_ENGINE_PROVIDER: HybridSearchProviderEntry = HybridSearchProviderEntry {
-    name: mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
-    description: "Hybrid BM25 + semantic search engine (default)",
-    build: hybrid_search_factory,
-};
+mcb_domain::register_hybrid_search_provider!(
+    mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+    "Hybrid BM25 + semantic search engine (default)",
+    hybrid_search_factory
+);

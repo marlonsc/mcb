@@ -3,8 +3,7 @@
 
 use std::fmt;
 
-/// Placeholder shown instead of sensitive data.
-pub const REDACTED: &str = "REDACTED";
+pub use crate::constants::values::REDACTED;
 
 /// Wraps a value so that `Debug` and `Display` output `REDACTED`.
 #[derive(Clone, Copy)]

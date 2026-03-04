@@ -47,9 +47,7 @@ use std::any::Any;
 use std::sync::Arc;
 
 use mcb_domain::ports::GraphQLSchemaProvider;
-use mcb_domain::registry::graphql::{
-    GRAPHQL_SCHEMA_PROVIDERS, GraphQLSchemaProviderConfig, GraphQLSchemaProviderEntry,
-};
+use mcb_domain::registry::graphql::GraphQLSchemaProviderConfig;
 
 /// Seaography GraphQL schema provider implementing the domain port.
 struct SeaographyGraphQLSchemaProvider;
@@ -80,9 +78,8 @@ fn seaography_factory(
     Ok(Arc::new(SeaographyGraphQLSchemaProvider))
 }
 
-#[linkme::distributed_slice(GRAPHQL_SCHEMA_PROVIDERS)]
-static SEAOGRAPHY_GRAPHQL_PROVIDER: GraphQLSchemaProviderEntry = GraphQLSchemaProviderEntry {
-    name: "seaography",
-    description: "Seaography auto-generated GraphQL schema from SeaORM entities",
-    build: seaography_factory,
-};
+mcb_domain::register_graphql_schema_provider!(
+    "seaography",
+    "Seaography auto-generated GraphQL schema from SeaORM entities",
+    seaography_factory
+);

@@ -22,5 +22,7 @@ crate::impl_registry!(
     entry_type: ProjectDetectionServiceEntry,
     slice_name: PROJECT_DETECTION_SERVICES,
     resolve_fn: resolve_project_detection_service,
-    list_fn: list_project_detection_services
+    list_fn: list_project_detection_services,
+    register_macro: register_project_detection_service,
+    module: project_detection
 );

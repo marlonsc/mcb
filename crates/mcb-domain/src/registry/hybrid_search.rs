@@ -21,5 +21,7 @@ crate::impl_registry!(
     entry_type: HybridSearchProviderEntry,
     slice_name: HYBRID_SEARCH_PROVIDERS,
     resolve_fn: resolve_hybrid_search_provider,
-    list_fn: list_hybrid_search_providers
+    list_fn: list_hybrid_search_providers,
+    register_macro: register_hybrid_search_provider,
+    module: hybrid_search
 );

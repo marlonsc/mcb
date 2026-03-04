@@ -14,8 +14,28 @@ macro_rules! impl_registry {
         entry_type: $entry:ident,
         slice_name: $slice:ident,
         resolve_fn: $resolve:ident,
-        list_fn: $list:ident
+        list_fn: $list:ident,
+        register_macro: $register_macro:ident,
+        module: $module:ident
     ) => {
+        /// Register a provider in the distributed slice.
+        #[macro_export]
+        macro_rules! $register_macro {
+            ($name:expr, $desc:expr, $build:expr) => {
+                #[allow(unsafe_code)]
+                #[linkme::distributed_slice($crate::registry::$module::$slice)]
+                static PROVIDER: $crate::registry::$module::$entry =
+                    $crate::registry::$module::$entry {
+                        name: $name,
+                        description: $desc,
+                        build: $build,
+                    };
+            };
+            ($name:expr, $desc:expr, $build:expr,) => {
+                $register_macro!($name, $desc, $build);
+            };
+        }
+
         /// Registry entry for providers
         #[doc(hidden)]
         pub struct $entry {

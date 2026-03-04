@@ -151,9 +151,7 @@ impl PineconeVectorStoreProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use mcb_domain::registry::vector_store::{
-    VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
-};
+use mcb_domain::registry::vector_store::VectorStoreProviderConfig;
 
 /// Factory function for creating Pinecone vector store provider instances.
 ///
@@ -183,9 +181,8 @@ pub fn pinecone_factory(
     )))
 }
 
-#[linkme::distributed_slice(VECTOR_STORE_PROVIDERS)]
-static PINECONE_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {
-    name: "pinecone",
-    description: "Pinecone cloud vector database (managed, serverless)",
-    build: pinecone_factory,
-};
+mcb_domain::register_vector_store_provider!(
+    "pinecone",
+    "Pinecone cloud vector database (managed, serverless)",
+    pinecone_factory
+);

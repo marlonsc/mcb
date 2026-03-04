@@ -25,7 +25,9 @@ crate::impl_registry!(
     entry_type: IndexingOperationsProviderEntry,
     slice_name: INDEXING_OPERATIONS_PROVIDERS,
     resolve_fn: resolve_indexing_operations_provider,
-    list_fn: list_indexing_operations_providers
+    list_fn: list_indexing_operations_providers,
+    register_macro: register_indexing_operations_provider,
+    module: admin_operations
 );
 
 /// Configuration for validation operations providers.
@@ -53,5 +55,7 @@ crate::impl_registry!(
     entry_type: ValidationOperationsProviderEntry,
     slice_name: VALIDATION_OPERATIONS_PROVIDERS,
     resolve_fn: resolve_validation_operations_provider,
-    list_fn: list_validation_operations_providers
+    list_fn: list_validation_operations_providers,
+    register_macro: register_validation_operations_provider,
+    module: admin_operations
 );

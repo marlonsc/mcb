@@ -10,7 +10,7 @@ use mcb_utils::utils::id;
 #[rstest]
 #[case("abc123")]
 #[case("xyz")]
-fn repository_id_construction(#[case] input: &str) {
+fn test_repository_id_construction(#[case] input: &str) {
     let uuid = id::deterministic("repository", input);
     let id = RepositoryId::from_uuid(uuid);
     assert_eq!(id.to_string(), uuid.to_string());

@@ -31,6 +31,8 @@ impl VcsContext {
 use std::process::Command;
 use std::sync::OnceLock;
 
+use crate::constants::vcs;
+
 static VCS_CONTEXT: OnceLock<VcsContext> = OnceLock::new();
 
 /// Capture VCS context (branch, commit, repo) from the git environment.
@@ -40,8 +42,13 @@ static VCS_CONTEXT: OnceLock<VcsContext> = OnceLock::new();
 pub fn capture_vcs_context() -> VcsContext {
     VCS_CONTEXT
         .get_or_init(|| {
-            let (branch, commit) = Command::new("git")
-                .args(["rev-parse", "--abbrev-ref", "HEAD", "HEAD"])
+            let (branch, commit) = Command::new(vcs::GIT_COMMAND)
+                .args([
+                    "rev-parse",
+                    "--abbrev-ref",
+                    vcs::GIT_REF_HEAD,
+                    vcs::GIT_REF_HEAD,
+                ])
                 .output()
                 .ok()
                 .and_then(|o| {
@@ -57,7 +64,7 @@ pub fn capture_vcs_context() -> VcsContext {
                 })
                 .unwrap_or((None, None));
 
-            let repo_id = Command::new("git")
+            let repo_id = Command::new(vcs::GIT_COMMAND)
                 .args(["config", "--get", "remote.origin.url"])
                 .output()
                 .ok()

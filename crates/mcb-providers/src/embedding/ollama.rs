@@ -168,9 +168,7 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 use std::sync::Arc;
 
 use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::embedding::{
-    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
-};
+use mcb_domain::registry::embedding::EmbeddingProviderConfig;
 
 /// Factory function for creating Ollama embedding provider instances.
 fn ollama_factory(
@@ -198,9 +196,8 @@ fn ollama_factory(
     )))
 }
 
-#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-    name: "ollama",
-    description: "Ollama local embedding provider (nomic-embed-text, all-minilm, etc.)",
-    build: ollama_factory,
-};
+mcb_domain::register_embedding_provider!(
+    "ollama",
+    "Ollama local embedding provider (nomic-embed-text, all-minilm, etc.)",
+    ollama_factory
+);

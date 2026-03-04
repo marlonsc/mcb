@@ -22,5 +22,7 @@ crate::impl_registry!(
     entry_type: VcsProviderEntry,
     slice_name: VCS_PROVIDERS,
     resolve_fn: resolve_vcs_provider,
-    list_fn: list_vcs_providers
+    list_fn: list_vcs_providers,
+    register_macro: register_vcs_provider,
+    module: vcs
 );

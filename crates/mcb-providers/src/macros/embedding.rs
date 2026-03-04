@@ -118,13 +118,13 @@ macro_rules! register_http_provider {
     ) => {
         /// Factory function for creating provider instances.
         fn $factory_fn(
-            config: &EmbeddingProviderConfig,
-        ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
+            config: &mcb_domain::registry::embedding::EmbeddingProviderConfig,
+        ) -> std::result::Result<std::sync::Arc<dyn mcb_domain::ports::EmbeddingProvider>, String> {
             use $crate::utils::http::create_http_provider_config;
 
             let cfg = create_http_provider_config(config, $config_name, $default_model)?;
 
-            Ok(Arc::new($struct_name::new(
+            Ok(std::sync::Arc::new($struct_name::new(
                 &cfg.api_key,
                 cfg.base_url,
                 cfg.model,
@@ -133,12 +133,7 @@ macro_rules! register_http_provider {
             )))
         }
 
-        #[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-        static $static_name: EmbeddingProviderEntry = EmbeddingProviderEntry {
-            name: $provider_slug,
-            description: $description,
-            build: $factory_fn,
-        };
+        mcb_domain::register_embedding_provider!($provider_slug, $description, $factory_fn);
     };
 }
 
@@ -283,11 +278,6 @@ macro_rules! define_standard_embedding_provider {
         impl_embedding_provider_trait!($struct_name, $provider_slug, $dimensions_logic);
 
         // ── linkme registration ──
-        use std::sync::Arc;
-        use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
-        use mcb_domain::registry::embedding::{
-            EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
-        };
 
         register_http_provider!(
             $struct_name,

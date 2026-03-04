@@ -183,9 +183,7 @@ impl EdgeVecVectorStoreProvider {
     }
 }
 
-use mcb_domain::registry::vector_store::{
-    VECTOR_STORE_PROVIDERS, VectorStoreProviderConfig, VectorStoreProviderEntry,
-};
+use mcb_domain::registry::vector_store::VectorStoreProviderConfig;
 
 /// Factory function for creating `EdgeVec` vector store provider instances.
 fn edgevec_factory(
@@ -209,9 +207,8 @@ fn edgevec_factory(
     Ok(Arc::new(provider))
 }
 
-#[linkme::distributed_slice(VECTOR_STORE_PROVIDERS)]
-static EDGEVEC_PROVIDER: VectorStoreProviderEntry = VectorStoreProviderEntry {
-    name: mcb_utils::constants::PROVIDER_SLUG_EDGEVEC,
-    description: "EdgeVec in-memory HNSW vector store (high-performance)",
-    build: edgevec_factory,
-};
+mcb_domain::register_vector_store_provider!(
+    mcb_utils::constants::PROVIDER_SLUG_EDGEVEC,
+    "EdgeVec in-memory HNSW vector store (high-performance)",
+    edgevec_factory
+);

@@ -461,11 +461,8 @@ impl VcsProvider for GitProvider {
 // ---------------------------------------------------------------------------
 // Linkme Registration
 // ---------------------------------------------------------------------------
-use mcb_domain::registry::vcs::{VCS_PROVIDERS, VcsProviderEntry};
-
-#[linkme::distributed_slice(VCS_PROVIDERS)]
-static GIT_VCS_PROVIDER_ENTRY: VcsProviderEntry = VcsProviderEntry {
-    name: mcb_utils::constants::DEFAULT_VCS_PROVIDER,
-    description: "Git repository provider using libgit2",
-    build: |_config| Ok(std::sync::Arc::new(GitProvider::new())),
-};
+mcb_domain::register_vcs_provider!(
+    mcb_utils::constants::DEFAULT_VCS_PROVIDER,
+    "Git repository provider using libgit2",
+    |_config| Ok(std::sync::Arc::new(GitProvider::new()))
+);

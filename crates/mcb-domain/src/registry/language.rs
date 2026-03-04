@@ -42,5 +42,7 @@ crate::impl_registry!(
     entry_type: LanguageProviderEntry,
     slice_name: LANGUAGE_PROVIDERS,
     resolve_fn: resolve_language_provider,
-    list_fn: list_language_providers
+    list_fn: list_language_providers,
+    register_macro: register_language_provider,
+    module: language
 );

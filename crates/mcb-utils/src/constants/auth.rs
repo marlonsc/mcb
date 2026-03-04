@@ -15,7 +15,7 @@ pub const JWT_REFRESH_EXPIRATION_SECS: u64 = 604800;
 pub const BCRYPT_DEFAULT_COST: u32 = 12;
 /// Constant value for `DEFAULT_ADMIN_KEY_HEADER`.
 pub const DEFAULT_ADMIN_KEY_HEADER: &str = "X-Admin-Key";
-/// Constant value for `AUTHORIZATION_HEADER`.
-pub const AUTHORIZATION_HEADER: &str = "authorization";
+/// Default Authorization header name.
+pub use crate::constants::http::HTTP_HEADER_AUTHORIZATION as AUTHORIZATION_HEADER;
 /// Constant value for `MIN_JWT_SECRET_LENGTH`.
 pub const MIN_JWT_SECRET_LENGTH: usize = 32;

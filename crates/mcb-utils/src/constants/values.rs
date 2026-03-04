@@ -10,11 +10,21 @@
 /// Default batch size for indexing operations
 pub const INDEXING_BATCH_SIZE: usize = 10;
 
-/// Indexing status: started
-pub const INDEXING_STATUS_STARTED: &str = "started";
+/// Indexing-operation status: starting.
+pub const INDEX_OP_STATUS_STARTING: &str = "starting";
 
-/// Indexing status: completed
-pub const INDEXING_STATUS_COMPLETED: &str = "completed";
+/// Indexing-operation status: in progress.
+pub const INDEX_OP_STATUS_IN_PROGRESS: &str = "in_progress";
+
+/// Indexing-operation status: completed.
+pub const INDEX_OP_STATUS_COMPLETED: &str = "completed";
+
+/// Indexing-operation status: failed.
+pub const INDEX_OP_STATUS_FAILED: &str = "failed";
+
+// Aliases for transition
+pub use INDEX_OP_STATUS_COMPLETED as INDEXING_STATUS_COMPLETED;
+pub use INDEX_OP_STATUS_STARTING as INDEXING_STATUS_STARTED;
 
 /// Minimum character length for a code chunk to be indexed
 pub const INDEXING_CHUNK_MIN_LENGTH: usize = 25;
@@ -45,7 +55,7 @@ pub const MS_PER_SEC: i64 = 1000;
 // ============================================================================
 
 /// Default language identifier when language cannot be determined
-pub const DEFAULT_LANGUAGE: &str = "unknown";
+pub use crate::constants::lang::LANG_UNKNOWN as DEFAULT_LANGUAGE;
 
 // ============================================================================
 // PROVIDER DEFAULTS
@@ -58,7 +68,7 @@ pub const DEFAULT_DATABASE_PROVIDER: &str = "seaorm";
 pub const DEFAULT_LANGUAGE_PROVIDER: &str = "universal";
 
 /// Registry provider name for Git VCS.
-pub const DEFAULT_VCS_PROVIDER: &str = "git";
+pub use crate::constants::vcs::GIT_COMMAND as DEFAULT_VCS_PROVIDER;
 
 /// Registry provider name for hybrid search.
 pub const DEFAULT_HYBRID_SEARCH_PROVIDER: &str = "default";
@@ -142,18 +152,74 @@ pub const SERVICE_NAME_HIGHLIGHT: &str = "highlight";
 /// `SQLite` in-memory DSN for test and fallback connections.
 pub const SQLITE_MEMORY_DSN: &str = "sqlite::memory:";
 
+// Statuses moved to the top and deduplicated.
+
 // ============================================================================
-// INDEXING OPERATION STATUS (database string enums)
+// SECURITY AND SENSITIVITY
 // ============================================================================
 
-/// Indexing-operation status: starting.
-pub const INDEX_OP_STATUS_STARTING: &str = "starting";
+/// Placeholder shown instead of sensitive data.
+pub const REDACTED: &str = "REDACTED";
 
-/// Indexing-operation status: in progress.
-pub const INDEX_OP_STATUS_IN_PROGRESS: &str = "in_progress";
+// ============================================================================
+// ORGANIZATION DEFAULTS
+// ============================================================================
 
-/// Indexing-operation status: completed.
-pub const INDEX_OP_STATUS_COMPLETED: &str = "completed";
+/// Default organization ID (hardcoded UUID for single-tenant bootstrap).
+pub const DEFAULT_ORG_ID: &str = "00000000-0000-0000-0000-000000000001";
 
-/// Indexing-operation status: failed.
-pub const INDEX_OP_STATUS_FAILED: &str = "failed";
+/// Default organization name.
+pub const DEFAULT_ORG_NAME: &str = "default";
+
+// ============================================================================
+// GENERAL LIMITS
+// ============================================================================
+
+/// Default limit for listing results (pagination default).
+pub const DEFAULT_LIST_LIMIT: usize = 10;
+
+// ============================================================================
+// CROSS-CUTTING TAGS
+// ============================================================================
+
+/// Tag for architecture-related items.
+pub const TAG_ARCHITECTURE: &str = "architecture";
+
+/// Tag for organization-related items.
+pub const TAG_ORGANIZATION: &str = "organization";
+
+/// Tag for quality-related items.
+pub const TAG_QUALITY: &str = "quality";
+
+/// Tag for performance-related items.
+pub const TAG_PERFORMANCE: &str = "performance";
+
+/// Tag for async-related items.
+pub const TAG_ASYNC: &str = "async";
+
+/// Tag for naming-related items.
+pub const TAG_NAMING: &str = "naming";
+
+/// Tag for documentation-related items.
+pub const TAG_DOCUMENTATION: &str = "documentation";
+
+/// Tag for security-related items.
+pub const TAG_SECURITY: &str = "security";
+
+/// Generic "success" tag.
+pub const TAG_SUCCESS: &str = "success";
+
+/// Generic "failure" tag.
+pub const TAG_FAILURE: &str = "failure";
+
+/// Tag for tool-related activities.
+pub const TAG_TOOL: &str = "tool";
+
+/// Tag for execution-related items.
+pub const TAG_EXECUTION: &str = "execution";
+
+/// Tag for quality gate results.
+pub const TAG_QUALITY_GATE: &str = "quality_gate";
+
+/// Tag for SOLID principles.
+pub const TAG_SOLID: &str = "solid";

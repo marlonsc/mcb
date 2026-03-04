@@ -23,5 +23,7 @@ crate::impl_registry!(
     entry_type: ConfigProviderEntry,
     slice_name: CONFIG_PROVIDERS,
     resolve_fn: resolve_config_provider,
-    list_fn: list_config_providers
+    list_fn: list_config_providers,
+    register_macro: register_config_provider,
+    module: config
 );

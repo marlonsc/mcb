@@ -23,13 +23,13 @@ pub const SCHEMA_COMPLEXITY: usize = 250;
 // ============================================================================
 
 /// Default number of results for code and memory searches.
-pub const DEFAULT_SEARCH_LIMIT: usize = 10;
+pub const DEFAULT_SEARCH_LIMIT: usize = crate::constants::values::DEFAULT_LIST_LIMIT;
 
 /// Default number of memory items returned by list/timeline queries.
-pub const DEFAULT_MEMORY_LIST_LIMIT: usize = 10;
+pub const DEFAULT_MEMORY_LIST_LIMIT: usize = crate::constants::values::DEFAULT_LIST_LIMIT;
 
 /// Default number of sessions returned by session list queries.
-pub const DEFAULT_SESSION_LIST_LIMIT: usize = 10;
+pub const DEFAULT_SESSION_LIST_LIMIT: usize = crate::constants::values::DEFAULT_LIST_LIMIT;
 
 /// Default number of results for VCS branch searches.
 pub const DEFAULT_VCS_SEARCH_LIMIT: usize = 20;

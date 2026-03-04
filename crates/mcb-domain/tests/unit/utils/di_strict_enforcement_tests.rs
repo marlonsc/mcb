@@ -57,7 +57,7 @@ fn no_direct_concrete_di_shortcuts_outside_linkme_registries() -> TestResult {
                     let start = idx.saturating_sub(REGISTRY_CONTEXT_WINDOW);
                     let in_registry = lines[start..idx]
                         .iter()
-                        .any(|l| l.contains("distributed_slice"));
+                        .any(|l| l.contains("distributed_slice") || l.contains("register_"));
 
                     if !in_registry {
                         let rel = file

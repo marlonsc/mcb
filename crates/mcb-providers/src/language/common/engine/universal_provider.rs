@@ -8,9 +8,7 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::LanguageChunkingProvider as LanguageProviderPort;
-use mcb_domain::registry::language::{
-    LANGUAGE_PROVIDERS, LanguageProviderConfig, LanguageProviderEntry,
-};
+use mcb_domain::registry::language::LanguageProviderConfig;
 
 use super::IntelligentChunker;
 
@@ -73,10 +71,8 @@ fn universal_language_factory(
     Ok(Arc::new(UniversalLanguageChunkingProvider::new()))
 }
 
-#[linkme::distributed_slice(LANGUAGE_PROVIDERS)]
-#[allow(unsafe_code)]
-static UNIVERSAL_LANGUAGE_PROVIDER: LanguageProviderEntry = LanguageProviderEntry {
-    name: mcb_utils::constants::DEFAULT_LANGUAGE_PROVIDER,
-    description: "Universal language chunker supporting all languages via tree-sitter",
-    build: universal_language_factory,
-};
+mcb_domain::register_language_provider!(
+    mcb_utils::constants::DEFAULT_LANGUAGE_PROVIDER,
+    "Universal language chunker supporting all languages via tree-sitter",
+    universal_language_factory
+);

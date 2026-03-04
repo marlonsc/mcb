@@ -143,13 +143,6 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
 // Auto-registration via linkme distributed slice
 // ============================================================================
 
-use std::sync::Arc;
-
-use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::embedding::{
-    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
-};
-
 register_http_provider!(
     GeminiEmbeddingProvider,
     gemini_factory,

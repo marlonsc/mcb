@@ -64,15 +64,8 @@ impl ConfigProvider for LocoYamlConfigProvider {
     }
 }
 
-// ---------------------------------------------------------------------------
-// Linkme Registration
-// ---------------------------------------------------------------------------
-use mcb_domain::registry::config::{CONFIG_PROVIDERS, ConfigProviderEntry};
-
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(CONFIG_PROVIDERS)]
-static LOCO_YAML_CONFIG_ENTRY: ConfigProviderEntry = ConfigProviderEntry {
-    name: mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
-    description: "YAML configuration loader following Loco conventions",
-    build: |_config| Ok(Arc::new(LocoYamlConfigProvider)),
-};
+mcb_domain::register_config_provider!(
+    mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
+    "YAML configuration loader following Loco conventions",
+    |_config| Ok(Arc::new(LocoYamlConfigProvider))
+);

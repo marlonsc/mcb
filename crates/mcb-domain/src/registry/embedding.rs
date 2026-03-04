@@ -51,5 +51,7 @@ crate::impl_registry!(
     entry_type: EmbeddingProviderEntry,
     slice_name: EMBEDDING_PROVIDERS,
     resolve_fn: resolve_embedding_provider,
-    list_fn: list_embedding_providers
+    list_fn: list_embedding_providers,
+    register_macro: register_embedding_provider,
+    module: embedding
 );

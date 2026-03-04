@@ -1,5 +1,8 @@
 //! VCS and git-related constants.
 
+/// Git command name.
+pub const GIT_COMMAND: &str = "git";
+
 /// Git HEAD reference name.
 pub const GIT_REF_HEAD: &str = "HEAD";
 
