@@ -17,105 +17,24 @@ use mcb_utils::constants::embedding::{
 };
 use reqwest::Client;
 
-use crate::utils::embedding::{HttpEmbeddingClient, parse_standard_embedding, process_batch};
-use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
-use mcb_utils::constants::embedding::{
-    EMBEDDING_API_ENDPOINT, EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_INPUT, EMBEDDING_PARAM_MODEL,
-};
-use mcb_utils::constants::http::{
-    HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS,
-    PROVIDER_RETRY_COUNT,
-};
+use crate::utils::embedding::{HttpEmbeddingClient, process_batch};
 
-use mcb_utils::constants::http::CONTENT_TYPE_JSON;
-
-define_http_embedding_provider!(
-    /// `OpenAI` embedding provider
-    ///
-    /// Implements the `EmbeddingProvider` domain port using `OpenAI`'s embedding API.
-    /// Receives HTTP client via constructor injection.
-    OpenAIEmbeddingProvider
-);
-
-impl_http_provider_base!(
-    OpenAIEmbeddingProvider,
-    mcb_utils::constants::embedding::OPENAI_API_BASE_URL
-);
-
-impl OpenAIEmbeddingProvider {
-    /// Get the maximum tokens for this model
-    #[must_use]
-    pub fn max_tokens(&self) -> usize {
-        mcb_utils::constants::embedding::OPENAI_MAX_TOKENS_PER_REQUEST
-    }
-
-    /// Send embedding request and get response data
-    async fn fetch_embeddings(&self, texts: &[String]) -> Result<serde_json::Value> {
-        let payload = serde_json::json!({
-            (EMBEDDING_PARAM_INPUT): texts,
-            (EMBEDDING_PARAM_MODEL): self.client.model,
-            "encoding_format": "float"
-        });
-
-        let headers = vec![
-            (
-                HTTP_HEADER_AUTHORIZATION,
-                format!("Bearer {}", self.client.api_key),
-            ),
-            (HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned()),
-        ];
-
-        send_json_request(JsonRequestParams {
-            client: &self.client.client,
-            method: reqwest::Method::POST,
-            url: format!("{}{}", self.base_url(), EMBEDDING_API_ENDPOINT),
-            timeout: self.client.timeout,
-            provider: "OpenAI",
-            operation: EMBEDDING_OPERATION_NAME,
-            kind: RequestErrorKind::Embedding,
-            headers: &headers,
-            body: Some(&payload),
-            retry: Some(RetryConfig::new(
-                PROVIDER_RETRY_COUNT,
-                Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
-            )),
-        })
-        .await
-    }
-
-    /// Parse embedding vector from response data
-    fn parse_embedding(&self, index: usize, item: &serde_json::Value) -> Result<Embedding> {
-        parse_standard_embedding(&self.client.model, self.dimensions(), index, item)
-    }
-}
-
-impl_embedding_provider_trait!(
-    OpenAIEmbeddingProvider,
-    "openai",
-    |model: &str| match model {
+define_standard_embedding_provider! {
+    struct_name: OpenAIEmbeddingProvider,
+    doc: "OpenAI embedding provider — wraps the standard /v1/embeddings API with Bearer auth.",
+    provider_name: "OpenAI",
+    provider_slug: "openai",
+    base_url: mcb_utils::constants::embedding::OPENAI_API_BASE_URL,
+    max_tokens: mcb_utils::constants::embedding::OPENAI_MAX_TOKENS_PER_REQUEST,
+    dimensions: |model: &str| match model {
         "text-embedding-3-large" => EMBEDDING_DIMENSION_OPENAI_LARGE,
         "text-embedding-ada-002" => EMBEDDING_DIMENSION_OPENAI_ADA,
         _ => EMBEDDING_DIMENSION_OPENAI_SMALL,
-    }
-);
-
-// ============================================================================
-// Auto-registration via linkme distributed slice
-// ============================================================================
-
-use std::sync::Arc;
-
-use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::embedding::{
-    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
-};
-
-register_http_provider!(
-    OpenAIEmbeddingProvider,
-    openai_factory,
-    OPENAI_PROVIDER,
-    "openai",
-    "OpenAI embedding provider (text-embedding-3-small/large, ada-002)",
-    "OpenAI",
-    "text-embedding-3-small"
-);
+    },
+    extra_payload: { "encoding_format": "float" },
+    factory_fn: openai_factory,
+    static_name: OPENAI_PROVIDER,
+    description: "OpenAI embedding provider (text-embedding-3-small/large, ada-002)",
+    config_name: "OpenAI",
+    default_model: "text-embedding-3-small",
+}
