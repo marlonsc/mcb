@@ -153,7 +153,7 @@ impl Initializer for McpServerInitializer {
 
         let mcp_server_for_stdio = Arc::clone(&bootstrap.mcp_server);
         if stdio_only || !no_stdio {
-            tokio::spawn(async move {
+            let _ = tokio::spawn(async move {
                 let server = (*mcp_server_for_stdio).clone();
                 if let Err(e) = server.serve_stdio().await {
                     mcb_domain::error!("mcp_initializer", "MCP stdio server stopped", &e);

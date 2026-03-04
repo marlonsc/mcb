@@ -57,7 +57,7 @@ fn expected_naming_for_parent(
                 Severity::Warning,
             )
         }),
-        _ => None,
+        _other => None,
     }
 }
 

@@ -62,7 +62,7 @@ impl MavenDetector {
             match reader.read_event() {
                 Ok(Event::Start(e)) => {
                     let name = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                    current_path.push(name.clone());
+                    current_path.push(name);
 
                     if Self::path_matches(&current_path, &["project", "dependencies", "dependency"])
                     {

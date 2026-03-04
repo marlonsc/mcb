@@ -416,7 +416,7 @@ pub trait MetricsProvider: Send + Sync {
 
 /// Extension trait providing common metrics operations.
 #[async_trait]
-pub trait MetricsProviderExt: MetricsProvider {
+pub trait MetricsProviderExt: MetricsProvider + Send + Sync {
     /// Record the duration of an indexing operation.
     async fn record_index_time(&self, duration: Duration, collection: &str) -> MetricsResult<()> {
         let labels = labels_from([("collection", collection)]);

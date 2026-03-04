@@ -12,25 +12,11 @@ use mcb_domain::value_objects::CollectionId;
 
 use super::{IndexingProgress, IndexingServiceImpl};
 
-#[async_trait::async_trait]
-impl IndexingServiceInterface for IndexingServiceImpl {
-    /// # Errors
-    ///
-    /// Returns an error if collection initialization fails.
-    async fn index_codebase(
-        &self,
-        path: &Path,
-        collection: &CollectionId,
-    ) -> Result<IndexingResult> {
-        // Initialize collection
-        self.context_service.initialize(collection).await?;
-
-        // Discover files first (quick operation)
+impl IndexingServiceImpl {
+    async fn run_discovery(&self, path: &Path) -> (Vec<std::path::PathBuf>, IndexingProgress) {
         let mut progress = IndexingProgress::new();
         let files = self.discover_files(path, &mut progress).await;
-        let total_files = files.len();
 
-        // Log any discovery errors so unreadable directories are not silently skipped
         if !progress.errors.is_empty() {
             mcb_domain::warn!(
                 "indexing",
@@ -46,15 +32,21 @@ impl IndexingServiceInterface for IndexingServiceImpl {
             "indexing",
             &format!(
                 "Starting indexing: {} files in {}",
-                total_files,
+                files.len(),
                 path.display()
             )
         );
 
-        // Start tracking operation
+        (files, progress)
+    }
+
+    async fn start_tracking(
+        &self,
+        collection: &CollectionId,
+        total_files: usize,
+    ) -> mcb_domain::value_objects::OperationId {
         let operation_id = self.indexing_ops.start_operation(collection, total_files);
 
-        // Publish IndexingStarted event
         if let Err(e) = self
             .event_bus
             .publish_event(DomainEvent::IndexingStarted {
@@ -65,6 +57,27 @@ impl IndexingServiceInterface for IndexingServiceImpl {
         {
             mcb_domain::warn!("indexing", "Failed to publish IndexingStarted event", &e);
         }
+
+        operation_id
+    }
+}
+
+#[async_trait::async_trait]
+impl IndexingServiceInterface for IndexingServiceImpl {
+    /// # Errors
+    ///
+    /// Returns an error if collection initialization fails.
+    async fn index_codebase(
+        &self,
+        path: &Path,
+        collection: &CollectionId,
+    ) -> Result<IndexingResult> {
+        self.context_service.initialize(collection).await?;
+
+        let (files, _progress) = self.run_discovery(path).await;
+        let total_files = files.len();
+
+        let operation_id = self.start_tracking(collection, total_files).await;
 
         // Clone service for the background task
         // IndexingServiceImpl is cheap to clone (Arc-based)

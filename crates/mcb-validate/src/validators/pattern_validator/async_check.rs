@@ -37,6 +37,9 @@ pub fn check_async_traits(path: &Path, content: &str) -> crate::Result<Vec<Patte
     for (line_num, line) in lines.iter().enumerate() {
         if let Some(cap) = trait_pattern.captures(line) {
             let trait_name = cap.get(1).map_or("", |m| m.as_str());
+            if line.contains('=') {
+                continue;
+            }
             if !has_async_methods(line_num) {
                 continue;
             }

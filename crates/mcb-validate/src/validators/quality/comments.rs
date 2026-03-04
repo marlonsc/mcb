@@ -13,7 +13,7 @@ use mcb_utils::utils::regex::compile_regex;
 /// Scans for pending task comments matching `PENDING_LABEL_*` constants.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
     let todo_pattern = compile_regex(&format!(
-        r"(?i)({PENDING_LABEL_TODO}|{PENDING_LABEL_FIXME}|{PENDING_LABEL_XXX}|{PENDING_LABEL_HACK}):?\s*(.*)"
+        r"(?i)//[/!]*\s*({PENDING_LABEL_TODO}|{PENDING_LABEL_FIXME}|{PENDING_LABEL_XXX}|{PENDING_LABEL_HACK}):?\s*(.*)"
     ))?;
 
     let mut violations = Vec::new();

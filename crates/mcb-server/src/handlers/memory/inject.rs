@@ -36,13 +36,14 @@ pub async fn inject_context(
             let mut observation_ids = Vec::new();
             let max_chars = max_tokens * CHARS_PER_TOKEN_ESTIMATE;
             for result in results {
-                observation_ids.push(result.observation.id.clone());
+                let obs = result.observation;
                 let entry = format!(
                     "[{}] {}: {}\n\n",
-                    result.observation.r#type.as_str().to_uppercase(),
-                    result.observation.id,
-                    result.observation.content
+                    obs.r#type.as_str().to_uppercase(),
+                    obs.id,
+                    obs.content
                 );
+                observation_ids.push(obs.id);
                 if context.len() + entry.len() > max_chars {
                     break;
                 }

@@ -85,7 +85,10 @@ impl HookProcessor {
             match value.trim().to_ascii_lowercase().as_str() {
                 "true" | "1" | "yes" => Some(true),
                 "false" | "0" | "no" => Some(false),
-                _ => None,
+                _ => {
+                    mcb_domain::trace!("hooks", "Unrecognized boolean mapping for delegated flag");
+                    None
+                }
             }
         });
 

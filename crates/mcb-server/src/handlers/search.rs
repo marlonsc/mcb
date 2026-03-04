@@ -133,7 +133,7 @@ impl SearchHandler {
                             if path.is_dir() {
                                 let indexing = Arc::clone(&self.indexing_service);
                                 let coll_id = collection_id;
-                                tokio::spawn(async move {
+                                let _ = tokio::spawn(async move {
                                     tracing::info!(
                                         "Auto-indexing triggered for '{}'",
                                         coll_id.as_str()

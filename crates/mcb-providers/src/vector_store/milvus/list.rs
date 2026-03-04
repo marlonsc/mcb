@@ -42,17 +42,8 @@ impl MilvusVectorStoreProvider {
         }
     }
 
-    pub(super) async fn list_vectors_impl(
-        &self,
-        collection: &CollectionId,
-        limit: usize,
-    ) -> Result<Vec<SearchResult>> {
-        if limit == 0 {
-            return Ok(Vec::new());
-        }
+    async fn ensure_collection_loaded(&self, collection: &CollectionId) -> Result<()> {
         let name_str = to_milvus_name(collection);
-
-        // Ensure collection is loaded
         self.client
             .load_collection(&name_str, None)
             .await
@@ -61,7 +52,14 @@ impl MilvusVectorStoreProvider {
                     "Failed to load collection '{collection}': {e}"
                 ))
             })?;
+        Ok(())
+    }
 
+    async fn collect_list_vectors_batches(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<SearchResult>> {
         let mut all_results = Vec::new();
         let mut offset = 0i64;
 
@@ -93,5 +91,18 @@ impl MilvusVectorStoreProvider {
         }
 
         Ok(all_results)
+    }
+
+    pub(super) async fn list_vectors_impl(
+        &self,
+        collection: &CollectionId,
+        limit: usize,
+    ) -> Result<Vec<SearchResult>> {
+        if limit == 0 {
+            return Ok(Vec::new());
+        }
+
+        self.ensure_collection_loaded(collection).await?;
+        self.collect_list_vectors_batches(collection, limit).await
     }
 }

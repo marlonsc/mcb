@@ -75,7 +75,7 @@ impl MilvusVectorStoreProvider {
             })
     }
 
-    fn value_to_id_string(value: Option<Value<'_>>) -> String {
+    fn value_to_id_string(value: Option<&Value<'_>>) -> String {
         match value {
             Some(Value::Long(id)) => id.to_string(),
             Some(Value::String(id)) => id.to_string(),
@@ -100,7 +100,7 @@ impl MilvusVectorStoreProvider {
                 let start_line = extract_long_field(fields, VECTOR_FIELD_START_LINE, index)? as u32;
 
                 results.push(SearchResult {
-                    id: Self::value_to_id_string(Some(id_value.clone())),
+                    id: Self::value_to_id_string(Some(id_value)),
                     file_path: extract_string_field(fields, VECTOR_FIELD_FILE_PATH, index)?,
                     start_line,
                     content: extract_string_field(fields, VECTOR_FIELD_CONTENT, index)?,

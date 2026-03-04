@@ -58,7 +58,9 @@ pub fn extract_function_body(content: &str, start_pos: usize) -> Option<String> 
                     return Some(content[body_start..=i].to_string());
                 }
             }
-            _ => {}
+            _other => {
+                // Ignore other characters
+            }
         }
         i += 1;
     }
@@ -230,7 +232,11 @@ pub fn compute_tdg_scores(
     let mut dead_by_file: HashMap<PathBuf, u32> = HashMap::new();
     for finding in dead_code {
         if let AnalysisFinding::DeadCode { file, .. } = finding {
-            *dead_by_file.entry(file.clone()).or_insert(0) += 1;
+            if let Some(count) = dead_by_file.get_mut(file) {
+                *count += 1;
+            } else {
+                dead_by_file.insert(file.clone(), 1);
+            }
         }
     }
 

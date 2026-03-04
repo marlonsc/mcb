@@ -14,8 +14,7 @@ pub fn language_to_rca(lang: LanguageId) -> LANG {
         LanguageId::TypeScript => LANG::Typescript,
         LanguageId::Tsx => LANG::Tsx,
         LanguageId::Java => LANG::Java,
-        LanguageId::C => LANG::Cpp,
-        LanguageId::Cpp => LANG::Cpp,
+        LanguageId::C | LanguageId::Cpp => LANG::Cpp,
         LanguageId::Kotlin => LANG::Kotlin,
         LanguageId::Go
         | LanguageId::Ruby

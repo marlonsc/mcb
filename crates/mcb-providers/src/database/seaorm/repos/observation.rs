@@ -104,6 +104,64 @@ impl SeaOrmObservationRepository {
         }
     }
 
+    fn apply_filter(
+        query: &mut sea_query::SelectStatement,
+        f: &MemoryFilter,
+        tag_filter_sql: &'static str,
+    ) {
+        if let Some(id) = &f.id {
+            query.and_where(Expr::col(observation::Column::Id).eq(id));
+        }
+        if let Some(project_id) = &f.project_id {
+            query.and_where(Expr::col(observation::Column::ProjectId).eq(project_id));
+        }
+        if let Some(obs_type) = &f.r#type {
+            query.and_where(Expr::col(observation::Column::ObservationType).eq(obs_type.as_str()));
+        }
+        if let Some(session_id) = &f.session_id {
+            query.and_where(Expr::cust_with_values(
+                "json_extract(metadata, '$.session_id') = ?",
+                vec![Value::from(session_id.as_str())],
+            ));
+        }
+        if let Some(parent_session_id) = &f.parent_session_id {
+            query.and_where(Expr::cust_with_values(
+                "json_extract(metadata, '$.origin_context.parent_session_id') = ?",
+                vec![Value::from(parent_session_id.as_str())],
+            ));
+        }
+        if let Some(repo_id) = &f.repo_id {
+            query.and_where(Expr::cust_with_values(
+                "json_extract(metadata, '$.repo_id') = ?",
+                vec![Value::from(repo_id.clone())],
+            ));
+        }
+        if let Some((start, end)) = f.time_range {
+            query.and_where(Expr::col(observation::Column::CreatedAt).gte(start));
+            query.and_where(Expr::col(observation::Column::CreatedAt).lte(end));
+        }
+        if let Some(branch) = &f.branch {
+            query.and_where(Expr::cust_with_values(
+                "json_extract(metadata, '$.branch') = ?",
+                vec![Value::from(branch.clone())],
+            ));
+        }
+        if let Some(commit) = &f.commit {
+            query.and_where(Expr::cust_with_values(
+                "json_extract(metadata, '$.commit') = ?",
+                vec![Value::from(commit.clone())],
+            ));
+        }
+        if let Some(tags) = &f.tags {
+            for tag in tags {
+                query.and_where(Expr::cust_with_values(
+                    tag_filter_sql,
+                    vec![Value::from(tag.as_str())],
+                ));
+            }
+        }
+    }
+
     fn build_list_sql(&self, filter: Option<&MemoryFilter>, limit: usize) -> Statement {
         let mut query = Query::select();
         query
@@ -123,60 +181,7 @@ impl SeaOrmObservationRepository {
             .limit(limit as u64);
 
         if let Some(f) = filter {
-            if let Some(id) = &f.id {
-                query.and_where(Expr::col(observation::Column::Id).eq(id));
-            }
-            if let Some(project_id) = &f.project_id {
-                query.and_where(Expr::col(observation::Column::ProjectId).eq(project_id));
-            }
-            if let Some(obs_type) = &f.r#type {
-                query.and_where(
-                    Expr::col(observation::Column::ObservationType).eq(obs_type.as_str()),
-                );
-            }
-            if let Some(session_id) = &f.session_id {
-                query.and_where(Expr::cust_with_values(
-                    "json_extract(metadata, '$.session_id') = ?",
-                    vec![Value::from(session_id.as_str())],
-                ));
-            }
-            if let Some(parent_session_id) = &f.parent_session_id {
-                query.and_where(Expr::cust_with_values(
-                    "json_extract(metadata, '$.origin_context.parent_session_id') = ?",
-                    vec![Value::from(parent_session_id.as_str())],
-                ));
-            }
-            if let Some(repo_id) = &f.repo_id {
-                query.and_where(Expr::cust_with_values(
-                    "json_extract(metadata, '$.repo_id') = ?",
-                    vec![Value::from(repo_id.clone())],
-                ));
-            }
-            if let Some((start, end)) = f.time_range {
-                query.and_where(Expr::col(observation::Column::CreatedAt).gte(start));
-                query.and_where(Expr::col(observation::Column::CreatedAt).lte(end));
-            }
-            if let Some(branch) = &f.branch {
-                query.and_where(Expr::cust_with_values(
-                    "json_extract(metadata, '$.branch') = ?",
-                    vec![Value::from(branch.clone())],
-                ));
-            }
-            if let Some(commit) = &f.commit {
-                query.and_where(Expr::cust_with_values(
-                    "json_extract(metadata, '$.commit') = ?",
-                    vec![Value::from(commit.clone())],
-                ));
-            }
-            if let Some(tags) = &f.tags {
-                let tag_filter_sql = self.tag_contains_sql();
-                for tag in tags {
-                    query.and_where(Expr::cust_with_values(
-                        tag_filter_sql,
-                        vec![Value::from(tag.as_str())],
-                    ));
-                }
-            }
+            Self::apply_filter(&mut query, f, self.tag_contains_sql());
         }
 
         self.db.get_database_backend().build(&query)

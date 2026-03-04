@@ -22,11 +22,7 @@ use mcb_domain::entities::team::{Team, TeamMember, TeamMemberRole};
 use mcb_domain::entities::user::{User, UserRole};
 use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree, WorktreeStatus};
 use mcb_domain::entities::{ApiKey, Organization};
-use mcb_domain::ports::{
-    ApiKeyRegistry, IssueCommentRegistry, IssueLabelAssignmentManager, IssueLabelRegistry,
-    IssueRegistry, OrgRegistry, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry,
-    TeamMemberManager, TeamRegistry, UserRegistry,
-};
+use mcb_domain::ports::*;
 use mcb_domain::value_objects::ids::{IssueLabelAssignmentId, TeamMemberId};
 
 use mcb_domain::utils::tests::utils::TestResult;

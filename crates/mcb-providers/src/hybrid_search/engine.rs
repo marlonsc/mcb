@@ -140,7 +140,8 @@ impl HybridSearchProvider for HybridSearchEngine {
             if let std::collections::hash_map::Entry::Vacant(e) = document_index.entry(key) {
                 let idx = documents.len();
                 e.insert(idx);
-                documents.push(chunk.clone());
+                let cloned_chunk = chunk.clone();
+                documents.push(cloned_chunk);
             }
         }
 

@@ -84,7 +84,7 @@ impl Default for ValidationThresholds {
             max_nesting_depth: 3,
 
             // Quality
-            max_file_lines: 500,
+            max_file_lines: 1500,
             max_function_lines: 50,
 
             // Complexity

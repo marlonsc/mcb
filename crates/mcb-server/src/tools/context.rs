@@ -10,7 +10,7 @@ use serde_json::Value;
 
 use crate::tools::defaults::RuntimeDefaults;
 use crate::tools::field_aliases::{
-    BOOL_FIELD_ALIASES, STRING_FIELD_ALIASES, field_aliases, normalize_text, resolve_override_bool,
+    BOOL_FIELD_ALIASES, STRING_FIELD_ALIASES, field_aliases, resolve_override_bool,
     resolve_override_value,
 };
 
@@ -213,7 +213,14 @@ fn meta_value_as_string(meta: &Meta, keys: &[&str]) -> Option<String> {
         };
 
         let extracted = match value {
-            Value::String(v) => normalize_text(Some(v.clone())),
+            Value::String(v) => {
+                let trimmed = v.trim();
+                if trimmed.is_empty() {
+                    None
+                } else {
+                    Some(trimmed.to_owned())
+                }
+            }
             Value::Number(v) => Some(v.to_string()),
             Value::Bool(v) => Some(v.to_string()),
             Value::Null | Value::Array(_) | Value::Object(_) => None,
@@ -250,7 +257,10 @@ fn meta_value_as_bool(meta: &Meta, keys: &[&str]) -> Option<bool> {
             Value::String(v) => match v.trim().to_ascii_lowercase().as_str() {
                 "true" | "1" | "yes" => Some(true),
                 "false" | "0" | "no" => Some(false),
-                _ => None,
+                _other => {
+                    mcb_domain::trace!("context", "Unrecognized boolean mapping", v);
+                    None
+                }
             },
             Value::Null | Value::Number(_) | Value::Array(_) | Value::Object(_) => None,
         };

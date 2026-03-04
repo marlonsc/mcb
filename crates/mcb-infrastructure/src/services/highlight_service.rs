@@ -58,78 +58,118 @@ impl HighlightServiceImpl {
         }
     }
 
+    fn get_language_config_dynamic(
+        lang_id: &mcb_domain::ports::validation::LanguageId,
+    ) -> Option<Result<HighlightLanguageConfig, HighlightError>> {
+        match lang_id {
+            mcb_domain::ports::validation::LanguageId::Python => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "python",
+                    tree_sitter_python::LANGUAGE.into(),
+                    tree_sitter_python::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::JavaScript => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "javascript",
+                    tree_sitter_javascript::LANGUAGE.into(),
+                    tree_sitter_javascript::HIGHLIGHT_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::TypeScript => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "typescript",
+                    tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
+                    tree_sitter_typescript::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Tsx => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "tsx",
+                    tree_sitter_typescript::LANGUAGE_TSX.into(),
+                    tree_sitter_typescript::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Ruby => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "ruby",
+                    tree_sitter_ruby::LANGUAGE.into(),
+                    tree_sitter_ruby::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Php => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "php",
+                    tree_sitter_php::LANGUAGE_PHP.into(),
+                    tree_sitter_php::HIGHLIGHTS_QUERY,
+                )))
+            }
+            _unsupported_lang => None,
+        }
+    }
+
+    fn get_language_config_static(
+        lang_id: &mcb_domain::ports::validation::LanguageId,
+    ) -> Option<Result<HighlightLanguageConfig, HighlightError>> {
+        match lang_id {
+            mcb_domain::ports::validation::LanguageId::Rust => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "rust",
+                    tree_sitter_rust::LANGUAGE.into(),
+                    tree_sitter_rust::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Go => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "go",
+                    tree_sitter_go::LANGUAGE.into(),
+                    tree_sitter_go::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Java => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "java",
+                    tree_sitter_java::LANGUAGE.into(),
+                    tree_sitter_java::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::C => Some(Ok(HighlightLanguageConfig::new(
+                "c",
+                tree_sitter_c::LANGUAGE.into(),
+                tree_sitter_c::HIGHLIGHT_QUERY,
+            ))),
+            mcb_domain::ports::validation::LanguageId::Cpp => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "cpp",
+                    tree_sitter_cpp::LANGUAGE.into(),
+                    tree_sitter_cpp::HIGHLIGHT_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Swift => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "swift",
+                    tree_sitter_swift::LANGUAGE.into(),
+                    tree_sitter_swift::HIGHLIGHTS_QUERY,
+                )))
+            }
+            _unsupported_lang => None,
+        }
+    }
+
     /// Get language configuration for supported languages
     fn get_language_config(language: &str) -> Result<HighlightLanguageConfig, HighlightError> {
         let lang_id = mcb_domain::ports::validation::LanguageId::from_name(language)
             .ok_or_else(|| HighlightError::UnsupportedLanguage(language.to_owned()))?;
 
-        match lang_id {
-            mcb_domain::ports::validation::LanguageId::Rust => Ok(HighlightLanguageConfig::new(
-                "rust",
-                tree_sitter_rust::LANGUAGE.into(),
-                tree_sitter_rust::HIGHLIGHTS_QUERY,
-            )),
-            mcb_domain::ports::validation::LanguageId::Python => Ok(HighlightLanguageConfig::new(
-                "python",
-                tree_sitter_python::LANGUAGE.into(),
-                tree_sitter_python::HIGHLIGHTS_QUERY,
-            )),
-            mcb_domain::ports::validation::LanguageId::JavaScript => {
-                Ok(HighlightLanguageConfig::new(
-                    "javascript",
-                    tree_sitter_javascript::LANGUAGE.into(),
-                    tree_sitter_javascript::HIGHLIGHT_QUERY,
-                ))
-            }
-            mcb_domain::ports::validation::LanguageId::TypeScript => {
-                Ok(HighlightLanguageConfig::new(
-                    "typescript",
-                    tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
-                    tree_sitter_typescript::HIGHLIGHTS_QUERY,
-                ))
-            }
-            mcb_domain::ports::validation::LanguageId::Tsx => Ok(HighlightLanguageConfig::new(
-                "tsx",
-                tree_sitter_typescript::LANGUAGE_TSX.into(),
-                tree_sitter_typescript::HIGHLIGHTS_QUERY,
-            )),
-            mcb_domain::ports::validation::LanguageId::Go => Ok(HighlightLanguageConfig::new(
-                "go",
-                tree_sitter_go::LANGUAGE.into(),
-                tree_sitter_go::HIGHLIGHTS_QUERY,
-            )),
-            mcb_domain::ports::validation::LanguageId::Java => Ok(HighlightLanguageConfig::new(
-                "java",
-                tree_sitter_java::LANGUAGE.into(),
-                tree_sitter_java::HIGHLIGHTS_QUERY,
-            )),
-            mcb_domain::ports::validation::LanguageId::C => Ok(HighlightLanguageConfig::new(
-                "c",
-                tree_sitter_c::LANGUAGE.into(),
-                tree_sitter_c::HIGHLIGHT_QUERY,
-            )),
-            mcb_domain::ports::validation::LanguageId::Cpp => Ok(HighlightLanguageConfig::new(
-                "cpp",
-                tree_sitter_cpp::LANGUAGE.into(),
-                tree_sitter_cpp::HIGHLIGHT_QUERY,
-            )),
-            mcb_domain::ports::validation::LanguageId::Ruby => Ok(HighlightLanguageConfig::new(
-                "ruby",
-                tree_sitter_ruby::LANGUAGE.into(),
-                tree_sitter_ruby::HIGHLIGHTS_QUERY,
-            )),
-            mcb_domain::ports::validation::LanguageId::Php => Ok(HighlightLanguageConfig::new(
-                "php",
-                tree_sitter_php::LANGUAGE_PHP.into(),
-                tree_sitter_php::HIGHLIGHTS_QUERY,
-            )),
-            mcb_domain::ports::validation::LanguageId::Swift => Ok(HighlightLanguageConfig::new(
-                "swift",
-                tree_sitter_swift::LANGUAGE.into(),
-                tree_sitter_swift::HIGHLIGHTS_QUERY,
-            )),
-            _ => Err(HighlightError::UnsupportedLanguage(language.to_owned())),
+        if let Some(res) = Self::get_language_config_dynamic(&lang_id) {
+            return res;
         }
+
+        if let Some(res) = Self::get_language_config_static(&lang_id) {
+            return res;
+        }
+
+        Err(HighlightError::UnsupportedLanguage(language.to_owned()))
     }
 
     /// Create highlight configuration from language config
@@ -147,6 +187,42 @@ impl HighlightServiceImpl {
 
         config.configure(&HIGHLIGHT_NAMES);
         Ok(config)
+    }
+
+    fn parse_highlight_events(
+        highlights: impl Iterator<Item = Result<HighlightEvent, tree_sitter_highlight::Error>>,
+    ) -> Result<Vec<HighlightSpan>, HighlightError> {
+        let mut spans = Vec::new();
+        let mut position = 0;
+        let mut open_spans: Vec<(usize, &str)> = Vec::new();
+
+        for event in highlights {
+            match event {
+                Ok(HighlightEvent::Source { end, .. }) => {
+                    position = end;
+                }
+                Ok(HighlightEvent::HighlightStart(Highlight(highlight))) => {
+                    if let Some(class_name) = HIGHLIGHT_NAMES.get(highlight) {
+                        open_spans.push((position, class_name));
+                    }
+                }
+                Ok(HighlightEvent::HighlightEnd) => {
+                    if let Some((start, class_name)) = open_spans.pop() {
+                        let category = map_highlight_to_category(class_name);
+                        spans.push(HighlightSpan {
+                            start,
+                            end: position,
+                            category,
+                        });
+                    }
+                }
+                Err(e) => {
+                    return Err(HighlightError::HighlightingFailed(e.to_string()));
+                }
+            }
+        }
+
+        Ok(spans)
     }
 
     /// Highlight code using tree-sitter
@@ -178,35 +254,7 @@ impl HighlightServiceImpl {
             .highlight(&config, code.as_bytes(), None, |_: &str| None)
             .map_err(|e| HighlightError::HighlightingFailed(e.to_string()))?;
 
-        let mut spans = Vec::new();
-        let mut position = 0;
-        let mut open_spans: Vec<(usize, &str)> = Vec::new();
-
-        for event in highlights {
-            match event {
-                Ok(HighlightEvent::Source { end, .. }) => {
-                    position = end;
-                }
-                Ok(HighlightEvent::HighlightStart(Highlight(highlight))) => {
-                    if let Some(class_name) = HIGHLIGHT_NAMES.get(highlight) {
-                        open_spans.push((position, class_name));
-                    }
-                }
-                Ok(HighlightEvent::HighlightEnd) => {
-                    if let Some((start, class_name)) = open_spans.pop() {
-                        let category = map_highlight_to_category(class_name);
-                        spans.push(HighlightSpan {
-                            start,
-                            end: position,
-                            category,
-                        });
-                    }
-                }
-                Err(e) => {
-                    return Err(HighlightError::HighlightingFailed(e.to_string()));
-                }
-            }
-        }
+        let spans = Self::parse_highlight_events(highlights)?;
 
         Ok(HighlightedCode {
             original: code.to_owned(),

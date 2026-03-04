@@ -98,6 +98,7 @@ impl AstSelectorEngine {
         use mcb_domain::ports::validation::LanguageId;
 
         let id = LanguageId::from_name(language)?;
+        #[allow(clippy::wildcard_enum_match_arm)]
         match id {
             LanguageId::Rust => Some(tree_sitter_rust::LANGUAGE.into()),
             LanguageId::Python => Some(tree_sitter_python::LANGUAGE.into()),
@@ -106,7 +107,7 @@ impl AstSelectorEngine {
             LanguageId::Go => Some(tree_sitter_go::LANGUAGE.into()),
             LanguageId::Java => Some(tree_sitter_java::LANGUAGE.into()),
             LanguageId::Cpp => Some(tree_sitter_cpp::LANGUAGE.into()),
-            _ => None,
+            _other_lang => None,
         }
     }
 

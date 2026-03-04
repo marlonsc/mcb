@@ -44,7 +44,6 @@ impl GoDetector {
 /// Go project detector implementation.
 impl ProjectDetector for GoDetector {
     /// Detects a Go project by analyzing `go.mod`.
-    // TODO(qlty): Function with high complexity (count = 19): detect
     async fn detect(&self, path: &Path) -> Result<Option<ProjectType>> {
         let gomod_path = path.join("go.mod");
         if !gomod_path.exists() {

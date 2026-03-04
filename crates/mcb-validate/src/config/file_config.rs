@@ -123,6 +123,7 @@ impl FileConfig {
     /// Check if a validator is enabled
     #[must_use]
     pub fn is_validator_enabled(&self, name: &str) -> bool {
+        #[allow(clippy::type_complexity)]
         const CHECKS: &[(&str, fn(&ValidatorsConfig) -> bool)] = &[
             (VALIDATOR_DEPENDENCY, |c| c.dependency),
             (VALIDATOR_ORGANIZATION, |c| c.organization),

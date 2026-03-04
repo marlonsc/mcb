@@ -21,6 +21,31 @@ use mcb_utils::constants::use_cases::OBSERVATION_PREVIEW_LENGTH;
 use super::MemoryServiceImpl;
 
 impl MemoryServiceImpl {
+    async fn calculate_rrf_scores(
+        &self,
+        fts_results: &[mcb_domain::ports::FtsSearchResult],
+        vector_results: &[mcb_domain::value_objects::SearchResult],
+    ) -> HashMap<String, f32> {
+        let mut rrf_scores: HashMap<String, f32> = HashMap::new();
+
+        for (rank, fts_result) in fts_results.iter().enumerate() {
+            let score = RRF_SCORE_NUMERATOR / (RRF_K + rank as f32 + 1.0);
+            let key = fts_result.id.clone();
+            *rrf_scores.entry(key).or_default() += score;
+        }
+
+        for (rank, vec_result) in vector_results.iter().enumerate() {
+            let content_hash = compute_content_hash(&vec_result.content);
+            if let Ok(Some(obs)) = self.repository.find_by_hash(&content_hash).await {
+                let score = RRF_SCORE_NUMERATOR / (RRF_K + rank as f32 + 1.0);
+                let key = obs.id.clone();
+                *rrf_scores.entry(key).or_default() += score;
+            }
+        }
+
+        rrf_scores
+    }
+
     /// Search memories using hybrid FTS + vector search with RRF ranking.
     pub(crate) async fn search_memories_impl(
         &self,
@@ -58,22 +83,9 @@ impl MemoryServiceImpl {
             }
         };
 
-        let mut rrf_scores: HashMap<String, f32> = HashMap::new();
-
-        for (rank, fts_result) in fts_results.iter().enumerate() {
-            let score = RRF_SCORE_NUMERATOR / (RRF_K + rank as f32 + 1.0);
-            let key = fts_result.id.clone();
-            *rrf_scores.entry(key).or_default() += score;
-        }
-
-        for (rank, vec_result) in vector_results.iter().enumerate() {
-            let content_hash = compute_content_hash(&vec_result.content);
-            if let Ok(Some(obs)) = self.repository.find_by_hash(&content_hash).await {
-                let score = RRF_SCORE_NUMERATOR / (RRF_K + rank as f32 + 1.0);
-                let key = obs.id.clone();
-                *rrf_scores.entry(key).or_default() += score;
-            }
-        }
+        let rrf_scores = self
+            .calculate_rrf_scores(&fts_results, &vector_results)
+            .await;
 
         let mut ranked: Vec<(String, f32)> = rrf_scores.into_iter().collect();
         ranked.sort_by(|a, b| b.1.partial_cmp(&a.1).unwrap_or(std::cmp::Ordering::Equal));

@@ -38,11 +38,11 @@ define_violations! {
             test_name: String,
             severity: Severity,
         },
-        /// todo!() macro in test fixture without proper stub marker
+        /// `todo` macro in test fixture without proper stub marker
         #[violation(
             id = "TST002",
             severity = Warning,
-            message = "{file}:{line} - Function '{function_name}' in test fixture contains todo!() - implement or mark as intentional stub",
+            message = "{file}:{line} - Function '{function_name}' in test fixture contains incomplete stub - implement or mark as intentional stub",
             suggestion = "Implement the test fixture function or add comment: // Intentional stub for X"
         )]
         TodoInTestFixture {
@@ -246,7 +246,7 @@ impl TestQualityValidator {
         }
 
         for (i, line) in lines.iter().enumerate() {
-            if line.contains("todo!(") {
+            if line.contains("todo!") && line.contains('(') {
                 // Check if it's NOT marked as intentional stub
                 let has_stub_marker = i > 0 && {
                     let prev_line = lines[i - 1];

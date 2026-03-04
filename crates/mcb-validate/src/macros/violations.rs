@@ -104,6 +104,7 @@ macro_rules! define_violations {
         $display:tt,
         $severity_mode:ident,
         $category:expr,
+        $(#[$enum_meta:meta])*
         $vis:vis enum $name:ident {
             $(
                 $(#[doc = $doc:literal])*
@@ -112,14 +113,19 @@ macro_rules! define_violations {
             ),* $(,)?
         }
     ) => {
-        define_violations! {
-            @enum_def
-            $vis enum $name {
-                $(
-                    $(#[doc = $doc])*
-                    $variant { $( $field : $field_ty ),* }
-                ),*
-            }
+        $(#[$enum_meta])*
+        #[derive(Debug, Clone, serde::Serialize)]
+        #[doc = concat!("Violation types emitted by the [`", stringify!($name), "`] validator.")]
+        $vis enum $name {
+            $(
+                $(#[doc = $doc])*
+                $variant {
+                    $(
+                        #[doc = concat!(" `", stringify!($field), "` value.")]
+                        $field : $field_ty
+                    ),*
+                }
+            ),*
         }
 
         define_violations! {

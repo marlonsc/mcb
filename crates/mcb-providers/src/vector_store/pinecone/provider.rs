@@ -12,6 +12,25 @@ use serde_json::Value;
 
 use super::PineconeVectorStoreProvider;
 
+impl PineconeVectorStoreProvider {
+    async fn upsert_vector_batch(
+        &self,
+        collection_str: &str,
+        pinecone_vectors: &[Value],
+    ) -> Result<()> {
+        self.request(
+            reqwest::Method::POST,
+            "/vectors/upsert",
+            Some(serde_json::json!({
+                "vectors": pinecone_vectors,
+                "namespace": collection_str
+            })),
+        )
+        .await?;
+        Ok(())
+    }
+}
+
 #[async_trait]
 impl VectorStoreProvider for PineconeVectorStoreProvider {
     // --- Provider Methods ---
@@ -60,8 +79,8 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
                 metadata.len()
             )));
         }
-        let collection_str = collection.to_string();
 
+        let collection_str = collection.to_string();
         let mut ids = Vec::with_capacity(vectors.len());
         let mut pinecone_vectors = Vec::with_capacity(vectors.len());
         let batch_size = mcb_utils::constants::vector_store::PINECONE_UPSERT_BATCH_SIZE;
@@ -73,20 +92,11 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
                 "values": embedding.vector,
                 "metadata": meta
             }));
-            ids.push(id);
+            ids.push(id.clone());
 
-            // Pinecone has a batch size limit; upsert in chunks
             if pinecone_vectors.len() >= batch_size || i == vectors.len() - 1 {
-                self.request(
-                    reqwest::Method::POST,
-                    "/vectors/upsert",
-                    Some(serde_json::json!({
-                        "vectors": pinecone_vectors,
-                        "namespace": collection_str
-                    })),
-                )
-                .await?;
-
+                self.upsert_vector_batch(&collection_str, &pinecone_vectors)
+                    .await?;
                 pinecone_vectors.clear();
             }
         }

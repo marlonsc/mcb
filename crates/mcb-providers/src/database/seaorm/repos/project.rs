@@ -264,7 +264,7 @@ impl SeaOrmProjectRepository {
             }
 
             let models = project_dependency::Entity::find()
-                .filter(project_dependency::Column::FromIssueId.eq(current.clone()))
+                .filter(project_dependency::Column::FromIssueId.eq(current))
                 .order_by_asc(project_dependency::Column::CreatedAt)
                 .all(&self.db)
                 .await

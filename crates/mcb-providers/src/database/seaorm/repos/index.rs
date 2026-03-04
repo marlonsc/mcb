@@ -84,6 +84,35 @@ impl SeaOrmIndexRepository {
             _ => IndexingOperationStatus::Failed(format!("unknown status: {s}")),
         }
     }
+
+    async fn fail_active_operations_for_collection(
+        &self,
+        collection_str: &str,
+        now: i64,
+    ) -> Result<()> {
+        let active_ops = index_operation::Entity::find()
+            .filter(index_operation::Column::CollectionId.eq(collection_str))
+            .filter(index_operation::Column::Status.is_in([
+                mcb_utils::constants::INDEX_OP_STATUS_STARTING,
+                mcb_utils::constants::INDEX_OP_STATUS_IN_PROGRESS,
+            ]))
+            .all(self.db.as_ref())
+            .await
+            .map_err(db_error("find active ops for clear"))?;
+
+        for op in active_ops {
+            let mut active: index_operation::ActiveModel = op.into();
+            active.status = Set(Self::status_to_string(&IndexingOperationStatus::Failed(
+                "index cleared".to_owned(),
+            )));
+            active.completed_at = Set(Some(now));
+            active
+                .update(self.db.as_ref())
+                .await
+                .map_err(db_error("cancel active op during clear"))?;
+        }
+        Ok(())
+    }
 }
 
 impl From<index_operation::Model> for IndexingOperation {
@@ -273,28 +302,8 @@ impl IndexRepository for SeaOrmIndexRepository {
             .map_err(db_error("clear collection metadata"))?;
 
         // Mark any active operations for this collection as failed
-        let active_ops = index_operation::Entity::find()
-            .filter(index_operation::Column::CollectionId.eq(&collection_str))
-            .filter(index_operation::Column::Status.is_in([
-                mcb_utils::constants::INDEX_OP_STATUS_STARTING,
-                mcb_utils::constants::INDEX_OP_STATUS_IN_PROGRESS,
-            ]))
-            .all(self.db.as_ref())
-            .await
-            .map_err(db_error("find active ops for clear"))?;
-
-        let now = Self::now()?;
-        for op in active_ops {
-            let mut active: index_operation::ActiveModel = op.into();
-            active.status = Set(Self::status_to_string(&IndexingOperationStatus::Failed(
-                "index cleared".to_owned(),
-            )));
-            active.completed_at = Set(Some(now));
-            active
-                .update(self.db.as_ref())
-                .await
-                .map_err(db_error("cancel active op during clear"))?;
-        }
+        self.fail_active_operations_for_collection(&collection_str, Self::now()?)
+            .await?;
 
         Ok(count)
     }

@@ -129,7 +129,7 @@ impl EdgeVecActor {
         if let Some(collection_metadata) = self.get_collection_metadata(collection) {
             for id in ids {
                 if let Some(meta_val) = collection_metadata.get(&id) {
-                    final_results.push(search_result_from_json_metadata(id.clone(), meta_val, 1.0));
+                    final_results.push(search_result_from_json_metadata(id, meta_val, 1.0));
                 }
             }
         }
@@ -141,7 +141,7 @@ impl EdgeVecActor {
         if let Some(collection_metadata) = self.get_collection_metadata(collection) {
             for (ext_id, meta_val) in collection_metadata.iter().take(limit) {
                 final_results.push(search_result_from_json_metadata(
-                    ext_id.clone(),
+                    ext_id.to_owned(),
                     meta_val,
                     1.0,
                 ));
@@ -300,7 +300,7 @@ impl EdgeVecActor {
                         .is_some_and(|p| p.replace('\\', "/") == normalized_query)
                 {
                     let mut result =
-                        search_result_from_json_metadata(ext_id.clone(), meta_val, 1.0);
+                        search_result_from_json_metadata(ext_id.to_owned(), meta_val, 1.0);
                     result.file_path = file_path.to_owned();
                     results.push(result);
                 }

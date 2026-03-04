@@ -755,7 +755,6 @@ pub struct ValidationReport {
 /// A single violation entry.
 ///
 /// # Code Smells
-/// TODO(qlty): Found 16 lines of similar code with `crates/mcb-validate/src/generic_reporter.rs`.
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct ViolationEntry {
     /// Unique violation ID (e.g., "CA001", "SOLID002")

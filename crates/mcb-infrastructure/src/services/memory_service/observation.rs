@@ -25,6 +25,102 @@ impl MemoryServiceImpl {
     ///
     /// Deduplicates based on content hash. Returns the observation ID and a boolean
     /// indicating whether the input was deduplicated (`true` means duplicate content).
+    fn build_vector_metadata(
+        content: &str,
+        r#type: &ObservationType,
+        tags: &[String],
+        project_id: &str,
+        metadata: &ObservationMetadata,
+    ) -> HashMap<String, serde_json::Value> {
+        let mut vector_metadata = HashMap::new();
+        vector_metadata.insert(
+            METADATA_KEY_CONTENT.to_owned(),
+            serde_json::Value::String(content.to_owned()),
+        );
+        vector_metadata.insert(
+            METADATA_KEY_TYPE.to_owned(),
+            serde_json::Value::String(r#type.as_str().to_owned()),
+        );
+        vector_metadata.insert(METADATA_KEY_TAGS.to_owned(), serde_json::json!(tags));
+        vector_metadata.insert(
+            "project_id".to_owned(),
+            serde_json::Value::String(project_id.to_owned()),
+        );
+
+        if let Some(session_id) = &metadata.session_id {
+            vector_metadata.insert(
+                METADATA_KEY_SESSION_ID.to_owned(),
+                serde_json::Value::String(session_id.clone()),
+            );
+        }
+
+        vector_metadata.insert(
+            METADATA_KEY_FILE_PATH.to_owned(),
+            serde_json::Value::String(
+                metadata
+                    .file_path
+                    .clone()
+                    .unwrap_or_else(|| "memory".to_owned()),
+            ),
+        );
+        vector_metadata.insert(
+            METADATA_KEY_START_LINE.to_owned(),
+            serde_json::Value::Number(serde_json::Number::from(0)),
+        );
+
+        vector_metadata
+    }
+
+    async fn insert_into_vector_store(
+        &self,
+        content: &str,
+        r#type: &ObservationType,
+        tags: &[String],
+        project_id: &str,
+        metadata: &ObservationMetadata,
+        collection_id: &CollectionId,
+    ) -> Result<Vec<String>> {
+        let embedding = self.embedding_provider.embed(content).await?;
+        let vector_metadata =
+            Self::build_vector_metadata(content, r#type, tags, project_id, metadata);
+
+        self.vector_store
+            .insert_vectors(collection_id, &[embedding], vec![vector_metadata])
+            .await
+    }
+
+    async fn create_and_store_observation(
+        &self,
+        project_id: String,
+        content: String,
+        content_hash: String,
+        r#type: ObservationType,
+        tags: Vec<String>,
+        metadata: ObservationMetadata,
+        embedding_id: Option<String>,
+        collection_id: &CollectionId,
+        ids: &[String],
+    ) -> Result<String> {
+        let observation = Observation {
+            id: id::generate().to_string(),
+            project_id,
+            content,
+            content_hash,
+            tags,
+            r#type,
+            metadata,
+            created_at: domain_time::epoch_secs_i64()?,
+            embedding_id,
+        };
+
+        if let Err(err) = self.repository.store_observation(&observation).await {
+            let _ = self.vector_store.delete_vectors(collection_id, ids).await;
+            return Err(err);
+        }
+
+        Ok(observation.id)
+    }
+
     pub(crate) async fn store_observation_impl(
         &self,
         project_id: String,
@@ -45,73 +141,36 @@ impl MemoryServiceImpl {
             return Ok((existing.id, true));
         }
 
-        let embedding = self.embedding_provider.embed(&content).await?;
-
-        let mut vector_metadata = HashMap::new();
-        vector_metadata.insert(
-            METADATA_KEY_CONTENT.to_owned(),
-            serde_json::Value::String(content.clone()),
-        );
-        vector_metadata.insert(
-            METADATA_KEY_TYPE.to_owned(),
-            serde_json::Value::String(r#type.as_str().to_owned()),
-        );
-        vector_metadata.insert(METADATA_KEY_TAGS.to_owned(), serde_json::json!(tags));
-        vector_metadata.insert(
-            "project_id".to_owned(),
-            serde_json::Value::String(project_id.clone()),
-        );
-
-        if let Some(session_id) = &metadata.session_id {
-            vector_metadata.insert(
-                METADATA_KEY_SESSION_ID.to_owned(),
-                serde_json::Value::String(session_id.clone()),
-            );
-        }
-
-        // Vector stores (Milvus) require file_path and start_line columns
-        // for all vectors. For observations, use the origin file_path if available,
-        // otherwise default to "memory" sentinel so the insert doesn't fail.
-        vector_metadata.insert(
-            METADATA_KEY_FILE_PATH.to_owned(),
-            serde_json::Value::String(
-                metadata
-                    .file_path
-                    .clone()
-                    .unwrap_or_else(|| "memory".to_owned()),
-            ),
-        );
-        vector_metadata.insert(
-            METADATA_KEY_START_LINE.to_owned(),
-            serde_json::Value::Number(serde_json::Number::from(0)),
-        );
-
         let collection_id =
             CollectionId::from_uuid(id::deterministic("collection", MEMORY_COLLECTION_NAME));
+
         let ids = self
-            .vector_store
-            .insert_vectors(&collection_id, &[embedding], vec![vector_metadata])
+            .insert_into_vector_store(
+                &content,
+                &r#type,
+                &tags,
+                &project_id,
+                &metadata,
+                &collection_id,
+            )
             .await?;
 
         let embedding_id = ids.first().cloned();
 
-        let observation = Observation {
-            id: id::generate().to_string(),
-            project_id,
-            content,
-            content_hash,
-            tags,
-            r#type,
-            metadata,
-            created_at: domain_time::epoch_secs_i64()?,
-            embedding_id,
-        };
+        let id = self
+            .create_and_store_observation(
+                project_id,
+                content,
+                content_hash,
+                r#type,
+                tags,
+                metadata,
+                embedding_id,
+                &collection_id,
+                &ids,
+            )
+            .await?;
 
-        if let Err(err) = self.repository.store_observation(&observation).await {
-            let _ = self.vector_store.delete_vectors(&collection_id, &ids).await;
-            return Err(err);
-        }
-
-        Ok((observation.id, false))
+        Ok((id, false))
     }
 }

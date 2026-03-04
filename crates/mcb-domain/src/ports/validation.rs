@@ -546,8 +546,7 @@ impl LanguageId {
         Self::LANGUAGE_DATA
             .iter()
             .find(|d| d.id == *self)
-            .map(|d| d.name)
-            .unwrap_or("unknown")
+            .map_or("unknown", |d| d.name)
     }
 
     /// Get typical file extensions associated with this language.
@@ -556,8 +555,7 @@ impl LanguageId {
         Self::LANGUAGE_DATA
             .iter()
             .find(|d| d.id == *self)
-            .map(|d| d.extensions)
-            .unwrap_or(&[])
+            .map_or(&[], |d| d.extensions)
     }
 
     /// Resolve a language ID from its human-readable name or alias.
