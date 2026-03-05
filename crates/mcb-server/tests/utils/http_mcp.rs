@@ -10,11 +10,13 @@
 use std::sync::Arc;
 
 use axum::http::StatusCode;
-use mcb_domain::protocol::{McpError, McpRequest, McpResponse};
+use mcb_domain::protocol::{JSONRPC_VERSION, McpError, McpRequest, McpResponse};
 use mcb_domain::test_utils::TestResult;
 use mcb_server::McpServer;
 use mcb_server::tools::create_tool_list;
 use mcb_server::tools::{ToolExecutionContext, route_tool_call};
+use mcb_utils::constants::headers::HEADER_WORKSPACE_ROOT;
+use mcb_utils::constants::protocol::HTTP_HEADER_EXECUTION_FLOW;
 use rmcp::model::CallToolRequestParams;
 use tempfile::TempDir;
 
@@ -74,7 +76,7 @@ pub async fn post_mcp(
             Ok((
                 StatusCode::OK,
                 McpResponse {
-                    jsonrpc: "2.0".to_owned(),
+                    jsonrpc: JSONRPC_VERSION.to_owned(),
                     result: Some(result),
                     error: None,
                     id: request.id.clone(),
@@ -97,7 +99,7 @@ pub async fn post_mcp(
             Ok((
                 StatusCode::OK,
                 McpResponse {
-                    jsonrpc: "2.0".to_owned(),
+                    jsonrpc: JSONRPC_VERSION.to_owned(),
                     result: Some(result),
                     error: None,
                     id: request.id.clone(),
@@ -133,10 +135,10 @@ pub async fn post_mcp(
 
             // Propagate X-Execution-Flow and X-Workspace-Root headers
             let mut exec_ctx = ToolExecutionContext::default();
-            if let Some(flow) = header_value(headers, "X-Execution-Flow") {
+            if let Some(flow) = header_value(headers, HTTP_HEADER_EXECUTION_FLOW) {
                 exec_ctx.execution_flow = Some(flow.to_owned());
             }
-            if let Some(root) = header_value(headers, "X-Workspace-Root") {
+            if let Some(root) = header_value(headers, HEADER_WORKSPACE_ROOT) {
                 exec_ctx.repo_path = Some(root.to_owned());
             }
 
@@ -145,13 +147,13 @@ pub async fn post_mcp(
 
             let mcp_response = match response {
                 Ok(result) => McpResponse {
-                    jsonrpc: "2.0".to_owned(),
+                    jsonrpc: JSONRPC_VERSION.to_owned(),
                     result: Some(serde_json::to_value(&result)?),
                     error: None,
                     id: request.id.clone(),
                 },
                 Err(err) => McpResponse {
-                    jsonrpc: "2.0".to_owned(),
+                    jsonrpc: JSONRPC_VERSION.to_owned(),
                     result: None,
                     error: Some(McpError {
                         code: err.code.0,
@@ -167,7 +169,7 @@ pub async fn post_mcp(
         other => Ok((
             StatusCode::OK,
             McpResponse {
-                jsonrpc: "2.0".to_owned(),
+                jsonrpc: JSONRPC_VERSION.to_owned(),
                 result: None,
                 error: Some(McpError {
                     code: -32601,

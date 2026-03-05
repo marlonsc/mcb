@@ -21,7 +21,34 @@ impl VectorStoreAdmin for PineconeVectorStoreProvider {
 
     async fn collection_exists(&self, name: &CollectionId) -> Result<bool> {
         let name_str = name.to_string();
-        Ok(self.collections.contains_key(&name_str))
+
+        // Check in-memory cache first for fast path
+        if self.collections.contains_key(&name_str) {
+            return Ok(true);
+        }
+
+        // Query Pinecone to check if the namespace exists remotely.
+        // `/describe_index_stats` returns all namespaces in the index.
+        match self
+            .request(
+                reqwest::Method::POST,
+                "/describe_index_stats",
+                Some(serde_json::json!({ "filter": {} })),
+            )
+            .await
+        {
+            Ok(data) => {
+                let exists = data
+                    .get("namespaces")
+                    .and_then(Value::as_object)
+                    .is_some_and(|ns| ns.contains_key(&name_str));
+                Ok(exists)
+            }
+            Err(_) => {
+                // If we can't reach Pinecone, fall back to the in-memory cache
+                Ok(false)
+            }
+        }
     }
 
     async fn get_stats(&self, collection: &CollectionId) -> Result<HashMap<String, Value>> {

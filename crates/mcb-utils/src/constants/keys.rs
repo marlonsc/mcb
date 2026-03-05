@@ -6,8 +6,6 @@
 //! Contains column names and other schema-related constants that are used
 //! across the domain, infrastructure, and server layers.
 
-use super::define_str_consts;
-
 // ============================================================================
 // Column / Field Names (macro-generated)
 // ============================================================================

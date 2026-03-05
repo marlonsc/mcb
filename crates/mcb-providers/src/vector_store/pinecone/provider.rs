@@ -198,7 +198,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
     ) -> Result<Vec<SearchResult>> {
         // Pinecone doesn't support listing; use zero vector search as workaround
         let collection_str = collection.to_string();
-        let dimensions = self.collection_dimensions(&collection_str);
+        let dimensions = self.collection_dimensions(&collection_str)?;
 
         let zero_vector = vec![0.0f32; dimensions];
         self.search_similar(collection, &zero_vector, limit, None)

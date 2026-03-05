@@ -126,9 +126,9 @@ impl SearchHandler {
             }
             Err(e) => {
                 tracing::info!(
-                    "Vector search failed for '{}', attempting hybrid fallback: {}",
-                    collection_name,
-                    e
+                    collection = collection_name,
+                    error = %e,
+                    "Vector search failed, attempting hybrid fallback"
                 );
                 self.trigger_auto_indexing(args.repo_path.as_deref(), collection_id);
                 self.hybrid_fallback_or_error(collection_name, query, limit, timer, e)
@@ -151,9 +151,9 @@ impl SearchHandler {
         {
             Ok(enhanced) if !enhanced.is_empty() => {
                 tracing::info!(
-                    "Hybrid search enhanced {} results for collection '{}'",
-                    enhanced.len(),
-                    collection_name
+                    collection = collection_name,
+                    count = enhanced.len(),
+                    "Hybrid search enhanced results"
                 );
                 enhanced
             }
@@ -171,9 +171,12 @@ impl SearchHandler {
             if path.is_dir() {
                 let indexing = Arc::clone(&self.indexing_service);
                 tokio::spawn(async move {
-                    tracing::info!("Auto-indexing triggered for '{}'", collection_id.as_str());
+                    tracing::info!(
+                        collection = collection_id.as_str(),
+                        "Auto-indexing triggered"
+                    );
                     if let Err(idx_err) = indexing.index_codebase(&path, &collection_id).await {
-                        tracing::warn!("Auto-indexing failed (non-fatal): {idx_err}");
+                        tracing::warn!(error = %idx_err, "Auto-indexing failed (non-fatal)");
                     }
                 });
             }

@@ -19,6 +19,10 @@
 //! - **Pure utilities** — no business logic, no entity definitions
 //! - **Self-contained error types** — `UtilsError` with `thiserror`, converted via `From` in consumers
 
+/// Crate-internal macros (must precede consumers).
+#[macro_use]
+mod macros;
+
 /// Workspace-wide constants.
 pub mod constants;
 /// Utility error types.

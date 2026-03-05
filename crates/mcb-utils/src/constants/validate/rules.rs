@@ -1,6 +1,5 @@
 //! YAML rule field names, GRL keywords, engine types, and rule defaults.
 
-use super::super::define_str_consts;
 use super::super::values::TAG_QUALITY;
 
 // ============================================================================

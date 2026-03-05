@@ -17,6 +17,7 @@ use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
 use mcb_server::build_mcp_server_bootstrap;
+use mcb_server::state::McbState;
 use mcb_server::tools::ExecutionFlow;
 use mcb_server::transport::stdio::StdioServerExt;
 use rmcp::transport::streamable_http_server::{
@@ -180,12 +181,65 @@ impl Initializer for McpServerInitializer {
             },
         );
 
-        // Web UI routes (served at root, not under /api)
-        let ui_routes = axum::Router::new()
+        // Public routes — no auth required (static assets + redirect)
+        let public_routes = axum::Router::new()
             .route(
                 "/",
                 axum::routing::get(|| async { axum::response::Redirect::temporary("/ui/") }),
             )
+            .route(
+                "/favicon.ico",
+                axum::routing::get(|| async {
+                    (
+                        [(axum::http::header::CONTENT_TYPE, "image/svg+xml")],
+                        include_str!("../../../../assets/admin/favicon.svg"),
+                    )
+                }),
+            )
+            .route(
+                "/ui/theme.css",
+                axum::routing::get(|| async {
+                    (
+                        [(axum::http::header::CONTENT_TYPE, "text/css")],
+                        include_str!("../../../../assets/admin/ui/theme.css"),
+                    )
+                }),
+            )
+            .route(
+                "/ui/shared.js",
+                axum::routing::get(|| async {
+                    (
+                        [(axum::http::header::CONTENT_TYPE, "application/javascript")],
+                        include_str!("../../../../assets/admin/ui/shared.js"),
+                    )
+                }),
+            );
+
+        // Admin auth middleware — enforces API-key auth on protected routes.
+        // Capture state directly to avoid dependency on Extension layer ordering.
+        let settings_for_middleware = ctx.config.settings.clone();
+        let state_for_middleware = mcb_state.clone();
+        let admin_auth_middleware = axum::middleware::from_fn(
+            move |req: axum::http::Request<axum::body::Body>, next: axum::middleware::Next| {
+                let settings = settings_for_middleware.clone();
+                let state = state_for_middleware.clone();
+                async move {
+                    if let Err(_e) = mcb_server::auth::authorize_admin_api_key(
+                        state.auth_repo.as_ref(),
+                        req.headers(),
+                        settings.as_ref(),
+                    )
+                    .await
+                    {
+                        return Err(axum::http::StatusCode::UNAUTHORIZED);
+                    }
+                    Ok(next.run(req).await)
+                }
+            },
+        );
+
+        // Protected routes — require admin API-key auth
+        let protected_routes = axum::Router::new()
             .route(
                 "/ui",
                 axum::routing::get(mcb_server::controllers::web::dashboard),
@@ -230,37 +284,13 @@ impl Initializer for McpServerInitializer {
                 "/config",
                 axum::routing::get(mcb_server::controllers::admin::config),
             )
-            // Static file routes for assets at root level
-            .route(
-                "/favicon.ico",
-                axum::routing::get(|| async {
-                    (
-                        [(axum::http::header::CONTENT_TYPE, "image/svg+xml")],
-                        include_str!("../../../../assets/admin/favicon.svg"),
-                    )
-                }),
-            )
-            .route(
-                "/ui/theme.css",
-                axum::routing::get(|| async {
-                    (
-                        [(axum::http::header::CONTENT_TYPE, "text/css")],
-                        include_str!("../../../../assets/admin/ui/theme.css"),
-                    )
-                }),
-            )
-            .route(
-                "/ui/shared.js",
-                axum::routing::get(|| async {
-                    (
-                        [(axum::http::header::CONTENT_TYPE, "application/javascript")],
-                        include_str!("../../../../assets/admin/ui/shared.js"),
-                    )
-                }),
-            );
+            .layer(admin_auth_middleware);
 
-        // Merge UI routes first, then apply Extension layer so all routes get McbState
-        let router = router.merge(ui_routes).layer(Extension(mcb_state));
+        // Merge public + protected routes, then apply Extension layer so all routes get McbState
+        let router = router
+            .merge(public_routes)
+            .merge(protected_routes)
+            .layer(Extension(mcb_state));
         let mcp_routes = axum::Router::new().nest_service("/mcp", mcp_service);
 
         // 404 fallback handler for unknown routes

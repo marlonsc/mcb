@@ -28,7 +28,7 @@ use crate::error::{Error, Result};
 use crate::registry::config::{ConfigProviderConfig, resolve_config_provider};
 
 /// Default configuration provider name.
-pub const DEFAULT_PROVIDER: &str = mcb_utils::constants::DEFAULT_CONFIG_PROVIDER;
+pub use mcb_utils::constants::DEFAULT_CONFIG_PROVIDER as DEFAULT_PROVIDER;
 
 /// Load application configuration via CA/DI registry.
 ///

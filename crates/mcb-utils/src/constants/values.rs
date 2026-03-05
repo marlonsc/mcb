@@ -58,6 +58,9 @@ pub const MS_PER_SEC: i64 = 1000;
 /// Default language identifier when language cannot be determined
 pub const DEFAULT_LANGUAGE: &str = "unknown";
 
+/// Generic "unknown" fallback for non-language contexts (model ID, project name, etc.).
+pub const FALLBACK_UNKNOWN: &str = "unknown";
+
 // ============================================================================
 // PROVIDER DEFAULTS
 // ============================================================================

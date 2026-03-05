@@ -17,3 +17,12 @@ pub const HTTP_HEADER_EXECUTION_FLOW: &str = "X-Execution-Flow";
 
 /// Execution flow mode: client-hybrid.
 pub const EXECUTION_FLOW_HYBRID: &str = "client-hybrid";
+
+/// Execution flow mode: stdio-only.
+pub const EXECUTION_FLOW_STDIO_ONLY: &str = "stdio-only";
+
+/// Execution flow mode: server-hybrid.
+pub const EXECUTION_FLOW_SERVER_HYBRID: &str = "server-hybrid";
+
+/// MCP server display name.
+pub const SERVER_NAME: &str = "MCP Context Browser";

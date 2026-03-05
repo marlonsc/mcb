@@ -14,11 +14,40 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
     // --- Browser Methods ---
 
     async fn list_collections(&self) -> Result<Vec<CollectionInfo>> {
-        let collections: Vec<CollectionInfo> = self
-            .collections
-            .iter()
-            .map(|entry| CollectionInfo::new(entry.key(), 0, 0, None, self.provider_name()))
-            .collect();
+        // Query Pinecone to get the authoritative list of namespaces.
+        // `/describe_index_stats` returns all namespaces in the index.
+        let response = self
+            .request(
+                reqwest::Method::POST,
+                "/describe_index_stats",
+                Some(serde_json::json!({ "filter": {} })),
+            )
+            .await?;
+
+        let collections = response
+            .get("namespaces")
+            .and_then(serde_json::Value::as_object)
+            .map(|namespaces| {
+                namespaces
+                    .keys()
+                    .map(|name| {
+                        let vector_count = namespaces
+                            .get(name)
+                            .and_then(|ns| ns.get("vectorCount"))
+                            .and_then(serde_json::Value::as_u64)
+                            .unwrap_or(0);
+                        CollectionInfo::new(
+                            name,
+                            vector_count as usize,
+                            0,
+                            None,
+                            self.provider_name(),
+                        )
+                    })
+                    .collect()
+            })
+            .unwrap_or_default();
+
         Ok(collections)
     }
 

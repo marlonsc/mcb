@@ -48,9 +48,7 @@ pub fn extract_text(content: &[serde_json::Value]) -> String {
 /// Returns an error if any item fails JSON serialization; no items are
 /// silently skipped.
 #[must_use]
-pub fn extract_text_from<T: Serialize>(
-    content: &[T],
-) -> Result<String, serde_json::Error> {
+pub fn extract_text_from<T: Serialize>(content: &[T]) -> Result<String, serde_json::Error> {
     let mut values = Vec::with_capacity(content.len());
 
     for c in content {

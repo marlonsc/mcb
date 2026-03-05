@@ -35,14 +35,7 @@ pub fn dispatch(
 
 /// Sets the minimum log level for stderr output.
 pub fn set_stderr_log_level(level: LogLevel) {
-    let mapped = match level {
-        LogLevel::Error => 0,
-        LogLevel::Warn => 1,
-        LogLevel::Info => 2,
-        LogLevel::Debug => 3,
-        LogLevel::Trace => 4,
-    };
-    STDERR_LOG_LEVEL.store(mapped, Ordering::Relaxed);
+    STDERR_LOG_LEVEL.store(level_to_u8(level), Ordering::Relaxed);
 }
 
 fn level_to_u8(level: LogLevel) -> u8 {

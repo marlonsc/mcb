@@ -1,6 +1,5 @@
 //! Severity levels, categories, and validator names.
 
-use super::super::define_str_consts;
 use super::super::values::{
     TAG_ARCHITECTURE, TAG_ASYNC, TAG_DOCUMENTATION, TAG_NAMING, TAG_ORGANIZATION, TAG_PERFORMANCE,
     TAG_QUALITY, TAG_SOLID,

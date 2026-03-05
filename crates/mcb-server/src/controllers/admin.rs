@@ -1,5 +1,6 @@
 use crate::{controllers::admin_config::load_admin_config, state::McbState};
 use axum::extract::Extension;
+use axum::http::HeaderMap;
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -29,8 +30,18 @@ fn datum(key: String, val: i64) -> Datum {
 ///
 /// # Errors
 ///
-/// Fails when config cannot be loaded or serialized.
-pub async fn config(Extension(_state): Extension<McbState>) -> Result<Response> {
+/// Fails when config cannot be loaded or serialized, or when auth fails.
+pub async fn config(
+    State(ctx): State<AppContext>,
+    headers: HeaderMap,
+    Extension(state): Extension<McbState>,
+) -> Result<Response> {
+    crate::auth::authorize_admin_api_key(
+        state.auth_repo.as_ref(),
+        &headers,
+        ctx.config.settings.as_ref(),
+    )
+    .await?;
     format::json(load_admin_config()?)
 }
 
@@ -38,11 +49,19 @@ pub async fn config(Extension(_state): Extension<McbState>) -> Result<Response> 
 ///
 /// # Errors
 ///
-/// Fails when the dashboard port fails or graph is unknown.
+/// Fails when the dashboard port fails or graph is unknown, or when auth fails.
 pub async fn dashboard(
+    State(ctx): State<AppContext>,
+    headers: HeaderMap,
     Extension(state): Extension<McbState>,
     Json(body): Json<DashboardBody>,
 ) -> Result<Response> {
+    crate::auth::authorize_admin_api_key(
+        state.auth_repo.as_ref(),
+        &headers,
+        ctx.config.settings.as_ref(),
+    )
+    .await?;
     let limit = body
         .limit
         .unwrap_or(mcb_utils::constants::DEFAULT_DASHBOARD_LIMIT);

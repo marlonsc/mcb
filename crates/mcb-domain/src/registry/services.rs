@@ -47,25 +47,7 @@ fn find_builder(name: &str) -> Result<ServiceBuilder> {
         .ok_or_else(|| Error::internal(format!("No service provider found for '{name}'")))
 }
 
-macro_rules! resolve_service {
-    ($fn_name:ident, $const_expr:expr, $variant:ident, $trait_obj:ty) => {
-        /// Resolve a service by name from the registry.
-        ///
-        /// # Errors
-        ///
-        /// Returns an error if the service provider is not registered or has the wrong variant.
-        pub fn $fn_name(context: &dyn std::any::Any) -> Result<std::sync::Arc<$trait_obj>> {
-            match find_builder($const_expr)? {
-                ServiceBuilder::$variant(build) => build(context),
-                _ => Err(Error::internal(format!(
-                    "Service provider '{}' is not a {} builder",
-                    $const_expr,
-                    stringify!($variant)
-                ))),
-            }
-        }
-    };
-}
+// `resolve_service!` macro is defined in `crate::macros::services` and available via `#[macro_use]`.
 
 resolve_service!(
     resolve_context_service,

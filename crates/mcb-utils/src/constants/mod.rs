@@ -14,8 +14,12 @@ pub mod display;
 pub mod embedding;
 /// Event bus and messaging constants.
 pub mod events;
+/// Custom HTTP header name constants for execution context / provenance.
+pub mod headers;
 /// HTTP constants.
 pub mod http;
+/// IDE / Agent program identifier constants.
+pub mod ide;
 /// I/O and buffer size constants.
 pub mod io;
 /// Key name constants.
@@ -45,12 +49,4 @@ pub mod vector_store;
 /// Re-export all values for convenience.
 pub use values::*;
 
-/// Batch-define `pub const` string constants with optional doc comments.
-///
-/// Used by sub-modules to reduce boilerplate in constant definitions.
-macro_rules! define_str_consts {
-    ($($(#[doc = $doc:literal])? $name:ident = $val:literal;)*) => {
-        $($(#[doc = $doc])? pub const $name: &str = $val;)*
-    };
-}
-pub(crate) use define_str_consts;
+// `define_str_consts!` macro is defined in `crate::macros` and available via `#[macro_use]`.

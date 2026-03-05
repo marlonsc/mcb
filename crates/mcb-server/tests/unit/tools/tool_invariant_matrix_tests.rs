@@ -11,6 +11,11 @@ use crate::utils::http_mcp::{McpTestContext, post_mcp_str};
 use crate::utils::test_fixtures::create_test_mcp_server;
 use mcb_domain::test_http_mcp::tools_call_request;
 use mcb_domain::test_utils::TestResult;
+use mcb_utils::constants::headers::HEADER_WORKSPACE_ROOT;
+use mcb_utils::constants::protocol::{
+    EXECUTION_FLOW_HYBRID, EXECUTION_FLOW_SERVER_HYBRID, EXECUTION_FLOW_STDIO_ONLY,
+    HTTP_HEADER_EXECUTION_FLOW,
+};
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
     server.tool_handlers()
@@ -40,7 +45,7 @@ fn full_provenance_context() -> ToolExecutionContext {
         model_id: Some("model-test".to_owned()),
         delegated: Some(false),
         timestamp: Some(1700000000),
-        execution_flow: Some("stdio-only".to_owned()),
+        execution_flow: Some(EXECUTION_FLOW_STDIO_ONLY.to_owned()),
     }
 }
 
@@ -151,8 +156,8 @@ async fn client_hybrid_allows_server_side_tools(
     let ctx = McpTestContext::new().await?;
     let request = tools_call_request(tool_name);
     let headers = [
-        ("X-Workspace-Root", "/tmp"),
-        ("X-Execution-Flow", "client-hybrid"),
+        (HEADER_WORKSPACE_ROOT, "/tmp"),
+        (HTTP_HEADER_EXECUTION_FLOW, EXECUTION_FLOW_HYBRID),
     ];
     let (status, response) = post_mcp_str(&ctx, &request, &headers).await?;
 
@@ -176,8 +181,8 @@ async fn server_hybrid_blocks_validate() -> Result<(), Box<dyn std::error::Error
     let ctx = McpTestContext::new().await?;
     let request = tools_call_request("validate");
     let headers = [
-        ("X-Workspace-Root", "/tmp"),
-        ("X-Execution-Flow", "server-hybrid"),
+        (HEADER_WORKSPACE_ROOT, "/tmp"),
+        (HTTP_HEADER_EXECUTION_FLOW, EXECUTION_FLOW_SERVER_HYBRID),
     ];
     let (status, response) = post_mcp_str(&ctx, &request, &headers).await?;
 

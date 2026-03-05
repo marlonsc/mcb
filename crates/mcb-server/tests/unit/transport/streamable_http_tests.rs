@@ -1,19 +1,23 @@
 use axum::http::{HeaderMap, HeaderValue};
 use mcb_server::transport::streamable_http::{build_overrides, extract_override};
+use mcb_utils::constants::headers::{HEADER_REPO_PATH, HEADER_SESSION_ID, HEADER_WORKSPACE_ROOT};
 use rstest::rstest;
 
 #[rstest]
 fn test_extract_override_present() {
     let mut headers = HeaderMap::new();
-    headers.insert("X-Workspace-Root", HeaderValue::from_static("/workspace"));
-    let result = extract_override(&headers, "X-Workspace-Root");
+    headers.insert(
+        HEADER_WORKSPACE_ROOT,
+        HeaderValue::from_static("/workspace"),
+    );
+    let result = extract_override(&headers, HEADER_WORKSPACE_ROOT);
     assert_eq!(result, Some("/workspace".to_owned()));
 }
 
 #[rstest]
 fn test_extract_override_missing() {
     let headers = HeaderMap::new();
-    let result = extract_override(&headers, "X-Workspace-Root");
+    let result = extract_override(&headers, HEADER_WORKSPACE_ROOT);
     assert_eq!(result, None);
 }
 
@@ -21,19 +25,22 @@ fn test_extract_override_missing() {
 fn test_extract_override_whitespace_trimmed() {
     let mut headers = HeaderMap::new();
     headers.insert(
-        "X-Workspace-Root",
+        HEADER_WORKSPACE_ROOT,
         HeaderValue::from_static("  /workspace  "),
     );
-    let result = extract_override(&headers, "X-Workspace-Root");
+    let result = extract_override(&headers, HEADER_WORKSPACE_ROOT);
     assert_eq!(result, Some("/workspace".to_owned()));
 }
 
 #[rstest]
 fn test_build_overrides_multiple_headers() {
     let mut headers = HeaderMap::new();
-    headers.insert("X-Workspace-Root", HeaderValue::from_static("/workspace"));
-    headers.insert("X-Repo-Path", HeaderValue::from_static("/repo"));
-    headers.insert("X-Session-Id", HeaderValue::from_static("sess-123"));
+    headers.insert(
+        HEADER_WORKSPACE_ROOT,
+        HeaderValue::from_static("/workspace"),
+    );
+    headers.insert(HEADER_REPO_PATH, HeaderValue::from_static("/repo"));
+    headers.insert(HEADER_SESSION_ID, HeaderValue::from_static("sess-123"));
 
     let overrides = build_overrides(&headers);
     assert_eq!(

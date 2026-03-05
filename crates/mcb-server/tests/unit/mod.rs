@@ -4,10 +4,8 @@
 extern crate mcb_infrastructure;
 extern crate mcb_providers;
 extern crate mcb_validate;
-#[allow(unused_imports)]
-use mcb_infrastructure::infrastructure::events::BroadcastEventBus; // linkme force-link
-#[allow(unused_imports)]
-use mcb_providers::database::seaorm::migration::Migrator; // linkme force-link
+use mcb_infrastructure::infrastructure::events::BroadcastEventBus as _; // linkme force-link
+use mcb_providers::database::seaorm::migration::Migrator as _; // linkme force-link
 
 /// Shared test utilities.
 #[path = "../utils/mod.rs"]

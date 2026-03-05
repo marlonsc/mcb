@@ -78,50 +78,5 @@ pub fn should_run_docker_integration_tests() -> bool {
     }
 }
 
-/// Skip test if service is not available or if in CI.
-///
-/// # Example
-/// ```ignore
-/// skip_if_service_unavailable!("Milvus", is_milvus_available());
-/// ```
-#[macro_export]
-macro_rules! skip_if_service_unavailable {
-    ($service:expr, $is_available:expr) => {
-        if !$crate::utils::tests::service_detection::should_run_docker_integration_tests() {
-            println!("⊘ SKIPPED: Docker integration tests disabled in this environment");
-            return;
-        }
-        if !$is_available {
-            println!(
-                "⊘ SKIPPED: {} service not available (skipping test)",
-                $service
-            );
-            return;
-        }
-    };
-}
-
-/// Skip test if any required services are unavailable.
-///
-/// # Example
-/// ```ignore
-/// skip_if_any_service_unavailable!("Milvus" => is_milvus_available(), "Ollama" => is_ollama_available());
-/// ```
-#[macro_export]
-macro_rules! skip_if_any_service_unavailable {
-    ($($service:expr => $is_available:expr),+ $(,)?) => {
-        if !$crate::utils::tests::service_detection::should_run_docker_integration_tests() {
-            println!("⊘ SKIPPED: Docker integration tests disabled in this environment");
-            return;
-        }
-        $(
-            if !$is_available {
-                println!(
-                    "⊘ SKIPPED: {} service not available (skipping test)",
-                    $service
-                );
-                return;
-            }
-        )+
-    };
-}
+// `skip_if_service_unavailable!` and `skip_if_any_service_unavailable!` macros
+// are defined in `crate::macros::testing` and available via `#[macro_export]`.

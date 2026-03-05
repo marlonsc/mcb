@@ -1,5 +1,7 @@
 use axum::http::StatusCode;
 use mcb_domain::protocol::{JSONRPC_VERSION, McpRequest, McpResponse};
+use mcb_utils::constants::headers::*;
+use mcb_utils::constants::protocol::{EXECUTION_FLOW_HYBRID, HTTP_HEADER_EXECUTION_FLOW};
 use serde_json::{Value, json};
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp};
@@ -22,21 +24,30 @@ pub fn workspace_root() -> String {
 pub fn bridge_headers() -> Vec<(String, String)> {
     let root = workspace_root();
     vec![
-        ("X-Workspace-Root".to_owned(), root.clone()),
-        ("X-Repo-Path".to_owned(), root),
-        ("X-Repo-Id".to_owned(), "contract-test-repo".to_owned()),
+        (HEADER_WORKSPACE_ROOT.to_owned(), root.clone()),
+        (HEADER_REPO_PATH.to_owned(), root),
+        (HEADER_REPO_ID.to_owned(), "contract-test-repo".to_owned()),
         (
-            "X-Session-Id".to_owned(),
+            HEADER_SESSION_ID.to_owned(),
             "00000000-0000-0000-0000-000000000001".to_owned(),
         ),
-        ("X-Project-Id".to_owned(), "project-contract".to_owned()),
-        ("X-Worktree-Id".to_owned(), "worktree-contract".to_owned()),
-        ("X-Operator-Id".to_owned(), "operator-contract".to_owned()),
-        ("X-Machine-Id".to_owned(), "machine-contract".to_owned()),
-        ("X-Agent-Program".to_owned(), "contract-suite".to_owned()),
-        ("X-Model-Id".to_owned(), "snapshot-model".to_owned()),
-        ("X-Delegated".to_owned(), "false".to_owned()),
-        ("X-Execution-Flow".to_owned(), "client-hybrid".to_owned()),
+        (HEADER_PROJECT_ID.to_owned(), "project-contract".to_owned()),
+        (
+            HEADER_WORKTREE_ID.to_owned(),
+            "worktree-contract".to_owned(),
+        ),
+        (
+            HEADER_OPERATOR_ID.to_owned(),
+            "operator-contract".to_owned(),
+        ),
+        (HEADER_MACHINE_ID.to_owned(), "machine-contract".to_owned()),
+        (HEADER_AGENT_PROGRAM.to_owned(), "contract-suite".to_owned()),
+        (HEADER_MODEL_ID.to_owned(), "snapshot-model".to_owned()),
+        (HEADER_DELEGATED.to_owned(), "false".to_owned()),
+        (
+            HTTP_HEADER_EXECUTION_FLOW.to_owned(),
+            EXECUTION_FLOW_HYBRID.to_owned(),
+        ),
     ]
 }
 

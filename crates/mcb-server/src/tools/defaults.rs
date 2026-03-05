@@ -9,6 +9,13 @@ use std::str::FromStr;
 use uuid::Uuid;
 
 use mcb_domain::ports::VcsProvider;
+use mcb_utils::constants::FALLBACK_UNKNOWN;
+use mcb_utils::constants::ide::{
+    IDE_CLAUDE_CODE, IDE_CURSOR, IDE_MCB_STDIO, IDE_OPENCODE, IDE_VSCODE,
+};
+use mcb_utils::constants::protocol::{
+    EXECUTION_FLOW_HYBRID, EXECUTION_FLOW_SERVER_HYBRID, EXECUTION_FLOW_STDIO_ONLY,
+};
 
 /// Valid execution flow modes for MCP tool dispatch.
 ///
@@ -29,9 +36,9 @@ impl ExecutionFlow {
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
-            Self::StdioOnly => "stdio-only",
-            Self::ClientHybrid => "client-hybrid",
-            Self::ServerHybrid => "server-hybrid",
+            Self::StdioOnly => EXECUTION_FLOW_STDIO_ONLY,
+            Self::ClientHybrid => EXECUTION_FLOW_HYBRID,
+            Self::ServerHybrid => EXECUTION_FLOW_SERVER_HYBRID,
         }
     }
 }
@@ -47,9 +54,9 @@ impl FromStr for ExecutionFlow {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.trim().to_ascii_lowercase().as_str() {
-            "stdio-only" => Ok(Self::StdioOnly),
-            "client-hybrid" => Ok(Self::ClientHybrid),
-            "server-hybrid" => Ok(Self::ServerHybrid),
+            EXECUTION_FLOW_STDIO_ONLY => Ok(Self::StdioOnly),
+            EXECUTION_FLOW_HYBRID => Ok(Self::ClientHybrid),
+            EXECUTION_FLOW_SERVER_HYBRID => Ok(Self::ServerHybrid),
             other => Err(format!(
                 "Invalid execution_flow '{other}'. Expected one of: {}, {}, {}",
                 Self::StdioOnly.as_str(),
@@ -147,7 +154,7 @@ impl RuntimeDefaults {
             session_id: Some(Uuid::new_v4().to_string()),
             agent_program: Some(agent_program),
             client_session_id,
-            model_id: Some("unknown".to_owned()),
+            model_id: Some(FALLBACK_UNKNOWN.to_owned()),
             execution_flow,
             org_id,
             project_id: auto_project_id,
@@ -187,21 +194,21 @@ async fn discover_workspace_root(vcs: &dyn VcsProvider, cwd: &Path) -> Option<St
 fn detect_ide() -> (String, Option<String>) {
     // Cursor: sets CURSOR_TRACE_ID
     if let Ok(trace_id) = std::env::var("CURSOR_TRACE_ID") {
-        return ("cursor".to_owned(), Some(trace_id));
+        return (IDE_CURSOR.to_owned(), Some(trace_id));
     }
 
     // Claude Code: sets CLAUDE_CODE=1 or CLAUDE_SESSION_ID
     if std::env::var("CLAUDE_CODE").is_ok() {
         let session_id = std::env::var("CLAUDE_SESSION_ID").ok();
-        return ("claude-code".to_owned(), session_id);
+        return (IDE_CLAUDE_CODE.to_owned(), session_id);
     }
     if let Ok(session_id) = std::env::var("CLAUDE_SESSION_ID") {
-        return ("claude-code".to_owned(), Some(session_id));
+        return (IDE_CLAUDE_CODE.to_owned(), Some(session_id));
     }
 
     // OpenCode: sets OPENCODE_SESSION_ID
     if let Ok(session_id) = std::env::var("OPENCODE_SESSION_ID") {
-        return ("opencode".to_owned(), Some(session_id));
+        return (IDE_OPENCODE.to_owned(), Some(session_id));
     }
 
     // VS Code: sets VSCODE_PID or TERM_PROGRAM=vscode
@@ -210,11 +217,11 @@ fn detect_ide() -> (String, Option<String>) {
             .map(|v| v.eq_ignore_ascii_case("vscode"))
             .unwrap_or(false)
     {
-        return ("vscode".to_owned(), std::env::var("VSCODE_PID").ok());
+        return (IDE_VSCODE.to_owned(), std::env::var("VSCODE_PID").ok());
     }
 
     // Fallback: plain stdio
-    ("mcb-stdio".to_owned(), None)
+    (IDE_MCB_STDIO.to_owned(), None)
 }
 
 /// Extract org and project from `git remote get-url origin` in the given directory.
@@ -281,6 +288,7 @@ fn parse_org_and_project_from_remote_url(url: &str) -> Option<(String, String)> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use mcb_utils::constants::ide::KNOWN_IDE_PROGRAMS;
 
     #[test]
     fn test_detect_ide_fallback() {
@@ -289,8 +297,7 @@ mod tests {
         let (program, session) = detect_ide();
         // In CI/test environment, we expect one of the known IDEs or fallback
         assert!(
-            ["mcb-stdio", "cursor", "claude-code", "opencode", "vscode"]
-                .contains(&program.as_str()),
+            KNOWN_IDE_PROGRAMS.contains(&program.as_str()),
             "unexpected agent_program: {program}"
         );
         // client_session_id may or may not be set depending on environment

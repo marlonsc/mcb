@@ -6,3 +6,7 @@ mod logging;
 mod ports;
 #[macro_use]
 mod registry;
+#[macro_use]
+mod services;
+#[macro_use]
+mod testing;

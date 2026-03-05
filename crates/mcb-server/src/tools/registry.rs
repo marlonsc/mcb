@@ -37,36 +37,18 @@ pub struct ToolDescriptor {
     pub call: ToolCallFn,
 }
 
+// SAFETY: `linkme::distributed_slice` uses `#[link_section]` internally which
+// requires `unsafe_code`. The macro generates only a static array of
+// `ToolDescriptor` references — no raw pointer dereference or mutable aliasing
+// occurs. Every entry is produced by `register_tool!` which emits safe,
+// read-only descriptors. This is the same pattern used in `mcb-domain` registry
+// macros. See: https://docs.rs/linkme/latest/linkme/attr.distributed_slice.html
 #[allow(unsafe_code)]
 #[linkme::distributed_slice]
 /// All registered tool descriptors.
 pub static TOOL_DESCRIPTORS: [ToolDescriptor];
 
-/// Register a tool: generates schema factory, dispatch function, and linkme descriptor.
-macro_rules! register_tool {
-    ($schema_fn:ident, $call_fn:ident, $descriptor:ident, $handler:ident, $args:ty, $name:literal, $desc:literal) => {
-        fn $schema_fn() -> schemars::Schema {
-            schemars::schema_for!($args)
-        }
-        fn $call_fn<'a>(
-            request: &'a CallToolRequestParams,
-            handlers: &'a ToolHandlers,
-        ) -> ToolCallFuture<'a> {
-            Box::pin(async move {
-                let args = parse_args::<$args>(request)?;
-                handlers.$handler.handle(Parameters(args)).await
-            })
-        }
-        #[allow(unsafe_code)]
-        #[linkme::distributed_slice(TOOL_DESCRIPTORS)]
-        static $descriptor: ToolDescriptor = ToolDescriptor {
-            name: $name,
-            description: $desc,
-            schema: $schema_fn,
-            call: $call_fn,
-        };
-    };
-}
+// `register_tool!` macro is defined in `crate::macros::registry` and available via `#[macro_use]`.
 
 fn parse_args<T>(request: &CallToolRequestParams) -> Result<T, McpError>
 where

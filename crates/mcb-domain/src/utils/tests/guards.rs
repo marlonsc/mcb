@@ -4,11 +4,18 @@
 //!
 //! # Safety
 //!
-//! `EnvVarGuard` uses `env::set_var`/`env::remove_var` which are `unsafe` since
-//! Rust edition 2024 (undefined behavior if called from multiple threads).
-//! There is **no safe alternative** in `std`. The `#[allow(unsafe_code)]` is
-//! scoped to each function/impl block. Callers MUST use `#[serial]` (or
-//! equivalent single-thread guarantee) when tests modify environment variables.
+//! [`EnvVarGuard`] uses [`std::env::set_var`]/[`std::env::remove_var`] which are
+//! `unsafe` since Rust edition 2024 (undefined behavior if called from multiple
+//! threads). There is **no safe alternative** in `std`.
+//!
+//! The `#![allow(unsafe_code)]` is scoped to this module file alone — it is
+//! the single blessed location for env-var mutation in the entire workspace.
+//! Callers MUST use `#[serial]` (or equivalent single-thread guarantee) when
+//! tests modify environment variables.
+
+// Allow unsafe in this module only — env::set_var / env::remove_var are unsafe
+// since Rust 2024, and there is no safe std alternative.
+#![allow(unsafe_code)]
 
 use std::env;
 use std::fs;
@@ -33,7 +40,6 @@ pub struct EnvVarGuard {
 impl EnvVarGuard {
     /// Set multiple env vars at once; all are removed on drop.
     #[must_use]
-    #[allow(unsafe_code)]
     pub fn new(vars: &[(&str, &str)]) -> Self {
         for (k, v) in vars {
             // SAFETY: Test-only helper; tests using env vars run serially
@@ -54,7 +60,6 @@ impl EnvVarGuard {
     }
 
     /// Remove env vars without a guard (immediate).
-    #[allow(unsafe_code)]
     pub fn remove(vars: &[&str]) {
         for key in vars {
             // SAFETY: Test-only helper; tests using env vars run serially.
@@ -65,7 +70,6 @@ impl EnvVarGuard {
     }
 }
 
-#[allow(unsafe_code)]
 impl Drop for EnvVarGuard {
     fn drop(&mut self) {
         for key in &self.keys {

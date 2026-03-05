@@ -1,4 +1,5 @@
 use mcb_domain::entities::user::{User, UserRole};
+use mcb_domain::utils::tests::utils::TestResult;
 use rstest::{fixture, rstest};
 
 #[fixture]
@@ -22,15 +23,16 @@ fn test_user_construction(default_user: User) {
 }
 
 #[rstest]
-fn test_user_serialization_roundtrip(mut default_user: User) {
+fn test_user_serialization_roundtrip(mut default_user: User) -> TestResult {
     default_user.role = UserRole::Member;
     default_user.api_key_hash = Some("$argon2id$...".to_owned());
 
-    let json = serde_json::to_string(&default_user).expect("serialize");
-    let deserialized: User = serde_json::from_str(&json).expect("deserialize");
+    let json = serde_json::to_string(&default_user)?;
+    let deserialized: User = serde_json::from_str(&json)?;
     assert_eq!(deserialized.id, default_user.id);
     assert_eq!(deserialized.role, UserRole::Member);
     assert!(deserialized.api_key_hash.is_some());
+    Ok(())
 }
 
 #[rstest]

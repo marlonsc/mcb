@@ -12,6 +12,7 @@ use loco_rs::errors::Error;
 use loco_rs::prelude::Result;
 use mcb_domain::ports::AuthRepositoryPort;
 use mcb_utils::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
+use mcb_utils::constants::http::HTTP_HEADER_AUTHORIZATION;
 
 /// Authenticated admin principal.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -91,7 +92,7 @@ pub fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String>
         }
     }
 
-    if let Some(value) = headers.get("authorization") {
+    if let Some(value) = headers.get(HTTP_HEADER_AUTHORIZATION) {
         let value = value
             .to_str()
             .map_err(|_| Error::Unauthorized("invalid authorization header value".to_owned()))?;

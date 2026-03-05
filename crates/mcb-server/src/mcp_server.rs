@@ -242,7 +242,7 @@ impl ServerHandler for McpServer {
             protocol_version: ProtocolVersion::V_2025_03_26,
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation {
-                name: "MCP Context Browser".to_owned(),
+                name: mcb_utils::constants::protocol::SERVER_NAME.to_owned(),
                 version: env!("CARGO_PKG_VERSION").to_owned(),
                 ..Default::default()
             },
@@ -353,12 +353,15 @@ async fn auto_create_session_and_project(
             .agent_program
             .as_deref()
             .or(ctx.agent_program.as_deref())
-            .unwrap_or("mcb-stdio");
+            .unwrap_or(mcb_utils::constants::ide::IDE_MCB_STDIO);
         let session = AgentSession {
             id: session_id.clone(),
             session_summary_id: format!("auto_{}", mcb_utils::utils::id::generate().simple()),
             agent_type: AgentType::Sisyphus,
-            model: ctx.model_id.clone().unwrap_or_else(|| "unknown".to_owned()),
+            model: ctx
+                .model_id
+                .clone()
+                .unwrap_or_else(|| mcb_utils::constants::FALLBACK_UNKNOWN.to_owned()),
             parent_session_id: ctx.parent_session_id.clone(),
             started_at: now,
             ended_at: None,
@@ -383,7 +386,7 @@ async fn auto_create_session_and_project(
         let project_name = Path::new(repo_path.as_str())
             .file_name()
             .and_then(|n| n.to_str())
-            .unwrap_or("unknown");
+            .unwrap_or(mcb_utils::constants::FALLBACK_UNKNOWN);
         match services
             .project_workflow
             .get_by_name(org_id, project_name)

@@ -49,33 +49,65 @@ fn no_direct_concrete_di_shortcuts_outside_linkme_registries() -> TestResult {
 
         let lines: Vec<&str> = content.lines().collect();
 
+        let mut in_block_comment = false;
+
         for (idx, line) in lines.iter().enumerate() {
             let trimmed = line.trim_start();
+
+            // Track block comments
+            if in_block_comment {
+                if trimmed.contains("*/") {
+                    in_block_comment = false;
+                }
+                continue;
+            }
+            if trimmed.starts_with("/*") {
+                in_block_comment = true;
+                if trimmed.contains("*/") {
+                    in_block_comment = false;
+                }
+                continue;
+            }
             if trimmed.starts_with("//") {
                 continue;
             }
 
             for needle in forbidden {
-                if line.contains(needle) {
-                    // Check whether this call is inside a linkme registry entry
-                    // by scanning up to REGISTRY_CONTEXT_WINDOW lines above for
-                    // the `distributed_slice` attribute.
-                    let start = idx.saturating_sub(REGISTRY_CONTEXT_WINDOW);
-                    let in_registry = lines[start..idx]
-                        .iter()
-                        .any(|l| l.contains("distributed_slice") || l.contains("register_"));
+                if !line.contains(needle) {
+                    continue;
+                }
 
-                    if !in_registry {
-                        let rel = file
-                            .strip_prefix(&root)
-                            .unwrap_or(&file)
-                            .display()
-                            .to_string();
-                        violations
-                            .entry(rel)
-                            .or_default()
-                            .push(format!("{}:{}", idx + 1, needle));
+                // Skip matches that appear inside string literals.
+                // Heuristic: if a quote appears before the needle on the same
+                // line, the needle is likely inside a string.
+                if let Some(pos) = line.find(needle) {
+                    let before = &line[..pos];
+                    if before.contains('"') {
+                        continue;
                     }
+                }
+
+                // Check whether this call is inside a linkme registry entry
+                // by scanning up to REGISTRY_CONTEXT_WINDOW lines above for
+                // specific registry-related attributes/macros.
+                let start = idx.saturating_sub(REGISTRY_CONTEXT_WINDOW);
+                let in_registry = lines[start..idx].iter().any(|l| {
+                    l.contains("#[linkme::distributed_slice]")
+                        || l.contains("linkme::distributed_slice")
+                        || l.contains("register_tool!")
+                        || (l.contains("register_") && l.contains("_provider!"))
+                });
+
+                if !in_registry {
+                    let rel = file
+                        .strip_prefix(&root)
+                        .unwrap_or(&file)
+                        .display()
+                        .to_string();
+                    violations
+                        .entry(rel)
+                        .or_default()
+                        .push(format!("{}:{}", idx + 1, needle));
                 }
             }
         }

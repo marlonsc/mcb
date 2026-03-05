@@ -358,27 +358,4 @@ pub fn create_test_indexing_result(
     }
 }
 
-// ---------------------------------------------------------------------------
-// External service availability detection
-// ---------------------------------------------------------------------------
-
-/// Skip a test early (with `Ok(())`) when the named external service is not
-/// configured in `config/tests.toml` under `[test_services]`.
-///
-/// Usage at the top of any `-> TestResult` test function:
-/// ```rust,ignore
-/// #[tokio::test]
-/// async fn test_foo() -> TestResult {
-///     require_service!("milvus");
-///     // ... rest of the test
-/// }
-/// ```
-#[macro_export]
-macro_rules! require_service {
-    ($service:expr) => {
-        if $crate::utils::tests::services_config::test_service_url($service).is_none() {
-            eprintln!("⏭ Skipping: {} not available", $service);
-            return Ok(());
-        }
-    };
-}
+// `require_service!` macro is defined in `crate::macros::testing` and available via `#[macro_export]`.
