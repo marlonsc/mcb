@@ -176,12 +176,12 @@ fn ollama_factory(
 ) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
     use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
-    let base_url = config.base_url.clone().unwrap_or_else(|| {
+    let base_url = config.base_url.clone().ok_or_else(|| {
         format!(
-            "http://localhost:{}",
-            mcb_utils::constants::embedding::OLLAMA_DEFAULT_PORT
+            "Ollama embedding provider requires `base_url` in configuration (e.g. \"{}\")",
+            mcb_utils::constants::embedding::OLLAMA_DEFAULT_BASE_URL
         )
-    });
+    })?;
     let model = config
         .model
         .clone()

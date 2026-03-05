@@ -1,11 +1,11 @@
 ---
 source: crates/mcb-server/tests/contract/agent_contract_tests.rs
-assertion_line: 64
 expression: "snapshot_payload(&request, status, &response)"
 ---
 {
   "request": {
     "id": 1,
+    "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
       "arguments": {

@@ -5,6 +5,7 @@ expression: "normalize_tool_call_ids(snapshot_payload(&request, status, &respons
 {
   "request": {
     "id": 1,
+    "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
       "arguments": {

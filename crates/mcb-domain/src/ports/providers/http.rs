@@ -2,6 +2,7 @@
 
 use std::time::Duration;
 
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
 use crate::error::Result;
@@ -38,6 +39,7 @@ impl Default for HttpClientConfig {
 /// Provides an abstract HTTP client interface without coupling to any
 /// concrete HTTP library. Implementations live in the provider or
 /// infrastructure layer and wrap a real HTTP client.
+#[async_trait]
 pub trait HttpClientProvider: Send + Sync {
     /// Get the HTTP client configuration.
     fn config(&self) -> &HttpClientConfig;
@@ -46,13 +48,13 @@ pub trait HttpClientProvider: Send + Sync {
     ///
     /// # Errors
     /// Returns an error if the request fails.
-    fn get(&self, url: &str) -> Result<Vec<u8>>;
+    async fn get(&self, url: &str) -> Result<Vec<u8>>;
 
     /// Execute a POST request with a JSON body and return the response body.
     ///
     /// # Errors
     /// Returns an error if the request fails.
-    fn post(&self, url: &str, body: &[u8]) -> Result<Vec<u8>>;
+    async fn post(&self, url: &str, body: &[u8]) -> Result<Vec<u8>>;
 
     /// Return true if the HTTP client is configured and enabled.
     fn is_enabled(&self) -> bool;

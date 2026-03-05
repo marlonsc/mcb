@@ -70,7 +70,6 @@ toml = { workspace = true, optional = true }
 tempfile = { workspace = true, optional = true }
 # MCP SDK types — optional, only for test utilities
 rmcp = { workspace = true, optional = true }
-jsonrpc = { workspace = true }
 
 [features]
 default = []

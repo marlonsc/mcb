@@ -11,7 +11,7 @@ use rstest::rstest;
 async fn golden_validate_analyze() -> TestResult {
     let (server, _td) = create_test_mcp_server().await?;
     let handler = server.validate_handler();
-    let file_path = sample_codebase_path().join("src/main.rs");
+    let file_path = sample_codebase_path().join("main.rs");
 
     let result = handler
         .handle(Parameters(ValidateArgs {
