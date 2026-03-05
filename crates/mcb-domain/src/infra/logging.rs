@@ -1,7 +1,7 @@
 //! Logging facade: single registration point for the operation logger.
 //!
-//! Provides `set_log_fn` + `dispatch` (OnceLock-based), plus two built-in
-//! implementations: `stderr_log_fn` (pure std) and `tracing_log_fn` (structured).
+//! Provides `set_log_fn` + `dispatch` (OnceLock-based), plus a built-in
+//! implementation: `stderr_log_fn` (pure std).
 
 use std::io::Write;
 use std::sync::OnceLock;
