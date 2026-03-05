@@ -26,6 +26,12 @@ fn no_direct_concrete_di_shortcuts_outside_linkme_registries() -> TestResult {
     let mut files = Vec::new();
     rust_files_under(&root.join("crates"), &mut files);
 
+    // Filter out fixture directories so we only scan production/intentional DI sites.
+    files.retain(|path| {
+        !path
+            .components()
+            .any(|c| c.as_os_str().to_string_lossy() == "fixtures")
+    });
     let mut violations: BTreeMap<String, Vec<String>> = BTreeMap::new();
 
     for file in files {
