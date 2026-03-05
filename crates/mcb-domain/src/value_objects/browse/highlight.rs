@@ -105,15 +105,13 @@ pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
         "string" => HighlightCategory::String,
         "comment" => HighlightCategory::Comment,
         "function" => HighlightCategory::Function,
-        "variable" => HighlightCategory::Variable,
+        "variable" | "constant" | "attribute" | "property" | "tag" => HighlightCategory::Variable,
         "type" => HighlightCategory::Type,
         "number" => HighlightCategory::Number,
         "operator" => HighlightCategory::Operator,
-        "constant" | "attribute" | "property" | "tag" => HighlightCategory::Variable,
-        "punctuation"
-        | "punctuation.bracket"
-        | "punctuation.delimiter"
-        | "punctuation.special" => HighlightCategory::Punctuation,
+        "punctuation" | "punctuation.bracket" | "punctuation.delimiter" | "punctuation.special" => {
+            HighlightCategory::Punctuation
+        }
         _ => HighlightCategory::Other,
     }
 }

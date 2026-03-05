@@ -1,6 +1,6 @@
 //! Tests for transport layer types
 
-use mcb_domain::protocol::{McpRequest, McpResponse};
+use mcb_domain::protocol::{JSONRPC_VERSION, McpRequest, McpResponse};
 use rstest::rstest;
 
 #[rstest]
@@ -22,6 +22,7 @@ fn test_mcp_request_serialization(
     #[case] expected_param_fragment: Option<&str>,
 ) {
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: method.to_owned(),
         params,
         id: Some(serde_json::json!(id)),

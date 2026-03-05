@@ -6,7 +6,7 @@
 //!
 //! **Documentation**: [docs/modules/domain.md#testing-utilities](../../../../docs/modules/domain.md#testing-utilities)
 
-use crate::protocol::{McpRequest, McpResponse};
+use crate::protocol::{JSONRPC_VERSION, McpRequest, McpResponse};
 use crate::utils::tests::utils::TestResult;
 
 // ---------------------------------------------------------------------------
@@ -34,7 +34,7 @@ pub fn tools_list_request() -> McpRequest {
         method: "tools/list".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
-        jsonrpc: todo!(),
+        jsonrpc: JSONRPC_VERSION.to_owned(),
     }
 }
 
@@ -48,7 +48,7 @@ pub fn tools_call_request(tool_name: &str) -> McpRequest {
             "arguments": {}
         })),
         id: Some(serde_json::json!(1)),
-        jsonrpc: todo!(),
+        jsonrpc: JSONRPC_VERSION.to_owned(),
     }
 }
 
@@ -62,7 +62,7 @@ pub fn tools_call_request_with_args(tool_name: &str, arguments: &serde_json::Val
             "arguments": arguments
         })),
         id: Some(serde_json::json!(1)),
-        jsonrpc: todo!(),
+        jsonrpc: JSONRPC_VERSION.to_owned(),
     }
 }
 
@@ -74,7 +74,7 @@ pub fn initialize_request() -> McpRequest {
         method: "initialize".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
-        jsonrpc: todo!(),
+        jsonrpc: JSONRPC_VERSION.to_owned(),
     }
 }
 

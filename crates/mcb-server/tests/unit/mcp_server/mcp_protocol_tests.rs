@@ -11,7 +11,7 @@
 use rstest::rstest;
 
 use axum::http::StatusCode;
-use mcb_domain::protocol::McpRequest;
+use mcb_domain::protocol::{JSONRPC_VERSION, McpRequest};
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp};
 
@@ -24,6 +24,7 @@ use crate::utils::http_mcp::{McpTestContext, post_mcp};
 async fn test_initialize_response() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: "initialize".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
@@ -119,6 +120,7 @@ async fn test_initialize_response() -> Result<(), Box<dyn std::error::Error>> {
 async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: "tools/list".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
@@ -247,6 +249,7 @@ async fn test_response_has_jsonrpc_field(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: method.to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
@@ -270,6 +273,7 @@ async fn test_response_echoes_request_id(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: "ping".to_owned(),
         params: None,
         id: Some(id.clone()),
@@ -286,6 +290,7 @@ async fn test_response_echoes_request_id(
 async fn test_error_response_structure() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: "nonexistent/method".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),

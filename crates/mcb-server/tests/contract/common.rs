@@ -1,5 +1,5 @@
 use axum::http::StatusCode;
-use mcb_domain::protocol::{McpRequest, McpResponse};
+use mcb_domain::protocol::{JSONRPC_VERSION, McpRequest, McpResponse};
 use serde_json::{Value, json};
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp};
@@ -42,6 +42,7 @@ pub fn bridge_headers() -> Vec<(String, String)> {
 
 pub fn tool_call_request(tool_name: &str, arguments: &Value) -> McpRequest {
     McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: "tools/call".to_owned(),
         params: Some(json!({
             "name": tool_name,
