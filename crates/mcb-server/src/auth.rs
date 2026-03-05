@@ -14,7 +14,8 @@ use mcb_domain::ports::AuthRepositoryPort;
 use mcb_utils::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
 use mcb_utils::constants::http::HTTP_HEADER_AUTHORIZATION;
 
-const ADMIN_AUTH_EXEMPT_PATHS: &[&str] = &["/alive"];
+// Support both direct app routes (`/alive`) and prefixed ingress rewrites (`/api/alive`).
+const ADMIN_AUTH_EXEMPT_PATHS: &[&str] = &["/alive", "/api/alive"];
 
 /// Authenticated admin principal.
 #[derive(Debug, Clone, PartialEq, Eq)]

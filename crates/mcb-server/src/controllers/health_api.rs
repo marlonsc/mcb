@@ -39,7 +39,7 @@ pub async fn health(Extension(state): Extension<McbState>) -> Result<Response> {
 ///
 /// # Errors
 ///
-/// Returns JSON liveness payload.
+/// Returns an error if JSON response serialization fails.
 pub async fn alive() -> Result<Response> {
     format::json(serde_json::json!({
         "status": "alive",

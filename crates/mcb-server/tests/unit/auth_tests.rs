@@ -29,11 +29,13 @@ fn extract_api_key_rejects_missing_headers() {
 }
 
 #[rstest]
-fn admin_auth_exempt_path_allows_alive_helper() {
+fn admin_auth_exempt_path_allows_alive_endpoint() {
     assert!(is_admin_auth_exempt_path("/alive"));
+    assert!(is_admin_auth_exempt_path("/api/alive"));
 }
 
 #[rstest]
 fn admin_auth_exempt_path_keeps_health_protected() {
     assert!(!is_admin_auth_exempt_path("/health"));
+    assert!(!is_admin_auth_exempt_path("/api/health"));
 }
