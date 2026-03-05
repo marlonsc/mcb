@@ -34,6 +34,7 @@ pub fn tools_list_request() -> McpRequest {
         method: "tools/list".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
+        jsonrpc: todo!(),
     }
 }
 
@@ -47,6 +48,7 @@ pub fn tools_call_request(tool_name: &str) -> McpRequest {
             "arguments": {}
         })),
         id: Some(serde_json::json!(1)),
+        jsonrpc: todo!(),
     }
 }
 
@@ -60,6 +62,7 @@ pub fn tools_call_request_with_args(tool_name: &str, arguments: &serde_json::Val
             "arguments": arguments
         })),
         id: Some(serde_json::json!(1)),
+        jsonrpc: todo!(),
     }
 }
 
@@ -71,6 +74,7 @@ pub fn initialize_request() -> McpRequest {
         method: "initialize".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
+        jsonrpc: todo!(),
     }
 }
 
