@@ -19,10 +19,17 @@ macro_rules! impl_registry {
         module: $module:ident
     ) => {
         /// Register a provider in the distributed slice.
+        ///
+        /// # Safety rationale
+        ///
+        /// `linkme::distributed_slice` uses linker-section manipulation that
+        /// the compiler classifies as `unsafe_code`. The `#[allow]` is scoped
+        /// to the single generated static — not to the enclosing module — and
+        /// no user-written unsafe code is involved.
         #[macro_export]
         macro_rules! $register_macro {
             ($name:expr, $desc:expr, $build:expr) => {
-                #[allow(unsafe_code)]
+                #[allow(unsafe_code)] // required by linkme::distributed_slice — see safety rationale above
                 #[linkme::distributed_slice($crate::registry::$module::$slice)]
                 static PROVIDER: $crate::registry::$module::$entry =
                     $crate::registry::$module::$entry {
@@ -147,7 +154,7 @@ macro_rules! impl_config_builder {
 #[macro_export]
 macro_rules! register_project_detector {
     ($name:expr, $desc:expr, $markers:expr, $build:expr $(,)?) => {
-        #[allow(unsafe_code)]
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
         #[linkme::distributed_slice($crate::registry::project_detector::PROJECT_DETECTORS)]
         static DETECTOR: $crate::registry::project_detector::ProjectDetectorEntry =
             $crate::registry::project_detector::ProjectDetectorEntry {
@@ -163,7 +170,7 @@ macro_rules! register_project_detector {
 #[macro_export]
 macro_rules! register_code_analyzer {
     ($name:expr, $desc:expr, $build:expr $(,)?) => {
-        #[allow(unsafe_code)]
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
         #[linkme::distributed_slice($crate::registry::code_analysis::CODE_ANALYZERS)]
         static ANALYZER: $crate::registry::code_analysis::CodeAnalyzerEntry =
             $crate::registry::code_analysis::CodeAnalyzerEntry {
@@ -186,7 +193,7 @@ macro_rules! register_code_analyzer {
 #[macro_export]
 macro_rules! register_validator {
     ($name:expr, $desc:expr, $build:expr $(,)?) => {
-        #[allow(unsafe_code)]
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
         #[linkme::distributed_slice($crate::registry::validation::VALIDATOR_ENTRIES)]
         static VALIDATOR_ENTRY: $crate::registry::validation::ValidatorEntry =
             $crate::registry::validation::ValidatorEntry {
@@ -210,7 +217,7 @@ macro_rules! register_validator {
 #[macro_export]
 macro_rules! register_service {
     ($name:expr, $builder:expr $(,)?) => {
-        #[allow(unsafe_code)]
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
         #[linkme::distributed_slice($crate::registry::services::SERVICES_REGISTRY)]
         static SERVICE_ENTRY: $crate::registry::services::ServiceRegistryEntry =
             $crate::registry::services::ServiceRegistryEntry {
@@ -232,7 +239,7 @@ macro_rules! register_service {
 #[macro_export]
 macro_rules! register_database_connection {
     ($ident:ident, $name:expr, $build:expr $(,)?) => {
-        #[allow(unsafe_code)]
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
         #[linkme::distributed_slice($crate::registry::database::DATABASE_CONNECTION_PROVIDERS)]
         static $ident: $crate::registry::database::DatabaseConnectionEntry =
             $crate::registry::database::DatabaseConnectionEntry {
@@ -254,7 +261,7 @@ macro_rules! register_database_connection {
 #[macro_export]
 macro_rules! register_database_repository {
     ($name:expr, $desc:expr, $build:expr $(,)?) => {
-        #[allow(unsafe_code)]
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
         #[linkme::distributed_slice($crate::registry::database::DATABASE_REPOSITORY_PROVIDERS)]
         static DB_REPO_ENTRY: $crate::registry::database::DatabaseRepositoryEntry =
             $crate::registry::database::DatabaseRepositoryEntry {
@@ -277,7 +284,7 @@ macro_rules! register_database_repository {
 #[macro_export]
 macro_rules! register_migration_provider {
     ($name:expr, $desc:expr, $build:expr $(,)?) => {
-        #[allow(unsafe_code)]
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
         #[linkme::distributed_slice($crate::registry::database::MIGRATION_PROVIDERS)]
         static MIGRATION_ENTRY: $crate::registry::database::MigrationProviderEntry =
             $crate::registry::database::MigrationProviderEntry {

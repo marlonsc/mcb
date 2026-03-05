@@ -97,7 +97,7 @@ settings:
     enabled: false
     password_algorithm: Argon2
     jwt:
-      secret: ""
+      secret: "{{ get_env(name='JWT_SECRET') }}"
       expiration_secs: 86400
       refresh_expiration_secs: 604800
     api_key:

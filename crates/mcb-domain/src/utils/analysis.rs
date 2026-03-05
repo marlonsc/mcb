@@ -232,11 +232,7 @@ pub fn compute_tdg_scores(
     let mut dead_by_file: HashMap<PathBuf, u32> = HashMap::new();
     for finding in dead_code {
         if let AnalysisFinding::DeadCode { file, .. } = finding {
-            if let Some(count) = dead_by_file.get_mut(file) {
-                *count += 1;
-            } else {
-                dead_by_file.insert(file.clone(), 1);
-            }
+            *dead_by_file.entry(file.clone()).or_insert(0) += 1;
         }
     }
 

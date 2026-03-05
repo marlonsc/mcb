@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use sea_orm::{ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter};
+use sea_orm::{ColumnTrait, Condition, DatabaseConnection, EntityTrait, QueryFilter};
 use std::collections::HashMap;
 
 use mcb_domain::entities::User;
@@ -40,8 +40,17 @@ impl SeaOrmAuthRepositoryAdapter {
 #[async_trait]
 impl AuthRepositoryPort for SeaOrmAuthRepositoryAdapter {
     async fn find_users_by_api_key_hash(&self, key_hash: &str) -> Result<Vec<UserWithApiKey>> {
+        let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
         let mut api_key_rows = api_keys::Entity::find()
-            .filter(api_keys::Column::RevokedAt.is_null())
+            .filter(
+                Condition::all()
+                    .add(api_keys::Column::RevokedAt.is_null())
+                    .add(
+                        Condition::any()
+                            .add(api_keys::Column::ExpiresAt.is_null())
+                            .add(api_keys::Column::ExpiresAt.gt(now)),
+                    ),
+            )
             .all(&self.db)
             .await
             .map_err(|e| Error::database(format!("find API key records failed: {e}")))?;
@@ -86,8 +95,18 @@ impl AuthRepositoryPort for SeaOrmAuthRepositoryAdapter {
     }
 
     async fn verify_api_key(&self, key_hash: &str) -> Result<Option<ApiKeyInfo>> {
+        let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
         let api_key = api_keys::Entity::find()
-            .filter(api_keys::Column::KeyHash.eq(key_hash.to_owned()))
+            .filter(
+                Condition::all()
+                    .add(api_keys::Column::KeyHash.eq(key_hash.to_owned()))
+                    .add(api_keys::Column::RevokedAt.is_null())
+                    .add(
+                        Condition::any()
+                            .add(api_keys::Column::ExpiresAt.is_null())
+                            .add(api_keys::Column::ExpiresAt.gt(now)),
+                    ),
+            )
             .one(&self.db)
             .await
             .map_err(|e| Error::database(format!("verify API key failed: {e}")))?;
