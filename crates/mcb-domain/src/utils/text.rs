@@ -61,12 +61,6 @@ pub fn try_extract_text_from<T: Serialize>(content: &[T]) -> Result<String, serd
 pub fn extract_text_from<T: Serialize>(content: &[T]) -> String {
     match try_extract_text_from(content) {
         Ok(text) => text,
-        Err(err) => {
-            eprintln!(
-                "mcb-domain: failed to serialize MCP content for text extraction: {}",
-                err
-            );
-            String::new()
-        }
+        Err(_) => String::new(),
     }
 }
