@@ -15,7 +15,6 @@ use rstest::rstest;
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_kiss_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
@@ -45,7 +44,6 @@ fn test_kiss_full_workspace() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_clean_code_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,

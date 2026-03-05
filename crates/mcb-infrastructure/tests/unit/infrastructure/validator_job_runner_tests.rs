@@ -201,7 +201,6 @@ async fn submit_validation_job_marks_failure_result(
 }
 
 #[rstest]
-#[test]
 fn submit_validation_job_requires_runtime(
     validation_ops: TestResult<Arc<dyn ValidationOperationsInterface>>,
 ) -> TestResult {

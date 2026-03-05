@@ -65,7 +65,6 @@ fn test_format_search_response(#[case] count: usize, #[case] duration_ms: u64, #
 )]
 #[case(build_indexing_result(100, 500, 0, Vec::new()), "/project", 100)]
 #[rstest]
-#[test]
 fn test_format_indexing_success(
     #[case] result: IndexingResult,
     #[case] path: &str,
@@ -80,7 +79,6 @@ fn test_format_indexing_success(
 }
 
 #[rstest]
-#[test]
 fn test_format_indexing_error() {
     let path = Path::new("/nonexistent/path");
 
@@ -116,14 +114,12 @@ fn test_format_indexing_error() {
     processed_files: 100,
 })]
 #[rstest]
-#[test]
 fn test_format_indexing_status(#[case] status: IndexingStatus) {
     let response = ResponseFormatter::format_indexing_status(&status);
     assert!(!response.is_error.unwrap_or(false));
 }
 
 #[rstest]
-#[test]
 fn test_format_clear_index() {
     let response = ResponseFormatter::format_clear_index("test-collection");
 
@@ -131,7 +127,6 @@ fn test_format_clear_index() {
 }
 
 #[rstest]
-#[test]
 fn test_format_search_result_code_preview() {
     // Test with Rust code
     let result = create_test_search_result(
@@ -150,7 +145,6 @@ fn test_format_search_result_code_preview() {
 }
 
 #[rstest]
-#[test]
 fn test_format_search_result_long_content() {
     // Create content with more than 10 lines
     let long_content = (0..20)

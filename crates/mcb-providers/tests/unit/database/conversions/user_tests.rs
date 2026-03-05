@@ -18,7 +18,6 @@ fn sample_user() -> user::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_user() {
     let model = sample_user();
     let model_val = model.id.clone();

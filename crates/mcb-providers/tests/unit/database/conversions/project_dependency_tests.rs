@@ -15,7 +15,6 @@ fn sample_project_dependency() -> project_dependency::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_project_dependency() {
     let model = sample_project_dependency();
     let model_val = model.id.clone();

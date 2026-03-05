@@ -20,7 +20,6 @@ fn sample_branch() -> branch::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_branch() {
     let model = sample_branch();
     let model_val = model.id.clone();

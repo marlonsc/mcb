@@ -20,7 +20,6 @@ fn sample_delegation() -> delegation::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_delegation() {
     let model = sample_delegation();
     let model_val = model.id.clone();

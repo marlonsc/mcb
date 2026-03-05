@@ -19,7 +19,6 @@ fn sample_observation() -> observation::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_observation() {
     let model = sample_observation();
     let model_val = model.id.clone();

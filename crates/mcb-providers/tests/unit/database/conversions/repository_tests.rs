@@ -20,7 +20,6 @@ fn sample_repository() -> repository::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_repository() {
     let model = sample_repository();
     let model_val = model.id.clone();

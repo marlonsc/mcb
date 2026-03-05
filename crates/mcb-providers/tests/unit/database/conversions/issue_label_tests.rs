@@ -16,7 +16,6 @@ fn sample_issue_label() -> issue_label::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_issue_label() {
     let model = sample_issue_label();
     let model_val = model.id.clone();

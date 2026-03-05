@@ -209,7 +209,6 @@ async fn test_failed_search_doesnt_corrupt_state() -> Result<(), Box<dyn std::er
 // ============================================================================
 
 #[rstest]
-#[test]
 fn test_list_providers_never_panics() {
     // These should never panic, even if registry is empty
     let embedding_providers = list_embedding_providers();
@@ -232,7 +231,6 @@ fn test_list_providers_never_panics() {
 }
 
 #[rstest]
-#[test]
 fn test_resolve_with_empty_config_values() {
     // Config with empty strings should fail gracefully
     let embedding_config = EmbeddingProviderConfig::new("");

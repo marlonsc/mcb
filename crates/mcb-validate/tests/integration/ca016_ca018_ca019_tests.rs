@@ -23,7 +23,6 @@ fn workspace_root() -> PathBuf {
 
 /// CA016: No `pub mod constants;` outside mcb-utils in the real workspace.
 #[rstest]
-#[test]
 fn test_ca016_zero_constants_module_violations() {
     let root = workspace_root();
     let config = ValidationConfig::new(&root);
@@ -47,7 +46,6 @@ fn test_ca016_zero_constants_module_violations() {
 
 /// CA018: No `pub use mcb_utils::` re-exports in the real workspace.
 #[rstest]
-#[test]
 fn test_ca018_zero_proxy_wrapper_violations() {
     let root = workspace_root();
     let config = ValidationConfig::new(&root);
@@ -71,7 +69,6 @@ fn test_ca018_zero_proxy_wrapper_violations() {
 
 /// CA019: No cross-imports between outer crates in the real workspace.
 #[rstest]
-#[test]
 fn test_ca019_zero_cross_import_violations() {
     let root = workspace_root();
     let config = ValidationConfig::new(&root);

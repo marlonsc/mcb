@@ -75,7 +75,6 @@ fn from_shebang_mapping(#[case] first_line: &str, #[case] expected: LanguageId) 
 }
 
 #[rstest]
-#[test]
 fn test_content_detection() {
     let detector = LanguageDetector::new();
 
@@ -87,14 +86,12 @@ fn test_content_detection() {
 }
 
 #[rstest]
-#[test]
 fn test_unknown_extension() {
     let detector = LanguageDetector::new();
     assert_eq!(detector.detect_name(Path::new("file.unknown"), None), None);
 }
 
 #[rstest]
-#[test]
 fn test_filename_detection() {
     let detector = LanguageDetector::new();
     assert_eq!(
@@ -108,7 +105,6 @@ fn test_filename_detection() {
 }
 
 #[rstest]
-#[test]
 fn test_shebang_detection() {
     let detector = LanguageDetector::new();
     let shell_script = "#!/usr/bin/env bash\necho hello";
@@ -120,7 +116,6 @@ fn test_shebang_detection() {
 }
 
 #[rstest]
-#[test]
 fn test_unknown_existing_file_returns_none() {
     let detector = LanguageDetector::new();
 
@@ -155,7 +150,6 @@ fn matches_languages(
 }
 
 #[rstest]
-#[test]
 fn test_supported_languages() {
     let detector = LanguageDetector::new();
     let languages = detector.supported_language_names();

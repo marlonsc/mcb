@@ -4,7 +4,6 @@ use mcb_validate::embedded_rules::EmbeddedRules;
 use rstest::rstest;
 
 #[rstest]
-#[test]
 fn all_embedded_yaml_files_are_non_empty() {
     let rules = EmbeddedRules::all_yaml();
     assert!(!rules.is_empty(), "embedded rules list should not be empty");
@@ -18,7 +17,6 @@ fn all_embedded_yaml_files_are_non_empty() {
 }
 
 #[rstest]
-#[test]
 fn all_embedded_yaml_files_are_valid_yaml() {
     for (path, content) in &EmbeddedRules::all_yaml() {
         let parsed: Result<serde_yaml::Value, _> = serde_yaml::from_str(content);
@@ -31,7 +29,6 @@ fn all_embedded_yaml_files_are_valid_yaml() {
 }
 
 #[rstest]
-#[test]
 fn rule_yaml_excludes_templates() {
     let rules = EmbeddedRules::rule_yaml();
     for (path, _) in &rules {
@@ -43,7 +40,6 @@ fn rule_yaml_excludes_templates() {
 }
 
 #[rstest]
-#[test]
 fn schema_json_is_non_empty_and_valid() {
     let schema = EmbeddedRules::SCHEMA_JSON;
     assert!(!schema.is_empty(), "schema JSON must not be empty");

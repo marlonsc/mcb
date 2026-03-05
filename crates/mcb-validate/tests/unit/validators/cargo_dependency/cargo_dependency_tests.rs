@@ -14,7 +14,6 @@ use crate::utils::*;
 use rstest::rstest;
 
 #[rstest]
-#[test]
 fn test_cargo_dependency_detection() {
     let engine = RustyRulesEngineWrapper::new();
     let context = create_rule_context();
@@ -43,7 +42,6 @@ fn test_cargo_dependency_detection() {
 }
 
 #[rstest]
-#[test]
 fn test_cargo_dependency_detection_with_violation() {
     let temp_dir = tempfile::TempDir::new().unwrap();
     let cargo_path = temp_dir.path().join("Cargo.toml");

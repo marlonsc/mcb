@@ -16,7 +16,6 @@ fn sample_agent_worktree_assignment() -> agent_worktree_assignment::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_agent_worktree_assignment() {
     let model = sample_agent_worktree_assignment();
     let model_val = model.id.clone();

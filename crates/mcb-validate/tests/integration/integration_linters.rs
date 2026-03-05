@@ -60,7 +60,6 @@ fn get_default_substitution_variables() -> serde_yaml::Value {
 // ==================== Unit Tests for Linter Types ====================
 
 #[rstest]
-#[test]
 fn test_linter_engine_creation() {
     let _engine = LinterEngine::new();
     // Engine should be created with default linters
@@ -76,7 +75,6 @@ fn linter_engine_with_specific_linters(#[case] linters: Vec<LinterType>) {
 }
 
 #[rstest]
-#[test]
 fn test_linter_type_equality() {
     assert_eq!(LinterType::Ruff, LinterType::Ruff);
     assert_eq!(LinterType::Clippy, LinterType::Clippy);
@@ -93,7 +91,6 @@ fn linter_type_commands(#[case] linter: LinterType, #[case] command: &str) {
 // ==================== JSON Parsing Tests ====================
 
 #[rstest]
-#[test]
 fn test_ruff_json_array_parsing() {
     // Ruff outputs JSON in array format
     let json_output = r#"[
@@ -141,7 +138,6 @@ fn ruff_empty_output(#[case] output: &str) {
 }
 
 #[rstest]
-#[test]
 fn test_clippy_json_parsing() {
     // Clippy outputs JSON lines with "reason" field
     let json_output = r#"{"reason":"compiler-message","message":{"message":"used `unwrap()` on an `Option` value","code":{"code":"clippy::unwrap_used","explanation":null},"level":"warning","spans":[{"file_name":"src/lib.rs","line_start":42,"column_start":5,"is_primary":true}]}}
@@ -163,7 +159,6 @@ fn test_clippy_json_parsing() {
 }
 
 #[rstest]
-#[test]
 fn test_clippy_filters_non_compiler_messages() {
     // Should ignore compiler-artifact and build-finished
     let json_output = r#"{"reason":"compiler-artifact","target":{"name":"test"}}
@@ -174,7 +169,6 @@ fn test_clippy_filters_non_compiler_messages() {
 }
 
 #[rstest]
-#[test]
 fn test_clippy_requires_primary_span() {
     // Message without primary span should be skipped
     let json_output = r#"{"reason":"compiler-message","message":{"message":"help message","code":{"code":"clippy::help","explanation":null},"level":"help","spans":[{"file_name":"src/lib.rs","line_start":1,"column_start":1,"is_primary":false}]}}"#;
@@ -254,7 +248,6 @@ async fn test_linter_mapping() {
 // ==================== LintViolation Structure Tests ====================
 
 #[rstest]
-#[test]
 fn test_lint_violation_structure() {
     let violation = LintViolation {
         rule: "F401".to_owned(),
@@ -279,7 +272,6 @@ fn test_lint_violation_structure() {
 // ==================== Hybrid Engine Lint Integration Tests ====================
 
 #[rstest]
-#[test]
 fn test_lint_code_categorization() {
     // This tests the internal categorization logic
     // Ruff codes: F401, E501, W291, I001, etc.
@@ -312,7 +304,6 @@ fn test_lint_code_categorization() {
 
 /// Verify that public types have expected documentation
 #[rstest]
-#[test]
 fn test_public_api_accessible() {
     // These should all be publicly accessible via the linters module
     // Using _ prefix to suppress unused warnings while still testing compilation
@@ -333,7 +324,6 @@ fn test_public_api_accessible() {
 
 /// Test real ruff execution against Python files
 #[rstest]
-#[test]
 fn test_ruff_real_execution() {
     use std::process::Command;
 
@@ -400,7 +390,6 @@ def example():
 
 /// Test real clippy execution against Rust code
 #[rstest]
-#[test]
 fn test_clippy_real_execution() {
     use std::process::Command;
 

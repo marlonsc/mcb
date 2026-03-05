@@ -19,7 +19,6 @@ fn sample_api_key() -> api_key::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_api_key() {
     let model = sample_api_key();
     let model_val = model.id.clone();

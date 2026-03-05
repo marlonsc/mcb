@@ -21,7 +21,6 @@ use mcb_domain::utils::tests::assertions::{
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_quality_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
@@ -104,7 +103,6 @@ fn file_size_threshold_behavior(
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_unwrap_exempt_in_test_code() {
     let (_temp, root) = with_fixture_crate(TEST_CRATE);
     let validator = QualityValidator::new(&root);
@@ -119,7 +117,6 @@ fn test_unwrap_exempt_in_test_code() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_clean_code_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,

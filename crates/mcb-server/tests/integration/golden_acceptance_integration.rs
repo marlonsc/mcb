@@ -115,7 +115,6 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn test_golden_queries_fixture_valid() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_golden_queries()?;
 
@@ -170,7 +169,6 @@ fn test_config_values_reasonable(
 }
 
 #[rstest]
-#[test]
 fn test_query_ids_unique() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_golden_queries()?;
     let mut seen = std::collections::HashSet::new();
@@ -186,7 +184,6 @@ fn test_query_ids_unique() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[rstest]
-#[test]
 fn test_sample_codebase_files_exist() {
     let chunks = read_sample_codebase_files();
 

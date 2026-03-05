@@ -21,7 +21,6 @@ fn sample_worktree() -> worktree::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_worktree() {
     let model = sample_worktree();
     let model_val = model.id.clone();

@@ -67,6 +67,7 @@ impl McpResponse {
     }
 
     /// Create an error response.
+    #[must_use]
     pub fn from_error(
         id: Option<serde_json::Value>,
         code: i32,

@@ -29,7 +29,6 @@ fn loaded_config() -> Result<AppConfig, Box<dyn std::error::Error>> {
 }
 
 #[rstest]
-#[test]
 #[serial]
 fn test_auth_config_jwt_secret_length() -> Result<(), Box<dyn std::error::Error>> {
     let default_auth = loaded_config()?.auth;
@@ -58,7 +57,6 @@ fn test_auth_config_jwt_secret_length() -> Result<(), Box<dyn std::error::Error>
 }
 
 #[rstest]
-#[test]
 #[serial]
 fn test_cache_config_ttl_when_enabled() -> Result<(), Box<dyn std::error::Error>> {
     // When cache is enabled, TTL should be positive
@@ -115,7 +113,6 @@ fn test_cache_config_ttl_when_enabled() -> Result<(), Box<dyn std::error::Error>
 }
 
 #[rstest]
-#[test]
 #[serial]
 fn test_default_config_is_valid() -> Result<(), Box<dyn std::error::Error>> {
     // Load via CA/DI and validate

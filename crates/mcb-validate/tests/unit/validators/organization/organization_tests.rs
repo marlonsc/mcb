@@ -16,7 +16,6 @@ use rstest::rstest;
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_organization_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
@@ -69,7 +68,6 @@ fn test_organization_full_workspace() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_clean_organization_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
@@ -90,7 +88,6 @@ pub fn retry(attempts: u32) -> bool {
 }
 
 #[rstest]
-#[test]
 fn test_organization_violation_severity_is_non_recursive() {
     let violation = OrganizationViolation::MagicNumber {
         file: std::path::PathBuf::from("dummy.rs"),

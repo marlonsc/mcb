@@ -1,6 +1,14 @@
 //! RAII guards for test isolation — environment variables, current directory, file backup.
 //!
 //! Centralized in `mcb-domain` so every crate can reuse the same primitives.
+//!
+//! # Safety
+//!
+//! `EnvVarGuard` uses `env::set_var`/`env::remove_var` which are `unsafe` since
+//! Rust edition 2024 (undefined behavior if called from multiple threads).
+//! There is **no safe alternative** in `std`. The `#[allow(unsafe_code)]` is
+//! scoped to each function/impl block. Callers MUST use `#[serial]` (or
+//! equivalent single-thread guarantee) when tests modify environment variables.
 
 use std::env;
 use std::fs;

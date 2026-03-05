@@ -8,7 +8,6 @@ use mcb_utils::constants::testing::{GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES};
 use rstest::rstest;
 
 #[rstest]
-#[test]
 fn test_fixtures_referenced() {
     assert!(!GOLDEN_COLLECTION.is_empty());
     assert!(!SAMPLE_CODEBASE_FILES.is_empty());

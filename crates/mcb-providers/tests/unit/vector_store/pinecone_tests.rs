@@ -48,7 +48,6 @@ fn test_match_to_search_result_error_cases(
 }
 
 #[rstest]
-#[test]
 fn test_match_to_search_result_valid_item_succeeds() {
     let item = serde_json::json!({
         "id": "vec_123",

@@ -16,7 +16,6 @@ use rstest::rstest;
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_refactoring_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
@@ -35,7 +34,6 @@ fn test_refactoring_full_workspace() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_clean_refactoring_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,

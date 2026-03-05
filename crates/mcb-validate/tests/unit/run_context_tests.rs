@@ -7,7 +7,6 @@ use mcb_validate::run_context::{FileInventorySource, ValidationRunContext};
 use rstest::rstest;
 
 #[rstest]
-#[test]
 fn walkdir_inventory_respects_exclude_patterns() {
     let temp = TempDir::new().expect("tempdir");
     let root = temp.path();
@@ -40,7 +39,6 @@ fn walkdir_inventory_respects_exclude_patterns() {
 }
 
 #[rstest]
-#[test]
 fn git_inventory_uses_git_source_when_repository_exists() {
     let temp = TempDir::new().expect("tempdir");
     let root = temp.path();

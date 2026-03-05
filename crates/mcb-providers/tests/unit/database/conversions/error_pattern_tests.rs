@@ -22,7 +22,6 @@ fn sample_error_pattern() -> error_pattern::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_error_pattern() {
     let model = sample_error_pattern();
     let model_val = model.id.clone();

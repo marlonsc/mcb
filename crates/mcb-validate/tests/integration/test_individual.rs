@@ -2,7 +2,6 @@ use mcb_domain::ports::validation::ValidationConfig;
 use rstest::rstest;
 
 #[rstest]
-#[test]
 fn test_just_dependency() {
     println!("Testing ONLY dependency validator...");
     let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();

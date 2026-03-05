@@ -13,7 +13,6 @@ use rstest::rstest;
     Some("search")
 )]
 #[rstest]
-#[test]
 fn test_mcp_request_serialization(
     #[case] method: &str,
     #[case] params: Option<serde_json::Value>,
@@ -62,7 +61,6 @@ fn test_mcp_response_shapes(
 }
 
 #[rstest]
-#[test]
 fn test_mcp_response_serialization_roundtrip() {
     let response =
         McpResponse::from_success(Some(serde_json::json!(1)), serde_json::json!({"tools": []}));
@@ -73,7 +71,6 @@ fn test_mcp_response_serialization_roundtrip() {
 }
 
 #[rstest]
-#[test]
 fn test_mcp_request_deserialization() {
     let json = r#"{"method":"ping","params":null,"id":1}"#;
     let request: McpRequest = serde_json::from_str(json).unwrap();

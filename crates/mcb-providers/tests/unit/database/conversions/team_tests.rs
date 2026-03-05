@@ -14,7 +14,6 @@ fn sample_team() -> team::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_team() {
     let model = sample_team();
     let model_val = model.id.clone();

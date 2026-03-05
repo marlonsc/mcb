@@ -18,7 +18,6 @@ fn sample_plan_version() -> plan_version::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_plan_version() {
     let model = sample_plan_version();
     let model_val = model.id.clone();

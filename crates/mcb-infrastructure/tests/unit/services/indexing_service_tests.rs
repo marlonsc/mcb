@@ -3,7 +3,6 @@ use rstest::rstest;
 use std::path::Path;
 
 #[rstest]
-#[test]
 fn workspace_relative_path_normalizes_within_workspace() {
     let workspace = Path::new("/repo");
     let file = Path::new("/repo/src/main.rs");
@@ -13,7 +12,6 @@ fn workspace_relative_path_normalizes_within_workspace() {
 }
 
 #[rstest]
-#[test]
 fn workspace_relative_path_rejects_outside_workspace() {
     let workspace = Path::new("/repo");
     let file = Path::new("/other/main.rs");

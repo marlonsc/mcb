@@ -90,7 +90,6 @@ fn cleanup_temp_files(db_path: &std::path::Path, prefix: &str) {
 }
 
 #[rstest]
-#[test]
 fn corrupted_db_is_backed_up_and_recreated() {
     let db_path = unique_temp_path("corrupt.db");
     fs::write(&db_path, b"this-is-not-a-valid-sqlite-database")
@@ -153,7 +152,6 @@ fn corrupted_db_is_backed_up_and_recreated() {
 }
 
 #[rstest]
-#[test]
 fn ddl_error_messages_include_source_context() {
     let db_path = unique_temp_path("ddl-ctx.db");
     fs::write(&db_path, vec![0u8; 100]).unwrap_or_else(|e| unreachable!("write invalid db: {e}"));

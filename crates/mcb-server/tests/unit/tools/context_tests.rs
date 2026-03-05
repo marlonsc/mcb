@@ -7,7 +7,6 @@ use rmcp::model::CallToolRequestParams;
 use rstest::rstest;
 
 #[rstest]
-#[test]
 fn test_resolve_uses_override_when_present() {
     let defaults = RuntimeDefaults {
         workspace_root: Some("default-root".to_owned()),
@@ -33,7 +32,6 @@ fn test_resolve_uses_override_when_present() {
 }
 
 #[rstest]
-#[test]
 fn test_resolve_falls_back_to_default_when_override_missing() {
     let defaults = RuntimeDefaults {
         workspace_root: Some("default-root".to_owned()),
@@ -58,7 +56,6 @@ fn test_resolve_falls_back_to_default_when_override_missing() {
 }
 
 #[rstest]
-#[test]
 fn test_resolve_prefers_override_over_default() {
     let defaults = RuntimeDefaults {
         workspace_root: Some("default-root".to_owned()),
@@ -84,7 +81,6 @@ fn test_resolve_prefers_override_over_default() {
 }
 
 #[rstest]
-#[test]
 fn test_resolve_handles_multiple_overrides() {
     let defaults = RuntimeDefaults {
         workspace_root: Some("default-root".to_owned()),
@@ -114,7 +110,6 @@ fn test_resolve_handles_multiple_overrides() {
 }
 
 #[rstest]
-#[test]
 fn test_resolve_sets_delegated_true_when_parent_session_id_present() {
     let defaults = RuntimeDefaults {
         workspace_root: None,
@@ -141,7 +136,6 @@ fn test_resolve_sets_delegated_true_when_parent_session_id_present() {
 }
 
 #[rstest]
-#[test]
 fn test_resolve_respects_explicit_delegated_override() {
     let defaults = RuntimeDefaults {
         workspace_root: None,
@@ -167,7 +161,6 @@ fn test_resolve_respects_explicit_delegated_override() {
 }
 
 #[rstest]
-#[test]
 fn test_apply_to_request_if_missing_injects_missing_values() {
     let context = ToolExecutionContext {
         session_id: Some("sess-123".to_owned()),
@@ -202,7 +195,6 @@ fn test_apply_to_request_if_missing_injects_missing_values() {
 }
 
 #[rstest]
-#[test]
 fn test_apply_to_request_if_missing_does_not_overwrite_existing_values() {
     let context = ToolExecutionContext {
         session_id: Some("context-session".to_owned()),
@@ -255,7 +247,6 @@ fn test_apply_to_request_if_missing_does_not_overwrite_existing_values() {
 }
 
 #[rstest]
-#[test]
 fn test_apply_to_request_if_missing_injects_boolean_values() {
     let context = ToolExecutionContext {
         session_id: None,
@@ -288,7 +279,6 @@ fn test_apply_to_request_if_missing_injects_boolean_values() {
 }
 
 #[rstest]
-#[test]
 fn test_apply_to_request_if_missing_injects_timestamp() {
     let context = ToolExecutionContext {
         session_id: None,
@@ -321,7 +311,6 @@ fn test_apply_to_request_if_missing_injects_timestamp() {
 }
 
 #[rstest]
-#[test]
 fn test_apply_to_request_if_missing_does_not_inject_none_values() {
     let context = ToolExecutionContext {
         session_id: None,
@@ -354,7 +343,6 @@ fn test_apply_to_request_if_missing_does_not_inject_none_values() {
 }
 
 #[rstest]
-#[test]
 fn test_apply_to_request_if_missing_creates_arguments_map_if_needed() {
     let context = ToolExecutionContext {
         session_id: Some("sess-123".to_owned()),

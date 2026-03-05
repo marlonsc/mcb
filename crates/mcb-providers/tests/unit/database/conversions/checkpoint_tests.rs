@@ -18,7 +18,6 @@ fn sample_checkpoint() -> checkpoint::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_checkpoint() {
     let model = sample_checkpoint();
     let model_val = model.id.clone();

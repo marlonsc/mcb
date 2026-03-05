@@ -16,7 +16,6 @@ fn sample_organization() -> organization::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_organization() {
     let model = sample_organization();
     let model_val = model.id.clone();

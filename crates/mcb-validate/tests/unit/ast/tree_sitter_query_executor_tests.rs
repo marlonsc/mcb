@@ -28,7 +28,6 @@ fn build_rule(query: Option<&str>) -> ValidatedRule {
 }
 
 #[rstest]
-#[test]
 fn tree_sitter_query_executor_matches_function_names() {
     let temp_dir = TempDir::new().unwrap();
     let file = temp_dir.path().join("sample.rs");
@@ -44,7 +43,6 @@ fn tree_sitter_query_executor_matches_function_names() {
 }
 
 #[rstest]
-#[test]
 fn tree_sitter_query_executor_returns_config_error_for_invalid_query() {
     let temp_dir = TempDir::new().unwrap();
     let file = temp_dir.path().join("sample.rs");

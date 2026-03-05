@@ -29,7 +29,6 @@ use rstest::rstest;
 // ============================================================================
 
 #[rstest]
-#[test]
 fn file_selection_standard_file_field() {
     let v = mcb_validate::QualityViolation::UnwrapInProduction {
         file: PathBuf::from("src/main.rs"),
@@ -45,7 +44,6 @@ fn file_selection_standard_file_field() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn file_selection_path_field() {
     let v = mcb_validate::NamingViolation::BadModuleName {
         path: PathBuf::from("src/Foo.rs"),
@@ -56,7 +54,6 @@ fn file_selection_path_field() {
 }
 
 #[rstest]
-#[test]
 fn file_selection_path_field_with_other_fields() {
     let v = mcb_validate::NamingViolation::BadFileSuffix {
         path: PathBuf::from("src/handler.rs"),
@@ -73,7 +70,6 @@ fn file_selection_path_field_with_other_fields() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn file_selection_location_field() {
     let v = mcb_validate::DependencyViolation::ForbiddenCargoDepedency {
         crate_name: "mcb-server".to_owned(),
@@ -92,7 +88,6 @@ fn file_selection_location_field() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn file_selection_source_file_field() {
     let v = mcb_validate::RefactoringViolation::MissingTestFile {
         source_file: PathBuf::from("src/service.rs"),
@@ -107,7 +102,6 @@ fn file_selection_source_file_field() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn file_selection_referencing_file_field() {
     let v = mcb_validate::RefactoringViolation::DeletedModuleReference {
         referencing_file: PathBuf::from("src/lib.rs"),
@@ -123,7 +117,6 @@ fn file_selection_referencing_file_field() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn file_selection_locations_vec_returns_first() {
     let v = mcb_validate::RefactoringViolation::DuplicateDefinition {
         type_name: "Config".to_owned(),
@@ -138,7 +131,6 @@ fn file_selection_locations_vec_returns_first() {
 }
 
 #[rstest]
-#[test]
 fn file_selection_locations_vec_empty_returns_none() {
     let v = mcb_validate::RefactoringViolation::DuplicateDefinition {
         type_name: "Config".to_owned(),
@@ -154,7 +146,6 @@ fn file_selection_locations_vec_empty_returns_none() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn file_selection_no_file_field_returns_none() {
     let v = mcb_validate::DependencyViolation::CircularDependency {
         cycle: mcb_validate::validators::dependency::DependencyCycle(vec![
@@ -172,7 +163,6 @@ fn file_selection_no_file_field_returns_none() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn line_selection_standard_line_field() {
     let v = mcb_validate::ErrorBoundaryViolation::MissingErrorContext {
         file: PathBuf::from("src/handler.rs"),
@@ -185,7 +175,6 @@ fn line_selection_standard_line_field() {
 }
 
 #[rstest]
-#[test]
 fn line_selection_line_not_first_field() {
     // `referencing_file` comes before `line` — macro must skip non-line fields
     let v = mcb_validate::RefactoringViolation::DeletedModuleReference {
@@ -202,7 +191,6 @@ fn line_selection_line_not_first_field() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn line_selection_no_line_field_returns_none() {
     // BadModuleName has only `path`, `expected_case`, `severity` — no `line`
     let v = mcb_validate::NamingViolation::BadModuleName {
@@ -214,7 +202,6 @@ fn line_selection_no_line_field_returns_none() {
 }
 
 #[rstest]
-#[test]
 fn line_selection_no_line_circular_dep() {
     let v = mcb_validate::DependencyViolation::CircularDependency {
         cycle: mcb_validate::validators::dependency::DependencyCycle(vec![
@@ -231,7 +218,6 @@ fn line_selection_no_line_circular_dep() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn suggestion_from_literal_attribute() {
     let v = mcb_validate::QualityViolation::UnwrapInProduction {
         file: PathBuf::from("src/lib.rs"),
@@ -246,7 +232,6 @@ fn suggestion_from_literal_attribute() {
 }
 
 #[rstest]
-#[test]
 fn suggestion_from_literal_with_field_interpolation() {
     // RefactoringViolation::MissingTestFile uses `suggestion = "Create test file {expected_test} ..."`
     let v = mcb_validate::RefactoringViolation::MissingTestFile {
@@ -270,7 +255,6 @@ fn suggestion_from_literal_with_field_interpolation() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn suggestion_from_string_field() {
     // OrphanImport has `suggestion = "{suggestion}"` — renders the field value verbatim
     let v = mcb_validate::RefactoringViolation::OrphanImport {
@@ -284,7 +268,6 @@ fn suggestion_from_string_field() {
 }
 
 #[rstest]
-#[test]
 fn suggestion_from_string_field_naming() {
     // BadCaNaming has `suggestion = "{suggestion}"` — passthrough
     let v = mcb_validate::NamingViolation::BadCaNaming {
@@ -302,7 +285,6 @@ fn suggestion_from_string_field_naming() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn suggestion_circular_dependency_literal() {
     let v = mcb_validate::DependencyViolation::CircularDependency {
         cycle: mcb_validate::validators::dependency::DependencyCycle(vec![
@@ -322,7 +304,6 @@ fn suggestion_circular_dependency_literal() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn all_three_methods_on_kiss_violation() {
     let v = mcb_validate::KissViolation::StructTooManyFields {
         file: PathBuf::from("src/big.rs"),
@@ -346,7 +327,6 @@ fn all_three_methods_on_kiss_violation() {
 }
 
 #[rstest]
-#[test]
 fn all_three_methods_on_no_file_no_line_variant() {
     let v = mcb_validate::DependencyViolation::CircularDependency {
         cycle: mcb_validate::validators::dependency::DependencyCycle(vec![
@@ -365,7 +345,6 @@ fn all_three_methods_on_no_file_no_line_variant() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn severity_dynamic_reads_field_value() {
     // QualityViolation uses `dynamic_severity` — severity comes from the field
     let v = mcb_validate::QualityViolation::UnwrapInProduction {
@@ -382,7 +361,6 @@ fn severity_dynamic_reads_field_value() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn id_and_category_correct() {
     let v = mcb_validate::KissViolation::DeepNesting {
         file: PathBuf::from("src/deep.rs"),
@@ -393,5 +371,8 @@ fn id_and_category_correct() {
         severity: Severity::Warning,
     };
     assert_eq!(v.id(), "KISS004");
-    assert_eq!(v.category(), mcb_domain::ports::validation::ViolationCategory::Kiss);
+    assert_eq!(
+        v.category(),
+        mcb_domain::ports::validation::ViolationCategory::Kiss
+    );
 }

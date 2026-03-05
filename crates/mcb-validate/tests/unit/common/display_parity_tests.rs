@@ -14,7 +14,6 @@ use rstest::rstest;
 // ============================================================================
 
 #[rstest]
-#[test]
 fn display_parity_quality_unwrap_smoke_test() {
     let v = mcb_validate::QualityViolation::UnwrapInProduction {
         file: PathBuf::from("src/test.rs"),
@@ -31,7 +30,6 @@ fn display_parity_quality_unwrap_smoke_test() {
 }
 
 #[rstest]
-#[test]
 fn display_parity_error_boundary_missing_context() {
     let v = mcb_validate::ErrorBoundaryViolation::MissingErrorContext {
         file: PathBuf::from("src/handlers/auth.rs"),
@@ -47,7 +45,6 @@ fn display_parity_error_boundary_missing_context() {
 }
 
 #[rstest]
-#[test]
 fn display_parity_error_boundary_wrong_layer() {
     let v = mcb_validate::ErrorBoundaryViolation::WrongLayerError {
         file: PathBuf::from("src/domain/service.rs"),
@@ -63,7 +60,6 @@ fn display_parity_error_boundary_wrong_layer() {
 }
 
 #[rstest]
-#[test]
 fn display_parity_error_boundary_leaked_internal() {
     let v = mcb_validate::ErrorBoundaryViolation::LeakedInternalError {
         file: PathBuf::from("src/handlers/api.rs"),
@@ -82,7 +78,6 @@ fn display_parity_error_boundary_leaked_internal() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn display_parity_refactoring_orphan_import() {
     let v = mcb_validate::RefactoringViolation::OrphanImport {
         file: PathBuf::from("src/lib.rs"),
@@ -98,7 +93,6 @@ fn display_parity_refactoring_orphan_import() {
 }
 
 #[rstest]
-#[test]
 fn display_parity_refactoring_duplicate_definition() {
     // NOTE: Old manual Display included "in N locations:" with count.
     // Macro-generated Display drops the count, keeping just the path list.
@@ -116,7 +110,6 @@ fn display_parity_refactoring_duplicate_definition() {
 }
 
 #[rstest]
-#[test]
 fn display_parity_refactoring_missing_test_file() {
     let v = mcb_validate::RefactoringViolation::MissingTestFile {
         source_file: PathBuf::from("src/foo.rs"),
@@ -130,7 +123,6 @@ fn display_parity_refactoring_missing_test_file() {
 }
 
 #[rstest]
-#[test]
 fn display_parity_refactoring_stale_reexport() {
     let v = mcb_validate::RefactoringViolation::StaleReExport {
         file: PathBuf::from("src/lib.rs"),
@@ -145,7 +137,6 @@ fn display_parity_refactoring_stale_reexport() {
 }
 
 #[rstest]
-#[test]
 fn display_parity_refactoring_deleted_module_reference() {
     let v = mcb_validate::RefactoringViolation::DeletedModuleReference {
         referencing_file: PathBuf::from("src/lib.rs"),
@@ -160,7 +151,6 @@ fn display_parity_refactoring_deleted_module_reference() {
 }
 
 #[rstest]
-#[test]
 fn display_parity_refactoring_dead_code() {
     let v = mcb_validate::RefactoringViolation::RefactoringDeadCode {
         file: PathBuf::from("src/old.rs"),
@@ -179,7 +169,6 @@ fn display_parity_refactoring_dead_code() {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn display_parity_vec_pathbuf_rendering() {
     let v = mcb_validate::RefactoringViolation::DuplicateDefinition {
         type_name: "T".to_owned(),

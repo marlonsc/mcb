@@ -18,7 +18,7 @@ pub(crate) fn db_error(context: &str) -> impl FnOnce(DbErr) -> Error + '_ {
 // ============================================================================
 
 use mcb_domain::error::Result;
-use mcb_utils::constants::values::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
+use mcb_utils::constants::values::DEFAULT_ORG_NAME;
 use sea_orm::sea_query::OnConflict;
 use sea_orm::{ConnectionTrait, EntityTrait, Set};
 
@@ -41,7 +41,7 @@ pub(crate) async fn ensure_org_and_project(
         created_at: Set(timestamp),
         updated_at: Set(timestamp),
     };
-    organization::Entity::insert(org)
+    match organization::Entity::insert(org)
         .on_conflict(
             OnConflict::column(organization::Column::Id)
                 .do_nothing()
@@ -49,17 +49,20 @@ pub(crate) async fn ensure_org_and_project(
         )
         .exec(db)
         .await
-        .ok(); // ignore RecordNotInserted
+    {
+        Ok(_) | Err(DbErr::RecordNotInserted) => {}
+        Err(other) => return Err(db_err(other)),
+    }
 
     let proj = project::ActiveModel {
         id: Set(project_id.to_owned()),
-        org_id: Set(DEFAULT_ORG_ID.to_owned()),
+        org_id: Set(org_id.to_owned()),
         name: Set(format!("Project {project_id}")),
         path: Set(project_id.to_owned()),
         created_at: Set(timestamp),
         updated_at: Set(timestamp),
     };
-    project::Entity::insert(proj)
+    match project::Entity::insert(proj)
         .on_conflict(
             OnConflict::column(project::Column::Id)
                 .do_nothing()
@@ -67,7 +70,10 @@ pub(crate) async fn ensure_org_and_project(
         )
         .exec(db)
         .await
-        .ok(); // ignore RecordNotInserted
+    {
+        Ok(_) | Err(DbErr::RecordNotInserted) => {}
+        Err(other) => return Err(db_err(other)),
+    }
 
     Ok(())
 }

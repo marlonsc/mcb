@@ -13,7 +13,6 @@ fn sample_issue_label_assignment() -> issue_label_assignment::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_issue_label_assignment() {
     let model = sample_issue_label_assignment();
     let model_val = model.issue_id.clone();

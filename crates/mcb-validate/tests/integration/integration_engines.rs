@@ -47,7 +47,6 @@ pub async fn process() -> Result<(), Error> {
         "tests/test_main.rs".to_owned(),
         "
 #[rstest]
-#[test]
 fn test_main() {
     let x = get_value().unwrap(); // OK in tests
     assert!(x >= 0); // Basic assertion to ensure test has validation

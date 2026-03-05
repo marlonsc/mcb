@@ -26,7 +26,6 @@ fn sample_agent_session() -> agent_session::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_agent_session() {
     let model = sample_agent_session();
     let model_val = model.id.clone();

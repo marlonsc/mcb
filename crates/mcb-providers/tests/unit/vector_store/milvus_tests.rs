@@ -30,7 +30,6 @@ fn milvus_name(collection_id: CollectionId) -> String {
 // ---------------------------------------------------------------------------
 
 #[rstest]
-#[test]
 fn test_to_milvus_name_starts_with_letter(milvus_name: String) {
     assert!(
         milvus_name.starts_with(MILVUS_COLLECTION_PREFIX),
@@ -39,7 +38,6 @@ fn test_to_milvus_name_starts_with_letter(milvus_name: String) {
 }
 
 #[rstest]
-#[test]
 fn test_to_milvus_name_no_hyphens(milvus_name: String) {
     assert!(
         !milvus_name.contains('-'),
@@ -48,7 +46,6 @@ fn test_to_milvus_name_no_hyphens(milvus_name: String) {
 }
 
 #[rstest]
-#[test]
 fn test_to_milvus_name_valid_pattern(milvus_name: String) {
     let pattern = regex::Regex::new(MILVUS_COLLECTION_NAME_PATTERN).unwrap();
     assert!(
@@ -58,7 +55,6 @@ fn test_to_milvus_name_valid_pattern(milvus_name: String) {
 }
 
 #[rstest]
-#[test]
 fn test_to_milvus_name_under_255_chars(milvus_name: String) {
     assert!(
         milvus_name.len() <= 255,
@@ -99,7 +95,6 @@ fn long_column() -> impl Fn(&str, Vec<i64>) -> FieldColumn {
 // ---------------------------------------------------------------------------
 
 #[rstest]
-#[test]
 fn test_extract_string_field_missing_column_returns_error() {
     let fields: Vec<FieldColumn> = vec![];
     let result = extract_string_field(&fields, "missing", 0);
@@ -112,7 +107,6 @@ fn test_extract_string_field_missing_column_returns_error() {
 }
 
 #[rstest]
-#[test]
 fn test_extract_string_field_out_of_bounds_returns_error(
     string_column: impl Fn(&str, Vec<String>) -> FieldColumn,
 ) {
@@ -130,7 +124,6 @@ fn test_extract_string_field_out_of_bounds_returns_error(
 }
 
 #[rstest]
-#[test]
 fn test_extract_string_field_valid_returns_ok(
     string_column: impl Fn(&str, Vec<String>) -> FieldColumn,
 ) {
@@ -143,7 +136,6 @@ fn test_extract_string_field_valid_returns_ok(
 }
 
 #[rstest]
-#[test]
 fn test_extract_long_field_missing_column_returns_error() {
     let fields: Vec<FieldColumn> = vec![];
     let result = extract_long_field(&fields, "missing", 0);
@@ -156,7 +148,6 @@ fn test_extract_long_field_missing_column_returns_error() {
 }
 
 #[rstest]
-#[test]
 fn test_extract_long_field_valid_returns_ok(long_column: impl Fn(&str, Vec<i64>) -> FieldColumn) {
     let fields = vec![long_column(VECTOR_FIELD_START_LINE, vec![42])];
     let result = extract_long_field(&fields, VECTOR_FIELD_START_LINE, 0);
@@ -164,7 +155,6 @@ fn test_extract_long_field_valid_returns_ok(long_column: impl Fn(&str, Vec<i64>)
 }
 
 #[rstest]
-#[test]
 fn test_convert_query_results_missing_fields_returns_error(
     string_column: impl Fn(&str, Vec<String>) -> FieldColumn,
 ) {

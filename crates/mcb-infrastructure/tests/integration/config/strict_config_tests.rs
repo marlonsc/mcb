@@ -94,7 +94,6 @@ fn load_app_config_from_yaml_path(path: &Path) -> DomainResult<AppConfig> {
 }
 
 #[rstest]
-#[test]
 fn test_missing_yaml_config_fails() {
     let result =
         load_app_config_from_yaml_path(Path::new("/tmp/nonexistent-dir/config/development.yaml"));
@@ -111,7 +110,6 @@ fn test_missing_yaml_config_fails() {
 }
 
 #[rstest]
-#[test]
 fn test_unknown_key_rejected() {
     // AppConfig uses #[serde(deny_unknown_fields)] — unknown keys are rejected at parse time.
     let temp_dir = TempDir::new().unwrap();
@@ -126,7 +124,6 @@ fn test_unknown_key_rejected() {
 }
 
 #[rstest]
-#[test]
 fn test_missing_required_key_fails() {
     // Write a YAML config with a required key removed and load via explicit path.
     let temp_dir = TempDir::new().unwrap();
@@ -155,7 +152,6 @@ fn test_missing_required_key_fails() {
 // ── Enforcement: no config bypass ────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_no_direct_env_var_in_production_code() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
     let allowed_paths: &[&str] = &[
@@ -216,7 +212,6 @@ fn test_no_direct_env_var_in_production_code() -> Result<(), Box<dyn std::error:
 }
 
 #[rstest]
-#[test]
 fn test_no_impl_default_in_config_types() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
     let types_dir = root.join("crates/mcb-infrastructure/src/config/types");
@@ -258,7 +253,6 @@ fn test_no_impl_default_in_config_types() -> Result<(), Box<dyn std::error::Erro
 }
 
 #[rstest]
-#[test]
 fn test_no_serde_default_in_config_types() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
     let types_dir = root.join("crates/mcb-infrastructure/src/config/types");
@@ -289,7 +283,6 @@ fn test_no_serde_default_in_config_types() -> Result<(), Box<dyn std::error::Err
 }
 
 #[rstest]
-#[test]
 fn test_no_hardcoded_fallback_for_security_ids() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
 
@@ -348,7 +341,6 @@ fn test_no_hardcoded_fallback_for_security_ids() -> Result<(), Box<dyn std::erro
 // ── Enforcement: no duplicated domain constants outside mcb-domain ───────────
 
 #[rstest]
-#[test]
 fn test_no_lang_constants_outside_domain() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
     let domain_lang = root.join("crates/mcb-domain/src/constants/lang.rs");
@@ -404,7 +396,6 @@ fn test_no_lang_constants_outside_domain() -> Result<(), Box<dyn std::error::Err
 }
 
 #[rstest]
-#[test]
 fn test_no_bm25_constants_outside_domain() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
 
@@ -464,7 +455,6 @@ fn test_no_bm25_constants_outside_domain() -> Result<(), Box<dyn std::error::Err
 }
 
 #[rstest]
-#[test]
 fn test_no_hardcoded_provider_defaults() -> Result<(), Box<dyn std::error::Error>> {
     let root = workspace_root()?;
 
@@ -529,7 +519,6 @@ fn load_valid_config_unvalidated() -> AppConfig {
 // ── Positive: valid development.yaml passes all 6 validators ────────────────
 
 #[rstest]
-#[test]
 fn test_valid_development_config_passes_all_validators() {
     let config = load_valid_config_unvalidated();
     let result = config_provider().validate_config(&config);
@@ -567,7 +556,6 @@ fn test_auth_enabled_with_invalid_secret_fails(
 }
 
 #[rstest]
-#[test]
 fn test_auth_disabled_skips_secret_validation() {
     let mut config = load_valid_config_unvalidated();
     config.auth.enabled = false;
@@ -581,7 +569,6 @@ fn test_auth_disabled_skips_secret_validation() {
 // ── Negative: validate_cache_config ─────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_cache_enabled_with_zero_ttl_fails() {
     let mut config = load_valid_config_unvalidated();
     config.system.infrastructure.cache.enabled = true;
@@ -597,7 +584,6 @@ fn test_cache_enabled_with_zero_ttl_fails() {
 }
 
 #[rstest]
-#[test]
 fn test_cache_disabled_allows_zero_ttl() {
     let mut config = load_valid_config_unvalidated();
     config.system.infrastructure.cache.enabled = false;
@@ -636,7 +622,6 @@ fn test_limits_zero_value_fails(
 }
 
 #[rstest]
-#[test]
 fn test_limits_nonzero_passes() {
     let mut config = load_valid_config_unvalidated();
     config.system.infrastructure.limits.memory_limit = 1024;
@@ -650,7 +635,6 @@ fn test_limits_nonzero_passes() {
 // ── Negative: validate_daemon_config ────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_daemon_enabled_with_zero_restart_attempts_fails() {
     let mut config = load_valid_config_unvalidated();
     config.operations_daemon.daemon.enabled = true;
@@ -666,7 +650,6 @@ fn test_daemon_enabled_with_zero_restart_attempts_fails() {
 }
 
 #[rstest]
-#[test]
 fn test_daemon_disabled_allows_zero_restart_attempts() {
     let mut config = load_valid_config_unvalidated();
     config.operations_daemon.daemon.enabled = false;
@@ -680,7 +663,6 @@ fn test_daemon_disabled_allows_zero_restart_attempts() {
 // ── Negative: validate_backup_config ────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_backup_enabled_with_zero_interval_fails() {
     let mut config = load_valid_config_unvalidated();
     config.system.data.backup.enabled = true;
@@ -696,7 +678,6 @@ fn test_backup_enabled_with_zero_interval_fails() {
 }
 
 #[rstest]
-#[test]
 fn test_backup_disabled_allows_zero_interval() {
     let mut config = load_valid_config_unvalidated();
     config.system.data.backup.enabled = false;
@@ -736,7 +717,6 @@ fn test_operations_tracking_enabled_with_zero_value_fails(
 }
 
 #[rstest]
-#[test]
 fn test_operations_tracking_disabled_allows_zero_values() {
     let mut config = load_valid_config_unvalidated();
     config.operations_daemon.operations.tracking_enabled = false;

@@ -31,7 +31,6 @@ fn sample_project_issue() -> project_issue::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_project_issue() {
     let model = sample_project_issue();
     let model_val = model.id.clone();

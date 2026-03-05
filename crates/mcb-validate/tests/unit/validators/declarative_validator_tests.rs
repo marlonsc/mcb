@@ -48,7 +48,6 @@ fn write_rule(root: &Path, file_name: &str, content: &str) -> io::Result<()> {
 }
 
 #[rstest]
-#[test]
 fn ast_selector_matches_rust_function_nodes() -> io::Result<()> {
     let temp = TempDir::new()?;
     let root = temp.path();
@@ -87,7 +86,6 @@ message: "Function node detected"
 }
 
 #[rstest]
-#[test]
 fn regex_rules_without_selectors_still_work() -> io::Result<()> {
     let temp = TempDir::new()?;
     let root = temp.path();
@@ -129,7 +127,6 @@ message: "Unwrap detected"
 }
 
 #[rstest]
-#[test]
 fn ast_query_matches_rust_function_names() {
     let temp = TempDir::new().unwrap();
     let root = temp.path();
@@ -169,7 +166,6 @@ message: "Function detected"
 }
 
 #[rstest]
-#[test]
 fn invalid_ast_query_returns_config_error() {
     let temp = TempDir::new().unwrap();
     let root = temp.path();

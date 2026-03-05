@@ -6,7 +6,6 @@ use std::path::PathBuf;
 use mcb_domain::ports::validation::{Severity, ValidationConfig};
 
 #[rstest]
-#[test]
 fn test_severity_serialization() {
     let severity = Severity::Error;
     let json = serde_json::to_string(&severity).unwrap();
@@ -14,7 +13,6 @@ fn test_severity_serialization() {
 }
 
 #[rstest]
-#[test]
 fn test_validation_config_creation() {
     let config = ValidationConfig::new("/workspace");
     assert_eq!(config.workspace_root.to_str().unwrap(), "/workspace");
@@ -23,7 +21,6 @@ fn test_validation_config_creation() {
 }
 
 #[rstest]
-#[test]
 fn test_validation_config_builder() {
     let config = ValidationConfig::new("/workspace")
         .with_additional_path("../src")
@@ -48,7 +45,6 @@ fn validation_config_should_exclude(#[case] file: &str, #[case] expected: bool) 
 }
 
 #[rstest]
-#[test]
 fn test_validator_registry_with_config() {
     let config = ValidationConfig::new("/tmp/test-workspace")
         .with_additional_path("../legacy-src")

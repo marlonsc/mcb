@@ -28,7 +28,6 @@ fn tokenize(#[case] input: &str, #[case] token: &str, #[case] should_contain: bo
 }
 
 #[rstest]
-#[test]
 fn test_bm25_scorer_creation() {
     let chunks = vec![
         create_test_chunk("fn authenticate_user() {}", "auth.rs", 1),

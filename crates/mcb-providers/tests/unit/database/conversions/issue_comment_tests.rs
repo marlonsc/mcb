@@ -15,7 +15,6 @@ fn sample_issue_comment() -> issue_comment::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_issue_comment() {
     let model = sample_issue_comment();
     let model_val = model.id.clone();

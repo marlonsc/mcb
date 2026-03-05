@@ -36,7 +36,6 @@ fn validate_workspace_group(
 }
 
 #[rstest]
-#[test]
 fn test_validate_workspace_quality() {
     let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root);
@@ -76,7 +75,6 @@ fn test_validate_workspace_quality() {
 }
 
 #[rstest]
-#[test]
 fn test_validate_workspace_documentation() {
     let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root);
@@ -104,7 +102,6 @@ fn test_validate_workspace_documentation() {
 }
 
 #[rstest]
-#[test]
 fn test_full_validation_report() {
     let handle = match std::thread::Builder::new()
         .name("full-report".into())
@@ -185,7 +182,6 @@ fn run_full_validation_report() {
 }
 
 #[rstest]
-#[test]
 fn test_validation_config() {
     let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root)

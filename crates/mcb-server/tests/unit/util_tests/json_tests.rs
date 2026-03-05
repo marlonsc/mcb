@@ -3,7 +3,6 @@ use rstest::rstest;
 use serde_json::json;
 
 #[rstest]
-#[test]
 fn test_json_map() {
     let val = Some(json!({"key": "value"}));
     let map = json_map(&val).unwrap();
@@ -11,7 +10,6 @@ fn test_json_map() {
 }
 
 #[rstest]
-#[test]
 fn test_get_str() {
     let val = json!({"key": "value"});
     let map = val.as_object().unwrap();
@@ -42,7 +40,6 @@ fn test_get_bool(#[case] value: serde_json::Value, #[case] expected: Option<bool
 }
 
 #[rstest]
-#[test]
 fn test_get_string_list() {
     let val = json!({"key": ["a", "b", "c"]});
     let map = val.as_object().unwrap();

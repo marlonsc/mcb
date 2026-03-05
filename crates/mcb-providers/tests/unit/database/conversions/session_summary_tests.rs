@@ -21,7 +21,6 @@ fn sample_session_summary() -> session_summary::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_session_summary() {
     let model = sample_session_summary();
     let model_val = model.id.clone();

@@ -18,7 +18,6 @@ use crate::utils::*;
 use rstest::rstest;
 
 #[rstest]
-#[test]
 fn test_rete_engine_creation() {
     let _engine = ReteEngine::new();
 }

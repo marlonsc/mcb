@@ -18,7 +18,6 @@ fn sample_error_pattern_match() -> error_pattern_match::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_error_pattern_match() {
     let model = sample_error_pattern_match();
     let model_val = model.id.clone();

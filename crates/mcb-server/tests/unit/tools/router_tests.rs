@@ -99,7 +99,6 @@ fn valid_context() -> ToolExecutionContext {
 }
 
 #[rstest]
-#[test]
 fn rejects_blank_provenance_scope_for_search() {
     let mut context = valid_context();
     context.operator_id = Some("   ".to_owned());
@@ -114,7 +113,6 @@ fn rejects_blank_provenance_scope_for_search() {
 }
 
 #[rstest]
-#[test]
 fn rejects_delegated_without_parent_session_id() {
     let mut context = valid_context();
     context.delegated = Some(true);
@@ -133,7 +131,6 @@ fn rejects_delegated_without_parent_session_id() {
 }
 
 #[rstest]
-#[test]
 fn non_provenance_tool_bypasses_scope_gate() {
     let context = ToolExecutionContext {
         session_id: None,
@@ -159,7 +156,6 @@ fn non_provenance_tool_bypasses_scope_gate() {
 }
 
 #[rstest]
-#[test]
 fn rejects_validate_in_server_hybrid_flow() {
     let mut context = valid_context();
     context.execution_flow = Some(ExecutionFlow::ServerHybrid.to_string());
@@ -177,7 +173,6 @@ fn rejects_validate_in_server_hybrid_flow() {
 }
 
 #[rstest]
-#[test]
 fn allows_search_in_client_hybrid_flow() {
     let mut context = valid_context();
     context.execution_flow = Some(ExecutionFlow::ClientHybrid.to_string());
@@ -190,7 +185,6 @@ fn allows_search_in_client_hybrid_flow() {
 }
 
 #[rstest]
-#[test]
 fn allows_search_in_server_hybrid_flow() {
     let mut context = valid_context();
     context.execution_flow = Some(ExecutionFlow::ServerHybrid.to_string());
@@ -242,7 +236,6 @@ async fn test_runtime_defaults_discover() {
 }
 
 #[rstest]
-#[test]
 fn test_resolve_overrides_beat_defaults() {
     let defaults = RuntimeDefaults {
         workspace_root: Some("/defaults/workspace".to_owned()),
@@ -286,7 +279,6 @@ fn test_resolve_overrides_beat_defaults() {
 }
 
 #[rstest]
-#[test]
 fn test_resolve_with_empty_overrides_uses_defaults() {
     let defaults = RuntimeDefaults {
         workspace_root: Some("/defaults/workspace".to_owned()),
@@ -316,7 +308,6 @@ fn test_resolve_with_empty_overrides_uses_defaults() {
 }
 
 #[rstest]
-#[test]
 fn test_resolve_workspace_root_maps_to_repo_path() {
     let defaults = RuntimeDefaults {
         workspace_root: None,

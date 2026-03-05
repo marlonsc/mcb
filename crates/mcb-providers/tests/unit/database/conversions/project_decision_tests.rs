@@ -18,7 +18,6 @@ fn sample_project_decision() -> project_decision::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_project_decision() {
     let model = sample_project_decision();
     let model_val = model.id.clone();

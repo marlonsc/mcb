@@ -21,7 +21,6 @@ fn sample_tool_call() -> tool_call::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_tool_call() {
     let model = sample_tool_call();
     let model_val = model.id.clone();
