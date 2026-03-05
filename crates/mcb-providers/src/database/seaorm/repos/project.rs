@@ -1,4 +1,4 @@
-#![allow(clippy::missing_errors_doc)]
+//! SeaORM-backed project repository implementation.
 
 use std::collections::{HashSet, VecDeque};
 
@@ -11,9 +11,10 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::ProjectRepository;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter,
-    QueryOrder, QuerySelect, Set,
+    QueryOrder, QuerySelect,
 };
 
+use super::common::db_error;
 use crate::database::seaorm::entities::{
     project, project_decision, project_dependency, project_issue, project_phase,
 };
@@ -29,28 +30,26 @@ impl SeaOrmProjectRepository {
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
     }
+}
 
-    /// Persists a new project phase.
-    pub async fn create_phase(&self, phase: &ProjectPhase) -> Result<()> {
-        let active: project_phase::ActiveModel = phase.clone().into();
-        project_phase::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("create project phase"))?;
-        Ok(())
-    }
+// ── Phase CRUD (simple id-based) ────────────────────────────────────────────
 
-    /// Fetches a project phase by id.
-    pub async fn get_phase_by_id(&self, id: &str) -> Result<ProjectPhase> {
-        let model = project_phase::Entity::find_by_id(id.to_owned())
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project phase by id"))?;
+sea_pub_crud!(SeaOrmProjectRepository {
+    db_field: db,
+    entity: project_phase,
+    domain: ProjectPhase,
+    label: "ProjectPhase",
+    create: create_phase(phase),
+    get: get_phase_by_id(id),
+    update: update_phase(phase),
+    delete: delete_phase(id),
+});
 
-        Error::not_found_or(model.map(Into::into), "ProjectPhase", id)
-    }
-
+impl SeaOrmProjectRepository {
     /// Lists all phases for a project ordered by sequence.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
     pub async fn list_phases(&self, project_id: &str) -> Result<Vec<ProjectPhase>> {
         let models = project_phase::Entity::find()
             .filter(project_phase::Column::ProjectId.eq(project_id.to_owned()))
@@ -62,94 +61,75 @@ impl SeaOrmProjectRepository {
 
         Ok(models.into_iter().map(Into::into).collect())
     }
+}
 
-    /// Updates an existing project phase.
-    pub async fn update_phase(&self, phase: &ProjectPhase) -> Result<()> {
-        let active = project_phase::ActiveModel {
-            id: Set(phase.id.clone()),
-            project_id: Set(phase.project_id.clone()),
-            name: Set(phase.name.clone()),
-            description: Set(phase.description.clone()),
-            sequence: Set(i64::from(phase.sequence)),
-            status: Set(phase.status.to_string()),
-            started_at: Set(phase.started_at),
-            completed_at: Set(phase.completed_at),
-            created_at: Set(phase.created_at),
-            updated_at: Set(phase.updated_at),
-        };
-        active
-            .update(&self.db)
-            .await
-            .map_err(db_error("update project phase"))?;
-        Ok(())
-    }
+// ── Decision CRUD (simple id-based) ─────────────────────────────────────────
 
-    /// Deletes a project phase by id.
-    pub async fn delete_phase(&self, id: &str) -> Result<()> {
-        project_phase::Entity::delete_by_id(id.to_owned())
-            .exec(&self.db)
-            .await
-            .map_err(db_error("delete project phase"))?;
-        Ok(())
-    }
+sea_pub_crud!(SeaOrmProjectRepository {
+    db_field: db,
+    entity: project_decision,
+    domain: ProjectDecision,
+    label: "ProjectDecision",
+    create: create_decision(decision),
+    get: get_decision_by_id(id),
+    update: update_decision(decision),
+    delete: delete_decision(id),
+});
 
-    /// Persists a new project issue.
-    pub async fn create_issue(&self, issue: &ProjectIssue) -> Result<()> {
-        let active: project_issue::ActiveModel = issue.clone().into();
-        project_issue::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("create project issue"))?;
-        Ok(())
-    }
-
-    /// Fetches a project issue by organization and issue id.
-    pub async fn get_issue_by_id(&self, org_id: &str, id: &str) -> Result<ProjectIssue> {
-        let model = project_issue::Entity::find_by_id(id.to_owned())
-            .filter(project_issue::Column::OrgId.eq(org_id.to_owned()))
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project issue by id"))?;
-
-        Error::not_found_or(model.map(Into::into), "ProjectIssue", id)
-    }
-
-    /// Lists all issues for a project in an organization.
-    pub async fn list_issues(&self, org_id: &str, project_id: &str) -> Result<Vec<ProjectIssue>> {
-        let models = project_issue::Entity::find()
-            .filter(project_issue::Column::OrgId.eq(org_id.to_owned()))
-            .filter(project_issue::Column::ProjectId.eq(project_id.to_owned()))
-            .order_by_asc(project_issue::Column::CreatedAt)
+impl SeaOrmProjectRepository {
+    /// Lists all decisions for a project ordered by creation date.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
+    pub async fn list_decisions(&self, project_id: &str) -> Result<Vec<ProjectDecision>> {
+        let models = project_decision::Entity::find()
+            .filter(project_decision::Column::ProjectId.eq(project_id.to_owned()))
+            .order_by_desc(project_decision::Column::CreatedAt)
             .all(&self.db)
             .await
-            .map_err(db_error("list project issues"))?;
+            .map_err(db_error("list project decisions"))?;
 
         Ok(models.into_iter().map(Into::into).collect())
     }
+}
 
-    /// Lists issues using a rich filter.
-    pub async fn list_issues_filtered(
-        &self,
-        org_id: &str,
+// ── Issue CRUD (org-scoped) ─────────────────────────────────────────────────
+
+sea_pub_crud_scoped!(SeaOrmProjectRepository {
+    db_field: db, entity: project_issue, domain: ProjectIssue,
+    label: "ProjectIssue",
+    scope_col: project_issue::Column::OrgId,
+    create: create_issue(issue),
+    get: get_issue_by_id,
+    list: list_issues(project_issue::Column::ProjectId => project_id),
+    update: update_issue(issue),
+    delete: delete_issue,
+});
+
+impl SeaOrmProjectRepository {
+    /// Verifies a project exists in the given org.
+    async fn verify_project_exists(&self, org_id: &str, project_id: &str) -> Result<()> {
+        let exists = project::Entity::find()
+            .filter(project::Column::Id.eq(project_id))
+            .filter(project::Column::OrgId.eq(org_id))
+            .count(&self.db)
+            .await
+            .map_err(db_error("verify project ownership"))?
+            > 0;
+        if !exists {
+            return Err(Error::not_found(format!(
+                "Project with id {project_id} not found in org"
+            )));
+        }
+        Ok(())
+    }
+
+    /// Applies `IssueFilter` fields to a `SeaORM` `Select` query.
+    fn apply_issue_filter(
+        mut q: sea_orm::Select<project_issue::Entity>,
         filter: &IssueFilter,
-    ) -> Result<Vec<ProjectIssue>> {
-        let mut q = project_issue::Entity::find()
-            .filter(project_issue::Column::OrgId.eq(org_id.to_owned()))
-            .order_by_desc(project_issue::Column::UpdatedAt);
-
+    ) -> sea_orm::Select<project_issue::Entity> {
         if let Some(project_id) = &filter.project_id {
-            let project_exists = project::Entity::find()
-                .filter(project::Column::Id.eq(project_id.as_str()))
-                .filter(project::Column::OrgId.eq(org_id))
-                .count(&self.db)
-                .await
-                .map_err(db_error("verify project ownership"))?
-                > 0;
-            if !project_exists {
-                return Err(Error::not_found(format!(
-                    "Project with id {project_id} not found in org"
-                )));
-            }
             q = q.filter(project_issue::Column::ProjectId.eq(project_id.to_owned()));
         }
         if let Some(phase_id) = &filter.phase_id {
@@ -174,47 +154,55 @@ impl SeaOrmProjectRepository {
         if let Some(limit) = filter.limit {
             q = q.limit(limit as u64);
         }
+        q
+    }
 
-        let models = q
+    /// Lists issues using a rich filter.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
+    pub async fn list_issues_filtered(
+        &self,
+        org_id: &str,
+        filter: &IssueFilter,
+    ) -> Result<Vec<ProjectIssue>> {
+        if let Some(project_id) = &filter.project_id {
+            self.verify_project_exists(org_id, project_id).await?;
+        }
+
+        let q = project_issue::Entity::find()
+            .filter(project_issue::Column::OrgId.eq(org_id.to_owned()))
+            .order_by_desc(project_issue::Column::UpdatedAt);
+
+        let models = Self::apply_issue_filter(q, filter)
             .all(&self.db)
             .await
             .map_err(db_error("list filtered project issues"))?;
 
         Ok(models.into_iter().map(Into::into).collect())
     }
+}
 
-    /// Updates an existing project issue.
-    pub async fn update_issue(&self, issue: &ProjectIssue) -> Result<()> {
-        let active: project_issue::ActiveModel = issue.clone().into();
-        project_issue::Entity::update(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("update project issue"))?;
-        Ok(())
-    }
+// ── Dependency CRUD ─────────────────────────────────────────────────────────
 
-    /// Deletes an issue by organization and id.
-    pub async fn delete_issue(&self, org_id: &str, id: &str) -> Result<()> {
-        project_issue::Entity::delete_many()
-            .filter(project_issue::Column::OrgId.eq(org_id.to_owned()))
-            .filter(project_issue::Column::Id.eq(id.to_owned()))
-            .exec(&self.db)
-            .await
-            .map_err(db_error("delete project issue"))?;
-        Ok(())
-    }
-
+impl SeaOrmProjectRepository {
     /// Persists a dependency edge between issues.
+    ///
+    /// # Errors
+    /// Returns an error if the database insert fails.
     pub async fn create_dependency(&self, dependency: &ProjectDependency) -> Result<()> {
-        let active: project_dependency::ActiveModel = dependency.clone().into();
-        project_dependency::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("create project dependency"))?;
-        Ok(())
+        sea_repo_insert!(
+            &self.db,
+            project_dependency,
+            dependency,
+            "create project dependency"
+        )
     }
 
     /// Lists all dependencies attached to an issue.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
     pub async fn list_dependencies(&self, issue_id: &str) -> Result<Vec<ProjectDependency>> {
         let models = project_dependency::Entity::find()
             .filter(
@@ -231,6 +219,9 @@ impl SeaOrmProjectRepository {
     }
 
     /// Traverses issue dependencies breadth-first up to `max_depth`.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
     pub async fn traverse_dependencies(
         &self,
         issue_id: &str,
@@ -251,7 +242,7 @@ impl SeaOrmProjectRepository {
             }
 
             let models = project_dependency::Entity::find()
-                .filter(project_dependency::Column::FromIssueId.eq(current.clone()))
+                .filter(project_dependency::Column::FromIssueId.eq(current))
                 .order_by_asc(project_dependency::Column::CreatedAt)
                 .all(&self.db)
                 .await
@@ -273,116 +264,44 @@ impl SeaOrmProjectRepository {
     }
 
     /// Deletes a dependency edge by id.
+    ///
+    /// # Errors
+    /// Returns an error if the database delete fails.
     pub async fn delete_dependency(&self, id: &str) -> Result<()> {
-        project_dependency::Entity::delete_by_id(id.to_owned())
-            .exec(&self.db)
-            .await
-            .map_err(db_error("delete project dependency"))?;
-        Ok(())
-    }
-
-    /// Persists a new project decision.
-    pub async fn create_decision(&self, decision: &ProjectDecision) -> Result<()> {
-        let active: project_decision::ActiveModel = decision.clone().into();
-        project_decision::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("create project decision"))?;
-        Ok(())
-    }
-
-    /// Fetches a project decision by id.
-    pub async fn get_decision_by_id(&self, id: &str) -> Result<ProjectDecision> {
-        let model = project_decision::Entity::find_by_id(id.to_owned())
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project decision by id"))?;
-
-        Error::not_found_or(model.map(Into::into), "ProjectDecision", id)
-    }
-
-    /// Lists all decisions for a project.
-    pub async fn list_decisions(&self, project_id: &str) -> Result<Vec<ProjectDecision>> {
-        let models = project_decision::Entity::find()
-            .filter(project_decision::Column::ProjectId.eq(project_id.to_owned()))
-            .order_by_desc(project_decision::Column::CreatedAt)
-            .all(&self.db)
-            .await
-            .map_err(db_error("list project decisions"))?;
-
-        Ok(models.into_iter().map(Into::into).collect())
-    }
-
-    /// Updates an existing project decision.
-    pub async fn update_decision(&self, decision: &ProjectDecision) -> Result<()> {
-        let active = project_decision::ActiveModel {
-            id: Set(decision.id.clone()),
-            project_id: Set(decision.project_id.clone()),
-            issue_id: Set(decision.issue_id.clone()),
-            title: Set(decision.title.clone()),
-            context: Set(decision.context.clone()),
-            decision: Set(decision.decision.clone()),
-            consequences: Set(decision.consequences.clone()),
-            created_at: Set(decision.created_at),
-        };
-        active
-            .update(&self.db)
-            .await
-            .map_err(db_error("update project decision"))?;
-        Ok(())
-    }
-
-    /// Deletes a project decision by id.
-    pub async fn delete_decision(&self, id: &str) -> Result<()> {
-        project_decision::Entity::delete_by_id(id.to_owned())
-            .exec(&self.db)
-            .await
-            .map_err(db_error("delete project decision"))?;
-        Ok(())
+        sea_repo_delete!(
+            &self.db,
+            project_dependency,
+            id,
+            "delete project dependency"
+        )
     }
 }
+
+// ── ProjectRepository trait impl ────────────────────────────────────────────
 
 #[async_trait]
 impl ProjectRepository for SeaOrmProjectRepository {
     async fn create(&self, project: &Project) -> Result<()> {
-        let active: project::ActiveModel = project.clone().into();
-        project::Entity::insert(active)
-            .exec(&self.db)
-            .await
-            .map_err(db_error("create project"))?;
-        Ok(())
+        sea_repo_insert!(&self.db, project, project, "create project")
     }
 
     async fn get_by_id(&self, org_id: &str, id: &str) -> Result<Project> {
-        let model = project::Entity::find_by_id(id.to_owned())
-            .filter(project::Column::OrgId.eq(org_id.to_owned()))
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project by id"))?;
-
-        Error::not_found_or(model.map(Into::into), "Project", id)
+        sea_repo_get_filtered!(&self.db, project, Project, "Project", id,
+            "get project by id", project::Column::OrgId => org_id)
     }
 
     async fn get_by_name(&self, org_id: &str, name: &str) -> Result<Project> {
-        let model = project::Entity::find()
-            .filter(project::Column::OrgId.eq(org_id.to_owned()))
-            .filter(project::Column::Name.eq(name.to_owned()))
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project by name"))?;
-
-        Error::not_found_or(model.map(Into::into), "Project", name)
+        sea_repo_find_by_column!(&self.db, project, Project, "Project", name,
+            "get project by name",
+            project::Column::OrgId => org_id,
+            project::Column::Name => name)
     }
 
     async fn get_by_path(&self, org_id: &str, path: &str) -> Result<Project> {
-        let model = project::Entity::find()
-            .filter(project::Column::OrgId.eq(org_id.to_owned()))
-            .filter(project::Column::Path.eq(path.to_owned()))
-            .one(&self.db)
-            .await
-            .map_err(db_error("get project by path"))?;
-
-        Error::not_found_or(model.map(Into::into), "Project", path)
+        sea_repo_find_by_column!(&self.db, project, Project, "Project", path,
+            "get project by path",
+            project::Column::OrgId => org_id,
+            project::Column::Path => path)
     }
 
     async fn list(&self, org_id: &str) -> Result<Vec<Project>> {
@@ -397,25 +316,11 @@ impl ProjectRepository for SeaOrmProjectRepository {
     }
 
     async fn update(&self, project: &Project) -> Result<()> {
-        let active: project::ActiveModel = project.clone().into();
-        active
-            .update(&self.db)
-            .await
-            .map_err(db_error("update project"))?;
-        Ok(())
+        sea_repo_update!(&self.db, project, project, "update project")
     }
 
     async fn delete(&self, org_id: &str, id: &str) -> Result<()> {
-        project::Entity::delete_many()
-            .filter(project::Column::OrgId.eq(org_id.to_owned()))
-            .filter(project::Column::Id.eq(id.to_owned()))
-            .exec(&self.db)
-            .await
-            .map_err(db_error("delete project"))?;
-        Ok(())
+        sea_repo_delete_filtered!(&self.db, project, id, "delete project",
+            project::Column::OrgId => org_id.to_owned())
     }
-}
-
-fn db_error(op: &'static str) -> impl Fn(sea_orm::DbErr) -> Error {
-    move |e| Error::database(format!("{op}: {e}"))
 }

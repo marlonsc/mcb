@@ -8,10 +8,10 @@
 
 use async_trait::async_trait;
 use fastembed::{EmbeddingModel, InitOptions, TextEmbedding};
-use mcb_domain::constants::embedding::EMBEDDING_DIMENSION_FASTEMBED_DEFAULT;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use mcb_utils::constants::embedding::EMBEDDING_DIMENSION_FASTEMBED_DEFAULT;
 use tokio::sync::{mpsc, oneshot};
 
 /// Messages for the `FastEmbed` actor
@@ -71,7 +71,8 @@ impl FastEmbedProvider {
         let text_embedding = TextEmbedding::try_new(init_options)
             .map_err(|e| Error::embedding(format!("Failed to initialize FastEmbed model: {e}")))?;
 
-        let (tx, rx) = mpsc::channel(crate::constants::FASTEMBED_ACTOR_CHANNEL_CAPACITY);
+        let (tx, rx) =
+            mpsc::channel(mcb_utils::constants::embedding::FASTEMBED_ACTOR_CHANNEL_CAPACITY);
         let mut actor = FastEmbedActor::new(rx, text_embedding, model_name.clone());
         tokio::spawn(async move {
             actor.run().await;
@@ -92,7 +93,7 @@ impl FastEmbedProvider {
     /// Get the maximum tokens supported by this model (approximate)
     #[must_use]
     pub fn max_tokens(&self) -> usize {
-        crate::constants::FASTEMBED_MAX_TOKENS
+        mcb_utils::constants::embedding::FASTEMBED_MAX_TOKENS
     }
 }
 
@@ -118,7 +119,7 @@ impl EmbeddingProvider for FastEmbedProvider {
     }
 
     fn provider_name(&self) -> &str {
-        "fastembed"
+        mcb_utils::constants::PROVIDER_SLUG_FASTEMBED
     }
 
     async fn health_check(&self) -> Result<()> {
@@ -194,9 +195,7 @@ impl FastEmbedActor {
 use std::sync::Arc;
 
 use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::embedding::{
-    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
-};
+use mcb_domain::registry::embedding::EmbeddingProviderConfig;
 
 /// Parse model name string to `EmbeddingModel` enum
 fn parse_embedding_model(model_name: &str) -> EmbeddingModel {
@@ -223,7 +222,7 @@ fn fastembed_factory(
     let model_name = config
         .model
         .clone()
-        .unwrap_or_else(|| crate::constants::FASTEMBED_DEFAULT_MODEL.to_owned());
+        .unwrap_or_else(|| mcb_utils::constants::embedding::FASTEMBED_DEFAULT_MODEL.to_owned());
 
     let model = parse_embedding_model(&model_name);
 
@@ -242,9 +241,8 @@ fn fastembed_factory(
     Ok(Arc::new(provider))
 }
 
-#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-static FASTEMBED_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-    name: "fastembed",
-    description: "FastEmbed local provider (AllMiniLML6V2, BGESmallEN, etc.)",
-    build: fastembed_factory,
-};
+mcb_domain::register_embedding_provider!(
+    mcb_utils::constants::PROVIDER_SLUG_FASTEMBED,
+    "FastEmbed local provider (AllMiniLML6V2, BGESmallEN, etc.)",
+    fastembed_factory
+);

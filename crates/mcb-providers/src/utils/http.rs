@@ -13,15 +13,11 @@ use reqwest::Client;
 use serde_json::Value;
 
 use super::http_response::HttpResponseUtils;
-use super::retry::retry_with_backoff;
-use crate::constants::ERROR_MSG_REQUEST_TIMEOUT;
+pub(crate) use mcb_utils::constants::http::{DEFAULT_HTTP_TIMEOUT, ERROR_MSG_REQUEST_TIMEOUT};
+use mcb_utils::utils::retry::retry_with_backoff;
 
 // Re-export so callers of `send_json_request` can build `JsonRequestParams.retry`.
-pub(crate) use super::retry::RetryConfig;
-
-/// Default timeout for HTTP requests (30 seconds)
-pub(crate) const DEFAULT_HTTP_TIMEOUT: Duration =
-    Duration::from_secs(crate::constants::DEFAULT_HTTP_TIMEOUT_SECS);
+pub(crate) use mcb_utils::utils::retry::RetryConfig;
 
 #[derive(Debug, Clone, Copy)]
 /// Classification used to map HTTP request failures to domain errors.
@@ -55,7 +51,7 @@ pub(crate) fn create_client(timeout_secs: u64) -> std::result::Result<Client, St
 
 /// Create an HTTP client with the default 30-second timeout
 pub(crate) fn create_default_client() -> std::result::Result<Client, String> {
-    create_client(30)
+    create_client(mcb_utils::constants::http::HTTP_REQUEST_TIMEOUT_SECS)
 }
 
 pub(crate) fn handle_request_error_with_kind(
@@ -268,7 +264,7 @@ pub(crate) struct VectorDbRequestParams<'a> {
     pub headers: &'a [(&'a str, String)],
     pub body: Option<&'a Value>,
     pub retry_attempts: usize,
-    pub retry_backoff_secs: u64,
+    pub retry_backoff_ms: u64,
 }
 
 pub(crate) async fn send_vector_db_request(
@@ -284,7 +280,7 @@ pub(crate) async fn send_vector_db_request(
         headers,
         body,
         retry_attempts,
-        retry_backoff_secs,
+        retry_backoff_ms,
     } = params;
 
     send_json_request(JsonRequestParams {
@@ -299,7 +295,7 @@ pub(crate) async fn send_vector_db_request(
         body,
         retry: Some(RetryConfig::new(
             retry_attempts,
-            Duration::from_secs(retry_backoff_secs),
+            Duration::from_millis(retry_backoff_ms),
         )),
     })
     .await

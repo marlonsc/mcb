@@ -5,17 +5,17 @@ use std::sync::Arc;
 
 use mcb_domain::error;
 use mcb_domain::ports::MemoryServiceInterface;
-use mcb_infrastructure::project::context_resolver::capture_vcs_context;
+use mcb_utils::utils::vcs_context::capture_vcs_context;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
 use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
-use crate::constants::limits::{
-    CHARS_PER_TOKEN_ESTIMATE, DEFAULT_MAX_CONTEXT_TOKENS, DEFAULT_MEMORY_LIMIT,
-};
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
+use mcb_utils::constants::limits::{
+    CHARS_PER_TOKEN_ESTIMATE, DEFAULT_MAX_CONTEXT_TOKENS, DEFAULT_MEMORY_LIST_LIMIT,
+};
 
 /// Injects semantic memory context into the MCP tool result based on the provided filter.
 #[tracing::instrument(skip_all)]
@@ -24,7 +24,7 @@ pub async fn inject_context(
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
     let filter = build_memory_filter(args, None, None);
-    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIMIT as u32) as usize;
+    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIST_LIMIT as u32) as usize;
     let max_tokens = args.max_tokens.unwrap_or(DEFAULT_MAX_CONTEXT_TOKENS);
     let vcs_context = capture_vcs_context();
     match memory_service
@@ -36,13 +36,14 @@ pub async fn inject_context(
             let mut observation_ids = Vec::new();
             let max_chars = max_tokens * CHARS_PER_TOKEN_ESTIMATE;
             for result in results {
-                observation_ids.push(result.observation.id.clone());
+                let obs = result.observation;
                 let entry = format!(
                     "[{}] {}: {}\n\n",
-                    result.observation.r#type.as_str().to_uppercase(),
-                    result.observation.id,
-                    result.observation.content
+                    obs.r#type.as_str().to_uppercase(),
+                    obs.id,
+                    obs.content
                 );
+                observation_ids.push(obs.id);
                 if context.len() + entry.len() > max_chars {
                     break;
                 }

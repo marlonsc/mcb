@@ -104,13 +104,16 @@ MCB follows **Clean Architecture** with strict inward-only dependency flow:
 ├─────────────────────────────────────────────────┤
 │                mcb-domain                        │
 │         (entities, ports, errors)                │
+├─────────────────────────────────────────────────┤
+│                mcb-utils                         │
+│      (constants, utilities, helpers)             │
 └─────────────────────────────────────────────────┘
          ▲                        ▲
     mcb-providers            mcb-validate
   (embeddings, stores)    (architecture rules)
 ```
 
-6 workspace crates enforce layer boundaries at compile time via
+7 workspace crates enforce layer boundaries at compile time via
 [linkme](https://crates.io/crates/linkme) provider registration (zero runtime overhead).
 
 See [Architecture Documentation](./docs/architecture/ARCHITECTURE.md) for detailed design

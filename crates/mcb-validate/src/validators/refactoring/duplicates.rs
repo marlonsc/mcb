@@ -5,15 +5,15 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
+use mcb_utils::utils::regex::compile_regex;
 
 use super::RefactoringValidator;
-use super::constants::{
+use super::violation::RefactoringViolation;
+use mcb_utils::constants::validate::{
     CRATE_PATH_DELIMITER, MIGRATION_TYPE_SUFFIXES, REFACTORING_SKIP_PATTERNS, TYPE_DEFINITION_REGEX,
 };
-use super::violation::RefactoringViolation;
 
 /// Check for same type defined in multiple locations
 pub fn validate_duplicate_definitions(

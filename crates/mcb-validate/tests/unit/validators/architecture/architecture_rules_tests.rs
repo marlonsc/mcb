@@ -7,13 +7,13 @@
 use mcb_validate::rules::yaml_loader::YamlRuleLoader;
 use rstest::*;
 
+use crate::utils::build_yaml_variables;
 use crate::utils::test_constants::*;
-use crate::utils::{build_yaml_variables, get_workspace_root};
 
 #[rstest]
 #[tokio::test]
 async fn test_ca001_rule_loading() {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
     let rules_dir = workspace_root.join("crates/mcb-validate/rules");
 
     assert!(
@@ -32,8 +32,10 @@ async fn test_ca001_rule_loading() {
     if let Some(rule) = ca001_rule {
         println!("Found CA001 rule: {:?}", rule.name);
         assert_eq!(
-            rule.engine, ENGINE_RUST_RULE,
-            "CA001 should use {ENGINE_RUST_RULE}"
+            rule.engine,
+            mcb_utils::constants::validate::ENGINE_TYPE_RUST_RULE,
+            "CA001 should use {}",
+            mcb_utils::constants::validate::ENGINE_TYPE_RUST_RULE
         );
         assert!(
             rule.name.contains(RULE_CA001_NAME_KEYWORD),

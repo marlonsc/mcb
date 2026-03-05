@@ -3,24 +3,32 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an issue comment.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "issue_comments")]
 pub struct Model {
+    /// Unique identifier for the issue comment.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the issue this comment belongs to.
     #[sea_orm(column_type = "Text")]
     pub issue_id: String,
+    /// Identifier of the user who authored the comment.
     #[sea_orm(column_type = "Text")]
     pub author_id: String,
+    /// Content of the comment.
     #[sea_orm(column_type = "Text")]
     pub content: String,
+    /// Timestamp when the comment was created.
     pub created_at: i64,
 }
 
+/// Relations for the issue comment model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the issue comment model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

@@ -9,15 +9,15 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
-use tracing::{error, warn};
 
 use crate::Result;
-use crate::constants::rules::{
+use crate::rules::templates::TemplateEngine;
+use mcb_domain::error;
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
+use mcb_utils::constants::validate::{
     YAML_FIELD_ALLOWED_DEPS, YAML_FIELD_CONFIG, YAML_FIELD_CRATE_NAME, YAML_FIELD_ID,
     YAML_FIELD_PATTERNS, YAML_FIELD_REGEX, YAML_FIELD_SELECTORS,
 };
-use crate::linters::constants::CARGO_TOML_FILENAME;
-use crate::rules::templates::TemplateEngine;
 
 /// Registry of compiled regex patterns and configurations loaded from YAML rules
 pub struct PatternRegistry {
@@ -50,10 +50,10 @@ impl PatternRegistry {
         let rule_files = crate::utils::fs::collect_yaml_files(rules_dir)?;
         for path in rule_files.into_iter().filter(|p| !is_template_path(p)) {
             if let Err(e) = registry.load_rule_file(&path, naming_config, project_prefix) {
-                warn!(
-                    path = %path.display(),
-                    error = %e,
-                    "Failed to load patterns/config"
+                mcb_domain::warn!(
+                    "pattern_registry",
+                    "Failed to load patterns/config",
+                    &format!("path={} error={}", path.display(), e)
                 );
             }
         }
@@ -79,13 +79,14 @@ impl PatternRegistry {
         );
 
         // Map each layer key to (crate_name, module_name) from NamingRulesConfig
-        let crates: [(&str, &str); 6] = [
+        let crates: [(&str, &str); 7] = [
             ("domain", &naming_config.domain_crate),
             ("application", &naming_config.application_crate),
             ("providers", &naming_config.providers_crate),
             ("infrastructure", &naming_config.infrastructure_crate),
             ("server", &naming_config.server_crate),
             ("validate", &naming_config.validate_crate),
+            ("utils", &naming_config.utils_crate),
         ];
 
         for (key, crate_name) in crates {
@@ -103,10 +104,10 @@ impl PatternRegistry {
         let engine = TemplateEngine::new();
         let variables_value = serde_yaml::Value::Mapping(variables);
         if let Err(e) = engine.substitute_variables(&mut yaml, &variables_value) {
-            warn!(
-                path = %path.display(),
-                error = %e,
-                "Failed to substitute variables"
+            mcb_domain::warn!(
+                "pattern_registry",
+                "Failed to substitute variables",
+                &format!("path={} error={}", path.display(), e)
             );
         }
 
@@ -213,6 +214,7 @@ impl PatternRegistry {
                     .filter_map(|v| v.as_str().map(str::to_owned))
                     .collect()
             })
+            // INTENTIONAL: YAML sequence parsing; empty patterns list is valid
             .unwrap_or_default()
     }
 
@@ -308,7 +310,7 @@ pub static PATTERNS: std::sync::LazyLock<PatternRegistry> = std::sync::LazyLock:
     let project_prefix = &file_config.general.project_prefix;
     PatternRegistry::load_from_rules(&rules_dir, naming_config, project_prefix).unwrap_or_else(
         |e| {
-            error!(error = %e, "Failed to load pattern registry");
+            error!("pattern_registry", "Failed to load pattern registry", &e);
             PatternRegistry::new()
         },
     )

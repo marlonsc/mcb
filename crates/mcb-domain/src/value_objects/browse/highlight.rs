@@ -7,7 +7,6 @@ use serde::{Deserialize, Serialize};
 
 /// Highlight category for code tokens
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
-// TODO(qlty): Found 22 lines of similar code in 2 locations (mass = 54)
 pub enum HighlightCategory {
     /// Language keyword (e.g., if, while, return)
     Keyword,
@@ -78,5 +77,41 @@ impl HighlightedCode {
             spans,
             language,
         }
+    }
+}
+
+/// Tree-sitter highlight capture names (order must match `HighlightConfiguration`)
+pub const HIGHLIGHT_NAMES: [&str; 13] = [
+    "keyword",
+    "function",
+    "string",
+    "comment",
+    "type",
+    "variable",
+    "constant",
+    "operator",
+    "attribute",
+    "number",
+    "punctuation",
+    "property",
+    "tag",
+];
+
+/// Maps tree-sitter highlight token names to domain highlight categories.
+#[must_use]
+pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
+    match name {
+        "keyword" => HighlightCategory::Keyword,
+        "string" => HighlightCategory::String,
+        "comment" => HighlightCategory::Comment,
+        "function" => HighlightCategory::Function,
+        "variable" | "constant" | "attribute" | "property" | "tag" => HighlightCategory::Variable,
+        "type" => HighlightCategory::Type,
+        "number" => HighlightCategory::Number,
+        "operator" => HighlightCategory::Operator,
+        "punctuation" | "punctuation.bracket" | "punctuation.delimiter" | "punctuation.special" => {
+            HighlightCategory::Punctuation
+        }
+        _ => HighlightCategory::Other,
     }
 }

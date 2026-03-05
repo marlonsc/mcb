@@ -3,9 +3,9 @@
 //!
 use std::sync::Arc;
 
-use mcb_domain::constants::keys as schema;
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus};
 use mcb_domain::ports::AgentSessionServiceInterface;
+use mcb_utils::constants::keys as schema;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Map;
@@ -15,10 +15,10 @@ use mcb_domain::error;
 
 use super::common::{json_map, opt_str, require_session_id_str};
 use crate::args::SessionArgs;
-use crate::constants::fields::FIELD_UPDATED;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::{resolve_identifier_precedence, tool_error};
+use mcb_utils::constants::keys::FIELD_UPDATED;
 
 /// Updates an existing agent session.
 #[tracing::instrument(skip_all)]

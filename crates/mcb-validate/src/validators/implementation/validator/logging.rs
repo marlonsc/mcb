@@ -7,8 +7,8 @@ use regex::Regex;
 
 use super::super::violation::ImplementationViolation;
 use crate::Result;
-use crate::traits::violation::Severity;
 use crate::utils::source::{extract_functions_with_body, non_test_lines, required_patterns};
+use mcb_domain::ports::validation::Severity;
 
 pub fn validate_log_only_methods(
     files: &[(PathBuf, String)],

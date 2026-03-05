@@ -202,7 +202,7 @@ impl VcsEntityHandler {
             }
             (VcsEntityAction::Release, VcsEntityResource::Assignment) => {
                 let id = require_id(&args.id)?;
-                let now = mcb_domain::utils::time::epoch_secs_i64()
+                let now = mcb_utils::utils::time::epoch_secs_i64()
                     .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
                 map_opaque_error(self.repo.release_assignment(&id, now).await)?;
                 ok_text("released")

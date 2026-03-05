@@ -1,7 +1,5 @@
-//!
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
-//!
-//! Provides search domain definitions.
+//! Search service ports.
+
 use async_trait::async_trait;
 
 use crate::error::Result;
@@ -12,7 +10,7 @@ use crate::value_objects::{CollectionId, SearchResult};
 /// Provides semantic code search capabilities.
 #[async_trait]
 pub trait SearchServiceInterface: Send + Sync {
-    /// Search for code similar to the query
+    /// Search for code similar to the query.
     async fn search(
         &self,
         collection: &CollectionId,
@@ -20,7 +18,7 @@ pub trait SearchServiceInterface: Send + Sync {
         limit: usize,
     ) -> Result<Vec<SearchResult>>;
 
-    /// Search with optional filters for more refined results
+    /// Search with optional filters for more refined results.
     async fn search_with_filters(
         &self,
         collection: &CollectionId,

@@ -5,6 +5,7 @@ expression: "snapshot_payload(&request, status, &response)"
 {
   "request": {
     "id": 1,
+    "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
       "arguments": {
@@ -16,17 +17,12 @@ expression: "snapshot_payload(&request, status, &response)"
     }
   },
   "response": {
+    "error": {
+      "code": -32602,
+      "message": "Missing execution provenance for 'memory': session_id, repo_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
+    },
     "id": 1,
-    "jsonrpc": "2.0",
-    "result": {
-      "content": [
-        {
-          "text": "{\n  \"count\": 0,\n  \"hint\": \"Use memory action=timeline or memory action=get for details\",\n  \"query\": \"\",\n  \"results\": []\n}",
-          "type": "text"
-        }
-      ],
-      "isError": false
-    }
+    "jsonrpc": "2.0"
   },
   "status": 200
 }

@@ -13,12 +13,12 @@ use super::common::{
     resolve_memory_origin_context, str_vec,
 };
 use crate::args::MemoryArgs;
-use crate::constants::fields::{
-    FIELD_BRANCH, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE, FIELD_OBSERVATIONS,
-};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
+use mcb_utils::constants::keys::{
+    FIELD_BRANCH, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE, FIELD_OBSERVATIONS,
+};
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -70,10 +70,10 @@ pub async fn get_observations(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let ids = args
-        .ids
-        .clone()
-        .ok_or_else(|| McpError::invalid_params("missing required field: ids", None))?;
+    let ids = match args.ids.clone() {
+        Some(ids) => ids,
+        None => return Ok(tool_error("Missing required field: ids")),
+    };
     if ids.is_empty() {
         return Ok(tool_error("Missing observation ids"));
     }

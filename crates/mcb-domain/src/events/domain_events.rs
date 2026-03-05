@@ -212,6 +212,44 @@ pub enum DomainEvent {
         /// Timestamp (Unix epoch milliseconds)
         timestamp: i64,
     },
+
+    // === Workflow Events ===
+    /// Workflow session created for a project
+    WorkflowSessionCreated {
+        /// Unique session identifier
+        session_id: String,
+        /// Project this session belongs to
+        project_id: String,
+    },
+    /// Workflow state transition occurred
+    WorkflowTransitioned {
+        /// Session that transitioned
+        session_id: String,
+        /// Previous state (Display representation)
+        from_state: String,
+        /// New state (Display representation)
+        to_state: String,
+        /// Trigger that caused the transition (Display representation)
+        trigger: String,
+    },
+    /// Workflow session completed successfully
+    WorkflowSessionCompleted {
+        /// Session that completed
+        session_id: String,
+        /// Final state (Display representation)
+        final_state: String,
+        /// Total session duration in milliseconds
+        duration_ms: u64,
+    },
+    /// Workflow session failed
+    WorkflowSessionFailed {
+        /// Session that failed
+        session_id: String,
+        /// Error description
+        error: String,
+        /// Whether the failure is recoverable
+        recoverable: bool,
+    },
 }
 
 /// Domain Port for Publishing System Events

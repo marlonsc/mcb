@@ -5,9 +5,9 @@
 //!
 //! Validates Clean Architecture port/adapter patterns.
 
-use crate::constants::common::COMMENT_PREFIX;
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
+use mcb_utils::constants::validate::COMMENT_PREFIX;
+use mcb_utils::utils::regex::compile_regex;
 use regex::Regex;
 use std::path::Path;
 use std::path::PathBuf;
@@ -15,8 +15,8 @@ use std::path::PathBuf;
 use crate::config::PortAdapterRulesConfig;
 use crate::define_violations;
 use crate::scan::for_each_file_under_root;
-use crate::traits::violation::ViolationCategory;
 use crate::{Result, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
 
 define_violations! {
     ViolationCategory::Architecture,
@@ -298,9 +298,9 @@ fn is_forbidden_adapter_import(imported: &str, adapter_suffixes: &[String]) -> b
         .any(|suffix| imported.ends_with(suffix))
 }
 
-impl crate::traits::validator::Validator for PortAdapterValidator {
+impl mcb_domain::ports::validation::Validator for PortAdapterValidator {
     fn name(&self) -> &'static str {
-        "port_adapter"
+        mcb_utils::constants::validate::VALIDATOR_PORT_ADAPTER
     }
 
     fn description(&self) -> &'static str {
@@ -310,11 +310,22 @@ impl crate::traits::validator::Validator for PortAdapterValidator {
     fn validate(
         &self,
         config: &ValidationConfig,
-    ) -> crate::Result<Vec<Box<dyn crate::traits::violation::Violation>>> {
+    ) -> mcb_domain::ports::validation::ValidatorResult<
+        Vec<Box<dyn mcb_domain::ports::validation::Violation>>,
+    > {
         let violations = self.validate(config)?;
         Ok(violations
             .into_iter()
-            .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+            .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
             .collect())
     }
 }
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_PORT_ADAPTER,
+    "Validates port/adapter patterns for Clean Architecture compliance",
+    |root| {
+        Ok(Box::new(PortAdapterValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

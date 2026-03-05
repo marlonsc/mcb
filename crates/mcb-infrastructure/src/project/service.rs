@@ -12,37 +12,55 @@
 //! - **Framework Recognition**: Detecting project frameworks (e.g., React, Django, cargo).
 //! - **Monorepo Handling**: Scanning nested projects within a workspace.
 
+use std::fmt;
+use std::future::Future;
 use std::path::Path;
+use std::pin::Pin;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::ports::ProjectDetectorService;
-use mcb_providers::project_detection::detect_all_projects;
+
+/// Type alias for the async detection function injected by the DI composition root.
+///
+/// Accepts a path and returns detected project types. The concrete implementation
+/// is provided by `mcb-providers` via the DI layer (CA-compliant).
+pub type DetectAllFn = Arc<
+    dyn for<'a> Fn(&'a Path) -> Pin<Box<dyn Future<Output = Vec<ProjectType>> + Send + 'a>>
+        + Send
+        + Sync,
+>;
 
 /// Infrastructure service for project detection and scanning.
 ///
-/// Wraps `mcb-providers` git and filesystem utilities to recursively discover
+/// Wraps an injected detection function to recursively discover
 /// and classify projects across the workspace.
-#[derive(Debug, PartialEq)]
-pub struct ProjectService;
+pub struct ProjectService {
+    detect_fn: DetectAllFn,
+}
 
-impl ProjectService {
-    /// Creates a project detector service instance.
-    #[must_use]
-    pub fn new() -> Self {
-        Self
+impl fmt::Debug for ProjectService {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("ProjectService").finish()
     }
 }
 
-impl Default for ProjectService {
-    fn default() -> Self {
-        Self::new()
+impl ProjectService {
+    /// Creates a project detector service instance with the given detection function.
+    #[must_use]
+    pub fn new(detect_fn: DetectAllFn) -> Self {
+        Self { detect_fn }
     }
 }
 
 #[async_trait]
 impl ProjectDetectorService for ProjectService {
     async fn detect_all(&self, path: &Path) -> Vec<ProjectType> {
-        detect_all_projects(path).await
+        (self.detect_fn)(path).await
     }
 }
+
+// NOTE: Linkme registration for the universal project detection service has been
+// moved to `mcb-providers::project_detection` to respect Clean Architecture
+// boundaries (infra must not depend on providers).

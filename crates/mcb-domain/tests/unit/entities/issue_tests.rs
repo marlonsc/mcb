@@ -2,11 +2,11 @@
 
 use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
 use mcb_domain::entities::project::{IssueStatus, IssueType, ProjectIssue};
-use rstest::rstest;
+use rstest::{fixture, rstest};
 
-#[rstest]
-fn test_enhanced_project_issue_construction() {
-    let issue = ProjectIssue {
+#[fixture]
+fn default_issue() -> ProjectIssue {
+    ProjectIssue {
         id: "iss-001".to_owned(),
         org_id: "org-1".to_owned(),
         project_id: "proj-1".to_owned(),
@@ -28,61 +28,63 @@ fn test_enhanced_project_issue_construction() {
         updated_at: 120,
         closed_at: None,
         closed_reason: String::new(),
-    };
-
-    assert_eq!(issue.org_id, "org-1");
-    assert_eq!(issue.created_by, "user-1");
-    assert_eq!(issue.estimated_minutes, Some(90));
-    assert_eq!(issue.actual_minutes, Some(30));
-    assert_eq!(issue.parent_issue_id.as_deref(), Some("iss-000"));
-    assert_eq!(issue.notes, "Initial implementation started");
-    assert_eq!(issue.design, "Follow plan_entity layering");
+    }
 }
 
 #[rstest]
-fn test_issue_comment_serialization_roundtrip() {
-    let comment = IssueComment {
+fn test_enhanced_project_issue_construction(default_issue: ProjectIssue) {
+    assert_eq!(default_issue.org_id, "org-1");
+    assert_eq!(default_issue.created_by, "user-1");
+    assert_eq!(default_issue.estimated_minutes, Some(90));
+    assert_eq!(default_issue.actual_minutes, Some(30));
+    assert_eq!(default_issue.parent_issue_id.as_deref(), Some("iss-000"));
+    assert_eq!(default_issue.notes, "Initial implementation started");
+    assert_eq!(default_issue.design, "Follow plan_entity layering");
+}
+
+#[fixture]
+fn default_comment() -> IssueComment {
+    IssueComment {
         id: "c-1".to_owned(),
         issue_id: "iss-1".to_owned(),
         author_id: "user-1".to_owned(),
         content: "Looks good".to_owned(),
         created_at: 123,
-    };
-
-    let json = serde_json::to_string(&comment).expect("serialize issue comment");
-    let parsed: IssueComment = serde_json::from_str(&json).expect("deserialize issue comment");
-
-    assert_eq!(parsed.id, "c-1");
-    assert_eq!(parsed.issue_id, "iss-1");
-    assert_eq!(parsed.author_id, "user-1");
-    assert_eq!(parsed.content, "Looks good");
-    assert_eq!(parsed.created_at, 123);
+    }
 }
 
-#[rstest]
-fn test_issue_label_serialization_roundtrip() {
-    let label = IssueLabel {
+#[fixture]
+fn default_label() -> IssueLabel {
+    IssueLabel {
         id: "l-1".to_owned(),
         org_id: "org-1".to_owned(),
         project_id: "proj-1".to_owned(),
         name: "bug".to_owned(),
         color: "#ff0000".to_owned(),
         created_at: 123,
-    };
+    }
+}
 
-    let json = serde_json::to_string(&label).expect("serialize issue label");
+#[rstest]
+fn test_issue_comment_serialization_roundtrip(default_comment: IssueComment) {
+    let json = serde_json::to_string(&default_comment).expect("serialize issue comment");
+    let parsed: IssueComment = serde_json::from_str(&json).expect("deserialize issue comment");
+
+    assert_eq!(parsed.id, "c-1");
+    assert_eq!(parsed.content, "Looks good");
+}
+
+#[rstest]
+fn test_issue_label_serialization_roundtrip(default_label: IssueLabel) {
+    let json = serde_json::to_string(&default_label).expect("serialize issue label");
     let parsed: IssueLabel = serde_json::from_str(&json).expect("deserialize issue label");
 
     assert_eq!(parsed.id, "l-1");
-    assert_eq!(parsed.org_id, "org-1");
-    assert_eq!(parsed.project_id, "proj-1");
     assert_eq!(parsed.name, "bug");
-    assert_eq!(parsed.color, "#ff0000");
-    assert_eq!(parsed.created_at, 123);
 }
 
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::ids::IssueLabelAssignmentId;
+use mcb_utils::utils::id;
 
 #[rstest]
 fn test_issue_label_assignment_construction() {

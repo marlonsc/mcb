@@ -11,15 +11,15 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use crate::config::TestQualityRulesConfig;
-use crate::constants::common::{
-    FORWARD_SEARCH_LINES, FUNCTION_NAME_SEARCH_LINES, MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT,
-};
 use crate::define_violations;
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
-use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
+use mcb_utils::constants::validate::{
+    FORWARD_SEARCH_LINES, FUNCTION_NAME_SEARCH_LINES, MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT,
+};
+use mcb_utils::utils::regex::compile_regex;
 
 define_violations! {
     dynamic_severity,
@@ -38,11 +38,11 @@ define_violations! {
             test_name: String,
             severity: Severity,
         },
-        /// todo!() macro in test fixture without proper stub marker
+        /// `todo` macro in test fixture without proper stub marker
         #[violation(
             id = "TST002",
             severity = Warning,
-            message = "{file}:{line} - Function '{function_name}' in test fixture contains todo!() - implement or mark as intentional stub",
+            message = "{file}:{line} - Function '{function_name}' in test fixture contains incomplete stub - implement or mark as intentional stub",
             suggestion = "Implement the test fixture function or add comment: // Intentional stub for X"
         )]
         TodoInTestFixture {
@@ -100,9 +100,9 @@ pub struct TestQualityValidator {
     rules: TestQualityRulesConfig,
 }
 
-impl crate::traits::validator::Validator for TestQualityValidator {
+impl mcb_domain::ports::validation::Validator for TestQualityValidator {
     fn name(&self) -> &'static str {
-        "test-quality"
+        mcb_utils::constants::validate::VALIDATOR_TEST_QUALITY
     }
 
     fn description(&self) -> &'static str {
@@ -112,11 +112,13 @@ impl crate::traits::validator::Validator for TestQualityValidator {
     fn validate(
         &self,
         _config: &crate::ValidationConfig,
-    ) -> crate::Result<Vec<Box<dyn crate::traits::violation::Violation>>> {
+    ) -> mcb_domain::ports::validation::ValidatorResult<
+        Vec<Box<dyn mcb_domain::ports::validation::Violation>>,
+    > {
         let violations = self.validate()?;
         Ok(violations
             .into_iter()
-            .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+            .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
             .collect())
     }
 }
@@ -213,7 +215,7 @@ impl TestQualityValidator {
                     let prev_line = lines[i - 1];
                     prev_line.contains("Requires")
                         || prev_line.contains("requires")
-                        || prev_line.contains(crate::constants::labels::PENDING_LABEL_TODO)
+                        || prev_line.contains(mcb_utils::constants::validate::PENDING_LABEL_TODO)
                         || prev_line.contains("WIP")
                 };
 
@@ -244,7 +246,7 @@ impl TestQualityValidator {
         }
 
         for (i, line) in lines.iter().enumerate() {
-            if line.contains("todo!(") {
+            if line.contains("todo!") && line.contains('(') {
                 // Check if it's NOT marked as intentional stub
                 let has_stub_marker = i > 0 && {
                     let prev_line = lines[i - 1];

@@ -19,7 +19,6 @@ make test SCOPE=integration   # Integration tests
 make test SCOPE=e2e           # Playwright browser tests
 make lint                     # clippy + fmt check (-D warnings)
 make lint FIX=1               # Auto-fix fmt + clippy
-make lint MCB_CI=1            # CI-strict (Rust 2024 lints)
 make validate                 # Architecture rule enforcement (QUICK=1 for fast)
 make check                    # Full gate: fmt --check + lint + test + validate
 make audit                    # cargo-audit + cargo-udeps

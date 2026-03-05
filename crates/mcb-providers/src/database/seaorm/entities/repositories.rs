@@ -3,33 +3,46 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a repository.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "repositories")]
 pub struct Model {
+    /// Unique identifier for the repository.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the organization this repository belongs to.
     #[sea_orm(column_type = "Text")]
     pub org_id: String,
+    /// Reference to the project this repository is part of.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Name of the repository.
     #[sea_orm(column_type = "Text")]
     pub name: String,
+    /// Remote URL of the repository.
     #[sea_orm(column_type = "Text")]
     pub url: String,
+    /// Local filesystem path where the repository is cloned.
     #[sea_orm(column_type = "Text")]
     pub local_path: String,
+    /// Type of Version Control System (e.g., "git").
     #[sea_orm(column_type = "Text")]
     pub vcs_type: String,
+    /// Optional context about the repository origin.
     #[sea_orm(column_type = "Text", nullable)]
     pub origin_context: Option<String>,
+    /// Timestamp when the repository was registered.
     pub created_at: i64,
+    /// Timestamp when the repository record was last updated.
     pub updated_at: i64,
 }
 
+/// Relations for the repository model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the repository model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

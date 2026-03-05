@@ -10,7 +10,5 @@ pub mod embedding;
 /// HTTP request utilities for provider implementations.
 pub mod http;
 pub(crate) mod http_response;
-/// Retry utilities with exponential backoff.
-pub mod retry;
 /// Vector store shared utilities.
 pub mod vector_store;

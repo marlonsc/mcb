@@ -4,9 +4,15 @@
 use std::path::Path;
 
 use super::super::violation::NamingViolation;
-use crate::constants::common::STANDARD_SKIP_FILES;
-use crate::traits::violation::Severity;
-use crate::validators::naming::constants::*;
+use crate::apply_ca_rule;
+use mcb_domain::ports::validation::Severity;
+use mcb_utils::constants::validate::STANDARD_SKIP_FILES;
+use mcb_utils::constants::validate::{
+    ADAPTERS_DIR, CA_ADAPTERS_REPOSITORY_DIR, CA_DI_DIR, CA_DOMAIN_PROVIDER_KEYWORD,
+    CA_DOMAIN_REPOSITORY_KEYWORD, CA_HANDLER_DIRS, CA_HANDLER_KEYWORD, CA_INFRA_ADAPTER_KEYWORD,
+    CA_INFRA_IMPL_SUFFIX, CA_MODULE_KEYWORD, CA_PORTS_PROVIDERS_DIR, CA_REPOSITORIES_DIR,
+    PORTS_DIR,
+};
 
 fn ca_violation(
     path: &Path,
@@ -41,13 +47,6 @@ fn in_any_dir(path_str: &str, dirs: &[&str]) -> bool {
     dirs.iter().any(|dir| path_str.contains(dir))
 }
 
-macro_rules! apply_ca_rule {
-    ($path:expr, $file_name:expr, $path_str:expr, $matcher:expr, $required_dirs:expr, $detected_type:expr, $issue:expr, $suggestion:expr, $severity:expr) => {
-        (name_matches($file_name, $matcher) && !in_any_dir($path_str, $required_dirs))
-            .then(|| ca_violation($path, $detected_type, $issue, $suggestion, $severity))
-    };
-}
-
 pub fn validate_ca_naming(
     path: &Path,
     crate_name: &str,
@@ -69,7 +68,7 @@ pub fn validate_ca_naming(
             file_name,
             path_str,
             NameMatch::Contains(CA_DOMAIN_PROVIDER_KEYWORD),
-            &[CA_PORTS_PROVIDERS_DIR, CA_PORTS_DIR],
+            &[CA_PORTS_PROVIDERS_DIR, PORTS_DIR],
             "Provider Port",
             "Provider file outside ports/ directory",
             "Move to ports/providers/",
@@ -96,7 +95,7 @@ pub fn validate_ca_naming(
             file_name,
             path_str,
             NameMatch::EndsWith(CA_INFRA_IMPL_SUFFIX),
-            &[CA_ADAPTERS_DIR],
+            &[ADAPTERS_DIR],
             "Adapter",
             "Adapter/implementation file outside adapters/ directory",
             "Move to adapters/",
@@ -108,7 +107,7 @@ pub fn validate_ca_naming(
                 file_name,
                 path_str,
                 NameMatch::Contains(CA_INFRA_ADAPTER_KEYWORD),
-                &[CA_ADAPTERS_DIR],
+                &[ADAPTERS_DIR],
                 "Adapter",
                 "Adapter/implementation file outside adapters/ directory",
                 "Move to adapters/",

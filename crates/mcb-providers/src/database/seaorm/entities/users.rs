@@ -3,29 +3,40 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a user.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "users")]
 pub struct Model {
+    /// Unique identifier for the user.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the organization this user belongs to.
     #[sea_orm(column_type = "Text")]
     pub org_id: String,
+    /// User's email address.
     #[sea_orm(column_type = "Text")]
     pub email: String,
+    /// User's display name.
     #[sea_orm(column_type = "Text")]
     pub display_name: String,
+    /// User's role within the organization.
     #[sea_orm(column_type = "Text")]
     pub role: String,
+    /// Hashed API key for authentication.
     #[sea_orm(column_type = "Text", nullable)]
     pub api_key_hash: Option<String>,
+    /// Timestamp when the user was created.
     pub created_at: i64,
+    /// Timestamp when the user record was last updated.
     pub updated_at: i64,
 }
 
+/// Relations for the user model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the user model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

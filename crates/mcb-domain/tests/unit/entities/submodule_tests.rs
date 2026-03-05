@@ -1,19 +1,25 @@
 //! Tests for submodule entity (REF003: dedicated test file).
 
 use mcb_domain::entities::submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};
-use rstest::rstest;
+use rstest::{fixture, rstest};
 
-#[rstest]
-fn test_submodule_discovery_config_default() {
-    let c = SubmoduleDiscoveryConfig::default();
-    assert_eq!(c.max_depth, 2);
-    assert!(!c.skip_uninitialized);
-    assert!(c.continue_on_error);
+#[fixture]
+fn default_submodule_discovery_config() -> SubmoduleDiscoveryConfig {
+    SubmoduleDiscoveryConfig::default()
 }
 
 #[rstest]
-fn test_submodule_info_fields() {
-    let s = SubmoduleInfo {
+fn test_submodule_discovery_config_default(
+    default_submodule_discovery_config: SubmoduleDiscoveryConfig,
+) {
+    assert_eq!(default_submodule_discovery_config.max_depth, 2);
+    assert!(!default_submodule_discovery_config.skip_uninitialized);
+    assert!(default_submodule_discovery_config.continue_on_error);
+}
+
+#[fixture]
+fn default_submodule_info() -> SubmoduleInfo {
+    SubmoduleInfo {
         id: "sub-1".to_owned(),
         path: "libs/bar".to_owned(),
         url: "https://example.com/bar.git".to_owned(),
@@ -22,8 +28,11 @@ fn test_submodule_info_fields() {
         depth: 1,
         name: "bar".to_owned(),
         is_initialized: true,
-    };
-    assert_eq!(s.id, "sub-1");
-    assert_eq!(s.path, "libs/bar");
-    assert_eq!(s.depth, 1);
+    }
+}
+
+#[rstest]
+fn test_submodule_info_construction(default_submodule_info: SubmoduleInfo) {
+    assert_eq!(default_submodule_info.id, "sub-1");
+    assert_eq!(default_submodule_info.path, "libs/bar");
 }

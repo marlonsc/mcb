@@ -20,6 +20,7 @@ path = "src/lib.rs"
 [dependencies]
 # Domain layer (canonical utils)
 mcb-domain = { path = "../mcb-domain" }
+mcb-utils = { path = "../mcb-utils" }
 
 # File traversal and globbing
 walkdir.workspace = true
@@ -30,6 +31,7 @@ globset.workspace = true
 
 # Pattern matching
 regex.workspace = true
+rayon.workspace = true
 
 # Serialization
 serde = { workspace = true, features = ["derive"] }
@@ -106,3 +108,5 @@ serde_yaml.workspace = true
 rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
+mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+mcb-utils = { path = "../mcb-utils" }

@@ -15,15 +15,14 @@
 //! # Example
 //!
 //! ```rust
-//! use mcb_providers::database::seaorm::constraints::{ConstraintBuilder, SearchConstraint};
-//! use sea_orm::QuerySelect;
+//! use mcb_providers::database::seaorm::constraints::{ConstraintBuilder, EntityType};
+//! use sea_query::Query;
 //!
 //! let mut query = Query::select();
-//! query.from(observation::Entity);
 //!
 //! ConstraintBuilder::new()
 //!     .with_project_id("proj-123")
-//!     .with_entity_type("memory")
+//!     .with_entity_type(EntityType::Memory)
 //!     .with_tags(&["important", "review"])
 //!     .apply_to(&mut query);
 //! ```
@@ -119,6 +118,8 @@ pub enum SearchConstraint {
 /// # Example
 ///
 /// ```rust
+/// use mcb_providers::database::seaorm::constraints::ConstraintBuilder;
+///
 /// let builder = ConstraintBuilder::new()
 ///     .with_project_id("my-project")
 ///     .with_file_extensions(&["rs", "toml"]);
@@ -274,225 +275,81 @@ impl ConstraintBuilder {
     /// # Arguments
     ///
     /// * `query` - The `SeaQuery` select statement to modify
-    pub fn apply_to(&self, query: &mut SelectStatement) {
-        for constraint in &self.constraints {
-            match constraint {
-                SearchConstraint::ProjectId(id) => {
-                    query.cond_where(
-                        Expr::col((observation::Entity, observation::Column::ProjectId))
-                            .eq(id.clone()),
-                    );
-                }
-                SearchConstraint::WorkspaceId(id) => {
-                    // Workspace ID is stored in metadata as worktree_id
-                    query.cond_where(Expr::cust_with_values(
-                        "json_extract(metadata, '$.worktree_id') = ?",
-                        vec![sea_orm::Value::from(id.clone())],
-                    ));
-                }
-                SearchConstraint::OrgId(id) => {
-                    // Org ID is stored in metadata
-                    query.cond_where(Expr::cust_with_values(
-                        "json_extract(metadata, '$.org_id') = ?",
-                        vec![sea_orm::Value::from(id.clone())],
-                    ));
-                }
-                SearchConstraint::EntityType(et) => {
-                    query.cond_where(
-                        Expr::col((observation::Entity, observation::Column::ObservationType))
-                            .eq(et.as_str()),
-                    );
-                }
-                SearchConstraint::FileExtension(ext) => {
-                    // File extension is stored in metadata
-                    query.cond_where(Expr::cust_with_values(
-                        "json_extract(metadata, '$.file_extension') = ?",
-                        vec![sea_orm::Value::from(ext.clone())],
-                    ));
-                }
-                SearchConstraint::DirectoryPath(path) => {
-                    // Directory path uses LIKE for prefix matching
-                    let pattern = format!("{path}%");
-                    query.cond_where(Expr::cust_with_values(
-                        "json_extract(metadata, '$.file_path') LIKE ?",
-                        vec![sea_orm::Value::from(pattern)],
-                    ));
-                }
-                SearchConstraint::Language(lang) => {
-                    query.cond_where(Expr::cust_with_values(
-                        "json_extract(metadata, '$.language') = ?",
-                        vec![sea_orm::Value::from(lang.clone())],
-                    ));
-                }
-                SearchConstraint::Tags(tags) => {
-                    // Each tag must exist in the tags array
-                    for tag in tags {
-                        query.cond_where(Expr::cust_with_values(
-                            "EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)",
-                            vec![sea_orm::Value::from(tag.clone())],
-                        ));
-                    }
-                }
-                SearchConstraint::MinScore(_score) => {
-                    // Score filtering is typically done at the vector store level
-                    // or in-memory after retrieval. Skip for SQL filtering.
-                }
-                SearchConstraint::TimeRange(start, end) => {
-                    query.cond_where(
-                        Expr::col((observation::Entity, observation::Column::CreatedAt))
-                            .gte(*start),
-                    );
-                    query.cond_where(
-                        Expr::col((observation::Entity, observation::Column::CreatedAt)).lte(*end),
-                    );
-                }
-                SearchConstraint::JsonMetadata { path, value } => {
-                    let expr = Expr::cust(format!("json_extract(metadata, '{path}')"));
-                    query.cond_where(expr.eq(value.clone()));
-                }
-            }
+    fn build_column_condition(constraint: &SearchConstraint, condition: Condition) -> Condition {
+        #[allow(clippy::wildcard_enum_match_arm)]
+        match constraint {
+            SearchConstraint::ProjectId(id) => condition.add(
+                Expr::col((observation::Entity, observation::Column::ProjectId)).eq(id.as_str()),
+            ),
+            SearchConstraint::EntityType(et) => condition.add(
+                Expr::col((observation::Entity, observation::Column::ObservationType))
+                    .eq(et.as_str()),
+            ),
+            SearchConstraint::TimeRange(start, end) => condition
+                .add(Expr::col((observation::Entity, observation::Column::CreatedAt)).gte(*start))
+                .add(Expr::col((observation::Entity, observation::Column::CreatedAt)).lte(*end)),
+            _ => condition,
         }
     }
 
+    fn build_metadata_condition(
+        constraint: &SearchConstraint,
+        mut condition: Condition,
+    ) -> Condition {
+        #[allow(clippy::wildcard_enum_match_arm)]
+        match constraint {
+            SearchConstraint::WorkspaceId(id) => condition.add(Expr::cust_with_values(
+                "json_extract(metadata, '$.worktree_id') = ?",
+                vec![sea_orm::Value::from(id.as_str())],
+            )),
+            SearchConstraint::OrgId(id) => condition.add(Expr::cust_with_values(
+                "json_extract(metadata, '$.org_id') = ?",
+                vec![sea_orm::Value::from(id.as_str())],
+            )),
+            SearchConstraint::FileExtension(ext) => condition.add(Expr::cust_with_values(
+                "json_extract(metadata, '$.file_extension') = ?",
+                vec![sea_orm::Value::from(ext.as_str())],
+            )),
+            SearchConstraint::DirectoryPath(path) => condition.add(Expr::cust_with_values(
+                "json_extract(metadata, '$.file_path') LIKE ?",
+                vec![sea_orm::Value::from(format!("{path}%"))],
+            )),
+            SearchConstraint::Language(lang) => condition.add(Expr::cust_with_values(
+                "json_extract(metadata, '$.language') = ?",
+                vec![sea_orm::Value::from(lang.as_str())],
+            )),
+            SearchConstraint::Tags(tags) => {
+                for tag in tags {
+                    condition = condition.add(Expr::cust_with_values(
+                        "EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)",
+                        vec![sea_orm::Value::from(tag.as_str())],
+                    ));
+                }
+                condition
+            }
+            SearchConstraint::JsonMetadata { path, value } => condition
+                .add(Expr::cust(format!("json_extract(metadata, '{path}')")).eq(value.as_str())),
+            _ => condition,
+        }
+    }
+
+    /// Build the WHERE conditions for the given `SeaQuery` select statement
+    pub fn apply_to(&self, query: &mut SelectStatement) {
+        let condition = self.build_condition();
+        // Always apply cond_where since Condition::all() generates nothing when empty
+        query.cond_where(condition);
+    }
+
     /// Build a standalone Condition expression that can be composed with other conditions
-    ///
-    /// Returns a `SeaQuery` Condition containing all constraints combined with AND logic.
     #[must_use]
     pub fn build_condition(&self) -> Condition {
         let mut condition = Condition::all();
-
         for constraint in &self.constraints {
-            match constraint {
-                SearchConstraint::ProjectId(id) => {
-                    condition = condition.add(
-                        Expr::col((observation::Entity, observation::Column::ProjectId))
-                            .eq(id.clone()),
-                    );
-                }
-                SearchConstraint::WorkspaceId(id) => {
-                    condition = condition.add(Expr::cust_with_values(
-                        "json_extract(metadata, '$.worktree_id') = ?",
-                        vec![sea_orm::Value::from(id.clone())],
-                    ));
-                }
-                SearchConstraint::OrgId(id) => {
-                    condition = condition.add(Expr::cust_with_values(
-                        "json_extract(metadata, '$.org_id') = ?",
-                        vec![sea_orm::Value::from(id.clone())],
-                    ));
-                }
-                SearchConstraint::EntityType(et) => {
-                    condition = condition.add(
-                        Expr::col((observation::Entity, observation::Column::ObservationType))
-                            .eq(et.as_str()),
-                    );
-                }
-                SearchConstraint::FileExtension(ext) => {
-                    condition = condition.add(Expr::cust_with_values(
-                        "json_extract(metadata, '$.file_extension') = ?",
-                        vec![sea_orm::Value::from(ext.clone())],
-                    ));
-                }
-                SearchConstraint::DirectoryPath(path) => {
-                    let pattern = format!("{path}%");
-                    condition = condition.add(Expr::cust_with_values(
-                        "json_extract(metadata, '$.file_path') LIKE ?",
-                        vec![sea_orm::Value::from(pattern)],
-                    ));
-                }
-                SearchConstraint::Language(lang) => {
-                    condition = condition.add(Expr::cust_with_values(
-                        "json_extract(metadata, '$.language') = ?",
-                        vec![sea_orm::Value::from(lang.clone())],
-                    ));
-                }
-                SearchConstraint::Tags(tags) => {
-                    for tag in tags {
-                        condition = condition.add(Expr::cust_with_values(
-                            "EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)",
-                            vec![sea_orm::Value::from(tag.clone())],
-                        ));
-                    }
-                }
-                SearchConstraint::MinScore(_) => {
-                    // Handled at vector store level
-                }
-                SearchConstraint::TimeRange(start, end) => {
-                    condition = condition.add(
-                        Expr::col((observation::Entity, observation::Column::CreatedAt))
-                            .gte(*start),
-                    );
-                    condition = condition.add(
-                        Expr::col((observation::Entity, observation::Column::CreatedAt)).lte(*end),
-                    );
-                }
-                SearchConstraint::JsonMetadata { path, value } => {
-                    let expr = Expr::cust(format!("json_extract(metadata, '{path}')"));
-                    condition = condition.add(expr.eq(value.clone()));
-                }
-            }
+            condition = Self::build_column_condition(constraint, condition);
+            condition = Self::build_metadata_condition(constraint, condition);
         }
-
         condition
     }
 }
 
 use crate::database::seaorm::entities::observation;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::str::FromStr;
-
-    #[test]
-    fn test_entity_type_from_str() {
-        assert_eq!(EntityType::from_str("memory").unwrap(), EntityType::Memory);
-        assert_eq!(EntityType::from_str("CODE").unwrap(), EntityType::Code);
-        assert!(EntityType::from_str("unknown").is_err());
-    }
-
-    #[test]
-    fn test_constraint_builder_chaining() {
-        let builder = ConstraintBuilder::new()
-            .with_project_id("proj-123")
-            .with_entity_type(EntityType::Memory)
-            .with_file_extension("rs")
-            .with_tag("important");
-
-        assert_eq!(builder.len(), 4);
-    }
-
-    #[test]
-    fn test_constraint_builder_tags() {
-        let builder = ConstraintBuilder::new().with_tags(&["tag1", "tag2", "tag3"]);
-
-        assert_eq!(builder.len(), 1);
-        if let SearchConstraint::Tags(tags) = &builder.constraints[0] {
-            assert_eq!(tags.len(), 3);
-            assert!(tags.contains("tag1"));
-            assert!(tags.contains("tag2"));
-            assert!(tags.contains("tag3"));
-        } else {
-            panic!("Expected Tags constraint");
-        }
-    }
-
-    #[test]
-    fn test_empty_builder() {
-        let builder = ConstraintBuilder::new();
-        assert!(builder.is_empty());
-        assert_eq!(builder.len(), 0);
-    }
-
-    #[test]
-    fn test_build_condition_returns_all() {
-        let builder = ConstraintBuilder::new()
-            .with_project_id("proj-123")
-            .with_min_score(0.8);
-
-        let _condition = builder.build_condition();
-        // Condition should have 1 entry (MinScore is skipped for SQL)
-        // We can't easily inspect the condition contents, but we can verify it builds
-        assert!(!builder.is_empty());
-    }
-}

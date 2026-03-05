@@ -20,8 +20,18 @@
 //! ```
 
 use std::path::Path;
+use std::sync::{Arc, Mutex, OnceLock};
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
+
+struct CompiledPatternSets {
+    includes: GlobSet,
+    excludes: GlobSet,
+}
+
+static PATTERN_SET_CACHE: OnceLock<
+    Mutex<std::collections::HashMap<String, Arc<CompiledPatternSets>>>,
+> = OnceLock::new();
 
 /// Matcher for file patterns using glob syntax
 pub struct FilePatternMatcher {
@@ -69,27 +79,54 @@ impl FilePatternMatcher {
     /// true if the path matches any of the patterns
     #[must_use]
     pub fn matches_any(&self, path: &Path, patterns: &[String]) -> bool {
+        let Some(compiled) = Self::compiled_patterns(patterns) else {
+            return false;
+        };
+
+        if compiled.excludes.is_match(path) {
+            return false;
+        }
+
+        compiled.includes.is_match(path)
+    }
+
+    fn compiled_patterns(patterns: &[String]) -> Option<Arc<CompiledPatternSets>> {
         let (includes, excludes) = Self::parse_patterns(patterns);
+        let key = format!(
+            "i:{}|e:{}",
+            includes.join("\u{1f}"),
+            excludes.join("\u{1f}")
+        );
+        let cache = PATTERN_SET_CACHE.get_or_init(|| Mutex::new(std::collections::HashMap::new()));
 
-        // First check exclusions (they take precedence)
-        for exclude_pattern in &excludes {
-            if let Ok(glob) = Glob::new(exclude_pattern)
-                && glob.compile_matcher().is_match(path)
-            {
-                return false;
-            }
+        if let Ok(cache_guard) = cache.lock()
+            && let Some(hit) = cache_guard.get(&key)
+        {
+            return Some(Arc::clone(hit));
         }
 
-        // Then check inclusions
-        for include_pattern in &includes {
-            if let Ok(glob) = Glob::new(include_pattern)
-                && glob.compile_matcher().is_match(path)
-            {
-                return true;
-            }
+        let mut include_builder = GlobSetBuilder::new();
+        for pattern in &includes {
+            let glob = Glob::new(pattern).ok()?;
+            include_builder.add(glob);
         }
 
-        false
+        let mut exclude_builder = GlobSetBuilder::new();
+        for pattern in &excludes {
+            let glob = Glob::new(pattern).ok()?;
+            exclude_builder.add(glob);
+        }
+
+        let compiled = Arc::new(CompiledPatternSets {
+            includes: include_builder.build().ok()?,
+            excludes: exclude_builder.build().ok()?,
+        });
+
+        if let Ok(mut cache_guard) = cache.lock() {
+            cache_guard.insert(key, Arc::clone(&compiled));
+        }
+
+        Some(compiled)
     }
 
     /// Check if a file path should be included based on include/exclude sets

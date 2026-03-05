@@ -4,9 +4,9 @@
 use std::path::Path;
 
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
+use mcb_utils::utils::regex::compile_regex;
 
 use super::RefactoringValidator;
 use super::violation::RefactoringViolation;

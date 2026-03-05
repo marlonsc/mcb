@@ -1,21 +1,21 @@
 use crate::filters::LanguageId;
 use std::path::PathBuf;
 
-use super::constants::{
-    ATTR_REGEX, DI_MODULES_PATH, DOC_COMMENT_CAPTURE_REGEX, DOC_COMMENT_REGEX,
-    EXAMPLE_SECTION_REGEX, ITEM_KIND_ENUM, ITEM_KIND_FUNCTION, ITEM_KIND_STRUCT, ITEM_KIND_TRAIT,
-    MODULE_DOC_REGEX, MODULE_FILE_NAMES, PORTS_PATH, PUB_ENUM_REGEX, PUB_FN_REGEX,
-    PUB_STRUCT_REGEX, PUB_TRAIT_REGEX,
-};
 use super::helpers::{
     DocItemContext, DocRegexContext, MissingDocSpec, ScanLineContext, SimplePubItemSpec,
     get_doc_comment_section, has_doc_comment,
 };
 use crate::define_violations;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_crate_file;
-use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
+use mcb_utils::constants::validate::{
+    ATTR_REGEX, DI_MODULES_PATH, DOC_COMMENT_CAPTURE_REGEX, DOC_COMMENT_REGEX,
+    EXAMPLE_SECTION_REGEX, ITEM_KIND_ENUM, ITEM_KIND_FUNCTION, ITEM_KIND_STRUCT, ITEM_KIND_TRAIT,
+    MODULE_DOC_REGEX, MODULE_FILE_NAMES, PORTS_DIR, PUB_ENUM_REGEX, PUB_FN_REGEX, PUB_STRUCT_REGEX,
+    PUB_TRAIT_REGEX,
+};
+use mcb_utils::utils::regex::compile_regex;
 
 define_violations! {
     dynamic_severity,
@@ -65,7 +65,7 @@ define_violations! {
 
 crate::create_validator!(
     DocumentationValidator,
-    "documentation",
+    mcb_utils::constants::validate::VALIDATOR_DOCUMENTATION,
     "Validates documentation standards",
     DocumentationViolation,
     [Self::validate_module_docs, Self::validate_pub_item_docs,]
@@ -152,6 +152,7 @@ impl DocumentationValidator {
                 let path = &entry.absolute_path;
                 let content = std::fs::read_to_string(path)?;
                 let lines: Vec<&str> = content.lines().collect();
+                // INTENTIONAL: Path to string; non-UTF8 paths yield empty string (best-effort)
                 let path_str = path.to_str().unwrap_or_default();
                 let regex_ctx = DocRegexContext {
                     doc_comment_re: &doc_comment_re,
@@ -303,7 +304,7 @@ impl DocumentationValidator {
         }
 
         let is_di_or_port_trait =
-            path_str.contains(DI_MODULES_PATH) || path_str.contains(PORTS_PATH);
+            path_str.contains(DI_MODULES_PATH) || path_str.contains(PORTS_DIR);
         if is_di_or_port_trait {
             return;
         }

@@ -55,12 +55,9 @@ impl ValidationServiceInterface for InfraValidationService {
     }
 
     async fn list_validators(&self) -> Result<Vec<String>> {
-        use mcb_validate::ValidatorRegistry;
-
-        Ok(ValidatorRegistry::standard_validator_names()
-            .iter()
-            .map(|name| (*name).to_owned())
-            .collect())
+        let mut validators = mcb_domain::registry::validation::list_validator_names();
+        validators.sort_unstable();
+        Ok(validators)
     }
 
     async fn validate_file(
@@ -72,7 +69,20 @@ impl ValidationServiceInterface for InfraValidationService {
     }
 
     async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>> {
-        Ok(mcb_validate::utils::yaml::get_validation_rules(category))
+        let entries = mcb_domain::registry::validation::list_validator_entries();
+        let mut rules: Vec<RuleInfo> = entries
+            .iter()
+            .filter(|(name, _)| category.is_none_or(|c| *name == c))
+            .map(|(name, description)| RuleInfo {
+                id: (*name).to_owned(),
+                category: (*name).to_owned(),
+                severity: "warning".to_owned(),
+                description: (*description).to_owned(),
+                engine: "linkme".to_owned(),
+            })
+            .collect();
+        rules.sort_unstable_by(|a, b| a.id.cmp(&b.id));
+        Ok(rules)
     }
 
     async fn analyze_complexity(
@@ -89,32 +99,48 @@ fn run_validation(
     validators: Option<&[String]>,
     severity_filter: Option<&str>,
 ) -> Result<ValidationReport> {
-    use mcb_validate::{GenericReporter, ValidationConfig, ValidatorRegistry};
-
-    let config = ValidationConfig::new(workspace_root);
-    let registry = ValidatorRegistry::standard_for(workspace_root);
-
-    let report = if let Some(names) = validators {
-        let names_ref: Vec<&str> = names.iter().map(String::as_str).collect();
-        let violations = registry
-            .validate_named(&config, &names_ref)
-            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-        GenericReporter::create_report(&violations, workspace_root.to_path_buf())
+    let root = workspace_root.to_path_buf();
+    let validators_list = if let Some(names) = validators {
+        mcb_domain::registry::validation::build_named_validators(&root, names)?
     } else {
-        let violations = registry
-            .validate_all(&config)
-            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-        GenericReporter::create_report(&violations, workspace_root.to_path_buf())
+        mcb_domain::registry::validation::build_all_validators(&root)?
     };
 
-    Ok(convert_report(report, severity_filter))
+    let config = mcb_domain::ports::validation::ValidationConfig::new(&root);
+
+    let mut all_violations: Vec<Box<dyn mcb_domain::ports::validation::Violation>> = Vec::new();
+    for v in &validators_list {
+        match v.validate(&config) {
+            Ok(violations) => all_violations.extend(violations),
+            Err(e) => {
+                return Err(mcb_domain::error::Error::internal(format!(
+                    "validator '{}' failed: {}",
+                    v.name(),
+                    e
+                )));
+            }
+        }
+    }
+
+    Ok(mcb_domain::registry::validation::build_report(
+        &all_violations,
+        severity_filter,
+    ))
 }
 
-fn convert_report(
-    report: mcb_validate::GenericReport,
-    severity_filter: Option<&str>,
-) -> ValidationReport {
-    mcb_validate::utils::validation_report::from_generic_report(report, severity_filter, true)
+/// Traverse parent directories to find the workspace root (directory containing Cargo.toml).
+fn find_workspace_root_from(start: &Path) -> Option<std::path::PathBuf> {
+    let mut current = if start.is_file() {
+        start.parent()?
+    } else {
+        start
+    };
+    loop {
+        if current.join("Cargo.toml").exists() {
+            return Some(current.to_path_buf());
+        }
+        current = current.parent()?;
+    }
 }
 
 fn run_file_validation(
@@ -123,7 +149,7 @@ fn run_file_validation(
 ) -> Result<ValidationReport> {
     // For single file validation, we need to find the workspace root
     // and run validation scoped to that file
-    let workspace_root = mcb_validate::find_workspace_root_from(file_path)
+    let workspace_root = find_workspace_root_from(file_path)
         .unwrap_or_else(|| file_path.parent().unwrap_or(file_path).to_path_buf());
 
     // Run standard validation - mcb-validate doesn't have single-file mode yet
@@ -137,47 +163,101 @@ fn run_file_validation(
         .filter(|v| v.file.as_ref().is_some_and(|f| f.contains(&file_str)))
         .collect();
 
-    Ok(mcb_validate::utils::validation_report::from_violations(
-        file_violations,
-    ))
+    let total = file_violations.len();
+    let errors = file_violations
+        .iter()
+        .filter(|v| v.severity == "ERROR")
+        .count();
+    let warnings = file_violations
+        .iter()
+        .filter(|v| v.severity == "WARNING")
+        .count();
+    let infos = total.saturating_sub(errors).saturating_sub(warnings);
+    Ok(ValidationReport {
+        total_violations: total,
+        errors,
+        warnings,
+        infos,
+        passed: errors == 0,
+        violations: file_violations,
+    })
+}
+fn count_sloc(content: &str) -> usize {
+    content
+        .lines()
+        .filter(|line| {
+            let trimmed = line.trim();
+            !trimmed.is_empty() && !trimmed.starts_with("//")
+        })
+        .count()
+}
+
+fn calculate_maintainability_index(sloc: usize, avg_cyclomatic: f64) -> f64 {
+    if sloc == 0 {
+        return 100.0;
+    }
+    let raw = 171.0
+        - 5.2 * avg_cyclomatic.max(1.0).ln()
+        - 0.23 * avg_cyclomatic
+        - 16.2 * (sloc as f64).ln();
+    (raw * 100.0 / 171.0).clamp(0.0, 100.0)
+}
+
+fn build_function_metrics(
+    functions: &[mcb_domain::utils::analysis::FunctionRecord],
+    include_functions: bool,
+) -> Vec<FunctionComplexity> {
+    if !include_functions {
+        return vec![];
+    }
+    functions
+        .iter()
+        .map(|f| FunctionComplexity {
+            name: f.name.clone(),
+            line: f.line,
+            cyclomatic: f64::from(f.complexity),
+            cognitive: f64::from(f.complexity) * 1.2,
+            sloc: 0,
+        })
+        .collect()
 }
 
 fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<ComplexityReport> {
-    use mcb_validate::RcaAnalyzer;
+    let content = std::fs::read_to_string(file_path).map_err(|e| {
+        mcb_domain::error::Error::io_with_source(
+            format!("failed to read {}", file_path.display()),
+            e,
+        )
+    })?;
 
-    let analyzer = RcaAnalyzer::new();
+    let sloc = count_sloc(&content);
+    let files = vec![(file_path.to_path_buf(), content)];
+    let functions = mcb_domain::utils::analysis::collect_functions(&files)?;
 
-    // Get aggregate metrics for the file
-    let aggregate = analyzer
-        .analyze_file_aggregate(file_path)
-        .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-
-    let functions = if include_functions {
-        // Get function-level metrics
-        let func_metrics = analyzer
-            .analyze_file(file_path)
-            .map_err(|e| mcb_domain::error::Error::internal(e.to_string()))?;
-
-        func_metrics
-            .into_iter()
-            .map(|f| FunctionComplexity {
-                name: f.name,
-                line: f.start_line,
-                cyclomatic: f.metrics.cyclomatic,
-                cognitive: f.metrics.cognitive,
-                sloc: f.metrics.sloc,
-            })
-            .collect()
-    } else {
-        Vec::new()
-    };
+    let total_cyclomatic: f64 = functions.iter().map(|f| f64::from(f.complexity)).sum();
+    let fn_count = functions.len().max(1) as f64;
+    let avg_cyclomatic = total_cyclomatic / fn_count;
+    let cognitive = avg_cyclomatic * 1.2;
+    let mi = calculate_maintainability_index(sloc, avg_cyclomatic);
+    let function_metrics = build_function_metrics(&functions, include_functions);
 
     Ok(ComplexityReport {
-        file: file_path.to_str().unwrap_or_default().to_owned(),
-        cyclomatic: aggregate.cyclomatic,
-        cognitive: aggregate.cognitive,
-        maintainability_index: aggregate.maintainability_index,
-        sloc: aggregate.sloc,
-        functions,
+        file: file_path.display().to_string(),
+        cyclomatic: avg_cyclomatic,
+        cognitive,
+        maintainability_index: mi,
+        sloc,
+        functions: function_metrics,
     })
 }
+
+// ---------------------------------------------------------------------------
+// Linkme Registration
+// ---------------------------------------------------------------------------
+
+mcb_domain::register_service!(
+    mcb_utils::constants::SERVICE_NAME_VALIDATION,
+    mcb_domain::registry::services::ServiceBuilder::Validation(|_context| {
+        Ok(std::sync::Arc::new(InfraValidationService::new()))
+    }),
+);

@@ -10,11 +10,11 @@ use rmcp::model::CallToolResult;
 
 use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
-use crate::constants::fields::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
-use crate::constants::limits::{DEFAULT_MEMORY_LIMIT, DEFAULT_TIMELINE_DEPTH};
 use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
+use mcb_utils::constants::keys::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
+use mcb_utils::constants::limits::{DEFAULT_MEMORY_LIST_LIMIT, DEFAULT_TIMELINE_DEPTH};
 
 /// Lists semantic memories based on the provided search query and filters.
 #[tracing::instrument(skip_all)]
@@ -23,7 +23,8 @@ pub async fn list_observations(
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
     let filter = build_memory_filter(args, None, args.tags.clone());
-    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIMIT as u32) as usize;
+    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIST_LIMIT as u32) as usize;
+    // INTENTIONAL: Optional query parameter; empty string means no filter
     let query = args.query.clone().unwrap_or_default();
     match memory_service
         .memory_search(&query, Some(filter), limit)

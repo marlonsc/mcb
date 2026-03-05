@@ -1,0 +1,23 @@
+---
+# yamllint configuration for GitHub Actions workflows
+# Line-length: 120 (balanced for CI YAML)
+
+extends: default
+
+rules:
+  line-length:
+    max: 120
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+  truthy:
+    # GitHub Actions uses `on:` which triggers truthy warnings
+    # Workflows use inline disable comments where needed
+    allowed-values: ['true', 'false', 'on', 'off', 'yes', 'no']
+  comments:
+    require-starting-space: true
+    min-spaces-from-content: 1
+  document-start:
+    present: true
+  indentation:
+    spaces: 2
+    indent-sequences: true

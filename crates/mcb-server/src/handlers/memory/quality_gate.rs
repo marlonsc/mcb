@@ -16,9 +16,10 @@ use super::common::{
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use mcb_domain::utils::id as domain_id;
+use mcb_utils::utils::id as domain_id;
 
-use crate::constants::fields::{FIELD_MESSAGE, FIELD_OBSERVATION_ID, TAG_QUALITY_GATE};
+use mcb_utils::constants::keys::{FIELD_MESSAGE, FIELD_OBSERVATION_ID};
+use mcb_utils::constants::values::TAG_QUALITY_GATE;
 
 /// Stores a quality gate result as a semantic observation.
 #[tracing::instrument(skip_all)]

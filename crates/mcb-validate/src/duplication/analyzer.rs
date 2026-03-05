@@ -7,7 +7,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::filters::LanguageDetector;
-use crate::pattern_registry::compile_regex;
+use mcb_utils::utils::regex::compile_regex;
 
 use super::detector::{CloneDetector, tokenize_source};
 use super::fingerprint::TokenFingerprinter;

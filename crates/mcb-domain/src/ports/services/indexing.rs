@@ -1,7 +1,5 @@
-//!
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
-//!
-//! Provides indexing domain definitions.
+//! Indexing service ports.
+
 use std::path::Path;
 
 use async_trait::async_trait;
@@ -16,17 +14,17 @@ use crate::value_objects::{CollectionId, OperationId};
 /// Defines the contract for codebase indexing operations.
 #[async_trait]
 pub trait IndexingServiceInterface: Send + Sync {
-    /// Index a codebase at the given path
+    /// Index a codebase at the given path.
     async fn index_codebase(
         &self,
         path: &Path,
         collection: &CollectionId,
     ) -> Result<IndexingResult>;
 
-    /// Get the current indexing status
+    /// Get the current indexing status.
     fn get_status(&self) -> IndexingStatus;
 
-    /// Clear all indexed data from a collection
+    /// Clear all indexed data from a collection.
     async fn clear_collection(&self, collection: &CollectionId) -> Result<()>;
 }
 
@@ -68,19 +66,19 @@ pub struct IndexingStatus {
 /// incremental updates, rebuilds, and detailed statistics.
 #[async_trait]
 pub trait BatchIndexingServiceInterface: Send + Sync {
-    /// Index a batch of code chunks
+    /// Index a batch of code chunks.
     async fn index_chunks(&self, chunks: &[CodeChunk]) -> Result<()>;
 
-    /// Index files from a directory
+    /// Index all files within a directory.
     async fn index_directory(&self, path: &Path) -> Result<()>;
 
-    /// Process a synchronization batch
+    /// Process a batch of changes from a synchronization operation.
     async fn process_sync_batch(&self, batch: &SyncBatch) -> Result<()>;
 
-    /// Rebuild index for a collection
+    /// Completely rebuild the index for a collection.
     async fn rebuild_index(&self, collection: &CollectionId) -> Result<()>;
 
-    /// Get indexing statistics
+    /// Get current indexing throughput and statistics.
     async fn get_indexing_stats(&self) -> Result<IndexingStats>;
 }
 

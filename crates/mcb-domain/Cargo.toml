@@ -16,6 +16,9 @@ name = "mcb_domain"
 path = "src/lib.rs"
 
 [dependencies]
+# Shared utilities layer (Layer 0)
+mcb-utils = { workspace = true }
+
 # Serialization - pure lib acceptable for domain
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -30,6 +33,7 @@ typed-builder = { workspace = true }
 
 # Async traits - needed for port definitions
 async-trait = { workspace = true }
+
 
 # Dependency injection interfaces - port traits (linkme + AppContext)
 
@@ -62,13 +66,14 @@ futures = { workspace = true }
 # Plugin registration
 linkme = { workspace = true }
 
-# HTTP Client types for providers
-reqwest = { workspace = true }
 toml = { workspace = true, optional = true }
+tempfile = { workspace = true, optional = true }
+# MCP SDK types — optional, only for test utilities
+rmcp = { workspace = true, optional = true }
 
 [features]
 default = []
-test-utils = ["dep:toml"]
+test-utils = ["dep:toml", "dep:tempfile", "dep:rmcp"]
 
 [lints]
 workspace = true
@@ -79,6 +84,7 @@ tempfile = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 rstest = { workspace = true }
 mockall = { workspace = true }
+rmcp = { workspace = true }
 insta = { workspace = true }
 toml = { workspace = true }
 
