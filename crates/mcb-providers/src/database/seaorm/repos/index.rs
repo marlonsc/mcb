@@ -20,7 +20,7 @@ use sea_orm::{
 use super::common::db_error;
 use crate::database::seaorm::entities::{collection, file_hash, index_operation};
 
-/// SeaORM `IndexRepository` + `FileHashRepository` implementation.
+/// `SeaORM` `IndexRepository` + `FileHashRepository` implementation.
 pub struct SeaOrmIndexRepository {
     db: Arc<DatabaseConnection>,
     project_id: String,

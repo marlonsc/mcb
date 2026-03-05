@@ -78,7 +78,7 @@ impl SearchHandler {
         }
     }
 
-    async fn resolve_collection<'a>(args: &'a SearchArgs) -> Result<&'a str, CallToolResult> {
+    async fn resolve_collection(args: &SearchArgs) -> Result<&str, CallToolResult> {
         args.collection
             .as_deref()
             .or(args.repo_id.as_deref())

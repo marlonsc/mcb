@@ -154,6 +154,9 @@ impl SeaOrmObservationRepository {
     }
 
     /// List observations matching an optional filter, up to `limit`.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
     pub async fn list_observations(
         &self,
         filter: Option<&MemoryFilter>,
@@ -163,6 +166,9 @@ impl SeaOrmObservationRepository {
     }
 
     /// Inject observations matching a filter, capped by `max_chars` total content size.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
     pub async fn inject_observations(
         &self,
         filter: Option<&MemoryFilter>,

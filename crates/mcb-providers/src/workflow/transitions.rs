@@ -121,8 +121,8 @@ fn is_executing_transition(state: &WorkflowState, trigger: &TransitionTrigger) -
 /// Resolve the specific `Executing` variant based on the trigger.
 fn resolve_executing_state(state: &WorkflowState, trigger: &TransitionTrigger) -> WorkflowState {
     let phase_id = match (state, trigger) {
-        (_, TransitionTrigger::StartExecution { phase_id }) => phase_id.clone(),
-        (
+        (_, TransitionTrigger::StartExecution { phase_id })
+        | (
             WorkflowState::Executing { phase_id, .. }
             | WorkflowState::Planning { phase_id }
             | WorkflowState::Verifying { phase_id },

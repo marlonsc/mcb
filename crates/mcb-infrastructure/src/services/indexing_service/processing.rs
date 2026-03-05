@@ -57,6 +57,7 @@ fn log_indexing_completion(
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn finish_indexing_task(
     service: &IndexingServiceImpl,
     operation_id: &OperationId,
@@ -79,7 +80,7 @@ async fn finish_indexing_task(
 
     let result =
         IndexingProgress::with_counts(files_processed, chunks_created, files_skipped, failed_files)
-            .into_result(Some(operation_id.clone()), INDEXING_STATUS_COMPLETED);
+            .into_result(Some(*operation_id), INDEXING_STATUS_COMPLETED);
 
     publish_indexing_completed_event(service, collection, result.chunks_created, duration_ms).await;
     log_indexing_completion(error_count, files_processed, chunks_created, duration_ms);

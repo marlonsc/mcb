@@ -47,6 +47,9 @@ sea_pub_crud!(SeaOrmProjectRepository {
 
 impl SeaOrmProjectRepository {
     /// Lists all phases for a project ordered by sequence.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
     pub async fn list_phases(&self, project_id: &str) -> Result<Vec<ProjectPhase>> {
         let models = project_phase::Entity::find()
             .filter(project_phase::Column::ProjectId.eq(project_id.to_owned()))
@@ -75,6 +78,9 @@ sea_pub_crud!(SeaOrmProjectRepository {
 
 impl SeaOrmProjectRepository {
     /// Lists all decisions for a project ordered by creation date.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
     pub async fn list_decisions(&self, project_id: &str) -> Result<Vec<ProjectDecision>> {
         let models = project_decision::Entity::find()
             .filter(project_decision::Column::ProjectId.eq(project_id.to_owned()))
@@ -118,7 +124,7 @@ impl SeaOrmProjectRepository {
         Ok(())
     }
 
-    /// Applies `IssueFilter` fields to a SeaORM `Select` query.
+    /// Applies `IssueFilter` fields to a `SeaORM` `Select` query.
     fn apply_issue_filter(
         mut q: sea_orm::Select<project_issue::Entity>,
         filter: &IssueFilter,
@@ -152,6 +158,9 @@ impl SeaOrmProjectRepository {
     }
 
     /// Lists issues using a rich filter.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
     pub async fn list_issues_filtered(
         &self,
         org_id: &str,
@@ -178,6 +187,9 @@ impl SeaOrmProjectRepository {
 
 impl SeaOrmProjectRepository {
     /// Persists a dependency edge between issues.
+    ///
+    /// # Errors
+    /// Returns an error if the database insert fails.
     pub async fn create_dependency(&self, dependency: &ProjectDependency) -> Result<()> {
         sea_repo_insert!(
             &self.db,
@@ -188,6 +200,9 @@ impl SeaOrmProjectRepository {
     }
 
     /// Lists all dependencies attached to an issue.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
     pub async fn list_dependencies(&self, issue_id: &str) -> Result<Vec<ProjectDependency>> {
         let models = project_dependency::Entity::find()
             .filter(
@@ -204,6 +219,9 @@ impl SeaOrmProjectRepository {
     }
 
     /// Traverses issue dependencies breadth-first up to `max_depth`.
+    ///
+    /// # Errors
+    /// Returns an error if the database query fails.
     pub async fn traverse_dependencies(
         &self,
         issue_id: &str,
@@ -246,6 +264,9 @@ impl SeaOrmProjectRepository {
     }
 
     /// Deletes a dependency edge by id.
+    ///
+    /// # Errors
+    /// Returns an error if the database delete fails.
     pub async fn delete_dependency(&self, id: &str) -> Result<()> {
         sea_repo_delete!(
             &self.db,

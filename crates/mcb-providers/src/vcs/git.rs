@@ -108,6 +108,7 @@ impl GitProvider {
 
     /// Convert a git2 delta status to our domain `DiffStatus`.
     fn delta_to_status(delta: git2::Delta) -> DiffStatus {
+        #[allow(clippy::wildcard_enum_match_arm)]
         match delta {
             git2::Delta::Added => DiffStatus::Added,
             git2::Delta::Deleted => DiffStatus::Deleted,
@@ -123,7 +124,7 @@ impl GitProvider {
         let parent_hashes: Vec<String> = commit.parent_ids().map(|id| id.to_string()).collect();
 
         VcsCommit::new(VcsCommitInput {
-            id: format!("{}:{}", repo_id, oid),
+            id: format!("{repo_id}:{oid}"),
             hash: oid.to_string(),
             message: commit.message().unwrap_or("").to_owned(),
             author: author.name().unwrap_or("Unknown").to_owned(),

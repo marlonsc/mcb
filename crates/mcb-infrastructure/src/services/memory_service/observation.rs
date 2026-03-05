@@ -89,6 +89,7 @@ impl MemoryServiceImpl {
             .await
     }
 
+    #[allow(clippy::too_many_arguments)]
     async fn create_and_store_observation(
         &self,
         project_id: String,

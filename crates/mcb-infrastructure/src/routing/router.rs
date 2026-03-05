@@ -44,7 +44,6 @@ impl DefaultProviderRouter {
     }
 
     fn filter_available_providers<'a>(
-        &self,
         providers: &'a [String],
         context: &ProviderContext,
     ) -> Vec<&'a String> {
@@ -100,7 +99,7 @@ impl DefaultProviderRouter {
         providers: &[String],
         context: &ProviderContext,
     ) -> Result<String> {
-        let available = self.filter_available_providers(providers, context);
+        let available = Self::filter_available_providers(providers, context);
 
         if available.is_empty() {
             return Err(Error::infrastructure(
@@ -117,7 +116,7 @@ impl DefaultProviderRouter {
             .cloned()
             .ok_or_else(|| Error::infrastructure("No healthy providers available"))?;
 
-        Ok(best.to_owned())
+        Ok(best.clone())
     }
 }
 

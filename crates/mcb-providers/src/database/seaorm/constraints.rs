@@ -275,11 +275,8 @@ impl ConstraintBuilder {
     /// # Arguments
     ///
     /// * `query` - The `SeaQuery` select statement to modify
-    fn build_column_condition(
-        &self,
-        constraint: &SearchConstraint,
-        condition: Condition,
-    ) -> Condition {
+    fn build_column_condition(constraint: &SearchConstraint, condition: Condition) -> Condition {
+        #[allow(clippy::wildcard_enum_match_arm)]
         match constraint {
             SearchConstraint::ProjectId(id) => condition.add(
                 Expr::col((observation::Entity, observation::Column::ProjectId)).eq(id.as_str()),
@@ -296,10 +293,10 @@ impl ConstraintBuilder {
     }
 
     fn build_metadata_condition(
-        &self,
         constraint: &SearchConstraint,
         mut condition: Condition,
     ) -> Condition {
+        #[allow(clippy::wildcard_enum_match_arm)]
         match constraint {
             SearchConstraint::WorkspaceId(id) => condition.add(Expr::cust_with_values(
                 "json_extract(metadata, '$.worktree_id') = ?",
@@ -348,8 +345,8 @@ impl ConstraintBuilder {
     pub fn build_condition(&self) -> Condition {
         let mut condition = Condition::all();
         for constraint in &self.constraints {
-            condition = self.build_column_condition(constraint, condition);
-            condition = self.build_metadata_condition(constraint, condition);
+            condition = Self::build_column_condition(constraint, condition);
+            condition = Self::build_metadata_condition(constraint, condition);
         }
         condition
     }

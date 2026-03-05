@@ -217,7 +217,7 @@ macro_rules! sea_repo_list {
 
 /// Find-by-id, set a single field, and update.
 ///
-/// Handles the common pattern of "find → not_found → set field → save".
+/// Handles the common pattern of "find → `not_found` → set field → save".
 ///
 /// ```rust,ignore
 /// sea_repo_set_field!(self.db(), api_key, id, "ApiKey", "revoke api key",
@@ -270,7 +270,7 @@ macro_rules! sea_repo_find_by_column {
 // The `db` parameter is the method name on `self` that returns a `&DatabaseConnection`,
 // e.g. `db: db` will expand to `self.db()` inside the generated methods.
 
-/// Generate a simple CRUD trait impl (no org_id scoping).
+/// Generate a simple CRUD trait impl (no `org_id` scoping).
 ///
 /// ```rust,ignore
 /// sea_impl_crud!(TeamRegistry for SeaOrmEntityRepository { db: db,
@@ -345,7 +345,7 @@ macro_rules! sea_impl_crud {
     };
 }
 
-/// Generate an org-scoped CRUD trait impl (get/delete filtered by org_id).
+/// Generate an org-scoped CRUD trait impl (get/delete filtered by `org_id`).
 ///
 /// ```rust,ignore
 /// sea_impl_crud_scoped!(IssueRegistry for SeaOrmEntityRepository { db: db,
@@ -518,23 +518,38 @@ macro_rules! sea_pub_crud {
     ) => {
         impl $repo {
             /// Auto-generated create method.
+            ///
+            /// # Errors
+            /// Returns an error if the database insert fails.
             pub async fn $create_fn(&self, $create_p: &$dtype) -> Result<()> {
                 sea_repo_insert!(&self.$field, $mod, $create_p, concat!(stringify!($create_fn)))
             }
             /// Auto-generated get-by-id method.
+            ///
+            /// # Errors
+            /// Returns an error if the entity is not found or the query fails.
             pub async fn $get_fn(&self, $get_id: &str) -> Result<$dtype> {
                 sea_repo_get!(&self.$field, $mod, $dtype, $label, $get_id, concat!(stringify!($get_fn)))
             }
             $(/// Auto-generated list method.
+            ///
+            /// # Errors
+            /// Returns an error if the database query fails.
             pub async fn $list_fn(&self, $($list_param: &str),+) -> Result<Vec<$dtype>> {
                 sea_repo_list!(&self.$field, $mod, $dtype, concat!(stringify!($list_fn)),
                     $($list_col => $list_param),+)
             })?
             $(/// Auto-generated update method.
+            ///
+            /// # Errors
+            /// Returns an error if the entity is not found or the update fails.
             pub async fn $upd_fn(&self, $upd_p: &$dtype) -> Result<()> {
                 sea_repo_update!(&self.$field, $mod, $upd_p, concat!(stringify!($upd_fn)))
             })?
             /// Auto-generated delete method.
+            ///
+            /// # Errors
+            /// Returns an error if the entity is not found or the delete fails.
             pub async fn $del_fn(&self, $del_id: &str) -> Result<()> {
                 sea_repo_delete!(&self.$field, $mod, $del_id, concat!(stringify!($del_fn)))
             }
@@ -542,7 +557,7 @@ macro_rules! sea_pub_crud {
     };
 }
 
-/// Generate `pub` org-scoped CRUD methods (get/delete filtered by org_id, no trait).
+/// Generate `pub` org-scoped CRUD methods (get/delete filtered by `org_id`, no trait).
 ///
 /// ```rust,ignore
 /// sea_pub_crud_scoped!(SeaOrmProjectRepository {
@@ -570,24 +585,39 @@ macro_rules! sea_pub_crud_scoped {
     ) => {
         impl $repo {
             /// Auto-generated create method.
+            ///
+            /// # Errors
+            /// Returns an error if the database insert fails.
             pub async fn $create_fn(&self, $create_p: &$dtype) -> Result<()> {
                 sea_repo_insert!(&self.$field, $mod, $create_p, concat!(stringify!($create_fn)))
             }
             /// Auto-generated scoped get method.
+            ///
+            /// # Errors
+            /// Returns an error if the entity is not found or the query fails.
             pub async fn $get_fn(&self, org_id: &str, id: &str) -> Result<$dtype> {
                 sea_repo_get_filtered!(&self.$field, $mod, $dtype, $label, id,
                     concat!(stringify!($get_fn)), $scope_col => org_id)
             }
             /// Auto-generated scoped list method.
+            ///
+            /// # Errors
+            /// Returns an error if the database query fails.
             pub async fn $list_fn(&self, org_id: &str, $($list_param: &str),+) -> Result<Vec<$dtype>> {
                 sea_repo_list!(&self.$field, $mod, $dtype, concat!(stringify!($list_fn)),
                     $scope_col => org_id, $($list_col => $list_param),+)
             }
             /// Auto-generated update method.
+            ///
+            /// # Errors
+            /// Returns an error if the entity is not found or the update fails.
             pub async fn $upd_fn(&self, $upd_p: &$dtype) -> Result<()> {
                 sea_repo_update!(&self.$field, $mod, $upd_p, concat!(stringify!($upd_fn)))
             }
             /// Auto-generated scoped delete method.
+            ///
+            /// # Errors
+            /// Returns an error if the entity is not found or the delete fails.
             pub async fn $del_fn(&self, org_id: &str, id: &str) -> Result<()> {
                 sea_repo_delete_filtered!(&self.$field, $mod, id,
                     concat!(stringify!($del_fn)), $scope_col => org_id)

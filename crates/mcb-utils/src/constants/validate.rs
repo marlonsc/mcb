@@ -4,6 +4,11 @@
 //! All validation-specific constants: rule engine infrastructure, code analysis
 //! patterns, detection patterns, and duplication analysis.
 
+use super::values::{
+    TAG_ARCHITECTURE, TAG_ASYNC, TAG_DOCUMENTATION, TAG_NAMING, TAG_ORGANIZATION, TAG_PERFORMANCE,
+    TAG_QUALITY, TAG_SOLID,
+};
+
 // ============================================================================
 // Common Patterns (cross-cutting, shared across many validators)
 // ============================================================================
@@ -462,32 +467,8 @@ pub const LINTER_CMD_RUFF: &str = "ruff";
 pub const LINTER_CMD_CARGO: &str = "cargo";
 
 // ============================================================================
-// COMMON IDENTIFIERS AND TAGS
+// COMMON IDENTIFIERS AND TAGS — defined in values.rs, re-exported via mod.rs
 // ============================================================================
-
-/// Tag for architecture-related items.
-pub const TAG_ARCHITECTURE: &str = "architecture";
-
-/// Tag for organization-related items.
-pub const TAG_ORGANIZATION: &str = "organization";
-
-/// Tag for quality-related items.
-pub const TAG_QUALITY: &str = "quality";
-
-/// Tag for SOLID-related items.
-pub const TAG_SOLID: &str = "solid";
-
-/// Tag for naming-related items.
-pub const TAG_NAMING: &str = "naming";
-
-/// Tag for documentation-related items.
-pub const TAG_DOCUMENTATION: &str = "documentation";
-
-/// Tag for performance-related items.
-pub const TAG_PERFORMANCE: &str = "performance";
-
-/// Tag for async-related items.
-pub const TAG_ASYNC: &str = "async";
 
 // ============================================================================
 // Severity Levels

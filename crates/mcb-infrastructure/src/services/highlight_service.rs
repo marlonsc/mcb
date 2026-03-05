@@ -59,8 +59,9 @@ impl HighlightServiceImpl {
     }
 
     fn get_language_config_dynamic(
-        lang_id: &mcb_domain::ports::validation::LanguageId,
+        lang_id: mcb_domain::ports::validation::LanguageId,
     ) -> Option<Result<HighlightLanguageConfig, HighlightError>> {
+        #[allow(clippy::wildcard_enum_match_arm)]
         match lang_id {
             mcb_domain::ports::validation::LanguageId::Python => {
                 Some(Ok(HighlightLanguageConfig::new(
@@ -109,8 +110,9 @@ impl HighlightServiceImpl {
     }
 
     fn get_language_config_static(
-        lang_id: &mcb_domain::ports::validation::LanguageId,
+        lang_id: mcb_domain::ports::validation::LanguageId,
     ) -> Option<Result<HighlightLanguageConfig, HighlightError>> {
+        #[allow(clippy::wildcard_enum_match_arm)]
         match lang_id {
             mcb_domain::ports::validation::LanguageId::Rust => {
                 Some(Ok(HighlightLanguageConfig::new(
@@ -161,11 +163,11 @@ impl HighlightServiceImpl {
         let lang_id = mcb_domain::ports::validation::LanguageId::from_name(language)
             .ok_or_else(|| HighlightError::UnsupportedLanguage(language.to_owned()))?;
 
-        if let Some(res) = Self::get_language_config_dynamic(&lang_id) {
+        if let Some(res) = Self::get_language_config_dynamic(lang_id) {
             return res;
         }
 
-        if let Some(res) = Self::get_language_config_static(&lang_id) {
+        if let Some(res) = Self::get_language_config_static(lang_id) {
             return res;
         }
 
