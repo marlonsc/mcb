@@ -80,6 +80,9 @@ pub const DEFAULT_INDEXING_OP_PROVIDER: &str = "default";
 /// Registry provider name for validation operations.
 pub const DEFAULT_VALIDATION_OP_PROVIDER: &str = "default";
 
+/// Registry provider name for the null/no-op fallback when no provider is configured.
+pub const DEFAULT_NULL_PROVIDER: &str = "null";
+
 /// Default namespace for database repositories.
 pub const DEFAULT_NAMESPACE: &str = "default";
 

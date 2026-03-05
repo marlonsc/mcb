@@ -76,7 +76,7 @@ impl Initializer for McpServerInitializer {
                 .embedding
                 .provider
                 .as_deref()
-                .unwrap_or("null"),
+                .unwrap_or(mcb_utils::constants::DEFAULT_NULL_PROVIDER),
         );
         if let Some(ref v) = app_config.providers.embedding.cache_dir {
             embed_cfg = embed_cfg.with_cache_dir(v.clone());
@@ -102,7 +102,7 @@ impl Initializer for McpServerInitializer {
                 .vector_store
                 .provider
                 .as_deref()
-                .unwrap_or("null"),
+                .unwrap_or(mcb_utils::constants::DEFAULT_NULL_PROVIDER),
         );
         if let Some(ref v) = app_config.providers.vector_store.address {
             vec_cfg = vec_cfg.with_uri(v.clone());

@@ -26,7 +26,7 @@ use mcb_domain::ports::*;
 use mcb_domain::value_objects::ids::{IssueLabelAssignmentId, TeamMemberId};
 
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_providers::database::seaorm::repos::entity::SeaOrmEntityRepository;
+use mcb_providers::database::seaorm::repos::SeaOrmEntityRepository;
 use rstest::rstest;
 
 async fn setup_db() -> TestResult<Arc<DatabaseConnection>> {

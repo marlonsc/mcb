@@ -21,7 +21,7 @@
 //!
 //! [rules.architecture]
 //! enabled = true
-//! severity = "Error"
+//! severity = "ERROR"
 //!
 //! [rules.quality]
 //! enabled = true
