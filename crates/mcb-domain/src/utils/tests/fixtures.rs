@@ -1,16 +1,10 @@
 use std::path::{Path, PathBuf};
 
-/// Path to `sample_codebase` fixture (used by golden tests).
+/// Path to the `sample_codebase` fixture (used by golden tests).
 ///
-/// # Panics
-///
-/// Panics if the workspace root cannot be resolved from `CARGO_MANIFEST_DIR`.
+/// This is resolved relative to `CARGO_MANIFEST_DIR` for the `mcb-domain` crate.
 #[must_use]
 pub fn sample_codebase_path() -> PathBuf {
-    #[allow(clippy::expect_used)]
     Path::new(env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .nth(2)
-        .expect("workspace root not found")
-        .join("tests/fixtures/sample_codebase")
+        .join("src/utils/tests/fixtures/sample_codebase")
 }

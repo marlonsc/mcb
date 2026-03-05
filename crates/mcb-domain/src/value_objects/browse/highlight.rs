@@ -109,9 +109,11 @@ pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
         "type" => HighlightCategory::Type,
         "number" => HighlightCategory::Number,
         "operator" => HighlightCategory::Operator,
-        "punctuation" | "punctuation.bracket" | "punctuation.delimiter" => {
-            HighlightCategory::Punctuation
-        }
+        "constant" | "attribute" | "property" | "tag" => HighlightCategory::Variable,
+        "punctuation"
+        | "punctuation.bracket"
+        | "punctuation.delimiter"
+        | "punctuation.special" => HighlightCategory::Punctuation,
         _ => HighlightCategory::Other,
     }
 }
