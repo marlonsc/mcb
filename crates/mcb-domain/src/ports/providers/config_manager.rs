@@ -4,9 +4,9 @@ use crate::error::Result;
 use crate::value_objects::{EmbeddingConfig, VectorStoreConfig};
 
 /// Provider configuration manager interface
-#[async_trait::async_trait]
 pub trait ProviderConfigManagerInterface: Send + Sync {
     /// Get embedding configuration by provider name.
+    ///
     ///
     /// # Errors
     /// Returns an error if the named provider is not configured.
