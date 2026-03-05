@@ -13,7 +13,7 @@ pub fn create_test_chunk(content: &str, file_path: &str, start_line: u32) -> Cod
         file_path: file_path.to_owned(),
         start_line,
         end_line: start_line + content.lines().count() as u32,
-        language: "Rust".to_owned(),
+        language: "rust".to_owned(),
         metadata: serde_json::json!({}),
     }
 }
