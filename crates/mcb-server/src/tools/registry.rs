@@ -1,5 +1,20 @@
 //! Registry-backed tool definitions and dispatch for MCP protocol.
-// linkme distributed_slice uses #[link_section] internally
+//!
+//! # Safety
+//!
+//! [`linkme::distributed_slice`] uses `#[link_section]` internally which
+//! requires `unsafe_code`. The macro generates only a static array of
+//! [`ToolDescriptor`] references — no raw pointer dereference or mutable
+//! aliasing occurs. Every entry is produced by [`register_tool!`] which emits
+//! safe, read-only descriptors. This is the same pattern used in `mcb-domain`
+//! registry macros. See: <https://docs.rs/linkme/latest/linkme/attr.distributed_slice.html>
+//!
+//! The `#![allow(unsafe_code)]` is scoped to this module file alone — it is
+//! the single blessed location for tool registration in the server crate.
+
+// Allow unsafe in this module only — linkme::distributed_slice requires it,
+// and there is no safe alternative for compile-time registration.
+#![allow(unsafe_code)]
 
 use std::borrow::Cow;
 use std::collections::HashSet;
@@ -37,13 +52,6 @@ pub struct ToolDescriptor {
     pub call: ToolCallFn,
 }
 
-// SAFETY: `linkme::distributed_slice` uses `#[link_section]` internally which
-// requires `unsafe_code`. The macro generates only a static array of
-// `ToolDescriptor` references — no raw pointer dereference or mutable aliasing
-// occurs. Every entry is produced by `register_tool!` which emits safe,
-// read-only descriptors. This is the same pattern used in `mcb-domain` registry
-// macros. See: https://docs.rs/linkme/latest/linkme/attr.distributed_slice.html
-#[allow(unsafe_code)]
 #[linkme::distributed_slice]
 /// All registered tool descriptors.
 pub static TOOL_DESCRIPTORS: [ToolDescriptor];

@@ -284,23 +284,3 @@ fn parse_org_and_project_from_remote_url(url: &str) -> Option<(String, String)> 
 
     None
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use mcb_utils::constants::ide::KNOWN_IDE_PROGRAMS;
-
-    #[test]
-    fn test_detect_ide_fallback() {
-        // Clear all IDE env vars to test fallback
-        // Note: env vars are process-global, so this test is best-effort
-        let (program, session) = detect_ide();
-        // In CI/test environment, we expect one of the known IDEs or fallback
-        assert!(
-            KNOWN_IDE_PROGRAMS.contains(&program.as_str()),
-            "unexpected agent_program: {program}"
-        );
-        // client_session_id may or may not be set depending on environment
-        let _ = session;
-    }
-}

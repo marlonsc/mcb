@@ -6,7 +6,7 @@
 
 use std::path::PathBuf;
 
-use mcb_domain::ports::AnalysisFinding;
+use mcb_domain::ports::providers::analysis::AnalysisFinding;
 use mcb_domain::utils::analysis::{
     FunctionRecord, collect_functions, compute_complexity_score, compute_tdg_scores,
     count_balanced_block_lines, count_symbol_occurrences, detect_dead_functions,

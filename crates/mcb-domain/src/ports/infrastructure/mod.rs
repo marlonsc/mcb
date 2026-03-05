@@ -3,27 +3,33 @@
 //! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
 
 /// Configuration provider ports.
-mod config;
+pub mod config;
 /// Event bus provider ports.
-mod events;
+pub mod events;
 /// GraphQL schema provider ports.
-mod graphql;
+pub mod graphql;
 /// Lifecycle management and health check ports.
-mod lifecycle;
+pub mod lifecycle;
 /// Logging ports.
-mod logging;
+pub mod logging;
 /// Database migration ports.
-mod migrations;
+pub mod migrations;
 /// Provider routing ports.
-mod routing;
+pub mod routing;
 /// Snapshot and sync provider ports.
-mod sync;
+pub mod sync;
 
-pub use config::*;
-pub use events::*;
-pub use graphql::*;
-pub use lifecycle::*;
-pub use logging::*;
-pub use migrations::*;
-pub use routing::*;
-pub use sync::*;
+// Re-exports for canonical access via `ports::infrastructure::{...}`
+pub use config::ConfigProvider;
+pub use events::{DomainEventStream, EventBusProvider};
+pub use graphql::{GraphQLSchemaProvider, SharedGraphQLSchemaProvider};
+pub use lifecycle::{
+    DependencyHealth, DependencyHealthCheck, ExtendedHealthResponse, LifecycleManaged,
+    PortServiceState, ShutdownCoordinator,
+};
+pub use logging::{LogLevel, OperationLogger};
+pub use migrations::{MigrationProvider, SharedMigrationProvider};
+pub use routing::{ProviderContext, ProviderHealthStatus, ProviderRouter};
+pub use sync::{
+    SharedSyncCoordinator, SnapshotProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult,
+};

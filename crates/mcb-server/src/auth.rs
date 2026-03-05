@@ -64,11 +64,17 @@ pub async fn authorize_admin_api_key(
 }
 
 pub(crate) fn configured_api_key_header(settings: Option<&serde_json::Value>) -> String {
-    settings
-        .and_then(|raw_settings| raw_settings.get("auth"))
-        .and_then(|auth| auth.get("api_key"))
-        .and_then(|api_key| api_key.get("header"))
+    // Try admin-specific header first (settings.auth.admin.header), then
+    // fall back to the general API-key header (settings.auth.api_key.header).
+    let auth = settings.and_then(|s| s.get("auth"));
+    auth.and_then(|a| a.get("admin"))
+        .and_then(|admin| admin.get("header"))
         .and_then(serde_json::Value::as_str)
+        .or_else(|| {
+            auth.and_then(|a| a.get("api_key"))
+                .and_then(|api_key| api_key.get("header"))
+                .and_then(serde_json::Value::as_str)
+        })
         .map_or_else(|| API_KEY_HEADER.to_owned(), str::to_ascii_lowercase)
 }
 

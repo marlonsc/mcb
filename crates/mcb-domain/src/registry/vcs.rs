@@ -17,7 +17,7 @@ crate::impl_config_builder!(VcsProviderConfig {
 });
 
 crate::impl_registry!(
-    provider_trait: crate::ports::VcsProvider,
+    provider_trait: crate::ports::providers::vcs::VcsProvider,
     config_type: VcsProviderConfig,
     entry_type: VcsProviderEntry,
     slice_name: VCS_PROVIDERS,

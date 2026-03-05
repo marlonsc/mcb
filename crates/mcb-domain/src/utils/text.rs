@@ -56,7 +56,7 @@ pub fn try_extract_text_from<T: Serialize>(content: &[T]) -> Result<String, serd
 /// Extract text from any serializable MCP content sequence.
 ///
 /// This is a convenience wrapper around [`try_extract_text_from`] that
-/// logs serialization failures and returns an empty string on error.
+/// silently returns an empty string on serialization failure.
 #[must_use]
 pub fn extract_text_from<T: Serialize>(content: &[T]) -> String {
     match try_extract_text_from(content) {

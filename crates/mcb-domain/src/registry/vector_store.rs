@@ -55,7 +55,7 @@ impl VectorStoreProviderConfig {
 }
 
 crate::impl_registry!(
-    provider_trait: crate::ports::VectorStoreProvider,
+    provider_trait: crate::ports::providers::vector_store::VectorStoreProvider,
     config_type: VectorStoreProviderConfig,
     entry_type: VectorStoreProviderEntry,
     slice_name: VECTOR_STORE_PROVIDERS,

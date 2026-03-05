@@ -26,6 +26,9 @@ macro_rules! require_service {
 
 /// Skip test if service is not available or if in CI.
 ///
+/// For tests returning `()`. For tests returning `TestResult`, use
+/// [`skip_if_service_unavailable_result!`] instead.
+///
 /// # Example
 /// ```ignore
 /// skip_if_service_unavailable!("Milvus", is_milvus_available());
@@ -47,7 +50,29 @@ macro_rules! skip_if_service_unavailable {
     };
 }
 
+/// Like [`skip_if_service_unavailable!`] but returns `Ok(())` for tests
+/// returning `TestResult` / `Result<()>`.
+#[macro_export]
+macro_rules! skip_if_service_unavailable_result {
+    ($service:expr, $is_available:expr) => {
+        if !$crate::utils::tests::service_detection::should_run_docker_integration_tests() {
+            println!("⊘ SKIPPED: Docker integration tests disabled in this environment");
+            return Ok(());
+        }
+        if !$is_available {
+            println!(
+                "⊘ SKIPPED: {} service not available (skipping test)",
+                $service
+            );
+            return Ok(());
+        }
+    };
+}
+
 /// Skip test if any required services are unavailable.
+///
+/// For tests returning `()`. For tests returning `TestResult`, use
+/// [`skip_if_any_service_unavailable_result!`] instead.
 ///
 /// # Example
 /// ```ignore
@@ -67,6 +92,27 @@ macro_rules! skip_if_any_service_unavailable {
                     $service
                 );
                 return;
+            }
+        )+
+    };
+}
+
+/// Like [`skip_if_any_service_unavailable!`] but returns `Ok(())` for tests
+/// returning `TestResult` / `Result<()>`.
+#[macro_export]
+macro_rules! skip_if_any_service_unavailable_result {
+    ($($service:expr => $is_available:expr),+ $(,)?) => {
+        if !$crate::utils::tests::service_detection::should_run_docker_integration_tests() {
+            println!("⊘ SKIPPED: Docker integration tests disabled in this environment");
+            return Ok(());
+        }
+        $(
+            if !$is_available {
+                println!(
+                    "⊘ SKIPPED: {} service not available (skipping test)",
+                    $service
+                );
+                return Ok(());
             }
         )+
     };

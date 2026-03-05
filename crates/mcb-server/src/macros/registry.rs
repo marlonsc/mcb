@@ -22,9 +22,8 @@ macro_rules! register_tool {
                 handlers.$handler.handle(Parameters(args)).await
             })
         }
-        // SAFETY: required by linkme::distributed_slice — see safety rationale
-        // on TOOL_DESCRIPTORS definition in tools/registry.rs
-        #[allow(unsafe_code)]
+        // linkme registration — covered by `#![allow(unsafe_code)]` in
+        // tools/registry.rs where this macro is invoked.
         #[linkme::distributed_slice(TOOL_DESCRIPTORS)]
         static $descriptor: ToolDescriptor = ToolDescriptor {
             name: $name,

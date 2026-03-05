@@ -79,7 +79,6 @@ fn domain_event_variants(#[case] event: DomainEvent, #[case] expected_debug_frag
 }
 
 #[rstest]
-#[test]
 fn test_domain_event_clone() {
     let event1 = DomainEvent::SyncCompleted {
         path: "/code".to_owned(),
@@ -92,7 +91,6 @@ fn test_domain_event_clone() {
 }
 
 #[rstest]
-#[test]
 fn test_event_publisher_creation() {
     let publisher = TestEventPublisher::new();
     let events = publisher.get_published_events();
@@ -147,7 +145,6 @@ async fn publish_events(
 }
 
 #[rstest]
-#[test]
 fn test_event_publisher_trait_object() {
     // Test that we can use EventPublisher as a trait object
     let publisher: Box<dyn EventPublisher> = Box::new(TestEventPublisher::new());

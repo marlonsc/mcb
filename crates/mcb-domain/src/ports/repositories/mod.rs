@@ -7,36 +7,48 @@
 //! Organized into submodules by domain aggregate.
 
 /// Agent session/event/checkpoint repository ports.
-mod agent;
+pub mod agent;
 /// Authentication repository ports.
-mod auth;
+pub mod auth;
 /// File hash tracking repository ports.
-mod file_hash;
+pub mod file_hash;
 /// Indexing operation repository ports.
-mod index;
+pub mod index;
 /// Issue repository ports (issue, comment, label).
-mod issue;
+pub mod issue;
 /// Memory/observation repository ports.
-mod memory;
+pub mod memory;
 /// Organization repository ports (org, user, team, API key).
-mod org;
+pub mod org;
 /// Plan repository ports (plan, version, review).
-mod plan;
+pub mod plan;
 /// Project repository ports.
-mod project;
+pub mod project;
 /// VCS repository ports (repository, branch, worktree, agent assignments).
-mod vcs;
+pub mod vcs;
 /// Workflow session and transition repository ports.
-mod workflow;
+pub mod workflow;
 
-pub use agent::*;
-pub use auth::*;
-pub use file_hash::*;
-pub use index::*;
-pub use issue::*;
-pub use memory::*;
-pub use org::*;
-pub use plan::*;
-pub use project::*;
-pub use vcs::*;
-pub use workflow::*;
+// Re-exports for canonical access via `ports::repositories::{...}`
+pub use agent::{
+    AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
+    AgentSessionRepository,
+};
+pub use auth::{ApiKeyInfo, AuthRepositoryPort, UserWithApiKey};
+pub use file_hash::FileHashRepository;
+pub use index::{IndexRepository, IndexStats};
+pub use issue::{
+    IssueCommentRegistry, IssueEntityRepository, IssueLabelAssignmentManager, IssueLabelRegistry,
+    IssueRegistry,
+};
+pub use memory::{FtsSearchResult, MemoryRepository};
+pub use org::{
+    ApiKeyRegistry, OrgEntityRepository, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
+};
+pub use plan::{PlanEntityRepository, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry};
+pub use project::ProjectRepository;
+pub use vcs::{
+    AgentAssignmentManager, VcsBranchRegistry, VcsEntityRepository, VcsRepositoryRegistry,
+    VcsWorktreeRegistry,
+};
+pub use workflow::{TransitionRepository, WorkflowSessionRepository};

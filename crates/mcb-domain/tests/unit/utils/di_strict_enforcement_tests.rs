@@ -10,7 +10,6 @@ use std::fs;
 const REGISTRY_CONTEXT_WINDOW: usize = 15;
 
 #[rstest]
-#[test]
 fn no_direct_concrete_di_shortcuts_outside_linkme_registries() -> TestResult {
     let root = workspace_root()?;
 

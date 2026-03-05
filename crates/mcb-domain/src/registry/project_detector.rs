@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use crate::error::Result;
-use crate::ports::ProjectDetector;
+use crate::ports::providers::project_detection::ProjectDetector;
 
 /// Configuration for project detector initialization.
 #[derive(Debug, Clone)]

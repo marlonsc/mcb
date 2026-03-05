@@ -3,36 +3,37 @@
 //! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
 
 /// Code analysis provider ports.
-mod analysis;
+pub mod analysis;
 /// Provider configuration manager ports.
-mod config_manager;
+pub mod config_manager;
 /// Cryptographic provider ports.
-mod crypto;
+pub mod crypto;
 /// Embedding provider ports.
-mod embedding;
+pub mod embedding;
 /// HTTP client provider ports.
-mod http;
+pub mod http;
 /// Hybrid search provider ports.
-mod hybrid_search;
+pub mod hybrid_search;
 /// Language-specific chunking provider ports.
-mod language_chunking;
+pub mod language_chunking;
 /// Metrics provider ports.
-mod metrics;
+pub mod metrics;
 /// Project detection provider ports.
-mod project_detection;
+pub mod project_detection;
 /// Version control system provider ports.
-mod vcs;
+pub mod vcs;
 /// Vector store provider ports.
-mod vector_store;
+pub mod vector_store;
 
-pub use analysis::*;
-pub use config_manager::*;
-pub use crypto::*;
-pub use embedding::*;
-pub use http::*;
-pub use hybrid_search::*;
-pub use language_chunking::*;
-pub use metrics::*;
-pub use project_detection::*;
-pub use vcs::*;
-pub use vector_store::*;
+// Re-exports for canonical access via `ports::providers::{...}`
+pub use analysis::{AnalysisFinding, CodeAnalyzer};
+pub use config_manager::ProviderConfigManagerInterface;
+pub use crypto::{CryptoProvider, EncryptedData};
+pub use embedding::EmbeddingProvider;
+pub use http::{HttpClientConfig, HttpClientProvider};
+pub use hybrid_search::{HybridSearchProvider, HybridSearchResult};
+pub use language_chunking::LanguageChunkingProvider;
+pub use metrics::{MetricLabels, MetricsError, MetricsProvider, MetricsProviderExt, MetricsResult};
+pub use project_detection::ProjectDetector;
+pub use vcs::VcsProvider;
+pub use vector_store::{VectorStoreAdmin, VectorStoreBrowser, VectorStoreProvider};

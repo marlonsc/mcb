@@ -343,12 +343,12 @@ pub fn create_test_indexing_result(
     files_processed: usize,
     chunks_created: usize,
     error_count: usize,
-) -> crate::ports::IndexingResult {
+) -> crate::ports::services::indexing::IndexingResult {
     let errors = (0..error_count)
         .map(|i| format!("Test error {i}"))
         .collect();
 
-    crate::ports::IndexingResult {
+    crate::ports::services::indexing::IndexingResult {
         files_processed,
         chunks_created,
         files_skipped: 0,

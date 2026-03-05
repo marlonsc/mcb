@@ -3,7 +3,7 @@
 use async_trait::async_trait;
 
 use crate::error::Result;
-use crate::ports::admin::IndexingOperation;
+use crate::ports::admin::indexing::IndexingOperation;
 use crate::value_objects::{CollectionId, OperationId};
 
 /// Statistics about a collection's index state.

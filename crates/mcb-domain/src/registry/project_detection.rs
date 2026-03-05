@@ -17,7 +17,7 @@ crate::impl_config_builder!(ProjectDetectionServiceConfig {
 });
 
 crate::impl_registry!(
-    provider_trait: crate::ports::ProjectDetectorService,
+    provider_trait: crate::ports::services::project::ProjectDetectorService,
     config_type: ProjectDetectionServiceConfig,
     entry_type: ProjectDetectionServiceEntry,
     slice_name: PROJECT_DETECTION_SERVICES,

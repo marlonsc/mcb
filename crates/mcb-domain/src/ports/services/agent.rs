@@ -4,7 +4,7 @@ use async_trait::async_trait;
 
 use crate::entities::agent::{AgentSession, AgentSessionStatus, Checkpoint, Delegation, ToolCall};
 use crate::error::Result;
-use crate::ports::AgentSessionQuery;
+use crate::ports::repositories::agent::AgentSessionQuery;
 
 /// Manages agent session lifecycle.
 #[async_trait]

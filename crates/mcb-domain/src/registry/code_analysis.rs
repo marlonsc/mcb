@@ -3,7 +3,7 @@
 use std::sync::Arc;
 
 use crate::error::Result;
-use crate::ports::CodeAnalyzer;
+use crate::ports::providers::analysis::CodeAnalyzer;
 
 /// Registry entry for code analyzers.
 #[doc(hidden)]

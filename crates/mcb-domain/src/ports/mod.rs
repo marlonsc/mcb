@@ -18,18 +18,20 @@
 //! - **admin** - Administrative interfaces for system management and monitoring
 //! - **infrastructure/** - Infrastructure services (sync, snapshots, auth, events)
 //! - **providers/** - External service provider ports (embeddings, vector stores, search)
+//! - **repositories/** - Repository ports for data persistence
 //! - **services** - Application service ports (validation, etc.)
+//! - **validation** - Validation abstractions (Validator, Violation, Severity, etc.)
 
 /// Administrative interfaces for system management and monitoring
-mod admin;
+pub mod admin;
 /// Infrastructure service ports
-mod infrastructure;
+pub mod infrastructure;
 /// External service provider ports
-mod providers;
+pub mod providers;
 /// Repository ports for data persistence
-mod repositories;
+pub mod repositories;
 /// Application service ports
-mod services;
+pub mod services;
 /// Validation abstractions (Validator, Violation, Severity, `LanguageId`, `ValidationConfig`)
 pub mod validation;
 
@@ -63,6 +65,7 @@ pub use providers::{
     MetricsResult, ProjectDetector, ProviderConfigManagerInterface, VcsProvider, VectorStoreAdmin,
     VectorStoreBrowser, VectorStoreProvider,
 };
+
 // --- Repositories ---
 pub use repositories::{
     AgentAssignmentManager, AgentCheckpointRepository, AgentEventRepository, AgentRepository,

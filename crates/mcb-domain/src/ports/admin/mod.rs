@@ -3,15 +3,23 @@
 //! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
 
 /// Dashboard/analytics query ports.
-mod dashboard;
+pub mod dashboard;
 /// Indexing operation tracking ports.
-mod indexing;
+pub mod indexing;
 /// Provider admin interfaces (embedding, vector store, language).
-mod provider_admin;
+pub mod provider_admin;
 /// Validation operation tracking ports.
-mod validation;
+pub mod validation;
 
-pub use dashboard::*;
-pub use indexing::*;
-pub use provider_admin::*;
-pub use validation::*;
+// Re-exports for canonical access via `ports::admin::{...}`
+pub use dashboard::{
+    AgentSessionStats, DailyCount, DashboardQueryPort, MonthlyCount, ToolCallCount,
+};
+pub use indexing::{IndexingOperation, IndexingOperationStatus, IndexingOperationsInterface};
+pub use provider_admin::{
+    EmbeddingAdminInterface, LanguageAdminInterface, ProviderInfo, VectorStoreAdminInterface,
+};
+pub use validation::{
+    ValidationOperation, ValidationOperationResult, ValidationOperationsInterface,
+    ValidationStatus, ValidatorJobRunner,
+};

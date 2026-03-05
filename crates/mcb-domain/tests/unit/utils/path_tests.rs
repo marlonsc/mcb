@@ -6,7 +6,6 @@ use rstest::rstest;
 use std::path::{Path, PathBuf};
 
 #[rstest]
-#[test]
 fn workspace_relative_happy_path() -> TestResult {
     let root = Path::new("/home/user/project");
     let file = Path::new("/home/user/project/src/main.rs");
@@ -15,7 +14,6 @@ fn workspace_relative_happy_path() -> TestResult {
 }
 
 #[rstest]
-#[test]
 fn workspace_relative_nested() -> TestResult {
     let root = Path::new("/a/b");
     let file = Path::new("/a/b/c/d/e.rs");
@@ -24,7 +22,6 @@ fn workspace_relative_nested() -> TestResult {
 }
 
 #[rstest]
-#[test]
 fn workspace_relative_outside_root_returns_error() {
     let root = Path::new("/home/user/project");
     let file = Path::new("/other/place/file.rs");
@@ -39,7 +36,6 @@ fn workspace_relative_outside_root_returns_error() {
 }
 
 #[rstest]
-#[test]
 fn strict_strip_prefix_same_path() -> TestResult {
     let root = Path::new("/a/b");
     let path = Path::new("/a/b");
@@ -49,7 +45,6 @@ fn strict_strip_prefix_same_path() -> TestResult {
 }
 
 #[rstest]
-#[test]
 fn strict_strip_prefix_errors_outside_root() {
     let root = Path::new("/a/b");
     let path = Path::new("/a/c/d");
@@ -57,7 +52,6 @@ fn strict_strip_prefix_errors_outside_root() {
 }
 
 #[rstest]
-#[test]
 fn path_to_utf8_string_forward_slashes() -> TestResult {
     // On Unix the backslash is a valid filename char, but we still replace it
     let p = Path::new("src/main.rs");
@@ -66,7 +60,6 @@ fn path_to_utf8_string_forward_slashes() -> TestResult {
 }
 
 #[rstest]
-#[test]
 fn strict_canonicalize_nonexistent_path_returns_error() {
     let bad = Path::new("/this/path/definitely/does/not/exist/xyz123");
     let result = strict_canonicalize(bad);
@@ -81,7 +74,6 @@ fn strict_canonicalize_nonexistent_path_returns_error() {
 
 #[cfg(target_os = "linux")]
 #[rstest]
-#[test]
 fn strict_canonicalize_real_path_succeeds() -> TestResult {
     // /tmp always exists on Linux
     let result = strict_canonicalize(Path::new("/tmp"))?;

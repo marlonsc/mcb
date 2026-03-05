@@ -3,7 +3,6 @@ use mcb_utils::utils::time::{epoch_nanos_u128, epoch_secs_i64, epoch_secs_u64};
 use rstest::rstest;
 
 #[rstest]
-#[test]
 fn epoch_secs_i64_returns_positive() -> TestResult {
     let ts = epoch_secs_i64()?;
     assert!(ts > 0, "timestamp should be positive, got {ts}");
@@ -11,7 +10,6 @@ fn epoch_secs_i64_returns_positive() -> TestResult {
 }
 
 #[rstest]
-#[test]
 fn epoch_secs_u64_returns_positive() -> TestResult {
     let ts = epoch_secs_u64()?;
     assert!(ts > 0, "timestamp should be positive, got {ts}");
@@ -19,7 +17,6 @@ fn epoch_secs_u64_returns_positive() -> TestResult {
 }
 
 #[rstest]
-#[test]
 fn epoch_nanos_u128_returns_positive() -> TestResult {
     let nanos = epoch_nanos_u128()?;
     assert!(nanos > 0, "nanos should be positive, got {nanos}");
@@ -27,7 +24,6 @@ fn epoch_nanos_u128_returns_positive() -> TestResult {
 }
 
 #[rstest]
-#[test]
 fn epoch_secs_i64_monotonic() -> TestResult {
     let a = epoch_secs_i64()?;
     let b = epoch_secs_i64()?;
@@ -36,7 +32,6 @@ fn epoch_secs_i64_monotonic() -> TestResult {
 }
 
 #[rstest]
-#[test]
 fn epoch_secs_u64_monotonic() -> TestResult {
     let a = epoch_secs_u64()?;
     let b = epoch_secs_u64()?;
@@ -45,7 +40,6 @@ fn epoch_secs_u64_monotonic() -> TestResult {
 }
 
 #[rstest]
-#[test]
 fn epoch_nanos_u128_monotonic() -> TestResult {
     let a = epoch_nanos_u128()?;
     let b = epoch_nanos_u128()?;
@@ -54,7 +48,6 @@ fn epoch_nanos_u128_monotonic() -> TestResult {
 }
 
 #[rstest]
-#[test]
 fn epoch_secs_i64_reasonable_range() -> TestResult {
     use mcb_utils::constants::time::{TIMESTAMP_MAX_BOUNDARY, TIMESTAMP_MIN_BOUNDARY};
     let ts = epoch_secs_i64()?;

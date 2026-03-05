@@ -10,8 +10,8 @@
 use std::path::{Path, PathBuf};
 
 use crate::error::Result;
+use crate::ports::services::validation_service::{ValidationReport, ViolationEntry};
 use crate::ports::validation::Validator;
-use crate::ports::{ValidationReport, ViolationEntry};
 
 // ============================================================================
 // Validator entries (linkme-discovered validators)

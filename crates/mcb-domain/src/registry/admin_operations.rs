@@ -20,7 +20,7 @@ impl IndexingOperationsProviderConfig {
 }
 
 crate::impl_registry!(
-    provider_trait: crate::ports::IndexingOperationsInterface,
+    provider_trait: crate::ports::admin::indexing::IndexingOperationsInterface,
     config_type: IndexingOperationsProviderConfig,
     entry_type: IndexingOperationsProviderEntry,
     slice_name: INDEXING_OPERATIONS_PROVIDERS,
@@ -50,7 +50,7 @@ impl ValidationOperationsProviderConfig {
 }
 
 crate::impl_registry!(
-    provider_trait: crate::ports::ValidationOperationsInterface,
+    provider_trait: crate::ports::admin::validation::ValidationOperationsInterface,
     config_type: ValidationOperationsProviderConfig,
     entry_type: ValidationOperationsProviderEntry,
     slice_name: VALIDATION_OPERATIONS_PROVIDERS,

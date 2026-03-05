@@ -12,7 +12,7 @@ define_str_consts! {
     IDE_CURSOR = "cursor";
     /// Claude Code IDE identifier.
     IDE_CLAUDE_CODE = "claude-code";
-    /// OpenCode IDE identifier.
+    /// `OpenCode` IDE identifier.
     IDE_OPENCODE = "opencode";
     /// VS Code IDE identifier.
     IDE_VSCODE = "vscode";

@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use regex::Regex;
 
 use crate::error::{Error, Result};
-use crate::ports::AnalysisFinding;
+use crate::ports::providers::analysis::AnalysisFinding;
 
 /// Record of a discovered function.
 #[derive(Debug, Clone)]

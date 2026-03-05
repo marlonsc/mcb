@@ -16,7 +16,7 @@ pub struct HybridSearchProviderConfig {
 crate::impl_config_builder!(HybridSearchProviderConfig {});
 
 crate::impl_registry!(
-    provider_trait: crate::ports::HybridSearchProvider,
+    provider_trait: crate::ports::providers::hybrid_search::HybridSearchProvider,
     config_type: HybridSearchProviderConfig,
     entry_type: HybridSearchProviderEntry,
     slice_name: HYBRID_SEARCH_PROVIDERS,

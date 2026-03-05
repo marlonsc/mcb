@@ -8,7 +8,9 @@
 use std::any::Any;
 use std::sync::Arc;
 
-use crate::ports::{EmbeddingProvider, EventBusProvider, VectorStoreProvider};
+use crate::ports::infrastructure::events::EventBusProvider;
+use crate::ports::providers::embedding::EmbeddingProvider;
+use crate::ports::providers::vector_store::VectorStoreProvider;
 
 /// Context passed to service factory functions during DI resolution.
 ///

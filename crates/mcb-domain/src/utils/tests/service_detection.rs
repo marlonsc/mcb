@@ -3,19 +3,22 @@
 //! Centralized in `mcb-domain` so every crate can detect service availability
 //! and skip tests when external dependencies are unavailable.
 
-use std::net::TcpStream;
+use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
 
 /// Check if a service is available by attempting a TCP connection.
+///
+/// Supports both IP addresses and hostnames (e.g., "localhost").
 #[must_use]
 pub fn check_service_available(host: &str, port: u16) -> bool {
     let addr = format!("{host}:{port}");
-    match addr.parse() {
-        Ok(socket_addr) => {
-            TcpStream::connect_timeout(&socket_addr, Duration::from_millis(300)).is_ok()
-        }
-        Err(_) => false,
-    }
+    // Use ToSocketAddrs for DNS resolution (handles "localhost", etc.)
+    let Ok(mut addrs) = addr.to_socket_addrs() else {
+        return false;
+    };
+    addrs.any(|socket_addr| {
+        TcpStream::connect_timeout(&socket_addr, Duration::from_millis(300)).is_ok()
+    })
 }
 
 /// Extract host and port from a URL string.

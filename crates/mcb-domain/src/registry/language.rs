@@ -37,7 +37,7 @@ crate::impl_config_builder!(LanguageProviderConfig {
 });
 
 crate::impl_registry!(
-    provider_trait: crate::ports::LanguageChunkingProvider,
+    provider_trait: crate::ports::providers::language_chunking::LanguageChunkingProvider,
     config_type: LanguageProviderConfig,
     entry_type: LanguageProviderEntry,
     slice_name: LANGUAGE_PROVIDERS,

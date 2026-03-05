@@ -220,11 +220,11 @@ pub enum Error {
 
     /// Browse operation error
     #[error("Browse error: {0}")]
-    Browse(#[from] crate::ports::BrowseError),
+    Browse(#[from] crate::ports::services::browse::BrowseError),
 
     /// Highlighting operation error
     #[error("Highlighting error: {0}")]
-    Highlight(#[from] crate::ports::HighlightError),
+    Highlight(#[from] crate::ports::services::browse::HighlightError),
 }
 
 impl Error {

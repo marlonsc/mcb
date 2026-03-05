@@ -16,7 +16,6 @@ fn test_indexing_constant_values(#[case] constant: usize, #[case] expected: usiz
 }
 
 #[rstest]
-#[test]
 fn test_indexing_constants_relationships() {
     const { assert!(INDEXING_BATCH_SIZE > 0) };
     const { assert!(INDEXING_BATCH_SIZE <= 100) };

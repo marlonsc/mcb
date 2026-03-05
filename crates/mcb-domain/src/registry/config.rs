@@ -18,7 +18,7 @@ pub struct ConfigProviderConfig {
 crate::impl_config_builder!(ConfigProviderConfig {});
 
 crate::impl_registry!(
-    provider_trait: crate::ports::ConfigProvider,
+    provider_trait: crate::ports::infrastructure::config::ConfigProvider,
     config_type: ConfigProviderConfig,
     entry_type: ConfigProviderEntry,
     slice_name: CONFIG_PROVIDERS,

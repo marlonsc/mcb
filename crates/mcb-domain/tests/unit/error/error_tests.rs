@@ -50,7 +50,6 @@ fn error_generic(#[case] message: &str) {
 }
 
 #[rstest]
-#[test]
 fn test_error_equality_discrimination() {
     let not_found = Error::not_found("resource");
     let invalid_arg = Error::invalid_argument("bad argument");

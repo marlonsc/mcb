@@ -7,7 +7,7 @@ use std::io::Write;
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU8, Ordering};
 
-use crate::ports::LogLevel;
+use crate::ports::infrastructure::logging::LogLevel;
 
 /// Function type that the infrastructure layer registers to handle log events.
 pub type LogFn = fn(LogLevel, &str, &str, Option<&dyn std::fmt::Display>);

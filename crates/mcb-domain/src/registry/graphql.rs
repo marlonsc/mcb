@@ -16,7 +16,7 @@ pub struct GraphQLSchemaProviderConfig {
 crate::impl_config_builder!(GraphQLSchemaProviderConfig {});
 
 crate::impl_registry!(
-    provider_trait: crate::ports::GraphQLSchemaProvider,
+    provider_trait: crate::ports::infrastructure::graphql::GraphQLSchemaProvider,
     config_type: GraphQLSchemaProviderConfig,
     entry_type: GraphQLSchemaProviderEntry,
     slice_name: GRAPHQL_SCHEMA_PROVIDERS,

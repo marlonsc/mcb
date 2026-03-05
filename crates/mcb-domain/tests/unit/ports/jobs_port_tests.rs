@@ -30,7 +30,6 @@ fn job_type_display(#[case] job_type: JobType, #[case] expected: &str) {
 }
 
 #[rstest]
-#[test]
 fn new_job_defaults() {
     let job = Job::new(
         OperationId::from_uuid(id::deterministic("operation", "test-123")),
@@ -47,7 +46,6 @@ fn new_job_defaults() {
 }
 
 #[rstest]
-#[test]
 fn job_counts_default() {
     let counts = JobCounts::default();
     assert_eq!(counts.queued, 0);

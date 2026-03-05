@@ -50,7 +50,7 @@ pub trait HttpClientProvider: Send + Sync {
     /// Returns an error if the request fails.
     async fn get(&self, url: &str) -> Result<Vec<u8>>;
 
-    /// Execute a POST request with a JSON body and return the response body.
+    /// Execute a POST request with a raw byte body and return the response body.
     ///
     /// # Errors
     /// Returns an error if the request fails.

@@ -16,7 +16,7 @@ pub struct EventBusProviderConfig {
 crate::impl_config_builder!(EventBusProviderConfig {});
 
 crate::impl_registry!(
-    provider_trait: crate::ports::EventBusProvider,
+    provider_trait: crate::ports::infrastructure::events::EventBusProvider,
     config_type: EventBusProviderConfig,
     entry_type: EventBusProviderEntry,
     slice_name: EVENT_BUS_PROVIDERS,

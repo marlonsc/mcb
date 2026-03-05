@@ -2,11 +2,13 @@ use std::any::Any;
 use std::sync::Arc;
 
 use crate::error::{Error, Result};
-use crate::ports::{
-    AgentSessionServiceInterface, ContextServiceInterface, HighlightServiceInterface,
-    IndexingServiceInterface, MemoryServiceInterface, SearchServiceInterface,
-    ValidationServiceInterface,
-};
+use crate::ports::services::agent::AgentSessionServiceInterface;
+use crate::ports::services::browse::HighlightServiceInterface;
+use crate::ports::services::context::ContextServiceInterface;
+use crate::ports::services::indexing::IndexingServiceInterface;
+use crate::ports::services::memory::MemoryServiceInterface;
+use crate::ports::services::search::SearchServiceInterface;
+use crate::ports::services::validation_service::ValidationServiceInterface;
 
 /// Typed factory enum for building domain services from a resolution context.
 #[derive(Clone, Copy)]
