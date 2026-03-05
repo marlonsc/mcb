@@ -44,11 +44,18 @@ pub fn extract_text(content: &[serde_json::Value]) -> String {
 /// Serializes the content to JSON, then extracts `"text"` fields.
 /// This allows callers to pass protocol-specific types (e.g. `rmcp::model::Content`)
 /// without the domain layer depending on those types directly.
+///
+/// Returns an error if any item fails JSON serialization; no items are
+/// silently skipped.
 #[must_use]
-pub fn extract_text_from<T: Serialize>(content: &[T]) -> String {
-    let values: Vec<serde_json::Value> = content
-        .iter()
-        .filter_map(|c| serde_json::to_value(c).ok())
-        .collect();
-    extract_text(&values)
+pub fn extract_text_from<T: Serialize>(
+    content: &[T],
+) -> Result<String, serde_json::Error> {
+    let mut values = Vec::with_capacity(content.len());
+
+    for c in content {
+        values.push(serde_json::to_value(c)?);
+    }
+
+    Ok(extract_text(&values))
 }
