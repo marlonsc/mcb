@@ -224,14 +224,16 @@ impl Initializer for McpServerInitializer {
                 let settings = settings_for_middleware.clone();
                 let state = state_for_middleware.clone();
                 async move {
-                    if let Err(_e) = mcb_server::auth::authorize_admin_api_key(
-                        state.auth_repo.as_ref(),
-                        req.headers(),
-                        settings.as_ref(),
-                    )
-                    .await
-                    {
-                        return Err(axum::http::StatusCode::UNAUTHORIZED);
+                    if !mcb_server::auth::is_admin_auth_exempt_path(req.uri().path()) {
+                        if let Err(_e) = mcb_server::auth::authorize_admin_api_key(
+                            state.auth_repo.as_ref(),
+                            req.headers(),
+                            settings.as_ref(),
+                        )
+                        .await
+                        {
+                            return Err(axum::http::StatusCode::UNAUTHORIZED);
+                        }
                     }
                     Ok(next.run(req).await)
                 }
@@ -267,6 +269,10 @@ impl Initializer for McpServerInitializer {
             .route(
                 "/health",
                 axum::routing::get(mcb_server::controllers::health_api::health),
+            )
+            .route(
+                "/alive",
+                axum::routing::get(mcb_server::controllers::health_api::alive),
             )
             .route(
                 "/jobs",
