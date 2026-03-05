@@ -2,6 +2,7 @@
 //!
 //! Uses shared constants for severity levels, rule codes, and file extensions.
 
+use mcb_utils::constants::validate::{SEVERITY_ERROR, SEVERITY_INFO, SEVERITY_WARNING};
 use mcb_validate::linters::*;
 use rstest::rstest;
 
@@ -35,7 +36,8 @@ async fn linter_engine_execution() {
     let engine = LinterEngine::new();
 
     let result = engine.check_files(&[]).await;
-    assert!(result.is_ok());
+    let output = result.expect("linter should execute successfully");
+    assert_eq!(output.len(), 0);
 }
 
 #[rstest]

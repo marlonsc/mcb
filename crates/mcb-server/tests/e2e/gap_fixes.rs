@@ -1,19 +1,22 @@
-use crate::utils::test_fixtures::{TEST_REPO_NAME, create_test_mcp_server};
-use crate::utils::text::extract_text;
+use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::text::extract_text_from;
 use mcb_server::args::SessionAction;
 use mcb_server::args::SessionArgs;
 use mcb_server::args::ValidateAction;
 use mcb_server::args::ValidateArgs;
 use mcb_server::args::VcsAction;
 use mcb_server::args::VcsArgs;
+use mcb_utils::constants::testing::TEST_REPO_NAME;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use std::fs;
 use std::process::Command;
 
+#[rstest]
 #[tokio::test]
-async fn test_gap1_validate_list_rules_returns_populated_list() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_gap1_validate_list_rules_returns_populated_list() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let validate_h = server.validate_handler();
 
     let result = validate_h
@@ -26,12 +29,11 @@ async fn test_gap1_validate_list_rules_returns_populated_list() {
         }))
         .await;
 
-    assert!(result.is_ok());
-    let resp = result.unwrap();
+    let resp = result.expect("validate list-rules should succeed");
     assert!(!resp.is_error.unwrap_or(false));
     assert!(!resp.content.is_empty(), "Response content empty");
 
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     let json_val: serde_json::Value = serde_json::from_str(&text).unwrap();
 
     // Expected format: { "count": N, "rules": [...] }
@@ -54,11 +56,13 @@ async fn test_gap1_validate_list_rules_returns_populated_list() {
 
     assert!(rule_names.contains(&"clean_architecture"));
     assert!(rule_names.contains(&"solid"));
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_gap1_validate_list_rules_by_category_filter() {
-    let (server, _temp) = create_test_mcp_server().await;
+async fn test_gap1_validate_list_rules_by_category_filter() -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let validate_h = server.validate_handler();
 
     let result = validate_h
@@ -71,11 +75,11 @@ async fn test_gap1_validate_list_rules_by_category_filter() {
         }))
         .await;
 
-    assert!(result.is_ok());
-    let resp = result.unwrap();
+    let resp = result.expect("validate list-rules with category filter should succeed");
     assert!(!resp.is_error.unwrap_or(false));
+    assert!(!resp.content.is_empty(), "Response content empty");
 
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     let json_val: serde_json::Value = serde_json::from_str(&text).unwrap();
     let rules = json_val
         .get("rules")
@@ -89,11 +93,13 @@ async fn test_gap1_validate_list_rules_by_category_filter() {
             Some("quality")
         );
     }
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_gap2_vcs_list_repositories_discovers_repos() {
-    let (server, temp_dir) = create_test_mcp_server().await;
+async fn test_gap2_vcs_list_repositories_discovers_repos() -> TestResult {
+    let (server, temp_dir) = create_test_mcp_server().await?;
     let vcs_h = server.vcs_handler();
 
     // Create a git repo in the temp dir
@@ -127,7 +133,7 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
             action: VcsAction::ListRepositories,
             org_id: None,
             repo_id: None,
-            repo_path: Some(temp_dir.path().to_string_lossy().to_string()),
+            repo_path: Some(temp_dir.path().to_string_lossy().into_owned()),
             base_branch: None,
             target_branch: None,
             query: None,
@@ -138,11 +144,11 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
         }))
         .await;
 
-    assert!(result.is_ok());
-    let resp = result.unwrap();
+    let resp = result.expect("vcs list-repositories should succeed");
     assert!(!resp.is_error.unwrap_or(false));
+    assert!(!resp.content.is_empty(), "Response content empty");
 
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     let json_val: serde_json::Value = serde_json::from_str(&text).unwrap();
     println!("VCS Response JSON: {json_val}");
 
@@ -167,18 +173,20 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() {
         found,
         "Created repo test-repo not found in list: {repo_strings:?}"
     );
+    Ok(())
 }
 
 #[rstest]
 #[case(None, true)]
 #[case(Some(String::new()), true)]
 #[case(Some("not_a_real_status".to_owned()), false)]
+#[rstest]
 #[tokio::test]
 async fn test_gap3_session_list_status_handling(
     #[case] status: Option<String>,
     #[case] should_succeed: bool,
-) {
-    let (server, _temp) = create_test_mcp_server().await;
+) -> TestResult {
+    let (server, _temp) = create_test_mcp_server().await?;
     let session_h = server.session_handler();
 
     let result = session_h
@@ -201,7 +209,7 @@ async fn test_gap3_session_list_status_handling(
             result.is_err(),
             "Invalid status should return invalid_params"
         );
-        return;
+        return Ok(());
     }
 
     assert!(
@@ -211,8 +219,9 @@ async fn test_gap3_session_list_status_handling(
     let resp = result.unwrap();
     assert!(!resp.is_error.unwrap_or(false));
 
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     let json_val: serde_json::Value = serde_json::from_str(&text).unwrap();
     assert!(json_val.get("sessions").is_some());
     assert!(json_val.get("count").is_some());
+    Ok(())
 }

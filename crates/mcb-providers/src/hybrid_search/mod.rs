@@ -1,6 +1,3 @@
-//!
-//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
-//!
 //! Hybrid Search Providers
 //!
 //! This module provides hybrid search functionality that combines BM25 text-based
@@ -69,6 +66,7 @@
 
 pub mod bm25;
 pub mod engine;
+mod registry;
 
 // Re-export main types
 pub use bm25::{BM25Params, BM25Scorer};

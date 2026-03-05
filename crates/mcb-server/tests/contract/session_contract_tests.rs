@@ -1,10 +1,12 @@
 use serde_json::json;
 
 use crate::common::{call_tool, snapshot_payload, tool_call_request};
+use rstest::rstest;
 
+#[rstest]
 #[tokio::test]
 async fn session_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
-    let request = tool_call_request("session", json!({"action": "list", "limit": 10}));
+    let request = tool_call_request("session", &json!({"action": "list", "limit": 10}));
     let (status, response) = call_tool(&request).await?;
 
     insta::assert_json_snapshot!(
@@ -14,9 +16,10 @@ async fn session_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn session_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
-    let request = tool_call_request("session", json!({"action": 123}));
+    let request = tool_call_request("session", &json!({"action": 123}));
     let (status, response) = call_tool(&request).await?;
 
     insta::assert_json_snapshot!(

@@ -4,7 +4,7 @@ use mcb_domain::entities::memory::{
     ErrorPattern, ErrorPatternCategory, ErrorPatternMatch, MemoryFilter, Observation,
     ObservationMetadata, ObservationType,
 };
-use rstest::rstest;
+use rstest::{fixture, rstest};
 
 #[rstest]
 #[case("code", Ok(ObservationType::Code))]
@@ -52,9 +52,9 @@ fn test_memory_filter_construction() {
     assert_eq!(f.session_id.as_deref(), Some("s1"));
 }
 
-#[rstest]
-fn test_observation_has_required_fields() {
-    let o = Observation {
+#[fixture]
+fn default_observation() -> Observation {
+    Observation {
         id: "id1".to_owned(),
         project_id: "test-project".to_owned(),
         content: "c".to_owned(),
@@ -64,9 +64,13 @@ fn test_observation_has_required_fields() {
         metadata: ObservationMetadata::default(),
         created_at: 0,
         embedding_id: None,
-    };
-    assert_eq!(o.id, "id1");
-    assert_eq!(o.content, "c");
+    }
+}
+
+#[rstest]
+fn test_observation_has_required_fields(default_observation: Observation) {
+    assert_eq!(default_observation.id, "id1");
+    assert_eq!(default_observation.content, "c");
 }
 
 #[rstest]
@@ -102,9 +106,9 @@ fn error_pattern_category_as_str(#[case] category: ErrorPatternCategory, #[case]
     assert_eq!(category.as_str(), expected);
 }
 
-#[rstest]
-fn test_error_pattern_construction() {
-    let pattern = ErrorPattern {
+#[fixture]
+fn default_error_pattern() -> ErrorPattern {
+    ErrorPattern {
         id: "ep-001".to_owned(),
         project_id: "proj-1".to_owned(),
         pattern_signature: "error[E0277]: the trait bound".to_owned(),
@@ -117,15 +121,19 @@ fn test_error_pattern_construction() {
         first_seen_at: 1000,
         last_seen_at: 2000,
         embedding_id: None,
-    };
-    assert_eq!(pattern.id, "ep-001");
-    assert_eq!(pattern.occurrence_count, 5);
-    assert_eq!(pattern.solutions.len(), 1);
+    }
 }
 
 #[rstest]
-fn test_error_pattern_match_construction() {
-    let match_ = ErrorPatternMatch {
+fn test_error_pattern_construction(default_error_pattern: ErrorPattern) {
+    assert_eq!(default_error_pattern.id, "ep-001");
+    assert_eq!(default_error_pattern.occurrence_count, 5);
+    assert_eq!(default_error_pattern.solutions.len(), 1);
+}
+
+#[fixture]
+fn default_error_pattern_match() -> ErrorPatternMatch {
+    ErrorPatternMatch {
         id: "epm-001".to_owned(),
         pattern_id: "ep-001".to_owned(),
         observation_id: "obs-001".to_owned(),
@@ -134,8 +142,12 @@ fn test_error_pattern_match_construction() {
         resolution_successful: Some(true),
         matched_at: 1500,
         resolved_at: Some(1600),
-    };
-    assert_eq!(match_.id, "epm-001");
-    assert_eq!(match_.confidence, 950);
-    assert!(match_.resolution_successful.unwrap());
+    }
+}
+
+#[rstest]
+fn test_error_pattern_match_construction(default_error_pattern_match: ErrorPatternMatch) {
+    assert_eq!(default_error_pattern_match.id, "epm-001");
+    assert_eq!(default_error_pattern_match.confidence, 950);
+    assert!(default_error_pattern_match.resolution_successful.unwrap());
 }

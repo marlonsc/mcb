@@ -1,0 +1,28 @@
+schema: "rule/v2"
+id: CA019
+name: Outer Crate Isolation
+category: architecture
+severity: error
+description: Outer-layer crates (server, providers, infrastructure, validate) must NOT import from each other in production source code.
+rationale: |
+  Outer crates sit at the same architectural level. Cross-imports between them create
+  circular dependency risk and violate Clean Architecture layer boundaries. The only
+  allowed cross-crate reference is extern crate for linkme force-linking (in test code).
+engine: regex
+rule:
+  type: regex_scan
+config:
+  patterns:
+    cross_import: 'use\s+mcb_(server|providers|infrastructure|validate)::'
+  ignore_patterns:
+    - '^\s*//'
+    - '//.*linkme'
+filters:
+  file_patterns:
+    - "crates/mcb-server/src/**/*.rs"
+    - "crates/mcb-providers/src/**/*.rs"
+    - "crates/mcb-validate/src/**/*.rs"
+    - "crates/mcb-infrastructure/src/**/*.rs"
+  skip:
+    file_patterns:
+      - "**/tests/**"

@@ -160,18 +160,21 @@ impl RuleFilterExecutor {
         Ok(language_ok && dependencies_ok && patterns_ok && access_ok)
     }
 
+    /// Get the relative path of a file from the workspace root.
     fn relative_path<'a>(&'a self, file_path: &'a Path) -> &'a Path {
         file_path
             .strip_prefix(&self.workspace_root)
             .unwrap_or(file_path)
     }
 
+    /// Match file patterns with fallback to full path if relative path fails.
     fn matches_patterns_with_fallback(&self, file_path: &Path, patterns: &[String]) -> bool {
         let rel_path = self.relative_path(file_path);
         self.file_matcher.matches_any(rel_path, patterns)
             || (rel_path != file_path && self.file_matcher.matches_any(file_path, patterns))
     }
 
+    /// Check if a specific file matches an applicability filter (file or directory patterns).
     fn matches_filter(&self, file_path: &Path, filter: &ApplicabilityFilter) -> bool {
         let file_match = filter
             .file_patterns

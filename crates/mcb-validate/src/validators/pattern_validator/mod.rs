@@ -26,3 +26,12 @@ mod violation;
 
 pub use self::validator::PatternValidator;
 pub use self::violation::PatternViolation;
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_PATTERN,
+    "Validates code patterns (DI, Async, Result types)",
+    |root| {
+        Ok(Box::new(PatternValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

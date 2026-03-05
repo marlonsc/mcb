@@ -139,7 +139,7 @@ Fixes #<issue-id>
 
 ```bash
 ./scripts/commit_analyze.sh             # Analyze staged changes
-make lint MCB_CI=1 && make validate QUICK=1  # Pre-commit validation
+make lint && make validate QUICK=1      # Pre-commit validation
 git commit                              # Commit (pre-commit hook runs checks)
 git push                                # Push
 ```

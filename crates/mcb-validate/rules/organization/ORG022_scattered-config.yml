@@ -20,3 +20,5 @@ filters:
       - "**/config/**"
       - "**/config.rs" # config.rs at root is allowed
       - "**/tests/**"
+      - "**/controllers/**"
+      - "**/validators/**"

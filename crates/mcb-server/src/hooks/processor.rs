@@ -9,12 +9,12 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType, OriginContext};
 use mcb_domain::ports::MemoryServiceInterface;
-use mcb_domain::utils::mask_id;
+use mcb_utils::utils::id::mask_id;
 
 use mcb_domain::debug;
-use mcb_domain::utils::id as domain_id;
+use mcb_utils::utils::id as domain_id;
 
-use crate::constants::fields::TAG_TOOL;
+use mcb_utils::constants::TAG_TOOL;
 
 use super::types::{
     HookError, HookResult, PostToolUseContext, SessionStartContext, ToolExecutionStatus,
@@ -85,7 +85,10 @@ impl HookProcessor {
             match value.trim().to_ascii_lowercase().as_str() {
                 "true" | "1" | "yes" => Some(true),
                 "false" | "0" | "no" => Some(false),
-                _ => None,
+                _ => {
+                    mcb_domain::trace!("hooks", "Unrecognized boolean mapping for delegated flag");
+                    None
+                }
             }
         });
 
@@ -162,7 +165,11 @@ impl HookProcessor {
         };
 
         let results = memory_service
-            .memory_search("session context", Some(filter), 10)
+            .memory_search(
+                "session context",
+                Some(filter),
+                mcb_utils::constants::SESSION_SEARCH_LIMIT,
+            )
             .await
             .map_err(|e| HookError::FailedToInjectContext(e.to_string()))?;
 

@@ -24,6 +24,7 @@ doctest = false
 [dependencies]
 # Domain layer - contains provider port traits (Clean Architecture)
 mcb-domain = { path = "../mcb-domain" }
+mcb-utils = { path = "../mcb-utils" }
 
 # Core async runtime
 tokio = { workspace = true }
@@ -149,7 +150,8 @@ tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 rstest = { workspace = true }
 mockall = { workspace = true }
 sea-orm = { workspace = true }
-sea-orm-migration = { workspace = true }
+mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+mcb-utils = { path = "../mcb-utils" }
 
 [[test]]
 name = "unit"

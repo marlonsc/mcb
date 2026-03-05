@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
 //!
-use crate::validators::solid::constants::{
+use mcb_utils::constants::validate::{
     MAX_AFFIX_LENGTH, MIN_AFFIX_LENGTH, MIN_NAMES_FOR_RELATION_CHECK,
     MIN_WORD_LENGTH_FOR_COMPARISON,
 };
@@ -130,7 +130,7 @@ fn has_shared_keyword(names: &[String]) -> bool {
 fn has_common_words(names: &[String]) -> bool {
     let words: Vec<Vec<&str>> = names
         .iter()
-        .map(|n| crate::utils::naming::split_camel_case(n))
+        .map(|n| mcb_utils::utils::naming::split_camel_case(n))
         .collect();
 
     if let Some(first_words) = words.first() {

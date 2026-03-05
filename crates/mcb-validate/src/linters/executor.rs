@@ -8,11 +8,11 @@
 
 use std::path::{Path, PathBuf};
 
-use super::constants::CLIPPY_PREFIX;
 use super::engine::LinterEngine;
 use super::types::{LintViolation, LinterType};
 use crate::Result;
 use crate::rules::yaml_loader::ValidatedRule;
+use mcb_utils::constants::validate::CLIPPY_PREFIX;
 
 /// Execute a YAML rule that uses `lint_select` for linter-based validation
 ///

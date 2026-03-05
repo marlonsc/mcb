@@ -15,12 +15,12 @@ use rust_rule_engine::{Facts, GRLParser, KnowledgeBase, RustRuleEngine, Value as
 use serde_json::Value;
 
 use crate::Result;
-use crate::constants::rules::{
-    DEFAULT_GRL_RULE_ID, DEFAULT_RETE_MESSAGE, YAML_FIELD_GRL, YAML_FIELD_RULE,
-};
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
-use crate::linters::constants::CARGO_TOML_FILENAME;
-use crate::traits::violation::{Severity, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
+use mcb_utils::constants::validate::{
+    DEFAULT_GRL_RULE_ID, DEFAULT_RETE_MESSAGE, GRL, YAML_FIELD_RULE,
+};
 
 /// RETE Engine wrapper for rust-rule-engine library
 pub struct ReteEngine {
@@ -236,7 +236,7 @@ impl RuleEngine for ReteEngine {
         // Extract GRL code from rule definition
         let grl_code = rule_definition
             .get(YAML_FIELD_RULE)
-            .or_else(|| rule_definition.get(YAML_FIELD_GRL))
+            .or_else(|| rule_definition.get(GRL))
             .and_then(|v| v.as_str())
             .ok_or_else(|| {
                 crate::ValidationError::Config(

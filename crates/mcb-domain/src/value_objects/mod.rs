@@ -50,7 +50,4 @@ pub use project_settings::{
     ProjectEmbeddingConfig, ProjectProvidersSettings, ProjectSettings, ProjectVectorStoreConfig,
 };
 pub use search::SearchResult;
-pub use types::{
-    CacheProviderKind, EmbeddingProviderKind, Language, OperationType, SupportedLanguage,
-    VectorStoreProviderKind,
-};
+pub use types::{Language, OperationType, SupportedLanguage};

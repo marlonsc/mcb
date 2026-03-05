@@ -12,9 +12,7 @@
 mod encryption;
 mod password;
 mod token;
-mod utils;
 
 pub use encryption::CryptoService;
 pub use password::PasswordService;
 pub use token::TokenGenerator;
-pub use utils::{HashUtils, KeyDerivation, SecureErasure, bytes_to_hex};

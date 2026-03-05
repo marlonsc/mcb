@@ -304,6 +304,7 @@ async fn test_health_check_variations(
     }
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_service_as_trait_object() {
     let service: Arc<dyn LifecycleManaged> = Arc::new(TestService::new("dynamic-service", true));
@@ -321,6 +322,7 @@ async fn test_service_as_trait_object() {
     assert_eq!(service.state(), PortServiceState::Stopped);
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_multiple_services_independence() {
     let service_a = TestService::new("service-a", true);

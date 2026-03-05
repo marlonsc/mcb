@@ -19,7 +19,7 @@ fn empty_workspace_deps() -> WorkspaceDependencies {
 #[case(None, "main.rs", true)]
 #[case(Some("rust"), "main.rs", true)]
 #[case(Some("rust"), "script.py", false)]
-#[test]
+#[rstest]
 fn language_filter(
     #[case] language: Option<&str>,
     #[case] file: &str,
@@ -44,7 +44,7 @@ fn language_filter(
     assert_eq!(actual, expected);
 }
 
-#[test]
+#[rstest]
 fn test_dependency_filter() {
     let temp_dir = TempDir::new().unwrap();
 
@@ -106,7 +106,7 @@ serde = "1.0"
     );
 }
 
-#[test]
+#[rstest]
 fn test_file_pattern_filter() {
     let temp_dir = TempDir::new().unwrap();
     let executor = RuleFilterExecutor::new(temp_dir.path().to_path_buf());
@@ -148,7 +148,7 @@ fn test_file_pattern_filter() {
     );
 }
 
-#[test]
+#[rstest]
 fn test_combined_filters() {
     let temp_dir = TempDir::new().unwrap();
 

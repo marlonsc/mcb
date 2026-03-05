@@ -3,6 +3,10 @@ target/
 node_modules/
 **/node_modules/
 **/.git/
+vendor/
+**/vendor/
+third-party/
+**/third-party/
 crates/mcb-validate/tests/fixtures/
 tests/fixtures/
 tests/node_modules

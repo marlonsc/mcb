@@ -11,7 +11,7 @@ use mcb_domain::value_objects::Language;
 
 use super::config::LanguageConfig;
 use super::traverser::AstTraverser;
-use crate::constants::{LANGUAGE_MAX_CHUNKS_PER_FILE, LANGUAGE_PRIORITY_THRESHOLD};
+use mcb_utils::constants::lang::{LANGUAGE_MAX_CHUNKS_PER_FILE, LANGUAGE_PRIORITY_THRESHOLD};
 
 /// Trait for language-specific processing
 ///

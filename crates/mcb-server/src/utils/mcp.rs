@@ -5,9 +5,9 @@
 
 use mcb_domain::entities::memory::OriginContext;
 use mcb_domain::error::Error;
-use mcb_domain::utils::id as domain_id;
-use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::OrgContext;
+use mcb_utils::utils::id as domain_id;
+use mcb_utils::utils::time as domain_time;
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 use serde::Serialize;
 use serde::de::DeserializeOwned;

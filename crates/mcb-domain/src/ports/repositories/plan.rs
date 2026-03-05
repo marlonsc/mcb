@@ -1,62 +1,43 @@
-//!
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#repository-ports)
-//!
-//! Plan Entity Repository Port
-//!
-//! # Overview
-//! Defines the interface for persisting plan-related entities including plans,
-//! versions, and reviews.
+//! Plan repository ports.
+
 use async_trait::async_trait;
 
 use crate::entities::plan::{Plan, PlanReview, PlanVersion};
-use crate::error::Result;
 
-#[async_trait]
-/// Defines behavior for `PlanEntityRepository`.
-#[async_trait]
-/// Registry for plans.
-pub trait PlanRegistry: Send + Sync {
-    /// Performs the create plan operation.
-    async fn create_plan(&self, plan: &Plan) -> Result<()>;
-    /// Performs the get plan operation.
-    async fn get_plan(&self, org_id: &str, id: &str) -> Result<Plan>;
-    /// Performs the list plans operation.
-    async fn list_plans(&self, org_id: &str, project_id: &str) -> Result<Vec<Plan>>;
-    /// Performs the update plan operation.
-    async fn update_plan(&self, plan: &Plan) -> Result<()>;
-    /// Performs the delete plan operation.
-    async fn delete_plan(&self, org_id: &str, id: &str) -> Result<()>;
+define_crud_port! {
+    /// Registry for plans.
+    pub trait PlanRegistry {
+        entity: Plan,
+        create: create_plan,
+        get: get_plan(org_id, id),
+        list: list_plans(org_id, project_id),
+        update: update_plan,
+        delete: delete_plan(org_id, id),
+    }
 }
 
-#[async_trait]
-/// Registry for plan versions.
-pub trait PlanVersionRegistry: Send + Sync {
-    /// Performs the create plan version operation.
-    async fn create_plan_version(&self, version: &PlanVersion) -> Result<()>;
-    /// Performs the get plan version operation.
-    async fn get_plan_version(&self, id: &str) -> Result<PlanVersion>;
-    /// Performs the list plan versions by plan operation.
-    async fn list_plan_versions_by_plan(&self, plan_id: &str) -> Result<Vec<PlanVersion>>;
+define_readonly_port! {
+    /// Registry for plan versions.
+    pub trait PlanVersionRegistry {
+        entity: PlanVersion,
+        create: create_plan_version,
+        get: get_plan_version(id),
+        list: list_plan_versions_by_plan(plan_id),
+    }
 }
 
-#[async_trait]
-/// Registry for plan reviews.
-pub trait PlanReviewRegistry: Send + Sync {
-    /// Performs the create plan review operation.
-    async fn create_plan_review(&self, review: &PlanReview) -> Result<()>;
-    /// Performs the get plan review operation.
-    async fn get_plan_review(&self, id: &str) -> Result<PlanReview>;
-    /// Performs the list plan reviews by version operation.
-    async fn list_plan_reviews_by_version(&self, plan_version_id: &str) -> Result<Vec<PlanReview>>;
+define_readonly_port! {
+    /// Registry for plan reviews.
+    pub trait PlanReviewRegistry {
+        entity: PlanReview,
+        create: create_plan_review,
+        get: get_plan_review(id),
+        list: list_plan_reviews_by_version(plan_version_id),
+    }
 }
 
-/// Aggregate trait for plan entity management.
-pub trait PlanEntityRepository:
-    PlanRegistry + PlanVersionRegistry + PlanReviewRegistry + Send + Sync
-{
-}
-
-impl<T> PlanEntityRepository for T where
-    T: PlanRegistry + PlanVersionRegistry + PlanReviewRegistry + Send + Sync
-{
+define_aggregate! {
+    /// Aggregate trait for plan entity management.
+    #[async_trait]
+    pub trait PlanEntityRepository = PlanRegistry + PlanVersionRegistry + PlanReviewRegistry;
 }

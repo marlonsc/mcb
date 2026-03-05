@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
+import argparse
 import os
 import sys
-import argparse
 
-
-import scripts.docs.py.utils as utils
+from scripts.docs.py import utils
 
 
 def _process_links(links, filepath, rel_filepath, project_root):

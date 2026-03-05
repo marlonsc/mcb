@@ -1,0 +1,101 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
+//! Cryptographic utilities
+
+use crate::error::{Result, UtilsError};
+use aes_gcm::aead::{OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore};
+use sha2::Sha256;
+
+/// Convert bytes to hex string
+#[must_use]
+pub fn bytes_to_hex(bytes: &[u8]) -> String {
+    bytes.iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// Key derivation utilities
+pub struct KeyDerivation;
+
+impl KeyDerivation {
+    /// Derive a key from password using PBKDF2
+    #[must_use]
+    pub fn pbkdf2(password: &str, salt: &[u8], iterations: u32, key_len: usize) -> Vec<u8> {
+        use pbkdf2::pbkdf2_hmac;
+
+        let mut key = vec![0u8; key_len];
+        pbkdf2_hmac::<Sha256>(password.as_bytes(), salt, iterations, &mut key);
+        key
+    }
+
+    /// Generate a random salt
+    #[must_use]
+    pub fn generate_salt(length: usize) -> Vec<u8> {
+        let mut salt = vec![0u8; length];
+        AeadOsRng.fill_bytes(&mut salt);
+        salt
+    }
+}
+
+/// Secure data erasure
+pub struct SecureErasure;
+
+impl SecureErasure {
+    /// Overwrite data with zeros
+    pub fn zeroize(data: &mut [u8]) {
+        data.iter_mut().for_each(|b| *b = 0);
+    }
+
+    /// Overwrite data with random bytes then zeros (secure erase)
+    pub fn secure_erase(data: &mut [u8]) {
+        // Overwrite with random data
+        AeadOsRng.fill_bytes(data);
+        // Overwrite with zeros
+        Self::zeroize(data);
+    }
+
+    /// Securely erase a string by overwriting its buffer
+    #[allow(unsafe_code)]
+    pub fn erase_string(s: &mut String) {
+        // SAFETY: We have exclusive mutable access to the String, and we only
+        // overwrite the bytes without changing the length. The bytes remain
+        // valid UTF-8 (zeros are valid UTF-8).
+        unsafe {
+            let bytes = s.as_bytes_mut();
+            Self::secure_erase(bytes);
+        }
+        s.clear();
+    }
+}
+
+/// Cryptographic hash utilities
+pub struct HashUtils;
+
+impl HashUtils {
+    /// Compute HMAC-SHA256
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if HMAC initialization fails due to invalid key length.
+    pub fn hmac_sha256(key: &[u8], data: &[u8]) -> Result<Vec<u8>> {
+        use hmac::{Hmac, Mac};
+        type HmacSha256 = Hmac<Sha256>;
+        let mut mac = <HmacSha256 as Mac>::new_from_slice(key)
+            .map_err(|e| UtilsError::Hash(format!("HMAC initialization failed: {e}")))?;
+        mac.update(data);
+        Ok(mac.finalize().into_bytes().to_vec())
+    }
+
+    /// Constant-time comparison for cryptographic values
+    #[must_use]
+    pub fn constant_time_eq(a: &[u8], b: &[u8]) -> bool {
+        if a.len() != b.len() {
+            return false;
+        }
+
+        let mut result = 0u8;
+        for (x, y) in a.iter().zip(b.iter()) {
+            result |= x ^ y;
+        }
+        result == 0
+    }
+}

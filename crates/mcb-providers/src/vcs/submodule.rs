@@ -66,7 +66,6 @@ impl SubmoduleProvider {
     }
 
     /// Synchronously collects submodules using git2 (thread-blocking).
-    // TODO(qlty): Function with high complexity (count = 33): collect_submodules_sync
     fn collect_submodules_sync(
         repo_path: &Path,
         parent_repo_id: &str,
@@ -141,9 +140,7 @@ impl SubmoduleProvider {
                     .unwrap_or_default();
 
                 // Get submodule name
-                let name = submodule
-                    .name()
-                    .map_or_else(|| path.clone(), ToOwned::to_owned);
+                let name = submodule.name().unwrap_or(&path).to_owned();
 
                 // Check if submodule is initialized
                 let workdir = current_repo.workdir().unwrap_or_else(|| Path::new(""));

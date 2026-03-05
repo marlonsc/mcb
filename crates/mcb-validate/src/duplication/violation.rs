@@ -6,8 +6,8 @@
 use std::path::PathBuf;
 
 use super::{CloneCandidate, DuplicationType};
-use crate::traits::violation::{Severity, Violation, ViolationCategory};
 use derive_more::Display;
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 
 /// A duplication violation representing a detected code clone
 #[derive(Debug, Clone, Display)]

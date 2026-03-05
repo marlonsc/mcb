@@ -13,13 +13,12 @@ use std::collections::HashMap;
 use async_trait::async_trait;
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
-use tracing::{error, warn};
 
 use super::router::{RoutedEngine, RuleEngineRouter};
 use super::validator_engine::ValidatorEngine;
 use crate::Result;
 use crate::ValidationConfig;
-use crate::traits::violation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 
 /// Types of rule engines supported
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -316,10 +315,18 @@ impl HybridRuleEngine {
             match handle.await {
                 Ok((returned_rule_id, Ok(result))) => results.push((returned_rule_id, result)),
                 Ok((returned_rule_id, Err(e))) => {
-                    warn!(rule_id = %returned_rule_id, error = %e, "Rule execution error");
+                    mcb_domain::warn!(
+                        "hybrid_engine",
+                        "Rule execution error",
+                        &format!("rule_id={returned_rule_id} error={e}")
+                    );
                 }
                 Err(e) => {
-                    error!(rule_id = %rule_id, error = %e, "Task join error");
+                    mcb_domain::error!(
+                        "hybrid_engine",
+                        "Task join error",
+                        &format!("rule_id={rule_id} error={e}")
+                    );
                 }
             }
         }

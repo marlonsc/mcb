@@ -3,16 +3,16 @@
 use rstest::rstest;
 use std::path::PathBuf;
 
-use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry};
+use mcb_domain::ports::validation::{Severity, ValidationConfig};
 
-#[test]
+#[rstest]
 fn test_severity_serialization() {
     let severity = Severity::Error;
     let json = serde_json::to_string(&severity).unwrap();
-    assert_eq!(json, "\"Error\"");
+    assert_eq!(json, "\"ERROR\"");
 }
 
-#[test]
+#[rstest]
 fn test_validation_config_creation() {
     let config = ValidationConfig::new("/workspace");
     assert_eq!(config.workspace_root.to_str().unwrap(), "/workspace");
@@ -20,7 +20,7 @@ fn test_validation_config_creation() {
     assert!(config.exclude_patterns.is_empty());
 }
 
-#[test]
+#[rstest]
 fn test_validation_config_builder() {
     let config = ValidationConfig::new("/workspace")
         .with_additional_path("../src")
@@ -44,15 +44,16 @@ fn validation_config_should_exclude(#[case] file: &str, #[case] expected: bool) 
     assert_eq!(config.should_exclude(&PathBuf::from(file)), expected);
 }
 
-#[test]
+#[rstest]
 fn test_validator_registry_with_config() {
     let config = ValidationConfig::new("/tmp/test-workspace")
         .with_additional_path("../legacy-src")
         .with_exclude_pattern("target/");
 
-    let registry = ValidatorRegistry::standard_for(&config.workspace_root);
+    let names = mcb_validate::validators::standard_validator_names();
+    let _ = mcb_validate::validators::validate_all(&config);
 
     assert_eq!(config.additional_src_paths.len(), 1);
     assert_eq!(config.exclude_patterns.len(), 1);
-    assert!(!registry.validators().is_empty());
+    assert!(!names.is_empty());
 }

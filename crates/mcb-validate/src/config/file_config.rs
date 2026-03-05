@@ -21,7 +21,7 @@
 //!
 //! [rules.architecture]
 //! enabled = true
-//! severity = "Error"
+//! severity = "ERROR"
 //!
 //! [rules.quality]
 //! enabled = true
@@ -39,15 +39,15 @@ use std::path::PathBuf;
 use figment::Figment;
 use figment::providers::{Env, Format, Toml};
 use serde::{Deserialize, Serialize};
-use tracing::{error, warn};
 
 use crate::Severity;
-use crate::constants::validators::{
+use mcb_utils::constants::validate::{
     VALIDATOR_ARCHITECTURE, VALIDATOR_ASYNC_PATTERNS, VALIDATOR_CLEAN_ARCHITECTURE,
-    VALIDATOR_DEPENDENCY, VALIDATOR_DOCUMENTATION, VALIDATOR_ERROR_BOUNDARY,
-    VALIDATOR_IMPLEMENTATION, VALIDATOR_KISS, VALIDATOR_NAMING, VALIDATOR_ORGANIZATION,
-    VALIDATOR_PATTERNS, VALIDATOR_PERFORMANCE, VALIDATOR_PMAT, VALIDATOR_QUALITY,
-    VALIDATOR_REFACTORING, VALIDATOR_SOLID, VALIDATOR_TESTS,
+    VALIDATOR_CONFIG_QUALITY, VALIDATOR_DECLARATIVE, VALIDATOR_DEPENDENCY, VALIDATOR_DOCUMENTATION,
+    VALIDATOR_ERROR_BOUNDARY, VALIDATOR_HYGIENE, VALIDATOR_IMPLEMENTATION, VALIDATOR_KISS,
+    VALIDATOR_LAYER_FLOW, VALIDATOR_NAMING, VALIDATOR_ORGANIZATION, VALIDATOR_PATTERN,
+    VALIDATOR_PERFORMANCE, VALIDATOR_PMAT, VALIDATOR_PORT_ADAPTER, VALIDATOR_QUALITY,
+    VALIDATOR_REFACTORING, VALIDATOR_SOLID, VALIDATOR_SSOT, VALIDATOR_TESTS, VALIDATOR_VISIBILITY,
 };
 
 /// Embedded default configuration (baked into binary at compile time)
@@ -88,16 +88,20 @@ impl FileConfig {
         let mut config: Self = match figment.extract() {
             Ok(config) => config,
             Err(err) => {
-                warn!(
-                    error = %err,
-                    "failed to load validation config; using embedded defaults"
+                mcb_domain::warn!(
+                    "validate_config",
+                    "failed to load validation config; using embedded defaults",
+                    &err
                 );
                 let mut fallback: Self = Figment::new()
                     .merge(Toml::string(EMBEDDED_VALIDATE_DEFAULTS))
                     .extract()
-                    .unwrap_or_else(|_| {
-                        error!("embedded mcb-validate defaults are invalid");
-                        std::process::exit(2);
+                    .unwrap_or_else(|e| {
+                        mcb_domain::error!(
+                            "validate_config",
+                            "embedded mcb-validate defaults are invalid"
+                        );
+                        unreachable!("embedded mcb-validate defaults are invalid: {e}");
                     });
                 fallback.general.workspace_root = Some(root.clone());
                 fallback
@@ -119,26 +123,40 @@ impl FileConfig {
     /// Check if a validator is enabled
     #[must_use]
     pub fn is_validator_enabled(&self, name: &str) -> bool {
-        match name {
-            VALIDATOR_DEPENDENCY => self.validators.dependency,
-            VALIDATOR_ORGANIZATION => self.validators.organization,
-            VALIDATOR_QUALITY => self.validators.quality,
-            VALIDATOR_SOLID => self.validators.solid,
-            VALIDATOR_ARCHITECTURE => self.validators.architecture,
-            VALIDATOR_REFACTORING => self.validators.refactoring,
-            VALIDATOR_NAMING => self.validators.naming,
-            VALIDATOR_DOCUMENTATION => self.validators.documentation,
-            VALIDATOR_PATTERNS => self.validators.patterns,
-            VALIDATOR_KISS => self.validators.kiss,
-            VALIDATOR_TESTS => self.validators.tests,
-            VALIDATOR_ASYNC_PATTERNS => self.validators.async_patterns,
-            VALIDATOR_ERROR_BOUNDARY => self.validators.error_boundary,
-            VALIDATOR_PERFORMANCE => self.validators.performance,
-            VALIDATOR_IMPLEMENTATION => self.validators.implementation,
-            VALIDATOR_PMAT => self.validators.pmat,
-            VALIDATOR_CLEAN_ARCHITECTURE => self.validators.clean_architecture,
-            _ => true, // Unknown validators enabled by default
+        #[allow(clippy::type_complexity)]
+        const CHECKS: &[(&str, fn(&ValidatorsConfig) -> bool)] = &[
+            (VALIDATOR_DEPENDENCY, |c| c.dependency),
+            (VALIDATOR_ORGANIZATION, |c| c.organization),
+            (VALIDATOR_QUALITY, |c| c.quality),
+            (VALIDATOR_SOLID, |c| c.solid),
+            (VALIDATOR_ARCHITECTURE, |c| c.architecture),
+            (VALIDATOR_REFACTORING, |c| c.refactoring),
+            (VALIDATOR_NAMING, |c| c.naming),
+            (VALIDATOR_DOCUMENTATION, |c| c.documentation),
+            (VALIDATOR_PATTERN, |c| c.patterns),
+            (VALIDATOR_KISS, |c| c.kiss),
+            (VALIDATOR_TESTS, |c| c.tests),
+            (VALIDATOR_ASYNC_PATTERNS, |c| c.async_patterns),
+            (VALIDATOR_ERROR_BOUNDARY, |c| c.error_boundary),
+            (VALIDATOR_PERFORMANCE, |c| c.performance),
+            (VALIDATOR_IMPLEMENTATION, |c| c.implementation),
+            (VALIDATOR_PMAT, |c| c.pmat),
+            (VALIDATOR_CLEAN_ARCHITECTURE, |c| c.clean_architecture),
+            (VALIDATOR_CONFIG_QUALITY, |c| c.config_quality),
+            (VALIDATOR_HYGIENE, |c| c.hygiene),
+            (VALIDATOR_LAYER_FLOW, |c| c.layer_flow),
+            (VALIDATOR_PORT_ADAPTER, |c| c.port_adapter),
+            (VALIDATOR_SSOT, |c| c.ssot),
+            (VALIDATOR_VISIBILITY, |c| c.visibility),
+            (VALIDATOR_DECLARATIVE, |c| c.declarative),
+        ];
+
+        for (v_name, check) in CHECKS {
+            if name == *v_name {
+                return check(&self.validators);
+            }
         }
+        true // Unknown validators enabled by default
     }
 }
 
@@ -423,6 +441,9 @@ pub struct NamingRulesConfig {
 
     /// Target crate for validation logic (e.g., "mcb-validate")
     pub validate_crate: String,
+
+    /// Target crate for shared utilities (e.g., "mcb-utils")
+    pub utils_crate: String,
 }
 
 /// KISS rules configuration
@@ -583,4 +604,29 @@ pub struct ValidatorsConfig {
     pub pmat: bool,
     /// Enable clean architecture validation
     pub clean_architecture: bool,
+    /// Enable configuration quality validation
+    #[serde(default = "default_true")]
+    pub config_quality: bool,
+    /// Enable hygiene validation
+    #[serde(default = "default_true")]
+    pub hygiene: bool,
+    /// Enable layer flow validation
+    #[serde(default = "default_true")]
+    pub layer_flow: bool,
+    /// Enable port/adapter validation
+    #[serde(default = "default_true")]
+    pub port_adapter: bool,
+    /// Enable SSOT validation
+    #[serde(default = "default_true")]
+    pub ssot: bool,
+    /// Enable visibility validation
+    #[serde(default = "default_true")]
+    pub visibility: bool,
+    /// Enable declarative rules validation
+    #[serde(default = "default_true")]
+    pub declarative: bool,
+}
+
+fn default_true() -> bool {
+    true
 }

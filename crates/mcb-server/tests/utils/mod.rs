@@ -1,12 +1,6 @@
-pub mod collection;
 pub mod domain_services;
 pub mod http_mcp;
-pub mod invariants;
 pub mod real_providers;
-pub mod search_fixtures;
-pub mod service_detection;
-pub mod shared_context;
-pub mod sync;
+/// Markdown/HTML rendering utilities for tests.
+pub mod renderer;
 pub mod test_fixtures;
-pub mod text;
-pub mod timeouts;

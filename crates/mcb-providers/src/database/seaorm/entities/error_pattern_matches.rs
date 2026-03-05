@@ -3,26 +3,37 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an error pattern match.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "error_pattern_matches")]
 pub struct Model {
+    /// Unique identifier for the error pattern match.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the error pattern that was matched.
     #[sea_orm(column_type = "Text")]
     pub pattern_id: String,
+    /// Reference to the observation where the error was found.
     #[sea_orm(column_type = "Text")]
     pub observation_id: String,
+    /// Confidence level of the match (0-100).
     pub confidence: i64,
+    /// Whether a solution based on the pattern was applied.
     pub solution_applied: Option<i64>,
+    /// Whether the applied solution successfully resolved the error.
     pub resolution_successful: Option<i64>,
+    /// Timestamp when the pattern was matched.
     pub matched_at: i64,
+    /// Optional timestamp when the error was successfully resolved.
     pub resolved_at: Option<i64>,
 }
 
+/// Relations for the error pattern match model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the error pattern match model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

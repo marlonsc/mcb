@@ -17,7 +17,7 @@
 //! // let violations = query.execute(&root_node);
 //! ```
 
-use crate::pattern_registry::compile_regex;
+use mcb_utils::utils::regex::compile_regex;
 
 use super::{AstNode, AstViolation};
 

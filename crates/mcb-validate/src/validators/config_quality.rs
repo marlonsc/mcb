@@ -13,14 +13,14 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
-use crate::constants::architecture::ARCH_PATH_CONFIG;
-use crate::constants::common::{COMMENT_PREFIX, DOC_COMMENT_PREFIX};
 use crate::define_violations;
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
-use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::{Violation, ViolationCategory};
+use mcb_utils::constants::validate::ARCH_PATH_CONFIG;
+use mcb_utils::constants::validate::{COMMENT_PREFIX, DOC_COMMENT_PREFIX};
+use mcb_utils::utils::regex::compile_regex;
 
 define_violations! {
     dynamic_severity,
@@ -102,9 +102,14 @@ pub struct ConfigQualityValidator {
 }
 
 impl ConfigQualityValidator {
-    /// Create a new configuration quality validator with the given configuration
+    /// Create a new configuration quality validator for the workspace root.
+    pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
+        Self::with_config(ValidationConfig::new(workspace_root))
+    }
+
+    /// Create a new configuration quality validator with explicit config.
     #[must_use]
-    pub fn new(config: ValidationConfig) -> Self {
+    pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }
 
@@ -296,5 +301,26 @@ impl ConfigQualityValidator {
         // Check if the line itself uses a constant
         let current_line = lines[line_idx];
         current_line.contains("const") || current_line.contains("DEFAULT_")
+    }
+}
+
+impl mcb_domain::ports::validation::Validator for ConfigQualityValidator {
+    fn name(&self) -> &'static str {
+        mcb_utils::constants::validate::VALIDATOR_CONFIG_QUALITY
+    }
+
+    fn description(&self) -> &'static str {
+        "Validates configuration code quality and anti-patterns"
+    }
+
+    fn validate(
+        &self,
+        _config: &ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
+        let violations = ConfigQualityValidator::validate(self)?;
+        Ok(violations
+            .into_iter()
+            .map(|v| Box::new(v) as Box<dyn Violation>)
+            .collect())
     }
 }

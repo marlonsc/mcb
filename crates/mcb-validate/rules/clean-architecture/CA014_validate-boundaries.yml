@@ -11,12 +11,12 @@ rationale: "Validation logic may depend on domain utilities but not application 
 
 crate_name: "{{validate_crate}}"
 forbidden_prefixes: []
-allowed_dependencies: ["{{domain_crate}}"]
+allowed_dependencies: ["{{domain_crate}}", "{{utils_crate}}"]
 
 config:
   crate_name: "{{validate_crate}}"
   forbidden_prefixes: []
-  allowed_dependencies: ["{{domain_crate}}"]
+  allowed_dependencies: ["{{domain_crate}}", "{{utils_crate}}"]
 
 rule: |
   rule ValidatorBoundaries "Validator Crate Boundaries" {

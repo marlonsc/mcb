@@ -173,5 +173,5 @@ impl OrgEntityHandler {
 
 fn extract_revoked_at(data: Option<&serde_json::Value>) -> i64 {
     data.and_then(|value| value.get("revoked_at").and_then(serde_json::Value::as_i64))
-        .unwrap_or_else(|| mcb_domain::utils::time::epoch_secs_i64().unwrap_or(0))
+        .unwrap_or_else(|| mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0))
 }

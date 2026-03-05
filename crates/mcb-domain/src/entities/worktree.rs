@@ -30,31 +30,17 @@ crate::define_entity! {
     }
 }
 
-/// Lifecycle status of a worktree.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    strum_macros::Display,
-    strum_macros::AsRefStr,
-    strum_macros::EnumString,
-)]
-#[serde(rename_all = "snake_case")]
-#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
-pub enum WorktreeStatus {
-    /// Worktree is available for use.
-    Active,
-    /// Worktree is currently in use by an agent.
-    InUse,
-    /// Worktree has been pruned / removed.
-    Pruned,
+crate::define_string_enum! {
+    /// Lifecycle status of a worktree.
+    pub enum WorktreeStatus [strum = "snake_case", serde = "snake_case", schema] {
+        /// Worktree is available for use.
+        Active,
+        /// Worktree is currently in use by an agent.
+        InUse,
+        /// Worktree has been pruned / removed.
+        Pruned,
+    }
 }
-
-crate::impl_as_str_from_as_ref!(WorktreeStatus);
 
 // ---------------------------------------------------------------------------
 // AgentWorktreeAssignment

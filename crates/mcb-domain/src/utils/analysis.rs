@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use regex::Regex;
 
 use crate::error::{Error, Result};
-use crate::ports::{ComplexityFinding, DeadCodeFinding, TdgFinding};
+use crate::ports::providers::analysis::AnalysisFinding;
 
 /// Record of a discovered function.
 #[derive(Debug, Clone)]
@@ -58,7 +58,9 @@ pub fn extract_function_body(content: &str, start_pos: usize) -> Option<String> 
                     return Some(content[body_start..=i].to_string());
                 }
             }
-            _ => {}
+            _other => {
+                // Ignore other characters
+            }
         }
         i += 1;
     }
@@ -166,17 +168,15 @@ pub fn collect_functions(files: &[(PathBuf, String)]) -> Result<Vec<FunctionReco
 }
 
 /// Filters functions exceeding a complexity threshold.
-///
-/// Returns a [`ComplexityFinding`] for each function whose score is above the threshold.
 #[must_use]
 pub fn filter_complex_functions(
     functions: Vec<FunctionRecord>,
     threshold: u32,
-) -> Vec<ComplexityFinding> {
+) -> Vec<AnalysisFinding> {
     functions
         .into_iter()
         .filter(|f| f.complexity > threshold)
-        .map(|f| ComplexityFinding {
+        .map(|f| AnalysisFinding::Complexity {
             file: f.file,
             function: f.name,
             complexity: f.complexity,
@@ -195,7 +195,7 @@ pub fn filter_complex_functions(
 pub fn detect_dead_functions(
     functions: Vec<FunctionRecord>,
     file_contents: &[String],
-) -> Result<Vec<DeadCodeFinding>> {
+) -> Result<Vec<AnalysisFinding>> {
     let names: Vec<String> = functions.iter().map(|f| f.name.clone()).collect();
     let occurrences = count_symbol_occurrences(file_contents, &names)?;
 
@@ -203,7 +203,7 @@ pub fn detect_dead_functions(
         .into_iter()
         .filter(|f| !is_exempt_symbol(&f.name))
         .filter(|f| occurrences.get(&f.name).copied().unwrap_or(0) <= 1)
-        .map(|f| DeadCodeFinding {
+        .map(|f| AnalysisFinding::DeadCode {
             file: f.file,
             line: f.line,
             item_type: "function".to_owned(),
@@ -220,9 +220,9 @@ pub fn detect_dead_functions(
 pub fn compute_tdg_scores(
     files: &[(PathBuf, String)],
     functions: Vec<FunctionRecord>,
-    dead_code: &[DeadCodeFinding],
+    dead_code: &[AnalysisFinding],
     threshold: u32,
-) -> Vec<TdgFinding> {
+) -> Vec<AnalysisFinding> {
     let mut complexity_by_file: HashMap<PathBuf, u32> = HashMap::new();
     for function in functions {
         let entry = complexity_by_file.entry(function.file).or_insert(0);
@@ -231,7 +231,9 @@ pub fn compute_tdg_scores(
 
     let mut dead_by_file: HashMap<PathBuf, u32> = HashMap::new();
     for finding in dead_code {
-        *dead_by_file.entry(finding.file.clone()).or_insert(0) += 1;
+        if let AnalysisFinding::DeadCode { file, .. } = finding {
+            *dead_by_file.entry(file.clone()).or_insert(0) += 1;
+        }
     }
 
     let mut findings = Vec::new();
@@ -245,7 +247,7 @@ pub fn compute_tdg_scores(
             + ((sloc / 200).saturating_mul(10));
 
         if tdg_score > threshold {
-            findings.push(TdgFinding {
+            findings.push(AnalysisFinding::TechnicalDebt {
                 file: path.clone(),
                 score: tdg_score,
             });

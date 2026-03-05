@@ -9,10 +9,9 @@
 //! Run with: `cargo test -p mcb-server --test unit mcp_protocol`
 
 use rstest::rstest;
-extern crate mcb_providers;
 
 use axum::http::StatusCode;
-use mcb_server::transport::types::McpRequest;
+use mcb_domain::protocol::{JSONRPC_VERSION, McpRequest};
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp};
 
@@ -25,6 +24,7 @@ use crate::utils::http_mcp::{McpTestContext, post_mcp};
 async fn test_initialize_response() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: "initialize".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
@@ -120,6 +120,7 @@ async fn test_initialize_response() -> Result<(), Box<dyn std::error::Error>> {
 async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: "tools/list".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
@@ -223,7 +224,7 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
         .and_then(|v| v.get("required"))
         .and_then(serde_json::Value::as_array);
     assert!(required.is_some(), "req array");
-    let required = match required {
+    let required: &Vec<serde_json::Value> = match required {
         Some(value) => value,
         None => return Ok(()),
     };
@@ -248,6 +249,7 @@ async fn test_response_has_jsonrpc_field(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: method.to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),
@@ -271,6 +273,7 @@ async fn test_response_echoes_request_id(
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: "ping".to_owned(),
         params: None,
         id: Some(id.clone()),
@@ -287,6 +290,7 @@ async fn test_response_echoes_request_id(
 async fn test_error_response_structure() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: "nonexistent/method".to_owned(),
         params: None,
         id: Some(serde_json::json!(1)),

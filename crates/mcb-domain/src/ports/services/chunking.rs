@@ -1,7 +1,5 @@
-//!
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
-//!
-//! Provides chunking domain definitions.
+//! Code chunking service ports.
+
 use std::path::Path;
 
 use async_trait::async_trait;
@@ -49,27 +47,27 @@ pub struct ChunkingResult {
 /// Coordinates batch code chunking operations.
 #[async_trait]
 pub trait ChunkingOrchestratorInterface: Send + Sync {
-    /// Process multiple files and return chunks
+    /// Process multiple files and return chunks.
     async fn process_files(&self, files: Vec<(String, String)>) -> Result<Vec<CodeChunk>>;
 
-    /// Process a single file with content
+    /// Process a single file with content.
     async fn process_file(&self, path: &Path, content: &str) -> Result<Vec<CodeChunk>>;
 
-    /// Read and chunk a file from disk
+    /// Read and chunk a file from disk.
     async fn chunk_file(&self, path: &Path) -> Result<Vec<CodeChunk>>;
 }
 
 /// Domain Port for Code Chunking Operations
 #[async_trait]
 pub trait CodeChunker: Send + Sync {
-    /// Performs the chunk file operation.
+    /// Analyze a file and split it into semantic chunks.
     async fn chunk_file(
         &self,
         file_path: &Path,
         options: ChunkingOptions,
     ) -> Result<ChunkingResult>;
 
-    /// Performs the chunk content operation.
+    /// Split raw text content into semantic chunks.
     async fn chunk_content(
         &self,
         content: &str,
@@ -78,17 +76,17 @@ pub trait CodeChunker: Send + Sync {
         options: ChunkingOptions,
     ) -> Result<ChunkingResult>;
 
-    /// Performs the chunk batch operation.
+    /// Batch process multiple files into semantic chunks.
     async fn chunk_batch(
         &self,
         file_paths: &[&Path],
         options: ChunkingOptions,
     ) -> Result<Vec<ChunkingResult>>;
 
-    /// Performs the supported languages operation.
+    /// List all programming languages supported by this chunker.
     fn supported_languages(&self) -> Vec<Language>;
 
-    /// Performs the is language supported operation.
+    /// Check if a specific language is supported for semantic chunking.
     fn is_language_supported(&self, language: &Language) -> bool {
         self.supported_languages().contains(language)
     }

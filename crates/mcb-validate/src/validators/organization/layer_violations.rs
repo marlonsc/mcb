@@ -1,16 +1,16 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
 //!
-use super::constants::{
+use super::violation::OrganizationViolation;
+use crate::filters::LanguageId;
+use crate::scan::{for_each_scan_file, is_test_path};
+use crate::{Result, Severity, ValidationConfig};
+use mcb_utils::constants::validate::PUB_USE_PREFIX;
+use mcb_utils::constants::validate::{
     APPLICATION_LAYER_PATH, ARC_NEW_SERVICE_REGEX, INFRASTRUCTURE_LAYER_PATH, SERVER_IMPORT_REGEX,
     SERVER_LAYER_PATH, SERVICE_CREATION_BYPASS_FILES,
 };
-use super::violation::OrganizationViolation;
-use crate::constants::common::PUB_USE_PREFIX;
-use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
-use crate::scan::{for_each_scan_file, is_test_path};
-use crate::{Result, Severity, ValidationConfig};
+use mcb_utils::utils::regex::compile_regex;
 
 /// Checks for violations of Clean Architecture layer boundaries.
 ///

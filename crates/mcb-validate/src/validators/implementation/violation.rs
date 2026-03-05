@@ -14,7 +14,7 @@ use std::path::PathBuf;
 
 use crate::Severity;
 use crate::define_violations;
-use crate::traits::violation::ViolationCategory;
+use mcb_domain::ports::validation::ViolationCategory;
 
 define_violations! {
     dynamic_severity,
@@ -94,7 +94,7 @@ define_violations! {
         #[violation(
             id = "IMPL006",
             severity = Warning,
-            message = "Empty catch-all: {file}:{line} - match arm '_ => {}' silently ignores cases: {context}",
+            message = "Empty catch-all: {file}:{line} - catch-all match arm silently ignores cases: {context}",
             suggestion = "Handle the catch-all case explicitly or log unhandled variants"
         )]
         EmptyCatchAll {

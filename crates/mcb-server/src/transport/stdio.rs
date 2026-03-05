@@ -6,6 +6,8 @@
 //! Implements MCP protocol over standard input/output streams.
 //! This is the traditional transport mechanism for MCP servers.
 
+use std::sync::Arc;
+
 use mcb_domain::info;
 use rmcp::ServiceExt;
 use rmcp::transport::stdio;
@@ -49,5 +51,11 @@ impl StdioServerExt for McpServer {
 
         info!("Stdio", "MCP server shutdown complete");
         Ok(())
+    }
+}
+
+impl StdioServerExt for Arc<McpServer> {
+    async fn serve_stdio(self) -> Result<(), Box<dyn std::error::Error>> {
+        (*self).clone().serve_stdio().await
     }
 }

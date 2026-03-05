@@ -2,7 +2,6 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
 //!
-pub mod constants;
 pub mod domain_purity;
 pub mod duplicate_strings;
 pub mod file_placement;
@@ -15,3 +14,12 @@ pub mod violation;
 
 pub use self::validator::OrganizationValidator;
 pub use self::violation::OrganizationViolation;
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_ORGANIZATION,
+    "Validates code organization patterns",
+    |root| {
+        Ok(Box::new(OrganizationValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

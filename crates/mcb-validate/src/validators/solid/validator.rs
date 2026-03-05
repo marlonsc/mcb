@@ -17,7 +17,7 @@ use crate::{Result, ValidationConfig};
 
 crate::create_validator!(
     SolidValidator,
-    "solid",
+    mcb_utils::constants::validate::VALIDATOR_SOLID,
     "Validates SOLID principles",
     SolidViolation,
     [

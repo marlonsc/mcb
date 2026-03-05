@@ -220,7 +220,12 @@ is_adr_file() {
 
 find_markdown_files() {
     local dir="${1:-$DOCS_DIR}"
-    find "$dir" -name "*.md" -type f 2>/dev/null
+    find "$dir" -name "*.md" -type f \
+        -not -path "*/vendor/*" \
+        -not -path "*/third-party/*" \
+        -not -path "*/node_modules/*" \
+        -not -path "*/target/*" \
+        2>/dev/null
 }
 
 has_trailing_whitespace() {

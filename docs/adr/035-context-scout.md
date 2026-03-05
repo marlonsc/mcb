@@ -19,7 +19,6 @@ implementation_status: Complete
 
 > **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
 
-
 **Accepted** — 2026-02-06 (locked for Phase 9 dependency)
 
 - **Deciders:** Project team
@@ -1587,7 +1586,7 @@ WHERE i.status = 'open'
 6. Add `[context]` section to `config/default.toml`
 
 > **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
-7. Create issue/phase/decision tables (if not created by ADR-034's workflow tables)
+1. Create issue/phase/decision tables (if not created by ADR-034's workflow tables)
 
 ### Migration
 

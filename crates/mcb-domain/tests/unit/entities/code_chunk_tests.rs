@@ -1,72 +1,47 @@
-//! Unit tests for `CodeChunk` entity
-//!
-//! Tests the core domain entity for code chunks, ensuring proper
-//! creation, validation, and business rule enforcement.
+use mcb_domain::CodeChunk;
+use rstest::{fixture, rstest};
+use serde_json::json;
 
-#[cfg(test)]
-mod tests {
-    use mcb_domain::CodeChunk;
-    use rstest::rstest;
-    use serde_json::json;
-
-    #[rstest]
-    #[case("test-chunk-001", "fn hello() {}", "src/main.rs", 1, 3, "rust", json!({"type": "function"}))]
-    fn test_code_chunk_creation(
-        #[case] id: &str,
-        #[case] content: &str,
-        #[case] file_path: &str,
-        #[case] start_line: u32,
-        #[case] end_line: u32,
-        #[case] language: &str,
-        #[case] metadata: serde_json::Value,
-    ) {
-        let chunk = CodeChunk {
-            id: id.to_owned(),
-            content: content.to_owned(),
-            file_path: file_path.to_owned(),
-            start_line,
-            end_line,
-            language: language.to_owned(),
-            metadata: metadata.clone(),
-        };
-
-        assert_eq!(chunk.id, id);
-        assert_eq!(chunk.content, content);
-        assert_eq!(chunk.file_path, file_path);
-        assert_eq!(chunk.start_line, start_line);
-        assert_eq!(chunk.end_line, end_line);
-        assert_eq!(chunk.language, language);
-        assert_eq!(chunk.metadata, metadata);
+#[fixture]
+fn default_chunk() -> CodeChunk {
+    CodeChunk {
+        id: "test-chunk-001".to_owned(),
+        content: "fn hello() {}".to_owned(),
+        file_path: "src/main.rs".to_owned(),
+        start_line: 1,
+        end_line: 3,
+        language: "rust".to_owned(),
+        metadata: json!({"type": "function"}),
     }
+}
 
-    #[rstest]
-    fn test_code_chunk_metadata_scenarios() {
-        // Empty metadata
-        let empty_chunk = CodeChunk {
-            id: "empty".to_owned(),
-            content: String::new(),
-            file_path: String::new(),
-            start_line: 0,
-            end_line: 0,
-            language: String::new(),
-            metadata: json!({}),
-        };
-        assert!(empty_chunk.metadata.as_object().unwrap().is_empty());
+#[rstest]
+fn test_code_chunk_construction(default_chunk: CodeChunk) {
+    assert_eq!(default_chunk.id, "test-chunk-001");
+    assert_eq!(default_chunk.language, "rust");
+}
 
-        // Complex metadata
-        let complex_chunk = CodeChunk {
-            id: "complex".to_owned(),
-            content: String::new(),
-            file_path: String::new(),
-            start_line: 0,
-            end_line: 0,
-            language: String::new(),
-            metadata: json!({
-                "type": "class",
-                "methods": ["a", "b"]
-            }),
-        };
-        assert_eq!(complex_chunk.metadata["type"], "class");
-        assert!(complex_chunk.metadata["methods"].is_array());
-    }
+#[rstest]
+fn test_code_chunk_metadata_scenarios(mut default_chunk: CodeChunk) {
+    // Empty metadata
+    default_chunk.metadata = json!({});
+    assert!(default_chunk.metadata.as_object().unwrap().is_empty());
+
+    // Complex metadata
+    default_chunk.metadata = json!({
+        "type": "class",
+        "methods": ["a", "b"]
+    });
+    assert_eq!(default_chunk.metadata["type"], "class");
+    assert!(default_chunk.metadata["methods"].is_array());
+}
+
+#[rstest]
+#[case("c1", "content1")]
+#[case("c2", "content2")]
+fn test_code_chunk_variants(#[case] id: &str, #[case] content: &str, mut default_chunk: CodeChunk) {
+    default_chunk.id = id.to_owned();
+    default_chunk.content = content.to_owned();
+    assert_eq!(default_chunk.id, id);
+    assert_eq!(default_chunk.content, content);
 }

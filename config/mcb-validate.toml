@@ -20,7 +20,7 @@ internal_dep_prefix = ""
 # ==============================================================================
 [rules.architecture]
 enabled = true
-severity = "Error"
+severity = "ERROR"
 layer_boundaries.application_internal_deps = []
 layer_boundaries.domain_internal_deps = []
 layer_boundaries.infrastructure_internal_deps = []
@@ -135,6 +135,7 @@ infrastructure_crate = ""
 application_crate = ""
 providers_crate = ""
 validate_crate = ""
+utils_crate = ""
 
 # ==============================================================================
 # KISS Rules

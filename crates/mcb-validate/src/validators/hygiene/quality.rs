@@ -1,14 +1,15 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::constants::common::{COMMENT_PREFIX, FN_PREFIX, MODULE_DOC_PREFIX};
 use crate::filters::LanguageId;
-use crate::pattern_registry::{compile_regex, compile_regex_pairs};
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_utils::constants::validate::{COMMENT_PREFIX, FN_PREFIX, MODULE_DOC_PREFIX};
+use mcb_utils::utils::regex::{compile_regex, compile_regex_pairs};
 use regex::Regex;
 
 use super::violation::HygieneViolation;
+use crate::ValidationConfigExt;
 
 struct QualityPatterns {
     mock_type: Regex,
@@ -73,9 +74,8 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
     // Match common assertion macros - allow leading whitespace for indented code
     // The pattern checks for assertions at the start of a line (with optional whitespace)
     // or preceded by whitespace/punctuation to avoid false positives like "some_assert!"
-    let real_assert_pattern = compile_regex(
-        r"(?:^|\s)(assert!|assert_eq!|assert_ne!|assert_matches!|debug_assert!|debug_assert_eq!|debug_assert_ne!|panic!)",
-    )?;
+    let real_assert_pattern =
+        compile_regex(r"(?:^|\s)(assert[a-z_]*!|assert_[a-z_]+\(|debug_assert[a-z_]*!|panic!)")?;
     let unwrap_pattern = compile_regex(r"\.unwrap\(|\.expect\(")?;
     let scan_input = QualityScanInput {
         test_attr_pattern: &test_attr_pattern,
