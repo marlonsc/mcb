@@ -1,5 +1,5 @@
 use axum::http::{HeaderMap, HeaderValue};
-use mcb_server::auth::extract_api_key;
+use mcb_server::auth::{extract_api_key, is_admin_auth_exempt_path};
 use rstest::rstest;
 
 #[rstest]
@@ -26,4 +26,16 @@ fn extract_api_key_reads_authorization_bearer() {
 fn extract_api_key_rejects_missing_headers() {
     let headers = HeaderMap::new();
     assert!(extract_api_key(&headers, "x-api-key").is_err());
+}
+
+#[rstest]
+fn admin_auth_exempt_path_allows_alive_endpoint() {
+    assert!(is_admin_auth_exempt_path("/alive"));
+    assert!(is_admin_auth_exempt_path("/api/alive"));
+}
+
+#[rstest]
+fn admin_auth_exempt_path_keeps_health_protected() {
+    assert!(!is_admin_auth_exempt_path("/health"));
+    assert!(!is_admin_auth_exempt_path("/api/health"));
 }

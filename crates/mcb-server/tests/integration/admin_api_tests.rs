@@ -101,6 +101,15 @@ async fn test_health_endpoint_provider_name_is_nonempty() -> Result<(), Box<dyn 
     Ok(())
 }
 
+#[rstest]
+#[tokio::test]
+async fn test_alive_endpoint_returns_alive_status() -> Result<(), Box<dyn std::error::Error>> {
+    let response = mcb_server::controllers::health_api::alive().await?;
+    let body = json_body(response).await?;
+    assert_eq!(body["status"].as_str(), Some("alive"));
+    Ok(())
+}
+
 // ---------------------------------------------------------------------------
 // T7: Jobs API
 // ---------------------------------------------------------------------------

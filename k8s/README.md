@@ -120,9 +120,9 @@ limits:
 
 ### Health Checks
 
-- **Liveness**: `/api/health` every 10s
-- **Readiness**: `/api/health` every 5s
-- **Startup**: `/api/health` with timeout of 6 attempts
+- **Liveness**: `/api/alive` every 10s
+- **Readiness**: `/api/alive` every 5s
+- **Startup**: `/api/alive` with timeout of 6 attempts
 
 ## 📊 Monitoring
 

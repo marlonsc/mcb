@@ -14,6 +14,9 @@ use mcb_domain::ports::AuthRepositoryPort;
 use mcb_utils::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
 use mcb_utils::constants::http::HTTP_HEADER_AUTHORIZATION;
 
+// Support both direct app routes (`/alive`) and prefixed ingress rewrites (`/api/alive`).
+const ADMIN_AUTH_EXEMPT_PATHS: &[&str] = &["/alive", "/api/alive"];
+
 /// Authenticated admin principal.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AdminPrincipal {
@@ -76,6 +79,12 @@ pub(crate) fn configured_api_key_header(settings: Option<&serde_json::Value>) ->
                 .and_then(serde_json::Value::as_str)
         })
         .map_or_else(|| API_KEY_HEADER.to_owned(), str::to_ascii_lowercase)
+}
+
+/// Returns whether a path is exempt from admin API-key authentication.
+#[must_use]
+pub fn is_admin_auth_exempt_path(path: &str) -> bool {
+    ADMIN_AUTH_EXEMPT_PATHS.contains(&path)
 }
 
 /// Extract API key from headers, checking both custom header and Authorization bearer.
