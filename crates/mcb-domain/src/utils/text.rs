@@ -16,11 +16,20 @@ use serde::Serialize;
 /// Non-text values (images, resources, etc.) are silently skipped.
 #[must_use]
 pub fn extract_text_with_sep(content: &[serde_json::Value], sep: &str) -> String {
-    content
-        .iter()
-        .filter_map(|v| v.get("text").and_then(|t| t.as_str()))
-        .collect::<Vec<_>>()
-        .join(sep)
+    let mut result = String::new();
+    let mut first = true;
+
+    for value in content {
+        if let Some(text) = value.get("text").and_then(|t| t.as_str()) {
+            if !first {
+                result.push_str(sep);
+            }
+            first = false;
+            result.push_str(text);
+        }
+    }
+
+    result
 }
 
 /// Concatenate all text segments from a slice of JSON content values,
