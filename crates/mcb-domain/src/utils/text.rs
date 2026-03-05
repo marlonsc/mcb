@@ -74,10 +74,3 @@ pub fn extract_text_from<T: Serialize>(content: &[T]) -> String {
         }
     }
 }
-
-    for c in content {
-        values.push(serde_json::to_value(c)?);
-    }
-
-    Ok(extract_text(&values))
-}
