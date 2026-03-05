@@ -25,8 +25,9 @@ pub fn rust_files_under(path: &Path, out: &mut Vec<PathBuf>) {
 
 /// Collect `.rs` source files under `dir`, skipping test directories.
 ///
-/// Filters out paths containing `/tests/` or `/test_` to focus on production source.
-/// Requires `walkdir` (available in `mcb-domain`'s dev-dependencies).
+/// Filters out paths containing test directories (`tests` or `test_*` components)
+/// to focus on production source. Uses `Path` component iteration for correct
+/// cross-platform behaviour (including Windows paths with `\\`).
 #[must_use]
 pub fn scan_rs_files(dir: &Path) -> Vec<PathBuf> {
     let mut results = Vec::new();
@@ -49,8 +50,16 @@ fn collect_rs_files_filtered(dir: &Path, out: &mut Vec<PathBuf>) {
                 }
                 collect_rs_files_filtered(&path, out);
             } else if path.extension().and_then(|e| e.to_str()) == Some("rs") {
-                let lossy = path.to_string_lossy();
-                if !lossy.contains("/tests/") && !lossy.contains("/test_") {
+                // Double-check via Path components for correct cross-platform behaviour.
+                let in_test_dir = path.components().any(|c| {
+                    if let std::path::Component::Normal(os) = c {
+                        let s = os.to_string_lossy();
+                        s == "tests" || s.starts_with("test_")
+                    } else {
+                        false
+                    }
+                });
+                if !in_test_dir {
                     out.push(path);
                 }
             }

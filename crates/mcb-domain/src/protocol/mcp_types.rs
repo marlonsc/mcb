@@ -14,6 +14,9 @@ pub const JSONRPC_VERSION: &str = mcb_utils::constants::protocol::JSONRPC_VERSIO
 /// MCP request payload (JSON-RPC format).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpRequest {
+    /// JSON-RPC version (e.g. "2.0")
+    #[serde(default = "default_jsonrpc")]
+    pub jsonrpc: String,
     /// JSON-RPC method
     pub method: String,
     /// Request parameters
