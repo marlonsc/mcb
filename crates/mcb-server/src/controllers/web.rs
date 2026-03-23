@@ -206,12 +206,14 @@ pub async fn jobs_page(Extension(state): Extension<McbState>) -> Result<Response
     format::html(&page_layout("Jobs", &body))
 }
 
-/// Escapes HTML special characters in a string.
+/// Escapes HTML special characters in a string (including single quotes for
+/// safe use in both double-quoted and single-quoted attribute values).
 fn html_escape(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
         .replace('>', "&gt;")
         .replace('"', "&quot;")
+        .replace('\'', "&#x27;")
 }
 
 /// Browse page — shows vector store collections.
@@ -244,9 +246,10 @@ pub async fn browse_page(Extension(state): Extension<McbState>) -> Result<Respon
             .iter()
             .enumerate()
             .map(|(i, chunk)| {
-                let lang = chunk.language.to_lowercase();
+                let lang = html_escape(&chunk.language.to_lowercase());
                 let content = html_escape(&chunk.content);
                 let file = html_escape(&chunk.file_path);
+                let id_attr = html_escape(&chunk.id);
                 format!(
                     r#"<div class="code-chunk" data-chunk-id="{}" data-index="{}" data-language="{}" tabindex="0">
   <div class="chunk-header">
@@ -256,7 +259,7 @@ pub async fn browse_page(Extension(state): Extension<McbState>) -> Result<Respon
   </div>
   <pre class="chunk-content"><code>{}</code></pre>
 </div>"#,
-                    chunk.id, i, lang, file, lang, chunk.start_line, content
+                    id_attr, i, lang, file, lang, chunk.start_line, content
                 )
             })
             .collect::<Vec<_>>()

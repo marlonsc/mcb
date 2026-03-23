@@ -3,9 +3,8 @@
 use std::collections::HashMap;
 
 use mcb_domain::{
-    CodeChunk, Embedding, SearchResult,
-    entities::{CodebaseSnapshot, FileSnapshot},
-    value_objects::config::SyncBatch,
+    entities::{CodeChunk, CodebaseSnapshot, FileSnapshot},
+    value_objects::{Embedding, SearchResult, config::SyncBatch},
 };
 use rstest::rstest;
 

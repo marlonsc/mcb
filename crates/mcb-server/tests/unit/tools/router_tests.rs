@@ -8,6 +8,9 @@ use mcb_domain::value_objects::RepositoryId;
 use mcb_server::tools::{
     ExecutionFlow, RuntimeDefaults, ToolExecutionContext, validate_execution_context,
 };
+use mcb_utils::constants::FALLBACK_UNKNOWN;
+use mcb_utils::constants::ide::{IDE_MCB_STDIO, KNOWN_IDE_PROGRAMS};
+use mcb_utils::constants::protocol::{EXECUTION_FLOW_HYBRID, EXECUTION_FLOW_STDIO_ONLY};
 use rstest::rstest;
 
 struct TestVcsProvider {
@@ -221,7 +224,7 @@ async fn test_runtime_defaults_discover() {
         defaults.repo_id.as_deref(),
         Some(RepositoryId::from_name("repo-test").as_str().as_str())
     );
-    let known_programs = ["mcb-stdio", "cursor", "claude-code", "opencode", "vscode"];
+    let known_programs = KNOWN_IDE_PROGRAMS;
     assert!(
         defaults
             .agent_program
@@ -230,7 +233,7 @@ async fn test_runtime_defaults_discover() {
         "agent_program should be a known IDE, got: {:?}",
         defaults.agent_program
     );
-    assert_eq!(defaults.model_id.as_deref(), Some("unknown"));
+    assert_eq!(defaults.model_id.as_deref(), Some(FALLBACK_UNKNOWN));
     assert_eq!(defaults.execution_flow, Some(ExecutionFlow::StdioOnly));
     assert!(defaults.session_id.is_some());
 }
@@ -244,8 +247,8 @@ fn test_resolve_overrides_beat_defaults() {
         operator_id: Some("operator-default".to_owned()),
         machine_id: Some("machine-default".to_owned()),
         session_id: Some("session-default".to_owned()),
-        agent_program: Some("mcb-stdio".to_owned()),
-        model_id: Some("unknown".to_owned()),
+        agent_program: Some(IDE_MCB_STDIO.to_owned()),
+        model_id: Some(FALLBACK_UNKNOWN.to_owned()),
         execution_flow: Some(ExecutionFlow::StdioOnly),
         client_session_id: None,
         org_id: None,
@@ -260,7 +263,10 @@ fn test_resolve_overrides_beat_defaults() {
         ("machine_id".to_owned(), "machine-override".to_owned()),
         ("agent_program".to_owned(), "agent-override".to_owned()),
         ("model_id".to_owned(), "model-override".to_owned()),
-        ("execution_flow".to_owned(), "client-hybrid".to_owned()),
+        (
+            "execution_flow".to_owned(),
+            EXECUTION_FLOW_HYBRID.to_owned(),
+        ),
         ("delegated".to_owned(), "true".to_owned()),
     ]);
 
@@ -273,7 +279,10 @@ fn test_resolve_overrides_beat_defaults() {
     assert_eq!(context.machine_id.as_deref(), Some("machine-override"));
     assert_eq!(context.agent_program.as_deref(), Some("agent-override"));
     assert_eq!(context.model_id.as_deref(), Some("model-override"));
-    assert_eq!(context.execution_flow.as_deref(), Some("client-hybrid"));
+    assert_eq!(
+        context.execution_flow.as_deref(),
+        Some(EXECUTION_FLOW_HYBRID)
+    );
     assert_eq!(context.delegated, Some(true));
     assert!(context.timestamp.is_some());
 }
@@ -287,8 +296,8 @@ fn test_resolve_with_empty_overrides_uses_defaults() {
         operator_id: Some("operator-default".to_owned()),
         machine_id: Some("machine-default".to_owned()),
         session_id: Some("session-default".to_owned()),
-        agent_program: Some("mcb-stdio".to_owned()),
-        model_id: Some("unknown".to_owned()),
+        agent_program: Some(IDE_MCB_STDIO.to_owned()),
+        model_id: Some(FALLBACK_UNKNOWN.to_owned()),
         execution_flow: Some(ExecutionFlow::StdioOnly),
         client_session_id: None,
         org_id: None,
@@ -302,9 +311,12 @@ fn test_resolve_with_empty_overrides_uses_defaults() {
     assert_eq!(context.repo_path.as_deref(), Some("/defaults/repo"));
     assert_eq!(context.operator_id.as_deref(), Some("operator-default"));
     assert_eq!(context.machine_id.as_deref(), Some("machine-default"));
-    assert_eq!(context.agent_program.as_deref(), Some("mcb-stdio"));
-    assert_eq!(context.model_id.as_deref(), Some("unknown"));
-    assert_eq!(context.execution_flow.as_deref(), Some("stdio-only"));
+    assert_eq!(context.agent_program.as_deref(), Some(IDE_MCB_STDIO));
+    assert_eq!(context.model_id.as_deref(), Some(FALLBACK_UNKNOWN));
+    assert_eq!(
+        context.execution_flow.as_deref(),
+        Some(EXECUTION_FLOW_STDIO_ONLY)
+    );
 }
 
 #[rstest]

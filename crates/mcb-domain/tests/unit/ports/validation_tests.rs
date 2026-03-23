@@ -1,7 +1,7 @@
 //! Unit tests for validation port types and configuration.
 //!
-//! Tests cover: ValidationConfig construction, builder methods, path exclusion,
-//! Severity serialization, ViolationCategory display, and NamedCheck/run_checks flow.
+//! Tests cover: `ValidationConfig` construction, builder methods, path exclusion,
+//! Severity serialization, `ViolationCategory` display, and `NamedCheck/run_checks` flow.
 
 use mcb_domain::ports::validation::{
     NamedCheck, Severity, ValidationConfig, ViolationCategory, run_checks,

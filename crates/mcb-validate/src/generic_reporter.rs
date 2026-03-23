@@ -70,7 +70,7 @@ fn violation_location(v: &ViolationEntry) -> String {
     match (&v.file, v.line) {
         (Some(file), Some(line)) => format!("{file}:{line}"),
         (Some(file), None) => file.clone(),
-        (None, _) => "unknown".to_owned(),
+        (None, _) => mcb_utils::constants::FALLBACK_UNKNOWN.to_owned(),
     }
 }
 

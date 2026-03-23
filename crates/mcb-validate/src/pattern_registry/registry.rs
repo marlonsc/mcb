@@ -115,7 +115,7 @@ impl PatternRegistry {
         let rule_id = yaml
             .get(YAML_FIELD_ID)
             .and_then(|v| v.as_str())
-            .unwrap_or("unknown");
+            .unwrap_or(mcb_utils::constants::FALLBACK_UNKNOWN);
 
         // Load patterns from "patterns" section
         for (name, pattern) in yaml

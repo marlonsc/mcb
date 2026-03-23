@@ -8,6 +8,8 @@
 use std::path::Path;
 use std::sync::Arc;
 
+use dashmap::DashSet;
+
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
 use mcb_domain::entities::project::Project;
 use mcb_domain::ports::AgentSessionServiceInterface;
@@ -27,7 +29,6 @@ use rmcp::model::{
     CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
     ServerCapabilities, ServerInfo,
 };
-use tokio::sync::OnceCell;
 
 use crate::handlers::{
     AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
@@ -52,8 +53,10 @@ pub struct McpServer {
     /// Tool handlers for MCP protocol
     handlers: ToolHandlers,
     runtime_defaults: RuntimeDefaults,
-    /// Lazy auto-initialization gate for session + project creation (T10, T11).
-    auto_init: Arc<OnceCell<()>>,
+    /// Sessions already auto-created (keyed by session ID).
+    auto_init_sessions: Arc<DashSet<String>>,
+    /// Projects already auto-created (keyed by `(org_id, project_name)`).
+    auto_init_projects: Arc<DashSet<(String, String)>>,
 }
 
 impl std::fmt::Debug for McpServer {
@@ -158,7 +161,8 @@ impl McpServer {
             services,
             handlers,
             runtime_defaults,
-            auto_init: Arc::new(OnceCell::new()),
+            auto_init_sessions: Arc::new(DashSet::new()),
+            auto_init_projects: Arc::new(DashSet::new()),
         }
     }
 
@@ -320,34 +324,36 @@ tools:
 
         execution_context.apply_to_request_if_missing(&mut request);
 
-        // T10 + T11: Lazy auto-creation of session and project on first tool call.
-        {
-            let services = self.services.clone();
-            let defaults = self.runtime_defaults.clone();
-            let ctx = execution_context.clone();
-            self.auto_init
-                .get_or_init(|| async move {
-                    auto_create_session_and_project(&services, &defaults, &ctx).await;
-                })
-                .await;
-        }
+        // T10 + T11: Lazy auto-creation of session and project per unique context.
+        auto_create_session_and_project(
+            &self.services,
+            &self.runtime_defaults,
+            &execution_context,
+            &self.auto_init_sessions,
+            &self.auto_init_projects,
+        )
+        .await;
 
         route_tool_call(request, &self.handlers, execution_context).await
     }
 }
 
-/// Auto-create agent session and project on first tool call (T10 + T11).
+/// Auto-create agent session and project per unique context (T10 + T11).
 ///
-/// Called lazily via `OnceCell` so it runs exactly once per server boot and
-/// does not block startup. Failures are non-fatal: logged as warnings but
+/// Uses `DashSet` guards to ensure each session ID and (org, project) pair is
+/// created at most once. Failures are non-fatal: logged as warnings but
 /// never propagated to tool callers.
 async fn auto_create_session_and_project(
     services: &McpServices,
     defaults: &RuntimeDefaults,
     ctx: &ToolExecutionContext,
+    init_sessions: &DashSet<String>,
+    init_projects: &DashSet<(String, String)>,
 ) {
     // T10: Auto-create agent session with IDE identity
-    if let Some(ref session_id) = ctx.session_id {
+    if let Some(ref session_id) = ctx.session_id
+        && init_sessions.insert(session_id.clone())
+    {
         let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
         let ide_label = defaults
             .agent_program
@@ -387,6 +393,10 @@ async fn auto_create_session_and_project(
             .file_name()
             .and_then(|n| n.to_str())
             .unwrap_or(mcb_utils::constants::FALLBACK_UNKNOWN);
+        if !init_projects.insert((org_id.clone(), project_name.to_owned())) {
+            return;
+        }
+
         match services
             .project_workflow
             .get_by_name(org_id, project_name)

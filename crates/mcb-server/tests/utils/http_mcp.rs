@@ -11,7 +11,7 @@ use std::sync::Arc;
 
 use axum::http::StatusCode;
 use mcb_domain::protocol::{JSONRPC_VERSION, McpError, McpRequest, McpResponse};
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::McpServer;
 use mcb_server::tools::create_tool_list;
 use mcb_server::tools::{ToolExecutionContext, route_tool_call};

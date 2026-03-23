@@ -9,8 +9,8 @@ use rmcp::model::CallToolRequestParams;
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp_str};
 use crate::utils::test_fixtures::create_test_mcp_server;
-use mcb_domain::test_http_mcp::tools_call_request;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::http_mcp::tools_call_request;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_utils::constants::headers::HEADER_WORKSPACE_ROOT;
 use mcb_utils::constants::protocol::{
     EXECUTION_FLOW_HYBRID, EXECUTION_FLOW_SERVER_HYBRID, EXECUTION_FLOW_STDIO_ONLY,

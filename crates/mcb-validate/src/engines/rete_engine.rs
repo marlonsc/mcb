@@ -93,7 +93,7 @@ impl ReteEngine {
                     .root_package()
                     .map(|p| p.name.to_string())
                     .or_else(|| metadata.packages.first().map(|p| p.name.to_string()))
-                    .unwrap_or_else(|| "unknown".to_owned());
+                    .unwrap_or_else(|| mcb_utils::constants::FALLBACK_UNKNOWN.to_owned());
 
                 facts.set("Facts.crate_name", RreValue::String(root_name));
 

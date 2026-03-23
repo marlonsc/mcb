@@ -106,6 +106,18 @@ pub async fn dashboard(
     format::json(data)
 }
 
+/// Returns admin config as JSON for routes guarded by external middleware.
+///
+/// Auth is enforced by the calling route's middleware; no per-request
+/// re-authentication is needed here.
+///
+/// # Errors
+///
+/// Fails when config cannot be loaded or serialized.
+pub async fn config_via_middleware(Extension(_state): Extension<McbState>) -> Result<Response> {
+    format::json(load_admin_config()?)
+}
+
 /// Registers admin routes under `/admin`.
 #[must_use]
 pub fn routes() -> Routes {

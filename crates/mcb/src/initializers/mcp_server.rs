@@ -17,7 +17,6 @@ use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
 use mcb_server::build_mcp_server_bootstrap;
-use mcb_server::state::McbState;
 use mcb_server::tools::ExecutionFlow;
 use mcb_server::transport::stdio::StdioServerExt;
 use rmcp::transport::streamable_http_server::{
@@ -282,7 +281,7 @@ impl Initializer for McpServerInitializer {
             )
             .route(
                 "/config",
-                axum::routing::get(mcb_server::controllers::admin::config),
+                axum::routing::get(mcb_server::controllers::admin::config_via_middleware),
             )
             .layer(admin_auth_middleware);
 

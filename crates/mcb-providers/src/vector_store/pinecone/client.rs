@@ -5,7 +5,6 @@ use std::time::Duration;
 
 use dashmap::DashMap;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::VectorStoreProvider;
 use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
 use mcb_domain::value_objects::SearchResult;

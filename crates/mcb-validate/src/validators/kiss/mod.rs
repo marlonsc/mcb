@@ -14,7 +14,6 @@ mod counting;
 use std::path::PathBuf;
 
 use crate::config::KISSRulesConfig;
-use crate::thresholds::thresholds;
 use crate::{Severity, ValidationConfig};
 use mcb_domain::ports::validation::ViolationCategory;
 

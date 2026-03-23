@@ -8,7 +8,7 @@ use mcb_server::McpServer;
 use mcb_server::tools::{ToolExecutionContext, ToolHandlers, route_tool_call};
 use rmcp::model::CallToolRequestParams;
 
-use mcb_domain::test_http_mcp::{tools_call_request, tools_list_request};
+use mcb_domain::utils::tests::http_mcp::{tools_call_request, tools_list_request};
 use mcb_utils::constants::headers::HEADER_WORKSPACE_ROOT;
 use mcb_utils::constants::protocol::{
     EXECUTION_FLOW_HYBRID, EXECUTION_FLOW_SERVER_HYBRID, EXECUTION_FLOW_STDIO_ONLY,

@@ -1,5 +1,5 @@
 use crate::utils::test_fixtures::create_test_mcp_server;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::utils::text::extract_text_from;
 use mcb_server::args::SessionAction;
 use mcb_server::args::SessionArgs;

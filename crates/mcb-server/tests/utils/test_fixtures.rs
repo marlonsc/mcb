@@ -30,7 +30,7 @@ use tempfile::TempDir;
 extern crate mcb_providers;
 
 // Import centralized fixtures from mcb-domain
-use mcb_domain::test_utils::{create_temp_codebase, create_test_indexing_result};
+use mcb_domain::utils::tests::utils::{create_temp_codebase, create_test_indexing_result};
 // Import test constants from canonical source (mcb-utils)
 use mcb_utils::constants::testing::{TEST_ORG_ID, TEST_REPO_NAME, TEST_SESSION_ID};
 

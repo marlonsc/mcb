@@ -12,6 +12,7 @@ use rstest::rstest;
 
 use axum::http::StatusCode;
 use mcb_domain::protocol::{JSONRPC_VERSION, McpRequest};
+use mcb_utils::constants::FALLBACK_UNKNOWN;
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp};
 
@@ -153,7 +154,7 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
         let tool_name = tool
             .get("name")
             .and_then(|n| n.as_str())
-            .unwrap_or("unknown");
+            .unwrap_or(FALLBACK_UNKNOWN);
         let schema_opt = tool.get("inputSchema");
         assert!(schema_opt.is_some(), "Missing inputSchema");
         let schema = match schema_opt {
@@ -258,7 +259,7 @@ async fn test_response_has_jsonrpc_field(
     let (_, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
 
     assert_eq!(
-        mcp_response.jsonrpc, "2.0",
+        mcp_response.jsonrpc, JSONRPC_VERSION,
         "Response for '{method}' should have jsonrpc: \"2.0\""
     );
     Ok(())

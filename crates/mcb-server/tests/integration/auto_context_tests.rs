@@ -9,6 +9,9 @@ use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
 use mcb_server::args::{SearchArgs, SearchResource};
 use mcb_server::handlers::SearchHandler;
 use mcb_server::tools::RuntimeDefaults;
+use mcb_utils::constants::ide::{
+    IDE_CLAUDE_CODE, IDE_CURSOR, IDE_MCB_STDIO, IDE_OPENCODE, IDE_VSCODE,
+};
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use serial_test::serial;
@@ -73,22 +76,22 @@ fn parse_agent_program(output: &str) -> Option<String> {
 
 fn detect_agent_program_from_env() -> String {
     if std::env::var("CURSOR_TRACE_ID").is_ok() {
-        return "cursor".to_owned();
+        return IDE_CURSOR.to_owned();
     }
     if std::env::var("CLAUDE_CODE").is_ok() || std::env::var("CLAUDE_SESSION_ID").is_ok() {
-        return "claude-code".to_owned();
+        return IDE_CLAUDE_CODE.to_owned();
     }
     if std::env::var("OPENCODE_SESSION_ID").is_ok() {
-        return "opencode".to_owned();
+        return IDE_OPENCODE.to_owned();
     }
     if std::env::var("VSCODE_PID").is_ok()
         || std::env::var("TERM_PROGRAM")
-            .map(|v| v.eq_ignore_ascii_case("vscode"))
+            .map(|v| v.eq_ignore_ascii_case(IDE_VSCODE))
             .unwrap_or(false)
     {
-        return "vscode".to_owned();
+        return IDE_VSCODE.to_owned();
     }
-    "mcb-stdio".to_owned()
+    IDE_MCB_STDIO.to_owned()
 }
 
 #[rstest]
@@ -132,7 +135,7 @@ async fn test_ide_detection_from_env_vars() {
     );
     assert_eq!(
         parse_agent_program(&format!("{cursor_stdout}\n{cursor_stderr}")).as_deref(),
-        Some("cursor"),
+        Some(IDE_CURSOR),
         "cursor stdout was: {cursor_stdout}, stderr was: {cursor_stderr}"
     );
 
@@ -146,7 +149,7 @@ async fn test_ide_detection_from_env_vars() {
     );
     assert_eq!(
         parse_agent_program(&format!("{vscode_stdout}\n{vscode_stderr}")).as_deref(),
-        Some("vscode"),
+        Some(IDE_VSCODE),
         "vscode stdout was: {vscode_stdout}, stderr was: {vscode_stderr}"
     );
 
@@ -160,7 +163,7 @@ async fn test_ide_detection_from_env_vars() {
     );
     assert_eq!(
         parse_agent_program(&format!("{claude_stdout}\n{claude_stderr}")).as_deref(),
-        Some("claude-code"),
+        Some(IDE_CLAUDE_CODE),
         "claude stdout was: {claude_stdout}, stderr was: {claude_stderr}"
     );
 
@@ -174,7 +177,7 @@ async fn test_ide_detection_from_env_vars() {
     );
     assert_eq!(
         parse_agent_program(&format!("{fallback_stdout}\n{fallback_stderr}")).as_deref(),
-        Some("mcb-stdio"),
+        Some(IDE_MCB_STDIO),
         "fallback stdout was: {fallback_stdout}, stderr was: {fallback_stderr}"
     );
 }

@@ -1,4 +1,4 @@
-//! EdgeVec provider factory and auto-registration.
+//! `EdgeVec` provider factory and auto-registration.
 
 use std::sync::Arc;
 

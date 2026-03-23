@@ -1,4 +1,4 @@
-//! SeaORM migration provider implementation.
+//! `SeaORM` migration provider implementation.
 
 use std::any::Any;
 use std::sync::Arc;

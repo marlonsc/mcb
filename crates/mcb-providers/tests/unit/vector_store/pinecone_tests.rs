@@ -18,6 +18,7 @@ fn pinecone_provider() -> PineconeVectorStoreProvider {
         "https://test.pinecone.io",
         Duration::from_secs(5),
         reqwest::Client::new(),
+        None,
     )
 }
 

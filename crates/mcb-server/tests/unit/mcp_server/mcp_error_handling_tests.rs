@@ -157,7 +157,7 @@ fn test_format_indexing_success(
 )]
 fn test_format_search_response(
     #[case] query: &str,
-    #[case] results: Vec<mcb_domain::SearchResult>,
+    #[case] results: Vec<mcb_domain::value_objects::SearchResult>,
     #[case] duration: Duration,
     #[case] expected_is_error: bool,
     #[case] expected_content: Vec<&str>,

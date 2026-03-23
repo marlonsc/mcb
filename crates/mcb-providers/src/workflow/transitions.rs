@@ -7,6 +7,7 @@
 //! and side effects for the 8-state workflow model.
 
 use mcb_domain::entities::{TransitionTrigger, WorkflowSession, WorkflowState};
+use mcb_utils::constants::FALLBACK_UNKNOWN;
 
 type Result<T> = std::result::Result<T, String>;
 
@@ -83,7 +84,7 @@ fn resolve_transition(state: &WorkflowState, trigger: &TransitionTrigger) -> Res
         // Failed → Executing (recovery)
         (WorkflowState::Failed { .. }, TransitionTrigger::Recover) => {
             Ok(WorkflowState::Executing {
-                phase_id: "unknown".to_owned(),
+                phase_id: FALLBACK_UNKNOWN.to_owned(),
                 task_id: None,
             })
         }
@@ -128,7 +129,7 @@ fn resolve_executing_state(state: &WorkflowState, trigger: &TransitionTrigger) -
             | WorkflowState::Verifying { phase_id },
             _,
         ) => phase_id.clone(),
-        _ => "unknown".to_owned(),
+        _ => FALLBACK_UNKNOWN.to_owned(),
     };
 
     let task_id = if let TransitionTrigger::ClaimTask { task_id } = trigger {

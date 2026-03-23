@@ -37,30 +37,27 @@ mod teams;
 mod vcs;
 
 // Re-export common items for sub-modules using `super::*`
-pub(self) use async_trait::async_trait;
-pub(self) use sea_orm::{
-    ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, QueryFilter,
-};
+use async_trait::async_trait;
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter};
 
-pub(self) use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
-pub(self) use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
-pub(self) use mcb_domain::entities::project::ProjectIssue;
-pub(self) use mcb_domain::entities::repository::{Branch, Repository};
-pub(self) use mcb_domain::entities::team::TeamMember;
-pub(self) use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
-pub(self) use mcb_domain::entities::{ApiKey, Organization, Team, User};
-pub(self) use mcb_domain::error::{Error, Result};
-pub(self) use mcb_domain::ports::{
+use mcb_domain::entities::issue::{IssueComment, IssueLabel, IssueLabelAssignment};
+use mcb_domain::entities::plan::{Plan, PlanReview, PlanVersion};
+use mcb_domain::entities::project::ProjectIssue;
+use mcb_domain::entities::repository::{Branch, Repository};
+use mcb_domain::entities::team::TeamMember;
+use mcb_domain::entities::worktree::{AgentWorktreeAssignment, Worktree};
+use mcb_domain::entities::{ApiKey, Organization, Team, User};
+use mcb_domain::error::{Error, Result};
+use mcb_domain::ports::{
     AgentAssignmentManager, ApiKeyRegistry, IssueCommentRegistry, IssueLabelAssignmentManager,
     IssueLabelRegistry, IssueRegistry, OrgRegistry, PlanRegistry, PlanReviewRegistry,
     PlanVersionRegistry, TeamMemberManager, TeamRegistry, UserRegistry, VcsBranchRegistry,
     VcsRepositoryRegistry, VcsWorktreeRegistry,
 };
 
-pub(self) use crate::database::seaorm::entities::{
+use crate::database::seaorm::entities::{
     agent_worktree_assignment, api_key, branch, issue_comment, issue_label, issue_label_assignment,
     organization, plan, plan_review, plan_version, project_issue, repository, team, team_member,
     user, worktree,
 };
-pub(self) use common::db_err;
-pub(self) use entity_repository::SeaOrmEntityRepository;
+use common::db_err;

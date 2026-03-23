@@ -719,19 +719,19 @@ impl Validator for DeclarativeValidator {
             });
             (
                 t_metrics.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "Metrics validation thread panicked", "");
+                    mcb_domain::warn!("validate", "Metrics validation thread panicked");
                     Vec::new()
                 }),
                 t_ast.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "AST validation thread panicked", "");
+                    mcb_domain::warn!("validate", "AST validation thread panicked");
                     Ok(Vec::new())
                 }),
                 t_regex.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "Regex validation thread panicked", "");
+                    mcb_domain::warn!("validate", "Regex validation thread panicked");
                     Vec::new()
                 }),
                 t_path.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "Path validation thread panicked", "");
+                    mcb_domain::warn!("validate", "Path validation thread panicked");
                     Vec::new()
                 }),
             )

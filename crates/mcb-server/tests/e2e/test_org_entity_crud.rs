@@ -1,10 +1,10 @@
 use crate::utils::test_fixtures::create_test_mcp_server;
-use mcb_domain::test_utils::{
+use mcb_domain::utils::tests::mcp_assertions::extract_text;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::tests::utils::{
     create_test_admin_user, create_test_organization, create_test_team, create_test_team_member,
     create_test_user_with,
 };
-use mcb_domain::utils::tests::mcp_assertions::extract_text;
-use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
