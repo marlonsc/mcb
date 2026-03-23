@@ -6,6 +6,7 @@ ignore = [
     "RUSTSEC-2023-0071",  # rsa timing attack - NO FIX AVAILABLE
     "CVE-2023-49092",     # rsa timing attack (same as above)
     "RUSTSEC-2025-0134",  # rustls-pemfile unmaintained - transitive via async-nats/milvus
+    "RUSTSEC-2026-0044",  # aws-lc-sys X.509 bypass - transitive via rustls; upgrade blocked by vendored deps
 ]
 
 [bans]

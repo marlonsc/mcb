@@ -46,7 +46,9 @@ audit: ## Security audit (cargo-audit)
 		--ignore RUSTSEC-2023-0089 \
 		--ignore RUSTSEC-2025-0119 \
 		--ignore RUSTSEC-2024-0436 \
-		--ignore RUSTSEC-2025-0134
+		--ignore RUSTSEC-2025-0134 \
+		--ignore CVE-2023-49092 \
+		--ignore RUSTSEC-2026-0044
 	@cargo udeps --workspace 2>/dev/null || echo "Note: cargo-udeps not installed"
 
 coverage: ## Code coverage (lcov output)
