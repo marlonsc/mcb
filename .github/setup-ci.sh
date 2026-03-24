@@ -109,18 +109,14 @@ Darwin)
 	if ! find /usr/local/lib /opt/homebrew/lib -name 'libonnxruntime*.dylib' 2>/dev/null | grep -q .; then
 		ORT_ARCHIVE="onnxruntime-osx-universal2-${ORT_VERSION}.tgz"
 		ORT_URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ORT_ARCHIVE}"
-		ORT_SHA256="${ORT_SHA256_MACOS:-}"
+		ORT_SHA256="${ORT_SHA256_MACOS:-49ae8e3a66ccb18d98ad3fe7f5906b6d7887df8a5edd40f49eb2b14e20885809}"
 		ORT_TMP="/tmp/${ORT_ARCHIVE}"
 		echo "Installing ONNX Runtime ${ORT_VERSION} (macOS universal2)..." >&2
 		curl -sSfL "$ORT_URL" -o "$ORT_TMP"
-		if [[ -n "$ORT_SHA256" ]]; then
-			verify_ort_checksum "$ORT_TMP" "$ORT_SHA256"
-		else
-			echo "Warning: ORT_SHA256_MACOS not set, skipping checksum verification." >&2
-			echo "Actual SHA256: $(shasum -a 256 "$ORT_TMP" | awk '{print $1}')" >&2
-		fi
+		verify_ort_checksum "$ORT_TMP" "$ORT_SHA256"
 		tar -xzf "$ORT_TMP" -C /tmp
 		ORT_DIR="/tmp/onnxruntime-osx-universal2-${ORT_VERSION}"
+		sudo mkdir -p /usr/local/lib
 		sudo cp "${ORT_DIR}/lib/libonnxruntime.${ORT_VERSION}.dylib" /usr/local/lib/
 		sudo ln -sf "/usr/local/lib/libonnxruntime.${ORT_VERSION}.dylib" /usr/local/lib/libonnxruntime.dylib
 		# Set DYLD_LIBRARY_PATH for the current CI run
