@@ -45,7 +45,9 @@ MINGW* | MSYS* | CYGWIN*)
 			echo "ERROR: neither sha256sum nor shasum is available to verify protoc download." >&2
 			exit 1
 		fi
-		if [[ "${ACTUAL_SHA256,,}" != "${PROTOC_SHA256,,}" ]]; then
+		ACTUAL_SHA256=$(echo "$ACTUAL_SHA256" | tr '[:upper:]' '[:lower:]')
+		PROTOC_SHA256=$(echo "$PROTOC_SHA256" | tr '[:upper:]' '[:lower:]')
+		if [[ "$ACTUAL_SHA256" != "$PROTOC_SHA256" ]]; then
 			echo "ERROR: protoc checksum mismatch. expected=${PROTOC_SHA256} got=${ACTUAL_SHA256}" >&2
 			exit 1
 		fi
@@ -81,7 +83,9 @@ verify_ort_checksum() {
 		echo "ERROR: neither sha256sum nor shasum is available to verify ONNX Runtime download." >&2
 		exit 1
 	fi
-	if [[ "${actual,,}" != "${expected,,}" ]]; then
+	actual=$(echo "$actual" | tr '[:upper:]' '[:lower:]')
+	expected=$(echo "$expected" | tr '[:upper:]' '[:lower:]')
+	if [[ "$actual" != "$expected" ]]; then
 		echo "ERROR: ONNX Runtime checksum mismatch. expected=${expected} got=${actual}" >&2
 		exit 1
 	fi
