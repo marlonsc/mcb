@@ -65,7 +65,12 @@ fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
         .env("LOCO_ENV", "test")
         .env(
             "DATABASE_URL",
-            format!("sqlite://{}?mode=rwc", db_path.display()),
+            // Use forward slashes — backslashes in Windows paths break YAML
+            // parsing when Tera renders the template (e.g. \U → unicode escape).
+            format!(
+                "sqlite://{}?mode=rwc",
+                db_path.display().to_string().replace('\\', "/")
+            ),
         )
         .env("RUST_LOG", "info")
         .stderr(Stdio::piped())

@@ -255,10 +255,26 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
+      - name: Pre-download FastEmbed model
+        run: |
+          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
+            echo "Cache miss — downloading FastEmbed model..."
+            pip install --quiet huggingface_hub
+            python3 -c "
+          from huggingface_hub import snapshot_download
+          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
+          "
+          else
+            echo "FastEmbed model cache restored."
+          fi
       - name: Startup Smoke (DDL/Init)
         run: make test SCOPE=startup THREADS=4
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
       - name: Full Test Suite
         run: make test THREADS=4
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
 
   # ===========================================================================
   # Stage 2b — Extended Testing (after linux stable, all parallel)
@@ -343,7 +359,24 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - run: make test THREADS=4
+      - name: Pre-download FastEmbed model
+        shell: bash
+        run: |
+          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
+            echo "Cache miss — downloading FastEmbed model..."
+            pip install --quiet huggingface_hub
+            PYTHON=$(command -v python3 || command -v python)
+            $PYTHON -c "
+          from huggingface_hub import snapshot_download
+          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
+          "
+          else
+            echo "FastEmbed model cache restored."
+          fi
+      - name: Run tests
+        run: make test THREADS=4
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
 
   validate:
     name: Architecture Validation
@@ -411,7 +444,7 @@ jobs:
       github.event_name == 'workflow_dispatch') &&
       needs.classify.outputs.is_fork == 'false'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
@@ -425,7 +458,29 @@ jobs:
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
-      - run: make coverage THREADS=4
+      - name: Cache fastembed models (coverage)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: .cache/mcb/fastembed
+          key: fastembed-${{ runner.os }}-allminilml6v2-v1
+          restore-keys: |
+            fastembed-${{ runner.os }}-
+      - name: Pre-download FastEmbed model
+        run: |
+          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
+            echo "Cache miss — downloading FastEmbed model..."
+            pip install --quiet huggingface_hub
+            python3 -c "
+          from huggingface_hub import snapshot_download
+          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
+          "
+          else
+            echo "FastEmbed model cache restored."
+          fi
+      - name: Run coverage
+        run: make coverage THREADS=4
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
         with:
           files: ./coverage/lcov.info

@@ -92,15 +92,16 @@ fn get_mcb_path() -> PathBuf {
 fn create_test_command() -> Command {
     let mcb_path = get_mcb_path();
     let mut cmd = Command::new(mcb_path);
-    let unique_db = format!(
-        "/tmp/mcb-stdio-{}-{}.db",
+    let unique_db = std::env::temp_dir().join(format!(
+        "mcb-stdio-{}-{}.db",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_nanos()
-    );
-    register_temp_db(unique_db.clone());
+    ));
+    let unique_db_str = unique_db.display().to_string().replace('\\', "/");
+    register_temp_db(unique_db_str.clone());
     // Run from workspace root so Loco finds config/test.yaml
     let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     cmd.current_dir(&workspace_root);
@@ -108,7 +109,7 @@ fn create_test_command() -> Command {
     cmd.arg("--stdio");
     // Use Loco test environment (config/test.yaml with Tera template for DATABASE_URL)
     cmd.env("LOCO_ENV", "test");
-    cmd.env("DATABASE_URL", format!("sqlite://{unique_db}?mode=rwc"));
+    cmd.env("DATABASE_URL", format!("sqlite://{unique_db_str}?mode=rwc"));
     cmd
 }
 
