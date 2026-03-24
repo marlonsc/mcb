@@ -14,7 +14,7 @@ use std::path::PathBuf;
 use serde::Serialize;
 
 use crate::Severity;
-use crate::traits::violation::Violation;
+use mcb_domain::ports::validation::Violation;
 
 /// Report containing all violations with summary
 #[derive(Debug, Clone, Serialize)]
@@ -46,7 +46,7 @@ pub struct GenericSummary {
     pub passed: bool,
 }
 
-pub use mcb_domain::ports::ViolationEntry;
+use mcb_domain::ports::ViolationEntry;
 
 impl GenericReporter {
     /// Create a domain violation entry from a violation trait object
@@ -70,7 +70,7 @@ fn violation_location(v: &ViolationEntry) -> String {
     match (&v.file, v.line) {
         (Some(file), Some(line)) => format!("{file}:{line}"),
         (Some(file), None) => file.clone(),
-        (None, _) => "unknown".to_owned(),
+        (None, _) => mcb_utils::constants::FALLBACK_UNKNOWN.to_owned(),
     }
 }
 

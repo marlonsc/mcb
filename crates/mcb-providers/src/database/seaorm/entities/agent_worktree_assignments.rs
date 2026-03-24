@@ -3,25 +3,34 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an agent worktree assignment.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "agent_worktree_assignments")]
 pub struct Model {
+    /// Unique identifier for the assignment.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Identifier of the agent session.
     #[sea_orm(column_type = "Text")]
     pub agent_session_id: String,
+    /// Identifier of the worktree assigned.
     #[sea_orm(column_type = "Text")]
     pub worktree_id: String,
+    /// Timestamp when the worktree was assigned.
     pub assigned_at: i64,
+    /// Optional timestamp when the worktree was released.
     pub released_at: Option<i64>,
+    /// Optional context about the assignment origin.
     #[sea_orm(column_type = "Text", nullable)]
     pub origin_context: Option<String>,
 }
 
+/// Relations for the agent worktree assignment model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the agent worktree assignment model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

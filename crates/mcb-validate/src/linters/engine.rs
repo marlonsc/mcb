@@ -96,7 +96,7 @@ impl LinterEngine {
             // Clippy mappings
             "clippy::unwrap_used" => Some("QUAL001"), // Unwrap usage
 
-            _ => None,
+            _other => None,
         }
     }
 

@@ -5,12 +5,12 @@ It is the **single source of truth** for all AI agents. See [`AGENTS.md`](AGENTS
 
 ## Project
 
-MCB (Memory Context Browser) — a high-performance MCP server giving AI coding agents persistent memory, semantic code search, and architecture validation. Rust edition 2024, stable toolchain, MSRV 1.92. Version 0.2.1-dev.
+MCB (Memory Context Browser) — a high-performance MCP server giving AI coding agents persistent memory, semantic code search, and architecture validation. Rust edition 2024, stable toolchain, MSRV 1.92. Version 0.3.1.
 
 ## Build & Quality Commands
 
 ```bash
-make build                    # Debug build (RELEASE=1 for release)
+make build                    # Release build (default); RELEASE=0 for debug
 make test                     # All workspace tests (1700+)
 make test SCOPE=unit          # Unit tests only (fast feedback)
 make test SCOPE=golden        # Golden acceptance tests
@@ -19,7 +19,6 @@ make test SCOPE=integration   # Integration tests
 make test SCOPE=e2e           # Playwright browser tests
 make lint                     # clippy + fmt check (-D warnings)
 make lint FIX=1               # Auto-fix fmt + clippy
-make lint MCB_CI=1            # CI-strict (Rust 2024 lints)
 make validate                 # Architecture rule enforcement (QUICK=1 for fast)
 make check                    # Full gate: fmt --check + lint + test + validate
 make audit                    # cargo-audit + cargo-udeps
@@ -37,11 +36,12 @@ Clean Architecture with strict inward-only dependency flow, enforced at compile 
 
 ```
 mcb (CLI facade binary)
-  -> mcb-server       (MCP protocol, Rocket HTTP, handlers, admin UI)
+  -> mcb-server       (MCP protocol, Axum HTTP, handlers, admin UI)
     -> mcb-infrastructure (DI/linkme+Handle, config/Loco YAML, cache/Moka, logging/tracing)
       -> mcb-domain     (entities, port traits, errors — ZERO infra deps)
   -> mcb-providers    (adapters: embedding, vector store, DB, git, language parsers)
   -> mcb-validate     (rule engine, AST analysis, metrics — dev-only)
+  -> mcb-utils        (shared constants, helpers — leaf crate, no mcb-* deps)
 ```
 
 ### Dependency Rules

@@ -4,17 +4,16 @@
 //! Maven project detector.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
+use mcb_domain::ports::ProjectDetector;
+use mcb_domain::registry::ProjectDetectorConfig;
 use quick_xml::Reader;
 use quick_xml::events::Event;
-use tokio::fs::read_to_string;
 
-use super::PROJECT_DETECTORS;
+use super::common::read_file_opt;
 
 /// Maven project detector
 pub struct MavenDetector;
@@ -63,7 +62,7 @@ impl MavenDetector {
             match reader.read_event() {
                 Ok(Event::Start(e)) => {
                     let name = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                    current_path.push(name.clone());
+                    current_path.push(name);
 
                     if Self::path_matches(&current_path, &["project", "dependencies", "dependency"])
                     {
@@ -158,16 +157,8 @@ impl ProjectDetector for MavenDetector {
             return Ok(None);
         }
 
-        let content = match read_to_string(&pom_path).await {
-            Ok(c) => c,
-            Err(e) => {
-                mcb_domain::debug!(
-                    "maven",
-                    "Failed to read pom.xml",
-                    &format!("path = {pom_path:?}, error = {e}")
-                );
-                return Ok(None);
-            }
+        let Some(content) = read_file_opt(&pom_path, "maven").await else {
+            return Ok(None);
         };
 
         match Self::parse_pom(&content) {
@@ -192,19 +183,9 @@ impl ProjectDetector for MavenDetector {
     }
 }
 
-/// Factory function for creating Maven detector instances.
-fn maven_factory(
-    config: &ProjectDetectorConfig,
-) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
-    Ok(Arc::new(MavenDetector::new(config)))
-}
-
-// linkme distributed_slice uses #[link_section] internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(PROJECT_DETECTORS)]
-static MAVEN_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
-    name: "maven",
-    description: "Detects Maven projects with pom.xml",
-    marker_files: &["pom.xml"],
-    build: maven_factory,
-};
+mcb_domain::register_project_detector!(
+    "maven",
+    "Detects Maven projects with pom.xml",
+    &["pom.xml"],
+    |_config| Ok(std::sync::Arc::new(MavenDetector))
+);

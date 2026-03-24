@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 mod tests {
-    use mcb_domain::SearchResult;
+    use mcb_domain::value_objects::SearchResult;
     use rstest::rstest;
 
     #[rstest]

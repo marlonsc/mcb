@@ -9,10 +9,10 @@
 use std::path::PathBuf;
 use std::str::Chars;
 
-use super::constants::{OPERATOR_CHARS, PUNCTUATION_CHARS};
 use super::fingerprint::{FingerprintMatch, Token, TokenType};
 use super::thresholds::{DuplicationThresholds, DuplicationType};
-use super::utils::lines_overlap;
+use mcb_utils::constants::validate::{OPERATOR_CHARS, PUNCTUATION_CHARS};
+use mcb_utils::utils::range::lines_overlap;
 
 /// Result of comparing two code fragments
 #[derive(Debug, Clone)]
@@ -406,5 +406,5 @@ pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
 
 /// Check if a word is a common keyword (simplified, multi-language)
 fn is_keyword(word: &str) -> bool {
-    crate::constants::duplication::DUPLICATION_KEYWORDS.contains(&word)
+    mcb_utils::constants::validate::DUPLICATION_KEYWORDS.contains(&word)
 }

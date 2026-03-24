@@ -3,26 +3,35 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an issue label.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "issue_labels")]
 pub struct Model {
+    /// Unique identifier for the issue label.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the organization this label belongs to.
     #[sea_orm(column_type = "Text")]
     pub org_id: String,
+    /// Reference to the project this label belongs to.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Name of the label.
     #[sea_orm(column_type = "Text")]
     pub name: String,
+    /// Hex color code of the label.
     #[sea_orm(column_type = "Text")]
     pub color: String,
+    /// Timestamp when the label was created.
     pub created_at: i64,
 }
 
+/// Relations for the issue label model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the issue label model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

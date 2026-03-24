@@ -1,14 +1,14 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use super::constants::MIN_STRING_MATCH_ARMS_FOR_DISPATCH;
 use crate::Result;
 use crate::Severity;
 use crate::ValidationConfig;
-use crate::constants::common::SHORT_PREVIEW_LENGTH;
 use crate::pattern_registry::required_pattern;
 use crate::utils::source::{count_match_arms, count_matches_in_block, for_each_rust_file};
 use crate::validators::solid::violation::SolidViolation;
+use mcb_utils::constants::validate::MIN_STRING_MATCH_ARMS_FOR_DISPATCH;
+use mcb_utils::constants::validate::SHORT_PREVIEW_LENGTH;
 
 /// OCP: Check for excessive match statements
 ///
@@ -23,6 +23,9 @@ pub fn validate_ocp(
 
     for_each_rust_file(config, |path, lines| {
         for (line_num, line) in lines.iter().enumerate() {
+            if line.trim().starts_with("//") {
+                continue;
+            }
             if match_pattern.is_match(line) {
                 let arm_count = count_match_arms(&lines, line_num)?;
 
@@ -58,6 +61,9 @@ pub fn validate_string_dispatch(config: &ValidationConfig) -> Result<Vec<SolidVi
     for_each_rust_file(config, |path, lines| {
         for (line_num, line) in lines.iter().enumerate() {
             let trimmed = line.trim();
+            if trimmed.starts_with("//") {
+                continue;
+            }
 
             if string_match_pattern.is_match(line) {
                 let string_arm_count = count_matches_in_block(&lines, line_num, string_arm_pattern);

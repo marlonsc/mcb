@@ -1,6 +1,9 @@
-use crate::utils::test_fixtures::*;
+use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::utils::tests::mcp_assertions::extract_text;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{PlanEntityAction, PlanEntityArgs, PlanEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
+use rstest::rstest;
 use serde_json::json;
 
 fn base_args(action: PlanEntityAction, resource: PlanEntityResource) -> PlanEntityArgs {
@@ -17,14 +20,14 @@ fn base_args(action: PlanEntityAction, resource: PlanEntityResource) -> PlanEnti
 }
 
 fn result_json(res: &rmcp::model::CallToolResult) -> serde_json::Value {
-    let text = golden_content_to_string(res);
+    let text = extract_text(res);
     serde_json::from_str(&text)
         .unwrap_or_else(|e| panic!("response should be valid JSON: {text}; error: {e}"))
 }
 
 fn test_plan_payload(project_id: &str, title: &str) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "org_id": "",
         "project_id": project_id,
         "title": title,
@@ -38,11 +41,11 @@ fn test_plan_payload(project_id: &str, title: &str) -> serde_json::Value {
 
 fn test_version_payload(plan_id: &str, version_number: i64) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "org_id": "",
         "plan_id": plan_id,
         "version_number": version_number,
-        "content_json": json!({"steps": ["step-1", "step-2"]}).to_string(),
+        "content_json": "{\"steps\":[\"step-1\",\"step-2\"]}",
         "change_summary": format!("Version {version_number} changes"),
         "created_by": "test-user",
         "created_at": 0
@@ -51,7 +54,7 @@ fn test_version_payload(plan_id: &str, version_number: i64) -> serde_json::Value
 
 fn test_review_payload(plan_version_id: &str) -> serde_json::Value {
     json!({
-        "id": uuid::Uuid::new_v4().to_string(),
+        "id": uuid::Uuid::new_v4().clone(),
         "org_id": "",
         "plan_version_id": plan_version_id,
         "reviewer_id": "reviewer-user",
@@ -69,7 +72,7 @@ async fn create_plan(
     let payload = test_plan_payload(project_id, title);
 
     let mut args = base_args(PlanEntityAction::Create, PlanEntityResource::Plan);
-    args.project_id = Some(project_id.to_string());
+    args.project_id = Some(project_id.to_owned());
     args.data = Some(payload);
 
     let result = server.plan_entity_handler().handle(Parameters(args)).await;
@@ -110,9 +113,10 @@ async fn create_review(
 // Plan CRUD (4 tests)
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-plan-create-get-proj";
 
     let created = create_plan(&server, project_id, "Golden Plan Create Get").await;
@@ -120,7 +124,7 @@ async fn golden_plan_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "created plan id must be present");
 
     let mut get_args = base_args(PlanEntityAction::Get, PlanEntityResource::Plan);
@@ -143,18 +147,20 @@ async fn golden_plan_create_and_get() {
         body.get("title").and_then(serde_json::Value::as_str),
         Some("Golden Plan Create Get")
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-plan-list-proj";
 
     let _ = create_plan(&server, project_id, "Golden Plan List 1").await;
     let _ = create_plan(&server, project_id, "Golden Plan List 2").await;
 
     let mut list_args = base_args(PlanEntityAction::List, PlanEntityResource::Plan);
-    list_args.project_id = Some(project_id.to_string());
+    list_args.project_id = Some(project_id.to_owned());
     let list_result = server
         .plan_entity_handler()
         .handle(Parameters(list_args))
@@ -170,11 +176,13 @@ async fn golden_plan_list() {
         count >= 2,
         "plan list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_update() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_update() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-plan-update-proj";
 
     let created = create_plan(&server, project_id, "Golden Plan Update").await;
@@ -182,7 +190,7 @@ async fn golden_plan_update() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "created plan id must be present");
 
     let mut updated = created.clone();
@@ -215,11 +223,13 @@ async fn golden_plan_update() {
         body.get("title").and_then(serde_json::Value::as_str),
         Some("Golden Plan Updated Title")
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-plan-delete-proj";
 
     let created = create_plan(&server, project_id, "Golden Plan Delete").await;
@@ -227,7 +237,7 @@ async fn golden_plan_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "created plan id must be present");
 
     let mut delete_args = base_args(PlanEntityAction::Delete, PlanEntityResource::Plan);
@@ -248,15 +258,17 @@ async fn golden_plan_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "plan get should fail after delete");
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
 // PlanVersion CRUD (3 tests)
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_version_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_version_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-version-create-get-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Version Create Get").await;
@@ -264,7 +276,7 @@ async fn golden_plan_version_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let created = create_version(&server, &plan_id, 1).await;
@@ -272,7 +284,7 @@ async fn golden_plan_version_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!version_id.is_empty(), "created version id must be present");
 
     let mut get_args = base_args(PlanEntityAction::Get, PlanEntityResource::Version);
@@ -295,11 +307,13 @@ async fn golden_plan_version_create_and_get() {
         body.get("plan_id").and_then(serde_json::Value::as_str),
         Some(plan_id.as_str())
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_version_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_version_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-version-list-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Version List").await;
@@ -307,7 +321,7 @@ async fn golden_plan_version_list() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let _ = create_version(&server, &plan_id, 1).await;
@@ -330,11 +344,13 @@ async fn golden_plan_version_list() {
         count >= 2,
         "version list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_version_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_version_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-version-delete-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Version Delete").await;
@@ -342,7 +358,7 @@ async fn golden_plan_version_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let created = create_version(&server, &plan_id, 1).await;
@@ -350,7 +366,7 @@ async fn golden_plan_version_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!version_id.is_empty(), "version id must be present");
 
     // Version delete is not in the handler dispatch — use the generic unsupported path
@@ -365,7 +381,7 @@ async fn golden_plan_version_delete() {
     // If delete is unsupported for versions, verify the error
     if delete_result.is_err() {
         // Delete not supported for versions — that's expected
-        return;
+        return Ok(());
     }
 
     // If delete succeeded, verify get fails
@@ -376,15 +392,17 @@ async fn golden_plan_version_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "version get should fail after delete");
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
 // PlanReview CRUD (3 tests)
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_review_create_and_get() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_review_create_and_get() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-review-create-get-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Review Create Get").await;
@@ -392,7 +410,7 @@ async fn golden_plan_review_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let version = create_version(&server, &plan_id, 1).await;
@@ -400,7 +418,7 @@ async fn golden_plan_review_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!version_id.is_empty(), "version id must be present");
 
     let created = create_review(&server, &version_id).await;
@@ -408,7 +426,7 @@ async fn golden_plan_review_create_and_get() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!review_id.is_empty(), "created review id must be present");
 
     let mut get_args = base_args(PlanEntityAction::Get, PlanEntityResource::Review);
@@ -432,11 +450,13 @@ async fn golden_plan_review_create_and_get() {
             .and_then(serde_json::Value::as_str),
         Some(version_id.as_str())
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_review_list() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_review_list() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-review-list-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Review List").await;
@@ -444,7 +464,7 @@ async fn golden_plan_review_list() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let version = create_version(&server, &plan_id, 1).await;
@@ -452,7 +472,7 @@ async fn golden_plan_review_list() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!version_id.is_empty(), "version id must be present");
 
     let _ = create_review(&server, &version_id).await;
@@ -486,11 +506,13 @@ async fn golden_plan_review_list() {
         count >= 2,
         "review list should have at least 2 results, got {count}"
     );
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_review_delete() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_review_delete() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
     let project_id = "golden-review-delete-proj";
 
     let plan = create_plan(&server, project_id, "Plan for Review Delete").await;
@@ -498,7 +520,7 @@ async fn golden_plan_review_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!plan_id.is_empty(), "plan id must be present");
 
     let version = create_version(&server, &plan_id, 1).await;
@@ -506,7 +528,7 @@ async fn golden_plan_review_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!version_id.is_empty(), "version id must be present");
 
     let created = create_review(&server, &version_id).await;
@@ -514,7 +536,7 @@ async fn golden_plan_review_delete() {
         .get("id")
         .and_then(serde_json::Value::as_str)
         .unwrap_or("")
-        .to_string();
+        .to_owned();
     assert!(!review_id.is_empty(), "review id must be present");
 
     // Review delete may not be in the handler dispatch
@@ -528,7 +550,7 @@ async fn golden_plan_review_delete() {
     // If delete is unsupported for reviews, verify the error
     if delete_result.is_err() {
         // Delete not supported for reviews — that's expected
-        return;
+        return Ok(());
     }
 
     // If delete succeeded, verify get fails
@@ -539,27 +561,32 @@ async fn golden_plan_review_delete() {
         .handle(Parameters(get_args))
         .await;
     assert!(get_result.is_err(), "review get should fail after delete");
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
 // Error paths (2 tests)
 // ---------------------------------------------------------------------------
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_create_missing_data() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_create_missing_data() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let args = base_args(PlanEntityAction::Create, PlanEntityResource::Plan);
     let result = server.plan_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "plan create without data should fail");
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn golden_plan_get_nonexistent() {
-    let (server, _td) = create_test_mcp_server().await;
+async fn golden_plan_get_nonexistent() -> TestResult {
+    let (server, _td) = create_test_mcp_server().await?;
 
     let mut args = base_args(PlanEntityAction::Get, PlanEntityResource::Plan);
-    args.id = Some("nonexistent-plan-id-00000000".to_string());
+    args.id = Some("nonexistent-plan-id-00000000".to_owned());
     let result = server.plan_entity_handler().handle(Parameters(args)).await;
     assert!(result.is_err(), "plan get with fake id should fail");
+    Ok(())
 }

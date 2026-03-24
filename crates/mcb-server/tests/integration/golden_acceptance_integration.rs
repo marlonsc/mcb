@@ -11,10 +11,9 @@
 //! 3. Search returns results matching `expected_files`
 //! 4. The architecture works end-to-end without external dependencies
 //!
-//! Uses `extern crate mcb_providers` to force linkme registration.
+//! Uses DI registries in mcb-domain for provider resolution.
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
+// Providers are resolved via DI registries in mcb-domain
 
 use std::collections::HashMap;
 use std::fs;
@@ -24,11 +23,12 @@ use std::time::{Duration, Instant};
 use mcb_domain::entities::CodeChunk;
 // Note: EmbeddingProvider/VectorStoreProvider traits are used via ctx.embedding_handle().get()
 use mcb_domain::value_objects::CollectionId;
+use mcb_utils::constants::FALLBACK_UNKNOWN;
 use rstest::rstest;
 use serde_json::json;
 
-use crate::utils::collection::unique_collection;
 use crate::utils::test_fixtures::shared_app_context;
+use mcb_domain::utils::tests::collection::unique_collection;
 
 /// Test query structure matching the JSON fixture format
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -90,7 +90,7 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
                 let file_name = path
                     .file_name()
                     .and_then(|n| n.to_str())
-                    .unwrap_or("unknown")
+                    .unwrap_or(FALLBACK_UNKNOWN)
                     .to_owned();
 
                 let line_count = content.lines().count();
@@ -115,7 +115,7 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
 // Fixture Validation Tests (always run)
 // ============================================================================
 
-#[test]
+#[rstest]
 fn test_golden_queries_fixture_valid() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_golden_queries()?;
 
@@ -169,7 +169,7 @@ fn test_config_values_reasonable(
     Ok(())
 }
 
-#[test]
+#[rstest]
 fn test_query_ids_unique() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_golden_queries()?;
     let mut seen = std::collections::HashSet::new();
@@ -184,7 +184,7 @@ fn test_query_ids_unique() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[test]
+#[rstest]
 fn test_sample_codebase_files_exist() {
     let chunks = read_sample_codebase_files();
 
@@ -231,9 +231,10 @@ fn test_sample_codebase_contains_expected_file(#[case] expected_file: &str) {
 // Real Provider Tests (using FastEmbed + EdgeVec)
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();
@@ -302,9 +303,10 @@ async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();
@@ -398,9 +400,10 @@ async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std
 /// semantic-like matching without requiring external embedding services.
 /// The provider generates vectors based on domain keywords
 /// (embedding, `vector_store`, handler, cache, di, error, chunking, etc.)
+#[rstest]
 #[tokio::test]
 async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std::error::Error>> {
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();
@@ -508,6 +511,7 @@ async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error::Error>> {
     // This test validates the complete golden test workflow:
@@ -518,7 +522,7 @@ async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error
     // 5. Search with all golden queries
     // 6. Validate expected_files found
 
-    let ctx = shared_app_context();
+    let ctx = shared_app_context()?;
 
     let embedding = ctx.embedding_provider();
     let vector_store = ctx.vector_store_provider();

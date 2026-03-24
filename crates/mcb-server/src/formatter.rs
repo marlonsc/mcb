@@ -11,14 +11,14 @@ use std::fmt::Write;
 use std::path::Path;
 use std::time::Duration;
 
-use mcb_domain::SearchResult;
 use mcb_domain::ports::ValidationReport;
 use mcb_domain::ports::{IndexingResult, IndexingStatus};
+use mcb_domain::value_objects::SearchResult;
 use mcb_domain::{error, info};
 use rmcp::ErrorData as McpError;
 use rmcp::model::{CallToolResult, Content};
 
-use crate::constants::display::{CODE_PREVIEW_MAX_LINES, SEARCH_SLOW_THRESHOLD_MS};
+use mcb_utils::constants::{display::CODE_PREVIEW_MAX_LINES, search::SEARCH_SLOW_THRESHOLD_MS};
 use serde::Serialize;
 
 /// Response formatter for MCP server tools
@@ -310,10 +310,10 @@ fn build_indexing_success_message(
 }
 
 fn build_indexing_started_message(result: &IndexingResult, path: &Path) -> String {
-    let operation_id = result
-        .operation_id
-        .as_ref()
-        .map_or_else(|| "N/A".to_owned(), mcb_domain::OperationId::as_str);
+    let operation_id = result.operation_id.as_ref().map_or_else(
+        || "N/A".to_owned(),
+        mcb_domain::value_objects::OperationId::as_str,
+    );
 
     format!(
         "🚀 **Indexing Started**\n\n\

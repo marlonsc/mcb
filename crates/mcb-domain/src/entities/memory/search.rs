@@ -78,7 +78,7 @@ impl std::fmt::Debug for MemoryFilter {
             .field(
                 "session_id_present",
                 &if self.session_id.is_some() {
-                    "REDACTED"
+                    mcb_utils::constants::REDACTED
                 } else {
                     "NONE"
                 },
@@ -86,7 +86,7 @@ impl std::fmt::Debug for MemoryFilter {
             .field(
                 "parent_session_id_present",
                 &if self.parent_session_id.is_some() {
-                    "REDACTED"
+                    mcb_utils::constants::REDACTED
                 } else {
                     "NONE"
                 },

@@ -6,37 +6,25 @@ use super::memory::{ExecutionMetadata, OriginContext, QualityGateResult};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-/// Categorizes the type of observation recorded.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
-pub enum ObservationType {
-    /// Represents a code snippet or file content.
-    Code,
-    /// Represents a recorded decision.
-    Decision,
-    /// Represents general project context or information.
-    Context,
-    /// Represents an error or exception.
-    Error,
-    /// Represents a summary or aggregation of data.
-    Summary,
-    /// Represents an execution trace or log.
-    Execution,
-    /// Represents a quality gate check result.
-    QualityGate,
+crate::define_string_enum! {
+    /// Categorizes the type of observation recorded.
+    pub enum ObservationType [strum = "snake_case"] {
+        /// Represents a code snippet or file content.
+        Code,
+        /// Represents a recorded decision.
+        Decision,
+        /// Represents general project context or information.
+        Context,
+        /// Represents an error or exception.
+        Error,
+        /// Represents a summary or aggregation of data.
+        Summary,
+        /// Represents an execution trace or log.
+        Execution,
+        /// Represents a quality gate check result.
+        QualityGate,
+    }
 }
-
-crate::impl_as_str_from_as_ref!(ObservationType);
 
 /// Metadata associated with an observation.
 ///
@@ -72,7 +60,7 @@ impl std::fmt::Debug for ObservationMetadata {
             .field(
                 "session_id",
                 &if self.session_id.is_some() {
-                    "REDACTED"
+                    mcb_utils::constants::REDACTED
                 } else {
                     "NONE"
                 },
@@ -92,7 +80,7 @@ impl Default for ObservationMetadata {
     /// Creates a new `ObservationMetadata` with a generated UUID and all optional fields set to `None`.
     fn default() -> Self {
         Self {
-            id: crate::utils::id::generate().to_string(),
+            id: mcb_utils::utils::id::generate().to_string(),
             session_id: None,
             repo_id: None,
             file_path: None,

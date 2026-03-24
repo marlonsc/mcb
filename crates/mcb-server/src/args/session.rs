@@ -6,6 +6,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
+use crate::args::schema_helpers::ObjectDataSchema;
+
 tool_enum! {
 /// Actions available for session management operations
 pub enum SessionAction {
@@ -43,7 +45,7 @@ pub struct SessionArgs {
     /// Data payload for create/update (JSON object).
     #[schemars(
         description = "Data payload for create/update. create requires model and accepts session_summary_id?, agent_type? (or top-level args.agent_type), parent_session_id?, prompt_summary?, project_id?, worktree_id?; update accepts mutable session fields",
-        with = "serde_json::Value"
+        with = "ObjectDataSchema"
     )]
     pub data: Option<serde_json::Value>,
 

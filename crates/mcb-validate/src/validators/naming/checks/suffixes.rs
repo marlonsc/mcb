@@ -4,10 +4,12 @@
 use std::path::Path;
 
 use super::super::violation::NamingViolation;
-use crate::constants::architecture::{ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES};
-use crate::constants::common::{FACTORY_FILE_SUFFIX, REPOSITORY_FILE_SUFFIX, SERVICE_FILE_SUFFIX};
-use crate::traits::violation::Severity;
-use crate::utils::naming::get_suffix;
+use mcb_domain::ports::validation::Severity;
+use mcb_utils::constants::validate::{ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES};
+use mcb_utils::constants::validate::{
+    FACTORY_FILE_SUFFIX, REPOSITORY_FILE_SUFFIX, SERVICE_FILE_SUFFIX,
+};
+use mcb_utils::utils::naming::get_suffix;
 
 pub fn validate_file_suffix(
     path: &Path,

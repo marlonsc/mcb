@@ -7,6 +7,12 @@ use seaography::{
 use async_graphql::dynamic::{Schema, SchemaError};
 use sea_orm::DatabaseConnection;
 
+use std::any::Any;
+use std::sync::Arc;
+
+use mcb_domain::ports::GraphQLSchemaProvider;
+use mcb_domain::registry::graphql::GraphQLSchemaProviderConfig;
+
 lazy_static::lazy_static! {
     static ref CONTEXT: BuilderContext = {
         BuilderContext {
@@ -38,3 +44,42 @@ pub fn schema(
         .data(database)
         .finish()
 }
+
+// ============================================================================
+// CA/DI: GraphQLSchemaProvider port implementation + linkme registration
+// ============================================================================
+
+/// Seaography GraphQL schema provider implementing the domain port.
+struct SeaographyGraphQLSchemaProvider;
+
+impl GraphQLSchemaProvider for SeaographyGraphQLSchemaProvider {
+    fn build_schema(
+        &self,
+        db: Box<dyn Any + Send + Sync>,
+        depth: Option<usize>,
+        complexity: Option<usize>,
+    ) -> mcb_domain::error::Result<Box<dyn Any + Send + Sync>> {
+        let database = db.downcast::<DatabaseConnection>().map_err(|_| {
+            mcb_domain::error::Error::configuration(
+                "GraphQL: expected DatabaseConnection, got wrong type".to_owned(),
+            )
+        })?;
+        let s = schema(*database, depth, complexity).map_err(|e| {
+            mcb_domain::error::Error::configuration(format!("GraphQL schema build failed: {e}"))
+        })?;
+        Ok(Box::new(s))
+    }
+}
+
+/// Factory function for creating the Seaography GraphQL provider.
+fn seaography_factory(
+    _config: &GraphQLSchemaProviderConfig,
+) -> std::result::Result<Arc<dyn GraphQLSchemaProvider>, String> {
+    Ok(Arc::new(SeaographyGraphQLSchemaProvider))
+}
+
+mcb_domain::register_graphql_schema_provider!(
+    "seaography",
+    "Seaography auto-generated GraphQL schema from SeaORM entities",
+    seaography_factory
+);

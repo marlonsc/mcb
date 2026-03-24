@@ -1,12 +1,12 @@
 //!
 //! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
 //!
-use mcb_domain::constants::keys as schema;
+use mcb_utils::constants::keys as schema;
 use std::sync::Arc;
 
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
 use mcb_domain::ports::AgentSessionServiceInterface;
-use mcb_domain::utils::id as domain_id;
+use mcb_utils::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde::Deserialize;
@@ -21,7 +21,6 @@ use crate::utils::mcp::{
 
 /// Payload for creating an agent session from JSON data.
 #[derive(Deserialize, Default)]
-#[serde(default)]
 struct CreateSessionPayload {
     agent_type: Option<String>,
     session_summary_id: Option<String>,
@@ -52,7 +51,7 @@ pub async fn create_session(
             .clone()
             .ok_or_else(|| McpError::invalid_params("missing required field: data", None))?,
     )
-    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+    .map_err(|e| McpError::invalid_params(format!("invalid session data: {e}"), None))?;
 
     let agent_type_value = resolve_identifier_precedence(
         "agent_type",
@@ -67,7 +66,7 @@ pub async fn create_session(
             ));
         }
     };
-    let now = mcb_domain::utils::time::epoch_secs_i64()
+    let now = mcb_utils::utils::time::epoch_secs_i64()
         .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
     let session_id = domain_id::generate().to_string();
     let session_summary_id = payload

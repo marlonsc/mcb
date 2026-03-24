@@ -5,8 +5,16 @@
 //! - Module-level documentation (//!)
 //! - Example code blocks for traits
 
-pub mod constants;
 mod helpers;
 mod validator;
 
 pub use self::validator::{DocumentationValidator, DocumentationViolation};
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_DOCUMENTATION,
+    "Validates documentation standards",
+    |root| {
+        Ok(Box::new(DocumentationValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

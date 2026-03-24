@@ -2,7 +2,6 @@
 //!
 //! **Documentation**: [`docs/modules/validate.md#solid`](../../../../../docs/modules/validate.md#solid)
 
-pub mod constants;
 mod isp;
 mod lsp;
 mod ocp;
@@ -16,3 +15,12 @@ pub use self::utils::{
 };
 pub use self::validator::SolidValidator;
 pub use self::violation::SolidViolation;
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_SOLID,
+    "Validates SOLID principles",
+    |root| {
+        Ok(Box::new(SolidValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

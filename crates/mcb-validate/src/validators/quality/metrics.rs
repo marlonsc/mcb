@@ -2,12 +2,16 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
 //!
 use super::{QualityValidator, QualityViolation};
-use crate::constants::common::TEST_PATH_PATTERNS;
+use crate::ast::rca_helpers;
 use crate::filters::LanguageId;
+use crate::run_context::ValidationRunContext;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::TEST_PATH_PATTERNS;
 
 /// Checks that source files do not exceed the configured line count limit.
+///
+/// Uses RCA's aggregate SLOC metric for accurate source line counting.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
     let mut violations = Vec::new();
 
@@ -41,8 +45,17 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                 return Ok(());
             }
 
-            let content = std::fs::read_to_string(&entry.absolute_path)?;
-            let line_count = content.lines().count();
+            let ctx = ValidationRunContext::active_or_build(&validator.config)?;
+            let content = ctx
+                .read_cached(&entry.absolute_path)
+                .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
+
+            // Use RCA's SLOC for accurate source line counting (excludes blanks/comments)
+            let line_count = rca_helpers::parse_file_spaces(&entry.absolute_path, &content)
+                .map_or_else(
+                    || content.lines().count(), // fallback for unsupported languages
+                    |root| root.metrics.loc.sloc().round() as usize,
+                );
 
             if line_count > validator.max_file_lines {
                 violations.push(QualityViolation::FileTooLarge {

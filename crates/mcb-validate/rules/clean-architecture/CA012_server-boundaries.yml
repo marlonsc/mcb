@@ -12,13 +12,13 @@ rationale: "Server layer depends on infrastructure for DI and application for us
 crate_name: "{{server_crate}}"
 forbidden_prefixes: []
 allowed_dependencies:
-  ["{{domain_crate}}", "{{application_crate}}", "{{infrastructure_crate}}", "{{providers_crate}}"]
+  ["{{domain_crate}}", "{{application_crate}}", "{{infrastructure_crate}}", "{{providers_crate}}", "{{utils_crate}}"]
 
 config:
   crate_name: "{{server_crate}}"
   forbidden_prefixes: []
   allowed_dependencies:
-    ["{{domain_crate}}", "{{application_crate}}", "{{infrastructure_crate}}", "{{providers_crate}}"]
+    ["{{domain_crate}}", "{{application_crate}}", "{{infrastructure_crate}}", "{{providers_crate}}", "{{utils_crate}}"]
 
 rule: |
   rule ServerBoundaries "Server Layer Boundaries" {

@@ -11,9 +11,9 @@ use std::path::PathBuf;
 
 use crate::config::LayerFlowRulesConfig;
 use crate::define_violations;
-use crate::linters::constants::CARGO_TOML_FILENAME;
-use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
+use mcb_domain::ports::validation::{Violation, ViolationCategory};
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 
 define_violations! {
     ViolationCategory::Architecture,
@@ -108,6 +108,7 @@ impl LayerFlowValidator {
                             .filter(|dep| dep != crate_name && crate_names.contains(dep))
                             .collect()
                     })
+                    // INTENTIONAL: Dependency filter; empty list means no filtered deps
                     .unwrap_or_default();
                 Ok((crate_name.clone(), crate_deps))
             })
@@ -146,16 +147,19 @@ impl LayerFlowValidator {
     }
 }
 
-impl crate::traits::validator::Validator for LayerFlowValidator {
+impl mcb_domain::ports::validation::Validator for LayerFlowValidator {
     fn name(&self) -> &'static str {
-        "layer_flow"
+        mcb_utils::constants::validate::VALIDATOR_LAYER_FLOW
     }
 
     fn description(&self) -> &'static str {
         "Validates Clean Architecture layer dependency rules"
     }
 
-    fn validate(&self, config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
+    fn validate(
+        &self,
+        config: &ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
         let violations = self.check_circular_dependencies(config)?;
         Ok(violations
             .into_iter()
@@ -163,3 +167,12 @@ impl crate::traits::validator::Validator for LayerFlowValidator {
             .collect())
     }
 }
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_LAYER_FLOW,
+    "Validates Clean Architecture layer dependency rules",
+    |root| {
+        Ok(Box::new(LayerFlowValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

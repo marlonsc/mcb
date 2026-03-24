@@ -68,6 +68,7 @@ The v0.3.0 release is a full platform rebuild on SeaQL (SeaORM, SeaQuery, SeaSch
 - [ADR 050: Manual Composition Root — dill Removal](050-manual-composition-root-dill-removal.md) — Supersedes ADR-029 — **Implemented**
 - [ADR 051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md) — Supersedes ADR-004, 007, 025, 026 — **Accepted**
 - [ADR 052: Schema Resolution with SeaORM 2.x](052-schema-resolution-seaorm.md) — Domain-driven DDL generation — **Accepted**
+- [ADR 053: Shared Provider Resolution](053-shared-provider-resolution.md) — Extends ADR-050, shared provider lifecycle — **Accepted**
 
 ### Workflow FSM & Policies (v0.4.0, previously v0.3.0)
 
@@ -127,9 +128,9 @@ These ADRs have been superseded by newer decisions and moved to [`archive/`](arc
 
 ## ADR Count
 
-**Total ADRs**: 52 (ADR-001 through ADR-052)
+**Total ADRs**: 53 (ADR-001 through ADR-053)
 
-- **Active**: 47 ADRs in this directory
+- **Active**: 48 ADRs in this directory
 - **Archived**: 8 superseded ADRs in [`archive/`](archive/)
 - **Core Architecture**: ADR-001–006 (5 active)
 - **v0.2.0 Features**: ADR-008–010 (3 ADRs)
@@ -137,7 +138,7 @@ These ADRs have been superseded by newer decisions and moved to [`archive/`](arc
 - **v0.1.2 Refactoring**: ADR-023–031 (5 active, 3 archived)
 - **v0.2.1 Additions**: ADR-032–033, 039–040 (4 ADRs)
 - **v0.2.2 Observability**: ADR-048 (1 ADR)
-- **v0.3.0 Platform Rebuild**: ADR-049–052 (4 ADRs)
+- **v0.3.0 Platform Rebuild**: ADR-049–053 (5 ADRs)
 - **v0.4.0 Workflow**: ADR-034–038 (5 ADRs)
 - **v0.5.0 Context System**: ADR-041–047 (7 ADRs)
 

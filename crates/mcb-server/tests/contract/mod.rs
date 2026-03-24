@@ -1,10 +1,17 @@
-#![allow(missing_docs)]
+//! Contract tests — `cargo test -p mcb-server --test contract`
 
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
+extern crate mcb_infrastructure;
 extern crate mcb_providers;
+extern crate mcb_validate;
+#[allow(unused_imports)]
+use mcb_infrastructure::infrastructure::events::BroadcastEventBus as _; // linkme force-link
+#[allow(unused_imports)]
+use mcb_providers::database::seaorm::migration::Migrator as _; // linkme force-link
 
+/// Shared test utilities.
 #[path = "../utils/mod.rs"]
-#[allow(dead_code, unused_imports)]
-mod utils;
+pub mod utils;
 
 mod agent_contract_tests;
 mod common;

@@ -7,24 +7,24 @@
 
 use std::path::{Path, PathBuf};
 
+use rayon::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_yaml;
 
 use super::templates::TemplateEngine;
 use super::yaml_validator::YamlRuleValidator;
 use crate::Result;
-use crate::constants::rules::{
-    DEFAULT_RULE_CATEGORY, DEFAULT_RULE_DESCRIPTION, DEFAULT_RULE_ENGINE, DEFAULT_RULE_NAME,
-    DEFAULT_RULE_RATIONALE, DEFAULT_RULE_SEVERITY, YAML_FIELD_AST_QUERY, YAML_FIELD_BASE,
-    YAML_FIELD_CATEGORY, YAML_FIELD_CONFIG, YAML_FIELD_DESCRIPTION, YAML_FIELD_ENABLED,
-    YAML_FIELD_ENGINE, YAML_FIELD_EXTENDS, YAML_FIELD_FILTERS, YAML_FIELD_FIX_TYPE,
-    YAML_FIELD_FIXES, YAML_FIELD_ID, YAML_FIELD_LANGUAGE, YAML_FIELD_LINT_SELECT,
-    YAML_FIELD_MESSAGE, YAML_FIELD_METRICS, YAML_FIELD_NAME, YAML_FIELD_NODE_TYPE,
-    YAML_FIELD_PATTERN, YAML_FIELD_RATIONALE, YAML_FIELD_RULE, YAML_FIELD_SELECTORS,
-    YAML_FIELD_SEVERITY, YAML_FIELD_TEMPLATE,
-};
 use crate::filters::rule_filters::RuleFilters;
 use crate::utils::fs::collect_yaml_files;
+use mcb_utils::constants::validate::{
+    DEFAULT_RULE_CATEGORY, DEFAULT_RULE_DESCRIPTION, DEFAULT_RULE_NAME, DEFAULT_RULE_RATIONALE,
+    RUSTY_RULES, SEVERITY_WARNING, YAML_FIELD_AST_QUERY, YAML_FIELD_BASE, YAML_FIELD_CATEGORY,
+    YAML_FIELD_CONFIG, YAML_FIELD_DESCRIPTION, YAML_FIELD_ENABLED, YAML_FIELD_ENGINE,
+    YAML_FIELD_EXTENDS, YAML_FIELD_FILTERS, YAML_FIELD_FIX_TYPE, YAML_FIELD_FIXES, YAML_FIELD_ID,
+    YAML_FIELD_LANGUAGE, YAML_FIELD_LINT_SELECT, YAML_FIELD_MESSAGE, YAML_FIELD_METRICS,
+    YAML_FIELD_NAME, YAML_FIELD_NODE_TYPE, YAML_FIELD_PATTERN, YAML_FIELD_RATIONALE,
+    YAML_FIELD_RULE, YAML_FIELD_SELECTORS, YAML_FIELD_SEVERITY, YAML_FIELD_TEMPLATE,
+};
 
 /// Loaded and validated YAML rule
 #[derive(Debug, Clone)]
@@ -125,6 +125,12 @@ pub struct YamlRuleLoader {
 }
 
 impl YamlRuleLoader {
+    fn is_template_path(path: &str) -> bool {
+        path.contains("/templates/")
+            || path.starts_with("templates/")
+            || path.contains("\\templates\\")
+    }
+
     /// Create a new YAML rule loader
     ///
     /// # Errors
@@ -207,7 +213,7 @@ impl YamlRuleLoader {
                 .load_templates_from_embedded(embedded_rules)?;
 
             for (path, content) in embedded_rules {
-                if path.ends_with(".yml") && !path.contains("/templates/") {
+                if path.ends_with(".yml") && !Self::is_template_path(path) {
                     let loaded_rules = self.load_rule_from_str(Path::new(path), content)?;
                     rules.extend(loaded_rules);
                 }
@@ -232,13 +238,22 @@ impl YamlRuleLoader {
         if self.rules_dir.exists() {
             self.template_engine.load_templates_sync(&self.rules_dir)?;
 
-            for path in collect_yaml_files(&self.rules_dir)? {
-                if Self::is_rule_file(&path) {
+            let rule_files: Vec<PathBuf> = collect_yaml_files(&self.rules_dir)?
+                .into_iter()
+                .filter(|path| Self::is_rule_file(path))
+                .collect();
+
+            let loaded: Result<Vec<Vec<ValidatedRule>>> = rule_files
+                .par_iter()
+                .map(|path| {
                     let content =
-                        std::fs::read_to_string(&path).map_err(crate::ValidationError::Io)?;
-                    let loaded_rules = self.load_rule_from_str(&path, &content)?;
-                    rules.extend(loaded_rules);
-                }
+                        std::fs::read_to_string(path).map_err(crate::ValidationError::Io)?;
+                    self.load_rule_from_str(path, &content)
+                })
+                .collect();
+
+            for loaded_rules in loaded? {
+                rules.extend(loaded_rules);
             }
         }
 
@@ -366,7 +381,7 @@ impl YamlRuleLoader {
     /// Check if a file is a rule file
     fn is_rule_file(path: &Path) -> bool {
         path.extension().and_then(|ext| ext.to_str()) == Some("yml")
-            && !path.to_str().is_some_and(|s| s.contains("/templates/"))
+            && !path.to_str().is_some_and(Self::is_template_path)
     }
 
     /// Convert YAML/JSON value to `ValidatedRule`
@@ -398,7 +413,7 @@ impl YamlRuleLoader {
         let severity = obj
             .get(YAML_FIELD_SEVERITY)
             .and_then(|v| v.as_str())
-            .unwrap_or(DEFAULT_RULE_SEVERITY)
+            .unwrap_or(SEVERITY_WARNING)
             .to_owned();
 
         let enabled = obj
@@ -421,7 +436,7 @@ impl YamlRuleLoader {
         let engine = obj
             .get(YAML_FIELD_ENGINE)
             .and_then(|v| v.as_str())
-            .unwrap_or(DEFAULT_RULE_ENGINE)
+            .unwrap_or(RUSTY_RULES)
             .to_owned();
 
         let config = obj
@@ -455,6 +470,7 @@ impl YamlRuleLoader {
                     })
                     .collect()
             })
+            // INTENTIONAL: YAML field extraction; missing field yields empty string
             .unwrap_or_default();
 
         // Extract lint_select codes (for Ruff/Clippy integration)
@@ -466,6 +482,7 @@ impl YamlRuleLoader {
                     .filter_map(|code| code.as_str().map(str::to_owned))
                     .collect()
             })
+            // INTENTIONAL: YAML field extraction; missing field yields empty string
             .unwrap_or_default();
 
         // Extract custom message
@@ -496,6 +513,7 @@ impl YamlRuleLoader {
                     })
                     .collect()
             })
+            // INTENTIONAL: YAML field extraction; missing field yields empty string
             .unwrap_or_default();
 
         // Extract ast_query (Phase 2)

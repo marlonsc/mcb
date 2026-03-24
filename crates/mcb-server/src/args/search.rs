@@ -75,5 +75,13 @@ pub struct SearchArgs {
     /// JWT token for authenticated requests.
     #[schemars(description = "JWT token for authenticated requests", with = "String")]
     pub token: Option<String>,
+
+    /// Repository ID injected by execution context (hidden from MCP schema).
+    #[schemars(skip)]
+    pub repo_id: Option<String>,
+
+    /// Workspace/repo path injected by execution context (hidden from MCP schema).
+    #[schemars(skip)]
+    pub repo_path: Option<String>,
 }
 }

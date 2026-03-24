@@ -7,19 +7,16 @@ rules_path = "crates/mcb-validate/rules"
 project_prefix = "mcb"
 internal_dep_prefix = "mcb-"
 skip_dir_patterns = ["/fixtures/"]
-exclude_patterns = []
+exclude_patterns = ["target/", "tests/fixtures/", "seaorm/entities/"]
 
 [rules.architecture]
 enabled = true
 
 [rules.architecture.layer_boundaries]
-application_internal_deps = ["mcb-domain"]
-providers_internal_deps = ["mcb-domain"]
-infrastructure_internal_deps = [
-    "mcb-domain",
-    "mcb-providers",
-]
-server_internal_deps = ["mcb-domain", "mcb-infrastructure"]
+application_internal_deps = ["mcb-domain", "mcb-utils"]
+providers_internal_deps = ["mcb-domain", "mcb-utils"]
+infrastructure_internal_deps = ["mcb-domain", "mcb-providers", "mcb-utils"]
+server_internal_deps = ["mcb-domain", "mcb-infrastructure", "mcb-utils"]
 
 [rules.naming]
 enabled = true
@@ -37,6 +34,7 @@ infrastructure_crate = "mcb-infrastructure"
 application_crate = ""
 providers_crate = "mcb-providers"
 validate_crate = "mcb-validate"
+utils_crate = "mcb-utils"
 
 [rules.kiss]
 enabled = true

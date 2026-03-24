@@ -13,16 +13,13 @@ use evalexpr::{ContextWithMutableVariables, HashMapContext, Value as EvalValue};
 use serde_json::Value;
 
 use crate::Result;
-use crate::constants::common::{
-    ASYNC_FN_PREFIX, EXPECT_CALL, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, UNWRAP_CALL,
-};
-use crate::constants::rules::{
-    DEFAULT_EXPR_MESSAGE, DEFAULT_EXPR_RULE_ID, YAML_FIELD_CATEGORY, YAML_FIELD_EXPRESSION,
-    YAML_FIELD_ID, YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY,
-};
-use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_WARNING};
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
-use crate::traits::violation::{Severity, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
+use mcb_utils::constants::validate::{
+    ASYNC_FN_PREFIX, DEFAULT_EXPR_MESSAGE, DEFAULT_EXPR_RULE_ID, EXPECT_CALL, SEVERITY_ERROR,
+    SEVERITY_WARNING, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, UNWRAP_CALL, YAML_FIELD_CATEGORY,
+    YAML_FIELD_EXPRESSION, YAML_FIELD_ID, YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY,
+};
 
 /// Wrapper for evalexpr engine
 ///
@@ -240,7 +237,6 @@ impl RuleEngine for ExpressionEngine {
         rule_definition: &Value,
         context: &RuleContext,
     ) -> Result<Vec<RuleViolation>> {
-        // Extract expression from rule definition
         let expression = rule_definition
             .get(YAML_FIELD_EXPRESSION)
             .and_then(|v| v.as_str())
@@ -272,14 +268,8 @@ impl RuleEngine for ExpressionEngine {
         let category = rule_definition
             .get(YAML_FIELD_CATEGORY)
             .and_then(|v| v.as_str())
-            .map_or(ViolationCategory::Quality, |c| match c {
-                crate::constants::severities::CATEGORY_ARCHITECTURE => {
-                    ViolationCategory::Architecture
-                }
-                crate::constants::severities::CATEGORY_PERFORMANCE => {
-                    ViolationCategory::Performance
-                }
-                _ => ViolationCategory::Quality,
+            .map_or(ViolationCategory::Quality, |c| {
+                c.parse().unwrap_or(ViolationCategory::Quality)
             });
 
         self.execute_expression_rule(ExpressionRuleInput {

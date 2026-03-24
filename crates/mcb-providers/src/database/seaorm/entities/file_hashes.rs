@@ -3,29 +3,40 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a file hash record.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "file_hashes")]
 pub struct Model {
+    /// Unique internal identifier for the file hash record.
     #[sea_orm(primary_key)]
     pub id: i64,
+    /// Reference to the project the file belongs to.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Reference to the collection the file belongs to.
     #[sea_orm(column_type = "Text")]
     pub collection: String,
+    /// Path to the file relative to the project root.
     #[sea_orm(column_type = "Text")]
     pub file_path: String,
+    /// Hash of the file content used for change detection.
     #[sea_orm(column_type = "Text")]
     pub content_hash: String,
+    /// Timestamp when the file was last indexed.
     pub indexed_at: i64,
+    /// Optional timestamp if the file was deleted.
     pub deleted_at: Option<i64>,
+    /// Optional context about the hash origin.
     #[sea_orm(column_type = "Text", nullable)]
     pub origin_context: Option<String>,
 }
 
+/// Relations for the file hash model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the file hash model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

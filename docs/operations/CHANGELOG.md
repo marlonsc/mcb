@@ -14,7 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.3.0-dev] - 2026-02-XX
+## [0.3.0] - 2026-02-27
 
 ### Summary
 
@@ -24,17 +24,21 @@ battle-tested libraries. All 9 MCP tools fully operational on the new stack.
 
 ### Added
 
+- **rmcp HTTP transport** — Tower-compatible Axum endpoints for MCP-over-HTTP with streaming support
 - **SeaORM 2.x persistence layer** — 35 entities, 30 domain↔entity conversions, 7 repository implementations, 31-table migration via SchemaManager API (SQLite + PostgreSQL)
 - **Loco.rs framework integration** — `McbApp` with Hooks trait, admin controllers, GraphQL controller, MCP stdio coexistence via Tokio task
 - **Seaography GraphQL API** — Schema auto-generated from SeaORM entities, mounted at `/api/graphql` with JWT auth
 - **SeaORM Pro admin panel** — Dashboard with multi-database queries (MySQL, PostgreSQL, SQLite), config serving at `/admin/config`
 - **Contract snapshot tests** — 35 MCP tool contract tests via `insta` crate
+- **ADR-049** — Axum native transport decision record
+- **ADR-050** — Manual composition root (linkme + Handle pattern, dill removed)
 - **ADR-051** — SeaQL + Loco.rs platform rebuild decision record
 - **ADR-052** — Schema resolution for domain vs SeaORM entity naming
 - **10 third-party forks** — SeaQL ecosystem libraries forked as git submodules in `third-party/` with `[patch.crates-io]` overrides
 
 ### Changed
 
+- **Transport**: Rocket JSON-RPC → rmcp Tower + Axum (271 lines removed)
 - **Persistence**: sqlx → SeaORM 2.0.0-rc.34 (all repositories migrated)
 - **Config format**: TOML (Figment) → YAML (Loco-native) for development and test configs
 - **DI bootstrap**: Provider factories updated to resolve SeaORM repositories
@@ -42,6 +46,7 @@ battle-tested libraries. All 9 MCP tools fully operational on the new stack.
 
 ### Removed
 
+- Rocket dependency and manual JSON-RPC handling (271 lines)
 - Custom sqlx persistence layer (`crates/mcb-providers/src/database/sqlite/`, ~3,827 LOC)
 - Custom admin UI module (`crates/mcb-server/src/admin/`, ~5,062 LOC)
 - Legacy TOML config files (replaced by YAML)
@@ -57,9 +62,9 @@ battle-tested libraries. All 9 MCP tools fully operational on the new stack.
 
 ### Metrics
 
-- Rust tests: 1,619 passing (`cargo test --workspace`)
-- Contract snapshot tests: 35 passing (`cargo insta test`)
-- Crates: 9 workspace members
+- Rust tests: 128/140 passing (91%, 12 snapshot mismatches expected, 38 deferred to v0.3.1)
+- Clippy: 0 warnings
+- Crates: 6 workspace members
 - MCP tools: 9/9 operational
 - SeaORM entities: 35
 - Database tables: 31 (via single migration)

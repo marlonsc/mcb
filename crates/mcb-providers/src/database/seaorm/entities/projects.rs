@@ -3,25 +3,34 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a project.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "projects")]
 pub struct Model {
+    /// Unique identifier for the project.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the organization this project belongs to.
     #[sea_orm(column_type = "Text")]
     pub org_id: String,
+    /// Name of the project.
     #[sea_orm(column_type = "Text")]
     pub name: String,
+    /// Local filesystem path to the project root.
     #[sea_orm(column_type = "Text")]
     pub path: String,
+    /// Timestamp when the project was created.
     pub created_at: i64,
+    /// Timestamp when the project was last updated.
     pub updated_at: i64,
 }
 
+/// Relations for the project model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the project model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

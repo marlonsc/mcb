@@ -3,7 +3,7 @@
 //! Run with: cargo bench -p mcb-validate
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use mcb_validate::ValidationConfig;
+use mcb_domain::ports::validation::ValidationConfig;
 use mcb_validate::ast::UnwrapDetector;
 use mcb_validate::clean_architecture::CleanArchitectureValidator;
 use mcb_validate::duplication::{DuplicationAnalyzer, DuplicationThresholds, tokenize_source};
@@ -20,6 +20,7 @@ const SAMPLE_RUST_CODE: &str = r#"
 
 use std::collections::HashMap;
 use std::sync::Arc;
+use rstest::rstest;
 
 /// A user entity with identity
 pub struct User {
@@ -75,7 +76,9 @@ impl UserService {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use rstest::rstest;
 
+    #[rstest]
     #[test]
     fn test_user_creation() {
         let user = User::new("Alice".to_string(), "alice@example.com".to_string());

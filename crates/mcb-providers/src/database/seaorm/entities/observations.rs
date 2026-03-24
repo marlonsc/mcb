@@ -3,32 +3,44 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an observation.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "observations")]
 pub struct Model {
+    /// Unique identifier for the observation.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the project this observation belongs to.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Content of the observation.
     #[sea_orm(column_type = "Text")]
     pub content: String,
+    /// Unique hash of the content for deduplication.
     #[sea_orm(column_type = "Text", unique)]
     pub content_hash: String,
+    /// Optional JSON list of tags associated with the observation.
     #[sea_orm(column_type = "Text", nullable)]
     pub tags: Option<String>,
+    /// Optional type of the observation (e.g., "manual", "automated").
     #[sea_orm(column_type = "Text", nullable)]
     pub observation_type: Option<String>,
+    /// Optional JSON metadata associated with the observation.
     #[sea_orm(column_type = "Text", nullable)]
     pub metadata: Option<String>,
+    /// Timestamp when the observation was created.
     pub created_at: i64,
+    /// Optional identifier for the observation's embedding in a vector database.
     #[sea_orm(column_type = "Text", nullable)]
     pub embedding_id: Option<String>,
 }
 
+/// Relations for the observation model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the observation model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

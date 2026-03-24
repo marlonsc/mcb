@@ -3,24 +3,32 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a vector/search collection.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "collections")]
 pub struct Model {
+    /// Unique identifier for the collection.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the project this collection belongs to.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Human-readable name of the collection.
     #[sea_orm(column_type = "Text")]
     pub name: String,
+    /// Name of the collection in the underlying vector database.
     #[sea_orm(column_type = "Text")]
     pub vector_name: String,
+    /// Timestamp when the collection was created.
     pub created_at: i64,
 }
 
+/// Relations for the collection model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the collection model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

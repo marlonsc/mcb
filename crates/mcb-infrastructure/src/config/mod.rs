@@ -1,27 +1,15 @@
-//! Configuration Management - Type-safe, layered, Validated
+//! Configuration — concrete implementation (CA/DI).
 //!
-//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md#configuration)
+//! All access goes through `mcb_domain::utils::config` helpers →
+//! `mcb_domain::registry::config::resolve_config_provider()`.
 //!
-//! Provides YAML configuration loading (Loco convention), validation, and
-//! type-safe configuration for all system components.
+//! Types are `pub` (needed for downcast at composition root).
+//! Loader/validation are private implementation details.
 
-pub mod loader;
-mod mcp_context_config;
-pub mod paths;
-pub mod test_builder;
-pub mod types;
-
-// Re-export main configuration types
-pub use types::{
-    AppConfig, AuthConfig, CacheProvider, CacheSystemConfig, DatabaseConfig,
-    DatabaseConfigContainer, LoggingConfig, ServerConfig, ServerConfigBuilder, ServerConfigPresets,
-    ServerCorsConfig, ServerNetworkConfig, ServerSslConfig, ServerTimeoutConfig, TransportMode,
-};
-
-pub use loader::ConfigLoader;
-pub use mcp_context_config::{GitConfig, McpContextConfig};
-pub use paths::{
-    COLLECTION_MAPPING_FILENAME, COLLECTION_MAPPING_LOCK_FILENAME, VCS_LOCK_FILENAME,
-    VCS_REGISTRY_FILENAME, config_dir,
-};
-pub use test_builder::TestConfigBuilder;
+pub mod app;
+pub mod infrastructure;
+mod loader;
+pub mod mode;
+mod provider;
+pub mod system;
+mod validation;

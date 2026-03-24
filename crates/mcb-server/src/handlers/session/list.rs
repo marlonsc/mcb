@@ -9,10 +9,10 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
 use crate::args::SessionArgs;
-use crate::constants::fields::{FIELD_COUNT, FIELD_SESSIONS};
-use crate::constants::limits::DEFAULT_SESSION_LIST_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use mcb_utils::constants::keys::{FIELD_COUNT, FIELD_SESSIONS};
+use mcb_utils::constants::limits::DEFAULT_SESSION_LIST_LIMIT;
 
 /// Lists agent sessions based on filters.
 #[tracing::instrument(skip_all)]

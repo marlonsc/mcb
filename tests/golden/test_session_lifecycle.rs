@@ -3,7 +3,8 @@
 //! Verifies create, get, list, end (update), error handling, and summarize
 //! through the `SessionHandler` MCP tool interface.
 
-use crate::utils::test_fixtures::{create_test_mcp_server, golden_content_to_string};
+use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::utils::tests::mcp_assertions::extract_text_from;
 use mcb_server::args::{SessionAction, SessionArgs};
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
@@ -26,7 +27,7 @@ fn base_args(action: SessionAction) -> SessionArgs {
 
 /// Parse handler response text as JSON value.
 fn result_json(res: &rmcp::model::CallToolResult) -> serde_json::Value {
-    let text = golden_content_to_string(res);
+    let text = extract_text_from(res);
     serde_json::from_str(&text)
         .unwrap_or_else(|e| panic!("response should be valid JSON: {text}; error: {e}"))
 }
@@ -238,7 +239,7 @@ async fn golden_session_get_nonexistent() {
     let res = result.expect("get nonexistent result");
 
     // Should indicate not found (is_error=true or error text)
-    let text = golden_content_to_string(&res);
+    let text = extract_text_from(&res);
     let is_error = res.is_error.unwrap_or(false);
     let mentions_not_found = text.to_lowercase().contains("not found");
     assert!(

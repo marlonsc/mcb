@@ -12,16 +12,6 @@ use std::path::PathBuf;
 use mcb_validate::linters::{LintViolation, LinterEngine, LinterType, YamlRuleExecutor};
 use mcb_validate::{ValidatedRule, YamlRuleLoader};
 
-fn get_workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .nth(2)
-        .map_or_else(
-            || PathBuf::from(env!("CARGO_MANIFEST_DIR")),
-            std::path::Path::to_path_buf,
-        )
-}
-
 /// Check if an external tool is available on the system
 fn is_tool_available(tool: &str) -> bool {
     std::process::Command::new(tool)
@@ -57,7 +47,9 @@ fn get_default_substitution_variables() -> serde_yaml::Value {
         "server_module": "mcb_server",
         "providers_module": "mcb_providers",
         "validate_crate": "mcb-validate",
-        "validate_module": "mcb_validate"
+        "validate_module": "mcb_validate",
+        "utils_crate": "mcb-utils",
+        "utils_module": "mcb_utils"
     });
     match serde_yaml::to_value(json) {
         Ok(value) => value,
@@ -67,7 +59,7 @@ fn get_default_substitution_variables() -> serde_yaml::Value {
 
 // ==================== Unit Tests for Linter Types ====================
 
-#[test]
+#[rstest]
 fn test_linter_engine_creation() {
     let _engine = LinterEngine::new();
     // Engine should be created with default linters
@@ -82,7 +74,7 @@ fn linter_engine_with_specific_linters(#[case] linters: Vec<LinterType>) {
     let _engine = LinterEngine::with_linters(linters);
 }
 
-#[test]
+#[rstest]
 fn test_linter_type_equality() {
     assert_eq!(LinterType::Ruff, LinterType::Ruff);
     assert_eq!(LinterType::Clippy, LinterType::Clippy);
@@ -98,7 +90,7 @@ fn linter_type_commands(#[case] linter: LinterType, #[case] command: &str) {
 
 // ==================== JSON Parsing Tests ====================
 
-#[test]
+#[rstest]
 fn test_ruff_json_array_parsing() {
     // Ruff outputs JSON in array format
     let json_output = r#"[
@@ -145,7 +137,7 @@ fn ruff_empty_output(#[case] output: &str) {
     );
 }
 
-#[test]
+#[rstest]
 fn test_clippy_json_parsing() {
     // Clippy outputs JSON lines with "reason" field
     let json_output = r#"{"reason":"compiler-message","message":{"message":"used `unwrap()` on an `Option` value","code":{"code":"clippy::unwrap_used","explanation":null},"level":"warning","spans":[{"file_name":"src/lib.rs","line_start":42,"column_start":5,"is_primary":true}]}}
@@ -166,7 +158,7 @@ fn test_clippy_json_parsing() {
     assert_eq!(violations[0].category, "quality");
 }
 
-#[test]
+#[rstest]
 fn test_clippy_filters_non_compiler_messages() {
     // Should ignore compiler-artifact and build-finished
     let json_output = r#"{"reason":"compiler-artifact","target":{"name":"test"}}
@@ -176,7 +168,7 @@ fn test_clippy_filters_non_compiler_messages() {
     assert!(violations.is_empty(), "Should ignore non-message lines");
 }
 
-#[test]
+#[rstest]
 fn test_clippy_requires_primary_span() {
     // Message without primary span should be skipped
     let json_output = r#"{"reason":"compiler-message","message":{"message":"help message","code":{"code":"clippy::help","explanation":null},"level":"help","spans":[{"file_name":"src/lib.rs","line_start":1,"column_start":1,"is_primary":false}]}}"#;
@@ -205,6 +197,7 @@ fn ruff_severity_mapping(#[case] code: &str, #[case] expected_severity: &str) {
 
 // ==================== Async Execution Tests ====================
 
+#[rstest]
 #[tokio::test]
 async fn test_linter_engine_empty_files() {
     let engine = LinterEngine::new();
@@ -217,6 +210,7 @@ async fn test_linter_engine_empty_files() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_linter_execution_with_nonexistent_files() {
     let engine = LinterEngine::with_linters(vec![LinterType::Ruff]);
@@ -233,6 +227,7 @@ async fn test_linter_execution_with_nonexistent_files() {
 
 // ==================== Integration with Real Workspace ====================
 
+#[rstest]
 #[tokio::test]
 async fn test_linter_mapping() {
     let engine = LinterEngine::new();
@@ -252,7 +247,7 @@ async fn test_linter_mapping() {
 
 // ==================== LintViolation Structure Tests ====================
 
-#[test]
+#[rstest]
 fn test_lint_violation_structure() {
     let violation = LintViolation {
         rule: "F401".to_owned(),
@@ -276,7 +271,7 @@ fn test_lint_violation_structure() {
 
 // ==================== Hybrid Engine Lint Integration Tests ====================
 
-#[test]
+#[rstest]
 fn test_lint_code_categorization() {
     // This tests the internal categorization logic
     // Ruff codes: F401, E501, W291, I001, etc.
@@ -308,7 +303,7 @@ fn test_lint_code_categorization() {
 // ==================== Documentation Verification ====================
 
 /// Verify that public types have expected documentation
-#[test]
+#[rstest]
 fn test_public_api_accessible() {
     // These should all be publicly accessible via the linters module
     // Using _ prefix to suppress unused warnings while still testing compilation
@@ -328,7 +323,7 @@ fn test_public_api_accessible() {
 // Run with: cargo test --package mcb-validate -- --ignored
 
 /// Test real ruff execution against Python files
-#[test]
+#[rstest]
 fn test_ruff_real_execution() {
     use std::process::Command;
 
@@ -394,7 +389,7 @@ def example():
 }
 
 /// Test real clippy execution against Rust code
-#[test]
+#[rstest]
 fn test_clippy_real_execution() {
     use std::process::Command;
 
@@ -413,7 +408,7 @@ fn test_clippy_real_execution() {
             "-W",
             "clippy::all",
         ])
-        .current_dir(get_workspace_root())
+        .current_dir(mcb_domain::utils::tests::utils::workspace_root().unwrap())
         .output()
         .expect("Failed to execute cargo clippy");
 
@@ -447,6 +442,7 @@ fn test_clippy_real_execution() {
 }
 
 /// Test `LinterEngine` can execute linters and aggregate results
+#[rstest]
 #[tokio::test]
 async fn test_linter_engine_real_execution() {
     require_tool!("ruff", "pip install ruff");
@@ -527,6 +523,7 @@ fn create_test_rule(
 }
 
 /// Test that `YamlRuleExecutor` correctly routes Ruff codes to Ruff linter
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_ruff_integration() {
     require_tool!("ruff", "pip install ruff");
@@ -573,6 +570,7 @@ def example():
 }
 
 /// Test that disabled rules return no violations
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_disabled_rule() {
     let rule = create_test_rule(
@@ -595,6 +593,7 @@ async fn test_yaml_rule_executor_disabled_rule() {
 }
 
 /// Test that rules with empty `lint_select` return no violations
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_empty_lint_select() {
     let rule = create_test_rule(
@@ -616,6 +615,7 @@ async fn test_yaml_rule_executor_empty_lint_select() {
 }
 
 /// Test that Clippy codes are correctly detected and routed
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_clippy_code_detection() {
     // This tests the code detection logic, not actual Clippy execution
@@ -643,6 +643,7 @@ async fn test_yaml_rule_executor_clippy_code_detection() {
 }
 
 /// Test filtering: only `lint_select` codes should appear in results
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_filters_to_lint_select() {
     require_tool!("ruff", "pip install ruff");
@@ -687,6 +688,7 @@ def f():
 }
 
 /// Test custom message from rule is applied to violations
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_custom_message() {
     require_tool!("ruff", "pip install ruff");
@@ -730,6 +732,7 @@ fn get_rules_dir() -> PathBuf {
 ///
 /// This is the Phase 1 deliverable: "Integration test: YAML rule → linter → violations"
 /// Tests the COMPLETE pipeline from actual YAML file to violations.
+#[rstest]
 #[tokio::test]
 async fn test_e2e_yaml_file_to_linter_violations() {
     require_tool!("ruff", "pip install ruff");
@@ -818,6 +821,7 @@ if __name__ == "__main__":
 ///
 /// This verifies that Clippy-based rules load correctly from YAML.
 /// Note: Actually running Clippy requires a Cargo project context.
+#[rstest]
 #[tokio::test]
 async fn test_e2e_yaml_clippy_rule_loads() {
     let rules_dir = get_rules_dir();
@@ -861,6 +865,7 @@ async fn test_e2e_yaml_clippy_rule_loads() {
 }
 
 /// Verify all YAML rules with `lint_select` load correctly
+#[rstest]
 #[tokio::test]
 async fn test_all_yaml_rules_with_lint_select_load() {
     let rules_dir = get_rules_dir();
@@ -897,6 +902,7 @@ async fn test_all_yaml_rules_with_lint_select_load() {
 /// 2. Create a temporary Cargo project with .`unwrap()` calls
 /// 3. Execute `YamlRuleExecutor` (which runs cargo clippy)
 /// 4. Verify `clippy::unwrap_used` violations are returned
+#[rstest]
 #[tokio::test]
 async fn test_e2e_yaml_clippy_rule_execution() {
     require_tool!("cargo", "rustup component add clippy");

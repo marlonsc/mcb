@@ -10,8 +10,8 @@ use std::path::Path;
 
 use rust_code_analysis::{Callback, Node, ParserTrait, action, guess_language};
 
-use crate::constants::common::{CFG_TEST_MARKER, EXPECT_CALL, MOD_PREFIX, UNWRAP_CALL};
 use crate::{Result, ValidationError};
+use mcb_utils::constants::validate::{CFG_TEST_MARKER, EXPECT_CALL, MOD_PREFIX, UNWRAP_CALL};
 
 /// Detection result for unwrap/expect usage
 #[derive(Debug, Clone)]

@@ -35,14 +35,14 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: `rm -f /tmp/mcb-playwright.db && if [ -x target/release/mcb ]; then MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http target/release/mcb serve --server; else MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http cargo run --release --bin mcb -- serve --server; fi`,
+    command: `rm -f /tmp/mcb-playwright.db && if [ -x target/release/mcb ]; then SERVER_PORT=${process.env.MCB_TEST_PORT || '18080'} MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http target/release/mcb serve --server; else SERVER_PORT=${process.env.MCB_TEST_PORT || '18080'} MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http cargo run --release --bin mcb -- serve --server; fi`,
     url: process.env.MCB_TEST_PORT
       ? `http://localhost:${process.env.MCB_TEST_PORT}`
       : 'http://localhost:18080',
     reuseExistingServer: !process.env.CI,
     timeout: 600 * 1000,
     env: {
-      'MCP__SERVER__NETWORK__PORT': process.env.MCB_TEST_PORT || '18080',
+      'SERVER_PORT': process.env.MCB_TEST_PORT || '18080',
       'MCP__SERVER__TRANSPORT_MODE': 'http',
       'MCP__AUTH__USER_DB_PATH': '/tmp/mcb-playwright.db',
       'RUST_LOG': process.env.CI ? 'warn' : 'info',

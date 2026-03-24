@@ -105,6 +105,17 @@ impl RcaAnalyzer {
     ///
     /// Returns an error if the file cannot be read or its language is unsupported.
     pub fn analyze_file(&self, path: &Path) -> Result<Vec<RcaFunctionMetrics>> {
+        // Try RCA cache first (avoids redundant file reads + tree-sitter parses)
+        if let Some(ctx) = crate::run_context::ValidationRunContext::active()
+            && let Ok(content) = ctx.read_cached(path)
+            && let Some(root) = ctx.parse_rca_cached(path, &content)
+        {
+            let mut results = Vec::new();
+            Self::extract_function_metrics(&root, &mut results);
+            return Ok(results);
+        }
+
+        // Fallback: uncached path
         let lang = self.detect_language(path).ok_or_else(|| {
             ValidationError::Config(format!("Unsupported language for file: {}", path.display()))
         })?;
@@ -185,11 +196,24 @@ impl RcaAnalyzer {
     /// Returns an error if file analysis fails.
     pub fn find_violations(&self, path: &Path) -> Result<Vec<MetricViolation>> {
         let functions = self.analyze_file(path)?;
+        Ok(Self::find_violations_in_functions(
+            path,
+            &functions,
+            &self.thresholds,
+        ))
+    }
+
+    #[must_use]
+    pub(crate) fn find_violations_in_functions(
+        path: &Path,
+        functions: &[RcaFunctionMetrics],
+        thresholds: &MetricThresholds,
+    ) -> Vec<MetricViolation> {
         let mut violations = Vec::new();
 
         let to_u32_metric = |x: f64| x.round().max(0.0) as u32;
         for func in functions {
-            if let Some(threshold) = self.thresholds.get(MetricType::CyclomaticComplexity) {
+            if let Some(threshold) = thresholds.get(MetricType::CyclomaticComplexity) {
                 let value = to_u32_metric(func.metrics.cyclomatic);
                 if value > threshold.max_value {
                     violations.push(MetricViolation {
@@ -204,7 +228,7 @@ impl RcaAnalyzer {
                 }
             }
 
-            if let Some(threshold) = self.thresholds.get(MetricType::CognitiveComplexity) {
+            if let Some(threshold) = thresholds.get(MetricType::CognitiveComplexity) {
                 let value = to_u32_metric(func.metrics.cognitive);
                 if value > threshold.max_value {
                     violations.push(MetricViolation {
@@ -219,7 +243,7 @@ impl RcaAnalyzer {
                 }
             }
 
-            if let Some(threshold) = self.thresholds.get(MetricType::FunctionLength) {
+            if let Some(threshold) = thresholds.get(MetricType::FunctionLength) {
                 let value = u32::try_from(func.metrics.sloc).unwrap_or(u32::MAX);
                 if value > threshold.max_value {
                     violations.push(MetricViolation {
@@ -235,7 +259,7 @@ impl RcaAnalyzer {
             }
         }
 
-        Ok(violations)
+        violations
     }
 
     /// Get file-level metrics (aggregated)

@@ -6,7 +6,7 @@
 //! Defines the core configuration types used for language-specific
 //! chunking rules and settings.
 
-use super::constants::{
+use mcb_utils::constants::lang::{
     DEFAULT_CHUNK_SIZE, NODE_EXTRACTION_DEFAULT_PRIORITY, NODE_EXTRACTION_MAX_DEPTH,
     NODE_EXTRACTION_MIN_LENGTH, NODE_EXTRACTION_MIN_LINES,
 };

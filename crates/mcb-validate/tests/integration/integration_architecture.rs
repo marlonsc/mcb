@@ -24,11 +24,12 @@ mod architecture_integration_tests {
     use std::io::Write;
     use std::path::{Path, PathBuf};
 
-    use mcb_validate::ValidationConfig;
-    use mcb_validate::Validator;
+    use crate::utils::run_named_validator;
+    use mcb_domain::ports::validation::ValidationConfig;
+    use mcb_domain::ports::validation::Validator;
+    use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
     use mcb_validate::config::NamingRulesConfig;
     use mcb_validate::{CleanArchitectureValidator, CleanArchitectureViolation};
-    use mcb_validate::{Severity, Violation, ViolationCategory};
     use tempfile::TempDir;
 
     fn mcb_naming_config() -> NamingRulesConfig {
@@ -39,6 +40,7 @@ mod architecture_integration_tests {
             infrastructure_crate: "mcb-infrastructure".to_owned(),
             server_crate: "mcb-server".to_owned(),
             validate_crate: "mcb-validate".to_owned(),
+            utils_crate: "mcb-utils".to_owned(),
 
             enabled: true,
         }
@@ -68,6 +70,7 @@ mod architecture_integration_tests {
     }
 
     /// Test that validator creates successfully
+    #[rstest]
     #[test]
     fn test_validator_creation() {
         let dir = TempDir::new().unwrap();
@@ -79,6 +82,7 @@ mod architecture_integration_tests {
     }
 
     /// Test that clean code produces no violations
+    #[rstest]
     #[test]
     fn test_clean_code_no_violations() {
         let dir = TempDir::new().unwrap();
@@ -131,17 +135,19 @@ impl Email {
             vo_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Clean code should produce no violations
         assert!(
             violations.is_empty(),
-            "Clean code should produce no violations, got: {violations:?}"
+            "Clean code should produce no violations, got {} violations",
+            violations.len()
         );
     }
 
     /// Test detection of handler creating service directly
+    #[rstest]
     #[test]
     fn test_detects_handler_creating_service() {
         let dir = TempDir::new().unwrap();
@@ -173,14 +179,11 @@ impl SearchHandler {
             handler_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Should detect CA002 violations
-        let ca002_violations: Vec<_> = violations
-            .iter()
-            .filter(|v| matches!(v, CleanArchitectureViolation::HandlerCreatesService { .. }))
-            .collect();
+        let ca002_violations: Vec<_> = violations.iter().filter(|v| v.id() == "CA002").collect();
 
         // Note: Detection depends on implementation details
         // If no violations found, the validator may need different patterns
@@ -194,6 +197,7 @@ impl SearchHandler {
     }
 
     /// Test detection of entity missing identity field
+    #[rstest]
     #[test]
     fn test_detects_entity_missing_identity() {
         let dir = TempDir::new().unwrap();
@@ -223,14 +227,11 @@ impl Product {
             entity_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Should detect CA004 violations
-        let ca004_violations: Vec<_> = violations
-            .iter()
-            .filter(|v| matches!(v, CleanArchitectureViolation::EntityMissingIdentity { .. }))
-            .collect();
+        let ca004_violations: Vec<_> = violations.iter().filter(|v| v.id() == "CA004").collect();
 
         if !ca004_violations.is_empty() {
             for v in &ca004_violations {
@@ -241,6 +242,7 @@ impl Product {
     }
 
     /// Test detection of mutable value object
+    #[rstest]
     #[test]
     fn test_detects_mutable_value_object() {
         let dir = TempDir::new().unwrap();
@@ -283,14 +285,11 @@ impl Money {
             vo_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Should detect CA005 violations
-        let ca005_violations: Vec<_> = violations
-            .iter()
-            .filter(|v| matches!(v, CleanArchitectureViolation::ValueObjectMutable { .. }))
-            .collect();
+        let ca005_violations: Vec<_> = violations.iter().filter(|v| v.id() == "CA005").collect();
 
         if !ca005_violations.is_empty() {
             for v in &ca005_violations {
@@ -301,6 +300,7 @@ impl Money {
     }
 
     /// Test detection of server importing provider directly
+    #[rstest]
     #[test]
     fn test_detects_server_imports_provider() {
         let dir = TempDir::new().unwrap();
@@ -356,6 +356,7 @@ impl Server {
     }
 
     /// Test Violation trait implementation
+    #[rstest]
     #[test]
     fn test_violation_trait_implementation() {
         let violation = CleanArchitectureViolation::HandlerCreatesService {
@@ -456,6 +457,7 @@ impl Server {
     }
 
     /// Test Validator trait integration
+    #[rstest]
     #[test]
     fn test_validator_trait() {
         let dir = TempDir::new().unwrap();
@@ -475,10 +477,12 @@ impl Server {
 
         // Should be able to call validate through trait
         let result = validator.validate(&config);
-        assert!(result.is_ok());
+        let report = result.expect("validation should succeed");
+        assert!(report.iter().all(|v| !v.id().is_empty()));
     }
 
     /// Test with real workspace structure (integration with actual codebase)
+    #[rstest]
     #[test]
     fn test_with_workspace_root() {
         // This test uses the actual workspace if available
@@ -495,13 +499,9 @@ impl Server {
         });
 
         if let Some(root) = workspace_root {
-            let validator = CleanArchitectureValidator::new(&root);
-            let result = validator.validate_all();
-
-            // Should not panic, even if violations exist
-            assert!(result.is_ok());
-
-            let violations = result.unwrap();
+            let violations = run_named_validator(&root, "clean_architecture")
+                .expect("validation should succeed");
+            assert!(violations.iter().all(|v| !v.id().is_empty()));
             // Log violations for informational purposes
             if !violations.is_empty() {
                 eprintln!(

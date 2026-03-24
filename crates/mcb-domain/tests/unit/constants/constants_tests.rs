@@ -1,6 +1,6 @@
 //! Unit tests for domain constants
 
-use mcb_domain::{
+use mcb_utils::constants::values::{
     INDEXING_BATCH_SIZE, INDEXING_CHUNK_MIN_LENGTH, INDEXING_CHUNK_MIN_LINES,
     INDEXING_CHUNKS_MAX_PER_FILE,
 };
@@ -15,7 +15,7 @@ fn test_indexing_constant_values(#[case] constant: usize, #[case] expected: usiz
     assert_eq!(constant, expected);
 }
 
-#[test]
+#[rstest]
 fn test_indexing_constants_relationships() {
     const { assert!(INDEXING_BATCH_SIZE > 0) };
     const { assert!(INDEXING_BATCH_SIZE <= 100) };

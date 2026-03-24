@@ -7,15 +7,15 @@ use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 use git2::{BranchType, Repository, Sort};
-use mcb_domain::utils::id;
 use mcb_domain::{
     entities::vcs::{
-        DiffStatus, FileDiff, RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsCommitInput,
-        VcsRepository,
+        DiffStatus, FileDiff, RefDiff, VcsBranch, VcsCommit, VcsCommitInput, VcsRepository,
     },
     error::{Error, Result},
     ports::VcsProvider,
+    value_objects::RepositoryId,
 };
+use mcb_utils::utils::id;
 
 /// Git repository provider.
 pub struct GitProvider;
@@ -46,6 +46,7 @@ impl GitProvider {
             .push_head()
             .map_err(|e| Error::vcs_with_source("Failed to push HEAD to revwalk", e))?;
 
+        // INTENTIONAL: Sorting preference is non-critical; default ordering is acceptable
         revwalk.set_sorting(Sort::TIME | Sort::REVERSE).ok();
 
         let first_oid = revwalk
@@ -58,6 +59,7 @@ impl GitProvider {
 
     fn get_default_branch(repo: &Repository) -> Result<String> {
         repo.head()
+            // INTENTIONAL: Best-effort default branch detection; falls back to None
             .ok()
             .and_then(|head| head.shorthand().map(String::from))
             .ok_or_else(|| {
@@ -69,6 +71,7 @@ impl GitProvider {
 
     fn get_remote_url(repo: &Repository) -> Option<String> {
         repo.find_remote("origin")
+            // INTENTIONAL: Best-effort remote URL detection; falls back to None
             .ok()
             .and_then(|remote| remote.url().map(String::from))
     }
@@ -82,12 +85,113 @@ impl GitProvider {
         for branch_result in branches {
             let (branch, _) =
                 branch_result.map_err(|e| Error::vcs_with_source("Failed to read branch", e))?;
+            // INTENTIONAL: Optional branch name extraction; None means detached HEAD
             if let Some(name) = branch.name().ok().flatten() {
                 names.push(name.to_owned());
             }
         }
 
         Ok(names)
+    }
+
+    /// Resolve a local branch reference, returning a useful error if not found.
+    fn find_branch_ref<'r>(repo: &'r Repository, branch: &str) -> Result<git2::Reference<'r>> {
+        let branch_ref = repo.find_branch(branch, BranchType::Local).map_err(|e| {
+            if e.code() == git2::ErrorCode::NotFound {
+                Error::branch_not_found(branch)
+            } else {
+                Error::vcs_with_source(format!("Failed to find branch: {branch}"), e)
+            }
+        })?;
+        Ok(branch_ref.into_reference())
+    }
+
+    /// Convert a git2 delta status to our domain `DiffStatus`.
+    fn delta_to_status(delta: git2::Delta) -> DiffStatus {
+        #[allow(clippy::wildcard_enum_match_arm)]
+        match delta {
+            git2::Delta::Added => DiffStatus::Added,
+            git2::Delta::Deleted => DiffStatus::Deleted,
+            git2::Delta::Renamed => DiffStatus::Renamed,
+            _ => DiffStatus::Modified,
+        }
+    }
+
+    /// Convert a git2 commit to a `VcsCommit` domain entity.
+    fn commit_to_vcs(repo_id: &RepositoryId, commit: &git2::Commit<'_>) -> VcsCommit {
+        let oid = commit.id();
+        let author = commit.author();
+        let parent_hashes: Vec<String> = commit.parent_ids().map(|id| id.to_string()).collect();
+
+        VcsCommit::new(VcsCommitInput {
+            id: format!("{repo_id}:{oid}"),
+            hash: oid.to_string(),
+            message: commit.message().unwrap_or("").to_owned(),
+            author: author.name().unwrap_or("Unknown").to_owned(),
+            author_email: author.email().unwrap_or("").to_owned(),
+            timestamp: commit.time().seconds(),
+            parent_hashes,
+        })
+    }
+
+    /// Resolve two git refs into their tree objects for diffing.
+    fn resolve_trees<'r>(
+        repo: &'r Repository,
+        base_ref: &str,
+        head_ref: &str,
+    ) -> Result<(git2::Tree<'r>, git2::Tree<'r>)> {
+        let base_obj = repo
+            .revparse_single(base_ref)
+            .map_err(|e| Error::vcs_with_source(format!("Failed to resolve ref: {base_ref}"), e))?;
+        let head_obj = repo
+            .revparse_single(head_ref)
+            .map_err(|e| Error::vcs_with_source(format!("Failed to resolve ref: {head_ref}"), e))?;
+        let base_tree = base_obj
+            .peel_to_tree()
+            .map_err(|e| Error::vcs_with_source("Failed to get base tree", e))?;
+        let head_tree = head_obj
+            .peel_to_tree()
+            .map_err(|e| Error::vcs_with_source("Failed to get head tree", e))?;
+        Ok((base_tree, head_tree))
+    }
+
+    /// Collect file diffs and line counts from a git2 diff.
+    fn collect_diff_files(diff: &git2::Diff<'_>) -> Result<(Vec<FileDiff>, usize, usize)> {
+        let mut files = Vec::new();
+        let mut total_additions = 0;
+        let mut total_deletions = 0;
+
+        diff.foreach(
+            &mut |delta, _| {
+                let path = delta
+                    .new_file()
+                    .path()
+                    .or_else(|| delta.old_file().path())
+                    .map(PathBuf::from)
+                    .unwrap_or_default();
+                files.push(FileDiff {
+                    id: id::generate().to_string(),
+                    path,
+                    status: Self::delta_to_status(delta.status()),
+                    additions: 0,
+                    deletions: 0,
+                });
+                true
+            },
+            None,
+            None,
+            Some(&mut |_delta, _hunk, line| {
+                match line.origin() {
+                    '+' => total_additions += 1,
+                    '-' => total_deletions += 1,
+                    _ => {}
+                }
+                true
+            }),
+        )
+        .map_err(|e| Error::vcs_with_source("Failed to iterate diff", e))?;
+
+        Ok((files, total_additions, total_deletions))
     }
 }
 
@@ -135,28 +239,13 @@ impl VcsProvider for GitProvider {
 
             let name = match branch.name() {
                 Ok(Some(n)) => n.to_owned(),
-                _ => {
-                    tracing::warn!(
-                        branch_id = ?branch.name(),
-                        "skipping branch with invalid name"
-                    );
-                    continue;
-                }
+                _ => continue,
             };
 
             let head_commit = match branch.get().peel_to_commit() {
                 Ok(c) => c.id().to_string(),
-                Err(e) => {
-                    tracing::warn!(
-                        error = %e,
-                        branch_name = %name,
-                        "skipping branch with invalid head commit"
-                    );
-                    continue;
-                }
+                Err(_unsupported) => continue,
             };
-
-            let is_default = name == repo.default_branch();
 
             let upstream = branch
                 .upstream()
@@ -165,9 +254,9 @@ impl VcsProvider for GitProvider {
 
             result.push(VcsBranch::new(
                 format!("{}::{}", repo.id(), name),
-                name,
+                name.clone(),
                 head_commit,
-                is_default,
+                name == repo.default_branch(),
                 upstream,
             ));
         }
@@ -183,58 +272,34 @@ impl VcsProvider for GitProvider {
     ) -> Result<Vec<VcsCommit>> {
         let git_repo = Self::open_repo(repo.path())?;
 
-        let branch_ref = git_repo
-            .find_branch(branch, BranchType::Local)
-            .map_err(|e| {
-                if e.code() == git2::ErrorCode::NotFound {
-                    Error::branch_not_found(branch)
-                } else {
-                    Error::vcs_with_source(format!("Failed to find branch: {branch}"), e)
-                }
-            })?;
-
+        let branch_ref = Self::find_branch_ref(&git_repo, branch)?;
         let branch_commit = branch_ref
-            .get()
             .peel_to_commit()
             .map_err(|e| Error::vcs_with_source("Failed to get branch commit", e))?;
 
         let mut revwalk = git_repo
             .revwalk()
             .map_err(|e| Error::vcs_with_source("Failed to create revwalk", e))?;
-
         revwalk
             .push(branch_commit.id())
             .map_err(|e| Error::vcs_with_source("Failed to push commit to revwalk", e))?;
-
+        // INTENTIONAL: Sorting preference is non-critical; default ordering is acceptable
         revwalk.set_sorting(Sort::TIME).ok();
 
-        let mut commits = Vec::new();
         let max_commits = limit.unwrap_or(usize::MAX);
+        let mut commits = Vec::new();
 
         for oid_result in revwalk {
             if commits.len() >= max_commits {
                 break;
             }
-
             let oid =
                 oid_result.map_err(|e| Error::vcs_with_source("Failed to iterate commits", e))?;
-
             let commit = git_repo
                 .find_commit(oid)
                 .map_err(|e| Error::vcs_with_source("Failed to find commit", e))?;
 
-            let author = commit.author();
-            let parent_hashes: Vec<String> = commit.parent_ids().map(|id| id.to_string()).collect();
-
-            commits.push(VcsCommit::new(VcsCommitInput {
-                id: format!("{}:{}", repo.id(), oid),
-                hash: oid.to_string(),
-                message: commit.message().unwrap_or("").to_owned(),
-                author: author.name().unwrap_or("Unknown").to_owned(),
-                author_email: author.email().unwrap_or("").to_owned(),
-                timestamp: commit.time().seconds(),
-                parent_hashes,
-            }));
+            commits.push(Self::commit_to_vcs(repo.id(), &commit));
         }
 
         Ok(commits)
@@ -243,18 +308,9 @@ impl VcsProvider for GitProvider {
     async fn list_files(&self, repo: &VcsRepository, branch: &str) -> Result<Vec<PathBuf>> {
         let git_repo = Self::open_repo(repo.path())?;
 
-        let branch_ref = git_repo
-            .find_branch(branch, BranchType::Local)
-            .map_err(|e| {
-                if e.code() == git2::ErrorCode::NotFound {
-                    Error::branch_not_found(branch)
-                } else {
-                    Error::vcs_with_source(format!("Failed to find branch: {branch}"), e)
-                }
-            })?;
+        let branch_ref = Self::find_branch_ref(&git_repo, branch)?;
 
         let tree = branch_ref
-            .get()
             .peel_to_tree()
             .map_err(|e| Error::vcs_with_source("Failed to get branch tree", e))?;
 
@@ -280,22 +336,13 @@ impl VcsProvider for GitProvider {
     async fn read_file(&self, repo: &VcsRepository, branch: &str, path: &Path) -> Result<String> {
         let git_repo = Self::open_repo(repo.path())?;
 
-        let branch_ref = git_repo
-            .find_branch(branch, BranchType::Local)
-            .map_err(|e| {
-                if e.code() == git2::ErrorCode::NotFound {
-                    Error::branch_not_found(branch)
-                } else {
-                    Error::vcs_with_source(format!("Failed to find branch: {branch}"), e)
-                }
-            })?;
+        let branch_ref = Self::find_branch_ref(&git_repo, branch)?;
 
         let tree = branch_ref
-            .get()
             .peel_to_tree()
             .map_err(|e| Error::vcs_with_source("Failed to get branch tree", e))?;
 
-        let path_str = mcb_domain::utils::path::path_to_utf8_string(path)
+        let path_str = mcb_utils::utils::path::path_to_utf8_string(path)
             .map_err(|e| Error::vcs_with_source("non-UTF-8 path", e))?;
         let entry = tree.get_path(path).map_err(|e| {
             Error::vcs_with_source(format!("File not found in branch: {path_str}"), e)
@@ -321,7 +368,7 @@ impl VcsProvider for GitProvider {
     }
 
     fn vcs_name(&self) -> &str {
-        "git"
+        mcb_utils::constants::DEFAULT_VCS_PROVIDER
     }
 
     async fn diff_refs(
@@ -331,74 +378,13 @@ impl VcsProvider for GitProvider {
         head_ref: &str,
     ) -> Result<RefDiff> {
         let git_repo = Self::open_repo(repo.path())?;
-
-        let base_obj = git_repo
-            .revparse_single(base_ref)
-            .map_err(|e| Error::vcs_with_source(format!("Failed to resolve ref: {base_ref}"), e))?;
-        let head_obj = git_repo
-            .revparse_single(head_ref)
-            .map_err(|e| Error::vcs_with_source(format!("Failed to resolve ref: {head_ref}"), e))?;
-
-        let base_tree = base_obj
-            .peel_to_tree()
-            .map_err(|e| Error::vcs_with_source("Failed to get base tree", e))?;
-        let head_tree = head_obj
-            .peel_to_tree()
-            .map_err(|e| Error::vcs_with_source("Failed to get head tree", e))?;
+        let (base_tree, head_tree) = Self::resolve_trees(&git_repo, base_ref, head_ref)?;
 
         let diff = git_repo
             .diff_tree_to_tree(Some(&base_tree), Some(&head_tree), None)
             .map_err(|e| Error::vcs_with_source("Failed to create diff", e))?;
 
-        let mut files = Vec::new();
-        let mut total_additions = 0;
-        let mut total_deletions = 0;
-
-        diff.foreach(
-            &mut |delta, _| {
-                let status = match delta.status() {
-                    git2::Delta::Added => DiffStatus::Added,
-                    git2::Delta::Deleted => DiffStatus::Deleted,
-                    git2::Delta::Renamed => DiffStatus::Renamed,
-                    git2::Delta::Unmodified
-                    | git2::Delta::Modified
-                    | git2::Delta::Copied
-                    | git2::Delta::Ignored
-                    | git2::Delta::Untracked
-                    | git2::Delta::Typechange
-                    | git2::Delta::Unreadable
-                    | git2::Delta::Conflicted => DiffStatus::Modified,
-                };
-
-                let path = delta
-                    .new_file()
-                    .path()
-                    .or_else(|| delta.old_file().path())
-                    .map(PathBuf::from)
-                    .unwrap_or_default();
-
-                files.push(FileDiff {
-                    id: id::generate().to_string(),
-                    path,
-                    status,
-                    additions: 0,
-                    deletions: 0,
-                });
-                true
-            },
-            None,
-            None,
-            Some(&mut |_delta, _hunk, line| {
-                let origin = line.origin();
-                if origin == '+' {
-                    total_additions += 1;
-                } else if origin == '-' {
-                    total_deletions += 1;
-                }
-                true
-            }),
-        )
-        .map_err(|e| Error::vcs_with_source("Failed to iterate diff", e))?;
+        let (files, total_additions, total_deletions) = Self::collect_diff_files(&diff)?;
 
         Ok(RefDiff {
             id: id::generate().to_string(),
@@ -449,3 +435,12 @@ impl VcsProvider for GitProvider {
         Ok(repositories)
     }
 }
+
+// ---------------------------------------------------------------------------
+// Linkme Registration
+// ---------------------------------------------------------------------------
+mcb_domain::register_vcs_provider!(
+    mcb_utils::constants::DEFAULT_VCS_PROVIDER,
+    "Git repository provider using libgit2",
+    |_config| Ok(std::sync::Arc::new(GitProvider::new()))
+);

@@ -1,5 +1,8 @@
 #[cfg(test)]
 mod rmcp_http_feature_tests {
+    use rstest::rstest;
+
+    #[rstest]
     #[test]
     fn test_streamable_http_service_available() {
         use rmcp::transport::StreamableHttpServerConfig;

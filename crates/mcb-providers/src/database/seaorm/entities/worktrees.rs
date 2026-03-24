@@ -3,35 +3,49 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a worktree.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "worktrees")]
 pub struct Model {
+    /// Unique identifier for the worktree.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Optional organization ID this worktree belongs to.
     #[sea_orm(column_type = "Text", nullable)]
     pub org_id: Option<String>,
+    /// Optional project ID this worktree belongs to.
     #[sea_orm(column_type = "Text", nullable)]
     pub project_id: Option<String>,
+    /// Reference to the repository this worktree belongs to.
     #[sea_orm(column_type = "Text")]
     pub repository_id: String,
+    /// Reference to the branch this worktree is based on.
     #[sea_orm(column_type = "Text")]
     pub branch_id: String,
+    /// Local filesystem path of the worktree.
     #[sea_orm(column_type = "Text")]
     pub path: String,
+    /// Status of the worktree (e.g., "active", "deleted").
     #[sea_orm(column_type = "Text")]
     pub status: String,
+    /// Optional ID of the agent currently assigned to this worktree.
     #[sea_orm(column_type = "Text", nullable)]
     pub assigned_agent_id: Option<String>,
+    /// Optional context about the worktree origin.
     #[sea_orm(column_type = "Text", nullable)]
     pub origin_context: Option<String>,
+    /// Timestamp when the worktree was created.
     pub created_at: i64,
+    /// Timestamp when the worktree was last updated.
     pub updated_at: i64,
 }
 
+/// Relations for the worktree model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the worktree model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

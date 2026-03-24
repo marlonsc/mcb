@@ -8,10 +8,13 @@
 
 use std::path::Path;
 
-use crate::constants::common::{MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX};
+use crate::ValidationConfigExt;
 use crate::filters::LanguageId;
 use crate::run_context::{InventoryEntry, ValidationRunContext};
 use crate::{Result, ValidationConfig};
+use mcb_utils::constants::validate::{
+    MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX,
+};
 
 /// True if a path points to a test file or tests directory.
 #[must_use]
@@ -125,7 +128,7 @@ where
 
     let context = ValidationRunContext::active_or_build(config)?;
     let inventory = context.file_inventory();
-    let normalized_root = mcb_domain::utils::path::strict_canonicalize(root)
+    let normalized_root = mcb_utils::utils::path::strict_canonicalize(root)
         .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
 
     for entry in inventory {

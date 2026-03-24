@@ -14,7 +14,7 @@
 //! | [`entities`] | Core business entities with identity |
 //! | [`value_objects`] | Immutable value objects |
 //! | [`ports`] | External provider port interfaces |
-//! | [`constants`] | Domain constants |
+//! | [`utils`] | Shared utilities and helpers |
 //! | [`error`] | Domain error types |
 //!
 //! ## Clean Architecture Principles
@@ -24,11 +24,23 @@
 //! - **No external dependencies** - only standard library and core traits
 //! - **Pure business logic** - no infrastructure or application concerns
 //!
+//! ## Focus: Architecture & Integration
+//!
+//! For developers (and agents) looking to integrate with MCB's dependency system:
+//!
+//! - **Static DI / Containerless Architecture (CA)**: See [`registry`] for the
+//!   `linkme`-based registration backbone. This is where providers are "linked" to the domain.
+//! - **Opaque DI Context**: See [`registry::ServiceResolutionContext`]. It carries
+//!   infrastructure dependencies (DB, Config) through the domain layer without creating
+//!   cyclic dependencies.
+//! - **Test Utilities**: See [`utils::tests`] for the centralized testing
+//!   scaffolding, including Golden Tests, Invariant Assertions, and DI-ready fixtures.
+//!
 //! ## Example
 //!
 //! ```
-//! use mcb_domain::entities::CodeChunk;
-//! use mcb_domain::value_objects::Embedding;
+//! use mcb_domain::entities::code_chunk::CodeChunk;
+//! use mcb_domain::value_objects::embedding::Embedding;
 //!
 //! // Create a code chunk entity
 //! let chunk = CodeChunk {
@@ -49,8 +61,6 @@
 #[macro_use]
 pub mod macros;
 
-/// Domain-level constants
-pub mod constants;
 /// Core business entities with identity
 pub mod entities;
 /// Domain error types
@@ -61,24 +71,14 @@ pub mod events;
 pub mod infra;
 /// External provider port interfaces
 pub mod ports;
+/// MCP JSON-RPC protocol types (domain-level contract)
+pub mod protocol;
 /// Provider auto-registration registry
 pub mod registry;
-
-#[cfg(any(test, feature = "test-utils"))]
-/// Test-only configuration helpers for external service endpoints.
-pub mod test_services_config;
-#[cfg(any(test, feature = "test-utils"))]
-/// Shared test fixtures and utilities.
-pub mod test_utils;
 /// Common utilities
 pub mod utils;
 /// Immutable value objects
 pub mod value_objects;
 
-// Re-export commonly used types for convenience
-pub use constants::values::*;
-pub use entities::*;
+// Re-export only error types (universally used)
 pub use error::{Error, Result};
-pub use events::{DomainEvent, EventPublisher, ServiceState};
-pub use utils::{compute_content_hash, project_type, vcs_context};
-pub use value_objects::*;

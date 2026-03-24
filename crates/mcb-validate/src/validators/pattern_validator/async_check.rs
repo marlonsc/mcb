@@ -4,9 +4,9 @@
 use std::path::Path;
 
 use super::violation::PatternViolation;
-use crate::constants::common::ATTR_SEARCH_LINES;
-use crate::pattern_registry::compile_regex;
-use crate::traits::violation::Severity;
+use mcb_domain::ports::validation::Severity;
+use mcb_utils::constants::validate::ATTR_SEARCH_LINES;
+use mcb_utils::utils::regex::compile_regex;
 
 /// Checks for async trait usage in a single file.
 pub fn check_async_traits(path: &Path, content: &str) -> crate::Result<Vec<PatternViolation>> {
@@ -37,6 +37,9 @@ pub fn check_async_traits(path: &Path, content: &str) -> crate::Result<Vec<Patte
     for (line_num, line) in lines.iter().enumerate() {
         if let Some(cap) = trait_pattern.captures(line) {
             let trait_name = cap.get(1).map_or("", |m| m.as_str());
+            if line.contains('=') {
+                continue;
+            }
             if !has_async_methods(line_num) {
                 continue;
             }

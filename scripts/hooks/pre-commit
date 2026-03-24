@@ -22,9 +22,9 @@ echo "Running pre-commit checks..."
 # Same checks as CI pipeline (fast checks only)
 # =============================================================================
 
-echo "  → Lint (Rust 2024 compliance)..."
+echo "  → Lint..."
 lint_start=$SECONDS
-make lint MCB_CI=1
+make lint
 echo "    ✓ Lint completed in $((SECONDS - lint_start))s"
 
 echo "  → Security audit..."

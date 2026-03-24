@@ -48,22 +48,6 @@ settings:
     auto_reconnect: true
     max_reconnect_attempts: 5
 
-  server:
-    transport_mode: stdio
-    network:
-      host: "0.0.0.0"
-      port: 3000
-    ssl:
-      https: false
-    timeouts:
-      request_timeout_secs: 30
-      connection_timeout_secs: 10
-      max_request_body_size: 10485760
-    cors:
-      cors_enabled: true
-      cors_origins:
-        - "*"
-
   providers:
     database:
       provider: sqlite
@@ -72,23 +56,31 @@ settings:
           provider: sqlite
           path: ""
     embedding:
-      provider: fastembed
-      cache_dir: "./.cache/mcb/fastembed"
+      provider: ollama
+      model: nomic-embed-text
+      base_url: "http://localhost:11434"
+      dimensions: 768
       configs:
         default:
-          provider: fastembed
-          model: AllMiniLML6V2
-          dimensions: 384
+          provider: ollama
+          model: nomic-embed-text
+          dimensions: 768
+          base_url: "http://localhost:11434"
     vector_store:
-      provider: edgevec
+      provider: milvus
+      address: "http://localhost:29530"
+      dimensions: 768
       collection: default
       configs:
         default:
-          provider: edgevec
-          dimensions: 384
+          provider: milvus
+          dimensions: 768
           collection: default
+          address: "http://localhost:29530"
 
   mcp:
+    no_stdio: false
+    stdio_only: false
     indexing:
       supported_extensions:
         - rs
@@ -99,15 +91,6 @@ settings:
         - cpp
         - c
         - go
-
-  mcp_context:
-    git:
-      branches:
-        - main
-        - HEAD
-      depth: 50
-      ignore_patterns: []
-      include_submodules: true
 
   logging:
     level: info

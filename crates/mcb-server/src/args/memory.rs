@@ -6,6 +6,8 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;
 
+use crate::args::schema_helpers::ObjectDataSchema;
+
 tool_enum! {
 /// Actions available for the memory tool.
 pub enum MemoryAction {
@@ -58,7 +60,7 @@ pub struct MemoryArgs {
     /// Data payload for store actions (JSON object).
     #[schemars(
         description = "Data payload for store action. observation: {content, type?, tags?, metadata?}; execution: {command, output?, status?}; quality_gate: {gate_name, status, details?}; error_pattern: {error_type, message, fix?}; session: {session_id, topics?, decisions?, next_steps?, key_files?}",
-        with = "serde_json::Value"
+        with = "ObjectDataSchema"
     )]
     pub data: Option<serde_json::Value>,
 

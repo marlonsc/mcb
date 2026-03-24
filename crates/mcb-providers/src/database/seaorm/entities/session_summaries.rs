@@ -3,36 +3,50 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a session summary.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "session_summaries")]
 pub struct Model {
+    /// Unique identifier for the session summary.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Optional organization ID.
     #[sea_orm(column_type = "Text", nullable)]
     pub org_id: Option<String>,
+    /// Identifier of the project this summary belongs to.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Optional repository ID.
     #[sea_orm(column_type = "Text", nullable)]
     pub repo_id: Option<String>,
+    /// Identifier of the session summarized.
     #[sea_orm(column_type = "Text")]
     pub session_id: String,
+    /// Optional summarized topics discussed in the session.
     #[sea_orm(column_type = "Text", nullable)]
     pub topics: Option<String>,
+    /// Optional summarized decisions made in the session.
     #[sea_orm(column_type = "Text", nullable)]
     pub decisions: Option<String>,
+    /// Optional list of next steps identified in the session.
     #[sea_orm(column_type = "Text", nullable)]
     pub next_steps: Option<String>,
+    /// Optional list of key files modified or discussed.
     #[sea_orm(column_type = "Text", nullable)]
     pub key_files: Option<String>,
+    /// Optional context about the summary origin.
     #[sea_orm(column_type = "Text", nullable)]
     pub origin_context: Option<String>,
+    /// Timestamp when the summary was created.
     pub created_at: i64,
 }
 
+/// Relations for the session summary model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the session summary model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

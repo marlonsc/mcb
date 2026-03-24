@@ -3,7 +3,8 @@
 use rstest::rstest;
 use std::path::Path;
 
-use mcb_validate::filters::{LanguageDetector, LanguageId};
+use mcb_domain::ports::validation::LanguageId;
+use mcb_validate::filters::LanguageDetector;
 
 #[rstest]
 #[case("main.rs", "rust")]
@@ -73,7 +74,7 @@ fn from_shebang_mapping(#[case] first_line: &str, #[case] expected: LanguageId) 
     assert_eq!(LanguageId::from_shebang(first_line), Some(expected));
 }
 
-#[test]
+#[rstest]
 fn test_content_detection() {
     let detector = LanguageDetector::new();
 
@@ -84,13 +85,13 @@ fn test_content_detection() {
     );
 }
 
-#[test]
+#[rstest]
 fn test_unknown_extension() {
     let detector = LanguageDetector::new();
     assert_eq!(detector.detect_name(Path::new("file.unknown"), None), None);
 }
 
-#[test]
+#[rstest]
 fn test_filename_detection() {
     let detector = LanguageDetector::new();
     assert_eq!(
@@ -103,7 +104,7 @@ fn test_filename_detection() {
     );
 }
 
-#[test]
+#[rstest]
 fn test_shebang_detection() {
     let detector = LanguageDetector::new();
     let shell_script = "#!/usr/bin/env bash\necho hello";
@@ -114,7 +115,7 @@ fn test_shebang_detection() {
     );
 }
 
-#[test]
+#[rstest]
 fn test_unknown_existing_file_returns_none() {
     let detector = LanguageDetector::new();
 
@@ -148,7 +149,7 @@ fn matches_languages(
     );
 }
 
-#[test]
+#[rstest]
 fn test_supported_languages() {
     let detector = LanguageDetector::new();
     let languages = detector.supported_language_names();

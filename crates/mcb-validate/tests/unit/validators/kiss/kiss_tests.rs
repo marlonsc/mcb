@@ -3,23 +3,22 @@
 //! Validates `KissValidator` against fixture crates with precise
 //! file + line + violation-type assertions.
 
-use mcb_validate::KissValidator;
-
 use crate::utils::test_constants::{
     DOMAIN_CRATE, FIXTURE_DOMAIN_SERVICE_PATH, INFRA_CRATE, LIB_RS, SERVER_CRATE, TEST_CRATE,
 };
 use crate::utils::*;
+use mcb_domain::utils::tests::assertions::{assert_no_violations, assert_violations_exact};
+use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[test]
+#[rstest]
 fn test_kiss_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = KissValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "kiss").unwrap();
 
     let domain_service = format!("{DOMAIN_CRATE}/src/{FIXTURE_DOMAIN_SERVICE_PATH}");
     let test_lib = format!("{TEST_CRATE}/src/{LIB_RS}");
@@ -44,7 +43,7 @@ fn test_kiss_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[test]
+#[rstest]
 fn test_clean_code_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
@@ -55,8 +54,7 @@ pub fn greet(name: &str, greeting: &str) -> String {
 }
 "#,
     );
-    let validator = KissValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "kiss").unwrap();
 
     assert_no_violations(&violations, "Clean code should produce no violations");
 }

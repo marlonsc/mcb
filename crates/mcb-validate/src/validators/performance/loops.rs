@@ -7,10 +7,10 @@ use std::path::PathBuf;
 use regex::Regex;
 
 use crate::Result;
-use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX, TEST_DIR_FRAGMENT};
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
+use mcb_utils::constants::validate::{CFG_TEST_MARKER, COMMENT_PREFIX, TEST_DIR_FRAGMENT};
+use mcb_utils::utils::regex::compile_regex;
 
 use super::PerformanceValidator;
 use super::violation::PerformanceViolation;

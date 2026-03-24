@@ -5,7 +5,7 @@ use std::sync::Arc;
 
 use mcb_domain::entities::memory::{ExecutionMetadata, MemorySearchResult, ObservationType};
 use mcb_domain::ports::MemoryServiceInterface;
-use mcb_domain::utils::id as domain_id;
+use mcb_utils::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Value;
@@ -16,9 +16,10 @@ use super::common::{
     search_memories_as_json, str_vec,
 };
 use crate::args::MemoryArgs;
-use crate::constants::fields::{FIELD_OBSERVATION_ID, TAG_EXECUTION, TAG_FAILURE, TAG_SUCCESS};
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
+use mcb_utils::constants::keys::FIELD_OBSERVATION_ID;
+use mcb_utils::constants::values::{TAG_EXECUTION, TAG_FAILURE, TAG_SUCCESS};
 
 /// Validated execution data extracted from JSON payload
 struct ValidatedExecutionData {

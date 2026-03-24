@@ -1,23 +1,29 @@
-//! Operation logging port: single entry point (level + context + message + optional detail).
+//! Logging ports.
 
 /// Log level for the unified `log` method.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum LogLevel {
-    /// Error level
+    /// Critical error that requires immediate attention.
     Error,
-    /// Warning level
+    /// Potentially problematic situation that doesn't prevent operation.
     Warn,
-    /// Info level
+    /// Significant informational event for monitoring purposes.
     Info,
-    /// Debug level
+    /// Detailed information useful for debugging.
     Debug,
-    /// Trace level
+    /// Extremely fine-grained information for tracing execution flow.
     Trace,
 }
 
 /// Operation logger interface: one method for all levels, optional detail.
 pub trait OperationLogger: Send + Sync {
-    /// Logs at the given level. Message always; detail only when config permits.
+    /// Logs a message with a specific level, context, and optional detail.
+    ///
+    /// # Parameters
+    /// - `level`: The severity level of the log message.
+    /// - `context`: The name of the module or component generating the log.
+    /// - `message`: The primary log message text.
+    /// - `detail`: An optional displayable value providing extra context (e.g., a struct).
     fn log(
         &self,
         level: LogLevel,

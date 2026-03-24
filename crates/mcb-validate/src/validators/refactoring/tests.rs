@@ -1,10 +1,10 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#refactoring)
 //!
-use crate::constants::common::CFG_TEST_MARKER;
 use crate::filters::LanguageId;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::CFG_TEST_MARKER;
 use std::collections::HashSet;
 use std::path::Path;
 

@@ -5,7 +5,7 @@
 # Manual workflow: triggered via workflow_dispatch only
 # Superseded by release.yml for tag-triggered deployment.
 # This workflow is kept as a manual emergency fallback only.
-# Builds and deploys documentation (mdBook + Rust API docs) to GitHub Pages
+# Uses the shared docs-build.yml reusable workflow.
 # =============================================================================
 
 name: Pages
@@ -20,143 +20,36 @@ concurrency:
   group: pages-${{ github.ref }}
   cancel-in-progress: true
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
-  validate-docs:
-    name: Validate Documentation
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - run: make docs-check
-       - run: bash .github/setup-ci.sh
-       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: stable
-       - run: |
-           sudo apt-get update
-           sudo apt-get install -y nodejs npm
-           npm install -g markdownlint-cli
-       - run: make docs-validate QUICK=1
-
-   docs-rust:
-    name: Build Rust API Docs
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
-    steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - run: bash .github/setup-ci.sh
-       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-         with:
-           toolchain: stable
-       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-         with:
-           save-if: ${{ github.ref == 'refs/heads/main' }}
-       - run: make rust-docs
-       - run: make test SCOPE=doc
-       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-         with:
-           name: rust-api-docs
-           path: target/doc/
-           retention-days: 7
-           include-hidden-files: false
-
-   docs-book:
-    name: Build mdBook
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    needs: [validate-docs]
-    if: |
-      always() &&
-      (needs.validate-docs.result == 'success' ||
-       needs.validate-docs.result == 'skipped')
-    steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - run: make docs-setup
-       - run: make docs-sync
-       - run: make docs-build
-       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
-         with:
-           name: mdbook-docs
-           path: book/book/
-           retention-days: 7
-           include-hidden-files: false
-
-   deploy:
-    name: Deploy to GitHub Pages
-    timeout-minutes: 10
-    runs-on: ubuntu-latest
-    needs: [docs-rust, docs-book]
-    if: |
-      always() &&
-      !failure() &&
-      !cancelled() &&
-      (needs.docs-rust.result == 'success' || needs.docs-book.result == 'success')
+  docs:
+    name: Build, Validate & Deploy Documentation
+    uses: ./.github/workflows/docs-build.yml
+    with:
+      deploy: true
+      validate: true
+      rust-cache-save: false
     permissions:
       contents: write
-    steps:
-       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-         with:
-           persist-credentials: false
-           submodules: recursive
-       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-         continue-on-error: true
-         with:
-           name: rust-api-docs
-           path: docs-site/api/
-       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-         continue-on-error: true
-         with:
-           name: mdbook-docs
-           path: docs-site/
-       - name: Check artifacts exist
-         run: |
-           # Check for actual content files, not just directories
-           # (download-artifact may create empty dirs with continue-on-error)
-           if [[ ! -f "docs-site/api/index.html" ]]; then
-             echo "Warning: Rust API docs not found, creating empty directory" >&2
-             mkdir -p docs-site/api
-           fi
-           if [[ ! -f "docs-site/index.html" ]]; then
-             echo "Warning: mdBook docs not found, creating empty directory" >&2
-             mkdir -p docs-site
-           fi
-       - name: Deploy to GitHub Pages
-         uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
-         with:
-           github_token: ${{ secrets.GITHUB_TOKEN }}
-           publish_dir: docs-site
 
-   summary:
+  summary:
     name: Deployment Summary
     runs-on: ubuntu-latest
-    needs: [deploy]
+    needs: [docs]
     if: always()
     steps:
       - name: Report Status
         env:
-          DEPLOY_RESULT: ${{ needs.deploy.result }}
+          DEPLOY_RESULT: ${{ needs.docs.result }}
           REPO: ${{ github.repository }}
         run: |
           {
             echo "## GitHub Pages Deployment"
             echo ""
             if [[ "$DEPLOY_RESULT" == "success" ]]; then
-              echo "✓ Documentation deployed successfully"
+              echo "[OK] Documentation deployed successfully"
               echo ""
               echo "View at: https://${REPO%%/*}.github.io/${REPO##*/}/"
             else
-              echo "✗ Deployment failed: $DEPLOY_RESULT"
+              echo "[FAIL] Deployment failed: $DEPLOY_RESULT"
             fi
           } >> "$GITHUB_STEP_SUMMARY"

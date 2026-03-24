@@ -3,24 +3,32 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a project dependency between issues.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "project_dependencies")]
 pub struct Model {
+    /// Unique identifier for the dependency.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Identifier of the issue that depends on another issue.
     #[sea_orm(column_type = "Text")]
     pub from_issue_id: String,
+    /// Identifier of the issue that is being depended on.
     #[sea_orm(column_type = "Text")]
     pub to_issue_id: String,
+    /// Type of the dependency (e.g., "blocks", "relates to").
     #[sea_orm(column_type = "Text")]
     pub dependency_type: String,
+    /// Timestamp when the dependency was recorded.
     pub created_at: i64,
 }
 
+/// Relations for the project dependency model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the project dependency model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

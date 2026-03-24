@@ -8,7 +8,12 @@
 use std::path::Path;
 use std::sync::Arc;
 
+use dashmap::DashSet;
+
+use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
+use mcb_domain::entities::project::Project;
 use mcb_domain::ports::AgentSessionServiceInterface;
+use mcb_domain::ports::HybridSearchProvider;
 use mcb_domain::ports::VcsProvider;
 use mcb_domain::ports::{
     ContextServiceInterface, IndexingServiceInterface, MemoryServiceInterface,
@@ -48,6 +53,16 @@ pub struct McpServer {
     /// Tool handlers for MCP protocol
     handlers: ToolHandlers,
     runtime_defaults: RuntimeDefaults,
+    /// Sessions already auto-created (keyed by session ID).
+    auto_init_sessions: Arc<DashSet<String>>,
+    /// Projects already auto-created (keyed by `(org_id, project_name)`).
+    auto_init_projects: Arc<DashSet<(String, String)>>,
+}
+
+impl std::fmt::Debug for McpServer {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("McpServer").finish()
+    }
 }
 
 /// Entity repositories used by MCP entity handlers.
@@ -84,21 +99,10 @@ pub struct McpServices {
     pub project_workflow: Arc<dyn ProjectRepository>,
     /// VCS provider
     pub vcs: Arc<dyn VcsProvider>,
+    /// Hybrid search provider for BM25+semantic re-ranking.
+    pub hybrid_search: Arc<dyn HybridSearchProvider>,
     /// Entity repositories shared by CRUD handlers.
     pub entities: McpEntityRepositories,
-}
-
-/// Generate `Arc`-cloning accessor methods for `McpServer` fields.
-macro_rules! impl_arc_accessors {
-    ($($(#[doc = $doc:literal])* $name:ident -> $ty:ty => $($path:ident).+),+ $(,)?) => {
-        $(
-            $(#[doc = $doc])*
-            #[must_use]
-            pub fn $name(&self) -> Arc<$ty> {
-                Arc::clone(&self.$($path).+)
-            }
-        )+
-    };
 }
 
 impl McpServer {
@@ -109,10 +113,8 @@ impl McpServer {
         vcs: &Arc<dyn VcsProvider>,
         execution_flow: Option<ExecutionFlow>,
     ) -> Self {
-        let runtime_defaults = futures::executor::block_on(RuntimeDefaults::discover(
-            vcs.as_ref(),
-            execution_flow,
-        ));
+        let runtime_defaults =
+            futures::executor::block_on(RuntimeDefaults::discover(vcs.as_ref(), execution_flow));
         let hook_processor = HookProcessor::new(Some(Arc::clone(&services.memory)));
         let vcs_entity_handler =
             Arc::new(VcsEntityHandler::new(Arc::clone(&services.entities.vcs)));
@@ -135,6 +137,8 @@ impl McpServer {
             search: Arc::new(SearchHandler::new(
                 Arc::clone(&services.search),
                 Arc::clone(&services.memory),
+                Arc::clone(&services.hybrid_search),
+                Arc::clone(&services.indexing),
             )),
             validate: Arc::new(ValidateHandler::new(Arc::clone(&services.validation))),
             memory: Arc::new(MemoryHandler::new(Arc::clone(&services.memory))),
@@ -157,6 +161,8 @@ impl McpServer {
             services,
             handlers,
             runtime_defaults,
+            auto_init_sessions: Arc::new(DashSet::new()),
+            auto_init_projects: Arc::new(DashSet::new()),
         }
     }
 
@@ -240,7 +246,7 @@ impl ServerHandler for McpServer {
             protocol_version: ProtocolVersion::V_2025_03_26,
             capabilities: ServerCapabilities::builder().enable_tools().build(),
             server_info: Implementation {
-                name: "MCP Context Browser".to_owned(),
+                name: mcb_utils::constants::protocol::SERVER_NAME.to_owned(),
                 version: env!("CARGO_PKG_VERSION").to_owned(),
                 ..Default::default()
             },
@@ -318,6 +324,106 @@ tools:
 
         execution_context.apply_to_request_if_missing(&mut request);
 
+        // T10 + T11: Lazy auto-creation of session and project per unique context.
+        auto_create_session_and_project(
+            &self.services,
+            &self.runtime_defaults,
+            &execution_context,
+            &self.auto_init_sessions,
+            &self.auto_init_projects,
+        )
+        .await;
+
         route_tool_call(request, &self.handlers, execution_context).await
+    }
+}
+
+/// Auto-create agent session and project per unique context (T10 + T11).
+///
+/// Uses `DashSet` guards to ensure each session ID and (org, project) pair is
+/// created at most once. Failures are non-fatal: logged as warnings but
+/// never propagated to tool callers.
+async fn auto_create_session_and_project(
+    services: &McpServices,
+    defaults: &RuntimeDefaults,
+    ctx: &ToolExecutionContext,
+    init_sessions: &DashSet<String>,
+    init_projects: &DashSet<(String, String)>,
+) {
+    // T10: Auto-create agent session with IDE identity
+    if let Some(ref session_id) = ctx.session_id
+        && init_sessions.insert(session_id.clone())
+    {
+        let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
+        let ide_label = defaults
+            .agent_program
+            .as_deref()
+            .or(ctx.agent_program.as_deref())
+            .unwrap_or(mcb_utils::constants::ide::IDE_MCB_STDIO);
+        let session = AgentSession {
+            id: session_id.clone(),
+            session_summary_id: format!("auto_{}", mcb_utils::utils::id::generate().simple()),
+            agent_type: AgentType::Sisyphus,
+            model: ctx
+                .model_id
+                .clone()
+                .unwrap_or_else(|| mcb_utils::constants::FALLBACK_UNKNOWN.to_owned()),
+            parent_session_id: ctx.parent_session_id.clone(),
+            started_at: now,
+            ended_at: None,
+            duration_ms: None,
+            status: AgentSessionStatus::Active,
+            prompt_summary: Some(format!("Auto-session via {ide_label}")),
+            result_summary: None,
+            token_count: None,
+            tool_calls_count: None,
+            delegations_count: None,
+            project_id: ctx.project_id.clone(),
+            worktree_id: ctx.worktree_id.clone(),
+        };
+        match services.agent_session.create_session(session).await {
+            Ok(_) => tracing::info!("Auto-session created: {session_id} via {ide_label}"),
+            Err(e) => tracing::warn!("Auto-session creation failed (non-fatal): {e}"),
+        }
+    }
+
+    // T11: Auto-create project from VCS context
+    if let (Some(org_id), Some(repo_path)) = (&ctx.org_id, &ctx.repo_path) {
+        let project_name = Path::new(repo_path.as_str())
+            .file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or(mcb_utils::constants::FALLBACK_UNKNOWN);
+        if !init_projects.insert((org_id.clone(), project_name.to_owned())) {
+            return;
+        }
+
+        match services
+            .project_workflow
+            .get_by_name(org_id, project_name)
+            .await
+        {
+            Ok(_) => {
+                tracing::debug!("Project '{project_name}' already exists for org '{org_id}'");
+            }
+            Err(_) => {
+                let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
+                let project = Project {
+                    id: mcb_utils::utils::id::generate().to_string(),
+                    org_id: org_id.clone(),
+                    name: project_name.to_owned(),
+                    path: repo_path.clone(),
+                    created_at: now,
+                    updated_at: now,
+                };
+                match services.project_workflow.create(&project).await {
+                    Ok(()) => {
+                        tracing::info!("Auto-project created: '{project_name}' for org '{org_id}'");
+                    }
+                    Err(e) => {
+                        tracing::warn!("Auto-project creation failed (non-fatal): {e}");
+                    }
+                }
+            }
+        }
     }
 }

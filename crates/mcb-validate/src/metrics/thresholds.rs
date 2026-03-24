@@ -7,9 +7,12 @@
 
 use std::collections::HashMap;
 
-use crate::constants::rules::{METRICS_FIELD_MAX, METRICS_FIELD_SEVERITY};
-use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_INFO};
-use crate::traits::violation::Severity;
+use mcb_domain::ports::validation::Severity;
+use mcb_utils::constants::validate::{
+    METRICS_FIELD_MAX, SEVERITY_ERROR, SEVERITY_INFO, YAML_FIELD_COGNITIVE_COMPLEXITY,
+    YAML_FIELD_CYCLOMATIC_COMPLEXITY, YAML_FIELD_FUNCTION_LENGTH, YAML_FIELD_NESTING_DEPTH,
+    YAML_FIELD_SEVERITY,
+};
 
 /// Types of metrics we can measure
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -152,7 +155,7 @@ impl MetricThresholds {
     ) -> Option<(u32, Severity)> {
         let section = obj.get(key)?;
         let max = section.get(METRICS_FIELD_MAX)?.as_u64()?;
-        let severity_str = section.get(METRICS_FIELD_SEVERITY).and_then(|v| v.as_str());
+        let severity_str = section.get(YAML_FIELD_SEVERITY).and_then(|v| v.as_str());
         Some((Self::to_u32(max), Self::severity_from_str(severity_str)))
     }
 
@@ -178,16 +181,16 @@ impl MetricThresholds {
         let mut thresholds = Self::new();
 
         if let Some(obj) = config.as_object() {
-            if let Some((max, sev)) = Self::parse_metric(obj, "cognitive_complexity") {
+            if let Some((max, sev)) = Self::parse_metric(obj, YAML_FIELD_COGNITIVE_COMPLEXITY) {
                 thresholds = thresholds.with_threshold(MetricType::CognitiveComplexity, max, sev);
             }
-            if let Some((max, sev)) = Self::parse_metric(obj, "function_length") {
+            if let Some((max, sev)) = Self::parse_metric(obj, YAML_FIELD_FUNCTION_LENGTH) {
                 thresholds = thresholds.with_threshold(MetricType::FunctionLength, max, sev);
             }
-            if let Some((max, sev)) = Self::parse_metric(obj, "cyclomatic_complexity") {
+            if let Some((max, sev)) = Self::parse_metric(obj, YAML_FIELD_CYCLOMATIC_COMPLEXITY) {
                 thresholds = thresholds.with_threshold(MetricType::CyclomaticComplexity, max, sev);
             }
-            if let Some((max, sev)) = Self::parse_metric(obj, "nesting_depth") {
+            if let Some((max, sev)) = Self::parse_metric(obj, YAML_FIELD_NESTING_DEPTH) {
                 thresholds = thresholds.with_threshold(MetricType::NestingDepth, max, sev);
             }
         }

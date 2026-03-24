@@ -7,4 +7,5 @@ mod database;
 mod hybrid_search;
 mod project_detection;
 mod vcs;
+mod vector_store;
 mod workflow;

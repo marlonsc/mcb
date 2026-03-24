@@ -6,11 +6,13 @@
 
 use std::path::PathBuf;
 
+use mcb_domain::ports::validation::ValidationConfig;
+use mcb_validate::CleanArchitectureValidator;
 use mcb_validate::config::NamingRulesConfig;
-use mcb_validate::{CleanArchitectureValidator, ValidationConfig};
+use rstest::rstest;
 
 /// Test that CA009 allows composition root (di/) and flags only non-di imports
-#[test]
+#[rstest]
 fn test_ca009_infrastructure_imports_application() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -31,6 +33,7 @@ fn test_ca009_infrastructure_imports_application() {
             infrastructure_crate: "mcb-infrastructure".to_owned(),
             server_crate: "mcb-server".to_owned(),
             validate_crate: "mcb-validate".to_owned(),
+            utils_crate: "mcb-utils".to_owned(),
 
             enabled: true,
         },
