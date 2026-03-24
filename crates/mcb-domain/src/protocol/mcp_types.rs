@@ -6,9 +6,8 @@
 //!
 //! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
 
+use mcb_utils::constants::protocol::JSONRPC_VERSION;
 use serde::{Deserialize, Serialize};
-
-pub use mcb_utils::constants::protocol::JSONRPC_VERSION;
 
 /// MCP request payload (JSON-RPC format).
 #[derive(Debug, Clone, Serialize, Deserialize)]

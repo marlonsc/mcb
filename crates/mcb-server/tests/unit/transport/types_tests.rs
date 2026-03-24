@@ -1,6 +1,7 @@
 //! Tests for transport layer types
 
-use mcb_domain::protocol::{JSONRPC_VERSION, McpRequest, McpResponse};
+use mcb_domain::protocol::{McpRequest, McpResponse};
+use mcb_utils::constants::protocol::JSONRPC_VERSION;
 use rstest::rstest;
 
 #[rstest]

@@ -11,8 +11,9 @@
 use rstest::rstest;
 
 use axum::http::StatusCode;
-use mcb_domain::protocol::{JSONRPC_VERSION, McpRequest};
+use mcb_domain::protocol::McpRequest;
 use mcb_utils::constants::FALLBACK_UNKNOWN;
+use mcb_utils::constants::protocol::JSONRPC_VERSION;
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp};
 
