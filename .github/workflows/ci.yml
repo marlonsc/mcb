@@ -336,6 +336,13 @@ jobs:
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           save-if: false
+      - name: Cache FastEmbed models
+        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        with:
+          path: .cache/mcb/fastembed
+          key: fastembed-${{ runner.os }}-allminilml6v2-v1
+          restore-keys: |
+            fastembed-${{ runner.os }}-
       - run: make test THREADS=4
 
   validate:
