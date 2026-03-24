@@ -313,6 +313,23 @@ jobs:
           }
           Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
           Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
+      - name: Install ONNX Runtime (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          ORT_VERSION: "1.23.2"
+        run: |
+          $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
+          $zip = "$env:TEMP\onnxruntime.zip"
+          $dest = "$env:TEMP\onnxruntime"
+          Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          Expand-Archive $zip -DestinationPath $dest -Force
+          $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
+          $ortLib = "$ortDir\lib"
+          Add-Content -Path $env:GITHUB_PATH -Value $ortLib
+          Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
+          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ matrix.rust }}
@@ -467,6 +484,23 @@ jobs:
           }
           Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
           Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
+      - name: Install ONNX Runtime (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          ORT_VERSION: "1.23.2"
+        run: |
+          $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
+          $zip = "$env:TEMP\onnxruntime.zip"
+          $dest = "$env:TEMP\onnxruntime"
+          Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          Expand-Archive $zip -DestinationPath $dest -Force
+          $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
+          $ortLib = "$ortDir\lib"
+          Add-Content -Path $env:GITHUB_PATH -Value $ortLib
+          Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
+          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
