@@ -35,7 +35,20 @@ fn resolve_default_hybrid_search() -> Option<Arc<dyn mcb_domain::ports::HybridSe
     .ok()
 }
 
-const MCB_REPO_ROOT: &str = "/home/marlonsc/mcb";
+/// Resolve repo root from CARGO_MANIFEST_DIR (works in CI and local dev)
+fn mcb_repo_root() -> &'static str {
+    // CARGO_MANIFEST_DIR points to crates/mcb-server; go up two levels to repo root
+    static ROOT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
+    ROOT.get_or_init(|| {
+        let manifest = std::env::var("CARGO_MANIFEST_DIR")
+            .unwrap_or_else(|_| "/home/marlonsc/mcb/crates/mcb-server".to_string());
+        Path::new(&manifest)
+            .parent() // crates/
+            .and_then(|p| p.parent()) // repo root
+            .map(|p| p.to_string_lossy().into_owned())
+            .unwrap_or_else(|| manifest)
+    })
+}
 
 fn probe_agent_program(
     env_overrides: &[(&str, &str)],
@@ -106,7 +119,8 @@ async fn test_ide_probe_runtime_defaults() {
         return;
     };
     let defaults =
-        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
+        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(mcb_repo_root())), None)
+            .await;
 
     let agent_program = defaults.agent_program.unwrap_or_default();
     println!("AGENT_PROGRAM={agent_program}");
@@ -268,7 +282,8 @@ async fn test_context_fields_populated_in_defaults() {
         return;
     };
     let defaults =
-        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
+        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(mcb_repo_root())), None)
+            .await;
 
     assert!(defaults.session_id.is_some());
     assert!(defaults.repo_id.is_some());
@@ -283,7 +298,8 @@ async fn test_org_id_from_git_remote() {
         return;
     };
     let defaults =
-        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(MCB_REPO_ROOT)), None).await;
+        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(mcb_repo_root())), None)
+            .await;
 
     assert!(defaults.org_id.is_some());
 }
