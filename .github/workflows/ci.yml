@@ -259,7 +259,7 @@ jobs:
         run: |
           if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
             echo "Cache miss — downloading FastEmbed model..."
-            pip install --quiet huggingface_hub
+            python3 -m pip install --quiet huggingface_hub
             python3 -c "
           from huggingface_hub import snapshot_download
           snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
@@ -364,8 +364,8 @@ jobs:
         run: |
           if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
             echo "Cache miss — downloading FastEmbed model..."
-            pip install --quiet huggingface_hub
             PYTHON=$(command -v python3 || command -v python)
+            $PYTHON -m pip install --quiet huggingface_hub
             $PYTHON -c "
           from huggingface_hub import snapshot_download
           snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
@@ -469,7 +469,7 @@ jobs:
         run: |
           if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
             echo "Cache miss — downloading FastEmbed model..."
-            pip install --quiet huggingface_hub
+            python3 -m pip install --quiet huggingface_hub
             python3 -c "
           from huggingface_hub import snapshot_download
           snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
