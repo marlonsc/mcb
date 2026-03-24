@@ -41,7 +41,7 @@ pull: ## Pull current branch from origin
 
 pr-checks: ## Show PR check status (PR=number)
 	@if [ -z "$(PR)" ]; then echo "Error: PR is required. Usage: make pr-checks PR=116"; exit 1; fi
-	@gh pr checks $(PR)
+	@gh pr checks $(PR) || true
 
 pr-view: ## View PR details (PR=number)
 	@if [ -z "$(PR)" ]; then echo "Error: PR is required. Usage: make pr-view PR=116"; exit 1; fi
