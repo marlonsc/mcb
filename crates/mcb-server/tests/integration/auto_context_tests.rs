@@ -35,18 +35,17 @@ fn resolve_default_hybrid_search() -> Option<Arc<dyn mcb_domain::ports::HybridSe
     .ok()
 }
 
-/// Resolve repo root from CARGO_MANIFEST_DIR (works in CI and local dev)
+/// Resolve repo root from `CARGO_MANIFEST_DIR` (works in CI and local dev)
 fn mcb_repo_root() -> &'static str {
     // CARGO_MANIFEST_DIR points to crates/mcb-server; go up two levels to repo root
     static ROOT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
     ROOT.get_or_init(|| {
         let manifest = std::env::var("CARGO_MANIFEST_DIR")
-            .unwrap_or_else(|_| "/home/marlonsc/mcb/crates/mcb-server".to_string());
+            .unwrap_or_else(|_| "/home/marlonsc/mcb/crates/mcb-server".to_owned());
         Path::new(&manifest)
             .parent() // crates/
             .and_then(|p| p.parent()) // repo root
-            .map(|p| p.to_string_lossy().into_owned())
-            .unwrap_or_else(|| manifest)
+            .map_or_else(|| manifest.clone(), |p| p.to_string_lossy().into_owned())
     })
 }
 
