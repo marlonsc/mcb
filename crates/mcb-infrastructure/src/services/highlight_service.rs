@@ -41,12 +41,18 @@ impl HighlightLanguageConfig {
     }
 }
 
+/// Internal state holding both the highlighter and cached language configs.
+struct HighlighterState {
+    highlighter: Highlighter,
+    configs: std::collections::HashMap<String, HighlightConfiguration>,
+}
+
 /// Concrete highlight service implementation using tree-sitter.
 ///
-/// Manages a thread-safe `Highlighter` instance and specific language configurations
+/// Manages a thread-safe `Highlighter` instance and **cached** language configurations
 /// to perform efficient, on-demand syntax highlighting.
 pub struct HighlightServiceImpl {
-    highlighter: Arc<tokio::sync::Mutex<Highlighter>>,
+    state: Arc<std::sync::Mutex<HighlighterState>>,
 }
 
 impl HighlightServiceImpl {
@@ -54,7 +60,10 @@ impl HighlightServiceImpl {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            highlighter: Arc::new(tokio::sync::Mutex::new(Highlighter::new())),
+            state: Arc::new(std::sync::Mutex::new(HighlighterState {
+                highlighter: Highlighter::new(),
+                configs: std::collections::HashMap::new(),
+            })),
         }
     }
 
@@ -227,7 +236,7 @@ impl HighlightServiceImpl {
         Ok(spans)
     }
 
-    /// Highlight code using tree-sitter
+    /// Highlight code using tree-sitter with cached language configs.
     fn highlight_code_internal(
         &self,
         code: &str,
@@ -241,19 +250,33 @@ impl HighlightServiceImpl {
             });
         }
 
-        let config_err = |op: &str, e: HighlightError| {
-            HighlightError::ConfigurationError(format!("failed to {op} for '{language}': {e}"))
+        let mut state = self
+            .state
+            .lock()
+            .map_err(|e| HighlightError::HighlightingFailed(format!("Lock poisoned: {e}")))?;
+
+        // Destructure to allow independent borrows of configs and highlighter
+        let HighlighterState {
+            highlighter,
+            configs,
+        } = &mut *state;
+
+        // Get or create cached config for this language (entry API avoids expect)
+        let config = match configs.entry(language.to_owned()) {
+            std::collections::hash_map::Entry::Occupied(e) => e.into_mut(),
+            std::collections::hash_map::Entry::Vacant(e) => {
+                let lang_config = Self::get_language_config(language)?;
+                let config = Self::create_highlight_config(lang_config).map_err(|e| {
+                    HighlightError::ConfigurationError(format!(
+                        "failed to create highlight config for '{language}': {e}"
+                    ))
+                })?;
+                e.insert(config)
+            }
         };
 
-        let lang_config = Self::get_language_config(language)?;
-
-        let config = Self::create_highlight_config(lang_config)
-            .map_err(|e| config_err("create highlight config", e))?;
-
-        let mut highlighter = self.highlighter.blocking_lock();
-
         let highlights = highlighter
-            .highlight(&config, code.as_bytes(), None, |_: &str| None)
+            .highlight(config, code.as_bytes(), None, |_: &str| None)
             .map_err(|e| HighlightError::HighlightingFailed(e.to_string()))?;
 
         let spans = Self::parse_highlight_events(highlights)?;
@@ -277,10 +300,10 @@ impl HighlightServiceInterface for HighlightServiceImpl {
     async fn highlight(&self, code: &str, language: &str) -> mcb_domain::Result<HighlightedCode> {
         let code = code.to_owned();
         let language = language.to_owned();
-        let highlighter = Arc::clone(&self.highlighter);
+        let state = Arc::clone(&self.state);
 
         let result = tokio::task::spawn_blocking(move || {
-            let service = HighlightServiceImpl { highlighter };
+            let service = HighlightServiceImpl { state };
             service.highlight_code_internal(&code, &language)
         })
         .await
