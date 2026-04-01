@@ -380,7 +380,7 @@ pub async fn jobs_page(Extension(state): Extension<McbState>) -> Result<Response
             let status_class = match op.status {
                 ValidationStatus::Queued | ValidationStatus::InProgress => "running",
                 ValidationStatus::Completed => "completed",
-                ValidationStatus::Failed(_) => "error",
+                ValidationStatus::Failed(_) | ValidationStatus::Canceled => "error",
             };
             format!(
                 r#"<tr>
