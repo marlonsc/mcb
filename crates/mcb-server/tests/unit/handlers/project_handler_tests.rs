@@ -23,6 +23,7 @@ async fn rejects_empty_project_id_for_get() -> TestResult {
         issue_id: None,
         data: None,
         filters: None,
+        org_id: None,
     };
 
     let err = handler

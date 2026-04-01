@@ -106,7 +106,7 @@ fn rejects_blank_provenance_scope_for_search() {
     let mut context = valid_context();
     context.operator_id = Some("   ".to_owned());
 
-    let validation = validate_execution_context("search", &context);
+    let validation = validate_execution_context("search_code", &context);
     assert!(validation.is_err(), "blank operator_id must be rejected");
     let error = match validation {
         Ok(()) => return,
@@ -121,7 +121,7 @@ fn rejects_delegated_without_parent_session_id() {
     context.delegated = Some(true);
     context.parent_session_id = Some(" ".to_owned());
 
-    let validation = validate_execution_context("memory", &context);
+    let validation = validate_execution_context("store_memory", &context);
     assert!(
         validation.is_err(),
         "delegated context must include parent_session_id"
@@ -153,7 +153,7 @@ fn non_provenance_tool_bypasses_scope_gate() {
     };
 
     assert!(
-        validate_execution_context("validate", &context).is_ok(),
+        validate_execution_context("validate_code", &context).is_ok(),
         "non-index/search/memory tools should not require provenance scope"
     );
 }
@@ -163,10 +163,10 @@ fn rejects_validate_in_server_hybrid_flow() {
     let mut context = valid_context();
     context.execution_flow = Some(ExecutionFlow::ServerHybrid.to_string());
 
-    let validation = validate_execution_context("validate", &context);
+    let validation = validate_execution_context("validate_code", &context);
     assert!(
         validation.is_err(),
-        "validate must be rejected in server-hybrid flow"
+        "validate_code must be rejected in server-hybrid flow"
     );
     let err = match validation {
         Ok(()) => return,
@@ -180,10 +180,10 @@ fn allows_search_in_client_hybrid_flow() {
     let mut context = valid_context();
     context.execution_flow = Some(ExecutionFlow::ClientHybrid.to_string());
 
-    let validation = validate_execution_context("search", &context);
+    let validation = validate_execution_context("search_code", &context);
     assert!(
         validation.is_ok(),
-        "search must be allowed in client-hybrid flow"
+        "search_code must be allowed in client-hybrid flow"
     );
 }
 
@@ -193,8 +193,8 @@ fn allows_search_in_server_hybrid_flow() {
     context.execution_flow = Some(ExecutionFlow::ServerHybrid.to_string());
 
     assert!(
-        validate_execution_context("search", &context).is_ok(),
-        "search must be allowed in server-hybrid flow"
+        validate_execution_context("search_code", &context).is_ok(),
+        "search_code must be allowed in server-hybrid flow"
     );
 }
 

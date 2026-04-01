@@ -59,7 +59,30 @@ async fn test_tool_name_set_stability() -> Result<(), Box<dyn std::error::Error>
         .collect();
 
     let expected: BTreeSet<String> = [
-        "agent", "entity", "index", "memory", "project", "search", "session", "validate", "vcs",
+        "analyze_code",
+        "analyze_impact",
+        "clear_index",
+        "compare_branches",
+        "entity",
+        "get_memories",
+        "get_session",
+        "index_repo",
+        "index_status",
+        "inject_context",
+        "list_memories",
+        "list_repos",
+        "list_rules",
+        "list_sessions",
+        "log_delegation",
+        "log_tool_call",
+        "memory_timeline",
+        "project",
+        "search_code",
+        "search_memory",
+        "start_session",
+        "store_memory",
+        "summarize_session",
+        "validate_code",
     ]
     .into_iter()
     .map(str::to_owned)
@@ -91,7 +114,7 @@ async fn test_tool_count_stability() -> Result<(), Box<dyn std::error::Error>> {
         Some(values) => values,
         None => return Ok(()),
     };
-    assert_eq!(tools.len(), 9, "tool count contract changed");
+    assert_eq!(tools.len(), 24, "tool count contract changed");
     Ok(())
 }
 
@@ -140,20 +163,21 @@ async fn test_each_tool_has_non_null_object_input_schema_with_properties()
             Some("object"),
             "{name} inputSchema.type must be object"
         );
-        assert!(
-            schema
-                .get("properties")
-                .is_some_and(serde_json::Value::is_object),
-            "{name} inputSchema.properties must be object"
-        );
+        // Some tools with all-optional or all-hidden fields may omit properties
+        if let Some(props) = schema.get("properties") {
+            assert!(
+                props.is_object(),
+                "{name} inputSchema.properties must be object if present"
+            );
+        }
     }
     Ok(())
 }
 
 #[rstest]
-#[case("index")]
-#[case("search")]
-#[case("memory")]
+#[case("index_repo")]
+#[case("search_code")]
+#[case("store_memory")]
 #[rstest]
 #[tokio::test]
 async fn test_provenance_gating_requires_full_provenance_fields(
@@ -195,9 +219,9 @@ async fn test_provenance_gating_requires_full_provenance_fields(
 }
 
 #[rstest]
-#[case("index")]
-#[case("search")]
-#[case("memory")]
+#[case("index_repo")]
+#[case("search_code")]
+#[case("store_memory")]
 #[rstest]
 #[tokio::test]
 async fn test_delegation_requires_parent_session_id_when_delegated_true(
@@ -246,7 +270,7 @@ async fn test_delegation_requires_parent_session_id_when_delegated_true(
 async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid()
 -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
-    let request = tools_call_request("validate");
+    let request = tools_call_request("validate_code");
     let headers = [
         (HEADER_WORKSPACE_ROOT, "/tmp"),
         (HTTP_HEADER_EXECUTION_FLOW, EXECUTION_FLOW_SERVER_HYBRID),
@@ -257,7 +281,7 @@ async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid()
     let error_opt = response.error;
     assert!(
         error_opt.is_some(),
-        "validate should be blocked in server-hybrid"
+        "validate_code should be blocked in server-hybrid"
     );
     let error = match error_opt {
         Some(error) => error,
@@ -265,18 +289,18 @@ async fn test_operation_mode_matrix_blocks_validate_in_server_hybrid()
     };
     assert_eq!(error.code, -32602);
     assert!(error.message.contains("Operation mode matrix violation"));
-    assert!(error.message.contains("validate"));
+    assert!(error.message.contains("validate_code"));
     assert!(error.message.contains("server-hybrid"));
     Ok(())
 }
 
 #[rstest]
-#[case("search")]
-#[case("memory")]
-#[case("session")]
-#[case("agent")]
+#[case("search_code")]
+#[case("store_memory")]
+#[case("list_sessions")]
+#[case("log_tool_call")]
 #[case("project")]
-#[case("vcs")]
+#[case("list_repos")]
 #[case("entity")]
 #[rstest]
 #[tokio::test]

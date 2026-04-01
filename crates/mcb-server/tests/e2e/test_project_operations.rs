@@ -15,6 +15,7 @@ fn base_args(action: ProjectAction, resource: ProjectResource) -> ProjectArgs {
         issue_id: None,
         data: None,
         filters: None,
+        org_id: None,
     }
 }
 

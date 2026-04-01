@@ -29,7 +29,19 @@ pub fn validate_execution_context(
 ) -> Result<(), McpError> {
     validate_operation_mode_matrix(tool_name, execution_context)?;
 
-    if !matches!(tool_name, "index" | "search" | "memory") {
+    if !matches!(
+        tool_name,
+        "index_repo"
+            | "index_status"
+            | "clear_index"
+            | "search_code"
+            | "search_memory"
+            | "store_memory"
+            | "get_memories"
+            | "list_memories"
+            | "memory_timeline"
+            | "inject_context"
+    ) {
         return Ok(());
     }
 
@@ -84,15 +96,16 @@ fn validate_operation_mode_matrix(
 ) -> Result<(), McpError> {
     let flow = normalize_execution_flow(execution_context.execution_flow.as_deref())?;
 
-    let allowed: &[ExecutionFlow] = if matches!(tool_name, "validate") {
-        &[ExecutionFlow::StdioOnly, ExecutionFlow::ClientHybrid]
-    } else {
-        &[
-            ExecutionFlow::StdioOnly,
-            ExecutionFlow::ClientHybrid,
-            ExecutionFlow::ServerHybrid,
-        ]
-    };
+    let allowed: &[ExecutionFlow] =
+        if matches!(tool_name, "validate_code" | "analyze_code" | "list_rules") {
+            &[ExecutionFlow::StdioOnly, ExecutionFlow::ClientHybrid]
+        } else {
+            &[
+                ExecutionFlow::StdioOnly,
+                ExecutionFlow::ClientHybrid,
+                ExecutionFlow::ServerHybrid,
+            ]
+        };
 
     if allowed.contains(&flow) {
         Ok(())

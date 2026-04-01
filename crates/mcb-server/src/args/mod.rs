@@ -36,10 +36,14 @@ pub mod vcs;
 
 // Consolidate arguments from all modules (User refactor)
 pub use consolidated::{
-    AgentAction, AgentArgs, EntityAction, EntityArgs, EntityResource, IndexAction, IndexArgs,
-    IssueEntityAction, IssueEntityArgs, IssueEntityResource, MemoryAction, MemoryArgs,
-    MemoryResource, OrgEntityAction, OrgEntityArgs, OrgEntityResource, PlanEntityAction,
+    AgentAction, AgentArgs, AnalyzeCodeArgs, AnalyzeImpactArgs, ClearIndexArgs,
+    CompareBranchesArgs, EntityAction, EntityArgs, EntityResource, GetMemoriesArgs, GetSessionArgs,
+    IndexAction, IndexArgs, IndexRepoArgs, IndexStatusArgs, InjectContextArgs, IssueEntityAction,
+    IssueEntityArgs, IssueEntityResource, ListMemoriesArgs, ListReposArgs, ListRulesArgs,
+    ListSessionsArgs, LogDelegationArgs, LogToolCallArgs, MemoryAction, MemoryArgs, MemoryResource,
+    MemoryTimelineArgs, OrgEntityAction, OrgEntityArgs, OrgEntityResource, PlanEntityAction,
     PlanEntityArgs, PlanEntityResource, ProjectAction, ProjectArgs, ProjectResource, SearchArgs,
-    SearchResource, SessionAction, SessionArgs, ValidateAction, ValidateArgs, ValidateScope,
-    VcsAction, VcsArgs, VcsEntityAction, VcsEntityArgs, VcsEntityResource,
+    SearchCodeArgs, SearchMemoryArgs, SearchResource, SessionAction, SessionArgs, StartSessionArgs,
+    StoreMemoryArgs, SummarizeSessionArgs, ValidateAction, ValidateArgs, ValidateCodeArgs,
+    ValidateScope, VcsAction, VcsArgs, VcsEntityAction, VcsEntityArgs, VcsEntityResource,
 };

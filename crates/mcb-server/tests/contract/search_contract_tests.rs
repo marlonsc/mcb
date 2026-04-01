@@ -7,11 +7,9 @@ use rstest::rstest;
 #[tokio::test]
 async fn search_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
-        "search",
+        "search_code",
         &json!({
             "query": "test query",
-            "resource": "code",
-            "collection": "contract-test",
             "limit": 10,
         }),
     );
@@ -31,10 +29,9 @@ async fn search_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error:
 #[tokio::test]
 async fn search_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
-        "search",
+        "search_code",
         &json!({
             "query": 999,
-            "resource": "code",
         }),
     );
     let (status, response) = call_tool(&request).await?;

@@ -75,5 +75,9 @@ pub struct ProjectArgs {
         with = "ObjectDataSchema"
     )]
     pub filters: Option<serde_json::Value>,
+
+    /// Organization ID (auto-injected).
+    #[schemars(skip)]
+    pub org_id: Option<String>,
 }
 }

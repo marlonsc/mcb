@@ -182,46 +182,22 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
             "Schema type must be object"
         );
 
-        assert!(
-            schema
-                .get("properties")
-                .is_some_and(serde_json::Value::is_object),
-            "properties must be object"
-        );
+        // Some tools with all-hidden fields may omit properties
+        if let Some(props) = schema.get("properties") {
+            assert!(props.is_object(), "properties must be object if present");
+        }
     }
 
     // Verify specific tools requirements
-    let index_tool = tools_array
+    let search_code_tool = tools_array
         .iter()
-        .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("index"));
-    assert!(index_tool.is_some(), "index tool missing");
-    let index_tool = match index_tool {
+        .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("search_code"));
+    assert!(search_code_tool.is_some(), "search_code tool missing");
+    let search_code_tool = match search_code_tool {
         Some(value) => value,
         None => return Ok(()),
     };
-    let required = index_tool
-        .get("inputSchema")
-        .and_then(|v| v.get("required"))
-        .and_then(serde_json::Value::as_array);
-    assert!(required.is_some(), "req array");
-    let required = match required {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-    assert!(
-        required.iter().any(|v| v.as_str() == Some("action")),
-        "index tool must require action"
-    );
-
-    let search_tool = tools_array
-        .iter()
-        .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("search"));
-    assert!(search_tool.is_some(), "search tool missing");
-    let search_tool = match search_tool {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-    let required = search_tool
+    let required = search_code_tool
         .get("inputSchema")
         .and_then(|v| v.get("required"))
         .and_then(serde_json::Value::as_array);
@@ -232,7 +208,7 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
     };
     assert!(
         required.iter().any(|v| v.as_str() == Some("query")),
-        "search tool must require query"
+        "search_code tool must require query"
     );
     Ok(())
 }

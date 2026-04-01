@@ -6,7 +6,7 @@ use rstest::rstest;
 #[rstest]
 #[tokio::test]
 async fn validate_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
-    let request = tool_call_request("validate", &json!({"action": "list_rules"}));
+    let request = tool_call_request("list_rules", &json!({}));
     let (status, response) = call_tool(&request).await?;
 
     insta::assert_json_snapshot!(
@@ -19,7 +19,7 @@ async fn validate_happy_path_contract_snapshot() -> Result<(), Box<dyn std::erro
 #[rstest]
 #[tokio::test]
 async fn validate_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
-    let request = tool_call_request("validate", &json!({"action": 123}));
+    let request = tool_call_request("validate_code", &json!({"scope": 123}));
     let (status, response) = call_tool(&request).await?;
 
     insta::assert_json_snapshot!(
