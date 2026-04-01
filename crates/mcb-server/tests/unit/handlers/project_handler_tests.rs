@@ -19,6 +19,8 @@ async fn rejects_empty_project_id_for_get() -> TestResult {
         action: ProjectAction::Get,
         resource: ProjectResource::Project,
         project_id: Some("  ".to_owned()),
+        id: None,
+        issue_id: None,
         data: None,
         filters: None,
     };

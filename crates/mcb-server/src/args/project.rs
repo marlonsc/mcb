@@ -54,6 +54,14 @@ pub struct ProjectArgs {
     #[schemars(description = "Project ID")]
     pub project_id: Option<String>,
 
+    /// Resource ID (for get/delete on phase, issue, dependency, decision)
+    #[schemars(description = "Resource ID (for get/delete operations)")]
+    pub id: Option<String>,
+
+    /// Issue ID (for dependency operations)
+    #[schemars(description = "Issue ID (for dependency list)")]
+    pub issue_id: Option<String>,
+
     /// Data payload for create/update (JSON object)
     #[schemars(
         description = "Data payload for create/update (JSON object)",

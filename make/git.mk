@@ -2,18 +2,23 @@
 # Git & GitHub
 # =============================================================================
 
-.PHONY: status diff log commit push pull pr pr-checks pr-view submodule-status submodule-sync submodule-push
+.PHONY: status diff log commit push pull add branch checkout tag stash stash-pop \
+        diff-stat diff-branch log-graph merge rebase reset-file show \
+        pr pr-checks pr-view submodule-status submodule-sync submodule-push
 
 # Configurable
 BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
+BASE ?= main
 FILES ?=
 MSG ?=
 PR ?=
+REF ?=
+TAG ?=
 
 ##@ Git
 
 status: ## Git status (main + submodules)
-	@echo "=== Main repo ==="
+	@echo "=== Main repo ($(BRANCH)) ==="
 	@git status --short
 	@echo ""
 	@echo "=== Submodules ==="
@@ -23,8 +28,27 @@ diff: ## Git diff (staged + unstaged)
 	@git diff
 	@git diff --cached
 
+diff-stat: ## Diff summary stats (BASE=main)
+	@git diff --stat $(BASE)...HEAD
+
+diff-branch: ## Diff between current branch and BASE (BASE=main)
+	@git diff $(BASE)...HEAD
+
 log: ## Recent commits (LOG_N=10)
 	@git log --oneline -$(or $(LOG_N),10)
+
+log-graph: ## Commits graph (LOG_N=20)
+	@git log --oneline --graph --all -$(or $(LOG_N),20)
+
+log-branch: ## Commits on current branch since BASE (BASE=main)
+	@git log --oneline $(BASE)..HEAD
+
+show: ## Show a commit (REF=HEAD)
+	@git show --stat $(or $(REF),HEAD)
+
+add: ## Stage files (FILES=required)
+	@if [ -z "$(FILES)" ]; then echo "Error: FILES is required. Usage: make add FILES='file1 file2'"; exit 1; fi
+	@git add $(FILES)
 
 commit: ## Commit staged files (MSG=, FILES= optional)
 	@if [ -z "$(MSG)" ]; then echo "Error: MSG is required. Usage: make commit MSG='your message' FILES='file1 file2'"; exit 1; fi
@@ -34,8 +58,46 @@ commit: ## Commit staged files (MSG=, FILES= optional)
 push: ## Push current branch to origin
 	@git push origin $(BRANCH)
 
+push-tags: ## Push all tags to origin
+	@git push origin --tags
+
 pull: ## Pull current branch from origin
 	@git pull origin $(BRANCH)
+
+branch: ## Show branches or create (REF= to create, BASE=main for start point)
+	@if [ -z "$(REF)" ]; then git branch -a; else git branch $(REF) $(BASE); echo "Created branch $(REF) from $(BASE)"; fi
+
+checkout: ## Switch branch (REF=required)
+	@if [ -z "$(REF)" ]; then echo "Error: REF is required. Usage: make checkout REF=main"; exit 1; fi
+	@git checkout $(REF)
+
+tag: ## Create tag (TAG=required, MSG= optional annotation)
+	@if [ -z "$(TAG)" ]; then echo "Error: TAG is required. Usage: make tag TAG=v0.3.1 MSG='Release 0.3.1'"; exit 1; fi
+	@if [ -n "$(MSG)" ]; then git tag -a $(TAG) -m "$(MSG)"; else git tag $(TAG); fi
+	@echo "Created tag $(TAG)"
+
+tags: ## List tags
+	@git tag -l --sort=-version:refname | head -20
+
+stash: ## Stash working changes (MSG= optional)
+	@if [ -n "$(MSG)" ]; then git stash push -m "$(MSG)"; else git stash push; fi
+
+stash-pop: ## Pop latest stash
+	@git stash pop
+
+stash-list: ## List stashes
+	@git stash list
+
+merge: ## Merge branch (REF=required, no-ff)
+	@if [ -z "$(REF)" ]; then echo "Error: REF is required. Usage: make merge REF=feature-branch"; exit 1; fi
+	@git merge --no-ff $(REF)
+
+rebase: ## Rebase onto BASE (BASE=main)
+	@git rebase $(BASE)
+
+reset-file: ## Unstage a file (FILES=required)
+	@if [ -z "$(FILES)" ]; then echo "Error: FILES is required. Usage: make reset-file FILES='file1'"; exit 1; fi
+	@git restore --staged $(FILES)
 
 ##@ GitHub
 

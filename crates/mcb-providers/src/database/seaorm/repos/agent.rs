@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::agent::{AgentSession, Checkpoint, Delegation, ToolCall};
-use mcb_domain::error::{Error, Result};
+use mcb_domain::error::Result;
 use mcb_domain::ports::{
     AgentCheckpointRepository, AgentEventRepository, AgentSessionQuery, AgentSessionRepository,
 };
@@ -33,16 +33,41 @@ impl SeaOrmAgentRepository {
         self.db.as_ref()
     }
 
-    /// Verify that a referenced session exists (strict: no auto-creation).
+    /// Ensure a referenced session exists, auto-creating a minimal session if missing.
+    ///
+    /// This allows orphan tool calls and delegations to be stored without requiring
+    /// the caller to pre-create the session — the session is created on-demand.
     async fn require_session_exists(&self, session_id: &str) -> Result<()> {
         let existing = agent_session::Entity::find_by_id(session_id.to_owned())
             .one(self.db())
             .await
             .map_err(db_error("check existing session"))?;
         if existing.is_none() {
-            return Err(Error::not_found(format!(
-                "Agent session '{session_id}' not found. Sessions must be created before storing events."
-            )));
+            use mcb_domain::entities::{AgentSessionStatus, AgentType};
+            let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
+            let auto_session = AgentSession {
+                id: session_id.to_owned(),
+                session_summary_id: String::new(),
+                agent_type: AgentType::Sisyphus,
+                model: String::new(),
+                parent_session_id: None,
+                started_at: now,
+                ended_at: None,
+                duration_ms: None,
+                status: AgentSessionStatus::Active,
+                prompt_summary: None,
+                result_summary: None,
+                token_count: None,
+                tool_calls_count: None,
+                delegations_count: None,
+                project_id: None,
+                worktree_id: None,
+            };
+            let active: agent_session::ActiveModel = auto_session.into();
+            agent_session::Entity::insert(active)
+                .exec(self.db())
+                .await
+                .map_err(db_error("auto-create orphan session"))?;
         }
         Ok(())
     }

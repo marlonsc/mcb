@@ -5,7 +5,9 @@
 
 use std::sync::Arc;
 
-use mcb_domain::entities::project::Project;
+use mcb_domain::entities::project::{
+    IssueFilter, Project, ProjectDecision, ProjectDependency, ProjectIssue, ProjectPhase,
+};
 use mcb_domain::info;
 use mcb_domain::ports::ProjectRepository;
 use rmcp::handler::server::wrapper::Parameters;
@@ -13,7 +15,9 @@ use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
 use crate::error_mapping::safe_internal_error;
-use crate::utils::mcp::{map_opaque_error, ok_json, resolve_org_id};
+use crate::utils::mcp::{
+    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
+};
 
 /// Handler for the consolidated `project` MCP tool.
 pub struct ProjectHandler {
@@ -37,7 +41,22 @@ impl ProjectHandler {
         let project_id = args.project_id.as_deref().unwrap_or("");
         let org_id = resolve_org_id(None);
 
-        if project_id.trim().is_empty() && !matches!(args.action, ProjectAction::List) {
+        // project_id required for most operations except List+Project
+        if project_id.trim().is_empty()
+            && !matches!(
+                (&args.action, &args.resource),
+                (ProjectAction::List, ProjectResource::Project)
+            )
+            && !matches!(
+                (&args.action, &args.resource),
+                (
+                    ProjectAction::Get | ProjectAction::Delete,
+                    ProjectResource::Phase
+                        | ProjectResource::Decision
+                        | ProjectResource::Dependency
+                )
+            )
+        {
             return Err(McpError::invalid_params(
                 "project_id is required (not resolved from context)",
                 None,
@@ -54,6 +73,7 @@ impl ProjectHandler {
         );
 
         match (args.action, args.resource) {
+            // ── Project ──────────────────────────────────────────────────
             (ProjectAction::Get, ProjectResource::Project) => ok_json(&map_opaque_error(
                 self.repo.get_by_id(org_id.as_str(), project_id).await,
             )?),
@@ -70,11 +90,126 @@ impl ProjectHandler {
                 self.delete_project(&org_id, project_id).await
             }
 
-            _ => Err(McpError::invalid_params(
-                format!(
-                    "Unsupported action {:?} for resource {:?}",
-                    args.action, args.resource
-                ),
+            // ── Phase ────────────────────────────────────────────────────
+            (ProjectAction::Create, ProjectResource::Phase) => {
+                let mut phase: ProjectPhase = require_data(args.data, "data required")?;
+                if phase.project_id.is_empty() {
+                    phase.project_id = project_id.to_owned();
+                }
+                map_opaque_error(self.repo.create_phase(&phase).await)?;
+                ok_json(&phase)
+            }
+            (ProjectAction::Get, ProjectResource::Phase) => {
+                let id = require_id(&args.id)?;
+                ok_json(&map_opaque_error(self.repo.get_phase(&id).await)?)
+            }
+            (ProjectAction::List, ProjectResource::Phase) => {
+                ok_json(&map_opaque_error(self.repo.list_phases(project_id).await)?)
+            }
+            (ProjectAction::Update, ProjectResource::Phase) => {
+                let phase: ProjectPhase = require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.update_phase(&phase).await)?;
+                ok_text("updated")
+            }
+            (ProjectAction::Delete, ProjectResource::Phase) => {
+                let id = require_id(&args.id)?;
+                map_opaque_error(self.repo.delete_phase(&id).await)?;
+                ok_text("deleted")
+            }
+
+            // ── Issue ────────────────────────────────────────────────────
+            (ProjectAction::Create, ProjectResource::Issue) => {
+                let mut issue: ProjectIssue = require_data(args.data, "data required")?;
+                if issue.project_id.is_empty() {
+                    issue.project_id = project_id.to_owned();
+                }
+                issue.org_id = org_id.clone();
+                map_opaque_error(self.repo.create_issue(&issue).await)?;
+                ok_json(&issue)
+            }
+            (ProjectAction::Get, ProjectResource::Issue) => {
+                let id = require_id(&args.id)?;
+                ok_json(&map_opaque_error(
+                    self.repo.get_issue(org_id.as_str(), &id).await,
+                )?)
+            }
+            (ProjectAction::List, ProjectResource::Issue) => {
+                if let Some(filters) = &args.filters {
+                    let filter: IssueFilter = serde_json::from_value(filters.clone())
+                        .map_err(|e| McpError::invalid_params(format!("bad filters: {e}"), None))?;
+                    ok_json(&map_opaque_error(
+                        self.repo
+                            .list_issues_filtered(org_id.as_str(), &filter)
+                            .await,
+                    )?)
+                } else {
+                    ok_json(&map_opaque_error(
+                        self.repo.list_issues(org_id.as_str(), project_id).await,
+                    )?)
+                }
+            }
+            (ProjectAction::Update, ProjectResource::Issue) => {
+                let mut issue: ProjectIssue = require_data(args.data, "data required")?;
+                issue.org_id = org_id.clone();
+                map_opaque_error(self.repo.update_issue(&issue).await)?;
+                ok_text("updated")
+            }
+            (ProjectAction::Delete, ProjectResource::Issue) => {
+                let id = require_id(&args.id)?;
+                map_opaque_error(self.repo.delete_issue(org_id.as_str(), &id).await)?;
+                ok_text("deleted")
+            }
+
+            // ── Dependency ───────────────────────────────────────────────
+            (ProjectAction::Create, ProjectResource::Dependency) => {
+                let dep: ProjectDependency = require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.create_dependency(&dep).await)?;
+                ok_json(&dep)
+            }
+            (ProjectAction::List, ProjectResource::Dependency) => {
+                let issue_id = args.issue_id.as_deref().ok_or_else(|| {
+                    McpError::invalid_params("issue_id required for dependency list", None)
+                })?;
+                ok_json(&map_opaque_error(
+                    self.repo.list_dependencies(issue_id).await,
+                )?)
+            }
+            (ProjectAction::Delete, ProjectResource::Dependency) => {
+                let id = require_id(&args.id)?;
+                map_opaque_error(self.repo.delete_dependency(&id).await)?;
+                ok_text("deleted")
+            }
+
+            // ── Decision ─────────────────────────────────────────────────
+            (ProjectAction::Create, ProjectResource::Decision) => {
+                let mut decision: ProjectDecision = require_data(args.data, "data required")?;
+                if decision.project_id.is_empty() {
+                    decision.project_id = project_id.to_owned();
+                }
+                map_opaque_error(self.repo.create_decision(&decision).await)?;
+                ok_json(&decision)
+            }
+            (ProjectAction::Get, ProjectResource::Decision) => {
+                let id = require_id(&args.id)?;
+                ok_json(&map_opaque_error(self.repo.get_decision(&id).await)?)
+            }
+            (ProjectAction::List, ProjectResource::Decision) => ok_json(&map_opaque_error(
+                self.repo.list_decisions(project_id).await,
+            )?),
+            (ProjectAction::Update, ProjectResource::Decision) => {
+                let decision: ProjectDecision = require_data(args.data, "data required")?;
+                map_opaque_error(self.repo.update_decision(&decision).await)?;
+                ok_text("updated")
+            }
+            (ProjectAction::Delete, ProjectResource::Decision) => {
+                let id = require_id(&args.id)?;
+                map_opaque_error(self.repo.delete_decision(&id).await)?;
+                ok_text("deleted")
+            }
+
+            // ── Unsupported combos (e.g. Get+Dependency, Update+Dependency) ──
+            (action, resource) => Err(McpError::invalid_params(
+                format!("Unsupported action {action:?} for resource {resource:?}"),
                 None,
             )),
         }
