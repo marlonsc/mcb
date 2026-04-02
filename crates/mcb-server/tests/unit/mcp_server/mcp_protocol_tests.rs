@@ -213,8 +213,9 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-/// Context fields (collection, repo_id, session_id, org_id, etc.) must never
-/// appear in MCP tool schemas — they are auto-injected via `#[schemars(skip)]`.
+/// Context fields (`collection`, `repo_id`, `session_id`, `org_id`, etc.) must
+/// never appear in MCP tool schemas — they are auto-injected via
+/// `#[schemars(skip)]`.
 #[rstest]
 #[tokio::test]
 async fn test_no_context_fields_in_tool_schemas() -> Result<(), Box<dyn std::error::Error>> {
