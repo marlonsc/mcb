@@ -1,0 +1,23 @@
+crates/mcb-server/tests/unit/mcp_server/mcp_protocol_tests.rs
+  479e8b119286722d 216-218
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "27270c6324468e7b335a04891a07ce32c66779fc",
+  "prompts": {
+    "479e8b119286722d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9ddb1304-f991-42ca-93c9-d0408d675583",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Marlon Costa",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 2,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
