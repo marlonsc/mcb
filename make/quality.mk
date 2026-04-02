@@ -6,7 +6,7 @@
 MCB_BIN ?= $(or $(shell command -v mcb 2>/dev/null),$(wildcard target/release/mcb),$(wildcard target/debug/mcb))
 MCB_CMD := $(if $(MCB_BIN),$(MCB_BIN),cargo run --package mcb --)
 
-.PHONY: fmt lint validate audit coverage
+.PHONY: fmt lint validate audit udeps coverage
 ##@ Quality
 
 fmt: ## Format Rust and Markdown (mutating)
@@ -39,7 +39,7 @@ else
 	@echo "Report generated: reports/mcb-validate-internal-report.json"
 endif
 
-audit: ## Security audit (cargo-audit)
+audit: ## Security audit (cargo-audit + cargo-udeps)
 	@echo "Running security audit..."
 	cargo audit \
 		--ignore RUSTSEC-2023-0071 \
@@ -48,7 +48,12 @@ audit: ## Security audit (cargo-audit)
 		--ignore RUSTSEC-2024-0436 \
 		--ignore RUSTSEC-2025-0134 \
 		--ignore CVE-2023-49092
-	@cargo udeps --workspace 2>/dev/null || echo "Note: cargo-udeps not installed"
+	@$(MAKE) udeps
+
+udeps: ## Detect unused dependencies (requires nightly + cargo-udeps)
+	@echo "Checking for unused dependencies..."
+	@command -v cargo-udeps >/dev/null 2>&1 || { echo "Installing cargo-udeps..."; cargo install cargo-udeps; }
+	cargo +nightly udeps --workspace
 
 coverage: ## Code coverage (lcov output)
 	@echo "Generating lcov coverage (excluding integration tests)..."

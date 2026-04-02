@@ -21,14 +21,10 @@ thiserror = { workspace = true }
 
 # Serialization (needed for constants and utility types)
 serde = { workspace = true }
-serde_json = { workspace = true }
 
 # Hashing utilities
 sha2 = { workspace = true }
 hex = { workspace = true }
-
-# Date/time handling
-chrono = { workspace = true }
 
 # UUID generation
 uuid = { workspace = true }
@@ -36,19 +32,8 @@ uuid = { workspace = true }
 # Regex for text processing
 regex = { workspace = true }
 
-# Text processing
-unicode-segmentation = { workspace = true }
-
-# File operations
-walkdir = { workspace = true }
-normpath = { workspace = true }
-globset = { workspace = true }
-
 # Async runtime (for async utility functions)
 tokio = { workspace = true }
-
-# Base64 encoding
-base64 = { workspace = true }
 
 # HMAC for hash-based auth
 hmac = { workspace = true }

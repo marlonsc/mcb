@@ -117,7 +117,6 @@ clap = { version = "4.5", features = ["derive"] }
 
 # File operations
 walkdir = "2.5"
-normpath = "1"
 globset = "0.4"
 fs2 = "0.4"
 
@@ -132,9 +131,6 @@ rust-code-analysis = "0.0.25"
 
 # Template engines
 handlebars = "6.0"
-
-# Markdown processing
-pulldown-cmark = "0.13"
 
 # Redis
 redis = { version = "1.0", features = ["tokio-comp", "connection-manager"] }
@@ -166,8 +162,6 @@ tower = { version = "0.5", features = ["util"] }
 http-body-util = "0.1"
 tower-http = { version = "0.6", features = ["cors", "trace"] }
 
-# System metrics
-sysinfo = "0.38"
 nix = { version = "0.31", features = ["fs"] }
 tree-sitter = "0.26"
 tree-sitter-c = "0.24"
@@ -337,9 +331,6 @@ sea-query = "=1.0.0-rc.31"
 # Seaography: GraphQL schema generator for SeaORM
 seaography = "=2.0.0-rc.8"
 
-# Sea Streamer: Event streaming
-sea-streamer = { version = "0.5", features = ["file", "redis"] }
-
 async-graphql = "7"
 async-graphql-axum = "7"
 
@@ -386,15 +377,6 @@ sea-query-sqlx           = { path = "third-party/sea-query/sea-query-sqlx" }
 # --- sea-schema ---
 sea-schema               = { path = "third-party/sea-schema" }
 sea-schema-derive        = { path = "third-party/sea-schema/sea-schema-derive" }
-
-# --- sea-streamer ---
-sea-streamer             = { path = "third-party/sea-streamer" }
-sea-streamer-types       = { path = "third-party/sea-streamer/sea-streamer-types" }
-sea-streamer-socket      = { path = "third-party/sea-streamer/sea-streamer-socket" }
-sea-streamer-runtime     = { path = "third-party/sea-streamer/sea-streamer-runtime" }
-sea-streamer-file        = { path = "third-party/sea-streamer/sea-streamer-file" }
-sea-streamer-redis       = { path = "third-party/sea-streamer/sea-streamer-redis" }
-sea-streamer-stdio       = { path = "third-party/sea-streamer/sea-streamer-stdio" }
 
 # --- seaography ---
 seaography               = { path = "third-party/seaography" }
