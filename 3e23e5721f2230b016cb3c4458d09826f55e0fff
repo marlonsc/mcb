@@ -1,0 +1,23 @@
+crates/mcb-server/tests/unit/mcp_server/mcp_contract_tests.rs
+  479e8b119286722d 1-3,12,23-63,69-88,92-93,96-98,104-111,117-123,127,133-134,140,144-148,150-152,154-159,167,177,181-185,187-189,191-192,196,200,206,208-210,223,231,233,235-237
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "3e23e5721f2230b016cb3c4458d09826f55e0fff",
+  "prompts": {
+    "479e8b119286722d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9ddb1304-f991-42ca-93c9-d0408d675583",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Marlon Costa",
+      "messages": [],
+      "total_additions": 130,
+      "total_deletions": 229,
+      "accepted_lines": 131,
+      "overriden_lines": 1
+    }
+  }
+}
