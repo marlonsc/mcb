@@ -9,9 +9,9 @@ expression: "snapshot_payload(&request, status, &response)"
     "method": "tools/call",
     "params": {
       "arguments": {
-        "action": 123
+        "scope": 123
       },
-      "name": "validate"
+      "name": "validate_code"
     }
   },
   "response": {

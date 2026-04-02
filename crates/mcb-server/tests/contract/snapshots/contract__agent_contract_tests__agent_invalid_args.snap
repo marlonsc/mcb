@@ -9,19 +9,15 @@ expression: "snapshot_payload(&request, status, &response)"
     "method": "tools/call",
     "params": {
       "arguments": {
-        "action": 123,
-        "data": {
-          "tool_name": "search"
-        },
-        "session_id": "00000000-0000-0000-0000-000000000001"
+        "data": 123
       },
-      "name": "agent"
+      "name": "log_tool_call"
     }
   },
   "response": {
     "error": {
       "code": -32602,
-      "message": "Failed to parse arguments: invalid type: integer `123`, expected string or map"
+      "message": "session_id is required (not resolved from context)"
     },
     "id": 1,
     "jsonrpc": "2.0"

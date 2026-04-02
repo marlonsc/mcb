@@ -8,10 +8,8 @@ expression: "snapshot_payload(&request, status, &response)"
     "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
-      "arguments": {
-        "action": "list_rules"
-      },
-      "name": "validate"
+      "arguments": {},
+      "name": "list_rules"
     }
   },
   "response": {

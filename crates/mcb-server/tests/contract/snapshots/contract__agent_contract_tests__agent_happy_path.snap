@@ -9,29 +9,22 @@ expression: "normalize_tool_call_ids(snapshot_payload(&request, status, &respons
     "method": "tools/call",
     "params": {
       "arguments": {
-        "action": "log_tool",
         "data": {
           "duration_ms": 5,
           "success": true,
           "tool_name": "search"
-        },
-        "session_id": "00000000-0000-0000-0000-000000000001"
+        }
       },
-      "name": "agent"
+      "name": "log_tool_call"
     }
   },
   "response": {
+    "error": {
+      "code": -32602,
+      "message": "session_id is required (not resolved from context)"
+    },
     "id": 1,
-    "jsonrpc": "2.0",
-    "result": {
-      "content": [
-        {
-          "text": "Not found: Agent session '00000000-0000-0000-0000-000000000001' not found. Sessions must be created before storing events.",
-          "type": "text"
-        }
-      ],
-      "isError": true
-    }
+    "jsonrpc": "2.0"
   },
   "status": 200
 }
