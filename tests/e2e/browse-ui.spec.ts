@@ -1,5 +1,4 @@
 import { test, expect, Page } from '@playwright/test';
-import path from 'path';
 import * as http from 'http';
 
 test.describe('MCB Browse UI - E2E Tests', () => {
@@ -14,9 +13,6 @@ test.describe('MCB Browse UI - E2E Tests', () => {
       const chunks = await checkResp.json().catch(() => []);
       if (Array.isArray(chunks) && chunks.length > 0) return;
     }
-
-    // Resolve fixture codebase path
-    const fixturePath = path.resolve(__dirname, '../..', 'crates/mcb-server/tests/fixtures/sample_codebase');
 
     // Helper: POST to MCP endpoint, reads until first SSE data event or timeout
     function mcpPost(body: string): Promise<string> {
@@ -60,18 +56,8 @@ test.describe('MCB Browse UI - E2E Tests', () => {
     await mcpPost(JSON.stringify({
       jsonrpc: '2.0', id: 2, method: 'tools/call',
       params: {
-        name: 'index',
-        arguments: {
-          action: 'clear',
-          path: fixturePath,
-          collection: 'sample',
-          extensions: ['rs'],
-          exclude_dirs: [],
-          ignore_patterns: [],
-          max_file_size: 1048576,
-          follow_symlinks: false,
-          token: '',
-        },
+        name: 'clear_index',
+        arguments: {},
       },
     }));
 
@@ -79,17 +65,9 @@ test.describe('MCB Browse UI - E2E Tests', () => {
     await mcpPost(JSON.stringify({
       jsonrpc: '2.0', id: 3, method: 'tools/call',
       params: {
-        name: 'index',
+        name: 'index_repo',
         arguments: {
-          action: 'start',
-          path: fixturePath,
-          collection: 'sample',
           extensions: ['rs', 'ts', 'js', 'py', 'go'],
-          exclude_dirs: [],
-          ignore_patterns: [],
-          max_file_size: 1048576,
-          follow_symlinks: false,
-          token: '',
         },
       },
     }));
@@ -315,9 +293,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
       await page.goto('/ui/browse');
       await page.waitForLoadState('networkidle');
 
-      const htmlElement = page.locator('html');
       const body = page.locator('body');
-
       const themeToggle = page.locator('button[title="Toggle Theme"]');
 
       await themeToggle.click();
