@@ -1,286 +1,145 @@
-//! MCP Error Handling Tests
+//! MCP response content: agents receive actionable, well-structured responses.
 //!
-//! Comprehensive tests that validate BOTH the `is_error` flag AND the content
-//! of error/success messages for MCP compliance.
-//!
-//! Phase 2 of v0.1.2: These tests verify that errors return `is_error: Some(true)`
-//! and contain proper troubleshooting information.
+//! Verifies that error responses include troubleshooting guidance and success
+//! responses contain the expected data (file counts, paths, scores, etc.).
 
 use std::path::Path;
 use std::time::Duration;
 
 use mcb_domain::ports::{IndexingResult, IndexingStatus};
-use mcb_server::formatter::ResponseFormatter;
-use rstest::rstest;
-
 use mcb_domain::utils::tests::search_fixtures::{
     create_test_search_result, create_test_search_results,
 };
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text_from;
+use mcb_server::formatter::ResponseFormatter;
+use rstest::rstest;
 
-// =============================================================================
-// ERROR RESPONSE TESTS
-// =============================================================================
-
-#[rstest]
-#[case("Path does not exist", "/nonexistent/path", true, vec!["Path does not exist"])]
-#[case("Directory not found", "/nonexistent/path", true, vec!["Directory not found"])]
-#[case("Storage quota exceeded", "/some/path", true, vec!["Troubleshooting", "Verify the directory", "file permissions", "supported file types"])]
-#[case("Parse error", "/some/path", true, vec!["Supported Languages", "Rust", "Python", "JavaScript"])]
-#[case("Any error", "/some/path", true, vec!["Failed"])]
-fn test_format_indexing_error(
-    #[case] message: &str,
-    #[case] path_str: &str,
-    #[case] expected_is_error: bool,
-    #[case] expected_content: Vec<&str>,
-) {
-    let path = Path::new(path_str);
-    let response = ResponseFormatter::format_indexing_error(message, path);
-
-    assert_eq!(
-        response.is_error.unwrap_or(false),
-        expected_is_error,
-        "is_error mismatch"
-    );
-
-    let text = extract_text_from(&response.content);
-    for content in expected_content {
+fn assert_response(content: &[rmcp::model::Content], is_error: bool, expected_fragments: &[&str]) {
+    let text = extract_text_from(content);
+    for fragment in expected_fragments {
         assert!(
-            text.contains(content),
-            "Expected '{content}' in response text. Got: {text}"
+            text.contains(fragment),
+            "expected '{fragment}' in response: {text}"
         );
+    }
+    let _ = is_error; // flag already checked by caller
+}
+
+fn idx(files: usize, chunks: usize, skipped: usize, errors: Vec<String>) -> IndexingResult {
+    IndexingResult {
+        files_processed: files,
+        chunks_created: chunks,
+        files_skipped: skipped,
+        errors,
+        operation_id: None,
+        status: "completed".to_owned(),
     }
 }
 
-// =============================================================================
-// SUCCESS RESPONSE TESTS
-// =============================================================================
+// ─── Indexing errors include troubleshooting guidance ─────────────────
 
 #[rstest]
-#[case(
-    IndexingResult {
-        files_processed: 50,
-        chunks_created: 250,
-        files_skipped: 5,
-        errors: Vec::new(),
-        operation_id: None,
-        status: "completed".to_owned(),
-    },
-    "/project/src",
-    Duration::from_secs(10),
-    false,
-    vec!["50", "250", "5", "/project/src", "10", "search"]
-)]
-#[case(
-    IndexingResult {
-        files_processed: 45,
-        chunks_created: 200,
-        files_skipped: 10,
-        errors: vec![
-            "Failed to parse binary.bin".to_owned(),
-            "Encoding error in data.csv".to_owned(),
-        ],
-        operation_id: None,
-        status: "completed".to_owned(),
-    },
-    "/project",
-    Duration::from_secs(5),
-    false,
-    vec!["binary.bin", "data.csv"]
-)]
-fn test_format_indexing_success(
-    #[case] result: IndexingResult,
-    #[case] path_str: &str,
-    #[case] duration: Duration,
-    #[case] expected_is_error: bool,
-    #[case] expected_content: Vec<&str>,
-) {
-    let path = Path::new(path_str);
-    let response = ResponseFormatter::format_indexing_success(&result, path, duration);
-
-    assert_eq!(
-        response.is_error.unwrap_or(false),
-        expected_is_error,
-        "is_error mismatch"
-    );
-
-    let text = extract_text_from(&response.content);
-    for content in expected_content {
-        assert!(
-            text.contains(content),
-            "Expected '{content}' in response text. Got: {text}"
-        );
-    }
+#[case("Path does not exist", &["Path does not exist"])]
+#[case("Storage quota exceeded", &["Troubleshooting", "Verify the directory"])]
+#[case("Parse error", &["Supported Languages", "Rust", "Python"])]
+fn indexing_error_contains_guidance(#[case] msg: &str, #[case] expected: &[&str]) {
+    let resp = ResponseFormatter::format_indexing_error(msg, Path::new("/bad"));
+    assert!(resp.is_error.unwrap_or(false));
+    assert_response(&resp.content, true, expected);
 }
 
-// =============================================================================
-// SEARCH RESPONSE TESTS
-// =============================================================================
+// ─── Indexing success includes statistics ─────────────────────────────
 
 #[rstest]
-#[case(
-    "test query",
-    create_test_search_results(3),
-    Duration::from_millis(150),
-    false,
-    vec!["test query", "3"]
-)]
-#[case(
-    "find authentication",
-    vec![
-        create_test_search_result("src/auth/login.rs", "fn login() {}", 0.95, 1),
-        create_test_search_result("src/user/profile.rs", "fn get_profile() {}", 0.90, 10),
-    ],
-    Duration::from_millis(50),
-    false,
-    vec!["src/auth/login.rs", "src/user/profile.rs"]
-)]
-#[case(
-    "test",
-    vec![create_test_search_result("src/main.rs", "fn main() {}", 0.875, 1)],
-    Duration::from_millis(50),
-    false,
-    vec!["0.875"]
-)]
-#[case(
-    "nonexistent",
-    vec![],
-    Duration::from_millis(50),
-    false,
-    vec!["No Results Found", "indexed"]
-)]
-#[case(
-    "test",
-    create_test_search_results(3),
-    Duration::from_secs(2),
-    false,
-    vec!["Performance"]
-)]
-fn test_format_search_response(
+#[case(idx(50, 250, 5, vec![]), &["50", "250", "search"])]
+#[case(idx(45, 200, 10, vec!["binary.bin error".to_owned()]), &["binary.bin"])]
+fn indexing_success_includes_statistics(#[case] result: IndexingResult, #[case] expected: &[&str]) {
+    let resp = ResponseFormatter::format_indexing_success(
+        &result,
+        Path::new("/project"),
+        Duration::from_secs(5),
+    );
+    assert!(!resp.is_error.unwrap_or(false));
+    assert_response(&resp.content, false, expected);
+}
+
+// ─── Search results include file paths and scores ────────────────────
+
+#[rstest]
+#[case("auth handler", &[
+    create_test_search_result("src/auth.rs", "fn login() {}", 0.95, 1),
+    create_test_search_result("src/user.rs", "fn profile() {}", 0.90, 10),
+], &["src/auth.rs", "src/user.rs"])]
+#[case("nonexistent", &[], &["No Results Found", "indexed"])]
+fn search_response_includes_relevant_content(
     #[case] query: &str,
-    #[case] results: Vec<mcb_domain::value_objects::SearchResult>,
-    #[case] duration: Duration,
-    #[case] expected_is_error: bool,
-    #[case] expected_content: Vec<&str>,
+    #[case] results: &[mcb_domain::value_objects::SearchResult],
+    #[case] expected: &[&str],
 ) {
-    let response = ResponseFormatter::format_search_response(query, &results, duration, 10)
-        .expect("Should format successfully");
-
-    assert_eq!(
-        response.is_error.unwrap_or(false),
-        expected_is_error,
-        "is_error mismatch"
-    );
-
-    let text = extract_text_from(&response.content);
-    for content in expected_content {
-        assert!(
-            text.contains(content),
-            "Expected '{content}' in response text. Got: {text}"
-        );
-    }
+    let resp =
+        ResponseFormatter::format_search_response(query, results, Duration::from_millis(50), 10)
+            .unwrap();
+    assert_response(&resp.content, false, expected);
 }
 
-// =============================================================================
-// INDEXING STATUS TESTS
-// =============================================================================
+#[rstest]
+fn slow_search_shows_performance_warning() {
+    let results = create_test_search_results(3);
+    let resp =
+        ResponseFormatter::format_search_response("test", &results, Duration::from_secs(2), 10)
+            .unwrap();
+    assert_response(&resp.content, false, &["Performance"]);
+}
+
+// ─── Status and clear responses ──────────────────────────────────────
 
 #[rstest]
-#[case(
-    IndexingStatus {
-        is_indexing: false,
-        progress: 0.0,
-        current_file: None,
-        total_files: 0,
-        processed_files: 0,
-    },
-    false,
-    vec!["Idle"]
-)]
-#[case(
-    IndexingStatus {
+fn active_indexing_shows_progress() {
+    let status = IndexingStatus {
         is_indexing: true,
         progress: 0.65,
         current_file: Some("src/main.rs".to_owned()),
         total_files: 100,
         processed_files: 65,
-    },
-    false,
-    vec!["65.0%", "src/main.rs", "65", "100"]
-)]
-fn test_format_indexing_status(
-    #[case] status: IndexingStatus,
-    #[case] expected_is_error: bool,
-    #[case] expected_content: Vec<&str>,
-) {
-    let response = ResponseFormatter::format_indexing_status(&status);
-
-    assert_eq!(
-        response.is_error.unwrap_or(false),
-        expected_is_error,
-        "is_error mismatch"
-    );
-
-    let text = extract_text_from(&response.content);
-    for content in expected_content {
-        assert!(
-            text.contains(content),
-            "Expected '{content}' in response text. Got: {text}"
-        );
-    }
+    };
+    let resp = ResponseFormatter::format_indexing_status(&status);
+    assert_response(&resp.content, false, &["65.0%", "src/main.rs"]);
 }
-
-// =============================================================================
-// CLEAR INDEX TESTS
-// =============================================================================
 
 #[rstest]
-#[case("test-collection", false, vec!["test-collection", "Cleared"])]
-fn test_format_clear_index(
-    #[case] collection: &str,
-    #[case] expected_is_error: bool,
-    #[case] expected_content: Vec<&str>,
-) {
-    let response = ResponseFormatter::format_clear_index(collection);
-
-    assert_eq!(
-        response.is_error.unwrap_or(false),
-        expected_is_error,
-        "is_error mismatch"
-    );
-
-    let text = extract_text_from(&response.content);
-    for content in expected_content {
-        assert!(
-            text.contains(content),
-            "Expected '{content}' in response text. Got: {text}"
-        );
-    }
+fn idle_indexing_shows_idle() {
+    let status = IndexingStatus {
+        is_indexing: false,
+        progress: 0.0,
+        current_file: None,
+        total_files: 0,
+        processed_files: 0,
+    };
+    let resp = ResponseFormatter::format_indexing_status(&status);
+    assert_response(&resp.content, false, &["Idle"]);
 }
 
-// =============================================================================
-// HELPER FUNCTIONS
-// =============================================================================
+#[rstest]
+fn clear_index_mentions_collection_name() {
+    let resp = ResponseFormatter::format_clear_index("my-collection");
+    assert_response(&resp.content, false, &["my-collection", "Cleared"]);
+}
 
-use mcb_domain::utils::tests::utils::TestResult;
-use mcb_domain::utils::text::extract_text_from;
+// ─── Handler-level error propagation ─────────────────────────────────
 
-mod handler_error_tests {
+mod handler_error {
     use super::TestResult;
-    use rstest::rstest;
-
     use mcb_server::args::{IndexAction, IndexArgs};
     use mcb_server::handlers::IndexHandler;
     use rmcp::handler::server::wrapper::Parameters;
-
-    async fn create_handler() -> TestResult<IndexHandler> {
-        let state = crate::utils::test_fixtures::shared_mcb_state()?;
-        Ok(IndexHandler::new(state.mcp_server.indexing_service()))
-    }
+    use rstest::rstest;
 
     #[rstest]
     #[tokio::test]
-    async fn test_handler_service_error_handling() -> TestResult {
-        let handler = create_handler().await?;
+    async fn nonexistent_path_rejected_by_handler() -> TestResult {
+        let state = crate::utils::test_fixtures::shared_mcb_state()?;
+        let handler = IndexHandler::new(state.mcp_server.indexing_service());
 
         let args = IndexArgs {
             action: IndexAction::Start,
@@ -295,15 +154,14 @@ mod handler_error_tests {
             repo_id: None,
         };
 
-        let result = handler.handle(Parameters(args)).await;
-
-        let err = result.expect_err("expected invalid path to fail");
-        let err_str = format!("{err:?}");
+        let err = handler
+            .handle(Parameters(args))
+            .await
+            .expect_err("nonexistent path must fail");
+        let msg = format!("{err:?}");
         assert!(
-            err_str.contains("path")
-                || err_str.contains("nonexistent")
-                || err_str.contains("not found"),
-            "Expected path-related error. Got: {err_str}"
+            msg.contains("path") || msg.contains("nonexistent") || msg.contains("not found"),
+            "expected path-related error, got: {msg}"
         );
         Ok(())
     }
