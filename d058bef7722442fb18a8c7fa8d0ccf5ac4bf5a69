@@ -1,0 +1,31 @@
+crates/mcb-server/tests/unit/error_mapping/error_mapping_tests.rs
+  479e8b119286722d 1-6,8,14,17-21,26-27,30,33,36-40,44-50
+crates/mcb-server/tests/unit/tools/context_tests.rs
+  479e8b119286722d 1-5,11-15,17-24,32,47,49-55,58,60-62,64,66,70-71,73-75,79-90,93,96-97,99,101-102,106-107,109,111,114,117-122,125-126,128-131,135-139,142-143,145-146,150,157,159,162,166,171-172,174-175,178-179,181,183-185,190-191,193-194,196-206,208-215
+crates/mcb-server/tests/unit/formatter/formatter_tests.rs
+  479e8b119286722d 1-4,13-14,16-19,23-25,32,35-39,42-45,47,49-51,55-60,62-63,65,68-69,71-77,79-80,84-85,87,91-105,107-108,110,113,116-117,119
+crates/mcb-server/tests/unit/tools/defaults_tests.rs
+  479e8b119286722d 1-4,7,10-14,17,20-25
+crates/mcb-server/tests/unit/macros/args_tests.rs
+  479e8b119286722d 1-5,10,28,43-44,46-50,52-53,56-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "d058bef7722442fb18a8c7fa8d0ccf5ac4bf5a69",
+  "prompts": {
+    "479e8b119286722d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9ddb1304-f991-42ca-93c9-d0408d675583",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Marlon Costa",
+      "messages": [],
+      "total_additions": 362,
+      "total_deletions": 619,
+      "accepted_lines": 314,
+      "overriden_lines": 3
+    }
+  }
+}
