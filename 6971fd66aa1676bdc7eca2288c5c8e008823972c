@@ -1,0 +1,23 @@
+make/quality.mk
+  479e8b119286722d 9,42,51-56
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "6971fd66aa1676bdc7eca2288c5c8e008823972c",
+  "prompts": {
+    "479e8b119286722d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9ddb1304-f991-42ca-93c9-d0408d675583",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Marlon Costa",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 50,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}
