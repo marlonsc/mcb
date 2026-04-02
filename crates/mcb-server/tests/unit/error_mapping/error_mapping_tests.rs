@@ -1,66 +1,51 @@
+//! Error mapping: domain errors → MCP-safe responses.
+//!
+//! Tests verify two security invariants:
+//! 1. Client-fixable errors (NotFound, InvalidArgument) surface to the agent
+//! 2. Internal errors NEVER leak implementation details (SQL, paths, credentials)
+
 use mcb_domain::error::Error;
+use mcb_domain::utils::text::extract_text_from;
 use mcb_server::error_mapping::{
     safe_internal_error, to_contextual_tool_error, to_opaque_mcp_error,
 };
 use rstest::rstest;
 
-use mcb_domain::utils::text::extract_text_from;
+// ─── Client-fixable errors are surfaced ──────────────────────────────
 
 #[rstest]
-#[case(Error::NotFound { resource: "test".to_owned() }, "Not found: test")]
-#[case(Error::Internal { message: "secret".to_owned() }, "internal server error")]
-fn test_to_opaque_mcp_error(#[case] err: Error, #[case] expected_message: &str) {
-    let mcp_err = to_opaque_mcp_error(&err);
-    assert_eq!(mcp_err.message, expected_message);
+#[case(Error::NotFound { resource: "session-123".to_owned() }, "Not found: session-123")]
+#[case(Error::InvalidArgument { message: "query empty".to_owned() }, "Invalid argument: query empty")]
+fn client_errors_include_actionable_detail(#[case] err: Error, #[case] expected: &str) {
+    let mcp = to_opaque_mcp_error(&err);
+    assert_eq!(mcp.message, expected);
 }
 
 #[rstest]
 #[case(Error::NotFound { resource: "item".to_owned() }, "Not found: item")]
-#[case(
-    Error::Database {
-        message: "db fail".to_owned(),
-        source: None,
-    },
-    "Database error: db fail"
-)]
-fn test_to_contextual_tool_error(#[case] err: Error, #[case] expected: &str) {
+#[case(Error::Database { message: "timeout".to_owned(), source: None }, "Database error: timeout")]
+fn contextual_tool_error_is_marked_as_error(#[case] err: Error, #[case] expected: &str) {
     let result = to_contextual_tool_error(err);
     assert!(result.is_error.unwrap_or(false));
-    let text = extract_text_from(&result.content);
-    assert_eq!(text, expected);
+    assert_eq!(extract_text_from(&result.content), expected);
+}
+
+// ─── Internal details never leak to MCP clients ──────────────────────
+
+#[rstest]
+#[case(Error::Internal { message: "SELECT * FROM secrets".to_owned() })]
+#[case(Error::Infrastructure { message: "pool exhausted at 0x7fff".to_owned(), source: None })]
+fn internal_errors_return_generic_message(#[case] err: Error) {
+    let mcp = to_opaque_mcp_error(&err);
+    assert_eq!(mcp.message, "internal server error");
 }
 
 #[rstest]
-#[case("db connection refused", "internal server error")]
-#[case("secret key mismatch at row 42", "internal server error")]
-#[case(
-    "/home/user/.config/mcb/credentials.json not found",
-    "internal server error"
-)]
-fn safe_internal_error_never_leaks_underlying_message(
-    #[case] sensitive_detail: &str,
-    #[case] expected: &str,
-) {
-    let mcp_err = safe_internal_error("test operation", &sensitive_detail);
-    assert_eq!(mcp_err.message, expected);
-    assert!(
-        !mcp_err.message.contains(sensitive_detail),
-        "internal error must not contain sensitive detail '{sensitive_detail}'"
-    );
-}
-
-#[rstest]
-#[case(
-    Error::Internal { message: "secret SQL query".to_owned() },
-    "internal server error"
-)]
-#[case(
-    Error::Infrastructure { message: "connection pool exhausted".to_owned(), source: None },
-    "internal server error"
-)]
-fn opaque_error_never_leaks_internal_details(#[case] err: Error, #[case] expected: &str) {
-    let mcp_err = to_opaque_mcp_error(&err);
-    assert_eq!(mcp_err.message, expected);
-    assert!(!mcp_err.message.contains("SQL"));
-    assert!(!mcp_err.message.contains("pool"));
+#[case("db connection refused")]
+#[case("/home/user/.config/mcb/credentials.json not found")]
+#[case("secret key mismatch at row 42")]
+fn safe_internal_error_never_leaks_sensitive_detail(#[case] detail: &str) {
+    let mcp = safe_internal_error("operation", &detail);
+    assert_eq!(mcp.message, "internal server error");
+    assert!(!mcp.message.contains(detail));
 }
