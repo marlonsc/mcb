@@ -1,0 +1,33 @@
+crates/mcb-server/tests/unit/tools/field_aliases_tests.rs
+  479e8b119286722d 1-4,14,17-26,30-31,46,48-49,55-56,59,62-67,69-70,73,76-84,88-93,97-105,109-110,113,116-127,130,133-143,147,150-151
+crates/mcb-server/tests/unit/handlers/entities/issue_entity_handler_tests.rs
+  479e8b119286722d 1-2,12,19-21,27,29,34-41,45-48,56,62-70,72-76,78-79,81-82,86
+crates/mcb-server/tests/unit/tools/router_tests.rs
+  479e8b119286722d 1-5,18-20,22,28,38-39,42,45-46,50-51,54,56-57,59,65,68-69,73-77,79-80,82-84,86-87,89,96,99-100,102-103,107-109,111-112,116-117,134,137-138,140-141,143,148-150,154-156,159-160,163-171,175,181-184,191-192,198,213,215-216
+crates/mcb-server/tests/unit/handlers/entities/vcs_entity_handler_tests.rs
+  479e8b119286722d 1-5,15,22,28,37,44-47,59-60,63-66,68-69,75-80,82,85,90-91,93-94,96-98,100-101,103-104,106-107,109-111
+crates/mcb-server/tests/unit/handlers/entities/plan_entity_handler_tests.rs
+  479e8b119286722d 1-2,12,19-22,29,34-37,41-45,53,59-70,72-76,78-80,82-83,87
+crates/mcb-server/tests/unit/handlers/entities/org_entity_handler_tests.rs
+  479e8b119286722d 1-2,12,19-22,29,34-36,40-43,51,57-68,70-74,76-78,80-81,85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "b824acd391aec0f3ce07d1e37765cb393343724a",
+  "prompts": {
+    "479e8b119286722d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9ddb1304-f991-42ca-93c9-d0408d675583",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Marlon Costa",
+      "messages": [],
+      "total_additions": 371,
+      "total_deletions": 733,
+      "accepted_lines": 355,
+      "overriden_lines": 2
+    }
+  }
+}
