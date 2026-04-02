@@ -62,7 +62,11 @@ mcb (CLI facade binary)
 
 **Provider registration**: `#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]` with function pointer factories. `extern crate mcb_providers` in `main.rs` forces linkme registrations to link.
 
-**MCP tools**: 9 tools registered via `linkme::distributed_slice(TOOL_DESCRIPTORS)`: `index`, `search`, `validate`, `memory`, `session`, `agent`, `project`, `vcs`, `entity`. Each tool = Args struct (`args/`) + Handler (`handlers/`) + Schema (`schemars`).
+**MCP tools**: 24 single-purpose tools registered via `linkme::distributed_slice(TOOL_DESCRIPTORS)`. Each tool = Args struct (`args/`) + Handler (`handlers/`) + Schema (`schemars`). Context fields (org_id, repo_id, session_id, collection, etc.) are auto-injected and hidden from MCP schema via `#[schemars(skip)]`.
+
+Tools: `search_code`, `search_memory`, `index_repo`, `index_status`, `clear_index`, `store_memory`, `get_memories`, `list_memories`, `memory_timeline`, `inject_context`, `start_session`, `get_session`, `list_sessions`, `summarize_session`, `log_tool_call`, `log_delegation`, `validate_code`, `analyze_code`, `list_rules`, `list_repos`, `compare_branches`, `analyze_impact`, `project` (compound CRUD), `entity` (compound CRUD).
+
+Macros: `tool_action!` (args struct + From conversion), `register_tool!` (direct or mapped dispatch via `=>`), `tool_schema!`, `tool_enum!`.
 
 ## Implementation Patterns
 
