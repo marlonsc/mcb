@@ -213,6 +213,66 @@ async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Context fields (collection, repo_id, session_id, org_id, etc.) must never
+/// appear in MCP tool schemas — they are auto-injected via `#[schemars(skip)]`.
+#[rstest]
+#[tokio::test]
+async fn test_no_context_fields_in_tool_schemas() -> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
+    let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
+        method: "tools/list".to_owned(),
+        params: None,
+        id: Some(serde_json::json!(1)),
+    };
+
+    let (_, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
+    let tools = mcp_response
+        .result
+        .as_ref()
+        .and_then(|r| r.get("tools"))
+        .and_then(|t| t.as_array())
+        .expect("tools array");
+
+    // Context fields that must never appear in MCP tool schemas.
+    // Note: session_id is excluded because get_session and summarize_session
+    // legitimately expose it as a required visible parameter.
+    let hidden_fields = [
+        "collection",
+        "repo_id",
+        "repo_path",
+        "auth",
+        "worktree_id",
+        "agent_program",
+        "model_id",
+        "operator_id",
+        "machine_id",
+    ];
+
+    for tool in tools {
+        let name = tool
+            .get("name")
+            .and_then(|n| n.as_str())
+            .unwrap_or("unknown");
+        let props = tool
+            .get("inputSchema")
+            .and_then(|s| s.get("properties"))
+            .and_then(|p| p.as_object());
+
+        if let Some(properties) = props {
+            for field in &hidden_fields {
+                assert!(
+                    !properties.contains_key(*field),
+                    "Tool '{name}' schema exposes hidden context field '{field}' — \
+                     add #[schemars(skip)] to this field"
+                );
+            }
+        }
+    }
+
+    Ok(())
+}
+
 // =============================================================================
 // JSON-RPC 2.0 FORMAT TESTS
 // =============================================================================
