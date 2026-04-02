@@ -144,8 +144,8 @@ macro_rules! entity_args_schema {
                 #[schemars(description = "Resource ID (for get/update/delete)")]
                 pub id: Option<String>,
 
-                #[doc = "Organization ID (uses default if omitted)"]
-                #[schemars(description = "Organization ID (uses default if omitted)")]
+                #[doc = "Organization ID (auto-injected)."]
+                #[schemars(skip)]
                 pub org_id: Option<String>,
 
                 $(
