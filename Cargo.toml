@@ -85,12 +85,12 @@ error_impl_error = "allow"               # our domain Error type is idiomatic Ru
 
 [workspace.dependencies]
 # Core async runtime
-tokio = { version = "1.49", features = ["full"] }
+tokio = { version = "1.50", features = ["full"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_with = "3.15"
+serde_with = "3.18"
 
 # Byte manipulation
 bytes = "1.11"
@@ -111,7 +111,7 @@ toml = "1.0"
 reqwest = { version = "0.13", features = ["json", "__tls"] }
 
 # CLI
-clap = { version = "4.5", features = ["derive"] }
+clap = { version = "4.6", features = ["derive"] }
 
 # File operations
 walkdir = "2.5"
@@ -135,7 +135,7 @@ handlebars = "6.0"
 pulldown-cmark = "0.13"
 
 # Redis
-redis = { version = "1.0", features = ["tokio-comp", "connection-manager"] }
+redis = { version = "1.2", features = ["tokio-comp", "connection-manager"] }
 
 # Cryptography
 aes-gcm = "0.10"
@@ -154,7 +154,7 @@ sha2 = "0.10"
 hex = "0.4"
 
 # Utilities
-uuid = { version = "1.21", features = ["v4", "v5", "serde"] }
+uuid = { version = "1.23", features = ["v4", "v5", "serde"] }
 dirs = "6.0"
 
 # HTTP server (Axum)
@@ -192,10 +192,10 @@ ignore = "0.4"
 # Concurrent processing
 futures = "0.3"
 async-stream = "0.3"
-rayon = "1.8"
+rayon = "1.12"
 
 # Text processing
-unicode-segmentation = "1.12"
+unicode-segmentation = "1.13"
 html-escape = "0.2"
 
 # Schema generation for MCP
@@ -242,7 +242,7 @@ itertools = "0.14"
 humantime = "2.1"
 
 # Local embeddings without external services
-fastembed = { version = "5.11", default-features = false, features = [
+fastembed = { version = "5.13", default-features = false, features = [
     "default",
     "hf-hub-native-tls",
     "image-models",
@@ -251,7 +251,7 @@ fastembed = { version = "5.11", default-features = false, features = [
 
 # Configuration watching
 notify = "8.2"
-arc-swap = "1.8"
+arc-swap = "1.9"
 
 # Compression
 flate2 = "1.1"
@@ -275,11 +275,11 @@ criterion = "0.8.1"
 linkme = "0.3"
 
 # Development/testing
-tempfile = "3.26"
+tempfile = "3.27"
 serial_test = "3.4"
 rstest = "0.26"
 mockall = "0.14"
-insta = { version = "1.41", features = ["json", "yaml", "redactions"] }
+insta = { version = "1.47", features = ["json", "yaml", "redactions"] }
 
 # ============================================
 # mcb-validate specific dependencies
@@ -302,7 +302,7 @@ git2 = "0.20"
 serde_yaml = "0.9"
 
 # Rule Engines
-rust-rule-engine = "1.19"
+rust-rule-engine = "1.20"
 evalexpr = "13"
 
 # JSON Schema validation
@@ -312,7 +312,7 @@ jsonschema = "0.42"
 jsonpath-rust = "1.0.4"
 
 # Lazy static values
-once_cell = "1.19"
+once_cell = "1.21"
 
 # ============================================
 # SeaQL Ecosystem (v0.3.0 — SQLite + PostgreSQL)
