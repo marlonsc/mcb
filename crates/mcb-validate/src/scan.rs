@@ -22,6 +22,16 @@ pub fn is_test_path(path: &str) -> bool {
     path.contains(TEST_FILE_SUFFIX) || path.contains(TEST_DIR_FRAGMENT)
 }
 
+/// Files under `constants/validate/` hold the validators' own detection-pattern
+/// data (anti-pattern strings, rule ids, category names). Content scanners would
+/// otherwise flag those literals as the very anti-patterns they describe, so the
+/// pattern-definition directory is excluded from file scanning.
+fn is_validator_pattern_data(path: &Path) -> bool {
+    path.to_str()
+        .map(|s| s.replace('\\', "/"))
+        .is_some_and(|s| s.contains("/constants/validate/"))
+}
+
 // ---------------------------------------------------------------------------
 // Generic, language-aware scan helpers
 // ---------------------------------------------------------------------------
@@ -101,6 +111,9 @@ where
                 continue;
             }
             if !matches_language(entry, language) {
+                continue;
+            }
+            if is_validator_pattern_data(&entry.absolute_path) {
                 continue;
             }
             f(entry, &src_dir)?;
