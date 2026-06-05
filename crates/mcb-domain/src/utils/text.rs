@@ -64,3 +64,33 @@ pub fn try_extract_text_from<T: Serialize>(content: &[T]) -> Result<String, serd
 pub fn extract_text_from<T: Serialize>(content: &[T]) -> String {
     try_extract_text_from(content).unwrap_or_default()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::{extract_text, extract_text_with_sep};
+    use serde_json::json;
+
+    #[test]
+    fn joins_text_segments_with_separator() {
+        let content = [json!({"text": "a"}), json!({"text": "b"})];
+        assert_eq!(extract_text_with_sep(&content, ", "), "a, b");
+    }
+
+    #[test]
+    fn skips_non_text_values() {
+        let content = [json!({"text": "a"}), json!({"image": "x"}), json!({"text": "b"})];
+        assert_eq!(extract_text(&content), "a\nb");
+    }
+
+    #[test]
+    fn empty_input_yields_empty_string() {
+        let content: [serde_json::Value; 0] = [];
+        assert_eq!(extract_text_with_sep(&content, "-"), "");
+    }
+
+    #[test]
+    fn single_segment_has_no_separator() {
+        let content = [json!({"text": "only"})];
+        assert_eq!(extract_text_with_sep(&content, ", "), "only");
+    }
+}
