@@ -62,70 +62,82 @@ impl RustExtractor {
             None,
         ));
 
-        // Helper for finding nodes by kind
-        fn find_by_kind<'a>(root: Node<'a>, kind: &str) -> Vec<Node<'a>> {
-            let mut results = Vec::new();
-            let mut stack = vec![root.0]; // Access inner tree-sitter node
-
-            while let Some(n) = stack.pop() {
-                if n.kind() == kind {
-                    results.push(Node(n));
-                }
-
-                let mut cursor = n.walk();
-                for child in n.children(&mut cursor) {
-                    stack.push(child);
-                }
-            }
-            results
-        }
-
-        // Find "use" declarations (Imports)
-        let imports = find_by_kind(root, "use_declaration");
-        for import in imports {
-            if let Some(text) = import.utf8_text(code_ref) {
-                // Remove "use " and ";"
-                let import_path = text.trim_start_matches("use ").trim_end_matches(';').trim();
-
-                facts.push(Fact::new(
-                    import_path.to_owned(),
-                    FactType::Import,
-                    Self::location_for(path, &import),
-                    Some(module_id.clone()),
-                ));
-            }
-        }
-
-        // Find Structs
-        let structs = find_by_kind(root, "struct_item");
-        for st in structs {
-            if let Some(name_node) = st.0.child_by_field_name("name")
-                && let Ok(name) = name_node.utf8_text(code_ref)
-            {
-                facts.push(Fact::new(
-                    name.to_owned(),
-                    FactType::Struct,
-                    Self::location_for(path, &st),
-                    Some(module_id.clone()),
-                ));
-            }
-        }
-
-        // Find Functions
-        let functions = find_by_kind(root, "function_item");
-        for func in functions {
-            if let Some(name_node) = func.0.child_by_field_name("name")
-                && let Ok(name) = name_node.utf8_text(code_ref)
-            {
-                facts.push(Fact::new(
-                    name.to_owned(),
-                    FactType::Function,
-                    Self::location_for(path, &func),
-                    Some(module_id.clone()),
-                ));
-            }
-        }
+        let ctx = FactCtx {
+            path,
+            code_ref,
+            module_id: &module_id,
+        };
+        Self::collect_imports(&ctx, &root, &mut facts);
+        Self::collect_named(&ctx, &root, "struct_item", &FactType::Struct, &mut facts);
+        Self::collect_named(
+            &ctx,
+            &root,
+            "function_item",
+            &FactType::Function,
+            &mut facts,
+        );
 
         Ok(facts)
     }
+
+    /// Collect every AST node of `kind` reachable from `root`.
+    fn find_by_kind<'a>(root: &Node<'a>, kind: &str) -> Vec<Node<'a>> {
+        let mut results = Vec::new();
+        let mut stack = vec![root.0];
+
+        while let Some(n) = stack.pop() {
+            if n.kind() == kind {
+                results.push(Node(n));
+            }
+            let mut cursor = n.walk();
+            for child in n.children(&mut cursor) {
+                stack.push(child);
+            }
+        }
+        results
+    }
+
+    /// Append an [`FactType::Import`] fact for each `use` declaration.
+    fn collect_imports(ctx: &FactCtx, root: &Node, facts: &mut Vec<Fact>) {
+        for import in Self::find_by_kind(root, "use_declaration") {
+            if let Some(text) = import.utf8_text(ctx.code_ref) {
+                let import_path = text.trim_start_matches("use ").trim_end_matches(';').trim();
+                facts.push(Fact::new(
+                    import_path.to_owned(),
+                    FactType::Import,
+                    Self::location_for(ctx.path, &import),
+                    Some(ctx.module_id.to_owned()),
+                ));
+            }
+        }
+    }
+
+    /// Append a named fact of `fact_type` for each named node of `kind`.
+    fn collect_named(
+        ctx: &FactCtx,
+        root: &Node,
+        kind: &str,
+        fact_type: &FactType,
+        facts: &mut Vec<Fact>,
+    ) {
+        for node in Self::find_by_kind(root, kind) {
+            if let Some(name_node) = node.0.child_by_field_name("name")
+                && let Ok(name) = name_node.utf8_text(ctx.code_ref)
+            {
+                facts.push(Fact::new(
+                    name.to_owned(),
+                    fact_type.clone(),
+                    Self::location_for(ctx.path, &node),
+                    Some(ctx.module_id.to_owned()),
+                ));
+            }
+        }
+    }
+}
+
+/// Shared context for fact collection within a single source file.
+struct FactCtx<'a> {
+    path: &'a Path,
+    code_ref: &'a [u8],
+    module_id: &'a str,
 }

@@ -219,53 +219,62 @@ impl RcaAnalyzer {
 
         let to_u32_metric = |x: f64| x.round().max(0.0) as u32;
         for func in functions {
-            if let Some(threshold) = thresholds.get(MetricType::CyclomaticComplexity) {
-                let value = to_u32_metric(func.metrics.cyclomatic);
-                if value > threshold.max_value {
-                    violations.push(MetricViolation {
-                        file: path.to_path_buf(),
-                        line: func.start_line,
-                        item_name: func.name.clone(),
-                        metric_type: MetricType::CyclomaticComplexity,
-                        actual_value: value,
-                        threshold: threshold.max_value,
-                        severity: threshold.severity,
-                    });
-                }
-            }
+            let cyclomatic = to_u32_metric(func.metrics.cyclomatic);
+            let cognitive = to_u32_metric(func.metrics.cognitive);
+            let length = u32::try_from(func.metrics.sloc).unwrap_or(u32::MAX);
 
-            if let Some(threshold) = thresholds.get(MetricType::CognitiveComplexity) {
-                let value = to_u32_metric(func.metrics.cognitive);
-                if value > threshold.max_value {
-                    violations.push(MetricViolation {
-                        file: path.to_path_buf(),
-                        line: func.start_line,
-                        item_name: func.name.clone(),
-                        metric_type: MetricType::CognitiveComplexity,
-                        actual_value: value,
-                        threshold: threshold.max_value,
-                        severity: threshold.severity,
-                    });
-                }
-            }
-
-            if let Some(threshold) = thresholds.get(MetricType::FunctionLength) {
-                let value = u32::try_from(func.metrics.sloc).unwrap_or(u32::MAX);
-                if value > threshold.max_value {
-                    violations.push(MetricViolation {
-                        file: path.to_path_buf(),
-                        line: func.start_line,
-                        item_name: func.name.clone(),
-                        metric_type: MetricType::FunctionLength,
-                        actual_value: value,
-                        threshold: threshold.max_value,
-                        severity: threshold.severity,
-                    });
-                }
-            }
+            Self::push_metric_violation(
+                path,
+                func,
+                thresholds,
+                MetricType::CyclomaticComplexity,
+                cyclomatic,
+                &mut violations,
+            );
+            Self::push_metric_violation(
+                path,
+                func,
+                thresholds,
+                MetricType::CognitiveComplexity,
+                cognitive,
+                &mut violations,
+            );
+            Self::push_metric_violation(
+                path,
+                func,
+                thresholds,
+                MetricType::FunctionLength,
+                length,
+                &mut violations,
+            );
         }
 
         violations
+    }
+
+    /// Append a `MetricViolation` when `value` exceeds the configured threshold for `metric_type`.
+    fn push_metric_violation(
+        path: &Path,
+        func: &RcaFunctionMetrics,
+        thresholds: &MetricThresholds,
+        metric_type: MetricType,
+        value: u32,
+        violations: &mut Vec<MetricViolation>,
+    ) {
+        let Some(threshold) = thresholds.get(metric_type) else {
+            return;
+        };
+        if value > threshold.max_value {
+            violations.push(MetricViolation {
+                file: path.to_path_buf(),
+                line: func.start_line,
+                item_name: func.name.clone(),
+                metric_type,
+                actual_value: value,
+                threshold: threshold.max_value,
+                severity: threshold.severity,
+            });
+        }
     }
 
     /// Get file-level metrics (aggregated)

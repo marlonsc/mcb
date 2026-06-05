@@ -3,7 +3,6 @@
 //!
 //! Declarative rule validator that executes embedded YAML rules.
 
-use std::borrow::Cow;
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -123,37 +122,46 @@ impl DeclarativeValidator {
         let analyzer = RcaAnalyzer::new();
         let per_file: Vec<Vec<Box<dyn Violation>>> = files
             .par_iter()
-            .map(|file| match analyzer.analyze_file(file) {
-                Ok(functions) => {
-                    let mut local: Vec<Box<dyn Violation>> = Vec::new();
-                    for (rule, thresholds) in &metrics_rules {
-                        mcb_domain::trace!(
-                            "declarative",
-                            "Metrics check",
-                            &format!("rule={} file={}", rule.id, file.display())
-                        );
-                        let rule_violations: Vec<MetricViolation> =
-                            RcaAnalyzer::find_violations_in_functions(file, &functions, thresholds);
-                        local.extend(
-                            rule_violations
-                                .into_iter()
-                                .map(|v| Box::new(v) as Box<dyn Violation>),
-                        );
-                    }
-                    local
-                }
-                Err(e) => {
-                    mcb_domain::warn!(
-                        "validate",
-                        "Metrics analysis failed",
-                        &format!("file = {}, error = {:?}", file.display(), e)
-                    );
-                    Vec::new()
-                }
-            })
+            .map(|file| Self::metrics_violations_for_file(&analyzer, file, &metrics_rules))
             .collect();
 
         per_file.into_iter().flatten().collect()
+    }
+
+    /// Collect metric violations for a single file across all metrics rules.
+    fn metrics_violations_for_file(
+        analyzer: &RcaAnalyzer,
+        file: &Path,
+        metrics_rules: &[(&ValidatedRule, MetricThresholds)],
+    ) -> Vec<Box<dyn Violation>> {
+        let functions = match analyzer.analyze_file(file) {
+            Ok(functions) => functions,
+            Err(e) => {
+                mcb_domain::warn!(
+                    "validate",
+                    "Metrics analysis failed",
+                    &format!("file = {}, error = {:?}", file.display(), e)
+                );
+                return Vec::new();
+            }
+        };
+
+        let mut local: Vec<Box<dyn Violation>> = Vec::new();
+        for (rule, thresholds) in metrics_rules {
+            mcb_domain::trace!(
+                "declarative",
+                "Metrics check",
+                &format!("rule={} file={}", rule.id, file.display())
+            );
+            let rule_violations: Vec<MetricViolation> =
+                RcaAnalyzer::find_violations_in_functions(file, &functions, thresholds);
+            local.extend(
+                rule_violations
+                    .into_iter()
+                    .map(|v| Box::new(v) as Box<dyn Violation>),
+            );
+        }
+        local
     }
 
     // Rust-only: non-Rust lint selectors (e.g. Ruff) receive no matching files.
@@ -181,68 +189,15 @@ impl DeclarativeValidator {
         let has_cargo = Self::command_is_available("cargo");
 
         let file_refs: Vec<&Path> = files.iter().map(PathBuf::as_path).collect();
+        let avail = LintAvailability {
+            has_python_files,
+            has_ruff,
+            has_cargo,
+        };
         let mut violations: Vec<Box<dyn Violation>> = Vec::new();
 
-        // Spawn a dedicated thread with its own runtime so we never
-        // call `block_on` or `block_in_place` inside the caller's
-        // async context (which panics on both single- and multi-threaded
-        // tokio runtimes).
-        let run_on_dedicated = |fut: std::pin::Pin<
-            Box<
-                dyn std::future::Future<Output = crate::Result<Vec<crate::linters::LintViolation>>>
-                    + Send,
-            >,
-        >| {
-            std::thread::scope(|scope| {
-                scope
-                    .spawn(|| {
-                        let runtime = tokio::runtime::Builder::new_current_thread()
-                            .enable_all()
-                            .build()
-                            .map_err(|error| format!("failed to build lint runtime: {error}"))?;
-                        runtime
-                            .block_on(fut)
-                            .map_err(|error| format!("lint execution failed: {error}"))
-                    })
-                    .join()
-                    .map_err(|_| "lint thread panicked".to_owned())
-                    .and_then(std::convert::identity)
-            })
-        };
-
         for rule in &lint_rules {
-            let needs_clippy = rule
-                .lint_select
-                .iter()
-                .any(|code| code.starts_with("clippy::"));
-            let needs_ruff = rule
-                .lint_select
-                .iter()
-                .any(|code| !code.starts_with("clippy::"));
-
-            if (needs_clippy && !has_cargo) || (needs_ruff && (!has_ruff || !has_python_files)) {
-                mcb_domain::trace!(
-                    "declarative",
-                    "Skipping lint-select rule",
-                    &format!(
-                        "rule={} needs_clippy={} needs_ruff={} has_cargo={} has_ruff={} has_python_files={}",
-                        rule.id, needs_clippy, needs_ruff, has_cargo, has_ruff, has_python_files
-                    )
-                );
-                continue;
-            }
-
-            if needs_clippy
-                && rule
-                    .lint_select
-                    .iter()
-                    .all(|code| code == "clippy::unwrap_used")
-            {
-                mcb_domain::trace!(
-                    "declarative",
-                    "Skipping clippy unwrap rule",
-                    &format!("rule={}", rule.id)
-                );
+            if lint_rule_should_skip(rule, &avail) {
                 continue;
             }
 
@@ -251,29 +206,57 @@ impl DeclarativeValidator {
                 "Running lint-select rule",
                 &format!("rule={}", rule.id)
             );
-            match run_on_dedicated(Box::pin(YamlRuleExecutor::execute_rule(rule, &file_refs))) {
-                Ok(lint_violations) => {
-                    mcb_domain::trace!(
-                        "declarative",
-                        "Lint rule done",
-                        &format!("rule={} violations={}", rule.id, lint_violations.len())
-                    );
-                    violations.extend(lint_violations.into_iter().map(|mut v| {
-                        v.ensure_file_path();
-                        Box::new(v) as Box<dyn Violation>
-                    }));
-                }
-                Err(error) => {
-                    mcb_domain::warn!(
-                        "validate",
-                        "Lint rule execution failed",
-                        &format!("rule_id = {}, error = {}", rule.id, error)
-                    );
-                }
-            }
+            Self::run_lint_rule(rule, &file_refs, &mut violations);
         }
 
         violations
+    }
+
+    /// Execute a single lint-select rule on a dedicated runtime, appending its violations.
+    ///
+    /// Runs on a dedicated thread with its own current-thread runtime to avoid calling
+    /// `block_on`/`block_in_place` inside the caller's async context (which would panic).
+    fn run_lint_rule(
+        rule: &ValidatedRule,
+        file_refs: &[&Path],
+        violations: &mut Vec<Box<dyn Violation>>,
+    ) {
+        let result = std::thread::scope(|scope| {
+            scope
+                .spawn(|| {
+                    let runtime = tokio::runtime::Builder::new_current_thread()
+                        .enable_all()
+                        .build()
+                        .map_err(|error| format!("failed to build lint runtime: {error}"))?;
+                    runtime
+                        .block_on(YamlRuleExecutor::execute_rule(rule, file_refs))
+                        .map_err(|error| format!("lint execution failed: {error}"))
+                })
+                .join()
+                .map_err(|_| "lint thread panicked".to_owned())
+                .and_then(std::convert::identity)
+        });
+
+        match result {
+            Ok(lint_violations) => {
+                mcb_domain::trace!(
+                    "declarative",
+                    "Lint rule done",
+                    &format!("rule={} violations={}", rule.id, lint_violations.len())
+                );
+                violations.extend(lint_violations.into_iter().map(|mut v| {
+                    v.ensure_file_path();
+                    Box::new(v) as Box<dyn Violation>
+                }));
+            }
+            Err(error) => {
+                mcb_domain::warn!(
+                    "validate",
+                    "Lint rule execution failed",
+                    &format!("rule_id = {}, error = {}", rule.id, error)
+                );
+            }
+        }
     }
 
     fn command_is_available(command: &str) -> bool {
@@ -315,49 +298,43 @@ impl DeclarativeValidator {
         let per_file: Vec<Vec<Box<dyn Violation>>> = files
             .par_iter()
             .map(|file| {
-                let cached = crate::run_context::ValidationRunContext::active()
-                    .and_then(|ctx| ctx.read_cached(file).ok());
-                let content = if let Some(cached) = cached.as_ref() {
-                    Cow::Borrowed(cached.as_ref())
-                } else {
-                    match std::fs::read_to_string(file) {
-                        Ok(c) => Cow::Owned(c),
-                        Err(e) => {
-                            mcb_domain::warn!(
-                                "validate",
-                                "Failed to read file for regex validation",
-                                &format!("file = {}, error = {:?}", file.display(), e)
-                            );
-                            return Vec::new();
-                        }
-                    }
-                };
-
-                let mut file_violations: Vec<Box<dyn Violation>> = Vec::new();
-                for rule in &regex_rules {
-                    if !Self::should_execute_on_file(
-                        filter_executor,
-                        workspace_deps,
-                        rule.rule,
-                        file,
-                        Some(content.as_ref()),
-                    ) {
-                        continue;
-                    }
-
-                    file_violations.extend(Self::collect_regex_violations_for_content(
-                        rule.rule,
-                        file,
-                        content.as_ref(),
-                        &rule.compiled,
-                        &rule.ignore_compiled,
-                    ));
-                }
-                file_violations
+                Self::regex_violations_for_file(file, &regex_rules, filter_executor, workspace_deps)
             })
             .collect();
 
         per_file.into_iter().flatten().collect()
+    }
+
+    /// Collect regex-rule violations for a single file.
+    fn regex_violations_for_file(
+        file: &Path,
+        regex_rules: &[CompiledRegexRule<'_>],
+        filter_executor: &RuleFilterExecutor,
+        workspace_deps: &WorkspaceDependencies,
+    ) -> Vec<Box<dyn Violation>> {
+        let Some(content) = read_cached_or_disk(file, "regex validation") else {
+            return Vec::new();
+        };
+
+        let mut file_violations: Vec<Box<dyn Violation>> = Vec::new();
+        for rule in regex_rules {
+            if Self::should_execute_on_file(
+                filter_executor,
+                workspace_deps,
+                rule.rule,
+                file,
+                Some(content.as_ref()),
+            ) {
+                file_violations.extend(Self::collect_regex_violations_for_content(
+                    rule.rule,
+                    file,
+                    content.as_ref(),
+                    &rule.compiled,
+                    &rule.ignore_compiled,
+                ));
+            }
+        }
+        file_violations
     }
 
     fn validate_ast_selector_rules(
@@ -380,50 +357,7 @@ impl DeclarativeValidator {
         > = files
             .par_iter()
             .map(|file| {
-                let cached = crate::run_context::ValidationRunContext::active()
-                    .and_then(|ctx| ctx.read_cached(file).ok());
-                let source = if let Some(cached) = cached.as_ref() {
-                    Cow::Borrowed(cached.as_ref())
-                } else {
-                    match std::fs::read_to_string(file) {
-                        Ok(content) => Cow::Owned(content),
-                        Err(e) => {
-                            mcb_domain::warn!(
-                                "validate",
-                                "Failed to read file for AST validation",
-                                &format!("file = {}, error = {:?}", file.display(), e)
-                            );
-                            return Ok(Vec::new());
-                        }
-                    }
-                };
-
-                let mut local: Vec<Box<dyn Violation>> = Vec::new();
-                for rule in &ast_rules {
-                    if !Self::should_execute_on_file(
-                        filter_executor,
-                        workspace_deps,
-                        rule,
-                        file,
-                        Some(source.as_ref()),
-                    ) {
-                        continue;
-                    }
-
-                    let selector_matches =
-                        AstSelectorEngine::execute_on_source(rule, file, source.as_ref());
-                    local.extend(selector_matches.into_iter().map(|matched| {
-                        Self::build_pattern_match_violation(rule, matched.file_path, matched.line)
-                    }));
-
-                    let query_matches =
-                        TreeSitterQueryExecutor::execute_on_source(rule, file, source.as_bytes())?;
-                    local.extend(query_matches.into_iter().map(|matched| {
-                        Self::build_pattern_match_violation(rule, matched.file_path, matched.line)
-                    }));
-                }
-
-                Ok(local)
+                Self::ast_violations_for_file(file, &ast_rules, filter_executor, workspace_deps)
             })
             .collect();
 
@@ -433,6 +367,45 @@ impl DeclarativeValidator {
         }
 
         Ok(violations)
+    }
+
+    /// Collect AST selector and tree-sitter query violations for a single file.
+    fn ast_violations_for_file(
+        file: &Path,
+        ast_rules: &[&ValidatedRule],
+        filter_executor: &RuleFilterExecutor,
+        workspace_deps: &WorkspaceDependencies,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
+        let Some(source) = read_cached_or_disk(file, "AST validation") else {
+            return Ok(Vec::new());
+        };
+
+        let mut local: Vec<Box<dyn Violation>> = Vec::new();
+        for rule in ast_rules {
+            if !Self::should_execute_on_file(
+                filter_executor,
+                workspace_deps,
+                rule,
+                file,
+                Some(source.as_ref()),
+            ) {
+                continue;
+            }
+
+            let selector_matches =
+                AstSelectorEngine::execute_on_source(rule, file, source.as_ref());
+            local.extend(selector_matches.into_iter().map(|matched| {
+                Self::build_pattern_match_violation(rule, matched.file_path, matched.line)
+            }));
+
+            let query_matches =
+                TreeSitterQueryExecutor::execute_on_source(rule, file, source.as_bytes())?;
+            local.extend(query_matches.into_iter().map(|matched| {
+                Self::build_pattern_match_violation(rule, matched.file_path, matched.line)
+            }));
+        }
+
+        Ok(local)
     }
 
     fn is_regex_rule(rule: &ValidatedRule) -> bool {
@@ -582,6 +555,182 @@ impl DeclarativeValidator {
             category: parse_category(&rule.category),
         })
     }
+
+    /// Run the four declarative rule slices (metrics, AST, regex, path) in parallel.
+    ///
+    /// Returns `(metrics, ast_result, regex, path)`; a panicked slice degrades to an empty result.
+    fn run_parallel_slices(
+        rules: &[ValidatedRule],
+        files: &[PathBuf],
+        filter_executor: &RuleFilterExecutor,
+        workspace_deps: Option<&WorkspaceDependencies>,
+        ctx: &Option<std::sync::Arc<crate::run_context::ValidationRunContext>>,
+    ) -> ParallelSliceResults {
+        std::thread::scope(|s| {
+            let t_metrics = s.spawn(|| {
+                with_ctx(ctx, || {
+                    log_slice(
+                        "Metrics slice done",
+                        Self::validate_metrics_rules(rules, files),
+                    )
+                })
+            });
+            let t_ast = s.spawn(|| {
+                with_ctx(ctx, || {
+                    let v = workspace_deps.map_or_else(
+                        || Ok(Vec::new()),
+                        |deps| {
+                            Self::validate_ast_selector_rules(rules, files, filter_executor, deps)
+                        },
+                    );
+                    log_slice_result("AST selector slice done", v)
+                })
+            });
+            let t_regex = s.spawn(|| {
+                with_ctx(ctx, || {
+                    let v = workspace_deps.map_or_else(Vec::new, |deps| {
+                        Self::validate_regex_rules(rules, files, filter_executor, deps)
+                    });
+                    log_slice("Regex slice done", v)
+                })
+            });
+            let t_path = s.spawn(|| {
+                with_ctx(ctx, || {
+                    let v = workspace_deps.map_or_else(Vec::new, |deps| {
+                        validate_path_rules(rules, files, filter_executor, deps)
+                    });
+                    log_slice("Path rules slice done", v)
+                })
+            });
+            (
+                t_metrics.join().unwrap_or_else(|_| {
+                    mcb_domain::warn!("validate", "Metrics validation thread panicked");
+                    Vec::new()
+                }),
+                t_ast.join().unwrap_or_else(|_| {
+                    mcb_domain::warn!("validate", "AST validation thread panicked");
+                    Ok(Vec::new())
+                }),
+                t_regex.join().unwrap_or_else(|_| {
+                    mcb_domain::warn!("validate", "Regex validation thread panicked");
+                    Vec::new()
+                }),
+                t_path.join().unwrap_or_else(|_| {
+                    mcb_domain::warn!("validate", "Path validation thread panicked");
+                    Vec::new()
+                }),
+            )
+        })
+    }
+}
+
+/// Read file content from the active run-context cache, falling back to disk.
+///
+/// Returns `None` (after logging) when the file cannot be read; `context_label` names the
+/// validation slice for the warning message.
+fn read_cached_or_disk(file: &Path, context_label: &str) -> Option<std::sync::Arc<str>> {
+    if let Some(cached) = crate::run_context::ValidationRunContext::active()
+        .and_then(|ctx| ctx.read_cached(file).ok())
+    {
+        return Some(cached);
+    }
+
+    match std::fs::read_to_string(file) {
+        Ok(content) => Some(std::sync::Arc::from(content.as_str())),
+        Err(e) => {
+            mcb_domain::warn!(
+                "validate",
+                "Failed to read file for validation",
+                &format!(
+                    "context = {context_label}, file = {}, error = {:?}",
+                    file.display(),
+                    e
+                )
+            );
+            None
+        }
+    }
+}
+
+/// Availability of external linters and relevant source files for lint-select rules.
+struct LintAvailability {
+    has_python_files: bool,
+    has_ruff: bool,
+    has_cargo: bool,
+}
+
+/// Decide whether a lint-select rule should be skipped given tool/file availability.
+fn lint_rule_should_skip(rule: &ValidatedRule, avail: &LintAvailability) -> bool {
+    let needs_clippy = rule
+        .lint_select
+        .iter()
+        .any(|code| code.starts_with("clippy::"));
+    let needs_ruff = rule
+        .lint_select
+        .iter()
+        .any(|code| !code.starts_with("clippy::"));
+
+    if (needs_clippy && !avail.has_cargo)
+        || (needs_ruff && (!avail.has_ruff || !avail.has_python_files))
+    {
+        mcb_domain::trace!(
+            "declarative",
+            "Skipping lint-select rule",
+            &format!(
+                "rule={} needs_clippy={} needs_ruff={} has_cargo={} has_ruff={} has_python_files={}",
+                rule.id,
+                needs_clippy,
+                needs_ruff,
+                avail.has_cargo,
+                avail.has_ruff,
+                avail.has_python_files
+            )
+        );
+        return true;
+    }
+
+    if needs_clippy
+        && rule
+            .lint_select
+            .iter()
+            .all(|code| code == "clippy::unwrap_used")
+    {
+        mcb_domain::trace!(
+            "declarative",
+            "Skipping clippy unwrap rule",
+            &format!("rule={}", rule.id)
+        );
+        return true;
+    }
+
+    false
+}
+
+/// Result tuple of the four parallel declarative rule slices: `(metrics, ast, regex, path)`.
+type ParallelSliceResults = (
+    Vec<Box<dyn Violation>>,
+    mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>>,
+    Vec<Box<dyn Violation>>,
+    Vec<Box<dyn Violation>>,
+);
+
+/// Emit a debug line with the slice violation count and pass the violations through.
+fn log_slice(label: &str, v: Vec<Box<dyn Violation>>) -> Vec<Box<dyn Violation>> {
+    mcb_domain::debug!("declarative", label, &format!("violations={}", v.len()));
+    v
+}
+
+/// Like [`log_slice`] but for a fallible slice result.
+fn log_slice_result(
+    label: &str,
+    v: mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>>,
+) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
+    mcb_domain::debug!(
+        "declarative",
+        label,
+        &format!("violations={}", v.as_ref().map_or(0, Vec::len))
+    );
+    v
 }
 
 impl Validator for DeclarativeValidator {
@@ -650,92 +799,13 @@ impl Validator for DeclarativeValidator {
         // Capture the active ValidationRunContext so spawned threads can use caches.
         let ctx = crate::run_context::ValidationRunContext::active_or_build(config).ok();
 
-        let (metrics_v, ast_result, regex_v, path_v) = std::thread::scope(|s| {
-            let t_metrics = s.spawn(|| {
-                with_ctx(&ctx, || {
-                    let t = std::time::Instant::now();
-                    let v = Self::validate_metrics_rules(&rules, &files);
-                    mcb_domain::debug!(
-                        "declarative",
-                        "Metrics slice done",
-                        &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-                    );
-                    v
-                })
-            });
-            let t_ast = s.spawn(|| {
-                with_ctx(&ctx, || {
-                    let t = std::time::Instant::now();
-                    let v = workspace_deps.as_ref().map_or_else(
-                        || Ok(Vec::new()),
-                        |deps| {
-                            Self::validate_ast_selector_rules(
-                                &rules,
-                                &files,
-                                &filter_executor,
-                                deps,
-                            )
-                        },
-                    );
-                    mcb_domain::debug!(
-                        "declarative",
-                        "AST selector slice done",
-                        &format!(
-                            "violations={} elapsed={:.2?}",
-                            v.as_ref().map_or(0, Vec::len),
-                            t.elapsed()
-                        )
-                    );
-                    v
-                })
-            });
-            let t_regex = s.spawn(|| {
-                with_ctx(&ctx, || {
-                    let t = std::time::Instant::now();
-                    let v = workspace_deps.as_ref().map_or_else(Vec::new, |deps| {
-                        Self::validate_regex_rules(&rules, &files, &filter_executor, deps)
-                    });
-                    mcb_domain::debug!(
-                        "declarative",
-                        "Regex slice done",
-                        &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-                    );
-                    v
-                })
-            });
-            let t_path = s.spawn(|| {
-                with_ctx(&ctx, || {
-                    let t = std::time::Instant::now();
-                    let v = workspace_deps.as_ref().map_or_else(Vec::new, |deps| {
-                        validate_path_rules(&rules, &files, &filter_executor, deps)
-                    });
-                    mcb_domain::debug!(
-                        "declarative",
-                        "Path rules slice done",
-                        &format!("violations={} elapsed={:.2?}", v.len(), t.elapsed())
-                    );
-                    v
-                })
-            });
-            (
-                t_metrics.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "Metrics validation thread panicked");
-                    Vec::new()
-                }),
-                t_ast.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "AST validation thread panicked");
-                    Ok(Vec::new())
-                }),
-                t_regex.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "Regex validation thread panicked");
-                    Vec::new()
-                }),
-                t_path.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "Path validation thread panicked");
-                    Vec::new()
-                }),
-            )
-        });
+        let (metrics_v, ast_result, regex_v, path_v) = Self::run_parallel_slices(
+            &rules,
+            &files,
+            &filter_executor,
+            workspace_deps.as_ref(),
+            &ctx,
+        );
 
         let t = std::time::Instant::now();
         let lint_v = Self::validate_lint_select_rules(&rules, &files);

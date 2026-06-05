@@ -63,27 +63,30 @@ impl LinterEngine {
             all_violations.extend(violations);
         }
 
-        // For Clippy, we need to check if any Rust files are present
         if self.enabled_linters.contains(&LinterType::Clippy) {
-            let has_rust_files = files.iter().any(|f| {
-                LinterType::Clippy
-                    .matches_extension(f.extension().and_then(std::ffi::OsStr::to_str))
-            });
-            if has_rust_files {
-                // Find project root (simplified - assumes files are in a Cargo project)
-                if let Some(project_root) = find_project_root(files) {
-                    // Pass lint codes to enable specific warnings
-                    if let Ok(violations) =
-                        ClippyLinter::check_project_with_lints(&project_root, &self.lint_codes)
-                            .await
-                    {
-                        all_violations.extend(violations);
-                    }
-                }
-            }
+            all_violations.extend(self.run_clippy(files).await);
         }
 
         Ok(all_violations)
+    }
+
+    /// Run Clippy when Rust files are present, returning any violations found.
+    async fn run_clippy(&self, files: &[&Path]) -> Vec<LintViolation> {
+        let has_rust_files = files.iter().any(|f| {
+            LinterType::Clippy.matches_extension(f.extension().and_then(std::ffi::OsStr::to_str))
+        });
+        if !has_rust_files {
+            return Vec::new();
+        }
+
+        // Find project root (simplified - assumes files are in a Cargo project)
+        let Some(project_root) = find_project_root(files) else {
+            return Vec::new();
+        };
+
+        ClippyLinter::check_project_with_lints(&project_root, &self.lint_codes)
+            .await
+            .unwrap_or_default()
     }
 
     /// Map a linter-specific code to a custom rule ID

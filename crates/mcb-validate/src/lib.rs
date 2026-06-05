@@ -115,28 +115,39 @@ pub trait ValidationConfigExt {
     fn get_scan_dirs(&self) -> Result<Vec<PathBuf>>;
 }
 
+/// Push each non-skipped, non-excluded crate directory under `crates_dir` into `dirs`.
+fn collect_crate_dirs(
+    config: &ValidationConfig,
+    crates_dir: &std::path::Path,
+    file_config: &crate::config::FileConfig,
+    dirs: &mut Vec<PathBuf>,
+) -> Result<()> {
+    for entry in std::fs::read_dir(crates_dir)? {
+        let path = entry?.path();
+        let skipped = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .is_some_and(|name| {
+                file_config
+                    .general
+                    .skip_crates
+                    .iter()
+                    .any(|skip| skip == name)
+            });
+        if !skipped && path.is_dir() && !config.should_exclude(&path) {
+            dirs.push(path);
+        }
+    }
+    Ok(())
+}
+
 impl ValidationConfigExt for ValidationConfig {
     fn get_source_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut dirs = Vec::new();
         let file_config = crate::config::FileConfig::load(&self.workspace_root);
         let crates_dir = self.workspace_root.join("crates");
         if crates_dir.exists() {
-            for entry in std::fs::read_dir(&crates_dir)? {
-                let entry = entry?;
-                let path = entry.path();
-                if let Some(file_name) = path.file_name().and_then(|n| n.to_str())
-                    && file_config
-                        .general
-                        .skip_crates
-                        .iter()
-                        .any(|skip| skip == file_name)
-                {
-                    continue;
-                }
-                if path.is_dir() && !self.should_exclude(&path) {
-                    dirs.push(path);
-                }
-            }
+            collect_crate_dirs(self, &crates_dir, &file_config, &mut dirs)?;
         }
         for path in &self.additional_src_paths {
             let full_path = if path.is_absolute() {

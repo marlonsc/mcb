@@ -195,34 +195,32 @@ impl GenericReporter {
 
             for category in categories {
                 let category_violations = &report.violations_by_category[category];
-                if category_violations.is_empty() {
-                    continue;
+                if !category_violations.is_empty() {
+                    Self::write_category_section(&mut output, category, category_violations);
                 }
-
-                let _ = writeln!(
-                    output,
-                    "=== {} ({}) ===",
-                    category,
-                    category_violations.len()
-                );
-                for v in category_violations {
-                    let _ = writeln!(
-                        output,
-                        "  [{:>7}] [{}] {} - {}",
-                        v.severity,
-                        v.id,
-                        violation_location(v),
-                        v.message
-                    );
-                    if let Some(suggestion) = &v.suggestion {
-                        let _ = writeln!(output, "            -> {suggestion}");
-                    }
-                }
-                output.push('\n');
             }
         }
 
         output
+    }
+
+    /// Write one category header followed by its violation lines.
+    fn write_category_section(output: &mut String, category: &str, violations: &[ViolationEntry]) {
+        let _ = writeln!(output, "=== {} ({}) ===", category, violations.len());
+        for v in violations {
+            let _ = writeln!(
+                output,
+                "  [{:>7}] [{}] {} - {}",
+                v.severity,
+                v.id,
+                violation_location(v),
+                v.message
+            );
+            if let Some(suggestion) = &v.suggestion {
+                let _ = writeln!(output, "            -> {suggestion}");
+            }
+        }
+        output.push('\n');
     }
 
     /// Generate CI summary (GitHub Actions format).
