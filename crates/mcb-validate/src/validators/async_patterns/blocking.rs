@@ -11,61 +11,62 @@ use mcb_utils::utils::regex::compile_regex_triples;
 use super::for_each_async_fn_line;
 use super::violation::AsyncViolation;
 
+/// Blocking call patterns (regex, display name, suggested async replacement).
+const BLOCKING_PATTERNS: [(&str, &str, &str); 9] = [
+    (
+        "std::thread::sleep",
+        "std::thread::sleep",
+        "Use tokio::time::sleep instead",
+    ),
+    (
+        "thread::sleep",
+        "thread::sleep",
+        "Use tokio::time::sleep instead",
+    ),
+    (
+        "std::fs::read",
+        "std::fs::read",
+        "Use tokio::fs::read instead",
+    ),
+    (
+        "std::fs::write",
+        "std::fs::write",
+        "Use tokio::fs::write instead",
+    ),
+    (
+        "std::fs::File::open",
+        "std::fs::File::open",
+        "Use tokio::fs::File::open instead",
+    ),
+    (
+        "std::fs::File::create",
+        "std::fs::File::create",
+        "Use tokio::fs::File::create instead",
+    ),
+    (
+        r"\.blocking_lock\(\)",
+        ".blocking_lock()",
+        "Use .lock().await instead in async context",
+    ),
+    (
+        r"\.blocking_read\(\)",
+        ".blocking_read()",
+        "Use .read().await instead in async context",
+    ),
+    (
+        r"\.blocking_write\(\)",
+        ".blocking_write()",
+        "Use .write().await instead in async context",
+    ),
+];
+
 /// Detect blocking calls in async functions
 pub fn validate_blocking_in_async(config: &ValidationConfig) -> Result<Vec<AsyncViolation>> {
     let mut violations = Vec::new();
 
     let async_fn_pattern = required_pattern("ASYNC001.async_fn_named")?;
 
-    let blocking_patterns = [
-        (
-            "std::thread::sleep",
-            "std::thread::sleep",
-            "Use tokio::time::sleep instead",
-        ),
-        (
-            "thread::sleep",
-            "thread::sleep",
-            "Use tokio::time::sleep instead",
-        ),
-        (
-            "std::fs::read",
-            "std::fs::read",
-            "Use tokio::fs::read instead",
-        ),
-        (
-            "std::fs::write",
-            "std::fs::write",
-            "Use tokio::fs::write instead",
-        ),
-        (
-            "std::fs::File::open",
-            "std::fs::File::open",
-            "Use tokio::fs::File::open instead",
-        ),
-        (
-            "std::fs::File::create",
-            "std::fs::File::create",
-            "Use tokio::fs::File::create instead",
-        ),
-        (
-            r"\.blocking_lock\(\)",
-            ".blocking_lock()",
-            "Use .lock().await instead in async context",
-        ),
-        (
-            r"\.blocking_read\(\)",
-            ".blocking_read()",
-            "Use .read().await instead in async context",
-        ),
-        (
-            r"\.blocking_write\(\)",
-            ".blocking_write()",
-            "Use .write().await instead in async context",
-        ),
-    ];
-
-    let compiled_blocking = compile_regex_triples(&blocking_patterns)?;
+    let compiled_blocking = compile_regex_triples(&BLOCKING_PATTERNS)?;
 
     for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, _src_dir| {
         let path = &entry.absolute_path;

@@ -232,49 +232,38 @@ impl mcb_domain::ports::validation::Validator for NamingValidator {
             mcb_domain::debug!("naming", "Naming validator disabled, skipping");
             return Ok(Vec::new());
         }
+        use mcb_domain::ports::validation::NamedCheck;
         Ok(vec![
-            mcb_domain::ports::validation::NamedCheck::new("type_names", move || {
-                Ok(self
-                    .run_type_name_check()?
-                    .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
-                    .collect())
+            NamedCheck::new("type_names", move || {
+                box_violations(self.run_type_name_check())
             }),
-            mcb_domain::ports::validation::NamedCheck::new("function_names", move || {
-                Ok(self
-                    .run_function_name_check()?
-                    .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
-                    .collect())
+            NamedCheck::new("function_names", move || {
+                box_violations(self.run_function_name_check())
             }),
-            mcb_domain::ports::validation::NamedCheck::new("constant_names", move || {
-                Ok(self
-                    .run_constant_name_check()?
-                    .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
-                    .collect())
+            NamedCheck::new("constant_names", move || {
+                box_violations(self.run_constant_name_check())
             }),
-            mcb_domain::ports::validation::NamedCheck::new("module_names", move || {
-                Ok(self
-                    .run_module_name_check()?
-                    .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
-                    .collect())
+            NamedCheck::new("module_names", move || {
+                box_violations(self.run_module_name_check())
             }),
-            mcb_domain::ports::validation::NamedCheck::new("file_suffix", move || {
-                Ok(self
-                    .run_file_suffix_check()?
-                    .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
-                    .collect())
+            NamedCheck::new("file_suffix", move || {
+                box_violations(self.run_file_suffix_check())
             }),
-            mcb_domain::ports::validation::NamedCheck::new("ca_naming", move || {
-                Ok(self
-                    .run_ca_naming_check()?
-                    .into_iter()
-                    .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
-                    .collect())
+            NamedCheck::new("ca_naming", move || {
+                box_violations(self.run_ca_naming_check())
             }),
         ])
     }
+}
+
+/// Box each `NamingViolation` from a check result into a `dyn Violation`.
+fn box_violations(
+    result: Result<Vec<NamingViolation>>,
+) -> mcb_domain::ports::validation::ValidatorResult<
+    Vec<Box<dyn mcb_domain::ports::validation::Violation>>,
+> {
+    Ok(result?
+        .into_iter()
+        .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
+        .collect())
 }

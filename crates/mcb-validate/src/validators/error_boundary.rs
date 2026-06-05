@@ -91,29 +91,36 @@ impl ErrorBoundaryValidator {
             }
 
             let content = std::fs::read_to_string(path)?;
-            let mut in_test_module = false;
-
-            for (line_num, line) in content.lines().enumerate() {
-                let trimmed = line.trim();
-
-                if trimmed.starts_with(COMMENT_PREFIX) {
-                    continue;
-                }
-
-                if trimmed.contains(CFG_TEST_MARKER) {
-                    in_test_module = true;
-                    continue;
-                }
-
-                if in_test_module {
-                    continue;
-                }
-
-                line_handler(path, line_num + 1, line, trimmed);
-            }
-
+            Self::scan_file_lines(path, &content, &mut line_handler);
             Ok(())
         })
+    }
+
+    /// Invoke `line_handler` for each production line of `content`, skipping
+    /// comments and everything inside a `#[cfg(test)]` module.
+    fn scan_file_lines<LineHandler>(path: &PathBuf, content: &str, line_handler: &mut LineHandler)
+    where
+        LineHandler: FnMut(&PathBuf, usize, &str, &str),
+    {
+        let mut in_test_module = false;
+        for (line_num, line) in content.lines().enumerate() {
+            let trimmed = line.trim();
+
+            if trimmed.starts_with(COMMENT_PREFIX) {
+                continue;
+            }
+
+            if trimmed.contains(CFG_TEST_MARKER) {
+                in_test_module = true;
+                continue;
+            }
+
+            if in_test_module {
+                continue;
+            }
+
+            line_handler(path, line_num + 1, line, trimmed);
+        }
     }
 
     /// Detects infrastructure error types used in domain layer (layer boundary violation)

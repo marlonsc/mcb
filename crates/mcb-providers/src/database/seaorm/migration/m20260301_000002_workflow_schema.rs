@@ -1,5 +1,6 @@
 use sea_orm_migration::prelude::*;
 
+/// Workflow schema migration: creates the session and workflow tracking tables.
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 

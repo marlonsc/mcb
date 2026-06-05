@@ -335,29 +335,45 @@ fn tokenize_char(
             *current_column += tokenize_slash(chars, tokens, current_line, *current_column);
         }
         c if OPERATOR_CHARS.contains(c) => {
-            push_token(
+            push_single_char(
+                c,
                 tokens,
-                c.to_string(),
                 *current_line,
-                *current_column,
+                current_column,
                 TokenType::Operator,
             );
-            *current_column += 1;
         }
         c if PUNCTUATION_CHARS.contains(c) => {
-            push_token(
+            push_single_char(
+                c,
                 tokens,
-                c.to_string(),
                 *current_line,
-                *current_column,
+                current_column,
                 TokenType::Punctuation,
             );
-            *current_column += 1;
         }
         _ => {
             *current_column += 1;
         }
     }
+}
+
+/// Push a single-character token of `token_type` and advance the column counter.
+fn push_single_char(
+    c: char,
+    tokens: &mut Vec<Token>,
+    current_line: usize,
+    current_column: &mut usize,
+    token_type: TokenType,
+) {
+    push_token(
+        tokens,
+        c.to_string(),
+        current_line,
+        *current_column,
+        token_type,
+    );
+    *current_column += 1;
 }
 
 /// Check if a word is a common keyword (simplified, multi-language)

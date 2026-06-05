@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md)
 //!
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
@@ -26,32 +26,43 @@ pub fn validate_hardcoded_returns(
         if STUB_SKIP_FILE_KEYWORDS.iter().any(|k| fname.contains(k)) {
             continue;
         }
+        collect_hardcoded_returns(file_path, content, fn_pattern, &compiled, &mut violations);
+    }
+    Ok(violations)
+}
 
-        let non_test_lines = non_test_lines(&content.lines().collect::<Vec<_>>());
+/// Push a `HardcodedReturnValue` violation for each control-flow-free function
+/// whose body contains a hardcoded return pattern.
+fn collect_hardcoded_returns(
+    file_path: &Path,
+    content: &str,
+    fn_pattern: &Regex,
+    compiled: &[(&'static Regex, &str)],
+    violations: &mut Vec<ImplementationViolation>,
+) {
+    let non_test_lines = non_test_lines(&content.lines().collect::<Vec<_>>());
 
-        for func in extract_functions(Some(fn_pattern), &non_test_lines)
-            .into_iter()
-            .filter(|func| !func.has_control_flow)
+    for func in extract_functions(Some(fn_pattern), &non_test_lines)
+        .into_iter()
+        .filter(|func| !func.has_control_flow)
+    {
+        for line in func
+            .body_lines
+            .iter()
+            .filter(|line| !is_fn_signature_or_brace(line))
         {
-            for line in func
-                .body_lines
+            for (_pattern, desc) in compiled
                 .iter()
-                .filter(|line| !is_fn_signature_or_brace(line))
+                .filter(|(pattern, _)| pattern.is_match(line))
             {
-                for (_pattern, desc) in compiled
-                    .iter()
-                    .filter(|(pattern, _)| pattern.is_match(line))
-                {
-                    violations.push(ImplementationViolation::HardcodedReturnValue {
-                        file: file_path.clone(),
-                        line: func.start_line,
-                        method_name: func.name.clone(),
-                        return_value: desc.to_string(),
-                        severity: Severity::Warning,
-                    });
-                }
+                violations.push(ImplementationViolation::HardcodedReturnValue {
+                    file: file_path.to_path_buf(),
+                    line: func.start_line,
+                    method_name: func.name.clone(),
+                    return_value: (*desc).to_owned(),
+                    severity: Severity::Warning,
+                });
             }
         }
     }
-    Ok(violations)
 }

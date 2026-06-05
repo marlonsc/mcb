@@ -1,5 +1,6 @@
 use sea_orm_migration::prelude::*;
 
+/// Initial schema migration: creates the core entity tables and FTS triggers.
 #[derive(DeriveMigrationName)]
 pub struct Migration;
 

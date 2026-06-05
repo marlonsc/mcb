@@ -26,6 +26,64 @@ struct QualityScanInput<'a> {
     compiled_trivial: &'a [(Regex, &'a str)],
 }
 
+/// Owns the compiled regexes used to scan test files so they outlive the
+/// borrowed [`QualityScanInput`] view.
+struct QualityScanRegexes {
+    test_attr_pattern: Regex,
+    fn_pattern: Regex,
+    real_assert_pattern: Regex,
+    unwrap_pattern: Regex,
+    compiled_trivial: Vec<(Regex, &'static str)>,
+}
+
+impl QualityScanRegexes {
+    /// Trivial assertion patterns (regex, human-readable label).
+    const TRIVIAL_PATTERNS: [(&'static str, &'static str); 6] = [
+        (r"assert!\s*\(\s*true\s*\)", "assert!(true)"),
+        (r"assert!\s*\(\s*!false\s*\)", "assert!(!false)"),
+        (
+            r"assert_eq!\s*\(\s*true\s*,\s*true\s*\)",
+            "assert_eq!(true, true)",
+        ),
+        (r"assert_eq!\s*\(\s*1\s*,\s*1\s*\)", "assert_eq!(1, 1)"),
+        (r"assert_ne!\s*\(\s*1\s*,\s*2\s*\)", "assert_ne!(1, 2)"),
+        (
+            r"assert_ne!\s*\(\s*true\s*,\s*false\s*\)",
+            "assert_ne!(true, false)",
+        ),
+    ];
+
+    /// Compile every scan regex.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any pattern fails to compile.
+    fn compile() -> Result<Self> {
+        Ok(Self {
+            test_attr_pattern: compile_regex(r"#\[(?:tokio::)?test\]")?,
+            fn_pattern: compile_regex(r"(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\(")?,
+            // Match common assertion macros, allowing leading whitespace/punctuation
+            // to avoid false positives like "some_assert!".
+            real_assert_pattern: compile_regex(
+                r"(?:^|\s)(assert[a-z_]*!|assert_[a-z_]+\(|debug_assert[a-z_]*!|panic!)",
+            )?,
+            unwrap_pattern: compile_regex(r"\.unwrap\(|\.expect\(")?,
+            compiled_trivial: compile_regex_pairs(&Self::TRIVIAL_PATTERNS)?,
+        })
+    }
+
+    /// Borrow these regexes as a [`QualityScanInput`].
+    fn as_scan_input(&self) -> QualityScanInput<'_> {
+        QualityScanInput {
+            test_attr_pattern: &self.test_attr_pattern,
+            fn_pattern: &self.fn_pattern,
+            real_assert_pattern: &self.real_assert_pattern,
+            unwrap_pattern: &self.unwrap_pattern,
+            compiled_trivial: &self.compiled_trivial,
+        }
+    }
+}
+
 struct TestBodyInput<'a> {
     path: &'a std::path::Path,
     lines: &'a [&'a str],
@@ -51,39 +109,8 @@ pub fn validate_test_quality(config: &ValidationConfig) -> Result<Vec<HygieneVio
         unimplemented: compile_regex(r"\bunimplemented!\(")?,
     };
 
-    // Trivial assertion patterns
-    let trivial_patterns = [
-        (r"assert!\s*\(\s*true\s*\)", "assert!(true)"),
-        (r"assert!\s*\(\s*!false\s*\)", "assert!(!false)"),
-        (
-            r"assert_eq!\s*\(\s*true\s*,\s*true\s*\)",
-            "assert_eq!(true, true)",
-        ),
-        (r"assert_eq!\s*\(\s*1\s*,\s*1\s*\)", "assert_eq!(1, 1)"),
-        (r"assert_ne!\s*\(\s*1\s*,\s*2\s*\)", "assert_ne!(1, 2)"),
-        (
-            r"assert_ne!\s*\(\s*true\s*,\s*false\s*\)",
-            "assert_ne!(true, false)",
-        ),
-    ];
-
-    let compiled_trivial = compile_regex_pairs(&trivial_patterns)?;
-
-    let test_attr_pattern = compile_regex(r"#\[(?:tokio::)?test\]")?;
-    let fn_pattern = compile_regex(r"(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\(")?;
-    // Match common assertion macros - allow leading whitespace for indented code
-    // The pattern checks for assertions at the start of a line (with optional whitespace)
-    // or preceded by whitespace/punctuation to avoid false positives like "some_assert!"
-    let real_assert_pattern =
-        compile_regex(r"(?:^|\s)(assert[a-z_]*!|assert_[a-z_]+\(|debug_assert[a-z_]*!|panic!)")?;
-    let unwrap_pattern = compile_regex(r"\.unwrap\(|\.expect\(")?;
-    let scan_input = QualityScanInput {
-        test_attr_pattern: &test_attr_pattern,
-        fn_pattern: &fn_pattern,
-        real_assert_pattern: &real_assert_pattern,
-        unwrap_pattern: &unwrap_pattern,
-        compiled_trivial: &compiled_trivial,
-    };
+    let scan_regexes = QualityScanRegexes::compile()?;
+    let scan_input = scan_regexes.as_scan_input();
 
     for crate_dir in config.get_source_dirs()? {
         let tests_dir = crate_dir.join("tests");
@@ -161,6 +188,14 @@ fn process_quality_file(
     violations
 }
 
+/// Tracks which kinds of meaningful code a test body contains.
+#[derive(Default)]
+struct TestBodyFacts {
+    has_assertion: bool,
+    has_unwrap: bool,
+    has_code: bool,
+}
+
 fn analyze_test_function_body(input: &TestBodyInput<'_>) -> Vec<HygieneViolation> {
     let Some((body_lines, _)) = crate::scan::extract_balanced_block(input.lines, input.fn_line_idx)
     else {
@@ -168,46 +203,30 @@ fn analyze_test_function_body(input: &TestBodyInput<'_>) -> Vec<HygieneViolation
     };
 
     let mut violations = Vec::new();
-    let mut has_assertion = false;
-    let mut has_unwrap = false;
-    let mut has_code = false;
+    let mut facts = TestBodyFacts::default();
 
     for (offset, body_line) in body_lines.iter().enumerate() {
-        let body_line_idx = input.fn_line_idx + offset;
         let trimmed = body_line.trim();
         if should_skip_body_line(trimmed) {
             continue;
         }
-
-        has_code = true;
-        if input.real_assert_pattern.is_match(trimmed) {
-            has_assertion = true;
-        }
-        if input.unwrap_pattern.is_match(trimmed) {
-            has_unwrap = true;
-        }
-
-        for (regex, desc) in input.compiled_trivial {
-            if regex.is_match(trimmed) {
-                violations.push(HygieneViolation::TrivialAssertion {
-                    file: input.path.to_path_buf(),
-                    line: body_line_idx + 1,
-                    function_name: input.fn_name.to_owned(),
-                    assertion: (*desc).to_owned(),
-                    severity: Severity::Warning,
-                });
-            }
-        }
+        scan_test_body_line(
+            input,
+            trimmed,
+            input.fn_line_idx + offset,
+            &mut facts,
+            &mut violations,
+        );
     }
 
-    if !has_code {
+    if !facts.has_code {
         violations.push(HygieneViolation::CommentOnlyTest {
             file: input.path.to_path_buf(),
             line: input.fn_line_idx + 1,
             function_name: input.fn_name.to_owned(),
             severity: Severity::Warning,
         });
-    } else if !has_assertion && has_unwrap {
+    } else if !facts.has_assertion && facts.has_unwrap {
         violations.push(HygieneViolation::UnwrapOnlyAssertion {
             file: input.path.to_path_buf(),
             line: input.fn_line_idx + 1,
@@ -219,6 +238,36 @@ fn analyze_test_function_body(input: &TestBodyInput<'_>) -> Vec<HygieneViolation
     violations
 }
 
+/// Inspect one meaningful body line, updating `facts` and pushing a
+/// `TrivialAssertion` violation for each trivial-assert pattern matched.
+fn scan_test_body_line(
+    input: &TestBodyInput<'_>,
+    trimmed: &str,
+    body_line_idx: usize,
+    facts: &mut TestBodyFacts,
+    violations: &mut Vec<HygieneViolation>,
+) {
+    facts.has_code = true;
+    if input.real_assert_pattern.is_match(trimmed) {
+        facts.has_assertion = true;
+    }
+    if input.unwrap_pattern.is_match(trimmed) {
+        facts.has_unwrap = true;
+    }
+
+    for (regex, desc) in input.compiled_trivial {
+        if regex.is_match(trimmed) {
+            violations.push(HygieneViolation::TrivialAssertion {
+                file: input.path.to_path_buf(),
+                line: body_line_idx + 1,
+                function_name: input.fn_name.to_owned(),
+                assertion: (*desc).to_owned(),
+                severity: Severity::Warning,
+            });
+        }
+    }
+}
+
 fn should_skip_body_line(trimmed: &str) -> bool {
     trimmed.is_empty()
         || trimmed.starts_with(COMMENT_PREFIX)
@@ -226,8 +275,8 @@ fn should_skip_body_line(trimmed: &str) -> bool {
         || matches!(trimmed, "{" | "}")
 }
 
-/// Checks for forbidden patterns in test files.
-/// Checks for forbidden patterns in test files.
+/// Checks for forbidden patterns in test files (mock types, skip messages, stub
+/// macros, and `let Ok(..) else { return; }` skip branches).
 fn check_forbidden_patterns(
     file: &std::path::Path,
     lines: &[&str],
@@ -235,44 +284,59 @@ fn check_forbidden_patterns(
     violations: &mut Vec<HygieneViolation>,
 ) {
     for (idx, line) in lines.iter().enumerate() {
-        let line_no = idx + 1;
+        check_forbidden_line(file, idx + 1, line, patterns, violations);
+    }
+    check_skip_branches(file, lines, violations);
+}
 
-        for mat in patterns.mock_type.find_iter(line) {
-            violations.push(HygieneViolation::MockTypeUsage {
-                file: file.to_path_buf(),
-                line: line_no,
-                token: mat.as_str().to_owned(),
-                severity: Severity::Error,
-            });
-        }
+/// Push violations for forbidden tokens (mock types, skip messages, stub macros)
+/// found on a single line.
+fn check_forbidden_line(
+    file: &std::path::Path,
+    line_no: usize,
+    line: &str,
+    patterns: &QualityPatterns,
+    violations: &mut Vec<HygieneViolation>,
+) {
+    for mat in patterns.mock_type.find_iter(line) {
+        violations.push(HygieneViolation::MockTypeUsage {
+            file: file.to_path_buf(),
+            line: line_no,
+            token: mat.as_str().to_owned(),
+            severity: Severity::Error,
+        });
+    }
 
-        if patterns.skip_message.is_match(line) {
-            violations.push(HygieneViolation::SkipBranchUsage {
-                file: file.to_path_buf(),
-                line: line_no,
-                severity: Severity::Error,
-            });
-        }
+    if patterns.skip_message.is_match(line) {
+        violations.push(HygieneViolation::SkipBranchUsage {
+            file: file.to_path_buf(),
+            line: line_no,
+            severity: Severity::Error,
+        });
+    }
 
-        if patterns.todo.is_match(line) {
+    for (pattern, macro_name) in [
+        (&patterns.todo, "todo"),
+        (&patterns.unimplemented, "unimplemented"),
+    ] {
+        if pattern.is_match(line) {
             violations.push(HygieneViolation::StubMacroUsage {
                 file: file.to_path_buf(),
                 line: line_no,
-                macro_name: "todo".to_owned(),
-                severity: Severity::Error,
-            });
-        }
-
-        if patterns.unimplemented.is_match(line) {
-            violations.push(HygieneViolation::StubMacroUsage {
-                file: file.to_path_buf(),
-                line: line_no,
-                macro_name: "unimplemented".to_owned(),
+                macro_name: macro_name.to_owned(),
                 severity: Severity::Error,
             });
         }
     }
+}
 
+/// Push a `SkipBranchUsage` violation for each `let Ok(..) else { return; }`
+/// skip branch spanning three consecutive lines.
+fn check_skip_branches(
+    file: &std::path::Path,
+    lines: &[&str],
+    violations: &mut Vec<HygieneViolation>,
+) {
     for idx in 0..lines.len().saturating_sub(2) {
         let current = lines[idx].trim();
         let next = lines[idx + 1].trim();

@@ -167,14 +167,7 @@ impl DocumentationValidator {
 
                 let mut macro_depth: i32 = 0;
                 for (line_num, line) in lines.iter().enumerate() {
-                    // Skip pub items defined inside a macro invocation block.
-                    let entering_macro = macro_depth == 0
-                        && macro_invocation_re.is_match(line)
-                        && !line.contains("macro_rules!");
-                    if macro_depth > 0 || entering_macro {
-                        macro_depth += i32::try_from(line.matches('{').count()).unwrap_or(0);
-                        macro_depth -= i32::try_from(line.matches('}').count()).unwrap_or(0);
-                        macro_depth = macro_depth.max(0);
+                    if Self::advance_macro_depth(&mut macro_depth, line, &macro_invocation_re) {
                         continue;
                     }
 
@@ -190,38 +183,13 @@ impl DocumentationValidator {
                         &simple_pub_item_specs,
                         &regex_ctx,
                     );
-
-                    if let Some(cap) = pub_trait_pattern.captures(scan_ctx.line) {
-                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                        let item_ctx = Self::build_item_ctx(
-                            scan_ctx.path,
-                            scan_ctx.lines,
-                            scan_ctx.line_num,
-                            name,
-                        );
-                        Self::check_public_trait_docs(
-                            &mut violations,
-                            &item_ctx,
-                            path_str,
-                            &regex_ctx,
-                        );
-                    }
-
-                    if let Some(cap) = pub_fn_pattern.captures(scan_ctx.line) {
-                        let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
-                        let item_ctx = Self::build_item_ctx(
-                            scan_ctx.path,
-                            scan_ctx.lines,
-                            scan_ctx.line_num,
-                            name,
-                        );
-                        Self::check_public_function_docs(
-                            &mut violations,
-                            &item_ctx,
-                            scan_ctx.line,
-                            &regex_ctx,
-                        );
-                    }
+                    Self::check_trait_and_fn_docs(
+                        &mut violations,
+                        &scan_ctx,
+                        path_str,
+                        &regex_ctx,
+                        (&pub_trait_pattern, &pub_fn_pattern),
+                    );
                 }
 
                 Ok(())
@@ -229,6 +197,50 @@ impl DocumentationValidator {
         )?;
 
         Ok(violations)
+    }
+
+    /// Update `macro_depth` for `line` and return `true` when the line is inside
+    /// (or opening) a macro-invocation block whose pub items must be skipped.
+    fn advance_macro_depth(
+        macro_depth: &mut i32,
+        line: &str,
+        macro_invocation_re: &regex::Regex,
+    ) -> bool {
+        let entering_macro = *macro_depth == 0
+            && macro_invocation_re.is_match(line)
+            && !line.contains("macro_rules!");
+        if *macro_depth > 0 || entering_macro {
+            *macro_depth += i32::try_from(line.matches('{').count()).unwrap_or(0);
+            *macro_depth -= i32::try_from(line.matches('}').count()).unwrap_or(0);
+            *macro_depth = (*macro_depth).max(0);
+            return true;
+        }
+        false
+    }
+
+    /// Check the current line for an undocumented public trait and/or function,
+    /// appending any violations found.
+    fn check_trait_and_fn_docs(
+        violations: &mut Vec<DocumentationViolation>,
+        scan_ctx: &ScanLineContext<'_>,
+        path_str: &str,
+        regex_ctx: &DocRegexContext<'_>,
+        patterns: (&regex::Regex, &regex::Regex),
+    ) {
+        let (pub_trait_pattern, pub_fn_pattern) = patterns;
+        if let Some(cap) = pub_trait_pattern.captures(scan_ctx.line) {
+            let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
+            let item_ctx =
+                Self::build_item_ctx(scan_ctx.path, scan_ctx.lines, scan_ctx.line_num, name);
+            Self::check_public_trait_docs(violations, &item_ctx, path_str, regex_ctx);
+        }
+
+        if let Some(cap) = pub_fn_pattern.captures(scan_ctx.line) {
+            let name = cap.get(1).map_or("", |m: regex::Match| m.as_str());
+            let item_ctx =
+                Self::build_item_ctx(scan_ctx.path, scan_ctx.lines, scan_ctx.line_num, name);
+            Self::check_public_function_docs(violations, &item_ctx, scan_ctx.line, regex_ctx);
+        }
     }
 
     fn build_item_ctx<'a>(

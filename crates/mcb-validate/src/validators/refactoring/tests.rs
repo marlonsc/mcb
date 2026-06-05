@@ -100,42 +100,63 @@ pub fn validate_missing_test_files(
             &src_dir,
             Some(LanguageId::Rust),
             |entry| {
-                let path = &entry.absolute_path;
-                let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-                // skip_files is configured with full names (e.g. "lib.rs"), so the
-                // skip check must compare the file name including its extension.
-                let full_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
-                let relative = path.strip_prefix(&src_dir).unwrap_or(path);
-                let Some(path_str) = relative.to_str() else {
-                    return Ok(());
-                };
-
-                if validator.skip_files.contains(full_name)
-                    || validator
-                        .skip_dir_patterns
-                        .iter()
-                        .any(|pattern| path_str.contains(pattern))
-                {
-                    return Ok(());
+                if let Some(violation) = missing_test_file_violation(
+                    validator,
+                    &entry.absolute_path,
+                    &src_dir,
+                    &tests_dir,
+                    (&test_files, &test_dirs),
+                )? {
+                    violations.push(violation);
                 }
-
-                let content = std::fs::read_to_string(path)?;
-                if content.contains(CFG_TEST_MARKER) {
-                    return Ok(());
-                }
-
-                if !has_test_coverage(relative, &test_files, &test_dirs) {
-                    violations.push(RefactoringViolation::MissingTestFile {
-                        source_file: path.clone(),
-                        expected_test: tests_dir.join(format!("{file_name}_test.rs")),
-                        severity: Severity::Warning,
-                    });
-                }
-
                 Ok(())
             },
         )?;
     }
 
     Ok(violations)
+}
+
+/// Returns a `MissingTestFile` violation when `path` is a non-skipped,
+/// non-inline-tested source file lacking corresponding test coverage.
+///
+/// # Errors
+///
+/// Returns an error if the file content cannot be read.
+fn missing_test_file_violation(
+    validator: &RefactoringValidator,
+    path: &Path,
+    src_dir: &Path,
+    tests_dir: &Path,
+    test_index: (&HashSet<String>, &HashSet<String>),
+) -> Result<Option<RefactoringViolation>> {
+    let (test_files, test_dirs) = test_index;
+    let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+    // skip_files is configured with full names (e.g. "lib.rs"), so the skip check
+    // must compare the file name including its extension.
+    let full_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+    let relative = path.strip_prefix(src_dir).unwrap_or(path);
+    let Some(path_str) = relative.to_str() else {
+        return Ok(None);
+    };
+
+    if validator.skip_files.contains(full_name)
+        || validator
+            .skip_dir_patterns
+            .iter()
+            .any(|pattern| path_str.contains(pattern))
+    {
+        return Ok(None);
+    }
+
+    let content = std::fs::read_to_string(path)?;
+    if content.contains(CFG_TEST_MARKER) || has_test_coverage(relative, test_files, test_dirs) {
+        return Ok(None);
+    }
+
+    Ok(Some(RefactoringViolation::MissingTestFile {
+        source_file: path.to_path_buf(),
+        expected_test: tests_dir.join(format!("{file_name}_test.rs")),
+        severity: Severity::Warning,
+    }))
 }

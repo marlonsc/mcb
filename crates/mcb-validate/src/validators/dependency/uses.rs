@@ -1,6 +1,11 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
+use std::collections::HashSet;
+use std::path::Path;
+
+use regex::Regex;
+
 use crate::filters::LanguageId;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity};
@@ -35,34 +40,48 @@ pub fn validate_use_statements(
             |entry| {
                 let path = &entry.absolute_path;
                 let content = std::fs::read_to_string(path)?;
-
-                crate::validators::for_each_non_test_non_comment_line(
+                collect_forbidden_uses(
+                    path,
                     &content,
-                    |line_num, line, _trimmed| {
-                        if line.trim().starts_with("/*") || line.contains('"') {
-                            return;
-                        }
-                        violations.extend(use_pattern.captures_iter(line).filter_map(|cap| {
-                            let used_crate_kebab =
-                                cap.get(1).map_or("", |m| m.as_str()).replace('_', "-");
-                            (used_crate_kebab != *crate_name
-                                && !allowed.contains(&used_crate_kebab))
-                            .then(|| DependencyViolation::ForbiddenUseStatement {
-                                crate_name: crate_name.clone(),
-                                forbidden_dep: used_crate_kebab,
-                                file: path.clone(),
-                                line: line_num + 1,
-                                context: line.trim().to_owned(),
-                                severity: Severity::Error,
-                            })
-                        }));
-                    },
+                    crate_name,
+                    allowed,
+                    &use_pattern,
+                    &mut violations,
                 );
-
                 Ok(())
             },
         )?;
     }
 
     Ok(violations)
+}
+
+/// Push a `ForbiddenUseStatement` violation for every `use mcb_*` in `content`
+/// that names a crate not in `allowed` (and not the crate itself).
+fn collect_forbidden_uses(
+    path: &Path,
+    content: &str,
+    crate_name: &str,
+    allowed: &HashSet<String>,
+    use_pattern: &Regex,
+    violations: &mut Vec<DependencyViolation>,
+) {
+    crate::validators::for_each_non_test_non_comment_line(content, |line_num, line, _trimmed| {
+        if line.trim().starts_with("/*") || line.contains('"') {
+            return;
+        }
+        violations.extend(use_pattern.captures_iter(line).filter_map(|cap| {
+            let used_crate_kebab = cap.get(1).map_or("", |m| m.as_str()).replace('_', "-");
+            (used_crate_kebab != *crate_name && !allowed.contains(&used_crate_kebab)).then(|| {
+                DependencyViolation::ForbiddenUseStatement {
+                    crate_name: crate_name.to_owned(),
+                    forbidden_dep: used_crate_kebab,
+                    file: path.to_path_buf(),
+                    line: line_num + 1,
+                    context: line.trim().to_owned(),
+                    severity: Severity::Error,
+                }
+            })
+        }));
+    });
 }

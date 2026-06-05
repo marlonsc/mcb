@@ -86,16 +86,31 @@ fn collect_loop_pattern_violations<F>(
         }
 
         apply_line_brace_delta(&mut loop_depth, line);
-        for pattern in *patterns {
-            if pattern.is_match(line)
-                && let Some(violation) = make_violation(path.to_path_buf(), line_num + 1, line)
-            {
-                violations.push(violation);
-            }
-        }
+        match_loop_body_patterns(path, line, line_num, patterns, make_violation, violations);
 
         if loop_depth <= 0 {
             in_loop = false;
+        }
+    }
+}
+
+/// Push a violation for each in-loop pattern that matches `line` and produces a
+/// violation via `make_violation`.
+fn match_loop_body_patterns<F>(
+    path: &Path,
+    line: &str,
+    line_num: usize,
+    patterns: &[Regex],
+    make_violation: &F,
+    violations: &mut Vec<PerformanceViolation>,
+) where
+    F: Fn(PathBuf, usize, &str) -> Option<PerformanceViolation>,
+{
+    for pattern in patterns {
+        if pattern.is_match(line)
+            && let Some(violation) = make_violation(path.to_path_buf(), line_num + 1, line)
+        {
+            violations.push(violation);
         }
     }
 }
@@ -127,10 +142,31 @@ fn collect_pattern_violations<F>(
             continue;
         }
 
-        for (pattern, desc, sugg) in compiled_patterns {
-            if pattern.is_match(line) {
-                violations.push(make_violation(path.to_path_buf(), line_num + 1, desc, sugg));
-            }
+        match_production_line_patterns(
+            path,
+            line,
+            line_num,
+            compiled_patterns,
+            make_violation,
+            violations,
+        );
+    }
+}
+
+/// Push a violation for each compiled pattern matching `line` in production code.
+fn match_production_line_patterns<F>(
+    path: &Path,
+    line: &str,
+    line_num: usize,
+    compiled_patterns: &[(Regex, &str, &str)],
+    make_violation: &F,
+    violations: &mut Vec<PerformanceViolation>,
+) where
+    F: Fn(PathBuf, usize, &str, &str) -> PerformanceViolation,
+{
+    for (pattern, desc, sugg) in compiled_patterns {
+        if pattern.is_match(line) {
+            violations.push(make_violation(path.to_path_buf(), line_num + 1, desc, sugg));
         }
     }
 }

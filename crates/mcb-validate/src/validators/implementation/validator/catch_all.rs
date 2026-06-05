@@ -8,6 +8,13 @@ use crate::Result;
 use crate::utils::source::{required_patterns, source_lines};
 use mcb_domain::ports::validation::Severity;
 
+/// Detects empty catch-all error handlers (`_ => {}`, `_ => Ok(())`, etc.) that
+/// silently swallow values and report each as an `EmptyCatchAll` violation.
+///
+/// # Errors
+///
+/// Returns an error if any required IMPL001 catch-all pattern is missing from
+/// the pattern registry.
 pub fn validate_empty_catch_alls(
     files: &[(PathBuf, String)],
 ) -> Result<Vec<ImplementationViolation>> {

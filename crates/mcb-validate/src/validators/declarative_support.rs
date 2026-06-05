@@ -24,6 +24,15 @@ pub(crate) fn build_substitution_variables(workspace_root: &Path) -> serde_yaml:
         }
     }
 
+    insert_crate_module_variables(&mut variables);
+    insert_project_prefix(&mut variables);
+
+    serde_yaml::Value::Mapping(variables)
+}
+
+/// For each `<name>_crate` variable, derive a `<name>_module` variable with
+/// dashes replaced by underscores.
+fn insert_crate_module_variables(variables: &mut serde_yaml::Mapping) {
     let crates = [
         "domain",
         "application",
@@ -34,31 +43,32 @@ pub(crate) fn build_substitution_variables(workspace_root: &Path) -> serde_yaml:
     ];
     for name in crates {
         let key = format!("{name}_crate");
-        if let Some(val) = variables.get(serde_yaml::Value::String(key.clone()))
+        if let Some(val) = variables.get(serde_yaml::Value::String(key))
             && let Some(s) = val.as_str()
         {
+            let module = s.replace('-', "_");
             variables.insert(
                 serde_yaml::Value::String(format!("{name}_module")),
-                serde_yaml::Value::String(s.replace('-', "_")),
+                serde_yaml::Value::String(module),
             );
         }
     }
+}
 
+/// Derive the `project_prefix` variable from the `domain_crate` value (the part
+/// before the first dash, or the whole value).
+fn insert_project_prefix(variables: &mut serde_yaml::Mapping) {
     if let Some(domain_val) = variables.get(serde_yaml::Value::String("domain_crate".into()))
         && let Some(domain_str) = domain_val.as_str()
     {
-        let prefix = if let Some(idx) = domain_str.find('-') {
-            domain_str[0..idx].to_string()
-        } else {
-            domain_str.to_owned()
-        };
+        let prefix = domain_str
+            .split_once('-')
+            .map_or_else(|| domain_str.to_owned(), |(head, _)| head.to_owned());
         variables.insert(
             serde_yaml::Value::String("project_prefix".into()),
             serde_yaml::Value::String(prefix),
         );
     }
-
-    serde_yaml::Value::Mapping(variables)
 }
 
 #[derive(Debug, Display)]

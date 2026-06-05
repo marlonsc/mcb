@@ -78,18 +78,18 @@ impl LayerFlowValidator {
         }
     }
 
-    fn check_circular_dependencies(
+    /// Build a map from each checked crate to the subset of its workspace
+    /// dependencies that are themselves checked crates.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a `Cargo.toml` cannot be read or parsed.
+    fn build_filtered_deps(
         &self,
-        config: &ValidationConfig,
-    ) -> Result<Vec<LayerFlowViolation>> {
-        let crates_dir = config.workspace_root.join("crates");
-        if !crates_dir.exists() {
-            return Ok(Vec::new());
-        }
-
+        crates_dir: &std::path::Path,
+    ) -> Result<HashMap<String, HashSet<String>>> {
         let crate_names = &self.circular_dependency_check_crates;
-
-        let deps: HashMap<String, HashSet<String>> = crate_names
+        crate_names
             .iter()
             .filter_map(|crate_name| {
                 let cargo_toml = crates_dir.join(crate_name).join(CARGO_TOML_FILENAME);
@@ -112,7 +112,19 @@ impl LayerFlowValidator {
                     .unwrap_or_default();
                 Ok((crate_name.clone(), crate_deps))
             })
-            .collect::<Result<_>>()?;
+            .collect()
+    }
+
+    fn check_circular_dependencies(
+        &self,
+        config: &ValidationConfig,
+    ) -> Result<Vec<LayerFlowViolation>> {
+        let crates_dir = config.workspace_root.join("crates");
+        if !crates_dir.exists() {
+            return Ok(Vec::new());
+        }
+
+        let deps = self.build_filtered_deps(&crates_dir)?;
 
         Ok(deps
             .keys()

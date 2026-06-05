@@ -47,6 +47,10 @@ fn in_any_dir(path_str: &str, dirs: &[&str]) -> bool {
     dirs.iter().any(|dir| path_str.contains(dir))
 }
 
+/// Validates Clean Architecture file placement by crate role, returning a
+/// `BadCaNaming` violation when a role-bearing file (provider, repository,
+/// adapter, DI module, handler) sits outside its expected directory. Standard
+/// skip files yield `None`.
 pub fn validate_ca_naming(
     path: &Path,
     crate_name: &str,
@@ -63,85 +67,102 @@ pub fn validate_ca_naming(
     }
 
     if crate_name == domain_crate {
-        return apply_ca_rule!(
-            path,
-            file_name,
-            path_str,
-            NameMatch::Contains(CA_DOMAIN_PROVIDER_KEYWORD),
-            &[CA_PORTS_PROVIDERS_DIR, PORTS_DIR],
-            "Provider Port",
-            "Provider file outside ports/ directory",
-            "Move to ports/providers/",
-            Severity::Warning
-        )
-        .or_else(|| {
-            apply_ca_rule!(
-                path,
-                file_name,
-                path_str,
-                NameMatch::Contains(CA_DOMAIN_REPOSITORY_KEYWORD),
-                &[CA_REPOSITORIES_DIR, CA_ADAPTERS_REPOSITORY_DIR],
-                "Repository Port",
-                "Repository file outside repositories/ directory",
-                "Move to repositories/",
-                Severity::Warning
-            )
-        });
+        return check_domain_naming(path, file_name, path_str);
+    }
+    if crate_name == infrastructure_crate {
+        return check_infrastructure_naming(path, file_name, path_str);
+    }
+    if crate_name == server_crate {
+        return check_server_naming(path, file_name, path_str);
     }
 
-    if crate_name == infrastructure_crate {
-        return apply_ca_rule!(
+    None
+}
+
+/// CA placement rules for the domain crate (provider and repository ports).
+fn check_domain_naming(path: &Path, file_name: &str, path_str: &str) -> Option<NamingViolation> {
+    apply_ca_rule!(
+        path,
+        file_name,
+        path_str,
+        NameMatch::Contains(CA_DOMAIN_PROVIDER_KEYWORD),
+        &[CA_PORTS_PROVIDERS_DIR, PORTS_DIR],
+        "Provider Port",
+        "Provider file outside ports/ directory",
+        "Move to ports/providers/",
+        Severity::Warning
+    )
+    .or_else(|| {
+        apply_ca_rule!(
             path,
             file_name,
             path_str,
-            NameMatch::EndsWith(CA_INFRA_IMPL_SUFFIX),
+            NameMatch::Contains(CA_DOMAIN_REPOSITORY_KEYWORD),
+            &[CA_REPOSITORIES_DIR, CA_ADAPTERS_REPOSITORY_DIR],
+            "Repository Port",
+            "Repository file outside repositories/ directory",
+            "Move to repositories/",
+            Severity::Warning
+        )
+    })
+}
+
+/// CA placement rules for the infrastructure crate (adapters and DI modules).
+fn check_infrastructure_naming(
+    path: &Path,
+    file_name: &str,
+    path_str: &str,
+) -> Option<NamingViolation> {
+    apply_ca_rule!(
+        path,
+        file_name,
+        path_str,
+        NameMatch::EndsWith(CA_INFRA_IMPL_SUFFIX),
+        &[ADAPTERS_DIR],
+        "Adapter",
+        "Adapter/implementation file outside adapters/ directory",
+        "Move to adapters/",
+        Severity::Warning
+    )
+    .or_else(|| {
+        apply_ca_rule!(
+            path,
+            file_name,
+            path_str,
+            NameMatch::Contains(CA_INFRA_ADAPTER_KEYWORD),
             &[ADAPTERS_DIR],
             "Adapter",
             "Adapter/implementation file outside adapters/ directory",
             "Move to adapters/",
             Severity::Warning
         )
-        .or_else(|| {
-            apply_ca_rule!(
-                path,
-                file_name,
-                path_str,
-                NameMatch::Contains(CA_INFRA_ADAPTER_KEYWORD),
-                &[ADAPTERS_DIR],
-                "Adapter",
-                "Adapter/implementation file outside adapters/ directory",
-                "Move to adapters/",
-                Severity::Warning
-            )
-        })
-        .or_else(|| {
-            apply_ca_rule!(
-                path,
-                file_name,
-                path_str,
-                NameMatch::Contains(CA_MODULE_KEYWORD),
-                &[CA_DI_DIR],
-                "DI Module",
-                "Module file outside di/ directory",
-                "Move to di/modules/",
-                Severity::Info
-            )
-        });
-    }
-
-    if crate_name == server_crate {
-        return apply_ca_rule!(
+    })
+    .or_else(|| {
+        apply_ca_rule!(
             path,
             file_name,
             path_str,
-            NameMatch::Contains(CA_HANDLER_KEYWORD),
-            CA_HANDLER_DIRS,
-            "Handler",
-            "Handler file outside handlers/ directory",
-            "Move to handlers/, admin/, or tools/",
-            Severity::Warning
-        );
-    }
+            NameMatch::Contains(CA_MODULE_KEYWORD),
+            &[CA_DI_DIR],
+            "DI Module",
+            "Module file outside di/ directory",
+            "Move to di/modules/",
+            Severity::Info
+        )
+    })
+}
 
-    None
+/// CA placement rules for the server crate (handlers).
+fn check_server_naming(path: &Path, file_name: &str, path_str: &str) -> Option<NamingViolation> {
+    apply_ca_rule!(
+        path,
+        file_name,
+        path_str,
+        NameMatch::Contains(CA_HANDLER_KEYWORD),
+        CA_HANDLER_DIRS,
+        "Handler",
+        "Handler file outside handlers/ directory",
+        "Move to handlers/, admin/, or tools/",
+        Severity::Warning
+    )
 }

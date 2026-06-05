@@ -14,9 +14,34 @@ pub fn detect_circular_dependencies(
     validator: &DependencyValidator,
 ) -> Result<Vec<DependencyViolation>> {
     let mut violations = Vec::new();
+    let graph = build_dependency_graph(validator)?;
+
+    // Detect cycles using DFS
+    for start in graph.keys() {
+        let mut visited = HashSet::new();
+        let mut path = Vec::new();
+        if let Some(cycle) = find_cycle_impl(&graph, start, &mut visited, &mut path) {
+            violations.push(DependencyViolation::CircularDependency {
+                cycle: DependencyCycle(cycle),
+                severity: Severity::Error,
+            });
+        }
+    }
+
+    Ok(violations)
+}
+
+/// Build the inter-crate dependency graph from each crate's `Cargo.toml`,
+/// keeping only `mcb-` workspace dependencies.
+///
+/// # Errors
+///
+/// Returns an error if a `Cargo.toml` cannot be read or parsed.
+fn build_dependency_graph(
+    validator: &DependencyValidator,
+) -> Result<HashMap<String, HashSet<String>>> {
     let mut graph: HashMap<String, HashSet<String>> = HashMap::new();
 
-    // Build dependency graph from Cargo.toml files
     for crate_name in validator.allowed_deps.keys() {
         let cargo_toml = validator
             .config
@@ -43,19 +68,7 @@ pub fn detect_circular_dependencies(
         graph.insert(crate_name.clone(), deps);
     }
 
-    // Detect cycles using DFS
-    for start in graph.keys() {
-        let mut visited = HashSet::new();
-        let mut path = Vec::new();
-        if let Some(cycle) = find_cycle_impl(&graph, start, &mut visited, &mut path) {
-            violations.push(DependencyViolation::CircularDependency {
-                cycle: DependencyCycle(cycle),
-                severity: Severity::Error,
-            });
-        }
-    }
-
-    Ok(violations)
+    Ok(graph)
 }
 
 /// Detects cycles in the dependency graph using depth-first search.

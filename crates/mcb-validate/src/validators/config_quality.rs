@@ -133,16 +133,7 @@ impl ConfigQualityValidator {
             Some(LanguageId::Rust),
             false,
             |entry, _src_dir| {
-                let is_config_file = entry
-                    .absolute_path
-                    .to_str()
-                    .is_some_and(|s| s.contains(ARCH_PATH_CONFIG))
-                    || entry
-                        .absolute_path
-                        .file_name()
-                        .and_then(|name| name.to_str())
-                        .is_some_and(|name| name.contains("config"));
-                if !is_config_file {
+                if !Self::is_config_file(&entry.absolute_path) {
                     return Ok(());
                 }
 
@@ -179,6 +170,16 @@ impl ConfigQualityValidator {
         )?;
 
         Ok(violations)
+    }
+
+    /// Returns `true` when `path` lives under the config directory or its file
+    /// name contains `config`.
+    fn is_config_file(path: &Path) -> bool {
+        path.to_str().is_some_and(|s| s.contains(ARCH_PATH_CONFIG))
+            || path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.contains("config"))
     }
 
     fn check_hardcoded_namespaces(

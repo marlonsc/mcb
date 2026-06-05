@@ -556,6 +556,35 @@ impl DeclarativeValidator {
         })
     }
 
+    /// Parse workspace dependencies via `filter_executor`, logging timing and a
+    /// warning on failure, and returning `None` when parsing fails.
+    fn parse_workspace_deps_logged(
+        filter_executor: &RuleFilterExecutor,
+    ) -> Option<WorkspaceDependencies> {
+        let t = std::time::Instant::now();
+        let workspace_deps = match filter_executor.parse_workspace_dependencies() {
+            Ok(deps) => Some(deps),
+            Err(e) => {
+                mcb_domain::warn!(
+                    "validate",
+                    "Failed to parse workspace dependencies for declarative rules",
+                    &e.to_string()
+                );
+                None
+            }
+        };
+        mcb_domain::debug!(
+            "declarative",
+            "Workspace dependencies parsed",
+            &format!(
+                "available={} elapsed={:.2?}",
+                workspace_deps.is_some(),
+                t.elapsed()
+            )
+        );
+        workspace_deps
+    }
+
     /// Run the four declarative rule slices (metrics, AST, regex, path) in parallel.
     ///
     /// Returns `(metrics, ast_result, regex, path)`; a panicked slice degrades to an empty result.
@@ -603,25 +632,26 @@ impl DeclarativeValidator {
                 })
             });
             (
-                t_metrics.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "Metrics validation thread panicked");
-                    Vec::new()
-                }),
-                t_ast.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "AST validation thread panicked");
-                    Ok(Vec::new())
-                }),
-                t_regex.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "Regex validation thread panicked");
-                    Vec::new()
-                }),
-                t_path.join().unwrap_or_else(|_| {
-                    mcb_domain::warn!("validate", "Path validation thread panicked");
-                    Vec::new()
-                }),
+                join_slice(t_metrics, "Metrics validation thread panicked", Vec::new),
+                join_slice(t_ast, "AST validation thread panicked", || Ok(Vec::new())),
+                join_slice(t_regex, "Regex validation thread panicked", Vec::new),
+                join_slice(t_path, "Path validation thread panicked", Vec::new),
             )
         })
     }
+}
+
+/// Join a slice worker thread, returning `default()` (after logging `warn_msg`)
+/// when the thread panicked.
+fn join_slice<T>(
+    handle: std::thread::ScopedJoinHandle<'_, T>,
+    warn_msg: &str,
+    default: impl FnOnce() -> T,
+) -> T {
+    handle.join().unwrap_or_else(|_| {
+        mcb_domain::warn!("validate", warn_msg);
+        default()
+    })
 }
 
 /// Read file content from the active run-context cache, falling back to disk.
@@ -773,28 +803,8 @@ impl Validator for DeclarativeValidator {
             &format!("file_count={} elapsed={:.2?}", files.len(), t.elapsed())
         );
 
-        let t = std::time::Instant::now();
         let filter_executor = RuleFilterExecutor::new(self.workspace_root.clone());
-        let workspace_deps = match filter_executor.parse_workspace_dependencies() {
-            Ok(deps) => Some(deps),
-            Err(e) => {
-                mcb_domain::warn!(
-                    "validate",
-                    "Failed to parse workspace dependencies for declarative rules",
-                    &e.to_string()
-                );
-                None
-            }
-        };
-        mcb_domain::debug!(
-            "declarative",
-            "Workspace dependencies parsed",
-            &format!(
-                "available={} elapsed={:.2?}",
-                workspace_deps.is_some(),
-                t.elapsed()
-            )
-        );
+        let workspace_deps = Self::parse_workspace_deps_logged(&filter_executor);
 
         // Capture the active ValidationRunContext so spawned threads can use caches.
         let ctx = crate::run_context::ValidationRunContext::active_or_build(config).ok();

@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md)
 //!
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
@@ -36,22 +36,33 @@ pub fn validate_empty_methods(
         if fname.contains("null") || fname.contains("fake") {
             continue;
         }
+        collect_empty_method_bodies(file_path, content, fn_pattern, &compiled, &mut violations);
+    }
+    Ok(violations)
+}
 
-        let mut current_fn_name = String::new();
-        for (line_num, trimmed) in source_lines(content) {
-            track_fn_name(Some(fn_pattern), trimmed, &mut current_fn_name);
-            for (pattern, desc) in &compiled {
-                if pattern.is_match(trimmed) {
-                    violations.push(ImplementationViolation::EmptyMethodBody {
-                        file: file_path.clone(),
-                        line: line_num,
-                        method_name: current_fn_name.clone(),
-                        pattern: desc.to_string(),
-                        severity: Severity::Warning,
-                    });
-                }
+/// Push an `EmptyMethodBody` violation for each line of `content` matching an
+/// empty-body pattern, attributing it to the enclosing function.
+fn collect_empty_method_bodies(
+    file_path: &Path,
+    content: &str,
+    fn_pattern: &Regex,
+    compiled: &[(&'static Regex, &str)],
+    violations: &mut Vec<ImplementationViolation>,
+) {
+    let mut current_fn_name = String::new();
+    for (line_num, trimmed) in source_lines(content) {
+        track_fn_name(Some(fn_pattern), trimmed, &mut current_fn_name);
+        for (pattern, desc) in compiled {
+            if pattern.is_match(trimmed) {
+                violations.push(ImplementationViolation::EmptyMethodBody {
+                    file: file_path.to_path_buf(),
+                    line: line_num,
+                    method_name: current_fn_name.clone(),
+                    pattern: (*desc).to_owned(),
+                    severity: Severity::Warning,
+                });
             }
         }
     }
-    Ok(violations)
 }

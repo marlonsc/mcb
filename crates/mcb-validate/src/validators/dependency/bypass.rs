@@ -91,25 +91,38 @@ where
             }
 
             let content = std::fs::read_to_string(path)?;
-            for (line_num, line) in content.lines().enumerate() {
-                let trimmed = line.trim();
-                if trimmed.starts_with(COMMENT_PREFIX) {
-                    continue;
-                }
-                if line.contains(pattern) {
-                    out.push(make_violation(
-                        path.clone(),
-                        line_num + 1,
-                        trimmed.to_owned(),
-                    ));
-                }
-            }
-
+            collect_pattern_matches(path, &content, pattern, &make_violation, out);
             Ok(())
         },
     )?;
 
     Ok(())
+}
+
+/// Push a violation for every non-comment line of `content` that contains
+/// `pattern`.
+fn collect_pattern_matches<G>(
+    path: &Path,
+    content: &str,
+    pattern: &str,
+    make_violation: &G,
+    out: &mut Vec<DependencyViolation>,
+) where
+    G: Fn(PathBuf, usize, String) -> DependencyViolation,
+{
+    for (line_num, line) in content.lines().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.starts_with(COMMENT_PREFIX) {
+            continue;
+        }
+        if line.contains(pattern) {
+            out.push(make_violation(
+                path.to_path_buf(),
+                line_num + 1,
+                trimmed.to_owned(),
+            ));
+        }
+    }
 }
 
 struct ScanBypassParams<'a, F, G>

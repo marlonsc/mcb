@@ -6,6 +6,10 @@ use mcb_utils::constants::vector_store::{
 
 use super::*;
 
+/// Single-threaded owner of the `EdgeVec` index, storage, and metadata.
+///
+/// Runs in its own task and serializes all vector-store operations by
+/// processing [`EdgeVecMessage`] values received on `receiver`.
 pub struct EdgeVecActor {
     receiver: mpsc::Receiver<EdgeVecMessage>,
     index: edgevec::HnswIndex,
