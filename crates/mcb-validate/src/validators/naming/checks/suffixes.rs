@@ -59,9 +59,21 @@ pub fn validate_file_suffix(
     // so we skip suffix validation for that directory
     if path_str.contains(ARCH_PATH_SERVICES) {
         let in_domain_services = path_str.contains("/domain_services/");
+        // A service implemented as a module folder (`foo_service/`) already
+        // encodes the role in its directory name; its internal component files
+        // need not repeat the `_service` suffix.
+        let parent_is_service_module = path
+            .parent()
+            .and_then(|p| p.file_name())
+            .and_then(|n| n.to_str())
+            .is_some_and(|dir| dir.ends_with(SERVICE_FILE_SUFFIX));
         let invalid_service_name = !file_name.ends_with(SERVICE_FILE_SUFFIX) && file_name != "mod";
 
-        if !in_domain_services && crate_name != domain_crate && invalid_service_name {
+        if !in_domain_services
+            && !parent_is_service_module
+            && crate_name != domain_crate
+            && invalid_service_name
+        {
             return Some(NamingViolation::BadFileSuffix {
                 path: path.to_path_buf(),
                 component_type: "Service".to_owned(),

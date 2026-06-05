@@ -134,6 +134,10 @@ impl DocumentationValidator {
         let doc_comment_re = compile_regex(DOC_COMMENT_REGEX)?;
         let doc_comment_capture_re = compile_regex(DOC_COMMENT_CAPTURE_REGEX)?;
         let attr_re = compile_regex(ATTR_REGEX)?;
+        // Items declared inside a macro invocation (e.g. `define_violations! { pub enum ... }`)
+        // are documented by the macro expansion, not the source text, so the
+        // text scanner must skip them.
+        let macro_invocation_re = compile_regex(r"^\s*[a-z_][a-z0-9_]*!\s*\{")?;
         let simple_pub_item_specs = [
             SimplePubItemSpec {
                 pattern: &pub_struct_pattern,
@@ -161,7 +165,19 @@ impl DocumentationValidator {
                     example_pattern: &example_pattern,
                 };
 
+                let mut macro_depth: i32 = 0;
                 for (line_num, line) in lines.iter().enumerate() {
+                    // Skip pub items defined inside a macro invocation block.
+                    let entering_macro = macro_depth == 0
+                        && macro_invocation_re.is_match(line)
+                        && !line.contains("macro_rules!");
+                    if macro_depth > 0 || entering_macro {
+                        macro_depth += i32::try_from(line.matches('{').count()).unwrap_or(0);
+                        macro_depth -= i32::try_from(line.matches('}').count()).unwrap_or(0);
+                        macro_depth = macro_depth.max(0);
+                        continue;
+                    }
+
                     let scan_ctx = ScanLineContext {
                         path,
                         lines: &lines,
