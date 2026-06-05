@@ -1,0 +1,124 @@
+crates/mcb-server/src/handlers/session/create.rs
+  s_750dc69364e4e0::t_6536f75cb59efd 8
+  s_750dc69364e4e0::t_9b9f1a3efd00ff 102
+  s_750dc69364e4e0::t_fa9865489cf4fa 40-68
+crates/mcb-server/src/composition.rs
+  s_750dc69364e4e0::t_3fa73948439024 73-76
+  s_750dc69364e4e0::t_291ed27908f39e 21
+  s_750dc69364e4e0::t_2e0592eed2b9c9 102,105
+  s_750dc69364e4e0::t_890438d62b2569 96-101,109-110,112-121,123
+crates/mcb-server/src/error_mapping/groups.rs
+  s_750dc69364e4e0::t_978fe34fa12bc4 54-79
+crates/mcb-server/src/controllers/admin.rs
+  s_750dc69364e4e0::t_961cd547eef37b 68-72,74,112
+  s_750dc69364e4e0::t_2e0592eed2b9c9 73
+crates/mcb-server/src/handlers/session/summarize.rs
+  s_750dc69364e4e0::t_9c11c3c8f0b333 24,26-97
+crates/mcb-server/src/handlers/session/update.rs
+  s_750dc69364e4e0::t_ea1986ec3f7d2b 36-37,46-86
+crates/mcb-server/src/handlers/index.rs
+  s_750dc69364e4e0::t_f2ca36c4a3fc8a 84,89-134,136-144
+crates/mcb-server/src/handlers/memory/quality_gate.rs
+  s_750dc69364e4e0::t_a6137d584d9640 57,73
+  s_750dc69364e4e0::t_8684d2c39cc53a 59
+  s_750dc69364e4e0::t_713bde34fa7dc3 24-43
+crates/mcb-server/src/handlers/memory/session.rs
+  s_750dc69364e4e0::t_7c886bf7987ab8 92
+  s_750dc69364e4e0::t_84e8964dc604fa 83,85-86,88
+  s_750dc69364e4e0::t_16169e8c2be5a2 6
+  s_750dc69364e4e0::t_90a1b603e7d335 42-67
+crates/mcb-server/src/mcp_server.rs
+  s_750dc69364e4e0::t_1126150a441826 365-367,369-413,415-451
+  s_750dc69364e4e0::t_86d74cb557a870 118
+  s_750dc69364e4e0::t_1e4174d79cef00 253-254
+  s_750dc69364e4e0::t_3e82662d79e57f 290-292
+  s_750dc69364e4e0::t_6119d54be2edc2 327-352
+  s_750dc69364e4e0::t_d8e02c737454d3 285-289,293-326
+crates/mcb-server/src/tools/context.rs
+  s_750dc69364e4e0::t_bd92000858921f 125-136,139,141-147,152,157,159
+  s_750dc69364e4e0::t_2e0592eed2b9c9 150
+crates/mcb-server/src/handlers/search.rs
+  s_750dc69364e4e0::t_1d6b0fec259d24 143-150
+  s_750dc69364e4e0::t_9873ad4c2f65f6 204,206-212
+  s_750dc69364e4e0::t_b316d64cd3daac 188-189
+  s_750dc69364e4e0::t_fe77c1354fd9a6 34-42
+crates/mcb-server/src/controllers/web/jobs.rs
+  s_750dc69364e4e0::t_76ef24bd7898ea 12
+  s_750dc69364e4e0::t_8fe4f67512bffd 64-67,84-85,87-89,103
+  s_750dc69364e4e0::t_52939304e6a4e6 44-45
+  s_750dc69364e4e0::t_4ab72dfab3dc90 3-4,9-11
+crates/mcb-server/src/handlers/memory/execution.rs
+  s_750dc69364e4e0::t_801f4bbf0ed669 67
+  s_750dc69364e4e0::t_5c90fa41fd588a 99
+  s_750dc69364e4e0::t_04455b38292cf7 56-61,85-87
+crates/mcb-server/src/handlers/vcs/index_repo.rs
+  s_750dc69364e4e0::t_2e0592eed2b9c9 44-50
+  s_750dc69364e4e0::t_8d31fb359fb970 124-127,129-133,135-140
+  s_750dc69364e4e0::t_865831134e6ad6 68-70,72-85,87-105
+  s_750dc69364e4e0::t_481d25d53fc047 71,86
+  s_750dc69364e4e0::t_ea4ec104db240c 52
+crates/mcb-server/src/tools/validation.rs
+  s_750dc69364e4e0::t_979708e89359a2 48
+  s_750dc69364e4e0::t_c10c4ffb342d41 63-64,90
+crates/mcb-server/src/handlers/project.rs
+  s_750dc69364e4e0::t_3e82662d79e57f 72-81,99-101,129-131,214-217,241-243
+  s_750dc69364e4e0::t_75ee154df250fe 54,58,60-71,82-98,102-103,105-109,111-117,125,132,137,142-143,145-152,157,161,164,167,172,176,180,182,186,188,191-192,194-196,201,209,218-219,221-227,235,244,249
+  s_750dc69364e4e0::t_b96bcfa2db104a 40,43,55-57,59
+crates/mcb-server/src/tools/defaults.rs
+  s_750dc69364e4e0::t_3d1f9335410c70 253-254,256-258,260-263,265-266,268-271,273-281
+crates/mcb-server/src/state.rs
+  s_750dc69364e4e0::t_cea583747464c6 42-50
+crates/mcb-server/src/handlers/memory/common.rs
+  s_750dc69364e4e0::t_08be3566cafb87 12
+  s_750dc69364e4e0::t_96bcae92864f64 72
+  s_750dc69364e4e0::t_a6aea1f8d1c476 91-106
+crates/mcb-server/src/controllers/jobs_api.rs
+  s_750dc69364e4e0::t_888da75ffb8b86 70-84
+  s_750dc69364e4e0::t_9c0f9fbf2f4cdf 47
+  s_750dc69364e4e0::t_66268d7eda118c 3-4,8-11
+crates/mcb-server/src/handlers/entities/vcs.rs
+  s_750dc69364e4e0::t_ff5769275b6a06 97
+  s_750dc69364e4e0::t_a1925339b80b01 98-102
+  s_750dc69364e4e0::t_557b3db1b06af5 32-48
+  s_750dc69364e4e0::t_f5797518f3a135 135
+  s_750dc69364e4e0::t_e6631c63b92bd4 121-125
+crates/mcb-server/src/hooks/processor.rs
+  s_750dc69364e4e0::t_f6ec41e2e1d9a6 80
+  s_750dc69364e4e0::t_5c73e388a79890 152-198
+crates/mcb-server/src/handlers/memory/list_timeline.rs
+  s_750dc69364e4e0::t_2a558f04408e0a 91-93
+  s_750dc69364e4e0::t_3722f1c04e6ba2 61-84
+crates/mcb-server/src/handlers/vcs/analyze_impact.rs
+  s_750dc69364e4e0::t_9528ad0bf49796 60-62,65,69-100
+  s_750dc69364e4e0::t_2a4eb0014f5dfa 49
+crates/mcb-server/src/formatter/indexing.rs
+  s_750dc69364e4e0::t_43af72d75f165b 42-47
+crates/mcb-server/src/utils/mcp/origin.rs
+  s_750dc69364e4e0::t_e75b2129c06cb5 238-246,250-251,313
+  s_750dc69364e4e0::t_2e0592eed2b9c9 224-227
+  s_750dc69364e4e0::t_d8de7468ecfdbd 230-236
+  s_750dc69364e4e0::t_3cd1a2766ab015 210-223,228-229
+crates/mcb-server/src/controllers/web/dashboard.rs
+  s_750dc69364e4e0::t_5af867b1013d6f 30-31,43
+  s_750dc69364e4e0::t_c7b0c5a8ec30be 77-119
+  s_750dc69364e4e0::t_2e0592eed2b9c9 41-42
+crates/mcb-server/src/transport/http_client.rs
+  s_750dc69364e4e0::t_4950f68bae5c67 234,241-244,246-267
+  s_750dc69364e4e0::t_28948f15404dd2 245
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "d0ea35ae5b14da135086baaffad31e50eb8754fb",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
