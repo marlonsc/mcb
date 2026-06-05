@@ -1,0 +1,20 @@
+crates/mcb-validate/src/metrics/rca_analyzer.rs
+  s_750dc69364e4e0::t_3c7344467194a2 176-182,185
+  s_750dc69364e4e0::t_bf0f03eab888b8 19
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "f962329220afc39b20e1d9cb88588621753ea37f",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
