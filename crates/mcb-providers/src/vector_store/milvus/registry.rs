@@ -10,12 +10,12 @@ mcb_domain::register_vector_store_provider!(
 
 fn milvus_factory(
     config: &mcb_domain::registry::vector_store::VectorStoreProviderConfig,
-) -> std::result::Result<std::sync::Arc<dyn mcb_domain::ports::VectorStoreProvider>, String> {
+) -> mcb_domain::error::Result<std::sync::Arc<dyn mcb_domain::ports::VectorStoreProvider>> {
     let uri = config.uri.clone().ok_or_else(|| {
-        format!(
+        mcb_domain::error::Error::configuration(format!(
             "Milvus requires 'uri' configuration (e.g., http://localhost:{})",
             mcb_utils::constants::vector_store::MILVUS_DEFAULT_PORT
-        )
+        ))
     })?;
     let token = config.api_key.clone();
 
@@ -24,7 +24,9 @@ fn milvus_factory(
         tokio::runtime::Handle::current()
             .block_on(async { MilvusVectorStoreProvider::new(uri, token, None).await })
     })
-    .map_err(|e| format!("Failed to create Milvus provider: {e}"))?;
+    .map_err(|e| {
+        mcb_domain::error::Error::vector_db(format!("Failed to create Milvus provider: {e}"))
+    })?;
 
     Ok(std::sync::Arc::new(provider))
 }

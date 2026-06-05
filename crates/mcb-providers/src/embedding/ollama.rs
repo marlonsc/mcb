@@ -171,16 +171,14 @@ use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
 use mcb_domain::registry::embedding::EmbeddingProviderConfig;
 
 /// Factory function for creating Ollama embedding provider instances.
-fn ollama_factory(
-    config: &EmbeddingProviderConfig,
-) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
+fn ollama_factory(config: &EmbeddingProviderConfig) -> Result<Arc<dyn EmbeddingProviderPort>> {
     use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
     let base_url = config.base_url.clone().ok_or_else(|| {
-        format!(
+        Error::configuration(format!(
             "Ollama embedding provider requires `base_url` in configuration (e.g. \"{}\")",
             mcb_utils::constants::embedding::OLLAMA_DEFAULT_BASE_URL
-        )
+        ))
     })?;
     let model = config
         .model

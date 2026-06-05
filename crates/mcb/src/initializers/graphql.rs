@@ -35,7 +35,7 @@ impl Initializer for GraphQLInitializer {
         // Insert the schema as-is into shared_store. The GraphQL controller in
         // mcb-server knows the concrete type and will downcast when needed.
         mcb_server::graphql_store::insert_schema(&ctx.shared_store, schema_any)
-            .map_err(|e| loco_rs::Error::string(&e))?;
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
         Ok(router)
     }

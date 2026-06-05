@@ -11,7 +11,7 @@ mcb_domain::register_vector_store_provider!(
 
 fn qdrant_factory(
     config: &mcb_domain::registry::vector_store::VectorStoreProviderConfig,
-) -> std::result::Result<std::sync::Arc<dyn mcb_domain::ports::VectorStoreProvider>, String> {
+) -> mcb_domain::error::Result<std::sync::Arc<dyn mcb_domain::ports::VectorStoreProvider>> {
     use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
     let base_url = config
