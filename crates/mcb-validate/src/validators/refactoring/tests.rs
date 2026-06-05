@@ -102,12 +102,15 @@ pub fn validate_missing_test_files(
             |entry| {
                 let path = &entry.absolute_path;
                 let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+                // skip_files is configured with full names (e.g. "lib.rs"), so the
+                // skip check must compare the file name including its extension.
+                let full_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
                 let relative = path.strip_prefix(&src_dir).unwrap_or(path);
                 let Some(path_str) = relative.to_str() else {
                     return Ok(());
                 };
 
-                if validator.skip_files.contains(file_name)
+                if validator.skip_files.contains(full_name)
                     || validator
                         .skip_dir_patterns
                         .iter()
