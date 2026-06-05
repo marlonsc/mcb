@@ -30,8 +30,13 @@ pub struct ApiKeyInfo {
 /// Port for authentication repository operations.
 #[async_trait]
 pub trait AuthRepositoryPort: Send + Sync {
-    /// Find users by API key hash.
-    async fn find_users_by_api_key_hash(&self, key_hash: &str) -> Result<Vec<UserWithApiKey>>;
+    /// Return all currently valid (non-revoked, non-expired) API-key candidates
+    /// with their owning users.
+    ///
+    /// API keys are stored as salted password hashes, so they cannot be looked up
+    /// by value; the caller verifies the presented key against each candidate's
+    /// hash.
+    async fn find_active_api_key_candidates(&self) -> Result<Vec<UserWithApiKey>>;
     /// Verify API key and return key info if valid.
     async fn verify_api_key(&self, key_hash: &str) -> Result<Option<ApiKeyInfo>>;
 }
