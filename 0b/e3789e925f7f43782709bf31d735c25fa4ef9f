@@ -1,0 +1,189 @@
+crates/mcb-validate/src/validators/performance/loops.rs
+  s_750dc69364e4e0::t_470e688387a76a 89,97-113
+  s_750dc69364e4e0::t_2931777b099b98 145-169
+crates/mcb-validate/src/validators/naming/checks/constants.rs
+  s_750dc69364e4e0::t_c305f876e20155 24-26,32-49
+  s_750dc69364e4e0::t_fbf22f40c87ddd 12-14
+crates/mcb-validate/src/validators/error_boundary.rs
+  s_750dc69364e4e0::t_4b4b854646459e 94-97,99-107,109-111,113-116,118-119,122-123
+crates/mcb-validate/src/validators/config_quality.rs
+  s_750dc69364e4e0::t_34cae47873e150 136,175-182
+crates/mcb-validate/src/validators/dependency/cycles.rs
+  s_750dc69364e4e0::t_d8fb9945eb2609 17
+  s_750dc69364e4e0::t_2c643f0b9618d8 34-42,71
+crates/mcb-validate/src/validators/naming/checks/modules.rs
+  s_750dc69364e4e0::t_f768674c6b5bce 11-13
+crates/mcb-validate/src/validators/hygiene/directory.rs
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 38-43
+  s_750dc69364e4e0::t_389aeaa89388b4 44-45,47-48,50-57,59-63,65-85,87-90,92-101,103-108
+  s_750dc69364e4e0::t_a6907f34145edf 64,91
+crates/mcb-validate/src/validators/implementation/validator/hardcoded.rs
+  s_750dc69364e4e0::t_5343528e33b040 29-32,34-36,38-43,45-52,58,60-61,63-64
+  s_750dc69364e4e0::t_58de2f78afde2b 62
+  s_750dc69364e4e0::t_885a802238ca74 59
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 54,56
+  s_750dc69364e4e0::t_158c65879e11cf 4
+  s_750dc69364e4e0::t_cf5aca91d31ea2 37
+crates/mcb-validate/src/validators/layer_flow.rs
+  s_750dc69364e4e0::t_382b8de15a0668 127
+  s_750dc69364e4e0::t_9275c6660f6ab1 81-87,89-90,92,115-117
+crates/mcb-validate/src/validators/organization/duplicate_strings.rs
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 94-98
+  s_750dc69364e4e0::t_52a6d9f9193508 72-89,101-102
+  s_750dc69364e4e0::t_12c817d5e3c9b8 15,17
+  s_750dc69364e4e0::t_be2694b7b4123f 48
+  s_750dc69364e4e0::t_161418ba4ae5ed 90-93,99-100
+crates/mcb-validate/src/validators/port_adapter.rs
+  s_750dc69364e4e0::t_adad5d8d666f8d 175-183,192-203,205,207-208,210-224,226-228,230-231,233-236,239-251
+crates/mcb-validate/src/validators/quality/metrics.rs
+  s_750dc69364e4e0::t_9ce5666a184656 15-18,27-28,30-32,34-35,37-54,56-58,60-67,69-72,74-78
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 80-87
+crates/mcb-validate/src/validators/refactoring/tests.rs
+  s_750dc69364e4e0::t_0b97aa756ba9a1 103-110,119-161
+crates/mcb-validate/src/validators/test_quality.rs
+  s_750dc69364e4e0::t_af8f3d1dab92e1 171,178-179,186,188,196-221
+  s_750dc69364e4e0::t_8d159639cfaf3a 268-285
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 311-313
+  s_750dc69364e4e0::t_e9acf6d9cdd960 334-346
+  s_750dc69364e4e0::t_c6bf4d8a22a229 386-397
+  s_750dc69364e4e0::t_c290d686e66060 231-251
+  s_750dc69364e4e0::t_8f79e9586f7025 103-126
+  s_750dc69364e4e0::t_52c72299a04939 299-310,314-320
+crates/mcb-validate/src/validators/implementation/validator/stubs.rs
+  s_750dc69364e4e0::t_7e70dc0d2376c2 13-20
+crates/mcb-validate/src/validators/async_patterns/blocking.rs
+  s_750dc69364e4e0::t_39ab4407eb8130 14-62,69
+crates/mcb-providers/src/database/seaorm/migration/m20260301_000002_workflow_schema.rs
+  s_750dc69364e4e0::t_fd6079c89ce607 3
+crates/mcb-validate/src/validators/implementation/validator/wrappers.rs
+  s_750dc69364e4e0::t_4f2f03aec0ccc0 14-21
+  s_750dc69364e4e0::t_d0f33f181545b0 52
+  s_750dc69364e4e0::t_deb125b09d7f86 77
+  s_750dc69364e4e0::t_bfa9a0f7b38d86 4
+  s_750dc69364e4e0::t_7ea312fd358a46 36-46,48-51,53-76,78-83
+crates/mcb-validate/src/validators/async_patterns/spawn.rs
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 21-22
+  s_750dc69364e4e0::t_722f33455ab834 53-55
+  s_750dc69364e4e0::t_7f5ba2c4cec46f 13-20,23-25
+crates/mcb-validate/src/validators/hygiene/naming.rs
+  s_750dc69364e4e0::t_079a9e3139a70b 54-55
+  s_750dc69364e4e0::t_a847bcb213fe7a 11-27,32-41
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 28-31
+  s_750dc69364e4e0::t_5b796718cea446 85-86,88-90,92-93,95-99,101-103,105-111,114-127
+crates/mcb-validate/src/validators/pattern_validator/violation.rs
+  s_750dc69364e4e0::t_948e7a87ab22f6 95-99,106-110,116-120,127-131,137-141
+crates/mcb-validate/src/validators/solid/srp.rs
+  s_750dc69364e4e0::t_27dc04c2188d75 47-53,61-98
+  s_750dc69364e4e0::t_64f8c643a4f665 130-136,143-169
+crates/mcb-validate/src/validators/dependency/bypass.rs
+  s_750dc69364e4e0::t_3b249778ed98a4 94,102-118,124-125
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 119-123
+crates/mcb-validate/src/validators/refactoring/duplicates.rs
+  s_750dc69364e4e0::t_adc0bb5f5b435f 60,73
+  s_750dc69364e4e0::t_4f8be6788c2793 5
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 144-150,157,162,167-173,177
+  s_750dc69364e4e0::t_cead1017605dd7 161,163-165,174,176,178-181,190,195-197,200,204,206
+  s_750dc69364e4e0::t_2a269a792c6c19 18-59,61-72,74-110,112-115,155-156,158
+crates/mcb-validate/src/validators/kiss/counting.rs
+  s_750dc69364e4e0::t_dbe64d8e762d41 23-33
+crates/mcb-validate/src/validators/hygiene/inline_tests.rs
+  s_750dc69364e4e0::t_e5715d12d00e18 4-5,12-13,18-19,27,31-36,53-61,63-66,68-70,72-73,75,77-83,85
+  s_750dc69364e4e0::t_2602f3c484107b 14-17
+  s_750dc69364e4e0::t_7771534d971c30 42
+crates/mcb-validate/src/validators/pattern_validator/di.rs
+  s_750dc69364e4e0::t_af6f80c1542011 25,28-39,41-49,58-59,61-73,75-89
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 51-57
+crates/mcb-validate/src/validators/documentation/validator.rs
+  s_750dc69364e4e0::t_581a41c8768df6 170,186-192,202-243
+crates/mcb-validate/src/validators/refactoring/modules.rs
+  s_750dc69364e4e0::t_14c030196e9de0 32,39-82
+crates/mcb-providers/src/vector_store/edgevec/actor.rs
+  s_750dc69364e4e0::t_874b761620518a 10-12
+  s_750dc69364e4e0::t_7ac541e77a361b 9
+crates/mcb-validate/src/validators/declarative_support.rs
+  s_750dc69364e4e0::t_3e9090bf1e3dd5 27-35,46,49,52,56,58-60,64-66
+crates/mcb-validate/src/validators/naming/checks/ca.rs
+  s_750dc69364e4e0::t_3144d07bb77107 70-96,100-104,107-108,110-128,132,139-141,145-153,155-167
+  s_750dc69364e4e0::t_49a4a2dbcb9a18 50-53
+crates/mcb-validate/src/validators/implementation/validator/catch_all.rs
+  s_750dc69364e4e0::t_d65fc77a47a3f6 11-17
+crates/mcb-validate/src/validators/organization/domain_purity.rs
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 95-101
+  s_750dc69364e4e0::t_6bca8f96b6f2c4 47-50,56,59-61,66-68,70-71,73-88,90-92,94,102-106,108-123,125-131
+  s_750dc69364e4e0::t_edf94686898e35 4-7,17-30
+crates/mcb-validate/src/validators/implementation/validator/empty.rs
+  s_750dc69364e4e0::t_072aebcfc25261 62
+  s_750dc69364e4e0::t_44b30579df4e38 4
+  s_750dc69364e4e0::t_41aaa37bc449a3 39-42,44-46,48-49,51-58,60-61,63-64
+  s_750dc69364e4e0::t_a3c859be9b868d 47,59
+  s_750dc69364e4e0::t_42ef398e26ac3e 50
+crates/mcb-validate/src/validators/declarative_validator.rs
+  s_750dc69364e4e0::t_2f09d36d769667 635-638,644-654
+  s_750dc69364e4e0::t_241142887c9fcd 807
+  s_750dc69364e4e0::t_ba34cc22068200 559-587
+crates/mcb-validate/src/validators/organization/magic_numbers.rs
+  s_750dc69364e4e0::t_8a1b9d60bac7d0 47,54-103
+  s_750dc69364e4e0::t_618f3c6c81473f 4-7
+crates/mcb-validate/src/validators/implementation/validator/logging.rs
+  s_750dc69364e4e0::t_8d67f3307cef99 13-19
+crates/mcb-validate/src/validators/dependency/uses.rs
+  s_750dc69364e4e0::t_6ee6b9fabb46d8 65
+  s_750dc69364e4e0::t_472126be71d959 5-8,43-44,46-49,58-64,66-86
+  s_750dc69364e4e0::t_2b655e2b646ef5 4
+crates/mcb-validate/src/validators/quality/dead_code.rs
+  s_750dc69364e4e0::t_f588d8217265b3 4-5,14-22,24-27,30-35,42-43,46-47,55-90
+crates/mcb-providers/src/database/seaorm/migration/m20260301_000001_initial_schema.rs
+  s_750dc69364e4e0::t_8c8408b6f3b477 3
+crates/mcb-validate/src/validators/hygiene/quality.rs
+  s_750dc69364e4e0::t_fb7fe4667e7608 191-198,206,222,229,241-268
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 213-219,318-321
+  s_750dc69364e4e0::t_35d2ef8cd92812 29-86
+  s_750dc69364e4e0::t_f0f47b95dce574 112-113
+  s_750dc69364e4e0::t_ba2e2a260c72b4 278-279,287-290,292-308,310-316,322,326,331,333-339
+crates/mcb-validate/src/validators/organization/layer_violations.rs
+  s_750dc69364e4e0::t_e1a920b9a6a0f2 4-7
+  s_750dc69364e4e0::t_431ce7a2d90af4 36-37,40,44-47,49-50,57-103
+crates/mcb-validate/src/duplication/detector.rs
+  s_750dc69364e4e0::t_25d42b1570ec8d 347-348,351,361-368,376
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 338-339,342,369-375
+crates/mcb-validate/src/validators/naming/checks/suffixes.rs
+  s_750dc69364e4e0::t_add4b8f19d0a36 14-16
+  s_750dc69364e4e0::t_29c529473328ec 31-46,53-54,56-73,75-85,87-96,98-114,116-117,123
+crates/mcb-validate/src/validators/kiss/checks.rs
+  s_750dc69364e4e0::t_75771493793ded 287,289,291-299,301-302,304-315,317-320,322-324,326-327,329-337,339,341-352
+  s_750dc69364e4e0::t_4574c76bd09648 24-43
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 192-194,328
+  s_750dc69364e4e0::t_49e1e9e12ad774 166
+  s_750dc69364e4e0::t_adf596b6800cdc 165,167-168,177-191,195-210
+  s_750dc69364e4e0::t_9c990f80f4c9eb 290
+crates/mcb-validate/src/validators/naming/validator.rs
+  s_750dc69364e4e0::t_b3dea83a619930 235,237-238,240-241,243-244,246-247,249-250,252-253,258-268
+crates/mcb-validate/src/validators/pattern_validator/async_check.rs
+  s_750dc69364e4e0::t_9d77f150dd1b6d 38-44,46-48
+  s_750dc69364e4e0::t_1e0c6ab0eaa5cd 50-58,62-92
+crates/mcb-validate/src/validators/solid/ocp.rs
+  s_750dc69364e4e0::t_bef1ec8ce40d6d 30,33,35-36,45-57
+  s_750dc69364e4e0::t_d25e4ba171d3c5 34
+  s_750dc69364e4e0::t_bba9e6a50c1b3c 58-68
+  s_750dc69364e4e0::t_7b630ebe6ffca3 83,86,88-89,97-116
+  s_750dc69364e4e0::t_acac0182707dd2 87
+  s_750dc69364e4e0::t_632e88680208fd 4-7
+crates/mcb-validate/src/validators/ssot.rs
+  s_750dc69364e4e0::t_15c0449b4da411 172,180-181,184-185,188-189,191,193-194,196-212,214-219,221-292,294-295,297-307,309-325
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "0be3789e925f7f43782709bf31d735c25fa4ef9f",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
