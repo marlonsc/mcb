@@ -1,0 +1,108 @@
+crates/mcb-validate/src/engines/rete_engine.rs
+  s_750dc69364e4e0::t_7b3c342ed4e10a 113-151
+  s_750dc69364e4e0::t_9db924d63637c4 184-186,196-197,203-214,216-224
+  s_750dc69364e4e0::t_38921e4a3982e3 187-191,215
+  s_750dc69364e4e0::t_0b27c4ea09e103 89
+  s_750dc69364e4e0::t_83e5c90a78f2b1 198-202
+crates/mcb-validate/src/generic_reporter.rs
+  s_750dc69364e4e0::t_473026ac795575 198-199,207,209-223
+  s_750dc69364e4e0::t_83e5c90a78f2b1 208
+crates/mcb-validate/src/utils/source_functions.rs
+  s_750dc69364e4e0::t_70e4557ad188a8 73-74,77-78,114-119,125-135
+  s_750dc69364e4e0::t_d521028f9db0c2 99,105-113
+  s_750dc69364e4e0::t_83e5c90a78f2b1 86-90,120-124
+  s_750dc69364e4e0::t_cd2fb7a1114d25 85,100-104
+crates/mcb-validate/src/duplication/detector.rs
+  s_750dc69364e4e0::t_0d8aef34d42354 368,372-375,377-378,380,382-384
+  s_750dc69364e4e0::t_43758525350197 297-303,309-331,333-337,345-347,355-360
+  s_750dc69364e4e0::t_83e5c90a78f2b1 446-452
+  s_750dc69364e4e0::t_2f9351f539387d 332
+  s_750dc69364e4e0::t_cd2fb7a1114d25 338-344,348-354
+  s_750dc69364e4e0::t_a8fb68b5ed389f 367,385-445,453-456
+  s_750dc69364e4e0::t_b2fe0b530578e8 369-371,376,379,381
+crates/mcb-validate/src/utils/source_relatedness.rs
+  s_750dc69364e4e0::t_fd9a4011ee6c3b 123
+  s_750dc69364e4e0::t_7151c8fabc493f 76-77
+  s_750dc69364e4e0::t_83e5c90a78f2b1 78-121
+crates/mcb-validate/src/validators/declarative_validator.rs
+  s_750dc69364e4e0::t_53ab58376bf162 192-195,197,200,209,215,219-223,241-259
+  s_750dc69364e4e0::t_e887e7ca0a9cd7 558-567,569-571,576-626,717-733
+  s_750dc69364e4e0::t_f7b484d223f579 627-643,649-654
+  ai_agent 395-396,572-575,644-648,681-686,802-808
+  s_750dc69364e4e0::t_2cef4453cd0270 301,308-337
+  s_750dc69364e4e0::t_77063daf71f383 709-716
+  s_750dc69364e4e0::t_cc21c1a159bd61 568
+  s_750dc69364e4e0::t_011b7db7721942 216-218,224-240
+  s_750dc69364e4e0::t_db2d681e3075b7 655-680,687-708
+  s_750dc69364e4e0::t_844b2775323c33 360,372-394,397-408
+  s_750dc69364e4e0::t_26e22c74631e27 125,131-164
+crates/mcb-validate/src/ast/unwrap_detector.rs
+  s_750dc69364e4e0::t_a93bf6956220cb 122-126,137-162
+crates/mcb-validate/src/extractor/rust_extractor.rs
+  s_750dc69364e4e0::t_83e5c90a78f2b1 72-78
+  s_750dc69364e4e0::t_7398fe488c241a 65,68-71,101,103,108-109,117,120,125
+  s_750dc69364e4e0::t_4d653ca4c81841 130-131,137-142
+  s_750dc69364e4e0::t_479a71f5c33392 66-67,80-86,88-94,97-98,100,102,113,115-116,118-119,121-124,129
+crates/mcb-validate/src/lib.rs
+  s_750dc69364e4e0::t_eb676efcbcfe6a 118-129,137-138,141,150
+  s_750dc69364e4e0::t_81a46f5ddc65da 140,142-143
+  s_750dc69364e4e0::t_7e7a6318458dca 139
+  s_750dc69364e4e0::t_83e5c90a78f2b1 130-136
+crates/mcb-validate/src/engines/hybrid_engine.rs
+  s_750dc69364e4e0::t_0cf52e7454ac9e 428-454
+  s_750dc69364e4e0::t_5e6947ff377584 385
+crates/mcb-validate/src/run_context.rs
+  s_750dc69364e4e0::t_a969f12fa9239d 312-319,321,323-324,326-336,338-351,354-363
+crates/mcb-validate/src/filters/dependency_parser.rs
+  s_750dc69364e4e0::t_83e5c90a78f2b1 258
+  s_750dc69364e4e0::t_050e7a94409fd1 256-257,259-286
+  s_750dc69364e4e0::t_b95dd7b6bb830c 242
+crates/mcb-validate/src/metrics/rca_analyzer.rs
+  s_750dc69364e4e0::t_f654ad5f40a9b0 222-224,226-249,255-277
+crates/mcb-validate/src/engines/rusty_rules_engine.rs
+  s_750dc69364e4e0::t_88ddcdf4ddceea 436
+  s_750dc69364e4e0::t_1b45043617593b 453-469
+  s_750dc69364e4e0::t_7e274608baebd3 295,303-309
+  s_750dc69364e4e0::t_6a43b54381d2aa 241,250-257
+  s_750dc69364e4e0::t_83e5c90a78f2b1 437-439
+crates/mcb-validate/src/rules/yaml_loader.rs
+  s_750dc69364e4e0::t_83e5c90a78f2b1 418-422
+  s_750dc69364e4e0::t_0ff44abf9283fd 424-442,445,455,457-459,463,467
+  s_750dc69364e4e0::t_4969c8a0cc5960 361-369,371-385,387-388
+  s_750dc69364e4e0::t_21bda90b9709f2 411-416
+  s_750dc69364e4e0::t_bdebd76e6e3efc 341-343,358-359
+  s_750dc69364e4e0::t_e8fbcff3baff7e 322
+  s_750dc69364e4e0::t_f0d0e4d059e45b 443-444,446,448-454
+  s_750dc69364e4e0::t_73589519342a30 321,323
+  s_750dc69364e4e0::t_597ce93f3a80c3 470-472,476-486,490-491,493-495,500-508,513
+  s_750dc69364e4e0::t_db91712c433993 417
+crates/mcb-validate/src/linters/engine.rs
+  s_750dc69364e4e0::t_2386022d766e9b 67,73-89
+crates/mcb-validate/src/duplication/fingerprint.rs
+  s_750dc69364e4e0::t_9607a4df9b6856 227-238,245-257
+  s_750dc69364e4e0::t_83e5c90a78f2b1 239-244
+  s_750dc69364e4e0::t_1189faaf6baf29 197
+crates/mcb-validate/src/scan.rs
+  s_750dc69364e4e0::t_b0af46985c3b21 94,99-103,111-122
+  s_750dc69364e4e0::t_e63194af1c3de9 65-66
+crates/mcb-validate/src/pattern_registry/registry.rs
+  s_750dc69364e4e0::t_c7d6268ca7f655 74,88-98,100-104,109,130-137,139-144,146-147,149,151-157
+  s_750dc69364e4e0::t_10c19d3574fbe2 226-261
+  s_750dc69364e4e0::t_bd44124898cef0 284-285,288-290,303-323
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "d57ca912fceb2d6f928386da70d9002423c466d1",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
