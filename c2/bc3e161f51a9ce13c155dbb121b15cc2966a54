@@ -1,0 +1,26 @@
+crates/mcb-validate/src/validators/naming/checks/suffixes.rs
+  s_750dc69364e4e0::t_8264f01f2282d7 62-69,72-76
+config/mcb-validate-internal.toml
+  s_750dc69364e4e0::t_3a52c9a811a743 92-102
+  s_750dc69364e4e0::t_979504c5df68a9 76-91,105
+  s_750dc69364e4e0::t_2f9d69e35f51d1 103-104
+crates/mcb-validate/src/validators/documentation/validator.rs
+  s_750dc69364e4e0::t_e90244e20385b0 168,170-180
+  s_750dc69364e4e0::t_90f590b086f677 137-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "c2bc3e161f51a9ce13c155dbb121b15cc2966a54",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
