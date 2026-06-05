@@ -35,10 +35,20 @@ fn format_violations_failure(
         debug_strs.len()
     );
     if !missing.is_empty() {
-        let _ = write!(msg, "MISSING ({}):\n{}\n", missing.len(), missing.join("\n"));
+        let _ = write!(
+            msg,
+            "MISSING ({}):\n{}\n",
+            missing.len(),
+            missing.join("\n")
+        );
     }
     if !extras.is_empty() {
-        let _ = write!(msg, "UNEXPECTED ({}):\n{}\n", extras.len(), extras.join("\n"));
+        let _ = write!(
+            msg,
+            "UNEXPECTED ({}):\n{}\n",
+            extras.len(),
+            extras.join("\n")
+        );
     }
     let _ = write!(msg, "ALL VIOLATIONS:\n{}", debug_strs.join("\n"));
     msg

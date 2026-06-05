@@ -78,7 +78,11 @@ mod tests {
 
     #[test]
     fn skips_non_text_values() {
-        let content = [json!({"text": "a"}), json!({"image": "x"}), json!({"text": "b"})];
+        let content = [
+            json!({"text": "a"}),
+            json!({"image": "x"}),
+            json!({"text": "b"}),
+        ];
         assert_eq!(extract_text(&content), "a\nb");
     }
 
