@@ -1,0 +1,31 @@
+crates/mcb/src/cli/validate.rs
+  s_750dc69364e4e0::t_e02a8926d21eac 106-109,111-113,115-121,123,133,135,137,139,141-143,145-149,151-152,154-170
+crates/mcb/src/initializers/mcp_server.rs
+  s_750dc69364e4e0::t_37c87e7adcabaf 192-196,200-202
+  s_750dc69364e4e0::t_11d8b54fac8cc1 197-199,203-222,224-225,227-229,231-238,240-241,244-248,250-263,268-274,277-297
+  s_750dc69364e4e0::t_475f0df02860f9 27-46,48-55,57-79,81-115,117-122,124-142,144-147,149-190,298-299,303-309
+  s_750dc69364e4e0::t_b7fe770bcca39b 267,275-276
+  s_750dc69364e4e0::t_6f921c79715c2f 300-302
+  s_750dc69364e4e0::t_a3e06fe534b6f7 322-324
+  s_750dc69364e4e0::t_48a51aeb48a9f1 249
+  s_750dc69364e4e0::t_0c7d4c7a2f4a8d 331
+  s_750dc69364e4e0::t_57ec3919b8f04d 325
+  s_750dc69364e4e0::t_32c2d01a74867c 123
+  s_750dc69364e4e0::t_da9eb923373426 333-334,338
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "7f248bf2a0a594d1ca8bdfedd52cb0031782d752",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
