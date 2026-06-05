@@ -1,0 +1,25 @@
+crates/mcb-validate/tests/unit/field_selection_tests.rs
+  s_750dc69364e4e0::t_f804d21b0c1400 167,170-172
+crates/mcb-validate/src/validators/error_boundary.rs
+  s_750dc69364e4e0::t_2dc08f586da96a 12,14-15,23
+crates/mcb-validate/src/validators/refactoring/tests.rs
+  s_750dc69364e4e0::t_ead919329604de 41-44,46-49
+crates/mcb-validate/src/validators/hygiene/function_naming.rs
+  s_750dc69364e4e0::t_8e5f61aa74a6b2 27-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "88b7d1139ee03b14a1f16ea88414bc7713c9ac3d",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
