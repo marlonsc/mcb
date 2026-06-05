@@ -1,0 +1,21 @@
+crates/mcb-domain/src/utils/text.rs
+  s_750dc69364e4e0::t_e701cffa9e8bfa 81-85
+crates/mcb-domain/src/utils/tests/assertions.rs
+  s_750dc69364e4e0::t_e0489bce7b73bd 38-43,46-51
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "9d627860b4d51bc702cb6d8e6cbea89b77d30f29",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
