@@ -20,34 +20,33 @@ use mcb_utils::constants::use_cases::MEMORY_COLLECTION_NAME;
 
 use super::MemoryServiceImpl;
 
+/// Owned inputs describing an observation to be stored.
+pub(crate) struct ObservationInput {
+    pub project_id: String,
+    pub content: String,
+    pub r#type: ObservationType,
+    pub tags: Vec<String>,
+    pub metadata: ObservationMetadata,
+}
+
 impl MemoryServiceImpl {
-    /// Store an observation in both relational and vector stores.
-    ///
-    /// Deduplicates based on content hash. Returns the observation ID and a boolean
-    /// indicating whether the input was deduplicated (`true` means duplicate content).
-    fn build_vector_metadata(
-        content: &str,
-        r#type: &ObservationType,
-        tags: &[String],
-        project_id: &str,
-        metadata: &ObservationMetadata,
-    ) -> HashMap<String, serde_json::Value> {
+    fn build_vector_metadata(input: &ObservationInput) -> HashMap<String, serde_json::Value> {
         let mut vector_metadata = HashMap::new();
         vector_metadata.insert(
             METADATA_KEY_CONTENT.to_owned(),
-            serde_json::Value::String(content.to_owned()),
+            serde_json::Value::String(input.content.clone()),
         );
         vector_metadata.insert(
             METADATA_KEY_TYPE.to_owned(),
-            serde_json::Value::String(r#type.as_str().to_owned()),
+            serde_json::Value::String(input.r#type.as_str().to_owned()),
         );
-        vector_metadata.insert(METADATA_KEY_TAGS.to_owned(), serde_json::json!(tags));
+        vector_metadata.insert(METADATA_KEY_TAGS.to_owned(), serde_json::json!(input.tags));
         vector_metadata.insert(
             "project_id".to_owned(),
-            serde_json::Value::String(project_id.to_owned()),
+            serde_json::Value::String(input.project_id.clone()),
         );
 
-        if let Some(session_id) = &metadata.session_id {
+        if let Some(session_id) = &input.metadata.session_id {
             vector_metadata.insert(
                 METADATA_KEY_SESSION_ID.to_owned(),
                 serde_json::Value::String(session_id.clone()),
@@ -57,7 +56,8 @@ impl MemoryServiceImpl {
         vector_metadata.insert(
             METADATA_KEY_FILE_PATH.to_owned(),
             serde_json::Value::String(
-                metadata
+                input
+                    .metadata
                     .file_path
                     .clone()
                     .unwrap_or_else(|| "memory".to_owned()),
@@ -73,43 +73,33 @@ impl MemoryServiceImpl {
 
     async fn insert_into_vector_store(
         &self,
-        content: &str,
-        r#type: &ObservationType,
-        tags: &[String],
-        project_id: &str,
-        metadata: &ObservationMetadata,
+        input: &ObservationInput,
         collection_id: &CollectionId,
     ) -> Result<Vec<String>> {
-        let embedding = self.embedding_provider.embed(content).await?;
-        let vector_metadata =
-            Self::build_vector_metadata(content, r#type, tags, project_id, metadata);
+        let embedding = self.embedding_provider.embed(&input.content).await?;
+        let vector_metadata = Self::build_vector_metadata(input);
 
         self.vector_store
             .insert_vectors(collection_id, &[embedding], vec![vector_metadata])
             .await
     }
 
-    #[allow(clippy::too_many_arguments)]
     async fn create_and_store_observation(
         &self,
-        project_id: String,
-        content: String,
+        input: ObservationInput,
         content_hash: String,
-        r#type: ObservationType,
-        tags: Vec<String>,
-        metadata: ObservationMetadata,
         embedding_id: Option<String>,
         collection_id: &CollectionId,
         ids: &[String],
     ) -> Result<String> {
         let observation = Observation {
             id: id::generate().to_string(),
-            project_id,
-            content,
+            project_id: input.project_id,
+            content: input.content,
             content_hash,
-            tags,
-            r#type,
-            metadata,
+            tags: input.tags,
+            r#type: input.r#type,
+            metadata: input.metadata,
             created_at: domain_time::epoch_secs_i64()?,
             embedding_id,
         };
@@ -124,19 +114,15 @@ impl MemoryServiceImpl {
 
     pub(crate) async fn store_observation_impl(
         &self,
-        project_id: String,
-        content: String,
-        r#type: ObservationType,
-        tags: Vec<String>,
-        metadata: ObservationMetadata,
+        input: ObservationInput,
     ) -> Result<(String, bool)> {
-        if project_id.trim().is_empty() {
+        if input.project_id.trim().is_empty() {
             return Err(mcb_domain::error::Error::invalid_argument(
                 "Project ID cannot be empty for memory storage",
             ));
         }
 
-        let content_hash = compute_content_hash(&content);
+        let content_hash = compute_content_hash(&input.content);
 
         if let Some(existing) = self.repository.find_by_hash(&content_hash).await? {
             return Ok((existing.id, true));
@@ -146,30 +132,12 @@ impl MemoryServiceImpl {
             CollectionId::from_uuid(id::deterministic("collection", MEMORY_COLLECTION_NAME));
 
         let ids = self
-            .insert_into_vector_store(
-                &content,
-                &r#type,
-                &tags,
-                &project_id,
-                &metadata,
-                &collection_id,
-            )
+            .insert_into_vector_store(&input, &collection_id)
             .await?;
-
         let embedding_id = ids.first().cloned();
 
         let id = self
-            .create_and_store_observation(
-                project_id,
-                content,
-                content_hash,
-                r#type,
-                tags,
-                metadata,
-                embedding_id,
-                &collection_id,
-                &ids,
-            )
+            .create_and_store_observation(input, content_hash, embedding_id, &collection_id, &ids)
             .await?;
 
         Ok((id, false))
