@@ -37,30 +37,10 @@ impl ProjectHandler {
         &self,
         Parameters(args): Parameters<ProjectArgs>,
     ) -> Result<CallToolResult, McpError> {
-        let project_id = args.project_id.as_deref().unwrap_or("");
+        let project_id = args.project_id.clone().unwrap_or_default();
         let org_id = resolve_org_id(None);
 
-        // project_id required for most operations except List+Project
-        if project_id.trim().is_empty()
-            && !matches!(
-                (&args.action, &args.resource),
-                (ProjectAction::List, ProjectResource::Project)
-            )
-            && !matches!(
-                (&args.action, &args.resource),
-                (
-                    ProjectAction::Get | ProjectAction::Delete,
-                    ProjectResource::Phase
-                        | ProjectResource::Decision
-                        | ProjectResource::Dependency
-                )
-            )
-        {
-            return Err(McpError::invalid_params(
-                "project_id is required (not resolved from context)",
-                None,
-            ));
-        }
+        Self::ensure_project_id_present(&project_id, args.action, args.resource)?;
 
         info!(
             "ProjectHandler",
@@ -71,26 +51,70 @@ impl ProjectHandler {
             )
         );
 
-        match (args.action, args.resource) {
-            // ── Project ──────────────────────────────────────────────────
-            (ProjectAction::Get, ProjectResource::Project) => ResponseFormatter::json_success(
-                &map_opaque_error(self.repo.get_by_id(org_id.as_str(), project_id).await)?,
-            ),
-            (ProjectAction::List, ProjectResource::Project) => ResponseFormatter::json_success(
-                &map_opaque_error(self.repo.list(org_id.as_str()).await)?,
-            ),
-            (ProjectAction::Create, ProjectResource::Project) => {
-                self.create_project(&org_id, project_id, &args).await
-            }
-            (ProjectAction::Update, ProjectResource::Project) => {
-                self.update_project(&org_id, project_id, &args).await
-            }
-            (ProjectAction::Delete, ProjectResource::Project) => {
-                self.delete_project(&org_id, project_id).await
-            }
+        match args.resource {
+            ProjectResource::Project => self.handle_project(&org_id, &project_id, args).await,
+            ProjectResource::Phase => self.handle_phase(&project_id, args).await,
+            ProjectResource::Issue => self.handle_issue(&org_id, &project_id, args).await,
+            ProjectResource::Dependency => self.handle_dependency(args).await,
+            ProjectResource::Decision => self.handle_decision(&project_id, args).await,
+        }
+    }
 
-            // ── Phase ────────────────────────────────────────────────────
-            (ProjectAction::Create, ProjectResource::Phase) => {
+    /// Reject requests that omit `project_id` for operations that require it.
+    fn ensure_project_id_present(
+        project_id: &str,
+        action: ProjectAction,
+        resource: ProjectResource,
+    ) -> Result<(), McpError> {
+        if !project_id.trim().is_empty() {
+            return Ok(());
+        }
+        let exempt = matches!(
+            (action, resource),
+            (ProjectAction::List, ProjectResource::Project)
+        ) || matches!(
+            (action, resource),
+            (
+                ProjectAction::Get | ProjectAction::Delete,
+                ProjectResource::Phase | ProjectResource::Decision | ProjectResource::Dependency
+            )
+        );
+        if exempt {
+            Ok(())
+        } else {
+            Err(McpError::invalid_params(
+                "project_id is required (not resolved from context)",
+                None,
+            ))
+        }
+    }
+
+    async fn handle_project(
+        &self,
+        org_id: &str,
+        project_id: &str,
+        args: ProjectArgs,
+    ) -> Result<CallToolResult, McpError> {
+        match args.action {
+            ProjectAction::Get => ResponseFormatter::json_success(&map_opaque_error(
+                self.repo.get_by_id(org_id, project_id).await,
+            )?),
+            ProjectAction::List => {
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list(org_id).await)?)
+            }
+            ProjectAction::Create => self.create_project(org_id, project_id, &args).await,
+            ProjectAction::Update => self.update_project(org_id, project_id, &args).await,
+            ProjectAction::Delete => self.delete_project(org_id, project_id).await,
+        }
+    }
+
+    async fn handle_phase(
+        &self,
+        project_id: &str,
+        args: ProjectArgs,
+    ) -> Result<CallToolResult, McpError> {
+        match args.action {
+            ProjectAction::Create => {
                 let mut phase: ProjectPhase = require_data(args.data, "data required")?;
                 if phase.project_id.is_empty() {
                     phase.project_id = project_id.to_owned();
@@ -98,74 +122,83 @@ impl ProjectHandler {
                 map_opaque_error(self.repo.create_phase(&phase).await)?;
                 ResponseFormatter::json_success(&phase)
             }
-            (ProjectAction::Get, ProjectResource::Phase) => {
+            ProjectAction::Get => {
                 let id = require_id(&args.id)?;
                 ResponseFormatter::json_success(&map_opaque_error(self.repo.get_phase(&id).await)?)
             }
-            (ProjectAction::List, ProjectResource::Phase) => ResponseFormatter::json_success(
-                &map_opaque_error(self.repo.list_phases(project_id).await)?,
-            ),
-            (ProjectAction::Update, ProjectResource::Phase) => {
+            ProjectAction::List => ResponseFormatter::json_success(&map_opaque_error(
+                self.repo.list_phases(project_id).await,
+            )?),
+            ProjectAction::Update => {
                 let phase: ProjectPhase = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.update_phase(&phase).await)?;
                 ok_text("updated")
             }
-            (ProjectAction::Delete, ProjectResource::Phase) => {
+            ProjectAction::Delete => {
                 let id = require_id(&args.id)?;
                 map_opaque_error(self.repo.delete_phase(&id).await)?;
                 ok_text("deleted")
             }
+        }
+    }
 
-            // ── Issue ────────────────────────────────────────────────────
-            (ProjectAction::Create, ProjectResource::Issue) => {
+    async fn handle_issue(
+        &self,
+        org_id: &str,
+        project_id: &str,
+        args: ProjectArgs,
+    ) -> Result<CallToolResult, McpError> {
+        match args.action {
+            ProjectAction::Create => {
                 let mut issue: ProjectIssue = require_data(args.data, "data required")?;
                 if issue.project_id.is_empty() {
                     issue.project_id = project_id.to_owned();
                 }
-                issue.org_id = org_id.clone();
+                issue.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.create_issue(&issue).await)?;
                 ResponseFormatter::json_success(&issue)
             }
-            (ProjectAction::Get, ProjectResource::Issue) => {
+            ProjectAction::Get => {
                 let id = require_id(&args.id)?;
                 ResponseFormatter::json_success(&map_opaque_error(
-                    self.repo.get_issue(org_id.as_str(), &id).await,
+                    self.repo.get_issue(org_id, &id).await,
                 )?)
             }
-            (ProjectAction::List, ProjectResource::Issue) => {
+            ProjectAction::List => {
                 if let Some(filters) = &args.filters {
                     let filter: IssueFilter = serde_json::from_value(filters.clone())
                         .map_err(|e| McpError::invalid_params(format!("bad filters: {e}"), None))?;
                     ResponseFormatter::json_success(&map_opaque_error(
-                        self.repo
-                            .list_issues_filtered(org_id.as_str(), &filter)
-                            .await,
+                        self.repo.list_issues_filtered(org_id, &filter).await,
                     )?)
                 } else {
                     ResponseFormatter::json_success(&map_opaque_error(
-                        self.repo.list_issues(org_id.as_str(), project_id).await,
+                        self.repo.list_issues(org_id, project_id).await,
                     )?)
                 }
             }
-            (ProjectAction::Update, ProjectResource::Issue) => {
+            ProjectAction::Update => {
                 let mut issue: ProjectIssue = require_data(args.data, "data required")?;
-                issue.org_id = org_id.clone();
+                issue.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.update_issue(&issue).await)?;
                 ok_text("updated")
             }
-            (ProjectAction::Delete, ProjectResource::Issue) => {
+            ProjectAction::Delete => {
                 let id = require_id(&args.id)?;
-                map_opaque_error(self.repo.delete_issue(org_id.as_str(), &id).await)?;
+                map_opaque_error(self.repo.delete_issue(org_id, &id).await)?;
                 ok_text("deleted")
             }
+        }
+    }
 
-            // ── Dependency ───────────────────────────────────────────────
-            (ProjectAction::Create, ProjectResource::Dependency) => {
+    async fn handle_dependency(&self, args: ProjectArgs) -> Result<CallToolResult, McpError> {
+        match args.action {
+            ProjectAction::Create => {
                 let dep: ProjectDependency = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.create_dependency(&dep).await)?;
                 ResponseFormatter::json_success(&dep)
             }
-            (ProjectAction::List, ProjectResource::Dependency) => {
+            ProjectAction::List => {
                 let issue_id = args.issue_id.as_deref().ok_or_else(|| {
                     McpError::invalid_params("issue_id required for dependency list", None)
                 })?;
@@ -173,14 +206,25 @@ impl ProjectHandler {
                     self.repo.list_dependencies(issue_id).await,
                 )?)
             }
-            (ProjectAction::Delete, ProjectResource::Dependency) => {
+            ProjectAction::Delete => {
                 let id = require_id(&args.id)?;
                 map_opaque_error(self.repo.delete_dependency(&id).await)?;
                 ok_text("deleted")
             }
+            action @ (ProjectAction::Get | ProjectAction::Update) => Err(McpError::invalid_params(
+                format!("Unsupported action {action:?} for resource Dependency"),
+                None,
+            )),
+        }
+    }
 
-            // ── Decision ─────────────────────────────────────────────────
-            (ProjectAction::Create, ProjectResource::Decision) => {
+    async fn handle_decision(
+        &self,
+        project_id: &str,
+        args: ProjectArgs,
+    ) -> Result<CallToolResult, McpError> {
+        match args.action {
+            ProjectAction::Create => {
                 let mut decision: ProjectDecision = require_data(args.data, "data required")?;
                 if decision.project_id.is_empty() {
                     decision.project_id = project_id.to_owned();
@@ -188,31 +232,25 @@ impl ProjectHandler {
                 map_opaque_error(self.repo.create_decision(&decision).await)?;
                 ResponseFormatter::json_success(&decision)
             }
-            (ProjectAction::Get, ProjectResource::Decision) => {
+            ProjectAction::Get => {
                 let id = require_id(&args.id)?;
                 ResponseFormatter::json_success(&map_opaque_error(
                     self.repo.get_decision(&id).await,
                 )?)
             }
-            (ProjectAction::List, ProjectResource::Decision) => ResponseFormatter::json_success(
-                &map_opaque_error(self.repo.list_decisions(project_id).await)?,
-            ),
-            (ProjectAction::Update, ProjectResource::Decision) => {
+            ProjectAction::List => ResponseFormatter::json_success(&map_opaque_error(
+                self.repo.list_decisions(project_id).await,
+            )?),
+            ProjectAction::Update => {
                 let decision: ProjectDecision = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.update_decision(&decision).await)?;
                 ok_text("updated")
             }
-            (ProjectAction::Delete, ProjectResource::Decision) => {
+            ProjectAction::Delete => {
                 let id = require_id(&args.id)?;
                 map_opaque_error(self.repo.delete_decision(&id).await)?;
                 ok_text("deleted")
             }
-
-            // ── Unsupported combos (e.g. Get+Dependency, Update+Dependency) ──
-            (action, resource) => Err(McpError::invalid_params(
-                format!("Unsupported action {action:?} for resource {resource:?}"),
-                None,
-            )),
         }
     }
 

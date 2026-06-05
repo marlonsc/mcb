@@ -207,21 +207,48 @@ pub fn resolve_origin_context(input: &OriginContextInput<'_>) -> Result<OriginCo
         return Err(McpError::invalid_params("project_id is required", None));
     }
 
+    let session_correlation = resolve_session_correlation(
+        "session_id",
+        "session",
+        input.session_from_args,
+        input.session_from_data,
+    )?;
+    let parent_session_correlation = resolve_session_correlation(
+        "parent_session_id",
+        "parent_session",
+        input.parent_session_from_args,
+        input.parent_session_from_data,
+    )?;
+    let timestamp = match input.timestamp {
+        Some(ts) => Some(ts),
+        None => Some(
+            domain_time::epoch_secs_i64()
+                .map_err(|e| safe_internal_error("resolve timestamp", &e))?,
+        ),
+    };
+
+    build_origin_context(
+        input,
+        project_id,
+        session_correlation,
+        parent_session_correlation,
+        timestamp,
+    )
+}
+
+/// Assemble the `OriginContext` from pre-resolved primary fields plus per-field precedence.
+fn build_origin_context(
+    input: &OriginContextInput<'_>,
+    project_id: Option<String>,
+    session_correlation: Option<String>,
+    parent_session_correlation: Option<String>,
+    timestamp: Option<i64>,
+) -> Result<OriginContext, McpError> {
     Ok(OriginContext::builder()
         .org_id(Some(resolve_org_id(input.org_id)))
         .project_id(project_id)
-        .session_id_correlation(resolve_session_correlation(
-            "session_id",
-            "session",
-            input.session_from_args,
-            input.session_from_data,
-        )?)
-        .parent_session_id_correlation(resolve_session_correlation(
-            "parent_session_id",
-            "parent_session",
-            input.parent_session_from_args,
-            input.parent_session_from_data,
-        )?)
+        .session_id_correlation(session_correlation)
+        .parent_session_id_correlation(parent_session_correlation)
         .execution_id(resolve_field(
             "execution_id",
             input.execution_from_args,
@@ -283,12 +310,6 @@ pub fn resolve_origin_context(input: &OriginContextInput<'_>) -> Result<OriginCo
             input.commit_args,
             input.commit_payload,
         )?)
-        .timestamp(
-            input
-                .timestamp
-                .or(Some(domain_time::epoch_secs_i64().map_err(|e| {
-                    safe_internal_error("resolve timestamp", &e)
-                })?)),
-        )
+        .timestamp(timestamp)
         .build())
 }

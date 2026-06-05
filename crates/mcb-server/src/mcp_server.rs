@@ -115,47 +115,7 @@ impl McpServer {
     ) -> Self {
         let runtime_defaults =
             futures::executor::block_on(RuntimeDefaults::discover(vcs.as_ref(), execution_flow));
-        let hook_processor = HookProcessor::new(Some(Arc::clone(&services.memory)));
-        let vcs_entity_handler =
-            Arc::new(VcsEntityHandler::new(Arc::clone(&services.entities.vcs)));
-        let plan_entity_handler =
-            Arc::new(PlanEntityHandler::new(Arc::clone(&services.entities.plan)));
-        let issue_entity_handler = Arc::new(IssueEntityHandler::new(Arc::clone(
-            &services.entities.issue,
-        )));
-        let org_entity_handler =
-            Arc::new(OrgEntityHandler::new(Arc::clone(&services.entities.org)));
-        let entity_handler = Arc::new(EntityHandler::new(
-            Arc::clone(&vcs_entity_handler),
-            Arc::clone(&plan_entity_handler),
-            Arc::clone(&issue_entity_handler),
-            Arc::clone(&org_entity_handler),
-        ));
-
-        let handlers = ToolHandlers {
-            index: Arc::new(IndexHandler::new(Arc::clone(&services.indexing))),
-            search: Arc::new(SearchHandler::new(
-                Arc::clone(&services.search),
-                Arc::clone(&services.memory),
-                Arc::clone(&services.hybrid_search),
-                Arc::clone(&services.indexing),
-            )),
-            validate: Arc::new(ValidateHandler::new(Arc::clone(&services.validation))),
-            memory: Arc::new(MemoryHandler::new(Arc::clone(&services.memory))),
-            session: Arc::new(SessionHandler::new(
-                Arc::clone(&services.agent_session),
-                Arc::clone(&services.memory),
-            )),
-            agent: Arc::new(AgentHandler::new(Arc::clone(&services.agent_session))),
-            project: Arc::new(ProjectHandler::new(Arc::clone(&services.project_workflow))),
-            vcs: Arc::new(VcsHandler::new(Arc::clone(&services.vcs))),
-            vcs_entity: vcs_entity_handler,
-            plan_entity: plan_entity_handler,
-            issue_entity: issue_entity_handler,
-            org_entity: org_entity_handler,
-            entity: entity_handler,
-            hook_processor: Arc::new(hook_processor),
-        };
+        let handlers = build_tool_handlers(&services);
 
         Self {
             services,
@@ -290,24 +250,8 @@ tools:
         context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<CallToolResult, McpError> {
         let mut overrides = std::collections::HashMap::new();
-        let extract_meta =
-            |meta: Option<&rmcp::model::Meta>,
-             map: &mut std::collections::HashMap<String, String>| {
-                if let Some(m) = meta {
-                    for (key, value) in m.iter() {
-                        if let Some(string_value) = value.as_str() {
-                            map.insert(key.clone(), string_value.to_owned());
-                        } else if let Some(bool_value) = value.as_bool() {
-                            map.insert(key.clone(), bool_value.to_string());
-                        } else if let Some(number_value) = value.as_number() {
-                            map.insert(key.clone(), number_value.to_string());
-                        }
-                    }
-                }
-            };
-
-        extract_meta(Some(&context.meta), &mut overrides);
-        extract_meta(request.meta.as_ref(), &mut overrides);
+        merge_meta_overrides(Some(&context.meta), &mut overrides);
+        merge_meta_overrides(request.meta.as_ref(), &mut overrides);
 
         let mut execution_context =
             ToolExecutionContext::resolve(&self.runtime_defaults, &overrides);
@@ -338,6 +282,74 @@ tools:
     }
 }
 
+/// Build the full set of tool handlers from resolved services.
+fn build_tool_handlers(services: &McpServices) -> ToolHandlers {
+    let hook_processor = HookProcessor::new(Some(Arc::clone(&services.memory)));
+    let vcs_entity_handler = Arc::new(VcsEntityHandler::new(Arc::clone(&services.entities.vcs)));
+    let plan_entity_handler = Arc::new(PlanEntityHandler::new(Arc::clone(&services.entities.plan)));
+    let issue_entity_handler = Arc::new(IssueEntityHandler::new(Arc::clone(
+        &services.entities.issue,
+    )));
+    let org_entity_handler = Arc::new(OrgEntityHandler::new(Arc::clone(&services.entities.org)));
+    let entity_handler = Arc::new(EntityHandler::new(
+        Arc::clone(&vcs_entity_handler),
+        Arc::clone(&plan_entity_handler),
+        Arc::clone(&issue_entity_handler),
+        Arc::clone(&org_entity_handler),
+    ));
+
+    ToolHandlers {
+        index: Arc::new(IndexHandler::new(Arc::clone(&services.indexing))),
+        search: Arc::new(SearchHandler::new(
+            Arc::clone(&services.search),
+            Arc::clone(&services.memory),
+            Arc::clone(&services.hybrid_search),
+            Arc::clone(&services.indexing),
+        )),
+        validate: Arc::new(ValidateHandler::new(Arc::clone(&services.validation))),
+        memory: Arc::new(MemoryHandler::new(Arc::clone(&services.memory))),
+        session: Arc::new(SessionHandler::new(
+            Arc::clone(&services.agent_session),
+            Arc::clone(&services.memory),
+        )),
+        agent: Arc::new(AgentHandler::new(Arc::clone(&services.agent_session))),
+        project: Arc::new(ProjectHandler::new(Arc::clone(&services.project_workflow))),
+        vcs: Arc::new(VcsHandler::new(Arc::clone(&services.vcs))),
+        vcs_entity: vcs_entity_handler,
+        plan_entity: plan_entity_handler,
+        issue_entity: issue_entity_handler,
+        org_entity: org_entity_handler,
+        entity: entity_handler,
+        hook_processor: Arc::new(hook_processor),
+    }
+}
+
+/// Coerce a single JSON meta value into its string override form.
+fn meta_value_to_string(value: &serde_json::Value) -> Option<String> {
+    if let Some(s) = value.as_str() {
+        return Some(s.to_owned());
+    }
+    if let Some(b) = value.as_bool() {
+        return Some(b.to_string());
+    }
+    value.as_number().map(ToString::to_string)
+}
+
+/// Merge string/bool/number entries from a meta map into the overrides map.
+fn merge_meta_overrides(
+    meta: Option<&rmcp::model::Meta>,
+    map: &mut std::collections::HashMap<String, String>,
+) {
+    let Some(meta) = meta else {
+        return;
+    };
+    for (key, value) in meta.iter() {
+        if let Some(override_value) = meta_value_to_string(value) {
+            map.insert(key.clone(), override_value);
+        }
+    }
+}
+
 /// Auto-create agent session and project per unique context (T10 + T11).
 ///
 /// Uses `DashSet` guards to ensure each session ID and (org, project) pair is
@@ -350,80 +362,92 @@ async fn auto_create_session_and_project(
     init_sessions: &DashSet<String>,
     init_projects: &DashSet<(String, String)>,
 ) {
-    // T10: Auto-create agent session with IDE identity
-    if let Some(ref session_id) = ctx.session_id
-        && init_sessions.insert(session_id.clone())
-    {
-        let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
-        let ide_label = defaults
-            .agent_program
-            .as_deref()
-            .or(ctx.agent_program.as_deref())
-            .unwrap_or(mcb_utils::constants::ide::IDE_MCB_STDIO);
-        let session = AgentSession {
-            id: session_id.clone(),
-            session_summary_id: format!("auto_{}", mcb_utils::utils::id::generate().simple()),
-            agent_type: AgentType::Sisyphus,
-            model: ctx
-                .model_id
-                .clone()
-                .unwrap_or_else(|| mcb_utils::constants::FALLBACK_UNKNOWN.to_owned()),
-            parent_session_id: ctx.parent_session_id.clone(),
-            started_at: now,
-            ended_at: None,
-            duration_ms: None,
-            status: AgentSessionStatus::Active,
-            prompt_summary: Some(format!("Auto-session via {ide_label}")),
-            result_summary: None,
-            token_count: None,
-            tool_calls_count: None,
-            delegations_count: None,
-            project_id: ctx.project_id.clone(),
-            worktree_id: ctx.worktree_id.clone(),
-        };
-        match services.agent_session.create_session(session).await {
-            Ok(_) => tracing::info!("Auto-session created: {session_id} via {ide_label}"),
-            Err(e) => tracing::warn!("Auto-session creation failed (non-fatal): {e}"),
-        }
+    auto_create_session(services, defaults, ctx, init_sessions).await;
+    auto_create_project(services, ctx, init_projects).await;
+}
+
+/// T10: Auto-create an agent session with IDE identity (once per session id).
+async fn auto_create_session(
+    services: &McpServices,
+    defaults: &RuntimeDefaults,
+    ctx: &ToolExecutionContext,
+    init_sessions: &DashSet<String>,
+) {
+    let Some(session_id) = ctx.session_id.as_ref() else {
+        return;
+    };
+    if !init_sessions.insert(session_id.clone()) {
+        return;
     }
+    let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
+    let ide_label = defaults
+        .agent_program
+        .as_deref()
+        .or(ctx.agent_program.as_deref())
+        .unwrap_or(mcb_utils::constants::ide::IDE_MCB_STDIO);
+    let session = AgentSession {
+        id: session_id.clone(),
+        session_summary_id: format!("auto_{}", mcb_utils::utils::id::generate().simple()),
+        agent_type: AgentType::Sisyphus,
+        model: ctx
+            .model_id
+            .clone()
+            .unwrap_or_else(|| mcb_utils::constants::FALLBACK_UNKNOWN.to_owned()),
+        parent_session_id: ctx.parent_session_id.clone(),
+        started_at: now,
+        ended_at: None,
+        duration_ms: None,
+        status: AgentSessionStatus::Active,
+        prompt_summary: Some(format!("Auto-session via {ide_label}")),
+        result_summary: None,
+        token_count: None,
+        tool_calls_count: None,
+        delegations_count: None,
+        project_id: ctx.project_id.clone(),
+        worktree_id: ctx.worktree_id.clone(),
+    };
+    match services.agent_session.create_session(session).await {
+        Ok(_) => tracing::info!("Auto-session created: {session_id} via {ide_label}"),
+        Err(e) => tracing::warn!("Auto-session creation failed (non-fatal): {e}"),
+    }
+}
 
-    // T11: Auto-create project from VCS context
-    if let (Some(org_id), Some(repo_path)) = (&ctx.org_id, &ctx.repo_path) {
-        let project_name = Path::new(repo_path.as_str())
-            .file_name()
-            .and_then(|n| n.to_str())
-            .unwrap_or(mcb_utils::constants::FALLBACK_UNKNOWN);
-        if !init_projects.insert((org_id.clone(), project_name.to_owned())) {
-            return;
-        }
-
-        match services
-            .project_workflow
-            .get_by_name(org_id, project_name)
-            .await
-        {
-            Ok(_) => {
-                tracing::debug!("Project '{project_name}' already exists for org '{org_id}'");
-            }
-            Err(_) => {
-                let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
-                let project = Project {
-                    id: mcb_utils::utils::id::generate().to_string(),
-                    org_id: org_id.clone(),
-                    name: project_name.to_owned(),
-                    path: repo_path.clone(),
-                    created_at: now,
-                    updated_at: now,
-                };
-                match services.project_workflow.create(&project).await {
-                    Ok(()) => {
-                        tracing::info!("Auto-project created: '{project_name}' for org '{org_id}'");
-                    }
-                    Err(e) => {
-                        tracing::warn!("Auto-project creation failed (non-fatal): {e}");
-                    }
-                }
-            }
-        }
+/// T11: Auto-create a project from VCS context (once per org/project pair).
+async fn auto_create_project(
+    services: &McpServices,
+    ctx: &ToolExecutionContext,
+    init_projects: &DashSet<(String, String)>,
+) {
+    let (Some(org_id), Some(repo_path)) = (&ctx.org_id, &ctx.repo_path) else {
+        return;
+    };
+    let project_name = Path::new(repo_path.as_str())
+        .file_name()
+        .and_then(|n| n.to_str())
+        .unwrap_or(mcb_utils::constants::FALLBACK_UNKNOWN);
+    if !init_projects.insert((org_id.clone(), project_name.to_owned())) {
+        return;
+    }
+    if services
+        .project_workflow
+        .get_by_name(org_id, project_name)
+        .await
+        .is_ok()
+    {
+        tracing::debug!("Project '{project_name}' already exists for org '{org_id}'");
+        return;
+    }
+    let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
+    let project = Project {
+        id: mcb_utils::utils::id::generate().to_string(),
+        org_id: org_id.clone(),
+        name: project_name.to_owned(),
+        path: repo_path.clone(),
+        created_at: now,
+        updated_at: now,
+    };
+    match services.project_workflow.create(&project).await {
+        Ok(()) => tracing::info!("Auto-project created: '{project_name}' for org '{org_id}'"),
+        Err(e) => tracing::warn!("Auto-project creation failed (non-fatal): {e}"),
     }
 }

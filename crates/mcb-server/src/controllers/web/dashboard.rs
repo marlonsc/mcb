@@ -27,28 +27,8 @@ pub async fn dashboard(Extension(state): Extension<McbState>) -> Result<Response
     let sessions = stats.as_ref().map_or(0, |s| s.total_sessions);
     let agents = stats.as_ref().map_or(0, |s| s.total_agents);
 
-    let idx_run = state
-        .indexing_ops
-        .get_operations()
-        .values()
-        .filter(|o| {
-            matches!(
-                o.status,
-                IndexingOperationStatus::Starting | IndexingOperationStatus::InProgress
-            )
-        })
-        .count();
-    let val_run = state
-        .validation_ops
-        .get_operations()
-        .values()
-        .filter(|o| {
-            matches!(
-                o.status,
-                ValidationStatus::Queued | ValidationStatus::InProgress
-            )
-        })
-        .count();
+    let idx_run = count_active_indexing(&state);
+    let val_run = count_active_validation(&state);
 
     let emb_ok = state.embedding_provider.health_check().await.is_ok();
     let vec_ok = state.vector_store.health_check().await.is_ok();
@@ -58,29 +38,9 @@ pub async fn dashboard(Extension(state): Extension<McbState>) -> Result<Response
         "degraded"
     };
 
-    let tool_rows: String = tool_calls
-        .iter()
-        .take(8)
-        .map(|t| {
-            format!(
-                "<tr><td>{}</td><td class=\"num\">{}</td></tr>",
-                html_escape(&t.tool_name),
-                t.count
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
-    let obs_rows: String = daily
-        .iter()
-        .map(|d| {
-            format!(
-                "<tr><td>{}</td><td class=\"num\">{}</td></tr>",
-                html_escape(&d.day),
-                d.count
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("\n");
+    let tool_rows =
+        render_label_count_rows(tool_calls.iter().take(8).map(|t| (&t.tool_name, t.count)));
+    let obs_rows = render_label_count_rows(daily.iter().map(|d| (&d.day, d.count)));
 
     let body = format!(
         r#"<h1>Dashboard</h1>
@@ -113,4 +73,47 @@ pub async fn dashboard(Extension(state): Extension<McbState>) -> Result<Response
         ),
     );
     html_page!("Dashboard", body)
+}
+
+/// Count indexing operations currently starting or in progress.
+fn count_active_indexing(state: &McbState) -> usize {
+    state
+        .indexing_ops
+        .get_operations()
+        .values()
+        .filter(|o| {
+            matches!(
+                o.status,
+                IndexingOperationStatus::Starting | IndexingOperationStatus::InProgress
+            )
+        })
+        .count()
+}
+
+/// Count validation operations currently queued or in progress.
+fn count_active_validation(state: &McbState) -> usize {
+    state
+        .validation_ops
+        .get_operations()
+        .values()
+        .filter(|o| {
+            matches!(
+                o.status,
+                ValidationStatus::Queued | ValidationStatus::InProgress
+            )
+        })
+        .count()
+}
+
+/// Render `(label, count)` pairs as escaped two-column table rows.
+fn render_label_count_rows<'a>(rows: impl Iterator<Item = (&'a String, i64)>) -> String {
+    rows.map(|(label, count)| {
+        format!(
+            "<tr><td>{}</td><td class=\"num\">{}</td></tr>",
+            html_escape(label),
+            count
+        )
+    })
+    .collect::<Vec<_>>()
+    .join("\n")
 }

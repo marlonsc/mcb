@@ -65,7 +65,13 @@ pub async fn dashboard(
     let limit = body
         .limit
         .unwrap_or(mcb_utils::constants::DEFAULT_DASHBOARD_LIMIT);
-    let data = match body.graph.as_str() {
+    let data = dashboard_series(&state, &body.graph, limit).await?;
+    format::json(data)
+}
+
+/// Resolve the dashboard series for a named graph, mapping port errors to Loco errors.
+async fn dashboard_series(state: &McbState, graph: &str, limit: usize) -> Result<Vec<Datum>> {
+    let data = match graph {
         "observations_by_month" => state
             .dashboard
             .get_observations_by_month(limit)
@@ -103,7 +109,7 @@ pub async fn dashboard(
         }
         _ => not_found()?,
     };
-    format::json(data)
+    Ok(data)
 }
 
 /// Returns admin config as JSON for routes guarded by external middleware.

@@ -39,6 +39,12 @@ pub(super) fn build_indexing_success_message(
         chunks_per_sec
     );
 
+    append_indexing_success_trailer(&mut message, result);
+    message
+}
+
+/// Append the errors summary (or next-steps guidance) to a completed-indexing message.
+fn append_indexing_success_trailer(message: &mut String, result: &IndexingResult) {
     if !result.errors.is_empty() {
         let _ = write!(
             message,
@@ -55,8 +61,6 @@ pub(super) fn build_indexing_success_message(
             "• Try queries like \"find authentication functions\" or \"show error handling\"\n",
         );
     }
-
-    message
 }
 
 fn build_indexing_started_message(result: &IndexingResult, path: &Path) -> String {

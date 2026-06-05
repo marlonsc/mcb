@@ -77,40 +77,7 @@ impl HookProcessor {
             }
         };
 
-        let parent_session_hash = context
-            .metadata
-            .get("parent_session_id")
-            .map(|parent| domain_id::correlate_id("parent_session", parent.as_str()));
-        let delegated = context.metadata.get("delegated").and_then(|value| {
-            match value.trim().to_ascii_lowercase().as_str() {
-                "true" | "1" | "yes" => Some(true),
-                "false" | "0" | "no" => Some(false),
-                _ => {
-                    mcb_domain::trace!("hooks", "Unrecognized boolean mapping for delegated flag");
-                    None
-                }
-            }
-        });
-
-        let metadata = mcb_domain::entities::memory::ObservationMetadata {
-            session_id: None,
-            origin_context: Some(
-                OriginContext::builder()
-                    .project_id(Some(project_id.clone()))
-                    .parent_session_id_correlation(parent_session_hash)
-                    .tool_name(Some(context.tool_name.clone()))
-                    .repo_id(context.metadata.get("repo_id").cloned())
-                    .repo_path(context.metadata.get("repo_path").cloned())
-                    .worktree_id(context.metadata.get("worktree_id").cloned())
-                    .operator_id(context.metadata.get("operator_id").cloned())
-                    .machine_id(context.metadata.get("machine_id").cloned())
-                    .agent_program(context.metadata.get("agent_program").cloned())
-                    .model_id(context.metadata.get("model_id").cloned())
-                    .delegated(delegated)
-                    .build(),
-            ),
-            ..Default::default()
-        };
+        let metadata = build_post_tool_use_metadata(&context, &project_id);
 
         let mut tags = vec![TAG_TOOL.to_owned(), context.tool_name.clone()];
         if context.status == ToolExecutionStatus::Error {
@@ -179,6 +146,53 @@ impl HookProcessor {
             &format!("count={}", results.len())
         );
         Ok(())
+    }
+}
+
+/// Parse a textual boolean flag from hook metadata, logging unrecognized values.
+fn parse_delegated_flag(value: &str) -> Option<bool> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "true" | "1" | "yes" => Some(true),
+        "false" | "0" | "no" => Some(false),
+        _ => {
+            mcb_domain::trace!("hooks", "Unrecognized boolean mapping for delegated flag");
+            None
+        }
+    }
+}
+
+/// Build observation metadata for a `PostToolUse` event from its context and project id.
+fn build_post_tool_use_metadata(
+    context: &PostToolUseContext,
+    project_id: &str,
+) -> mcb_domain::entities::memory::ObservationMetadata {
+    let parent_session_hash = context
+        .metadata
+        .get("parent_session_id")
+        .map(|parent| domain_id::correlate_id("parent_session", parent.as_str()));
+    let delegated = context
+        .metadata
+        .get("delegated")
+        .and_then(|value| parse_delegated_flag(value));
+
+    mcb_domain::entities::memory::ObservationMetadata {
+        session_id: None,
+        origin_context: Some(
+            OriginContext::builder()
+                .project_id(Some(project_id.to_owned()))
+                .parent_session_id_correlation(parent_session_hash)
+                .tool_name(Some(context.tool_name.clone()))
+                .repo_id(context.metadata.get("repo_id").cloned())
+                .repo_path(context.metadata.get("repo_path").cloned())
+                .worktree_id(context.metadata.get("worktree_id").cloned())
+                .operator_id(context.metadata.get("operator_id").cloned())
+                .machine_id(context.metadata.get("machine_id").cloned())
+                .agent_program(context.metadata.get("agent_program").cloned())
+                .model_id(context.metadata.get("model_id").cloned())
+                .delegated(delegated)
+                .build(),
+        ),
+        ..Default::default()
     }
 }
 

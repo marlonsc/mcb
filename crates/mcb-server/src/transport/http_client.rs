@@ -231,36 +231,40 @@ impl HttpClientTransport {
                     continue;
                 }
             };
-
-            // Skip empty lines
-            if line.trim().is_empty() {
-                continue;
-            }
-
-            debug!("HttpClient", "Received request from stdin", &line.len());
-
-            // Parse the request
-            let request: McpRequest = match serde_json::from_str(&line) {
-                Ok(req) => req,
-                Err(e) => {
-                    warn!(
-                        "HttpClient",
-                        "Failed to parse request",
-                        &format!("error={e} len={}", line.len())
-                    );
-                    let error_response = Self::create_parse_error(&e);
-                    Self::write_response(&mut stdout, &error_response)?;
-                    continue;
-                }
-            };
-
-            // Forward to server and handle response
-            let response = self.forward_request(&request).await;
-            Self::write_response(&mut stdout, &response)?;
+            self.process_line(&line, &mut stdout).await?;
         }
 
         info!("HttpClient", "MCB client transport finished");
         Ok(())
+    }
+
+    /// Parse a single stdin line, forward it to the server, and write the response.
+    async fn process_line(
+        &self,
+        line: &str,
+        stdout: &mut io::Stdout,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if line.trim().is_empty() {
+            return Ok(());
+        }
+
+        debug!("HttpClient", "Received request from stdin", &line.len());
+
+        let request: McpRequest = match serde_json::from_str(line) {
+            Ok(req) => req,
+            Err(e) => {
+                warn!(
+                    "HttpClient",
+                    "Failed to parse request",
+                    &format!("error={e} len={}", line.len())
+                );
+                let error_response = Self::create_parse_error(&e);
+                return Self::write_response(stdout, &error_response);
+            }
+        };
+
+        let response = self.forward_request(&request).await;
+        Self::write_response(stdout, &response)
     }
 
     /// Send a request to the MCB server

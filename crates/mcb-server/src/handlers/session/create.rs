@@ -5,6 +5,7 @@ use mcb_utils::constants::keys as schema;
 use std::sync::Arc;
 
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
+use mcb_domain::entities::memory::OriginContext;
 use mcb_domain::ports::AgentSessionServiceInterface;
 use mcb_utils::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
@@ -34,6 +35,35 @@ struct CreateSessionPayload {
     machine_id: Option<String>,
     agent_program: Option<String>,
     model_id: Option<String>,
+}
+
+/// Resolve the canonical origin context for a new agent session.
+fn resolve_create_origin_context(
+    args: &SessionArgs,
+    payload: &CreateSessionPayload,
+    session_id: &str,
+    now: i64,
+) -> Result<OriginContext, McpError> {
+    resolve_origin_context(&OriginContextInput {
+        org_id: args.org_id.as_deref(),
+        project_id_args: args.project_id.as_deref(),
+        project_id_payload: payload.project_id.as_deref(),
+        session_from_args: Some(session_id),
+        parent_session_from_args: args.parent_session_id.as_deref(),
+        parent_session_from_data: payload.parent_session_id.as_deref(),
+        tool_name_args: Some("session"),
+        repo_path_payload: payload.repo_path.as_deref(),
+        worktree_id_args: args.worktree_id.as_deref(),
+        worktree_id_payload: payload.worktree_id.as_deref(),
+        operator_id_payload: payload.operator_id.as_deref(),
+        machine_id_payload: payload.machine_id.as_deref(),
+        agent_program_payload: payload.agent_program.as_deref(),
+        model_id_payload: payload.model_id.as_deref(),
+        delegated_payload: Some(payload.parent_session_id.is_some()),
+        require_project_id: true,
+        timestamp: Some(now),
+        ..Default::default()
+    })
 }
 
 /// Creates a new agent session.
@@ -69,6 +99,7 @@ pub async fn create_session(
     let now = mcb_utils::utils::time::epoch_secs_i64()
         .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
     let session_id = domain_id::generate().to_string();
+    let origin_context = resolve_create_origin_context(args, &payload, session_id.as_str(), now)?;
     let session_summary_id = payload
         .session_summary_id
         .unwrap_or_else(|| format!("auto_{}", domain_id::generate().simple()));
@@ -94,33 +125,8 @@ pub async fn create_session(
         token_count: None,
         tool_calls_count: None,
         delegations_count: None,
-        project_id: None,
-        worktree_id: None,
-    };
-    let origin_context = resolve_origin_context(&OriginContextInput {
-        org_id: args.org_id.as_deref(),
-        project_id_args: args.project_id.as_deref(),
-        project_id_payload: payload.project_id.as_deref(),
-        session_from_args: Some(session_id.as_str()),
-        parent_session_from_args: args.parent_session_id.as_deref(),
-        parent_session_from_data: payload.parent_session_id.as_deref(),
-        tool_name_args: Some("session"),
-        repo_path_payload: payload.repo_path.as_deref(),
-        worktree_id_args: args.worktree_id.as_deref(),
-        worktree_id_payload: payload.worktree_id.as_deref(),
-        operator_id_payload: payload.operator_id.as_deref(),
-        machine_id_payload: payload.machine_id.as_deref(),
-        agent_program_payload: payload.agent_program.as_deref(),
-        model_id_payload: payload.model_id.as_deref(),
-        delegated_payload: Some(payload.parent_session_id.is_some()),
-        require_project_id: true,
-        timestamp: Some(now),
-        ..Default::default()
-    })?;
-    let session = AgentSession {
         project_id: origin_context.project_id,
         worktree_id: origin_context.worktree_id,
-        ..session
     };
     match agent_service.create_session(session).await {
         Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
