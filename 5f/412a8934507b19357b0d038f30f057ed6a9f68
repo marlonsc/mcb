@@ -1,0 +1,23 @@
+crates/mcb-validate/src/scan.rs
+  s_750dc69364e4e0::t_4d96fb13e510cc 116-118
+  s_750dc69364e4e0::t_eacd2605f22700 25-34
+crates/mcb-validate/src/validators/pattern_validator/result_check.rs
+  s_750dc69364e4e0::t_d2bc7d28509bb0 9-14,18-21,23
+  s_750dc69364e4e0::t_e8e4f2d1e1439b 15-17,22,29-32,41-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "5f412a8934507b19357b0d038f30f057ed6a9f68",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
