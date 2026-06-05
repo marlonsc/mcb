@@ -1,0 +1,19 @@
+crates/mcb-validate/src/validators/refactoring/tests.rs
+  s_750dc69364e4e0::t_4d6b5df3a23aaa 105-107,113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "1f5ec36e2c2a8a6b2bb36d4bb21443fd49b9ef60",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
