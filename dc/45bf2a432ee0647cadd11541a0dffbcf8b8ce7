@@ -1,0 +1,27 @@
+crates/mcb-utils/src/utils/fs.rs
+  s_750dc69364e4e0::t_5f3e2ffc3e0519 48-51,53-54,56-72,74-77,80
+crates/mcb-domain/src/ports/repositories/auth.rs
+  s_750dc69364e4e0::t_f571568009c05d 33-39
+crates/mcb-server/src/auth.rs
+  s_750dc69364e4e0::t_eb98471a6d1200 45
+config/development.yaml
+  s_750dc69364e4e0::t_53a9f2feaf7d71 106
+crates/mcb-providers/src/database/seaorm/auth_repository.rs
+  s_750dc69364e4e0::t_fd81b2bfc2b024 42,44
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "dc45bf2a432ee0647cadd11541a0dffbcf8b8ce7",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
