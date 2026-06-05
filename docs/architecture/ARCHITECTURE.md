@@ -46,11 +46,11 @@ Memory Context Browser is a high-performance, extensible Model Context Protocol 
 
 ### Current Status
 
-**Version**: 0.2.1 (Memory, Session, Agent, VCS + Documentation Overhaul + rstest)
-**Architecture Maturity**: ✅ **100% Complete DI Implementation**
-**DI Status**: ✅ 20+ Port Traits, ✅ Provider Registry, ✅ Service Factory, ✅ Full Port/Adapter Wiring
+**Version**: 0.3.1 (SeaQL + Loco.rs baseline, release stabilization)
+**Architecture Maturity**: ✅ **SeaQL + Loco.rs Clean Architecture Baseline**
+**DI Status**: ✅ Linkme provider registry, ✅ AppContext composition root, ✅ Full Port/Adapter Wiring
 **Provider Registration**: ✅ Linkme distributed slices (compile-time), ✅ Inventory removed
-**Validation**: ✅ mcb-validate crate Phases 1–7 verified (349 tests); 1700+ tests project-wide
+**Validation**: ✅ `mcb-validate` architecture checks; run `make validate` for the current release verdict
 **Port Traits**: `crates/mcb-domain/src/ports/` - Provider traits in domain layer (Clean Architecture compliant)
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
@@ -924,7 +924,7 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Status**: Phases 1–7 all VERIFIED (v0.2.1) - 349+ tests pass
+**Status**: Active in v0.3.1; run `make validate` for the current architecture verdict.
 
 ### Components (1)
 
@@ -2278,7 +2278,7 @@ impl BackupManager {
 - Multi-branch and commit history search
 - Cross-session memory with SQLite storage
 - Hybrid search for observations and decisions
-- 🚧**v0.3.0**: SeaQL + Loco.rs Platform Rebuild (ADR-051)
+- ✅ **v0.3.0**: SeaQL + Loco.rs Platform Rebuild (ADR-051)
 - SeaORM persistence replacing raw SQLite
 - Loco.rs framework with Axum native server
 - Entity CRUD (vcs/plan/issue/org resources)
@@ -2299,7 +2299,7 @@ impl BackupManager {
 
 **Overview**: v0.5.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
 
-> **v0.3.0 Migration Note:** This architecture is v0.4.0-v0.5.0 future work. The current v0.3.0 release uses 4 layers (domain → providers → infrastructure → server).
+> **v0.3.x Migration Note:** This architecture is v0.4.0-v0.5.0 future work. The current v0.3.1 line uses 4 runtime layers (domain → providers → infrastructure → server) plus `mcb-utils`, `mcb-validate`, and the `mcb` CLI facade.
 
 ### 5-Layer Architecture
 

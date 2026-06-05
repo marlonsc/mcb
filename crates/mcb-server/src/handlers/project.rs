@@ -15,9 +15,8 @@ use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{ProjectAction, ProjectArgs, ProjectResource};
 use crate::error_mapping::safe_internal_error;
-use crate::utils::mcp::{
-    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_org_id,
-};
+use crate::formatter::ResponseFormatter;
+use crate::utils::mcp::{map_opaque_error, ok_text, require_data, require_id, resolve_org_id};
 
 /// Handler for the consolidated `project` MCP tool.
 pub struct ProjectHandler {
@@ -74,12 +73,12 @@ impl ProjectHandler {
 
         match (args.action, args.resource) {
             // ── Project ──────────────────────────────────────────────────
-            (ProjectAction::Get, ProjectResource::Project) => ok_json(&map_opaque_error(
-                self.repo.get_by_id(org_id.as_str(), project_id).await,
-            )?),
-            (ProjectAction::List, ProjectResource::Project) => {
-                ok_json(&map_opaque_error(self.repo.list(org_id.as_str()).await)?)
-            }
+            (ProjectAction::Get, ProjectResource::Project) => ResponseFormatter::json_success(
+                &map_opaque_error(self.repo.get_by_id(org_id.as_str(), project_id).await)?,
+            ),
+            (ProjectAction::List, ProjectResource::Project) => ResponseFormatter::json_success(
+                &map_opaque_error(self.repo.list(org_id.as_str()).await)?,
+            ),
             (ProjectAction::Create, ProjectResource::Project) => {
                 self.create_project(&org_id, project_id, &args).await
             }
@@ -97,15 +96,15 @@ impl ProjectHandler {
                     phase.project_id = project_id.to_owned();
                 }
                 map_opaque_error(self.repo.create_phase(&phase).await)?;
-                ok_json(&phase)
+                ResponseFormatter::json_success(&phase)
             }
             (ProjectAction::Get, ProjectResource::Phase) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_phase(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_phase(&id).await)?)
             }
-            (ProjectAction::List, ProjectResource::Phase) => {
-                ok_json(&map_opaque_error(self.repo.list_phases(project_id).await)?)
-            }
+            (ProjectAction::List, ProjectResource::Phase) => ResponseFormatter::json_success(
+                &map_opaque_error(self.repo.list_phases(project_id).await)?,
+            ),
             (ProjectAction::Update, ProjectResource::Phase) => {
                 let phase: ProjectPhase = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.update_phase(&phase).await)?;
@@ -125,11 +124,11 @@ impl ProjectHandler {
                 }
                 issue.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_issue(&issue).await)?;
-                ok_json(&issue)
+                ResponseFormatter::json_success(&issue)
             }
             (ProjectAction::Get, ProjectResource::Issue) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(
+                ResponseFormatter::json_success(&map_opaque_error(
                     self.repo.get_issue(org_id.as_str(), &id).await,
                 )?)
             }
@@ -137,13 +136,13 @@ impl ProjectHandler {
                 if let Some(filters) = &args.filters {
                     let filter: IssueFilter = serde_json::from_value(filters.clone())
                         .map_err(|e| McpError::invalid_params(format!("bad filters: {e}"), None))?;
-                    ok_json(&map_opaque_error(
+                    ResponseFormatter::json_success(&map_opaque_error(
                         self.repo
                             .list_issues_filtered(org_id.as_str(), &filter)
                             .await,
                     )?)
                 } else {
-                    ok_json(&map_opaque_error(
+                    ResponseFormatter::json_success(&map_opaque_error(
                         self.repo.list_issues(org_id.as_str(), project_id).await,
                     )?)
                 }
@@ -164,13 +163,13 @@ impl ProjectHandler {
             (ProjectAction::Create, ProjectResource::Dependency) => {
                 let dep: ProjectDependency = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.create_dependency(&dep).await)?;
-                ok_json(&dep)
+                ResponseFormatter::json_success(&dep)
             }
             (ProjectAction::List, ProjectResource::Dependency) => {
                 let issue_id = args.issue_id.as_deref().ok_or_else(|| {
                     McpError::invalid_params("issue_id required for dependency list", None)
                 })?;
-                ok_json(&map_opaque_error(
+                ResponseFormatter::json_success(&map_opaque_error(
                     self.repo.list_dependencies(issue_id).await,
                 )?)
             }
@@ -187,15 +186,17 @@ impl ProjectHandler {
                     decision.project_id = project_id.to_owned();
                 }
                 map_opaque_error(self.repo.create_decision(&decision).await)?;
-                ok_json(&decision)
+                ResponseFormatter::json_success(&decision)
             }
             (ProjectAction::Get, ProjectResource::Decision) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_decision(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(
+                    self.repo.get_decision(&id).await,
+                )?)
             }
-            (ProjectAction::List, ProjectResource::Decision) => ok_json(&map_opaque_error(
-                self.repo.list_decisions(project_id).await,
-            )?),
+            (ProjectAction::List, ProjectResource::Decision) => ResponseFormatter::json_success(
+                &map_opaque_error(self.repo.list_decisions(project_id).await)?,
+            ),
             (ProjectAction::Update, ProjectResource::Decision) => {
                 let decision: ProjectDecision = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.update_decision(&decision).await)?;
@@ -245,7 +246,7 @@ impl ProjectHandler {
             updated_at: now,
         };
         map_opaque_error(self.repo.create(&project).await)?;
-        ok_json(&project)
+        ResponseFormatter::json_success(&project)
     }
 
     /// Updates an existing project with optional field changes from data payload.
@@ -268,7 +269,7 @@ impl ProjectHandler {
             .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
         project.updated_at = now;
         map_opaque_error(self.repo.update(&project).await)?;
-        ok_json(&project)
+        ResponseFormatter::json_success(&project)
     }
 
     /// Deletes a project by ID.
@@ -278,7 +279,7 @@ impl ProjectHandler {
         project_id: &str,
     ) -> Result<CallToolResult, McpError> {
         map_opaque_error(self.repo.delete(org_id, project_id).await)?;
-        ok_json(&serde_json::json!({
+        ResponseFormatter::json_success(&serde_json::json!({
             "deleted": true,
             "id": project_id,
         }))

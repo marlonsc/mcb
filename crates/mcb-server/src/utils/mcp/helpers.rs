@@ -3,10 +3,8 @@
 use mcb_domain::error::Error;
 use mcb_domain::value_objects::OrgContext;
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
-use serde::Serialize;
 use serde::de::DeserializeOwned;
 
-use crate::error_mapping::safe_internal_error;
 use crate::utils::json::json_map;
 
 /// Returns the required `id` parameter or an MCP invalid params error.
@@ -16,16 +14,6 @@ use crate::utils::json::json_map;
 pub fn require_id(id: &Option<String>) -> Result<String, McpError> {
     id.clone()
         .ok_or_else(|| McpError::invalid_params("id required", None))
-}
-
-/// Serializes a value into pretty JSON and wraps it in a successful MCP tool result.
-///
-/// # Errors
-/// Returns an error when JSON serialization fails.
-pub fn ok_json<T: Serialize>(val: &T) -> Result<CallToolResult, McpError> {
-    let json = serde_json::to_string_pretty(val)
-        .map_err(|e| safe_internal_error("json serialization", &e))?;
-    Ok(CallToolResult::success(vec![Content::text(json)]))
 }
 
 /// Wraps plain text in a successful MCP tool result.

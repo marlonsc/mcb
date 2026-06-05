@@ -11,8 +11,9 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{PlanEntityAction, PlanEntityArgs, PlanEntityResource};
+use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::{
-    map_opaque_error, ok_json, ok_text, require_data, require_id, require_resolved_identifier,
+    map_opaque_error, ok_text, require_data, require_id, require_resolved_identifier,
     resolve_org_id,
 };
 
@@ -55,15 +56,15 @@ impl PlanEntityHandler {
                 )?;
                 plan.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_plan(&plan).await)?;
-                ok_json(&plan)
+                ResponseFormatter::json_success(&plan)
             }
             (PlanEntityAction::Get, PlanEntityResource::Plan) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_plan(org_id.as_str(), &id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_plan(org_id.as_str(), &id).await)?)
             }
             (PlanEntityAction::List, PlanEntityResource::Plan) => {
                 let project_id = require_arg!(args.project_id, "project_id required for list");
-                ok_json(&map_opaque_error(self.repo.list_plans(org_id.as_str(), project_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_plans(org_id.as_str(), project_id).await)?)
             }
             (PlanEntityAction::Update, PlanEntityResource::Plan) => {
                 let mut plan: Plan = require_data(args.data, "data required for update")?;
@@ -80,30 +81,30 @@ impl PlanEntityHandler {
                 let mut version: PlanVersion = require_data(args.data, "data required")?;
                 version.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_plan_version(&version).await)?;
-                ok_json(&version)
+                ResponseFormatter::json_success(&version)
             }
             (PlanEntityAction::Get, PlanEntityResource::Version) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_plan_version(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_plan_version(&id).await)?)
             }
             (PlanEntityAction::List, PlanEntityResource::Version) => {
                 let plan_id = require_arg!(args.plan_id, "plan_id required");
-                ok_json(&map_opaque_error(self.repo.list_plan_versions_by_plan(plan_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_plan_versions_by_plan(plan_id).await)?)
             }
             (PlanEntityAction::Create, PlanEntityResource::Review) => {
                 let mut review: PlanReview = require_data(args.data, "data required")?;
                 review.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_plan_review(&review).await)?;
-                ok_json(&review)
+                ResponseFormatter::json_success(&review)
             }
             (PlanEntityAction::Get, PlanEntityResource::Review) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_plan_review(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_plan_review(&id).await)?)
             }
             (PlanEntityAction::List, PlanEntityResource::Review) => {
                 let plan_version_id =
                     require_arg!(args.plan_version_id, "plan_version_id required");
-                ok_json(&map_opaque_error(self.repo.list_plan_reviews_by_version(plan_version_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_plan_reviews_by_version(plan_version_id).await)?)
             }
             }
         }

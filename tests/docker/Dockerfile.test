@@ -6,6 +6,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     make \
     netcat-traditional \
     nodejs \
+    libssl-dev \
     npm \
     lsof \
     && rm -rf /var/lib/apt/lists/*

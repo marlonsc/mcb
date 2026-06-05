@@ -4095,6 +4095,7 @@ dependencies = [
  "rmcp",
  "rstest",
  "serde_json",
+ "serde_yaml",
  "serial_test",
  "tokio",
  "tokio-util",

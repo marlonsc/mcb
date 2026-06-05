@@ -214,38 +214,44 @@ async fn test_stdio_roundtrip_tools_list() -> TestResult {
             "Should have at least one tool"
         );
 
-        // Verify expected tools exist
+        // Verify expected public tools exist.
         let tool_names: Vec<String> = tools_result
             .tools
             .iter()
             .map(|t| t.name.to_string())
             .collect();
-
-        assert!(
-            tool_names.contains(&"index".to_owned()),
-            "Missing index tool"
-        );
-        assert!(
-            tool_names.contains(&"search".to_owned()),
-            "Missing search tool"
-        );
-        assert!(
-            tool_names.contains(&"validate".to_owned()),
-            "Missing validate tool"
-        );
-        assert!(
-            tool_names.contains(&"memory".to_owned()),
-            "Missing memory tool"
-        );
-        assert!(
-            tool_names.contains(&"session".to_owned()),
-            "Missing session tool"
-        );
-        assert!(
-            tool_names.contains(&"agent".to_owned()),
-            "Missing agent tool"
-        );
-        assert!(tool_names.contains(&"vcs".to_owned()), "Missing vcs tool");
+        let expected_tools = [
+            "search_code",
+            "search_memory",
+            "index_repo",
+            "index_status",
+            "clear_index",
+            "store_memory",
+            "get_memories",
+            "list_memories",
+            "memory_timeline",
+            "inject_context",
+            "start_session",
+            "get_session",
+            "list_sessions",
+            "summarize_session",
+            "log_tool_call",
+            "log_delegation",
+            "validate_code",
+            "analyze_code",
+            "list_rules",
+            "list_repos",
+            "compare_branches",
+            "analyze_impact",
+            "project",
+            "entity",
+        ];
+        for expected_tool in expected_tools {
+            assert!(
+                tool_names.contains(&expected_tool.to_owned()),
+                "Missing {expected_tool} tool"
+            );
+        }
 
         let _ = client.cancel().await;
         cleanup_temp_dbs();

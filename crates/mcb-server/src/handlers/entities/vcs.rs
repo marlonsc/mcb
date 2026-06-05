@@ -13,8 +13,9 @@ use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
 use crate::error_mapping::safe_internal_error;
+use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::{
-    map_opaque_error, ok_json, ok_text, require_data, require_id, require_resolved_identifier,
+    map_opaque_error, ok_text, require_data, require_id, require_resolved_identifier,
     resolve_org_id,
 };
 
@@ -71,7 +72,7 @@ impl VcsEntityHandler {
                 )?;
                 repo.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_repository(&repo).await)?;
-                ok_json(&repo)
+                ResponseFormatter::json_success(&repo)
             }
             (VcsEntityAction::Get, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
@@ -87,11 +88,11 @@ impl VcsEntityHandler {
                         None,
                     ));
                 }
-                ok_json(&repository)
+                ResponseFormatter::json_success(&repository)
             }
             (VcsEntityAction::List, VcsEntityResource::Repository) => {
                 let project_id = require_arg!(args.project_id, "project_id required for list");
-                ok_json(&map_opaque_error(self.repo.list_repositories(&org_id, project_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_repositories(&org_id, project_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Repository) => {
                 let project_id =
@@ -139,15 +140,15 @@ impl VcsEntityHandler {
             (VcsEntityAction::Create, VcsEntityResource::Branch) => {
                 let branch: Branch = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.create_branch(&branch).await)?;
-                ok_json(&branch)
+                ResponseFormatter::json_success(&branch)
             }
             (VcsEntityAction::Get, VcsEntityResource::Branch) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_branch(&org_id, &id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_branch(&org_id, &id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Branch) => {
                 let repo_id = require_arg!(args.repository_id, "repository_id required");
-                ok_json(&map_opaque_error(self.repo.list_branches(&org_id, repo_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_branches(&org_id, repo_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Branch) => {
                 let branch: Branch = require_data(args.data, "data required")?;
@@ -164,15 +165,15 @@ impl VcsEntityHandler {
             (VcsEntityAction::Create, VcsEntityResource::Worktree) => {
                 let wt: Worktree = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.create_worktree(&wt).await)?;
-                ok_json(&wt)
+                ResponseFormatter::json_success(&wt)
             }
             (VcsEntityAction::Get, VcsEntityResource::Worktree) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_worktree(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_worktree(&id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Worktree) => {
                 let repo_id = require_arg!(args.repository_id, "repository_id required");
-                ok_json(&map_opaque_error(self.repo.list_worktrees(repo_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_worktrees(repo_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Worktree) => {
                 let wt: Worktree = require_data(args.data, "data required")?;
@@ -190,15 +191,15 @@ impl VcsEntityHandler {
                 let asgn: AgentWorktreeAssignment =
                     require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.create_assignment(&asgn).await)?;
-                ok_json(&asgn)
+                ResponseFormatter::json_success(&asgn)
             }
             (VcsEntityAction::Get, VcsEntityResource::Assignment) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_assignment(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_assignment(&id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Assignment) => {
                 let wt_id = require_arg!(args.worktree_id, "worktree_id required");
-                ok_json(&map_opaque_error(self.repo.list_assignments_by_worktree(wt_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_assignments_by_worktree(wt_id).await)?)
             }
             (VcsEntityAction::Release, VcsEntityResource::Assignment) => {
                 let id = require_id(&args.id)?;

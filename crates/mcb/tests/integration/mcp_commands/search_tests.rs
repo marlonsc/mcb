@@ -1,6 +1,6 @@
-//! Tests for the `search` MCP tool.
+//! Tests for public search MCP tools.
 //!
-//! Resources: code, memory, context
+//! Tools: `search_code`, `search_memory`
 
 use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
 use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
@@ -15,8 +15,8 @@ async fn test_search_memory() -> TestResult {
     let client = create_client().await?;
     let result = call_tool(
         &client,
-        "search",
-        serde_json::json!({"query": "test", "resource": "memory", "limit": 5}),
+        "search_memory",
+        serde_json::json!({"query": "test", "limit": 5}),
     )
     .await?;
     assert!(
@@ -35,8 +35,8 @@ async fn test_search_code_missing_collection() -> TestResult {
     let client = create_client().await?;
     let result = call_tool(
         &client,
-        "search",
-        serde_json::json!({"query": "test", "resource": "code", "limit": 5}),
+        "search_code",
+        serde_json::json!({"query": "test", "limit": 5}),
     )
     .await?;
     assert!(
@@ -53,7 +53,7 @@ async fn test_search_code_missing_collection() -> TestResult {
 #[tokio::test]
 async fn test_search_missing_query() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(&client, "search", serde_json::json!({"resource": "code"})).await;
+    let result = call_tool(&client, "search_code", serde_json::json!({})).await;
     assert_tool_error(result, &["query", "missing field"]);
     shutdown_client(client).await;
     cleanup_temp_dbs();
@@ -63,15 +63,10 @@ async fn test_search_missing_query() -> TestResult {
 #[serial]
 #[rstest]
 #[tokio::test]
-async fn test_search_invalid_resource() -> TestResult {
+async fn test_search_rejects_empty_query() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(
-        &client,
-        "search",
-        serde_json::json!({"query": "test", "resource": "nonexistent"}),
-    )
-    .await;
-    assert_tool_error(result, &["unknown variant", "expected one of"]);
+    let result = call_tool(&client, "search_memory", serde_json::json!({"query": ""})).await;
+    assert_tool_error(result, &["query", "validation", "length"]);
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
