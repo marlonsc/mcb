@@ -1,0 +1,31 @@
+crates/mcb-infrastructure/src/services/memory_service/observation.rs
+  s_750dc69364e4e0::t_072f02663b1cfb 33,135
+  s_750dc69364e4e0::t_e10849503d58f0 23-31,37,41,43,46,49,59-60,76,79-80,89,97-98,100-102,117,119,125,140
+crates/mcb-infrastructure/src/services/indexing_service/processing.rs
+  s_750dc69364e4e0::t_1374c9b25204de 60-61,66-73,75-82
+  s_750dc69364e4e0::t_09294a7d8b9593 155-161
+  s_750dc69364e4e0::t_611da3198b1f68 125-130,132
+  s_750dc69364e4e0::t_28d912ac71e209 103,105,107
+  s_750dc69364e4e0::t_f625fcd3cdf96f 222,226,229,235,243,247
+  s_750dc69364e4e0::t_6f259c22a13e15 101-102,104,106,108-110
+crates/mcb-infrastructure/src/services/memory_service/interface.rs
+  s_750dc69364e4e0::t_fe97173f9b3f85 33-39
+crates/mcb-infrastructure/src/project/workspace.rs
+  s_750dc69364e4e0::t_9739ae974d4583 50-56,58-66,68-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "a2c6af61aa49eefe89231686f79f078d0aa727ca",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
