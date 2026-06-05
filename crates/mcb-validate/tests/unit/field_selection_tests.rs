@@ -164,12 +164,12 @@ fn file_selection_no_file_field_returns_none() {
 
 #[rstest]
 fn line_selection_standard_line_field() {
-    let v = mcb_validate::ErrorBoundaryViolation::MissingErrorContext {
+    let v = mcb_validate::ErrorBoundaryViolation::WrongLayerError {
         file: PathBuf::from("src/handler.rs"),
         line: 99,
-        error_pattern: "db.query()?".to_owned(),
-        suggestion: "Add .context()".to_owned(),
-        severity: Severity::Info,
+        error_type: "std::io::Error".to_owned(),
+        layer: "domain".to_owned(),
+        severity: Severity::Warning,
     };
     assert_eq!(v.line(), Some(99));
 }

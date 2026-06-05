@@ -38,14 +38,15 @@ fn has_test_coverage(
         return true;
     }
 
-    let parent_name = relative
+    // Tests are organized by module/feature under tests/ (e.g. tests/unit/<module>/),
+    // not 1:1 with source files. A file counts as covered when any of its module
+    // path segments has a matching test directory or file.
+    relative
         .parent()
-        .and_then(|p| p.file_name())
-        .and_then(|s| s.to_str())
-        .unwrap_or("");
-
-    relative.components().count() > 1
-        && (test_dirs.contains(parent_name) || has_test_key(test_files, parent_name))
+        .into_iter()
+        .flat_map(Path::components)
+        .filter_map(|c| c.as_os_str().to_str())
+        .any(|segment| test_dirs.contains(segment) || has_test_key(test_files, segment))
 }
 
 fn collect_test_index(
