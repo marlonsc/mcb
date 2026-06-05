@@ -88,11 +88,11 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         for (i, (embedding, meta)) in vectors.iter().zip(metadata.iter()).enumerate() {
             let id = format!("vec_{}", id::generate());
             pinecone_vectors.push(serde_json::json!({
-                "id": id,
+                "id": &id,
                 "values": embedding.vector,
                 "metadata": meta
             }));
-            ids.push(id.clone());
+            ids.push(id);
 
             if pinecone_vectors.len() >= batch_size || i == vectors.len() - 1 {
                 self.upsert_vector_batch(&collection_str, &pinecone_vectors)

@@ -250,12 +250,13 @@ impl SeaOrmProjectRepository {
 
             for model in models {
                 let dependency: ProjectDependency = model.into();
-                if visited_edges.insert(dependency.id.clone()) {
-                    let next = dependency.to_issue_id.clone();
-                    traversed.push(dependency);
-                    if visited_nodes.insert(next.clone()) {
-                        queue.push_back((next, depth + 1));
-                    }
+                if !visited_edges.insert(dependency.id.clone()) {
+                    continue;
+                }
+                let next = dependency.to_issue_id.clone();
+                traversed.push(dependency);
+                if visited_nodes.insert(next.clone()) {
+                    queue.push_back((next, depth + 1));
                 }
             }
         }

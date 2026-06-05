@@ -181,10 +181,10 @@ impl GitProvider {
             None,
             None,
             Some(&mut |_delta, _hunk, line| {
-                match line.origin() {
-                    '+' => total_additions += 1,
-                    '-' => total_deletions += 1,
-                    _ => {}
+                if line.origin() == '+' {
+                    total_additions += 1;
+                } else if line.origin() == '-' {
+                    total_deletions += 1;
                 }
                 true
             }),
@@ -239,7 +239,8 @@ impl VcsProvider for GitProvider {
 
             let name = match branch.name() {
                 Ok(Some(n)) => n.to_owned(),
-                _ => continue,
+                Ok(None) => continue,
+                Err(_non_utf8) => continue,
             };
 
             let head_commit = match branch.get().peel_to_commit() {
@@ -252,11 +253,12 @@ impl VcsProvider for GitProvider {
                 .ok()
                 .and_then(|u| u.name().ok().flatten().map(String::from));
 
+            let is_default = name == repo.default_branch();
             result.push(VcsBranch::new(
                 format!("{}::{}", repo.id(), name),
-                name.clone(),
+                name,
                 head_commit,
-                name == repo.default_branch(),
+                is_default,
                 upstream,
             ));
         }

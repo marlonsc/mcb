@@ -57,40 +57,11 @@ impl SeaOrmObservationRepository {
         if let Some(obs_type) = &f.r#type {
             query.and_where(Expr::col(observation::Column::ObservationType).eq(obs_type.as_str()));
         }
-        if let Some(session_id) = &f.session_id {
-            query.and_where(Expr::cust_with_values(
-                "json_extract(metadata, '$.session_id') = ?",
-                vec![Value::from(session_id.as_str())],
-            ));
-        }
-        if let Some(parent_session_id) = &f.parent_session_id {
-            query.and_where(Expr::cust_with_values(
-                "json_extract(metadata, '$.origin_context.parent_session_id') = ?",
-                vec![Value::from(parent_session_id.as_str())],
-            ));
-        }
-        if let Some(repo_id) = &f.repo_id {
-            query.and_where(Expr::cust_with_values(
-                "json_extract(metadata, '$.repo_id') = ?",
-                vec![Value::from(repo_id.clone())],
-            ));
-        }
         if let Some((start, end)) = f.time_range {
             query.and_where(Expr::col(observation::Column::CreatedAt).gte(start));
             query.and_where(Expr::col(observation::Column::CreatedAt).lte(end));
         }
-        if let Some(branch) = &f.branch {
-            query.and_where(Expr::cust_with_values(
-                "json_extract(metadata, '$.branch') = ?",
-                vec![Value::from(branch.clone())],
-            ));
-        }
-        if let Some(commit) = &f.commit {
-            query.and_where(Expr::cust_with_values(
-                "json_extract(metadata, '$.commit') = ?",
-                vec![Value::from(commit.clone())],
-            ));
-        }
+        Self::apply_metadata_filters(query, f);
         if let Some(tags) = &f.tags {
             for tag in tags {
                 query.and_where(Expr::cust_with_values(
@@ -98,6 +69,35 @@ impl SeaOrmObservationRepository {
                     vec![Value::from(tag.as_str())],
                 ));
             }
+        }
+    }
+
+    /// Applies the `json_extract(metadata, ...)` equality filters.
+    fn apply_metadata_filters(query: &mut sea_query::SelectStatement, f: &MemoryFilter) {
+        let json_eq = |query: &mut sea_query::SelectStatement, path: &str, value: Value| {
+            query.and_where(Expr::cust_with_values(
+                format!("json_extract(metadata, '{path}') = ?"),
+                vec![value],
+            ));
+        };
+        if let Some(session_id) = &f.session_id {
+            json_eq(query, "$.session_id", Value::from(session_id.as_str()));
+        }
+        if let Some(parent_session_id) = &f.parent_session_id {
+            json_eq(
+                query,
+                "$.origin_context.parent_session_id",
+                Value::from(parent_session_id.as_str()),
+            );
+        }
+        if let Some(repo_id) = &f.repo_id {
+            json_eq(query, "$.repo_id", Value::from(repo_id.clone()));
+        }
+        if let Some(branch) = &f.branch {
+            json_eq(query, "$.branch", Value::from(branch.clone()));
+        }
+        if let Some(commit) = &f.commit {
+            json_eq(query, "$.commit", Value::from(commit.clone()));
         }
     }
 

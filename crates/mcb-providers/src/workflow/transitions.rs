@@ -68,6 +68,16 @@ fn resolve_transition(state: &WorkflowState, trigger: &TransitionTrigger) -> Res
             })
         }
 
+        _ => resolve_verification_transition(state, trigger),
+    }
+}
+
+/// Resolve verification, completion, and recovery transitions (latter half of the FSM).
+fn resolve_verification_transition(
+    state: &WorkflowState,
+    trigger: &TransitionTrigger,
+) -> Result<WorkflowState> {
+    match (state, trigger) {
         // Verifying → PhaseComplete
         (WorkflowState::Verifying { phase_id }, TransitionTrigger::VerificationPassed) => {
             Ok(WorkflowState::PhaseComplete {
