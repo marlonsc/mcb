@@ -1,0 +1,36 @@
+crates/mcb-domain/src/entities/memory/search.rs
+  s_750dc69364e4e0::t_7e19a0f624e9a5 106-110,116-127,156
+crates/mcb-domain/src/utils/tests/fs_scan.rs
+  s_750dc69364e4e0::t_9359173d896e8e 39-44
+  s_750dc69364e4e0::t_0e094a95ceed9b 14-22,27-38,45
+  s_750dc69364e4e0::t_557258ec7cc3ef 64-71,74-75
+crates/mcb-domain/src/utils/analysis.rs
+  s_750dc69364e4e0::t_cf4d568763db23 235-239
+crates/mcb-domain/src/utils/tests/assertions.rs
+  ai_agent 38-43,46
+  s_750dc69364e4e0::t_b4f2ae7ef96b93 111-113,115-125,127-130
+  s_750dc69364e4e0::t_e0489bce7b73bd 8-37,44-45
+crates/mcb-domain/src/utils/text.rs
+  s_750dc69364e4e0::t_e701cffa9e8bfa 67-80,86-96
+  ai_agent 81-85
+crates/mcb-validate/src/validators/documentation/helpers.rs
+  s_750dc69364e4e0::t_9038653ac4a463 47-52,54-56,58-59,61-70,73-76
+crates/mcb-domain/src/macros/mod.rs
+  s_750dc69364e4e0::t_216a47c5492734 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "8566ddb15bd776ac07d56d5fd5e4d0597dcc8e33",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
