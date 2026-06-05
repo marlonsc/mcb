@@ -16,7 +16,7 @@
 use std::path::Path;
 
 use crate::filters::LanguageDetector;
-use rust_code_analysis::{FuncSpace, LANG, get_function_spaces};
+use rust_code_analysis::{FuncSpace, LANG, SpaceKind, get_function_spaces};
 
 use super::MetricViolation;
 use super::thresholds::{MetricThresholds, MetricType};
@@ -173,10 +173,16 @@ impl RcaAnalyzer {
         }
     }
 
-    /// Recursively extract metrics from function spaces
+    /// Recursively extract metrics from function spaces.
+    ///
+    /// Only [`SpaceKind::Function`] spaces are recorded. The root unit space is
+    /// named after the file path (not `<unit>`) and `impl`/`struct`/`trait`
+    /// spaces carry the type name, so a name-only filter mis-counts whole files
+    /// and type blocks as oversized "functions". Function-level thresholds must
+    /// only see actual functions and methods.
     fn extract_function_metrics(space: &FuncSpace, results: &mut Vec<RcaFunctionMetrics>) {
         let name = space.name.as_deref().unwrap_or("");
-        if !name.is_empty() && name != "<unit>" {
+        if space.kind == SpaceKind::Function && !name.is_empty() && name != "<unit>" {
             results.push(RcaFunctionMetrics {
                 name: name.to_owned(),
                 start_line: space.start_line,
