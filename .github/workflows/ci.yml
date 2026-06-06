@@ -266,10 +266,15 @@ jobs:
             VENV_PY=".venv-fastembed/bin/python"
             [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
             "$VENV_PY" -m pip install --quiet huggingface_hub
-            "$VENV_PY" -c "
+            for attempt in 1 2 3 4 5; do
+              if "$VENV_PY" -c "
           from huggingface_hub import snapshot_download
           snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "
+          "; then break; fi
+              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
+              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+              sleep $((attempt * 20))
+            done
           else
             echo "FastEmbed model cache restored."
           fi
@@ -375,10 +380,15 @@ jobs:
             VENV_PY=".venv-fastembed/bin/python"
             [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
             "$VENV_PY" -m pip install --quiet huggingface_hub
-            "$VENV_PY" -c "
+            for attempt in 1 2 3 4 5; do
+              if "$VENV_PY" -c "
           from huggingface_hub import snapshot_download
           snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "
+          "; then break; fi
+              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
+              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+              sleep $((attempt * 20))
+            done
           else
             echo "FastEmbed model cache restored."
           fi
@@ -484,10 +494,15 @@ jobs:
             VENV_PY=".venv-fastembed/bin/python"
             [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
             "$VENV_PY" -m pip install --quiet huggingface_hub
-            "$VENV_PY" -c "
+            for attempt in 1 2 3 4 5; do
+              if "$VENV_PY" -c "
           from huggingface_hub import snapshot_download
           snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "
+          "; then break; fi
+              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
+              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+              sleep $((attempt * 20))
+            done
           else
             echo "FastEmbed model cache restored."
           fi
