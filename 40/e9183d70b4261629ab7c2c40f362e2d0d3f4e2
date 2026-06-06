@@ -1,0 +1,67 @@
+crates/mcb-validate/src/validators/documentation/validator.rs
+  s_750dc69364e4e0::t_a48011c552d7b5 21-77
+  s_750dc69364e4e0::t_6ace4659556c24 185,191,193-198,206-243
+crates/mcb-server/src/handlers/entities/vcs.rs
+  s_64c182eb86dc9e::t_6d17676ba8697d 84,103
+  s_64c182eb86dc9e::t_2c111292e2e3be 124,143
+  s_750dc69364e4e0::t_7b4776a891251c 118-123,125-142,144-157
+crates/mcb-server/src/handlers/session/update.rs
+  s_750dc69364e4e0::t_728a901aac7701 35-40,42
+  s_750dc69364e4e0::t_de75160c5bd746 54-61,65,68-74
+  s_750dc69364e4e0::t_50e405d01aa128 89
+crates/mcb-validate/src/validators/test_quality.rs
+  s_750dc69364e4e0::t_6a6345c67ac169 282
+  s_750dc69364e4e0::t_e8896e79adcef9 224-242
+  s_750dc69364e4e0::t_74cbee8a53f8e7 253
+crates/mcb-validate/src/validators/pattern_validator/violation.rs
+  s_750dc69364e4e0::t_82661957609699 86-88,96,106,115,125,134,142-144
+crates/mcb-validate/src/lib.rs
+  s_750dc69364e4e0::t_b0182fbd3537e8 104-114
+crates/mcb-validate/src/validators/kiss/checks.rs
+  s_750dc69364e4e0::t_dd99334005e0f4 345-368
+  s_750dc69364e4e0::t_f0599013c328a5 328
+crates/mcb-validate/src/engines/rete_engine.rs
+  s_750dc69364e4e0::t_12686671b3e57f 220-222,226-235
+crates/mcb-server/src/handlers/session/create.rs
+  s_750dc69364e4e0::t_6756fca81f908c 97-132
+  s_750dc69364e4e0::t_250f909d6d8eda 153,160-161,164-167
+crates/mcb-validate/src/validators/declarative_validator.rs
+  s_750dc69364e4e0::t_f5853bf1df1d4a 817-823,825,839-840,842-843,851-858
+  s_750dc69364e4e0::t_f86fbc000a9ffe 860-861
+  s_750dc69364e4e0::t_7d88a41fcb926e 609-612,617-620,625-628,639-645,647-658,660-670,672-673
+  s_750dc69364e4e0::t_52d05afc4bbb2b 646,659,671
+crates/mcb-server/src/handlers/memory/execution.rs
+  s_750dc69364e4e0::t_585ffa682f35b8 88-112
+  s_750dc69364e4e0::t_5f8dd6f89b7f2e 125-126
+crates/mcb-validate/src/validators/config_quality.rs
+  s_750dc69364e4e0::t_fb1c49c083e7dc 104-123
+  s_750dc69364e4e0::t_9f504fb39ef269 143,156,164-174
+crates/mcb-validate/src/validators/ssot.rs
+  s_750dc69364e4e0::t_c63b6fba7fe6d3 223-244,281,283-290
+crates/mcb-validate/src/validators/dependency/cycles.rs
+  s_750dc69364e4e0::t_16b452ce3817c1 57,63-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "40e9183d70b4261629ab7c2c40f362e2d0d3f4e2",
+  "prompts": {},
+  "sessions": {
+    "s_64c182eb86dc9e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9a50-f152-74c2-bc71-2f973915b762",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    },
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
