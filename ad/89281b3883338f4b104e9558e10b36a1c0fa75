@@ -1,0 +1,19 @@
+crates/mcb-validate/src/filters/rule_filters.rs
+  s_f9d035179282ab::t_b0a54d70282ac2 87-91
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "ad89281b3883338f4b104e9558e10b36a1c0fa75",
+  "prompts": {},
+  "sessions": {
+    "s_f9d035179282ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42fba31f-461c-4a02-9a34-c3462d77e248",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
