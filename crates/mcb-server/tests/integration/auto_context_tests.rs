@@ -81,7 +81,8 @@ async fn test_ide_probe_runtime_defaults() {
         return;
     };
     let defaults =
-        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(mcb_repo_root())), None).await;
+        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(mcb_repo_root())), None)
+            .await;
 
     let agent_program = defaults.agent_program.unwrap_or_default();
     println!("AGENT_PROGRAM={agent_program}");
@@ -238,7 +239,8 @@ async fn test_context_fields_populated_in_defaults() {
         return;
     };
     let defaults =
-        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(mcb_repo_root())), None).await;
+        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(mcb_repo_root())), None)
+            .await;
 
     assert!(defaults.session_id.is_some());
     assert!(defaults.repo_id.is_some());
@@ -253,7 +255,8 @@ async fn test_org_id_from_git_remote() {
         return;
     };
     let defaults =
-        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(mcb_repo_root())), None).await;
+        RuntimeDefaults::discover_from_path(&*provider, Some(Path::new(mcb_repo_root())), None)
+            .await;
 
     assert!(defaults.org_id.is_some());
 }
