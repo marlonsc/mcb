@@ -66,6 +66,34 @@ fn resolve_create_origin_context(
     })
 }
 
+/// Parse the JSON `data` payload for session creation.
+fn parse_create_payload(args: &SessionArgs) -> Result<CreateSessionPayload, McpError> {
+    serde_json::from_value::<CreateSessionPayload>(
+        args.data
+            .clone()
+            .ok_or_else(|| McpError::invalid_params("missing required field: data", None))?,
+    )
+    .map_err(|e| McpError::invalid_params(format!("invalid session data: {e}"), None))
+}
+
+/// Resolve the agent type from args/payload precedence, erroring if absent.
+fn resolve_agent_type(
+    args: &SessionArgs,
+    payload: &CreateSessionPayload,
+) -> Result<Result<AgentType, CallToolResult>, McpError> {
+    let agent_type_value = resolve_identifier_precedence(
+        "agent_type",
+        args.agent_type.as_deref(),
+        payload.agent_type.as_deref(),
+    )?;
+    match agent_type_value {
+        Some(value) => Ok(Ok(parse_agent_type(&value)?)),
+        None => Ok(Err(tool_error(
+            "Missing agent_type for create (expected in args or data)",
+        ))),
+    }
+}
+
 /// Creates a new agent session.
 #[tracing::instrument(skip_all)]
 pub async fn create_session(
@@ -76,25 +104,11 @@ pub async fn create_session(
         Ok(data) => data,
         Err(error_result) => return Ok(error_result),
     };
-    let payload = serde_json::from_value::<CreateSessionPayload>(
-        args.data
-            .clone()
-            .ok_or_else(|| McpError::invalid_params("missing required field: data", None))?,
-    )
-    .map_err(|e| McpError::invalid_params(format!("invalid session data: {e}"), None))?;
+    let payload = parse_create_payload(args)?;
 
-    let agent_type_value = resolve_identifier_precedence(
-        "agent_type",
-        args.agent_type.as_deref(),
-        payload.agent_type.as_deref(),
-    )?;
-    let agent_type: AgentType = match agent_type_value {
-        Some(value) => parse_agent_type(&value)?,
-        None => {
-            return Ok(tool_error(
-                "Missing agent_type for create (expected in args or data)",
-            ));
-        }
+    let agent_type: AgentType = match resolve_agent_type(args, &payload)? {
+        Ok(value) => value,
+        Err(error_result) => return Ok(error_result),
     };
     let now = mcb_utils::utils::time::epoch_secs_i64()
         .map_err(|e| safe_internal_error("resolve timestamp", &e))?;

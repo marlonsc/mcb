@@ -98,20 +98,24 @@ impl SearchHandler {
             })
     }
 
+    /// Resolve the collection name and its normalized id for a code search.
+    async fn resolve_search_collection(
+        args: &SearchArgs,
+    ) -> Result<(&str, mcb_domain::value_objects::CollectionId), CallToolResult> {
+        let collection_name = Self::resolve_collection(args).await?;
+        let collection_id = normalize_collection_name(collection_name)
+            .map_err(|reason| to_contextual_tool_error(Error::invalid_argument(reason)))?;
+        Ok((collection_name, collection_id))
+    }
+
     async fn handle_code_search(
         &self,
         query: &str,
         args: &SearchArgs,
     ) -> Result<CallToolResult, McpError> {
-        let collection_name = match Self::resolve_collection(args).await {
-            Ok(name) => name,
+        let (collection_name, collection_id) = match Self::resolve_search_collection(args).await {
+            Ok(pair) => pair,
             Err(err) => return Ok(err),
-        };
-        let collection_id = match normalize_collection_name(collection_name) {
-            Ok(id) => id,
-            Err(reason) => {
-                return Ok(to_contextual_tool_error(Error::invalid_argument(reason)));
-            }
         };
 
         let timer = Instant::now();

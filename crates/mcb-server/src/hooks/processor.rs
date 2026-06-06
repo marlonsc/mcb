@@ -66,23 +66,12 @@ impl HookProcessor {
             context.tool_name, context.status
         );
 
-        let project_id = match context.metadata.get("project_id").cloned() {
-            Some(id) if !id.trim().is_empty() => id,
-            _ => {
-                debug!(
-                    "HookProcessor",
-                    "PostToolUse hook skipped: missing project_id in metadata"
-                );
-                return Ok(());
-            }
+        let Some(project_id) = resolve_post_tool_use_project_id(&context) else {
+            return Ok(());
         };
 
         let metadata = build_post_tool_use_metadata(&context, &project_id);
-
-        let mut tags = vec![TAG_TOOL.to_owned(), context.tool_name.clone()];
-        if context.status == ToolExecutionStatus::Error {
-            tags.push("error".to_owned());
-        }
+        let tags = build_post_tool_use_tags(&context);
 
         memory_service
             .store_observation(
@@ -159,6 +148,29 @@ fn parse_delegated_flag(value: &str) -> Option<bool> {
             None
         }
     }
+}
+
+/// Resolve a non-empty `project_id` from the event metadata, logging a skip when absent.
+fn resolve_post_tool_use_project_id(context: &PostToolUseContext) -> Option<String> {
+    match context.metadata.get("project_id").cloned() {
+        Some(id) if !id.trim().is_empty() => Some(id),
+        _ => {
+            debug!(
+                "HookProcessor",
+                "PostToolUse hook skipped: missing project_id in metadata"
+            );
+            None
+        }
+    }
+}
+
+/// Build the observation tags for a `PostToolUse` event.
+fn build_post_tool_use_tags(context: &PostToolUseContext) -> Vec<String> {
+    let mut tags = vec![TAG_TOOL.to_owned(), context.tool_name.clone()];
+    if context.status == ToolExecutionStatus::Error {
+        tags.push("error".to_owned());
+    }
+    tags
 }
 
 /// Build observation metadata for a `PostToolUse` event from its context and project id.

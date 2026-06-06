@@ -42,7 +42,42 @@ pub async fn dashboard(Extension(state): Extension<McbState>) -> Result<Response
         render_label_count_rows(tool_calls.iter().take(8).map(|t| (&t.tool_name, t.count)));
     let obs_rows = render_label_count_rows(daily.iter().map(|d| (&d.day, d.count)));
 
-    let body = format!(
+    let body = render_dashboard_body(DashboardView {
+        sessions,
+        agents,
+        health,
+        idx_run,
+        val_run,
+        tool_rows: &tool_rows,
+        obs_rows: &obs_rows,
+    });
+    html_page!("Dashboard", body)
+}
+
+/// View-model carrying the computed values rendered by [`render_dashboard_body`].
+#[derive(Clone, Copy)]
+struct DashboardView<'a> {
+    sessions: i64,
+    agents: i64,
+    health: &'a str,
+    idx_run: usize,
+    val_run: usize,
+    tool_rows: &'a str,
+    obs_rows: &'a str,
+}
+
+/// Assemble the dashboard HTML body from precomputed metrics and table rows.
+fn render_dashboard_body(view: DashboardView<'_>) -> String {
+    let DashboardView {
+        sessions,
+        agents,
+        health,
+        idx_run,
+        val_run,
+        tool_rows,
+        obs_rows,
+    } = view;
+    format!(
         r#"<h1>Dashboard</h1>
 <div class="dashboard-grid">{}{}{}{}</div>
 <div class="dashboard-grid two-col">
@@ -71,8 +106,7 @@ pub async fn dashboard(Extension(state): Extension<McbState>) -> Result<Response
             obs_rows,
             "No observations recorded yet."
         ),
-    );
-    html_page!("Dashboard", body)
+    )
 }
 
 /// Count indexing operations currently starting or in progress.

@@ -61,22 +61,25 @@ impl VcsEntityHandler {
         let org_id = resolve_org_id(args.org_id.as_deref());
         tracing::Span::current().record("org_id", org_id.as_str());
 
+        match args.resource {
+            VcsEntityResource::Repository => self.handle_repository(&org_id, args).await,
+            VcsEntityResource::Branch => self.handle_branch(&org_id, args).await,
+            VcsEntityResource::Worktree => self.handle_worktree(args).await,
+            VcsEntityResource::Assignment => self.handle_assignment(args).await,
+        }
+    }
+
+    /// Dispatch CRUD actions for the `Repository` resource.
+    async fn handle_repository(
+        &self,
+        org_id: &str,
+        args: VcsEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
         crate::entity_crud_dispatch! {
             action = args.action,
             resource = args.resource,
-            fallback = |action, resource| {
-                mcb_domain::warn!(
-                    "VcsEntity",
-                    "unsupported action/resource combination",
-                    &format!("action={action:?} resource={resource:?}")
-                );
-                Err(McpError::invalid_params(
-                    "unsupported action/resource combination",
-                    None,
-                ))
-            },
+            fallback = |action, resource| vcs_unsupported(action, resource),
             {
-            // -- Repository --
             (VcsEntityAction::Create, VcsEntityResource::Repository) => {
                 let project_id =
                     require_arg!(args.project_id, "project_id required for repository create");
@@ -87,13 +90,13 @@ impl VcsEntityHandler {
                     Some(repo.project_id.as_str()),
                     "project_id required for repository create",
                 )?;
-                repo.org_id = org_id.clone();
+                repo.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.create_repository(&repo).await)?;
                 ResponseFormatter::json_success(&repo)
             }
             (VcsEntityAction::Get, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
-                let repository = map_opaque_error(self.repo.get_repository(&org_id, &id).await)?;
+                let repository = map_opaque_error(self.repo.get_repository(org_id, &id).await)?;
                 if let Some(project_id) = args.project_id.as_deref() {
                     Self::ensure_project_id_matches_labeled(
                         "args",
@@ -105,7 +108,7 @@ impl VcsEntityHandler {
             }
             (VcsEntityAction::List, VcsEntityResource::Repository) => {
                 let project_id = require_arg!(args.project_id, "project_id required for list");
-                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_repositories(&org_id, project_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_repositories(org_id, project_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Repository) => {
                 let project_id =
@@ -117,13 +120,13 @@ impl VcsEntityHandler {
                     Some(repo.project_id.as_str()),
                     "project_id required for repository update",
                 )?;
-                let existing = map_opaque_error(self.repo.get_repository(&org_id, &repo.id).await)?;
+                let existing = map_opaque_error(self.repo.get_repository(org_id, &repo.id).await)?;
                 Self::ensure_project_id_matches_labeled(
                     "payload",
                     &repo.project_id,
                     &existing.project_id,
                 )?;
-                repo.org_id = org_id.clone();
+                repo.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.update_repository(&repo).await)?;
                 ok_text("updated")
             }
@@ -131,13 +134,26 @@ impl VcsEntityHandler {
                 let id = require_id(&args.id)?;
                 let project_id =
                     require_arg!(args.project_id, "project_id required for repository delete");
-                let existing = map_opaque_error(self.repo.get_repository(&org_id, &id).await)?;
+                let existing = map_opaque_error(self.repo.get_repository(org_id, &id).await)?;
                 Self::ensure_project_id_matches_labeled("args", project_id, &existing.project_id)?;
-                map_opaque_error(self.repo.delete_repository(&org_id, &id).await)?;
+                map_opaque_error(self.repo.delete_repository(org_id, &id).await)?;
                 ok_text("deleted")
             }
+            }
+        }
+    }
 
-            // -- Branch --
+    /// Dispatch CRUD actions for the `Branch` resource.
+    async fn handle_branch(
+        &self,
+        org_id: &str,
+        args: VcsEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            fallback = |action, resource| vcs_unsupported(action, resource),
+            {
             (VcsEntityAction::Create, VcsEntityResource::Branch) => {
                 let branch: Branch = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.create_branch(&branch).await)?;
@@ -145,11 +161,11 @@ impl VcsEntityHandler {
             }
             (VcsEntityAction::Get, VcsEntityResource::Branch) => {
                 let id = require_id(&args.id)?;
-                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_branch(&org_id, &id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_branch(org_id, &id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Branch) => {
                 let repo_id = require_arg!(args.repository_id, "repository_id required");
-                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_branches(&org_id, repo_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_branches(org_id, repo_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Branch) => {
                 let branch: Branch = require_data(args.data, "data required")?;
@@ -161,8 +177,17 @@ impl VcsEntityHandler {
                 map_opaque_error(self.repo.delete_branch(&id).await)?;
                 ok_text("deleted")
             }
+            }
+        }
+    }
 
-            // -- Worktree --
+    /// Dispatch CRUD actions for the `Worktree` resource.
+    async fn handle_worktree(&self, args: VcsEntityArgs) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            fallback = |action, resource| vcs_unsupported(action, resource),
+            {
             (VcsEntityAction::Create, VcsEntityResource::Worktree) => {
                 let wt: Worktree = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.create_worktree(&wt).await)?;
@@ -186,8 +211,17 @@ impl VcsEntityHandler {
                 map_opaque_error(self.repo.delete_worktree(&id).await)?;
                 ok_text("deleted")
             }
+            }
+        }
+    }
 
-            // -- Assignment --
+    /// Dispatch CRUD actions for the `Assignment` resource.
+    async fn handle_assignment(&self, args: VcsEntityArgs) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            fallback = |action, resource| vcs_unsupported(action, resource),
+            {
             (VcsEntityAction::Create, VcsEntityResource::Assignment) => {
                 let asgn: AgentWorktreeAssignment =
                     require_data(args.data, "data required")?;
@@ -209,8 +243,23 @@ impl VcsEntityHandler {
                 map_opaque_error(self.repo.release_assignment(&id, now).await)?;
                 ok_text("released")
             }
-
             }
         }
     }
+}
+
+/// Log and build the error for an unsupported `(action, resource)` combination.
+fn vcs_unsupported(
+    action: VcsEntityAction,
+    resource: VcsEntityResource,
+) -> Result<CallToolResult, McpError> {
+    mcb_domain::warn!(
+        "VcsEntity",
+        "unsupported action/resource combination",
+        &format!("action={action:?} resource={resource:?}")
+    );
+    Err(McpError::invalid_params(
+        "unsupported action/resource combination",
+        None,
+    ))
 }

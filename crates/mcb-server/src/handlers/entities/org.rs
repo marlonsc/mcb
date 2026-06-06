@@ -37,7 +37,17 @@ impl OrgEntityHandler {
         Parameters(args): Parameters<OrgEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
         let org_id = resolve_org_id(args.org_id.as_deref());
+        match args.resource {
+            OrgEntityResource::Org => self.handle_org(args).await,
+            OrgEntityResource::User => self.handle_user(&org_id, args).await,
+            OrgEntityResource::Team => self.handle_team(&org_id, args).await,
+            OrgEntityResource::TeamMember => self.handle_team_member(args).await,
+            OrgEntityResource::ApiKey => self.handle_api_key(&org_id, args).await,
+        }
+    }
 
+    /// Dispatch CRUD actions for the `Org` resource.
+    async fn handle_org(&self, args: OrgEntityArgs) -> Result<CallToolResult, McpError> {
         crate::entity_crud_dispatch! {
             action = args.action,
             resource = args.resource,
@@ -77,17 +87,31 @@ impl OrgEntityHandler {
                 map_opaque_error(self.repo.delete_org(&id).await)?;
                 ok_text("deleted")
             }
+            }
+        }
+    }
+
+    /// Dispatch CRUD actions for the `User` resource.
+    async fn handle_user(
+        &self,
+        org_id: &str,
+        args: OrgEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (OrgEntityAction::Create, OrgEntityResource::User) => {
                 let mut user: User = require_data(args.data, "data required for create")?;
-                user.org_id = org_id.clone();
+                user.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.create_user(&user).await)?;
                 ResponseFormatter::json_success(&user)
             }
             (OrgEntityAction::Get, OrgEntityResource::User) => {
                 let user = if let Some(id) = args.id.as_deref() {
-                    self.repo.get_user(org_id.as_str(), id).await
+                    self.repo.get_user(org_id, id).await
                 } else if let Some(email) = args.email.as_deref() {
-                    self.repo.get_user_by_email(org_id.as_str(), email).await
+                    self.repo.get_user_by_email(org_id, email).await
                 } else {
                     return Err(McpError::invalid_params(
                         "id or email required for user get",
@@ -97,11 +121,11 @@ impl OrgEntityHandler {
                 ResponseFormatter::json_success(&map_opaque_error(user)?)
             }
             (OrgEntityAction::List, OrgEntityResource::User) => {
-                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_users(org_id.as_str()).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_users(org_id).await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::User) => {
                 let mut user: User = require_data(args.data, "data required for update")?;
-                user.org_id = org_id.clone();
+                user.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.update_user(&user).await)?;
                 ok_text("updated")
             }
@@ -110,9 +134,23 @@ impl OrgEntityHandler {
                 map_opaque_error(self.repo.delete_user(&id).await)?;
                 ok_text("deleted")
             }
+            }
+        }
+    }
+
+    /// Dispatch CRUD actions for the `Team` resource.
+    async fn handle_team(
+        &self,
+        org_id: &str,
+        args: OrgEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (OrgEntityAction::Create, OrgEntityResource::Team) => {
                 let mut team: Team = require_data(args.data, "data required for create")?;
-                team.org_id = org_id.clone();
+                team.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.create_team(&team).await)?;
                 ResponseFormatter::json_success(&team)
             }
@@ -121,13 +159,23 @@ impl OrgEntityHandler {
                 ResponseFormatter::json_success(&map_opaque_error(self.repo.get_team(&id).await)?)
             }
             (OrgEntityAction::List, OrgEntityResource::Team) => {
-                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_teams(org_id.as_str()).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_teams(org_id).await)?)
             }
             (OrgEntityAction::Delete, OrgEntityResource::Team) => {
                 let id = require_id(&args.id)?;
                 map_opaque_error(self.repo.delete_team(&id).await)?;
                 ok_text("deleted")
             }
+            }
+        }
+    }
+
+    /// Dispatch CRUD actions for the `TeamMember` resource.
+    async fn handle_team_member(&self, args: OrgEntityArgs) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (OrgEntityAction::Create, OrgEntityResource::TeamMember) => {
                 let member: TeamMember = require_data(args.data, "data required for create")?;
                 map_opaque_error(self.repo.add_team_member(&member).await)?;
@@ -143,9 +191,23 @@ impl OrgEntityHandler {
                 map_opaque_error(self.repo.remove_team_member(team_id, user_id).await)?;
                 ok_text("deleted")
             }
+            }
+        }
+    }
+
+    /// Dispatch CRUD actions for the `ApiKey` resource.
+    async fn handle_api_key(
+        &self,
+        org_id: &str,
+        args: OrgEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (OrgEntityAction::Create, OrgEntityResource::ApiKey) => {
                 let mut key: ApiKey = require_data(args.data, "data required for create")?;
-                key.org_id = org_id.clone();
+                key.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.create_api_key(&key).await)?;
                 ResponseFormatter::json_success(&key)
             }
@@ -154,7 +216,7 @@ impl OrgEntityHandler {
                 ResponseFormatter::json_success(&map_opaque_error(self.repo.get_api_key(&id).await)?)
             }
             (OrgEntityAction::List, OrgEntityResource::ApiKey) => {
-                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_api_keys(org_id.as_str()).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_api_keys(org_id).await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::ApiKey) => {
                 let id = require_id(&args.id)?;

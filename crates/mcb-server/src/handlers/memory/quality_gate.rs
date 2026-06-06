@@ -81,9 +81,27 @@ pub async fn store_quality_gate(
         Some(quality_gate),
     );
 
+    persist_quality_gate_observation(
+        memory_service,
+        origin.project_id,
+        content,
+        tags,
+        obs_metadata,
+    )
+    .await
+}
+
+/// Store the quality gate observation and format the MCP response.
+async fn persist_quality_gate_observation(
+    memory_service: &Arc<dyn MemoryServiceInterface>,
+    project_id: String,
+    content: String,
+    tags: Vec<String>,
+    obs_metadata: mcb_domain::entities::memory::ObservationMetadata,
+) -> Result<CallToolResult, McpError> {
     match memory_service
         .store_observation(
-            origin.project_id,
+            project_id,
             content,
             ObservationType::QualityGate,
             tags,

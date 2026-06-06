@@ -41,7 +41,19 @@ impl PlanEntityHandler {
         Parameters(args): Parameters<PlanEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
         let org_id = resolve_org_id(args.org_id.as_deref());
+        match args.resource {
+            PlanEntityResource::Plan => self.handle_plan(&org_id, args).await,
+            PlanEntityResource::Version => self.handle_version(&org_id, args).await,
+            PlanEntityResource::Review => self.handle_review(&org_id, args).await,
+        }
+    }
 
+    /// Dispatch CRUD actions for the `Plan` resource.
+    async fn handle_plan(
+        &self,
+        org_id: &str,
+        args: PlanEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
         crate::entity_crud_dispatch! {
             action = args.action,
             resource = args.resource,
@@ -54,32 +66,46 @@ impl PlanEntityHandler {
                     Some(plan.project_id.as_str()),
                     "project_id required for plan create",
                 )?;
-                plan.org_id = org_id.clone();
+                plan.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.create_plan(&plan).await)?;
                 ResponseFormatter::json_success(&plan)
             }
             (PlanEntityAction::Get, PlanEntityResource::Plan) => {
                 let id = require_id(&args.id)?;
-                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_plan(org_id.as_str(), &id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_plan(org_id, &id).await)?)
             }
             (PlanEntityAction::List, PlanEntityResource::Plan) => {
                 let project_id = require_arg!(args.project_id, "project_id required for list");
-                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_plans(org_id.as_str(), project_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_plans(org_id, project_id).await)?)
             }
             (PlanEntityAction::Update, PlanEntityResource::Plan) => {
                 let mut plan: Plan = require_data(args.data, "data required for update")?;
-                plan.org_id = org_id.clone();
+                plan.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.update_plan(&plan).await)?;
                 ok_text("updated")
             }
             (PlanEntityAction::Delete, PlanEntityResource::Plan) => {
                 let id = require_id(&args.id)?;
-                map_opaque_error(self.repo.delete_plan(org_id.as_str(), &id).await)?;
+                map_opaque_error(self.repo.delete_plan(org_id, &id).await)?;
                 ok_text("deleted")
             }
+            }
+        }
+    }
+
+    /// Dispatch CRUD actions for the `Version` resource.
+    async fn handle_version(
+        &self,
+        org_id: &str,
+        args: PlanEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (PlanEntityAction::Create, PlanEntityResource::Version) => {
                 let mut version: PlanVersion = require_data(args.data, "data required")?;
-                version.org_id = org_id.clone();
+                version.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.create_plan_version(&version).await)?;
                 ResponseFormatter::json_success(&version)
             }
@@ -91,9 +117,23 @@ impl PlanEntityHandler {
                 let plan_id = require_arg!(args.plan_id, "plan_id required");
                 ResponseFormatter::json_success(&map_opaque_error(self.repo.list_plan_versions_by_plan(plan_id).await)?)
             }
+            }
+        }
+    }
+
+    /// Dispatch CRUD actions for the `Review` resource.
+    async fn handle_review(
+        &self,
+        org_id: &str,
+        args: PlanEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (PlanEntityAction::Create, PlanEntityResource::Review) => {
                 let mut review: PlanReview = require_data(args.data, "data required")?;
-                review.org_id = org_id.clone();
+                review.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.create_plan_review(&review).await)?;
                 ResponseFormatter::json_success(&review)
             }

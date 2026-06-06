@@ -236,6 +236,60 @@ pub fn resolve_origin_context(input: &OriginContextInput<'_>) -> Result<OriginCo
     )
 }
 
+/// Per-field values resolved from args/payload precedence for an `OriginContext`.
+struct ResolvedOriginFields {
+    execution_id: Option<String>,
+    tool_name: Option<String>,
+    repo_id: Option<String>,
+    repo_path: Option<String>,
+    operator_id: Option<String>,
+    machine_id: Option<String>,
+    agent_program: Option<String>,
+    model_id: Option<String>,
+    worktree_id: Option<String>,
+    file_path: Option<String>,
+    branch: Option<String>,
+    commit: Option<String>,
+}
+
+/// Resolve every precedence-driven field from the input, failing on conflicts.
+fn resolve_origin_fields(input: &OriginContextInput<'_>) -> Result<ResolvedOriginFields, McpError> {
+    Ok(ResolvedOriginFields {
+        execution_id: resolve_field(
+            "execution_id",
+            input.execution_from_args,
+            input.execution_from_data,
+        )?,
+        tool_name: resolve_field("tool_name", input.tool_name_args, input.tool_name_payload)?,
+        repo_id: resolve_field("repo_id", input.repo_id_args, input.repo_id_payload)?,
+        repo_path: resolve_field("repo_path", input.repo_path_args, input.repo_path_payload)?,
+        operator_id: resolve_field(
+            "operator_id",
+            input.operator_id_args,
+            input.operator_id_payload,
+        )?,
+        machine_id: resolve_field(
+            "machine_id",
+            input.machine_id_args,
+            input.machine_id_payload,
+        )?,
+        agent_program: resolve_field(
+            "agent_program",
+            input.agent_program_args,
+            input.agent_program_payload,
+        )?,
+        model_id: resolve_field("model_id", input.model_id_args, input.model_id_payload)?,
+        worktree_id: resolve_field(
+            "worktree_id",
+            input.worktree_id_args,
+            input.worktree_id_payload,
+        )?,
+        file_path: resolve_field("file_path", input.file_path_args, input.file_path_payload)?,
+        branch: resolve_field("branch", input.branch_args, input.branch_payload)?,
+        commit: resolve_field("commit", input.commit_args, input.commit_payload)?,
+    })
+}
+
 /// Assemble the `OriginContext` from pre-resolved primary fields plus per-field precedence.
 fn build_origin_context(
     input: &OriginContextInput<'_>,
@@ -244,72 +298,25 @@ fn build_origin_context(
     parent_session_correlation: Option<String>,
     timestamp: Option<i64>,
 ) -> Result<OriginContext, McpError> {
+    let fields = resolve_origin_fields(input)?;
     Ok(OriginContext::builder()
         .org_id(Some(resolve_org_id(input.org_id)))
         .project_id(project_id)
         .session_id_correlation(session_correlation)
         .parent_session_id_correlation(parent_session_correlation)
-        .execution_id(resolve_field(
-            "execution_id",
-            input.execution_from_args,
-            input.execution_from_data,
-        )?)
-        .tool_name(resolve_field(
-            "tool_name",
-            input.tool_name_args,
-            input.tool_name_payload,
-        )?)
-        .repo_id(resolve_field(
-            "repo_id",
-            input.repo_id_args,
-            input.repo_id_payload,
-        )?)
-        .repo_path(resolve_field(
-            "repo_path",
-            input.repo_path_args,
-            input.repo_path_payload,
-        )?)
-        .operator_id(resolve_field(
-            "operator_id",
-            input.operator_id_args,
-            input.operator_id_payload,
-        )?)
-        .machine_id(resolve_field(
-            "machine_id",
-            input.machine_id_args,
-            input.machine_id_payload,
-        )?)
-        .agent_program(resolve_field(
-            "agent_program",
-            input.agent_program_args,
-            input.agent_program_payload,
-        )?)
-        .model_id(resolve_field(
-            "model_id",
-            input.model_id_args,
-            input.model_id_payload,
-        )?)
+        .execution_id(fields.execution_id)
+        .tool_name(fields.tool_name)
+        .repo_id(fields.repo_id)
+        .repo_path(fields.repo_path)
+        .operator_id(fields.operator_id)
+        .machine_id(fields.machine_id)
+        .agent_program(fields.agent_program)
+        .model_id(fields.model_id)
         .delegated(input.delegated_args.or(input.delegated_payload))
-        .worktree_id(resolve_field(
-            "worktree_id",
-            input.worktree_id_args,
-            input.worktree_id_payload,
-        )?)
-        .file_path(resolve_field(
-            "file_path",
-            input.file_path_args,
-            input.file_path_payload,
-        )?)
-        .branch(resolve_field(
-            "branch",
-            input.branch_args,
-            input.branch_payload,
-        )?)
-        .commit(resolve_field(
-            "commit",
-            input.commit_args,
-            input.commit_payload,
-        )?)
+        .worktree_id(fields.worktree_id)
+        .file_path(fields.file_path)
+        .branch(fields.branch)
+        .commit(fields.commit)
         .timestamp(timestamp)
         .build())
 }
