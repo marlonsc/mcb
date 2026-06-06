@@ -113,9 +113,7 @@ impl SeaOrmIndexRepository {
             .one(self.db())
             .await
             .map_err(db_error(&format!("find operation for {ctx}")))?
-            .ok_or_else(|| Error::NotFound {
-                resource: format!("IndexOperation:{operation_id}"),
-            })?;
+            .ok_or_else(|| Error::not_found(format!("IndexOperation:{operation_id}")))?;
         let mut active: index_operation::ActiveModel = existing.into();
         mutate(&mut active);
         active.update(self.db()).await.map_err(db_error(ctx))?;
