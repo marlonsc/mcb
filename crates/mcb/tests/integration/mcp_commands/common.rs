@@ -6,16 +6,15 @@
 //! **CRITICAL**: Every test using these helpers MUST be annotated with `#[serial]`
 //! to prevent spawning multiple mcb processes simultaneously (each is ~50MB RSS).
 
-use fs2::FileExt;
+use std::ops::Deref;
+use std::path::PathBuf;
+use std::sync::{Arc, Mutex, OnceLock};
+
 use rmcp::model::{CallToolRequestParams, CallToolResult};
 use rmcp::service::RunningService;
 use rmcp::transport::child_process::TokioChildProcess;
 use rmcp::{RoleClient, ServiceExt};
 use serde_json::Value;
-use std::fs::{File, OpenOptions};
-use std::ops::Deref;
-use std::path::PathBuf;
-use std::sync::{Arc, Mutex, OnceLock};
 use tokio::process::Command;
 use tokio::time::{Duration, timeout};
 
@@ -53,34 +52,9 @@ pub fn cleanup_temp_dbs() {
     }
 }
 
-// --- Cross-process MCP server lock ---
-
-struct McpProcessLock {
-    file: File,
-}
-
-impl McpProcessLock {
-    fn acquire() -> Result<Self, Box<dyn std::error::Error>> {
-        let path = std::env::temp_dir().join("mcb-stdio-integration.lock");
-        let file = OpenOptions::new()
-            .create(true)
-            .read(true)
-            .write(true)
-            .open(path)?;
-        file.lock_exclusive()?;
-        Ok(Self { file })
-    }
-}
-
-impl Drop for McpProcessLock {
-    fn drop(&mut self) {
-        let _ = self.file.unlock();
-    }
-}
-
 pub struct McpTestClient {
     client: RunningService<RoleClient, ()>,
-    _lock: McpProcessLock,
+    _lock: crate::process_lock::ProcessLock,
 }
 
 impl Deref for McpTestClient {
@@ -141,7 +115,7 @@ fn create_test_command() -> Command {
 ///
 /// Includes a timeout to prevent hanging if the server fails to start.
 pub async fn create_client() -> Result<McpTestClient, Box<dyn std::error::Error>> {
-    let lock = McpProcessLock::acquire()?;
+    let lock = crate::process_lock::ProcessLock::acquire()?;
     let transport = TokioChildProcess::new(create_test_command())
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
     let client = timeout(STARTUP_TIMEOUT, ().serve(transport))
