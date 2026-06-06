@@ -1,0 +1,26 @@
+crates/mcb/tests/integration/mod.rs
+  s_64c182eb86dc9e::t_eb647d5dfe6215 4
+crates/mcb/tests/integration/startup_smoke_integration.rs
+  s_64c182eb86dc9e::t_c4749dc152f87a 16-22,105,168
+crates/mcb/tests/integration/process_lock.rs
+  s_64c182eb86dc9e::t_5a8e2b1b90925d 14
+  s_64c182eb86dc9e::t_eb647d5dfe6215 1-13,15-27
+crates/mcb/tests/integration/stdio_transport_integration.rs
+  s_64c182eb86dc9e::t_6a06c43aeb11d3 126,158,196,268,318,364
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "328e86fdedd6e131d52bc6d4b1b4051d2b93124c",
+  "prompts": {},
+  "sessions": {
+    "s_64c182eb86dc9e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9a50-f152-74c2-bc71-2f973915b762",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
