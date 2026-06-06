@@ -19,7 +19,8 @@ use std::path::Path;
 use async_trait::async_trait;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{
-    ComplexityReport, RuleInfo, ValidationReport, ValidationServiceInterface, ViolationEntry,
+    ComplexityReport, FunctionComplexity, RuleInfo, ValidationReport, ValidationServiceInterface,
+    ViolationEntry,
 };
 
 /// Infrastructure validation service using mcb-validate.
@@ -179,16 +180,73 @@ fn run_file_validation(
         violations: file_violations,
     })
 }
-fn analyze_file_complexity(
-    _file_path: &Path,
-    _include_functions: bool,
-) -> Result<ComplexityReport> {
-    // Complexity analysis depends on mcb-validate::RcaAnalyzer which is not available
-    // from the infrastructure layer (CA boundary). When the full binary links mcb-validate,
-    // a richer implementation can be registered via linkme.
-    Err(mcb_domain::error::Error::internal(
-        "Complexity analysis requires mcb-validate (not linked in infrastructure layer)",
-    ))
+fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<ComplexityReport> {
+    let content = std::fs::read_to_string(file_path).map_err(|e| {
+        mcb_domain::error::Error::io_with_source(
+            format!("failed to read {}", file_path.display()),
+            e,
+        )
+    })?;
+
+    let sloc = count_sloc(&content);
+    let files = vec![(file_path.to_path_buf(), content)];
+    let functions = mcb_domain::utils::analysis::collect_functions(&files)?;
+
+    let total_cyclomatic: f64 = functions.iter().map(|f| f64::from(f.complexity)).sum();
+    let fn_count = functions.len().max(1) as f64;
+    let avg_cyclomatic = total_cyclomatic / fn_count;
+    let cognitive = avg_cyclomatic * 1.2;
+    let mi = calculate_maintainability_index(sloc, avg_cyclomatic);
+    let function_metrics = build_function_metrics(&functions, include_functions);
+
+    Ok(ComplexityReport {
+        file: file_path.display().to_string(),
+        cyclomatic: avg_cyclomatic,
+        cognitive,
+        maintainability_index: mi,
+        sloc,
+        functions: function_metrics,
+    })
+}
+
+fn count_sloc(content: &str) -> usize {
+    content
+        .lines()
+        .filter(|line| {
+            let trimmed = line.trim();
+            !trimmed.is_empty() && !trimmed.starts_with("//")
+        })
+        .count()
+}
+
+fn calculate_maintainability_index(sloc: usize, avg_cyclomatic: f64) -> f64 {
+    if sloc == 0 {
+        return 100.0;
+    }
+    let raw = 171.0
+        - 5.2 * avg_cyclomatic.max(1.0).ln()
+        - 0.23 * avg_cyclomatic
+        - 16.2 * (sloc as f64).ln();
+    (raw * 100.0 / 171.0).clamp(0.0, 100.0)
+}
+
+fn build_function_metrics(
+    functions: &[mcb_domain::utils::analysis::FunctionRecord],
+    include_functions: bool,
+) -> Vec<FunctionComplexity> {
+    if !include_functions {
+        return vec![];
+    }
+    functions
+        .iter()
+        .map(|f| FunctionComplexity {
+            name: f.name.clone(),
+            line: f.line,
+            cyclomatic: f64::from(f.complexity),
+            cognitive: f64::from(f.complexity) * 1.2,
+            sloc: 0,
+        })
+        .collect()
 }
 
 // ---------------------------------------------------------------------------
