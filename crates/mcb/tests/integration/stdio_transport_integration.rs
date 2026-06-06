@@ -14,7 +14,6 @@ use mcb_domain::utils::tests::utils::TestResult;
 use rmcp::ServiceExt;
 use rmcp::transport::child_process::TokioChildProcess;
 use rstest::rstest;
-use serial_test::serial;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::{Arc, Mutex, OnceLock};
@@ -121,10 +120,10 @@ fn create_test_command() -> Command {
 ///
 /// This prevents regression of the fix in commit ffbe441 where ANSI color codes
 /// from logging were polluting the JSON-RPC stream on stdout.
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_no_ansi_codes_in_output() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
@@ -153,10 +152,10 @@ async fn test_stdio_no_ansi_codes_in_output() -> TestResult {
 }
 
 /// Test that response is valid JSON (not corrupted by logs)
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_response_is_valid_json() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
@@ -191,10 +190,10 @@ async fn test_stdio_response_is_valid_json() -> TestResult {
 // =============================================================================
 
 /// Test complete tools/list roundtrip via stdio
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_roundtrip_tools_list() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
@@ -263,10 +262,10 @@ async fn test_stdio_roundtrip_tools_list() -> TestResult {
 }
 
 /// Test initialize request via stdio
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_roundtrip_initialize() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
@@ -313,10 +312,10 @@ async fn test_stdio_roundtrip_initialize() -> TestResult {
 /// transport layer to treat the deserialization error as a closed stream and
 /// shut down the connection.  Both outcomes are valid: the server either
 /// responds with an error **or** closes the connection — it must NOT panic.
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_error_response_format() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let cmd = create_test_command();
         let (transport, _stderr) = rmcp::transport::child_process::TokioChildProcess::builder(cmd)
@@ -359,10 +358,10 @@ async fn test_stdio_error_response_format() -> TestResult {
 }
 
 /// Test that logs go to stderr, not stdout
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_logs_go_to_stderr() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let cmd = create_test_command();
         let (transport, stderr_handle) =

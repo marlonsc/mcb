@@ -4,7 +4,6 @@
 //! - Corrupted/incompatible databases are backed up and recreated
 //! - DDL errors surface with actionable source context
 
-use rstest::rstest;
 use std::fs;
 use std::io::{BufRead, BufReader};
 use std::path::PathBuf;
@@ -13,6 +12,13 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
+
+use rstest::rstest;
+
+fn acquire_process_lock() -> crate::process_lock::ProcessLock {
+    crate::process_lock::ProcessLock::acquire()
+        .unwrap_or_else(|e| unreachable!("acquire process lock: {e}"))
+}
 
 /// Locate the mcb binary from env or target directory.
 ///
@@ -96,6 +102,7 @@ fn cleanup_temp_files(db_path: &std::path::Path, prefix: &str) {
 
 #[rstest]
 fn corrupted_db_is_backed_up_and_recreated() {
+    let _lock = acquire_process_lock();
     let db_path = unique_temp_path("corrupt.db");
     fs::write(&db_path, b"this-is-not-a-valid-sqlite-database")
         .unwrap_or_else(|e| unreachable!("write corrupt db fixture: {e}"));
@@ -158,6 +165,7 @@ fn corrupted_db_is_backed_up_and_recreated() {
 
 #[rstest]
 fn ddl_error_messages_include_source_context() {
+    let _lock = acquire_process_lock();
     let db_path = unique_temp_path("ddl-ctx.db");
     fs::write(&db_path, vec![0u8; 100]).unwrap_or_else(|e| unreachable!("write invalid db: {e}"));
 
