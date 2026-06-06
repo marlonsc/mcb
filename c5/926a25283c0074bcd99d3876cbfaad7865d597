@@ -1,0 +1,19 @@
+crates/mcb-server/src/macros/dispatch.rs
+  s_f9d035179282ab::t_3049f0b1382f17 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "c5926a25283c0074bcd99d3876cbfaad7865d597",
+  "prompts": {},
+  "sessions": {
+    "s_f9d035179282ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42fba31f-461c-4a02-9a34-c3462d77e248",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
