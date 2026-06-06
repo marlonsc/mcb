@@ -165,6 +165,11 @@ async fn boot_discovers_workspace_from_nested_path() {
     let root = tmp.path().join("repo");
     let nested = root.join("src/deep/path");
     std::fs::create_dir_all(&nested).expect("dirs");
+    // `discover_from_path` canonicalizes the cwd; mirror that here so the
+    // StubVcs repo_root and the expected paths stay consistent on platforms
+    // where TMPDIR is a symlink (macOS `/var` -> `/private/var`).
+    let root = std::fs::canonicalize(&root).expect("canonicalize root");
+    let nested = std::fs::canonicalize(&nested).expect("canonicalize nested");
 
     let vcs = StubVcs {
         repo_root: root.clone(),
