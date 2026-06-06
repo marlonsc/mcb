@@ -142,7 +142,7 @@ jobs:
 
   audit:
     name: Security Audit
-    timeout-minutes: 10
+    timeout-minutes: 25
     needs: [changes, classify]
     if: >-
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
