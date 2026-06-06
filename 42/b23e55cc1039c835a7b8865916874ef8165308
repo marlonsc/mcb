@@ -1,0 +1,28 @@
+crates/mcb-server/tests/utils/test_fixtures.rs
+  s_f9d035179282ab::t_18616c48e194a6 254,256
+crates/mcb-providers/src/vector_store/edgevec/actor.rs
+  s_f9d035179282ab::t_52ab38ebf0abab 89
+crates/mcb-providers/src/database/seaorm/connection.rs
+  s_f9d035179282ab::t_bcb53ddbd756a0 65
+  s_f9d035179282ab::t_c672f7250bd15b 58
+  s_f9d035179282ab::t_a09457bec3eba8 15
+  s_f9d035179282ab::t_1a083139152b4e 23
+crates/mcb-providers/src/database/seaorm/entities/mod.rs
+  s_f9d035179282ab::t_0c686dfd58b280 2-4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "42b23e55cc1039c835a7b8865916874ef8165308",
+  "prompts": {},
+  "sessions": {
+    "s_f9d035179282ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42fba31f-461c-4a02-9a34-c3462d77e248",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
