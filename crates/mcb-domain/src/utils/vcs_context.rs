@@ -40,23 +40,29 @@ static VCS_CONTEXT: OnceLock<VcsContext> = OnceLock::new();
 pub fn capture_vcs_context() -> VcsContext {
     VCS_CONTEXT
         .get_or_init(|| {
-            let (branch, commit) = Command::new("git")
-                .args(["rev-parse", "--abbrev-ref", "HEAD", "HEAD"])
+            let branch = Command::new("git")
+                .args(["rev-parse", "--abbrev-ref", "HEAD"])
                 .output()
                 .ok()
                 .and_then(|o| {
                     if o.status.success() {
-                        let output = String::from_utf8_lossy(&o.stdout);
-                        let mut lines = output.lines();
-                        let branch = lines.next().map(|s| s.trim().to_owned());
-                        let commit = lines.next().map(|s| s.trim().to_owned());
-                        Some((branch, commit))
+                        Some(String::from_utf8_lossy(&o.stdout).trim().to_owned())
                     } else {
                         None
                     }
-                })
-                .unwrap_or((None, None));
+                });
 
+            let commit = Command::new("git")
+                .args(["rev-parse", "HEAD"])
+                .output()
+                .ok()
+                .and_then(|o| {
+                    if o.status.success() {
+                        Some(String::from_utf8_lossy(&o.stdout).trim().to_owned())
+                    } else {
+                        None
+                    }
+                });
             let repo_id = Command::new("git")
                 .args(["config", "--get", "remote.origin.url"])
                 .output()
