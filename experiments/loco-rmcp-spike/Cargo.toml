@@ -11,7 +11,7 @@ members = ["."]
 async-trait = "0.1"
 axum = "0.8"
 loco-rs = { version = "0.16.4", default-features = false, features = ["with-db", "cache_inmem"] }
-rmcp = { version = "0.16", features = ["server", "transport-io"] }
+rmcp = { version = "1.4", features = ["server", "transport-io"] }
 sea-orm = { version = "=1.1.19", features = ["sqlx-sqlite", "runtime-tokio-rustls"] }
 sea-orm-migration = "=1.1.19"
 serde = { version = "1.0", features = ["derive"] }
