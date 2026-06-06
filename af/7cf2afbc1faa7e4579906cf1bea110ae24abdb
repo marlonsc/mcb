@@ -1,0 +1,49 @@
+crates/mcb-server/src/handlers/session/create.rs
+  s_750dc69364e4e0::t_178cf2619d981f 69,71-96,107,109-111
+  s_750dc69364e4e0::t_0c570bac49437d 70
+crates/mcb-server/src/hooks/processor.rs
+  s_750dc69364e4e0::t_6328357976bdc5 153-175
+  s_750dc69364e4e0::t_86a28201318c75 69-70,74
+crates/mcb-server/src/handlers/entities/plan.rs
+  s_750dc69364e4e0::t_8e0caf94ba1d8a 44-49,51-56,69,75,79,83,89,92-105,108,120-133,136
+crates/mcb-server/src/controllers/web/dashboard.rs
+  s_750dc69364e4e0::t_955ddd38c25fdb 58
+  s_750dc69364e4e0::t_a4b7e9a52cad1e 45-57,59,62-80,109
+  s_750dc69364e4e0::t_acc14b58fd4352 60-61
+crates/mcb-server/src/handlers/memory/quality_gate.rs
+  s_750dc69364e4e0::t_63fd0607034e8c 84-101,104
+crates/mcb-server/src/handlers/entities/issue.rs
+  s_750dc69364e4e0::t_f09f864cd64777 41-47,49-54,67,73,77,81,87,90-94,96-99,118-131,134,144,151-163
+  s_750dc69364e4e0::t_0c570bac49437d 95
+crates/mcb-server/src/handlers/search.rs
+  s_750dc69364e4e0::t_012dddedc3de64 104
+  s_750dc69364e4e0::t_22aa9dfb25e1b1 101-103,105-110
+  s_750dc69364e4e0::t_4f212c577d086d 116-117
+crates/mcb-server/src/handlers/entities/org.rs
+  s_750dc69364e4e0::t_d57ad305c238df 40-47,49-50,90-103,106,112,114,124,128,137-150,153,162,169-173,175-178,194-207,210,219
+  s_750dc69364e4e0::t_0c570bac49437d 174
+crates/mcb-server/src/handlers/entities/vcs.rs
+  s_750dc69364e4e0::t_0c570bac49437d 185,219
+  s_750dc69364e4e0::t_7263f8ddb2bb9a 64-77,81,93,99,111,123,129,137,139,142-144,146-156,164,168,180-182,184,186-190,214-216,218,220-224,250-264
+crates/mcb-server/src/handlers/memory/execution.rs
+  s_750dc69364e4e0::t_8c3e87a8f99080 141-158,161
+crates/mcb-server/src/utils/mcp/origin.rs
+  s_750dc69364e4e0::t_0c570bac49437d 256
+  s_750dc69364e4e0::t_06cce6e9995820 239-255,257-258,262-266,270-271,275-276,280-282,286-319
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "af7cf2afbc1faa7e4579906cf1bea110ae24abdb",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
