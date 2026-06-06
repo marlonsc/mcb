@@ -213,9 +213,7 @@ fn detect_ide() -> (String, Option<String>) {
 
     // VS Code: sets VSCODE_PID or TERM_PROGRAM=vscode
     if std::env::var("VSCODE_PID").is_ok()
-        || std::env::var("TERM_PROGRAM")
-            .map(|v| v.eq_ignore_ascii_case(IDE_VSCODE))
-            .unwrap_or(false)
+        || std::env::var("TERM_PROGRAM").is_ok_and(|v| v.eq_ignore_ascii_case(IDE_VSCODE))
     {
         return (IDE_VSCODE.to_owned(), std::env::var("VSCODE_PID").ok());
     }

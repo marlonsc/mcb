@@ -36,9 +36,17 @@ struct ExtractionContext<'a> {
 
 /// Source under traversal: the file contents and its name, invariant across recursion.
 #[derive(Clone, Copy)]
-struct SourceRef<'a> {
+pub struct SourceRef<'a> {
     content: &'a str,
     file_name: &'a str,
+}
+
+impl<'a> SourceRef<'a> {
+    /// Bundle file contents and name for traversal.
+    #[must_use]
+    pub fn new(content: &'a str, file_name: &'a str) -> Self {
+        Self { content, file_name }
+    }
 }
 
 /// Generic AST node traverser with configurable rules
@@ -70,12 +78,10 @@ impl<'a> AstTraverser<'a> {
     pub fn traverse_and_extract(
         &self,
         cursor: &mut tree_sitter::TreeCursor,
-        content: &str,
-        file_name: &str,
+        source: SourceRef<'_>,
         depth: usize,
         chunks: &mut Vec<CodeChunk>,
     ) {
-        let source = SourceRef { content, file_name };
         self.traverse(cursor, source, depth, chunks);
     }
 

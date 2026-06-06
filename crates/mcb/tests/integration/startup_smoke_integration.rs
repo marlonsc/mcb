@@ -63,8 +63,8 @@ fn unique_temp_path(name: &str) -> PathBuf {
 fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
     // Set CWD to workspace root so Loco can find config/test.yaml.
     let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
-    Command::new(get_mcb_path())
-        .arg("serve")
+    let mut cmd = Command::new(get_mcb_path());
+    cmd.arg("serve")
         .arg("--server")
         .current_dir(&workspace_root)
         // Use Loco test environment (config/test.yaml with Tera template for DATABASE_URL)
@@ -80,8 +80,11 @@ fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
         )
         .env("RUST_LOG", "info")
         .stderr(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
+        .stdout(Stdio::piped());
+    for key in ["RUST_TEST_THREADS", "THREADS", "SCOPE", "RELEASE"] {
+        cmd.env_remove(key);
+    }
+    cmd.spawn()
         .unwrap_or_else(|e| unreachable!("spawn mcb process: {e}"))
 }
 

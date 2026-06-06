@@ -108,6 +108,9 @@ fn create_test_command() -> Command {
     cmd.arg("--stdio");
     cmd.env("LOCO_ENV", "test");
     cmd.env("DATABASE_URL", format!("sqlite://{unique_db_str}?mode=rwc"));
+    for key in ["RUST_TEST_THREADS", "THREADS", "SCOPE", "RELEASE"] {
+        cmd.env_remove(key);
+    }
     cmd
 }
 

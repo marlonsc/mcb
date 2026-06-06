@@ -49,7 +49,6 @@ chrono = { workspace = true }
 
 # Cryptography
 aes-gcm = { workspace = true }
-rand = { workspace = true }
 
 # Authentication
 argon2 = { workspace = true }

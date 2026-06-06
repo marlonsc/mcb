@@ -48,7 +48,7 @@ pub fn extract_text(content: &[serde_json::Value]) -> String {
 ///
 /// # Errors
 ///
-/// Returns a `serde_json::Error` if any content item fails to serialize.
+/// Returns [`serde_json::Error`] if any element in `content` fails to serialize to a JSON value.
 pub fn try_extract_text_from<T: Serialize>(content: &[T]) -> Result<String, serde_json::Error> {
     let values: Result<Vec<serde_json::Value>, serde_json::Error> =
         content.iter().map(serde_json::to_value).collect();

@@ -109,6 +109,9 @@ fn create_test_command() -> Command {
     // Use Loco test environment (config/test.yaml with Tera template for DATABASE_URL)
     cmd.env("LOCO_ENV", "test");
     cmd.env("DATABASE_URL", format!("sqlite://{unique_db_str}?mode=rwc"));
+    for key in ["RUST_TEST_THREADS", "THREADS", "SCOPE", "RELEASE"] {
+        cmd.env_remove(key);
+    }
     cmd
 }
 

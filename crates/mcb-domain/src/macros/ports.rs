@@ -95,25 +95,25 @@ macro_rules! impl_from_str {
 ///
 /// ```ignore
 /// define_crud_port! {
-///     /// Registry for teams.
-///     pub trait TeamRegistry {
-///         entity: Team,
-///         create: create_team,
-///         get: get_team(id),
-///         list: list_teams(org_id),
-///         delete: delete_team(id),
+///     /// Registry for widgets.
+///     pub trait WidgetRegistry {
+///         entity: Widget,
+///         create: create_widget,
+///         get: get_widget(id),
+///         list: list_widgets(org_id),
+///         delete: delete_widget(id),
 ///     }
 /// }
 ///
 /// define_crud_port! {
-///     /// Registry for plans.
-///     pub trait PlanRegistry {
-///         entity: Plan,
-///         create: create_plan,
-///         get: get_plan(org_id, id),
-///         list: list_plans(org_id, project_id),
-///         update: update_plan,
-///         delete: delete_plan(org_id, id),
+///     /// Registry for gadgets.
+///     pub trait GadgetRegistry {
+///         entity: Gadget,
+///         create: create_gadget,
+///         get: get_gadget(org_id, id),
+///         list: list_gadgets(org_id, project_id),
+///         update: update_gadget,
+///         delete: delete_gadget(org_id, id),
 ///     }
 /// }
 /// ```
@@ -214,12 +214,12 @@ macro_rules! define_crud_port {
 ///
 /// ```ignore
 /// define_readonly_port! {
-///     /// Registry for plan versions.
-///     pub trait PlanVersionRegistry {
-///         entity: PlanVersion,
-///         create: create_plan_version,
-///         get: get_plan_version(id),
-///         list: list_plan_versions_by_plan(plan_id),
+///     /// Registry for widget versions.
+///     pub trait WidgetVersionRegistry {
+///         entity: WidgetVersion,
+///         create: create_widget_version,
+///         get: get_widget_version(id),
+///         list: list_widget_versions_by_widget(widget_id),
 ///     }
 /// }
 /// ```

@@ -42,39 +42,23 @@ static VCS_CONTEXT: OnceLock<VcsContext> = OnceLock::new();
 pub fn capture_vcs_context() -> VcsContext {
     VCS_CONTEXT
         .get_or_init(|| {
-            let (branch, commit) = Command::new(vcs::GIT_COMMAND)
-                .args([
-                    "rev-parse",
-                    "--abbrev-ref",
-                    vcs::GIT_REF_HEAD,
-                    vcs::GIT_REF_HEAD,
-                ])
-                .output()
-                .ok()
-                .and_then(|o| {
-                    if o.status.success() {
-                        let output = String::from_utf8_lossy(&o.stdout);
-                        let mut lines = output.lines();
-                        let branch = lines.next().map(|s| s.trim().to_owned());
-                        let commit = lines.next().map(|s| s.trim().to_owned());
-                        Some((branch, commit))
-                    } else {
-                        None
-                    }
-                })
-                .unwrap_or((None, None));
+            let git_output = |args: &[&str]| {
+                Command::new(vcs::GIT_COMMAND)
+                    .args(args)
+                    .output()
+                    .ok()
+                    .and_then(|o| {
+                        if o.status.success() {
+                            Some(String::from_utf8_lossy(&o.stdout).trim().to_owned())
+                        } else {
+                            None
+                        }
+                    })
+            };
 
-            let repo_id = Command::new(vcs::GIT_COMMAND)
-                .args(["config", "--get", "remote.origin.url"])
-                .output()
-                .ok()
-                .and_then(|o| {
-                    if o.status.success() {
-                        Some(String::from_utf8_lossy(&o.stdout).trim().to_owned())
-                    } else {
-                        None
-                    }
-                });
+            let branch = git_output(&["rev-parse", "--abbrev-ref", vcs::GIT_REF_HEAD]);
+            let commit = git_output(&["rev-parse", vcs::GIT_REF_HEAD]);
+            let repo_id = git_output(&["config", "--get", "remote.origin.url"]);
 
             VcsContext::new(branch, commit, repo_id)
         })

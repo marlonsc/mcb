@@ -10,6 +10,14 @@ use git2::Repository;
 use mcb_domain::entities::submodule::{SubmoduleDiscoveryConfig, SubmoduleInfo};
 use mcb_domain::error::{Error, Result};
 
+/// Context for building a single [`SubmoduleInfo`] during BFS traversal.
+struct BuildContext<'a> {
+    current_repo: &'a Repository,
+    parent_id: &'a str,
+    depth: usize,
+    skip_uninitialized: bool,
+}
+
 /// Provider for discovering and traversing git submodules
 pub struct SubmoduleProvider {
     config: SubmoduleDiscoveryConfig,
@@ -94,45 +102,24 @@ impl SubmoduleProvider {
                 continue;
             }
 
-            let submodules = match current_repo.submodules() {
-                Ok(s) => s,
-                Err(e) => {
-                    mcb_domain::warn!("submodule", "Failed to list submodules", &e.to_string());
-                    if continue_on_error {
-                        continue;
-                    }
-                    return Err(Error::internal(format!("Failed to list submodules: {e}")));
-                }
+            let Some(submodules) =
+                Self::list_submodules(&current_repo, continue_on_error).transpose()?
+            else {
+                continue;
             };
 
             for submodule in submodules {
-                let Some(info) = Self::build_submodule_info(
-                    &submodule,
-                    &current_repo,
-                    &parent_id,
+                let ctx = BuildContext {
+                    current_repo: &current_repo,
+                    parent_id: &parent_id,
                     depth,
                     skip_uninitialized,
-                    &mut visited,
-                ) else {
+                };
+                let Some(info) = Self::build_submodule_info(&submodule, &ctx, &mut visited) else {
                     continue;
                 };
 
-                // Try to open submodule for recursive processing before moving `info`.
-                if info.is_initialized {
-                    match submodule.open() {
-                        Ok(sub_repo) => {
-                            queue.push_back((sub_repo, info.id.clone(), depth + 1));
-                        }
-                        Err(e) => {
-                            mcb_domain::warn!(
-                                "submodule",
-                                "Cannot access submodule repository, skipping nested submodules",
-                                &format!("path = {}, error = {e}", info.path)
-                            );
-                        }
-                    }
-                }
-
+                Self::enqueue_nested(&submodule, &info, depth, &mut queue);
                 results.push(info);
             }
         }
@@ -146,20 +133,59 @@ impl SubmoduleProvider {
         Ok(results)
     }
 
+    /// List submodules of a repository, mapping the BFS error policy.
+    ///
+    /// Returns `None` when listing failed and `continue_on_error` is set (skip this node),
+    /// `Some(Ok(..))` on success, and `Some(Err(..))` when the failure must abort traversal.
+    fn list_submodules(
+        repo: &Repository,
+        continue_on_error: bool,
+    ) -> Option<Result<Vec<git2::Submodule<'_>>>> {
+        match repo.submodules() {
+            Ok(s) => Some(Ok(s)),
+            Err(e) => {
+                mcb_domain::warn!("submodule", "Failed to list submodules", &e.to_string());
+                if continue_on_error {
+                    None
+                } else {
+                    Some(Err(Error::internal(format!(
+                        "Failed to list submodules: {e}"
+                    ))))
+                }
+            }
+        }
+    }
+
+    /// Open an initialized submodule and enqueue it for nested traversal.
+    fn enqueue_nested(
+        submodule: &git2::Submodule<'_>,
+        info: &SubmoduleInfo,
+        depth: usize,
+        queue: &mut VecDeque<(Repository, String, usize)>,
+    ) {
+        if !info.is_initialized {
+            return;
+        }
+        match submodule.open() {
+            Ok(sub_repo) => queue.push_back((sub_repo, info.id.clone(), depth + 1)),
+            Err(e) => mcb_domain::warn!(
+                "submodule",
+                "Cannot access submodule repository, skipping nested submodules",
+                &format!("path = {}, error = {e}", info.path)
+            ),
+        }
+    }
+
     /// Build a `SubmoduleInfo` for one submodule, or `None` when it must be skipped
     /// (circular reference, orphaned, or uninitialized when skipping is enabled).
     fn build_submodule_info(
         submodule: &git2::Submodule<'_>,
-        current_repo: &Repository,
-        parent_id: &str,
-        depth: usize,
-        skip_uninitialized: bool,
+        ctx: &BuildContext<'_>,
         visited: &mut HashSet<String>,
     ) -> Option<SubmoduleInfo> {
         let path = submodule.path().to_str().unwrap_or_default().to_owned();
 
-        let unique_key = format!("{parent_id}:{path}");
-        if !visited.insert(unique_key) {
+        if !visited.insert(format!("{}:{path}", ctx.parent_id)) {
             mcb_domain::warn!(
                 "submodule",
                 "Circular submodule reference detected, skipping",
@@ -177,33 +203,37 @@ impl SubmoduleProvider {
             return None;
         };
 
+        let is_initialized = Self::is_submodule_initialized(ctx.current_repo, &path);
+        if ctx.skip_uninitialized && !is_initialized {
+            mcb_domain::debug!("submodule", "Skipping uninitialized submodule", &path);
+            return None;
+        }
+
         let commit_hash = submodule
             .head_id()
             .map(|oid| oid.to_string())
             .unwrap_or_default();
         let name = submodule.name().unwrap_or(&path).to_owned();
 
-        let workdir = current_repo.workdir().unwrap_or_else(|| Path::new(""));
-        let submodule_path = workdir.join(&path);
-        // `.git` can be a file (gitlink) for nested submodules.
-        let is_initialized =
-            submodule_path.join(".git").exists() || submodule_path.join(".git").is_file();
-
-        if skip_uninitialized && !is_initialized {
-            mcb_domain::debug!("submodule", "Skipping uninitialized submodule", &path);
-            return None;
-        }
-
         Some(SubmoduleInfo {
-            id: format!("{parent_id}:{path}"),
+            id: format!("{}:{path}", ctx.parent_id),
             path,
             url,
             commit_hash,
-            parent_repo_id: parent_id.to_owned(),
-            depth: depth + 1,
+            parent_repo_id: ctx.parent_id.to_owned(),
+            depth: ctx.depth + 1,
             name,
             is_initialized,
         })
+    }
+
+    /// Whether a submodule has a populated working tree (initialized).
+    ///
+    /// `.git` can be a file (gitlink) for nested submodules.
+    fn is_submodule_initialized(current_repo: &Repository, path: &str) -> bool {
+        let workdir = current_repo.workdir().unwrap_or_else(|| Path::new(""));
+        let git_entry = workdir.join(path).join(".git");
+        git_entry.exists() || git_entry.is_file()
     }
 }
 

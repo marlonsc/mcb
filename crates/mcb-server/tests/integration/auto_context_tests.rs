@@ -97,9 +97,7 @@ fn detect_agent_program_from_env() -> String {
         return IDE_OPENCODE.to_owned();
     }
     if std::env::var("VSCODE_PID").is_ok()
-        || std::env::var("TERM_PROGRAM")
-            .map(|v| v.eq_ignore_ascii_case(IDE_VSCODE))
-            .unwrap_or(false)
+        || std::env::var("TERM_PROGRAM").is_ok_and(|v| v.eq_ignore_ascii_case(IDE_VSCODE))
     {
         return IDE_VSCODE.to_owned();
     }

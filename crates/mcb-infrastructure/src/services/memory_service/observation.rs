@@ -29,6 +29,17 @@ pub(crate) struct ObservationInput {
     pub metadata: ObservationMetadata,
 }
 
+/// Result of persisting the observation embedding into the vector store.
+///
+/// Carries the data needed to finalize the relational record and to roll the
+/// vectors back if the relational write fails.
+struct VectorWriteOutcome<'a> {
+    content_hash: String,
+    embedding_id: Option<String>,
+    collection_id: &'a CollectionId,
+    ids: Vec<String>,
+}
+
 impl MemoryServiceImpl {
     fn build_vector_metadata(input: &ObservationInput) -> HashMap<String, serde_json::Value> {
         let mut vector_metadata = HashMap::new();
@@ -87,25 +98,25 @@ impl MemoryServiceImpl {
     async fn create_and_store_observation(
         &self,
         input: ObservationInput,
-        content_hash: String,
-        embedding_id: Option<String>,
-        collection_id: &CollectionId,
-        ids: &[String],
+        vector: VectorWriteOutcome<'_>,
     ) -> Result<String> {
         let observation = Observation {
             id: id::generate().to_string(),
             project_id: input.project_id,
             content: input.content,
-            content_hash,
+            content_hash: vector.content_hash,
             tags: input.tags,
             r#type: input.r#type,
             metadata: input.metadata,
             created_at: domain_time::epoch_secs_i64()?,
-            embedding_id,
+            embedding_id: vector.embedding_id,
         };
 
         if let Err(err) = self.repository.store_observation(&observation).await {
-            let _ = self.vector_store.delete_vectors(collection_id, ids).await;
+            let _ = self
+                .vector_store
+                .delete_vectors(vector.collection_id, &vector.ids)
+                .await;
             return Err(err);
         }
 
@@ -134,11 +145,14 @@ impl MemoryServiceImpl {
         let ids = self
             .insert_into_vector_store(&input, &collection_id)
             .await?;
-        let embedding_id = ids.first().cloned();
+        let vector = VectorWriteOutcome {
+            content_hash,
+            embedding_id: ids.first().cloned(),
+            collection_id: &collection_id,
+            ids,
+        };
 
-        let id = self
-            .create_and_store_observation(input, content_hash, embedding_id, &collection_id, &ids)
-            .await?;
+        let id = self.create_and_store_observation(input, vector).await?;
 
         Ok((id, false))
     }

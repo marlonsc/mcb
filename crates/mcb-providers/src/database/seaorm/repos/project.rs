@@ -241,15 +241,8 @@ impl SeaOrmProjectRepository {
                 continue;
             }
 
-            let models = project_dependency::Entity::find()
-                .filter(project_dependency::Column::FromIssueId.eq(current))
-                .order_by_asc(project_dependency::Column::CreatedAt)
-                .all(&self.db)
-                .await
-                .map_err(db_error("traverse project dependencies"))?;
-
-            for model in models {
-                let dependency: ProjectDependency = model.into();
+            let edges = self.outgoing_dependencies(&current).await?;
+            for dependency in edges {
                 if !visited_edges.insert(dependency.id.clone()) {
                     continue;
                 }
@@ -262,6 +255,17 @@ impl SeaOrmProjectRepository {
         }
 
         Ok(traversed)
+    }
+
+    /// Loads the dependency edges originating from a single issue.
+    async fn outgoing_dependencies(&self, from_issue_id: &str) -> Result<Vec<ProjectDependency>> {
+        let models = project_dependency::Entity::find()
+            .filter(project_dependency::Column::FromIssueId.eq(from_issue_id.to_owned()))
+            .order_by_asc(project_dependency::Column::CreatedAt)
+            .all(&self.db)
+            .await
+            .map_err(db_error("traverse project dependencies"))?;
+        Ok(models.into_iter().map(ProjectDependency::from).collect())
     }
 
     /// Deletes a dependency edge by id.
