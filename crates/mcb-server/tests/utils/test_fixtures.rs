@@ -255,10 +255,7 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
         .and_then(|b| b.with_temp_db("test-mcp.db"))
         .and_then(|b| b.build())
         .map(|(cfg, _temp)| cfg)
-        .unwrap_or_else(|_| {
-            // Fallback: build a minimal config if YAML not found
-            panic!("Failed to load test config via TestConfigBuilder")
-        });
+        .expect("Failed to load test config via TestConfigBuilder");
 
     let resolution_ctx = ServiceResolutionContext {
         db: Arc::clone(&db),
