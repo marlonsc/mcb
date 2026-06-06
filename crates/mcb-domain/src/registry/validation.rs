@@ -57,7 +57,6 @@ pub fn list_validator_names() -> Vec<String> {
     names
 }
 
-
 /// Return the number of registered validators.
 #[must_use]
 pub fn validator_count() -> usize {
