@@ -71,7 +71,8 @@ jobs:
               - '.github/workflows/ci.yml'
               - '.github/setup-ci.sh'
               - 'Makefile'
-              - 'make/*.mk'
+              - 'makefiles/*.mk'
+              - 'scripts/lib/mcb.sh'
 
   classify:
     name: Classify PR
@@ -137,7 +138,7 @@ jobs:
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
-      - run: make lint
+      - run: make check WHAT=lint
 
   audit:
     name: Security Audit
@@ -162,7 +163,7 @@ jobs:
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
-      - run: make audit
+      - run: make check WHAT=audit
 
   validate-docs:
     name: Validate Documentation
@@ -179,7 +180,7 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - run: make docs-check
+      - run: make docs WHAT=check
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -188,7 +189,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y nodejs npm
           npm install -g markdownlint-cli
-      - run: make docs-validate QUICK=1
+      - run: make docs WHAT=validate QUICK=1
 
   docs-diagrams:
     name: Generate Diagrams
@@ -212,7 +213,7 @@ jobs:
           distribution: "temurin"
       - name: Install PlantUML
         run: sudo apt-get update && sudo apt-get install -y plantuml
-      - run: make diagrams
+      - run: make docs WHAT=diagrams
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: architecture-diagrams
@@ -478,7 +479,7 @@ jobs:
             echo "FastEmbed model cache restored."
           fi
       - name: Run coverage
-        run: make coverage THREADS=4
+        run: make check WHAT=coverage THREADS=4
         env:
           FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
       - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2

@@ -53,13 +53,12 @@ init_paths() {
 # Colors
 # =============================================================================
 
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-NC='\033[0m' # No Color
+# Colors: source the canonical monopoly (single ANSI SSOT) for the shared hues;
+# define only the docs-extra hues (blue/purple) here. NC aliases mcb.sh RESET.
+# shellcheck source=/dev/null
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")/../../lib" && pwd)/mcb.sh"
+if [ -t 1 ]; then BLUE=$'\033[0;34m'; PURPLE=$'\033[0;35m'; else BLUE=''; PURPLE=''; fi
+NC="$RESET"
 
 # =============================================================================
 # Logging Functions

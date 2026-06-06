@@ -123,8 +123,9 @@ doc as part of the same change.
 
 - Version, MSRV, workspace members, lint policy: `Cargo.toml`.
 - Rust toolchain components and targets: `rust-toolchain.toml`.
-- Developer commands: `Makefile` plus `make/dev.mk`, `make/quality.mk`,
-  `make/docs.mk`, `make/codegen.mk`, `make/release.mk`.
+- Developer commands: `Makefile` plus `makefiles/ui.mk`, `makefiles/dispatch.mk`,
+  and the canonical monopoly script `scripts/lib/mcb.sh` (exit codes, the
+  `APPLY=Y` gate, SSOT readers, the banned-pattern guard, the agent bash-guard).
 - Runtime configuration: `config/development.yaml`, `config/test.yaml`,
   `config/production.yaml`.
 - Architecture validation config: `config/mcb-validate.toml` and
@@ -134,53 +135,59 @@ doc as part of the same change.
 
 ## Commands
 
-Use `make` targets for normal development gates. Use raw `cargo` only for a
-narrow local probe that has no Makefile equivalent.
+The whole dev cycle runs through few canonical `make` verbs backed by the single
+monopoly script `scripts/lib/mcb.sh`. Pattern: `make <verb> [WHAT=phase]
+[SCOPE=...] [APPLY=Y]`. Do not call `cargo`/`git` directly — use a verb. Run
+`make help` for the live list.
 
 ```bash
-make help                    # Show available targets
-make build                   # Release build by default (RELEASE=0 for debug)
-make dev                     # Development server with auto-reload fallback
-make test                    # Workspace tests, all targets
-make test SCOPE=unit         # Library unit tests
-make test SCOPE=doc          # Rust doc tests
-make test SCOPE=golden       # Golden acceptance tests
-make test SCOPE=startup      # Startup smoke test
-make test SCOPE=integration  # Integration tests
-make test SCOPE=e2e          # Playwright E2E tests
-make lint                    # cargo fmt --check + clippy -D warnings
-make lint FIX=1              # Mutating rustfmt + clippy --fix
-make validate QUICK=1        # Fast architecture validation
-make validate                # Full architecture validation
-make docs-lint               # Markdown lint
-make docs-lint FIX=1         # Mutating Markdown fix
-make docs-validate QUICK=1   # Documentation validation without external links
-make check                   # fmt --check + lint + test + validate
-make ci                      # check + audit
-make qlty                    # qlty reports under docs/reports/
+make help                          # All verbs + their WHAT= phases
+make build [RELEASE=0|1]           # Release build by default
+make dev   [WHAT=run|docker-up|docker-down|docker-logs|docker-test]
+make test  [SCOPE=unit|doc|golden|startup|integration|e2e|all] [THREADS=N]
+make check [WHAT=fmt|lint|validate|audit|udeps|coverage|qlty|all] [QUICK=1]
+make fix   [WHAT=fmt|lint|docs|all]   # Mutating auto-fix (rustfmt, clippy --fix, markdown)
+make docs  [WHAT=build|serve|lint|validate|sync|rust|check|setup|adr|adr-new|diagrams] [QUICK=1] [FIX=1]
+make ci                            # CI gate (check WHAT=all)
+make guard                         # Banned-pattern scanner (prod unwrap/expect/panic/todo, TODO/FIXME, unjustified #[allow])
+```
+
+Read-only git / PR / submodule inspection flows through the same monopoly:
+
+```bash
+make git WHAT=status|diff|log|show|branch|tags|stash-list
+make pr  WHAT=view|checks PR=<n>
+make sub WHAT=status|diff
 ```
 
 Single-test local debugging is allowed when it is materially faster than the
-workspace target:
+verb:
 
 ```bash
 cargo test -p mcb-server --test unit -- test_name
 ```
 
-Treat these targets as mutating or environment-affecting:
+Destructive verbs are DRY-RUN by default and require `APPLY=Y` to execute:
 
 ```bash
-make fmt
-make lint FIX=1
-make docs-lint FIX=1
-make codegen
-make release
-make install
+make codegen [WHAT=all|cli|db|entities|conversions|clean] APPLY=Y
+make release [WHAT=package|version|install|install-validate] [BUMP=patch|minor|major] APPLY=Y
+make clean   [WHAT=build|codegen|all] APPLY=Y
+make git WHAT=commit MSG='...' [FILES='...'] APPLY=Y   # also push|merge|rebase
+make sub WHAT=commit|push SUB=<name> [MSG='...'] APPLY=Y
+make setup [WHAT=hooks|tools|adr|all]                  # hooks installs the pre-commit gate
 ```
 
-`make install` builds, installs config under the user's home directory, updates
-MCP client configs when present, and manages the user `mcb` systemd service.
-Run it only when the user explicitly asks for installation work.
+`make release WHAT=install APPLY=Y` builds, installs config under the user's home
+directory, updates MCP client configs when present, and manages the user `mcb`
+systemd service. Run it only when the user explicitly asks for installation work.
+
+Enforcement is mechanical, not honor-system: `make setup WHAT=hooks` installs a
+no-bypass pre-commit hook (staged `guard` + `check WHAT=lint` + `check
+WHAT=validate QUICK=1`); `.claude/settings.json` denies dangerous shell and
+routes every Bash through `scripts/lib/mcb.sh guard-bash`; `make guard` scans the
+full tree (CI/manual) while the hook's `guard --staged` blocks only NEW
+violations in the commit.
 
 ## Architecture
 
@@ -277,13 +284,13 @@ When changing a tool:
 After meaningful edits, run the smallest relevant gate first, then broaden when
 the change touches shared behavior:
 
-- Rust code: `make lint` plus the relevant `make test SCOPE=...`.
+- Rust code: `make check WHAT=lint` plus the relevant `make test SCOPE=...`.
 - Architecture rules, dependencies, or crate boundaries: add
-  `make validate QUICK=1` or `make validate`.
-- Docs-only changes: `make docs-lint`.
-- Public docs plus architecture/status changes: `make docs-validate QUICK=1`
+  `make check WHAT=validate QUICK=1` or `make check WHAT=validate`.
+- Docs-only changes: `make docs WHAT=lint`.
+- Public docs plus architecture/status changes: `make docs WHAT=validate QUICK=1`
   when practical.
-- Release/install paths: `make release` only when explicitly requested.
+- Release/install paths: `make release APPLY=Y` only when explicitly requested.
 
 Report command, exit code, and the meaningful output. Do not claim a full gate
 passed unless that exact gate was run in the current turn.
