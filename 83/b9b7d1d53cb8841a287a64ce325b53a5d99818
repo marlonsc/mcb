@@ -1,0 +1,21 @@
+Cargo.lock
+  ai_agent 682,684,692,694,1337,1346,2105,2983,3723,3775,3777,4042,4258,4862,5154,5437,5765,5915,5917,5923,5978,5980,5989,5991,5999,6001,6090,6475,6625,6726,6728,7717,7759,8016,8186,8860,8904,9105,9426
+make/quality.mk
+  s_f9d035179282ab::t_67132fb252856c 52-54
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "83b9b7d1d53cb8841a287a64ce325b53a5d99818",
+  "prompts": {},
+  "sessions": {
+    "s_f9d035179282ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42fba31f-461c-4a02-9a34-c3462d77e248",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
