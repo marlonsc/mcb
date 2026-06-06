@@ -1,0 +1,62 @@
+crates/mcb-domain/src/ports/services/memory.rs
+  s_750dc69364e4e0::t_5d09ff8d567c7e 33-47,54
+crates/mcb/Cargo.toml
+  s_64c182eb86dc9e::t_11d339a08bca39 86
+crates/mcb-server/src/hooks/processor.rs
+  s_750dc69364e4e0::t_903f68a7bddd06 11
+  s_750dc69364e4e0::t_ecb286c8206c3b 77,80,83
+crates/mcb-providers/src/vector_store/edgevec/actor.rs
+  s_64c182eb86dc9e::t_4a3c898c00658d 99
+crates/mcb-infrastructure/src/services/indexing_service/processing.rs
+  s_750dc69364e4e0::t_3ad135c6984cf6 111-116,118-127,131,133-134,145,150-171,178-180
+crates/mcb-server/src/handlers/memory/quality_gate.rs
+  s_750dc69364e4e0::t_52e798b5213601 7
+  s_750dc69364e4e0::t_a65b2efbed8997 103,106,108-109
+crates/mcb-infrastructure/src/services/memory_service/interface.rs
+  s_750dc69364e4e0::t_a2a3c5c54e13a8 26,28-34
+  s_750dc69364e4e0::t_9bc42fc80face2 86-87,89-90,92
+  s_750dc69364e4e0::t_d82193fd6d428f 13
+crates/mcb-server/src/handlers/memory/observation.rs
+  s_64c182eb86dc9e::t_07b253bd27672b 6,56-62
+crates/mcb/src/initializers/mcp_server.rs
+  s_750dc69364e4e0::t_6b037c9c13cccc 211-212,234-241,262-278,286
+  s_750dc69364e4e0::t_f41185ca6e9b9d 117-118,144-148,169-173
+  s_750dc69364e4e0::t_2393348d4132d7 177-179,184-203
+  s_750dc69364e4e0::t_949695b996882a 174-176,180-183
+crates/mcb-domain/src/ports/mod.rs
+  s_750dc69364e4e0::t_e9c696acdba9c9 90-91
+crates/mcb-server/src/handlers/memory/execution.rs
+  s_750dc69364e4e0::t_927c75094033d6 7
+  s_750dc69364e4e0::t_5f4312213fd234 160,163,165-166
+crates/mcb/tests/integration/mcp_commands/common.rs
+  s_64c182eb86dc9e::t_11d339a08bca39 15-16,56,58-60,62-72,75-77,81-90,143-144,151-154,162-163
+  ai_agent 9
+crates/mcb-domain/src/ports/services/mod.rs
+  ai_agent 46
+crates/mcb-domain/src/utils/analysis.rs
+  s_750dc69364e4e0::t_dc64d3484f87dd 235,239-244,246-248,250,253-255
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "6755d5464764c2c32519b5612539dfd705335ecb",
+  "prompts": {},
+  "sessions": {
+    "s_64c182eb86dc9e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9a50-f152-74c2-bc71-2f973915b762",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    },
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
