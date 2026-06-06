@@ -1,0 +1,64 @@
+makefiles/ui.mk
+  s_f9d035179282ab::t_b197994c3c9a30 1-18
+.github/workflows/ci.yml
+  s_f9d035179282ab::t_fd57ee4597e40a 216
+  s_f9d035179282ab::t_594db9e0ec73d0 482
+  s_f9d035179282ab::t_3f0a1e36d8ee88 141
+  s_f9d035179282ab::t_4b3d509470e172 74-75
+  s_f9d035179282ab::t_47fea36295eac2 166
+  s_f9d035179282ab::t_70615956d1de30 183,192
+scripts/docs/README.md
+  s_f9d035179282ab::t_dcdad14f62174f 41,145-147
+  s_f9d035179282ab::t_151ecbd808bb64 31
+  s_f9d035179282ab::t_91897b304910e1 42,132
+  s_f9d035179282ab::t_387873e96f3ee0 48
+  s_f9d035179282ab::t_ac6566867af34f 30,49,139
+scripts/docs/create-adr.sh
+  s_f9d035179282ab::t_af492347e57e55 97
+scripts/docs/validate.sh
+  s_f9d035179282ab::t_1580ef25a96926 432-433
+makefiles/dispatch.mk
+  s_f9d035179282ab::t_863701d576a7b2 260
+  s_f9d035179282ab::t_7d1b8c8b2b93b4 126
+  s_f9d035179282ab::t_8216a7f9483aa1 72
+  s_f9d035179282ab::t_a447697856a72f 218
+  s_f9d035179282ab::t_2822d94acf9f62 2-5,8-10,12-20,22-26,28-30,35-71,73-125,127-217,219-221,223-232,234-245,247-256,258-259,261-266
+Makefile
+  s_f9d035179282ab::t_fce36fdd1df21a 57
+  s_f9d035179282ab::t_7dbef27c39e1c2 61,67
+  s_f9d035179282ab::t_275b89c23bf2fc 2,4-12,14,17,19-32,35-36,38-44,46-49,51-52,54-56,58-60,62-66,68-69,71-88
+  s_f9d035179282ab::t_3405396abdabba 45
+scripts/hooks/pre-commit
+  s_f9d035179282ab::t_37782e2c75781a 1-11
+AGENTS.md
+  s_f9d035179282ab::t_a189775855792f 126-128
+  s_f9d035179282ab::t_e167918e144987 138-141,144-160,164,170,173-178,181-190
+  s_f9d035179282ab::t_ec8a6925f3d5ba 287,289-291,293
+scripts/lib/mcb.sh
+  s_f9d035179282ab::t_105077970e803d 84-95
+  s_f9d035179282ab::t_680830e1d51863 1-6,8-9,11-29,31-46,48-49,51-52,54-60,62-74,77-83,96-108,110-121,123-128,130,132-136
+  s_f9d035179282ab::t_5b11a1d95930c4 129
+  s_f9d035179282ab::t_8e14930e065070 131
+.github/workflows/docs-build.yml
+  s_f9d035179282ab::t_894f4e9d5ebfaa 69
+  s_f9d035179282ab::t_f57e3346db21ff 92-94
+  s_f9d035179282ab::t_8018b7018925c9 42,51
+scripts/docs/lib/common.sh
+  s_f9d035179282ab::t_a9820d840ec73b 56-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "3678582e0c785d7b8e47ee47374bfb74ee5b5af6",
+  "prompts": {},
+  "sessions": {
+    "s_f9d035179282ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42fba31f-461c-4a02-9a34-c3462d77e248",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
