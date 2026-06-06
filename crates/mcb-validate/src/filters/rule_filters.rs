@@ -84,6 +84,11 @@ impl RuleFilterExecutor {
     /// Create a new filter executor
     #[must_use]
     pub fn new(workspace_root: std::path::PathBuf) -> Self {
+        // Canonicalize so `relative_path`'s strip_prefix matches the canonical
+        // file paths produced by the inventory walk. Without this, file_pattern
+        // filters silently fail under symlinked roots (e.g. macOS /var → /private/var),
+        // skipping the rules they scope.
+        let workspace_root = std::fs::canonicalize(&workspace_root).unwrap_or(workspace_root);
         Self {
             workspace_root: workspace_root.clone(),
             language_detector: LanguageDetector::new(),
