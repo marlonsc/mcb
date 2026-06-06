@@ -121,9 +121,15 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
         resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default")).ok()?;
 
     // 6. Build ServiceResolutionContext (domain-level opaque DI context)
+    // Real AppConfig: the indexing service builder downcasts ctx.config to AppConfig.
+    let (app_config, _config_temp) =
+        mcb_infrastructure::config::test_builder::TestConfigBuilder::new()
+            .ok()?
+            .build()
+            .ok()?;
     let resolution_ctx = ServiceResolutionContext {
         db: Arc::clone(&db),
-        config: Arc::new(()), // opaque — service builders use typed port fields above
+        config: Arc::new(app_config),
         event_bus,
         embedding_provider: Arc::clone(&embedding_provider),
         vector_store_provider: Arc::clone(&vector_store_provider),
