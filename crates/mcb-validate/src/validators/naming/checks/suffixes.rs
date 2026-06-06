@@ -40,8 +40,12 @@ fn check_repository_suffix(
     file_name: &str,
     path_str: &str,
 ) -> Option<NamingViolation> {
-    let in_repo_dir =
-        path_str.contains("/repositories/") || path_str.contains("/adapters/repository/");
+    // Port trait definitions live in `ports/repositories/` and are entity-named
+    // (e.g. `agent.rs` defines `AgentRepository`); the `_repository` suffix
+    // convention applies to concrete adapter implementations, not port contracts.
+    let in_repo_dir = (path_str.contains("/repositories/")
+        || path_str.contains("/adapters/repository/"))
+        && !path_str.contains("/ports/");
     (in_repo_dir && !file_name.ends_with(REPOSITORY_FILE_SUFFIX) && file_name != "mod").then(|| {
         NamingViolation::BadFileSuffix {
             path: path.to_path_buf(),

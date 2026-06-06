@@ -74,17 +74,14 @@ impl CodeAnalyzer for NativePmatAnalyzer {
         &self,
         workspace_root: &Path,
         threshold: u32,
-    ) -> std::result::Result<Vec<AnalysisFinding>, mcb_domain::error::Error> {
+    ) -> mcb_domain::Result<Vec<AnalysisFinding>> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
         let functions = Self::collect_functions_rca(&files);
         Ok(analysis::filter_complex_functions(functions, threshold))
     }
 
-    fn detect_dead_code(
-        &self,
-        workspace_root: &Path,
-    ) -> std::result::Result<Vec<AnalysisFinding>, mcb_domain::error::Error> {
+    fn detect_dead_code(&self, workspace_root: &Path) -> mcb_domain::Result<Vec<AnalysisFinding>> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
         let functions = Self::collect_functions_rca(&files);
@@ -96,7 +93,7 @@ impl CodeAnalyzer for NativePmatAnalyzer {
         &self,
         workspace_root: &Path,
         threshold: u32,
-    ) -> std::result::Result<Vec<AnalysisFinding>, mcb_domain::error::Error> {
+    ) -> mcb_domain::Result<Vec<AnalysisFinding>> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
         let functions = Self::collect_functions_rca(&files);

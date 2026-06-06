@@ -7,40 +7,31 @@ use super::violation::PatternViolation;
 use mcb_domain::ports::validation::Severity;
 use mcb_utils::constants::validate::COMMENT_PREFIX;
 use mcb_utils::utils::regex::compile_regex;
-use regex::Regex;
 
-/// True when `std::result::Result` on this line is necessary rather than a
-/// spelled-out domain result: alias definitions, `FromStr` signatures, method
-/// path references (`Result::ok`), turbofish collects, and generic-parameter
-/// error types (matched by `generic_error`) all require the fully-qualified std
-/// form.
-fn is_necessary_std_result(trimmed: &str, generic_error: &Regex) -> bool {
-    (trimmed.contains("type ") && trimmed.contains("= std::result::Result"))
-        || trimmed.contains("fn from_str")
-        || trimmed.contains("std::result::Result::")
-        || trimmed.contains(".collect::<")
-        || generic_error.is_match(trimmed)
-}
-
-/// Detects `std::result::Result` usage that should use `crate::Result`.
+/// Detects `std::result::Result<T, E>` where the error `E` is the spelled-out
+/// domain error (`Error` / `mcb_domain::Error` / `crate::error::Error`) or
+/// `String` — exactly the cases that should instead use the domain `Result`
+/// alias. Foreign error types (`sea_orm::DbErr`, `regex::Error`, axum tuples,
+/// generic parameters, `FromStr`-required signatures, alias definitions) are
+/// necessary and left untouched. The error arg must close the type (`...>`),
+/// which also excludes string literals mentioning the type.
 pub fn check_result_types(path: &Path, content: &str) -> crate::Result<Vec<PatternViolation>> {
     let mut violations = Vec::new();
 
-    // Error arg is a bare generic type parameter (short all-uppercase id) that
-    // cannot use a domain alias, e.g. `std::result::Result<T, E>`.
-    let generic_error = compile_regex(r"std::result::Result\s*<[^<>]*,\s*[A-Z][A-Z0-9]?\s*>")?;
+    let domain_error_result = compile_regex(
+        r"std::result::Result\s*<.*,\s*(?:mcb_domain::error::Error|mcb_domain::Error|crate::error::Error|Error|String)\s*>",
+    )?;
 
     for (line_num, line) in content.lines().enumerate() {
         let trimmed = line.trim();
 
-        // Skip comments
-        if trimmed.starts_with(COMMENT_PREFIX) {
+        // Skip comments and type-alias definitions (the alias itself must spell
+        // out the std form).
+        if trimmed.starts_with(COMMENT_PREFIX) || trimmed.contains("= std::result::Result") {
             continue;
         }
 
-        if trimmed.contains("std::result::Result")
-            && !is_necessary_std_result(trimmed, &generic_error)
-        {
+        if domain_error_result.is_match(trimmed) {
             let context = trimmed.chars().take(80).collect::<String>();
             violations.push(PatternViolation::RawResultType {
                 file: path.to_path_buf(),
