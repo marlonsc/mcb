@@ -1,0 +1,22 @@
+crates/mcb/tests/integration/mcp_commands/common.rs
+  s_64c182eb86dc9e::t_eb647d5dfe6215 57,118
+  s_64c182eb86dc9e::t_bfe639ce2310e1 9-12
+Cargo.lock
+  ai_agent 2270-2278,3776,4659
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "cc97538ab39d4e3a68944c92bb383f39bc3d8e3d",
+  "prompts": {},
+  "sessions": {
+    "s_64c182eb86dc9e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9a50-f152-74c2-bc71-2f973915b762",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
