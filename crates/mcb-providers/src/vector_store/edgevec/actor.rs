@@ -86,7 +86,7 @@ impl EdgeVecActor {
             .entry(collection.to_owned())
             .or_default();
 
-        for (vector, meta) in vectors.into_iter().zip(metadata.into_iter()) {
+        for (vector, meta) in vectors.into_iter().zip(metadata) {
             let external_id = format!("{}_{}", collection, id::generate());
 
             match self.index.insert(&vector.vector, &mut self.storage) {

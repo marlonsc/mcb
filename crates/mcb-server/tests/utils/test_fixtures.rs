@@ -251,11 +251,9 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
 
     // Load a real AppConfig so service builders (e.g. IndexingService) can
     // downcast the config from the resolution context.
-    let app_config = TestConfigBuilder::new()
+    let (app_config, _) = TestConfigBuilder::new()
         .and_then(|b| b.with_temp_db("test-mcp.db"))
-        .and_then(|b| b.build())
-        .map(|(cfg, _temp)| cfg)
-        .expect("Failed to load test config via TestConfigBuilder");
+        .and_then(TestConfigBuilder::build)?;
 
     let resolution_ctx = ServiceResolutionContext {
         db: Arc::clone(&db),
