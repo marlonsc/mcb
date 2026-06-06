@@ -255,6 +255,23 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
+      - name: Pre-download FastEmbed model
+        shell: bash
+        run: |
+          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
+            echo "Cache miss — downloading FastEmbed model..."
+            PYTHON=$(command -v python3 || command -v python)
+            "$PYTHON" -m venv .venv-fastembed
+            VENV_PY=".venv-fastembed/bin/python"
+            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
+            "$VENV_PY" -m pip install --quiet huggingface_hub
+            "$VENV_PY" -c "
+          from huggingface_hub import snapshot_download
+          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
+          "
+          else
+            echo "FastEmbed model cache restored."
+          fi
       - name: Startup Smoke (DDL/Init)
         run: make test SCOPE=startup THREADS=4
       - name: Full Test Suite
