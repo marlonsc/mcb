@@ -334,12 +334,9 @@ async fn test_stdio_error_response_format() -> TestResult {
         // rmcp may close the connection or return an error
         // The key is that the server must NOT panic
         let result = client
-            .call_tool(rmcp::model::CallToolRequestParams {
-                meta: None,
-                name: "nonexistent/method".into(),
-                arguments: None,
-                task: None,
-            })
+            .call_tool(rmcp::model::CallToolRequestParams::new(
+                "nonexistent/method",
+            ))
             .await;
 
         // Either error or connection closed is acceptable

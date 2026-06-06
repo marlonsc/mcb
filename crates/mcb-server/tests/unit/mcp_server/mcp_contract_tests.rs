@@ -141,12 +141,8 @@ async fn data_plane_tools_reject_empty_provenance(
     #[case] tool_name: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
-    let req = CallToolRequestParams {
-        name: tool_name.to_owned().into(),
-        arguments: Some(serde_json::Map::new()),
-        task: None,
-        meta: None,
-    };
+    let req =
+        CallToolRequestParams::new(tool_name.to_owned()).with_arguments(serde_json::Map::new());
     let err = route_tool_call(
         req,
         &tool_handlers(&ctx.server),
@@ -178,12 +174,8 @@ async fn delegated_agent_without_parent_session_rejected(
     #[case] tool_name: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
-    let req = CallToolRequestParams {
-        name: tool_name.to_owned().into(),
-        arguments: Some(serde_json::Map::new()),
-        task: None,
-        meta: None,
-    };
+    let req =
+        CallToolRequestParams::new(tool_name.to_owned()).with_arguments(serde_json::Map::new());
     let err = route_tool_call(req, &tool_handlers(&ctx.server), provenance_context(true))
         .await
         .expect_err("delegated without parent must fail");

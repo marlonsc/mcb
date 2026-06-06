@@ -160,17 +160,11 @@ pub async fn call_tool(
     tool_name: &str,
     arguments: Value,
 ) -> Result<CallToolResult, Box<dyn std::error::Error>> {
-    let result = timeout(
-        OP_TIMEOUT,
-        client.call_tool(CallToolRequestParams {
-            meta: None,
-            name: tool_name.to_owned().into(),
-            arguments: json_args(arguments),
-            task: None,
-        }),
-    )
-    .await
-    .map_err(|_| format!("Timeout: tool '{tool_name}' did not respond within 10s"))?
-    .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
+    let mut params = CallToolRequestParams::new(tool_name.to_owned());
+    params.arguments = json_args(arguments);
+    let result = timeout(OP_TIMEOUT, client.call_tool(params))
+        .await
+        .map_err(|_| format!("Timeout: tool '{tool_name}' did not respond within 10s"))?
+        .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
     Ok(result)
 }

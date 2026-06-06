@@ -310,17 +310,17 @@ fn build_mcp_service(
     mcp_server: Arc<mcb_server::McpServer>,
 ) -> StreamableHttpService<mcb_server::McpServer, LocalSessionManager> {
     let ct = CancellationToken::new();
+    // rmcp 1.x marks StreamableHttpServerConfig #[non_exhaustive]; build via Default.
+    let mut config = StreamableHttpServerConfig::default();
+    config.stateful_mode = false;
+    config.cancellation_token = ct.child_token();
     StreamableHttpService::new(
         move || {
             let server = (*mcp_server).clone();
             Ok(server)
         },
         LocalSessionManager::default().into(),
-        StreamableHttpServerConfig {
-            stateful_mode: false,
-            cancellation_token: ct.child_token(),
-            ..Default::default()
-        },
+        config,
     )
 }
 

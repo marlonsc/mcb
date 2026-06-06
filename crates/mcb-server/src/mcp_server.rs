@@ -202,16 +202,17 @@ impl McpServer {
 impl ServerHandler for McpServer {
     /// Get server information and capabilities
     fn get_info(&self) -> ServerInfo {
-        ServerInfo {
-            protocol_version: ProtocolVersion::V_2025_03_26,
-            capabilities: ServerCapabilities::builder().enable_tools().build(),
-            server_info: Implementation {
-                name: mcb_utils::constants::protocol::SERVER_NAME.to_owned(),
-                version: env!("CARGO_PKG_VERSION").to_owned(),
-                ..Default::default()
-            },
-            instructions: Some(
-                "MCP Context Browser - Semantic Code Search
+        // rmcp 1.x marks ServerInfo/Implementation #[non_exhaustive]; build via
+        // Default then set fields (struct-literal construction is disallowed).
+        let mut server_info = Implementation::default();
+        server_info.name = mcb_utils::constants::protocol::SERVER_NAME.to_owned();
+        server_info.version = env!("CARGO_PKG_VERSION").to_owned();
+        let mut info = ServerInfo::default();
+        info.protocol_version = ProtocolVersion::V_2025_03_26;
+        info.capabilities = ServerCapabilities::builder().enable_tools().build();
+        info.server_info = server_info;
+        info.instructions = Some(
+            "MCP Context Browser - Semantic Code Search
 
 tools:
 - index: Index operations (start, status, clear)
@@ -224,9 +225,9 @@ tools:
 - vcs: Repository operations
 - entity: Unified entity CRUD (vcs/plan/issue/org resources)
 "
-                .to_owned(),
-            ),
-        }
+            .to_owned(),
+        );
+        info
     }
 
     /// List available tools

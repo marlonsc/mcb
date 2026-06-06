@@ -344,17 +344,12 @@ fn create_tool_from_descriptor(descriptor: &ToolDescriptor) -> Result<Tool, McpE
             )
         })?
         .clone();
-    Ok(Tool {
-        name: Cow::Borrowed(descriptor.name),
-        title: None,
-        description: Some(Cow::Borrowed(descriptor.description)),
-        input_schema: Arc::new(input_schema),
-        output_schema: None,
-        annotations: None,
-        icons: None,
-        execution: None,
-        meta: Default::default(),
-    })
+    // rmcp 1.x marks Tool #[non_exhaustive]; build via its constructor.
+    Ok(Tool::new(
+        Cow::Borrowed(descriptor.name),
+        Cow::Borrowed(descriptor.description),
+        Arc::new(input_schema),
+    ))
 }
 
 fn validate_registry_unique_tool_names() -> Result<(), McpError> {

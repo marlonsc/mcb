@@ -47,12 +47,7 @@ fn empty_defaults() -> RuntimeDefaults {
 }
 
 fn empty_request() -> CallToolRequestParams {
-    CallToolRequestParams {
-        name: "search_code".to_owned().into(),
-        arguments: None,
-        task: None,
-        meta: None,
-    }
+    CallToolRequestParams::new("search_code")
 }
 
 // ─── Resolution: boot defaults + per-request overrides ───────────────
@@ -139,20 +134,15 @@ fn agent_explicit_values_never_overwritten() {
         ..ToolExecutionContext::resolve(&empty_defaults(), &HashMap::new())
     };
 
-    let mut req = CallToolRequestParams {
-        name: "search_code".to_owned().into(),
-        arguments: Some(
-            [
-                ("session_id", "agent-session"),
-                ("project_id", "agent-project"),
-            ]
-            .into_iter()
-            .map(|(k, v)| (k.to_owned(), serde_json::json!(v)))
-            .collect(),
-        ),
-        task: None,
-        meta: None,
-    };
+    let mut req = CallToolRequestParams::new("search_code").with_arguments(
+        [
+            ("session_id", "agent-session"),
+            ("project_id", "agent-project"),
+        ]
+        .into_iter()
+        .map(|(k, v)| (k.to_owned(), serde_json::json!(v)))
+        .collect(),
+    );
 
     ctx.apply_to_request_if_missing(&mut req);
 
