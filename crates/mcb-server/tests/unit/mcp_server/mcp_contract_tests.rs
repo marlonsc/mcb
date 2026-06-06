@@ -17,12 +17,7 @@ fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
 }
 
 fn direct_tool_call_request(tool_name: &str) -> CallToolRequestParams {
-    CallToolRequestParams {
-        name: tool_name.to_owned().into(),
-        arguments: Some(serde_json::Map::new()),
-        task: None,
-        meta: None,
-    }
+    CallToolRequestParams::new(tool_name.to_owned()).with_arguments(serde_json::Map::new())
 }
 
 #[rstest]

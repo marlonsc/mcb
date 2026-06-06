@@ -120,16 +120,13 @@ pub async fn post_mcp(
                 .cloned()
                 .unwrap_or(serde_json::json!({}));
 
-            let call_request = CallToolRequestParams {
-                name: tool_name.to_owned().into(),
-                arguments: if let serde_json::Value::Object(map) = arguments {
-                    Some(map)
-                } else {
-                    Some(serde_json::Map::new())
-                },
-                task: None,
-                meta: None,
+            let args_map = if let serde_json::Value::Object(map) = arguments {
+                map
+            } else {
+                serde_json::Map::new()
             };
+            let call_request =
+                CallToolRequestParams::new(tool_name.to_owned()).with_arguments(args_map);
 
             // Propagate X-Execution-Flow and X-Workspace-Root headers
             let mut exec_ctx = ToolExecutionContext::default();

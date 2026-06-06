@@ -161,10 +161,12 @@ impl Initializer for McpServerInitializer {
                 Ok(server)
             },
             LocalSessionManager::default().into(),
-            StreamableHttpServerConfig {
-                stateful_mode: false,
-                cancellation_token: ct.child_token(),
-                ..Default::default()
+            {
+                // rmcp 1.x marks StreamableHttpServerConfig #[non_exhaustive].
+                let mut cfg = StreamableHttpServerConfig::default();
+                cfg.stateful_mode = false;
+                cfg.cancellation_token = ct.child_token();
+                cfg
             },
         );
 

@@ -186,12 +186,7 @@ fn test_apply_to_request_if_missing_injects_missing_values() {
         execution_flow: None,
     };
 
-    let mut request = CallToolRequestParams {
-        name: "test_tool".to_owned().into(),
-        arguments: None,
-        task: None,
-        meta: None,
-    };
+    let mut request = CallToolRequestParams::new("test_tool");
 
     context.apply_to_request_if_missing(&mut request);
 
@@ -221,25 +216,20 @@ fn test_apply_to_request_if_missing_does_not_overwrite_existing_values() {
         execution_flow: None,
     };
 
-    let mut request = CallToolRequestParams {
-        name: "test_tool".to_owned().into(),
-        arguments: Some(
-            vec![
-                (
-                    "session_id".to_owned(),
-                    serde_json::json!("request-session"),
-                ),
-                (
-                    "project_id".to_owned(),
-                    serde_json::json!("request-project"),
-                ),
-            ]
-            .into_iter()
-            .collect(),
-        ),
-        task: None,
-        meta: None,
-    };
+    let mut request = CallToolRequestParams::new("test_tool").with_arguments(
+        vec![
+            (
+                "session_id".to_owned(),
+                serde_json::json!("request-session"),
+            ),
+            (
+                "project_id".to_owned(),
+                serde_json::json!("request-project"),
+            ),
+        ]
+        .into_iter()
+        .collect(),
+    );
 
     context.apply_to_request_if_missing(&mut request);
 
@@ -274,12 +264,7 @@ fn test_apply_to_request_if_missing_injects_boolean_values() {
         execution_flow: None,
     };
 
-    let mut request = CallToolRequestParams {
-        name: "test_tool".to_owned().into(),
-        arguments: None,
-        task: None,
-        meta: None,
-    };
+    let mut request = CallToolRequestParams::new("test_tool");
 
     context.apply_to_request_if_missing(&mut request);
 
@@ -307,12 +292,7 @@ fn test_apply_to_request_if_missing_injects_timestamp() {
         execution_flow: None,
     };
 
-    let mut request = CallToolRequestParams {
-        name: "test_tool".to_owned().into(),
-        arguments: None,
-        task: None,
-        meta: None,
-    };
+    let mut request = CallToolRequestParams::new("test_tool");
 
     context.apply_to_request_if_missing(&mut request);
 
@@ -340,12 +320,7 @@ fn test_apply_to_request_if_missing_does_not_inject_none_values() {
         execution_flow: None,
     };
 
-    let mut request = CallToolRequestParams {
-        name: "test_tool".to_owned().into(),
-        arguments: None,
-        task: None,
-        meta: None,
-    };
+    let mut request = CallToolRequestParams::new("test_tool");
 
     context.apply_to_request_if_missing(&mut request);
 
@@ -373,12 +348,7 @@ fn test_apply_to_request_if_missing_creates_arguments_map_if_needed() {
         execution_flow: None,
     };
 
-    let mut request = CallToolRequestParams {
-        name: "test_tool".to_owned().into(),
-        arguments: None,
-        task: None,
-        meta: None,
-    };
+    let mut request = CallToolRequestParams::new("test_tool");
 
     assert!(request.arguments.is_none());
 
