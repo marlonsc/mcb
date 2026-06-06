@@ -46,11 +46,17 @@ pub fn list_validator_entries() -> Vec<(&'static str, &'static str)> {
 /// List all registered validator names (single source of truth for CLI and handlers).
 #[must_use]
 pub fn list_validator_names() -> Vec<String> {
-    VALIDATOR_ENTRIES
+    // Sort for a deterministic order: `linkme` registration order is not stable
+    // across builds/link units, which otherwise makes consumers (list_rules,
+    // snapshots, error messages) non-deterministic.
+    let mut names: Vec<String> = VALIDATOR_ENTRIES
         .iter()
         .map(|e| e.name.to_owned())
-        .collect()
+        .collect();
+    names.sort_unstable();
+    names
 }
+
 
 /// Return the number of registered validators.
 #[must_use]
