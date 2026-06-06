@@ -74,3 +74,89 @@ pub struct SessionArgs {
     pub limit: Option<u32>,
 }
 }
+
+// ---------------------------------------------------------------------------
+// MCP-facing single-purpose tools
+// ---------------------------------------------------------------------------
+
+tool_action! {
+    /// Arguments for the `start_session` tool.
+    pub struct StartSessionArgs => SessionArgs {
+        #[schemars(description = "AI model identifier", with = "String")]
+        model: Option<String>,
+        #[schemars(description = "Agent type label", with = "String")]
+        agent_type: Option<String>,
+        #[schemars(description = "Brief summary of session purpose", with = "ObjectDataSchema")]
+        data: Option<serde_json::Value>
+        ;
+        hidden {
+            org_id: Option<String>, session_id: Option<SessionId>,
+            project_id: Option<String>, worktree_id: Option<String>,
+            parent_session_id: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: SessionAction::Create, data: a.data,
+            agent_type: a.agent_type, status: None, limit: None,
+        }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `get_session` tool.
+    pub struct GetSessionArgs => SessionArgs {
+        #[schemars(description = "Session ID to retrieve", with = "SessionId")]
+        session_id: Option<SessionId>
+        ;
+        hidden {
+            org_id: Option<String>, project_id: Option<String>,
+            worktree_id: Option<String>, parent_session_id: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: SessionAction::Get, session_id: a.session_id, data: None,
+            agent_type: None, status: None, limit: None,
+        }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `list_sessions` tool.
+    pub struct ListSessionsArgs => SessionArgs {
+        #[schemars(description = "Filter by status", with = "String")]
+        status: Option<String>,
+        #[schemars(description = "Filter by agent type", with = "String")]
+        agent_type: Option<String>,
+        #[schemars(description = "Maximum results", with = "u32")]
+        limit: Option<u32>
+        ;
+        hidden {
+            org_id: Option<String>, session_id: Option<SessionId>,
+            project_id: Option<String>, worktree_id: Option<String>,
+            parent_session_id: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: SessionAction::List, data: None,
+            agent_type: a.agent_type, status: a.status, limit: a.limit,
+        }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `summarize_session` tool.
+    pub struct SummarizeSessionArgs => SessionArgs {
+        #[schemars(description = "Session ID to summarize", with = "SessionId")]
+        session_id: Option<SessionId>
+        ;
+        hidden {
+            org_id: Option<String>, project_id: Option<String>,
+            worktree_id: Option<String>, parent_session_id: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: SessionAction::Summarize, session_id: a.session_id, data: None,
+            agent_type: None, status: None, limit: None,
+        }
+    }
+}

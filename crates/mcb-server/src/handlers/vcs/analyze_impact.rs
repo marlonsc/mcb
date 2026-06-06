@@ -46,24 +46,7 @@ pub async fn analyze_impact(
             return Ok(to_contextual_tool_error(e));
         }
     };
-    let mut added = 0;
-    let mut modified = 0;
-    let mut deleted = 0;
-    let mut impacted_files = Vec::new();
-    for file in diff.files.iter() {
-        let status = file.status.to_string();
-        match status.as_str() {
-            "added" => added += 1,
-            "deleted" => deleted += 1,
-            _ => modified += 1,
-        }
-        impacted_files.push(ImpactFile {
-            // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
-            path: file.path.to_str().unwrap_or_default().to_owned(),
-            status: status.clone(),
-            impact: file.additions + file.deletions,
-        });
-    }
+    let tally = tally_impacted_files(&diff);
     let total_changes = diff.total_additions + diff.total_deletions;
     let impact_score = ((diff.files.len() as f64).ln_1p() * IMPACT_FILE_COUNT_WEIGHT
         + (total_changes as f64).ln_1p() * IMPACT_CHANGE_COUNT_WEIGHT)
@@ -74,12 +57,45 @@ pub async fn analyze_impact(
         impact_score,
         summary: ImpactSummary {
             total_files: diff.files.len(),
-            added,
-            modified,
-            deleted,
+            added: tally.added,
+            modified: tally.modified,
+            deleted: tally.deleted,
             total_changes,
         },
-        impacted_files,
+        impacted_files: tally.impacted_files,
     };
     ResponseFormatter::json_success(&result)
+}
+
+/// Per-status counts plus the rendered impacted-file list from a ref diff.
+struct ImpactTally {
+    added: usize,
+    modified: usize,
+    deleted: usize,
+    impacted_files: Vec<ImpactFile>,
+}
+
+/// Tally added/modified/deleted counts and build the impacted-file list from a diff.
+fn tally_impacted_files(diff: &mcb_domain::entities::vcs::RefDiff) -> ImpactTally {
+    let mut tally = ImpactTally {
+        added: 0,
+        modified: 0,
+        deleted: 0,
+        impacted_files: Vec::new(),
+    };
+    for file in &diff.files {
+        let status = file.status.to_string();
+        match status.as_str() {
+            "added" => tally.added += 1,
+            "deleted" => tally.deleted += 1,
+            _ => tally.modified += 1,
+        }
+        tally.impacted_files.push(ImpactFile {
+            // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
+            path: file.path.to_str().unwrap_or_default().to_owned(),
+            status: status.clone(),
+            impact: file.additions + file.deletions,
+        });
+    }
+    tally
 }

@@ -108,7 +108,7 @@ impl AstQuery {
         if self.matches_node(node) {
             violations.push(AstViolation {
                 rule_id: format!("AST_{}_{}", self.language, self.node_type),
-                file: "unknown".to_owned(), // Would be set by caller
+                file: mcb_utils::constants::FALLBACK_UNKNOWN.to_owned(), // Would be set by caller
                 node: node.clone(),
                 message: self.message.clone(),
                 severity: self.severity.clone(),

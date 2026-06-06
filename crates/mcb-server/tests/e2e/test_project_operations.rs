@@ -1,5 +1,5 @@
 /// Golden tests: Project operations handler
-/// Verifies project handler routing, unsupported action errors, and input validation
+/// Verifies project handler routing for all resource types and input validation
 use crate::utils::test_fixtures::create_test_mcp_server;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{ProjectAction, ProjectArgs, ProjectResource};
@@ -11,8 +11,11 @@ fn base_args(action: ProjectAction, resource: ProjectResource) -> ProjectArgs {
         action,
         resource,
         project_id: Some("test-project".to_owned()),
+        id: None,
+        issue_id: None,
         data: None,
         filters: None,
+        org_id: None,
     }
 }
 
@@ -23,25 +26,19 @@ async fn golden_project_create_phase() -> TestResult {
 
     let mut args = base_args(ProjectAction::Create, ProjectResource::Phase);
     args.data = Some(serde_json::json!({
+        "id": "phase-001",
+        "project_id": "test-project",
         "name": "Phase 1 - Foundation",
         "description": "Initial project setup",
         "sequence": 1,
-        "status": "planned"
+        "status": "Planned",
+        "created_at": 0,
+        "updated_at": 0
     }));
 
     let result = server.project_handler().handle(Parameters(args)).await;
 
-    // Create+Phase is not yet implemented — handler returns unsupported error
-    assert!(
-        result.is_err(),
-        "Create Phase should return error (unsupported): {result:?}"
-    );
-    let err = result.expect_err("Create Phase should be unsupported");
-    assert!(
-        err.message.contains("Unsupported action"),
-        "error should mention unsupported action, got: {}",
-        err.message
-    );
+    assert!(result.is_ok(), "Create Phase should succeed: {result:?}");
     Ok(())
 }
 
@@ -54,17 +51,7 @@ async fn golden_project_list_phases() -> TestResult {
 
     let result = server.project_handler().handle(Parameters(args)).await;
 
-    // List+Phase is not yet implemented — handler returns unsupported error
-    assert!(
-        result.is_err(),
-        "List Phases should return error (unsupported): {result:?}"
-    );
-    let err = result.expect_err("List Phases should be unsupported");
-    assert!(
-        err.message.contains("Unsupported action"),
-        "error should mention unsupported action, got: {}",
-        err.message
-    );
+    assert!(result.is_ok(), "List Phases should succeed: {result:?}");
     Ok(())
 }
 
@@ -75,25 +62,18 @@ async fn golden_project_create_decision() -> TestResult {
 
     let mut args = base_args(ProjectAction::Create, ProjectResource::Decision);
     args.data = Some(serde_json::json!({
+        "id": "dec-001",
+        "project_id": "test-project",
         "title": "Use JWT for authentication",
         "context": "Need stateless auth for microservices",
         "decision": "Adopt JWT with refresh tokens",
-        "consequences": "Must handle token rotation"
+        "consequences": "Must handle token rotation",
+        "created_at": 0
     }));
 
     let result = server.project_handler().handle(Parameters(args)).await;
 
-    // Create+Decision is not yet implemented — handler returns unsupported error
-    assert!(
-        result.is_err(),
-        "Create Decision should return error (unsupported): {result:?}"
-    );
-    let err = result.expect_err("Create Decision should be unsupported");
-    assert!(
-        err.message.contains("Unsupported action"),
-        "error should mention unsupported action, got: {}",
-        err.message
-    );
+    assert!(result.is_ok(), "Create Decision should succeed: {result:?}");
     Ok(())
 }
 

@@ -53,24 +53,18 @@ impl ValidatedExecutionData {
     }
 }
 
-/// Store an execution observation in memory
-#[tracing::instrument(skip_all)]
-pub async fn store_execution(
-    memory_service: &Arc<dyn MemoryServiceInterface>,
-    args: &MemoryArgs,
-) -> Result<CallToolResult, McpError> {
-    let data = extract_field!(require_data_map(
-        &args.data,
-        "Missing data payload for execution store"
-    ));
-    let validated = extract_field!(ValidatedExecutionData::validate(data));
-    let metadata = ExecutionMetadata {
+/// Assemble [`ExecutionMetadata`] from validated fields plus optional payload extras.
+fn build_execution_metadata(
+    validated: &ValidatedExecutionData,
+    data: &serde_json::Map<String, serde_json::Value>,
+) -> ExecutionMetadata {
+    ExecutionMetadata {
         id: domain_id::generate().to_string(),
         command: validated.command.clone(),
         exit_code: Some(validated.exit_code),
         duration_ms: Some(validated.duration_ms),
         success: validated.success,
-        execution_type: validated.execution_type,
+        execution_type: validated.execution_type.clone(),
         coverage: data
             .get("coverage")
             .and_then(Value::as_f64)
@@ -88,7 +82,21 @@ pub async fn store_execution(
             .get("errors_count")
             .and_then(Value::as_i64)
             .and_then(|value| value.try_into().ok()),
-    };
+    }
+}
+
+/// Store an execution observation in memory
+#[tracing::instrument(skip_all)]
+pub async fn store_execution(
+    memory_service: &Arc<dyn MemoryServiceInterface>,
+    args: &MemoryArgs,
+) -> Result<CallToolResult, McpError> {
+    let data = extract_field!(require_data_map(
+        &args.data,
+        "Missing data payload for execution store"
+    ));
+    let validated = extract_field!(ValidatedExecutionData::validate(data));
+    let metadata = build_execution_metadata(&validated, data);
     let content = format!(
         "Execution: {} (exit_code={}, success={})",
         validated.command, validated.exit_code, validated.success

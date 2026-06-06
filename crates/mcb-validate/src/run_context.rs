@@ -309,38 +309,58 @@ fn enumerate_with_walkdir(
         .into_iter()
         .filter_map(std::result::Result::ok)
     {
-        let path = entry.path();
-        if !path.is_file() {
-            continue;
-        }
-
-        let absolute = normalize_path(path)?;
-        let Ok(relative) = absolute.strip_prefix(&canonical_root) else {
-            continue;
-        };
-        let relative = relative.to_path_buf();
-
-        let Some(relative_str) = relative.to_str() else {
-            continue;
-        };
-        if should_ignore(relative_str, ignore_patterns)
-            || relative_str.contains("/.git/")
-            || relative_str.starts_with(".git/")
-        {
-            continue;
-        }
-
-        if seen.insert(relative.clone()) {
-            let lang = detector.detect(&absolute, None);
-            entries.push(InventoryEntry {
-                absolute_path: absolute,
-                relative_path: relative,
-                detected_language: lang,
-            });
+        if let Some(inventory_entry) = walk_entry_to_inventory(
+            entry.path(),
+            &canonical_root,
+            ignore_patterns,
+            detector,
+            &mut seen,
+        )? {
+            entries.push(inventory_entry);
         }
     }
 
     Ok(entries)
+}
+
+/// Convert one walked path into an [`InventoryEntry`], skipping ignored/duplicate/non-file paths.
+fn walk_entry_to_inventory(
+    path: &Path,
+    canonical_root: &Path,
+    ignore_patterns: &[String],
+    detector: &LanguageDetector,
+    seen: &mut HashSet<std::path::PathBuf>,
+) -> std::io::Result<Option<InventoryEntry>> {
+    if !path.is_file() {
+        return Ok(None);
+    }
+
+    let absolute = normalize_path(path)?;
+    let Ok(relative) = absolute.strip_prefix(canonical_root) else {
+        return Ok(None);
+    };
+    let relative = relative.to_path_buf();
+
+    let Some(relative_str) = relative.to_str() else {
+        return Ok(None);
+    };
+    if should_ignore(relative_str, ignore_patterns)
+        || relative_str.contains("/.git/")
+        || relative_str.starts_with(".git/")
+    {
+        return Ok(None);
+    }
+
+    if !seen.insert(relative.clone()) {
+        return Ok(None);
+    }
+
+    let lang = detector.detect(&absolute, None);
+    Ok(Some(InventoryEntry {
+        absolute_path: absolute,
+        relative_path: relative,
+        detected_language: lang,
+    }))
 }
 
 fn should_ignore(path: &str, ignore_patterns: &[String]) -> bool {

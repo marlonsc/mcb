@@ -30,7 +30,13 @@ impl ObservationManager for MemoryServiceImpl {
         metadata: mcb_domain::entities::memory::ObservationMetadata,
     ) -> Result<(ObservationId, bool)> {
         let (id, new) = self
-            .store_observation_impl(project_id, content, r#type, tags, metadata)
+            .store_observation_impl(super::observation::ObservationInput {
+                project_id,
+                content,
+                r#type,
+                tags,
+                metadata,
+            })
             .await?;
         let obs_id = ObservationId::from_str(&id)
             .map_err(|e| mcb_domain::error::Error::invalid_argument(e.to_string()))?;

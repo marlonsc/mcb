@@ -21,6 +21,26 @@ use mcb_utils::utils::id as domain_id;
 use mcb_utils::constants::keys::{FIELD_MESSAGE, FIELD_OBSERVATION_ID};
 use mcb_utils::constants::values::TAG_QUALITY_GATE;
 
+/// Build a [`QualityGateResult`] from validated fields plus optional payload extras.
+fn build_quality_gate(
+    gate_name: &str,
+    status: mcb_domain::entities::memory::QualityGateStatus,
+    data: &serde_json::Map<String, serde_json::Value>,
+) -> QualityGateResult {
+    let timestamp = data
+        .get("timestamp")
+        .and_then(Value::as_i64)
+        .unwrap_or_else(|| chrono::Utc::now().timestamp());
+    QualityGateResult {
+        id: domain_id::generate().to_string(),
+        gate_name: gate_name.to_owned(),
+        status,
+        message: opt_str(data, "message"),
+        timestamp,
+        execution_id: opt_str(data, "execution_id"),
+    }
+}
+
 /// Stores a quality gate result as a semantic observation.
 #[tracing::instrument(skip_all)]
 pub async fn store_quality_gate(
@@ -34,21 +54,9 @@ pub async fn store_quality_gate(
     let gate_name = extract_field!(require_str(data, "gate_name"));
     let status_str = extract_field!(require_str(data, "status"));
     let status: mcb_domain::entities::memory::QualityGateStatus = parse_enum!(status_str, "status");
-    let timestamp = data
-        .get("timestamp")
-        .and_then(Value::as_i64)
-        .unwrap_or_else(|| chrono::Utc::now().timestamp());
-    let quality_gate = QualityGateResult {
-        id: domain_id::generate().to_string(),
-        gate_name: gate_name.clone(),
-        status,
-        message: opt_str(data, "message"),
-        timestamp,
-        execution_id: opt_str(data, "execution_id"),
-    };
+    let quality_gate = build_quality_gate(&gate_name, status, data);
     let content = format!(
-        "Quality Gate: {} (status={})",
-        gate_name,
+        "Quality Gate: {gate_name} (status={})",
         quality_gate.status.as_str()
     );
     let tags = vec![
@@ -62,7 +70,7 @@ pub async fn store_quality_gate(
             execution_from_args: quality_gate.execution_id.as_deref(),
             execution_from_data: quality_gate.execution_id.as_deref(),
             file_path_payload: None,
-            timestamp: Some(timestamp),
+            timestamp: Some(quality_gate.timestamp),
         },
     )?;
 

@@ -33,38 +33,8 @@ pub async fn update_session(
     let data = json_map(&args.data);
     let status = parse_status(args, data)?;
     match agent_service.get_session(&session_id).await {
-        Ok(Some(mut session)) => {
-            apply_resolved_identifier(
-                &mut session.project_id,
-                schema::PROJECT_ID,
-                args.project_id.as_deref(),
-                payload_str(data, schema::PROJECT_ID).as_deref(),
-            )?;
-            apply_resolved_identifier(
-                &mut session.worktree_id,
-                schema::WORKTREE_ID,
-                args.worktree_id.as_deref(),
-                payload_str(data, schema::WORKTREE_ID).as_deref(),
-            )?;
-
-            if let Some(status) = status {
-                session.status = status;
-            }
-            if let Some(data) = data {
-                apply_session_updates(&mut session, data);
-            }
-            let status = session.status.as_str().to_owned();
-            match agent_service.update_session(session).await {
-                Ok(_) => ResponseFormatter::json_success(&serde_json::json!({
-                    schema::ID: session_id,
-                    schema::STATUS: status,
-                    (FIELD_UPDATED): true,
-                })),
-                Err(e) => {
-                    error!("update_session", "Failed to update agent session", &e);
-                    Ok(to_contextual_tool_error(e))
-                }
-            }
+        Ok(Some(session)) => {
+            apply_and_persist(agent_service, args, &session_id, session, status, data).await
         }
         Ok(None) => Ok(tool_error("Agent session not found")),
         Err(e) => {
@@ -72,6 +42,48 @@ pub async fn update_session(
                 "update_session",
                 "Failed to update agent session (get failed)", &e
             );
+            Ok(to_contextual_tool_error(e))
+        }
+    }
+}
+
+/// Apply identifier/status/payload updates to a loaded session, then persist it.
+async fn apply_and_persist(
+    agent_service: &Arc<dyn AgentSessionServiceInterface>,
+    args: &SessionArgs,
+    session_id: &str,
+    mut session: AgentSession,
+    status: Option<AgentSessionStatus>,
+    data: Option<&Map<String, Value>>,
+) -> Result<CallToolResult, McpError> {
+    apply_resolved_identifier(
+        &mut session.project_id,
+        schema::PROJECT_ID,
+        args.project_id.as_deref(),
+        payload_str(data, schema::PROJECT_ID).as_deref(),
+    )?;
+    apply_resolved_identifier(
+        &mut session.worktree_id,
+        schema::WORKTREE_ID,
+        args.worktree_id.as_deref(),
+        payload_str(data, schema::WORKTREE_ID).as_deref(),
+    )?;
+
+    if let Some(status) = status {
+        session.status = status;
+    }
+    if let Some(data) = data {
+        apply_session_updates(&mut session, data);
+    }
+    let status = session.status.as_str().to_owned();
+    match agent_service.update_session(session).await {
+        Ok(_) => ResponseFormatter::json_success(&serde_json::json!({
+            schema::ID: session_id,
+            schema::STATUS: status,
+            (FIELD_UPDATED): true,
+        })),
+        Err(e) => {
+            error!("update_session", "Failed to update agent session", &e);
             Ok(to_contextual_tool_error(e))
         }
     }

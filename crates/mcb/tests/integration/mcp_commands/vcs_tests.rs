@@ -1,6 +1,6 @@
-//! Tests for the `vcs` MCP tool.
+//! Tests for public VCS MCP tools.
 //!
-//! Actions: `list_repositories`, `index_repository`, `compare_branches`, `search_branch`, `analyze_impact`
+//! Tools: `list_repos`, `compare_branches`, `analyze_impact`
 
 use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
 use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
@@ -13,12 +13,7 @@ use serial_test::serial;
 #[tokio::test]
 async fn test_vcs_list_repositories() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(
-        &client,
-        "vcs",
-        serde_json::json!({"action": "list_repositories"}),
-    )
-    .await?;
+    let result = call_tool(&client, "list_repos", serde_json::json!({})).await?;
     assert!(!is_error(&result), "list_repositories should not error");
     assert!(
         !extract_text(&result).is_empty(),
@@ -32,17 +27,12 @@ async fn test_vcs_list_repositories() -> TestResult {
 #[serial]
 #[rstest]
 #[tokio::test]
-async fn test_vcs_search_branch() -> TestResult {
+async fn test_vcs_analyze_impact() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(
-        &client,
-        "vcs",
-        serde_json::json!({"action": "search_branch", "query": "main", "limit": 5}),
-    )
-    .await?;
+    let result = call_tool(&client, "analyze_impact", serde_json::json!({"limit": 5})).await?;
     assert!(
         !extract_text(&result).is_empty(),
-        "search_branch should return a response"
+        "analyze_impact should return a response"
     );
     shutdown_client(client).await;
     cleanup_temp_dbs();
@@ -54,11 +44,10 @@ async fn test_vcs_search_branch() -> TestResult {
 #[tokio::test]
 async fn test_vcs_compare_default_branches() -> TestResult {
     let client = create_client().await?;
-    // compare_branches without explicit branch params uses defaults (current branch vs HEAD)
     let result = call_tool(
         &client,
-        "vcs",
-        serde_json::json!({"action": "compare_branches"}),
+        "compare_branches",
+        serde_json::json!({"base_branch": "HEAD", "target_branch": "HEAD"}),
     )
     .await?;
     assert!(
@@ -74,10 +63,15 @@ async fn test_vcs_compare_default_branches() -> TestResult {
 #[serial]
 #[rstest]
 #[tokio::test]
-async fn test_vcs_invalid_action() -> TestResult {
+async fn test_compare_branches_requires_base_branch() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(&client, "vcs", serde_json::json!({"action": "nonexistent"})).await;
-    assert_tool_error(result, &["unknown variant", "expected one of"]);
+    let result = call_tool(
+        &client,
+        "compare_branches",
+        serde_json::json!({"target_branch": "HEAD"}),
+    )
+    .await;
+    assert_tool_error(result, &["base_branch", "missing field"]);
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())

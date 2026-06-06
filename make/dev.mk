@@ -72,7 +72,7 @@ _test-e2e:
 		(cd tests && npx playwright install chromium --with-deps 2>&1 | tail -5); \
 	fi
 	@cargo build --release --bin mcb
-	@MCB_TEST_PORT=$(MCB_TEST_PORT) tests/node_modules/.bin/playwright test --config=tests/playwright.config.ts --reporter=list
+	@cd tests && MCB_TEST_PORT=$(MCB_TEST_PORT) node_modules/.bin/playwright test --config=playwright.config.ts --reporter=list
 
 test-rust: ## Run all Rust tests (used by CI and docker test-runner)
 	@echo "Running full Rust test suite..."

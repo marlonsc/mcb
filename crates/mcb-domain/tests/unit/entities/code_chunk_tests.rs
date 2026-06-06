@@ -1,4 +1,4 @@
-use mcb_domain::CodeChunk;
+use mcb_domain::entities::CodeChunk;
 use rstest::{fixture, rstest};
 use serde_json::json;
 

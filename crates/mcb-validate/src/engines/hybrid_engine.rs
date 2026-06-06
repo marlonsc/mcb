@@ -370,7 +370,6 @@ impl HybridRuleEngine {
     /// Returns an error if linter execution or violation conversion fails.
     pub async fn execute_lint_rule(&self, input: LintRuleInput<'_>) -> Result<RuleResult> {
         use crate::linters::YamlRuleExecutor;
-        use crate::rules::yaml_loader::ValidatedRule;
 
         let LintRuleInput {
             rule_id,
@@ -383,25 +382,7 @@ impl HybridRuleEngine {
 
         let start_time = std::time::Instant::now();
 
-        let lint_adapter_rule = ValidatedRule {
-            id: rule_id.to_owned(),
-            name: String::new(),
-            category: String::new(),
-            severity: String::new(),
-            enabled: true,
-            description: String::new(),
-            rationale: String::new(),
-            engine: String::new(),
-            config: serde_json::Value::Null,
-            rule_definition: serde_json::Value::Null,
-            fixes: Vec::new(),
-            lint_select: lint_select.to_vec(),
-            message: custom_message.map(String::from),
-            selectors: Vec::new(),
-            ast_query: None,
-            metrics: None,
-            filters: None,
-        };
+        let lint_adapter_rule = lint_adapter_rule(rule_id, lint_select, custom_message);
 
         let files: Vec<std::path::PathBuf> = context
             .file_contents
@@ -441,6 +422,33 @@ impl HybridRuleEngine {
             .get("lint_select")
             .and_then(|v| v.as_array())
             .is_some_and(|arr| !arr.is_empty())
+    }
+}
+
+/// Build a minimal `ValidatedRule` that carries only the lint-selection fields.
+fn lint_adapter_rule(
+    rule_id: &str,
+    lint_select: &[String],
+    custom_message: Option<&str>,
+) -> crate::rules::yaml_loader::ValidatedRule {
+    crate::rules::yaml_loader::ValidatedRule {
+        id: rule_id.to_owned(),
+        name: String::new(),
+        category: String::new(),
+        severity: String::new(),
+        enabled: true,
+        description: String::new(),
+        rationale: String::new(),
+        engine: String::new(),
+        config: serde_json::Value::Null,
+        rule_definition: serde_json::Value::Null,
+        fixes: Vec::new(),
+        lint_select: lint_select.to_vec(),
+        message: custom_message.map(String::from),
+        selectors: Vec::new(),
+        ast_query: None,
+        metrics: None,
+        filters: None,
     }
 }
 

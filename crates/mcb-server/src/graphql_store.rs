@@ -14,14 +14,16 @@ use async_graphql::dynamic::Schema;
 ///
 /// # Errors
 ///
-/// Returns an error string if the downcast fails.
+/// Returns an error if the downcast fails.
 pub fn insert_schema(
     store: &loco_rs::app::SharedStore,
     schema_any: Box<dyn Any + Send + Sync>,
-) -> std::result::Result<(), String> {
-    let schema = schema_any
-        .downcast::<Schema>()
-        .map_err(|_| "GraphQL: expected async_graphql::dynamic::Schema, got wrong type")?;
+) -> mcb_domain::error::Result<()> {
+    let schema = schema_any.downcast::<Schema>().map_err(|_| {
+        mcb_domain::error::Error::configuration(
+            "GraphQL: expected async_graphql::dynamic::Schema, got wrong type",
+        )
+    })?;
     store.insert(*schema);
     Ok(())
 }

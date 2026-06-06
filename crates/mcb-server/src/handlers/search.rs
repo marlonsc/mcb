@@ -31,6 +31,15 @@ use mcb_utils::constants::keys::{
 };
 use mcb_utils::constants::limits::DEFAULT_SEARCH_LIMIT;
 
+/// Inputs for the hybrid-search fallback path after a primary vector search fails.
+struct HybridFallbackSpec<'a> {
+    collection_name: &'a str,
+    query: &'a str,
+    limit: usize,
+    timer: Instant,
+    original_error: Error,
+}
+
 /// Handler for code and memory search MCP tool operations.
 #[derive(Clone)]
 pub struct SearchHandler {
@@ -131,8 +140,14 @@ impl SearchHandler {
                     "Vector search failed, attempting hybrid fallback"
                 );
                 self.trigger_auto_indexing(args.repo_path.as_deref(), collection_id);
-                self.hybrid_fallback_or_error(collection_name, query, limit, timer, e)
-                    .await
+                self.hybrid_fallback_or_error(HybridFallbackSpec {
+                    collection_name,
+                    query,
+                    limit,
+                    timer,
+                    original_error: e,
+                })
+                .await
             }
         }
     }
@@ -170,7 +185,8 @@ impl SearchHandler {
             let path = PathBuf::from(repo_path);
             if path.is_dir() {
                 let indexing = Arc::clone(&self.indexing_service);
-                tokio::spawn(async move {
+                // Fire-and-forget background indexing; failures are logged, not awaited.
+                let _handle = tokio::spawn(async move {
                     tracing::info!(
                         collection = collection_id.as_str(),
                         "Auto-indexing triggered"
@@ -185,12 +201,15 @@ impl SearchHandler {
 
     async fn hybrid_fallback_or_error(
         &self,
-        collection_name: &str,
-        query: &str,
-        limit: usize,
-        timer: Instant,
-        original_error: Error,
+        spec: HybridFallbackSpec<'_>,
     ) -> Result<CallToolResult, McpError> {
+        let HybridFallbackSpec {
+            collection_name,
+            query,
+            limit,
+            timer,
+            original_error,
+        } = spec;
         match self
             .hybrid_search
             .search(collection_name, query, vec![], limit)

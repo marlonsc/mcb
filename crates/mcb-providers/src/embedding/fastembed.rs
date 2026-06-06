@@ -216,9 +216,7 @@ fn parse_embedding_model(model_name: &str) -> EmbeddingModel {
 ///
 /// Uses a centralized cache directory to avoid creating `.fastembed_cache`
 /// directories in repository working directories.
-fn fastembed_factory(
-    config: &EmbeddingProviderConfig,
-) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
+fn fastembed_factory(config: &EmbeddingProviderConfig) -> Result<Arc<dyn EmbeddingProviderPort>> {
     let model_name = config
         .model
         .clone()
@@ -229,14 +227,14 @@ fn fastembed_factory(
     let cache_dir = config
         .cache_dir
         .clone()
-        .ok_or_else(|| "FastEmbed provider requires cache_dir in config".to_owned())?;
+        .ok_or_else(|| Error::configuration("FastEmbed provider requires cache_dir in config"))?;
 
     let init_options = InitOptions::new(model)
         .with_show_download_progress(true)
         .with_cache_dir(cache_dir);
 
     let provider = FastEmbedProvider::with_options(init_options)
-        .map_err(|e| format!("Failed to create FastEmbed provider: {e}"))?;
+        .map_err(|e| Error::embedding(format!("Failed to create FastEmbed provider: {e}")))?;
 
     Ok(Arc::new(provider))
 }

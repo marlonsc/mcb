@@ -214,7 +214,7 @@ fn detect_ide() -> (String, Option<String>) {
     // VS Code: sets VSCODE_PID or TERM_PROGRAM=vscode
     if std::env::var("VSCODE_PID").is_ok()
         || std::env::var("TERM_PROGRAM")
-            .map(|v| v.eq_ignore_ascii_case("vscode"))
+            .map(|v| v.eq_ignore_ascii_case(IDE_VSCODE))
             .unwrap_or(false)
     {
         return (IDE_VSCODE.to_owned(), std::env::var("VSCODE_PID").ok());
@@ -250,37 +250,33 @@ fn extract_org_and_project_from_git_remote(workspace_root: &str) -> Option<(Stri
 /// - `https://github.com/owner/repo`
 fn parse_org_and_project_from_remote_url(url: &str) -> Option<(String, String)> {
     let url = url.trim();
+    parse_ssh_remote(url).or_else(|| parse_https_remote(url))
+}
 
-    // SSH format: git@host:owner/repo.git
-    if let Some(path) = url
+/// Parse `git@host:owner/repo.git` style SSH remotes.
+fn parse_ssh_remote(url: &str) -> Option<(String, String)> {
+    let path = url
         .strip_prefix("git@")
-        .and_then(|s| s.split_once(':').map(|(_, p)| p))
-    {
-        let clean = path.trim_end_matches(".git");
-        if let Some((org, project)) = clean.split_once('/')
-            && !org.is_empty()
-            && !project.is_empty()
-        {
-            return Some((org.to_owned(), project.to_owned()));
-        }
+        .and_then(|s| s.split_once(':').map(|(_, p)| p))?;
+    let (org, project) = path.trim_end_matches(".git").split_once('/')?;
+    if org.is_empty() || project.is_empty() {
+        return None;
     }
+    Some((org.to_owned(), project.to_owned()))
+}
 
-    // HTTPS format: https://host/owner/repo.git
-    if url.starts_with("https://") || url.starts_with("http://") {
-        let segments: Vec<&str> = url
-            .split("//")
-            .nth(1)?
-            .split('/')
-            .skip(1) // skip host
-            .collect();
-        if segments.len() >= 2 {
-            let org = segments[0];
-            let project = segments[1].trim_end_matches(".git");
-            if !org.is_empty() && !project.is_empty() {
-                return Some((org.to_owned(), project.to_owned()));
-            }
-        }
+/// Parse `https://host/owner/repo(.git)` style HTTP(S) remotes.
+fn parse_https_remote(url: &str) -> Option<(String, String)> {
+    if !url.starts_with("https://") && !url.starts_with("http://") {
+        return None;
     }
-
-    None
+    let segments: Vec<&str> = url.split("//").nth(1)?.split('/').skip(1).collect();
+    let [org, project, ..] = segments.as_slice() else {
+        return None;
+    };
+    let project = project.trim_end_matches(".git");
+    if org.is_empty() || project.is_empty() {
+        return None;
+    }
+    Some(((*org).to_owned(), project.to_owned()))
 }

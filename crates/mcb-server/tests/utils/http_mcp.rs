@@ -10,13 +10,15 @@
 use std::sync::Arc;
 
 use axum::http::StatusCode;
-use mcb_domain::protocol::{JSONRPC_VERSION, McpError, McpRequest, McpResponse};
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::protocol::{McpError, McpRequest, McpResponse};
+use mcb_domain::utils::tests::http_mcp::header_value;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::McpServer;
 use mcb_server::tools::create_tool_list;
 use mcb_server::tools::{ToolExecutionContext, route_tool_call};
 use mcb_utils::constants::headers::HEADER_WORKSPACE_ROOT;
 use mcb_utils::constants::protocol::HTTP_HEADER_EXECUTION_FLOW;
+use mcb_utils::constants::protocol::JSONRPC_VERSION;
 use rmcp::model::CallToolRequestParams;
 use tempfile::TempDir;
 
@@ -45,15 +47,6 @@ impl McpTestContext {
             _temp: temp,
         })
     }
-}
-
-/// Extract header value by name (case-insensitive key match).
-fn header_value<'a>(headers: &'a [(String, String)], name: &str) -> Option<&'a str> {
-    let lower = name.to_lowercase();
-    headers
-        .iter()
-        .find(|(k, _)| k.to_lowercase() == lower)
-        .map(|(_, v)| v.as_str())
 }
 
 /// Send an MCP request through the server and return the response.

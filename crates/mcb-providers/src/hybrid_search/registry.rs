@@ -10,7 +10,7 @@ use super::HybridSearchEngine;
 /// Factory function for creating `HybridSearchEngine` instances.
 fn hybrid_search_factory(
     _config: &HybridSearchProviderConfig,
-) -> std::result::Result<Arc<dyn HybridSearchProviderPort>, String> {
+) -> mcb_domain::error::Result<Arc<dyn HybridSearchProviderPort>> {
     Ok(Arc::new(HybridSearchEngine::new()))
 }
 

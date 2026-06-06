@@ -21,37 +21,6 @@ fn test_error_boundary_full_workspace() {
     assert_violations_exact(
         &violations,
         &[
-            // ── MissingErrorContext (bare ?) ─────────────────────────────
-            (
-                "my-server/src/handlers/user_handler.rs",
-                30,
-                "MissingErrorContext",
-            ),
-            (
-                "my-server/src/handlers/user_handler.rs",
-                32,
-                "MissingErrorContext",
-            ),
-            (
-                "my-server/src/handlers/user_handler.rs",
-                36,
-                "MissingErrorContext",
-            ),
-            (
-                "my-server/src/handlers/user_handler.rs",
-                106,
-                "MissingErrorContext",
-            ),
-            (
-                "my-server/src/handlers/user_handler.rs",
-                109,
-                "MissingErrorContext",
-            ),
-            (
-                "my-server/src/handlers/user_handler.rs",
-                112,
-                "MissingErrorContext",
-            ),
             // ── WrongLayerError (infra types in domain) ─────────────────
             ("my-domain/src/domain/service.rs", 17, "WrongLayerError"),
             ("my-domain/src/domain/service.rs", 19, "WrongLayerError"),

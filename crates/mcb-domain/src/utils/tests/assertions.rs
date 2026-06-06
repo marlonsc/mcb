@@ -5,6 +5,55 @@
 
 use std::fmt::Write;
 
+/// Normalizes a path-like string to forward slashes with empty segments removed.
+fn normalize_path(s: &str) -> String {
+    s.replace('\\', "/")
+        .split('/')
+        .filter(|part| !part.is_empty())
+        .collect::<Vec<_>>()
+        .join("/")
+}
+
+/// Returns true when a normalized debug string matches an expected entry.
+fn debug_matches_expected(debug: &str, expected: &(&str, usize, &str)) -> bool {
+    let (file_suffix, line, msg_contains) = expected;
+    debug.contains(&normalize_path(file_suffix))
+        && (*line == 0 || debug.contains(&format!("line: {line}")))
+        && debug.contains(msg_contains)
+}
+
+/// Builds the failure message for [`assert_violations_exact`].
+fn format_violations_failure(
+    context: &str,
+    expected_len: usize,
+    debug_strs: &[String],
+    missing: &[String],
+    extras: &[String],
+) -> String {
+    let mut msg = format!(
+        "{context}: expected {expected_len} violations, got {}\n",
+        debug_strs.len()
+    );
+    if !missing.is_empty() {
+        let _ = write!(
+            msg,
+            "MISSING ({}):\n{}\n",
+            missing.len(),
+            missing.join("\n")
+        );
+    }
+    if !extras.is_empty() {
+        let _ = write!(
+            msg,
+            "UNEXPECTED ({}):\n{}\n",
+            extras.len(),
+            extras.join("\n")
+        );
+    }
+    let _ = write!(msg, "ALL VIOLATIONS:\n{}", debug_strs.join("\n"));
+    msg
+}
+
 /// Assert that violations list is empty with descriptive message.
 ///
 /// # Panics
@@ -62,73 +111,32 @@ pub fn assert_violations_exact<V: std::fmt::Debug>(
     expected: &[(&str, usize, &str)],
     context: &str,
 ) {
-    let normalize = |s: &str| {
-        s.replace('\\', "/")
-            .split('/')
-            .filter(|part| !part.is_empty())
-            .collect::<Vec<_>>()
-            .join("/")
-    };
     let debug_strs: Vec<String> = violations
         .iter()
-        .map(|v| normalize(&format!("{v:?}")))
+        .map(|v| normalize_path(&format!("{v:?}")))
         .collect();
 
-    // Check each expected violation is present
-    let mut missing: Vec<String> = Vec::new();
-    for (file_suffix, line, msg_contains) in expected {
-        let normalized_suffix = normalize(file_suffix);
-        let found = debug_strs.iter().any(|d| {
-            d.contains(&normalized_suffix)
-                && (*line == 0 || d.contains(&format!("line: {line}")))
-                && d.contains(msg_contains)
-        });
-        if !found {
-            missing.push(format!("  {normalized_suffix}:{line} {msg_contains:?}"));
-        }
-    }
+    let missing: Vec<String> = expected
+        .iter()
+        .filter(|exp| !debug_strs.iter().any(|d| debug_matches_expected(d, exp)))
+        .map(|(suffix, line, msg)| format!("  {}:{line} {msg:?}", normalize_path(suffix)))
+        .collect();
 
-    // Check there are no unexpected violations (count mismatch means extras)
-    let mut extras: Vec<String> = Vec::new();
-    if violations.len() != expected.len() {
-        for (i, d) in debug_strs.iter().enumerate() {
-            let matched = expected.iter().any(|(file_suffix, line, msg_contains)| {
-                let normalized_suffix = normalize(file_suffix);
-                d.contains(&normalized_suffix)
-                    && (*line == 0 || d.contains(&format!("line: {line}")))
-                    && d.contains(msg_contains)
-            });
-            if !matched {
-                extras.push(format!("  [{i}] {d}"));
-            }
-        }
-    }
+    // A count mismatch is the only way to have unexpected violations.
+    let extras: Vec<String> = if violations.len() == expected.len() {
+        Vec::new()
+    } else {
+        debug_strs
+            .iter()
+            .enumerate()
+            .filter(|(_, d)| !expected.iter().any(|exp| debug_matches_expected(d, exp)))
+            .map(|(i, d)| format!("  [{i}] {d}"))
+            .collect()
+    };
 
-    let has_issues = !missing.is_empty() || !extras.is_empty();
-    if has_issues {
-        let mut msg = format!(
-            "{}: expected {} violations, got {}\n",
-            context,
-            expected.len(),
-            violations.len()
-        );
-        if !missing.is_empty() {
-            let _ = write!(
-                msg,
-                "MISSING ({}):\n{}\n",
-                missing.len(),
-                missing.join("\n")
-            );
-        }
-        if !extras.is_empty() {
-            let _ = write!(
-                msg,
-                "UNEXPECTED ({}):\n{}\n",
-                extras.len(),
-                extras.join("\n")
-            );
-        }
-        let _ = write!(msg, "ALL VIOLATIONS:\n{}", debug_strs.join("\n"));
-        assert!(!has_issues, "{msg}");
-    }
+    assert!(
+        missing.is_empty() && extras.is_empty(),
+        "{}",
+        format_violations_failure(context, expected.len(), &debug_strs, &missing, &extras)
+    );
 }

@@ -202,7 +202,9 @@ impl VisibilityValidator {
             }
 
             if let Some(captures) = input.pub_item_re_internal.captures(trimmed) {
-                let item_name = captures.get(2).map_or("unknown", |m| m.as_str());
+                let item_name = captures
+                    .get(2)
+                    .map_or(mcb_utils::constants::FALLBACK_UNKNOWN, |m| m.as_str());
                 if input.exempted_items.contains(item_name) {
                     continue;
                 }

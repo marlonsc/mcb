@@ -70,58 +70,69 @@ pub(super) fn extract_functions_with_body_impl(
             continue;
         }
 
-        if let Some(re) = impl_pattern
-            && let Some(cap) = re.captures(trimmed)
-        {
-            *current_struct = cap
-                .get(1)
-                .map(|m| m.as_str().to_owned())
-                // INTENTIONAL: Regex capture group; no match yields empty string
-                .unwrap_or_default();
+        if let Some(name) = impl_pattern.and_then(|re| first_capture(re, trimmed)) {
+            *current_struct = name;
         }
 
-        if let Some(re) = fn_pattern
-            && let Some(cap) = re.captures(trimmed)
-        {
-            current_fn_name = cap
-                .get(1)
-                .map(|m| m.as_str().to_owned())
-                // INTENTIONAL: Regex capture group; no match yields empty string
-                .unwrap_or_default();
+        if let Some(name) = fn_pattern.and_then(|re| first_capture(re, trimmed)) {
+            current_fn_name = name;
             fn_start_line = orig_idx + 1;
             fn_body_lines.clear();
             in_fn = true;
             brace_depth = 0;
         }
 
-        if !in_fn {
-            continue;
-        }
-
-        let opens =
-            i32::try_from(trimmed.chars().filter(|c| *c == '{').count()).unwrap_or(i32::MAX);
-        let closes =
-            i32::try_from(trimmed.chars().filter(|c| *c == '}').count()).unwrap_or(i32::MAX);
-        brace_depth += opens - closes;
-
-        if !trimmed.is_empty() && !trimmed.starts_with(ATTRIBUTE_PREFIX) {
-            fn_body_lines.push(trimmed.to_owned());
-        }
-
-        if brace_depth <= 0 && opens > 0 {
-            functions.push(FunctionInfo {
-                name: current_fn_name.clone(),
-                start_line: fn_start_line,
-                meaningful_body: meaningful_lines(&fn_body_lines),
-                has_control_flow: has_control_flow(&fn_body_lines),
-                body_lines: fn_body_lines.clone(),
-            });
+        if in_fn && accumulate_body_line(trimmed, &mut brace_depth, &mut fn_body_lines) {
+            functions.push(build_function_info(
+                &current_fn_name,
+                fn_start_line,
+                &fn_body_lines,
+            ));
             in_fn = false;
             fn_body_lines.clear();
         }
     }
 
     functions
+}
+
+/// Update brace depth and accumulate a body line. Returns true when the function body closes.
+fn accumulate_body_line(
+    trimmed: &str,
+    brace_depth: &mut i32,
+    body_lines: &mut Vec<String>,
+) -> bool {
+    let opens = i32::try_from(trimmed.chars().filter(|c| *c == '{').count()).unwrap_or(i32::MAX);
+    let closes = i32::try_from(trimmed.chars().filter(|c| *c == '}').count()).unwrap_or(i32::MAX);
+    *brace_depth += opens - closes;
+
+    if !trimmed.is_empty() && !trimmed.starts_with(ATTRIBUTE_PREFIX) {
+        body_lines.push(trimmed.to_owned());
+    }
+
+    *brace_depth <= 0 && opens > 0
+}
+
+/// Return the first regex capture group of `trimmed` as an owned string, if the regex matches.
+fn first_capture(re: &Regex, trimmed: &str) -> Option<String> {
+    let cap = re.captures(trimmed)?;
+    // INTENTIONAL: Regex capture group; no match yields empty string
+    Some(
+        cap.get(1)
+            .map(|m| m.as_str().to_owned())
+            .unwrap_or_default(),
+    )
+}
+
+/// Build a [`FunctionInfo`] from an accumulated function body.
+fn build_function_info(name: &str, start_line: usize, body_lines: &[String]) -> FunctionInfo {
+    FunctionInfo {
+        name: name.to_owned(),
+        start_line,
+        meaningful_body: meaningful_lines(body_lines),
+        has_control_flow: has_control_flow(body_lines),
+        body_lines: body_lines.to_vec(),
+    }
 }
 
 fn find_function_end(lines: &[(usize, &str)], start_idx: usize) -> usize {

@@ -9,12 +9,10 @@
 //! - Error type placement (right layer)
 
 use crate::filters::LanguageId;
+use mcb_utils::constants::validate::{ARCH_PATH_DOMAIN, ARCH_PATH_HANDLERS};
 use mcb_utils::constants::validate::{
-    ADAPTERS_DIR, ARCH_PATH_DOMAIN, ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES,
-};
-use mcb_utils::constants::validate::{
-    CFG_TEST_MARKER, COMMENT_PREFIX, ERROR_MODULE_FILE, HANDLER_FILE_SUFFIX, SHORT_PREVIEW_LENGTH,
-    TEST_DIR_FRAGMENT, VAL_ERROR,
+    CFG_TEST_MARKER, COMMENT_PREFIX, ERROR_MODULE_FILE, HANDLER_FILE_SUFFIX, TEST_DIR_FRAGMENT,
+    VAL_ERROR,
 };
 use std::path::{Path, PathBuf};
 
@@ -22,26 +20,12 @@ use crate::define_violations;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
 use mcb_domain::ports::validation::ViolationCategory;
-use mcb_utils::utils::regex::{compile_regex, compile_regex_pairs};
+use mcb_utils::utils::regex::compile_regex_pairs;
 
 define_violations! {
     dynamic_severity,
     ViolationCategory::ErrorBoundary,
     pub enum ErrorBoundaryViolation {
-        /// Error crossing layer without context
-        #[violation(
-            id = "ERR001",
-            severity = Warning,
-            message = "Missing error context: {file}:{line} - {error_pattern} ({suggestion})",
-            suggestion = "{suggestion}"
-        )]
-        MissingErrorContext {
-            file: PathBuf,
-            line: usize,
-            error_pattern: String,
-            suggestion: String,
-            severity: Severity,
-        },
         /// Infrastructure error type used in domain layer
         #[violation(
             id = "ERR002",
@@ -78,7 +62,6 @@ crate::create_validator!(
     "Validates error handling patterns across layer boundaries",
     ErrorBoundaryViolation,
     [
-        Self::validate_error_context,
         Self::validate_layer_error_types,
         Self::validate_leaked_errors,
     ]
@@ -131,48 +114,6 @@ impl ErrorBoundaryValidator {
 
             Ok(())
         })
-    }
-
-    /// Detects error propagation without context (missing `.context()` or `.map_err()`)
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if regex compilation or source file reading fails.
-    pub fn validate_error_context(
-        config: &ValidationConfig,
-    ) -> Result<Vec<ErrorBoundaryViolation>> {
-        let mut violations = Vec::new();
-
-        // Pattern: ? operator without .context() or .with_context()
-        // This is a heuristic - we look for lines with ? but no context method
-        let question_mark_pattern = compile_regex(r"\?\s*;?\s*$")?;
-        let context_pattern = compile_regex(r"\.(context|with_context|map_err|ok_or_else)\s*\(")?;
-
-        // Files that are likely error boundary crossing points
-        let boundary_paths = [ARCH_PATH_HANDLERS, ADAPTERS_DIR, ARCH_PATH_SERVICES];
-
-        Self::scan_relevant_lines(
-            config,
-            |_path, path_str| boundary_paths.iter().any(|p| path_str.contains(p)),
-            |path, line_num, _line, trimmed| {
-                if question_mark_pattern.is_match(trimmed)
-                    && !context_pattern.is_match(trimmed)
-                    && !trimmed.starts_with("return ")
-                    && !trimmed.contains("Ok(")
-                {
-                    violations.push(ErrorBoundaryViolation::MissingErrorContext {
-                        file: path.clone(),
-                        line: line_num,
-                        error_pattern: trimmed.chars().take(SHORT_PREVIEW_LENGTH).collect(),
-                        suggestion: "Add .context() or .map_err() for better error messages"
-                            .to_owned(),
-                        severity: Severity::Info,
-                    });
-                }
-            },
-        )?;
-
-        Ok(violations)
     }
 
     /// Detects infrastructure error types used in domain layer (layer boundary violation)

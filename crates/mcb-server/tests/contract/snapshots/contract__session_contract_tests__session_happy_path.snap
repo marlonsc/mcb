@@ -9,10 +9,9 @@ expression: "snapshot_payload(&request, status, &response)"
     "method": "tools/call",
     "params": {
       "arguments": {
-        "action": "list",
         "limit": 10
       },
-      "name": "session"
+      "name": "list_sessions"
     }
   },
   "response": {

@@ -1,6 +1,7 @@
 //! Tests for transport layer types
 
-use mcb_domain::protocol::{JSONRPC_VERSION, McpRequest, McpResponse};
+use mcb_domain::protocol::{McpRequest, McpResponse};
+use mcb_utils::constants::protocol::JSONRPC_VERSION;
 use rstest::rstest;
 
 #[rstest]
@@ -48,7 +49,7 @@ fn test_mcp_response_shapes(
         McpResponse::from_success(id, serde_json::json!({"result": "ok"}))
     };
 
-    assert_eq!(response.jsonrpc, "2.0");
+    assert_eq!(response.jsonrpc, JSONRPC_VERSION);
     if is_error {
         assert!(response.result.is_none());
         let err = response.error.expect("expected error payload");
@@ -66,7 +67,7 @@ fn test_mcp_response_serialization_roundtrip() {
         McpResponse::from_success(Some(serde_json::json!(1)), serde_json::json!({"tools": []}));
     let json = serde_json::to_string(&response).unwrap();
     let deserialized: McpResponse = serde_json::from_str(&json).unwrap();
-    assert_eq!(deserialized.jsonrpc, "2.0");
+    assert_eq!(deserialized.jsonrpc, JSONRPC_VERSION);
     assert!(deserialized.result.is_some());
 }
 

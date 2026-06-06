@@ -51,7 +51,7 @@ macro_rules! impl_registry {
             /// Human-readable description
             pub description: &'static str,
             /// Constructor function to create provider instance
-            pub build: fn(&$config) -> std::result::Result<std::sync::Arc<dyn $trait>, String>,
+            pub build: fn(&$config) -> $crate::error::Result<std::sync::Arc<dyn $trait>>,
         }
 
         #[doc(hidden)]
@@ -70,8 +70,11 @@ macro_rules! impl_registry {
 
             for entry in $slice {
                 if entry.name == provider_name {
-                    return (entry.build)(config)
-                        .map_err(|e| $crate::error::Error::configuration(e.to_string()));
+                    return (entry.build)(config).map_err(|e| {
+                        $crate::error::Error::configuration(format!(
+                            "provider '{provider_name}' construction failed: {e}"
+                        ))
+                    });
                 }
             }
 

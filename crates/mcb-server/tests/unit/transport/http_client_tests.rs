@@ -1,6 +1,7 @@
 use mcb_server::transport::http_client::HttpClientTransport;
 
 use mcb_domain::utils::tests::timeouts::TEST_TIMEOUT;
+use mcb_utils::constants::FALLBACK_UNKNOWN;
 
 #[rstest]
 fn test_http_client_creation() {
@@ -135,7 +136,7 @@ fn machine_id_detected_from_gethostname_without_env() {
     let expected_hostname = hostname::get()
         .ok()
         .and_then(|h| h.into_string().ok())
-        .unwrap_or_else(|| "unknown".to_owned());
+        .unwrap_or_else(|| FALLBACK_UNKNOWN.to_owned());
 
     assert!(
         !expected_hostname.is_empty(),
@@ -148,7 +149,7 @@ fn machine_id_prefers_gethostname_over_env() {
     let gethostname_result = hostname::get()
         .ok()
         .and_then(|h| h.into_string().ok())
-        .unwrap_or_else(|| "unknown".to_owned());
+        .unwrap_or_else(|| FALLBACK_UNKNOWN.to_owned());
 
     assert!(
         !gethostname_result.is_empty(),

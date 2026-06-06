@@ -9,15 +9,15 @@ expression: "snapshot_payload(&request, status, &response)"
     "method": "tools/call",
     "params": {
       "arguments": {
-        "action": 123
+        "max_file_size": "not_a_number"
       },
-      "name": "index"
+      "name": "index_repo"
     }
   },
   "response": {
     "error": {
       "code": -32602,
-      "message": "Missing execution provenance for 'index': session_id, repo_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
+      "message": "Missing execution provenance for 'index_repo': session_id, repo_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
     },
     "id": 1,
     "jsonrpc": "2.0"

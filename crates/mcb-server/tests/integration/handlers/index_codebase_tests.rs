@@ -4,7 +4,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 
 use crate::utils::test_fixtures::create_test_mcb_state;
-use mcb_domain::test_utils::create_temp_codebase;
+use mcb_domain::utils::tests::utils::create_temp_codebase;
 
 #[rstest]
 #[case(true, None, Some("test"), true)]

@@ -6,8 +6,9 @@
 //!
 //! **Documentation**: [docs/modules/domain.md#testing-utilities](../../../../docs/modules/domain.md#testing-utilities)
 
-use crate::protocol::{JSONRPC_VERSION, McpRequest, McpResponse};
+use crate::protocol::{McpRequest, McpResponse};
 use crate::utils::tests::utils::TestResult;
+use mcb_utils::constants::protocol::JSONRPC_VERSION;
 
 // ---------------------------------------------------------------------------
 // Header helpers

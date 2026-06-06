@@ -27,7 +27,7 @@ pub struct ValidatorEntry {
     /// Human-readable description
     pub description: &'static str,
     /// Build a validator instance for the given workspace root
-    pub build: fn(PathBuf) -> std::result::Result<Box<dyn Validator>, String>,
+    pub build: fn(PathBuf) -> Result<Box<dyn Validator>>,
 }
 
 #[linkme::distributed_slice]

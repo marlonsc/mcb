@@ -35,7 +35,7 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: `rm -f /tmp/mcb-playwright.db && if [ -x target/release/mcb ]; then SERVER_PORT=${process.env.MCB_TEST_PORT || '18080'} MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http target/release/mcb serve --server; else SERVER_PORT=${process.env.MCB_TEST_PORT || '18080'} MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http cargo run --release --bin mcb -- serve --server; fi`,
+    command: `rm -f /tmp/mcb-playwright.db && MCB_BIN=$([ -x ../target/release/mcb ] && echo ../target/release/mcb || echo target/release/mcb) && if [ -x $MCB_BIN ]; then SERVER_PORT=${process.env.MCB_TEST_PORT || '18080'} MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http $MCB_BIN serve --server; else SERVER_PORT=${process.env.MCB_TEST_PORT || '18080'} MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http cargo run --release --bin mcb -- serve --server; fi`,
     url: process.env.MCB_TEST_PORT
       ? `http://localhost:${process.env.MCB_TEST_PORT}`
       : 'http://localhost:18080',

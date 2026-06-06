@@ -101,21 +101,22 @@ fn get_mcb_path() -> PathBuf {
 fn create_test_command() -> Command {
     let mcb_path = get_mcb_path();
     let mut cmd = Command::new(mcb_path);
-    let unique_db = format!(
-        "/tmp/mcb-mcp-{}-{}.db",
+    let unique_db = std::env::temp_dir().join(format!(
+        "mcb-mcp-{}-{}.db",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_nanos()
-    );
-    register_temp_db(unique_db.clone());
+    ));
+    let unique_db_str = unique_db.display().to_string().replace('\\', "/");
+    register_temp_db(unique_db_str.clone());
     let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     cmd.current_dir(&workspace_root);
     cmd.arg("serve");
     cmd.arg("--stdio");
     cmd.env("LOCO_ENV", "test");
-    cmd.env("DATABASE_URL", format!("sqlite://{unique_db}?mode=rwc"));
+    cmd.env("DATABASE_URL", format!("sqlite://{unique_db_str}?mode=rwc"));
     cmd
 }
 

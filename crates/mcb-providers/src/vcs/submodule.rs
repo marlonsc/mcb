@@ -106,85 +106,34 @@ impl SubmoduleProvider {
             };
 
             for submodule in submodules {
-                let path = submodule.path().to_str().unwrap_or_default().to_owned();
-
-                // Check for circular references
-                let unique_key = format!("{parent_id}:{path}");
-                if visited.contains(&unique_key) {
-                    mcb_domain::warn!(
-                        "submodule",
-                        "Circular submodule reference detected, skipping",
-                        &path
-                    );
+                let Some(info) = Self::build_submodule_info(
+                    &submodule,
+                    &current_repo,
+                    &parent_id,
+                    depth,
+                    skip_uninitialized,
+                    &mut visited,
+                ) else {
                     continue;
-                }
-                visited.insert(unique_key);
-
-                // Get submodule URL (may be None for orphaned submodules)
-                let url = match submodule.url() {
-                    Some(u) => u.to_owned(),
-                    None => {
-                        mcb_domain::warn!(
-                            "submodule",
-                            "Orphaned submodule (no URL in .gitmodules), skipping",
-                            &path
-                        );
-                        continue;
-                    }
                 };
 
-                // Get commit hash (submodules are typically in detached HEAD)
-                let commit_hash = submodule
-                    .head_id()
-                    .map(|oid| oid.to_string())
-                    .unwrap_or_default();
-
-                // Get submodule name
-                let name = submodule.name().unwrap_or(&path).to_owned();
-
-                // Check if submodule is initialized
-                let workdir = current_repo.workdir().unwrap_or_else(|| Path::new(""));
-                let submodule_path = workdir.join(&path);
-                let is_initialized =
-                    submodule_path.join(".git").exists() || submodule_path.join(".git").is_file(); // .git can be a file for nested
-
-                if skip_uninitialized && !is_initialized {
-                    mcb_domain::debug!("submodule", "Skipping uninitialized submodule", &path);
-                    continue;
-                }
-
-                let submodule_id = format!("{parent_id}:{path}");
-
-                let info = SubmoduleInfo {
-                    id: submodule_id,
-                    path: path.clone(),
-                    url,
-                    commit_hash,
-                    parent_repo_id: parent_id.clone(),
-                    depth: depth + 1,
-                    name,
-                    is_initialized,
-                };
-
-                results.push(info);
-
-                // Try to open submodule for recursive processing
-                if is_initialized {
+                // Try to open submodule for recursive processing before moving `info`.
+                if info.is_initialized {
                     match submodule.open() {
                         Ok(sub_repo) => {
-                            let sub_id = format!("{parent_id}:{path}");
-                            queue.push_back((sub_repo, sub_id, depth + 1));
+                            queue.push_back((sub_repo, info.id.clone(), depth + 1));
                         }
                         Err(e) => {
                             mcb_domain::warn!(
                                 "submodule",
                                 "Cannot access submodule repository, skipping nested submodules",
-                                &format!("path = {path}, error = {e}")
+                                &format!("path = {}, error = {e}", info.path)
                             );
-                            // Continue with other submodules - don't block parent
                         }
                     }
                 }
+
+                results.push(info);
             }
         }
 
@@ -195,6 +144,66 @@ impl SubmoduleProvider {
         );
 
         Ok(results)
+    }
+
+    /// Build a `SubmoduleInfo` for one submodule, or `None` when it must be skipped
+    /// (circular reference, orphaned, or uninitialized when skipping is enabled).
+    fn build_submodule_info(
+        submodule: &git2::Submodule<'_>,
+        current_repo: &Repository,
+        parent_id: &str,
+        depth: usize,
+        skip_uninitialized: bool,
+        visited: &mut HashSet<String>,
+    ) -> Option<SubmoduleInfo> {
+        let path = submodule.path().to_str().unwrap_or_default().to_owned();
+
+        let unique_key = format!("{parent_id}:{path}");
+        if !visited.insert(unique_key) {
+            mcb_domain::warn!(
+                "submodule",
+                "Circular submodule reference detected, skipping",
+                &path
+            );
+            return None;
+        }
+
+        let Some(url) = submodule.url().map(str::to_owned) else {
+            mcb_domain::warn!(
+                "submodule",
+                "Orphaned submodule (no URL in .gitmodules), skipping",
+                &path
+            );
+            return None;
+        };
+
+        let commit_hash = submodule
+            .head_id()
+            .map(|oid| oid.to_string())
+            .unwrap_or_default();
+        let name = submodule.name().unwrap_or(&path).to_owned();
+
+        let workdir = current_repo.workdir().unwrap_or_else(|| Path::new(""));
+        let submodule_path = workdir.join(&path);
+        // `.git` can be a file (gitlink) for nested submodules.
+        let is_initialized =
+            submodule_path.join(".git").exists() || submodule_path.join(".git").is_file();
+
+        if skip_uninitialized && !is_initialized {
+            mcb_domain::debug!("submodule", "Skipping uninitialized submodule", &path);
+            return None;
+        }
+
+        Some(SubmoduleInfo {
+            id: format!("{parent_id}:{path}"),
+            path,
+            url,
+            commit_hash,
+            parent_repo_id: parent_id.to_owned(),
+            depth: depth + 1,
+            name,
+            is_initialized,
+        })
     }
 }
 

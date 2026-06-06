@@ -31,10 +31,8 @@ fn normalize_tool_call_ids(mut payload: serde_json::Value) -> serde_json::Value 
 #[tokio::test]
 async fn agent_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
-        "agent",
+        "log_tool_call",
         &json!({
-            "action": "log_tool",
-            "session_id": "00000000-0000-0000-0000-000000000001",
             "data": {
                 "tool_name": "search",
                 "success": true,
@@ -55,11 +53,9 @@ async fn agent_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::
 #[tokio::test]
 async fn agent_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
-        "agent",
+        "log_tool_call",
         &json!({
-            "action": 123,
-            "session_id": "00000000-0000-0000-0000-000000000001",
-            "data": {"tool_name": "search"},
+            "data": 123,
         }),
     );
     let (status, response) = call_tool(&request).await?;
@@ -75,10 +71,8 @@ async fn agent_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error
 #[tokio::test]
 async fn agent_store_without_session_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
-        "agent",
+        "log_tool_call",
         &json!({
-            "action": "log_tool",
-            "session_id": "nonexistent-session-00000",
             "data": {
                 "tool_name": "search",
                 "success": true,

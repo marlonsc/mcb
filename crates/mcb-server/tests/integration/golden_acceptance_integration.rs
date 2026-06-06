@@ -23,6 +23,7 @@ use std::time::{Duration, Instant};
 use mcb_domain::entities::CodeChunk;
 // Note: EmbeddingProvider/VectorStoreProvider traits are used via ctx.embedding_handle().get()
 use mcb_domain::value_objects::CollectionId;
+use mcb_utils::constants::FALLBACK_UNKNOWN;
 use rstest::rstest;
 use serde_json::json;
 
@@ -89,7 +90,7 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
                 let file_name = path
                     .file_name()
                     .and_then(|n| n.to_str())
-                    .unwrap_or("unknown")
+                    .unwrap_or(FALLBACK_UNKNOWN)
                     .to_owned();
 
                 let line_count = content.lines().count();

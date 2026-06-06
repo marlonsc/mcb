@@ -239,35 +239,7 @@ impl CargoDependencyParser {
             },
 
             // Table format: serde = { version = "1.0", features = ["derive"] }
-            toml::Value::Table(table) => {
-                let version = table
-                    .get("version")
-                    .and_then(|v| v.as_str())
-                    .map(str::to_owned);
-
-                let features = table
-                    .get("features")
-                    .and_then(|v| v.as_array())
-                    .map(|arr| {
-                        arr.iter()
-                            .filter_map(|v| v.as_str().map(str::to_owned))
-                            .collect()
-                    })
-                    // INTENTIONAL: TOML array extraction; empty deps is valid
-                    .unwrap_or_default();
-
-                let optional = table
-                    .get("optional")
-                    .and_then(toml::Value::as_bool)
-                    .unwrap_or(false);
-
-                DependencyInfo {
-                    declared: !is_optional && !optional,
-                    used_in_code: false,
-                    version,
-                    features,
-                }
-            }
+            toml::Value::Table(table) => Self::dependency_info_from_table(table, is_optional),
 
             toml::Value::Integer(_)
             | toml::Value::Float(_)
@@ -279,6 +251,37 @@ impl CargoDependencyParser {
                 version: None,
                 features: Vec::new(),
             },
+        }
+    }
+
+    /// Parse a table-form dependency (`{ version = ..., features = [...], optional = ... }`).
+    fn dependency_info_from_table(table: &toml::value::Table, is_optional: bool) -> DependencyInfo {
+        let version = table
+            .get("version")
+            .and_then(|v| v.as_str())
+            .map(str::to_owned);
+
+        let features = table
+            .get("features")
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(str::to_owned))
+                    .collect()
+            })
+            // INTENTIONAL: TOML array extraction; empty deps is valid
+            .unwrap_or_default();
+
+        let optional = table
+            .get("optional")
+            .and_then(toml::Value::as_bool)
+            .unwrap_or(false);
+
+        DependencyInfo {
+            declared: !is_optional && !optional,
+            used_in_code: false,
+            version,
+            features,
         }
     }
 }

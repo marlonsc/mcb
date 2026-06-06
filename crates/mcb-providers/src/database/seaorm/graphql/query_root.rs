@@ -74,7 +74,7 @@ impl GraphQLSchemaProvider for SeaographyGraphQLSchemaProvider {
 /// Factory function for creating the Seaography GraphQL provider.
 fn seaography_factory(
     _config: &GraphQLSchemaProviderConfig,
-) -> std::result::Result<Arc<dyn GraphQLSchemaProvider>, String> {
+) -> mcb_domain::error::Result<Arc<dyn GraphQLSchemaProvider>> {
     Ok(Arc::new(SeaographyGraphQLSchemaProvider))
 }
 

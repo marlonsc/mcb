@@ -44,26 +44,36 @@ pub(super) fn has_doc_comment(
         return false;
     }
 
+    let bracket_delta = |raw: &str| -> i32 {
+        let closes = (raw.matches(']').count() + raw.matches(')').count()) as i32;
+        let opens = (raw.matches('[').count() + raw.matches('(').count()) as i32;
+        closes - opens
+    };
+
     let mut i = item_line - 1;
+    // Depth of an in-progress multi-line attribute block (e.g. a wrapped
+    // `#[derive(\n ... \n)]`) encountered while scanning upward.
+    let mut attr_depth: i32 = 0;
     loop {
-        let line = lines[i].trim();
-        if line.is_empty() {
-            if i == 0 {
-                return false;
-            }
-            i -= 1;
-            continue;
+        let raw = lines[i];
+        let line = raw.trim();
+
+        // Inside a multi-line attribute: consume lines until its `#[` opener.
+        if attr_depth > 0 {
+            attr_depth += bracket_delta(raw);
+        } else if line.is_empty() || attr_re.is_match(raw) {
+            // blank line or single-line attribute — keep scanning upward
+        } else if line.ends_with(']') && bracket_delta(raw) > 0 {
+            // closing line of a multi-line attribute (e.g. `)]`)
+            attr_depth = bracket_delta(raw);
+        } else {
+            return doc_re.is_match(raw);
         }
 
-        if attr_re.is_match(lines[i]) {
-            if i == 0 {
-                return false;
-            }
-            i -= 1;
-            continue;
+        if i == 0 {
+            return false;
         }
-
-        return doc_re.is_match(lines[i]);
+        i -= 1;
     }
 }
 

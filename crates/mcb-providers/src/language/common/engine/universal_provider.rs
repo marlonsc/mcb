@@ -67,7 +67,7 @@ impl mcb_domain::ports::LanguageChunkingProvider for UniversalLanguageChunkingPr
 /// Factory function for creating universal language chunking provider instances.
 fn universal_language_factory(
     _config: &LanguageProviderConfig,
-) -> std::result::Result<Arc<dyn LanguageProviderPort>, String> {
+) -> mcb_domain::error::Result<Arc<dyn LanguageProviderPort>> {
     Ok(Arc::new(UniversalLanguageChunkingProvider::new()))
 }
 

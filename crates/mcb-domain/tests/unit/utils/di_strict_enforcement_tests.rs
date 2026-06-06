@@ -94,6 +94,7 @@ fn no_direct_concrete_di_shortcuts_outside_linkme_registries() -> TestResult {
                     l.contains("#[linkme::distributed_slice]")
                         || l.contains("linkme::distributed_slice")
                         || l.contains("register_tool!")
+                        || l.contains("register_service!")
                         || (l.contains("register_") && l.contains("_provider!"))
                 });
 

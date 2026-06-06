@@ -107,6 +107,24 @@ impl HybridSearchEngine {
             0.0
         }
     }
+
+    /// Combine the BM25 and semantic scores for one result. Falls back to the
+    /// semantic score alone when the document is absent from the BM25 index.
+    fn hybrid_score_for(
+        &self,
+        index: &CollectionIndex,
+        result: &SearchResult,
+        query_terms: &[String],
+    ) -> f64 {
+        let doc_key = format!("{}:{}", result.file_path, result.start_line);
+        let Some(&doc_idx) = index.document_index.get(&doc_key) else {
+            return self.semantic_weight * result.score;
+        };
+        let document = &index.documents[doc_idx];
+        let bm25_score = index.scorer.score_with_tokens(document, query_terms);
+        let normalized_bm25 = Self::normalize_bm25_score(bm25_score);
+        self.bm25_weight * normalized_bm25 + self.semantic_weight * result.score
+    }
 }
 
 impl Default for HybridSearchEngine {
@@ -185,22 +203,7 @@ impl HybridSearchProvider for HybridSearchEngine {
         let mut scored_results: Vec<(SearchResult, f64)> = semantic_results
             .into_iter()
             .map(|result| {
-                let doc_key = format!("{}:{}", result.file_path, result.start_line);
-                let semantic_score = result.score;
-
-                // Look up document in index for BM25 scoring
-                let hybrid_score = if let Some(&doc_idx) = index.document_index.get(&doc_key) {
-                    let document = &index.documents[doc_idx];
-                    let bm25_score = index.scorer.score_with_tokens(document, &query_terms);
-                    let normalized_bm25 = Self::normalize_bm25_score(bm25_score);
-
-                    // Combine scores using weighted average
-                    self.bm25_weight * normalized_bm25 + self.semantic_weight * semantic_score
-                } else {
-                    // Document not found in BM25 index, use semantic score only
-                    self.semantic_weight * semantic_score
-                };
-
+                let hybrid_score = self.hybrid_score_for(index, &result, &query_terms);
                 (result, hybrid_score)
             })
             .collect();

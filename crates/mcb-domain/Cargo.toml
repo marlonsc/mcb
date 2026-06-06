@@ -40,9 +40,6 @@ async-trait = { workspace = true }
 # Schema generation for MCP - pure lib acceptable for domain
 schemars = { workspace = true, features = ["uuid1"] }
 
-# Text processing
-unicode-segmentation = { workspace = true }
-
 # Hashing utilities
 sha2 = { workspace = true }
 

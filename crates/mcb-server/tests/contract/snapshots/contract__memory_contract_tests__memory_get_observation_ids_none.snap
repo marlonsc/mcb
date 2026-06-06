@@ -8,17 +8,14 @@ expression: "snapshot_payload(&request, status, &response)"
     "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
-      "arguments": {
-        "action": "get",
-        "resource": "observation"
-      },
-      "name": "memory"
+      "arguments": {},
+      "name": "get_memories"
     }
   },
   "response": {
     "error": {
       "code": -32602,
-      "message": "Missing execution provenance for 'memory': session_id, repo_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
+      "message": "Missing execution provenance for 'get_memories': session_id, repo_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
     },
     "id": 1,
     "jsonrpc": "2.0"

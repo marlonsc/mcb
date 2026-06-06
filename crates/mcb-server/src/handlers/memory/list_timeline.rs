@@ -58,27 +58,39 @@ pub async fn list_observations(
     }
 }
 
+/// Resolve the timeline anchor id from `anchor_id` or, failing that, a `query` search.
+///
+/// The outer `Result` carries hard errors; the inner `Result` carries either the
+/// resolved id or a ready-to-return tool error response (missing/empty anchor).
+async fn resolve_timeline_anchor_id(
+    memory_service: &Arc<dyn MemoryServiceInterface>,
+    args: &MemoryArgs,
+) -> Result<Result<String, CallToolResult>, McpError> {
+    if let Some(anchor_id) = args.anchor_id.clone() {
+        return Ok(Ok(anchor_id));
+    }
+    let Some(query) = args.query.clone() else {
+        return Ok(Err(tool_error("Missing anchor_id or query for timeline")));
+    };
+    let results = memory_service
+        .search_memories(&query, None, 1)
+        .await
+        .map_err(|e| to_opaque_mcp_error(&e))?;
+    match results.first() {
+        Some(first) => Ok(Ok(first.observation.id.clone())),
+        None => Ok(Err(tool_error("No anchor observation found"))),
+    }
+}
+
 /// Retrieves a timeline of observations surrounding an anchor observation.
 #[tracing::instrument(skip_all)]
 pub async fn get_timeline(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let anchor_id = if let Some(anchor_id) = args.anchor_id.clone() {
-        anchor_id
-    } else if let Some(query) = args.query.clone() {
-        let search_err = |e: mcb_domain::Error| to_opaque_mcp_error(&e);
-        let results = memory_service
-            .search_memories(&query, None, 1)
-            .await
-            .map_err(search_err)?;
-        if let Some(first) = results.first() {
-            first.observation.id.clone()
-        } else {
-            return Ok(tool_error("No anchor observation found"));
-        }
-    } else {
-        return Ok(tool_error("Missing anchor_id or query for timeline"));
+    let anchor_id = match resolve_timeline_anchor_id(memory_service, args).await? {
+        Ok(anchor_id) => anchor_id,
+        Err(response) => return Ok(response),
     };
     let filter = build_memory_filter(args, None, None);
     let depth_before = args.depth_before.unwrap_or(DEFAULT_TIMELINE_DEPTH);

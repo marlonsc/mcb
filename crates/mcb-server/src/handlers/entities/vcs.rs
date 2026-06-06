@@ -13,8 +13,9 @@ use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{VcsEntityAction, VcsEntityArgs, VcsEntityResource};
 use crate::error_mapping::safe_internal_error;
+use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::{
-    map_opaque_error, ok_json, ok_text, require_data, require_id, require_resolved_identifier,
+    map_opaque_error, ok_text, require_data, require_id, require_resolved_identifier,
     resolve_org_id,
 };
 
@@ -28,6 +29,23 @@ handler_new!(VcsEntityHandler {
 });
 
 impl VcsEntityHandler {
+    /// Reject a repository operation when the supplied and stored project ids diverge.
+    ///
+    /// `label` names the source of `supplied` in the error message (`args` or `payload`).
+    fn ensure_project_id_matches_labeled(
+        label: &str,
+        supplied: &str,
+        stored: &str,
+    ) -> Result<(), McpError> {
+        if supplied != stored {
+            return Err(McpError::invalid_params(
+                format!("conflicting project_id: {label}='{supplied}', repository='{stored}'"),
+                None,
+            ));
+        }
+        Ok(())
+    }
+
     /// Route an incoming `vcs_entity` tool call to the appropriate CRUD operation.
     ///
     /// # Errors
@@ -71,27 +89,23 @@ impl VcsEntityHandler {
                 )?;
                 repo.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_repository(&repo).await)?;
-                ok_json(&repo)
+                ResponseFormatter::json_success(&repo)
             }
             (VcsEntityAction::Get, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
                 let repository = map_opaque_error(self.repo.get_repository(&org_id, &id).await)?;
-                if let Some(project_id) = args.project_id.as_deref()
-                    && repository.project_id != project_id
-                {
-                    return Err(McpError::invalid_params(
-                        format!(
-                            "conflicting project_id: args='{project_id}', repository='{}'",
-                            repository.project_id
-                        ),
-                        None,
-                    ));
+                if let Some(project_id) = args.project_id.as_deref() {
+                    Self::ensure_project_id_matches_labeled(
+                        "args",
+                        project_id,
+                        &repository.project_id,
+                    )?;
                 }
-                ok_json(&repository)
+                ResponseFormatter::json_success(&repository)
             }
             (VcsEntityAction::List, VcsEntityResource::Repository) => {
                 let project_id = require_arg!(args.project_id, "project_id required for list");
-                ok_json(&map_opaque_error(self.repo.list_repositories(&org_id, project_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_repositories(&org_id, project_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Repository) => {
                 let project_id =
@@ -104,15 +118,11 @@ impl VcsEntityHandler {
                     "project_id required for repository update",
                 )?;
                 let existing = map_opaque_error(self.repo.get_repository(&org_id, &repo.id).await)?;
-                if existing.project_id != repo.project_id {
-                    return Err(McpError::invalid_params(
-                        format!(
-                            "conflicting project_id: payload='{}', repository='{}'",
-                            repo.project_id, existing.project_id
-                        ),
-                        None,
-                    ));
-                }
+                Self::ensure_project_id_matches_labeled(
+                    "payload",
+                    &repo.project_id,
+                    &existing.project_id,
+                )?;
                 repo.org_id = org_id.clone();
                 map_opaque_error(self.repo.update_repository(&repo).await)?;
                 ok_text("updated")
@@ -122,15 +132,7 @@ impl VcsEntityHandler {
                 let project_id =
                     require_arg!(args.project_id, "project_id required for repository delete");
                 let existing = map_opaque_error(self.repo.get_repository(&org_id, &id).await)?;
-                if existing.project_id != project_id {
-                    return Err(McpError::invalid_params(
-                        format!(
-                            "conflicting project_id: args='{project_id}', repository='{}'",
-                            existing.project_id
-                        ),
-                        None,
-                    ));
-                }
+                Self::ensure_project_id_matches_labeled("args", project_id, &existing.project_id)?;
                 map_opaque_error(self.repo.delete_repository(&org_id, &id).await)?;
                 ok_text("deleted")
             }
@@ -139,15 +141,15 @@ impl VcsEntityHandler {
             (VcsEntityAction::Create, VcsEntityResource::Branch) => {
                 let branch: Branch = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.create_branch(&branch).await)?;
-                ok_json(&branch)
+                ResponseFormatter::json_success(&branch)
             }
             (VcsEntityAction::Get, VcsEntityResource::Branch) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_branch(&org_id, &id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_branch(&org_id, &id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Branch) => {
                 let repo_id = require_arg!(args.repository_id, "repository_id required");
-                ok_json(&map_opaque_error(self.repo.list_branches(&org_id, repo_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_branches(&org_id, repo_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Branch) => {
                 let branch: Branch = require_data(args.data, "data required")?;
@@ -164,15 +166,15 @@ impl VcsEntityHandler {
             (VcsEntityAction::Create, VcsEntityResource::Worktree) => {
                 let wt: Worktree = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.create_worktree(&wt).await)?;
-                ok_json(&wt)
+                ResponseFormatter::json_success(&wt)
             }
             (VcsEntityAction::Get, VcsEntityResource::Worktree) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_worktree(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_worktree(&id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Worktree) => {
                 let repo_id = require_arg!(args.repository_id, "repository_id required");
-                ok_json(&map_opaque_error(self.repo.list_worktrees(repo_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_worktrees(repo_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Worktree) => {
                 let wt: Worktree = require_data(args.data, "data required")?;
@@ -190,15 +192,15 @@ impl VcsEntityHandler {
                 let asgn: AgentWorktreeAssignment =
                     require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.create_assignment(&asgn).await)?;
-                ok_json(&asgn)
+                ResponseFormatter::json_success(&asgn)
             }
             (VcsEntityAction::Get, VcsEntityResource::Assignment) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_assignment(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_assignment(&id).await)?)
             }
             (VcsEntityAction::List, VcsEntityResource::Assignment) => {
                 let wt_id = require_arg!(args.worktree_id, "worktree_id required");
-                ok_json(&map_opaque_error(self.repo.list_assignments_by_worktree(wt_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_assignments_by_worktree(wt_id).await)?)
             }
             (VcsEntityAction::Release, VcsEntityResource::Assignment) => {
                 let id = require_id(&args.id)?;

@@ -238,22 +238,23 @@ fn workspace_has_forbidden_cargo_dependency(
             let path = entry.path();
             if path.is_dir() {
                 stack.push(path);
-                continue;
-            }
-
-            if path.file_name().and_then(std::ffi::OsStr::to_str) != Some("Cargo.toml") {
-                continue;
-            }
-
-            if let Ok(content) = std::fs::read_to_string(&path)
-                && dependency_matches(content.as_ref(), pattern_prefix)
-            {
+            } else if cargo_toml_matches(&path, pattern_prefix) {
                 return true;
             }
         }
     }
 
     false
+}
+
+/// Returns true when `path` is a `Cargo.toml` whose dependencies match `pattern_prefix`.
+fn cargo_toml_matches(path: &std::path::Path, pattern_prefix: &str) -> bool {
+    if path.file_name().and_then(std::ffi::OsStr::to_str) != Some("Cargo.toml") {
+        return false;
+    }
+
+    std::fs::read_to_string(path)
+        .is_ok_and(|content| dependency_matches(content.as_ref(), pattern_prefix))
 }
 
 fn dependency_matches(content: &str, pattern_prefix: &str) -> bool {
@@ -291,21 +292,21 @@ fn dependencies_match_by_line(content: &str, pattern_prefix: &str) -> bool {
             continue;
         }
 
-        if !in_dependencies {
-            continue;
-        }
-
-        let Some((key, _)) = trimmed.split_once('=') else {
-            continue;
-        };
-
-        let dep_name = key.trim().trim_matches('"').trim_matches('\'');
-        if dep_name.starts_with(pattern_prefix) {
+        if in_dependencies && dependency_line_matches(trimmed, pattern_prefix) {
             return true;
         }
     }
 
     false
+}
+
+/// Returns true when a `[dependencies]` line declares a key starting with `pattern_prefix`.
+fn dependency_line_matches(trimmed: &str, pattern_prefix: &str) -> bool {
+    let Some((key, _)) = trimmed.split_once('=') else {
+        return false;
+    };
+    let dep_name = key.trim().trim_matches('"').trim_matches('\'');
+    dep_name.starts_with(pattern_prefix)
 }
 
 #[async_trait]
@@ -432,20 +433,11 @@ impl RustyRulesEngineWrapper {
             }
 
             let line_count = content.lines().count();
-            if line_count <= max_lines {
-                continue;
+            if line_count > max_lines {
+                violations.push(file_size_violation(
+                    file_path, line_count, max_lines, message,
+                ));
             }
-
-            violations.push(
-                RuleViolation::new(
-                    "QUAL006",
-                    ViolationCategory::Quality,
-                    Severity::Warning,
-                    format!("{message}: {line_count} lines (max: {max_lines})"),
-                )
-                .with_file(std::path::PathBuf::from(file_path))
-                .with_context(format!("File: {file_path}, Lines: {line_count}")),
-            );
         }
 
         Ok(violations)
@@ -456,6 +448,23 @@ impl RustyRulesEngineWrapper {
             || file_path.contains(RUSTY_TARGET_DIR_FRAGMENT)
             || file_path.ends_with(TEST_FILE_SUFFIX)
     }
+}
+
+/// Build a `QUAL006` violation for a file exceeding the line limit.
+fn file_size_violation(
+    file_path: &str,
+    line_count: usize,
+    max_lines: usize,
+    message: &str,
+) -> RuleViolation {
+    RuleViolation::new(
+        "QUAL006",
+        ViolationCategory::Quality,
+        Severity::Warning,
+        format!("{message}: {line_count} lines (max: {max_lines})"),
+    )
+    .with_file(std::path::PathBuf::from(file_path))
+    .with_context(format!("File: {file_path}, Lines: {line_count}"))
 }
 
 fn forbidden_patterns(rule_definition: &Value) -> Vec<&str> {

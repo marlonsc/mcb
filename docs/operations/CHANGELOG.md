@@ -10,7 +10,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
-### No unreleased changes
+
+### Added
+
+- Docker app/stdio compose profiles using inline Loco YAML configuration.
+- Root Dockerfile for containerized `mcb serve` runtime builds.
+
+### Changed
+
+- Agent instructions now use `AGENTS.md` as the project-canonical source, with
+  `CLAUDE.md` and Copilot instructions kept as thin pointers.
+- Project status docs updated for the `0.3.1` release line.
+
+### Fixed
+
+- Entity and project handlers now use the shared MCP JSON response formatter.
+- Test helpers reuse shared FastEmbed cache and HTTP header utilities.
 
 ---
 

@@ -9,15 +9,15 @@ expression: "snapshot_payload(&request, status, &response)"
     "method": "tools/call",
     "params": {
       "arguments": {
-        "action": 123
+        "limit": "not_a_number"
       },
-      "name": "vcs"
+      "name": "list_repos"
     }
   },
   "response": {
     "error": {
       "code": -32602,
-      "message": "Failed to parse arguments: invalid type: integer `123`, expected string or map"
+      "message": "Failed to parse arguments: invalid type: string \"not_a_number\", expected u32"
     },
     "id": 1,
     "jsonrpc": "2.0"
