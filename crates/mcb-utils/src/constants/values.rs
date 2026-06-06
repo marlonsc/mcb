@@ -7,9 +7,6 @@
 // INDEXING DOMAIN CONSTANTS
 // ============================================================================
 
-/// Default batch size for indexing operations
-pub const INDEXING_BATCH_SIZE: usize = 10;
-
 /// Indexing-operation status: starting.
 pub const INDEX_OP_STATUS_STARTING: &str = "starting";
 
@@ -26,12 +23,6 @@ pub const INDEX_OP_STATUS_FAILED: &str = "failed";
 pub const INDEXING_STATUS_COMPLETED: &str = "completed";
 /// Alias: indexing started status.
 pub const INDEXING_STATUS_STARTED: &str = "starting";
-
-/// Minimum character length for a code chunk to be indexed
-pub const INDEXING_CHUNK_MIN_LENGTH: usize = 25;
-
-/// Minimum number of lines for a code chunk to be indexed
-pub const INDEXING_CHUNK_MIN_LINES: usize = 2;
 
 /// Maximum number of chunks extracted from a single file
 pub const INDEXING_CHUNKS_MAX_PER_FILE: usize = 50;
@@ -98,15 +89,6 @@ pub const DEFAULT_BROWSE_LIMIT: usize = 50;
 // ============================================================================
 // PROVIDER SLUGS
 // ============================================================================
-
-/// Embedding provider slug: `OpenAI`.
-pub const PROVIDER_SLUG_OPENAI: &str = "openai";
-
-/// Embedding provider slug: Voyage AI.
-pub const PROVIDER_SLUG_VOYAGEAI: &str = "voyageai";
-
-/// Embedding provider slug: Anthropic.
-pub const PROVIDER_SLUG_ANTHROPIC: &str = "anthropic";
 
 /// Embedding provider slug: `FastEmbed` (local).
 pub const PROVIDER_SLUG_FASTEMBED: &str = "fastembed";
@@ -209,9 +191,6 @@ pub const TAG_NAMING: &str = "naming";
 
 /// Tag for documentation-related items.
 pub const TAG_DOCUMENTATION: &str = "documentation";
-
-/// Tag for security-related items.
-pub const TAG_SECURITY: &str = "security";
 
 /// Generic "success" tag.
 pub const TAG_SUCCESS: &str = "success";

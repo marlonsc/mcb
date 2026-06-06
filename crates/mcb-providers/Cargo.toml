@@ -108,12 +108,6 @@ fastembed = { workspace = true }
 # Encryption for encrypted vector store
 aes-gcm = { workspace = true }
 
-# Moka cache
-moka = { workspace = true }
-
-# Redis cache
-redis = { workspace = true }
-
 # EdgeVec high-performance vector store
 edgevec = { workspace = true }
 

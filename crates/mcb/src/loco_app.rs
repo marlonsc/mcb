@@ -85,6 +85,10 @@ impl Hooks for McbApp {
         create_app::<Self, DynamicMigrator>(mode, environment, config).await
     }
     async fn load_config(env: &Environment) -> loco_rs::Result<LocoConfig> {
+        if let Ok(inline) = std::env::var("MCB_CONFIG_INLINE") {
+            return serde_yaml::from_str(&inline)
+                .map_err(|e| loco_rs::Error::string(&format!("MCB_CONFIG_INLINE: {e}")));
+        }
         if let Ok(folder) = std::env::var("MCB_CONFIG_FOLDER") {
             return env.load_from_folder(Path::new(&folder));
         }

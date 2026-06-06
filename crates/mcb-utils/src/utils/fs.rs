@@ -45,29 +45,37 @@ pub fn find_files_by_extensions(
     let mut stack = vec![root.to_path_buf()];
 
     while let Some(dir) = stack.pop() {
-        let entries = read_entries(&dir)?;
-
-        for entry in entries {
-            let entry = entry.map_err(|e| {
-                UtilsError::Filesystem(format!(
-                    "Failed to read directory entry in {}: {}",
-                    dir.display(),
-                    e
-                ))
-            })?;
-            let path = entry.path();
-            let file_type = read_file_type(&entry, &path)?;
-
-            if file_type.is_dir() {
-                stack.push(path);
-                continue;
-            }
-
-            if file_type.is_file() && has_matching_extension(&path, extensions) {
-                files.push(path);
-            }
+        for entry in read_entries(&dir)? {
+            classify_entry(&dir, entry, extensions, &mut stack, &mut files)?;
         }
     }
 
     Ok(files)
+}
+
+/// Route one directory entry: push subdirectories onto `stack`, collect matching files.
+fn classify_entry(
+    dir: &Path,
+    entry: std::io::Result<std::fs::DirEntry>,
+    extensions: &[&str],
+    stack: &mut Vec<PathBuf>,
+    files: &mut Vec<PathBuf>,
+) -> Result<(), UtilsError> {
+    let entry = entry.map_err(|e| {
+        UtilsError::Filesystem(format!(
+            "Failed to read directory entry in {}: {}",
+            dir.display(),
+            e
+        ))
+    })?;
+    let path = entry.path();
+    let file_type = read_file_type(&entry, &path)?;
+
+    if file_type.is_dir() {
+        stack.push(path);
+    } else if file_type.is_file() && has_matching_extension(&path, extensions) {
+        files.push(path);
+    }
+
+    Ok(())
 }

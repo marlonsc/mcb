@@ -7,10 +7,8 @@ use rstest::rstest;
 #[tokio::test]
 async fn memory_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
-        "memory",
+        "list_memories",
         &json!({
-            "action": "list",
-            "resource": "observation",
             "limit": 10,
         }),
     );
@@ -26,7 +24,7 @@ async fn memory_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error:
 #[rstest]
 #[tokio::test]
 async fn memory_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
-    let request = tool_call_request("memory", &json!({"action": 123, "resource": "observation"}));
+    let request = tool_call_request("list_memories", &json!({"limit": "not_a_number"}));
     let (status, response) = call_tool(&request).await?;
 
     insta::assert_json_snapshot!(
@@ -40,13 +38,7 @@ async fn memory_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::erro
 #[tokio::test]
 async fn memory_get_observation_ids_none_contract_snapshot()
 -> Result<(), Box<dyn std::error::Error>> {
-    let request = tool_call_request(
-        "memory",
-        &json!({
-            "action": "get",
-            "resource": "observation"
-        }),
-    );
+    let request = tool_call_request("get_memories", &json!({}));
     let (status, response) = call_tool(&request).await?;
 
     insta::assert_json_snapshot!(
@@ -61,10 +53,8 @@ async fn memory_get_observation_ids_none_contract_snapshot()
 async fn memory_get_observation_ids_empty_contract_snapshot()
 -> Result<(), Box<dyn std::error::Error>> {
     let request = tool_call_request(
-        "memory",
+        "get_memories",
         &json!({
-            "action": "get",
-            "resource": "observation",
             "ids": []
         }),
     );

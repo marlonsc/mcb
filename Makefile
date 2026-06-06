@@ -17,6 +17,7 @@ include make/quality.mk
 include make/release.mk
 include make/docs.mk
 include make/codegen.mk
+include make/git.mk
 
 .DEFAULT_GOAL := help
 

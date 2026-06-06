@@ -1,8 +1,13 @@
+//! Tool argument validation: agent inputs are validated before dispatch.
+//!
+//! Tests verify that valid queries/paths pass validation and that dangerous
+//! or empty inputs are rejected with clear errors.
+
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
 use rstest::rstest;
 use validator::Validate;
 
-fn build_search_args(query: &str, min_score: Option<f32>, collection: Option<&str>) -> SearchArgs {
+fn search(query: &str, min_score: Option<f32>, collection: Option<&str>) -> SearchArgs {
     SearchArgs {
         query: query.to_owned(),
         org_id: None,
@@ -20,19 +25,7 @@ fn build_search_args(query: &str, min_score: Option<f32>, collection: Option<&st
     }
 }
 
-#[rstest]
-#[case(
-    build_search_args("find authentication functions", Some(0.5), Some("test")),
-    true
-)]
-#[case(build_search_args("", None, None), false)]
-#[case(build_search_args("test", Some(2.0), None), false)]
-#[rstest]
-fn test_search_args_validation(#[case] args: SearchArgs, #[case] expected_valid: bool) {
-    assert_eq!(args.validate().is_ok(), expected_valid);
-}
-
-fn build_index_args(path: Option<&str>, collection: Option<&str>) -> IndexArgs {
+fn index(path: Option<&str>, collection: Option<&str>) -> IndexArgs {
     IndexArgs {
         action: IndexAction::Start,
         path: path.map(ToOwned::to_owned),
@@ -47,10 +40,22 @@ fn build_index_args(path: Option<&str>, collection: Option<&str>) -> IndexArgs {
     }
 }
 
+// ─── Search validation ───────────────────────────────────────────────
+
 #[rstest]
-#[case(build_index_args(Some("/tmp/test"), Some("test")), true)]
-#[case(build_index_args(None, None), true)]
-#[case(build_index_args(Some("../../../etc/passwd"), None), false)]
-fn test_index_args_validation(#[case] args: IndexArgs, #[case] expected_valid: bool) {
-    assert_eq!(args.validate().is_ok(), expected_valid);
+#[case(search("find auth functions", Some(0.5), Some("test")), true)]
+#[case(search("", None, None), false)]
+#[case(search("test", Some(2.0), None), false)]
+fn search_query_validated(#[case] args: SearchArgs, #[case] valid: bool) {
+    assert_eq!(args.validate().is_ok(), valid);
+}
+
+// ─── Index validation ────────────────────────────────────────────────
+
+#[rstest]
+#[case(index(Some("/tmp/project"), Some("test")), true)]
+#[case(index(None, None), true)]
+#[case(index(Some("../../../etc/passwd"), None), false)]
+fn index_path_validated(#[case] args: IndexArgs, #[case] valid: bool) {
+    assert_eq!(args.validate().is_ok(), valid);
 }

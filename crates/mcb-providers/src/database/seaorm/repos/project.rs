@@ -250,12 +250,13 @@ impl SeaOrmProjectRepository {
 
             for model in models {
                 let dependency: ProjectDependency = model.into();
-                if visited_edges.insert(dependency.id.clone()) {
-                    let next = dependency.to_issue_id.clone();
-                    traversed.push(dependency);
-                    if visited_nodes.insert(next.clone()) {
-                        queue.push_back((next, depth + 1));
-                    }
+                if !visited_edges.insert(dependency.id.clone()) {
+                    continue;
+                }
+                let next = dependency.to_issue_id.clone();
+                traversed.push(dependency);
+                if visited_nodes.insert(next.clone()) {
+                    queue.push_back((next, depth + 1));
                 }
             }
         }
@@ -281,6 +282,8 @@ impl SeaOrmProjectRepository {
 
 #[async_trait]
 impl ProjectRepository for SeaOrmProjectRepository {
+    // ── Project ──────────────────────────────────────────────────────────
+
     async fn create(&self, project: &Project) -> Result<()> {
         sea_repo_insert!(&self.db, project, project, "create project")
     }
@@ -322,5 +325,93 @@ impl ProjectRepository for SeaOrmProjectRepository {
     async fn delete(&self, org_id: &str, id: &str) -> Result<()> {
         sea_repo_delete_filtered!(&self.db, project, id, "delete project",
             project::Column::OrgId => org_id.to_owned())
+    }
+
+    // ── Phase ────────────────────────────────────────────────────────────
+
+    async fn create_phase(&self, phase: &ProjectPhase) -> Result<()> {
+        SeaOrmProjectRepository::create_phase(self, phase).await
+    }
+
+    async fn get_phase(&self, id: &str) -> Result<ProjectPhase> {
+        SeaOrmProjectRepository::get_phase_by_id(self, id).await
+    }
+
+    async fn list_phases(&self, project_id: &str) -> Result<Vec<ProjectPhase>> {
+        SeaOrmProjectRepository::list_phases(self, project_id).await
+    }
+
+    async fn update_phase(&self, phase: &ProjectPhase) -> Result<()> {
+        SeaOrmProjectRepository::update_phase(self, phase).await
+    }
+
+    async fn delete_phase(&self, id: &str) -> Result<()> {
+        SeaOrmProjectRepository::delete_phase(self, id).await
+    }
+
+    // ── Issue ────────────────────────────────────────────────────────────
+
+    async fn create_issue(&self, issue: &ProjectIssue) -> Result<()> {
+        SeaOrmProjectRepository::create_issue(self, issue).await
+    }
+
+    async fn get_issue(&self, org_id: &str, id: &str) -> Result<ProjectIssue> {
+        SeaOrmProjectRepository::get_issue_by_id(self, org_id, id).await
+    }
+
+    async fn list_issues(&self, org_id: &str, project_id: &str) -> Result<Vec<ProjectIssue>> {
+        SeaOrmProjectRepository::list_issues(self, org_id, project_id).await
+    }
+
+    async fn list_issues_filtered(
+        &self,
+        org_id: &str,
+        filter: &IssueFilter,
+    ) -> Result<Vec<ProjectIssue>> {
+        SeaOrmProjectRepository::list_issues_filtered(self, org_id, filter).await
+    }
+
+    async fn update_issue(&self, issue: &ProjectIssue) -> Result<()> {
+        SeaOrmProjectRepository::update_issue(self, issue).await
+    }
+
+    async fn delete_issue(&self, org_id: &str, id: &str) -> Result<()> {
+        SeaOrmProjectRepository::delete_issue(self, org_id, id).await
+    }
+
+    // ── Dependency ───────────────────────────────────────────────────────
+
+    async fn create_dependency(&self, dependency: &ProjectDependency) -> Result<()> {
+        SeaOrmProjectRepository::create_dependency(self, dependency).await
+    }
+
+    async fn list_dependencies(&self, issue_id: &str) -> Result<Vec<ProjectDependency>> {
+        SeaOrmProjectRepository::list_dependencies(self, issue_id).await
+    }
+
+    async fn delete_dependency(&self, id: &str) -> Result<()> {
+        SeaOrmProjectRepository::delete_dependency(self, id).await
+    }
+
+    // ── Decision ─────────────────────────────────────────────────────────
+
+    async fn create_decision(&self, decision: &ProjectDecision) -> Result<()> {
+        SeaOrmProjectRepository::create_decision(self, decision).await
+    }
+
+    async fn get_decision(&self, id: &str) -> Result<ProjectDecision> {
+        SeaOrmProjectRepository::get_decision_by_id(self, id).await
+    }
+
+    async fn list_decisions(&self, project_id: &str) -> Result<Vec<ProjectDecision>> {
+        SeaOrmProjectRepository::list_decisions(self, project_id).await
+    }
+
+    async fn update_decision(&self, decision: &ProjectDecision) -> Result<()> {
+        SeaOrmProjectRepository::update_decision(self, decision).await
+    }
+
+    async fn delete_decision(&self, id: &str) -> Result<()> {
+        SeaOrmProjectRepository::delete_decision(self, id).await
     }
 }

@@ -30,21 +30,6 @@ fn display_parity_quality_unwrap_smoke_test() {
 }
 
 #[rstest]
-fn display_parity_error_boundary_missing_context() {
-    let v = mcb_validate::ErrorBoundaryViolation::MissingErrorContext {
-        file: PathBuf::from("src/handlers/auth.rs"),
-        line: 42,
-        error_pattern: "db.query()?".to_owned(),
-        suggestion: "Add .context() or .map_err() for better error messages".to_owned(),
-        severity: Severity::Info,
-    };
-    assert_eq!(
-        format!("{v}"),
-        "Missing error context: src/handlers/auth.rs:42 - db.query()? (Add .context() or .map_err() for better error messages)"
-    );
-}
-
-#[rstest]
 fn display_parity_error_boundary_wrong_layer() {
     let v = mcb_validate::ErrorBoundaryViolation::WrongLayerError {
         file: PathBuf::from("src/domain/service.rs"),

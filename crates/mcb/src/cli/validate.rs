@@ -103,65 +103,72 @@ impl ValidateArgs {
         }
     }
 
-    /// Execute the validate command
-    /// # Errors
-    /// Returns an error if validation setup or execution fails.
-    pub fn execute(self) -> Result<ValidationResult, Box<dyn std::error::Error>> {
+    /// Resolve the workspace root from the configured path.
+    fn resolve_workspace_root(&self) -> Result<PathBuf, Box<dyn std::error::Error>> {
+        if self.path.is_absolute() {
+            Ok(self.path.clone())
+        } else {
+            Ok(std::env::current_dir()?.join(&self.path))
+        }
+    }
+
+    /// Run the configured validators and build the report.
+    fn run_validation(
+        &self,
+        workspace_root: &std::path::Path,
+    ) -> Result<mcb_validate::GenericReport, Box<dyn std::error::Error>> {
         use mcb_domain::ports::validation::ValidationConfig;
         use mcb_validate::GenericReporter;
 
-        self.init_logging();
-
-        // Resolve workspace root
-        let workspace_root = if self.path.is_absolute() {
-            self.path.clone()
-        } else {
-            std::env::current_dir()?.join(&self.path)
-        };
-
-        self.progress(&format!(
-            "● Validating workspace: {}",
-            workspace_root.display()
-        ));
-
-        // Build validation config
-        let config = ValidationConfig::new(&workspace_root);
+        let config = ValidationConfig::new(workspace_root);
 
         let validator_count = if let Some(ref v) = self.validators {
             v.len()
         } else {
             mcb_domain::registry::validation::validator_count()
         };
-
         self.progress(&format!("● Running {validator_count} validator(s)..."));
 
         let started = Instant::now();
-
-        // Run validation
-        let report = if let Some(ref validators) = self.validators {
+        let violations = if let Some(ref validators) = self.validators {
             let validator_names: Vec<&str> = validators.iter().map(String::as_str).collect();
-            let violations = mcb_validate::validators::validate_named(&config, &validator_names)?;
-            GenericReporter::create_report(&violations, workspace_root.clone())
+            mcb_validate::validators::validate_named(&config, &validator_names)?
         } else {
-            let violations = mcb_validate::validators::validate_all(&config)?;
-            GenericReporter::create_report(&violations, workspace_root.clone())
+            mcb_validate::validators::validate_all(&config)?
         };
+        let report = GenericReporter::create_report(&violations, workspace_root.to_path_buf());
 
-        let elapsed = started.elapsed();
+        self.progress(&format!("● Done in {:.2?}", started.elapsed()));
+        Ok(report)
+    }
 
-        self.progress(&format!("● Done in {elapsed:.2?}"));
-
-        // Format output
+    /// Format the report to stdout per the configured output format.
+    fn emit_report(
+        &self,
+        report: &mcb_validate::GenericReport,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         match self.format.as_str() {
-            "json" => {
-                Self::print_json(&report)?;
-            }
-            _ => {
-                self.print_text(&report);
-            }
+            "json" => Self::print_json(report)?,
+            _ => self.print_text(report),
         }
+        Ok(())
+    }
 
-        // Return counts for exit code
+    /// Execute the validate command
+    /// # Errors
+    /// Returns an error if validation setup or execution fails.
+    pub fn execute(self) -> Result<ValidationResult, Box<dyn std::error::Error>> {
+        self.init_logging();
+
+        let workspace_root = self.resolve_workspace_root()?;
+        self.progress(&format!(
+            "● Validating workspace: {}",
+            workspace_root.display()
+        ));
+
+        let report = self.run_validation(&workspace_root)?;
+        self.emit_report(&report)?;
+
         Ok(ValidationResult {
             errors: report.summary.errors,
             warnings: report.summary.warnings,

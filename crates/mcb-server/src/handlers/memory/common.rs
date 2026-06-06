@@ -9,7 +9,7 @@ use mcb_domain::{
     ports::MemoryServiceInterface,
 };
 use mcb_utils::utils::id as domain_id;
-use mcb_utils::utils::vcs_context::capture_vcs_context;
+use mcb_utils::utils::vcs_context::{VcsContext, capture_vcs_context};
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::{Map, Value};
@@ -69,15 +69,7 @@ pub(super) fn resolve_memory_origin_context(
     input.timestamp = opts.timestamp;
     let mut origin_context = resolve_origin_context(&input)?;
 
-    if origin_context.repo_id.is_none() {
-        origin_context.repo_id = vcs_context.repo_id;
-    }
-    if origin_context.branch.is_none() {
-        origin_context.branch = vcs_context.branch;
-    }
-    if origin_context.commit.is_none() {
-        origin_context.commit = vcs_context.commit;
-    }
+    overlay_vcs_context(&mut origin_context, vcs_context);
 
     origin_context.session_id = None;
     origin_context.session_id_correlation = canonical_session_id.clone();
@@ -94,6 +86,22 @@ pub(super) fn resolve_memory_origin_context(
         canonical_session_id,
         origin_context,
     })
+}
+
+/// Fill any unset repo/branch/commit fields on `origin_context` from the captured VCS context.
+fn overlay_vcs_context(
+    origin_context: &mut mcb_domain::entities::memory::OriginContext,
+    vcs_context: VcsContext,
+) {
+    if origin_context.repo_id.is_none() {
+        origin_context.repo_id = vcs_context.repo_id;
+    }
+    if origin_context.branch.is_none() {
+        origin_context.branch = vcs_context.branch;
+    }
+    if origin_context.commit.is_none() {
+        origin_context.commit = vcs_context.commit;
+    }
 }
 
 pub(super) fn build_observation_metadata(

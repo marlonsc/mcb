@@ -11,16 +11,38 @@ use std::path::{Path, PathBuf};
 ///
 /// Simple variant without any filtering — collects ALL Rust files.
 pub fn rust_files_under(path: &Path, out: &mut Vec<PathBuf>) {
-    if let Ok(entries) = fs::read_dir(path) {
-        for entry in entries.flatten() {
-            let p = entry.path();
-            if p.is_dir() {
-                rust_files_under(&p, out);
-            } else if p.extension().and_then(|e| e.to_str()) == Some("rs") {
-                out.push(p);
-            }
+    let Ok(entries) = fs::read_dir(path) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let p = entry.path();
+        if p.is_dir() {
+            rust_files_under(&p, out);
+        } else if is_rs_file(&p) {
+            out.push(p);
         }
     }
+}
+
+/// Returns true when the path has a `.rs` extension.
+fn is_rs_file(path: &Path) -> bool {
+    path.extension().and_then(|e| e.to_str()) == Some("rs")
+}
+
+/// Returns true when the directory name marks a test directory.
+fn is_test_dir_name(name: &str) -> bool {
+    name == "tests" || name.starts_with("test_")
+}
+
+/// Returns true when any path component is a test directory.
+fn path_in_test_dir(path: &Path) -> bool {
+    path.components().any(|c| {
+        if let std::path::Component::Normal(os) = c {
+            is_test_dir_name(&os.to_string_lossy())
+        } else {
+            false
+        }
+    })
 }
 
 /// Collect `.rs` source files under `dir`, skipping test directories.
@@ -39,30 +61,18 @@ pub fn scan_rs_files(dir: &Path) -> Vec<PathBuf> {
 }
 
 fn collect_rs_files_filtered(dir: &Path, out: &mut Vec<PathBuf>) {
-    if let Ok(entries) = fs::read_dir(dir) {
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.is_dir() {
-                let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                // Skip test directories
-                if name == "tests" || name.starts_with("test_") {
-                    continue;
-                }
+    let Ok(entries) = fs::read_dir(dir) else {
+        return;
+    };
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if !is_test_dir_name(name) {
                 collect_rs_files_filtered(&path, out);
-            } else if path.extension().and_then(|e| e.to_str()) == Some("rs") {
-                // Double-check via Path components for correct cross-platform behaviour.
-                let in_test_dir = path.components().any(|c| {
-                    if let std::path::Component::Normal(os) = c {
-                        let s = os.to_string_lossy();
-                        s == "tests" || s.starts_with("test_")
-                    } else {
-                        false
-                    }
-                });
-                if !in_test_dir {
-                    out.push(path);
-                }
             }
+        } else if is_rs_file(&path) && !path_in_test_dir(&path) {
+            out.push(path);
         }
     }
 }

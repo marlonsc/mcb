@@ -85,3 +85,63 @@ pub struct SearchArgs {
     pub repo_path: Option<String>,
 }
 }
+
+// ---------------------------------------------------------------------------
+// MCP-facing single-purpose tools
+// ---------------------------------------------------------------------------
+
+tool_action! {
+    /// Arguments for the `search_code` tool.
+    pub struct SearchCodeArgs => SearchArgs {
+        #[schemars(description = "What you're looking for, in plain English")]
+        #[validate(length(min = 1))]
+        query: String,
+        #[schemars(description = "Maximum results (default: 10)", with = "u32")]
+        limit: Option<u32>,
+        #[schemars(description = "Filter by file extensions (e.g. [\"rs\", \"py\"])", with = "Vec<String>")]
+        extensions: Option<Vec<String>>,
+        #[schemars(description = "Minimum relevance score from 0.0 to 1.0", with = "f32")]
+        #[validate(range(min = 0.0, max = 1.0))]
+        min_score: Option<f32>
+        ;
+        hidden {
+            org_id: Option<String>, collection: Option<String>,
+            session_id: Option<SessionId>, repo_id: Option<String>,
+            repo_path: Option<String>, token: Option<String>,
+        }
+        ;
+        convert |a| {
+            query: a.query, resource: SearchResource::Code,
+            extensions: a.extensions, filters: None,
+            limit: a.limit, min_score: a.min_score, tags: None,
+        }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `search_memory` tool.
+    pub struct SearchMemoryArgs => SearchArgs {
+        #[schemars(description = "What you're looking for in stored memories")]
+        #[validate(length(min = 1))]
+        query: String,
+        #[schemars(description = "Maximum results (default: 10)", with = "u32")]
+        limit: Option<u32>,
+        #[schemars(description = "Filter by tags", with = "Vec<String>")]
+        tags: Option<Vec<String>>,
+        #[schemars(description = "Minimum relevance score from 0.0 to 1.0", with = "f32")]
+        #[validate(range(min = 0.0, max = 1.0))]
+        min_score: Option<f32>
+        ;
+        hidden {
+            org_id: Option<String>, collection: Option<String>,
+            session_id: Option<SessionId>, repo_id: Option<String>,
+            repo_path: Option<String>, token: Option<String>,
+        }
+        ;
+        convert |a| {
+            query: a.query, resource: SearchResource::Memory,
+            extensions: None, filters: None,
+            limit: a.limit, min_score: a.min_score, tags: a.tags,
+        }
+    }
+}

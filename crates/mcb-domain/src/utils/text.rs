@@ -45,7 +45,10 @@ pub fn extract_text(content: &[serde_json::Value]) -> String {
 /// Serializes the content to JSON, then extracts `"text"` fields.
 /// This allows callers to pass protocol-specific types (e.g. `rmcp::model::Content`)
 /// without the domain layer depending on those types directly.
-#[must_use]
+///
+/// # Errors
+///
+/// Returns [`serde_json::Error`] if any element in `content` fails to serialize to a JSON value.
 pub fn try_extract_text_from<T: Serialize>(content: &[T]) -> Result<String, serde_json::Error> {
     let values: Result<Vec<serde_json::Value>, serde_json::Error> =
         content.iter().map(serde_json::to_value).collect();
@@ -59,8 +62,39 @@ pub fn try_extract_text_from<T: Serialize>(content: &[T]) -> Result<String, serd
 /// silently returns an empty string on serialization failure.
 #[must_use]
 pub fn extract_text_from<T: Serialize>(content: &[T]) -> String {
-    match try_extract_text_from(content) {
-        Ok(text) => text,
-        Err(_) => String::new(),
+    try_extract_text_from(content).unwrap_or_default()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{extract_text, extract_text_with_sep};
+    use serde_json::json;
+
+    #[test]
+    fn joins_text_segments_with_separator() {
+        let content = [json!({"text": "a"}), json!({"text": "b"})];
+        assert_eq!(extract_text_with_sep(&content, ", "), "a, b");
+    }
+
+    #[test]
+    fn skips_non_text_values() {
+        let content = [
+            json!({"text": "a"}),
+            json!({"image": "x"}),
+            json!({"text": "b"}),
+        ];
+        assert_eq!(extract_text(&content), "a\nb");
+    }
+
+    #[test]
+    fn empty_input_yields_empty_string() {
+        let content: [serde_json::Value; 0] = [];
+        assert_eq!(extract_text_with_sep(&content, "-"), "");
+    }
+
+    #[test]
+    fn single_segment_has_no_separator() {
+        let content = [json!({"text": "only"})];
+        assert_eq!(extract_text_with_sep(&content, ", "), "only");
     }
 }

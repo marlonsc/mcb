@@ -1,6 +1,6 @@
 //! Unit tests for configuration value objects.
 
-use mcb_domain::{EmbeddingConfig, VectorStoreConfig};
+use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use rstest::{fixture, rstest};
 
 fn make_embedding_config(

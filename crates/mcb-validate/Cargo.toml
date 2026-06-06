@@ -24,7 +24,6 @@ mcb-utils = { path = "../mcb-utils" }
 
 # File traversal and globbing
 walkdir.workspace = true
-glob.workspace = true
 globset.workspace = true
 
 # No external dependencies needed - using simplified detection
@@ -54,9 +53,6 @@ derive_more.workspace = true
 # Date/time for timestamps
 chrono.workspace = true
 
-# CLI
-clap = { workspace = true }
-
 # Rule Engines - Core do sistema
 rust-rule-engine.workspace = true
 evalexpr.workspace = true
@@ -81,7 +77,6 @@ tree-sitter-javascript.workspace = true
 tree-sitter-typescript.workspace = true
 tree-sitter-go.workspace = true
 tree-sitter-java.workspace = true
-tree-sitter-c.workspace = true
 tree-sitter-cpp.workspace = true
 
 # Async traits

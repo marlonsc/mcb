@@ -38,6 +38,58 @@ impl GoDetector {
             require_re,
         })
     }
+
+    /// Parse the contents of a `go.mod` file into module name, Go version, and dependencies.
+    fn parse_gomod(&self, content: &str) -> GoModInfo {
+        let mut info = GoModInfo::default();
+        let mut in_require_block = false;
+
+        for raw in content.lines() {
+            let line = raw.trim();
+
+            if let Some(module) = Self::first_capture(&self.module_re, line) {
+                info.module = module;
+            }
+            if let Some(version) = Self::first_capture(&self.go_version_re, line) {
+                info.go_version = version;
+            }
+
+            if line.starts_with("require (") {
+                in_require_block = true;
+            } else if line == ")" {
+                in_require_block = false;
+            } else if let Some(dep) = self.parse_require_line(line, in_require_block) {
+                info.dependencies.push(dep);
+            }
+        }
+
+        info
+    }
+
+    /// Extract a dependency from a `require` line, whether inside a block or single-line.
+    fn parse_require_line(&self, line: &str, in_require_block: bool) -> Option<String> {
+        if in_require_block {
+            return Self::first_capture(&self.require_re, line);
+        }
+        if line.starts_with("require ") && !line.contains('(') {
+            return Self::first_capture(&self.require_re, &line["require ".len()..]);
+        }
+        None
+    }
+
+    fn first_capture(re: &Regex, line: &str) -> Option<String> {
+        re.captures(line)
+            .and_then(|caps| caps.get(1))
+            .map(|m| m.as_str().to_owned())
+    }
+}
+
+/// Parsed contents of a `go.mod` file.
+#[derive(Default)]
+struct GoModInfo {
+    module: String,
+    go_version: String,
+    dependencies: Vec<String>,
 }
 
 #[async_trait]
@@ -54,63 +106,15 @@ impl ProjectDetector for GoDetector {
             return Ok(None);
         };
 
-        let mut module = String::new();
-        let mut go_version = String::new();
-        let mut dependencies = Vec::new();
-        let mut in_require_block = false;
-
-        for line in content.lines() {
-            let line = line.trim();
-
-            if let Some(caps) = self.module_re.captures(line) {
-                module = caps
-                    .get(1)
-                    .map(|m| m.as_str().to_owned())
-                    .unwrap_or_default();
-            }
-
-            if let Some(caps) = self.go_version_re.captures(line) {
-                go_version = caps
-                    .get(1)
-                    .map(|m| m.as_str().to_owned())
-                    .unwrap_or_default();
-            }
-
-            if line.starts_with("require (") {
-                in_require_block = true;
-                continue;
-            }
-
-            if line == ")" {
-                in_require_block = false;
-                continue;
-            }
-
-            if in_require_block
-                && let Some(caps) = self.require_re.captures(line)
-                && let Some(dep) = caps.get(1)
-            {
-                dependencies.push(dep.as_str().to_owned());
-            }
-
-            // Single-line require
-            if line.starts_with("require ")
-                && !line.contains('(')
-                && let Some(caps) = self.require_re.captures(&line["require ".len()..])
-                && let Some(dep) = caps.get(1)
-            {
-                dependencies.push(dep.as_str().to_owned());
-            }
-        }
-
-        if module.is_empty() {
+        let parsed = self.parse_gomod(&content);
+        if parsed.module.is_empty() {
             return Ok(None);
         }
 
         Ok(Some(ProjectType::Go {
-            module,
-            go_version,
-            dependencies,
+            module: parsed.module,
+            go_version: parsed.go_version,
+            dependencies: parsed.dependencies,
         }))
     }
 

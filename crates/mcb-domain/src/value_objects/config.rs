@@ -111,21 +111,3 @@ impl fmt::Debug for CacheConfig {
             .finish()
     }
 }
-
-/// Value Object: Synchronization Batch
-///
-/// Represents a batch of files queued for synchronization/re-indexing.
-/// Used by the file watcher daemon to batch file changes.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct SyncBatch {
-    /// Unique batch identifier
-    pub id: String,
-    /// Repository or collection identifier
-    pub collection: String,
-    /// List of file paths to process
-    pub files: Vec<String>,
-    /// Priority level (higher numbers = higher priority)
-    pub priority: u8,
-    /// Timestamp when batch was created
-    pub created_at: i64,
-}

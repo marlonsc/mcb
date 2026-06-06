@@ -6,7 +6,7 @@ use rstest::rstest;
 #[rstest]
 #[tokio::test]
 async fn index_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
-    let request = tool_call_request("index", &json!({"action": "status"}));
+    let request = tool_call_request("index_status", &json!({}));
     let (status, response) = call_tool(&request).await?;
 
     insta::assert_json_snapshot!(
@@ -19,7 +19,7 @@ async fn index_happy_path_contract_snapshot() -> Result<(), Box<dyn std::error::
 #[rstest]
 #[tokio::test]
 async fn index_invalid_args_contract_snapshot() -> Result<(), Box<dyn std::error::Error>> {
-    let request = tool_call_request("index", &json!({"action": 123}));
+    let request = tool_call_request("index_repo", &json!({"max_file_size": "not_a_number"}));
     let (status, response) = call_tool(&request).await?;
 
     insta::assert_json_snapshot!(

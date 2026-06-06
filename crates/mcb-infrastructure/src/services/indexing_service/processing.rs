@@ -57,17 +57,29 @@ fn log_indexing_completion(
     }
 }
 
-#[allow(clippy::too_many_arguments)]
-async fn finish_indexing_task(
-    service: &IndexingServiceImpl,
-    operation_id: &OperationId,
-    collection: &CollectionId,
+/// Aggregated outcome of an indexing run, consumed when finalizing the task.
+struct IndexingOutcome {
     total: usize,
     files_processed: usize,
     chunks_created: usize,
     failed_files: Vec<String>,
-    start: std::time::Instant,
+    start: Instant,
+}
+
+async fn finish_indexing_task(
+    service: &IndexingServiceImpl,
+    operation_id: &OperationId,
+    collection: &CollectionId,
+    outcome: IndexingOutcome,
 ) {
+    let IndexingOutcome {
+        total,
+        files_processed,
+        chunks_created,
+        failed_files,
+        start,
+    } = outcome;
+
     service
         .indexing_ops
         .update_progress(operation_id, None, total);
@@ -86,6 +98,16 @@ async fn finish_indexing_task(
     log_indexing_completion(error_count, files_processed, chunks_created, duration_ms);
 }
 
+/// Loop-invariant context shared across every file processed in one run.
+pub struct FileIndexContext<'a> {
+    /// Workspace root used to compute relative paths.
+    pub workspace_root: &'a Path,
+    /// Target collection for stored chunks and hashes.
+    pub collection: &'a CollectionId,
+    /// Operation identifier used for progress reporting.
+    pub operation_id: &'a OperationId,
+}
+
 /// Background task that performs the actual indexing work.
 pub async fn run_indexing_task(
     service: IndexingServiceImpl,
@@ -100,11 +122,14 @@ pub async fn run_indexing_task(
     let mut files_processed = 0;
     let mut failed_files: Vec<String> = Vec::new();
 
+    let ctx = FileIndexContext {
+        workspace_root: &workspace_root,
+        collection: &collection,
+        operation_id: &operation_id,
+    };
+
     for (i, file_path) in files.iter().enumerate() {
-        match service
-            .process_file(file_path, &workspace_root, &collection, &operation_id, i)
-            .await
-        {
+        match service.process_file(&ctx, file_path, i).await {
             Ok(ProcessResult::Processed { chunks }) => {
                 files_processed += 1;
                 chunks_created += chunks;
@@ -127,11 +152,13 @@ pub async fn run_indexing_task(
         &service,
         &operation_id,
         &collection,
-        total,
-        files_processed,
-        chunks_created,
-        failed_files,
-        start,
+        IndexingOutcome {
+            total,
+            files_processed,
+            chunks_created,
+            failed_files,
+            start,
+        },
     )
     .await;
 }
@@ -192,22 +219,20 @@ impl IndexingServiceImpl {
     /// Returns an error if the file cannot be read, hashed, chunked, or stored.
     pub async fn process_file(
         &self,
+        ctx: &FileIndexContext<'_>,
         file_path: &Path,
-        workspace_root: &Path,
-        collection: &CollectionId,
-        operation_id: &OperationId,
         index: usize,
     ) -> Result<ProcessResult> {
-        let relative_path = Self::workspace_relative_path(file_path, workspace_root)?;
+        let relative_path = Self::workspace_relative_path(file_path, ctx.workspace_root)?;
 
         self.indexing_ops
-            .update_progress(operation_id, Some(relative_path.clone()), index);
+            .update_progress(ctx.operation_id, Some(relative_path.clone()), index);
 
         let content = std::fs::read_to_string(file_path)
             .map_err(|e| mcb_domain::error::Error::internal(format!("Failed to read file: {e}")))?;
 
         let current_hash = match self
-            .check_incremental(collection, &relative_path, &content)
+            .check_incremental(ctx.collection, &relative_path, &content)
             .await?
         {
             Some(hash) => hash,
@@ -215,11 +240,11 @@ impl IndexingServiceImpl {
         };
 
         let chunk_count = self
-            .create_and_store_chunks(&content, &relative_path, collection)
+            .create_and_store_chunks(&content, &relative_path, ctx.collection)
             .await?;
 
         if let Some(repo) = &self.file_hash_repository {
-            repo.upsert_hash(&collection.to_string(), &relative_path, &current_hash)
+            repo.upsert_hash(&ctx.collection.to_string(), &relative_path, &current_hash)
                 .await?;
         }
 

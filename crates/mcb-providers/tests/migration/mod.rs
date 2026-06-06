@@ -2,7 +2,7 @@
 
 // linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
-use mcb_providers::database::seaorm::migration::Migrator as _; // linkme force-link
+// linkme force-link
 use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 
 use mcb_domain::utils::tests::utils::TestResult;

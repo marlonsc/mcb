@@ -34,20 +34,6 @@ define_violations! {
             suggestion: String,
             severity: Severity,
         },
-        /// Test function with incorrect naming
-        #[violation(
-            id = "TEST003",
-            severity = Warning,
-            message = "Bad test function name: {file}:{line} - {function_name} (use {suggestion})",
-            suggestion = "Rename to {suggestion}"
-        )]
-        BadTestFunctionName {
-            file: PathBuf,
-            line: usize,
-            function_name: String,
-            suggestion: String,
-            severity: Severity,
-        },
         /// Test without assertion
         #[violation(
             id = "TEST004",

@@ -1,6 +1,6 @@
-//! Tests for the `agent` MCP tool.
+//! Tests for public agent MCP tools.
 //!
-//! Actions: `log_tool`, `log_delegation`
+//! Tools: `log_tool_call`, `log_delegation`
 
 use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
 use mcb_domain::utils::tests::mcp_assertions::{extract_text, is_error};
@@ -15,11 +15,10 @@ async fn test_agent_log_tool() -> TestResult {
     let client = create_client().await?;
     let result = call_tool(
         &client,
-        "agent",
+        "log_tool_call",
         serde_json::json!({
-            "action": "log_tool",
             "session_id": "00000000-0000-0000-0000-000000000001",
-            "data": {"tool_name": "search", "success": true, "duration_ms": 150}
+            "data": {"tool_name": "search_memory", "success": true, "duration_ms": 150}
         }),
     )
     .await?;
@@ -37,8 +36,7 @@ async fn test_agent_log_tool() -> TestResult {
 #[tokio::test]
 async fn test_agent_log_delegation() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(&client, "agent", serde_json::json!({
-        "action": "log_delegation",
+    let result = call_tool(&client, "log_delegation", serde_json::json!({
         "session_id": "00000000-0000-0000-0000-000000000001",
         "data": {"child_session_id": "00000000-0000-0000-0000-000000000002", "prompt": "Find auth", "success": true}
     })).await?;
@@ -58,9 +56,9 @@ async fn test_agent_missing_session_id() -> TestResult {
     let client = create_client().await?;
     let result = call_tool(
         &client,
-        "agent",
+        "log_tool_call",
         serde_json::json!({
-            "action": "log_tool", "data": {"tool_name": "search", "success": true}
+            "data": {"tool_name": "search_memory", "success": true}
         }),
     )
     .await?;

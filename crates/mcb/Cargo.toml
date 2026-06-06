@@ -65,6 +65,7 @@ dirs = { workspace = true }
 
 # Re-export for doc examples
 serde_json = { workspace = true }
+serde_yaml = { workspace = true }
 
 # MCP protocol - rmcp transport for StreamableHttpService
 rmcp = { workspace = true }

@@ -119,7 +119,7 @@ macro_rules! register_http_provider {
         /// Factory function for creating provider instances.
         fn $factory_fn(
             config: &mcb_domain::registry::embedding::EmbeddingProviderConfig,
-        ) -> std::result::Result<std::sync::Arc<dyn mcb_domain::ports::EmbeddingProvider>, String> {
+        ) -> mcb_domain::error::Result<std::sync::Arc<dyn mcb_domain::ports::EmbeddingProvider>> {
             use $crate::utils::http::create_http_provider_config;
 
             let cfg = create_http_provider_config(config, $config_name, $default_model)?;

@@ -122,86 +122,41 @@ impl ToolExecutionContext {
     /// Inject execution context into tool arguments when those keys are missing.
     pub fn apply_to_request_if_missing(&self, request: &mut CallToolRequestParams) {
         let args = request.arguments.get_or_insert_with(Default::default);
-        for (key, value) in [
-            (
-                "session_id",
-                self.session_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "parent_session_id",
-                self.parent_session_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "org_id",
-                self.org_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "project_id",
-                self.project_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "worktree_id",
-                self.worktree_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "repo_id",
-                self.repo_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "repo_path",
-                self.repo_path
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "operator_id",
-                self.operator_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "machine_id",
-                self.machine_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "agent_program",
-                self.agent_program
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "model_id",
-                self.model_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            ("delegated", self.delegated.map(Value::Bool)),
-            ("timestamp", self.timestamp.map(|v| Value::Number(v.into()))),
-            (
-                "execution_flow",
-                self.execution_flow
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-        ] {
+        for (key, value) in self.context_entries() {
             if let Some(v) = value {
                 args.entry(key.to_owned()).or_insert(v);
             }
         }
+    }
+
+    /// Build the `(key, optional JSON value)` pairs representing this execution context.
+    fn context_entries(&self) -> [(&'static str, Option<Value>); 14] {
+        let str_value = crate::tools::field_aliases::str_value;
+        [
+            ("session_id", self.session_id.as_deref().map(str_value)),
+            (
+                "parent_session_id",
+                self.parent_session_id.as_deref().map(str_value),
+            ),
+            ("org_id", self.org_id.as_deref().map(str_value)),
+            ("project_id", self.project_id.as_deref().map(str_value)),
+            ("worktree_id", self.worktree_id.as_deref().map(str_value)),
+            ("repo_id", self.repo_id.as_deref().map(str_value)),
+            ("repo_path", self.repo_path.as_deref().map(str_value)),
+            ("operator_id", self.operator_id.as_deref().map(str_value)),
+            ("machine_id", self.machine_id.as_deref().map(str_value)),
+            (
+                "agent_program",
+                self.agent_program.as_deref().map(str_value),
+            ),
+            ("model_id", self.model_id.as_deref().map(str_value)),
+            ("delegated", self.delegated.map(Value::Bool)),
+            ("timestamp", self.timestamp.map(|v| Value::Number(v.into()))),
+            (
+                "execution_flow",
+                self.execution_flow.as_deref().map(str_value),
+            ),
+        ]
     }
 }
 

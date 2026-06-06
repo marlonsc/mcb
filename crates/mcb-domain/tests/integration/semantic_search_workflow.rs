@@ -3,9 +3,8 @@
 use std::collections::HashMap;
 
 use mcb_domain::{
-    CodeChunk, Embedding, SearchResult,
-    entities::{CodebaseSnapshot, FileSnapshot},
-    value_objects::config::SyncBatch,
+    entities::{CodeChunk, CodebaseSnapshot, FileSnapshot},
+    value_objects::{Embedding, SearchResult},
 };
 use rstest::rstest;
 
@@ -67,17 +66,10 @@ fn test_complete_semantic_search_workflow() {
         assert!(sorted_results[i].score >= sorted_results[i + 1].score);
     }
 
-    // Phase 6: Synchronization and Updates
-    // Simulate incremental updates
-    let sync_batch = create_sync_batch();
-    assert!(!sync_batch.files.is_empty());
-    assert_eq!(sync_batch.collection, "test-project");
-
     // Verify the complete workflow completed successfully
     assert_eq!(chunks.len(), 3);
     assert_eq!(embeddings.len(), 3);
     assert!(!sorted_results.is_empty());
-    assert_eq!(sync_batch.priority, 5);
 }
 
 // Helper functions for the workflow simulation
@@ -183,16 +175,6 @@ fn sort_results_by_score(mut results: Vec<SearchResult>) -> Vec<SearchResult> {
             .unwrap_or(std::cmp::Ordering::Equal)
     });
     results
-}
-
-fn create_sync_batch() -> SyncBatch {
-    SyncBatch {
-        id: "sync-batch-1".to_owned(),
-        collection: "test-project".to_owned(),
-        files: vec!["src/models.rs".to_owned(), "src/handlers.rs".to_owned()],
-        priority: 5,
-        created_at: 1640995200,
-    }
 }
 
 /// Test error handling in the workflow

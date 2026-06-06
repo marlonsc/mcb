@@ -4,7 +4,7 @@
 //! Resources: project, phase, issue, dependency, decision
 
 use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
-use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text};
+use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
 use mcb_domain::utils::tests::utils::TestResult;
 use rstest::rstest;
 use serial_test::serial;
@@ -39,8 +39,15 @@ async fn test_project_list_issues() -> TestResult {
         "project",
         serde_json::json!({"action": "list", "resource": "issue", "project_id": "test-proj"}),
     )
-    .await;
-    assert_tool_error(result, &["unsupported", "list", "issue"]);
+    .await?;
+    assert!(
+        !is_error(&result),
+        "project issue list should return an empty list, not an error"
+    );
+    assert!(
+        !extract_text(&result).is_empty(),
+        "project issue list should return a response"
+    );
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())

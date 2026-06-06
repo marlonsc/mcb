@@ -6,7 +6,6 @@ use async_trait::async_trait;
 
 use crate::entities::CodeChunk;
 use crate::error::Result;
-use crate::value_objects::config::SyncBatch;
 use crate::value_objects::{CollectionId, OperationId};
 
 /// Indexing Service Interface
@@ -71,9 +70,6 @@ pub trait BatchIndexingServiceInterface: Send + Sync {
 
     /// Index all files within a directory.
     async fn index_directory(&self, path: &Path) -> Result<()>;
-
-    /// Process a batch of changes from a synchronization operation.
-    async fn process_sync_batch(&self, batch: &SyncBatch) -> Result<()>;
 
     /// Completely rebuild the index for a collection.
     async fn rebuild_index(&self, collection: &CollectionId) -> Result<()>;

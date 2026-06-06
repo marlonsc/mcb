@@ -156,12 +156,12 @@ fn symbol_occurrences_empty_input() {
 
 #[rstest]
 fn collect_functions_finds_pub_async_and_plain() {
-    let code = r#"
+    let code = "
 fn plain() {}
 pub fn visible() {}
 pub async fn async_visible() {}
 async fn async_private() {}
-"#;
+";
     let files = vec![(PathBuf::from("test.rs"), code.to_owned())];
     let fns = collect_functions(&files).expect("should not fail");
 
@@ -223,7 +223,10 @@ fn filter_complex_below_threshold_excluded() {
             assert_eq!(function, "complex");
             assert_eq!(*complexity, 20);
         }
-        other => panic!("expected Complexity, got {other:?}"),
+        other @ AnalysisFinding::DeadCode { .. }
+        | other @ AnalysisFinding::TechnicalDebt { .. } => {
+            panic!("expected Complexity, got {other:?}")
+        }
     }
 }
 
@@ -263,7 +266,7 @@ fn detect_dead_functions_identifies_unused() {
         .iter()
         .filter_map(|f| match f {
             AnalysisFinding::DeadCode { name, .. } => Some(name.as_str()),
-            _ => None,
+            AnalysisFinding::Complexity { .. } | AnalysisFinding::TechnicalDebt { .. } => None,
         })
         .collect();
     assert!(dead_names.contains(&"unused_fn"));
@@ -301,7 +304,9 @@ fn tdg_scores_above_threshold_returned() {
             assert_eq!(file, &PathBuf::from("big.rs"));
             assert!(*score > 10);
         }
-        other => panic!("expected TechnicalDebt, got {other:?}"),
+        other @ AnalysisFinding::Complexity { .. } | other @ AnalysisFinding::DeadCode { .. } => {
+            panic!("expected TechnicalDebt, got {other:?}")
+        }
     }
 }
 

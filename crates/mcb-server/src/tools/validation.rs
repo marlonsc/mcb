@@ -29,10 +29,39 @@ pub fn validate_execution_context(
 ) -> Result<(), McpError> {
     validate_operation_mode_matrix(tool_name, execution_context)?;
 
-    if !matches!(tool_name, "index" | "search" | "memory") {
+    if !matches!(
+        tool_name,
+        "index_repo"
+            | "index_status"
+            | "clear_index"
+            | "search_code"
+            | "search_memory"
+            | "store_memory"
+            | "get_memories"
+            | "list_memories"
+            | "memory_timeline"
+            | "inject_context"
+    ) {
         return Ok(());
     }
 
+    let missing = collect_missing_provenance(execution_context);
+
+    if missing.is_empty() {
+        Ok(())
+    } else {
+        Err(McpError::invalid_params(
+            format!(
+                "Missing execution provenance for '{tool_name}': {}",
+                missing.join(", ")
+            ),
+            None,
+        ))
+    }
+}
+
+/// Collect the names of required provenance fields missing from the execution context.
+fn collect_missing_provenance(execution_context: &ToolExecutionContext) -> Vec<&'static str> {
     let mut missing = Vec::new();
     for (key, value) in [
         ("session_id", &execution_context.session_id),
@@ -58,18 +87,7 @@ pub fn validate_execution_context(
     {
         missing.push("parent_session_id");
     }
-
-    if missing.is_empty() {
-        Ok(())
-    } else {
-        Err(McpError::invalid_params(
-            format!(
-                "Missing execution provenance for '{tool_name}': {}",
-                missing.join(", ")
-            ),
-            None,
-        ))
-    }
+    missing
 }
 
 /// Check if a text value is missing or empty.
@@ -84,15 +102,16 @@ fn validate_operation_mode_matrix(
 ) -> Result<(), McpError> {
     let flow = normalize_execution_flow(execution_context.execution_flow.as_deref())?;
 
-    let allowed: &[ExecutionFlow] = if matches!(tool_name, "validate") {
-        &[ExecutionFlow::StdioOnly, ExecutionFlow::ClientHybrid]
-    } else {
-        &[
-            ExecutionFlow::StdioOnly,
-            ExecutionFlow::ClientHybrid,
-            ExecutionFlow::ServerHybrid,
-        ]
-    };
+    let allowed: &[ExecutionFlow] =
+        if matches!(tool_name, "validate_code" | "analyze_code" | "list_rules") {
+            &[ExecutionFlow::StdioOnly, ExecutionFlow::ClientHybrid]
+        } else {
+            &[
+                ExecutionFlow::StdioOnly,
+                ExecutionFlow::ClientHybrid,
+                ExecutionFlow::ServerHybrid,
+            ]
+        };
 
     if allowed.contains(&flow) {
         Ok(())

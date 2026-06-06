@@ -1,5 +1,6 @@
 use axum::http::{HeaderMap, HeaderValue};
 use mcb_server::auth::{extract_api_key, is_admin_auth_exempt_path};
+use mcb_utils::constants::http::HTTP_HEADER_AUTHORIZATION;
 use rstest::rstest;
 
 #[rstest]
@@ -15,7 +16,10 @@ fn extract_api_key_reads_x_api_key() {
 #[rstest]
 fn extract_api_key_reads_authorization_bearer() {
     let mut headers = HeaderMap::new();
-    headers.insert("authorization", HeaderValue::from_static("Bearer abc123"));
+    headers.insert(
+        HTTP_HEADER_AUTHORIZATION,
+        HeaderValue::from_static("Bearer abc123"),
+    );
     assert_eq!(
         extract_api_key(&headers, "x-api-key").expect("api key"),
         "abc123"

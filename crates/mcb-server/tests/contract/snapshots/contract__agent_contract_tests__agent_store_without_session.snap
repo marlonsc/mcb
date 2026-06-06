@@ -9,21 +9,19 @@ expression: "snapshot_payload(&request, status, &response)"
     "method": "tools/call",
     "params": {
       "arguments": {
-        "action": "log_tool",
         "data": {
           "duration_ms": 5,
           "success": true,
           "tool_name": "search"
-        },
-        "session_id": "nonexistent-session-00000"
+        }
       },
-      "name": "agent"
+      "name": "log_tool_call"
     }
   },
   "response": {
     "error": {
       "code": -32602,
-      "message": "Failed to parse arguments: UUID parsing failed: invalid character: expected an optional prefix of `urn:uuid:` followed by [0-9a-fA-F-], found `n` at 1"
+      "message": "session_id is required (not resolved from context)"
     },
     "id": 1,
     "jsonrpc": "2.0"

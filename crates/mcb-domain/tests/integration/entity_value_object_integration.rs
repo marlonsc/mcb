@@ -1,6 +1,7 @@
 //! Integration tests for entities and value objects working together
 
-use mcb_domain::{CodeChunk, Embedding, SearchResult};
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::value_objects::{Embedding, SearchResult};
 use rstest::rstest;
 
 #[rstest]

@@ -42,15 +42,15 @@ pub(crate) enum RequestErrorKind {
 ///
 /// let client = create_client(30)?;
 /// ```
-pub(crate) fn create_client(timeout_secs: u64) -> std::result::Result<Client, String> {
+pub(crate) fn create_client(timeout_secs: u64) -> mcb_domain::error::Result<Client> {
     Client::builder()
         .timeout(Duration::from_secs(timeout_secs))
         .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))
+        .map_err(|e| Error::network(format!("Failed to create HTTP client: {e}")))
 }
 
 /// Create an HTTP client with the default 30-second timeout
-pub(crate) fn create_default_client() -> std::result::Result<Client, String> {
+pub(crate) fn create_default_client() -> mcb_domain::error::Result<Client> {
     create_client(mcb_utils::constants::http::HTTP_REQUEST_TIMEOUT_SECS)
 }
 
@@ -155,11 +155,11 @@ pub(crate) fn create_http_provider_config(
     config: &mcb_domain::registry::embedding::EmbeddingProviderConfig,
     provider_name: &str,
     default_model: &str,
-) -> std::result::Result<HttpProviderConfig, String> {
+) -> mcb_domain::error::Result<HttpProviderConfig> {
     let api_key = config
         .api_key
         .clone()
-        .ok_or_else(|| format!("{provider_name} requires api_key"))?;
+        .ok_or_else(|| Error::configuration(format!("{provider_name} requires api_key")))?;
 
     let base_url = config.base_url.clone();
 

@@ -27,9 +27,6 @@ use std::any::Any;
 use crate::error::{Error, Result};
 use crate::registry::config::{ConfigProviderConfig, resolve_config_provider};
 
-/// Default configuration provider name.
-pub use mcb_utils::constants::DEFAULT_CONFIG_PROVIDER as DEFAULT_PROVIDER;
-
 /// Load application configuration via CA/DI registry.
 ///
 /// Resolves the `ConfigProvider` by name and calls `load_config()`.

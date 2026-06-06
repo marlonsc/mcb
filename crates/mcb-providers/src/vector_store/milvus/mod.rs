@@ -16,7 +16,8 @@ mod registry;
 pub mod schema;
 mod search;
 
-pub use client::{MilvusVectorStoreProvider, is_collection_not_found, to_milvus_name};
+pub use client::{MilvusVectorStoreProvider, to_milvus_name};
 
 // Re-export internal types for sibling modules that use `super::*`
-pub(self) use client::*;
+use client::*;
+use mcb_domain::error::Result;

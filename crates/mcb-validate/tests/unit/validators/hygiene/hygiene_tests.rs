@@ -30,8 +30,6 @@ fn test_hygiene_full_workspace() {
             ("my-test/tests", 0, "BadTestFileName"),
             ("integration_test.rs", 0, "BadTestFileName"),
             ("integration_test.rs", 0, "BadTestFileName"),
-            // ── BadTestFunctionName ─────────────────────────────────────
-            ("integration_test.rs", 8, "BadTestFunctionName"),
             // ── TrivialAssertion ────────────────────────────────────────
             ("integration_test.rs", 4, "TrivialAssertion"),
             ("integration_test.rs", 10, "TrivialAssertion"),

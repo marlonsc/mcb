@@ -1,9 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Development Roadmap
 
-**Last updated:** 2026-02-23
+**Last updated:** 2026-06-04
 
-Development roadmap for**Memory Context Browser (MCB)** — a high-performance MCP server for semantic code search, persistent memory, and agent-aware context management.
+Development roadmap for **Memory Context Browser (MCB)** — a high-performance MCP server for semantic code search, persistent memory, and agent-aware context management.
 
 ---
 
@@ -11,21 +11,21 @@ Development roadmap for**Memory Context Browser (MCB)** — a high-performance M
 
 | Field | Value |
 | ------- | ------- |
-| **Version** | v0.3.0 |
-| **Branch** | `main` (SeaQL + Loco.rs rebuild complete) |
-| **Build** | ✅ `cargo check --workspace` passes |
-| **Tests** | 128/140 passing (91%, 12 snapshot mismatches, 38 deferred) |
-| **Crates** | 6 (Clean Architecture workspace) |
-| **ADRs** | 52 (including Phase 8-9 and v0.3.0 rebuild) |
+| **Version** | v0.3.1 |
+| **Branch** | `release/v0.3.1` |
+| **Build** | ✅ `make lint` passes locally as of 2026-06-04 |
+| **Tests** | Release gate pending: run `make test` and `make validate` before tag |
+| **Crates** | 7 first-party workspace crates |
+| **ADRs** | 55 tracked ADRs |
 
 ### Project Metrics
 
 | Metric | Value |
-| -------- | ------- | |
+| -------- | ------- |
 | Beads issues | 312+ total |
 | Avg lead time | 9.5 hours |
-| TODO/FIXME | 164 markers in `crates/` |
-| Languages | 13 via tree-sitter |
+| TODO/FIXME | Verify TODO and FIXME markers in `crates/` before release notes |
+| Languages | 14 via tree-sitter |
 | Embedding providers | 6 (FastEmbed, OpenAI, VoyageAI, Ollama, Gemini, Anthropic) |
 | Vector stores | 5+ (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted) |
 
@@ -34,14 +34,33 @@ Development roadmap for**Memory Context Browser (MCB)** — a high-performance M
 1. **mcb-validate** coupled to runtime — should be decoupled
 2. **Duplicate tree-sitter** logic across crates — need centralization
 3. **Missing provider health** checks — no centralized validation
-4. **241 TODO/FIXME** markers — accumulated code/docs debt
-5. **225 missing_docs warnings** in mcb-domain struct fields
+4. **TODO/FIXME backlog** — count from source before each release note
+5. **missing_docs warnings** — tracked by workspace lint policy
 
 ---
 
-### v0.2.1 — Current Release (Admin UI + Modernization)
+### v0.3.1 — Current Release Stabilization
 
-**Status:** In progress
+**Status:** In release hardening
+**Branch:** `release/v0.3.1`
+
+Stabilizes the SeaQL + Loco baseline for release by closing handler response
+format drift, Docker runtime configuration, test helper reuse, and agent
+instruction canonicalization.
+
+| Area | Status |
+| ------ | -------- |
+| MCP JSON response formatting cleanup | In progress |
+| Loco inline config for Docker profiles | In progress |
+| Docker app/stdio compose profiles | In progress |
+| Agent instruction canonicalization | In progress |
+| Release gates (`make test`, `make validate`, `make check`) | Pending |
+
+---
+
+### v0.2.1 — Historical Release (Admin UI + Modernization)
+
+**Status:** Released
 **Branch:** `release/v0.2.1`
 
 Consolidates all pre-v0.3.0 work: admin UI, data model hardening, modernization cleanup. No intermediate 0.2.x release exists between this track and v0.3.0.
@@ -78,7 +97,7 @@ Full platform rebuild on SeaQL (SeaORM, SeaQuery, SeaSchema, SeaStreamer) and Lo
 
 ### v0.4.0 — Workflow System
 **Status:** Planning
-**Target:** Q2 2026 (after v0.3.0)
+**Target:** After v0.3.x stabilization
 **Key ADRs:** 034 (FSM), 035 (Scout), 036 (Policies), 037 (Orchestrator), 038 (Tiers)
 Implements complete workflow system with FSM-based task orchestration, context scouting, and policy enforcement.
 
@@ -131,7 +150,7 @@ Enterprise-grade platform with SLA guarantees, compliance certifications, and hi
 
 1. **ADR-Driven**: Architectural decisions documented before implementation
 2. **Test-First**: Core functionality developed with comprehensive tests
-3. **Clean Architecture**: 9-crate workspace with trait-based DI
+3. **Clean Architecture**: 7-crate first-party workspace with trait-based DI
 4. **Documentation First**: Documentation updated with each code change
 
 ---

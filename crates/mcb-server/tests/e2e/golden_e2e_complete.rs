@@ -8,7 +8,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use serde::Deserialize;
 
-use mcb_domain::test_fixtures::sample_codebase_path;
+use mcb_domain::utils::tests::fixtures::sample_codebase_path;
 use mcb_domain::utils::tests::mcp_assertions::{
     extract_text as extract_result_text, golden_count_result_entries, golden_parse_results_found,
 };

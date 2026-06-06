@@ -1,6 +1,6 @@
-//! Tests for the `validate` MCP tool.
+//! Tests for public validation MCP tools.
 //!
-//! Actions: run, `list_rules`, analyze
+//! Tools: `validate_code`, `analyze_code`, `list_rules`
 
 use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
 use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
@@ -13,12 +13,7 @@ use serial_test::serial;
 #[tokio::test]
 async fn test_validate_list_rules() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(
-        &client,
-        "validate",
-        serde_json::json!({"action": "list_rules"}),
-    )
-    .await?;
+    let result = call_tool(&client, "list_rules", serde_json::json!({})).await?;
     assert!(!is_error(&result), "list_rules should not error");
     let text = extract_text(&result);
     assert!(!text.is_empty(), "list_rules should return rules");
@@ -34,8 +29,8 @@ async fn test_validate_list_rules_with_category() -> TestResult {
     let client = create_client().await?;
     let result = call_tool(
         &client,
-        "validate",
-        serde_json::json!({"action": "list_rules", "category": "architecture"}),
+        "list_rules",
+        serde_json::json!({"category": "architecture"}),
     )
     .await?;
     assert!(
@@ -53,7 +48,7 @@ async fn test_validate_list_rules_with_category() -> TestResult {
 #[tokio::test]
 async fn test_validate_run_missing_path() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(&client, "validate", serde_json::json!({"action": "run"})).await;
+    let result = call_tool(&client, "validate_code", serde_json::json!({})).await;
     assert_tool_error(result, &["path", "required"]);
     shutdown_client(client).await;
     cleanup_temp_dbs();
@@ -63,15 +58,10 @@ async fn test_validate_run_missing_path() -> TestResult {
 #[serial]
 #[rstest]
 #[tokio::test]
-async fn test_validate_invalid_action() -> TestResult {
+async fn test_analyze_code_requires_path() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(
-        &client,
-        "validate",
-        serde_json::json!({"action": "nonexistent"}),
-    )
-    .await;
-    assert_tool_error(result, &["unknown variant", "expected one of"]);
+    let result = call_tool(&client, "analyze_code", serde_json::json!({})).await;
+    assert_tool_error(result, &["path"]);
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())

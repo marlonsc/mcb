@@ -170,35 +170,40 @@ impl EdgeVecActor {
             limit
         };
 
-        match self.index.search(query_vector, fetch_limit, &self.storage) {
-            Ok(results) => {
-                let mut final_results = Vec::with_capacity(limit);
-                if let Some(collection_metadata) = self.get_collection_metadata(collection) {
-                    for res in results {
-                        if final_results.len() >= limit {
-                            break;
-                        }
-                        let external_id: Option<String> = self
-                            .id_map
-                            .iter()
-                            .find(|entry| *entry.value() == res.vector_id)
-                            .map(|entry| entry.key().to_owned());
+        let results = self
+            .index
+            .search(query_vector, fetch_limit, &self.storage)
+            .map_err(|e| Error::vector_db(format!("Search failed: {e}")))?;
 
-                        if let Some(ext_id) = external_id
-                            && let Some(meta_val) = collection_metadata.get(&ext_id)
-                        {
-                            final_results.push(search_result_from_json_metadata(
-                                ext_id,
-                                meta_val,
-                                res.distance as f64,
-                            ));
-                        }
-                    }
-                }
-                Ok(final_results)
+        let Some(collection_metadata) = self.get_collection_metadata(collection) else {
+            return Ok(Vec::new());
+        };
+
+        let mut final_results = Vec::with_capacity(limit);
+        for res in results {
+            if final_results.len() >= limit {
+                break;
             }
-            Err(e) => Err(Error::vector_db(format!("Search failed: {e}"))),
+            let Some(ext_id) = self.external_id_for(res.vector_id) else {
+                continue;
+            };
+            if let Some(meta_val) = collection_metadata.get(&ext_id) {
+                final_results.push(search_result_from_json_metadata(
+                    ext_id,
+                    meta_val,
+                    res.distance as f64,
+                ));
+            }
         }
+        Ok(final_results)
+    }
+
+    /// Resolve the external string id for an internal HNSW vector id.
+    fn external_id_for(&self, vector_id: VectorId) -> Option<String> {
+        self.id_map
+            .iter()
+            .find(|entry| *entry.value() == vector_id)
+            .map(|entry| entry.key().to_owned())
     }
 }
 

@@ -16,9 +16,6 @@ pub mod logging;
 pub mod migrations;
 /// Provider routing ports.
 pub mod routing;
-/// Snapshot and sync provider ports.
-pub mod sync;
-
 // Re-exports for canonical access via `ports::infrastructure::{...}`
 pub use config::ConfigProvider;
 pub use events::{DomainEventStream, EventBusProvider};
@@ -30,6 +27,3 @@ pub use lifecycle::{
 pub use logging::{LogLevel, OperationLogger};
 pub use migrations::{MigrationProvider, SharedMigrationProvider};
 pub use routing::{ProviderContext, ProviderHealthStatus, ProviderRouter};
-pub use sync::{
-    SharedSyncCoordinator, SnapshotProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult,
-};

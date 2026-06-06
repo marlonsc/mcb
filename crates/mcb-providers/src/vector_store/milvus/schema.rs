@@ -1,5 +1,6 @@
 use super::*;
 use mcb_domain::error::Error;
+use mcb_domain::value_objects::CollectionId;
 use milvus::data::FieldColumn;
 
 use milvus::schema::{CollectionSchema, CollectionSchemaBuilder, FieldSchema};

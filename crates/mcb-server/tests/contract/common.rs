@@ -1,6 +1,7 @@
 use axum::http::StatusCode;
-use mcb_domain::protocol::{JSONRPC_VERSION, McpRequest, McpResponse};
+use mcb_domain::protocol::{McpRequest, McpResponse};
 use mcb_utils::constants::headers::*;
+use mcb_utils::constants::protocol::JSONRPC_VERSION;
 use mcb_utils::constants::protocol::{EXECUTION_FLOW_HYBRID, HTTP_HEADER_EXECUTION_FLOW};
 use serde_json::{Value, json};
 

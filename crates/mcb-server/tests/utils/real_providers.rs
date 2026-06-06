@@ -61,8 +61,8 @@ pub async fn create_real_embedding_provider_with_model(
 
 #[cfg(test)]
 mod tests {
-    use mcb_domain::test_collection::unique_collection;
-    use mcb_domain::test_service_detection::should_run_docker_integration_tests;
+    use mcb_domain::utils::tests::collection::unique_collection;
+    use mcb_domain::utils::tests::service_detection::should_run_docker_integration_tests;
     use mcb_domain::value_objects::CollectionId;
 
     use super::*;

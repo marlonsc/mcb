@@ -11,8 +11,9 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{OrgEntityAction, OrgEntityArgs, OrgEntityResource};
+use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::{
-    map_opaque_error, ok_json, ok_text, require_data, require_id, resolve_identifier_precedence,
+    map_opaque_error, ok_text, require_data, require_id, resolve_identifier_precedence,
     resolve_org_id,
 };
 
@@ -57,14 +58,14 @@ impl OrgEntityHandler {
                     org.id = resolved;
                 }
                 map_opaque_error(self.repo.create_org(&org).await)?;
-                ok_json(&org)
+                ResponseFormatter::json_success(&org)
             }
             (OrgEntityAction::Get, OrgEntityResource::Org) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_org(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_org(&id).await)?)
             }
             (OrgEntityAction::List, OrgEntityResource::Org) => {
-                ok_json(&map_opaque_error(self.repo.list_orgs().await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_orgs().await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::Org) => {
                 let org: Organization = require_data(args.data, "data required for update")?;
@@ -80,7 +81,7 @@ impl OrgEntityHandler {
                 let mut user: User = require_data(args.data, "data required for create")?;
                 user.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_user(&user).await)?;
-                ok_json(&user)
+                ResponseFormatter::json_success(&user)
             }
             (OrgEntityAction::Get, OrgEntityResource::User) => {
                 let user = if let Some(id) = args.id.as_deref() {
@@ -93,10 +94,10 @@ impl OrgEntityHandler {
                         None,
                     ));
                 };
-                ok_json(&map_opaque_error(user)?)
+                ResponseFormatter::json_success(&map_opaque_error(user)?)
             }
             (OrgEntityAction::List, OrgEntityResource::User) => {
-                ok_json(&map_opaque_error(self.repo.list_users(org_id.as_str()).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_users(org_id.as_str()).await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::User) => {
                 let mut user: User = require_data(args.data, "data required for update")?;
@@ -113,14 +114,14 @@ impl OrgEntityHandler {
                 let mut team: Team = require_data(args.data, "data required for create")?;
                 team.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_team(&team).await)?;
-                ok_json(&team)
+                ResponseFormatter::json_success(&team)
             }
             (OrgEntityAction::Get, OrgEntityResource::Team) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_team(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_team(&id).await)?)
             }
             (OrgEntityAction::List, OrgEntityResource::Team) => {
-                ok_json(&map_opaque_error(self.repo.list_teams(org_id.as_str()).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_teams(org_id.as_str()).await)?)
             }
             (OrgEntityAction::Delete, OrgEntityResource::Team) => {
                 let id = require_id(&args.id)?;
@@ -130,11 +131,11 @@ impl OrgEntityHandler {
             (OrgEntityAction::Create, OrgEntityResource::TeamMember) => {
                 let member: TeamMember = require_data(args.data, "data required for create")?;
                 map_opaque_error(self.repo.add_team_member(&member).await)?;
-                ok_json(&member)
+                ResponseFormatter::json_success(&member)
             }
             (OrgEntityAction::List, OrgEntityResource::TeamMember) => {
                 let team_id = require_arg!(args.team_id, "team_id required for list");
-                ok_json(&map_opaque_error(self.repo.list_team_members(team_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_team_members(team_id).await)?)
             }
             (OrgEntityAction::Delete, OrgEntityResource::TeamMember) => {
                 let team_id = require_arg!(args.team_id, "team_id required for delete");
@@ -146,14 +147,14 @@ impl OrgEntityHandler {
                 let mut key: ApiKey = require_data(args.data, "data required for create")?;
                 key.org_id = org_id.clone();
                 map_opaque_error(self.repo.create_api_key(&key).await)?;
-                ok_json(&key)
+                ResponseFormatter::json_success(&key)
             }
             (OrgEntityAction::Get, OrgEntityResource::ApiKey) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_api_key(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_api_key(&id).await)?)
             }
             (OrgEntityAction::List, OrgEntityResource::ApiKey) => {
-                ok_json(&map_opaque_error(self.repo.list_api_keys(org_id.as_str()).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_api_keys(org_id.as_str()).await)?)
             }
             (OrgEntityAction::Update, OrgEntityResource::ApiKey) => {
                 let id = require_id(&args.id)?;

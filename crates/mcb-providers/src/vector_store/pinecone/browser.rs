@@ -36,13 +36,7 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
                             .and_then(|ns| ns.get("vectorCount"))
                             .and_then(serde_json::Value::as_u64)
                             .unwrap_or(0);
-                        CollectionInfo::new(
-                            name,
-                            vector_count as usize,
-                            0,
-                            None,
-                            self.provider_name(),
-                        )
+                        CollectionInfo::new(name, vector_count, 0, None, self.provider_name())
                     })
                     .collect()
             })
@@ -72,7 +66,7 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         });
 
         let collection_str = collection.to_string();
-        let dimensions = self.collection_dimensions(&collection_str);
+        let dimensions = self.collection_dimensions(&collection_str)?;
 
         let zero_vector = vec![0.0f32; dimensions];
 

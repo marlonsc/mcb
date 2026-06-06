@@ -20,6 +20,7 @@ use mcb_domain::registry::hybrid_search::{
 use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
+use mcb_domain::value_objects::Embedding;
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::state::McbState;
@@ -30,7 +31,7 @@ use tempfile::TempDir;
 extern crate mcb_providers;
 
 // Import centralized fixtures from mcb-domain
-use mcb_domain::test_utils::{create_temp_codebase, create_test_indexing_result};
+use mcb_domain::utils::tests::utils::{create_temp_codebase, create_test_indexing_result};
 // Import test constants from canonical source (mcb-utils)
 use mcb_utils::constants::testing::{TEST_ORG_ID, TEST_REPO_NAME, TEST_SESSION_ID};
 
@@ -64,6 +65,71 @@ pub fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
         cache_dir
     })
     .clone()
+}
+
+// ---------------------------------------------------------------------------
+// Deterministic embedding provider for unit test composition
+// ---------------------------------------------------------------------------
+
+#[derive(Debug)]
+struct DeterministicTestEmbeddingProvider {
+    dimensions: usize,
+}
+
+impl DeterministicTestEmbeddingProvider {
+    const MODEL_NAME: &'static str = "deterministic-test";
+
+    const fn new(dimensions: usize) -> Self {
+        Self { dimensions }
+    }
+
+    fn embed_text(&self, text: &str) -> Embedding {
+        let mut vector = vec![0.0; self.dimensions];
+        if self.dimensions == 0 {
+            return Embedding {
+                vector,
+                model: Self::MODEL_NAME.to_owned(),
+                dimensions: self.dimensions,
+            };
+        }
+
+        for (index, byte) in text.bytes().enumerate() {
+            let slot = index % self.dimensions;
+            vector[slot] += (f32::from(byte) + 1.0) / 256.0;
+        }
+
+        let norm = vector.iter().map(|value| value * value).sum::<f32>().sqrt();
+        if norm > 0.0 {
+            for value in &mut vector {
+                *value /= norm;
+            }
+        }
+
+        Embedding {
+            vector,
+            model: Self::MODEL_NAME.to_owned(),
+            dimensions: self.dimensions,
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl EmbeddingProvider for DeterministicTestEmbeddingProvider {
+    async fn embed_batch(&self, texts: &[String]) -> mcb_domain::Result<Vec<Embedding>> {
+        Ok(texts.iter().map(|text| self.embed_text(text)).collect())
+    }
+
+    fn dimensions(&self) -> usize {
+        self.dimensions
+    }
+
+    fn provider_name(&self) -> &str {
+        Self::MODEL_NAME
+    }
+}
+
+pub(super) fn create_test_embedding_provider(dimensions: usize) -> Arc<dyn EmbeddingProvider> {
+    Arc::new(DeterministicTestEmbeddingProvider::new(dimensions))
 }
 
 // ---------------------------------------------------------------------------
@@ -162,7 +228,7 @@ pub async fn create_test_mcb_state() -> Option<(McbState, TempDir)> {
 // create_test_mcp_server
 // ---------------------------------------------------------------------------
 
-/// Create an MCP server with default providers (`SQLite`, `FastEmbed`, etc.) and an isolated DB.
+/// Create an MCP server with default local providers and an isolated DB.
 ///
 /// Builds state via pure registry DI: resolve providers through `mcb_domain::registry::*`,
 /// build [`ServiceResolutionContext`], then [`build_mcp_server_bootstrap`].
@@ -183,11 +249,7 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
 
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess"))?;
 
-    let cache_dir = shared_fastembed_test_cache_dir();
-    let embedding_config = EmbeddingProviderConfig::new("fastembed")
-        .with_cache_dir(cache_dir)
-        .with_dimensions(384);
-    let embedding_provider = resolve_embedding_provider(&embedding_config)?;
+    let embedding_provider = create_test_embedding_provider(384);
 
     let vs_config = VectorStoreProviderConfig::new("edgevec")
         .with_dimensions(384)

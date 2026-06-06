@@ -132,30 +132,33 @@ impl BM25Scorer {
         for query_term in query_terms {
             let tf = doc_term_freq.get(query_term.as_str()).copied().unwrap_or(0) as f64;
             let df = self.document_freq.get(query_term).copied().unwrap_or(0) as f64;
-
-            if df > 0.0 && tf > 0.0 {
-                // IDF calculation using Lucene/Elasticsearch variant that ensures positive IDF
-                // This avoids zero/negative IDF when terms appear in half or more documents
-                let idf = if self.total_docs > 1 {
-                    // Lucene BM25 IDF: ln(1 + (N - n + 0.5) / (n + 0.5))
-                    (1.0 + (self.total_docs as f64 - df + 0.5) / (df + 0.5)).ln()
-                } else {
-                    // Simplified IDF for single document (always positive)
-                    1.0
-                };
-
-                // Term frequency normalization
-                let tf_normalized = (tf * (self.params.k1 + 1.0))
-                    / (tf
-                        + self.params.k1
-                            * (1.0 - self.params.b
-                                + self.params.b * doc_length / self.avg_doc_len));
-
-                score += idf * tf_normalized;
-            }
+            score += self.term_score(tf, df, doc_length);
         }
 
         score
+    }
+
+    /// BM25 contribution of a single query term given its term frequency `tf`,
+    /// document frequency `df`, and the document length.
+    fn term_score(&self, tf: f64, df: f64, doc_length: f64) -> f64 {
+        if df <= 0.0 || tf <= 0.0 {
+            return 0.0;
+        }
+
+        // IDF using the Lucene/Elasticsearch variant that stays positive even when
+        // a term appears in half or more documents.
+        let idf = if self.total_docs > 1 {
+            (1.0 + (self.total_docs as f64 - df + 0.5) / (df + 0.5)).ln()
+        } else {
+            1.0
+        };
+
+        let tf_normalized = (tf * (self.params.k1 + 1.0))
+            / (tf
+                + self.params.k1
+                    * (1.0 - self.params.b + self.params.b * doc_length / self.avg_doc_len));
+
+        idf * tf_normalized
     }
 
     /// Score multiple documents with a single tokenization pass (batch optimization)

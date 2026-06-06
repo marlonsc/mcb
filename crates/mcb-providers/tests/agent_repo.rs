@@ -55,7 +55,6 @@ async fn setup_repo() -> TestResult<(SeaOrmAgentRepository, Arc<sea_orm::Databas
     Ok((SeaOrmAgentRepository::new(Arc::clone(&db)), db))
 }
 
-#[ignore = "auto-create session on orphan tool_call not yet implemented"]
 #[rstest]
 #[tokio::test]
 async fn log_tool_persists_when_session_missing() -> TestResult {
@@ -83,7 +82,6 @@ async fn log_tool_persists_when_session_missing() -> TestResult {
     Ok(())
 }
 
-#[ignore = "auto-create session on orphan delegation not yet implemented"]
 #[rstest]
 #[tokio::test]
 async fn log_delegation_persists_when_sessions_missing() -> TestResult {

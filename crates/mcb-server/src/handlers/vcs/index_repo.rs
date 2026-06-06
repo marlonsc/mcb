@@ -41,36 +41,15 @@ pub async fn index_repository(
         .branches
         .clone()
         .unwrap_or_else(|| vec![repo.default_branch().to_owned()]);
-    let mut total_files = 0;
-    for branch in &branches {
-        match vcs_provider.list_files(&repo, branch).await {
-            Ok(files) => {
-                let filtered_files = filter_files_by_patterns(&files, &config.git.ignore_patterns);
-                total_files += filtered_files.len();
-            }
-            Err(e) => {
-                return Ok(to_contextual_tool_error(e));
-            }
-        }
-    }
+    let total_files =
+        match count_filtered_files(vcs_provider, &repo, &branches, &config.git.ignore_patterns)
+            .await
+        {
+            Ok(count) => count,
+            Err(e) => return Ok(to_contextual_tool_error(e)),
+        };
     let commits_indexed = if args.include_commits.unwrap_or(false) {
-        let mut count = 0;
-        for branch in &branches {
-            match vcs_provider
-                .commit_history(&repo, branch, Some(depth))
-                .await
-            {
-                Ok(commits) => count += commits.len(),
-                Err(e) => {
-                    mcb_domain::warn!(
-                        "vcs",
-                        "Failed to index commits",
-                        &format!("branch={branch}: {e}")
-                    );
-                }
-            }
-        }
-        count
+        count_commits(vcs_provider, &repo, &branches, depth).await
     } else {
         0
     };
@@ -84,6 +63,44 @@ pub async fn index_repository(
     };
 
     ResponseFormatter::json_success(&result)
+}
+
+/// Count files across `branches` after applying ignore patterns.
+async fn count_filtered_files(
+    vcs_provider: &Arc<dyn VcsProvider>,
+    repo: &mcb_domain::entities::vcs::VcsRepository,
+    branches: &[String],
+    ignore_patterns: &[String],
+) -> mcb_domain::Result<usize> {
+    let mut total_files = 0;
+    for branch in branches {
+        let files = vcs_provider.list_files(repo, branch).await?;
+        total_files += filter_files_by_patterns(&files, ignore_patterns).len();
+    }
+    Ok(total_files)
+}
+
+/// Count commits across `branches`; per-branch failures are logged and skipped.
+async fn count_commits(
+    vcs_provider: &Arc<dyn VcsProvider>,
+    repo: &mcb_domain::entities::vcs::VcsRepository,
+    branches: &[String],
+    depth: usize,
+) -> usize {
+    let mut count = 0;
+    for branch in branches {
+        match vcs_provider.commit_history(repo, branch, Some(depth)).await {
+            Ok(commits) => count += commits.len(),
+            Err(e) => {
+                mcb_domain::warn!(
+                    "vcs",
+                    "Failed to index commits",
+                    &format!("branch={branch}: {e}")
+                );
+            }
+        }
+    }
+    count
 }
 
 /// Filter files by ignore patterns (gitignore-style)
@@ -104,28 +121,23 @@ fn should_ignore_file(file: &Path, patterns: &[String]) -> bool {
     let Some(file_str) = file.to_str() else {
         return false;
     };
+    patterns
+        .iter()
+        .any(|pattern| pattern_matches(file_str, pattern))
+}
 
-    for pattern in patterns {
-        // Handle directory patterns (ending with /)
-        if pattern.ends_with('/') {
-            let dir_pattern = &pattern[..pattern.len() - 1];
-            if file_str.contains(dir_pattern) {
-                return true;
-            }
-        }
-        // Handle wildcard patterns (*.ext)
-        else if let Some(ext) = pattern.strip_prefix('*') {
-            if file_str.ends_with(ext) {
-                return true;
-            }
-        }
-        // Handle exact matches and path patterns
-        else if file_str.contains(pattern) || file_str.ends_with(pattern) {
-            return true;
-        }
+/// Match a single gitignore-style pattern against a file path string.
+fn pattern_matches(file_str: &str, pattern: &str) -> bool {
+    // Directory patterns end with `/`.
+    if let Some(dir_pattern) = pattern.strip_suffix('/') {
+        return file_str.contains(dir_pattern);
     }
-
-    false
+    // Wildcard patterns start with `*` (e.g. `*.ext`).
+    if let Some(ext) = pattern.strip_prefix('*') {
+        return file_str.ends_with(ext);
+    }
+    // Exact matches and path patterns.
+    file_str.contains(pattern) || file_str.ends_with(pattern)
 }
 
 // ---------------------------------------------------------------------------

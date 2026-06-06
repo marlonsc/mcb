@@ -39,9 +39,9 @@ impl SeaOrmAuthRepositoryAdapter {
 
 #[async_trait]
 impl AuthRepositoryPort for SeaOrmAuthRepositoryAdapter {
-    async fn find_users_by_api_key_hash(&self, key_hash: &str) -> Result<Vec<UserWithApiKey>> {
+    async fn find_active_api_key_candidates(&self) -> Result<Vec<UserWithApiKey>> {
         let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
-        let mut api_key_rows = api_keys::Entity::find()
+        let api_key_rows = api_keys::Entity::find()
             .filter(
                 Condition::all()
                     .add(api_keys::Column::RevokedAt.is_null())
@@ -54,10 +54,6 @@ impl AuthRepositoryPort for SeaOrmAuthRepositoryAdapter {
             .all(&self.db)
             .await
             .map_err(|e| Error::database(format!("find API key records failed: {e}")))?;
-
-        if api_key_rows.iter().any(|row| row.key_hash == key_hash) {
-            api_key_rows.retain(|row| row.key_hash == key_hash);
-        }
 
         if api_key_rows.is_empty() {
             return Ok(Vec::new());
