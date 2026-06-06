@@ -153,9 +153,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .one(self.db.as_ref())
             .await
             .map_err(db_error("find operation for progress update"))?
-            .ok_or_else(|| Error::NotFound {
-                resource: format!("IndexOperation:{operation_id}"),
-            })?;
+            .ok_or_else(|| Error::not_found(format!("IndexOperation:{operation_id}")))?;
 
         let mut active: index_operation::ActiveModel = existing.into();
         active.status = Set(Self::status_to_string(&IndexingOperationStatus::InProgress));
@@ -177,9 +175,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .one(self.db.as_ref())
             .await
             .map_err(db_error("find operation for completion"))?
-            .ok_or_else(|| Error::NotFound {
-                resource: format!("IndexOperation:{operation_id}"),
-            })?;
+            .ok_or_else(|| Error::not_found(format!("IndexOperation:{operation_id}")))?;
 
         let mut active: index_operation::ActiveModel = existing.into();
         active.status = Set(Self::status_to_string(&IndexingOperationStatus::Completed));
@@ -200,9 +196,7 @@ impl IndexRepository for SeaOrmIndexRepository {
             .one(self.db.as_ref())
             .await
             .map_err(db_error("find operation for failure"))?
-            .ok_or_else(|| Error::NotFound {
-                resource: format!("IndexOperation:{operation_id}"),
-            })?;
+            .ok_or_else(|| Error::not_found(format!("IndexOperation:{operation_id}")))?;
 
         let mut active: index_operation::ActiveModel = existing.into();
         active.status = Set(Self::status_to_string(&IndexingOperationStatus::Failed(
