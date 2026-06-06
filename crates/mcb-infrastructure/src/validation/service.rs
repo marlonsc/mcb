@@ -65,11 +65,21 @@ impl ValidationServiceInterface for InfraValidationService {
         run_file_validation(file_path, validators)
     }
 
-    async fn get_rules(&self, _category: Option<&str>) -> Result<Vec<RuleInfo>> {
-        // TODO(CA): Rules provided by mcb-validate; infra cannot import validate.
-        // When the binary links mcb-validate, the validate crate registers its own rules
-        // via linkme. A future registry-based approach will resolve this properly.
-        Ok(vec![])
+    async fn get_rules(&self, category: Option<&str>) -> Result<Vec<RuleInfo>> {
+        let entries = mcb_domain::registry::validation::list_validator_entries();
+        let mut rules: Vec<RuleInfo> = entries
+            .iter()
+            .filter(|(name, _)| category.is_none_or(|c| *name == c))
+            .map(|(name, description)| RuleInfo {
+                id: (*name).to_owned(),
+                category: (*name).to_owned(),
+                severity: "warning".to_owned(),
+                description: (*description).to_owned(),
+                engine: "linkme".to_owned(),
+            })
+            .collect();
+        rules.sort_unstable_by(|a, b| a.id.cmp(&b.id));
+        Ok(rules)
     }
 
     async fn analyze_complexity(
