@@ -1,0 +1,22 @@
+crates/mcb/tests/integration/mcp_commands/common.rs
+  s_64c182eb86dc9e::t_2fc6474230aec2 131,134-135
+  s_64c182eb86dc9e::t_f5b0c5fb98acde 6-7
+crates/mcb/tests/integration/mcp_commands/mod.rs
+  s_64c182eb86dc9e::t_f5b0c5fb98acde 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "75a6944acf4b79b8c47fd7e7a5d0e809270986af",
+  "prompts": {},
+  "sessions": {
+    "s_64c182eb86dc9e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9a50-f152-74c2-bc71-2f973915b762",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
