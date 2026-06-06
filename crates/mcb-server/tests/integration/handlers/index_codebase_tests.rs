@@ -10,7 +10,7 @@ use crate::utils::test_fixtures::create_test_mcb_state;
 #[case(true, None, Some("test"), true)]
 #[case(false, Some("/nonexistent/path/to/codebase"), Some("test"), false)]
 #[case(false, None, Some("test"), true)]
-#[case(true, None, None, true)]
+#[case(true, None, None, false)]
 #[case(false, Some("/definitely/nonexistent/mcb-path"), Some("test"), false)]
 #[rstest]
 #[tokio::test]
