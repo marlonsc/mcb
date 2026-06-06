@@ -4,7 +4,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{ExecutionMetadata, MemorySearchResult, ObservationType};
-use mcb_domain::ports::MemoryServiceInterface;
+use mcb_domain::ports::{MemoryServiceInterface, StoreObservationInput};
 use mcb_utils::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
@@ -157,13 +157,13 @@ async fn persist_execution_observation(
     obs_metadata: mcb_domain::entities::memory::ObservationMetadata,
 ) -> Result<CallToolResult, McpError> {
     match memory_service
-        .store_observation(
+        .store_observation(StoreObservationInput {
             project_id,
             content,
-            ObservationType::Execution,
+            r#type: ObservationType::Execution,
             tags,
-            obs_metadata,
-        )
+            metadata: obs_metadata,
+        })
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({

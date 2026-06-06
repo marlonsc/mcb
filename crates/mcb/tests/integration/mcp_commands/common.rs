@@ -6,11 +6,14 @@
 //! **CRITICAL**: Every test using these helpers MUST be annotated with `#[serial]`
 //! to prevent spawning multiple mcb processes simultaneously (each is ~50MB RSS).
 
+use fs2::FileExt;
 use rmcp::model::{CallToolRequestParams, CallToolResult};
 use rmcp::service::RunningService;
 use rmcp::transport::child_process::TokioChildProcess;
 use rmcp::{RoleClient, ServiceExt};
 use serde_json::Value;
+use std::fs::{File, OpenOptions};
+use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, OnceLock};
 use tokio::process::Command;
@@ -50,27 +53,41 @@ pub fn cleanup_temp_dbs() {
     }
 }
 
-// --- Child PID tracking (ensures processes are killed after cancel() times out) ---
+// --- Cross-process MCP server lock ---
 
-static CHILD_PIDS: OnceLock<Arc<Mutex<Vec<u32>>>> = OnceLock::new();
-
-fn get_child_pids() -> Arc<Mutex<Vec<u32>>> {
-    Arc::clone(CHILD_PIDS.get_or_init(|| Arc::new(Mutex::new(Vec::new()))))
+struct McpProcessLock {
+    file: File,
 }
 
-fn register_child_pid(pid: u32) {
-    if let Ok(mut pids) = get_child_pids().lock() {
-        pids.push(pid);
+impl McpProcessLock {
+    fn acquire() -> Result<Self, Box<dyn std::error::Error>> {
+        let path = std::env::temp_dir().join("mcb-stdio-integration.lock");
+        let file = OpenOptions::new()
+            .create(true)
+            .read(true)
+            .write(true)
+            .open(path)?;
+        file.lock_exclusive()?;
+        Ok(Self { file })
     }
 }
 
-fn kill_registered_children() {
-    if let Ok(mut pids) = get_child_pids().lock() {
-        for pid in pids.drain(..) {
-            let _ = std::process::Command::new("kill")
-                .args(["-KILL", &pid.to_string()])
-                .status();
-        }
+impl Drop for McpProcessLock {
+    fn drop(&mut self) {
+        let _ = self.file.unlock();
+    }
+}
+
+pub struct McpTestClient {
+    client: RunningService<RoleClient, ()>,
+    _lock: McpProcessLock,
+}
+
+impl Deref for McpTestClient {
+    type Target = RunningService<RoleClient, ()>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.client
     }
 }
 
@@ -123,18 +140,18 @@ fn create_test_command() -> Command {
 /// Create an MCP client connected to a fresh mcb process via stdio.
 ///
 /// Includes a timeout to prevent hanging if the server fails to start.
-pub async fn create_client() -> Result<RunningService<RoleClient, ()>, Box<dyn std::error::Error>> {
+pub async fn create_client() -> Result<McpTestClient, Box<dyn std::error::Error>> {
+    let lock = McpProcessLock::acquire()?;
     let transport = TokioChildProcess::new(create_test_command())
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
-    // Track the PID so we can forcefully kill the process if cancel() hangs.
-    if let Some(pid) = transport.id() {
-        register_child_pid(pid);
-    }
     let client = timeout(STARTUP_TIMEOUT, ().serve(transport))
         .await
         .map_err(|_| "Timeout: mcb server failed to start within 120s (fastembed model may be downloading on first run)")?
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
-    Ok(client)
+    Ok(McpTestClient {
+        client,
+        _lock: lock,
+    })
 }
 
 /// Gracefully shut down the MCP client with a timeout, then kill any stray child.
@@ -142,10 +159,9 @@ pub async fn create_client() -> Result<RunningService<RoleClient, ()>, Box<dyn s
 /// `cancel()` awaits the service `JoinHandle` which may block if the child process
 /// doesn't exit on its own. After the 3-second timeout we forcefully kill any
 /// registered child PIDs so the next serial test can start a fresh process.
-pub async fn shutdown_client(client: RunningService<RoleClient, ()>) {
+pub async fn shutdown_client(client: McpTestClient) {
+    let McpTestClient { client, _lock } = client;
     let _ = timeout(Duration::from_secs(3), client.cancel()).await;
-    // Forcefully kill any remaining child processes.
-    kill_registered_children();
     cleanup_temp_dbs();
 }
 

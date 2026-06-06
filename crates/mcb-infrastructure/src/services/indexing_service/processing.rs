@@ -108,31 +108,30 @@ pub struct FileIndexContext<'a> {
     pub operation_id: &'a OperationId,
 }
 
-/// Background task that performs the actual indexing work.
-pub async fn run_indexing_task(
-    service: IndexingServiceImpl,
-    files: Vec<PathBuf>,
-    workspace_root: PathBuf,
-    collection: CollectionId,
-    operation_id: OperationId,
-) {
-    let start = Instant::now();
-    let total = files.len();
-    let mut chunks_created = 0;
-    let mut files_processed = 0;
-    let mut failed_files: Vec<String> = Vec::new();
+/// Running totals accumulated while processing the file batch.
+struct ProcessTotals {
+    chunks_created: usize,
+    files_processed: usize,
+    failed_files: Vec<String>,
+}
 
-    let ctx = FileIndexContext {
-        workspace_root: &workspace_root,
-        collection: &collection,
-        operation_id: &operation_id,
+/// Process every file in the batch, accumulating chunk counts and failures.
+async fn process_files(
+    service: &IndexingServiceImpl,
+    ctx: &FileIndexContext<'_>,
+    files: &[PathBuf],
+) -> ProcessTotals {
+    let mut totals = ProcessTotals {
+        chunks_created: 0,
+        files_processed: 0,
+        failed_files: Vec::new(),
     };
 
     for (i, file_path) in files.iter().enumerate() {
-        match service.process_file(&ctx, file_path, i).await {
+        match service.process_file(ctx, file_path, i).await {
             Ok(ProcessResult::Processed { chunks }) => {
-                files_processed += 1;
-                chunks_created += chunks;
+                totals.files_processed += 1;
+                totals.chunks_created += chunks;
             }
             Ok(ProcessResult::Skipped) => {
                 // File hasn't changed, increment skip count but don't record as processed
@@ -143,10 +142,32 @@ pub async fn run_indexing_task(
                     "Failed to process file during indexing",
                     &format!("file={} error={}", file_path.display(), e)
                 );
-                failed_files.push(file_path.display().to_string());
+                totals.failed_files.push(file_path.display().to_string());
             }
         }
     }
+
+    totals
+}
+
+/// Background task that performs the actual indexing work.
+pub async fn run_indexing_task(
+    service: IndexingServiceImpl,
+    files: Vec<PathBuf>,
+    workspace_root: PathBuf,
+    collection: CollectionId,
+    operation_id: OperationId,
+) {
+    let start = Instant::now();
+    let total = files.len();
+
+    let ctx = FileIndexContext {
+        workspace_root: &workspace_root,
+        collection: &collection,
+        operation_id: &operation_id,
+    };
+
+    let totals = process_files(&service, &ctx, &files).await;
 
     finish_indexing_task(
         &service,
@@ -154,9 +175,9 @@ pub async fn run_indexing_task(
         &collection,
         IndexingOutcome {
             total,
-            files_processed,
-            chunks_created,
-            failed_files,
+            files_processed: totals.files_processed,
+            chunks_created: totals.chunks_created,
+            failed_files: totals.failed_files,
             start,
         },
     )

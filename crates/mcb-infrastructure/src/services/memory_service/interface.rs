@@ -10,7 +10,7 @@ use mcb_domain::entities::memory::{
 use mcb_domain::error::Result;
 use mcb_domain::ports::{
     CreateSessionSummaryInput, ErrorPatternManager, MemorySearcher, ObservationManager,
-    SessionSummaryManager,
+    SessionSummaryManager, StoreObservationInput,
 };
 use mcb_domain::value_objects::{Embedding, ObservationId, SessionId};
 
@@ -23,12 +23,15 @@ impl ObservationManager for MemoryServiceImpl {
     /// Returns an error if embedding generation, vector storage, or repository persistence fails.
     async fn store_observation(
         &self,
-        project_id: String,
-        content: String,
-        r#type: ObservationType,
-        tags: Vec<String>,
-        metadata: mcb_domain::entities::memory::ObservationMetadata,
+        input: StoreObservationInput,
     ) -> Result<(ObservationId, bool)> {
+        let StoreObservationInput {
+            project_id,
+            content,
+            r#type,
+            tags,
+            metadata,
+        } = input;
         let (id, new) = self
             .store_observation_impl(super::observation::ObservationInput {
                 project_id,
@@ -80,13 +83,13 @@ impl ErrorPatternManager for MemoryServiceImpl {
         };
 
         let (id, _) = self
-            .store_observation(
-                pattern.project_id.clone(),
+            .store_observation(StoreObservationInput {
+                project_id: pattern.project_id.clone(),
                 content,
-                ObservationType::Error,
-                pattern.tags,
+                r#type: ObservationType::Error,
+                tags: pattern.tags,
                 metadata,
-            )
+            })
             .await?;
 
         Ok(id.to_string())

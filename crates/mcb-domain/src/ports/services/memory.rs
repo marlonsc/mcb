@@ -30,17 +30,28 @@ pub struct CreateSessionSummaryInput {
     pub origin_context: Option<OriginContext>,
 }
 
+/// Input payload describing an observation to store.
+#[derive(Debug, Clone)]
+pub struct StoreObservationInput {
+    /// Project identifier owning the observation.
+    pub project_id: String,
+    /// Observation content body.
+    pub content: String,
+    /// Observation type/category.
+    pub r#type: ObservationType,
+    /// Tags associated with the observation.
+    pub tags: Vec<String>,
+    /// Observation metadata.
+    pub metadata: ObservationMetadata,
+}
+
 /// Manager for core observations.
 #[async_trait]
 pub trait ObservationManager: Send + Sync {
     /// Store an observation with optional embedding for semantic search.
     async fn store_observation(
         &self,
-        project_id: String,
-        content: String,
-        r#type: ObservationType,
-        tags: Vec<String>,
-        metadata: ObservationMetadata,
+        input: StoreObservationInput,
     ) -> Result<(ObservationId, bool)>;
 
     /// Get an observation by ID.

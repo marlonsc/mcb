@@ -3,7 +3,7 @@
 //!
 use std::sync::Arc;
 
-use mcb_domain::ports::MemoryServiceInterface;
+use mcb_domain::ports::{MemoryServiceInterface, StoreObservationInput};
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
@@ -53,7 +53,13 @@ pub async fn store_observation(
         None,
     );
     match memory_service
-        .store_observation(origin.project_id, content, observation_type, tags, metadata)
+        .store_observation(StoreObservationInput {
+            project_id: origin.project_id,
+            content,
+            r#type: observation_type,
+            tags,
+            metadata,
+        })
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({

@@ -43,7 +43,7 @@ pub use job::{
 };
 pub use memory::{
     CreateSessionSummaryInput, ErrorPatternManager, MemorySearcher, MemoryServiceInterface,
-    ObservationManager, SessionSummaryManager,
+    ObservationManager, SessionSummaryManager, StoreObservationInput,
 };
 pub use project::ProjectDetectorService;
 pub use search::{SearchFilters, SearchServiceInterface};

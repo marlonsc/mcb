@@ -87,8 +87,8 @@ pub use services::{
     IndexingServiceInterface, IndexingStats, IndexingStatus, Job, JobCounts, JobId,
     JobManagerInterface, JobProgressUpdate, JobResult, JobStatus, JobType, MemorySearcher,
     MemoryServiceInterface, ObservationManager, ProjectDetectorService, RuleInfo, SearchFilters,
-    SearchServiceInterface, SessionSummaryManager, ValidationReport, ValidationServiceInterface,
-    ViolationEntry,
+    SearchServiceInterface, SessionSummaryManager, StoreObservationInput, ValidationReport,
+    ValidationServiceInterface, ViolationEntry,
 };
 
 // --- Validation abstractions ---

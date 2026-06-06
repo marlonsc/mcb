@@ -4,7 +4,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{MemorySearchResult, ObservationType, QualityGateResult};
-use mcb_domain::ports::MemoryServiceInterface;
+use mcb_domain::ports::{MemoryServiceInterface, StoreObservationInput};
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Value;
@@ -100,13 +100,13 @@ async fn persist_quality_gate_observation(
     obs_metadata: mcb_domain::entities::memory::ObservationMetadata,
 ) -> Result<CallToolResult, McpError> {
     match memory_service
-        .store_observation(
+        .store_observation(StoreObservationInput {
             project_id,
             content,
-            ObservationType::QualityGate,
+            r#type: ObservationType::QualityGate,
             tags,
-            obs_metadata,
-        )
+            metadata: obs_metadata,
+        })
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({

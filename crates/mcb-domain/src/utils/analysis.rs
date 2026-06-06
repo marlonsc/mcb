@@ -232,31 +232,25 @@ pub fn compute_tdg_scores(
     let mut dead_by_file: HashMap<PathBuf, u32> = HashMap::new();
     for finding in dead_code {
         if let AnalysisFinding::DeadCode { file, .. } = finding {
-            if let Some(count) = dead_by_file.get_mut(file) {
-                *count += 1;
-            } else {
-                dead_by_file.insert(file.clone(), 1);
-            }
+            *dead_by_file.entry(file.clone()).or_insert(0) += 1;
         }
     }
 
-    let mut findings = Vec::new();
-    for (path, content) in files {
-        let sloc = content.lines().filter(|l| !l.trim().is_empty()).count() as u32;
-        let complexity = complexity_by_file.get(path).copied().unwrap_or(1);
-        let dead = dead_by_file.get(path).copied().unwrap_or(0);
+    files
+        .iter()
+        .filter_map(|(path, content)| {
+            let sloc = content.lines().filter(|l| !l.trim().is_empty()).count() as u32;
+            let complexity = complexity_by_file.get(path).copied().unwrap_or(1);
+            let dead = dead_by_file.get(path).copied().unwrap_or(0);
 
-        let tdg_score = complexity.saturating_mul(2)
-            + dead.saturating_mul(10)
-            + ((sloc / 200).saturating_mul(10));
+            let tdg_score = complexity.saturating_mul(2)
+                + dead.saturating_mul(10)
+                + ((sloc / 200).saturating_mul(10));
 
-        if tdg_score > threshold {
-            findings.push(AnalysisFinding::TechnicalDebt {
+            (tdg_score > threshold).then(|| AnalysisFinding::TechnicalDebt {
                 file: path.clone(),
                 score: tdg_score,
-            });
-        }
-    }
-
-    findings
+            })
+        })
+        .collect()
 }

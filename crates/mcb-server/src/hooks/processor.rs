@@ -8,7 +8,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType, OriginContext};
-use mcb_domain::ports::MemoryServiceInterface;
+use mcb_domain::ports::{MemoryServiceInterface, StoreObservationInput};
 use mcb_utils::utils::id::mask_id;
 
 use mcb_domain::debug;
@@ -74,13 +74,13 @@ impl HookProcessor {
         let tags = build_post_tool_use_tags(&context);
 
         memory_service
-            .store_observation(
+            .store_observation(StoreObservationInput {
                 project_id,
                 content,
-                ObservationType::Execution,
+                r#type: ObservationType::Execution,
                 tags,
                 metadata,
-            )
+            })
             .await
             .map_err(|e| HookError::FailedToStoreObservation(e.to_string()))?;
 

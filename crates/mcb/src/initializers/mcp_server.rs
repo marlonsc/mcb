@@ -114,6 +114,65 @@ fn build_public_routes() -> AxumRouter {
         )
 }
 
+/// Admin web UI page routes.
+fn admin_ui_routes() -> AxumRouter {
+    axum::Router::new()
+        .route(
+            "/ui",
+            axum::routing::get(mcb_server::controllers::web::dashboard),
+        )
+        .route(
+            "/ui/",
+            axum::routing::get(mcb_server::controllers::web::dashboard),
+        )
+        .route(
+            "/ui/config",
+            axum::routing::get(mcb_server::controllers::web::config_page),
+        )
+        .route(
+            "/ui/health",
+            axum::routing::get(mcb_server::controllers::web::health_page),
+        )
+        .route(
+            "/ui/jobs",
+            axum::routing::get(mcb_server::controllers::web::jobs_page),
+        )
+        .route(
+            "/ui/browse",
+            axum::routing::get(mcb_server::controllers::web::browse_page),
+        )
+}
+
+/// Admin JSON API routes.
+fn admin_api_routes() -> AxumRouter {
+    axum::Router::new()
+        .route(
+            "/health",
+            axum::routing::get(mcb_server::controllers::health_api::health),
+        )
+        .route(
+            "/jobs",
+            axum::routing::get(mcb_server::controllers::jobs_api::jobs),
+        )
+        .route(
+            "/collections",
+            axum::routing::get(mcb_server::controllers::collections_api::collections),
+        )
+        .route(
+            "/chunks",
+            axum::routing::get(mcb_server::controllers::collections_api::chunks),
+        )
+        .route(
+            "/config",
+            axum::routing::get(mcb_server::controllers::admin::config_via_middleware),
+        )
+}
+
+/// Admin route table (without auth layer applied).
+fn admin_route_table() -> AxumRouter {
+    admin_ui_routes().merge(admin_api_routes())
+}
+
 /// Protected routes — require admin API-key auth.
 ///
 /// Captures `state`/`settings` clones for the admin-auth middleware closure so
@@ -141,52 +200,7 @@ fn build_protected_routes(
         },
     );
 
-    axum::Router::new()
-        .route(
-            "/ui",
-            axum::routing::get(mcb_server::controllers::web::dashboard),
-        )
-        .route(
-            "/ui/",
-            axum::routing::get(mcb_server::controllers::web::dashboard),
-        )
-        .route(
-            "/ui/config",
-            axum::routing::get(mcb_server::controllers::web::config_page),
-        )
-        .route(
-            "/ui/health",
-            axum::routing::get(mcb_server::controllers::web::health_page),
-        )
-        .route(
-            "/ui/jobs",
-            axum::routing::get(mcb_server::controllers::web::jobs_page),
-        )
-        .route(
-            "/ui/browse",
-            axum::routing::get(mcb_server::controllers::web::browse_page),
-        )
-        .route(
-            "/health",
-            axum::routing::get(mcb_server::controllers::health_api::health),
-        )
-        .route(
-            "/jobs",
-            axum::routing::get(mcb_server::controllers::jobs_api::jobs),
-        )
-        .route(
-            "/collections",
-            axum::routing::get(mcb_server::controllers::collections_api::collections),
-        )
-        .route(
-            "/chunks",
-            axum::routing::get(mcb_server::controllers::collections_api::chunks),
-        )
-        .route(
-            "/config",
-            axum::routing::get(mcb_server::controllers::admin::config_via_middleware),
-        )
-        .layer(admin_auth_middleware)
+    admin_route_table().layer(admin_auth_middleware)
 }
 
 /// Whether the MCP stdio transport should be started.
@@ -194,12 +208,8 @@ fn stdio_enabled(mcp: &mcb_infrastructure::config::app::McpConfig) -> bool {
     mcp.stdio_only || !mcp.no_stdio
 }
 
-/// Resolve `AppConfig` from Loco settings and build the MCP server bootstrap.
-///
-/// Centralizes config-provider deserialization, provider resolution, and the
-/// bootstrap wiring so `after_routes` reads as a short orchestration. Returns
-/// the bootstrap plus whether the stdio transport should be started.
-fn build_bootstrap(ctx: &AppContext) -> Result<(mcb_server::state::McpServerBootstrap, bool)> {
+/// Resolve and validate `AppConfig` from Loco settings via the config provider.
+fn resolve_app_config(ctx: &AppContext) -> Result<mcb_infrastructure::config::app::AppConfig> {
     let settings = ctx
         .config
         .settings
@@ -221,6 +231,14 @@ fn build_bootstrap(ctx: &AppContext) -> Result<(mcb_server::state::McpServerBoot
         .downcast::<mcb_infrastructure::config::app::AppConfig>()
         .map_err(|_| loco_rs::Error::string("ConfigProvider returned unexpected type"))?;
 
+    Ok(app_config)
+}
+
+/// Resolve event bus and provider adapters into a `ServiceResolutionContext`.
+fn build_resolution_ctx(
+    ctx: &AppContext,
+    app_config: mcb_infrastructure::config::app::AppConfig,
+) -> Result<ServiceResolutionContext> {
     let event_bus = mcb_domain::registry::events::resolve_event_bus_provider(
         &mcb_domain::registry::events::EventBusProviderConfig::new(
             app_config
@@ -241,6 +259,23 @@ fn build_bootstrap(ctx: &AppContext) -> Result<(mcb_server::state::McpServerBoot
         resolve_vector_store_provider(&build_vector_store_config(&app_config))
             .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
+    Ok(ServiceResolutionContext {
+        db: Arc::new(ctx.db.clone()),
+        config: Arc::new(app_config),
+        event_bus,
+        embedding_provider,
+        vector_store_provider,
+    })
+}
+
+/// Resolve `AppConfig` from Loco settings and build the MCP server bootstrap.
+///
+/// Centralizes config-provider deserialization, provider resolution, and the
+/// bootstrap wiring so `after_routes` reads as a short orchestration. Returns
+/// the bootstrap plus whether the stdio transport should be started.
+fn build_bootstrap(ctx: &AppContext) -> Result<(mcb_server::state::McpServerBootstrap, bool)> {
+    let app_config = resolve_app_config(ctx)?;
+
     let execution_flow = if app_config.mcp.stdio_only {
         ExecutionFlow::StdioOnly
     } else {
@@ -248,13 +283,7 @@ fn build_bootstrap(ctx: &AppContext) -> Result<(mcb_server::state::McpServerBoot
     };
     let start_stdio = stdio_enabled(&app_config.mcp);
 
-    let resolution_ctx = ServiceResolutionContext {
-        db: Arc::new(ctx.db.clone()),
-        config: Arc::new(app_config),
-        event_bus,
-        embedding_provider,
-        vector_store_provider,
-    };
+    let resolution_ctx = build_resolution_ctx(ctx, app_config)?;
 
     let hybrid_search: Arc<dyn mcb_domain::ports::HybridSearchProvider> =
         mcb_domain::registry::hybrid_search::resolve_hybrid_search_provider(
