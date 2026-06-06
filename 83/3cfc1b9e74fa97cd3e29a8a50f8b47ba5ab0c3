@@ -1,0 +1,19 @@
+crates/mcb-utils/src/utils/vcs_context.rs
+  s_0a2a11702fb29a::t_c4280e3d1123f5 45-57,59-61
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "833cfc1b9e74fa97cd3e29a8a50f8b47ba5ab0c3",
+  "prompts": {},
+  "sessions": {
+    "s_0a2a11702fb29a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019e9a55-d800-7e91-82b4-815d3267146a",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
