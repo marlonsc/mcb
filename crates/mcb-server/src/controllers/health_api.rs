@@ -35,6 +35,17 @@ pub async fn health(Extension(state): Extension<McbState>) -> Result<Response> {
     }))
 }
 
+/// Returns a lightweight liveness status for infrastructure probes.
+///
+/// # Errors
+///
+/// Returns an error if JSON response serialization fails.
+pub async fn alive() -> Result<Response> {
+    format::json(serde_json::json!({
+        "status": "alive",
+    }))
+}
+
 /// Registers health API routes.
 #[must_use]
 pub fn routes() -> Routes {
