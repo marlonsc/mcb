@@ -1,0 +1,21 @@
+crates/mcb-server/tests/contract/snapshots/contract__validate_contract_tests__validate_happy_path.snap
+  ai_agent 22
+crates/mcb-domain/src/registry/validation.rs
+  s_f9d035179282ab::t_9b487e74a50561 49-52,55-57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "c5f262ce036ddd3eebbd0bd1ae281e415ff39ae8",
+  "prompts": {},
+  "sessions": {
+    "s_f9d035179282ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42fba31f-461c-4a02-9a34-c3462d77e248",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
