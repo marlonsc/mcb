@@ -6,9 +6,7 @@ use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client}
 use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
 use mcb_domain::utils::tests::utils::TestResult;
 use rstest::rstest;
-use serial_test::serial;
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_session_list() -> TestResult {
@@ -24,7 +22,6 @@ async fn test_session_list() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_session_create() -> TestResult {
@@ -46,7 +43,6 @@ async fn test_session_create() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_session_get_nonexistent() -> TestResult {
@@ -65,7 +61,6 @@ async fn test_session_get_nonexistent() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_session_summarize_without_id() -> TestResult {
@@ -77,7 +72,6 @@ async fn test_session_summarize_without_id() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_start_session_requires_data() -> TestResult {

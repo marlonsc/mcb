@@ -6,9 +6,7 @@ use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client}
 use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
 use mcb_domain::utils::tests::utils::TestResult;
 use rstest::rstest;
-use serial_test::serial;
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_validate_list_rules() -> TestResult {
@@ -22,7 +20,6 @@ async fn test_validate_list_rules() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_validate_list_rules_with_category() -> TestResult {
@@ -43,7 +40,6 @@ async fn test_validate_list_rules_with_category() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_validate_run_missing_path() -> TestResult {
@@ -55,7 +51,6 @@ async fn test_validate_run_missing_path() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_analyze_code_requires_path() -> TestResult {

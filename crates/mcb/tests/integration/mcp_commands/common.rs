@@ -3,8 +3,8 @@
 //! Provides helpers for spawning the mcb binary and invoking MCP tools
 //! via the rmcp client API through stdio transport.
 //!
-//! **CRITICAL**: Every test using these helpers MUST be annotated with `#[serial]`
-//! to prevent spawning multiple mcb processes simultaneously (each is ~50MB RSS).
+//! **CRITICAL**: the shared process lock prevents multiple mcb processes from
+//! running simultaneously across test binaries and concurrent cargo test runs.
 
 use std::ops::Deref;
 use std::path::PathBuf;
@@ -128,11 +128,11 @@ pub async fn create_client() -> Result<McpTestClient, Box<dyn std::error::Error>
     })
 }
 
-/// Gracefully shut down the MCP client with a timeout, then kill any stray child.
+/// Gracefully shut down the MCP client with a timeout.
 ///
 /// `cancel()` awaits the service `JoinHandle` which may block if the child process
-/// doesn't exit on its own. After the 3-second timeout we forcefully kill any
-/// registered child PIDs so the next serial test can start a fresh process.
+/// doesn't exit on its own. Dropping the running service lets the rmcp transport
+/// clean up the child before the process lock is released.
 pub async fn shutdown_client(client: McpTestClient) {
     let McpTestClient { client, _lock } = client;
     let _ = timeout(Duration::from_secs(3), client.cancel()).await;

@@ -6,9 +6,7 @@ use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client}
 use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
 use mcb_domain::utils::tests::utils::TestResult;
 use rstest::rstest;
-use serial_test::serial;
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_memory_list_observations() -> TestResult {
@@ -23,7 +21,6 @@ async fn test_memory_list_observations() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_memory_store_and_list() -> TestResult {
@@ -53,7 +50,6 @@ async fn test_memory_store_and_list() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_memory_get_missing_ids() -> TestResult {
@@ -65,7 +61,6 @@ async fn test_memory_get_missing_ids() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_memory_timeline_requires_anchor_id() -> TestResult {
@@ -77,7 +72,6 @@ async fn test_memory_timeline_requires_anchor_id() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_store_memory_requires_data() -> TestResult {

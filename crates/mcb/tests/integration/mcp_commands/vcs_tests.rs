@@ -6,9 +6,7 @@ use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client}
 use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
 use mcb_domain::utils::tests::utils::TestResult;
 use rstest::rstest;
-use serial_test::serial;
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_vcs_list_repositories() -> TestResult {
@@ -24,7 +22,6 @@ async fn test_vcs_list_repositories() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_vcs_analyze_impact() -> TestResult {
@@ -39,7 +36,6 @@ async fn test_vcs_analyze_impact() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_vcs_compare_default_branches() -> TestResult {
@@ -60,7 +56,6 @@ async fn test_vcs_compare_default_branches() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_compare_branches_requires_base_branch() -> TestResult {
