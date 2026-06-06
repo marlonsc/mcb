@@ -94,6 +94,42 @@ fn resolve_agent_type(
     }
 }
 
+/// Resolved inputs for assembling a new [`AgentSession`].
+struct BuildSessionParams {
+    session_id: String,
+    agent_type: AgentType,
+    model: String,
+    now: i64,
+    payload: CreateSessionPayload,
+    origin_context: OriginContext,
+}
+
+/// Assemble an [`AgentSession`] in its initial active state.
+fn build_agent_session(params: BuildSessionParams) -> AgentSession {
+    let session_summary_id = params
+        .payload
+        .session_summary_id
+        .unwrap_or_else(|| format!("auto_{}", domain_id::generate().simple()));
+    AgentSession {
+        id: params.session_id,
+        session_summary_id,
+        agent_type: params.agent_type,
+        model: params.model,
+        parent_session_id: params.payload.parent_session_id,
+        started_at: params.now,
+        ended_at: None,
+        duration_ms: None,
+        status: AgentSessionStatus::Active,
+        prompt_summary: params.payload.prompt_summary,
+        result_summary: None,
+        token_count: None,
+        tool_calls_count: None,
+        delegations_count: None,
+        project_id: params.origin_context.project_id,
+        worktree_id: params.origin_context.worktree_id,
+    }
+}
+
 /// Creates a new agent session.
 #[tracing::instrument(skip_all)]
 pub async fn create_session(
@@ -114,34 +150,21 @@ pub async fn create_session(
         .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
     let session_id = domain_id::generate().to_string();
     let origin_context = resolve_create_origin_context(args, &payload, session_id.as_str(), now)?;
-    let session_summary_id = payload
-        .session_summary_id
-        .unwrap_or_else(|| format!("auto_{}", domain_id::generate().simple()));
-    let model = match payload.model {
+    let model = match payload.model.clone() {
         Some(value) => value,
         None => match require_str(data, schema::MODEL) {
             Ok(value) => value,
             Err(error_result) => return Ok(error_result),
         },
     };
-    let session = AgentSession {
-        id: session_id.clone(),
-        session_summary_id,
+    let session = build_agent_session(BuildSessionParams {
+        session_id: session_id.clone(),
         agent_type: agent_type.clone(),
         model,
-        parent_session_id: payload.parent_session_id.clone(),
-        started_at: now,
-        ended_at: None,
-        duration_ms: None,
-        status: AgentSessionStatus::Active,
-        prompt_summary: payload.prompt_summary,
-        result_summary: None,
-        token_count: None,
-        tool_calls_count: None,
-        delegations_count: None,
-        project_id: origin_context.project_id,
-        worktree_id: origin_context.worktree_id,
-    };
+        now,
+        payload,
+        origin_context,
+    });
     match agent_service.create_session(session).await {
         Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
             "session_id": id,

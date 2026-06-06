@@ -32,10 +32,14 @@ pub async fn update_session(
     };
     let data = json_map(&args.data);
     let status = parse_status(args, data)?;
+    let update = SessionUpdate {
+        args,
+        session_id: &session_id,
+        status,
+        data,
+    };
     match agent_service.get_session(&session_id).await {
-        Ok(Some(session)) => {
-            apply_and_persist(agent_service, args, &session_id, session, status, data).await
-        }
+        Ok(Some(session)) => apply_and_persist(agent_service, &update, session).await,
         Ok(None) => Ok(tool_error("Agent session not found")),
         Err(e) => {
             error!(
@@ -47,15 +51,27 @@ pub async fn update_session(
     }
 }
 
+/// Resolved update inputs for an existing agent session.
+struct SessionUpdate<'a> {
+    args: &'a SessionArgs,
+    session_id: &'a str,
+    status: Option<AgentSessionStatus>,
+    data: Option<&'a Map<String, Value>>,
+}
+
 /// Apply identifier/status/payload updates to a loaded session, then persist it.
 async fn apply_and_persist(
     agent_service: &Arc<dyn AgentSessionServiceInterface>,
-    args: &SessionArgs,
-    session_id: &str,
+    update: &SessionUpdate<'_>,
     mut session: AgentSession,
-    status: Option<AgentSessionStatus>,
-    data: Option<&Map<String, Value>>,
 ) -> Result<CallToolResult, McpError> {
+    let SessionUpdate {
+        args,
+        session_id,
+        status,
+        data,
+    } = update;
+    let data = *data;
     apply_resolved_identifier(
         &mut session.project_id,
         schema::PROJECT_ID,
@@ -70,7 +86,7 @@ async fn apply_and_persist(
     )?;
 
     if let Some(status) = status {
-        session.status = status;
+        session.status = status.clone();
     }
     if let Some(data) = data {
         apply_session_updates(&mut session, data);

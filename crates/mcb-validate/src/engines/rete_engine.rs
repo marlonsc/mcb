@@ -217,10 +217,22 @@ impl ReteEngine {
     }
 
     /// Read a string-valued fact by key, if present.
+    ///
+    /// Non-string and absent facts yield `None`; the engine only stores string
+    /// facts under the keys consumed here.
     fn fact_string(facts: &Facts, key: &str) -> Option<String> {
         match facts.get(key) {
             Some(RreValue::String(s)) => Some(s.clone()),
-            _ => None,
+            Some(
+                RreValue::Number(_)
+                | RreValue::Integer(_)
+                | RreValue::Boolean(_)
+                | RreValue::Array(_)
+                | RreValue::Object(_)
+                | RreValue::Null
+                | RreValue::Expression(_),
+            )
+            | None => None,
         }
     }
 }

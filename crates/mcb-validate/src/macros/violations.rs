@@ -14,6 +14,7 @@ macro_rules! define_violations {
         no_display,
         dynamic_severity,
         $category:expr,
+        $(#[$enum_meta:meta])*
         $vis:vis enum $name:ident { $($body:tt)* }
     ) => {
         define_violations! {
@@ -21,6 +22,7 @@ macro_rules! define_violations {
             no_display,
             dynamic_severity,
             $category,
+            $(#[$enum_meta])*
             $vis enum $name { $($body)* }
         }
     };
@@ -28,6 +30,7 @@ macro_rules! define_violations {
     (
         dynamic_severity,
         $category:expr,
+        $(#[$enum_meta:meta])*
         $vis:vis enum $name:ident { $($body:tt)* }
     ) => {
         define_violations! {
@@ -35,6 +38,7 @@ macro_rules! define_violations {
             with_display,
             dynamic_severity,
             $category,
+            $(#[$enum_meta])*
             $vis enum $name { $($body)* }
         }
     };
@@ -42,6 +46,7 @@ macro_rules! define_violations {
     (
         no_display,
         $category:expr,
+        $(#[$enum_meta:meta])*
         $vis:vis enum $name:ident { $($body:tt)* }
     ) => {
         define_violations! {
@@ -49,12 +54,14 @@ macro_rules! define_violations {
             no_display,
             static_severity,
             $category,
+            $(#[$enum_meta])*
             $vis enum $name { $($body)* }
         }
     };
 
     (
         $category:expr,
+        $(#[$enum_meta:meta])*
         $vis:vis enum $name:ident { $($body:tt)* }
     ) => {
         define_violations! {
@@ -62,6 +69,7 @@ macro_rules! define_violations {
             with_display,
             static_severity,
             $category,
+            $(#[$enum_meta])*
             $vis enum $name { $($body)* }
         }
     };
@@ -70,6 +78,7 @@ macro_rules! define_violations {
         $display:tt,
         $severity_mode:ident,
         $category:expr,
+        $(#[$enum_meta:meta])*
         $vis:vis enum $name:ident {
             $(
                 $(#[doc = $doc:literal])*
@@ -90,6 +99,7 @@ macro_rules! define_violations {
             $display,
             $severity_mode,
             $category,
+            $(#[$enum_meta])*
             $vis enum $name {
                 $(
                     $(#[doc = $doc])*

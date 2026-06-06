@@ -81,18 +81,7 @@ impl VcsEntityHandler {
             fallback = |action, resource| vcs_unsupported(action, resource),
             {
             (VcsEntityAction::Create, VcsEntityResource::Repository) => {
-                let project_id =
-                    require_arg!(args.project_id, "project_id required for repository create");
-                let mut repo: Repository = require_data(args.data, "data required for create")?;
-                repo.project_id = require_resolved_identifier(
-                    "project_id",
-                    Some(project_id),
-                    Some(repo.project_id.as_str()),
-                    "project_id required for repository create",
-                )?;
-                repo.org_id = org_id.to_owned();
-                map_opaque_error(self.repo.create_repository(&repo).await)?;
-                ResponseFormatter::json_success(&repo)
+                self.create_repository_action(org_id, args).await
             }
             (VcsEntityAction::Get, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
@@ -111,24 +100,7 @@ impl VcsEntityHandler {
                 ResponseFormatter::json_success(&map_opaque_error(self.repo.list_repositories(org_id, project_id).await)?)
             }
             (VcsEntityAction::Update, VcsEntityResource::Repository) => {
-                let project_id =
-                    require_arg!(args.project_id, "project_id required for repository update");
-                let mut repo: Repository = require_data(args.data, "data required for update")?;
-                repo.project_id = require_resolved_identifier(
-                    "project_id",
-                    Some(project_id),
-                    Some(repo.project_id.as_str()),
-                    "project_id required for repository update",
-                )?;
-                let existing = map_opaque_error(self.repo.get_repository(org_id, &repo.id).await)?;
-                Self::ensure_project_id_matches_labeled(
-                    "payload",
-                    &repo.project_id,
-                    &existing.project_id,
-                )?;
-                repo.org_id = org_id.to_owned();
-                map_opaque_error(self.repo.update_repository(&repo).await)?;
-                ok_text("updated")
+                self.update_repository_action(org_id, args).await
             }
             (VcsEntityAction::Delete, VcsEntityResource::Repository) => {
                 let id = require_id(&args.id)?;
@@ -141,6 +113,46 @@ impl VcsEntityHandler {
             }
             }
         }
+    }
+
+    /// Create a repository, resolving and stamping its scope identifiers.
+    async fn create_repository_action(
+        &self,
+        org_id: &str,
+        args: VcsEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
+        let project_id = require_arg!(args.project_id, "project_id required for repository create");
+        let mut repo: Repository = require_data(args.data, "data required for create")?;
+        repo.project_id = require_resolved_identifier(
+            "project_id",
+            Some(project_id),
+            Some(repo.project_id.as_str()),
+            "project_id required for repository create",
+        )?;
+        repo.org_id = org_id.to_owned();
+        map_opaque_error(self.repo.create_repository(&repo).await)?;
+        ResponseFormatter::json_success(&repo)
+    }
+
+    /// Update a repository, verifying its project scope matches the stored record.
+    async fn update_repository_action(
+        &self,
+        org_id: &str,
+        args: VcsEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
+        let project_id = require_arg!(args.project_id, "project_id required for repository update");
+        let mut repo: Repository = require_data(args.data, "data required for update")?;
+        repo.project_id = require_resolved_identifier(
+            "project_id",
+            Some(project_id),
+            Some(repo.project_id.as_str()),
+            "project_id required for repository update",
+        )?;
+        let existing = map_opaque_error(self.repo.get_repository(org_id, &repo.id).await)?;
+        Self::ensure_project_id_matches_labeled("payload", &repo.project_id, &existing.project_id)?;
+        repo.org_id = org_id.to_owned();
+        map_opaque_error(self.repo.update_repository(&repo).await)?;
+        ok_text("updated")
     }
 
     /// Dispatch CRUD actions for the `Branch` resource.

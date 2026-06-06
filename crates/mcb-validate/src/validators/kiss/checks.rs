@@ -325,17 +325,7 @@ impl KissValidator {
 
         if control_flow_pattern.is_match(line) && line.contains('{') {
             state.nesting_depth += 1;
-            if state.nesting_depth > self.max_nesting_depth && !state.has_nearby_report(line_num) {
-                violations.push(KissViolation::DeepNesting {
-                    file: path.to_path_buf(),
-                    line: line_num + 1,
-                    nesting_level: state.nesting_depth,
-                    max_allowed: self.max_nesting_depth,
-                    context: trimmed.chars().take(SHORT_PREVIEW_LENGTH).collect(),
-                    severity: Severity::Warning,
-                });
-                state.reported_lines.insert(line_num);
-            }
+            self.report_deep_nesting(path, trimmed, line_num, state, violations);
         }
 
         let open_braces = line.chars().filter(|c| *c == '{').count();
@@ -350,6 +340,30 @@ impl KissValidator {
         if state.in_test_module && state.brace_depth < state.test_brace_depth {
             state.in_test_module = false;
         }
+    }
+
+    /// Record a `DeepNesting` violation when the current depth exceeds the limit
+    /// and no nearby report already covers this region.
+    fn report_deep_nesting(
+        &self,
+        path: &std::path::Path,
+        trimmed: &str,
+        line_num: usize,
+        state: &mut NestingState,
+        violations: &mut Vec<KissViolation>,
+    ) {
+        if state.nesting_depth <= self.max_nesting_depth || state.has_nearby_report(line_num) {
+            return;
+        }
+        violations.push(KissViolation::DeepNesting {
+            file: path.to_path_buf(),
+            line: line_num + 1,
+            nesting_level: state.nesting_depth,
+            max_allowed: self.max_nesting_depth,
+            context: trimmed.chars().take(SHORT_PREVIEW_LENGTH).collect(),
+            severity: Severity::Warning,
+        });
+        state.reported_lines.insert(line_num);
     }
 
     /// Detects functions that exceed the maximum allowed line count using rust-code-analysis.

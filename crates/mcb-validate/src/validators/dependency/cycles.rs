@@ -54,21 +54,26 @@ fn build_dependency_graph(
             continue;
         }
 
-        let content = std::fs::read_to_string(&cargo_toml)?;
-        let parsed: toml::Value = toml::from_str(&content)?;
-
-        let mut deps = HashSet::new();
-        if let Some(dependencies) = parsed.get("dependencies").and_then(|d| d.as_table()) {
-            for dep_name in dependencies.keys() {
-                if dep_name.starts_with(MCB_DEPENDENCY_PREFIX) {
-                    deps.insert(dep_name.replace('_', "-"));
-                }
-            }
-        }
-        graph.insert(crate_name.clone(), deps);
+        graph.insert(crate_name.clone(), read_mcb_dependencies(&cargo_toml)?);
     }
 
     Ok(graph)
+}
+
+/// Parse a crate's `Cargo.toml` and return its internal (`mcb-*`) dependency names.
+fn read_mcb_dependencies(cargo_toml: &std::path::Path) -> Result<HashSet<String>> {
+    let content = std::fs::read_to_string(cargo_toml)?;
+    let parsed: toml::Value = toml::from_str(&content)?;
+
+    let Some(dependencies) = parsed.get("dependencies").and_then(|d| d.as_table()) else {
+        return Ok(HashSet::new());
+    };
+
+    Ok(dependencies
+        .keys()
+        .filter(|name| name.starts_with(MCB_DEPENDENCY_PREFIX))
+        .map(|name| name.replace('_', "-"))
+        .collect())
 }
 
 /// Detects cycles in the dependency graph using depth-first search.

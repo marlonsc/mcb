@@ -221,6 +221,25 @@ impl TestQualityValidator {
         );
     }
 
+    /// Whether the line above an `#[ignore]` carries a justification comment.
+    fn has_ignore_justification(lines: &[&str], i: usize) -> bool {
+        let Some(prev_line) = i.checked_sub(1).map(|p| lines[p]) else {
+            return false;
+        };
+        prev_line.contains("Requires")
+            || prev_line.contains("requires")
+            || prev_line.contains(mcb_utils::constants::validate::PENDING_LABEL_TODO)
+            || prev_line.contains("WIP")
+    }
+
+    /// Whether the line above a `todo!()` marks it as an intentional stub.
+    fn has_stub_marker(lines: &[&str], i: usize) -> bool {
+        let Some(prev_line) = i.checked_sub(1).map(|p| lines[p]) else {
+            return false;
+        };
+        prev_line.contains("Intentional stub") || prev_line.contains("Test stub")
+    }
+
     fn check_ignored_tests(
         file: &Path,
         lines: &[&str],
@@ -231,15 +250,7 @@ impl TestQualityValidator {
             if !line.contains("#[ignore]") {
                 continue;
             }
-            // Check if there's a justification comment above.
-            let has_justification = i > 0 && {
-                let prev_line = lines[i - 1];
-                prev_line.contains("Requires")
-                    || prev_line.contains("requires")
-                    || prev_line.contains(mcb_utils::constants::validate::PENDING_LABEL_TODO)
-                    || prev_line.contains("WIP")
-            };
-            if has_justification {
+            if Self::has_ignore_justification(lines, i) {
                 continue;
             }
             if let Some(test_name) = Self::find_test_name(lines, i, fn_pattern) {
@@ -268,12 +279,7 @@ impl TestQualityValidator {
             if !(line.contains("todo!") && line.contains('(')) {
                 continue;
             }
-            // Skip lines marked as an intentional stub.
-            let has_stub_marker = i > 0 && {
-                let prev_line = lines[i - 1];
-                prev_line.contains("Intentional stub") || prev_line.contains("Test stub")
-            };
-            if has_stub_marker {
+            if Self::has_stub_marker(lines, i) {
                 continue;
             }
             if let Some(function_name) = Self::find_function_name(lines, i, fn_pattern) {

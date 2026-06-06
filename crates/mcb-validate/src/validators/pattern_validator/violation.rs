@@ -83,8 +83,9 @@ impl PatternViolation {
     }
 }
 
-impl std::fmt::Display for PatternViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl PatternViolation {
+    /// Render the human-readable message for this violation variant.
+    fn display_message(&self) -> String {
         match self {
             Self::ConcreteTypeInDi {
                 file,
@@ -92,8 +93,7 @@ impl std::fmt::Display for PatternViolation {
                 concrete_type,
                 suggestion,
                 ..
-            } => write!(
-                f,
+            } => format!(
                 "Concrete type in DI: {}:{line} - {concrete_type} (use {suggestion})",
                 file.display(),
             ),
@@ -103,8 +103,7 @@ impl std::fmt::Display for PatternViolation {
                 trait_name,
                 missing_bound,
                 ..
-            } => write!(
-                f,
+            } => format!(
                 "Missing bound: {}:{line} - trait {trait_name} needs {missing_bound}",
                 file.display(),
             ),
@@ -113,8 +112,7 @@ impl std::fmt::Display for PatternViolation {
                 line,
                 trait_name,
                 ..
-            } => write!(
-                f,
+            } => format!(
                 "Missing #[async_trait]: {}:{line} - trait {trait_name}",
                 file.display(),
             ),
@@ -124,8 +122,7 @@ impl std::fmt::Display for PatternViolation {
                 context,
                 suggestion,
                 ..
-            } => write!(
-                f,
+            } => format!(
                 "Raw Result type: {}:{line} - {context} (use {suggestion})",
                 file.display(),
             ),
@@ -134,12 +131,17 @@ impl std::fmt::Display for PatternViolation {
                 line,
                 trait_name,
                 ..
-            } => write!(
-                f,
+            } => format!(
                 "Missing Interface bound: {}:{line} - trait {trait_name} needs : Interface",
                 file.display(),
             ),
         }
+    }
+}
+
+impl std::fmt::Display for PatternViolation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.display_message())
     }
 }
 

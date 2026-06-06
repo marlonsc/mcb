@@ -1,5 +1,6 @@
 use crate::filters::LanguageId;
-use std::path::PathBuf;
+use regex::Regex;
+use std::path::{Path, PathBuf};
 
 use super::helpers::{
     DocItemContext, DocRegexContext, MissingDocSpec, ScanLineContext, SimplePubItemSpec,
@@ -16,6 +17,63 @@ use mcb_utils::constants::validate::{
     PUB_TRAIT_REGEX,
 };
 use mcb_utils::utils::regex::compile_regex;
+
+/// Compiled regexes for scanning public items that require documentation.
+struct PubDocPatterns {
+    pub_struct: Regex,
+    pub_enum: Regex,
+    pub_trait: Regex,
+    pub_fn: Regex,
+    example: Regex,
+    doc_comment: Regex,
+    doc_comment_capture: Regex,
+    attr: Regex,
+    /// Items declared inside a macro invocation (e.g. `define_violations! { pub enum ... }`)
+    /// are documented by the macro expansion, not the source text, so the text
+    /// scanner must skip them.
+    macro_invocation: Regex,
+}
+
+impl PubDocPatterns {
+    /// Compile every pattern used by the public-item documentation scan.
+    fn compile() -> Result<Self> {
+        Ok(Self {
+            pub_struct: compile_regex(PUB_STRUCT_REGEX)?,
+            pub_enum: compile_regex(PUB_ENUM_REGEX)?,
+            pub_trait: compile_regex(PUB_TRAIT_REGEX)?,
+            pub_fn: compile_regex(PUB_FN_REGEX)?,
+            example: compile_regex(EXAMPLE_SECTION_REGEX)?,
+            doc_comment: compile_regex(DOC_COMMENT_REGEX)?,
+            doc_comment_capture: compile_regex(DOC_COMMENT_CAPTURE_REGEX)?,
+            attr: compile_regex(ATTR_REGEX)?,
+            macro_invocation: compile_regex(r"^\s*[a-z_][a-z0-9_]*!\s*\{")?,
+        })
+    }
+
+    /// Borrowed regex bundle for doc-comment detection helpers.
+    fn regex_context(&self) -> DocRegexContext<'_> {
+        DocRegexContext {
+            doc_comment_re: &self.doc_comment,
+            doc_comment_capture_re: &self.doc_comment_capture,
+            attr_re: &self.attr,
+            example_pattern: &self.example,
+        }
+    }
+
+    /// Specs for simple public items (struct, enum) checked uniformly.
+    fn simple_item_specs(&self) -> [SimplePubItemSpec<'_>; 2] {
+        [
+            SimplePubItemSpec {
+                pattern: &self.pub_struct,
+                item_kind: ITEM_KIND_STRUCT,
+            },
+            SimplePubItemSpec {
+                pattern: &self.pub_enum,
+                item_kind: ITEM_KIND_ENUM,
+            },
+        ]
+    }
+}
 
 define_violations! {
     dynamic_severity,
@@ -124,79 +182,65 @@ impl DocumentationValidator {
         config: &ValidationConfig,
     ) -> Result<Vec<DocumentationViolation>> {
         let mut violations = Vec::new();
-
-        // Patterns for public items
-        let pub_struct_pattern = compile_regex(PUB_STRUCT_REGEX)?;
-        let pub_enum_pattern = compile_regex(PUB_ENUM_REGEX)?;
-        let pub_trait_pattern = compile_regex(PUB_TRAIT_REGEX)?;
-        let pub_fn_pattern = compile_regex(PUB_FN_REGEX)?;
-        let example_pattern = compile_regex(EXAMPLE_SECTION_REGEX)?;
-        let doc_comment_re = compile_regex(DOC_COMMENT_REGEX)?;
-        let doc_comment_capture_re = compile_regex(DOC_COMMENT_CAPTURE_REGEX)?;
-        let attr_re = compile_regex(ATTR_REGEX)?;
-        // Items declared inside a macro invocation (e.g. `define_violations! { pub enum ... }`)
-        // are documented by the macro expansion, not the source text, so the
-        // text scanner must skip them.
-        let macro_invocation_re = compile_regex(r"^\s*[a-z_][a-z0-9_]*!\s*\{")?;
-        let simple_pub_item_specs = [
-            SimplePubItemSpec {
-                pattern: &pub_struct_pattern,
-                item_kind: ITEM_KIND_STRUCT,
-            },
-            SimplePubItemSpec {
-                pattern: &pub_enum_pattern,
-                item_kind: ITEM_KIND_ENUM,
-            },
-        ];
+        let patterns = PubDocPatterns::compile()?;
 
         for_each_crate_file(
             config,
             Some(LanguageId::Rust),
             |entry, _src_dir, _crate_name| {
-                let path = &entry.absolute_path;
-                let content = std::fs::read_to_string(path)?;
+                let content = std::fs::read_to_string(&entry.absolute_path)?;
                 let lines: Vec<&str> = content.lines().collect();
-                // INTENTIONAL: Path to string; non-UTF8 paths yield empty string (best-effort)
-                let path_str = path.to_str().unwrap_or_default();
-                let regex_ctx = DocRegexContext {
-                    doc_comment_re: &doc_comment_re,
-                    doc_comment_capture_re: &doc_comment_capture_re,
-                    attr_re: &attr_re,
-                    example_pattern: &example_pattern,
-                };
-
-                let mut macro_depth: i32 = 0;
-                for (line_num, line) in lines.iter().enumerate() {
-                    if Self::advance_macro_depth(&mut macro_depth, line, &macro_invocation_re) {
-                        continue;
-                    }
-
-                    let scan_ctx = ScanLineContext {
-                        path,
-                        lines: &lines,
-                        line_num,
-                        line,
-                    };
-                    Self::check_simple_public_item_docs(
-                        &mut violations,
-                        &scan_ctx,
-                        &simple_pub_item_specs,
-                        &regex_ctx,
-                    );
-                    Self::check_trait_and_fn_docs(
-                        &mut violations,
-                        &scan_ctx,
-                        path_str,
-                        &regex_ctx,
-                        (&pub_trait_pattern, &pub_fn_pattern),
-                    );
-                }
-
+                Self::scan_file_for_pub_docs(
+                    &entry.absolute_path,
+                    &lines,
+                    &patterns,
+                    &mut violations,
+                );
                 Ok(())
             },
         )?;
 
         Ok(violations)
+    }
+
+    /// Scan a single file's lines for undocumented public items.
+    fn scan_file_for_pub_docs(
+        path: &Path,
+        lines: &[&str],
+        patterns: &PubDocPatterns,
+        violations: &mut Vec<DocumentationViolation>,
+    ) {
+        // INTENTIONAL: Path to string; non-UTF8 paths yield empty string (best-effort)
+        let path_str = path.to_str().unwrap_or_default();
+        let regex_ctx = patterns.regex_context();
+        let simple_pub_item_specs = patterns.simple_item_specs();
+
+        let mut macro_depth: i32 = 0;
+        for (line_num, line) in lines.iter().enumerate() {
+            if Self::advance_macro_depth(&mut macro_depth, line, &patterns.macro_invocation) {
+                continue;
+            }
+
+            let scan_ctx = ScanLineContext {
+                path,
+                lines,
+                line_num,
+                line,
+            };
+            Self::check_simple_public_item_docs(
+                violations,
+                &scan_ctx,
+                &simple_pub_item_specs,
+                &regex_ctx,
+            );
+            Self::check_trait_and_fn_docs(
+                violations,
+                &scan_ctx,
+                path_str,
+                &regex_ctx,
+                (&patterns.pub_trait, &patterns.pub_fn),
+            );
+        }
     }
 
     /// Update `macro_depth` for `line` and return `true` when the line is inside

@@ -220,6 +220,28 @@ impl SsotValidator {
             }
         });
 
+        Self::check_schema_patterns(patterns, path, line, line_number, violations);
+        Self::check_root_schema_patterns(patterns, path, line, line_number, violations);
+
+        if is_domain_model_file(path) {
+            push_raw_id_field_violations(
+                violations,
+                &patterns.forbidden_raw_id_field,
+                path,
+                line,
+                line_number,
+            );
+        }
+    }
+
+    /// Flag legacy schema symbol/macro/import usages on a single line.
+    fn check_schema_patterns(
+        patterns: &SsotPatterns,
+        path: &Path,
+        line: &str,
+        line_number: usize,
+        violations: &mut Vec<SsotViolation>,
+    ) {
         push_capture_group(
             violations,
             &patterns.forbidden_schema_symbol,
@@ -256,7 +278,16 @@ impl SsotValidator {
                 severity: Severity::Error,
             },
         );
+    }
 
+    /// Flag root-schema path references on a single line.
+    fn check_root_schema_patterns(
+        patterns: &SsotPatterns,
+        path: &Path,
+        line: &str,
+        line_number: usize,
+        violations: &mut Vec<SsotViolation>,
+    ) {
         push_line_match(
             violations,
             &patterns.forbidden_root_schema_import,
@@ -281,16 +312,6 @@ impl SsotValidator {
                 severity: Severity::Error,
             },
         );
-
-        if is_domain_model_file(path) {
-            push_raw_id_field_violations(
-                violations,
-                &patterns.forbidden_raw_id_field,
-                path,
-                line,
-                line_number,
-            );
-        }
     }
 }
 

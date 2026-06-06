@@ -606,29 +606,26 @@ impl DeclarativeValidator {
             });
             let t_ast = s.spawn(|| {
                 with_ctx(ctx, || {
-                    let v = workspace_deps.map_or_else(
-                        || Ok(Vec::new()),
-                        |deps| {
-                            Self::validate_ast_selector_rules(rules, files, filter_executor, deps)
-                        },
-                    );
-                    log_slice_result("AST selector slice done", v)
+                    log_slice_result(
+                        "AST selector slice done",
+                        Self::ast_slice(rules, files, filter_executor, workspace_deps),
+                    )
                 })
             });
             let t_regex = s.spawn(|| {
                 with_ctx(ctx, || {
-                    let v = workspace_deps.map_or_else(Vec::new, |deps| {
-                        Self::validate_regex_rules(rules, files, filter_executor, deps)
-                    });
-                    log_slice("Regex slice done", v)
+                    log_slice(
+                        "Regex slice done",
+                        Self::regex_slice(rules, files, filter_executor, workspace_deps),
+                    )
                 })
             });
             let t_path = s.spawn(|| {
                 with_ctx(ctx, || {
-                    let v = workspace_deps.map_or_else(Vec::new, |deps| {
-                        validate_path_rules(rules, files, filter_executor, deps)
-                    });
-                    log_slice("Path rules slice done", v)
+                    log_slice(
+                        "Path rules slice done",
+                        Self::path_slice(rules, files, filter_executor, workspace_deps),
+                    )
                 })
             });
             (
@@ -637,6 +634,43 @@ impl DeclarativeValidator {
                 join_slice(t_regex, "Regex validation thread panicked", Vec::new),
                 join_slice(t_path, "Path validation thread panicked", Vec::new),
             )
+        })
+    }
+
+    /// AST-selector slice: empty when workspace dependencies are unavailable.
+    fn ast_slice(
+        rules: &[ValidatedRule],
+        files: &[PathBuf],
+        filter_executor: &RuleFilterExecutor,
+        workspace_deps: Option<&WorkspaceDependencies>,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
+        workspace_deps.map_or_else(
+            || Ok(Vec::new()),
+            |deps| Self::validate_ast_selector_rules(rules, files, filter_executor, deps),
+        )
+    }
+
+    /// Regex slice: empty when workspace dependencies are unavailable.
+    fn regex_slice(
+        rules: &[ValidatedRule],
+        files: &[PathBuf],
+        filter_executor: &RuleFilterExecutor,
+        workspace_deps: Option<&WorkspaceDependencies>,
+    ) -> Vec<Box<dyn Violation>> {
+        workspace_deps.map_or_else(Vec::new, |deps| {
+            Self::validate_regex_rules(rules, files, filter_executor, deps)
+        })
+    }
+
+    /// Path-rules slice: empty when workspace dependencies are unavailable.
+    fn path_slice(
+        rules: &[ValidatedRule],
+        files: &[PathBuf],
+        filter_executor: &RuleFilterExecutor,
+        workspace_deps: Option<&WorkspaceDependencies>,
+    ) -> Vec<Box<dyn Violation>> {
+        workspace_deps.map_or_else(Vec::new, |deps| {
+            validate_path_rules(rules, files, filter_executor, deps)
         })
     }
 }
@@ -780,7 +814,15 @@ impl Validator for DeclarativeValidator {
         &self,
         config: &ValidationConfig,
     ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
-        let t_total = std::time::Instant::now();
+        Self::run_validation(self, config)
+    }
+}
+
+impl DeclarativeValidator {
+    /// Load declarative rules, logging the loaded/enabled counts and timing.
+    fn load_rules_logged(
+        &self,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<ValidatedRule>> {
         let t = std::time::Instant::now();
         let rules = self.load_rules()?;
         let enabled_count = rules.iter().filter(|r| r.enabled).count();
@@ -794,7 +836,11 @@ impl Validator for DeclarativeValidator {
                 t.elapsed()
             )
         );
+        Ok(rules)
+    }
 
+    /// Collect Rust files for declarative rules, logging the count and timing.
+    fn collect_files_logged(config: &ValidationConfig) -> Vec<PathBuf> {
         let t = std::time::Instant::now();
         let files = Self::collect_files(config, Some(LanguageId::Rust));
         mcb_domain::debug!(
@@ -802,6 +848,17 @@ impl Validator for DeclarativeValidator {
             "Files collected for declarative rules",
             &format!("file_count={} elapsed={:.2?}", files.len(), t.elapsed())
         );
+        files
+    }
+
+    /// Execute the full declarative validation pipeline.
+    fn run_validation(
+        &self,
+        config: &ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
+        let t_total = std::time::Instant::now();
+        let rules = self.load_rules_logged()?;
+        let files = Self::collect_files_logged(config);
 
         let filter_executor = RuleFilterExecutor::new(self.workspace_root.clone());
         let workspace_deps = Self::parse_workspace_deps_logged(&filter_executor);

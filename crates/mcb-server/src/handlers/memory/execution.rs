@@ -85,6 +85,31 @@ fn build_execution_metadata(
     }
 }
 
+/// Human-readable summary line for an execution observation.
+fn format_execution_content(validated: &ValidatedExecutionData) -> String {
+    format!(
+        "Execution: {} (exit_code={}, success={})",
+        validated.command, validated.exit_code, validated.success
+    )
+}
+
+/// Tags describing an execution observation (kind plus success/failure).
+fn build_execution_tags(
+    validated: &ValidatedExecutionData,
+    metadata: &ExecutionMetadata,
+) -> Vec<String> {
+    let outcome = if validated.success {
+        TAG_SUCCESS
+    } else {
+        TAG_FAILURE
+    };
+    vec![
+        TAG_EXECUTION.to_owned(),
+        metadata.execution_type.as_str().to_owned(),
+        outcome.to_owned(),
+    ]
+}
+
 /// Store an execution observation in memory
 #[tracing::instrument(skip_all)]
 pub async fn store_execution(
@@ -97,20 +122,8 @@ pub async fn store_execution(
     ));
     let validated = extract_field!(ValidatedExecutionData::validate(data));
     let metadata = build_execution_metadata(&validated, data);
-    let content = format!(
-        "Execution: {} (exit_code={}, success={})",
-        validated.command, validated.exit_code, validated.success
-    );
-    let tags = vec![
-        TAG_EXECUTION.to_owned(),
-        metadata.execution_type.as_str().to_owned(),
-        if validated.success {
-            TAG_SUCCESS
-        } else {
-            TAG_FAILURE
-        }
-        .to_owned(),
-    ];
+    let content = format_execution_content(&validated);
+    let tags = build_execution_tags(&validated, &metadata);
     let payload_execution_id = opt_str(data, "execution_id");
     let generated_execution_id = metadata.id.clone();
 

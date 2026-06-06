@@ -101,6 +101,17 @@ pub(crate) use mcb_domain::ports::validation::{
 };
 
 /// Extension trait for `ValidationConfig` providing file system scanning capabilities.
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_validate::ValidationConfigExt;
+///
+/// let dirs = config.get_scan_dirs()?;
+/// for dir in dirs {
+///     // scan each crate's `src/` directory
+/// }
+/// ```
 pub trait ValidationConfigExt {
     /// Get the list of source directories to scan based on the configuration.
     ///

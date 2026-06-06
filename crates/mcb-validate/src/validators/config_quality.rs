@@ -101,6 +101,26 @@ pub struct ConfigQualityValidator {
     config: ValidationConfig,
 }
 
+/// Compiled regexes for detecting hardcoded configuration values.
+struct ConfigQualityPatterns {
+    namespace: Regex,
+    client_name: Regex,
+    header: Regex,
+    default_impl: Regex,
+}
+
+impl ConfigQualityPatterns {
+    /// Compile the hardcoded-config detection patterns.
+    fn compile() -> Result<Self> {
+        Ok(Self {
+            namespace: compile_regex(r#"namespace:\s*"([^"]+)".to_string\(\)"#)?,
+            client_name: compile_regex(r#"client_name:\s*Some\("([^"]+)".to_string\(\)\)"#)?,
+            header: compile_regex(r#"header:\s*"([^"]+)".to_string\(\)"#)?,
+            default_impl: compile_regex(r"impl\s+Default\s+for\s+(\w+)")?,
+        })
+    }
+}
+
 impl ConfigQualityValidator {
     /// Create a new configuration quality validator for the workspace root.
     pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
@@ -120,13 +140,7 @@ impl ConfigQualityValidator {
     /// Returns an error if regex compilation or file scanning fails.
     pub fn validate(&self) -> Result<Vec<ConfigQualityViolation>> {
         let mut violations = Vec::new();
-
-        // Regex patterns
-        let namespace_pattern = compile_regex(r#"namespace:\s*"([^"]+)".to_string\(\)"#)?;
-        let client_name_pattern =
-            compile_regex(r#"client_name:\s*Some\("([^"]+)".to_string\(\)\)"#)?;
-        let header_pattern = compile_regex(r#"header:\s*"([^"]+)".to_string\(\)"#)?;
-        let default_impl_pattern = compile_regex(r"impl\s+Default\s+for\s+(\w+)")?;
+        let patterns = ConfigQualityPatterns::compile()?;
 
         for_each_scan_file(
             &self.config,
@@ -139,37 +153,25 @@ impl ConfigQualityValidator {
 
                 let content = std::fs::read_to_string(&entry.absolute_path)?;
                 let lines: Vec<&str> = content.lines().collect();
-
-                Self::check_hardcoded_namespaces(
-                    &entry.absolute_path,
-                    &lines,
-                    &namespace_pattern,
-                    &mut violations,
-                );
-                Self::check_hardcoded_client_names(
-                    &entry.absolute_path,
-                    &lines,
-                    &client_name_pattern,
-                    &mut violations,
-                );
-                Self::check_hardcoded_headers(
-                    &entry.absolute_path,
-                    &lines,
-                    &header_pattern,
-                    &mut violations,
-                );
-                Self::check_undocumented_defaults(
-                    &entry.absolute_path,
-                    &lines,
-                    &default_impl_pattern,
-                    &mut violations,
-                );
-
+                Self::scan_config_file(&entry.absolute_path, &lines, &patterns, &mut violations);
                 Ok(())
             },
         )?;
 
         Ok(violations)
+    }
+
+    /// Run every hardcoded-config check against a single file's lines.
+    fn scan_config_file(
+        path: &Path,
+        lines: &[&str],
+        patterns: &ConfigQualityPatterns,
+        violations: &mut Vec<ConfigQualityViolation>,
+    ) {
+        Self::check_hardcoded_namespaces(path, lines, &patterns.namespace, violations);
+        Self::check_hardcoded_client_names(path, lines, &patterns.client_name, violations);
+        Self::check_hardcoded_headers(path, lines, &patterns.header, violations);
+        Self::check_undocumented_defaults(path, lines, &patterns.default_impl, violations);
     }
 
     /// Returns `true` when `path` lives under the config directory or its file
