@@ -1,0 +1,24 @@
+crates/mcb-validate/src/validators/pmat_native.rs
+  ai_agent 84
+  s_750dc69364e4e0::t_1e9dca273ab57b 77,96
+crates/mcb-validate/src/validators/pattern_validator/result_check.rs
+  s_750dc69364e4e0::t_be063972769979 11-17,21-23,28-30,34
+crates/mcb-validate/src/validators/naming/checks/suffixes.rs
+  s_750dc69364e4e0::t_476338272241c6 43-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "987587a2c88094d908abc716871988930e997a2f",
+  "prompts": {},
+  "sessions": {
+    "s_750dc69364e4e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5c5c372c-9970-4814-a543-84b67c67a046",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
