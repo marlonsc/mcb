@@ -1,0 +1,46 @@
+crates/mcb/tests/integration/mcp_commands/common.rs
+  s_f9d035179282ab::t_e76916fc8125b0 170-171
+  ai_agent 172-175
+Cargo.toml
+  s_f9d035179282ab::t_80ac7ffc86813e 208
+crates/mcb/src/initializers/mcp_server.rs
+  s_f9d035179282ab::t_a28dfb8a0a2770 164-169
+crates/mcb-server/tests/unit/mcp_server/mcp_contract_tests.rs
+  s_f9d035179282ab::t_d2bb160bdf3bad 20
+crates/mcb-server/tests/unit/tools/tool_invariant_matrix_tests.rs
+  s_f9d035179282ab::t_e7c363849b8ac4 20
+experiments/loco-rmcp-spike/Cargo.lock
+  ai_agent 412,414,417,423,425
+crates/mcb/tests/integration/stdio_transport_integration.rs
+  ai_agent 327-329
+crates/mcb-server/tests/unit/tools/context_tests.rs
+  s_f9d035179282ab::t_473d2576682e0a 189,267,295,323,351
+  s_f9d035179282ab::t_f42fb2e96f24e2 219-232
+crates/mcb-server/tests/utils/http_mcp.rs
+  s_f9d035179282ab::t_79b1e4a5cbf90f 123-126,128-129
+Cargo.lock
+  ai_agent 5059,5061,5096,5098,6459,6461,6491,6493
+crates/mcb-server/src/tools/registry.rs
+  s_f9d035179282ab::t_2bf3d26ad587bc 180-185
+crates/mcb-server/tests/unit/rmcp_http_feature/mod.rs
+  s_f9d035179282ab::t_b83b1cdf200d62 12
+crates/mcb-server/src/mcp_server.rs
+  s_f9d035179282ab::t_c6f53ea444570e 264-266
+  s_f9d035179282ab::t_564e48911d20c0 241-251
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "efbee0bc1025af0ebd844628f20ff2d20c8f35ac",
+  "prompts": {},
+  "sessions": {
+    "s_f9d035179282ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42fba31f-461c-4a02-9a34-c3462d77e248",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
