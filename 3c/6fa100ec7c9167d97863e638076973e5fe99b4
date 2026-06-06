@@ -1,0 +1,20 @@
+crates/mcb-server/tests/integration/auto_context_tests.rs
+  s_f9d035179282ab::t_ddc862dd1ce09f 28-40
+  s_f9d035179282ab::t_dc1793c92fa2ed 84,241,256
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "3c6fa100ec7c9167d97863e638076973e5fe99b4",
+  "prompts": {},
+  "sessions": {
+    "s_f9d035179282ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42fba31f-461c-4a02-9a34-c3462d77e248",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
