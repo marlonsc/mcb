@@ -3,6 +3,7 @@ use mcb_utils::constants::vector_store::{
     STATS_FIELD_COLLECTION, STATS_FIELD_VECTORS_COUNT, VECTOR_FIELD_FILE_PATH,
     VECTOR_FIELD_LANGUAGE,
 };
+use mcb_utils::utils::path::normalize_path_separators;
 
 use super::*;
 
@@ -298,15 +299,15 @@ impl EdgeVecActor {
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
         let mut results = Vec::new();
-        // Normalize to forward slashes for cross-platform path matching
-        let normalized_query = file_path.replace('\\', "/");
+        // Normalize to forward slashes for cross-platform path matching.
+        let normalized_query = normalize_path_separators(file_path);
         if let Some(collection_metadata) = self.get_collection_metadata(collection) {
             for (ext_id, meta_val) in collection_metadata.iter() {
                 if let Some(meta) = meta_val.as_object()
                     && meta
                         .get(VECTOR_FIELD_FILE_PATH)
                         .and_then(|v| v.as_str())
-                        .is_some_and(|p| p.replace('\\', "/") == normalized_query)
+                        .is_some_and(|p| normalize_path_separators(p) == normalized_query)
                 {
                     let mut result =
                         search_result_from_json_metadata(ext_id.to_owned(), meta_val, 1.0);
@@ -411,5 +412,96 @@ impl EdgeVecActor {
                 let _ = tx.send(self.handle_get_chunks_by_file(&collection, &file_path));
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mcb_domain::value_objects::Embedding;
+    use mcb_utils::utils::path::normalize_path_separators;
+    use tokio::sync::mpsc;
+
+    type TestResult<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
+
+    const TEST_DIMS: usize = 8;
+
+    /// Build a minimal `EdgeVecActor` with a small dimension for fast tests.
+    fn make_actor() -> TestResult<EdgeVecActor> {
+        let (_tx, rx) = mpsc::channel(1);
+        let cfg = EdgeVecConfig {
+            dimensions: TEST_DIMS,
+            ..EdgeVecConfig::default()
+        };
+        Ok(EdgeVecActor::new(rx, cfg)?)
+    }
+
+    /// Insert one vector with a `file_path` metadata field stored with forward slashes.
+    ///
+    /// Returns the collection name used, so callers can query it.
+    fn insert_forward_slash_chunk(actor: &mut EdgeVecActor) -> TestResult<String> {
+        let collection = "test_col";
+        actor.handle_create_collection(collection.to_owned())?;
+
+        let embedding = Embedding {
+            vector: vec![1.0_f32; TEST_DIMS],
+            model: "test".to_owned(),
+            dimensions: TEST_DIMS,
+        };
+
+        let metadata = vec![{
+            let mut m = std::collections::HashMap::new();
+            m.insert(
+                VECTOR_FIELD_FILE_PATH.to_owned(),
+                serde_json::json!("src/lib.rs"),
+            );
+            m.insert("content".to_owned(), serde_json::json!("fn foo() {}"));
+            m.insert("language".to_owned(), serde_json::json!("rust"));
+            m.insert("start_line".to_owned(), serde_json::json!(1_u32));
+            m.insert("end_line".to_owned(), serde_json::json!(3_u32));
+            m.insert("chunk_index".to_owned(), serde_json::json!(0_u32));
+            m
+        }];
+
+        let ids = actor.handle_insert_vectors(collection, vec![embedding], metadata)?;
+        assert_eq!(ids.len(), 1, "expected one inserted id");
+        Ok(collection.to_owned())
+    }
+
+    /// Regression test for mcb-ns8z: forward-slash and backslash queries must
+    /// return the same chunks, regardless of the separator used by the caller.
+    #[test]
+    fn get_chunks_by_file_backslash_and_forward_slash_are_equivalent() -> TestResult {
+        let mut actor = make_actor()?;
+        let collection = insert_forward_slash_chunk(&mut actor)?;
+
+        let forward = actor.handle_get_chunks_by_file(&collection, "src/lib.rs")?;
+        let backward = actor.handle_get_chunks_by_file(&collection, "src\\lib.rs")?;
+
+        assert_eq!(
+            forward.len(),
+            1,
+            "forward-slash query must return 1 chunk, got {}: {forward:?}",
+            forward.len()
+        );
+        assert_eq!(
+            backward.len(),
+            forward.len(),
+            "backslash query must return same number of chunks as forward-slash query"
+        );
+        Ok(())
+    }
+
+    /// Confirm that `normalize_path_separators` is a no-op for paths without backslashes.
+    #[test]
+    fn normalize_path_separators_forward_slash_unchanged() {
+        assert_eq!(normalize_path_separators("src/lib.rs"), "src/lib.rs");
+    }
+
+    /// Confirm that `normalize_path_separators` replaces backslashes.
+    #[test]
+    fn normalize_path_separators_backslash_replaced() {
+        assert_eq!(normalize_path_separators("src\\lib.rs"), "src/lib.rs");
+        assert_eq!(normalize_path_separators("a\\b\\c.rs"), "a/b/c.rs");
     }
 }
