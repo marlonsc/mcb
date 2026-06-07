@@ -9,6 +9,7 @@ target/
 dist/
 exports/
 *.rlib
+/clippy_*.json
 
 # ---------------------------------------------------------------------------
 # IDE / Editor files
@@ -224,7 +225,6 @@ __pycache__/
 book/
 docs/generated/
 docs/reports/
-!docs/adr/archive/*
 docs/**/*backup*
 docs/**/*bak*
 docs/**/*old*
@@ -277,3 +277,5 @@ reference/
 archive/
 !docs/archive/
 !docs/archive/**
+!docs/adr/archive/
+!docs/adr/archive/**
