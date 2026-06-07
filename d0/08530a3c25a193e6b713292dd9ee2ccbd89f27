@@ -1,0 +1,29 @@
+AGENTS.md
+  s_65f02658bb707e::t_f7524bb343155f 355-358
+  s_65f02658bb707e::t_facd9bf938380d 102-107,160-161,274-276,294,296,325,348-349
+  s_a475cfd2777057::t_4fd9cef33eeab2 326-332
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "d008530a3c25a193e6b713292dd9ee2ccbd89f27",
+  "prompts": {},
+  "sessions": {
+    "s_65f02658bb707e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea2f9-e5b7-7de1-980f-d38ae5985123",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    },
+    "s_a475cfd2777057": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea2cd-b65b-7262-910a-0392f963440d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
