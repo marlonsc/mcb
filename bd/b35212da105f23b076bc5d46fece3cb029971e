@@ -1,0 +1,9 @@
+Cargo.lock
+  ai_agent 798,3743,4000,4003,4273,4341,4686,4690,5619,7789,8002
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "bdb35212da105f23b076bc5d46fece3cb029971e",
+  "prompts": {}
+}
