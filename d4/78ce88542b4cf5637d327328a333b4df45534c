@@ -1,0 +1,29 @@
+docs/adr/035-context-scout.md
+  s_a475cfd2777057::t_96adb9c7bb2cf8 1538-1541
+docs/adr/032-agent-quality-domain-extension.md
+  s_a475cfd2777057::t_097551f0156caf 46-49
+AGENTS.md
+  s_a475cfd2777057::t_6b51a3ed4b673d 227-232
+.gitignore
+  s_a475cfd2777057::t_91c5447e207788 193-194,196-197,199-200
+scripts/docs/py/check_outdated.py
+  s_a475cfd2777057::t_865b0ac4aaa2b6 9
+scripts/docs/validate.sh
+  s_a475cfd2777057::t_f8122e3e241ff3 363
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "d478ce88542b4cf5637d327328a333b4df45534c",
+  "prompts": {},
+  "sessions": {
+    "s_a475cfd2777057": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea2cd-b65b-7262-910a-0392f963440d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
