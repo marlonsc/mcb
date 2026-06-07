@@ -199,5 +199,5 @@ Rejected because:
 
 - [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
 - [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
-- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md) (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) (superseded by ADR-050)
 - Beads task graph (`bd`) for current planning state

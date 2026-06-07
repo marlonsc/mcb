@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Development Roadmap
 
-**Last updated:** 2026-06-04
+**Last updated:** 2026-06-07
 
 Development roadmap for **Memory Context Browser (MCB)** — a high-performance MCP server for semantic code search, persistent memory, and agent-aware context management.
 
@@ -11,10 +11,10 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 
 | Field | Value |
 | ------- | ------- |
-| **Version** | v0.3.1 |
-| **Branch** | `release/v0.3.1` |
-| **Build** | ✅ `make lint` passes locally as of 2026-06-04 |
-| **Tests** | Release gate pending: run `make test` and `make validate` before tag |
+| **Version** | v0.3.2 from `Cargo.toml` |
+| **Branch** | `feat/v0.3.2-ci-gates` |
+| **Build** | v0.3.2 CI/release lane tracked by bead `mcb-v5an` |
+| **Tests** | Current CI verification tracked by bead `mcb-v5an.11` |
 | **Crates** | 7 first-party workspace crates |
 | **ADRs** | 55 tracked ADRs |
 
@@ -22,7 +22,7 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 
 | Metric | Value |
 | -------- | ------- |
-| Beads issues | 312+ total |
+| Beads issues | Use `bd status --json` for current totals |
 | Avg lead time | 9.5 hours |
 | TODO/FIXME | Verify TODO and FIXME markers in `crates/` before release notes |
 | Languages | 14 via tree-sitter |
@@ -39,10 +39,27 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 
 ---
 
-### v0.3.1 — Current Release Stabilization
+### v0.3.2 — CI/CD Gates And Release Reliability
 
-**Status:** In release hardening
-**Branch:** `release/v0.3.1`
+**Status:** Active CI/release stabilization
+**Branch:** `feat/v0.3.2-ci-gates`
+**Tracking bead:** `mcb-v5an`
+
+Hardens the release pipeline and development gates after v0.3.1 shipped. The
+scope is CI cache efficiency, nextest/test-gate reliability, hook enforcement,
+typos/doc validation, and release workflow resilience.
+
+| Area | Status |
+| ------ | -------- |
+| Release workflow resilience | Implemented; CI evidence tracked in beads |
+| Rust cache and nextest CI tuning | Implemented; verification tracked in `mcb-v5an.11` |
+| Typos and hook gates | Implemented |
+| Docs/governance cleanup | Active under `mcb-vy4k` |
+| Final PR/check validation | Pending current PR green state |
+
+---
+
+### v0.3.1 — Released
 
 Stabilizes the SeaQL + Loco baseline for release by closing handler response
 format drift, Docker runtime configuration, test helper reuse, and agent
@@ -50,11 +67,11 @@ instruction canonicalization.
 
 | Area | Status |
 | ------ | -------- |
-| MCP JSON response formatting cleanup | In progress |
-| Loco inline config for Docker profiles | In progress |
-| Docker app/stdio compose profiles | In progress |
-| Agent instruction canonicalization | In progress |
-| Release gates (`make test`, `make validate`, `make check`) | Pending |
+| MCP JSON response formatting cleanup | Released |
+| Loco inline config for Docker profiles | Released |
+| Docker app/stdio compose profiles | Released |
+| Agent instruction canonicalization | Released |
+| Release gates | Completed for v0.3.1 release publication |
 
 ---
 

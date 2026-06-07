@@ -88,7 +88,7 @@ arbor-graph.json
 # AI / Agent — tracked config files (DO NOT add these to ignore)
 # ---------------------------------------------------------------------------
 # AGENTS.md          — agent configuration index
-# CLAUDE.md          — single source of truth
+# CLAUDE.md          — thin pointer to AGENTS.md
 # CONVENTIONS.md     — Aider conventions pointer
 # codex.md           — Codex pointer
 # .clinerules        — Cline pointer
@@ -275,3 +275,5 @@ reference/
 # Archived files (moved out of project, kept locally for reference)
 # ---------------------------------------------------------------------------
 archive/
+!docs/archive/
+!docs/archive/**

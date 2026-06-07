@@ -25,7 +25,7 @@ implementation_status: Complete
 
 - **Deciders:** Project team
 - **Supersedes:** [ADR-032](./032-agent-quality-domain-extension.md) (Agent & Quality Domain Extension)
-- **Related:** [ADR-029](./archive/superseded-029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./archive/superseded-025-figment-configuration.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
+- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./051-seaql-loco-platform-rebuild.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
 - **Series:** ADR-034 → [ADR-035](./035-context-scout.md) →
   [ADR-036](./036-enforcement-policies.md) →
   [ADR-037](./037-workflow-orchestrator.md)
@@ -330,7 +330,7 @@ pub static DATABASE_PROVIDERS: [DatabaseProviderEntry] = [..];
 
 References:
 
-- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md) — Handle-based DI pattern (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) — Handle-based DI pattern (superseded by ADR-050)
 - [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Compile-time plugin discovery
 
 ---
@@ -1477,7 +1477,7 @@ impl SqliteWorkflowEngine {
 - [smlang-rs](https://docs.rs/smlang/latest/smlang/) — Declarative FSM macro
   (evaluated, not selected)
 - [sqlx](https://docs.rs/sqlx/latest/sqlx/) — Async SQLite driver
-- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md) (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) (superseded by ADR-050)
   — DI pattern
 - [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md)
   — Auto-registration
