@@ -305,11 +305,10 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
 
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess"))?;
 
-    let cache_dir = shared_fastembed_test_cache_dir();
-    let embedding_config = EmbeddingProviderConfig::new("fastembed")
-        .with_cache_dir(cache_dir)
-        .with_dimensions(384);
-    let embedding_provider = resolve_embedding_provider(&embedding_config)?;
+    // Deterministic local embedding provider (no ONNX model download; the MCP
+    // server test asserts wiring, not embedding quality). Avoids the macOS/Windows
+    // FastEmbed model-retrieval flake.
+    let embedding_provider = create_test_embedding_provider(384);
 
     let vs_config = VectorStoreProviderConfig::new("edgevec")
         .with_dimensions(384)
