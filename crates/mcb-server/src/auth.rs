@@ -41,7 +41,7 @@ pub async fn authorize_admin_api_key(
     let api_key = extract_api_key(headers, &api_key_header)?;
 
     let users_with_keys = auth_repo
-        .find_users_by_api_key_hash(&api_key)
+        .find_active_api_key_candidates()
         .await
         .map_err(|e| {
             mcb_domain::error!("auth", "auth repository lookup failed", &e);
