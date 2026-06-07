@@ -1,0 +1,20 @@
+typos.toml
+  s_a9c0ea473656a4::t_82bf526d3a0f85 32
+  s_a9c0ea473656a4::t_3bbe3553e74fa9 8-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "203d825a252d48077b6d86f7fb8a9aff724709de",
+  "prompts": {},
+  "sessions": {
+    "s_a9c0ea473656a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4ebff32-4652-4718-9925-5874de82848c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
