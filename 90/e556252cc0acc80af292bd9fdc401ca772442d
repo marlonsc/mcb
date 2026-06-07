@@ -1,0 +1,21 @@
+crates/mcb-server/tests/utils/real_providers.rs
+  s_a9c0ea473656a4::t_5cbf5c2dadab89 18,26,39
+crates/mcb-server/tests/utils/test_fixtures.rs
+  s_a9c0ea473656a4::t_600f844a38b1ae 207-209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "90e556252cc0acc80af292bd9fdc401ca772442d",
+  "prompts": {},
+  "sessions": {
+    "s_a9c0ea473656a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4ebff32-4652-4718-9925-5874de82848c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
