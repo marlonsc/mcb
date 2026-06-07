@@ -38,7 +38,7 @@ Pain points:
 4. Duplicate data stores (Beads SQLite vs MCB SQLite)
 5. No semantic search across workflow data
 
-## Historical Decision
+## Decision
 
 **This ADR proposed extending MCB domain as the SINGLE SOURCE OF TRUTH for workflow management.**
 That target is superseded by ADR-034 and is not the current operational coordination rule.
