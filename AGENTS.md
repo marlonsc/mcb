@@ -196,6 +196,11 @@ the hook's `guard --staged` blocks only NEW violations in the commit.
 Work items live in **beads** (`bd`, a Dolt-backed dependency graph; `.beads/` is
 already initialized). Prefer it over ad-hoc TODO lists for any multi-step work.
 
+> **FUNDAMENTAL RULE — never edit `.beads/*.jsonl` (or any beads DB file) by hand.**
+> `.beads/issues.jsonl` is a generated **export**, not the source of truth (Dolt is).
+> Hand-editing it desyncs/corrupts the graph. **Every** create/update/close/dep/status
+> change goes through the `bd` CLI — no exceptions, no manual JSONL/DB edits, ever.
+
 - `bd prime` — load agent workflow context + project memories.
 - `bd ready` — list work with no open blockers (actionable now).
 - `bd create "Title" -p <prio> -t <task|bug>`; `bd dep add <child> <parent>` links dependencies.
