@@ -1,0 +1,22 @@
+crates/mcb-server/tests/utils/domain_services.rs
+  s_f9d035179282ab::t_c5b385447d3b58 73-75
+crates/mcb-server/tests/utils/test_fixtures.rs
+  s_f9d035179282ab::t_55ce5a50f420b6 23
+  s_f9d035179282ab::t_beb2a052aba5a7 34-102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "00eeffda9a23ab82335212e407b9dd7688e1cc06",
+  "prompts": {},
+  "sessions": {
+    "s_f9d035179282ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42fba31f-461c-4a02-9a34-c3462d77e248",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
