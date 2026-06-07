@@ -1,0 +1,34 @@
+Makefile
+  s_65f02658bb707e::t_2d603e2a1c6513 46
+makefiles/dispatch.mk
+  s_65f02658bb707e::t_2d603e2a1c6513 90
+docs/adr/032-agent-quality-domain-extension.md
+  s_65f02658bb707e::t_c1c45c267c1e87 41,43-44,70-71,88,102,104,106-110
+AGENTS.md
+  s_a475cfd2777057::t_34c9b537cd1eca 267-270
+  s_65f02658bb707e::t_2976c748eba1f9 291-293,297-300,307-310
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "6c1b275ef5fb312165bb119988abb6ee3ca0953a",
+  "prompts": {},
+  "sessions": {
+    "s_65f02658bb707e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea2f9-e5b7-7de1-980f-d38ae5985123",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    },
+    "s_a475cfd2777057": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea2cd-b65b-7262-910a-0392f963440d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
