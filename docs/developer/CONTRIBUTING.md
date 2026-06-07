@@ -245,4 +245,3 @@ make docs-validate QUICK=1
 - [ROADMAP.md](./ROADMAP.md) — Project state and roadmap
 - [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) — Current state
 - [DEPLOYMENT.md](../operations/DEPLOYMENT.md) — Deployment guide
-- [CI_RELEASE.md](../operations/CI_RELEASE.md) — CI/CD and release process

@@ -37,7 +37,7 @@ Today, context discovery is scattered:
 | Git status | Shell `git status --porcelain` | Parsed ad-hoc, not typed, not cached |
 | Branch info | Shell `git branch --show-current` | Same |
 | Issue tracker | `bd ready`, `bd list` (Beads CLI) | External process, JSON parsing, slow |
-| Project phases | `docs/plans/archive/LEGACY_PLANNING_STATE.md` (historical GSD) | Markdown, no schema, no search |
+| Project phases | Beads (`bd`) | Canonical task graph; historical GSD planning files are retired |
 | Stash/commits | Shell commands | No integration with MCB |
 
 **This ADR** defines a typed `ProjectContext` entity and a `ContextScoutProvider` port that discovers and caches project state using `git2` (already in MCB's dependency tree) and direct SQLite queries (for issues/phases stored by the workflow engine).

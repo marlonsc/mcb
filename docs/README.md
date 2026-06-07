@@ -67,9 +67,6 @@ Operational documentation for deployment and maintenance.
 - **[Deployment Guide](operations/DEPLOYMENT.md)** - Deployment configurations
   and environments
 - **[Changelog](operations/CHANGELOG.md)** - Version history and release notes
-- **[CI Optimization](operations/CI_OPTIMIZATION.md)** - CI performance and
-  workflow tuning
-- **[CI/CD & Release](operations/CI_RELEASE.md)** - CI pipeline, CodeQL, and release process
 
 ### 📋 Templates
 
