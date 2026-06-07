@@ -1,0 +1,33 @@
+docs/adr/035-context-scout.md
+  s_a475cfd2777057::t_4115dcb736d524 40
+docs/adr/047-project-architecture.md
+  s_a475cfd2777057::t_9e5c8461a0a413 102
+docs/adr/048-observability-strategy.md
+  s_a475cfd2777057::t_a1724b1bc023d0 14-16
+AGENTS.md
+  s_a475cfd2777057::t_80398301c64943 227-234
+docs/adr/032-agent-quality-domain-extension.md
+  s_a475cfd2777057::t_748cced65cac87 201
+scripts/docs/lib/common.sh
+  s_a475cfd2777057::t_79ae1c53a27bdb 227-228
+scripts/docs/py/check_outdated.py
+  s_a475cfd2777057::t_48ae456da1f562 9-12
+scripts/docs/py/utils.py
+  s_a475cfd2777057::t_369d4facea9f6a 22-28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "2213a6c6478531a4c8a5bfd47a2acabfbb78e4c4",
+  "prompts": {},
+  "sessions": {
+    "s_a475cfd2777057": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea2cd-b65b-7262-910a-0392f963440d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
