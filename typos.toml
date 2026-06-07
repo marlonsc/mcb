@@ -4,13 +4,37 @@ extend-exclude = [
   "target/",
   "third-party/",
   "**/generated/**",
+  "**/fixtures/**",  # external sample codebases (e.g. rustlings) used as validator inputs
   "**/*.lock",
   "**/snapshots/**",
   "**/*.svg",
 ]
 
-# Domain words / abbreviations that are correct (identity mapping = "this is valid").
+# Accepted words (identity mapping = "this is valid, do not flag"). Baseline of the
+# bilingual codebase: Portuguese terms, crate names, acronyms, regex fragments, and a
+# couple of pre-existing identifier typos kept as baseline (gate catches NEW typos).
 [default.extend-words]
 mcb = "mcb"
 ort = "ort"
 seaorm = "seaorm"
+# Portuguese (intentional)
+ERRO = "ERRO"
+comando = "comando"
+instale = "instale"
+Atual = "Atual"
+# crate / acronyms / domain
+ratatui = "ratatui"
+LOV = "LOV"
+lov = "lov"
+# regex prefixes in scripts/docs/py/check_outdated.py
+referenc = "referenc"
+deprecat = "deprecat"
+# short test-data / identifier fragments
+nd = "nd"
+ba = "ba"
+alls = "alls"
+mis = "mis"
+# pre-existing identifier typos (baseline — fix in a focused follow-up)
+Depedency = "Depedency"
+Ccomment = "Ccomment"
+WARNIN = "WARNIN"

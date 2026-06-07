@@ -139,6 +139,10 @@ jobs:
           shared-key: ci-ubuntu-stable
           save-if: true
           cache-on-failure: true
+      - uses: taiki-e/install-action@v2 # prebuilt typos-cli
+        with:
+          tool: typos
+      - run: typos
       - run: make check WHAT=lint
 
   audit:
