@@ -1,0 +1,32 @@
+Makefile
+  s_a9c0ea473656a4::t_6bd28cf65c6bac 60
+  s_a9c0ea473656a4::t_4deb25629a613e 97
+  s_a9c0ea473656a4::t_8d62aee91f9627 35-41
+  s_a9c0ea473656a4::t_13f859e84676a2 56
+  s_a9c0ea473656a4::t_f6a46f0b65a6e6 78
+makefiles/dispatch.mk
+  s_a9c0ea473656a4::t_369ea47a700656 283-284,286
+  s_a9c0ea473656a4::t_c8978772891627 95-115
+  s_a9c0ea473656a4::t_9fe5a17cf51a19 12-23
+  s_a9c0ea473656a4::t_570f47352d64a3 57,63-64
+scripts/hooks/pre-commit
+  s_a9c0ea473656a4::t_63daf19ad005d9 2-4,7
+scripts/hooks/pre-push
+  s_a9c0ea473656a4::t_ba735ef5801155 1-10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "5032dd28d42ac22bfdd594a7170ac0ef0188776e",
+  "prompts": {},
+  "sessions": {
+    "s_a9c0ea473656a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4ebff32-4652-4718-9925-5874de82848c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
