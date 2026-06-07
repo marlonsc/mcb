@@ -224,12 +224,12 @@ Until the current bead-audit and retired-docs migration is complete:
   rewrite another agent's active bead; link dependencies through `bd` instead.
 - Use subagents for independent audit/verification slices, with disjoint write
   scopes and coordinator review before closing beads.
-- Run exactly one coordinator loop every five minutes in this session. Each tick
-  follows this schedule: T+0 read `bd status`, active child beads, subagent
-  state, and `make git WHAT=status`; T+5 execute or integrate one scoped
-  sub-bead; T+10 run the smallest relevant gate and `bd sync`; T+15 commit/push
-  a validated checkpoint when there are completed changes; then repeat from
-  T+0 until `mcb-v5an.14` and its children are closed or blocked with evidence.
+- Run exactly one coordinator loop every five minutes in this session. Each
+  five-minute tick performs, in order: read `bd status`, active child beads,
+  subagent state, and `make git WHAT=status`; execute or integrate one scoped
+  sub-bead; run the smallest relevant gate plus `bd sync`; commit/push a
+  validated checkpoint when changes are complete. Repeat that same single tick
+  until `mcb-v5an.14` and its children are closed or blocked with evidence.
   Between ticks, execute non-overlapping work only; do not start another poller,
   watcher, or sleep loop.
 - Push frequent validated checkpoints while this user-authorized lane is active.

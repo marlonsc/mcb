@@ -6,10 +6,7 @@ import os
 import re
 import sys
 
-try:
-    from scripts.docs.py import utils
-except ModuleNotFoundError:
-    import utils
+from scripts.docs.py import utils
 
 
 def _process_lines(lines, rel_filepath, outdated_patterns, is_suppressed):

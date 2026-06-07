@@ -1535,7 +1535,10 @@ WHERE i.status = 'open'
 - **VCS Provider Abstraction**: All VCS operations flow through `VcsProvider` trait (never direct git2). Enables MVP with git2 + Phase 2+ with GitHub/GitLab APIs.
 - **Worktree Isolation**: Each workflow session gets dedicated worktree. Multiple sessions work independently without conflicts.
 - **Worktree Safety**: Entire worktree can be discarded if task fails; main repo unaffected. Enables easy rollback and retry.
-- **Zero shell dependencies**: All discovery via `git2` FFI and direct SQLite — no `git`, `bd`, or `legacy-planning/` commands.
+- **Zero shell dependencies in the provider**: discovery uses `git2` FFI and
+  typed state adapters instead of shelling out to `git`, `bd`, or retired
+  `legacy-planning/` commands. While Beads remains the operational task graph,
+  integration must read it through the typed adapter boundary.
 - **Typed state**: `ProjectContext` with strong types eliminates String parsing errors.
 - **Performant**: Moka cache with 30s TTL. Cold: 5–20ms (git2). Warm: < 1ms.
 - **Composable**: `git_status()` and `tracker_state()` can be called independently for partial discovery.

@@ -43,6 +43,10 @@ Pain points:
 **Extend MCB domain to be the SINGLE SOURCE OF TRUTH for workflow management.**
 No support for legacy file formats (legacy-planning/, .beads/).
 
+> Operational note: this ADR records the target MCB-owned workflow architecture.
+> Until that replacement is implemented, project task coordination remains in
+> the Beads graph governed by `AGENTS.md`; changes still go through the `bd` CLI.
+
 ### Key Decisions
 
 #### 1. MCB-Only Architecture
