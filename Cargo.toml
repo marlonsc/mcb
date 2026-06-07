@@ -16,7 +16,7 @@ repository = "https://github.com/marlonsc/mcb"
 authors = ["Marlon Costa <marlonsc@gmail.com>"]
 homepage = "https://github.com/marlonsc/mcb"
 license = "MIT"
-version = "0.3.1"
+version = "0.3.2"
 rust-version = "1.92"
 edition = "2024"
 
@@ -351,7 +351,15 @@ lto = "thin"
 codegen-units = 1
 
 [profile.dev]
+# Faster local iteration without touching the release profile. incremental: reuse
+# prior compilation. line-tables-only: enough for backtraces without the full
+# debuginfo link cost. build-override opt-level=3: optimize proc-macros + build
+# scripts (sea-orm/serde/linkme derives run at compile time) — a large cold/warm win.
 incremental = true
+debug = "line-tables-only"
+
+[profile.dev.build-override]
+opt-level = 3
 
 # ============================================
 # Patch: redirect all SeaQL + Loco ecosystem
