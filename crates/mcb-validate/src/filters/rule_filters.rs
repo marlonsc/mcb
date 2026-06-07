@@ -84,11 +84,6 @@ impl RuleFilterExecutor {
     /// Create a new filter executor
     #[must_use]
     pub fn new(workspace_root: std::path::PathBuf) -> Self {
-        // Canonicalize so `relative_path`'s strip_prefix matches the canonical
-        // file paths produced by the inventory walk. Without this, file_pattern
-        // filters silently fail under symlinked roots (e.g. macOS /var → /private/var),
-        // skipping the rules they scope.
-        let workspace_root = std::fs::canonicalize(&workspace_root).unwrap_or(workspace_root);
         Self {
             workspace_root: workspace_root.clone(),
             language_detector: LanguageDetector::new(),
@@ -166,17 +161,31 @@ impl RuleFilterExecutor {
     }
 
     /// Get the relative path of a file from the workspace root.
-    fn relative_path<'a>(&'a self, file_path: &'a Path) -> &'a Path {
-        file_path
-            .strip_prefix(&self.workspace_root)
-            .unwrap_or(file_path)
+    ///
+    /// Strips `workspace_root` as-is first; if that fails (canonicalization
+    /// mismatch under symlinked roots, e.g. macOS `/var` → `/private/var`, where
+    /// the inventory yields canonical file paths but the root is not), retries
+    /// with both sides canonicalized so `file_pattern` filters still match.
+    fn relative_path<'a>(&self, file_path: &'a Path) -> std::borrow::Cow<'a, Path> {
+        if let Ok(rel) = file_path.strip_prefix(&self.workspace_root) {
+            return std::borrow::Cow::Borrowed(rel);
+        }
+        if let (Ok(canon_file), Ok(canon_root)) = (
+            std::fs::canonicalize(file_path),
+            std::fs::canonicalize(&self.workspace_root),
+        ) && let Ok(rel) = canon_file.strip_prefix(&canon_root)
+        {
+            return std::borrow::Cow::Owned(rel.to_path_buf());
+        }
+        std::borrow::Cow::Borrowed(file_path)
     }
 
     /// Match file patterns with fallback to full path if relative path fails.
     fn matches_patterns_with_fallback(&self, file_path: &Path, patterns: &[String]) -> bool {
         let rel_path = self.relative_path(file_path);
-        self.file_matcher.matches_any(rel_path, patterns)
-            || (rel_path != file_path && self.file_matcher.matches_any(file_path, patterns))
+        self.file_matcher.matches_any(rel_path.as_ref(), patterns)
+            || (rel_path.as_ref() != file_path
+                && self.file_matcher.matches_any(file_path, patterns))
     }
 
     /// Check if a specific file matches an applicability filter (file or directory patterns).
@@ -187,7 +196,7 @@ impl RuleFilterExecutor {
             .is_some_and(|patterns| self.matches_patterns_with_fallback(file_path, patterns));
         let dir_match = filter.directory_patterns.as_ref().is_some_and(|patterns| {
             self.file_matcher
-                .matches_any(self.relative_path(file_path), patterns)
+                .matches_any(self.relative_path(file_path).as_ref(), patterns)
         });
         file_match || dir_match
     }
