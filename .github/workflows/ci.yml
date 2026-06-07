@@ -751,8 +751,13 @@ jobs:
           if [[ "$RUN_FULL" == "true" ]]; then
             echo "=== Full Suite Policy (Human Ready PR) ==="
             FAILED=0
+            # Coverage is ADVISORY, not required: it is a metric (not a correctness
+            # gate) and cargo-tarpaulin's default ptrace engine intermittently aborts
+            # with "Test failed during run" on multi-threaded/tokio test binaries even
+            # when every test passes. Correctness is already enforced by the gates
+            # below. Root-cause engine fix tracked in mcb-xgji; advisory policy mcb-xku4.
             for job in LINT_RESULT TEST_LINUX_RESULT TEST_CROSS_RESULT \
-                       VALIDATE_RESULT AUDIT_RESULT GOLDEN_RESULT COVERAGE_RESULT \
+                       VALIDATE_RESULT AUDIT_RESULT GOLDEN_RESULT \
                        RELEASE_BUILD_RESULT; do
               result="${!job}"
               if [[ "$result" != "success" && "$result" != "skipped" ]]; then
@@ -761,12 +766,16 @@ jobs:
               fi
             done
 
+            if [[ "$COVERAGE_RESULT" != "success" && "$COVERAGE_RESULT" != "skipped" ]]; then
+              echo "⚠ Coverage: $COVERAGE_RESULT (advisory — does not block merge; see mcb-xku4)"
+            fi
+
             if [[ $FAILED -eq 1 ]]; then
               echo "✗ Full suite check failed"
               exit 1
             fi
 
-            echo "✓ Full suite — all required checks passed"
+            echo "✓ Full suite — all required checks passed (coverage advisory)"
             exit 0
           fi
 
