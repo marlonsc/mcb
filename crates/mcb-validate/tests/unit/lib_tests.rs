@@ -10,7 +10,7 @@ use mcb_validate::{Severity, ValidationConfig};
 fn test_severity_serialization() {
     let severity = Severity::Error;
     let json = serde_json::to_string(&severity).unwrap();
-    assert_eq!(json, "\"Error\"");
+    assert_eq!(json, "\"ERROR\"");
 }
 
 #[rstest]
