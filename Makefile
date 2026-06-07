@@ -32,6 +32,13 @@ SUB ?=
 LOG_N ?=
 export RUST_2024_LINTS := -D unsafe_op_in_unsafe_fn -D rust_2024_compatibility -W static_mut_refs
 
+# sccache (opt-in via SCCACHE=1): shared compilation cache for devs hopping across
+# projects. Disables incremental compilation (mutually exclusive with sccache).
+ifeq ($(SCCACHE),1)
+export RUSTC_WRAPPER := sccache
+export CARGO_INCREMENTAL := 0
+endif
+
 # Destructive-verb gate: dry-run unless APPLY=Y. Usage: $(call gate,<action>)
 gate = [ "$(APPLY)" = "Y" ] || { printf "DRY-RUN: would %s; set APPLY=Y to execute\n" "$(1)" >&2; exit 0; }
 
@@ -46,10 +53,11 @@ WHATS_git     := status diff log show add commit push pull branch checkout tag t
 WHATS_pr      := checks view merge rerun
 WHATS_sub     := status sync diff commit push propagate
 WHATS_setup   := hooks tools adr all
+WHATS_hook    := pre-commit pre-push
 WHATS_clean   := build codegen all
 
 # --- verb targets ------------------------------------------------------------
-.PHONY: build test check lint-impl fix dev docs codegen release git pr sub setup clean ci guard help
+.PHONY: build test check lint-impl fix dev docs codegen release git pr sub setup clean ci guard hook help
 
 build:     ; $(call DISPATCH_BUILD)
 test:      ; $(call DISPATCH_TEST)
@@ -67,6 +75,7 @@ setup:     ; $(call DISPATCH_SETUP)
 clean:     ; $(call DISPATCH_CLEAN)
 ci:        ; @$(MAKE) check WHAT=all
 guard:     ; @bash $(MCB_SH) guard
+hook:      ; $(call DISPATCH_HOOK)
 
 help:
 	@printf "\n$(BOLD)MCB — make <verb> [WHAT=phase] [SCOPE=..] [APPLY=Y]$(RESET)\n\n"
@@ -85,4 +94,5 @@ help:
 	@printf "  %-10s %s\n" clean   "Clean [APPLY=Y] (WHAT=$(WHATS_clean))"
 	@printf "  %-10s %s\n" ci      "CI gate (check WHAT=all)"
 	@printf "  %-10s %s\n" guard   "Banned-pattern scanner"
+	@printf "  %-10s %s\n" hook    "Tiered git-hook gate (WHAT=$(WHATS_hook))"
 	@printf "\n"

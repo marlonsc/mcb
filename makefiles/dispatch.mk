@@ -9,6 +9,18 @@
 MDBOOK         := $(shell command -v mdbook 2>/dev/null || echo "$(HOME)/.cargo/bin/mdbook")
 MCB_TEST_PORT  ?= 18080
 
+# Test runner: prefer cargo-nextest (faster, parallel, better output) when installed;
+# fall back to `cargo test`. Doctests always use `cargo test --doc` (nextest can't
+# run them) — semantics preserved since `cargo test --all-targets` also skips doctests.
+MCB_NEXTEST := $(shell command -v cargo-nextest >/dev/null 2>&1 && echo 1)
+ifeq ($(MCB_NEXTEST),1)
+  MCB_TEST_UNIT := cargo nextest run --workspace --lib --test-threads=$$T
+  MCB_TEST_ALL  := cargo nextest run --workspace --test-threads=$$T
+else
+  MCB_TEST_UNIT := RUST_TEST_THREADS=$$T cargo test --workspace --lib
+  MCB_TEST_ALL  := RUST_TEST_THREADS=$$T cargo test --workspace --all-targets
+endif
+
 # codegen
 CODEGEN_DB         := /tmp/mcb_codegen.db
 MIGRATION_RS       := crates/mcb-providers/src/database/seaorm/migration/m20260301_000001_initial_schema.rs
@@ -42,14 +54,14 @@ endef
 define DISPATCH_TEST
 @T="$(THREADS)"; case "$$T" in ''|*[!0-9]*|0) T=1;; esac; \
 case "$(SCOPE)" in \
-  unit)        RUST_TEST_THREADS=$$T cargo test --workspace --lib ;; \
+  unit)        $(MCB_TEST_UNIT) ;; \
   doc)         cargo test --workspace --doc ;; \
   golden)      RUST_TEST_THREADS=$$T cargo test --workspace --tests golden ;; \
   startup)     cargo test -p mcb --test integration startup_smoke -- --nocapture ;; \
   integration) RUST_TEST_THREADS=$$T cargo test --workspace --test '*integration*' ;; \
   e2e)         $(call MCB_E2E) ;; \
-  all)         RUST_TEST_THREADS=$$T cargo test --workspace --all-targets && $(call MCB_E2E) ;; \
-  '')          RUST_TEST_THREADS=$$T cargo test --workspace --all-targets ;; \
+  all)         $(MCB_TEST_ALL) && $(call MCB_E2E) ;; \
+  '')          $(MCB_TEST_ALL) ;; \
   *)           printf "ERRO: SCOPE '%s' invalido. Validos: unit doc golden startup integration e2e all\n" "$(SCOPE)" >&2; exit 2 ;; \
 esac
 endef
@@ -77,6 +89,27 @@ define DISPATCH_CHECK
   qlty)     mkdir -p docs/reports; ./scripts/analyze_qlty.py --scan --check --summary --markdown docs/reports/qlty-check-REPORTS.md; ./scripts/analyze_qlty.py --scan --smells --summary --markdown docs/reports/qlty-smells-REPORTS.md ;; \
   ""|all)   cargo fmt --all -- --check && $(MAKE) lint-impl && $(MAKE) test && bash $(MCB_SH) validate $(if $(filter 1,$(QUICK)),quick,full) ;; \
   *)        printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_check)\n" "$(WHAT)" >&2; exit 2 ;; \
+esac
+endef
+
+# --- hook (tiered native git-hook gates; SSOT for pre-commit/pre-push) --------
+# pre-commit (fast): guard + fmt + clippy(workspace, no test/bench compile) + typos
+#   + unit tests. pre-push (full): clippy --all-targets + full suite + doctests +
+#   validate. Same gates the CI runs, one definition. No bypass (AGENTS.md §3).
+define DISPATCH_HOOK
+@case "$(WHAT)" in \
+  pre-commit) \
+    bash $(MCB_SH) guard --staged && \
+    cargo fmt --all -- --check && \
+    cargo clippy --workspace -- -D warnings && \
+    { ! command -v typos >/dev/null 2>&1 || typos; } && \
+    $(if $(filter 1,$(MCB_NEXTEST)),cargo nextest run --workspace --lib,cargo test --workspace --lib) ;; \
+  pre-push) \
+    cargo fmt --all -- --check && \
+    cargo clippy --all-targets -- -D warnings && \
+    $(MAKE) test && $(MAKE) test SCOPE=doc && \
+    bash $(MCB_SH) validate quick ;; \
+  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_hook)\n" "$(WHAT)" >&2; exit 2 ;; \
 esac
 endef
 
@@ -247,10 +280,10 @@ endef
 # --- setup -------------------------------------------------------------------
 define DISPATCH_SETUP
 @case "$(WHAT)" in \
-  hooks)     cp scripts/hooks/pre-commit .git/hooks/pre-commit; chmod +x .git/hooks/pre-commit; echo "✓ pre-commit hook installed" ;; \
-  tools)     cargo install cargo-udeps cargo-audit cargo-tarpaulin 2>/dev/null || true; echo "✓ tools installed" ;; \
+  hooks)     cp scripts/hooks/pre-commit scripts/hooks/pre-push .git/hooks/; chmod +x .git/hooks/pre-commit .git/hooks/pre-push; echo "✓ pre-commit + pre-push hooks installed" ;; \
+  tools)     cargo install cargo-udeps cargo-audit cargo-tarpaulin cargo-nextest typos-cli 2>/dev/null || true; echo "✓ tools installed" ;; \
   adr)       ./scripts/setup/install-adr-tools.sh ;; \
-  ""|all)    cp scripts/hooks/pre-commit .git/hooks/pre-commit; chmod +x .git/hooks/pre-commit; echo "✓ pre-commit hook installed"; cargo install cargo-udeps cargo-audit cargo-tarpaulin 2>/dev/null || true; ./scripts/setup/install-adr-tools.sh 2>/dev/null || true; echo "✓ setup complete" ;; \
+  ""|all)    cp scripts/hooks/pre-commit scripts/hooks/pre-push .git/hooks/; chmod +x .git/hooks/pre-commit .git/hooks/pre-push; echo "✓ hooks installed"; cargo install cargo-udeps cargo-audit cargo-tarpaulin cargo-nextest typos-cli 2>/dev/null || true; ./scripts/setup/install-adr-tools.sh 2>/dev/null || true; echo "✓ setup complete" ;; \
   *)         printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_setup)\n" "$(WHAT)" >&2; exit 2 ;; \
 esac
 endef
