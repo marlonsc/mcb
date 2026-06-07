@@ -1,0 +1,34 @@
+docs/beads-sql-schema.sql
+  s_65f02658bb707e::t_3b04d7cb242f4b 2-3
+makefiles/dispatch.mk
+  s_65f02658bb707e::t_0561294b9194af 90
+scripts/context/validate-beads-policy.sh
+  s_65f02658bb707e::t_eb67dfab161b5d 1-11,14-15,18-55,57-61
+  s_65f02658bb707e::t_4b3b10aacfff63 12-13,16-17
+  s_65f02658bb707e::t_7ed4ee7550bb2f 56
+docs/modules/project.md
+  s_65f02658bb707e::t_fff30a062ff63f 720,722-725,727,729-731,736-741,748-752
+  s_65f02658bb707e::t_058018a20dd64e 532-534,538-540
+  s_65f02658bb707e::t_3b04d7cb242f4b 19-22,389-390,441-448,513,515-517,519,521-523,525,527-528,678,681-684,687,945,947-951,996-998,1008-1009
+  s_65f02658bb707e::t_689bff6a316e48 460-468,491-493,497,501-503
+AGENTS.md
+  s_65f02658bb707e::t_7ed4ee7550bb2f 347-348
+docs/modules/project-cli.md
+  s_65f02658bb707e::t_3b04d7cb242f4b 8,11,110-112,121-128,133-136,190
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "8560a009d141cbb54ba334b1b48ad88738a552d2",
+  "prompts": {},
+  "sessions": {
+    "s_65f02658bb707e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea2f9-e5b7-7de1-980f-d38ae5985123",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
