@@ -1,0 +1,23 @@
+.github/workflows/release.yml
+  s_a9c0ea473656a4::t_716a9b95f7361c 160-161,163
+  s_a9c0ea473656a4::t_42b3db44b8b25a 154
+  s_a9c0ea473656a4::t_026ce5f92233b0 140-142
+  s_a9c0ea473656a4::t_f98a8fab40169e 20-27
+  s_a9c0ea473656a4::t_517a52dc9b6d0b 203-204
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "65d3bbbb0974ff9742e12ba66e446de67adf704a",
+  "prompts": {},
+  "sessions": {
+    "s_a9c0ea473656a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4ebff32-4652-4718-9925-5874de82848c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
