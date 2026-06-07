@@ -8,13 +8,13 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{MemoryFilter, ObservationType, OriginContext};
-use mcb_domain::ports::MemoryServiceInterface;
-use mcb_domain::utils::id::mask_id;
+use mcb_domain::ports::{MemoryServiceInterface, StoreObservationInput};
+use mcb_utils::utils::id::mask_id;
 
 use mcb_domain::debug;
-use mcb_domain::utils::id as domain_id;
+use mcb_utils::utils::id as domain_id;
 
-use crate::constants::fields::TAG_TOOL;
+use mcb_utils::constants::TAG_TOOL;
 
 use super::types::{
     HookError, HookResult, PostToolUseContext, SessionStartContext, ToolExecutionStatus,
@@ -66,62 +66,21 @@ impl HookProcessor {
             context.tool_name, context.status
         );
 
-        let project_id = match context.metadata.get("project_id").cloned() {
-            Some(id) if !id.trim().is_empty() => id,
-            _ => {
-                debug!(
-                    "HookProcessor",
-                    "PostToolUse hook skipped: missing project_id in metadata"
-                );
-                return Ok(());
-            }
+        let Some(project_id) = resolve_post_tool_use_project_id(&context) else {
+            return Ok(());
         };
 
-        let parent_session_hash = context
-            .metadata
-            .get("parent_session_id")
-            .map(|parent| domain_id::correlate_id("parent_session", parent.as_str()));
-        let delegated = context.metadata.get("delegated").and_then(|value| {
-            match value.trim().to_ascii_lowercase().as_str() {
-                "true" | "1" | "yes" => Some(true),
-                "false" | "0" | "no" => Some(false),
-                _ => None,
-            }
-        });
-
-        let metadata = mcb_domain::entities::memory::ObservationMetadata {
-            session_id: None,
-            origin_context: Some(
-                OriginContext::builder()
-                    .project_id(Some(project_id.clone()))
-                    .parent_session_id_correlation(parent_session_hash)
-                    .tool_name(Some(context.tool_name.clone()))
-                    .repo_id(context.metadata.get("repo_id").cloned())
-                    .repo_path(context.metadata.get("repo_path").cloned())
-                    .worktree_id(context.metadata.get("worktree_id").cloned())
-                    .operator_id(context.metadata.get("operator_id").cloned())
-                    .machine_id(context.metadata.get("machine_id").cloned())
-                    .agent_program(context.metadata.get("agent_program").cloned())
-                    .model_id(context.metadata.get("model_id").cloned())
-                    .delegated(delegated)
-                    .build(),
-            ),
-            ..Default::default()
-        };
-
-        let mut tags = vec![TAG_TOOL.to_owned(), context.tool_name.clone()];
-        if context.status == ToolExecutionStatus::Error {
-            tags.push("error".to_owned());
-        }
+        let metadata = build_post_tool_use_metadata(&context, &project_id);
+        let tags = build_post_tool_use_tags(&context);
 
         memory_service
-            .store_observation(
+            .store_observation(StoreObservationInput {
                 project_id,
                 content,
-                ObservationType::Execution,
+                r#type: ObservationType::Execution,
                 tags,
                 metadata,
-            )
+            })
             .await
             .map_err(|e| HookError::FailedToStoreObservation(e.to_string()))?;
 
@@ -162,7 +121,11 @@ impl HookProcessor {
         };
 
         let results = memory_service
-            .memory_search("session context", Some(filter), 10)
+            .memory_search(
+                "session context",
+                Some(filter),
+                mcb_utils::constants::SESSION_SEARCH_LIMIT,
+            )
             .await
             .map_err(|e| HookError::FailedToInjectContext(e.to_string()))?;
 
@@ -172,6 +135,76 @@ impl HookProcessor {
             &format!("count={}", results.len())
         );
         Ok(())
+    }
+}
+
+/// Parse a textual boolean flag from hook metadata, logging unrecognized values.
+fn parse_delegated_flag(value: &str) -> Option<bool> {
+    match value.trim().to_ascii_lowercase().as_str() {
+        "true" | "1" | "yes" => Some(true),
+        "false" | "0" | "no" => Some(false),
+        _ => {
+            mcb_domain::trace!("hooks", "Unrecognized boolean mapping for delegated flag");
+            None
+        }
+    }
+}
+
+/// Resolve a non-empty `project_id` from the event metadata, logging a skip when absent.
+fn resolve_post_tool_use_project_id(context: &PostToolUseContext) -> Option<String> {
+    match context.metadata.get("project_id").cloned() {
+        Some(id) if !id.trim().is_empty() => Some(id),
+        _ => {
+            debug!(
+                "HookProcessor",
+                "PostToolUse hook skipped: missing project_id in metadata"
+            );
+            None
+        }
+    }
+}
+
+/// Build the observation tags for a `PostToolUse` event.
+fn build_post_tool_use_tags(context: &PostToolUseContext) -> Vec<String> {
+    let mut tags = vec![TAG_TOOL.to_owned(), context.tool_name.clone()];
+    if context.status == ToolExecutionStatus::Error {
+        tags.push("error".to_owned());
+    }
+    tags
+}
+
+/// Build observation metadata for a `PostToolUse` event from its context and project id.
+fn build_post_tool_use_metadata(
+    context: &PostToolUseContext,
+    project_id: &str,
+) -> mcb_domain::entities::memory::ObservationMetadata {
+    let parent_session_hash = context
+        .metadata
+        .get("parent_session_id")
+        .map(|parent| domain_id::correlate_id("parent_session", parent.as_str()));
+    let delegated = context
+        .metadata
+        .get("delegated")
+        .and_then(|value| parse_delegated_flag(value));
+
+    mcb_domain::entities::memory::ObservationMetadata {
+        session_id: None,
+        origin_context: Some(
+            OriginContext::builder()
+                .project_id(Some(project_id.to_owned()))
+                .parent_session_id_correlation(parent_session_hash)
+                .tool_name(Some(context.tool_name.clone()))
+                .repo_id(context.metadata.get("repo_id").cloned())
+                .repo_path(context.metadata.get("repo_path").cloned())
+                .worktree_id(context.metadata.get("worktree_id").cloned())
+                .operator_id(context.metadata.get("operator_id").cloned())
+                .machine_id(context.metadata.get("machine_id").cloned())
+                .agent_program(context.metadata.get("agent_program").cloned())
+                .model_id(context.metadata.get("model_id").cloned())
+                .delegated(delegated)
+                .build(),
+        ),
+        ..Default::default()
     }
 }
 

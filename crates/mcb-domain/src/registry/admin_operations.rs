@@ -20,12 +20,14 @@ impl IndexingOperationsProviderConfig {
 }
 
 crate::impl_registry!(
-    provider_trait: crate::ports::IndexingOperationsInterface,
+    provider_trait: crate::ports::admin::indexing::IndexingOperationsInterface,
     config_type: IndexingOperationsProviderConfig,
     entry_type: IndexingOperationsProviderEntry,
     slice_name: INDEXING_OPERATIONS_PROVIDERS,
     resolve_fn: resolve_indexing_operations_provider,
-    list_fn: list_indexing_operations_providers
+    list_fn: list_indexing_operations_providers,
+    register_macro: register_indexing_operations_provider,
+    module: admin_operations
 );
 
 /// Configuration for validation operations providers.
@@ -48,10 +50,12 @@ impl ValidationOperationsProviderConfig {
 }
 
 crate::impl_registry!(
-    provider_trait: crate::ports::ValidationOperationsInterface,
+    provider_trait: crate::ports::admin::validation::ValidationOperationsInterface,
     config_type: ValidationOperationsProviderConfig,
     entry_type: ValidationOperationsProviderEntry,
     slice_name: VALIDATION_OPERATIONS_PROVIDERS,
     resolve_fn: resolve_validation_operations_provider,
-    list_fn: list_validation_operations_providers
+    list_fn: list_validation_operations_providers,
+    register_macro: register_validation_operations_provider,
+    module: admin_operations
 );

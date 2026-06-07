@@ -15,12 +15,11 @@ fn sample_branch() -> branch::Model {
         head_commit: "test_head_commit".into(),
         upstream: Some("test_upstream".into()),
         origin_context: None,
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 
 #[rstest]
-#[test]
 fn round_trip_branch() {
     let model = sample_branch();
     let model_val = model.id.clone();

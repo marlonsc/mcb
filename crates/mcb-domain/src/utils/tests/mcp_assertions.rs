@@ -125,18 +125,6 @@ pub fn assert_tool_error(
         }
     }
 }
-// ---------------------------------------------------------------------------
-// Golden test compatibility helpers
-// ---------------------------------------------------------------------------
-
-/// Extract all text content blocks from a tool result, joined by newlines.
-///
-/// Aliased as `golden_content_to_string` for backward compatibility with E2E tests.
-#[must_use]
-pub fn golden_content_to_string(result: &CallToolResult) -> String {
-    extract_text(result)
-}
-
 /// Parse "**Results found:** N" and return N.
 #[must_use]
 pub fn golden_parse_results_found(text: &str) -> Option<usize> {

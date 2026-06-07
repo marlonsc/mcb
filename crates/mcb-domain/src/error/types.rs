@@ -220,11 +220,11 @@ pub enum Error {
 
     /// Browse operation error
     #[error("Browse error: {0}")]
-    Browse(#[from] crate::ports::BrowseError),
+    Browse(#[from] crate::ports::services::browse::BrowseError),
 
     /// Highlighting operation error
     #[error("Highlighting error: {0}")]
-    Highlight(#[from] crate::ports::HighlightError),
+    Highlight(#[from] crate::ports::services::browse::HighlightError),
 }
 
 impl Error {
@@ -466,5 +466,12 @@ impl Error {
     /// ```
     pub fn not_found_or<T>(opt: Option<T>, entity_type: &str, id: &str) -> Result<T> {
         opt.ok_or_else(|| Error::not_found(format!("{entity_type} with id {id} not found")))
+    }
+}
+
+// ── Conversion from mcb-utils error types ──────────────────────────
+impl From<mcb_utils::UtilsError> for Error {
+    fn from(err: mcb_utils::UtilsError) -> Self {
+        Self::internal(err.to_string())
     }
 }

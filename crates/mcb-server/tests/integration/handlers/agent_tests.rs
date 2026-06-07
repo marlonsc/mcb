@@ -1,14 +1,14 @@
 use mcb_domain::entities::agent::{AgentSession, AgentSessionStatus, AgentType};
-use mcb_domain::utils::time::epoch_secs_i64;
 use mcb_domain::value_objects::ids::SessionId;
 use mcb_server::args::{AgentAction, AgentArgs};
 use mcb_server::handlers::AgentHandler;
+use mcb_utils::utils::time::epoch_secs_i64;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use serde_json::json;
 
 use crate::utils::test_fixtures::create_test_mcb_state;
-use mcb_domain::test_utils::TEST_SESSION_ID;
+use mcb_utils::constants::testing::TEST_SESSION_ID;
 
 async fn create_handler() -> Option<(AgentHandler, tempfile::TempDir)> {
     let (state, temp_dir) = create_test_mcb_state().await?;

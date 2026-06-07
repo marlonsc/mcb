@@ -10,7 +10,7 @@ repos:
       - id: lint
         name: Rust Lint (Makefile)
         description: Runs 'make lint' to check for errors/warnings
-        entry: make lint MCB_CI=1
+        entry: make lint
         language: system
         types: [rust]
         pass_filenames: false

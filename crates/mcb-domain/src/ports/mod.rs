@@ -18,18 +18,20 @@
 //! - **admin** - Administrative interfaces for system management and monitoring
 //! - **infrastructure/** - Infrastructure services (sync, snapshots, auth, events)
 //! - **providers/** - External service provider ports (embeddings, vector stores, search)
+//! - **repositories/** - Repository ports for data persistence
 //! - **services** - Application service ports (validation, etc.)
+//! - **validation** - Validation abstractions (Validator, Violation, Severity, etc.)
 
 /// Administrative interfaces for system management and monitoring
-mod admin;
+pub mod admin;
 /// Infrastructure service ports
-mod infrastructure;
+pub mod infrastructure;
 /// External service provider ports
-mod providers;
+pub mod providers;
 /// Repository ports for data persistence
-mod repositories;
+pub mod repositories;
 /// Application service ports
-mod services;
+pub mod services;
 /// Validation abstractions (Validator, Violation, Severity, `LanguageId`, `ValidationConfig`)
 pub mod validation;
 
@@ -48,31 +50,31 @@ pub use admin::{
 
 // --- Infrastructure ---
 pub use infrastructure::{
-    DependencyHealth, DependencyHealthCheck, DomainEventStream, EventBusProvider,
+    ConfigProvider, DependencyHealth, DependencyHealthCheck, DomainEventStream, EventBusProvider,
     ExtendedHealthResponse, GraphQLSchemaProvider, LifecycleManaged, LogLevel, MigrationProvider,
     OperationLogger, PortServiceState, ProviderContext, ProviderHealthStatus, ProviderRouter,
-    SharedGraphQLSchemaProvider, SharedMigrationProvider, SharedSyncCoordinator,
-    ShutdownCoordinator, SnapshotProvider, SyncCoordinator, SyncOptions, SyncProvider, SyncResult,
+    SharedGraphQLSchemaProvider, SharedMigrationProvider, ShutdownCoordinator,
 };
 
 // --- Providers ---
 pub use providers::{
-    AnalysisFinding, CODE_ANALYZERS, CodeAnalyzer, CodeAnalyzerEntry, CryptoProvider,
-    EmbeddingProvider, EncryptedData, HttpClientConfig, HttpClientProvider, HybridSearchProvider,
-    HybridSearchResult, LanguageChunkingProvider, MetricLabels, MetricsError, MetricsProvider,
-    MetricsResult, PROJECT_DETECTORS, ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry,
-    ProviderConfigManagerInterface, VcsProvider, VectorStoreAdmin, VectorStoreBrowser,
-    VectorStoreProvider, list_code_analyzers, resolve_code_analyzer, resolve_default_code_analyzer,
+    AnalysisFinding, CodeAnalyzer, CryptoProvider, EmbeddingProvider, EncryptedData,
+    HttpClientConfig, HttpClientProvider, HybridSearchProvider, HybridSearchResult,
+    LanguageChunkingProvider, MetricLabels, MetricsError, MetricsProvider, MetricsProviderExt,
+    MetricsResult, ProjectDetector, ProviderConfigManagerInterface, VcsProvider, VectorStoreAdmin,
+    VectorStoreBrowser, VectorStoreProvider,
 };
+
 // --- Repositories ---
 pub use repositories::{
-    AgentCheckpointRepository, AgentEventRepository, AgentRepository, AgentSessionQuery,
-    AgentSessionRepository, ApiKeyInfo, ApiKeyRegistry, AuthRepositoryPort, FileHashRepository,
-    FtsSearchResult, IndexRepository, IndexStats, IssueCommentRegistry, IssueEntityRepository,
-    IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry, MemoryRepository,
-    OrgEntityRepository, OrgRegistry, PlanEntityRepository, PlanRegistry, PlanReviewRegistry,
-    PlanVersionRegistry, ProjectRepository, TeamMemberManager, TeamRegistry, TransitionRepository,
-    UserRegistry, UserWithApiKey, VcsEntityRepository, WorkflowSessionRepository,
+    AgentAssignmentManager, AgentCheckpointRepository, AgentEventRepository, AgentRepository,
+    AgentSessionQuery, AgentSessionRepository, ApiKeyInfo, ApiKeyRegistry, AuthRepositoryPort,
+    FileHashRepository, FtsSearchResult, IndexRepository, IndexStats, IssueCommentRegistry,
+    IssueEntityRepository, IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry,
+    MemoryRepository, OrgEntityRepository, OrgRegistry, PlanEntityRepository, PlanRegistry,
+    PlanReviewRegistry, PlanVersionRegistry, ProjectRepository, TeamMemberManager, TeamRegistry,
+    TransitionRepository, UserRegistry, UserWithApiKey, VcsBranchRegistry, VcsEntityRepository,
+    VcsRepositoryRegistry, VcsWorktreeRegistry, WorkflowSessionRepository,
 };
 
 // --- Services ---
@@ -80,12 +82,13 @@ pub use services::{
     AgentSessionManager, AgentSessionServiceInterface, BatchIndexingServiceInterface, BrowseError,
     BrowseServiceInterface, CheckpointManager, ChunkingOptions, ChunkingOrchestratorInterface,
     ChunkingResult, CodeChunker, ComplexityReport, ContextServiceInterface,
-    CreateSessionSummaryInput, DelegationTracker, FileHashService, FunctionComplexity,
-    HighlightError, HighlightServiceInterface, IndexingResult, IndexingServiceInterface,
-    IndexingStats, IndexingStatus, Job, JobCounts, JobId, JobManagerInterface, JobProgressUpdate,
-    JobResult, JobStatus, JobType, MemoryServiceInterface, ProjectDetectorService, RuleInfo,
-    SearchFilters, SearchServiceInterface, ValidationReport, ValidationServiceInterface,
-    ViolationEntry,
+    CreateSessionSummaryInput, DelegationTracker, ErrorPatternManager, FileHashService,
+    FunctionComplexity, HighlightError, HighlightServiceInterface, IndexingResult,
+    IndexingServiceInterface, IndexingStats, IndexingStatus, Job, JobCounts, JobId,
+    JobManagerInterface, JobProgressUpdate, JobResult, JobStatus, JobType, MemorySearcher,
+    MemoryServiceInterface, ObservationManager, ProjectDetectorService, RuleInfo, SearchFilters,
+    SearchServiceInterface, SessionSummaryManager, StoreObservationInput, ValidationReport,
+    ValidationServiceInterface, ViolationEntry,
 };
 
 // --- Validation abstractions ---

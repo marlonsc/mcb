@@ -10,7 +10,7 @@ use serde_json::Value;
 
 use crate::tools::defaults::RuntimeDefaults;
 use crate::tools::field_aliases::{
-    BOOL_FIELD_ALIASES, STRING_FIELD_ALIASES, field_aliases, normalize_text, resolve_override_bool,
+    BOOL_FIELD_ALIASES, STRING_FIELD_ALIASES, field_aliases, resolve_override_bool,
     resolve_override_value,
 };
 
@@ -114,7 +114,7 @@ impl ToolExecutionContext {
             agent_program,
             model_id,
             delegated,
-            timestamp: mcb_domain::utils::time::epoch_secs_i64().ok(),
+            timestamp: mcb_utils::utils::time::epoch_secs_i64().ok(),
             execution_flow,
         }
     }
@@ -122,86 +122,41 @@ impl ToolExecutionContext {
     /// Inject execution context into tool arguments when those keys are missing.
     pub fn apply_to_request_if_missing(&self, request: &mut CallToolRequestParams) {
         let args = request.arguments.get_or_insert_with(Default::default);
-        for (key, value) in [
-            (
-                "session_id",
-                self.session_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "parent_session_id",
-                self.parent_session_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "org_id",
-                self.org_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "project_id",
-                self.project_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "worktree_id",
-                self.worktree_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "repo_id",
-                self.repo_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "repo_path",
-                self.repo_path
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "operator_id",
-                self.operator_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "machine_id",
-                self.machine_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "agent_program",
-                self.agent_program
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            (
-                "model_id",
-                self.model_id
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-            ("delegated", self.delegated.map(Value::Bool)),
-            ("timestamp", self.timestamp.map(|v| Value::Number(v.into()))),
-            (
-                "execution_flow",
-                self.execution_flow
-                    .as_deref()
-                    .map(crate::tools::field_aliases::str_value),
-            ),
-        ] {
+        for (key, value) in self.context_entries() {
             if let Some(v) = value {
                 args.entry(key.to_owned()).or_insert(v);
             }
         }
+    }
+
+    /// Build the `(key, optional JSON value)` pairs representing this execution context.
+    fn context_entries(&self) -> [(&'static str, Option<Value>); 14] {
+        let str_value = crate::tools::field_aliases::str_value;
+        [
+            ("session_id", self.session_id.as_deref().map(str_value)),
+            (
+                "parent_session_id",
+                self.parent_session_id.as_deref().map(str_value),
+            ),
+            ("org_id", self.org_id.as_deref().map(str_value)),
+            ("project_id", self.project_id.as_deref().map(str_value)),
+            ("worktree_id", self.worktree_id.as_deref().map(str_value)),
+            ("repo_id", self.repo_id.as_deref().map(str_value)),
+            ("repo_path", self.repo_path.as_deref().map(str_value)),
+            ("operator_id", self.operator_id.as_deref().map(str_value)),
+            ("machine_id", self.machine_id.as_deref().map(str_value)),
+            (
+                "agent_program",
+                self.agent_program.as_deref().map(str_value),
+            ),
+            ("model_id", self.model_id.as_deref().map(str_value)),
+            ("delegated", self.delegated.map(Value::Bool)),
+            ("timestamp", self.timestamp.map(|v| Value::Number(v.into()))),
+            (
+                "execution_flow",
+                self.execution_flow.as_deref().map(str_value),
+            ),
+        ]
     }
 }
 
@@ -213,7 +168,14 @@ fn meta_value_as_string(meta: &Meta, keys: &[&str]) -> Option<String> {
         };
 
         let extracted = match value {
-            Value::String(v) => normalize_text(Some(v.clone())),
+            Value::String(v) => {
+                let trimmed = v.trim();
+                if trimmed.is_empty() {
+                    None
+                } else {
+                    Some(trimmed.to_owned())
+                }
+            }
             Value::Number(v) => Some(v.to_string()),
             Value::Bool(v) => Some(v.to_string()),
             Value::Null | Value::Array(_) | Value::Object(_) => None,
@@ -250,7 +212,10 @@ fn meta_value_as_bool(meta: &Meta, keys: &[&str]) -> Option<bool> {
             Value::String(v) => match v.trim().to_ascii_lowercase().as_str() {
                 "true" | "1" | "yes" => Some(true),
                 "false" | "0" | "no" => Some(false),
-                _ => None,
+                _other => {
+                    mcb_domain::trace!("context", "Unrecognized boolean mapping", v);
+                    None
+                }
             },
             Value::Null | Value::Number(_) | Value::Array(_) | Value::Object(_) => None,
         };

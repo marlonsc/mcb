@@ -9,8 +9,9 @@ Usage: python3 scripts/codegen-conversions.py
 """
 
 import re
-import tomllib
 from pathlib import Path
+
+import tomllib
 
 ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = ROOT / "config" / "conversions.toml"
@@ -134,7 +135,7 @@ def _test_value_for_field(
 
     # --- Type-based defaults for direct fields ---
     if is_option:
-        inner = db_type[len("Option<"):-1]
+        inner = db_type[len("Option<") : -1]
         if inner == "String":
             return f'Some("test_{field_name}".into())'
         if inner == "i64":
@@ -161,7 +162,7 @@ def _test_value_for_field(
             return '"https://example.com/repo".into()'
         if field_name == "slug":
             return f'"test-{entity_name}".into()'
-        if field_name == "path" or field_name == "local_path":
+        if field_name in {"path", "local_path"}:
             return '"/tmp/test-path".into()'
         return f'"test_{field_name}".into()'
 
@@ -230,14 +231,14 @@ def gen_from_model_field(field: str, convert: dict) -> str:
             f"            {domain_field}: m\n"
             f"                .{field}\n"
             f"                .as_deref()\n"
-            f"                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = \"{field}\", error = %e, \"malformed JSON in DB column\")).ok())\n"
+            f'                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column")).ok())\n'
             f"                .unwrap_or_default(),"
         )
 
     if ctype == "json_array_required":
         return (
             f"            {domain_field}: serde_json::from_str(&m.{field})\n"
-            f"                .map_err(|e| tracing::warn!(field = \"{field}\", error = %e, \"malformed JSON in DB column\"))\n"
+            f'                .map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column"))\n'
             f"                .unwrap_or_default(),"
         )
 
@@ -246,7 +247,7 @@ def gen_from_model_field(field: str, convert: dict) -> str:
             f"            {domain_field}: m\n"
             f"                .{field}\n"
             f"                .as_deref()\n"
-            f"                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = \"{field}\", error = %e, \"malformed JSON in DB column\")).ok())\n"
+            f'                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column")).ok())\n'
             f"                .unwrap_or_default(),"
         )
 
@@ -256,7 +257,7 @@ def gen_from_model_field(field: str, convert: dict) -> str:
             f"            {domain_field}: m\n"
             f"                .{field}\n"
             f"                .as_deref()\n"
-            f"                .and_then(|s| serde_json::from_str::<{obj_type}>(s).map_err(|e| tracing::warn!(field = \"{field}\", error = %e, \"malformed JSON in DB column\")).ok()),"
+            f'                .and_then(|s| serde_json::from_str::<{obj_type}>(s).map_err(|e| tracing::warn!(field = "{field}", error = %e, "malformed JSON in DB column")).ok()),'
         )
 
     if ctype == "json_value":
@@ -282,7 +283,7 @@ def gen_to_active_field(field: str, convert: dict) -> str | None:
     domain_field = conv.get("domain_field", field)
     ctype = conv["type"]
 
-    if ctype == "enum" or ctype == "enum_opt":
+    if ctype in {"enum", "enum_opt"}:
         if ctype == "enum_opt":
             return f"            {field}: ActiveValue::Set(Some(e.{domain_field}.to_string())),"
         return f"            {field}: ActiveValue::Set(e.{domain_field}.to_string()),"
@@ -367,6 +368,7 @@ def needs_serde_json(convert: dict) -> bool:
     }
     return any(c["type"] in serde_types for c in convert.values())
 
+
 def gen_test_block(name: str, entity: dict) -> str:
     """Generate #[cfg(test)] mod tests block for round-trip conversion test."""
     domain_type = entity["domain"]
@@ -381,9 +383,7 @@ def gen_test_block(name: str, entity: dict) -> str:
         return ""
 
     # Determine which fields are computed (not in Model)
-    computed_fields = {
-        f for f, c in convert.items() if c.get("type") == "computed"
-    }
+    computed_fields = {f for f, c in convert.items() if c.get("type") == "computed"}
 
     # Build the sample Model constructor
     sample_lines = []
@@ -394,7 +394,7 @@ def gen_test_block(name: str, entity: dict) -> str:
         sample_lines.append(f"            {field_name}: {val},")
 
     # Determine the assertion field (first field in `fields` list)
-    assert_field = fields[0] if fields else list(model_fields.keys())[0]
+    assert_field = fields[0] if fields else next(iter(model_fields.keys()))
 
     lines = [
         "",
@@ -406,26 +406,29 @@ def gen_test_block(name: str, entity: dict) -> str:
         f"        {entity_module}::Model {{",
     ]
     lines.extend(sample_lines)
-    lines.extend([
-        "        }",
-        "    }",
-        "",
-        "    #[test]",
-        f"    fn round_trip_{name}() {{",
-        f"        let model = sample_{name}();",
-        f"        let model_val = model.{assert_field}.clone();",
-        "",
-        "        // Model \u2192 Domain",
-        f"        let domain: {domain_type} = model.into();",
-        f"        assert_eq!(domain.{assert_field}, model_val);",
-        "",
-        "        // Domain \u2192 ActiveModel (should not panic)",
-        f"        let _active: {entity_module}::ActiveModel = domain.into();",
-        "    }",
-        "}",
-    ])
+    lines.extend(
+        [
+            "        }",
+            "    }",
+            "",
+            "    #[test]",
+            f"    fn round_trip_{name}() {{",
+            f"        let model = sample_{name}();",
+            f"        let model_val = model.{assert_field}.clone();",
+            "",
+            "        // Model \u2192 Domain",
+            f"        let domain: {domain_type} = model.into();",
+            f"        assert_eq!(domain.{assert_field}, model_val);",
+            "",
+            "        // Domain \u2192 ActiveModel (should not panic)",
+            f"        let _active: {entity_module}::ActiveModel = domain.into();",
+            "    }",
+            "}",
+        ]
+    )
 
     return "\n".join(lines)
+
 
 def all_fields_ordered(entity: dict) -> list[str]:
     """Return fields in safe evaluation order (computed fields first)."""
@@ -433,8 +436,16 @@ def all_fields_ordered(entity: dict) -> list[str]:
     convert = entity.get("convert", {})
     # Computed fields reference other model fields by borrow (e.g. format!),
     # so they MUST be evaluated before direct fields that move those values.
-    computed = [cf for cf in convert if cf not in fields and convert[cf].get("type") == "computed"]
-    extra = [cf for cf in convert if cf not in fields and convert[cf].get("type") != "computed"]
+    computed = [
+        cf
+        for cf in convert
+        if cf not in fields and convert[cf].get("type") == "computed"
+    ]
+    extra = [
+        cf
+        for cf in convert
+        if cf not in fields and convert[cf].get("type") != "computed"
+    ]
     return computed + fields + extra
 
 
@@ -443,24 +454,21 @@ def gen_conversion_file(name: str, entity: dict) -> str:
     entity_module = entity["entity"]
     main_import = entity["import"]
     extra_imports = entity.get("extra_imports", [])
-    fields = entity.get("fields", [])
+    entity.get("fields", [])
     not_set = entity.get("not_set", [])
     convert = entity.get("convert", {})
 
     lines = [GENERATED_HEADER, ""]
     lines.append("use sea_orm::ActiveValue;")
 
-
-
     lines.append("")
     lines.append(f"use crate::database::seaorm::entities::{entity_module};")
     lines.append(f"use {main_import};")
-    for imp in extra_imports:
-        lines.append(f"use {imp};")
+    lines.extend(f"use {imp};" for imp in extra_imports)
 
-    from_model_fields = []
-    for f in all_fields_ordered(entity):
-        from_model_fields.append(gen_from_model_field(f, convert))
+    from_model_fields = [
+        gen_from_model_field(f, convert) for f in all_fields_ordered(entity)
+    ]
 
     lines.append("")
     lines.append(f"impl From<{entity_module}::Model> for {domain_type} {{")
@@ -477,8 +485,9 @@ def gen_conversion_file(name: str, entity: dict) -> str:
         result = gen_to_active_field(f, convert)
         if result is not None:
             to_active_fields.append(result)
-    for ns_field in not_set:
-        to_active_fields.append(f"            {ns_field}: ActiveValue::NotSet,")
+    to_active_fields.extend(
+        f"            {ns_field}: ActiveValue::NotSet," for ns_field in not_set
+    )
 
     lines.append("")
     lines.append(f"impl From<{domain_type}> for {entity_module}::ActiveModel {{")
@@ -499,8 +508,7 @@ def gen_conversion_file(name: str, entity: dict) -> str:
 
 def gen_mod_rs(names: list[str]) -> str:
     lines = [GENERATED_HEADER, ""]
-    for n in sorted(names):
-        lines.append(f"pub mod {n};")
+    lines.extend(f"pub mod {n};" for n in sorted(names))
     return "\n".join(lines) + "\n"
 
 

@@ -5,7 +5,7 @@
 
 use std::collections::HashMap;
 
-use mcb_validate::ValidationConfig;
+use mcb_domain::ports::validation::ValidationConfig;
 use mcb_validate::engines::RuleContext;
 use mcb_validate::engines::rete_engine::ReteEngine;
 use rstest::rstest;

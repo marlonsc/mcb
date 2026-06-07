@@ -5,8 +5,8 @@ use std::io;
 use std::path::Path;
 
 use crate::utils::run_named_validator;
-use mcb_validate::ValidationConfig;
-use mcb_validate::Validator;
+use mcb_domain::ports::validation::ValidationConfig;
+use mcb_domain::ports::validation::Validator;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;
 use rstest::rstest;
 use tempfile::TempDir;
@@ -32,6 +32,10 @@ fn write_validator_config(root: &Path) -> io::Result<()> {
 fn write_source_file(root: &Path, content: &str) -> io::Result<()> {
     let src_dir = root.join("crates/demo/src");
     fs::create_dir_all(&src_dir)?;
+    fs::write(
+        root.join("crates/demo/Cargo.toml"),
+        "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2024\"\n",
+    )?;
     fs::write(src_dir.join("lib.rs"), content)?;
     Ok(())
 }
@@ -44,7 +48,6 @@ fn write_rule(root: &Path, file_name: &str, content: &str) -> io::Result<()> {
 }
 
 #[rstest]
-#[test]
 fn ast_selector_matches_rust_function_nodes() -> io::Result<()> {
     let temp = TempDir::new()?;
     let root = temp.path();
@@ -83,7 +86,6 @@ message: "Function node detected"
 }
 
 #[rstest]
-#[test]
 fn regex_rules_without_selectors_still_work() -> io::Result<()> {
     let temp = TempDir::new()?;
     let root = temp.path();
@@ -110,14 +112,13 @@ rule:
   type: regex_scan
 config:
   patterns:
-    unwrap_call: "\\.unwrap\\(\\)"
+    unwrap_call: '\.unwrap\(\)'
 message: "Unwrap detected"
 "#,
     )?;
 
     let violations = run_named_validator(root, "declarative_rules")
         .map_err(|e| io::Error::other(e.to_string()))?;
-
     assert!(
         violations.iter().any(|v| v.id() == "REG001"),
         "expected regex rule to execute when selectors are absent"
@@ -126,7 +127,6 @@ message: "Unwrap detected"
 }
 
 #[rstest]
-#[test]
 fn ast_query_matches_rust_function_names() {
     let temp = TempDir::new().unwrap();
     let root = temp.path();
@@ -166,7 +166,6 @@ message: "Function detected"
 }
 
 #[rstest]
-#[test]
 fn invalid_ast_query_returns_config_error() {
     let temp = TempDir::new().unwrap();
     let root = temp.path();

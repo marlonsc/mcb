@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 
 use crate::Result;
-use crate::constants::linters::CARGO_TOML_FILENAME;
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 
 /// Information about a dependency
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -67,16 +67,18 @@ impl WorkspaceDependencies {
     /// Find dependencies for a specific file's crate
     #[must_use]
     pub fn find_crate_deps(&self, file_path: &Path) -> Option<&CrateDependencies> {
-        // Find the crate directory containing this file
         let mut current = file_path.parent()?;
         loop {
-            // Check if this directory contains Cargo.toml
-            if current.join(CARGO_TOML_FILENAME).exists() {
-                return self.deps.get(current);
+            if let Some(deps) = self.deps.get(current) {
+                return Some(deps);
             }
 
-            // Move up one directory
-            current = current.parent()?;
+            current.file_name()?;
+
+            match current.parent() {
+                Some(parent) => current = parent,
+                None => return None,
+            }
         }
     }
 
@@ -237,35 +239,7 @@ impl CargoDependencyParser {
             },
 
             // Table format: serde = { version = "1.0", features = ["derive"] }
-            toml::Value::Table(table) => {
-                let version = table
-                    .get("version")
-                    .and_then(|v| v.as_str())
-                    .map(str::to_owned);
-
-                let features = table
-                    .get("features")
-                    .and_then(|v| v.as_array())
-                    .map(|arr| {
-                        arr.iter()
-                            .filter_map(|v| v.as_str().map(str::to_owned))
-                            .collect()
-                    })
-                    // INTENTIONAL: TOML array extraction; empty deps is valid
-                    .unwrap_or_default();
-
-                let optional = table
-                    .get("optional")
-                    .and_then(toml::Value::as_bool)
-                    .unwrap_or(false);
-
-                DependencyInfo {
-                    declared: !is_optional && !optional,
-                    used_in_code: false,
-                    version,
-                    features,
-                }
-            }
+            toml::Value::Table(table) => Self::dependency_info_from_table(table, is_optional),
 
             toml::Value::Integer(_)
             | toml::Value::Float(_)
@@ -277,6 +251,37 @@ impl CargoDependencyParser {
                 version: None,
                 features: Vec::new(),
             },
+        }
+    }
+
+    /// Parse a table-form dependency (`{ version = ..., features = [...], optional = ... }`).
+    fn dependency_info_from_table(table: &toml::value::Table, is_optional: bool) -> DependencyInfo {
+        let version = table
+            .get("version")
+            .and_then(|v| v.as_str())
+            .map(str::to_owned);
+
+        let features = table
+            .get("features")
+            .and_then(|v| v.as_array())
+            .map(|arr| {
+                arr.iter()
+                    .filter_map(|v| v.as_str().map(str::to_owned))
+                    .collect()
+            })
+            // INTENTIONAL: TOML array extraction; empty deps is valid
+            .unwrap_or_default();
+
+        let optional = table
+            .get("optional")
+            .and_then(toml::Value::as_bool)
+            .unwrap_or(false);
+
+        DependencyInfo {
+            declared: !is_optional && !optional,
+            used_in_code: false,
+            version,
+            features,
         }
     }
 }

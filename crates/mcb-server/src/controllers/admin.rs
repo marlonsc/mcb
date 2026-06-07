@@ -1,5 +1,6 @@
 use crate::{controllers::admin_config::load_admin_config, state::McbState};
 use axum::extract::Extension;
+use axum::http::HeaderMap;
 use loco_rs::prelude::*;
 use serde::{Deserialize, Serialize};
 
@@ -29,8 +30,18 @@ fn datum(key: String, val: i64) -> Datum {
 ///
 /// # Errors
 ///
-/// Fails when config cannot be loaded or serialized.
-pub async fn config(Extension(_state): Extension<McbState>) -> Result<Response> {
+/// Fails when config cannot be loaded or serialized, or when auth fails.
+pub async fn config(
+    State(ctx): State<AppContext>,
+    headers: HeaderMap,
+    Extension(state): Extension<McbState>,
+) -> Result<Response> {
+    crate::auth::authorize_admin_api_key(
+        state.auth_repo.as_ref(),
+        &headers,
+        ctx.config.settings.as_ref(),
+    )
+    .await?;
     format::json(load_admin_config()?)
 }
 
@@ -38,13 +49,29 @@ pub async fn config(Extension(_state): Extension<McbState>) -> Result<Response> 
 ///
 /// # Errors
 ///
-/// Fails when the dashboard port fails or graph is unknown.
+/// Fails when the dashboard port fails or graph is unknown, or when auth fails.
 pub async fn dashboard(
+    State(ctx): State<AppContext>,
+    headers: HeaderMap,
     Extension(state): Extension<McbState>,
     Json(body): Json<DashboardBody>,
 ) -> Result<Response> {
-    let limit = body.limit.unwrap_or(30);
-    let data = match body.graph.as_str() {
+    crate::auth::authorize_admin_api_key(
+        state.auth_repo.as_ref(),
+        &headers,
+        ctx.config.settings.as_ref(),
+    )
+    .await?;
+    let limit = body
+        .limit
+        .unwrap_or(mcb_utils::constants::DEFAULT_DASHBOARD_LIMIT);
+    let data = dashboard_series(&state, &body.graph, limit).await?;
+    format::json(data)
+}
+
+/// Resolve the dashboard series for a named graph, mapping port errors to Loco errors.
+async fn dashboard_series(state: &McbState, graph: &str, limit: usize) -> Result<Vec<Datum>> {
+    let data = match graph {
         "observations_by_month" => state
             .dashboard
             .get_observations_by_month(limit)
@@ -82,7 +109,19 @@ pub async fn dashboard(
         }
         _ => not_found()?,
     };
-    format::json(data)
+    Ok(data)
+}
+
+/// Returns admin config as JSON for routes guarded by external middleware.
+///
+/// Auth is enforced by the calling route's middleware; no per-request
+/// re-authentication is needed here.
+///
+/// # Errors
+///
+/// Fails when config cannot be loaded or serialized.
+pub async fn config_via_middleware(Extension(_state): Extension<McbState>) -> Result<Response> {
+    format::json(load_admin_config()?)
 }
 
 /// Registers admin routes under `/admin`.

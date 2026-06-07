@@ -18,7 +18,8 @@
 //! Validation can scan multiple source directories (e.g., workspace crates + extra src/ trees):
 //!
 //! ```
-//! use mcb_validate::{GenericReporter, ValidationConfig, Violation};
+//! use mcb_validate::GenericReporter;
+//! use mcb_domain::ports::validation::{ValidationConfig, Violation};
 //!
 //! let tmp = tempfile::tempdir().unwrap();
 //! let config = ValidationConfig::new(tmp.path()).with_exclude_pattern("target/");
@@ -35,9 +36,6 @@
 //! let report = GenericReporter::create_report(&violations, config.workspace_root.clone());
 //! assert!(report.summary.total_violations >= 0);
 //! ```
-
-// === Centralized Constants ===
-pub mod constants;
 
 // === Centralized Thresholds (Phase 2 DRY) ===
 pub mod thresholds;
@@ -89,8 +87,8 @@ pub use exports::*;
 
 use std::path::{Path, PathBuf};
 
-use crate::constants::linters::CARGO_TOML_FILENAME;
 use derive_more::Display;
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 use thiserror::Error;
 
 // --- Crate-owned types (defined here; not in a submodule) ---
@@ -98,12 +96,22 @@ use thiserror::Error;
 /// Result type for validation operations
 pub type Result<T> = std::result::Result<T, ValidationError>;
 
-pub use mcb_domain::ports::validation::{
-    CheckFn, NamedCheck, ValidationConfig, Validator, ValidatorError, ValidatorResult, Violation,
-    ViolationCategory, run_checks,
+pub(crate) use mcb_domain::ports::validation::{
+    NamedCheck, ValidationConfig, Validator, ValidatorResult, Violation, ViolationCategory,
 };
 
 /// Extension trait for `ValidationConfig` providing file system scanning capabilities.
+///
+/// # Example
+///
+/// ```ignore
+/// use mcb_validate::ValidationConfigExt;
+///
+/// let dirs = config.get_scan_dirs()?;
+/// for dir in dirs {
+///     // scan each crate's `src/` directory
+/// }
+/// ```
 pub trait ValidationConfigExt {
     /// Get the list of source directories to scan based on the configuration.
     ///
@@ -118,28 +126,39 @@ pub trait ValidationConfigExt {
     fn get_scan_dirs(&self) -> Result<Vec<PathBuf>>;
 }
 
+/// Push each non-skipped, non-excluded crate directory under `crates_dir` into `dirs`.
+fn collect_crate_dirs(
+    config: &ValidationConfig,
+    crates_dir: &std::path::Path,
+    file_config: &crate::config::FileConfig,
+    dirs: &mut Vec<PathBuf>,
+) -> Result<()> {
+    for entry in std::fs::read_dir(crates_dir)? {
+        let path = entry?.path();
+        let skipped = path
+            .file_name()
+            .and_then(|n| n.to_str())
+            .is_some_and(|name| {
+                file_config
+                    .general
+                    .skip_crates
+                    .iter()
+                    .any(|skip| skip == name)
+            });
+        if !skipped && path.is_dir() && !config.should_exclude(&path) {
+            dirs.push(path);
+        }
+    }
+    Ok(())
+}
+
 impl ValidationConfigExt for ValidationConfig {
     fn get_source_dirs(&self) -> Result<Vec<PathBuf>> {
         let mut dirs = Vec::new();
         let file_config = crate::config::FileConfig::load(&self.workspace_root);
         let crates_dir = self.workspace_root.join("crates");
         if crates_dir.exists() {
-            for entry in std::fs::read_dir(&crates_dir)? {
-                let entry = entry?;
-                let path = entry.path();
-                if let Some(file_name) = path.file_name().and_then(|n| n.to_str())
-                    && file_config
-                        .general
-                        .skip_crates
-                        .iter()
-                        .any(|skip| skip == file_name)
-                {
-                    continue;
-                }
-                if path.is_dir() && !self.should_exclude(&path) {
-                    dirs.push(path);
-                }
-            }
+            collect_crate_dirs(self, &crates_dir, &file_config, &mut dirs)?;
         }
         for path in &self.additional_src_paths {
             let full_path = if path.is_absolute() {
@@ -198,6 +217,10 @@ pub enum ValidationError {
     #[error("Invalid regex pattern: {0}")]
     InvalidRegex(#[from] regex::Error),
 
+    /// Utilities error
+    #[error("Utilities error: {0}")]
+    Utils(#[from] mcb_utils::error::UtilsError),
+
     /// Pattern not found
     #[error("Pattern not found: {0}")]
     PatternNotFound(String),
@@ -228,7 +251,7 @@ pub enum ValidationError {
     },
 }
 
-pub use mcb_domain::ports::validation::Severity;
+pub(crate) use mcb_domain::ports::validation::Severity;
 
 /// Component type for strict directory validation
 ///

@@ -5,7 +5,6 @@ use rstest::rstest;
 use std::str::FromStr;
 
 #[rstest]
-#[test]
 fn test_entity_type_from_str() {
     assert_eq!(EntityType::from_str("memory").unwrap(), EntityType::Memory);
     assert_eq!(EntityType::from_str("CODE").unwrap(), EntityType::Code);
@@ -13,7 +12,6 @@ fn test_entity_type_from_str() {
 }
 
 #[rstest]
-#[test]
 fn test_constraint_builder_chaining() {
     let builder = ConstraintBuilder::new()
         .with_project_id("proj-123")
@@ -25,7 +23,6 @@ fn test_constraint_builder_chaining() {
 }
 
 #[rstest]
-#[test]
 fn test_constraint_builder_tags() {
     let builder = ConstraintBuilder::new().with_tags(&["tag1", "tag2", "tag3"]);
 
@@ -35,7 +32,6 @@ fn test_constraint_builder_tags() {
 }
 
 #[rstest]
-#[test]
 fn test_empty_builder() {
     let builder = ConstraintBuilder::new();
     assert!(builder.is_empty());
@@ -43,7 +39,6 @@ fn test_empty_builder() {
 }
 
 #[rstest]
-#[test]
 fn test_build_condition_returns_all() {
     let builder = ConstraintBuilder::new()
         .with_project_id("proj-123")

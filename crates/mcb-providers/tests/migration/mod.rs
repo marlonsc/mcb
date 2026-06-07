@@ -1,11 +1,8 @@
 //! Database migration tests.
 
-// Force-link mcb_providers so that its linkme-registered migration provider
-// populates the MIGRATION_PROVIDERS distributed slice.
-// The explicit Migrator reference prevents linker gc-sections from stripping the module.
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
-#[allow(unused_imports)]
-use mcb_providers::database::seaorm::migration::Migrator;
+// linkme force-link
 use sea_orm::{ConnectionTrait, DatabaseBackend, DatabaseConnection, Statement};
 
 use mcb_domain::utils::tests::utils::TestResult;
@@ -24,7 +21,7 @@ async fn query_names(db: &DatabaseConnection, sql: &str) -> TestResult<Vec<Strin
 #[rstest]
 #[tokio::test]
 async fn migration_creates_all_tables() -> TestResult {
-    let db = sea_orm::Database::connect("sqlite::memory:").await?;
+    let db = sea_orm::Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
@@ -77,7 +74,7 @@ async fn migration_creates_all_tables() -> TestResult {
 #[rstest]
 #[tokio::test]
 async fn migration_creates_fts5_triggers() -> TestResult {
-    let db = sea_orm::Database::connect("sqlite::memory:").await?;
+    let db = sea_orm::Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
@@ -105,7 +102,7 @@ async fn migration_creates_fts5_triggers() -> TestResult {
 #[rstest]
 #[tokio::test]
 async fn migration_creates_indexes() -> TestResult {
-    let db = sea_orm::Database::connect("sqlite::memory:").await?;
+    let db = sea_orm::Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
 
@@ -133,7 +130,7 @@ async fn migration_creates_indexes() -> TestResult {
 #[rstest]
 #[tokio::test]
 async fn migration_down_drops_all_tables() -> TestResult {
-    let db = sea_orm::Database::connect("sqlite::memory:").await?;
+    let db = sea_orm::Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     mcb_domain::registry::database::migrate_down(Box::new(db.clone()), None).await?;
@@ -153,7 +150,7 @@ async fn migration_down_drops_all_tables() -> TestResult {
 #[rstest]
 #[tokio::test]
 async fn migration_is_idempotent() -> TestResult {
-    let db = sea_orm::Database::connect("sqlite::memory:").await?;
+    let db = sea_orm::Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;

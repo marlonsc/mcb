@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Scan docs/ for outdated content patterns."""
 
+import argparse
 import os
 import re
 import sys
-import argparse
 
-import scripts.docs.py.utils as utils
+from scripts.docs.py import utils
 
 
 def _process_lines(lines, rel_filepath, outdated_patterns, is_suppressed):

@@ -8,7 +8,7 @@ mod integration_metrics_tests {
     use rstest::rstest;
     use std::path::Path;
 
-    use mcb_validate::Severity;
+    use mcb_domain::ports::validation::Severity;
     use mcb_validate::metrics::{MetricThresholds, MetricType, RcaAnalyzer};
     use rust_code_analysis::LANG;
     use tempfile::TempDir;
@@ -330,7 +330,7 @@ fn with_if(x: i32) {
     #[rstest]
     #[test]
     fn test_suggestion_text() {
-        use mcb_validate::Violation;
+        use mcb_domain::ports::validation::Violation;
 
         let thresholds = MetricThresholds::new().with_threshold(
             MetricType::CyclomaticComplexity,

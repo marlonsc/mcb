@@ -4,12 +4,12 @@
 //! Python project detector.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
+use mcb_domain::ports::ProjectDetector;
+use mcb_domain::registry::ProjectDetectorConfig;
 use serde::Deserialize;
 
 use super::common::{parse_toml_opt, read_file_opt};
@@ -106,18 +106,9 @@ impl ProjectDetector for PythonDetector {
     }
 }
 
-fn python_factory(
-    config: &ProjectDetectorConfig,
-) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
-    Ok(Arc::new(PythonDetector::new(config)))
-}
-
-// linkme distributed_slice uses #[link_section] internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
-static PYTHON_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
-    name: "python",
-    description: "Detects Python projects with pyproject.toml or requirements.txt",
-    marker_files: &["pyproject.toml", "requirements.txt"],
-    build: python_factory,
-};
+mcb_domain::register_project_detector!(
+    "python",
+    "Detects Python projects with pyproject.toml or requirements.txt",
+    &["pyproject.toml", "requirements.txt"],
+    |_config| Ok(std::sync::Arc::new(PythonDetector))
+);

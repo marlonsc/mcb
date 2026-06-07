@@ -1,4 +1,5 @@
-use crate::utils::test_fixtures::*;
+use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::utils::tests::mcp_assertions::extract_text;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_server::args::{IssueEntityAction, IssueEntityArgs, IssueEntityResource};
 use rmcp::handler::server::wrapper::Parameters;
@@ -19,7 +20,7 @@ fn base_args(action: IssueEntityAction, resource: IssueEntityResource) -> IssueE
 }
 
 fn result_json(res: &rmcp::model::CallToolResult) -> serde_json::Value {
-    let text = golden_content_to_string(res);
+    let text = extract_text(res);
     serde_json::from_str(&text)
         .unwrap_or_else(|e| panic!("response should be valid JSON: {text}; error: {e}"))
 }

@@ -12,14 +12,13 @@ fn sample_api_key() -> api_key::Model {
         key_hash: "hash_api_key_001".into(),
         name: "test_name".into(),
         scopes_json: "{}".into(),
-        expires_at: Some(1_700_000_000),
-        created_at: 1_700_000_000,
-        revoked_at: Some(1_700_000_000),
+        expires_at: Some(mcb_utils::constants::testing::TEST_TIMESTAMP),
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        revoked_at: Some(mcb_utils::constants::testing::TEST_TIMESTAMP),
     }
 }
 
 #[rstest]
-#[test]
 fn round_trip_api_key() {
     let model = sample_api_key();
     let model_val = model.id.clone();

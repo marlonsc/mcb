@@ -40,7 +40,7 @@ define_violations! {
         #[violation(
             id = "QUAL003",
             severity = Warning,
-            message = "panic!() in production: {file}:{line} - {context}",
+            message = "panic macro in production: {file}:{line} - {context}",
             suggestion = "Return an error instead of panicking"
         )]
         PanicInProduction {
@@ -79,8 +79,8 @@ define_violations! {
         #[violation(
             id = "QUAL020",
             severity = Warning,
-            message = "{file}:{line} - {item_name} (allow(dead_code) not permitted)",
-            suggestion = "Remove #[allow(dead_code)] and fix or remove the dead code; justifications are not permitted"
+            message = "{file}:{line} - {item_name} (allow dead code not permitted)",
+            suggestion = "Remove the dead code allow attribute and fix or remove the code; justifications are not permitted"
         )]
         DeadCodeAllowNotPermitted {
             file: PathBuf,

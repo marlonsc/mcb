@@ -67,35 +67,51 @@ tool_schema! {
 /// Arguments for the consolidated `entity` MCP tool.
 pub struct EntityArgs {
     /// CRUD actions for entity resources.
+    #[schemars(description = "Action: create, get, update, list, delete, release")]
     pub action: EntityAction,
     /// Target resource type for consolidated entity operations.
+    #[schemars(description = "Resource type")]
     pub resource: EntityResource,
     /// JSON payload for create/update actions.
-    #[schemars(with = "ObjectDataSchema")]
+    #[schemars(description = "Data payload for create/update (JSON object)", with = "ObjectDataSchema")]
     pub data: Option<serde_json::Value>,
     /// Resource ID (for get/update/delete/release).
+    #[schemars(description = "Resource ID (for get/update/delete)")]
     pub id: Option<String>,
-    /// Organization ID.
+
+    // --- context (auto-injected, hidden from MCP schema) ---
+    /// Organization ID (auto-injected).
+    #[schemars(skip)]
     pub org_id: Option<String>,
-    /// Project ID (project-scoped list operations).
+    /// Project ID (auto-injected).
+    #[schemars(skip)]
     pub project_id: Option<String>,
-    /// Repository ID (branch/worktree list operations).
+    /// Repository ID (auto-injected).
+    #[schemars(skip)]
     pub repository_id: Option<String>,
-    /// Worktree ID (assignment list operations).
+    /// Worktree ID (auto-injected).
+    #[schemars(skip)]
     pub worktree_id: Option<String>,
-    /// Plan ID (version list operations).
+    /// Plan ID (auto-injected).
+    #[schemars(skip)]
     pub plan_id: Option<String>,
-    /// Plan version ID (review list operations).
+    /// Plan version ID (auto-injected).
+    #[schemars(skip)]
     pub plan_version_id: Option<String>,
-    /// Issue ID (comment/list/label assignment operations).
+    /// Issue ID (auto-injected).
+    #[schemars(skip)]
     pub issue_id: Option<String>,
-    /// Label ID (label unassignment operations).
+    /// Label ID (auto-injected).
+    #[schemars(skip)]
     pub label_id: Option<String>,
-    /// Team ID (team member list operations).
+    /// Team ID (auto-injected).
+    #[schemars(skip)]
     pub team_id: Option<String>,
-    /// User ID (team member delete operations).
+    /// User ID (auto-injected).
+    #[schemars(skip)]
     pub user_id: Option<String>,
-    /// User email (lookup operations).
+    /// User email (auto-injected).
+    #[schemars(skip)]
     pub email: Option<String>,
 }
 }

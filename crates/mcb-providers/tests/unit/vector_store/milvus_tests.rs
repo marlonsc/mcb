@@ -1,11 +1,11 @@
 use mcb_domain::value_objects::CollectionId;
-use mcb_providers::constants::{
-    MILVUS_COLLECTION_NAME_PATTERN, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_ID,
-    VECTOR_FIELD_START_LINE,
-};
 use mcb_providers::vector_store::milvus::browser::convert_query_results;
 use mcb_providers::vector_store::milvus::schema::{extract_long_field, extract_string_field};
 use mcb_providers::vector_store::milvus::to_milvus_name;
+use mcb_utils::constants::vector_store::{
+    MILVUS_COLLECTION_NAME_PATTERN, MILVUS_COLLECTION_PREFIX, VECTOR_FIELD_FILE_PATH,
+    VECTOR_FIELD_ID, VECTOR_FIELD_START_LINE,
+};
 use milvus::data::FieldColumn;
 use milvus::proto::schema::DataType;
 use milvus::value::ValueVec;
@@ -30,16 +30,14 @@ fn milvus_name(collection_id: CollectionId) -> String {
 // ---------------------------------------------------------------------------
 
 #[rstest]
-#[test]
 fn test_to_milvus_name_starts_with_letter(milvus_name: String) {
     assert!(
-        milvus_name.starts_with("mcb_"),
-        "name must start with mcb_ prefix: {milvus_name}"
+        milvus_name.starts_with(MILVUS_COLLECTION_PREFIX),
+        "name must start with {MILVUS_COLLECTION_PREFIX} prefix: {milvus_name}",
     );
 }
 
 #[rstest]
-#[test]
 fn test_to_milvus_name_no_hyphens(milvus_name: String) {
     assert!(
         !milvus_name.contains('-'),
@@ -48,7 +46,6 @@ fn test_to_milvus_name_no_hyphens(milvus_name: String) {
 }
 
 #[rstest]
-#[test]
 fn test_to_milvus_name_valid_pattern(milvus_name: String) {
     let pattern = regex::Regex::new(MILVUS_COLLECTION_NAME_PATTERN).unwrap();
     assert!(
@@ -58,7 +55,6 @@ fn test_to_milvus_name_valid_pattern(milvus_name: String) {
 }
 
 #[rstest]
-#[test]
 fn test_to_milvus_name_under_255_chars(milvus_name: String) {
     assert!(
         milvus_name.len() <= 255,
@@ -99,7 +95,6 @@ fn long_column() -> impl Fn(&str, Vec<i64>) -> FieldColumn {
 // ---------------------------------------------------------------------------
 
 #[rstest]
-#[test]
 fn test_extract_string_field_missing_column_returns_error() {
     let fields: Vec<FieldColumn> = vec![];
     let result = extract_string_field(&fields, "missing", 0);
@@ -112,7 +107,6 @@ fn test_extract_string_field_missing_column_returns_error() {
 }
 
 #[rstest]
-#[test]
 fn test_extract_string_field_out_of_bounds_returns_error(
     string_column: impl Fn(&str, Vec<String>) -> FieldColumn,
 ) {
@@ -130,7 +124,6 @@ fn test_extract_string_field_out_of_bounds_returns_error(
 }
 
 #[rstest]
-#[test]
 fn test_extract_string_field_valid_returns_ok(
     string_column: impl Fn(&str, Vec<String>) -> FieldColumn,
 ) {
@@ -143,7 +136,6 @@ fn test_extract_string_field_valid_returns_ok(
 }
 
 #[rstest]
-#[test]
 fn test_extract_long_field_missing_column_returns_error() {
     let fields: Vec<FieldColumn> = vec![];
     let result = extract_long_field(&fields, "missing", 0);
@@ -156,7 +148,6 @@ fn test_extract_long_field_missing_column_returns_error() {
 }
 
 #[rstest]
-#[test]
 fn test_extract_long_field_valid_returns_ok(long_column: impl Fn(&str, Vec<i64>) -> FieldColumn) {
     let fields = vec![long_column(VECTOR_FIELD_START_LINE, vec![42])];
     let result = extract_long_field(&fields, VECTOR_FIELD_START_LINE, 0);
@@ -164,7 +155,6 @@ fn test_extract_long_field_valid_returns_ok(long_column: impl Fn(&str, Vec<i64>)
 }
 
 #[rstest]
-#[test]
 fn test_convert_query_results_missing_fields_returns_error(
     string_column: impl Fn(&str, Vec<String>) -> FieldColumn,
 ) {
@@ -229,11 +219,11 @@ fn test_error_message_contains_expected_substrings(
 #[case(VECTOR_FIELD_ID)]
 #[case(VECTOR_FIELD_FILE_PATH)]
 #[case(VECTOR_FIELD_START_LINE)]
-#[case(mcb_providers::constants::VECTOR_FIELD_CONTENT)]
+#[case(mcb_utils::constants::vector_store::VECTOR_FIELD_CONTENT)]
 fn test_default_output_fields_contains_field(#[case] field: &str) {
-    use mcb_providers::vector_store::milvus::DEFAULT_OUTPUT_FIELDS;
+    use mcb_utils::constants::vector_store::MILVUS_DEFAULT_OUTPUT_FIELDS;
     assert!(
-        DEFAULT_OUTPUT_FIELDS.contains(&field),
-        "DEFAULT_OUTPUT_FIELDS must contain '{field}' for extraction to work"
+        MILVUS_DEFAULT_OUTPUT_FIELDS.contains(&field),
+        "MILVUS_DEFAULT_OUTPUT_FIELDS must contain '{field}' for extraction to work"
     );
 }

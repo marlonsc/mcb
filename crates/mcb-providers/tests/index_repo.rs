@@ -4,20 +4,20 @@
 
 use std::sync::Arc;
 
-use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::ports::IndexRepository;
 use mcb_domain::ports::IndexingOperationStatus;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::value_objects::CollectionId;
 use mcb_providers::database::seaorm::entities::{organization, project};
 use mcb_providers::database::seaorm::repos::SeaOrmIndexRepository;
+use mcb_utils::constants::values::DEFAULT_ORG_ID;
 use rstest::rstest;
 use sea_orm::{ActiveModelTrait, ActiveValue::Set, ConnectionTrait, Database, DatabaseConnection};
 
 const PROJECT_ID: &str = "proj-idx-001";
 
 async fn setup_db() -> TestResult<Arc<DatabaseConnection>> {
-    let db = Database::connect("sqlite::memory:").await?;
+    let db = Database::connect(mcb_utils::constants::SQLITE_MEMORY_DSN).await?;
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     Ok(Arc::new(db))
 }
@@ -28,8 +28,8 @@ async fn seed_org_and_project(db: &DatabaseConnection) -> TestResult {
         name: Set("Default Org".to_owned()),
         slug: Set("default-org".to_owned()),
         settings_json: Set("{}".to_owned()),
-        created_at: Set(1_700_000_000),
-        updated_at: Set(1_700_000_000),
+        created_at: Set(mcb_utils::constants::testing::TEST_TIMESTAMP),
+        updated_at: Set(mcb_utils::constants::testing::TEST_TIMESTAMP),
     };
     org.insert(db).await?;
 
@@ -38,8 +38,8 @@ async fn seed_org_and_project(db: &DatabaseConnection) -> TestResult {
         org_id: Set(DEFAULT_ORG_ID.to_owned()),
         name: Set("Index Test Project".to_owned()),
         path: Set("/tmp/index-test".to_owned()),
-        created_at: Set(1_700_000_000),
-        updated_at: Set(1_700_000_000),
+        created_at: Set(mcb_utils::constants::testing::TEST_TIMESTAMP),
+        updated_at: Set(mcb_utils::constants::testing::TEST_TIMESTAMP),
     };
     proj.insert(db).await?;
 

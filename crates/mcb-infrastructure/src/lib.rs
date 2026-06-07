@@ -16,10 +16,9 @@
 //! | -------- | ------------- |
 //! | [`crypto`] | AES-GCM encryption, secure key generation |
 //!
-//! ### Configuration & DI
+//! ### Infrastructure
 //! | Module | Description |
 //! | -------- | ------------- |
-//! | [`config`] | YAML configuration with hot-reload |
 //! | [`constants`] | Centralized configuration constants |
 //!
 //! ### Routing & Selection
@@ -30,13 +29,11 @@
 // Clippy allows for complex patterns in infrastructure code
 
 pub mod config;
-pub mod constants;
 pub mod crypto;
 pub mod infrastructure;
+pub mod logging;
 
 pub mod project;
 pub mod routing;
 pub mod services;
 pub mod validation;
-
-pub mod events;

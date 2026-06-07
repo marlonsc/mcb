@@ -3,34 +3,28 @@
 //! Tests the `CodebaseSnapshot` and `FileSnapshot` entities, including
 //! change tracking functionality.
 
-use rstest::rstest;
+use rstest::{fixture, rstest};
 use std::collections::HashMap;
 
 use mcb_domain::entities::codebase::{CodebaseSnapshot, FileSnapshot, SnapshotChanges};
 
-#[rstest]
-#[case("src/lib.rs", 1641081600, 2048, "def456", "rust")]
-fn file_snapshot_creation(
-    #[case] path: &str,
-    #[case] modified_at: i64,
-    #[case] size: u64,
-    #[case] hash: &str,
-    #[case] language: &str,
-) {
-    let file_snapshot = FileSnapshot {
+#[fixture]
+fn default_file() -> FileSnapshot {
+    FileSnapshot {
         id: "file-001".to_owned(),
-        path: path.to_owned(),
-        modified_at,
-        size,
-        hash: hash.to_owned(),
-        language: language.to_owned(),
-    };
+        path: "src/main.rs".to_owned(),
+        modified_at: 1640995200,
+        size: 1024,
+        hash: "abc123".to_owned(),
+        language: "rust".to_owned(),
+    }
+}
 
-    assert_eq!(file_snapshot.path, path);
-    assert_eq!(file_snapshot.modified_at, modified_at);
-    assert_eq!(file_snapshot.size, size);
-    assert_eq!(file_snapshot.hash, hash);
-    assert_eq!(file_snapshot.language, language);
+#[rstest]
+fn file_snapshot_creation(default_file: FileSnapshot) {
+    assert_eq!(default_file.path, "src/main.rs");
+    assert_eq!(default_file.modified_at, 1640995200);
+    assert_eq!(default_file.size, 1024);
 }
 
 #[rstest]

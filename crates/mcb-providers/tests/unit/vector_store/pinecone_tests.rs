@@ -18,6 +18,7 @@ fn pinecone_provider() -> PineconeVectorStoreProvider {
         "https://test.pinecone.io",
         Duration::from_secs(5),
         reqwest::Client::new(),
+        None,
     )
 }
 
@@ -48,7 +49,6 @@ fn test_match_to_search_result_error_cases(
 }
 
 #[rstest]
-#[test]
 fn test_match_to_search_result_valid_item_succeeds() {
     let item = serde_json::json!({
         "id": "vec_123",
@@ -95,7 +95,8 @@ fn test_pinecone_factory_missing_config_returns_error(
     let result = pinecone_factory(&config);
     let err = result
         .map(|_| ())
-        .expect_err("pinecone_factory should fail");
+        .expect_err("pinecone_factory should fail")
+        .to_string();
     assert!(
         err.contains(expected_field),
         "error should mention '{expected_field}': {err}"

@@ -4,8 +4,8 @@
 //! MCP server and state are built via [`mcb_server::build_mcp_server_bootstrap`]
 //! with pure registry DI through `mcb_domain::registry::*`.
 //!
-//! **Entity fixtures and constants are centralized in `mcb_domain::test_utils`.**
-//! This module re-exports them and adds mcb-server-specific helpers.
+//! **Entity fixtures and constants live in `mcb_domain::test_utils`.**
+//! This module provides mcb-server-specific test infrastructure (DI, MCP server).
 
 use std::sync::Arc;
 
@@ -21,22 +21,55 @@ use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
 use mcb_domain::value_objects::Embedding;
-use mcb_infrastructure::config::TestConfigBuilder;
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::mcp_server::McpServer;
 use mcb_server::state::McbState;
 use mcb_server::tools::ExecutionFlow;
 use tempfile::TempDir;
 
-// Force linkme registration of all concrete providers
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
 
+// Import centralized fixtures from mcb-domain
+use mcb_domain::utils::tests::utils::{create_temp_codebase, create_test_indexing_result};
+// Import test constants from canonical source (mcb-utils)
+use mcb_utils::constants::testing::{TEST_ORG_ID, TEST_REPO_NAME, TEST_SESSION_ID};
+
+// -----------------------------------------------------------------------------
+// Golden test helpers (shared by tests/golden and integration)
+// -----------------------------------------------------------------------------
+
 // ---------------------------------------------------------------------------
-// Deterministic embedding provider for test composition
+// Shared FastEmbed cache directory
 // ---------------------------------------------------------------------------
-// Contract/state tests assert MCP wiring, not embedding quality, so they use a
-// pure-CPU deterministic provider instead of the real FastEmbed ONNX model.
-// This removes the model-download dependency that flakes on macOS/Windows CI.
+
+/// Process-wide shared `FastEmbed` ONNX model cache directory.
+#[must_use]
+pub fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
+    static DIR: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+    DIR.get_or_init(|| {
+        let cache_dir = std::env::var_os("FASTEMBED_CACHE_DIR")
+            .or_else(|| std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR"))
+            .map_or_else(
+                || std::env::temp_dir().join("mcb-fastembed-test-cache"),
+                std::path::PathBuf::from,
+            );
+        if let Err(err) = std::fs::create_dir_all(&cache_dir) {
+            mcb_domain::warn!(
+                "test_fixtures",
+                "failed to create shared fastembed cache dir",
+                &err.to_string()
+            );
+            return std::env::temp_dir().join("mcb-fastembed-test-cache");
+        }
+        cache_dir
+    })
+    .clone()
+}
+
+// ---------------------------------------------------------------------------
+// Deterministic embedding provider for unit test composition
+// ---------------------------------------------------------------------------
 
 #[derive(Debug)]
 struct DeterministicTestEmbeddingProvider {
@@ -95,97 +128,8 @@ impl EmbeddingProvider for DeterministicTestEmbeddingProvider {
     }
 }
 
-/// Deterministic CPU embedding provider for contract/state tests (no model download).
 pub(super) fn create_test_embedding_provider(dimensions: usize) -> Arc<dyn EmbeddingProvider> {
     Arc::new(DeterministicTestEmbeddingProvider::new(dimensions))
-}
-
-// -----------------------------------------------------------------------------
-// Re-export ALL centralized constants and fixtures from mcb-domain SSOT
-// -----------------------------------------------------------------------------
-pub use mcb_domain::test_utils::{
-    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, TEST_EMBEDDING_DIMENSIONS, TEST_ORG_ID,
-    TEST_ORG_ID_A, TEST_ORG_ID_B, TEST_PROJECT_ID, TEST_REPO_NAME, TEST_SESSION_ID,
-    create_temp_codebase, create_test_admin_user, create_test_api_key, create_test_indexing_result,
-    create_test_organization, create_test_team, create_test_team_member, create_test_user_with,
-};
-
-// Re-export domain_services helpers for integration tests
-pub use super::domain_services::create_base_memory_args;
-
-// Backward-compat aliases used by e2e tests (delegate to centralized SSOT)
-
-/// Alias for [`create_test_organization`].
-#[must_use]
-pub fn test_organization(id: &str) -> mcb_domain::entities::Organization {
-    create_test_organization(id)
-}
-
-/// Alias for [`create_test_user_with`].
-#[must_use]
-pub fn test_user(org_id: &str, email: &str) -> mcb_domain::entities::User {
-    create_test_user_with(org_id, email)
-}
-
-/// Alias for [`create_test_admin_user`].
-#[must_use]
-pub fn test_admin_user(org_id: &str, email: &str) -> mcb_domain::entities::User {
-    create_test_admin_user(org_id, email)
-}
-
-/// Alias for [`create_test_team`].
-#[must_use]
-pub fn test_team(org_id: &str, name: &str) -> mcb_domain::entities::Team {
-    create_test_team(org_id, name)
-}
-
-/// Alias for [`create_test_team_member`].
-#[must_use]
-pub fn test_team_member(team_id: &str, user_id: &str) -> mcb_domain::entities::TeamMember {
-    create_test_team_member(team_id, user_id)
-}
-
-/// Alias for [`create_test_api_key`].
-#[must_use]
-pub fn test_api_key(user_id: &str, org_id: &str, name: &str) -> mcb_domain::entities::ApiKey {
-    create_test_api_key(user_id, org_id, name)
-}
-
-// -----------------------------------------------------------------------------
-// Golden test helpers (shared by tests/golden and integration)
-// -----------------------------------------------------------------------------
-
-pub use mcb_domain::test_fixtures::{
-    golden_content_to_string, golden_count_result_entries, golden_parse_results_found,
-    sample_codebase_path,
-};
-
-// ---------------------------------------------------------------------------
-// Shared FastEmbed cache directory
-// ---------------------------------------------------------------------------
-
-/// Process-wide shared `FastEmbed` ONNX model cache directory.
-#[must_use]
-pub fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
-    static DIR: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
-    DIR.get_or_init(|| {
-        let cache_dir = std::env::var_os("FASTEMBED_CACHE_DIR")
-            .or_else(|| std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR"))
-            .map_or_else(
-                || std::env::temp_dir().join("mcb-fastembed-test-cache"),
-                std::path::PathBuf::from,
-            );
-        if let Err(err) = std::fs::create_dir_all(&cache_dir) {
-            mcb_domain::warn!(
-                "test_fixtures",
-                "failed to create shared fastembed cache dir",
-                &err.to_string()
-            );
-            return std::env::temp_dir().join("mcb-fastembed-test-cache");
-        }
-        cache_dir
-    })
-    .clone()
 }
 
 // ---------------------------------------------------------------------------
@@ -243,7 +187,7 @@ fn create_shared_test_context() -> Option<SharedTestContext> {
 
     let vs_config = VectorStoreProviderConfig::new("edgevec")
         .with_dimensions(384)
-        .with_collection("default");
+        .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
     let vector_store = resolve_vector_store_provider(&vs_config).ok()?;
 
     Some(SharedTestContext {
@@ -284,7 +228,7 @@ pub async fn create_test_mcb_state() -> Option<(McbState, TempDir)> {
 // create_test_mcp_server
 // ---------------------------------------------------------------------------
 
-/// Create an MCP server with default providers (`SQLite`, `FastEmbed`, etc.) and an isolated DB.
+/// Create an MCP server with default local providers and an isolated DB.
 ///
 /// Builds state via pure registry DI: resolve providers through `mcb_domain::registry::*`,
 /// build [`ServiceResolutionContext`], then [`build_mcp_server_bootstrap`].
@@ -305,24 +249,29 @@ pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn st
 
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess"))?;
 
-    // Deterministic local embedding provider (no ONNX model download; the MCP
-    // server test asserts wiring, not embedding quality). Avoids the macOS/Windows
-    // FastEmbed model-retrieval flake.
     let embedding_provider = create_test_embedding_provider(384);
 
     let vs_config = VectorStoreProviderConfig::new("edgevec")
         .with_dimensions(384)
-        .with_collection("default");
+        .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
     let vector_store_provider = resolve_vector_store_provider(&vs_config)?;
 
-    let hybrid_search =
-        resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default"))?;
+    let hybrid_search = resolve_hybrid_search_provider(&HybridSearchProviderConfig::new(
+        mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+    ))?;
 
-    // Load a real AppConfig so service builders (e.g. IndexingService) can
-    // downcast the config from the resolution context.
-    let (app_config, _) = TestConfigBuilder::new()
-        .and_then(|b| b.with_temp_db("test-mcp.db"))
-        .and_then(TestConfigBuilder::build)?;
+    // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
+    let config_provider = mcb_domain::registry::config::resolve_config_provider(
+        &mcb_domain::registry::config::ConfigProviderConfig::new(
+            mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
+        ),
+    )?;
+    let app_config = *config_provider
+        .load_config()?
+        .downcast::<mcb_infrastructure::config::app::AppConfig>()
+        .map_err(|_| {
+            mcb_domain::error::Error::internal("ConfigProvider returned unexpected type")
+        })?;
 
     let resolution_ctx = ServiceResolutionContext {
         db: Arc::clone(&db),

@@ -10,7 +10,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ---
 
 ## [Unreleased]
-### No unreleased changes
+
+---
+
+## [0.3.1] - 2026-06-06
+
+### Added
+
+- Docker app/stdio compose profiles using inline Loco YAML configuration.
+- Root Dockerfile for containerized `mcb serve` runtime builds.
+
+### Changed
+
+- Agent instructions now use `AGENTS.md` as the project-canonical source, with
+  `CLAUDE.md` and Copilot instructions kept as thin pointers.
+- Project status docs updated for the `0.3.1` release line.
+- Provider registry, port contracts, and provider factories now return the domain
+  `Error`/`Result` instead of `String`, giving typed errors across the DI layer.
+- Strict AGENTS.md pass across all crates: long functions split, complexity and
+  parameter-sprawl reduced, duplicate types consolidated, module/enum docs added.
+- Architecture validator (`mcb-validate`) accuracy improved at the source: metrics
+  measure only real functions; pattern-definition data and macro-generated items are
+  excluded from scans; test-naming, test-coverage, error-boundary, file-suffix, and
+  raw-`Result` rules now match the project's conventions.
+- Integration tests serialize via a cross-process `ProcessLock` file lock instead of
+  `serial_test`.
+
+### Fixed
+
+- Entity and project handlers now use the shared MCP JSON response formatter.
+- Test helpers reuse shared FastEmbed cache and HTTP header utilities.
+- Admin API-key auth: removed dead in-memory filter; `find_active_api_key_candidates`
+  returns active (non-revoked, non-expired) candidates for argon2 verification.
+- Development JWT secret sourced from `JWT_SECRET` env (no empty hardcoded default).
+- `git.rs` diff/branch matches handle all cases explicitly (no silent catch-alls);
+  removed clone-in-loop allocations.
 
 ---
 

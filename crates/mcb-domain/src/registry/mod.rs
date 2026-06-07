@@ -66,6 +66,11 @@
 
 /// Admin operations provider registry.
 pub mod admin_operations;
+/// Code analyzers registry.
+pub mod code_analysis;
+pub use code_analysis::*;
+/// Configuration provider registry.
+pub mod config;
 /// Database provider registry.
 pub mod database;
 /// Embedding provider registry.
@@ -76,6 +81,9 @@ pub mod events;
 pub mod language;
 /// Project detection provider registry.
 pub mod project_detection;
+/// Project detector backend providers registry.
+pub mod project_detector;
+pub use project_detector::*;
 /// Service registry (context, indexing, search, memory, agent session, validation).
 pub mod services;
 
@@ -87,9 +95,7 @@ pub use admin_operations::{
     resolve_indexing_operations_provider, resolve_validation_operations_provider,
 };
 pub use services::{
-    AGENT_SESSION_SERVICE_NAME, CONTEXT_SERVICE_NAME, HIGHLIGHT_SERVICE_NAME,
-    INDEXING_SERVICE_NAME, MEMORY_SERVICE_NAME, SEARCH_SERVICE_NAME, SERVICES_REGISTRY,
-    ServiceBuilder, ServiceRegistryEntry, VALIDATION_SERVICE_NAME, resolve_agent_session_service,
+    SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry, resolve_agent_session_service,
     resolve_context_service, resolve_highlight_service, resolve_indexing_service,
     resolve_memory_service, resolve_search_service, resolve_validation_service,
 };

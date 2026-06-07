@@ -25,11 +25,11 @@ mod architecture_integration_tests {
     use std::path::{Path, PathBuf};
 
     use crate::utils::run_named_validator;
-    use mcb_validate::ValidationConfig;
-    use mcb_validate::Validator;
+    use mcb_domain::ports::validation::ValidationConfig;
+    use mcb_domain::ports::validation::Validator;
+    use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
     use mcb_validate::config::NamingRulesConfig;
     use mcb_validate::{CleanArchitectureValidator, CleanArchitectureViolation};
-    use mcb_validate::{Severity, Violation, ViolationCategory};
     use tempfile::TempDir;
 
     fn mcb_naming_config() -> NamingRulesConfig {
@@ -40,6 +40,7 @@ mod architecture_integration_tests {
             infrastructure_crate: "mcb-infrastructure".to_owned(),
             server_crate: "mcb-server".to_owned(),
             validate_crate: "mcb-validate".to_owned(),
+            utils_crate: "mcb-utils".to_owned(),
 
             enabled: true,
         }

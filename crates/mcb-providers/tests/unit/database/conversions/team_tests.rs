@@ -9,12 +9,11 @@ fn sample_team() -> team::Model {
         id: "team_test_001".into(),
         org_id: "ref_org_id_001".into(),
         name: "test_name".into(),
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 
 #[rstest]
-#[test]
 fn round_trip_team() {
     let model = sample_team();
     let model_val = model.id.clone();

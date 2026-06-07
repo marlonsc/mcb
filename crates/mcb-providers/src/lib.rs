@@ -39,9 +39,6 @@
 #[macro_use]
 pub mod macros;
 
-/// Provider-specific constants
-pub mod constants;
-
 /// Shared utilities for provider implementations
 pub mod utils;
 

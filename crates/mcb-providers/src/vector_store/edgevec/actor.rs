@@ -1,5 +1,15 @@
+use crate::utils::vector_store::search_result_from_json_metadata;
+use mcb_utils::constants::vector_store::{
+    STATS_FIELD_COLLECTION, STATS_FIELD_VECTORS_COUNT, VECTOR_FIELD_FILE_PATH,
+    VECTOR_FIELD_LANGUAGE,
+};
+
 use super::*;
 
+/// Single-threaded owner of the `EdgeVec` index, storage, and metadata.
+///
+/// Runs in its own task and serializes all vector-store operations by
+/// processing [`EdgeVecMessage`] values received on `receiver`.
 pub struct EdgeVecActor {
     receiver: mpsc::Receiver<EdgeVecMessage>,
     index: edgevec::HnswIndex,
@@ -123,7 +133,7 @@ impl EdgeVecActor {
         if let Some(collection_metadata) = self.get_collection_metadata(collection) {
             for id in ids {
                 if let Some(meta_val) = collection_metadata.get(&id) {
-                    final_results.push(search_result_from_json_metadata(id.clone(), meta_val, 1.0));
+                    final_results.push(search_result_from_json_metadata(id, meta_val, 1.0));
                 }
             }
         }
@@ -135,7 +145,7 @@ impl EdgeVecActor {
         if let Some(collection_metadata) = self.get_collection_metadata(collection) {
             for (ext_id, meta_val) in collection_metadata.iter().take(limit) {
                 final_results.push(search_result_from_json_metadata(
-                    ext_id.clone(),
+                    ext_id.to_owned(),
                     meta_val,
                     1.0,
                 ));
@@ -164,35 +174,40 @@ impl EdgeVecActor {
             limit
         };
 
-        match self.index.search(query_vector, fetch_limit, &self.storage) {
-            Ok(results) => {
-                let mut final_results = Vec::with_capacity(limit);
-                if let Some(collection_metadata) = self.get_collection_metadata(collection) {
-                    for res in results {
-                        if final_results.len() >= limit {
-                            break;
-                        }
-                        let external_id: Option<String> = self
-                            .id_map
-                            .iter()
-                            .find(|entry| *entry.value() == res.vector_id)
-                            .map(|entry| entry.key().to_owned());
+        let results = self
+            .index
+            .search(query_vector, fetch_limit, &self.storage)
+            .map_err(|e| Error::vector_db(format!("Search failed: {e}")))?;
 
-                        if let Some(ext_id) = external_id
-                            && let Some(meta_val) = collection_metadata.get(&ext_id)
-                        {
-                            final_results.push(search_result_from_json_metadata(
-                                ext_id,
-                                meta_val,
-                                res.distance as f64,
-                            ));
-                        }
-                    }
-                }
-                Ok(final_results)
+        let Some(collection_metadata) = self.get_collection_metadata(collection) else {
+            return Ok(Vec::new());
+        };
+
+        let mut final_results = Vec::with_capacity(limit);
+        for res in results {
+            if final_results.len() >= limit {
+                break;
             }
-            Err(e) => Err(Error::vector_db(format!("Search failed: {e}"))),
+            let Some(ext_id) = self.external_id_for(res.vector_id) else {
+                continue;
+            };
+            if let Some(meta_val) = collection_metadata.get(&ext_id) {
+                final_results.push(search_result_from_json_metadata(
+                    ext_id,
+                    meta_val,
+                    res.distance as f64,
+                ));
+            }
         }
+        Ok(final_results)
+    }
+
+    /// Resolve the external string id for an internal HNSW vector id.
+    fn external_id_for(&self, vector_id: VectorId) -> Option<String> {
+        self.id_map
+            .iter()
+            .find(|entry| *entry.value() == vector_id)
+            .map(|entry| entry.key().to_owned())
     }
 }
 
@@ -294,7 +309,7 @@ impl EdgeVecActor {
                         .is_some_and(|p| p.replace('\\', "/") == normalized_query)
                 {
                     let mut result =
-                        search_result_from_json_metadata(ext_id.clone(), meta_val, 1.0);
+                        search_result_from_json_metadata(ext_id.to_owned(), meta_val, 1.0);
                     result.file_path = file_path.to_owned();
                     results.push(result);
                 }

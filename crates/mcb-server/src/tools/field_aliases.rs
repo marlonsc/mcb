@@ -137,7 +137,10 @@ pub fn resolve_override_bool(overrides: &HashMap<String, String>, keys: &[&str])
         match raw.trim().to_ascii_lowercase().as_str() {
             "true" | "1" | "yes" => return Some(true),
             "false" | "0" | "no" => return Some(false),
-            _ => continue,
+            _other => {
+                mcb_domain::trace!("field_aliases", "Unrecognized boolean mapping", raw);
+                continue;
+            }
         }
     }
 

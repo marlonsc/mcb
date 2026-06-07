@@ -3,11 +3,10 @@
 //!
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
 
 use rust_code_analysis::SpaceKind;
 
-use mcb_domain::ports::{AnalysisFinding, CODE_ANALYZERS, CodeAnalyzer, CodeAnalyzerEntry};
+use mcb_domain::ports::{AnalysisFinding, CodeAnalyzer};
 use mcb_domain::utils::analysis::{self, FunctionRecord};
 
 use crate::ast::rca_helpers;
@@ -75,17 +74,14 @@ impl CodeAnalyzer for NativePmatAnalyzer {
         &self,
         workspace_root: &Path,
         threshold: u32,
-    ) -> std::result::Result<Vec<AnalysisFinding>, mcb_domain::error::Error> {
+    ) -> mcb_domain::Result<Vec<AnalysisFinding>> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
         let functions = Self::collect_functions_rca(&files);
         Ok(analysis::filter_complex_functions(functions, threshold))
     }
 
-    fn detect_dead_code(
-        &self,
-        workspace_root: &Path,
-    ) -> std::result::Result<Vec<AnalysisFinding>, mcb_domain::error::Error> {
+    fn detect_dead_code(&self, workspace_root: &Path) -> mcb_domain::Result<Vec<AnalysisFinding>> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
         let functions = Self::collect_functions_rca(&files);
@@ -97,7 +93,7 @@ impl CodeAnalyzer for NativePmatAnalyzer {
         &self,
         workspace_root: &Path,
         threshold: u32,
-    ) -> std::result::Result<Vec<AnalysisFinding>, mcb_domain::error::Error> {
+    ) -> mcb_domain::Result<Vec<AnalysisFinding>> {
         let files = Self::load_rust_files(workspace_root)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
         let functions = Self::collect_functions_rca(&files);
@@ -108,11 +104,6 @@ impl CodeAnalyzer for NativePmatAnalyzer {
     }
 }
 
-// Auto-registration via linkme distributed slice
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(CODE_ANALYZERS)]
-static NATIVE_RCA_ANALYZER: CodeAnalyzerEntry = CodeAnalyzerEntry {
-    name: "native-rca",
-    description: "RCA/tree-sitter code analyzer",
-    build: || Ok(Arc::new(NativePmatAnalyzer)),
-};
+mcb_domain::register_code_analyzer!("native-rca", "RCA/tree-sitter code analyzer", || Ok(
+    std::sync::Arc::new(NativePmatAnalyzer)
+));

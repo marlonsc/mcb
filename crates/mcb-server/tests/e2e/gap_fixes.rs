@@ -1,12 +1,13 @@
-use crate::utils::test_fixtures::{TEST_REPO_NAME, create_test_mcp_server};
-use mcb_domain::test_utils::TestResult;
-use mcb_domain::utils::text::extract_text;
+use crate::utils::test_fixtures::create_test_mcp_server;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text_from;
 use mcb_server::args::SessionAction;
 use mcb_server::args::SessionArgs;
 use mcb_server::args::ValidateAction;
 use mcb_server::args::ValidateArgs;
 use mcb_server::args::VcsAction;
 use mcb_server::args::VcsArgs;
+use mcb_utils::constants::testing::TEST_REPO_NAME;
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use std::fs;
@@ -32,7 +33,7 @@ async fn test_gap1_validate_list_rules_returns_populated_list() -> TestResult {
     assert!(!resp.is_error.unwrap_or(false));
     assert!(!resp.content.is_empty(), "Response content empty");
 
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     let json_val: serde_json::Value = serde_json::from_str(&text).unwrap();
 
     // Expected format: { "count": N, "rules": [...] }
@@ -78,7 +79,7 @@ async fn test_gap1_validate_list_rules_by_category_filter() -> TestResult {
     assert!(!resp.is_error.unwrap_or(false));
     assert!(!resp.content.is_empty(), "Response content empty");
 
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     let json_val: serde_json::Value = serde_json::from_str(&text).unwrap();
     let rules = json_val
         .get("rules")
@@ -147,7 +148,7 @@ async fn test_gap2_vcs_list_repositories_discovers_repos() -> TestResult {
     assert!(!resp.is_error.unwrap_or(false));
     assert!(!resp.content.is_empty(), "Response content empty");
 
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     let json_val: serde_json::Value = serde_json::from_str(&text).unwrap();
     println!("VCS Response JSON: {json_val}");
 
@@ -218,7 +219,7 @@ async fn test_gap3_session_list_status_handling(
     let resp = result.unwrap();
     assert!(!resp.is_error.unwrap_or(false));
 
-    let text = extract_text(&resp.content);
+    let text = extract_text_from(&resp.content);
     let json_val: serde_json::Value = serde_json::from_str(&text).unwrap();
     assert!(json_val.get("sessions").is_some());
     assert!(json_val.get("count").is_some());

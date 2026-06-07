@@ -139,3 +139,121 @@ pub struct MemoryArgs {
     pub limit: Option<u32>,
 }
 }
+
+// ---------------------------------------------------------------------------
+// MCP-facing single-purpose tools
+// ---------------------------------------------------------------------------
+
+tool_action! {
+    /// Arguments for the `store_memory` tool.
+    pub struct StoreMemoryArgs => MemoryArgs {
+        #[schemars(description = "Content: plain text or JSON {content, type?, tags?, metadata?}", with = "ObjectDataSchema")]
+        data: Option<serde_json::Value>,
+        #[schemars(description = "Tags for categorization", with = "Vec<String>")]
+        tags: Option<Vec<String>>
+        ;
+        hidden {
+            org_id: Option<String>, project_id: Option<String>, repo_id: Option<String>,
+            session_id: Option<SessionId>, parent_session_id: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: MemoryAction::Store, resource: MemoryResource::Observation,
+            data: a.data, ids: None, tags: a.tags, query: None,
+            anchor_id: None, depth_before: None, depth_after: None,
+            window_secs: None, observation_types: None, max_tokens: None, limit: None,
+        }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `get_memories` tool.
+    pub struct GetMemoriesArgs => MemoryArgs {
+        #[schemars(description = "Memory IDs to retrieve", with = "Vec<String>")]
+        ids: Option<Vec<String>>
+        ;
+        hidden {
+            org_id: Option<String>, project_id: Option<String>, repo_id: Option<String>,
+            session_id: Option<SessionId>, parent_session_id: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: MemoryAction::Get, resource: MemoryResource::Observation,
+            data: None, ids: a.ids, tags: None, query: None,
+            anchor_id: None, depth_before: None, depth_after: None,
+            window_secs: None, observation_types: None, max_tokens: None, limit: None,
+        }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `list_memories` tool.
+    pub struct ListMemoriesArgs => MemoryArgs {
+        #[schemars(description = "Search query to filter", with = "String")]
+        query: Option<String>,
+        #[schemars(description = "Filter by tags", with = "Vec<String>")]
+        tags: Option<Vec<String>>,
+        #[schemars(description = "Maximum results", with = "u32")]
+        limit: Option<u32>,
+        #[schemars(description = "Time window in seconds", with = "i64")]
+        window_secs: Option<i64>
+        ;
+        hidden {
+            org_id: Option<String>, project_id: Option<String>, repo_id: Option<String>,
+            session_id: Option<SessionId>, parent_session_id: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: MemoryAction::List, resource: MemoryResource::Observation,
+            data: None, ids: None, tags: a.tags, query: a.query,
+            anchor_id: None, depth_before: None, depth_after: None,
+            window_secs: a.window_secs, observation_types: None, max_tokens: None, limit: a.limit,
+        }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `memory_timeline` tool.
+    pub struct MemoryTimelineArgs => MemoryArgs {
+        #[schemars(description = "Anchor observation ID to center timeline on")]
+        anchor_id: String,
+        #[schemars(description = "Items before anchor (default: 5)", with = "usize")]
+        depth_before: Option<usize>,
+        #[schemars(description = "Items after anchor (default: 5)", with = "usize")]
+        depth_after: Option<usize>
+        ;
+        hidden {
+            org_id: Option<String>, project_id: Option<String>, repo_id: Option<String>,
+            session_id: Option<SessionId>, parent_session_id: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: MemoryAction::Timeline, resource: MemoryResource::Observation,
+            data: None, ids: None, tags: None, query: None,
+            anchor_id: Some(a.anchor_id), depth_before: a.depth_before, depth_after: a.depth_after,
+            window_secs: None, observation_types: None, max_tokens: None, limit: None,
+        }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `inject_context` tool.
+    pub struct InjectContextArgs => MemoryArgs {
+        #[schemars(description = "Observation types to include", with = "Vec<String>")]
+        observation_types: Option<Vec<String>>,
+        #[schemars(description = "Maximum token budget", with = "usize")]
+        max_tokens: Option<usize>
+        ;
+        hidden {
+            org_id: Option<String>, project_id: Option<String>, repo_id: Option<String>,
+            session_id: Option<SessionId>, parent_session_id: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: MemoryAction::Inject, resource: MemoryResource::Observation,
+            data: None, ids: None, tags: None, query: None,
+            anchor_id: None, depth_before: None, depth_after: None,
+            window_secs: None, observation_types: a.observation_types, max_tokens: a.max_tokens, limit: None,
+        }
+    }
+}

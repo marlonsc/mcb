@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use regex::Regex;
 
 use crate::error::{Error, Result};
-use crate::ports::AnalysisFinding;
+use crate::ports::providers::analysis::AnalysisFinding;
 
 /// Record of a discovered function.
 #[derive(Debug, Clone)]
@@ -58,7 +58,9 @@ pub fn extract_function_body(content: &str, start_pos: usize) -> Option<String> 
                     return Some(content[body_start..=i].to_string());
                 }
             }
-            _ => {}
+            _other => {
+                // Ignore other characters
+            }
         }
         i += 1;
     }
@@ -227,30 +229,28 @@ pub fn compute_tdg_scores(
         *entry = (*entry).max(function.complexity);
     }
 
-    let mut dead_by_file: HashMap<PathBuf, u32> = HashMap::new();
+    let mut dead_by_file: HashMap<&PathBuf, u32> = HashMap::new();
     for finding in dead_code {
         if let AnalysisFinding::DeadCode { file, .. } = finding {
-            *dead_by_file.entry(file.clone()).or_insert(0) += 1;
+            *dead_by_file.entry(file).or_insert(0) += 1;
         }
     }
 
-    let mut findings = Vec::new();
-    for (path, content) in files {
-        let sloc = content.lines().filter(|l| !l.trim().is_empty()).count() as u32;
-        let complexity = complexity_by_file.get(path).copied().unwrap_or(1);
-        let dead = dead_by_file.get(path).copied().unwrap_or(0);
+    files
+        .iter()
+        .filter_map(|(path, content)| {
+            let sloc = content.lines().filter(|l| !l.trim().is_empty()).count() as u32;
+            let complexity = complexity_by_file.get(path).copied().unwrap_or(1);
+            let dead = dead_by_file.get(path).copied().unwrap_or(0);
 
-        let tdg_score = complexity.saturating_mul(2)
-            + dead.saturating_mul(10)
-            + ((sloc / 200).saturating_mul(10));
+            let tdg_score = complexity.saturating_mul(2)
+                + dead.saturating_mul(10)
+                + ((sloc / 200).saturating_mul(10));
 
-        if tdg_score > threshold {
-            findings.push(AnalysisFinding::TechnicalDebt {
+            (tdg_score > threshold).then(|| AnalysisFinding::TechnicalDebt {
                 file: path.clone(),
                 score: tdg_score,
-            });
-        }
-    }
-
-    findings
+            })
+        })
+        .collect()
 }

@@ -5,21 +5,20 @@ expression: "snapshot_payload(&request, status, &response)"
 {
   "request": {
     "id": 1,
+    "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
       "arguments": {
-        "collection": "contract-test",
         "limit": 10,
-        "query": "test query",
-        "resource": "code"
+        "query": "test query"
       },
-      "name": "search"
+      "name": "search_code"
     }
   },
   "response": {
     "error": {
       "code": -32602,
-      "message": "Missing execution provenance for 'search': session_id, repo_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
+      "message": "Missing execution provenance for 'search_code': session_id, repo_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
     },
     "id": 1,
     "jsonrpc": "2.0"

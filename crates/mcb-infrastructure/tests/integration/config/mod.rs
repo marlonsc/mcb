@@ -4,4 +4,5 @@
 
 mod config_repro_tests;
 mod strict_config_tests;
+pub mod test_builder;
 mod validation_tests;

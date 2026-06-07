@@ -4,12 +4,12 @@
 //! Go project detector.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
+use mcb_domain::ports::ProjectDetector;
+use mcb_domain::registry::ProjectDetectorConfig;
 use regex::Regex;
 
 use super::common::read_file_opt;
@@ -38,13 +38,64 @@ impl GoDetector {
             require_re,
         })
     }
+
+    /// Parse the contents of a `go.mod` file into module name, Go version, and dependencies.
+    fn parse_gomod(&self, content: &str) -> GoModInfo {
+        let mut info = GoModInfo::default();
+        let mut in_require_block = false;
+
+        for raw in content.lines() {
+            let line = raw.trim();
+
+            if let Some(module) = Self::first_capture(&self.module_re, line) {
+                info.module = module;
+            }
+            if let Some(version) = Self::first_capture(&self.go_version_re, line) {
+                info.go_version = version;
+            }
+
+            if line.starts_with("require (") {
+                in_require_block = true;
+            } else if line == ")" {
+                in_require_block = false;
+            } else if let Some(dep) = self.parse_require_line(line, in_require_block) {
+                info.dependencies.push(dep);
+            }
+        }
+
+        info
+    }
+
+    /// Extract a dependency from a `require` line, whether inside a block or single-line.
+    fn parse_require_line(&self, line: &str, in_require_block: bool) -> Option<String> {
+        if in_require_block {
+            return Self::first_capture(&self.require_re, line);
+        }
+        if line.starts_with("require ") && !line.contains('(') {
+            return Self::first_capture(&self.require_re, &line["require ".len()..]);
+        }
+        None
+    }
+
+    fn first_capture(re: &Regex, line: &str) -> Option<String> {
+        re.captures(line)
+            .and_then(|caps| caps.get(1))
+            .map(|m| m.as_str().to_owned())
+    }
+}
+
+/// Parsed contents of a `go.mod` file.
+#[derive(Default)]
+struct GoModInfo {
+    module: String,
+    go_version: String,
+    dependencies: Vec<String>,
 }
 
 #[async_trait]
 /// Go project detector implementation.
 impl ProjectDetector for GoDetector {
     /// Detects a Go project by analyzing `go.mod`.
-    // TODO(qlty): Function with high complexity (count = 19): detect
     async fn detect(&self, path: &Path) -> Result<Option<ProjectType>> {
         let gomod_path = path.join("go.mod");
         if !gomod_path.exists() {
@@ -55,63 +106,15 @@ impl ProjectDetector for GoDetector {
             return Ok(None);
         };
 
-        let mut module = String::new();
-        let mut go_version = String::new();
-        let mut dependencies = Vec::new();
-        let mut in_require_block = false;
-
-        for line in content.lines() {
-            let line = line.trim();
-
-            if let Some(caps) = self.module_re.captures(line) {
-                module = caps
-                    .get(1)
-                    .map(|m| m.as_str().to_owned())
-                    .unwrap_or_default();
-            }
-
-            if let Some(caps) = self.go_version_re.captures(line) {
-                go_version = caps
-                    .get(1)
-                    .map(|m| m.as_str().to_owned())
-                    .unwrap_or_default();
-            }
-
-            if line.starts_with("require (") {
-                in_require_block = true;
-                continue;
-            }
-
-            if line == ")" {
-                in_require_block = false;
-                continue;
-            }
-
-            if in_require_block
-                && let Some(caps) = self.require_re.captures(line)
-                && let Some(dep) = caps.get(1)
-            {
-                dependencies.push(dep.as_str().to_owned());
-            }
-
-            // Single-line require
-            if line.starts_with("require ")
-                && !line.contains('(')
-                && let Some(caps) = self.require_re.captures(&line["require ".len()..])
-                && let Some(dep) = caps.get(1)
-            {
-                dependencies.push(dep.as_str().to_owned());
-            }
-        }
-
-        if module.is_empty() {
+        let parsed = self.parse_gomod(&content);
+        if parsed.module.is_empty() {
             return Ok(None);
         }
 
         Ok(Some(ProjectType::Go {
-            module,
-            go_version,
-            dependencies,
+            module: parsed.module,
+            go_version: parsed.go_version,
+            dependencies: parsed.dependencies,
         }))
     }
 
@@ -126,23 +129,15 @@ impl ProjectDetector for GoDetector {
     }
 }
 
-/// Factory function for creating Go detector instances.
-fn go_factory(
-    config: &ProjectDetectorConfig,
-) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
-    GoDetector::new(config)
-        .map(|detector| Arc::new(detector) as Arc<dyn ProjectDetector>)
-        .map_err(|e| {
-            mcb_domain::Error::configuration(format!("Failed to initialize Go detector: {e}"))
-        })
-}
-
-// linkme distributed_slice uses #[link_section] internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
-static GO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
-    name: "go",
-    description: "Detects Go projects with go.mod",
-    marker_files: &["go.mod"],
-    build: go_factory,
-};
+mcb_domain::register_project_detector!(
+    "go",
+    "Detects Go projects with go.mod",
+    &["go.mod"],
+    |config| {
+        GoDetector::new(config)
+            .map(|detector| std::sync::Arc::new(detector) as std::sync::Arc<dyn ProjectDetector>)
+            .map_err(|e| {
+                mcb_domain::Error::configuration(format!("Failed to initialize Go detector: {e}"))
+            })
+    }
+);

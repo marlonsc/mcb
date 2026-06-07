@@ -14,17 +14,17 @@ use tempfile::TempDir;
 ///
 /// Returns an error if the git command fails.
 pub fn run_git(dir: &Path, args: &[&str]) -> TestResult<()> {
-    let status = Command::new("git")
+    let output = Command::new("git")
         .args(args)
         .current_dir(dir)
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()?;
+        .output()?;
 
-    if status.success() {
+    if output.status.success() {
         Ok(())
     } else {
-        Err(format!("git {args:?} failed").into())
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        Err(format!("git {args:?} failed: {stderr}").into())
     }
 }
 

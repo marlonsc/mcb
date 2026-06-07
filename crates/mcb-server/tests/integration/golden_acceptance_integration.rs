@@ -23,6 +23,7 @@ use std::time::{Duration, Instant};
 use mcb_domain::entities::CodeChunk;
 // Note: EmbeddingProvider/VectorStoreProvider traits are used via ctx.embedding_handle().get()
 use mcb_domain::value_objects::CollectionId;
+use mcb_utils::constants::FALLBACK_UNKNOWN;
 use rstest::rstest;
 use serde_json::json;
 
@@ -89,7 +90,7 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
                 let file_name = path
                     .file_name()
                     .and_then(|n| n.to_str())
-                    .unwrap_or("unknown")
+                    .unwrap_or(FALLBACK_UNKNOWN)
                     .to_owned();
 
                 let line_count = content.lines().count();
@@ -115,7 +116,6 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
 // ============================================================================
 
 #[rstest]
-#[test]
 fn test_golden_queries_fixture_valid() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_golden_queries()?;
 
@@ -170,7 +170,6 @@ fn test_config_values_reasonable(
 }
 
 #[rstest]
-#[test]
 fn test_query_ids_unique() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_golden_queries()?;
     let mut seen = std::collections::HashSet::new();
@@ -186,7 +185,6 @@ fn test_query_ids_unique() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 #[rstest]
-#[test]
 fn test_sample_codebase_files_exist() {
     let chunks = read_sample_codebase_files();
 

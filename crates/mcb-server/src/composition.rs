@@ -18,7 +18,7 @@ use mcb_domain::registry::admin_operations::{
     IndexingOperationsProviderConfig, ValidationOperationsProviderConfig,
     resolve_indexing_operations_provider, resolve_validation_operations_provider,
 };
-use mcb_domain::registry::database::resolve_database_repositories;
+use mcb_domain::registry::database::{DatabaseRepositories, resolve_database_repositories};
 use mcb_domain::registry::project_detection::{
     ProjectDetectionServiceConfig, resolve_project_detection_service,
 };
@@ -31,17 +31,9 @@ use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
 use crate::mcp_server::{McpEntityRepositories, McpServer, McpServices};
 use crate::state::McpServerBootstrap;
 use crate::tools::ExecutionFlow;
-/// Registry provider name for `SeaORM` database repositories.
-const DATABASE_PROVIDER: &str = "seaorm";
-
-/// Default namespace for database repositories.
-const DEFAULT_NAMESPACE: &str = "default";
-
-/// Registry provider name for universal language chunking.
-const LANGUAGE_PROVIDER: &str = "universal";
-
-/// Registry provider name for Git VCS.
-const VCS_PROVIDER: &str = "git";
+use mcb_utils::constants::{
+    DEFAULT_DATABASE_PROVIDER, DEFAULT_LANGUAGE_PROVIDER, DEFAULT_NAMESPACE, DEFAULT_VCS_PROVIDER,
+};
 
 /// Build MCP server and dashboard/auth ports from decomposed DI parts.
 ///
@@ -72,46 +64,16 @@ pub fn build_mcp_server_bootstrap(
 ) -> mcb_domain::Result<McpServerBootstrap> {
     // 1. Resolve DB repos
     let repos = resolve_database_repositories(
-        DATABASE_PROVIDER,
+        DEFAULT_DATABASE_PROVIDER,
         db_connection,
         DEFAULT_NAMESPACE.to_owned(),
     )?;
 
     // 2. Create shared operation trackers for admin endpoints
-    let indexing_ops: Arc<dyn IndexingOperationsInterface> =
-        resolve_indexing_operations_provider(&IndexingOperationsProviderConfig::new("default"))?;
-    let validation_ops: Arc<dyn ValidationOperationsInterface> =
-        resolve_validation_operations_provider(&ValidationOperationsProviderConfig::new(
-            "default",
-        ))?;
+    let (indexing_ops, validation_ops) = resolve_admin_operation_trackers()?;
 
-    // 3. Resolve ALL services via registry (shared providers from ServiceResolutionContext)
-    let context_service = resolve_context_service(registry_ctx)?;
-    let search_service = resolve_search_service(registry_ctx)?;
-    let indexing_service = resolve_indexing_service(registry_ctx)?;
-    let memory_service = resolve_memory_service(registry_ctx)?;
-
-    // 4. Build MCP services struct
-    let mcp_services = McpServices {
-        indexing: indexing_service,
-        context: context_service,
-        search: search_service,
-        validation: resolve_validation_service(registry_ctx)?,
-        memory: memory_service,
-        agent_session: resolve_agent_session_service(registry_ctx)?,
-        project: resolve_project_detection_service(&ProjectDetectionServiceConfig::new(
-            LANGUAGE_PROVIDER,
-        ))?,
-        project_workflow: Arc::clone(&repos.project),
-        vcs: resolve_vcs_provider(&VcsProviderConfig::new(VCS_PROVIDER))?,
-        hybrid_search,
-        entities: McpEntityRepositories {
-            vcs: Arc::clone(&repos.vcs_entity),
-            plan: Arc::clone(&repos.plan_entity),
-            issue: Arc::clone(&repos.issue_entity),
-            org: Arc::clone(&repos.org_entity),
-        },
-    };
+    // 3. Build MCP services struct from registry-resolved services
+    let mcp_services = build_mcp_services(registry_ctx, &repos, hybrid_search)?;
 
     let vcs_for_defaults = Arc::clone(&mcp_services.vcs);
     let mcp_server = Arc::new(McpServer::new(
@@ -129,5 +91,48 @@ pub fn build_mcp_server_bootstrap(
         vector_store: vector_store_provider,
         indexing_ops,
         validation_ops,
+    })
+}
+
+/// Resolve the shared indexing/validation operation trackers used by admin endpoints.
+fn resolve_admin_operation_trackers() -> mcb_domain::Result<(
+    Arc<dyn IndexingOperationsInterface>,
+    Arc<dyn ValidationOperationsInterface>,
+)> {
+    let indexing_ops = resolve_indexing_operations_provider(
+        &IndexingOperationsProviderConfig::new(mcb_utils::constants::DEFAULT_INDEXING_OP_PROVIDER),
+    )?;
+    let validation_ops =
+        resolve_validation_operations_provider(&ValidationOperationsProviderConfig::new(
+            mcb_utils::constants::DEFAULT_VALIDATION_OP_PROVIDER,
+        ))?;
+    Ok((indexing_ops, validation_ops))
+}
+
+/// Resolve all MCP services via the linkme registry and assemble [`McpServices`].
+fn build_mcp_services(
+    registry_ctx: &dyn std::any::Any,
+    repos: &DatabaseRepositories,
+    hybrid_search: Arc<dyn HybridSearchProvider>,
+) -> mcb_domain::Result<McpServices> {
+    Ok(McpServices {
+        indexing: resolve_indexing_service(registry_ctx)?,
+        context: resolve_context_service(registry_ctx)?,
+        search: resolve_search_service(registry_ctx)?,
+        validation: resolve_validation_service(registry_ctx)?,
+        memory: resolve_memory_service(registry_ctx)?,
+        agent_session: resolve_agent_session_service(registry_ctx)?,
+        project: resolve_project_detection_service(&ProjectDetectionServiceConfig::new(
+            DEFAULT_LANGUAGE_PROVIDER,
+        ))?,
+        project_workflow: Arc::clone(&repos.project),
+        vcs: resolve_vcs_provider(&VcsProviderConfig::new(DEFAULT_VCS_PROVIDER))?,
+        hybrid_search,
+        entities: McpEntityRepositories {
+            vcs: Arc::clone(&repos.vcs_entity),
+            plan: Arc::clone(&repos.plan_entity),
+            issue: Arc::clone(&repos.issue_entity),
+            org: Arc::clone(&repos.org_entity),
+        },
     })
 }

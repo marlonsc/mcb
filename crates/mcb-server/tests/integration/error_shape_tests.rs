@@ -4,7 +4,7 @@
 //! Server-specific helpers (`MemoryArgs` factory, `McbState` bootstrap) are defined
 //! locally since they depend on `mcb_server` types.
 
-// Force linkme registration of all providers
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
 
 use std::sync::Arc;
@@ -81,17 +81,29 @@ async fn create_test_mcb_state() -> Option<(McbState, tempfile::TempDir)> {
 
     let vec_config = VectorStoreProviderConfig::new("edgevec")
         .with_dimensions(384)
-        .with_collection("default");
+        .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
     let vector_store_provider = resolve_vector_store_provider(&vec_config).ok()?;
 
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;
-    let hybrid_search =
-        resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default")).ok()?;
+    let hybrid_search = resolve_hybrid_search_provider(&HybridSearchProviderConfig::new(
+        mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+    ))
+    .ok()?;
 
-    let config: Arc<dyn std::any::Any + Send + Sync> = Arc::new(());
+    // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
+    let app_config = *mcb_domain::registry::config::resolve_config_provider(
+        &mcb_domain::registry::config::ConfigProviderConfig::new(
+            mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
+        ),
+    )
+    .ok()?
+    .load_config()
+    .ok()?
+    .downcast::<mcb_infrastructure::config::app::AppConfig>()
+    .ok()?;
     let resolution_ctx = ServiceResolutionContext {
         db,
-        config,
+        config: Arc::new(app_config),
         event_bus,
         embedding_provider,
         vector_store_provider,

@@ -14,7 +14,6 @@ use mcb_domain::utils::tests::utils::TestResult;
 use rmcp::ServiceExt;
 use rmcp::transport::child_process::TokioChildProcess;
 use rstest::rstest;
-use serial_test::serial;
 use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::{Arc, Mutex, OnceLock};
@@ -23,7 +22,8 @@ use tokio::time::{Duration, timeout};
 
 /// Startup timeout -- longer to allow fastembed model download on first cold CI run.
 /// The `AllMiniLML6V2` ONNX model (~90MB) must be downloaded from `HuggingFace` on first run.
-const STARTUP_TIMEOUT: Duration = Duration::from_secs(120);
+const STARTUP_TIMEOUT: Duration =
+    Duration::from_secs(mcb_utils::constants::testing::TEST_STARTUP_TIMEOUT_SECS);
 
 // =============================================================================
 // TEMP DB CLEANUP INFRASTRUCTURE
@@ -91,15 +91,16 @@ fn get_mcb_path() -> PathBuf {
 fn create_test_command() -> Command {
     let mcb_path = get_mcb_path();
     let mut cmd = Command::new(mcb_path);
-    let unique_db = format!(
-        "/tmp/mcb-stdio-{}-{}.db",
+    let unique_db = std::env::temp_dir().join(format!(
+        "mcb-stdio-{}-{}.db",
         std::process::id(),
         std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .unwrap_or_default()
             .as_nanos()
-    );
-    register_temp_db(unique_db.clone());
+    ));
+    let unique_db_str = unique_db.display().to_string().replace('\\', "/");
+    register_temp_db(unique_db_str.clone());
     // Run from workspace root so Loco finds config/test.yaml
     let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
     cmd.current_dir(&workspace_root);
@@ -107,7 +108,10 @@ fn create_test_command() -> Command {
     cmd.arg("--stdio");
     // Use Loco test environment (config/test.yaml with Tera template for DATABASE_URL)
     cmd.env("LOCO_ENV", "test");
-    cmd.env("DATABASE_URL", format!("sqlite://{unique_db}?mode=rwc"));
+    cmd.env("DATABASE_URL", format!("sqlite://{unique_db_str}?mode=rwc"));
+    for key in ["RUST_TEST_THREADS", "THREADS", "SCOPE", "RELEASE"] {
+        cmd.env_remove(key);
+    }
     cmd
 }
 
@@ -119,10 +123,10 @@ fn create_test_command() -> Command {
 ///
 /// This prevents regression of the fix in commit ffbe441 where ANSI color codes
 /// from logging were polluting the JSON-RPC stream on stdout.
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_no_ansi_codes_in_output() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
@@ -151,10 +155,10 @@ async fn test_stdio_no_ansi_codes_in_output() -> TestResult {
 }
 
 /// Test that response is valid JSON (not corrupted by logs)
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_response_is_valid_json() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
@@ -189,10 +193,10 @@ async fn test_stdio_response_is_valid_json() -> TestResult {
 // =============================================================================
 
 /// Test complete tools/list roundtrip via stdio
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_roundtrip_tools_list() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
@@ -212,38 +216,44 @@ async fn test_stdio_roundtrip_tools_list() -> TestResult {
             "Should have at least one tool"
         );
 
-        // Verify expected tools exist
+        // Verify expected public tools exist.
         let tool_names: Vec<String> = tools_result
             .tools
             .iter()
             .map(|t| t.name.to_string())
             .collect();
-
-        assert!(
-            tool_names.contains(&"index".to_owned()),
-            "Missing index tool"
-        );
-        assert!(
-            tool_names.contains(&"search".to_owned()),
-            "Missing search tool"
-        );
-        assert!(
-            tool_names.contains(&"validate".to_owned()),
-            "Missing validate tool"
-        );
-        assert!(
-            tool_names.contains(&"memory".to_owned()),
-            "Missing memory tool"
-        );
-        assert!(
-            tool_names.contains(&"session".to_owned()),
-            "Missing session tool"
-        );
-        assert!(
-            tool_names.contains(&"agent".to_owned()),
-            "Missing agent tool"
-        );
-        assert!(tool_names.contains(&"vcs".to_owned()), "Missing vcs tool");
+        let expected_tools = [
+            "search_code",
+            "search_memory",
+            "index_repo",
+            "index_status",
+            "clear_index",
+            "store_memory",
+            "get_memories",
+            "list_memories",
+            "memory_timeline",
+            "inject_context",
+            "start_session",
+            "get_session",
+            "list_sessions",
+            "summarize_session",
+            "log_tool_call",
+            "log_delegation",
+            "validate_code",
+            "analyze_code",
+            "list_rules",
+            "list_repos",
+            "compare_branches",
+            "analyze_impact",
+            "project",
+            "entity",
+        ];
+        for expected_tool in expected_tools {
+            assert!(
+                tool_names.contains(&expected_tool.to_owned()),
+                "Missing {expected_tool} tool"
+            );
+        }
 
         let _ = client.cancel().await;
         cleanup_temp_dbs();
@@ -255,10 +265,10 @@ async fn test_stdio_roundtrip_tools_list() -> TestResult {
 }
 
 /// Test initialize request via stdio
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_roundtrip_initialize() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let transport = TokioChildProcess::new(create_test_command())
             .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
@@ -305,10 +315,10 @@ async fn test_stdio_roundtrip_initialize() -> TestResult {
 /// transport layer to treat the deserialization error as a closed stream and
 /// shut down the connection.  Both outcomes are valid: the server either
 /// responds with an error **or** closes the connection — it must NOT panic.
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_error_response_format() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let cmd = create_test_command();
         let (transport, _stderr) = rmcp::transport::child_process::TokioChildProcess::builder(cmd)
@@ -348,10 +358,10 @@ async fn test_stdio_error_response_format() -> TestResult {
 }
 
 /// Test that logs go to stderr, not stdout
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_stdio_logs_go_to_stderr() -> TestResult {
+    let _lock = crate::process_lock::ProcessLock::acquire()?;
     let _ = timeout(STARTUP_TIMEOUT, async {
         let cmd = create_test_command();
         let (transport, stderr_handle) =

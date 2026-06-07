@@ -7,6 +7,7 @@ use crate::utils::test_constants::{
     DOMAIN_CRATE, FIXTURE_DOMAIN_SERVICE_PATH, INFRA_CRATE, SERVER_CRATE, TEST_CRATE,
 };
 use crate::utils::*;
+use mcb_domain::utils::tests::assertions::{assert_no_violations, assert_violations_exact};
 use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -14,7 +15,6 @@ use rstest::rstest;
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_solid_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
@@ -41,7 +41,6 @@ fn test_solid_full_workspace() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_clean_solid_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,

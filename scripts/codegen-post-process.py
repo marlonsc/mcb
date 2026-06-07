@@ -21,7 +21,7 @@ IRREGULAR_PLURALS = {
 def singularize(plural: str) -> str:
     if plural in IRREGULAR_PLURALS:
         return IRREGULAR_PLURALS[plural]
-    if plural.endswith("sses") or plural.endswith("shes") or plural.endswith("ches"):
+    if plural.endswith(("sses", "shes", "ches")):
         return plural[:-2]
     if plural.endswith("ies"):
         return plural[:-3] + "y"

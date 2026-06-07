@@ -12,7 +12,10 @@ use rstest::rstest;
 
 /// Resolve hybrid search via domain registry instead of direct infra constructor.
 fn resolve_default_hybrid_search() -> Option<Arc<dyn mcb_domain::ports::HybridSearchProvider>> {
-    resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default")).ok()
+    resolve_hybrid_search_provider(&HybridSearchProviderConfig::new(
+        mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+    ))
+    .ok()
 }
 
 #[rstest]

@@ -83,8 +83,9 @@ impl PatternViolation {
     }
 }
 
-impl std::fmt::Display for PatternViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl PatternViolation {
+    /// Render the human-readable message for this violation variant.
+    fn display_message(&self) -> String {
         match self {
             Self::ConcreteTypeInDi {
                 file,
@@ -92,77 +93,55 @@ impl std::fmt::Display for PatternViolation {
                 concrete_type,
                 suggestion,
                 ..
-            } => {
-                write!(
-                    f,
-                    "Concrete type in DI: {}:{} - {} (use {})",
-                    file.display(),
-                    line,
-                    concrete_type,
-                    suggestion
-                )
-            }
+            } => format!(
+                "Concrete type in DI: {}:{line} - {concrete_type} (use {suggestion})",
+                file.display(),
+            ),
             Self::MissingSendSync {
                 file,
                 line,
                 trait_name,
                 missing_bound,
                 ..
-            } => {
-                write!(
-                    f,
-                    "Missing bound: {}:{} - trait {} needs {}",
-                    file.display(),
-                    line,
-                    trait_name,
-                    missing_bound
-                )
-            }
+            } => format!(
+                "Missing bound: {}:{line} - trait {trait_name} needs {missing_bound}",
+                file.display(),
+            ),
             Self::MissingAsyncTrait {
                 file,
                 line,
                 trait_name,
                 ..
-            } => {
-                write!(
-                    f,
-                    "Missing #[async_trait]: {}:{} - trait {}",
-                    file.display(),
-                    line,
-                    trait_name
-                )
-            }
+            } => format!(
+                "Missing #[async_trait]: {}:{line} - trait {trait_name}",
+                file.display(),
+            ),
             Self::RawResultType {
                 file,
                 line,
                 context,
                 suggestion,
                 ..
-            } => {
-                write!(
-                    f,
-                    "Raw Result type: {}:{} - {} (use {})",
-                    file.display(),
-                    line,
-                    context,
-                    suggestion
-                )
-            }
+            } => format!(
+                "Raw Result type: {}:{line} - {context} (use {suggestion})",
+                file.display(),
+            ),
             Self::MissingInterfaceBound {
                 file,
                 line,
                 trait_name,
                 ..
-            } => {
-                write!(
-                    f,
-                    "Missing Interface bound: {}:{} - trait {} needs : Interface",
-                    file.display(),
-                    line,
-                    trait_name
-                )
-            }
+            } => format!(
+                "Missing Interface bound: {}:{line} - trait {trait_name} needs : Interface",
+                file.display(),
+            ),
         }
+    }
+}
+
+impl std::fmt::Display for PatternViolation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.display_message())
     }
 }
 

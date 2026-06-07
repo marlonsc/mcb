@@ -46,7 +46,7 @@ pub struct GenericSummary {
     pub passed: bool,
 }
 
-pub use mcb_domain::ports::ViolationEntry;
+use mcb_domain::ports::ViolationEntry;
 
 impl GenericReporter {
     /// Create a domain violation entry from a violation trait object
@@ -70,7 +70,7 @@ fn violation_location(v: &ViolationEntry) -> String {
     match (&v.file, v.line) {
         (Some(file), Some(line)) => format!("{file}:{line}"),
         (Some(file), None) => file.clone(),
-        (None, _) => "unknown".to_owned(),
+        (None, _) => mcb_utils::constants::FALLBACK_UNKNOWN.to_owned(),
     }
 }
 
@@ -195,34 +195,32 @@ impl GenericReporter {
 
             for category in categories {
                 let category_violations = &report.violations_by_category[category];
-                if category_violations.is_empty() {
-                    continue;
+                if !category_violations.is_empty() {
+                    Self::write_category_section(&mut output, category, category_violations);
                 }
-
-                let _ = writeln!(
-                    output,
-                    "=== {} ({}) ===",
-                    category,
-                    category_violations.len()
-                );
-                for v in category_violations {
-                    let _ = writeln!(
-                        output,
-                        "  [{:>7}] [{}] {} - {}",
-                        v.severity,
-                        v.id,
-                        violation_location(v),
-                        v.message
-                    );
-                    if let Some(suggestion) = &v.suggestion {
-                        let _ = writeln!(output, "            -> {suggestion}");
-                    }
-                }
-                output.push('\n');
             }
         }
 
         output
+    }
+
+    /// Write one category header followed by its violation lines.
+    fn write_category_section(output: &mut String, category: &str, violations: &[ViolationEntry]) {
+        let _ = writeln!(output, "=== {} ({}) ===", category, violations.len());
+        for v in violations {
+            let _ = writeln!(
+                output,
+                "  [{:>7}] [{}] {} - {}",
+                v.severity,
+                v.id,
+                violation_location(v),
+                v.message
+            );
+            if let Some(suggestion) = &v.suggestion {
+                let _ = writeln!(output, "            -> {suggestion}");
+            }
+        }
+        output.push('\n');
     }
 
     /// Generate CI summary (GitHub Actions format).

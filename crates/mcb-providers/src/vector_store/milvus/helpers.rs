@@ -6,7 +6,7 @@ use milvus::proto::schema::DataType;
 use milvus::value::ValueVec;
 use std::collections::HashMap;
 
-use crate::constants::{
+use mcb_utils::constants::vector_store::{
     MILVUS_FIELD_VARCHAR_MAX_LENGTH, MILVUS_METADATA_VARCHAR_MAX_LENGTH, VECTOR_FIELD_CONTENT,
     VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LINE_NUMBER, VECTOR_FIELD_START_LINE, VECTOR_FIELD_VECTOR,
 };

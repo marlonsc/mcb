@@ -6,7 +6,7 @@
 //! Validates proper use of pub(crate), pub, and private visibility.
 
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
+use mcb_utils::utils::regex::compile_regex;
 use std::collections::HashSet;
 use std::path::PathBuf;
 
@@ -202,7 +202,9 @@ impl VisibilityValidator {
             }
 
             if let Some(captures) = input.pub_item_re_internal.captures(trimmed) {
-                let item_name = captures.get(2).map_or("unknown", |m| m.as_str());
+                let item_name = captures
+                    .get(2)
+                    .map_or(mcb_utils::constants::FALLBACK_UNKNOWN, |m| m.as_str());
                 if input.exempted_items.contains(item_name) {
                     continue;
                 }
@@ -234,7 +236,7 @@ impl VisibilityValidator {
 /// Validator trait implementation for visibility validation.
 impl mcb_domain::ports::validation::Validator for VisibilityValidator {
     fn name(&self) -> &'static str {
-        "visibility"
+        mcb_utils::constants::validate::VALIDATOR_VISIBILITY
     }
 
     fn description(&self) -> &'static str {
@@ -255,13 +257,11 @@ impl mcb_domain::ports::validation::Validator for VisibilityValidator {
     }
 }
 
-#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
-static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
-    mcb_domain::registry::validation::ValidatorEntry {
-        name: "visibility",
-        description: "Validates visibility modifiers for proper encapsulation",
-        build: |root| {
-            Ok(Box::new(VisibilityValidator::new(root))
-                as Box<dyn mcb_domain::ports::validation::Validator>)
-        },
-    };
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_VISIBILITY,
+    "Validates visibility modifiers for proper encapsulation",
+    |root| {
+        Ok(Box::new(VisibilityValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

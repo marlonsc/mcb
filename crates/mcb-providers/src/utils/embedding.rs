@@ -102,7 +102,7 @@ pub(crate) fn parse_standard_embedding(
 ) -> Result<Embedding> {
     let embedding_vec = super::http::parse_embedding_vector(
         item,
-        crate::constants::EMBEDDING_RESPONSE_FIELD,
+        mcb_utils::constants::embedding::EMBEDDING_RESPONSE_FIELD,
         index,
     )?;
     Ok(Embedding {

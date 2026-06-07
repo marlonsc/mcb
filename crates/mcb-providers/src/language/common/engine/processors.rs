@@ -17,61 +17,28 @@ use crate::language::{
 /// Language processor registry
 pub(crate) static LANGUAGE_PROCESSORS: LazyLock<
     HashMap<String, Box<dyn LanguageProcessor + Send + Sync>>,
-> = LazyLock::new(|| {
-    let mut processors: HashMap<String, Box<dyn LanguageProcessor + Send + Sync>> = HashMap::new();
+> = LazyLock::new(build_processors);
 
-    processors.insert(
-        "rust".to_owned(),
-        Box::new(RustProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "python".to_owned(),
-        Box::new(PythonProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "javascript".to_owned(),
-        Box::new(JavaScriptProcessor::new(false)) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "typescript".to_owned(),
-        Box::new(JavaScriptProcessor::new(true)) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "go".to_owned(),
-        Box::new(GoProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "java".to_owned(),
-        Box::new(JavaProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "c".to_owned(),
-        Box::new(CProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "cpp".to_owned(),
-        Box::new(CppProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "csharp".to_owned(),
-        Box::new(CSharpProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "ruby".to_owned(),
-        Box::new(RubyProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "php".to_owned(),
-        Box::new(PhpProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "swift".to_owned(),
-        Box::new(SwiftProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
-    processors.insert(
-        "kotlin".to_owned(),
-        Box::new(KotlinProcessor::new()) as Box<dyn LanguageProcessor + Send + Sync>,
-    );
+type BoxedProcessor = Box<dyn LanguageProcessor + Send + Sync>;
 
-    processors
-});
+fn build_processors() -> HashMap<String, BoxedProcessor> {
+    let entries: [(&str, BoxedProcessor); 13] = [
+        ("rust", Box::new(RustProcessor::new())),
+        ("python", Box::new(PythonProcessor::new())),
+        ("javascript", Box::new(JavaScriptProcessor::new(false))),
+        ("typescript", Box::new(JavaScriptProcessor::new(true))),
+        ("go", Box::new(GoProcessor::new())),
+        ("java", Box::new(JavaProcessor::new())),
+        ("c", Box::new(CProcessor::new())),
+        ("cpp", Box::new(CppProcessor::new())),
+        ("csharp", Box::new(CSharpProcessor::new())),
+        ("ruby", Box::new(RubyProcessor::new())),
+        ("php", Box::new(PhpProcessor::new())),
+        ("swift", Box::new(SwiftProcessor::new())),
+        ("kotlin", Box::new(KotlinProcessor::new())),
+    ];
+    entries
+        .into_iter()
+        .map(|(name, processor)| (name.to_owned(), processor))
+        .collect()
+}

@@ -2,7 +2,7 @@ use std::path::Path;
 
 use rust_code_analysis::{LANG, guess_language};
 
-pub use mcb_domain::ports::validation::LanguageId;
+pub(crate) use mcb_domain::ports::validation::LanguageId;
 
 /// Map a `LanguageId` to its `rust-code-analysis` (RCA) equivalent.
 #[must_use]
@@ -12,8 +12,9 @@ pub fn language_to_rca(lang: LanguageId) -> LANG {
         LanguageId::Python => LANG::Python,
         LanguageId::JavaScript => LANG::Mozjs,
         LanguageId::TypeScript => LANG::Typescript,
+        LanguageId::Tsx => LANG::Tsx,
         LanguageId::Java => LANG::Java,
-        LanguageId::Cpp => LANG::Cpp,
+        LanguageId::C | LanguageId::Cpp => LANG::Cpp,
         LanguageId::Kotlin => LANG::Kotlin,
         LanguageId::Go
         | LanguageId::Ruby
@@ -27,6 +28,8 @@ pub fn language_to_rca(lang: LanguageId) -> LANG {
         | LanguageId::Sql
         | LanguageId::Dockerfile
         | LanguageId::Makefile
+        | LanguageId::Php
+        | LanguageId::Swift
         | LanguageId::Protobuf => LANG::Preproc,
     }
 }
@@ -38,7 +41,8 @@ pub fn language_from_rca(lang: LANG) -> Option<LanguageId> {
         LANG::Rust => Some(LanguageId::Rust),
         LANG::Python => Some(LanguageId::Python),
         LANG::Mozjs | LANG::Javascript => Some(LanguageId::JavaScript),
-        LANG::Typescript | LANG::Tsx => Some(LanguageId::TypeScript),
+        LANG::Typescript => Some(LanguageId::TypeScript),
+        LANG::Tsx => Some(LanguageId::Tsx),
         LANG::Java => Some(LanguageId::Java),
         LANG::Cpp => Some(LanguageId::Cpp),
         LANG::Kotlin => Some(LanguageId::Kotlin),
@@ -66,15 +70,6 @@ impl LanguageDetector {
 
     /// Detect the language of a file at the given path, optionally using its content.
     pub fn detect(&self, path: &Path, content: Option<&str>) -> Option<LanguageId> {
-        let source = content.map_or_else(
-            || std::fs::read(path).unwrap_or_default(),
-            |c| c.as_bytes().to_vec(),
-        );
-        let (rca_lang, _) = guess_language(&source, path);
-        if let Some(lang) = rca_lang.and_then(language_from_rca) {
-            return Some(lang);
-        }
-
         if let Some(ext) = path.extension().and_then(|ext| ext.to_str())
             && let Some(lang) = LanguageId::from_extension(ext)
         {
@@ -84,6 +79,15 @@ impl LanguageDetector {
         if let Some(filename) = path.file_name().and_then(|name| name.to_str())
             && let Some(lang) = LanguageId::from_filename(filename)
         {
+            return Some(lang);
+        }
+
+        let source = content.map_or_else(
+            || std::fs::read(path).unwrap_or_default(),
+            |c| c.as_bytes().to_vec(),
+        );
+        let (rca_lang, _) = guess_language(&source, path);
+        if let Some(lang) = rca_lang.and_then(language_from_rca) {
             return Some(lang);
         }
 
@@ -105,6 +109,12 @@ impl LanguageDetector {
     /// Detect language and return the specific RCA enum if supported.
     #[must_use]
     pub fn detect_rca_lang(&self, path: &Path, content: Option<&str>) -> Option<LANG> {
+        if let Some(ext) = path.extension().and_then(|e| e.to_str())
+            && let Some(lang) = LanguageId::from_extension(ext)
+        {
+            return Some(language_to_rca(lang));
+        }
+
         let source = content.map_or_else(
             || std::fs::read(path).unwrap_or_default(),
             |c| c.as_bytes().to_vec(),

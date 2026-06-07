@@ -1,122 +1,36 @@
-//! Unit tests for `ToolExecutionContext` resolution and injection.
+//! Context auto-injection: agents never pass context manually.
+//!
+//! These tests verify the zero-config agent experience: the server resolves
+//! session, repo, operator, and other context fields from boot-time defaults
+//! and per-request overrides, then injects them into tool requests transparently.
 
 use std::collections::HashMap;
 
 use mcb_server::tools::{ExecutionFlow, RuntimeDefaults, ToolExecutionContext};
 use rmcp::model::CallToolRequestParams;
-use rstest::rstest;
+use rstest::{fixture, rstest};
 
-#[rstest]
-#[test]
-fn test_resolve_uses_override_when_present() {
-    let defaults = RuntimeDefaults {
-        workspace_root: Some("default-root".to_owned()),
-        repo_path: Some("default-repo".to_owned()),
-        repo_id: Some("default-repo-id".to_owned()),
-        operator_id: Some("default-operator".to_owned()),
-        machine_id: Some("default-machine".to_owned()),
-        session_id: Some("default-session".to_owned()),
-        agent_program: Some("default-agent".to_owned()),
-        model_id: Some("default-model".to_owned()),
+/// Boot-time defaults simulating a detected workspace.
+#[fixture]
+fn defaults() -> RuntimeDefaults {
+    RuntimeDefaults {
+        workspace_root: Some("/repo".to_owned()),
+        repo_path: Some("/repo".to_owned()),
+        repo_id: Some("repo-abc".to_owned()),
+        operator_id: Some("dev-user".to_owned()),
+        machine_id: Some("laptop-01".to_owned()),
+        session_id: Some("sess-boot".to_owned()),
+        agent_program: Some("claude-code".to_owned()),
+        model_id: Some("opus".to_owned()),
         execution_flow: Some(ExecutionFlow::StdioOnly),
         client_session_id: None,
         org_id: None,
         project_id: None,
-    };
-
-    let mut overrides = HashMap::new();
-    overrides.insert("session_id".to_owned(), "override-session".to_owned());
-
-    let context = ToolExecutionContext::resolve(&defaults, &overrides);
-
-    assert_eq!(context.session_id, Some("override-session".to_owned()));
+    }
 }
 
-#[rstest]
-#[test]
-fn test_resolve_falls_back_to_default_when_override_missing() {
-    let defaults = RuntimeDefaults {
-        workspace_root: Some("default-root".to_owned()),
-        repo_path: Some("default-repo".to_owned()),
-        repo_id: Some("default-repo-id".to_owned()),
-        operator_id: Some("default-operator".to_owned()),
-        machine_id: Some("default-machine".to_owned()),
-        session_id: Some("default-session".to_owned()),
-        agent_program: Some("default-agent".to_owned()),
-        model_id: Some("default-model".to_owned()),
-        execution_flow: Some(ExecutionFlow::StdioOnly),
-        client_session_id: None,
-        org_id: None,
-        project_id: None,
-    };
-
-    let overrides = HashMap::new();
-
-    let context = ToolExecutionContext::resolve(&defaults, &overrides);
-
-    assert_eq!(context.session_id, Some("default-session".to_owned()));
-}
-
-#[rstest]
-#[test]
-fn test_resolve_prefers_override_over_default() {
-    let defaults = RuntimeDefaults {
-        workspace_root: Some("default-root".to_owned()),
-        repo_path: Some("default-repo".to_owned()),
-        repo_id: Some("default-repo-id".to_owned()),
-        operator_id: Some("default-operator".to_owned()),
-        machine_id: Some("default-machine".to_owned()),
-        session_id: Some("default-session".to_owned()),
-        agent_program: Some("default-agent".to_owned()),
-        model_id: Some("default-model".to_owned()),
-        execution_flow: Some(ExecutionFlow::StdioOnly),
-        client_session_id: None,
-        org_id: None,
-        project_id: None,
-    };
-
-    let mut overrides = HashMap::new();
-    overrides.insert("repo_id".to_owned(), "override-repo-id".to_owned());
-
-    let context = ToolExecutionContext::resolve(&defaults, &overrides);
-
-    assert_eq!(context.repo_id, Some("override-repo-id".to_owned()));
-}
-
-#[rstest]
-#[test]
-fn test_resolve_handles_multiple_overrides() {
-    let defaults = RuntimeDefaults {
-        workspace_root: Some("default-root".to_owned()),
-        repo_path: Some("default-repo".to_owned()),
-        repo_id: Some("default-repo-id".to_owned()),
-        operator_id: Some("default-operator".to_owned()),
-        machine_id: Some("default-machine".to_owned()),
-        session_id: Some("default-session".to_owned()),
-        agent_program: Some("default-agent".to_owned()),
-        model_id: Some("default-model".to_owned()),
-        execution_flow: Some(ExecutionFlow::StdioOnly),
-        client_session_id: None,
-        org_id: None,
-        project_id: None,
-    };
-
-    let mut overrides = HashMap::new();
-    overrides.insert("session_id".to_owned(), "override-session".to_owned());
-    overrides.insert("repo_id".to_owned(), "override-repo-id".to_owned());
-    overrides.insert("operator_id".to_owned(), "override-operator".to_owned());
-
-    let context = ToolExecutionContext::resolve(&defaults, &overrides);
-
-    assert_eq!(context.session_id, Some("override-session".to_owned()));
-    assert_eq!(context.repo_id, Some("override-repo-id".to_owned()));
-    assert_eq!(context.operator_id, Some("override-operator".to_owned()));
-}
-
-#[rstest]
-#[test]
-fn test_resolve_sets_delegated_true_when_parent_session_id_present() {
-    let defaults = RuntimeDefaults {
+fn empty_defaults() -> RuntimeDefaults {
+    RuntimeDefaults {
         workspace_root: None,
         repo_path: None,
         repo_id: None,
@@ -129,232 +43,164 @@ fn test_resolve_sets_delegated_true_when_parent_session_id_present() {
         client_session_id: None,
         org_id: None,
         project_id: None,
-    };
+    }
+}
 
-    let mut overrides = HashMap::new();
-    overrides.insert("parent_session_id".to_owned(), "parent-123".to_owned());
+fn empty_request() -> CallToolRequestParams {
+    CallToolRequestParams::new("search_code")
+}
 
-    let context = ToolExecutionContext::resolve(&defaults, &overrides);
+// ─── Resolution: boot defaults + per-request overrides ───────────────
 
-    assert_eq!(context.parent_session_id, Some("parent-123".to_owned()));
-    assert_eq!(context.delegated, Some(true));
+#[rstest]
+fn agent_override_wins_over_boot_default(defaults: RuntimeDefaults) {
+    let overrides = HashMap::from([("session_id".to_owned(), "agent-session".to_owned())]);
+
+    let ctx = ToolExecutionContext::resolve(&defaults, &overrides);
+
+    assert_eq!(ctx.session_id.as_deref(), Some("agent-session"));
 }
 
 #[rstest]
-#[test]
-fn test_resolve_respects_explicit_delegated_override() {
-    let defaults = RuntimeDefaults {
-        workspace_root: None,
-        repo_path: None,
-        repo_id: None,
-        operator_id: None,
-        machine_id: None,
-        session_id: None,
-        agent_program: None,
-        model_id: None,
-        execution_flow: None,
-        client_session_id: None,
-        org_id: None,
-        project_id: None,
-    };
+fn boot_default_used_when_agent_sends_nothing(defaults: RuntimeDefaults) {
+    let ctx = ToolExecutionContext::resolve(&defaults, &HashMap::new());
 
-    let mut overrides = HashMap::new();
-    overrides.insert("delegated".to_owned(), "false".to_owned());
-
-    let context = ToolExecutionContext::resolve(&defaults, &overrides);
-
-    assert_eq!(context.delegated, Some(false));
+    assert_eq!(ctx.session_id.as_deref(), Some("sess-boot"));
+    assert_eq!(ctx.repo_id.as_deref(), Some("repo-abc"));
+    assert_eq!(ctx.operator_id.as_deref(), Some("dev-user"));
 }
 
 #[rstest]
-#[test]
-fn test_apply_to_request_if_missing_injects_missing_values() {
-    let context = ToolExecutionContext {
-        session_id: Some("sess-123".to_owned()),
-        parent_session_id: None,
-        org_id: None,
-        project_id: Some("proj-456".to_owned()),
-        worktree_id: None,
-        repo_id: Some("repo-789".to_owned()),
-        repo_path: None,
-        operator_id: None,
-        machine_id: None,
-        agent_program: None,
-        model_id: None,
-        delegated: None,
-        timestamp: None,
-        execution_flow: None,
-    };
+fn multiple_overrides_applied_independently(defaults: RuntimeDefaults) {
+    let overrides = HashMap::from([
+        ("session_id".to_owned(), "s1".to_owned()),
+        ("repo_id".to_owned(), "r1".to_owned()),
+        ("operator_id".to_owned(), "o1".to_owned()),
+    ]);
 
-    let mut request = CallToolRequestParams::new("test_tool");
+    let ctx = ToolExecutionContext::resolve(&defaults, &overrides);
 
-    context.apply_to_request_if_missing(&mut request);
+    assert_eq!(ctx.session_id.as_deref(), Some("s1"));
+    assert_eq!(ctx.repo_id.as_deref(), Some("r1"));
+    assert_eq!(ctx.operator_id.as_deref(), Some("o1"));
+}
 
-    let args = request.arguments.as_ref().unwrap();
-    assert_eq!(args.get("session_id"), Some(&serde_json::json!("sess-123")));
-    assert_eq!(args.get("project_id"), Some(&serde_json::json!("proj-456")));
-    assert_eq!(args.get("repo_id"), Some(&serde_json::json!("repo-789")));
+// ─── Delegation inference ────────────────────────────────────────────
+
+#[rstest]
+fn parent_session_implies_delegation() {
+    let overrides = HashMap::from([("parent_session_id".to_owned(), "parent-123".to_owned())]);
+
+    let ctx = ToolExecutionContext::resolve(&empty_defaults(), &overrides);
+
+    assert_eq!(ctx.delegated, Some(true));
+    assert_eq!(ctx.parent_session_id.as_deref(), Some("parent-123"));
 }
 
 #[rstest]
-#[test]
-fn test_apply_to_request_if_missing_does_not_overwrite_existing_values() {
-    let context = ToolExecutionContext {
-        session_id: Some("context-session".to_owned()),
-        parent_session_id: None,
-        org_id: None,
-        project_id: Some("context-project".to_owned()),
-        worktree_id: None,
-        repo_id: None,
-        repo_path: None,
-        operator_id: None,
-        machine_id: None,
-        agent_program: None,
-        model_id: None,
-        delegated: None,
-        timestamp: None,
-        execution_flow: None,
+fn explicit_delegated_false_overrides_inference() {
+    let overrides = HashMap::from([("delegated".to_owned(), "false".to_owned())]);
+
+    let ctx = ToolExecutionContext::resolve(&empty_defaults(), &overrides);
+
+    assert_eq!(ctx.delegated, Some(false));
+}
+
+// ─── Transparent injection into MCP requests ─────────────────────────
+
+#[rstest]
+fn missing_context_fields_injected_into_request() {
+    let ctx = ToolExecutionContext {
+        session_id: Some("s1".to_owned()),
+        project_id: Some("p1".to_owned()),
+        repo_id: Some("r1".to_owned()),
+        ..ToolExecutionContext::resolve(&empty_defaults(), &HashMap::new())
     };
 
-    let mut request = CallToolRequestParams::new("test_tool").with_arguments(
-        vec![
-            (
-                "session_id".to_owned(),
-                serde_json::json!("request-session"),
-            ),
-            (
-                "project_id".to_owned(),
-                serde_json::json!("request-project"),
-            ),
+    let mut req = empty_request();
+    ctx.apply_to_request_if_missing(&mut req);
+
+    let args = req.arguments.as_ref().expect("args created");
+    assert_eq!(args.get("session_id"), Some(&serde_json::json!("s1")));
+    assert_eq!(args.get("project_id"), Some(&serde_json::json!("p1")));
+    assert_eq!(args.get("repo_id"), Some(&serde_json::json!("r1")));
+}
+
+#[rstest]
+fn agent_explicit_values_never_overwritten() {
+    let ctx = ToolExecutionContext {
+        session_id: Some("server-session".to_owned()),
+        project_id: Some("server-project".to_owned()),
+        ..ToolExecutionContext::resolve(&empty_defaults(), &HashMap::new())
+    };
+
+    let mut req = CallToolRequestParams::new("search_code").with_arguments(
+        [
+            ("session_id", "agent-session"),
+            ("project_id", "agent-project"),
         ]
         .into_iter()
+        .map(|(k, v)| (k.to_owned(), serde_json::json!(v)))
         .collect(),
     );
 
-    context.apply_to_request_if_missing(&mut request);
+    ctx.apply_to_request_if_missing(&mut req);
 
-    let args = request.arguments.as_ref().unwrap();
+    let args = req.arguments.as_ref().unwrap();
     assert_eq!(
         args.get("session_id"),
-        Some(&serde_json::json!("request-session"))
+        Some(&serde_json::json!("agent-session"))
     );
     assert_eq!(
         args.get("project_id"),
-        Some(&serde_json::json!("request-project"))
+        Some(&serde_json::json!("agent-project"))
     );
 }
 
 #[rstest]
-#[test]
-fn test_apply_to_request_if_missing_injects_boolean_values() {
-    let context = ToolExecutionContext {
-        session_id: None,
-        parent_session_id: None,
-        org_id: None,
-        project_id: None,
-        worktree_id: None,
-        repo_id: None,
-        repo_path: None,
-        operator_id: None,
-        machine_id: None,
-        agent_program: None,
-        model_id: None,
+fn boolean_and_numeric_fields_injected_correctly() {
+    let ctx = ToolExecutionContext {
         delegated: Some(true),
-        timestamp: None,
-        execution_flow: None,
+        timestamp: Some(1_700_000_000),
+        ..ToolExecutionContext::resolve(&empty_defaults(), &HashMap::new())
     };
 
-    let mut request = CallToolRequestParams::new("test_tool");
+    let mut req = empty_request();
+    ctx.apply_to_request_if_missing(&mut req);
 
-    context.apply_to_request_if_missing(&mut request);
-
-    let args = request.arguments.as_ref().unwrap();
+    let args = req.arguments.as_ref().expect("args created");
     assert_eq!(args.get("delegated"), Some(&serde_json::json!(true)));
+    assert_eq!(
+        args.get("timestamp"),
+        Some(&serde_json::json!(1_700_000_000))
+    );
 }
 
 #[rstest]
-#[test]
-fn test_apply_to_request_if_missing_injects_timestamp() {
-    let context = ToolExecutionContext {
-        session_id: None,
-        parent_session_id: None,
-        org_id: None,
-        project_id: None,
-        worktree_id: None,
-        repo_id: None,
-        repo_path: None,
-        operator_id: None,
-        machine_id: None,
-        agent_program: None,
-        model_id: None,
-        delegated: None,
-        timestamp: Some(1234567890),
-        execution_flow: None,
-    };
+fn empty_context_only_injects_auto_derived_fields() {
+    let ctx = ToolExecutionContext::resolve(&empty_defaults(), &HashMap::new());
 
-    let mut request = CallToolRequestParams::new("test_tool");
+    let mut req = empty_request();
+    ctx.apply_to_request_if_missing(&mut req);
 
-    context.apply_to_request_if_missing(&mut request);
-
-    let args = request.arguments.as_ref().unwrap();
-    assert_eq!(args.get("timestamp"), Some(&serde_json::json!(1234567890)));
-}
-
-#[rstest]
-#[test]
-fn test_apply_to_request_if_missing_does_not_inject_none_values() {
-    let context = ToolExecutionContext {
-        session_id: None,
-        parent_session_id: None,
-        org_id: None,
-        project_id: None,
-        worktree_id: None,
-        repo_id: None,
-        repo_path: None,
-        operator_id: None,
-        machine_id: None,
-        agent_program: None,
-        model_id: None,
-        delegated: None,
-        timestamp: None,
-        execution_flow: None,
-    };
-
-    let mut request = CallToolRequestParams::new("test_tool");
-
-    context.apply_to_request_if_missing(&mut request);
-
-    let args = request.arguments.as_ref();
-    assert!(args.is_none() || args.unwrap().is_empty());
-}
-
-#[rstest]
-#[test]
-fn test_apply_to_request_if_missing_creates_arguments_map_if_needed() {
-    let context = ToolExecutionContext {
-        session_id: Some("sess-123".to_owned()),
-        parent_session_id: None,
-        org_id: None,
-        project_id: None,
-        worktree_id: None,
-        repo_id: None,
-        repo_path: None,
-        operator_id: None,
-        machine_id: None,
-        agent_program: None,
-        model_id: None,
-        delegated: None,
-        timestamp: None,
-        execution_flow: None,
-    };
-
-    let mut request = CallToolRequestParams::new("test_tool");
-
-    assert!(request.arguments.is_none());
-
-    context.apply_to_request_if_missing(&mut request);
-
-    assert!(request.arguments.is_some());
-    let args = request.arguments.as_ref().unwrap();
-    assert_eq!(args.get("session_id"), Some(&serde_json::json!("sess-123")));
+    // With empty defaults, only auto-derived fields (timestamp, execution_flow)
+    // should be injected — no agent-visible context like session/repo/operator
+    if let Some(args) = req.arguments.as_ref() {
+        let agent_fields = [
+            "session_id",
+            "repo_id",
+            "repo_path",
+            "operator_id",
+            "machine_id",
+            "agent_program",
+            "model_id",
+            "project_id",
+        ];
+        for field in &agent_fields {
+            assert!(
+                !args.contains_key(*field),
+                "'{field}' should not be injected from empty context"
+            );
+        }
+    }
 }

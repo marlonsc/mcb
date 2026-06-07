@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/mcb",
+    "crates/mcb-utils",
     "crates/mcb-domain",
     "crates/mcb-infrastructure",
     "crates/mcb-providers",
@@ -15,7 +16,7 @@ repository = "https://github.com/marlonsc/mcb"
 authors = ["Marlon Costa <marlonsc@gmail.com>"]
 homepage = "https://github.com/marlonsc/mcb"
 license = "MIT"
-version = "0.3.0"
+version = "0.3.1"
 rust-version = "1.92"
 edition = "2024"
 
@@ -84,6 +85,7 @@ used_underscore_binding = "warn"         # don't use bindings prefixed with _
 error_impl_error = "allow"               # our domain Error type is idiomatic Rust
 
 [workspace.dependencies]
+mcb-utils = { path = "crates/mcb-utils" }
 # Core async runtime
 tokio = { version = "1.49", features = ["full"] }
 
@@ -115,7 +117,6 @@ clap = { version = "4.5", features = ["derive"] }
 
 # File operations
 walkdir = "2.5"
-normpath = "1"
 globset = "0.4"
 fs2 = "0.4"
 
@@ -130,9 +131,6 @@ rust-code-analysis = "0.0.25"
 
 # Template engines
 handlebars = "6.0"
-
-# Markdown processing
-pulldown-cmark = "0.13"
 
 # Redis
 redis = { version = "1.0", features = ["tokio-comp", "connection-manager"] }
@@ -164,8 +162,6 @@ tower = { version = "0.5", features = ["util"] }
 http-body-util = "0.1"
 tower-http = { version = "0.6", features = ["cors", "trace"] }
 
-# System metrics
-sysinfo = "0.38"
 nix = { version = "0.31", features = ["fs"] }
 tree-sitter = "0.26"
 tree-sitter-c = "0.24"
@@ -220,7 +216,7 @@ dashmap = "6.0"
 health = "0.2"
 
 # EdgeVec high-performance vector database (fork)
-edgevec = "0.8.0"
+edgevec = "0.9.0"
 
 milvus-sdk-rust = "0.1.0"
 
@@ -243,9 +239,7 @@ humantime = "2.1"
 
 # Local embeddings without external services
 fastembed = { version = "5.11", default-features = false, features = [
-    "default",
     "hf-hub-native-tls",
-    "image-models",
     "ort-load-dynamic",
 ] }
 
@@ -321,16 +315,16 @@ once_cell = "1.19"
 # SeaORM: Entity-first ORM with schema-sync and dense format
 # Pinned to exact RC version per v0.3.0 guardrails (not caret)
 # Both sqlx-sqlite and sqlx-postgres enabled — runtime selection via connection string
-sea-orm = { version = "=2.0.0-rc.34", features = [
+sea-orm = { version = "=2.0.0-rc.38", features = [
     "sqlx-sqlite", "sqlx-postgres", "runtime-tokio-rustls",
     "entity-registry", "schema-sync",
 ] }
 
 # SeaORM migrations
-sea-orm-migration = "=2.0.0-rc.34"
+sea-orm-migration = "=2.0.0-rc.38"
 
 # SeaQuery: SQL builder (explicit requirement)
-sea-query = "=1.0.0-rc.31"
+sea-query = "=1.0.0"
 
 # Seaography: GraphQL schema generator for SeaORM
 seaography = "=2.0.0-rc.8"
@@ -338,9 +332,9 @@ seaography = "=2.0.0-rc.8"
 async-graphql = "7"
 async-graphql-axum = "7"
 
-loco-rs = "0.16"
+loco-rs = "=0.16.4"
 
-sea-schema = "=0.17.0-rc.17"
+sea-schema = "=0.18.0"
 
 sea-orm-pro = "0.1"
 

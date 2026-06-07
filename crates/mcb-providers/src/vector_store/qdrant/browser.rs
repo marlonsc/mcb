@@ -63,11 +63,11 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
                 Some(serde_json::json!({
                     "filter": {
                         "must": [{
-                            "key": crate::constants::VECTOR_FIELD_FILE_PATH,
+                            "key": mcb_utils::constants::vector_store::VECTOR_FIELD_FILE_PATH,
                             "match": { "value": file_path }
                         }]
                     },
-                    "limit": 100,
+                    "limit": mcb_utils::constants::BROWSE_MAX_CHUNKS_PER_FILE,
                     "with_payload": true
                 })),
             )

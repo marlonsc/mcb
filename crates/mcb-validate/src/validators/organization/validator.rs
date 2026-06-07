@@ -13,7 +13,7 @@ use super::{
 
 crate::create_validator!(
     OrganizationValidator,
-    "organization",
+    mcb_utils::constants::validate::VALIDATOR_ORGANIZATION,
     "Validates code organization patterns",
     OrganizationViolation,
     [

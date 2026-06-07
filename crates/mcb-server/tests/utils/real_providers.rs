@@ -6,15 +6,16 @@
 //! Uses a process-wide shared `SharedTestContext` to avoid re-loading the ONNX model
 //! (~5-10s) per test. All providers resolved through domain registry (CA/DI/Linkme).
 
-// Force linkme registration of all providers
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
 
 use std::sync::Arc;
 
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider};
+use mcb_utils::constants::testing::TEST_EMBEDDING_DIMENSIONS;
 
-use super::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, try_shared_app_context};
+use super::test_fixtures::try_shared_app_context;
 
 /// Get the real `EdgeVec` vector store provider from the shared context.
 ///
@@ -60,8 +61,8 @@ pub async fn create_real_embedding_provider_with_model(
 
 #[cfg(test)]
 mod tests {
-    use mcb_domain::test_collection::unique_collection;
-    use mcb_domain::test_service_detection::should_run_docker_integration_tests;
+    use mcb_domain::utils::tests::collection::unique_collection;
+    use mcb_domain::utils::tests::service_detection::should_run_docker_integration_tests;
     use mcb_domain::value_objects::CollectionId;
 
     use super::*;

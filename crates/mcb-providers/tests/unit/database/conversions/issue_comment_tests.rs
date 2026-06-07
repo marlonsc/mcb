@@ -10,12 +10,11 @@ fn sample_issue_comment() -> issue_comment::Model {
         issue_id: "ref_issue_id_001".into(),
         author_id: "ref_author_id_001".into(),
         content: "test_content".into(),
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 
 #[rstest]
-#[test]
 fn round_trip_issue_comment() {
     let model = sample_issue_comment();
     let model_val = model.id.clone();

@@ -1,6 +1,7 @@
 //! Tests for transport layer types
 
-use mcb_server::transport::types::{McpRequest, McpResponse};
+use mcb_domain::protocol::{McpRequest, McpResponse};
+use mcb_utils::constants::protocol::JSONRPC_VERSION;
 use rstest::rstest;
 
 #[rstest]
@@ -13,7 +14,6 @@ use rstest::rstest;
     Some("search")
 )]
 #[rstest]
-#[test]
 fn test_mcp_request_serialization(
     #[case] method: &str,
     #[case] params: Option<serde_json::Value>,
@@ -22,6 +22,7 @@ fn test_mcp_request_serialization(
     #[case] expected_param_fragment: Option<&str>,
 ) {
     let request = McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
         method: method.to_owned(),
         params,
         id: Some(serde_json::json!(id)),
@@ -43,12 +44,12 @@ fn test_mcp_response_shapes(
     #[case] error_message: &str,
 ) {
     let response = if is_error {
-        McpResponse::error(id, error_code, error_message)
+        McpResponse::from_error(id, error_code, error_message)
     } else {
-        McpResponse::success(id, serde_json::json!({"result": "ok"}))
+        McpResponse::from_success(id, serde_json::json!({"result": "ok"}))
     };
 
-    assert_eq!(response.jsonrpc, "2.0");
+    assert_eq!(response.jsonrpc, JSONRPC_VERSION);
     if is_error {
         assert!(response.result.is_none());
         let err = response.error.expect("expected error payload");
@@ -61,18 +62,16 @@ fn test_mcp_response_shapes(
 }
 
 #[rstest]
-#[test]
 fn test_mcp_response_serialization_roundtrip() {
     let response =
-        McpResponse::success(Some(serde_json::json!(1)), serde_json::json!({"tools": []}));
+        McpResponse::from_success(Some(serde_json::json!(1)), serde_json::json!({"tools": []}));
     let json = serde_json::to_string(&response).unwrap();
     let deserialized: McpResponse = serde_json::from_str(&json).unwrap();
-    assert_eq!(deserialized.jsonrpc, "2.0");
+    assert_eq!(deserialized.jsonrpc, JSONRPC_VERSION);
     assert!(deserialized.result.is_some());
 }
 
 #[rstest]
-#[test]
 fn test_mcp_request_deserialization() {
     let json = r#"{"method":"ping","params":null,"id":1}"#;
     let request: McpRequest = serde_json::from_str(json).unwrap();

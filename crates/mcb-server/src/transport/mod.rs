@@ -7,4 +7,3 @@ pub mod types;
 pub use http_client::{HttpClientTransport, McpClientConfig};
 pub use stdio::StdioServerExt;
 pub use streamable_http::{build_overrides, extract_override};
-pub use types::{McpError, McpRequest, McpResponse};

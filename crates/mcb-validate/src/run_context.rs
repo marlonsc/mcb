@@ -4,6 +4,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
 
+use rust_code_analysis::FuncSpace;
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -57,6 +58,7 @@ pub struct ValidationRunContext {
     file_inventory: Arc<Vec<InventoryEntry>>,
     file_inventory_source: FileInventorySource,
     content_cache: Mutex<HashMap<PathBuf, Arc<str>>>,
+    rca_cache: Mutex<HashMap<PathBuf, Option<FuncSpace>>>,
 }
 
 thread_local! {
@@ -81,6 +83,7 @@ impl ValidationRunContext {
             file_inventory: Arc::new(entries),
             file_inventory_source: source,
             content_cache: Mutex::new(HashMap::new()),
+            rca_cache: Mutex::new(HashMap::new()),
         })
     }
 
@@ -166,6 +169,30 @@ impl ValidationRunContext {
         }
 
         Ok(value)
+    }
+
+    /// Parse file with RCA, using cache if available.
+    /// Returns cached `FuncSpace` clone on cache hit, otherwise parses and caches.
+    #[must_use]
+    pub fn parse_rca_cached(&self, path: &Path, content: &str) -> Option<FuncSpace> {
+        let normalized = std::fs::canonicalize(path).ok()?;
+
+        // Check cache
+        if let Ok(cache) = self.rca_cache.lock()
+            && let Some(result) = cache.get(&normalized)
+        {
+            return result.clone();
+        }
+
+        // Parse (uncached)
+        let result = crate::ast::rca_helpers::parse_file_spaces_raw(path, content);
+
+        // Store in cache
+        if let Ok(mut cache) = self.rca_cache.lock() {
+            cache.insert(normalized, result.clone());
+        }
+
+        result
     }
 
     /// Execute a closure with the given context set as active for the current thread
@@ -290,38 +317,58 @@ fn enumerate_with_walkdir(
         .into_iter()
         .filter_map(std::result::Result::ok)
     {
-        let path = entry.path();
-        if !path.is_file() {
-            continue;
-        }
-
-        let absolute = normalize_path(path)?;
-        let Ok(relative) = absolute.strip_prefix(&canonical_root) else {
-            continue;
-        };
-        let relative = relative.to_path_buf();
-
-        let Some(relative_str) = relative.to_str() else {
-            continue;
-        };
-        if should_ignore(relative_str, ignore_patterns)
-            || relative_str.contains("/.git/")
-            || relative_str.starts_with(".git/")
-        {
-            continue;
-        }
-
-        if seen.insert(relative.clone()) {
-            let lang = detector.detect(&absolute, None);
-            entries.push(InventoryEntry {
-                absolute_path: absolute,
-                relative_path: relative,
-                detected_language: lang,
-            });
+        if let Some(inventory_entry) = walk_entry_to_inventory(
+            entry.path(),
+            &canonical_root,
+            ignore_patterns,
+            detector,
+            &mut seen,
+        )? {
+            entries.push(inventory_entry);
         }
     }
 
     Ok(entries)
+}
+
+/// Convert one walked path into an [`InventoryEntry`], skipping ignored/duplicate/non-file paths.
+fn walk_entry_to_inventory(
+    path: &Path,
+    canonical_root: &Path,
+    ignore_patterns: &[String],
+    detector: &LanguageDetector,
+    seen: &mut HashSet<std::path::PathBuf>,
+) -> std::io::Result<Option<InventoryEntry>> {
+    if !path.is_file() {
+        return Ok(None);
+    }
+
+    let absolute = normalize_path(path)?;
+    let Ok(relative) = absolute.strip_prefix(canonical_root) else {
+        return Ok(None);
+    };
+    let relative = relative.to_path_buf();
+
+    let Some(relative_str) = relative.to_str() else {
+        return Ok(None);
+    };
+    if should_ignore(relative_str, ignore_patterns)
+        || relative_str.contains("/.git/")
+        || relative_str.starts_with(".git/")
+    {
+        return Ok(None);
+    }
+
+    if !seen.insert(relative.clone()) {
+        return Ok(None);
+    }
+
+    let lang = detector.detect(&absolute, None);
+    Ok(Some(InventoryEntry {
+        absolute_path: absolute,
+        relative_path: relative,
+        detected_language: lang,
+    }))
 }
 
 fn should_ignore(path: &str, ignore_patterns: &[String]) -> bool {
@@ -329,7 +376,7 @@ fn should_ignore(path: &str, ignore_patterns: &[String]) -> bool {
 }
 
 fn build_trace_id() -> String {
-    let nanos = mcb_domain::utils::time::epoch_nanos_u128().unwrap_or(0);
+    let nanos = mcb_utils::utils::time::epoch_nanos_u128().unwrap_or(0);
     format!("validate-run-{nanos}")
 }
 

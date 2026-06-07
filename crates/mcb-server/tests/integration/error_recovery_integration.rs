@@ -20,8 +20,9 @@ use mcb_domain::registry::vector_store::*;
 use mcb_domain::value_objects::CollectionId;
 use rstest::rstest;
 
-use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, shared_app_context};
+use crate::utils::test_fixtures::shared_app_context;
 use mcb_domain::utils::tests::collection::unique_collection;
+use mcb_utils::constants::testing::TEST_EMBEDDING_DIMENSIONS;
 
 // ============================================================================
 // Provider Resolution Error Handling
@@ -208,7 +209,6 @@ async fn test_failed_search_doesnt_corrupt_state() -> Result<(), Box<dyn std::er
 // ============================================================================
 
 #[rstest]
-#[test]
 fn test_list_providers_never_panics() {
     // These should never panic, even if registry is empty
     let embedding_providers = list_embedding_providers();
@@ -231,7 +231,6 @@ fn test_list_providers_never_panics() {
 }
 
 #[rstest]
-#[test]
 fn test_resolve_with_empty_config_values() {
     // Config with empty strings should fail gracefully
     let embedding_config = EmbeddingProviderConfig::new("");

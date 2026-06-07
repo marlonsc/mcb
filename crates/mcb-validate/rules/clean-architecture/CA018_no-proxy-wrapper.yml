@@ -1,0 +1,28 @@
+schema: "rule/v2"
+id: CA018
+name: No Proxy or Wrapper Re-exports
+category: architecture
+severity: error
+description: Crates must NOT re-export symbols from mcb-utils via pub use. Consumers should import directly from the canonical source.
+rationale: |
+  Proxy re-exports (pub use mcb_utils::...) create indirection that hides the true source
+  of symbols. Direct imports from mcb_utils make dependency paths explicit and searchable.
+engine: regex
+rule:
+  type: regex_scan
+config:
+  patterns:
+    proxy_reexport: 'pub\s+use\s+mcb_utils::'
+  ignore_patterns:
+    - '^\s*//'
+filters:
+  file_patterns:
+    - "crates/mcb-server/src/**/*.rs"
+    - "crates/mcb-providers/src/**/*.rs"
+    - "crates/mcb-validate/src/**/*.rs"
+    - "crates/mcb-infrastructure/src/**/*.rs"
+    - "crates/mcb-domain/src/**/*.rs"
+    - "crates/mcb/src/**/*.rs"
+  skip:
+    file_patterns:
+      - "**/tests/**"

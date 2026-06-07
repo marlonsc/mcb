@@ -10,8 +10,12 @@ use argon2::{Argon2, PasswordVerifier};
 use axum::http::HeaderMap;
 use loco_rs::errors::Error;
 use loco_rs::prelude::Result;
-use mcb_domain::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
 use mcb_domain::ports::AuthRepositoryPort;
+use mcb_utils::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
+use mcb_utils::constants::http::HTTP_HEADER_AUTHORIZATION;
+
+// Support both direct app routes (`/alive`) and prefixed ingress rewrites (`/api/alive`).
+const ADMIN_AUTH_EXEMPT_PATHS: &[&str] = &["/alive", "/api/alive"];
 
 /// Authenticated admin principal.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -63,12 +67,24 @@ pub async fn authorize_admin_api_key(
 }
 
 pub(crate) fn configured_api_key_header(settings: Option<&serde_json::Value>) -> String {
-    settings
-        .and_then(|raw_settings| raw_settings.get("auth"))
-        .and_then(|auth| auth.get("api_key"))
-        .and_then(|api_key| api_key.get("header"))
+    // Try admin-specific header first (settings.auth.admin.header), then
+    // fall back to the general API-key header (settings.auth.api_key.header).
+    let auth = settings.and_then(|s| s.get("auth"));
+    auth.and_then(|a| a.get("admin"))
+        .and_then(|admin| admin.get("header"))
         .and_then(serde_json::Value::as_str)
+        .or_else(|| {
+            auth.and_then(|a| a.get("api_key"))
+                .and_then(|api_key| api_key.get("header"))
+                .and_then(serde_json::Value::as_str)
+        })
         .map_or_else(|| API_KEY_HEADER.to_owned(), str::to_ascii_lowercase)
+}
+
+/// Returns whether a path is exempt from admin API-key authentication.
+#[must_use]
+pub fn is_admin_auth_exempt_path(path: &str) -> bool {
+    ADMIN_AUTH_EXEMPT_PATHS.contains(&path)
 }
 
 /// Extract API key from headers, checking both custom header and Authorization bearer.
@@ -91,7 +107,7 @@ pub fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String>
         }
     }
 
-    if let Some(value) = headers.get("authorization") {
+    if let Some(value) = headers.get(HTTP_HEADER_AUTHORIZATION) {
         let value = value
             .to_str()
             .map_err(|_| Error::Unauthorized("invalid authorization header value".to_owned()))?;

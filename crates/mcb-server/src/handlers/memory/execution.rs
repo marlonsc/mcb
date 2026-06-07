@@ -4,8 +4,8 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{ExecutionMetadata, MemorySearchResult, ObservationType};
-use mcb_domain::ports::MemoryServiceInterface;
-use mcb_domain::utils::id as domain_id;
+use mcb_domain::ports::{MemoryServiceInterface, StoreObservationInput};
+use mcb_utils::utils::id as domain_id;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Value;
@@ -16,9 +16,10 @@ use super::common::{
     search_memories_as_json, str_vec,
 };
 use crate::args::MemoryArgs;
-use crate::constants::fields::{FIELD_OBSERVATION_ID, TAG_EXECUTION, TAG_FAILURE, TAG_SUCCESS};
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
+use mcb_utils::constants::keys::FIELD_OBSERVATION_ID;
+use mcb_utils::constants::values::{TAG_EXECUTION, TAG_FAILURE, TAG_SUCCESS};
 
 /// Validated execution data extracted from JSON payload
 struct ValidatedExecutionData {
@@ -52,24 +53,18 @@ impl ValidatedExecutionData {
     }
 }
 
-/// Store an execution observation in memory
-#[tracing::instrument(skip_all)]
-pub async fn store_execution(
-    memory_service: &Arc<dyn MemoryServiceInterface>,
-    args: &MemoryArgs,
-) -> Result<CallToolResult, McpError> {
-    let data = extract_field!(require_data_map(
-        &args.data,
-        "Missing data payload for execution store"
-    ));
-    let validated = extract_field!(ValidatedExecutionData::validate(data));
-    let metadata = ExecutionMetadata {
+/// Assemble [`ExecutionMetadata`] from validated fields plus optional payload extras.
+fn build_execution_metadata(
+    validated: &ValidatedExecutionData,
+    data: &serde_json::Map<String, serde_json::Value>,
+) -> ExecutionMetadata {
+    ExecutionMetadata {
         id: domain_id::generate().to_string(),
         command: validated.command.clone(),
         exit_code: Some(validated.exit_code),
         duration_ms: Some(validated.duration_ms),
         success: validated.success,
-        execution_type: validated.execution_type,
+        execution_type: validated.execution_type.clone(),
         coverage: data
             .get("coverage")
             .and_then(Value::as_f64)
@@ -87,21 +82,48 @@ pub async fn store_execution(
             .get("errors_count")
             .and_then(Value::as_i64)
             .and_then(|value| value.try_into().ok()),
-    };
-    let content = format!(
+    }
+}
+
+/// Human-readable summary line for an execution observation.
+fn format_execution_content(validated: &ValidatedExecutionData) -> String {
+    format!(
         "Execution: {} (exit_code={}, success={})",
         validated.command, validated.exit_code, validated.success
-    );
-    let tags = vec![
+    )
+}
+
+/// Tags describing an execution observation (kind plus success/failure).
+fn build_execution_tags(
+    validated: &ValidatedExecutionData,
+    metadata: &ExecutionMetadata,
+) -> Vec<String> {
+    let outcome = if validated.success {
+        TAG_SUCCESS
+    } else {
+        TAG_FAILURE
+    };
+    vec![
         TAG_EXECUTION.to_owned(),
         metadata.execution_type.as_str().to_owned(),
-        if validated.success {
-            TAG_SUCCESS
-        } else {
-            TAG_FAILURE
-        }
-        .to_owned(),
-    ];
+        outcome.to_owned(),
+    ]
+}
+
+/// Store an execution observation in memory
+#[tracing::instrument(skip_all)]
+pub async fn store_execution(
+    memory_service: &Arc<dyn MemoryServiceInterface>,
+    args: &MemoryArgs,
+) -> Result<CallToolResult, McpError> {
+    let data = extract_field!(require_data_map(
+        &args.data,
+        "Missing data payload for execution store"
+    ));
+    let validated = extract_field!(ValidatedExecutionData::validate(data));
+    let metadata = build_execution_metadata(&validated, data);
+    let content = format_execution_content(&validated);
+    let tags = build_execution_tags(&validated, &metadata);
     let payload_execution_id = opt_str(data, "execution_id");
     let generated_execution_id = metadata.id.clone();
 
@@ -129,14 +151,32 @@ pub async fn store_execution(
         None,
     );
 
+    persist_execution_observation(
+        memory_service,
+        origin.project_id,
+        content,
+        tags,
+        obs_metadata,
+    )
+    .await
+}
+
+/// Store the execution observation and format the MCP response.
+async fn persist_execution_observation(
+    memory_service: &Arc<dyn MemoryServiceInterface>,
+    project_id: String,
+    content: String,
+    tags: Vec<String>,
+    obs_metadata: mcb_domain::entities::memory::ObservationMetadata,
+) -> Result<CallToolResult, McpError> {
     match memory_service
-        .store_observation(
-            origin.project_id,
+        .store_observation(StoreObservationInput {
+            project_id,
             content,
-            ObservationType::Execution,
+            r#type: ObservationType::Execution,
             tags,
-            obs_metadata,
-        )
+            metadata: obs_metadata,
+        })
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({

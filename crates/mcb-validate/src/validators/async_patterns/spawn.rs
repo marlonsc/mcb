@@ -1,14 +1,27 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::constants::common::{CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT};
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_utils::constants::validate::{CONTEXT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT};
 
 use super::violation::AsyncViolation;
-use crate::constants::async_patterns::BACKGROUND_FN_PATTERNS;
+use mcb_utils::constants::validate::BACKGROUND_FN_PATTERNS;
+
+/// Returns `true` when `line` contains a `tokio::spawn` whose handle is neither
+/// assigned, awaited, nor explicitly discarded with `let _`.
+fn is_unassigned_spawn(
+    line: &str,
+    spawn_pattern: &regex::Regex,
+    assigned_spawn_pattern: &regex::Regex,
+) -> bool {
+    let has_spawn = spawn_pattern.is_match(line);
+    let has_followup =
+        assigned_spawn_pattern.is_match(line) || line.contains(".await") || line.contains("let _");
+    has_spawn && !has_followup
+}
 
 /// Detect spawn without await patterns
 pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncViolation>> {
@@ -37,16 +50,9 @@ pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncVio
                     current_fn_name = cap.get(1).map_or("", |m| m.as_str()).to_lowercase();
                 }
 
-                let has_spawn = spawn_pattern.is_match(line);
-                let has_assignment = assigned_spawn_pattern.is_match(line);
-                let has_await = line.contains(".await");
-                let is_ignored_spawn = line.contains("let _");
-                let in_background_fn = is_background_fn(&current_fn_name);
-                let no_followup =
-                    !(has_assignment || has_await || is_ignored_spawn || in_background_fn);
-                let unassigned_spawn = has_spawn && no_followup;
-
-                if unassigned_spawn {
+                if is_unassigned_spawn(line, spawn_pattern, assigned_spawn_pattern)
+                    && !is_background_fn(&current_fn_name)
+                {
                     violations.push(AsyncViolation::UnawaitedSpawn {
                         file: path.clone(),
                         line: line_num + 1,

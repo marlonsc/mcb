@@ -7,8 +7,8 @@ use serde_json::Value;
 
 use mcb_domain::error::Result;
 use mcb_domain::ports::VectorStoreProvider;
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
+use mcb_utils::utils::id;
 
 use super::QdrantVectorStoreProvider;
 
@@ -21,7 +21,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
             Some(serde_json::json!({
                 "vectors": {
                     "size": dimensions,
-                    "distance": crate::constants::QDRANT_DISTANCE_METRIC
+                    "distance": mcb_utils::constants::vector_store::QDRANT_DISTANCE_METRIC
                 }
             })),
         )

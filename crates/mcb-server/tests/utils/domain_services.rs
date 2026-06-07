@@ -20,7 +20,7 @@ use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::state::McbState;
 use mcb_server::tools::ExecutionFlow;
 
-// Force linkme registration of all concrete providers
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
 
 /// Helper to create a base `MemoryArgs` with common defaults.
@@ -70,14 +70,13 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
     // 2. Event bus — resolved through linkme registry
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;
 
-    // 3. Embedding — deterministic local provider (no ONNX model download;
-    //    contract/state tests assert MCP wiring, not embedding quality)
+    // 3. Embedding — deterministic local provider for unit test composition
     let embedding_provider = super::test_fixtures::create_test_embedding_provider(384);
 
     // 4. Vector store — resolved through linkme registry
     let vs_config = VectorStoreProviderConfig::new("edgevec")
         .with_dimensions(384)
-        .with_collection("default");
+        .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
     let vector_store_provider = match resolve_vector_store_provider(&vs_config) {
         Ok(p) => p,
         Err(e) => {
@@ -91,19 +90,26 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
     };
 
     // 5. Hybrid search — resolved through linkme registry
-    let hybrid_search =
-        resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default")).ok()?;
+    let hybrid_search = resolve_hybrid_search_provider(&HybridSearchProviderConfig::new(
+        mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+    ))
+    .ok()?;
 
     // 6. Build ServiceResolutionContext (domain-level opaque DI context)
-    // Real AppConfig: the indexing service builder downcasts ctx.config to AppConfig.
-    let (app_config, _config_temp) =
-        mcb_infrastructure::config::test_builder::TestConfigBuilder::new()
-            .ok()?
-            .build()
-            .ok()?;
     let resolution_ctx = ServiceResolutionContext {
         db: Arc::clone(&db),
-        config: Arc::new(app_config),
+        config: Arc::new(
+            *mcb_domain::registry::config::resolve_config_provider(
+                &mcb_domain::registry::config::ConfigProviderConfig::new(
+                    mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
+                ),
+            )
+            .ok()?
+            .load_config()
+            .ok()?
+            .downcast::<mcb_infrastructure::config::app::AppConfig>()
+            .ok()?,
+        ), // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
         event_bus,
         embedding_provider: Arc::clone(&embedding_provider),
         vector_store_provider: Arc::clone(&vector_store_provider),

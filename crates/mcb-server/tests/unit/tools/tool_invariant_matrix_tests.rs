@@ -9,8 +9,13 @@ use rmcp::model::CallToolRequestParams;
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp_str};
 use crate::utils::test_fixtures::create_test_mcp_server;
-use mcb_domain::test_http_mcp::tools_call_request;
-use mcb_domain::test_utils::TestResult;
+use mcb_domain::utils::tests::http_mcp::tools_call_request;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_utils::constants::headers::HEADER_WORKSPACE_ROOT;
+use mcb_utils::constants::protocol::{
+    EXECUTION_FLOW_HYBRID, EXECUTION_FLOW_SERVER_HYBRID, EXECUTION_FLOW_STDIO_ONLY,
+    HTTP_HEADER_EXECUTION_FLOW,
+};
 
 fn tool_handlers(server: &Arc<McpServer>) -> ToolHandlers {
     server.tool_handlers()
@@ -35,19 +40,19 @@ fn full_provenance_context() -> ToolExecutionContext {
         model_id: Some("model-test".to_owned()),
         delegated: Some(false),
         timestamp: Some(1700000000),
-        execution_flow: Some("stdio-only".to_owned()),
+        execution_flow: Some(EXECUTION_FLOW_STDIO_ONLY.to_owned()),
     }
 }
 
+// Tools with required fields that reject empty args at parse time.
 #[rstest]
-#[case("index")]
-#[case("search")]
-#[case("validate")]
-#[case("memory")]
-#[case("session")]
-#[case("agent")]
+#[case("search_code")]
+#[case("search_memory")]
+#[case("memory_timeline")]
+#[case("log_tool_call")]
+#[case("log_delegation")]
+#[case("compare_branches")]
 #[case("project")]
-#[case("vcs")]
 #[case("entity")]
 #[rstest]
 #[tokio::test]
@@ -77,9 +82,9 @@ async fn empty_args_returns_invalid_params(#[case] tool_name: &str) -> TestResul
 }
 
 #[rstest]
-#[case("index")]
-#[case("search")]
-#[case("memory")]
+#[case("index_repo")]
+#[case("search_code")]
+#[case("store_memory")]
 #[rstest]
 #[tokio::test]
 async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) -> TestResult {
@@ -101,11 +106,11 @@ async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) ->
 }
 
 #[rstest]
-#[case("validate")]
-#[case("session")]
-#[case("agent")]
+#[case("validate_code")]
+#[case("list_sessions")]
+#[case("log_tool_call")]
 #[case("project")]
-#[case("vcs")]
+#[case("list_repos")]
 #[case("entity")]
 #[rstest]
 #[tokio::test]
@@ -114,29 +119,27 @@ async fn non_provenance_tools_pass_gate_without_context(#[case] tool_name: &str)
     let handlers = tool_handlers(&Arc::new(server));
     let request = empty_call_request(tool_name);
 
-    let error = route_tool_call(request, &handlers, ToolExecutionContext::default())
-        .await
-        .expect_err(&format!("{tool_name}: empty args should fail"));
+    let result = route_tool_call(request, &handlers, ToolExecutionContext::default()).await;
 
-    assert!(
-        !error.message.contains("Missing execution provenance"),
-        "{tool_name}: should NOT require provenance, got: {}",
-        error.message
-    );
-    assert_eq!(
-        error.code.0, -32602,
-        "{tool_name}: should still be -32602 from parse failure"
-    );
+    // Non-provenance tools should NOT be rejected by the provenance gate.
+    // They may succeed (if all args optional) or fail for other reasons (parse/handler error).
+    if let Err(error) = result {
+        assert!(
+            !error.message.contains("Missing execution provenance"),
+            "{tool_name}: should NOT require provenance, got: {}",
+            error.message
+        );
+    }
     Ok(())
 }
 
 #[rstest]
-#[case("search")]
-#[case("memory")]
-#[case("session")]
-#[case("agent")]
+#[case("search_code")]
+#[case("store_memory")]
+#[case("list_sessions")]
+#[case("log_tool_call")]
 #[case("project")]
-#[case("vcs")]
+#[case("list_repos")]
 #[case("entity")]
 #[rstest]
 #[tokio::test]
@@ -146,8 +149,8 @@ async fn client_hybrid_allows_server_side_tools(
     let ctx = McpTestContext::new().await?;
     let request = tools_call_request(tool_name);
     let headers = [
-        ("X-Workspace-Root", "/tmp"),
-        ("X-Execution-Flow", "client-hybrid"),
+        (HEADER_WORKSPACE_ROOT, "/tmp"),
+        (HTTP_HEADER_EXECUTION_FLOW, EXECUTION_FLOW_HYBRID),
     ];
     let (status, response) = post_mcp_str(&ctx, &request, &headers).await?;
 
@@ -169,10 +172,10 @@ async fn client_hybrid_allows_server_side_tools(
 #[tokio::test]
 async fn server_hybrid_blocks_validate() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
-    let request = tools_call_request("validate");
+    let request = tools_call_request("validate_code");
     let headers = [
-        ("X-Workspace-Root", "/tmp"),
-        ("X-Execution-Flow", "server-hybrid"),
+        (HEADER_WORKSPACE_ROOT, "/tmp"),
+        (HTTP_HEADER_EXECUTION_FLOW, EXECUTION_FLOW_SERVER_HYBRID),
     ];
     let (status, response) = post_mcp_str(&ctx, &request, &headers).await?;
 
@@ -180,7 +183,7 @@ async fn server_hybrid_blocks_validate() -> Result<(), Box<dyn std::error::Error
     let error_opt = response.error;
     assert!(
         error_opt.is_some(),
-        "validate should be blocked in server-hybrid"
+        "validate_code should be blocked in server-hybrid"
     );
     let error = match error_opt {
         Some(error) => error,

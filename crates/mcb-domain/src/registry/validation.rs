@@ -10,8 +10,8 @@
 use std::path::{Path, PathBuf};
 
 use crate::error::Result;
+use crate::ports::services::validation_service::{ValidationReport, ViolationEntry};
 use crate::ports::validation::Validator;
-use crate::ports::{ValidationReport, ViolationEntry};
 
 // ============================================================================
 // Validator entries (linkme-discovered validators)
@@ -27,7 +27,7 @@ pub struct ValidatorEntry {
     /// Human-readable description
     pub description: &'static str,
     /// Build a validator instance for the given workspace root
-    pub build: fn(PathBuf) -> std::result::Result<Box<dyn Validator>, String>,
+    pub build: fn(PathBuf) -> Result<Box<dyn Validator>>,
 }
 
 #[linkme::distributed_slice]

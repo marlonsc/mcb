@@ -9,4 +9,4 @@
 /// MCP JSON-RPC protocol types (request, response, error).
 pub mod mcp_types;
 
-pub use mcp_types::{JSONRPC_VERSION, McpError, McpRequest, McpResponse};
+pub use mcp_types::{McpError, McpRequest, McpResponse};

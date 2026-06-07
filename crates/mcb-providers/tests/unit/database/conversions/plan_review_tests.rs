@@ -12,12 +12,11 @@ fn sample_plan_review() -> plan_review::Model {
         reviewer_id: "ref_reviewer_id_001".into(),
         verdict: "NeedsRevision".into(),
         feedback: "test_feedback".into(),
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 
 #[rstest]
-#[test]
 fn round_trip_plan_review() {
     let model = sample_plan_review();
     let model_val = model.id.clone();

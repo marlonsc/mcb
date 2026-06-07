@@ -2,9 +2,9 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_utils::utils::regex::compile_regex;
 
 use super::violation::HygieneViolation;
 use crate::ValidationConfigExt;
@@ -24,7 +24,12 @@ struct NamingScanInput<'a> {
     assert_pattern: &'a regex::Regex,
 }
 
-/// Verifies that test functions follow the `test_*` naming pattern.
+/// Verifies test-function hygiene: every attributed test carries a real
+/// assertion.
+///
+/// Test functions use descriptive behavioral names (e.g.
+/// `agent_happy_path_contract`); a `test_` prefix is not required, so naming is
+/// not flagged here — only missing assertions are.
 ///
 /// # Errors
 ///
@@ -94,25 +99,6 @@ fn find_next_test_function(
         })
 }
 
-fn append_naming_violation_if_needed(
-    violations: &mut Vec<HygieneViolation>,
-    path: &std::path::Path,
-    fn_line_idx: usize,
-    fn_name: &str,
-) {
-    if fn_name.starts_with("test_") {
-        return;
-    }
-
-    violations.push(HygieneViolation::BadTestFunctionName {
-        file: path.to_path_buf(),
-        line: fn_line_idx + 1,
-        function_name: fn_name.to_owned(),
-        suggestion: format!("test_{fn_name}"),
-        severity: Severity::Warning,
-    });
-}
-
 fn has_assertion_in_test_body(
     lines: &[&str],
     fn_line_idx: usize,
@@ -152,8 +138,6 @@ fn collect_naming_violations_for_file(
         else {
             continue;
         };
-
-        append_naming_violation_if_needed(&mut violations, path, fn_line_idx, &fn_name);
 
         let has_assertion =
             has_assertion_in_test_body(lines, fn_line_idx, scan_input.assert_pattern);

@@ -7,16 +7,13 @@
 use std::any::Any;
 use std::sync::Arc;
 
-use mcb_domain::registry::database::{
-    DATABASE_CONNECTION_PROVIDERS, DatabaseBuildFuture, DatabaseConnectionEntry,
-    DatabaseProviderConfig,
-};
+use mcb_domain::registry::database::{DatabaseBuildFuture, DatabaseProviderConfig};
 
 /// Build a `SQLite` connection string from the provider configuration.
 fn sqlite_url(config: &DatabaseProviderConfig) -> String {
     match &config.path {
         Some(path) => format!("sqlite:{}?mode=rwc", path.display()),
-        None => "sqlite::memory:".to_owned(),
+        None => mcb_utils::constants::SQLITE_MEMORY_DSN.to_owned(),
     }
 }
 
@@ -55,16 +52,6 @@ fn build_seaorm_connection(config: &DatabaseProviderConfig) -> DatabaseBuildFutu
     })
 }
 
-/// `SeaORM` `SQLite` connection provider registration.
-#[linkme::distributed_slice(DATABASE_CONNECTION_PROVIDERS)]
-static SEAORM_SQLITE: DatabaseConnectionEntry = DatabaseConnectionEntry {
-    name: "sqlite",
-    build: build_seaorm_connection,
-};
+mcb_domain::register_database_connection!(SQLITE_CONN, "sqlite", build_seaorm_connection);
 
-/// `SeaORM` `PostgreSQL` connection provider registration.
-#[linkme::distributed_slice(DATABASE_CONNECTION_PROVIDERS)]
-static SEAORM_POSTGRES: DatabaseConnectionEntry = DatabaseConnectionEntry {
-    name: "postgres",
-    build: build_seaorm_connection,
-};
+mcb_domain::register_database_connection!(POSTGRES_CONN, "postgres", build_seaorm_connection);

@@ -6,11 +6,30 @@ use async_trait::async_trait;
 use mcb_domain::error::Error;
 use mcb_domain::error::Result;
 use mcb_domain::ports::VectorStoreProvider;
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
+use mcb_utils::utils::id;
 use serde_json::Value;
 
 use super::PineconeVectorStoreProvider;
+
+impl PineconeVectorStoreProvider {
+    async fn upsert_vector_batch(
+        &self,
+        collection_str: &str,
+        pinecone_vectors: &[Value],
+    ) -> Result<()> {
+        self.request(
+            reqwest::Method::POST,
+            "/vectors/upsert",
+            Some(serde_json::json!({
+                "vectors": pinecone_vectors,
+                "namespace": collection_str
+            })),
+        )
+        .await?;
+        Ok(())
+    }
+}
 
 #[async_trait]
 impl VectorStoreProvider for PineconeVectorStoreProvider {
@@ -60,33 +79,24 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
                 metadata.len()
             )));
         }
-        let collection_str = collection.to_string();
 
+        let collection_str = collection.to_string();
         let mut ids = Vec::with_capacity(vectors.len());
         let mut pinecone_vectors = Vec::with_capacity(vectors.len());
-        let batch_size = crate::constants::PINECONE_UPSERT_BATCH_SIZE;
+        let batch_size = mcb_utils::constants::vector_store::PINECONE_UPSERT_BATCH_SIZE;
 
         for (i, (embedding, meta)) in vectors.iter().zip(metadata.iter()).enumerate() {
             let id = format!("vec_{}", id::generate());
             pinecone_vectors.push(serde_json::json!({
-                "id": id,
+                "id": &id,
                 "values": embedding.vector,
                 "metadata": meta
             }));
             ids.push(id);
 
-            // Pinecone has a batch size limit; upsert in chunks
             if pinecone_vectors.len() >= batch_size || i == vectors.len() - 1 {
-                self.request(
-                    reqwest::Method::POST,
-                    "/vectors/upsert",
-                    Some(serde_json::json!({
-                        "vectors": pinecone_vectors,
-                        "namespace": collection_str
-                    })),
-                )
-                .await?;
-
+                self.upsert_vector_batch(&collection_str, &pinecone_vectors)
+                    .await?;
                 pinecone_vectors.clear();
             }
         }
@@ -188,7 +198,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
     ) -> Result<Vec<SearchResult>> {
         // Pinecone doesn't support listing; use zero vector search as workaround
         let collection_str = collection.to_string();
-        let dimensions = self.collection_dimensions(&collection_str);
+        let dimensions = self.collection_dimensions(&collection_str)?;
 
         let zero_vector = vec![0.0f32; dimensions];
         self.search_similar(collection, &zero_vector, limit, None)

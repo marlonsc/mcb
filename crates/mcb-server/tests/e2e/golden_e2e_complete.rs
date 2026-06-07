@@ -8,13 +8,14 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
 use serde::Deserialize;
 
-use crate::utils::test_fixtures::{
-    GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, golden_content_to_string,
-    golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
+use mcb_domain::utils::tests::fixtures::sample_codebase_path;
+use mcb_domain::utils::tests::mcp_assertions::{
+    extract_text as extract_result_text, golden_count_result_entries, golden_parse_results_found,
 };
 use mcb_domain::utils::tests::timeouts::TEST_TIMEOUT;
 use mcb_domain::utils::tests::utils::TestResult;
-use mcb_domain::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text_from;
+use mcb_utils::constants::testing::{GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES};
 
 fn index_args(action: IndexAction, path: Option<String>, collection: Option<String>) -> IndexArgs {
     IndexArgs {
@@ -92,7 +93,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
         )))
         .await;
     assert!(r.is_ok(), "index clear should succeed: {r:?}");
-    let clear_text = extract_text(&r.unwrap().content);
+    let clear_text = extract_text_from(&r.unwrap().content);
     assert!(
         clear_text.to_lowercase().contains("clear"),
         "clear response must mention clear/cleared: {clear_text}"
@@ -108,7 +109,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     assert!(r.is_ok(), "index status should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text(&res.content);
+    let text = extract_text_from(&res.content);
     assert!(text.contains("Indexing Status") || text.contains("Idle") || text.contains("indexing"));
 
     let r = index_h
@@ -121,7 +122,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     assert!(r.is_ok(), "index should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text(&res.content);
+    let text = extract_text_from(&res.content);
     assert!(
         text.contains("chunks") || text.contains("Indexing") || text.contains("files"),
         "expected chunks/indexing in response: {text}"
@@ -137,7 +138,7 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     assert!(r.is_ok(), "search should succeed: {r:?}");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text(&res.content);
+    let text = extract_text_from(&res.content);
     assert!(
         text.contains("Search") || text.contains("Results") || text.contains("result"),
         "expected search result text: {text}"
@@ -162,12 +163,12 @@ async fn test_golden_e2e_handles_concurrent_operations() -> TestResult {
     let r1 = status_h.handle(Parameters(index_args(
         IndexAction::Status,
         None,
-        Some("default".to_owned()),
+        Some(mcb_utils::constants::DEFAULT_NAMESPACE.to_owned()),
     )));
     let r2 = status_h.handle(Parameters(index_args(
         IndexAction::Status,
         None,
-        Some("default".to_owned()),
+        Some(mcb_utils::constants::DEFAULT_NAMESPACE.to_owned()),
     )));
     let (a, b) = tokio::join!(r1, r2);
     assert!(a.is_ok());
@@ -243,7 +244,7 @@ async fn test_golden_index_variants(
     assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
 
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     assert!(
         text.contains("Files processed")
             || text.contains("Indexing Started")
@@ -270,7 +271,7 @@ async fn test_golden_index_respects_ignore_patterns() -> TestResult {
     assert!(!response.content.is_empty(), "response should have content");
     assert!(!response.is_error.unwrap_or(false));
 
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     assert!(
         text.contains("Files processed")
             || text.contains("Indexing Started")
@@ -296,14 +297,14 @@ async fn test_golden_mcp_index_schema_actions(
         .handle(Parameters(index_args(
             action,
             None,
-            Some("default".to_owned()),
+            Some(mcb_utils::constants::DEFAULT_NAMESPACE.to_owned()),
         )))
         .await;
     assert!(r.is_ok());
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
     if assert_status_text {
-        let text = extract_text(&res.content);
+        let text = extract_text_from(&res.content);
         assert!(
             text.contains("Status") || text.contains("indexing") || text.contains("Idle"),
             "{}",
@@ -321,7 +322,7 @@ async fn test_golden_mcp_search_code_schema() -> TestResult {
     let r = search_h
         .handle(Parameters(search_args(
             "test",
-            Some("default".to_owned()),
+            Some(mcb_utils::constants::DEFAULT_NAMESPACE.to_owned()),
             Some(5),
         )))
         .await;
@@ -345,7 +346,7 @@ async fn test_golden_mcp_empty_query_error_responses(#[case] query: &str) -> Tes
         "error response should have content"
     );
     assert!(response.is_error.unwrap_or(false));
-    let text = extract_text(&response.content);
+    let text = extract_text_from(&response.content);
     assert!(
         text.to_lowercase().contains("empty") || text.to_lowercase().contains("query"),
         "error response should mention empty query: {text}"
@@ -380,7 +381,7 @@ async fn test_golden_search_returns_relevant_results() -> TestResult {
     assert!(r.is_ok(), "search must succeed after index");
     let res = r.unwrap();
     assert!(!res.is_error.unwrap_or(true));
-    let text = golden_content_to_string(&res);
+    let text = extract_result_text(&res);
     let count =
         golden_parse_results_found(&text).unwrap_or_else(|| golden_count_result_entries(&text));
     if count > 0 {
@@ -446,7 +447,7 @@ async fn test_golden_search_respects_limit_parameter() -> TestResult {
         )))
         .await;
     assert!(r.is_ok(), "search must succeed");
-    let text = golden_content_to_string(&r.unwrap());
+    let text = extract_result_text(&r.unwrap());
     let n = golden_parse_results_found(&text).unwrap_or_else(|| golden_count_result_entries(&text));
     assert!(n <= 2, "search must respect limit: got {n} results");
     Ok(())
@@ -520,7 +521,7 @@ async fn test_golden_e2e_golden_queries_setup() -> TestResult {
                 )))
                 .await
                 .expect("status");
-            let text = extract_text(&r.content);
+            let text = extract_text_from(&r.content);
             if text.contains("Idle") || text.contains("completed") || text.contains("Status") {
                 return true;
             }

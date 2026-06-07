@@ -5,6 +5,7 @@ pub mod utils;
 
 mod ca001_integration_tests;
 mod ca009_tests;
+mod ca016_ca018_ca019_tests;
 mod integration_architecture;
 mod integration_ast;
 mod integration_duplication;

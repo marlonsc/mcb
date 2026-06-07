@@ -17,14 +17,12 @@
 use std::sync::Arc;
 
 use mcb_domain::ports::{HighlightError, HighlightServiceInterface};
-use mcb_domain::registry::services::{
-    HIGHLIGHT_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
-};
-use mcb_domain::value_objects::browse::{HighlightCategory, HighlightSpan, HighlightedCode};
+use mcb_domain::registry::services::ServiceBuilder;
+use mcb_domain::value_objects::browse::{HighlightSpan, HighlightedCode};
 use tree_sitter::Language;
 use tree_sitter_highlight::{Highlight, HighlightConfiguration, HighlightEvent, Highlighter};
 
-use mcb_domain::value_objects::browse::HIGHLIGHT_NAMES;
+use mcb_domain::value_objects::browse::{HIGHLIGHT_NAMES, map_highlight_to_category};
 
 /// Language-specific highlighting configuration
 struct HighlightLanguageConfig {
@@ -43,29 +41,18 @@ impl HighlightLanguageConfig {
     }
 }
 
-/// Maps tree-sitter highlight names to our category enum.
-#[must_use]
-pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
-    match name {
-        "keyword" => HighlightCategory::Keyword,
-        "string" => HighlightCategory::String,
-        "comment" => HighlightCategory::Comment,
-        "function" => HighlightCategory::Function,
-        "type" => HighlightCategory::Type,
-        "variable" => HighlightCategory::Variable,
-        "number" => HighlightCategory::Number,
-        "operator" => HighlightCategory::Operator,
-        "punctuation" => HighlightCategory::Punctuation,
-        _ => HighlightCategory::Other,
-    }
+/// Internal state holding both the highlighter and cached language configs.
+struct HighlighterState {
+    highlighter: Highlighter,
+    configs: std::collections::HashMap<String, HighlightConfiguration>,
 }
 
 /// Concrete highlight service implementation using tree-sitter.
 ///
-/// Manages a thread-safe `Highlighter` instance and specific language configurations
+/// Manages a thread-safe `Highlighter` instance and **cached** language configurations
 /// to perform efficient, on-demand syntax highlighting.
 pub struct HighlightServiceImpl {
-    highlighter: Arc<tokio::sync::Mutex<Highlighter>>,
+    state: Arc<std::sync::Mutex<HighlighterState>>,
 }
 
 impl HighlightServiceImpl {
@@ -73,77 +60,127 @@ impl HighlightServiceImpl {
     #[must_use]
     pub fn new() -> Self {
         Self {
-            highlighter: Arc::new(tokio::sync::Mutex::new(Highlighter::new())),
+            state: Arc::new(std::sync::Mutex::new(HighlighterState {
+                highlighter: Highlighter::new(),
+                configs: std::collections::HashMap::new(),
+            })),
+        }
+    }
+
+    fn get_language_config_dynamic(
+        lang_id: mcb_domain::ports::validation::LanguageId,
+    ) -> Option<Result<HighlightLanguageConfig, HighlightError>> {
+        #[allow(clippy::wildcard_enum_match_arm)]
+        match lang_id {
+            mcb_domain::ports::validation::LanguageId::Python => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "python",
+                    tree_sitter_python::LANGUAGE.into(),
+                    tree_sitter_python::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::JavaScript => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "javascript",
+                    tree_sitter_javascript::LANGUAGE.into(),
+                    tree_sitter_javascript::HIGHLIGHT_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::TypeScript => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "typescript",
+                    tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
+                    tree_sitter_typescript::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Tsx => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "tsx",
+                    tree_sitter_typescript::LANGUAGE_TSX.into(),
+                    tree_sitter_typescript::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Ruby => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "ruby",
+                    tree_sitter_ruby::LANGUAGE.into(),
+                    tree_sitter_ruby::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Php => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "php",
+                    tree_sitter_php::LANGUAGE_PHP.into(),
+                    tree_sitter_php::HIGHLIGHTS_QUERY,
+                )))
+            }
+            _unsupported_lang => None,
+        }
+    }
+
+    fn get_language_config_static(
+        lang_id: mcb_domain::ports::validation::LanguageId,
+    ) -> Option<Result<HighlightLanguageConfig, HighlightError>> {
+        #[allow(clippy::wildcard_enum_match_arm)]
+        match lang_id {
+            mcb_domain::ports::validation::LanguageId::Rust => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "rust",
+                    tree_sitter_rust::LANGUAGE.into(),
+                    tree_sitter_rust::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Go => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "go",
+                    tree_sitter_go::LANGUAGE.into(),
+                    tree_sitter_go::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Java => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "java",
+                    tree_sitter_java::LANGUAGE.into(),
+                    tree_sitter_java::HIGHLIGHTS_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::C => Some(Ok(HighlightLanguageConfig::new(
+                "c",
+                tree_sitter_c::LANGUAGE.into(),
+                tree_sitter_c::HIGHLIGHT_QUERY,
+            ))),
+            mcb_domain::ports::validation::LanguageId::Cpp => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "cpp",
+                    tree_sitter_cpp::LANGUAGE.into(),
+                    tree_sitter_cpp::HIGHLIGHT_QUERY,
+                )))
+            }
+            mcb_domain::ports::validation::LanguageId::Swift => {
+                Some(Ok(HighlightLanguageConfig::new(
+                    "swift",
+                    tree_sitter_swift::LANGUAGE.into(),
+                    tree_sitter_swift::HIGHLIGHTS_QUERY,
+                )))
+            }
+            _unsupported_lang => None,
         }
     }
 
     /// Get language configuration for supported languages
     fn get_language_config(language: &str) -> Result<HighlightLanguageConfig, HighlightError> {
-        let normalized = language.trim().to_lowercase();
+        let lang_id = mcb_domain::ports::validation::LanguageId::from_name(language)
+            .ok_or_else(|| HighlightError::UnsupportedLanguage(language.to_owned()))?;
 
-        match normalized.as_str() {
-            "rust" => Ok(HighlightLanguageConfig::new(
-                "rust",
-                tree_sitter_rust::LANGUAGE.into(),
-                tree_sitter_rust::HIGHLIGHTS_QUERY,
-            )),
-            "python" => Ok(HighlightLanguageConfig::new(
-                "python",
-                tree_sitter_python::LANGUAGE.into(),
-                tree_sitter_python::HIGHLIGHTS_QUERY,
-            )),
-            "javascript" | "js" => Ok(HighlightLanguageConfig::new(
-                "javascript",
-                tree_sitter_javascript::LANGUAGE.into(),
-                tree_sitter_javascript::HIGHLIGHT_QUERY,
-            )),
-            "typescript" | "ts" => Ok(HighlightLanguageConfig::new(
-                "typescript",
-                tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
-                tree_sitter_typescript::HIGHLIGHTS_QUERY,
-            )),
-            "tsx" => Ok(HighlightLanguageConfig::new(
-                "tsx",
-                tree_sitter_typescript::LANGUAGE_TSX.into(),
-                tree_sitter_typescript::HIGHLIGHTS_QUERY,
-            )),
-            "go" => Ok(HighlightLanguageConfig::new(
-                "go",
-                tree_sitter_go::LANGUAGE.into(),
-                tree_sitter_go::HIGHLIGHTS_QUERY,
-            )),
-            "java" => Ok(HighlightLanguageConfig::new(
-                "java",
-                tree_sitter_java::LANGUAGE.into(),
-                tree_sitter_java::HIGHLIGHTS_QUERY,
-            )),
-            "c" => Ok(HighlightLanguageConfig::new(
-                "c",
-                tree_sitter_c::LANGUAGE.into(),
-                tree_sitter_c::HIGHLIGHT_QUERY,
-            )),
-            "cpp" | "c++" => Ok(HighlightLanguageConfig::new(
-                "cpp",
-                tree_sitter_cpp::LANGUAGE.into(),
-                tree_sitter_cpp::HIGHLIGHT_QUERY,
-            )),
-            "ruby" => Ok(HighlightLanguageConfig::new(
-                "ruby",
-                tree_sitter_ruby::LANGUAGE.into(),
-                tree_sitter_ruby::HIGHLIGHTS_QUERY,
-            )),
-            "php" => Ok(HighlightLanguageConfig::new(
-                "php",
-                tree_sitter_php::LANGUAGE_PHP.into(),
-                tree_sitter_php::HIGHLIGHTS_QUERY,
-            )),
-            "swift" => Ok(HighlightLanguageConfig::new(
-                "swift",
-                tree_sitter_swift::LANGUAGE.into(),
-                tree_sitter_swift::HIGHLIGHTS_QUERY,
-            )),
-            _ => Err(HighlightError::UnsupportedLanguage(language.to_owned())),
+        if let Some(res) = Self::get_language_config_dynamic(lang_id) {
+            return res;
         }
+
+        if let Some(res) = Self::get_language_config_static(lang_id) {
+            return res;
+        }
+
+        Err(HighlightError::UnsupportedLanguage(language.to_owned()))
     }
 
     /// Create highlight configuration from language config
@@ -163,35 +200,9 @@ impl HighlightServiceImpl {
         Ok(config)
     }
 
-    /// Highlight code using tree-sitter
-    fn highlight_code_internal(
-        &self,
-        code: &str,
-        language: &str,
-    ) -> Result<HighlightedCode, HighlightError> {
-        if code.is_empty() {
-            return Ok(HighlightedCode {
-                original: code.to_owned(),
-                spans: vec![],
-                language: language.to_owned(),
-            });
-        }
-
-        let config_err = |op: &str, e: HighlightError| {
-            HighlightError::ConfigurationError(format!("failed to {op} for '{language}': {e}"))
-        };
-
-        let lang_config = Self::get_language_config(language)?;
-
-        let config = Self::create_highlight_config(lang_config)
-            .map_err(|e| config_err("create highlight config", e))?;
-
-        let mut highlighter = self.highlighter.blocking_lock();
-
-        let highlights = highlighter
-            .highlight(&config, code.as_bytes(), None, |_: &str| None)
-            .map_err(|e| HighlightError::HighlightingFailed(e.to_string()))?;
-
+    fn parse_highlight_events(
+        highlights: impl Iterator<Item = Result<HighlightEvent, tree_sitter_highlight::Error>>,
+    ) -> Result<Vec<HighlightSpan>, HighlightError> {
         let mut spans = Vec::new();
         let mut position = 0;
         let mut open_spans: Vec<(usize, &str)> = Vec::new();
@@ -222,6 +233,54 @@ impl HighlightServiceImpl {
             }
         }
 
+        Ok(spans)
+    }
+
+    /// Highlight code using tree-sitter with cached language configs.
+    fn highlight_code_internal(
+        &self,
+        code: &str,
+        language: &str,
+    ) -> Result<HighlightedCode, HighlightError> {
+        if code.is_empty() {
+            return Ok(HighlightedCode {
+                original: code.to_owned(),
+                spans: vec![],
+                language: language.to_owned(),
+            });
+        }
+
+        let mut state = self
+            .state
+            .lock()
+            .map_err(|e| HighlightError::HighlightingFailed(format!("Lock poisoned: {e}")))?;
+
+        // Destructure to allow independent borrows of configs and highlighter
+        let HighlighterState {
+            highlighter,
+            configs,
+        } = &mut *state;
+
+        // Get or create cached config for this language (entry API avoids expect)
+        let config = match configs.entry(language.to_owned()) {
+            std::collections::hash_map::Entry::Occupied(e) => e.into_mut(),
+            std::collections::hash_map::Entry::Vacant(e) => {
+                let lang_config = Self::get_language_config(language)?;
+                let config = Self::create_highlight_config(lang_config).map_err(|e| {
+                    HighlightError::ConfigurationError(format!(
+                        "failed to create highlight config for '{language}': {e}"
+                    ))
+                })?;
+                e.insert(config)
+            }
+        };
+
+        let highlights = highlighter
+            .highlight(config, code.as_bytes(), None, |_: &str| None)
+            .map_err(|e| HighlightError::HighlightingFailed(e.to_string()))?;
+
+        let spans = Self::parse_highlight_events(highlights)?;
+
         Ok(HighlightedCode {
             original: code.to_owned(),
             spans,
@@ -241,10 +300,10 @@ impl HighlightServiceInterface for HighlightServiceImpl {
     async fn highlight(&self, code: &str, language: &str) -> mcb_domain::Result<HighlightedCode> {
         let code = code.to_owned();
         let language = language.to_owned();
-        let highlighter = Arc::clone(&self.highlighter);
+        let state = Arc::clone(&self.state);
 
         let result = tokio::task::spawn_blocking(move || {
-            let service = HighlightServiceImpl { highlighter };
+            let service = HighlightServiceImpl { state };
             service.highlight_code_internal(&code, &language)
         })
         .await
@@ -254,12 +313,7 @@ impl HighlightServiceInterface for HighlightServiceImpl {
     }
 }
 
-// linkme distributed_slice uses unsafe link-section attributes internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(SERVICES_REGISTRY)]
-static HIGHLIGHT_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
-    name: HIGHLIGHT_SERVICE_NAME,
-    build: ServiceBuilder::Highlight(|_context| {
-        Ok(std::sync::Arc::new(HighlightServiceImpl::new()))
-    }),
-};
+mcb_domain::register_service!(
+    mcb_utils::constants::SERVICE_NAME_HIGHLIGHT,
+    ServiceBuilder::Highlight(|_context| { Ok(std::sync::Arc::new(HighlightServiceImpl::new())) }),
+);

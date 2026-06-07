@@ -55,7 +55,9 @@ impl ValidationServiceInterface for InfraValidationService {
     }
 
     async fn list_validators(&self) -> Result<Vec<String>> {
-        Ok(mcb_domain::registry::validation::list_validator_names())
+        let mut validators = mcb_domain::registry::validation::list_validator_names();
+        validators.sort_unstable();
+        Ok(validators)
     }
 
     async fn validate_file(
@@ -180,34 +182,6 @@ fn run_file_validation(
         violations: file_violations,
     })
 }
-fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<ComplexityReport> {
-    let content = std::fs::read_to_string(file_path).map_err(|e| {
-        mcb_domain::error::Error::io_with_source(
-            format!("failed to read {}", file_path.display()),
-            e,
-        )
-    })?;
-
-    let sloc = count_sloc(&content);
-    let files = vec![(file_path.to_path_buf(), content)];
-    let functions = mcb_domain::utils::analysis::collect_functions(&files)?;
-
-    let total_cyclomatic: f64 = functions.iter().map(|f| f64::from(f.complexity)).sum();
-    let fn_count = functions.len().max(1) as f64;
-    let avg_cyclomatic = total_cyclomatic / fn_count;
-    let cognitive = avg_cyclomatic * 1.2;
-    let mi = calculate_maintainability_index(sloc, avg_cyclomatic);
-    let function_metrics = build_function_metrics(&functions, include_functions);
-
-    Ok(ComplexityReport {
-        file: file_path.display().to_string(),
-        cyclomatic: avg_cyclomatic,
-        cognitive,
-        maintainability_index: mi,
-        sloc,
-        functions: function_metrics,
-    })
-}
 
 fn count_sloc(content: &str) -> usize {
     content
@@ -249,18 +223,42 @@ fn build_function_metrics(
         .collect()
 }
 
+fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<ComplexityReport> {
+    let content = std::fs::read_to_string(file_path).map_err(|e| {
+        mcb_domain::error::Error::io_with_source(
+            format!("failed to read {}", file_path.display()),
+            e,
+        )
+    })?;
+
+    let sloc = count_sloc(&content);
+    let files = vec![(file_path.to_path_buf(), content)];
+    let functions = mcb_domain::utils::analysis::collect_functions(&files)?;
+
+    let total_cyclomatic: f64 = functions.iter().map(|f| f64::from(f.complexity)).sum();
+    let fn_count = functions.len().max(1) as f64;
+    let avg_cyclomatic = total_cyclomatic / fn_count;
+    let cognitive = avg_cyclomatic * 1.2;
+    let mi = calculate_maintainability_index(sloc, avg_cyclomatic);
+    let function_metrics = build_function_metrics(&functions, include_functions);
+
+    Ok(ComplexityReport {
+        file: file_path.display().to_string(),
+        cyclomatic: avg_cyclomatic,
+        cognitive,
+        maintainability_index: mi,
+        sloc,
+        functions: function_metrics,
+    })
+}
+
 // ---------------------------------------------------------------------------
 // Linkme Registration
 // ---------------------------------------------------------------------------
-use mcb_domain::registry::services::{
-    SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry, VALIDATION_SERVICE_NAME,
-};
 
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(SERVICES_REGISTRY)]
-static VALIDATION_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
-    name: VALIDATION_SERVICE_NAME,
-    build: ServiceBuilder::Validation(|_context| {
+mcb_domain::register_service!(
+    mcb_utils::constants::SERVICE_NAME_VALIDATION,
+    mcb_domain::registry::services::ServiceBuilder::Validation(|_context| {
         Ok(std::sync::Arc::new(InfraValidationService::new()))
     }),
-};
+);

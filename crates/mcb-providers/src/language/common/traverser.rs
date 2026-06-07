@@ -34,6 +34,21 @@ struct ExtractionContext<'a> {
     chunk_index: usize,
 }
 
+/// Source under traversal: the file contents and its name, invariant across recursion.
+#[derive(Clone, Copy)]
+pub struct SourceRef<'a> {
+    content: &'a str,
+    file_name: &'a str,
+}
+
+impl<'a> SourceRef<'a> {
+    /// Bundle file contents and name for traversal.
+    #[must_use]
+    pub fn new(content: &'a str, file_name: &'a str) -> Self {
+        Self { content, file_name }
+    }
+}
+
 /// Generic AST node traverser with configurable rules
 pub struct AstTraverser<'a> {
     rules: &'a [NodeExtractionRule],
@@ -48,7 +63,7 @@ impl<'a> AstTraverser<'a> {
         Self {
             rules,
             language,
-            max_chunks: 100,
+            max_chunks: mcb_utils::constants::INDEXING_CHUNKS_MAX_PER_FILE,
         }
     }
 
@@ -63,57 +78,88 @@ impl<'a> AstTraverser<'a> {
     pub fn traverse_and_extract(
         &self,
         cursor: &mut tree_sitter::TreeCursor,
-        content: &str,
-        file_name: &str,
+        source: SourceRef<'_>,
         depth: usize,
         chunks: &mut Vec<CodeChunk>,
     ) {
-        // Stop if we've reached the chunk limit
+        self.traverse(cursor, source, depth, chunks);
+    }
+
+    fn traverse(
+        &self,
+        cursor: &mut tree_sitter::TreeCursor,
+        source: SourceRef<'_>,
+        depth: usize,
+        chunks: &mut Vec<CodeChunk>,
+    ) {
         if chunks.len() >= self.max_chunks {
             return;
         }
 
         loop {
             let node = cursor.node();
-            let node_type = node.kind();
-
-            // Check if this node matches any extraction rule
-            for rule in self.rules {
-                if !rule.node_types.contains(&node_type.to_owned()) {
-                    continue;
-                }
-                let ctx = ExtractionContext {
-                    content,
-                    file_name,
-                    depth,
-                    rule,
-                    chunk_index: chunks.len(),
-                };
-                if let Some(chunk) = self.try_extract_chunk(node, &ctx) {
-                    chunks.push(chunk);
-                    if chunks.len() >= self.max_chunks {
-                        return;
-                    }
-                }
+            if self.extract_matching_rules(node, source, depth, chunks) {
+                return;
             }
-
-            // Recurse into children if within depth limit
-            for rule in self.rules {
-                if depth < rule.max_depth && cursor.goto_first_child() {
-                    self.traverse_and_extract(cursor, content, file_name, depth + 1, chunks);
-
-                    if chunks.len() >= self.max_chunks {
-                        return;
-                    }
-
-                    cursor.goto_parent();
-                }
+            if self.recurse_children(cursor, source, depth, chunks) {
+                return;
             }
-
             if !cursor.goto_next_sibling() {
                 break;
             }
         }
+    }
+
+    /// Extract chunks for every rule matching `node`. Returns `true` when the
+    /// chunk limit was reached and traversal must stop.
+    fn extract_matching_rules(
+        &self,
+        node: tree_sitter::Node,
+        source: SourceRef<'_>,
+        depth: usize,
+        chunks: &mut Vec<CodeChunk>,
+    ) -> bool {
+        let node_type = node.kind();
+        for rule in self.rules {
+            if !rule.node_types.contains(&node_type.to_owned()) {
+                continue;
+            }
+            let ctx = ExtractionContext {
+                content: source.content,
+                file_name: source.file_name,
+                depth,
+                rule,
+                chunk_index: chunks.len(),
+            };
+            if let Some(chunk) = self.try_extract_chunk(node, &ctx) {
+                chunks.push(chunk);
+                if chunks.len() >= self.max_chunks {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    /// Recurse into the current node's children for rules permitting deeper
+    /// traversal. Returns `true` when the chunk limit was reached.
+    fn recurse_children(
+        &self,
+        cursor: &mut tree_sitter::TreeCursor,
+        source: SourceRef<'_>,
+        depth: usize,
+        chunks: &mut Vec<CodeChunk>,
+    ) -> bool {
+        for rule in self.rules {
+            if depth < rule.max_depth && cursor.goto_first_child() {
+                self.traverse(cursor, source, depth + 1, chunks);
+                if chunks.len() >= self.max_chunks {
+                    return true;
+                }
+                cursor.goto_parent();
+            }
+        }
+        false
     }
 
     fn extract_node_content(node: tree_sitter::Node, content: &str) -> Result<String> {

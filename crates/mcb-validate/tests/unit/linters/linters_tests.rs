@@ -2,6 +2,7 @@
 //!
 //! Uses shared constants for severity levels, rule codes, and file extensions.
 
+use mcb_utils::constants::validate::{SEVERITY_ERROR, SEVERITY_INFO, SEVERITY_WARNING};
 use mcb_validate::linters::*;
 use rstest::rstest;
 

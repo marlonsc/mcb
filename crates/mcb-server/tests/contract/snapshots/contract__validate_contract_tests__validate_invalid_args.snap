@@ -1,17 +1,17 @@
 ---
 source: crates/mcb-server/tests/contract/validate_contract_tests.rs
-assertion_line: 22
 expression: "snapshot_payload(&request, status, &response)"
 ---
 {
   "request": {
     "id": 1,
+    "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
       "arguments": {
-        "action": 123
+        "scope": 123
       },
-      "name": "validate"
+      "name": "validate_code"
     }
   },
   "response": {

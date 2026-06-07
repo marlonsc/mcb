@@ -6,17 +6,11 @@ use std::sync::Arc;
 
 use mcb_domain::error::Result;
 use mcb_domain::ports::MemoryServiceInterface;
-use mcb_domain::registry::services::{
-    MEMORY_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
-};
+use mcb_domain::registry::services::ServiceBuilder;
 
 use super::MemoryServiceImpl;
 
-/// Registry provider name for `SeaORM` database repositories.
-const DATABASE_PROVIDER: &str = "seaorm";
-
-/// Default namespace for database repositories.
-const DEFAULT_NAMESPACE: &str = "default";
+use mcb_utils::constants::{DEFAULT_DATABASE_PROVIDER, DEFAULT_NAMESPACE};
 
 /// Build a `MemoryService` from the service resolution context.
 fn build_memory_service_from_registry(
@@ -35,7 +29,7 @@ fn build_memory_service_from_registry(
 
     // Resolve memory repository from database providers
     let repos = mcb_domain::registry::database::resolve_database_repositories(
-        DATABASE_PROVIDER,
+        DEFAULT_DATABASE_PROVIDER,
         Arc::clone(&ctx.db),
         DEFAULT_NAMESPACE.to_owned(),
     )?;
@@ -48,9 +42,7 @@ fn build_memory_service_from_registry(
     )))
 }
 
-/// Linkme distributed slice entry for `MemoryService` registration.
-#[linkme::distributed_slice(SERVICES_REGISTRY)]
-static MEMORY_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
-    name: MEMORY_SERVICE_NAME,
-    build: ServiceBuilder::Memory(build_memory_service_from_registry),
-};
+mcb_domain::register_service!(
+    mcb_utils::constants::SERVICE_NAME_MEMORY,
+    ServiceBuilder::Memory(build_memory_service_from_registry),
+);

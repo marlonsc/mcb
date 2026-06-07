@@ -9,6 +9,13 @@ use std::str::FromStr;
 use uuid::Uuid;
 
 use mcb_domain::ports::VcsProvider;
+use mcb_utils::constants::FALLBACK_UNKNOWN;
+use mcb_utils::constants::ide::{
+    IDE_CLAUDE_CODE, IDE_CURSOR, IDE_MCB_STDIO, IDE_OPENCODE, IDE_VSCODE,
+};
+use mcb_utils::constants::protocol::{
+    EXECUTION_FLOW_HYBRID, EXECUTION_FLOW_SERVER_HYBRID, EXECUTION_FLOW_STDIO_ONLY,
+};
 
 /// Valid execution flow modes for MCP tool dispatch.
 ///
@@ -29,9 +36,9 @@ impl ExecutionFlow {
     #[must_use]
     pub const fn as_str(self) -> &'static str {
         match self {
-            Self::StdioOnly => "stdio-only",
-            Self::ClientHybrid => "client-hybrid",
-            Self::ServerHybrid => "server-hybrid",
+            Self::StdioOnly => EXECUTION_FLOW_STDIO_ONLY,
+            Self::ClientHybrid => EXECUTION_FLOW_HYBRID,
+            Self::ServerHybrid => EXECUTION_FLOW_SERVER_HYBRID,
         }
     }
 }
@@ -47,9 +54,9 @@ impl FromStr for ExecutionFlow {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s.trim().to_ascii_lowercase().as_str() {
-            "stdio-only" => Ok(Self::StdioOnly),
-            "client-hybrid" => Ok(Self::ClientHybrid),
-            "server-hybrid" => Ok(Self::ServerHybrid),
+            EXECUTION_FLOW_STDIO_ONLY => Ok(Self::StdioOnly),
+            EXECUTION_FLOW_HYBRID => Ok(Self::ClientHybrid),
+            EXECUTION_FLOW_SERVER_HYBRID => Ok(Self::ServerHybrid),
             other => Err(format!(
                 "Invalid execution_flow '{other}'. Expected one of: {}, {}, {}",
                 Self::StdioOnly.as_str(),
@@ -110,7 +117,8 @@ impl RuntimeDefaults {
         cwd: Option<&Path>,
         execution_flow: Option<ExecutionFlow>,
     ) -> Self {
-        let workspace_root = match cwd {
+        let resolved_cwd = cwd.and_then(|p| std::fs::canonicalize(p).ok());
+        let workspace_root = match resolved_cwd.as_deref() {
             Some(path) => discover_workspace_root(vcs, path).await,
             None => None,
         };
@@ -146,7 +154,7 @@ impl RuntimeDefaults {
             session_id: Some(Uuid::new_v4().to_string()),
             agent_program: Some(agent_program),
             client_session_id,
-            model_id: Some("unknown".to_owned()),
+            model_id: Some(FALLBACK_UNKNOWN.to_owned()),
             execution_flow,
             org_id,
             project_id: auto_project_id,
@@ -186,32 +194,32 @@ async fn discover_workspace_root(vcs: &dyn VcsProvider, cwd: &Path) -> Option<St
 fn detect_ide() -> (String, Option<String>) {
     // Cursor: sets CURSOR_TRACE_ID
     if let Ok(trace_id) = std::env::var("CURSOR_TRACE_ID") {
-        return ("cursor".to_owned(), Some(trace_id));
+        return (IDE_CURSOR.to_owned(), Some(trace_id));
     }
 
     // Claude Code: sets CLAUDE_CODE=1 or CLAUDE_SESSION_ID
     if std::env::var("CLAUDE_CODE").is_ok() {
         let session_id = std::env::var("CLAUDE_SESSION_ID").ok();
-        return ("claude-code".to_owned(), session_id);
+        return (IDE_CLAUDE_CODE.to_owned(), session_id);
     }
     if let Ok(session_id) = std::env::var("CLAUDE_SESSION_ID") {
-        return ("claude-code".to_owned(), Some(session_id));
+        return (IDE_CLAUDE_CODE.to_owned(), Some(session_id));
     }
 
     // OpenCode: sets OPENCODE_SESSION_ID
     if let Ok(session_id) = std::env::var("OPENCODE_SESSION_ID") {
-        return ("opencode".to_owned(), Some(session_id));
+        return (IDE_OPENCODE.to_owned(), Some(session_id));
     }
 
     // VS Code: sets VSCODE_PID or TERM_PROGRAM=vscode
     if std::env::var("VSCODE_PID").is_ok()
-        || std::env::var("TERM_PROGRAM").is_ok_and(|v| v.eq_ignore_ascii_case("vscode"))
+        || std::env::var("TERM_PROGRAM").is_ok_and(|v| v.eq_ignore_ascii_case(IDE_VSCODE))
     {
-        return ("vscode".to_owned(), std::env::var("VSCODE_PID").ok());
+        return (IDE_VSCODE.to_owned(), std::env::var("VSCODE_PID").ok());
     }
 
     // Fallback: plain stdio
-    ("mcb-stdio".to_owned(), None)
+    (IDE_MCB_STDIO.to_owned(), None)
 }
 
 /// Extract org and project from `git remote get-url origin` in the given directory.
@@ -240,57 +248,33 @@ fn extract_org_and_project_from_git_remote(workspace_root: &str) -> Option<(Stri
 /// - `https://github.com/owner/repo`
 fn parse_org_and_project_from_remote_url(url: &str) -> Option<(String, String)> {
     let url = url.trim();
-
-    // SSH format: git@host:owner/repo.git
-    if let Some(path) = url
-        .strip_prefix("git@")
-        .and_then(|s| s.split_once(':').map(|(_, p)| p))
-    {
-        let clean = path.trim_end_matches(".git");
-        if let Some((org, project)) = clean.split_once('/')
-            && !org.is_empty()
-            && !project.is_empty()
-        {
-            return Some((org.to_owned(), project.to_owned()));
-        }
-    }
-
-    // HTTPS format: https://host/owner/repo.git
-    if url.starts_with("https://") || url.starts_with("http://") {
-        let segments: Vec<&str> = url
-            .split("//")
-            .nth(1)?
-            .split('/')
-            .skip(1) // skip host
-            .collect();
-        if segments.len() >= 2 {
-            let org = segments[0];
-            let project = segments[1].trim_end_matches(".git");
-            if !org.is_empty() && !project.is_empty() {
-                return Some((org.to_owned(), project.to_owned()));
-            }
-        }
-    }
-
-    None
+    parse_ssh_remote(url).or_else(|| parse_https_remote(url))
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_detect_ide_fallback() {
-        // Clear all IDE env vars to test fallback
-        // Note: env vars are process-global, so this test is best-effort
-        let (program, session) = detect_ide();
-        // In CI/test environment, we expect one of the known IDEs or fallback
-        assert!(
-            ["mcb-stdio", "cursor", "claude-code", "opencode", "vscode"]
-                .contains(&program.as_str()),
-            "unexpected agent_program: {program}"
-        );
-        // client_session_id may or may not be set depending on environment
-        let _ = session;
+/// Parse `git@host:owner/repo.git` style SSH remotes.
+fn parse_ssh_remote(url: &str) -> Option<(String, String)> {
+    let path = url
+        .strip_prefix("git@")
+        .and_then(|s| s.split_once(':').map(|(_, p)| p))?;
+    let (org, project) = path.trim_end_matches(".git").split_once('/')?;
+    if org.is_empty() || project.is_empty() {
+        return None;
     }
+    Some((org.to_owned(), project.to_owned()))
+}
+
+/// Parse `https://host/owner/repo(.git)` style HTTP(S) remotes.
+fn parse_https_remote(url: &str) -> Option<(String, String)> {
+    if !url.starts_with("https://") && !url.starts_with("http://") {
+        return None;
+    }
+    let segments: Vec<&str> = url.split("//").nth(1)?.split('/').skip(1).collect();
+    let [org, project, ..] = segments.as_slice() else {
+        return None;
+    };
+    let project = project.trim_end_matches(".git");
+    if org.is_empty() || project.is_empty() {
+        return None;
+    }
+    Some(((*org).to_owned(), project.to_owned()))
 }

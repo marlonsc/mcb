@@ -5,8 +5,9 @@
 
 use crate::utils::test_constants::*;
 use crate::utils::*;
-use mcb_validate::Severity;
-use mcb_validate::Violation;
+use mcb_domain::ports::validation::Severity;
+use mcb_domain::ports::validation::Violation;
+use mcb_domain::utils::tests::assertions::{assert_no_violations, assert_violations_exact};
 use mcb_validate::organization::OrganizationViolation;
 use rstest::rstest;
 
@@ -15,7 +16,6 @@ use rstest::rstest;
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_organization_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
@@ -68,7 +68,6 @@ fn test_organization_full_workspace() {
 // ─────────────────────────────────────────────────────────────────────────────
 
 #[rstest]
-#[test]
 fn test_clean_organization_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
@@ -89,7 +88,6 @@ pub fn retry(attempts: u32) -> bool {
 }
 
 #[rstest]
-#[test]
 fn test_organization_violation_severity_is_non_recursive() {
     let violation = OrganizationViolation::MagicNumber {
         file: std::path::PathBuf::from("dummy.rs"),

@@ -15,14 +15,13 @@ fn sample_error_pattern() -> error_pattern::Model {
         affected_files: Some(r#"["tag1","tag2"]"#.into()),
         tags: Some(r#"["tag1","tag2"]"#.into()),
         occurrence_count: 5,
-        first_seen_at: 1_700_000_000,
-        last_seen_at: 1_700_000_000,
+        first_seen_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        last_seen_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
         embedding_id: Some("test_embedding_id".into()),
     }
 }
 
 #[rstest]
-#[test]
 fn round_trip_error_pattern() {
     let model = sample_error_pattern();
     let model_val = model.id.clone();

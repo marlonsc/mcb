@@ -12,13 +12,12 @@ fn sample_user() -> user::Model {
         display_name: "test_display_name".into(),
         role: "Default".into(),
         api_key_hash: Some("test_api_key_hash".into()),
-        created_at: 1_700_000_000,
-        updated_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 
 #[rstest]
-#[test]
 fn round_trip_user() {
     let model = sample_user();
     let model_val = model.id.clone();

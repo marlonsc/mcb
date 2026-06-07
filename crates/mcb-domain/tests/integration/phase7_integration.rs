@@ -58,7 +58,6 @@ mod phase7_integration_tests {
     }
 
     #[rstest]
-    #[test]
     fn test_mem05_vcs_bootstrap_context_for_session_start() {
         let metadata1 = ObservationMetadata {
             id: Uuid::new_v4().to_string(),
@@ -89,7 +88,6 @@ mod phase7_integration_tests {
     }
 
     #[rstest]
-    #[test]
     fn test_memory_filter_creates_vcs_aware_queries() {
         let filter = MemoryFilter {
             id: None,
@@ -111,7 +109,6 @@ mod phase7_integration_tests {
     }
 
     #[rstest]
-    #[test]
     fn test_observation_metadata_serialization() {
         let metadata = ObservationMetadata {
             id: Uuid::new_v4().to_string(),

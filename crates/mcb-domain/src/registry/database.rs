@@ -11,11 +11,17 @@ use std::any::Any;
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use crate::ports::{
-    AgentRepository, AuthRepositoryPort, DashboardQueryPort, FileHashRepository,
-    IssueEntityRepository, MemoryRepository, OrgEntityRepository, PlanEntityRepository,
-    ProjectRepository, VcsEntityRepository,
-};
+use crate::ports::admin::dashboard::DashboardQueryPort;
+use crate::ports::infrastructure::migrations::MigrationProvider;
+use crate::ports::repositories::agent::AgentRepository;
+use crate::ports::repositories::auth::AuthRepositoryPort;
+use crate::ports::repositories::file_hash::FileHashRepository;
+use crate::ports::repositories::issue::IssueEntityRepository;
+use crate::ports::repositories::memory::MemoryRepository;
+use crate::ports::repositories::org::OrgEntityRepository;
+use crate::ports::repositories::plan::PlanEntityRepository;
+use crate::ports::repositories::project::ProjectRepository;
+use crate::ports::repositories::vcs::VcsEntityRepository;
 
 // ---------------------------------------------------------------------------
 // Database connection provider (factory for opaque DB connections)
@@ -184,7 +190,7 @@ pub struct MigrationProviderEntry {
     /// Human-readable description.
     pub description: &'static str,
     /// Factory that builds a migration provider instance.
-    pub build: fn() -> Arc<dyn crate::ports::MigrationProvider>,
+    pub build: fn() -> Arc<dyn MigrationProvider>,
 }
 
 #[linkme::distributed_slice]
@@ -196,8 +202,7 @@ pub static MIGRATION_PROVIDERS: [MigrationProviderEntry] = [..];
 /// # Errors
 ///
 /// Returns an error when no migration provider has been registered.
-pub fn resolve_migration_provider() -> crate::error::Result<Arc<dyn crate::ports::MigrationProvider>>
-{
+pub fn resolve_migration_provider() -> crate::error::Result<Arc<dyn MigrationProvider>> {
     if let Some(entry) = MIGRATION_PROVIDERS.iter().next() {
         return Ok((entry.build)());
     }

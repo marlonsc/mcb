@@ -4,7 +4,6 @@ use mcb_validate::ast::query::{AstQueryBuilder, AstQueryPatterns, QueryCondition
 use rstest::rstest;
 
 #[rstest]
-#[test]
 fn test_query_builder() {
     let query = AstQueryBuilder::new("rust", "function_item")
         .with_condition(QueryCondition::Custom {

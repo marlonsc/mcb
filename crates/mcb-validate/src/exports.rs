@@ -17,5 +17,3 @@ pub use crate::run_context::{FileInventorySource, InventoryEntry, ValidationRunC
 pub use crate::thresholds::{ValidationThresholds, thresholds};
 
 pub use crate::validators::*;
-
-pub use mcb_domain::ports::ViolationEntry;

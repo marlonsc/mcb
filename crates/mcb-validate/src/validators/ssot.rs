@@ -6,13 +6,13 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
 use mcb_domain::ports::validation::ViolationCategory;
+use mcb_utils::utils::regex::compile_regex;
 
 crate::define_validator! {
-    name: "ssot",
+    name: mcb_utils::constants::validate::VALIDATOR_SSOT,
     description: "Detects duplicate declarations and forbidden legacy schema/repository references",
 
     /// Validator for single-source-of-truth invariants.
@@ -169,16 +169,7 @@ impl SsotValidator {
     }
 
     fn analyze_files(mut files: Vec<(PathBuf, String)>) -> Result<Vec<SsotViolation>> {
-        let declaration_pattern = compile_regex(DECLARATION_PATTERN)?;
-        let legacy_import_pattern = compile_regex(LEGACY_IMPORT_PATTERN)?;
-        let forbidden_schema_symbol_pattern = compile_regex(FORBIDDEN_SCHEMA_SYMBOL)?;
-        let forbidden_schema_macro_path_pattern = compile_regex(FORBIDDEN_SCHEMA_MACRO_PATH)?;
-        let forbidden_schema_import_pattern = compile_regex(FORBIDDEN_SCHEMA_IMPORT_PATTERN)?;
-        let forbidden_root_schema_path_pattern = compile_regex(FORBIDDEN_ROOT_SCHEMA_PATH_PATTERN)?;
-        let forbidden_root_schema_import_pattern =
-            compile_regex(FORBIDDEN_ROOT_SCHEMA_IMPORT_PATTERN)?;
-        let forbidden_raw_id_field_pattern = compile_regex(FORBIDDEN_RAW_ID_FIELD_PATTERN)?;
-
+        let patterns = SsotPatterns::compile()?;
         files.sort_by(|a, b| a.0.cmp(&b.0));
 
         let mut declaration_locations: BTreeMap<String, Vec<(PathBuf, usize)>> = BTreeMap::new();
@@ -186,104 +177,173 @@ impl SsotValidator {
 
         for (path, content) in &files {
             for (line_index, line) in content.lines().enumerate() {
-                let line_number = line_index + 1;
-                record_declarations(
-                    &mut declaration_locations,
-                    &declaration_pattern,
-                    line,
+                Self::analyze_line(
+                    &patterns,
                     path,
-                    line_number,
-                );
-
-                push_line_match(
-                    &mut violations,
-                    &legacy_import_pattern,
                     line,
-                    |import_path| SsotViolation::ForbiddenLegacyImport {
-                        file: path.clone(),
-                        line: line_number,
-                        import_path,
-                        severity: Severity::Error,
-                    },
-                );
-
-                push_capture_group(
+                    line_index + 1,
+                    &mut declaration_locations,
                     &mut violations,
-                    &forbidden_schema_symbol_pattern,
-                    line,
-                    1,
-                    |symbol_name| SsotViolation::ForbiddenLegacySchemaSymbol {
-                        file: path.clone(),
-                        line: line_number,
-                        symbol_name: symbol_name.to_owned(),
-                        severity: Severity::Error,
-                    },
                 );
-
-                push_line_match(
-                    &mut violations,
-                    &forbidden_schema_macro_path_pattern,
-                    line,
-                    |macro_path| SsotViolation::ForbiddenSchemaMemoryMacroPath {
-                        file: path.clone(),
-                        line: line_number,
-                        macro_path,
-                        severity: Severity::Error,
-                    },
-                );
-
-                push_line_match(
-                    &mut violations,
-                    &forbidden_schema_import_pattern,
-                    line,
-                    |import_path| SsotViolation::ForbiddenLegacySchemaImport {
-                        file: path.clone(),
-                        line: line_number,
-                        import_path,
-                        severity: Severity::Error,
-                    },
-                );
-
-                push_line_match(
-                    &mut violations,
-                    &forbidden_root_schema_import_pattern,
-                    line,
-                    |path_text| SsotViolation::ForbiddenRootSchemaPath {
-                        file: path.clone(),
-                        line: line_number,
-                        path: path_text,
-                        severity: Severity::Error,
-                    },
-                );
-
-                push_capture_group(
-                    &mut violations,
-                    &forbidden_root_schema_path_pattern,
-                    line,
-                    0,
-                    |path_text| SsotViolation::ForbiddenRootSchemaPath {
-                        file: path.clone(),
-                        line: line_number,
-                        path: path_text.to_owned(),
-                        severity: Severity::Error,
-                    },
-                );
-
-                if is_domain_model_file(path) {
-                    push_raw_id_field_violations(
-                        &mut violations,
-                        &forbidden_raw_id_field_pattern,
-                        path,
-                        line,
-                        line_number,
-                    );
-                }
             }
         }
 
         push_duplicate_declarations(&mut violations, declaration_locations);
 
         Ok(violations)
+    }
+
+    /// Apply every SSOT pattern to one line, recording declarations and pushing
+    /// any forbidden-pattern violations.
+    fn analyze_line(
+        patterns: &SsotPatterns,
+        path: &Path,
+        line: &str,
+        line_number: usize,
+        declaration_locations: &mut BTreeMap<String, Vec<(PathBuf, usize)>>,
+        violations: &mut Vec<SsotViolation>,
+    ) {
+        record_declarations(
+            declaration_locations,
+            &patterns.declaration,
+            line,
+            path,
+            line_number,
+        );
+
+        push_line_match(violations, &patterns.legacy_import, line, |import_path| {
+            SsotViolation::ForbiddenLegacyImport {
+                file: path.to_path_buf(),
+                line: line_number,
+                import_path,
+                severity: Severity::Error,
+            }
+        });
+
+        Self::check_schema_patterns(patterns, path, line, line_number, violations);
+        Self::check_root_schema_patterns(patterns, path, line, line_number, violations);
+
+        if is_domain_model_file(path) {
+            push_raw_id_field_violations(
+                violations,
+                &patterns.forbidden_raw_id_field,
+                path,
+                line,
+                line_number,
+            );
+        }
+    }
+
+    /// Flag legacy schema symbol/macro/import usages on a single line.
+    fn check_schema_patterns(
+        patterns: &SsotPatterns,
+        path: &Path,
+        line: &str,
+        line_number: usize,
+        violations: &mut Vec<SsotViolation>,
+    ) {
+        push_capture_group(
+            violations,
+            &patterns.forbidden_schema_symbol,
+            line,
+            1,
+            |symbol_name| SsotViolation::ForbiddenLegacySchemaSymbol {
+                file: path.to_path_buf(),
+                line: line_number,
+                symbol_name: symbol_name.to_owned(),
+                severity: Severity::Error,
+            },
+        );
+
+        push_line_match(
+            violations,
+            &patterns.forbidden_schema_macro_path,
+            line,
+            |macro_path| SsotViolation::ForbiddenSchemaMemoryMacroPath {
+                file: path.to_path_buf(),
+                line: line_number,
+                macro_path,
+                severity: Severity::Error,
+            },
+        );
+
+        push_line_match(
+            violations,
+            &patterns.forbidden_schema_import,
+            line,
+            |import_path| SsotViolation::ForbiddenLegacySchemaImport {
+                file: path.to_path_buf(),
+                line: line_number,
+                import_path,
+                severity: Severity::Error,
+            },
+        );
+    }
+
+    /// Flag root-schema path references on a single line.
+    fn check_root_schema_patterns(
+        patterns: &SsotPatterns,
+        path: &Path,
+        line: &str,
+        line_number: usize,
+        violations: &mut Vec<SsotViolation>,
+    ) {
+        push_line_match(
+            violations,
+            &patterns.forbidden_root_schema_import,
+            line,
+            |path_text| SsotViolation::ForbiddenRootSchemaPath {
+                file: path.to_path_buf(),
+                line: line_number,
+                path: path_text,
+                severity: Severity::Error,
+            },
+        );
+
+        push_capture_group(
+            violations,
+            &patterns.forbidden_root_schema_path,
+            line,
+            0,
+            |path_text| SsotViolation::ForbiddenRootSchemaPath {
+                file: path.to_path_buf(),
+                line: line_number,
+                path: path_text.to_owned(),
+                severity: Severity::Error,
+            },
+        );
+    }
+}
+
+/// Compiled regexes for the SSOT scan.
+struct SsotPatterns {
+    declaration: regex::Regex,
+    legacy_import: regex::Regex,
+    forbidden_schema_symbol: regex::Regex,
+    forbidden_schema_macro_path: regex::Regex,
+    forbidden_schema_import: regex::Regex,
+    forbidden_root_schema_path: regex::Regex,
+    forbidden_root_schema_import: regex::Regex,
+    forbidden_raw_id_field: regex::Regex,
+}
+
+impl SsotPatterns {
+    /// Compile every SSOT pattern.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any pattern fails to compile.
+    fn compile() -> Result<Self> {
+        Ok(Self {
+            declaration: compile_regex(DECLARATION_PATTERN)?,
+            legacy_import: compile_regex(LEGACY_IMPORT_PATTERN)?,
+            forbidden_schema_symbol: compile_regex(FORBIDDEN_SCHEMA_SYMBOL)?,
+            forbidden_schema_macro_path: compile_regex(FORBIDDEN_SCHEMA_MACRO_PATH)?,
+            forbidden_schema_import: compile_regex(FORBIDDEN_SCHEMA_IMPORT_PATTERN)?,
+            forbidden_root_schema_path: compile_regex(FORBIDDEN_ROOT_SCHEMA_PATH_PATTERN)?,
+            forbidden_root_schema_import: compile_regex(FORBIDDEN_ROOT_SCHEMA_IMPORT_PATTERN)?,
+            forbidden_raw_id_field: compile_regex(FORBIDDEN_RAW_ID_FIELD_PATTERN)?,
+        })
     }
 }
 

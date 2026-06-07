@@ -13,7 +13,7 @@ use tokio::process::Command;
 use super::parsers::run_linter_command;
 use super::types::{LintViolation, LinterType};
 use crate::Result;
-use crate::constants::linters::{
+use mcb_utils::constants::validate::{
     CARGO_ARG_SEPARATOR, CLIPPY_COMMAND, CLIPPY_MESSAGE_FORMAT_JSON, CLIPPY_PREFIX,
     CLIPPY_WARN_FLAG,
 };

@@ -17,9 +17,9 @@ fn sample_project_issue() -> project_issue::Model {
         priority: 2,
         assignee: Some("test_assignee".into()),
         labels: r#"["label-a"]"#.into(),
-        created_at: 1_700_000_000,
-        updated_at: 1_700_000_000,
-        closed_at: Some(1_700_000_000),
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        closed_at: Some(mcb_utils::constants::testing::TEST_TIMESTAMP),
         created_by: "test_created_by".into(),
         estimated_minutes: Some(1),
         actual_minutes: Some(1),
@@ -31,7 +31,6 @@ fn sample_project_issue() -> project_issue::Model {
 }
 
 #[rstest]
-#[test]
 fn round_trip_project_issue() {
     let model = sample_project_issue();
     let model_val = model.id.clone();

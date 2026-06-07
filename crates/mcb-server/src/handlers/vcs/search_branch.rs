@@ -10,10 +10,10 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{BranchSearchMatch, BranchSearchResponse, repo_path};
 use crate::args::VcsArgs;
-use crate::constants::limits::DEFAULT_VCS_SEARCH_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
+use mcb_utils::constants::limits::DEFAULT_VCS_SEARCH_LIMIT;
 
 fn require_query(args: &VcsArgs) -> Result<&str, CallToolResult> {
     args.query

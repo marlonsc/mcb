@@ -5,9 +5,9 @@
 //!
 //! Validates Clean Architecture port/adapter patterns.
 
-use crate::constants::common::COMMENT_PREFIX;
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
+use mcb_utils::constants::validate::COMMENT_PREFIX;
+use mcb_utils::utils::regex::compile_regex;
 use regex::Regex;
 use std::path::Path;
 use std::path::PathBuf;
@@ -172,6 +172,15 @@ impl PortAdapterValidator {
     }
 }
 
+/// Per-file state for tracking the trait currently being scanned for size.
+#[derive(Default)]
+struct PortScanState {
+    /// `(trait_name, start_line, method_count)` of the trait in scope.
+    current_trait: Option<(String, usize, usize)>,
+    brace_depth: usize,
+    in_trait: bool,
+}
+
 fn collect_port_size_violations(
     path: &Path,
     content: &str,
@@ -179,51 +188,67 @@ fn collect_port_size_violations(
     fn_re: &Regex,
     max_port_methods: usize,
 ) -> Vec<PortAdapterViolation> {
-    let lines: Vec<&str> = content.lines().collect();
     let mut violations = Vec::new();
-    let mut current_trait: Option<(String, usize, usize)> = None;
-    let mut brace_depth = 0;
-    let mut in_trait = false;
+    let mut state = PortScanState::default();
 
-    for (line_num, line) in lines.iter().enumerate() {
-        if let Some(trait_name) = capture_trait_name(trait_start_re, line) {
-            current_trait = Some((trait_name, line_num + 1, 0));
-            in_trait = true;
-        }
-
-        if !in_trait {
-            continue;
-        }
-
-        brace_depth += line.matches('{').count();
-        brace_depth -= line.matches('}').count();
-
-        if fn_re.is_match(line)
-            && let Some((_, _, ref mut count)) = current_trait
-        {
-            *count += 1;
-        }
-
-        if brace_depth != 0 {
-            continue;
-        }
-
-        let Some((trait_name, start_line, method_count)) = current_trait.take() else {
-            continue;
-        };
-        in_trait = false;
-
-        if method_count > max_port_methods {
-            violations.push(PortAdapterViolation::PortTooLarge {
-                trait_name,
-                method_count,
-                file: path.to_path_buf(),
-                line: start_line,
-            });
+    for (line_num, line) in content.lines().enumerate() {
+        if let Some(violation) = scan_port_line(
+            path,
+            line,
+            line_num,
+            (trait_start_re, fn_re),
+            max_port_methods,
+            &mut state,
+        ) {
+            violations.push(violation);
         }
     }
 
     violations
+}
+
+/// Advance trait/brace tracking for one line; returns a `PortTooLarge`
+/// violation when a trait closes with too many methods.
+fn scan_port_line(
+    path: &Path,
+    line: &str,
+    line_num: usize,
+    patterns: (&Regex, &Regex),
+    max_port_methods: usize,
+    state: &mut PortScanState,
+) -> Option<PortAdapterViolation> {
+    let (trait_start_re, fn_re) = patterns;
+    if let Some(trait_name) = capture_trait_name(trait_start_re, line) {
+        state.current_trait = Some((trait_name, line_num + 1, 0));
+        state.in_trait = true;
+    }
+
+    if !state.in_trait {
+        return None;
+    }
+
+    state.brace_depth += line.matches('{').count();
+    state.brace_depth -= line.matches('}').count();
+
+    if fn_re.is_match(line)
+        && let Some((_, _, ref mut count)) = state.current_trait
+    {
+        *count += 1;
+    }
+
+    if state.brace_depth != 0 {
+        return None;
+    }
+
+    let (trait_name, start_line, method_count) = state.current_trait.take()?;
+    state.in_trait = false;
+
+    (method_count > max_port_methods).then(|| PortAdapterViolation::PortTooLarge {
+        trait_name,
+        method_count,
+        file: path.to_path_buf(),
+        line: start_line,
+    })
 }
 
 fn capture_trait_name(trait_start_re: &Regex, line: &str) -> Option<String> {
@@ -300,7 +325,7 @@ fn is_forbidden_adapter_import(imported: &str, adapter_suffixes: &[String]) -> b
 
 impl mcb_domain::ports::validation::Validator for PortAdapterValidator {
     fn name(&self) -> &'static str {
-        "port_adapter"
+        mcb_utils::constants::validate::VALIDATOR_PORT_ADAPTER
     }
 
     fn description(&self) -> &'static str {
@@ -321,13 +346,11 @@ impl mcb_domain::ports::validation::Validator for PortAdapterValidator {
     }
 }
 
-#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
-static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
-    mcb_domain::registry::validation::ValidatorEntry {
-        name: "port_adapter",
-        description: "Validates port/adapter patterns for Clean Architecture compliance",
-        build: |root| {
-            Ok(Box::new(PortAdapterValidator::new(root))
-                as Box<dyn mcb_domain::ports::validation::Validator>)
-        },
-    };
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_PORT_ADAPTER,
+    "Validates port/adapter patterns for Clean Architecture compliance",
+    |root| {
+        Ok(Box::new(PortAdapterValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

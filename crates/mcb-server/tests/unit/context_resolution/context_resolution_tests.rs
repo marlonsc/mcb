@@ -28,7 +28,6 @@ fn resolve_identifier_precedence_uses_non_conflicting_values(
 }
 
 #[rstest]
-#[test]
 fn resolve_identifier_precedence_rejects_conflicting_values() {
     let err = resolve_identifier_precedence("project_id", Some("proj-a"), Some("proj-b"))
         .expect_err("should reject conflicting identifiers");

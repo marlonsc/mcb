@@ -9,32 +9,42 @@ use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
 use mcb_server::args::{SearchArgs, SearchResource};
 use mcb_server::handlers::SearchHandler;
 use mcb_server::tools::RuntimeDefaults;
+use mcb_utils::constants::ide::{
+    IDE_CLAUDE_CODE, IDE_CURSOR, IDE_MCB_STDIO, IDE_OPENCODE, IDE_VSCODE,
+};
 use rmcp::handler::server::wrapper::Parameters;
 use rstest::rstest;
+use serial_test::serial;
 
 use crate::utils::test_fixtures::create_test_mcb_state;
 use mcb_domain::utils::tests::mcp_assertions::error_text;
 
 /// Resolve VCS provider via domain registry
 fn resolve_default_vcs() -> Option<Arc<dyn mcb_domain::ports::VcsProvider>> {
-    resolve_vcs_provider(&VcsProviderConfig::new("git")).ok()
+    resolve_vcs_provider(&VcsProviderConfig::new(
+        mcb_utils::constants::DEFAULT_VCS_PROVIDER,
+    ))
+    .ok()
 }
 
 /// Resolve hybrid search via domain registry
 fn resolve_default_hybrid_search() -> Option<Arc<dyn mcb_domain::ports::HybridSearchProvider>> {
-    resolve_hybrid_search_provider(&HybridSearchProviderConfig::new("default")).ok()
+    resolve_hybrid_search_provider(&HybridSearchProviderConfig::new(
+        mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+    ))
+    .ok()
 }
 
-/// Resolve repo root from `CARGO_MANIFEST_DIR` (works in CI and local dev).
+/// Resolve repo root from `CARGO_MANIFEST_DIR` (works in CI and local dev)
 fn mcb_repo_root() -> &'static str {
-    // CARGO_MANIFEST_DIR points to crates/mcb-server; go up two levels to repo root.
+    // CARGO_MANIFEST_DIR points to crates/mcb-server; go up two levels to repo root
     static ROOT: std::sync::OnceLock<String> = std::sync::OnceLock::new();
     ROOT.get_or_init(|| {
         let manifest = std::env::var("CARGO_MANIFEST_DIR")
             .unwrap_or_else(|_| "/home/marlonsc/mcb/crates/mcb-server".to_owned());
         Path::new(&manifest)
-            .parent()
-            .and_then(|p| p.parent())
+            .parent() // crates/
+            .and_then(|p| p.parent()) // repo root
             .map_or_else(|| manifest.clone(), |p| p.to_string_lossy().into_owned())
     })
 }
@@ -64,10 +74,34 @@ fn probe_agent_program(
     Some((output.status, stdout, stderr))
 }
 
-fn parse_agent_program(stdout: &str) -> Option<String> {
-    stdout
-        .lines()
-        .find_map(|line| line.strip_prefix("AGENT_PROGRAM=").map(ToOwned::to_owned))
+fn parse_agent_program(output: &str) -> Option<String> {
+    // With --nocapture the test harness may embed the println on the same
+    // line as the test name, e.g.:
+    //   "test auto_context_tests::test_ide_probe_runtime_defaults ... AGENT_PROGRAM=cursor"
+    // So we search for the marker anywhere in each line, not just at the start.
+    const MARKER: &str = "AGENT_PROGRAM=";
+    output.lines().find_map(|line| {
+        line.find(MARKER)
+            .map(|pos| line[pos + MARKER.len()..].trim().to_owned())
+    })
+}
+
+fn detect_agent_program_from_env() -> String {
+    if std::env::var("CURSOR_TRACE_ID").is_ok() {
+        return IDE_CURSOR.to_owned();
+    }
+    if std::env::var("CLAUDE_CODE").is_ok() || std::env::var("CLAUDE_SESSION_ID").is_ok() {
+        return IDE_CLAUDE_CODE.to_owned();
+    }
+    if std::env::var("OPENCODE_SESSION_ID").is_ok() {
+        return IDE_OPENCODE.to_owned();
+    }
+    if std::env::var("VSCODE_PID").is_ok()
+        || std::env::var("TERM_PROGRAM").is_ok_and(|v| v.eq_ignore_ascii_case(IDE_VSCODE))
+    {
+        return IDE_VSCODE.to_owned();
+    }
+    IDE_MCB_STDIO.to_owned()
 }
 
 #[rstest]
@@ -78,6 +112,7 @@ async fn test_ide_probe_runtime_defaults() {
     }
 
     let Some(provider) = resolve_default_vcs() else {
+        println!("AGENT_PROGRAM={}", detect_agent_program_from_env());
         return;
     };
     let defaults =
@@ -90,6 +125,7 @@ async fn test_ide_probe_runtime_defaults() {
 
 #[rstest]
 #[tokio::test]
+#[serial]
 async fn test_ide_detection_from_env_vars() {
     let ide_env_keys = [
         "CURSOR_TRACE_ID",
@@ -109,8 +145,9 @@ async fn test_ide_detection_from_env_vars() {
         "cursor probe failed: stdout={cursor_stdout} stderr={cursor_stderr}"
     );
     assert_eq!(
-        parse_agent_program(&cursor_stdout).as_deref(),
-        Some("cursor")
+        parse_agent_program(&format!("{cursor_stdout}\n{cursor_stderr}")).as_deref(),
+        Some(IDE_CURSOR),
+        "cursor stdout was: {cursor_stdout}, stderr was: {cursor_stderr}"
     );
 
     let vscode_probe = probe_agent_program(&[("VSCODE_PID", "12345")], &ide_env_keys);
@@ -122,8 +159,9 @@ async fn test_ide_detection_from_env_vars() {
         "vscode probe failed: stdout={vscode_stdout} stderr={vscode_stderr}"
     );
     assert_eq!(
-        parse_agent_program(&vscode_stdout).as_deref(),
-        Some("vscode")
+        parse_agent_program(&format!("{vscode_stdout}\n{vscode_stderr}")).as_deref(),
+        Some(IDE_VSCODE),
+        "vscode stdout was: {vscode_stdout}, stderr was: {vscode_stderr}"
     );
 
     let claude_probe = probe_agent_program(&[("CLAUDE_CODE", "1")], &ide_env_keys);
@@ -135,8 +173,9 @@ async fn test_ide_detection_from_env_vars() {
         "claude probe failed: stdout={claude_stdout} stderr={claude_stderr}"
     );
     assert_eq!(
-        parse_agent_program(&claude_stdout).as_deref(),
-        Some("claude-code")
+        parse_agent_program(&format!("{claude_stdout}\n{claude_stderr}")).as_deref(),
+        Some(IDE_CLAUDE_CODE),
+        "claude stdout was: {claude_stdout}, stderr was: {claude_stderr}"
     );
 
     let fallback_probe = probe_agent_program(&[], &ide_env_keys);
@@ -148,8 +187,9 @@ async fn test_ide_detection_from_env_vars() {
         "fallback probe failed: stdout={fallback_stdout} stderr={fallback_stderr}"
     );
     assert_eq!(
-        parse_agent_program(&fallback_stdout).as_deref(),
-        Some("mcb-stdio")
+        parse_agent_program(&format!("{fallback_stdout}\n{fallback_stderr}")).as_deref(),
+        Some(IDE_MCB_STDIO),
+        "fallback stdout was: {fallback_stdout}, stderr was: {fallback_stderr}"
     );
 }
 

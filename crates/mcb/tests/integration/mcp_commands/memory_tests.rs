@@ -1,26 +1,17 @@
-//! Tests for the `memory` MCP tool.
+//! Tests for public memory MCP tools.
 //!
-//! Actions: store, get, list, timeline, inject
-//! Resources: observation, execution, `quality_gate`, `error_pattern`, session
+//! Tools: `store_memory`, `get_memories`, `list_memories`, `memory_timeline`, `inject_context`
 
-use super::common::{
-    TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
-    is_error, shutdown_client,
-};
+use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
+use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
+use mcb_domain::utils::tests::utils::TestResult;
 use rstest::rstest;
-use serial_test::serial;
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_memory_list_observations() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(
-        &client,
-        "memory",
-        serde_json::json!({"action": "list", "resource": "observation", "limit": 10}),
-    )
-    .await?;
+    let result = call_tool(&client, "list_memories", serde_json::json!({"limit": 10})).await?;
     assert!(
         !extract_text(&result).is_empty(),
         "memory list should return a response"
@@ -30,16 +21,15 @@ async fn test_memory_list_observations() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_memory_store_and_list() -> TestResult {
     let client = create_client().await?;
     let store_result = call_tool(
         &client,
-        "memory",
+        "store_memory",
         serde_json::json!({
-            "action": "store", "resource": "observation", "project_id": "test-proj",
+            "project_id": "test-proj",
             "data": {"content": "Test observation from TDD", "observation_type": "context", "tags": ["test"]}
         }),
     )
@@ -50,12 +40,7 @@ async fn test_memory_store_and_list() -> TestResult {
         extract_text(&store_result)
     );
 
-    let list_result = call_tool(
-        &client,
-        "memory",
-        serde_json::json!({"action": "list", "resource": "observation", "limit": 50}),
-    )
-    .await?;
+    let list_result = call_tool(&client, "list_memories", serde_json::json!({"limit": 50})).await?;
     assert!(
         !extract_text(&list_result).is_empty(),
         "list should return a response"
@@ -65,55 +50,34 @@ async fn test_memory_store_and_list() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_memory_get_missing_ids() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(
-        &client,
-        "memory",
-        serde_json::json!({"action": "get", "resource": "observation"}),
-    )
-    .await;
+    let result = call_tool(&client, "get_memories", serde_json::json!({})).await;
     assert_tool_error(result, &["id", "required", "error"]);
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
-async fn test_memory_timeline() -> TestResult {
+async fn test_memory_timeline_requires_anchor_id() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(
-        &client,
-        "memory",
-        serde_json::json!({"action": "timeline", "resource": "observation"}),
-    )
-    .await?;
-    assert!(
-        !extract_text(&result).is_empty(),
-        "timeline should return a response"
-    );
+    let result = call_tool(&client, "memory_timeline", serde_json::json!({})).await;
+    assert_tool_error(result, &["anchor_id", "missing field"]);
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
-async fn test_memory_invalid_action() -> TestResult {
+async fn test_store_memory_requires_data() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(
-        &client,
-        "memory",
-        serde_json::json!({"action": "nonexistent", "resource": "observation"}),
-    )
-    .await;
-    assert_tool_error(result, &["unknown variant", "expected one of"]);
+    let result = call_tool(&client, "store_memory", serde_json::json!({})).await;
+    assert_tool_error(result, &["data", "payload"]);
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())

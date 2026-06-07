@@ -5,8 +5,8 @@ use std::io;
 use std::path::Path;
 
 use crate::utils::run_named_validator;
-use mcb_validate::ValidationConfig;
-use mcb_validate::Validator;
+use mcb_domain::ports::validation::ValidationConfig;
+use mcb_domain::ports::validation::Validator;
 use mcb_validate::validators::declarative_validator::DeclarativeValidator;
 use rstest::rstest;
 use tempfile::TempDir;
@@ -97,7 +97,6 @@ filters:
 }
 
 #[rstest]
-#[test]
 fn test_org020_domain_adapters_violation() -> io::Result<()> {
     let temp_dir = TempDir::new()?;
     let root = temp_dir.path();
@@ -138,7 +137,6 @@ fn test_org020_domain_adapters_violation() -> io::Result<()> {
 }
 
 #[rstest]
-#[test]
 fn test_org021_infra_ports_violation() -> io::Result<()> {
     let temp_dir = TempDir::new()?;
     let root = temp_dir.path();
@@ -170,7 +168,6 @@ fn test_org021_infra_ports_violation() -> io::Result<()> {
 }
 
 #[rstest]
-#[test]
 fn test_org019_trait_placement_violation() -> io::Result<()> {
     let temp_dir = TempDir::new()?;
     let root = temp_dir.path();
@@ -254,7 +251,6 @@ filters:
 }
 
 #[rstest]
-#[test]
 fn test_ast_query_and_selector_execute_together() -> io::Result<()> {
     let temp_dir = TempDir::new()?;
     let root = temp_dir.path();
@@ -285,7 +281,6 @@ fn test_ast_query_and_selector_execute_together() -> io::Result<()> {
 }
 
 #[rstest]
-#[test]
 fn test_invalid_ast_query_returns_config_error() -> io::Result<()> {
     let temp_dir = TempDir::new()?;
     let root = temp_dir.path();

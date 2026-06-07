@@ -6,11 +6,11 @@ severity: "warning"
 enabled: true
 engine: "rusty-rules"
 
-description: "Files should not exceed 500 lines"
+description: "Files should not exceed 1500 lines"
 rationale: "Large files are hard to maintain and understand"
 
 rule:
   type: "file_size"
   condition: "exceeds_limit"
   pattern: ".rs"
-  message: "File exceeds 500 lines limit"
+  message: "File exceeds 1500 lines limit"

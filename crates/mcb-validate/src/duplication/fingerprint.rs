@@ -10,10 +10,10 @@ use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 
-use crate::constants::duplication::{
+use mcb_utils::constants::validate::{
     NORMALIZED_IDENTIFIER, NORMALIZED_LITERAL, RABIN_KARP_BASE, RABIN_KARP_MODULUS,
 };
-use crate::utils::range::lines_overlap;
+use mcb_utils::utils::range::lines_overlap;
 
 /// A fingerprint represents a hash of a code fragment
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -194,33 +194,7 @@ impl TokenFingerprinter {
             if locations.len() < 2 {
                 continue;
             }
-
-            // Generate pairs of duplicates
-            for i in 0..locations.len() {
-                for j in (i + 1)..locations.len() {
-                    let loc1 = &locations[i];
-                    let loc2 = &locations[j];
-
-                    // Skip if in the same file and overlapping
-                    if loc1.file == loc2.file {
-                        let overlap = lines_overlap(
-                            loc1.start_line,
-                            loc1.end_line,
-                            loc2.start_line,
-                            loc2.end_line,
-                        );
-                        if overlap {
-                            continue;
-                        }
-                    }
-
-                    matches.push(FingerprintMatch {
-                        location1: loc1.clone(),
-                        location2: loc2.clone(),
-                        fingerprint: *fingerprint,
-                    });
-                }
-            }
+            collect_duplicate_pairs(*fingerprint, locations, &mut matches);
         }
 
         matches
@@ -246,6 +220,37 @@ impl TokenFingerprinter {
             total_locations,
             unique_fingerprints: total_fingerprints - duplicates,
             duplicate_fingerprints: duplicates,
+        }
+    }
+}
+
+/// Push every non-overlapping pair of locations sharing `fingerprint` into `matches`.
+fn collect_duplicate_pairs(
+    fingerprint: Fingerprint,
+    locations: &[FingerprintLocation],
+    matches: &mut Vec<FingerprintMatch>,
+) {
+    for i in 0..locations.len() {
+        for j in (i + 1)..locations.len() {
+            let loc1 = &locations[i];
+            let loc2 = &locations[j];
+
+            if loc1.file == loc2.file
+                && lines_overlap(
+                    loc1.start_line,
+                    loc1.end_line,
+                    loc2.start_line,
+                    loc2.end_line,
+                )
+            {
+                continue;
+            }
+
+            matches.push(FingerprintMatch {
+                location1: loc1.clone(),
+                location2: loc2.clone(),
+                fingerprint,
+            });
         }
     }
 }

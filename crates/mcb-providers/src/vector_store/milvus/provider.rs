@@ -1,15 +1,17 @@
-use super::*;
+use std::collections::HashMap;
+
 use async_trait::async_trait;
 use mcb_domain::error::Error;
 use mcb_domain::ports::VectorStoreProvider;
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
-use std::collections::HashMap;
-
-use crate::constants::{
+use mcb_utils::constants::http::{PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT};
+use mcb_utils::constants::vector_store::{
     MILVUS_ERROR_COLLECTION_NOT_EXISTS, MILVUS_IVFFLAT_NLIST, MILVUS_PARAM_NLIST,
-    MILVUS_VECTOR_INDEX_NAME, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT,
+    MILVUS_VECTOR_INDEX_NAME, VECTOR_FIELD_VECTOR,
 };
-use crate::utils::retry::{RetryConfig, retry_with_backoff};
+use mcb_utils::utils::retry::{RetryConfig, retry_with_backoff};
+
+use super::*;
 use helpers::{build_insert_columns, parse_milvus_ids, prepare_insert_data, validate_insert_input};
 use schema::build_collection_schema;
 
@@ -35,17 +37,15 @@ impl MilvusVectorStoreProvider {
                     nlist_params,
                 );
                 self.client
-                    .create_index(
-                        &name_str,
-                        crate::constants::VECTOR_FIELD_VECTOR,
-                        index_params,
-                    )
+                    .create_index(&name_str, VECTOR_FIELD_VECTOR, index_params)
                     .await
             },
             |e| {
                 let err_str = e.to_string();
                 err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
-                    || err_str.contains("collection not found")
+                    || err_str.contains(
+                        mcb_utils::constants::vector_store::MILVUS_ERROR_COLLECTION_NOT_FOUND,
+                    )
             },
         )
         .await;
@@ -53,7 +53,8 @@ impl MilvusVectorStoreProvider {
         if let Err(e) = index_result {
             let err_str = e.to_string();
             if err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
-                || err_str.contains("collection not found")
+                || err_str
+                    .contains(mcb_utils::constants::vector_store::MILVUS_ERROR_COLLECTION_NOT_FOUND)
             {
                 return Err(Error::vector_db(format!(
                     "Failed to create index after retries: {e}"
@@ -74,7 +75,10 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
             self.client.create_collection(schema, None).await,
             "create collection",
         )?;
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        tokio::time::sleep(std::time::Duration::from_millis(
+            mcb_utils::constants::vector_store::MILVUS_COLLECTION_CREATE_DELAY_MS,
+        ))
+        .await;
         self.create_vector_index_with_retry(name).await?;
         Ok(())
     }
@@ -152,7 +156,13 @@ impl VectorStoreProvider for MilvusVectorStoreProvider {
                 Error::vector_db(format!("Failed to load collection '{collection}': {e}"))
             })?;
 
-        let expr = format!("id in [{}]", ids.join(","));
+        // Validate that all IDs are numeric to prevent expression injection
+        let id_numbers: Vec<i64> = ids.iter().filter_map(|id| id.parse::<i64>().ok()).collect();
+        if id_numbers.is_empty() {
+            return Ok(Vec::new());
+        }
+        let id_list: Vec<String> = id_numbers.iter().map(ToString::to_string).collect();
+        let expr = format!("id in [{}]", id_list.join(","));
         use milvus::query::QueryOptions;
         let query_options = QueryOptions::new().output_fields(Self::default_output_fields());
         let query_results = Self::map_milvus_error(

@@ -15,16 +15,22 @@ use std::path::Path;
 use std::time::Duration;
 
 use hostname;
-use mcb_domain::constants::http::CONTENT_TYPE_JSON;
-use mcb_domain::utils::id as domain_id;
-use mcb_domain::utils::id::mask_id;
 use mcb_domain::{debug, error, info, warn};
+use mcb_utils::constants::FALLBACK_UNKNOWN;
+use mcb_utils::constants::headers::{
+    HEADER_AGENT_PROGRAM, HEADER_DELEGATED, HEADER_MACHINE_ID, HEADER_MODEL_ID, HEADER_OPERATOR_ID,
+    HEADER_REPO_PATH, HEADER_SESSION_ID, HEADER_WORKSPACE_ROOT,
+};
+use mcb_utils::constants::http::{CONTENT_TYPE_JSON, HTTP_HEADER_CONTENT_TYPE};
+use mcb_utils::constants::ide::IDE_MCB_CLIENT;
+use mcb_utils::constants::protocol::{
+    EXECUTION_FLOW_HYBRID, HTTP_HEADER_EXECUTION_FLOW, JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR,
+    JSONRPC_VERSION, MCP_ENDPOINT_PATH,
+};
+use mcb_utils::utils::id as domain_id;
+use mcb_utils::utils::id::mask_id;
 
 use super::types::{McpRequest, McpResponse};
-use crate::constants::protocol::{
-    EXECUTION_FLOW_HYBRID, HTTP_HEADER_EXECUTION_FLOW, JSONRPC_VERSION, MCP_ENDPOINT_PATH,
-};
-use crate::constants::{JSONRPC_INTERNAL_ERROR, JSONRPC_PARSE_ERROR};
 
 /// MCP client transport configuration
 #[derive(Debug, Clone)]
@@ -225,36 +231,40 @@ impl HttpClientTransport {
                     continue;
                 }
             };
-
-            // Skip empty lines
-            if line.trim().is_empty() {
-                continue;
-            }
-
-            debug!("HttpClient", "Received request from stdin", &line.len());
-
-            // Parse the request
-            let request: McpRequest = match serde_json::from_str(&line) {
-                Ok(req) => req,
-                Err(e) => {
-                    warn!(
-                        "HttpClient",
-                        "Failed to parse request",
-                        &format!("error={e} len={}", line.len())
-                    );
-                    let error_response = Self::create_parse_error(&e);
-                    Self::write_response(&mut stdout, &error_response)?;
-                    continue;
-                }
-            };
-
-            // Forward to server and handle response
-            let response = self.forward_request(&request).await;
-            Self::write_response(&mut stdout, &response)?;
+            self.process_line(&line, &mut stdout).await?;
         }
 
         info!("HttpClient", "MCB client transport finished");
         Ok(())
+    }
+
+    /// Parse a single stdin line, forward it to the server, and write the response.
+    async fn process_line(
+        &self,
+        line: &str,
+        stdout: &mut io::Stdout,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if line.trim().is_empty() {
+            return Ok(());
+        }
+
+        debug!("HttpClient", "Received request from stdin", &line.len());
+
+        let request: McpRequest = match serde_json::from_str(line) {
+            Ok(req) => req,
+            Err(e) => {
+                warn!(
+                    "HttpClient",
+                    "Failed to parse request",
+                    &format!("error={e} len={}", line.len())
+                );
+                let error_response = Self::create_parse_error(&e);
+                return Self::write_response(stdout, &error_response);
+            }
+        };
+
+        let response = self.forward_request(&request).await;
+        Self::write_response(stdout, &response)
     }
 
     /// Send a request to the MCB server
@@ -353,31 +363,31 @@ async fn post_mcp_request(
 ) -> Result<reqwest::Response, reqwest::Error> {
     let mut builder = client
         .post(url)
-        .header("Content-Type", CONTENT_TYPE_JSON)
+        .header(HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
         .header(HTTP_HEADER_EXECUTION_FLOW, EXECUTION_FLOW_HYBRID);
 
     if let Some(ref ws) = config.workspace_root {
-        builder = builder.header("X-Workspace-Root", ws);
+        builder = builder.header(HEADER_WORKSPACE_ROOT, ws);
     }
     if let Some(ref rp) = config.repo_path {
-        builder = builder.header("X-Repo-Path", rp);
+        builder = builder.header(HEADER_REPO_PATH, rp);
     }
-    builder = builder.header("X-Session-Id", &config.public_session_id);
+    builder = builder.header(HEADER_SESSION_ID, &config.public_session_id);
 
     if let Ok(user) = std::env::var("USER") {
-        builder = builder.header("X-Operator-Id", user);
+        builder = builder.header(HEADER_OPERATOR_ID, user);
     }
 
     let machine_id = hostname::get()
         .ok()
         .and_then(|h| h.into_string().ok())
         .or_else(|| std::env::var("HOSTNAME").ok())
-        .unwrap_or_else(|| "unknown".to_owned());
-    builder = builder.header("X-Machine-Id", machine_id);
+        .unwrap_or_else(|| FALLBACK_UNKNOWN.to_owned());
+    builder = builder.header(HEADER_MACHINE_ID, machine_id);
 
-    builder = builder.header("X-Agent-Program", "mcb-client");
-    builder = builder.header("X-Model-Id", "unknown");
-    builder = builder.header("X-Delegated", "false");
+    builder = builder.header(HEADER_AGENT_PROGRAM, IDE_MCB_CLIENT);
+    builder = builder.header(HEADER_MODEL_ID, FALLBACK_UNKNOWN);
+    builder = builder.header(HEADER_DELEGATED, "false");
 
     builder.json(request).send().await
 }

@@ -7,6 +7,12 @@ use seaography::{
 use async_graphql::dynamic::{Schema, SchemaError};
 use sea_orm::DatabaseConnection;
 
+use std::any::Any;
+use std::sync::Arc;
+
+use mcb_domain::ports::GraphQLSchemaProvider;
+use mcb_domain::registry::graphql::GraphQLSchemaProviderConfig;
+
 lazy_static::lazy_static! {
     static ref CONTEXT: BuilderContext = {
         BuilderContext {
@@ -43,14 +49,6 @@ pub fn schema(
 // CA/DI: GraphQLSchemaProvider port implementation + linkme registration
 // ============================================================================
 
-use std::any::Any;
-use std::sync::Arc;
-
-use mcb_domain::ports::GraphQLSchemaProvider;
-use mcb_domain::registry::graphql::{
-    GRAPHQL_SCHEMA_PROVIDERS, GraphQLSchemaProviderConfig, GraphQLSchemaProviderEntry,
-};
-
 /// Seaography GraphQL schema provider implementing the domain port.
 struct SeaographyGraphQLSchemaProvider;
 
@@ -76,13 +74,12 @@ impl GraphQLSchemaProvider for SeaographyGraphQLSchemaProvider {
 /// Factory function for creating the Seaography GraphQL provider.
 fn seaography_factory(
     _config: &GraphQLSchemaProviderConfig,
-) -> std::result::Result<Arc<dyn GraphQLSchemaProvider>, String> {
+) -> mcb_domain::error::Result<Arc<dyn GraphQLSchemaProvider>> {
     Ok(Arc::new(SeaographyGraphQLSchemaProvider))
 }
 
-#[linkme::distributed_slice(GRAPHQL_SCHEMA_PROVIDERS)]
-static SEAOGRAPHY_GRAPHQL_PROVIDER: GraphQLSchemaProviderEntry = GraphQLSchemaProviderEntry {
-    name: "seaography",
-    description: "Seaography auto-generated GraphQL schema from SeaORM entities",
-    build: seaography_factory,
-};
+mcb_domain::register_graphql_schema_provider!(
+    "seaography",
+    "Seaography auto-generated GraphQL schema from SeaORM entities",
+    seaography_factory
+);

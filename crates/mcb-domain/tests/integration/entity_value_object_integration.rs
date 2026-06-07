@@ -1,10 +1,10 @@
 //! Integration tests for entities and value objects working together
 
-use mcb_domain::{CodeChunk, Embedding, SearchResult};
+use mcb_domain::entities::CodeChunk;
+use mcb_domain::value_objects::{Embedding, SearchResult};
 use rstest::rstest;
 
 #[rstest]
-#[test]
 fn test_code_chunk_with_embedding_integration() {
     // Test how CodeChunk entity works with Embedding value object
     let chunk = CodeChunk {
@@ -35,7 +35,6 @@ fn test_code_chunk_with_embedding_integration() {
 }
 
 #[rstest]
-#[test]
 fn test_search_result_from_code_chunk() {
     // Test integration between CodeChunk and SearchResult
     let chunk = CodeChunk {
@@ -72,7 +71,6 @@ fn test_search_result_from_code_chunk() {
 }
 
 #[rstest]
-#[test]
 fn test_multi_language_code_chunks() {
     // Test integration with different programming languages
     let rust_chunk = CodeChunk {
@@ -110,7 +108,6 @@ fn test_multi_language_code_chunks() {
 }
 
 #[rstest]
-#[test]
 fn test_embedding_vector_properties() {
     // Test integration of embedding properties
     let embedding = Embedding {
@@ -141,7 +138,6 @@ fn test_embedding_vector_properties() {
 }
 
 #[rstest]
-#[test]
 fn test_search_result_ranking() {
     // Test integration of search results with different relevance scores
     let results = [

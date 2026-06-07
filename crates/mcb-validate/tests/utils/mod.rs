@@ -6,15 +6,9 @@
 //! - **Crate creation**:  `create_test_crate`, `create_test_crate_with_file`, etc.
 //! - **Fixture loading**: `copy_fixture_crate`, `setup_fixture_workspace`
 //! - **DRY helpers**:     `with_fixture_crate`, `with_inline_crate`, `with_fixture_workspace`
-//! - **Assertions**:      Re-exported from `mcb_domain::utils::tests::assertions`
+//! - **Assertions**:      Defined in `mcb_domain::utils::tests::assertions`
 
 pub mod test_constants;
-
-// Re-export centralized assertion helpers — single source of truth
-pub use mcb_domain::utils::tests::assertions::{
-    assert_has_violation_matching, assert_no_violation_from_file, assert_no_violations,
-    assert_violations_exact,
-};
 
 use std::fs;
 use std::path::Path;
@@ -28,8 +22,8 @@ use tempfile::TempDir;
 pub fn run_named_validator(
     root: &Path,
     validator_name: &str,
-) -> mcb_validate::Result<Vec<Box<dyn mcb_validate::Violation>>> {
-    let config = mcb_validate::ValidationConfig::new(root);
+) -> mcb_validate::Result<Vec<Box<dyn mcb_domain::ports::validation::Violation>>> {
+    let config = mcb_domain::ports::validation::ValidationConfig::new(root);
     run_named_validator_with_config(&config, validator_name)
 }
 
@@ -38,9 +32,9 @@ pub fn run_named_validator(
 /// # Errors
 /// Returns an error if the validator is not found or validation itself fails.
 pub fn run_named_validator_with_config(
-    config: &mcb_validate::ValidationConfig,
+    config: &mcb_domain::ports::validation::ValidationConfig,
     validator_name: &str,
-) -> mcb_validate::Result<Vec<Box<dyn mcb_validate::Violation>>> {
+) -> mcb_validate::Result<Vec<Box<dyn mcb_domain::ports::validation::Violation>>> {
     mcb_validate::validators::validate_named(config, &[validator_name])
 }
 
@@ -109,9 +103,6 @@ version = "{DEFAULT_VERSION}"
 // ---------------------------------------------------------------------------
 // Assertion helpers
 // ---------------------------------------------------------------------------
-
-// NOTE: assert_no_violations, assert_has_violation_matching, assert_no_violation_from_file,
-// and assert_violations_exact are now re-exported from mcb_domain::utils::tests::assertions above.
 
 // ---------------------------------------------------------------------------
 // Fixture loading utilities
@@ -347,7 +338,7 @@ pub fn create_rule_context() -> mcb_validate::engines::RuleContext {
 
     mcb_validate::engines::RuleContext {
         workspace_root: PathBuf::from(TEST_WORKSPACE_PATH),
-        config: mcb_validate::ValidationConfig::new(TEST_WORKSPACE_PATH),
+        config: mcb_domain::ports::validation::ValidationConfig::new(TEST_WORKSPACE_PATH),
         ast_data: HashMap::new(),
         cargo_data: HashMap::new(),
         file_contents: HashMap::new(),

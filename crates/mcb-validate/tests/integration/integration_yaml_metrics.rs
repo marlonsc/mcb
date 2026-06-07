@@ -5,7 +5,7 @@
 
 #[cfg(test)]
 mod yaml_metrics_tests {
-    use mcb_validate::Severity;
+    use mcb_domain::ports::validation::Severity;
     use mcb_validate::metrics::{MetricThresholds, MetricType, RcaAnalyzer};
     use mcb_validate::rules::yaml_loader::{MetricThresholdConfig, MetricsConfig, YamlRuleLoader};
     use rstest::rstest;

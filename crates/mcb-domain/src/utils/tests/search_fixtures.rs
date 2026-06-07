@@ -2,7 +2,7 @@
 //!
 //! Centralized in `mcb-domain` since `SearchResult` lives in the domain layer.
 
-use crate::SearchResult;
+use crate::value_objects::search::SearchResult;
 
 /// Create a single test search result.
 #[must_use]

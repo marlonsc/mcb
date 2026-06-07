@@ -24,5 +24,6 @@ pub use dependency_parser::{
     CargoDependencyParser, CrateDependencies, DependencyInfo, WorkspaceDependencies,
 };
 pub use file_matcher::FilePatternMatcher;
-pub use language_detector::{LanguageDetector, LanguageId, language_from_rca, language_to_rca};
+pub(crate) use language_detector::LanguageId;
+pub use language_detector::{LanguageDetector, language_from_rca, language_to_rca};
 pub use rule_filters::{ApplicabilityFilter, RuleFilterExecutor, RuleFilters};

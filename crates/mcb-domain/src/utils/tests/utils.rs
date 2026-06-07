@@ -52,23 +52,10 @@ pub fn workspace_root() -> TestResult<std::path::PathBuf> {
 }
 
 // ---------------------------------------------------------------------------
-// Common test identity constants
+// Common test identity constants — imported from the canonical source
 // ---------------------------------------------------------------------------
 
-/// Default test organization ID — use across all crates for consistency.
-pub const TEST_ORG_ID: &str = "test-org";
-
-/// Default test project ID.
-pub const TEST_PROJECT_ID: &str = "test-project";
-
-/// Default test session ID.
-pub const TEST_SESSION_ID: &str = "test-session";
-
-/// Default test user email.
-pub const TEST_USER_EMAIL: &str = "test@example.com";
-
-/// Default test timestamp (`2023-11-14T22:13:20Z`).
-pub const TEST_TIMESTAMP: i64 = 1_700_000_000;
+use mcb_utils::constants::testing::*;
 
 use crate::entities::agent::{
     AgentSession, AgentSessionStatus, AgentType, Checkpoint, CheckpointType, ToolCall,
@@ -87,7 +74,7 @@ pub fn create_test_project(id: &str) -> Project {
         id: id.to_owned(),
         org_id: TEST_ORG_ID.to_owned(),
         name: TEST_PROJECT_ID.to_owned(),
-        path: "/tmp/test-project".to_owned(),
+        path: TEST_PROJECT_PATH.to_owned(),
         created_at: 0,
         updated_at: 0,
     }
@@ -100,7 +87,7 @@ pub fn create_test_user() -> User {
         id: Uuid::new_v4().to_string(),
         org_id: TEST_ORG_ID.to_owned(),
         email: TEST_USER_EMAIL.to_owned(),
-        display_name: "Test User".to_owned(),
+        display_name: TEST_DISPLAY_NAME.to_owned(),
         role: crate::entities::user::UserRole::Member,
         api_key_hash: None,
         created_at: 0,
@@ -115,13 +102,13 @@ pub fn create_test_phase(id: &str, project_id: &str) -> ProjectPhase {
         id: id.to_owned(),
         project_id: project_id.to_owned(),
         name: format!("Phase {id}"),
-        description: "Test Phase Description".to_owned(),
+        description: TEST_PHASE_DESCRIPTION.to_owned(),
         sequence: 1,
         status: PhaseStatus::Planned,
         started_at: None,
         completed_at: None,
-        created_at: 1000,
-        updated_at: 1000,
+        created_at: TEST_TIMESTAMP_SMALL,
+        updated_at: TEST_TIMESTAMP_SMALL,
     }
 }
 
@@ -132,10 +119,10 @@ pub fn create_test_issue(id: &str, project_id: &str) -> ProjectIssue {
         id: id.to_owned(),
         org_id: TEST_ORG_ID.to_owned(),
         project_id: project_id.to_owned(),
-        created_by: "test-user".to_owned(),
+        created_by: TEST_USER_ID.to_owned(),
         phase_id: None,
         title: format!("Issue {id}"),
-        description: "Test Issue Description".to_owned(),
+        description: TEST_ISSUE_DESCRIPTION.to_owned(),
         issue_type: IssueType::Task,
         status: IssueStatus::Open,
         priority: 2,
@@ -146,8 +133,8 @@ pub fn create_test_issue(id: &str, project_id: &str) -> ProjectIssue {
         notes: String::new(),
         design: String::new(),
         parent_issue_id: None,
-        created_at: 1000,
-        updated_at: 1000,
+        created_at: TEST_TIMESTAMP_SMALL,
+        updated_at: TEST_TIMESTAMP_SMALL,
         closed_at: None,
         closed_reason: String::new(),
     }
@@ -160,13 +147,13 @@ pub fn create_test_agent_session(id: &str) -> AgentSession {
         id: id.to_owned(),
         session_summary_id: Uuid::new_v4().to_string(),
         agent_type: AgentType::Sisyphus,
-        model: "claude-sonnet".to_owned(),
+        model: TEST_MODEL_NAME.to_owned(),
         parent_session_id: None,
         started_at: TEST_TIMESTAMP,
         ended_at: None,
         duration_ms: None,
         status: AgentSessionStatus::Active,
-        prompt_summary: Some("Test Prompt".to_owned()),
+        prompt_summary: Some(TEST_PROMPT_SUMMARY.to_owned()),
         result_summary: None,
         token_count: Some(0),
         tool_calls_count: Some(0),
@@ -182,7 +169,7 @@ pub fn create_test_tool_call(id: &str) -> ToolCall {
     ToolCall {
         id: id.to_owned(),
         session_id: TEST_SESSION_ID.to_owned(),
-        tool_name: "test_tool".to_owned(),
+        tool_name: TEST_TOOL_NAME.to_owned(),
         params_summary: Some("check=true".to_owned()),
         success: true,
         error_message: None,
@@ -198,7 +185,7 @@ pub fn create_test_checkpoint(id: &str) -> Checkpoint {
         id: id.to_owned(),
         session_id: TEST_SESSION_ID.to_owned(),
         checkpoint_type: CheckpointType::Git,
-        description: "Test Checkpoint".to_owned(),
+        description: TEST_CHECKPOINT_DESCRIPTION.to_owned(),
         snapshot_data: serde_json::json!({"status": "clean"}),
         created_at: TEST_TIMESTAMP,
         restored_at: None,
@@ -207,34 +194,8 @@ pub fn create_test_checkpoint(id: &str) -> Checkpoint {
 }
 
 // ---------------------------------------------------------------------------
-// Extended test constants (migrated from mcb-server/tests/utils/test_fixtures)
+// Extended test constants — imported from the canonical source
 // ---------------------------------------------------------------------------
-
-/// Default test repository name.
-pub const TEST_REPO_NAME: &str = "test-repo";
-
-/// Default embedding dimensions (`FastEmbed` BGE-small-en-v1.5).
-pub const TEST_EMBEDDING_DIMENSIONS: usize = 384;
-
-/// Organization A identifier for multi-tenant tests.
-pub const TEST_ORG_ID_A: &str = "test-org-a";
-
-/// Organization B identifier for multi-tenant tests.
-pub const TEST_ORG_ID_B: &str = "test-org-b";
-
-/// Default golden-test collection name.
-pub const GOLDEN_COLLECTION: &str = "mcb_golden_test";
-
-/// Expected files in `sample_codebase` for search assertions.
-pub const SAMPLE_CODEBASE_FILES: &[&str] = &[
-    "embedding.rs",
-    "vector_store.rs",
-    "handlers.rs",
-    "cache.rs",
-    "di.rs",
-    "error.rs",
-    "chunking.rs",
-];
 
 // ---------------------------------------------------------------------------
 // Entity fixture builders (migrated from mcb-server/tests/utils/test_fixtures)
@@ -252,7 +213,7 @@ pub fn create_test_organization(id: &str) -> Organization {
         id: id.to_owned(),
         name: format!("Test Org {id}"),
         slug: format!("test-org-{id}"),
-        settings_json: "{}".to_owned(),
+        settings_json: TEST_SETTINGS_JSON.to_owned(),
         created_at: TEST_TIMESTAMP,
         updated_at: TEST_TIMESTAMP,
     }
@@ -265,7 +226,11 @@ pub fn create_test_admin_user(org_id: &str, email: &str) -> User {
         id: Uuid::new_v4().to_string(),
         org_id: org_id.to_owned(),
         email: email.to_owned(),
-        display_name: email.split('@').next().unwrap_or("Test Admin").to_owned(),
+        display_name: email
+            .split('@')
+            .next()
+            .unwrap_or(TEST_ADMIN_DISPLAY_NAME)
+            .to_owned(),
         role: crate::entities::user::UserRole::Admin,
         api_key_hash: None,
         created_at: TEST_TIMESTAMP,
@@ -280,7 +245,11 @@ pub fn create_test_user_with(org_id: &str, email: &str) -> User {
         id: Uuid::new_v4().to_string(),
         org_id: org_id.to_owned(),
         email: email.to_owned(),
-        display_name: email.split('@').next().unwrap_or("Test User").to_owned(),
+        display_name: email
+            .split('@')
+            .next()
+            .unwrap_or(TEST_DISPLAY_NAME)
+            .to_owned(),
         role: crate::entities::user::UserRole::Member,
         api_key_hash: None,
         created_at: TEST_TIMESTAMP,
@@ -320,7 +289,7 @@ pub fn create_test_api_key(user_id: &str, org_id: &str, name: &str) -> ApiKey {
         org_id: org_id.to_owned(),
         name: name.to_owned(),
         key_hash: format!("hash_{}", Uuid::new_v4()),
-        scopes_json: "[\"read\", \"write\"]".to_owned(),
+        scopes_json: TEST_API_KEY_SCOPES.to_owned(),
         expires_at: None,
         revoked_at: None,
         created_at: TEST_TIMESTAMP,
@@ -374,42 +343,19 @@ pub fn create_test_indexing_result(
     files_processed: usize,
     chunks_created: usize,
     error_count: usize,
-) -> crate::ports::IndexingResult {
+) -> crate::ports::services::indexing::IndexingResult {
     let errors = (0..error_count)
         .map(|i| format!("Test error {i}"))
         .collect();
 
-    crate::ports::IndexingResult {
+    crate::ports::services::indexing::IndexingResult {
         files_processed,
         chunks_created,
         files_skipped: 0,
         errors,
         operation_id: None,
-        status: "completed".to_owned(),
+        status: mcb_utils::constants::INDEX_OP_STATUS_COMPLETED.to_owned(),
     }
 }
 
-// ---------------------------------------------------------------------------
-// External service availability detection
-// ---------------------------------------------------------------------------
-
-/// Skip a test early (with `Ok(())`) when the named external service is not
-/// configured in `config/tests.toml` under `[test_services]`.
-///
-/// Usage at the top of any `-> TestResult` test function:
-/// ```rust,ignore
-/// #[tokio::test]
-/// async fn test_foo() -> TestResult {
-///     require_service!("milvus");
-///     // ... rest of the test
-/// }
-/// ```
-#[macro_export]
-macro_rules! require_service {
-    ($service:expr) => {
-        if $crate::utils::tests::services_config::test_service_url($service).is_none() {
-            eprintln!("⏭ Skipping: {} not available", $service);
-            return Ok(());
-        }
-    };
-}
+// `require_service!` macro is defined in `crate::macros::testing` and available via `#[macro_export]`.

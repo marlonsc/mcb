@@ -1,6 +1,3 @@
-//!
-//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
-//!
 //! Hybrid Search Providers
 //!
 //! This module provides hybrid search functionality that combines BM25 text-based
@@ -69,32 +66,8 @@
 
 pub mod bm25;
 pub mod engine;
+mod registry;
 
 // Re-export main types
 pub use bm25::{BM25Params, BM25Scorer};
 pub use engine::HybridSearchEngine;
-
-// ============================================================================
-// Auto-registration via linkme distributed slice
-// ============================================================================
-
-use std::sync::Arc;
-
-use mcb_domain::ports::HybridSearchProvider as HybridSearchProviderPort;
-use mcb_domain::registry::hybrid_search::{
-    HYBRID_SEARCH_PROVIDERS, HybridSearchProviderConfig, HybridSearchProviderEntry,
-};
-
-/// Factory function for creating `HybridSearchEngine` instances.
-fn hybrid_search_factory(
-    _config: &HybridSearchProviderConfig,
-) -> std::result::Result<Arc<dyn HybridSearchProviderPort>, String> {
-    Ok(Arc::new(HybridSearchEngine::new()))
-}
-
-#[linkme::distributed_slice(HYBRID_SEARCH_PROVIDERS)]
-static HYBRID_SEARCH_ENGINE_PROVIDER: HybridSearchProviderEntry = HybridSearchProviderEntry {
-    name: "default",
-    description: "Hybrid BM25 + semantic search engine (default)",
-    build: hybrid_search_factory,
-};

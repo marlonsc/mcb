@@ -4,12 +4,12 @@
 //! npm/Node.js project detector.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
+use mcb_domain::ports::ProjectDetector;
+use mcb_domain::registry::ProjectDetectorConfig;
 use serde::Deserialize;
 
 use super::common::{parse_json_opt, read_file_opt};
@@ -84,18 +84,9 @@ impl ProjectDetector for NpmDetector {
     }
 }
 
-fn npm_factory(
-    config: &ProjectDetectorConfig,
-) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
-    Ok(Arc::new(NpmDetector::new(config)))
-}
-
-// linkme distributed_slice uses #[link_section] internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
-static NPM_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
-    name: "npm",
-    description: "Detects Node.js projects with package.json",
-    marker_files: &["package.json"],
-    build: npm_factory,
-};
+mcb_domain::register_project_detector!(
+    "npm",
+    "Detects Node.js projects with package.json",
+    &["package.json"],
+    |_config| Ok(std::sync::Arc::new(NpmDetector))
+);

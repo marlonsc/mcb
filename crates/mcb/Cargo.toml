@@ -30,6 +30,7 @@ workspace = true
 [dependencies]
 # Domain layer - re-exported for public API for domain layer
 mcb-domain = { path = "../mcb-domain" }
+mcb-utils = { path = "../mcb-utils" }
 
 # Server layer - re-exported for run_server entry point for server layer
 mcb-server = { path = "../mcb-server" }
@@ -64,6 +65,7 @@ dirs = { workspace = true }
 
 # Re-export for doc examples
 serde_json = { workspace = true }
+serde_yaml = { workspace = true }
 
 # MCP protocol - rmcp transport for StreamableHttpService
 rmcp = { workspace = true }
@@ -79,9 +81,10 @@ rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+mcb-utils = { path = "../mcb-utils" }
 uuid = { workspace = true, features = ["v4"] }
+fs2 = { workspace = true }
 
-serial_test = { workspace = true }
 serde_json = { workspace = true }
 tokio = { workspace = true, features = ["full"] }
 [[test]]

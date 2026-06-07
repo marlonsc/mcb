@@ -1,4 +1,5 @@
-use mcb_domain::utils::id;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_utils::utils::id;
 use rstest::rstest;
 
 #[rstest]
@@ -23,19 +24,18 @@ fn correlate_id_changes_with_input(
 }
 
 #[rstest]
-#[test]
-fn correlate_id_returns_valid_uuid_format() {
+fn correlate_id_returns_valid_uuid_format() -> TestResult {
     let result = id::correlate_id("session", "ses_abcdef");
-    let parsed = uuid::Uuid::parse_str(&result);
-    assert!(
-        parsed.is_ok(),
-        "correlate_id must return a valid UUID string"
+    let parsed = uuid::Uuid::parse_str(&result)?;
+    assert_eq!(
+        parsed.get_version_num(),
+        5,
+        "correlate_id must return a UUID v5 string"
     );
-    assert_eq!(parsed.unwrap().get_version_num(), 5);
+    Ok(())
 }
 
 #[rstest]
-#[test]
 fn correlate_id_pinned_value() {
     let result = id::correlate_id("session", "ses_1234567890");
     assert_eq!(
@@ -45,21 +45,18 @@ fn correlate_id_pinned_value() {
 }
 
 #[rstest]
-#[test]
 fn deterministic_uuid_is_v5() {
     let uuid = id::deterministic("session", "ses_1234567890");
     assert_eq!(uuid.get_version_num(), 5);
 }
 
 #[rstest]
-#[test]
 fn generate_returns_v4() {
     let uuid = id::generate();
     assert_eq!(uuid.get_version_num(), 4);
 }
 
 #[rstest]
-#[test]
 fn generate_is_unique() {
     let a = id::generate();
     let b = id::generate();

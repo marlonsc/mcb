@@ -3,7 +3,7 @@
 //!
 use std::sync::Arc;
 
-use mcb_domain::ports::MemoryServiceInterface;
+use mcb_domain::ports::{MemoryServiceInterface, StoreObservationInput};
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
@@ -13,12 +13,12 @@ use super::common::{
     resolve_memory_origin_context, str_vec,
 };
 use crate::args::MemoryArgs;
-use crate::constants::fields::{
-    FIELD_BRANCH, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE, FIELD_OBSERVATIONS,
-};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
+use mcb_utils::constants::keys::{
+    FIELD_BRANCH, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE, FIELD_OBSERVATIONS,
+};
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -53,7 +53,13 @@ pub async fn store_observation(
         None,
     );
     match memory_service
-        .store_observation(origin.project_id, content, observation_type, tags, metadata)
+        .store_observation(StoreObservationInput {
+            project_id: origin.project_id,
+            content,
+            r#type: observation_type,
+            tags,
+            metadata,
+        })
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({

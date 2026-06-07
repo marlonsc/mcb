@@ -37,7 +37,6 @@ fn expression_evaluation(
 }
 
 #[rstest]
-#[test]
 fn test_custom_variables() {
     let engine = ExpressionEngine::new();
     let mut variables = HashMap::new();
@@ -54,7 +53,6 @@ fn test_custom_variables() {
 }
 
 #[rstest]
-#[test]
 fn test_invalid_expression() {
     let engine = ExpressionEngine::new();
     let context = create_rule_context_with_files(&[

@@ -20,9 +20,10 @@
 use std::path::PathBuf;
 use std::sync::Arc;
 
-use crate::constants::defaults::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 use mcb_domain::ports::validation::{Violation, ViolationCategory};
-use mcb_domain::ports::{AnalysisFinding, CodeAnalyzer, resolve_code_analyzer};
+use mcb_domain::ports::{AnalysisFinding, CodeAnalyzer};
+use mcb_domain::registry::resolve_code_analyzer;
+use mcb_utils::constants::validate::{DEFAULT_COMPLEXITY_THRESHOLD, DEFAULT_TDG_THRESHOLD};
 
 use crate::define_violations;
 use crate::{Result, Severity, ValidationConfig};
@@ -289,7 +290,7 @@ impl PmatValidator {
 
 impl mcb_domain::ports::validation::Validator for PmatValidator {
     fn name(&self) -> &'static str {
-        "pmat"
+        mcb_utils::constants::validate::VALIDATOR_PMAT
     }
 
     fn description(&self) -> &'static str {

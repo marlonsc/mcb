@@ -33,10 +33,14 @@ pub struct DynamicMigrator;
 
 #[async_trait::async_trait]
 impl MigratorTrait for DynamicMigrator {
-    #[allow(clippy::expect_used)] // MigratorTrait::migrations() is infallible
     fn migrations() -> Vec<Box<dyn MigrationTrait>> {
-        let provider = mcb_domain::registry::database::resolve_migration_provider()
-            .expect("No migration provider registered");
+        let provider = match mcb_domain::registry::database::resolve_migration_provider() {
+            Ok(p) => p,
+            Err(e) => {
+                mcb_domain::error!("migration", "No migration provider registered", &e);
+                return vec![];
+            }
+        };
         provider
             .migrations()
             .into_iter()

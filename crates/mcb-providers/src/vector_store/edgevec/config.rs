@@ -1,4 +1,7 @@
-use super::*;
+use mcb_utils::constants::vector_store::{
+    EDGEVEC_DEFAULT_DIMENSIONS, EDGEVEC_HNSW_EF_CONSTRUCTION, EDGEVEC_HNSW_EF_SEARCH,
+    EDGEVEC_HNSW_M, EDGEVEC_HNSW_M0, EDGEVEC_QUANTIZATION_TYPE,
+};
 
 /// `EdgeVec` vector store configuration
 #[derive(Debug, Clone, serde::Deserialize, serde::Serialize, schemars::JsonSchema)]

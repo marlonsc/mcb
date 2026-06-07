@@ -18,6 +18,7 @@ path = "src/lib.rs"
 [dependencies]
 # Domain layer - core business logic and port traits
 mcb-domain = { path = "../mcb-domain" }
+mcb-utils = { path = "../mcb-utils" }
 
 # Core async runtime
 tokio = { workspace = true }
@@ -28,18 +29,11 @@ serde_json = { workspace = true }
 serde_yaml = { workspace = true }
 
 # Error handling
-anyhow = { workspace = true }
 thiserror = { workspace = true }
 
 # Logging
 tracing = { workspace = true }
 tracing-subscriber = { workspace = true }
-
-# Configuration
-toml = { workspace = true }
-
-# HTTP client
-reqwest = { workspace = true }
 
 # CLI
 clap = { workspace = true }
@@ -53,15 +47,10 @@ regex = { workspace = true }
 # Date/time handling
 chrono = { workspace = true }
 
-# Template engines
-handlebars = { workspace = true }
-
 # Cryptography
 aes-gcm = { workspace = true }
-rand = { workspace = true }
 
 # Authentication
-bcrypt = { workspace = true }
 argon2 = { workspace = true }
 base64 = { workspace = true }
 
@@ -71,7 +60,6 @@ hex = { workspace = true }
 
 # Utilities
 uuid = { workspace = true }
-dirs = { workspace = true }
 
 # Fast globbing
 glob = { workspace = true }
@@ -81,50 +69,29 @@ ignore = { workspace = true }
 
 # Concurrent processing
 futures = { workspace = true }
-rayon = { workspace = true }
-
-# Text processing
-unicode-segmentation = { workspace = true }
 
 # Schema generation for MCP
 schemars = { workspace = true }
 
-# Input validation
-validator = { workspace = true }
-
-# MCP SDK
-rmcp = { workspace = true }
-
 # Advanced Multi-Provider Strategy
-tokio-util = { workspace = true }
 dashmap = { workspace = true }
 health = { workspace = true }
 
 # Additional dependencies
 async-trait = { workspace = true }
-downcast-rs = { workspace = true }
 futures-util = { workspace = true }
-delegate = { workspace = true }
 linkme.workspace = true
 
 # Service layer improvements
 itertools = { workspace = true }
-humantime = { workspace = true }
-
-tempfile = { workspace = true }
 
 # Additional crypto
 pbkdf2 = { workspace = true }
 hmac = { workspace = true }
 
-# Logging appenders
-tracing-appender = { workspace = true }
-
 # SeaORM (database layer)
 sea-orm = { workspace = true }
 sea-orm-migration = { workspace = true }
-
-loco-rs = { workspace = true }
 
 # SQLite for legacy/direct queries
 sqlx = { workspace = true }
@@ -153,7 +120,9 @@ workspace = true
 
 [dev-dependencies]
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+mcb-utils = { path = "../mcb-utils" }
 tempfile = { workspace = true }
+toml = { workspace = true }
 tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
 serial_test = { workspace = true }
 rstest = { workspace = true }

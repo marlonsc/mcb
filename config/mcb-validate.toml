@@ -135,6 +135,7 @@ infrastructure_crate = ""
 application_crate = ""
 providers_crate = ""
 validate_crate = ""
+utils_crate = ""
 
 # ==============================================================================
 # KISS Rules

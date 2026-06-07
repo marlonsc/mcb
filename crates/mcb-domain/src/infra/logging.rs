@@ -1,13 +1,13 @@
 //! Logging facade: single registration point for the operation logger.
 //!
-//! Provides `set_log_fn` + `dispatch` (OnceLock-based), plus two built-in
-//! implementations: `stderr_log_fn` (pure std) and `tracing_log_fn` (structured).
+//! Provides `set_log_fn` + `dispatch` (OnceLock-based), plus a built-in
+//! implementation: `stderr_log_fn` (pure std).
 
 use std::io::Write;
 use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU8, Ordering};
 
-use crate::ports::LogLevel;
+use crate::ports::infrastructure::logging::LogLevel;
 
 /// Function type that the infrastructure layer registers to handle log events.
 pub type LogFn = fn(LogLevel, &str, &str, Option<&dyn std::fmt::Display>);
@@ -35,14 +35,7 @@ pub fn dispatch(
 
 /// Sets the minimum log level for stderr output.
 pub fn set_stderr_log_level(level: LogLevel) {
-    let mapped = match level {
-        LogLevel::Error => 0,
-        LogLevel::Warn => 1,
-        LogLevel::Info => 2,
-        LogLevel::Debug => 3,
-        LogLevel::Trace => 4,
-    };
-    STDERR_LOG_LEVEL.store(mapped, Ordering::Relaxed);
+    STDERR_LOG_LEVEL.store(level_to_u8(level), Ordering::Relaxed);
 }
 
 fn level_to_u8(level: LogLevel) -> u8 {
@@ -78,31 +71,5 @@ pub fn stderr_log_fn(
         let _ = writeln!(std::io::stderr(), "[{tag}] {context}: {message} ({d})");
     } else {
         let _ = writeln!(std::io::stderr(), "[{tag}] {context}: {message}");
-    }
-}
-
-/// A log function that forwards to `tracing`.
-pub fn tracing_log_fn(
-    level: LogLevel,
-    context: &str,
-    message: &str,
-    detail: Option<&dyn std::fmt::Display>,
-) {
-    macro_rules! emit {
-        ($lvl:expr) => {
-            if let Some(d) = detail {
-                tracing::event!($lvl, context = %context, detail = %d, "{}", message);
-            } else {
-                tracing::event!($lvl, context = %context, "{}", message);
-            }
-        };
-    }
-
-    match level {
-        LogLevel::Error => emit!(tracing::Level::ERROR),
-        LogLevel::Warn => emit!(tracing::Level::WARN),
-        LogLevel::Info => emit!(tracing::Level::INFO),
-        LogLevel::Debug => emit!(tracing::Level::DEBUG),
-        LogLevel::Trace => emit!(tracing::Level::TRACE),
     }
 }

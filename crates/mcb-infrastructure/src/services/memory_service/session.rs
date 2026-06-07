@@ -6,8 +6,8 @@ use mcb_domain::entities::memory::OriginContext;
 use mcb_domain::entities::memory::SessionSummary;
 use mcb_domain::error::Result;
 use mcb_domain::ports::CreateSessionSummaryInput;
-use mcb_domain::utils::id;
-use mcb_domain::utils::time as domain_time;
+use mcb_utils::utils::id;
+use mcb_utils::utils::time as domain_time;
 
 use super::MemoryServiceImpl;
 

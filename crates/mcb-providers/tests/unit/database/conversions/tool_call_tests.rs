@@ -16,12 +16,11 @@ fn sample_tool_call() -> tool_call::Model {
         success: 1,
         error_message: Some("test_error_message".into()),
         duration_ms: Some(1500),
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 
 #[rstest]
-#[test]
 fn round_trip_tool_call() {
     let model = sample_tool_call();
     let model_val = model.id.clone();

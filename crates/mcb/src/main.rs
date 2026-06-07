@@ -2,6 +2,7 @@
 //!
 //! A semantic code search server and context browser for Model Context Protocol (MCP).
 
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
 
 use clap::{Parser, Subcommand};

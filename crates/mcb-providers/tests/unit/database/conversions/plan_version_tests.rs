@@ -13,12 +13,11 @@ fn sample_plan_version() -> plan_version::Model {
         content_json: "{}".into(),
         change_summary: "test_change_summary".into(),
         created_by: "test_created_by".into(),
-        created_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 
 #[rstest]
-#[test]
 fn round_trip_plan_version() {
     let model = sample_plan_version();
     let model_val = model.id.clone();

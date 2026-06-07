@@ -17,10 +17,12 @@ crate::impl_config_builder!(ProjectDetectionServiceConfig {
 });
 
 crate::impl_registry!(
-    provider_trait: crate::ports::ProjectDetectorService,
+    provider_trait: crate::ports::services::project::ProjectDetectorService,
     config_type: ProjectDetectionServiceConfig,
     entry_type: ProjectDetectionServiceEntry,
     slice_name: PROJECT_DETECTION_SERVICES,
     resolve_fn: resolve_project_detection_service,
-    list_fn: list_project_detection_services
+    list_fn: list_project_detection_services,
+    register_macro: register_project_detection_service,
+    module: project_detection
 );

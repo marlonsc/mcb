@@ -4,7 +4,7 @@
 use regex::Regex;
 
 use super::KissValidator;
-use crate::pattern_registry::compile_regex;
+use mcb_utils::utils::regex::compile_regex;
 
 impl KissValidator {
     fn count_block_matches(
@@ -20,15 +20,17 @@ impl KissValidator {
             if line.contains('{') {
                 in_block = true;
             }
-            if in_block {
-                brace_depth += line.chars().filter(|ch| *ch == '{').count();
-                brace_depth -= line.chars().filter(|ch| *ch == '}').count();
-                if brace_depth >= 1 && predicate(line) {
-                    count += 1;
-                }
-                if brace_depth == 0 {
-                    break;
-                }
+            if !in_block {
+                continue;
+            }
+
+            brace_depth += line.chars().filter(|ch| *ch == '{').count();
+            brace_depth -= line.chars().filter(|ch| *ch == '}').count();
+            if brace_depth >= 1 && predicate(line) {
+                count += 1;
+            }
+            if brace_depth == 0 {
+                break;
             }
         }
 

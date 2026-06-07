@@ -13,7 +13,7 @@ use super::violation::HygieneViolation;
 
 crate::create_validator!(
     HygieneValidator,
-    "hygiene",
+    mcb_utils::constants::validate::VALIDATOR_HYGIENE,
     "Validates test hygiene and quality",
     HygieneViolation,
     [

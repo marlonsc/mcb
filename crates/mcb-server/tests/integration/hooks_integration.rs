@@ -65,10 +65,7 @@ async fn test_post_tool_use_context_enrichment(
     assert_eq!(context.tool_name, tool_name);
     if with_session_id {
         assert_eq!(
-            context
-                .session_id
-                .as_ref()
-                .map(mcb_domain::SessionId::as_str),
+            context.session_id.as_ref().map(SessionId::as_str),
             Some(session_id_val.as_str())
         );
     }

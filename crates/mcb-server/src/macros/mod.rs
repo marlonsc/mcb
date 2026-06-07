@@ -5,6 +5,7 @@
 //! - [`args`]: Tool argument derive macros (used by `args/`)
 //! - [`dispatch`]: Entity handler dispatch macros (used by `handlers/entities/`)
 //! - [`handlers`]: Field extraction and validation macros (used by `handlers/`)
+//! - [`registry`]: Tool registration macros (used by `tools/registry`)
 
 #[macro_use]
 mod accessors;
@@ -14,3 +15,5 @@ mod args;
 mod dispatch;
 #[macro_use]
 mod handlers;
+#[macro_use]
+mod registry;

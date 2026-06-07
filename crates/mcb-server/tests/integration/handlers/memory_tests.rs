@@ -6,11 +6,11 @@ use rmcp::handler::server::wrapper::Parameters;
 use rstest::*;
 use serde_json::json;
 
-use mcb_domain::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text_from;
 
-use crate::utils::test_fixtures::create_base_memory_args;
+use crate::utils::domain_services::create_base_memory_args;
 use crate::utils::test_fixtures::create_test_mcb_state;
-use crate::utils::test_fixtures::{TEST_PROJECT_ID, TEST_SESSION_ID};
+use mcb_utils::constants::testing::{TEST_PROJECT_ID, TEST_SESSION_ID};
 
 async fn create_handler() -> Option<(MemoryHandler, tempfile::TempDir)> {
     let (state, temp_dir) = create_test_mcb_state().await?;
@@ -257,7 +257,7 @@ async fn test_get_observations_with_valid_ids_happy_path() {
         store_result.expect("memory handler should succeed for valid observation store");
 
     // Extract the observation ID from the response
-    let store_text = extract_text(&store_response.content);
+    let store_text = extract_text_from(&store_response.content);
     let response_json: serde_json::Value =
         serde_json::from_str(&store_text).expect("response should be valid JSON");
     let observation_id = response_json["observation_id"]
@@ -296,7 +296,7 @@ async fn test_get_observations_with_valid_ids_happy_path() {
     );
 
     // Verify the response contains the observation
-    let response_text = extract_text(&response.content);
+    let response_text = extract_text_from(&response.content);
     let response_json: serde_json::Value =
         serde_json::from_str(&response_text).expect("response should be valid JSON");
     assert!(

@@ -71,7 +71,7 @@ macro_rules! impl_config_only_validator_new {
 /// The default `validate()` on the trait handles timing and logging.
 #[macro_export]
 macro_rules! impl_validator {
-    ($validator_ty:ty, $name:literal, $desc:literal) => {
+    ($validator_ty:ty, $name:expr, $desc:literal) => {
         impl $crate::Validator for $validator_ty {
             fn name(&self) -> &'static str {
                 $name
@@ -103,7 +103,7 @@ macro_rules! impl_validator {
 /// Also generates a typed `validate_all()` convenience method for direct use.
 #[macro_export]
 macro_rules! create_validator {
-    ($name:ident, $id:literal, $desc:literal, $violation_ty:ty, [ $($func:path),* $(,)? ]) => {
+    ($name:ident, $id:expr, $desc:literal, $violation_ty:ty, [ $($func:path),* $(,)? ]) => {
         #[doc = $desc]
         pub struct $name {
             pub(crate) config: $crate::ValidationConfig,
@@ -177,7 +177,7 @@ macro_rules! create_validator {
 #[macro_export]
 macro_rules! define_validator {
     (
-        name: $name_str:literal,
+        name: $name_str:expr,
         description: $desc_str:literal,
 
         $(#[$struct_meta:meta])*

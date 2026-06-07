@@ -10,11 +10,19 @@ use crate::Result;
 use crate::utils::source::{compile_pattern_pairs, source_lines, track_fn_name};
 use mcb_domain::ports::validation::Severity;
 
+/// Detects stub macros (`todo!`, `unimplemented!`, `panic!("not implemented")`)
+/// that mark incomplete implementations and reports each as a `StubMacro`
+/// violation, attributing it to the enclosing function.
+///
+/// # Errors
+///
+/// Returns an error if any required IMPL001 stub pattern is missing from the
+/// pattern registry.
 pub fn validate_stub_macros(
     files: &[(PathBuf, String)],
     fn_pattern: &Regex,
 ) -> Result<Vec<ImplementationViolation>> {
-    use crate::constants::labels::STUB_PANIC_LABEL;
+    use mcb_utils::constants::validate::STUB_PANIC_LABEL;
     let stub_pattern_ids = [
         ("IMPL001.stub_todo", "todo"),
         ("IMPL001.stub_unimplemented", "unimplemented"),

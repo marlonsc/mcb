@@ -8,8 +8,10 @@ use rstest::{fixture, rstest};
 
 #[fixture]
 fn tracker() -> TestResult<std::sync::Arc<dyn IndexingOperationsInterface>> {
-    resolve_indexing_operations_provider(&IndexingOperationsProviderConfig::new("default"))
-        .map_err(Into::into)
+    resolve_indexing_operations_provider(&IndexingOperationsProviderConfig::new(
+        mcb_utils::constants::DEFAULT_INDEXING_OP_PROVIDER,
+    ))
+    .map_err(Into::into)
 }
 
 #[fixture]

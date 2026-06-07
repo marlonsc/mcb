@@ -1,25 +1,17 @@
-//! Tests for the `session` MCP tool.
+//! Tests for public session MCP tools.
 //!
-//! Actions: create, get, update, list, summarize
+//! Tools: `start_session`, `get_session`, `list_sessions`, `summarize_session`
 
-use super::common::{
-    TestResult, assert_tool_error, call_tool, cleanup_temp_dbs, create_client, extract_text,
-    is_error, shutdown_client,
-};
+use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
+use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
+use mcb_domain::utils::tests::utils::TestResult;
 use rstest::rstest;
-use serial_test::serial;
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_session_list() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(
-        &client,
-        "session",
-        serde_json::json!({"action": "list", "limit": 10}),
-    )
-    .await?;
+    let result = call_tool(&client, "list_sessions", serde_json::json!({"limit": 10})).await?;
     assert!(!is_error(&result), "session list should not error");
     assert!(
         !extract_text(&result).is_empty(),
@@ -30,16 +22,15 @@ async fn test_session_list() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_session_create() -> TestResult {
     let client = create_client().await?;
     let result = call_tool(
         &client,
-        "session",
+        "start_session",
         serde_json::json!({
-            "action": "create", "data": {"model": "test-model", "agent_type": "explore"}
+            "agent_type": "explore", "data": {"model": "test-model"}
         }),
     )
     .await?;
@@ -52,16 +43,15 @@ async fn test_session_create() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_session_get_nonexistent() -> TestResult {
     let client = create_client().await?;
     let result = call_tool(
         &client,
-        "session",
+        "get_session",
         serde_json::json!({
-            "action": "get", "session_id": "00000000-0000-0000-0000-000000000099"
+            "session_id": "00000000-0000-0000-0000-000000000099"
         }),
     )
     .await;
@@ -71,35 +61,28 @@ async fn test_session_get_nonexistent() -> TestResult {
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
 async fn test_session_summarize_without_id() -> TestResult {
     let client = create_client().await?;
-    let result = call_tool(
-        &client,
-        "session",
-        serde_json::json!({"action": "summarize"}),
-    )
-    .await;
+    let result = call_tool(&client, "summarize_session", serde_json::json!({})).await;
     assert_tool_error(result, &["session", "summary", "not found"]);
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())
 }
 
-#[serial]
 #[rstest]
 #[tokio::test]
-async fn test_session_invalid_action() -> TestResult {
+async fn test_start_session_requires_data() -> TestResult {
     let client = create_client().await?;
     let result = call_tool(
         &client,
-        "session",
-        serde_json::json!({"action": "nonexistent"}),
+        "start_session",
+        serde_json::json!({"agent_type": "explore"}),
     )
     .await;
-    assert_tool_error(result, &["unknown variant", "expected one of"]);
+    assert_tool_error(result, &["data", "payload"]);
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())

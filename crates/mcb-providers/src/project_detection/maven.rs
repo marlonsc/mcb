@@ -4,12 +4,12 @@
 //! Maven project detector.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
+use mcb_domain::ports::ProjectDetector;
+use mcb_domain::registry::ProjectDetectorConfig;
 use quick_xml::Reader;
 use quick_xml::events::Event;
 
@@ -62,31 +62,15 @@ impl MavenDetector {
             match reader.read_event() {
                 Ok(Event::Start(e)) => {
                     let name = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                    current_path.push(name.clone());
-
-                    if Self::path_matches(&current_path, &["project", "dependencies", "dependency"])
-                    {
-                        state.in_dependency = true;
-                        state.dep_group_id.clear();
-                        state.dep_artifact_id.clear();
-                    }
+                    current_path.push(name);
+                    Self::handle_start_event(&current_path, &mut state);
                 }
                 Ok(Event::Text(e)) => {
                     let text = String::from_utf8_lossy(e.as_ref()).to_string();
                     Self::handle_text_event(&current_path, &text, &mut state);
                 }
                 Ok(Event::End(_)) => {
-                    if Self::path_matches(&current_path, &["project", "dependencies", "dependency"])
-                        && state.in_dependency
-                    {
-                        if !state.dep_artifact_id.is_empty() {
-                            state.dependencies.push(Self::format_dependency(
-                                &state.dep_group_id,
-                                &state.dep_artifact_id,
-                            ));
-                        }
-                        state.in_dependency = false;
-                    }
+                    Self::handle_end_event(&current_path, &mut state);
                     current_path.pop();
                 }
                 Ok(Event::Eof) | Err(_) => break,
@@ -104,6 +88,29 @@ impl MavenDetector {
             state.version,
             state.dependencies,
         ))
+    }
+
+    fn handle_start_event(path: &[String], state: &mut MavenPomState) {
+        if Self::path_matches(path, &["project", "dependencies", "dependency"]) {
+            state.in_dependency = true;
+            state.dep_group_id.clear();
+            state.dep_artifact_id.clear();
+        }
+    }
+
+    fn handle_end_event(path: &[String], state: &mut MavenPomState) {
+        if !Self::path_matches(path, &["project", "dependencies", "dependency"])
+            || !state.in_dependency
+        {
+            return;
+        }
+        if !state.dep_artifact_id.is_empty() {
+            state.dependencies.push(Self::format_dependency(
+                &state.dep_group_id,
+                &state.dep_artifact_id,
+            ));
+        }
+        state.in_dependency = false;
     }
 
     fn handle_text_event(path: &[String], text: &str, state: &mut MavenPomState) {
@@ -183,19 +190,9 @@ impl ProjectDetector for MavenDetector {
     }
 }
 
-/// Factory function for creating Maven detector instances.
-fn maven_factory(
-    config: &ProjectDetectorConfig,
-) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
-    Ok(Arc::new(MavenDetector::new(config)))
-}
-
-// linkme distributed_slice uses #[link_section] internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
-static MAVEN_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
-    name: "maven",
-    description: "Detects Maven projects with pom.xml",
-    marker_files: &["pom.xml"],
-    build: maven_factory,
-};
+mcb_domain::register_project_detector!(
+    "maven",
+    "Detects Maven projects with pom.xml",
+    &["pom.xml"],
+    |_config| Ok(std::sync::Arc::new(MavenDetector))
+);

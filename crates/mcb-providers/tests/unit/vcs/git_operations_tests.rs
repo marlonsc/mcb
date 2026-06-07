@@ -6,7 +6,8 @@ use std::path::Path;
 use mcb_domain::utils::tests::utils::TestResult;
 use tokio::fs::write as tokio_write;
 
-use super::common::{create_test_repo, run_git, vcs_provider};
+use super::common::vcs_provider;
+use mcb_domain::utils::tests::git_helpers::{create_test_repo, run_git};
 
 #[rstest]
 #[case("branches")]

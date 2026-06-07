@@ -8,40 +8,24 @@
 //! - Context preservation across layers
 //! - Error type placement (right layer)
 
-use crate::constants::architecture::{
-    ARCH_PATH_ADAPTERS, ARCH_PATH_DOMAIN, ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES,
-};
-use crate::constants::common::{
-    CFG_TEST_MARKER, COMMENT_PREFIX, ERROR_FILE_PREFIX, ERROR_MODULE_FILE, HANDLER_FILE_SUFFIX,
-    SHORT_PREVIEW_LENGTH, TEST_DIR_FRAGMENT,
-};
 use crate::filters::LanguageId;
+use mcb_utils::constants::validate::{ARCH_PATH_DOMAIN, ARCH_PATH_HANDLERS};
+use mcb_utils::constants::validate::{
+    CFG_TEST_MARKER, COMMENT_PREFIX, ERROR_MODULE_FILE, HANDLER_FILE_SUFFIX, TEST_DIR_FRAGMENT,
+    VAL_ERROR,
+};
 use std::path::{Path, PathBuf};
 
 use crate::define_violations;
-use crate::pattern_registry::{compile_regex, compile_regex_pairs};
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
 use mcb_domain::ports::validation::ViolationCategory;
+use mcb_utils::utils::regex::compile_regex_pairs;
 
 define_violations! {
     dynamic_severity,
     ViolationCategory::ErrorBoundary,
     pub enum ErrorBoundaryViolation {
-        /// Error crossing layer without context
-        #[violation(
-            id = "ERR001",
-            severity = Warning,
-            message = "Missing error context: {file}:{line} - {error_pattern} ({suggestion})",
-            suggestion = "{suggestion}"
-        )]
-        MissingErrorContext {
-            file: PathBuf,
-            line: usize,
-            error_pattern: String,
-            suggestion: String,
-            severity: Severity,
-        },
         /// Infrastructure error type used in domain layer
         #[violation(
             id = "ERR002",
@@ -74,11 +58,10 @@ define_violations! {
 
 crate::create_validator!(
     ErrorBoundaryValidator,
-    "error_boundary",
+    mcb_utils::constants::validate::VALIDATOR_ERROR_BOUNDARY,
     "Validates error handling patterns across layer boundaries",
     ErrorBoundaryViolation,
     [
-        Self::validate_error_context,
         Self::validate_layer_error_types,
         Self::validate_leaked_errors,
     ]
@@ -108,71 +91,36 @@ impl ErrorBoundaryValidator {
             }
 
             let content = std::fs::read_to_string(path)?;
-            let mut in_test_module = false;
-
-            for (line_num, line) in content.lines().enumerate() {
-                let trimmed = line.trim();
-
-                if trimmed.starts_with(COMMENT_PREFIX) {
-                    continue;
-                }
-
-                if trimmed.contains(CFG_TEST_MARKER) {
-                    in_test_module = true;
-                    continue;
-                }
-
-                if in_test_module {
-                    continue;
-                }
-
-                line_handler(path, line_num + 1, line, trimmed);
-            }
-
+            Self::scan_file_lines(path, &content, &mut line_handler);
             Ok(())
         })
     }
 
-    /// Detects error propagation without context (missing `.context()` or `.map_err()`)
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if regex compilation or source file reading fails.
-    pub fn validate_error_context(
-        config: &ValidationConfig,
-    ) -> Result<Vec<ErrorBoundaryViolation>> {
-        let mut violations = Vec::new();
+    /// Invoke `line_handler` for each production line of `content`, skipping
+    /// comments and everything inside a `#[cfg(test)]` module.
+    fn scan_file_lines<LineHandler>(path: &PathBuf, content: &str, line_handler: &mut LineHandler)
+    where
+        LineHandler: FnMut(&PathBuf, usize, &str, &str),
+    {
+        let mut in_test_module = false;
+        for (line_num, line) in content.lines().enumerate() {
+            let trimmed = line.trim();
 
-        // Pattern: ? operator without .context() or .with_context()
-        // This is a heuristic - we look for lines with ? but no context method
-        let question_mark_pattern = compile_regex(r"\?\s*;?\s*$")?;
-        let context_pattern = compile_regex(r"\.(context|with_context|map_err|ok_or_else)\s*\(")?;
+            if trimmed.starts_with(COMMENT_PREFIX) {
+                continue;
+            }
 
-        // Files that are likely error boundary crossing points
-        let boundary_paths = [ARCH_PATH_HANDLERS, ARCH_PATH_ADAPTERS, ARCH_PATH_SERVICES];
+            if trimmed.contains(CFG_TEST_MARKER) {
+                in_test_module = true;
+                continue;
+            }
 
-        Self::scan_relevant_lines(
-            config,
-            |_path, path_str| boundary_paths.iter().any(|p| path_str.contains(p)),
-            |path, line_num, _line, trimmed| {
-                if question_mark_pattern.is_match(trimmed)
-                    && !context_pattern.is_match(trimmed)
-                    && !trimmed.starts_with("return ")
-                    && !trimmed.contains("Ok(")
-                {
-                    violations.push(ErrorBoundaryViolation::MissingErrorContext {
-                        file: path.clone(),
-                        line: line_num,
-                        error_pattern: trimmed.chars().take(SHORT_PREVIEW_LENGTH).collect(),
-                        suggestion: "Add .context() or .map_err() for better error messages"
-                            .to_owned(),
-                        severity: Severity::Info,
-                    });
-                }
-            },
-        )?;
+            if in_test_module {
+                continue;
+            }
 
-        Ok(violations)
+            line_handler(path, line_num + 1, line, trimmed);
+        }
     }
 
     /// Detects infrastructure error types used in domain layer (layer boundary violation)
@@ -204,7 +152,7 @@ impl ErrorBoundaryValidator {
                     return false;
                 }
                 let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                file_name != ERROR_MODULE_FILE && !file_name.starts_with(ERROR_FILE_PREFIX)
+                file_name != ERROR_MODULE_FILE && !file_name.starts_with(VAL_ERROR)
             },
             |path, line_num, line, _trimmed| {
                 for (pattern, desc) in &compiled_errors {
@@ -275,13 +223,11 @@ impl ErrorBoundaryValidator {
     }
 }
 
-#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
-static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
-    mcb_domain::registry::validation::ValidatorEntry {
-        name: "error_boundary",
-        description: "Validates error handling patterns across layer boundaries",
-        build: |root| {
-            Ok(Box::new(ErrorBoundaryValidator::new(root))
-                as Box<dyn mcb_domain::ports::validation::Validator>)
-        },
-    };
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_ERROR_BOUNDARY,
+    "Validates error handling patterns across layer boundaries",
+    |root| {
+        Ok(Box::new(ErrorBoundaryValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

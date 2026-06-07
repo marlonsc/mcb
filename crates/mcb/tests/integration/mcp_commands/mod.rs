@@ -1,7 +1,7 @@
 //! MCP tool command tests via rmcp client API (stdio transport).
 //!
 //! Each module tests one MCP tool through the real binary.
-//! ALL tests MUST use `#[serial]` — only one mcb process at a time.
+//! The shared process lock allows only one mcb process at a time.
 //!
 //! Run with: `cargo test -p mcb --test integration mcp_commands`
 

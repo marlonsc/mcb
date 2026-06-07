@@ -3,19 +3,22 @@
 //! Centralized in `mcb-domain` so every crate can detect service availability
 //! and skip tests when external dependencies are unavailable.
 
-use std::net::TcpStream;
+use std::net::{TcpStream, ToSocketAddrs};
 use std::time::Duration;
 
 /// Check if a service is available by attempting a TCP connection.
+///
+/// Supports both IP addresses and hostnames (e.g., "localhost").
 #[must_use]
 pub fn check_service_available(host: &str, port: u16) -> bool {
     let addr = format!("{host}:{port}");
-    match addr.parse() {
-        Ok(socket_addr) => {
-            TcpStream::connect_timeout(&socket_addr, Duration::from_millis(300)).is_ok()
-        }
-        Err(_) => false,
-    }
+    // Use ToSocketAddrs for DNS resolution (handles "localhost", etc.)
+    let Ok(mut addrs) = addr.to_socket_addrs() else {
+        return false;
+    };
+    addrs.any(|socket_addr| {
+        TcpStream::connect_timeout(&socket_addr, Duration::from_millis(300)).is_ok()
+    })
 }
 
 /// Extract host and port from a URL string.
@@ -78,50 +81,5 @@ pub fn should_run_docker_integration_tests() -> bool {
     }
 }
 
-/// Skip test if service is not available or if in CI.
-///
-/// # Example
-/// ```ignore
-/// skip_if_service_unavailable!("Milvus", is_milvus_available());
-/// ```
-#[macro_export]
-macro_rules! skip_if_service_unavailable {
-    ($service:expr, $is_available:expr) => {
-        if !$crate::utils::tests::service_detection::should_run_docker_integration_tests() {
-            println!("⊘ SKIPPED: Docker integration tests disabled in this environment");
-            return;
-        }
-        if !$is_available {
-            println!(
-                "⊘ SKIPPED: {} service not available (skipping test)",
-                $service
-            );
-            return;
-        }
-    };
-}
-
-/// Skip test if any required services are unavailable.
-///
-/// # Example
-/// ```ignore
-/// skip_if_any_service_unavailable!("Milvus" => is_milvus_available(), "Ollama" => is_ollama_available());
-/// ```
-#[macro_export]
-macro_rules! skip_if_any_service_unavailable {
-    ($($service:expr => $is_available:expr),+ $(,)?) => {
-        if !$crate::utils::tests::service_detection::should_run_docker_integration_tests() {
-            println!("⊘ SKIPPED: Docker integration tests disabled in this environment");
-            return;
-        }
-        $(
-            if !$is_available {
-                println!(
-                    "⊘ SKIPPED: {} service not available (skipping test)",
-                    $service
-                );
-                return;
-            }
-        )+
-    };
-}
+// `skip_if_service_unavailable!` and `skip_if_any_service_unavailable!` macros
+// are defined in `crate::macros::testing` and available via `#[macro_export]`.

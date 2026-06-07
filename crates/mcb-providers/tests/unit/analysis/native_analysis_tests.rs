@@ -3,10 +3,9 @@ mod tests {
     use std::fs;
     use std::sync::Arc;
 
-    use mcb_domain::ports::{
-        AnalysisFinding, CodeAnalyzer, list_code_analyzers, resolve_code_analyzer,
-    };
-    use rstest::*;
+    use mcb_domain::ports::{AnalysisFinding, CodeAnalyzer};
+    use mcb_domain::registry::{list_code_analyzers, resolve_code_analyzer};
+    use rstest::{fixture, rstest};
     use tempfile::TempDir;
 
     /// Resolve the "native-regex" analyzer from the linkme registry.
@@ -36,30 +35,22 @@ mod tests {
         analyzer: Arc<dyn CodeAnalyzer>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let temp = TempDir::new()?;
-        let file = temp.path().join("sample.rs");
         fs::write(
-            &file,
-            "
-fn simple() { let x = 1; }
-
-fn complex(a: i32) {
-    if a > 0 { }
-    for _i in 0..10 { }
-    while a > 1 { break; }
-    match a { 1 => (), _ => () }
-}
-",
+            temp.path().join("sample.rs"),
+            "fn simple() { let x = 1; }\n\
+             fn complex(a: i32) {\n\
+                if a > 0 { }\n\
+                for _i in 0..10 { }\n\
+                while a > 1 { break; }\n\
+                match a { 1 => (), _ => () }\n\
+             }",
         )?;
 
         let findings = analyzer.analyze_complexity(temp.path(), 3)?;
-
         assert_eq!(findings.len(), 1);
-        match &findings[0] {
-            AnalysisFinding::Complexity { function, .. } => assert_eq!(function, "complex"),
-            other @ (AnalysisFinding::DeadCode { .. } | AnalysisFinding::TechnicalDebt { .. }) => {
-                panic!("Expected Complexity finding, got {other:?}")
-            }
-        }
+        assert!(
+            matches!(findings[0], AnalysisFinding::Complexity { ref function, .. } if function == "complex")
+        );
         Ok(())
     }
 
@@ -68,21 +59,14 @@ fn complex(a: i32) {
         analyzer: Arc<dyn CodeAnalyzer>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let temp = TempDir::new()?;
-        let file = temp.path().join("sample.rs");
         fs::write(
-            &file,
-            "
-fn used() {}
-fn dead_fn() {}
-
-fn caller() {
-    used();
-}
-",
+            temp.path().join("sample.rs"),
+            "fn used() {}\n\
+             fn dead_fn() {}\n\
+             fn caller() { used(); }",
         )?;
 
         let findings = analyzer.detect_dead_code(temp.path())?;
-
         assert!(
             findings
                 .iter()
@@ -92,34 +76,25 @@ fn caller() {
     }
 
     #[rstest]
-    fn computes_tdg_score_above_threshold(
+    fn detects_tdg_score_above_threshold(
         analyzer: Arc<dyn CodeAnalyzer>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let temp = TempDir::new()?;
-        let file = temp.path().join("sample.rs");
         fs::write(
-            &file,
-            "
-fn dead_a() {}
-fn dead_b() {}
-fn heavy(x: i32) {
-    if x > 0 {}
-    if x > 1 {}
-    if x > 2 {}
-    if x > 3 {}
-}
-",
+            temp.path().join("sample.rs"),
+            "fn dead_a() {}\n\
+             fn dead_b() {}\n\
+             fn heavy(x: i32) {\n\
+                if x > 0 {}\n\
+                if x > 1 {}\n\
+                if x > 2 {}\n\
+                if x > 3 {}\n\
+             }",
         )?;
 
         let findings = analyzer.score_tdg(temp.path(), 15)?;
-
         assert_eq!(findings.len(), 1);
-        match &findings[0] {
-            AnalysisFinding::TechnicalDebt { score, .. } => assert!(*score > 15),
-            other @ (AnalysisFinding::Complexity { .. } | AnalysisFinding::DeadCode { .. }) => {
-                panic!("Expected TechnicalDebt finding, got {other:?}")
-            }
-        }
+        assert!(matches!(findings[0], AnalysisFinding::TechnicalDebt { score, .. } if score > 15));
         Ok(())
     }
 
@@ -128,7 +103,6 @@ fn heavy(x: i32) {
         analyzer: Arc<dyn CodeAnalyzer>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let temp = TempDir::new()?;
-
         assert!(analyzer.analyze_complexity(temp.path(), 10)?.is_empty());
         assert!(analyzer.detect_dead_code(temp.path())?.is_empty());
         assert!(analyzer.score_tdg(temp.path(), 50)?.is_empty());

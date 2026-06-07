@@ -3,9 +3,9 @@
 //! Contract: `HighlightServiceImpl` provides server-side syntax highlighting.
 //! Tests verify: All 12 languages supported, 13 highlight categories, HTML generation, edge cases.
 
+use crate::utils::renderer::HtmlRenderer;
 use mcb_domain::ports::HighlightServiceInterface;
 use mcb_domain::registry::services::resolve_highlight_service;
-use mcb_domain::value_objects::browse::HtmlRenderer;
 use rstest::rstest;
 
 fn get_service() -> std::sync::Arc<dyn HighlightServiceInterface> {

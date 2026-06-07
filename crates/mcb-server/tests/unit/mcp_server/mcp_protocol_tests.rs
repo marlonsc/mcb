@@ -1,263 +1,190 @@
-//! MCP Protocol Compliance Tests
+//! MCP protocol compliance: JSON-RPC 2.0, initialize, tool schemas.
 //!
-//! Tests that validate MCP protocol compliance to prevent regressions.
-//! These tests specifically target issues fixed in commits ffbe441 and a1af74c:
-//! - Protocol version serialization format
-//! - Tool inputSchema presence and validity
-//! - JSON-RPC 2.0 response format
-//!
-//! Run with: `cargo test -p mcb-server --test unit mcp_protocol`
+//! Regression guards for protocol-level issues (version format leaks,
+//! null schemas, missing jsonrpc field, broken error codes).
 
 use rstest::rstest;
 
 use axum::http::StatusCode;
-use mcb_server::transport::types::McpRequest;
+use mcb_domain::protocol::McpRequest;
+use mcb_utils::constants::protocol::JSONRPC_VERSION;
 
 use crate::utils::http_mcp::{McpTestContext, post_mcp};
 
-// =============================================================================
-// PROTOCOL VERSION & INITIALIZE TESTS
-// =============================================================================
+fn mcp_request(method: &str) -> McpRequest {
+    McpRequest {
+        jsonrpc: JSONRPC_VERSION.to_owned(),
+        method: method.to_owned(),
+        params: None,
+        id: Some(serde_json::json!(1)),
+    }
+}
+
+const HIDDEN_CONTEXT_FIELDS: &[&str] = &[
+    "collection",
+    "repo_id",
+    "repo_path",
+    "auth",
+    "worktree_id",
+    "agent_program",
+    "model_id",
+    "operator_id",
+    "machine_id",
+];
+
+// ─── Initialize handshake ────────────────────────────────────────────
 
 #[rstest]
 #[tokio::test]
-async fn test_initialize_response() -> Result<(), Box<dyn std::error::Error>> {
+async fn initialize_returns_valid_protocol_version() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
-    let request = McpRequest {
-        method: "initialize".to_owned(),
-        params: None,
-        id: Some(serde_json::json!(1)),
-    };
-
-    let (status, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
+    let (status, resp) = post_mcp(&ctx, &mcp_request("initialize"), &[]).await?;
     assert_eq!(status, StatusCode::OK);
+    assert!(resp.error.is_none(), "initialize must not error");
 
-    assert!(mcp_response.error.is_none(), "Initialize should not error");
+    let result = resp.result.ok_or("missing result")?;
 
-    let result_opt = mcp_response.result;
-    assert!(result_opt.is_some(), "Should have result");
-    let result = match result_opt {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-
-    // Check protocol version (regression test for a1af74c)
-    let version_opt = result.get("protocolVersion");
-    assert!(version_opt.is_some(), "Should have protocolVersion");
-    let version = match version_opt {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-
+    // Protocol version: must be a date string like "2024-11-05", not Debug format
+    let version = result
+        .get("protocolVersion")
+        .and_then(|v| v.as_str())
+        .ok_or("missing protocolVersion")?;
     assert!(
-        version.is_string(),
-        "protocolVersion must be a JSON string. Got: {version:?}"
-    );
-    let version_opt = version.as_str();
-    assert!(version_opt.is_some(), "version must be string");
-    let version_str = match version_opt {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-    assert!(
-        !version_str.contains("ProtocolVersion"),
-        "protocolVersion has Debug format leak: {version_str}"
-    );
-    assert!(
-        version_str.contains("-"),
-        "protocolVersion should be date-formatted: {version_str}"
+        version.contains('-') && !version.contains("ProtocolVersion"),
+        "protocolVersion must be date-formatted, got: {version}"
     );
 
-    // Check serverInfo
-    let server_info_opt = result.get("serverInfo");
-    assert!(server_info_opt.is_some(), "Should have serverInfo");
-    let server_info = match server_info_opt {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-    assert!(server_info.is_object(), "serverInfo should be an object");
-    let name_opt = server_info.get("name");
-    assert!(name_opt.is_some(), "Should have name");
-    let name = match name_opt {
-        Some(value) => value,
-        None => return Ok(()),
-    };
+    // Server info
+    let info = result.get("serverInfo").ok_or("missing serverInfo")?;
     assert!(
-        name.is_string() && name.as_str().is_some_and(|value| !value.is_empty()),
-        "Invalid name"
+        info.get("name")
+            .and_then(|n| n.as_str())
+            .is_some_and(|n| !n.is_empty()),
+        "serverInfo.name must be non-empty string"
     );
     assert!(
-        server_info
-            .get("version")
+        info.get("version")
             .is_some_and(serde_json::Value::is_string),
-        "Invalid version"
+        "serverInfo.version must be string"
     );
 
-    // Check capabilities
-    let capabilities_opt = result.get("capabilities");
-    assert!(capabilities_opt.is_some(), "Should have capabilities");
-    let capabilities = match capabilities_opt {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-    assert!(capabilities.is_object(), "capabilities should be an object");
+    // Capabilities
+    let caps = result.get("capabilities").ok_or("missing capabilities")?;
     assert!(
-        capabilities
-            .get("tools")
-            .is_some_and(serde_json::Value::is_object),
-        "tools cap should be object"
+        caps.get("tools").is_some_and(serde_json::Value::is_object),
+        "capabilities.tools must be object"
     );
+
     Ok(())
 }
 
-// =============================================================================
-// TOOL SCHEMA VALIDATION TESTS
-// =============================================================================
+// ─── Tool schema validation ──────────────────────────────────────────
 
 #[rstest]
 #[tokio::test]
-async fn test_tools_schemas() -> Result<(), Box<dyn std::error::Error>> {
+async fn all_tools_have_valid_object_schemas() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
-    let request = McpRequest {
-        method: "tools/list".to_owned(),
-        params: None,
-        id: Some(serde_json::json!(1)),
-    };
+    let (_, resp) = post_mcp(&ctx, &mcp_request("tools/list"), &[]).await?;
+    let tools = resp
+        .result
+        .as_ref()
+        .and_then(|r| r.get("tools"))
+        .and_then(|t| t.as_array())
+        .ok_or("tools array missing")?;
 
-    let (_, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
-    let result_opt = mcp_response.result;
-    assert!(result_opt.is_some(), "Should have result");
-    let result = match result_opt {
-        Some(value) => value,
-        None => return Ok(()),
-    };
+    assert!(!tools.is_empty());
 
-    let tools_opt = result.get("tools");
-    assert!(tools_opt.is_some(), "Should have tools array");
-    let tools = match tools_opt {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-    let tools_array_opt = tools.as_array();
-    assert!(tools_array_opt.is_some(), "tools should be array");
-    let tools_array = match tools_array_opt {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-    assert!(!tools_array.is_empty(), "Should have at least one tool");
+    for tool in tools {
+        let name = tool.get("name").and_then(|n| n.as_str()).unwrap_or("?");
+        let schema = tool.get("inputSchema").ok_or("missing inputSchema")?;
 
-    // Verify all tools have valid schemas
-    for tool in tools_array {
-        let tool_name = tool
-            .get("name")
-            .and_then(|n| n.as_str())
-            .unwrap_or("unknown");
-        let schema_opt = tool.get("inputSchema");
-        assert!(schema_opt.is_some(), "Missing inputSchema");
-        let schema = match schema_opt {
-            Some(value) => value,
-            None => continue,
-        };
-
-        // Regression check: not null
-        assert!(!schema.is_null(), "Tool '{tool_name}' has null inputSchema");
-        assert!(
-            schema.is_object(),
-            "Tool '{tool_name}' inputSchema should be object"
-        );
-
-        let schema_type_opt = schema.get("type");
-        assert!(schema_type_opt.is_some(), "Missing type in schema");
-        let schema_type = match schema_type_opt {
-            Some(value) => value,
-            None => continue,
-        };
+        assert!(!schema.is_null(), "'{name}' has null inputSchema");
+        assert!(schema.is_object(), "'{name}' inputSchema must be object");
         assert_eq!(
-            schema_type.as_str(),
+            schema.get("type").and_then(|v| v.as_str()),
             Some("object"),
-            "Schema type must be object"
-        );
-
-        assert!(
-            schema
-                .get("properties")
-                .is_some_and(serde_json::Value::is_object),
-            "properties must be object"
+            "'{name}' schema type must be object"
         );
     }
 
-    // Verify specific tools requirements
-    let index_tool = tools_array
-        .iter()
-        .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("index"));
-    assert!(index_tool.is_some(), "index tool missing");
-    let index_tool = match index_tool {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-    let required = index_tool
-        .get("inputSchema")
-        .and_then(|v| v.get("required"))
-        .and_then(serde_json::Value::as_array);
-    assert!(required.is_some(), "req array");
-    let required = match required {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-    assert!(
-        required.iter().any(|v| v.as_str() == Some("action")),
-        "index tool must require action"
-    );
-
-    let search_tool = tools_array
-        .iter()
-        .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("search"));
-    assert!(search_tool.is_some(), "search tool missing");
-    let search_tool = match search_tool {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-    let required = search_tool
-        .get("inputSchema")
-        .and_then(|v| v.get("required"))
-        .and_then(serde_json::Value::as_array);
-    assert!(required.is_some(), "req array");
-    let required: &Vec<serde_json::Value> = match required {
-        Some(value) => value,
-        None => return Ok(()),
-    };
-    assert!(
-        required.iter().any(|v| v.as_str() == Some("query")),
-        "search tool must require query"
-    );
     Ok(())
 }
 
-// =============================================================================
-// JSON-RPC 2.0 FORMAT TESTS
-// =============================================================================
+#[rstest]
+#[tokio::test]
+async fn search_code_requires_query_parameter() -> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
+    let (_, resp) = post_mcp(&ctx, &mcp_request("tools/list"), &[]).await?;
+    let tools = resp
+        .result
+        .as_ref()
+        .and_then(|r| r.get("tools"))
+        .and_then(|t| t.as_array())
+        .ok_or("tools array")?;
+
+    let search = tools
+        .iter()
+        .find(|t| t.get("name").and_then(|n| n.as_str()) == Some("search_code"))
+        .ok_or("search_code tool missing")?;
+
+    let required = search
+        .get("inputSchema")
+        .and_then(|s| s.get("required"))
+        .and_then(|r| r.as_array())
+        .ok_or("required array")?;
+
+    assert!(
+        required.iter().any(|v| v.as_str() == Some("query")),
+        "search_code must require 'query'"
+    );
+
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn context_fields_hidden_from_all_tool_schemas() -> Result<(), Box<dyn std::error::Error>> {
+    let ctx = McpTestContext::new().await?;
+    let (_, resp) = post_mcp(&ctx, &mcp_request("tools/list"), &[]).await?;
+    let tools = resp
+        .result
+        .as_ref()
+        .and_then(|r| r.get("tools"))
+        .and_then(|t| t.as_array())
+        .ok_or("tools array")?;
+
+    for tool in tools {
+        let name = tool.get("name").and_then(|n| n.as_str()).unwrap_or("?");
+        if let Some(props) = tool
+            .get("inputSchema")
+            .and_then(|s| s.get("properties"))
+            .and_then(|p| p.as_object())
+        {
+            for field in HIDDEN_CONTEXT_FIELDS {
+                assert!(
+                    !props.contains_key(*field),
+                    "'{name}' exposes hidden field '{field}'"
+                );
+            }
+        }
+    }
+
+    Ok(())
+}
+
+// ─── JSON-RPC 2.0 format ────────────────────────────────────────────
 
 #[rstest]
 #[case("initialize")]
 #[case("tools/list")]
 #[case("ping")]
 #[tokio::test]
-async fn test_response_has_jsonrpc_field(
+async fn every_response_includes_jsonrpc_version(
     #[case] method: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
-    let request = McpRequest {
-        method: method.to_owned(),
-        params: None,
-        id: Some(serde_json::json!(1)),
-    };
-
-    let (_, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
-
-    assert_eq!(
-        mcp_response.jsonrpc, "2.0",
-        "Response for '{method}' should have jsonrpc: \"2.0\""
-    );
+    let (_, resp) = post_mcp(&ctx, &mcp_request(method), &[]).await?;
+    assert_eq!(resp.jsonrpc, JSONRPC_VERSION);
     Ok(())
 }
 
@@ -265,40 +192,25 @@ async fn test_response_has_jsonrpc_field(
 #[case(serde_json::json!(42))]
 #[case(serde_json::json!("test-id-123"))]
 #[tokio::test]
-async fn test_response_echoes_request_id(
+async fn response_echoes_request_id(
     #[case] id: serde_json::Value,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
-    let request = McpRequest {
-        method: "ping".to_owned(),
-        params: None,
-        id: Some(id.clone()),
-    };
-
-    let (_, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
-
-    assert_eq!(mcp_response.id, Some(id));
+    let mut req = mcp_request("ping");
+    req.id = Some(id.clone());
+    let (_, resp) = post_mcp(&ctx, &req, &[]).await?;
+    assert_eq!(resp.id, Some(id));
     Ok(())
 }
 
 #[rstest]
 #[tokio::test]
-async fn test_error_response_structure() -> Result<(), Box<dyn std::error::Error>> {
+async fn unknown_method_returns_error_32601() -> Result<(), Box<dyn std::error::Error>> {
     let ctx = McpTestContext::new().await?;
-    let request = McpRequest {
-        method: "nonexistent/method".to_owned(),
-        params: None,
-        id: Some(serde_json::json!(1)),
-    };
+    let (_, resp) = post_mcp(&ctx, &mcp_request("nonexistent/method"), &[]).await?;
 
-    let (_, mcp_response) = post_mcp(&ctx, &request, &[]).await?;
-
-    assert!(mcp_response.error.is_some(), "Should have error");
-    let error = match mcp_response.error {
-        Some(error) => error,
-        None => return Ok(()),
-    };
-    assert_eq!(error.code, -32601, "Error code -32601");
-    assert!(!error.message.is_empty(), "Error message not empty");
+    let err = resp.error.ok_or("expected error")?;
+    assert_eq!(err.code, -32601);
+    assert!(!err.message.is_empty());
     Ok(())
 }

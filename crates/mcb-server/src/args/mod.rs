@@ -2,18 +2,12 @@
 //! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
 //!
 //! Argument types and validators for MCP tool requests.
-//!
-//! This module provides request argument types for all MCP tools and validation
-//! functions to ensure input safety and correctness.
 
 pub(crate) mod validation;
 pub(crate) use validation::{validate_collection_name, validate_file_path};
 
 /// Schema helper types for argument definitions.
 pub mod schema_helpers;
-
-/// Consolidated argument types (legacy, re-exports from split modules).
-pub mod consolidated;
 
 /// Agent activity logging argument types.
 pub mod agent;
@@ -34,12 +28,25 @@ pub mod validate;
 /// Version control operations argument types.
 pub mod vcs;
 
-// Consolidate arguments from all modules (User refactor)
-pub use consolidated::{
-    AgentAction, AgentArgs, EntityAction, EntityArgs, EntityResource, IndexAction, IndexArgs,
-    IssueEntityAction, IssueEntityArgs, IssueEntityResource, MemoryAction, MemoryArgs,
-    MemoryResource, OrgEntityAction, OrgEntityArgs, OrgEntityResource, PlanEntityAction,
-    PlanEntityArgs, PlanEntityResource, ProjectAction, ProjectArgs, ProjectResource, SearchArgs,
-    SearchResource, SessionAction, SessionArgs, ValidateAction, ValidateArgs, ValidateScope,
-    VcsAction, VcsArgs, VcsEntityAction, VcsEntityArgs, VcsEntityResource,
+// Re-export all types directly (no consolidated.rs indirection)
+pub use agent::{AgentAction, AgentArgs, LogDelegationArgs, LogToolCallArgs};
+pub use entity::{
+    EntityAction, EntityArgs, EntityResource, IssueEntityAction, IssueEntityArgs,
+    IssueEntityResource, OrgEntityAction, OrgEntityArgs, OrgEntityResource, PlanEntityAction,
+    PlanEntityArgs, PlanEntityResource, VcsEntityAction, VcsEntityArgs, VcsEntityResource,
 };
+pub use index::{ClearIndexArgs, IndexAction, IndexArgs, IndexRepoArgs, IndexStatusArgs};
+pub use memory::{
+    GetMemoriesArgs, InjectContextArgs, ListMemoriesArgs, MemoryAction, MemoryArgs, MemoryResource,
+    MemoryTimelineArgs, StoreMemoryArgs,
+};
+pub use project::{ProjectAction, ProjectArgs, ProjectResource};
+pub use search::{SearchArgs, SearchCodeArgs, SearchMemoryArgs, SearchResource};
+pub use session::{
+    GetSessionArgs, ListSessionsArgs, SessionAction, SessionArgs, StartSessionArgs,
+    SummarizeSessionArgs,
+};
+pub use validate::{
+    AnalyzeCodeArgs, ListRulesArgs, ValidateAction, ValidateArgs, ValidateCodeArgs, ValidateScope,
+};
+pub use vcs::{AnalyzeImpactArgs, CompareBranchesArgs, ListReposArgs, VcsAction, VcsArgs};

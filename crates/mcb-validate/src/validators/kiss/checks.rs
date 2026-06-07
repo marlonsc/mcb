@@ -1,24 +1,45 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::constants::common::{
+use crate::filters::LanguageId;
+use crate::run_context::ValidationRunContext;
+use mcb_utils::constants::validate::{
     CFG_TEST_MARKER, COMMENT_PREFIX, SHORT_PREVIEW_LENGTH, TEST_FUNCTION_PREFIX,
 };
-use crate::filters::LanguageId;
 use std::path::PathBuf;
 
 use rust_code_analysis::SpaceKind;
 
 use crate::ast::rca_helpers;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::thresholds::thresholds;
 use crate::{Result, Severity};
+use mcb_utils::utils::regex::compile_regex;
 
 use super::{KissValidator, KissViolation};
-use crate::constants::kiss::{
+use mcb_utils::constants::validate::{
     DI_CONTAINER_CONTAINS, DI_CONTAINER_SUFFIXES, NESTING_PROXIMITY_THRESHOLD,
 };
+
+/// Per-file state for nesting-depth analysis.
+#[derive(Default)]
+struct NestingState {
+    in_test_module: bool,
+    test_brace_depth: i32,
+    nesting_depth: usize,
+    brace_depth: i32,
+    reported_lines: std::collections::HashSet<usize>,
+}
+
+impl NestingState {
+    /// Whether a `DeepNesting` violation was already reported close enough to
+    /// `line_num` to suppress a duplicate.
+    fn has_nearby_report(&self, line_num: usize) -> bool {
+        self.reported_lines
+            .iter()
+            .any(|&l| l.abs_diff(line_num) < NESTING_PROXIMITY_THRESHOLD)
+    }
+}
 
 impl KissValidator {
     fn update_test_module_tracking(
@@ -59,7 +80,11 @@ impl KissValidator {
                     return Ok(());
                 }
 
-                let content = std::fs::read_to_string(path)?;
+                let ctx = ValidationRunContext::active_or_build(&self.config)?;
+                let cached = ctx
+                    .read_cached(path)
+                    .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
+                let content = cached.to_string();
                 f(path.clone(), content)
             },
         )
@@ -137,39 +162,52 @@ impl KissValidator {
         self.for_each_kiss_file(false, |path, content| {
             let lines: Vec<&str> = content.lines().collect();
             Self::for_each_non_test_line(&lines, |line_num, line, _trimmed| {
-                if let Some(cap) = struct_pattern.captures(line) {
-                    let struct_name = cap.get(1).map_or("", |m| m.as_str());
-                    let is_di_container = DI_CONTAINER_SUFFIXES
-                        .iter()
-                        .any(|s| struct_name.ends_with(s))
-                        || DI_CONTAINER_CONTAINS
-                            .iter()
-                            .any(|s| struct_name.contains(s));
-
-                    let max_fields = if is_di_container {
-                        thresholds().max_di_container_fields
-                    } else {
-                        self.max_struct_fields
-                    };
-
-                    let field_count = Self::count_struct_fields(&lines, line_num);
-
-                    if field_count > max_fields {
-                        violations.push(KissViolation::StructTooManyFields {
-                            file: path.clone(),
-                            line: line_num + 1,
-                            struct_name: struct_name.to_owned(),
-                            field_count,
-                            max_allowed: max_fields,
-                            severity: Severity::Warning,
-                        });
-                    }
+                if let Some(violation) =
+                    self.struct_field_violation(&path, &lines, line, line_num, &struct_pattern)
+                {
+                    violations.push(violation);
                 }
             });
             Ok(())
         })?;
 
         Ok(violations)
+    }
+
+    /// Returns a `StructTooManyFields` violation if `line` opens a struct whose
+    /// field count exceeds the limit (relaxed for DI containers), else `None`.
+    fn struct_field_violation(
+        &self,
+        path: &std::path::Path,
+        lines: &[&str],
+        line: &str,
+        line_num: usize,
+        struct_pattern: &regex::Regex,
+    ) -> Option<KissViolation> {
+        let cap = struct_pattern.captures(line)?;
+        let struct_name = cap.get(1).map_or("", |m| m.as_str());
+        let is_di_container = DI_CONTAINER_SUFFIXES
+            .iter()
+            .any(|s| struct_name.ends_with(s))
+            || DI_CONTAINER_CONTAINS
+                .iter()
+                .any(|s| struct_name.contains(s));
+
+        let max_fields = if is_di_container {
+            thresholds().max_di_container_fields
+        } else {
+            self.max_struct_fields
+        };
+        let field_count = Self::count_struct_fields(lines, line_num);
+
+        (field_count > max_fields).then(|| KissViolation::StructTooManyFields {
+            file: path.to_path_buf(),
+            line: line_num + 1,
+            struct_name: struct_name.to_owned(),
+            field_count,
+            max_allowed: max_fields,
+            severity: Severity::Warning,
+        })
     }
 
     /// Detects functions with too many parameters using rust-code-analysis.
@@ -246,66 +284,86 @@ impl KissValidator {
 
         self.for_each_kiss_file(false, |path, content| {
             let lines: Vec<&str> = content.lines().collect();
-
-            let mut in_test_module = false;
-            let mut test_brace_depth: i32 = 0;
-
-            let mut nesting_depth: usize = 0;
-            let mut brace_depth: i32 = 0;
-            let mut reported_lines: std::collections::HashSet<usize> =
-                std::collections::HashSet::new();
-
+            let mut state = NestingState::default();
             for (line_num, line) in lines.iter().enumerate() {
-                let trimmed = line.trim();
-
-                if trimmed.contains(CFG_TEST_MARKER) {
-                    in_test_module = true;
-                    test_brace_depth = brace_depth;
-                }
-
-                if trimmed.starts_with(COMMENT_PREFIX) {
-                    continue;
-                }
-
-                if control_flow_pattern.is_match(line) && line.contains('{') {
-                    nesting_depth += 1;
-
-                    if nesting_depth > self.max_nesting_depth {
-                        let nearby_reported = reported_lines
-                            .iter()
-                            .any(|&l| l.abs_diff(line_num) < NESTING_PROXIMITY_THRESHOLD);
-
-                        if !nearby_reported {
-                            violations.push(KissViolation::DeepNesting {
-                                file: path.clone(),
-                                line: line_num + 1,
-                                nesting_level: nesting_depth,
-                                max_allowed: self.max_nesting_depth,
-                                context: trimmed.chars().take(SHORT_PREVIEW_LENGTH).collect(),
-                                severity: Severity::Warning,
-                            });
-                            reported_lines.insert(line_num);
-                        }
-                    }
-                }
-
-                let open_braces = line.chars().filter(|c| *c == '{').count();
-                let close_braces = line.chars().filter(|c| *c == '}').count();
-                brace_depth += i32::try_from(open_braces).unwrap_or(i32::MAX);
-                brace_depth -= i32::try_from(close_braces).unwrap_or(i32::MAX);
-
-                if close_braces > 0 && nesting_depth > 0 {
-                    nesting_depth = nesting_depth.saturating_sub(close_braces);
-                }
-
-                if in_test_module && brace_depth < test_brace_depth {
-                    in_test_module = false;
-                }
+                self.process_nesting_line(
+                    &path,
+                    line,
+                    line_num,
+                    &control_flow_pattern,
+                    &mut state,
+                    &mut violations,
+                );
             }
             Ok(())
         })?;
 
         Ok(violations)
+    }
+
+    /// Update nesting/brace tracking for one line and report a `DeepNesting`
+    /// violation when the control-flow nesting exceeds the configured maximum.
+    fn process_nesting_line(
+        &self,
+        path: &std::path::Path,
+        line: &str,
+        line_num: usize,
+        control_flow_pattern: &regex::Regex,
+        state: &mut NestingState,
+        violations: &mut Vec<KissViolation>,
+    ) {
+        let trimmed = line.trim();
+
+        if trimmed.contains(CFG_TEST_MARKER) {
+            state.in_test_module = true;
+            state.test_brace_depth = state.brace_depth;
+        }
+
+        if trimmed.starts_with(COMMENT_PREFIX) {
+            return;
+        }
+
+        if control_flow_pattern.is_match(line) && line.contains('{') {
+            state.nesting_depth += 1;
+            self.report_deep_nesting(path, trimmed, line_num, state, violations);
+        }
+
+        let open_braces = line.chars().filter(|c| *c == '{').count();
+        let close_braces = line.chars().filter(|c| *c == '}').count();
+        state.brace_depth += i32::try_from(open_braces).unwrap_or(i32::MAX);
+        state.brace_depth -= i32::try_from(close_braces).unwrap_or(i32::MAX);
+
+        if close_braces > 0 && state.nesting_depth > 0 {
+            state.nesting_depth = state.nesting_depth.saturating_sub(close_braces);
+        }
+
+        if state.in_test_module && state.brace_depth < state.test_brace_depth {
+            state.in_test_module = false;
+        }
+    }
+
+    /// Record a `DeepNesting` violation when the current depth exceeds the limit
+    /// and no nearby report already covers this region.
+    fn report_deep_nesting(
+        &self,
+        path: &std::path::Path,
+        trimmed: &str,
+        line_num: usize,
+        state: &mut NestingState,
+        violations: &mut Vec<KissViolation>,
+    ) {
+        if state.nesting_depth <= self.max_nesting_depth || state.has_nearby_report(line_num) {
+            return;
+        }
+        violations.push(KissViolation::DeepNesting {
+            file: path.to_path_buf(),
+            line: line_num + 1,
+            nesting_level: state.nesting_depth,
+            max_allowed: self.max_nesting_depth,
+            context: trimmed.chars().take(SHORT_PREVIEW_LENGTH).collect(),
+            severity: Severity::Warning,
+        });
+        state.reported_lines.insert(line_num);
     }
 
     /// Detects functions that exceed the maximum allowed line count using rust-code-analysis.

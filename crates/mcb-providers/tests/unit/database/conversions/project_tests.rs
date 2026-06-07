@@ -10,13 +10,12 @@ fn sample_project() -> project::Model {
         org_id: "ref_org_id_001".into(),
         name: "test_name".into(),
         path: "/tmp/test-path".into(),
-        created_at: 1_700_000_000,
-        updated_at: 1_700_000_000,
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
     }
 }
 
 #[rstest]
-#[test]
 fn round_trip_project() {
     let model = sample_project();
     let model_val = model.id.clone();

@@ -6,14 +6,15 @@
 //!
 //! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
 
+use mcb_utils::constants::protocol::JSONRPC_VERSION;
 use serde::{Deserialize, Serialize};
-
-/// JSON-RPC version constant.
-pub const JSONRPC_VERSION: &str = "2.0";
 
 /// MCP request payload (JSON-RPC format).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct McpRequest {
+    /// JSON-RPC version (e.g. "2.0")
+    #[serde(default = "default_jsonrpc")]
+    pub jsonrpc: String,
     /// JSON-RPC method
     pub method: String,
     /// Request parameters
@@ -54,7 +55,7 @@ pub struct McpError {
 impl McpResponse {
     /// Create a success response.
     #[must_use]
-    pub fn success(id: Option<serde_json::Value>, result: serde_json::Value) -> Self {
+    pub fn from_success(id: Option<serde_json::Value>, result: serde_json::Value) -> Self {
         Self {
             jsonrpc: JSONRPC_VERSION.to_owned(),
             result: Some(result),
@@ -64,7 +65,12 @@ impl McpResponse {
     }
 
     /// Create an error response.
-    pub fn error(id: Option<serde_json::Value>, code: i32, message: impl Into<String>) -> Self {
+    #[must_use]
+    pub fn from_error(
+        id: Option<serde_json::Value>,
+        code: i32,
+        message: impl Into<String>,
+    ) -> Self {
         Self {
             jsonrpc: JSONRPC_VERSION.to_owned(),
             result: None,

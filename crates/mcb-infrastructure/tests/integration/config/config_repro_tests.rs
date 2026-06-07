@@ -1,7 +1,8 @@
 mod tests {
     use std::path::PathBuf;
 
-    use mcb_infrastructure::config::{AuthConfig, DatabaseConfigContainer};
+    use mcb_infrastructure::config::app::DatabaseConfigContainer;
+    use mcb_infrastructure::config::system::AuthConfig;
     use rstest::rstest;
     #[rstest]
     #[test]

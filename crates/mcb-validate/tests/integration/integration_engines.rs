@@ -7,11 +7,11 @@
 
 use std::collections::HashMap;
 
+use mcb_domain::ports::validation::{ValidationConfig, Violation};
 use mcb_validate::engines::{
     ExpressionEngine, HybridRuleEngine, ReteEngine, RoutedEngine, RuleContext, RuleEngine,
     RuleEngineRouter, RuleEngineType,
 };
-use mcb_validate::{ValidationConfig, Violation};
 use rstest::*;
 use serde_json::json;
 
@@ -47,7 +47,6 @@ pub async fn process() -> Result<(), Error> {
         "tests/test_main.rs".to_owned(),
         "
 #[rstest]
-#[test]
 fn test_main() {
     let x = get_value().unwrap(); // OK in tests
     assert!(x >= 0); // Basic assertion to ensure test has validation

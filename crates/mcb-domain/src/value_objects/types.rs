@@ -83,7 +83,7 @@ impl SupportedLanguage {
             "php" | "phtml" => Some(Self::Php),
             "swift" => Some(Self::Swift),
             "kt" | "kts" => Some(Self::Kotlin),
-            _ => None,
+            _other => None,
         }
     }
 

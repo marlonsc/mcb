@@ -1,39 +1,88 @@
 # =============================================================================
-# MCP Context Browser - Simplified Makefile
+# MCB — canonical Make interface. Few verbs, WHAT=/SCOPE= dispatch, mcb.sh monopoly.
 # =============================================================================
-
-export RELEASE ?= 1
-export SCOPE ?=
-export FIX ?= 0
-export MCB_CI ?= 0
-export QUICK ?= 0
-export THREADS ?= 1
-export BUMP ?=
-
-# Rust 2024 Edition lints (preserved verbatim)
-export RUST_2024_LINTS := -D unsafe_op_in_unsafe_fn -D rust_2024_compatibility -W static_mut_refs
-
-include make/dev.mk
-include make/quality.mk
-include make/release.mk
-include make/docs.mk
-include make/codegen.mk
-
+SHELL := bash
+.SHELLFLAGS := -euo pipefail -c
 .DEFAULT_GOAL := help
 
-##@ Core
+MCB_SH := scripts/lib/mcb.sh
+MCB_AUDIT_IGNORES := $(shell bash $(MCB_SH) ignores)
 
-check: ## Non-mutating gate: fmt --check + lint + test + validate
-	@echo "Running non-mutating checks..."
-	@cargo fmt --all -- --check
-	@$(MAKE) lint
-	@$(MAKE) test
-	@$(MAKE) validate
+include makefiles/ui.mk
+include makefiles/dispatch.mk
 
-ci: ## CI gate: check + audit
-	@echo "Running CI gate..."
-	@$(MAKE) check
-	@$(MAKE) audit
+# --- params (single declaration) ---------------------------------------------
+export RELEASE ?= 1
+export QUICK ?= 0
+export FIX ?= 0
+export THREADS ?= 1
+export SCOPE ?=
+WHAT ?=
+APPLY ?= N
+BUMP ?=
+FILES ?=
+MSG ?=
+REF ?=
+TAG ?=
+BASE ?= main
+BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
+PR ?=
+RUN ?=
+SUB ?=
+LOG_N ?=
+export RUST_2024_LINTS := -D unsafe_op_in_unsafe_fn -D rust_2024_compatibility -W static_mut_refs
 
-help: ## Show available commands
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[0-9a-zA-Z_-]+:.*?##/ { printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2 } /^##@/ { printf "\n\033[1m%s\033[0m\n", substr($$0, 5) }' $(MAKEFILE_LIST)
+# Destructive-verb gate: dry-run unless APPLY=Y. Usage: $(call gate,<action>)
+gate = [ "$(APPLY)" = "Y" ] || { printf "DRY-RUN: would %s; set APPLY=Y to execute\n" "$(1)" >&2; exit 0; }
+
+# --- WHATS_<verb> phase SSOT (drives sub-help + error arms) -------------------
+WHATS_check   := fmt lint validate audit udeps coverage qlty all
+WHATS_fix     := fmt lint docs all
+WHATS_dev     := run docker-up docker-down docker-logs docker-test
+WHATS_docs    := build serve lint validate sync rust check setup adr adr-new diagrams
+WHATS_codegen := all cli db entities conversions clean
+WHATS_release := package version install install-validate
+WHATS_git     := status diff log show add commit push pull branch checkout tag tags stash stash-pop stash-list merge rebase unstage push-tags
+WHATS_pr      := checks view merge rerun
+WHATS_sub     := status sync diff commit push propagate
+WHATS_setup   := hooks tools adr all
+WHATS_clean   := build codegen all
+
+# --- verb targets ------------------------------------------------------------
+.PHONY: build test check lint-impl fix dev docs codegen release git pr sub setup clean ci guard help
+
+build:     ; $(call DISPATCH_BUILD)
+test:      ; $(call DISPATCH_TEST)
+check:     ; $(call DISPATCH_CHECK)
+lint-impl: ; @cargo fmt --all -- --check && cargo clippy --all-targets -- -D warnings
+fix:       ; $(call DISPATCH_FIX)
+dev:       ; $(call DISPATCH_DEV)
+docs:      ; $(call DISPATCH_DOCS)
+codegen:   ; $(call DISPATCH_CODEGEN)
+release:   ; $(call DISPATCH_RELEASE)
+git:       ; $(call DISPATCH_GIT)
+pr:        ; $(call DISPATCH_PR)
+sub:       ; $(call DISPATCH_SUB)
+setup:     ; $(call DISPATCH_SETUP)
+clean:     ; $(call DISPATCH_CLEAN)
+ci:        ; @$(MAKE) check WHAT=all
+guard:     ; @bash $(MCB_SH) guard
+
+help:
+	@printf "\n$(BOLD)MCB — make <verb> [WHAT=phase] [SCOPE=..] [APPLY=Y]$(RESET)\n\n"
+	@printf "  %-10s %s\n" build   "Build (RELEASE=0|1)"
+	@printf "  %-10s %s\n" test    "Test (SCOPE=unit|doc|golden|startup|integration|e2e|all, THREADS=N)"
+	@printf "  %-10s %s\n" check   "Read-only gate (WHAT=$(WHATS_check))"
+	@printf "  %-10s %s\n" fix     "Auto-fix (WHAT=$(WHATS_fix))"
+	@printf "  %-10s %s\n" dev     "Dev/docker (WHAT=$(WHATS_dev))"
+	@printf "  %-10s %s\n" docs    "Docs (WHAT=$(WHATS_docs))"
+	@printf "  %-10s %s\n" codegen "Codegen [APPLY=Y] (WHAT=$(WHATS_codegen))"
+	@printf "  %-10s %s\n" release "Release (WHAT=$(WHATS_release), BUMP=patch|minor|major)"
+	@printf "  %-10s %s\n" git     "Git (WHAT=$(WHATS_git)) [commit/push/merge/rebase: APPLY=Y]"
+	@printf "  %-10s %s\n" pr      "GitHub PR (WHAT=$(WHATS_pr), PR=, RUN=)"
+	@printf "  %-10s %s\n" sub     "Submodules (WHAT=$(WHATS_sub), SUB=, MSG=)"
+	@printf "  %-10s %s\n" setup   "Setup (WHAT=$(WHATS_setup))"
+	@printf "  %-10s %s\n" clean   "Clean [APPLY=Y] (WHAT=$(WHATS_clean))"
+	@printf "  %-10s %s\n" ci      "CI gate (check WHAT=all)"
+	@printf "  %-10s %s\n" guard   "Banned-pattern scanner"
+	@printf "\n"

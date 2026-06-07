@@ -4,7 +4,7 @@
 use std::sync::Arc;
 
 use mcb_domain::entities::memory::{MemorySearchResult, ObservationType, QualityGateResult};
-use mcb_domain::ports::MemoryServiceInterface;
+use mcb_domain::ports::{MemoryServiceInterface, StoreObservationInput};
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Value;
@@ -16,9 +16,30 @@ use super::common::{
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use mcb_domain::utils::id as domain_id;
+use mcb_utils::utils::id as domain_id;
 
-use crate::constants::fields::{FIELD_MESSAGE, FIELD_OBSERVATION_ID, TAG_QUALITY_GATE};
+use mcb_utils::constants::keys::{FIELD_MESSAGE, FIELD_OBSERVATION_ID};
+use mcb_utils::constants::values::TAG_QUALITY_GATE;
+
+/// Build a [`QualityGateResult`] from validated fields plus optional payload extras.
+fn build_quality_gate(
+    gate_name: &str,
+    status: mcb_domain::entities::memory::QualityGateStatus,
+    data: &serde_json::Map<String, serde_json::Value>,
+) -> QualityGateResult {
+    let timestamp = data
+        .get("timestamp")
+        .and_then(Value::as_i64)
+        .unwrap_or_else(|| chrono::Utc::now().timestamp());
+    QualityGateResult {
+        id: domain_id::generate().to_string(),
+        gate_name: gate_name.to_owned(),
+        status,
+        message: opt_str(data, "message"),
+        timestamp,
+        execution_id: opt_str(data, "execution_id"),
+    }
+}
 
 /// Stores a quality gate result as a semantic observation.
 #[tracing::instrument(skip_all)]
@@ -33,21 +54,9 @@ pub async fn store_quality_gate(
     let gate_name = extract_field!(require_str(data, "gate_name"));
     let status_str = extract_field!(require_str(data, "status"));
     let status: mcb_domain::entities::memory::QualityGateStatus = parse_enum!(status_str, "status");
-    let timestamp = data
-        .get("timestamp")
-        .and_then(Value::as_i64)
-        .unwrap_or_else(|| chrono::Utc::now().timestamp());
-    let quality_gate = QualityGateResult {
-        id: domain_id::generate().to_string(),
-        gate_name: gate_name.clone(),
-        status,
-        message: opt_str(data, "message"),
-        timestamp,
-        execution_id: opt_str(data, "execution_id"),
-    };
+    let quality_gate = build_quality_gate(&gate_name, status, data);
     let content = format!(
-        "Quality Gate: {} (status={})",
-        gate_name,
+        "Quality Gate: {gate_name} (status={})",
         quality_gate.status.as_str()
     );
     let tags = vec![
@@ -61,7 +70,7 @@ pub async fn store_quality_gate(
             execution_from_args: quality_gate.execution_id.as_deref(),
             execution_from_data: quality_gate.execution_id.as_deref(),
             file_path_payload: None,
-            timestamp: Some(timestamp),
+            timestamp: Some(quality_gate.timestamp),
         },
     )?;
 
@@ -72,14 +81,32 @@ pub async fn store_quality_gate(
         Some(quality_gate),
     );
 
+    persist_quality_gate_observation(
+        memory_service,
+        origin.project_id,
+        content,
+        tags,
+        obs_metadata,
+    )
+    .await
+}
+
+/// Store the quality gate observation and format the MCP response.
+async fn persist_quality_gate_observation(
+    memory_service: &Arc<dyn MemoryServiceInterface>,
+    project_id: String,
+    content: String,
+    tags: Vec<String>,
+    obs_metadata: mcb_domain::entities::memory::ObservationMetadata,
+) -> Result<CallToolResult, McpError> {
     match memory_service
-        .store_observation(
-            origin.project_id,
+        .store_observation(StoreObservationInput {
+            project_id,
             content,
-            ObservationType::QualityGate,
+            r#type: ObservationType::QualityGate,
             tags,
-            obs_metadata,
-        )
+            metadata: obs_metadata,
+        })
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({

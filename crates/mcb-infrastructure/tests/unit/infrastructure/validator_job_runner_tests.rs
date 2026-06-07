@@ -142,8 +142,10 @@ impl ValidationServiceInterface for FailingValidationService {
 
 #[fixture]
 fn validation_ops() -> TestResult<Arc<dyn ValidationOperationsInterface>> {
-    resolve_validation_operations_provider(&ValidationOperationsProviderConfig::new("default"))
-        .map_err(Into::into)
+    resolve_validation_operations_provider(&ValidationOperationsProviderConfig::new(
+        mcb_utils::constants::DEFAULT_VALIDATION_OP_PROVIDER,
+    ))
+    .map_err(Into::into)
 }
 
 #[rstest]
@@ -199,7 +201,6 @@ async fn submit_validation_job_marks_failure_result(
 }
 
 #[rstest]
-#[test]
 fn submit_validation_job_requires_runtime(
     validation_ops: TestResult<Arc<dyn ValidationOperationsInterface>>,
 ) -> TestResult {

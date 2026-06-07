@@ -11,8 +11,8 @@ use std::str::Chars;
 
 use super::fingerprint::{FingerprintMatch, Token, TokenType};
 use super::thresholds::{DuplicationThresholds, DuplicationType};
-use crate::constants::duplication::{OPERATOR_CHARS, PUNCTUATION_CHARS};
-use crate::utils::range::lines_overlap;
+use mcb_utils::constants::validate::{OPERATOR_CHARS, PUNCTUATION_CHARS};
+use mcb_utils::utils::range::lines_overlap;
 
 /// Result of comparing two code fragments
 #[derive(Debug, Clone)]
@@ -294,117 +294,179 @@ pub fn tokenize_source(source: &str, _language: &str) -> Vec<Token> {
     let mut chars = source.chars().peekable();
 
     while let Some(c) = chars.next() {
-        match c {
-            '\n' => {
-                current_line += 1;
-                current_column = 1;
-            }
-            c if c.is_whitespace() => {
-                current_column += 1;
-            }
-            c if c.is_alphabetic() || c == '_' => {
-                let start_column = current_column;
-                let mut word = String::new();
-                word.push(c);
-                word.push_str(&consume_while(&mut chars, |next| {
-                    next.is_alphanumeric() || next == '_'
-                }));
-
-                let token_type = if is_keyword(&word) {
-                    TokenType::Keyword
-                } else {
-                    TokenType::Identifier
-                };
-
-                push_token(
-                    &mut tokens,
-                    word.clone(),
-                    current_line,
-                    start_column,
-                    token_type,
-                );
-                current_column += word.len();
-            }
-            c if c.is_ascii_digit() => {
-                let start_column = current_column;
-                let mut number = String::new();
-                number.push(c);
-                number.push_str(&consume_while(&mut chars, |next| {
-                    next.is_ascii_digit() || next == '.' || next == '_'
-                }));
-
-                push_token(
-                    &mut tokens,
-                    number.clone(),
-                    current_line,
-                    start_column,
-                    TokenType::Literal,
-                );
-                current_column += number.len();
-            }
-            '"' | '\'' => {
-                let start_column = current_column;
-                let string = consume_quoted_literal(&mut chars, c, &mut current_line);
-
-                push_token(
-                    &mut tokens,
-                    string.clone(),
-                    current_line,
-                    start_column,
-                    TokenType::Literal,
-                );
-                current_column += string.len();
-            }
-            '/' => match chars.peek().copied() {
-                Some('/') => {
-                    let _ = chars.next();
-                    skip_line_comment(&mut chars);
-                }
-                Some('*') => {
-                    let _ = chars.next();
-                    skip_block_comment(&mut chars, &mut current_line);
-                }
-                _ => {
-                    push_token(
-                        &mut tokens,
-                        c.to_string(),
-                        current_line,
-                        current_column,
-                        TokenType::Operator,
-                    );
-                    current_column += 1;
-                }
-            },
-            c if OPERATOR_CHARS.contains(c) => {
-                push_token(
-                    &mut tokens,
-                    c.to_string(),
-                    current_line,
-                    current_column,
-                    TokenType::Operator,
-                );
-                current_column += 1;
-            }
-            c if PUNCTUATION_CHARS.contains(c) => {
-                push_token(
-                    &mut tokens,
-                    c.to_string(),
-                    current_line,
-                    current_column,
-                    TokenType::Punctuation,
-                );
-                current_column += 1;
-            }
-            _ => {
-                current_column += 1;
-            }
-        }
+        tokenize_char(
+            c,
+            &mut chars,
+            &mut tokens,
+            &mut current_line,
+            &mut current_column,
+        );
     }
 
     tokens
 }
 
+/// Dispatch a single character to the appropriate tokenizer, updating position counters.
+fn tokenize_char(
+    c: char,
+    chars: &mut std::iter::Peekable<Chars<'_>>,
+    tokens: &mut Vec<Token>,
+    current_line: &mut usize,
+    current_column: &mut usize,
+) {
+    match c {
+        '\n' => {
+            *current_line += 1;
+            *current_column = 1;
+        }
+        c if c.is_whitespace() => {
+            *current_column += 1;
+        }
+        c if c.is_alphabetic() || c == '_' => {
+            *current_column += tokenize_word(chars, tokens, c, *current_line, *current_column);
+        }
+        c if c.is_ascii_digit() => {
+            *current_column += tokenize_number(chars, tokens, c, *current_line, *current_column);
+        }
+        '"' | '\'' => {
+            *current_column += tokenize_quoted(chars, tokens, c, current_line, *current_column);
+        }
+        '/' => {
+            *current_column += tokenize_slash(chars, tokens, current_line, *current_column);
+        }
+        c if OPERATOR_CHARS.contains(c) => {
+            push_single_char(
+                c,
+                tokens,
+                *current_line,
+                current_column,
+                TokenType::Operator,
+            );
+        }
+        c if PUNCTUATION_CHARS.contains(c) => {
+            push_single_char(
+                c,
+                tokens,
+                *current_line,
+                current_column,
+                TokenType::Punctuation,
+            );
+        }
+        _ => {
+            *current_column += 1;
+        }
+    }
+}
+
+/// Push a single-character token of `token_type` and advance the column counter.
+fn push_single_char(
+    c: char,
+    tokens: &mut Vec<Token>,
+    current_line: usize,
+    current_column: &mut usize,
+    token_type: TokenType,
+) {
+    push_token(
+        tokens,
+        c.to_string(),
+        current_line,
+        *current_column,
+        token_type,
+    );
+    *current_column += 1;
+}
+
 /// Check if a word is a common keyword (simplified, multi-language)
 fn is_keyword(word: &str) -> bool {
-    crate::constants::duplication::DUPLICATION_KEYWORDS.contains(&word)
+    mcb_utils::constants::validate::DUPLICATION_KEYWORDS.contains(&word)
+}
+
+/// Tokenize a quoted string/char literal starting at `quote`, returning the column advance.
+///
+/// `current_line` is advanced for newlines embedded in the literal, and the emitted token is
+/// recorded at the post-consumption line — preserving the original tokenizer's behavior.
+fn tokenize_quoted(
+    chars: &mut std::iter::Peekable<Chars<'_>>,
+    tokens: &mut Vec<Token>,
+    quote: char,
+    current_line: &mut usize,
+    column: usize,
+) -> usize {
+    let string = consume_quoted_literal(chars, quote, current_line);
+    let len = string.len();
+    push_token(tokens, string, *current_line, column, TokenType::Literal);
+    len
+}
+
+/// Tokenize an identifier or keyword starting at `first`, returning the column advance.
+fn tokenize_word(
+    chars: &mut std::iter::Peekable<Chars<'_>>,
+    tokens: &mut Vec<Token>,
+    first: char,
+    line: usize,
+    column: usize,
+) -> usize {
+    let mut word = String::from(first);
+    word.push_str(&consume_while(chars, |next| {
+        next.is_alphanumeric() || next == '_'
+    }));
+
+    let token_type = if is_keyword(&word) {
+        TokenType::Keyword
+    } else {
+        TokenType::Identifier
+    };
+
+    let len = word.len();
+    push_token(tokens, word, line, column, token_type);
+    len
+}
+
+/// Tokenize a numeric literal starting at `first`, returning the column advance.
+fn tokenize_number(
+    chars: &mut std::iter::Peekable<Chars<'_>>,
+    tokens: &mut Vec<Token>,
+    first: char,
+    line: usize,
+    column: usize,
+) -> usize {
+    let mut number = String::from(first);
+    number.push_str(&consume_while(chars, |next| {
+        next.is_ascii_digit() || next == '.' || next == '_'
+    }));
+
+    let len = number.len();
+    push_token(tokens, number, line, column, TokenType::Literal);
+    len
+}
+
+/// Handle a `/` character: line/block comment skip or operator token. Returns column advance.
+fn tokenize_slash(
+    chars: &mut std::iter::Peekable<Chars<'_>>,
+    tokens: &mut Vec<Token>,
+    current_line: &mut usize,
+    column: usize,
+) -> usize {
+    match chars.peek().copied() {
+        Some('/') => {
+            let _ = chars.next();
+            skip_line_comment(chars);
+            0
+        }
+        Some('*') => {
+            let _ = chars.next();
+            skip_block_comment(chars, current_line);
+            0
+        }
+        _ => {
+            push_token(
+                tokens,
+                "/".to_owned(),
+                *current_line,
+                column,
+                TokenType::Operator,
+            );
+            1
+        }
+    }
 }

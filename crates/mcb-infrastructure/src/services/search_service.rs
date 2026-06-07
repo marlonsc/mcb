@@ -12,10 +12,10 @@
 
 use std::sync::Arc;
 
-use mcb_domain::constants::search::SEARCH_OVERFETCH_MULTIPLIER;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{ContextServiceInterface, SearchFilters, SearchServiceInterface};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
+use mcb_utils::constants::search::SEARCH_OVERFETCH_MULTIPLIER;
 
 /// Implementation of the `SearchServiceInterface`.
 ///
@@ -125,17 +125,12 @@ impl SearchServiceInterface for SearchServiceImpl {
 // ---------------------------------------------------------------------------
 // Linkme Registration
 // ---------------------------------------------------------------------------
-use mcb_domain::registry::services::{
-    SEARCH_SERVICE_NAME, SERVICES_REGISTRY, ServiceBuilder, ServiceRegistryEntry,
-};
+use mcb_domain::registry::services::ServiceBuilder;
 
-// linkme distributed_slice uses #[link_section] internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(SERVICES_REGISTRY)]
-static SEARCH_SERVICE_REGISTRY_ENTRY: ServiceRegistryEntry = ServiceRegistryEntry {
-    name: SEARCH_SERVICE_NAME,
-    build: ServiceBuilder::Search(|context| {
+mcb_domain::register_service!(
+    mcb_utils::constants::SERVICE_NAME_SEARCH,
+    ServiceBuilder::Search(|context| {
         let context_service = mcb_domain::registry::services::resolve_context_service(context)?;
         Ok(Arc::new(SearchServiceImpl::new(context_service)))
-    }),
-};
+    })
+);

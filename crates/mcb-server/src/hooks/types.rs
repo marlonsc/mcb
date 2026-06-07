@@ -7,8 +7,8 @@
 
 use std::collections::HashMap;
 
-use mcb_domain::utils::time as domain_time;
 use mcb_domain::value_objects::ids::SessionId;
+use mcb_utils::utils::time as domain_time;
 use thiserror::Error;
 
 /// Result type for hook operations.

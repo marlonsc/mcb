@@ -5,7 +5,8 @@ use std::path::Path;
 
 use mcb_domain::utils::tests::utils::TestResult;
 
-use super::common::{create_test_repo, vcs_provider};
+use super::common::vcs_provider;
+use mcb_domain::utils::tests::git_helpers::create_test_repo;
 
 #[rstest]
 #[case(false)]

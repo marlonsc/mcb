@@ -1,4 +1,7 @@
-//! Unit tests for field alias resolution and normalization.
+//! Field alias resolution: agents can use `camelCase`, `snake_case`, or `x-header` style.
+//!
+//! Tests verify that context fields are resolved from any naming convention
+//! the agent might use (`session_id`, `sessionId`, `x-session-id` all work).
 
 use std::collections::HashMap;
 
@@ -8,39 +11,24 @@ use mcb_server::tools::field_aliases::{
 };
 use rstest::rstest;
 
+// ─── Alias registry ──────────────────────────────────────────────────
+
 #[rstest]
-#[test]
-fn test_field_aliases_returns_correct_aliases_for_session_id() {
-    let aliases = field_aliases("session_id");
-    assert!(!aliases.is_empty());
-    assert!(aliases.contains(&"session_id"));
-    assert!(aliases.contains(&"sessionId"));
-    assert!(aliases.contains(&"x-session-id"));
-    assert!(aliases.contains(&"x_session_id"));
+#[case("session_id", &["session_id", "sessionId", "x-session-id", "x_session_id"])]
+#[case("delegated", &["delegated", "is_delegated", "isDelegated", "x-delegated"])]
+fn known_fields_have_all_naming_variants(#[case] field: &str, #[case] expected: &[&str]) {
+    let aliases = field_aliases(field);
+    for alias in expected {
+        assert!(
+            aliases.contains(alias),
+            "missing alias '{alias}' for '{field}'"
+        );
+    }
 }
 
 #[rstest]
-#[test]
-fn test_field_aliases_returns_correct_aliases_for_delegated() {
-    let aliases = field_aliases("delegated");
-    assert!(!aliases.is_empty());
-    assert!(aliases.contains(&"delegated"));
-    assert!(aliases.contains(&"is_delegated"));
-    assert!(aliases.contains(&"isDelegated"));
-    assert!(aliases.contains(&"x-delegated"));
-}
-
-#[rstest]
-#[test]
-fn test_field_aliases_returns_empty_for_unknown_field() {
-    let aliases = field_aliases("unknown_field");
-    assert!(aliases.is_empty());
-}
-
-#[rstest]
-#[test]
-fn test_field_aliases_returns_aliases_for_all_canonical_fields() {
-    let canonical_fields = vec![
+fn every_canonical_field_includes_itself() {
+    let fields = [
         "session_id",
         "parent_session_id",
         "project_id",
@@ -55,209 +43,110 @@ fn test_field_aliases_returns_aliases_for_all_canonical_fields() {
         "execution_flow",
         "delegated",
     ];
-
-    for field in canonical_fields {
-        let aliases = field_aliases(field);
-        assert!(!aliases.is_empty(), "Field {field} should have aliases");
+    for f in fields {
         assert!(
-            aliases.contains(&field),
-            "Field {field} should include itself as an alias",
+            field_aliases(f).contains(&f),
+            "'{f}' should alias to itself"
         );
     }
 }
 
 #[rstest]
-#[test]
-fn test_normalize_text_returns_none_for_empty_string() {
-    let result = normalize_text(Some(String::new()));
-    assert!(result.is_none());
+fn unknown_field_returns_empty_aliases() {
+    assert!(field_aliases("nonexistent").is_empty());
 }
 
+// ─── Text normalization ──────────────────────────────────────────────
+
 #[rstest]
-#[test]
-fn test_normalize_text_returns_none_for_whitespace_only() {
-    let result = normalize_text(Some("   ".to_owned()));
-    assert!(result.is_none());
+#[case(None, None)]
+#[case(Some(String::new()), None)]
+#[case(Some("   ".to_owned()), None)]
+#[case(Some("  hello  ".to_owned()), Some("hello".to_owned()))]
+fn normalize_trims_and_rejects_empty(
+    #[case] input: Option<String>,
+    #[case] expected: Option<String>,
+) {
+    assert_eq!(normalize_text(input), expected);
 }
 
-#[rstest]
-#[test]
-fn test_normalize_text_returns_none_for_none() {
-    let result = normalize_text(None);
-    assert!(result.is_none());
-}
+// ─── String override resolution ──────────────────────────────────────
 
 #[rstest]
-#[test]
-fn test_normalize_text_trims_and_returns_value() {
-    let result = normalize_text(Some("  hello world  ".to_owned()));
-    assert_eq!(result, Some("hello world".to_owned()));
-}
-
-#[rstest]
-#[test]
-fn test_resolve_override_value_returns_none_when_no_keys_match() {
-    let overrides = HashMap::new();
-    let keys = vec!["session_id", "sessionId"];
-    let result = resolve_override_value(&overrides, &keys);
-    assert!(result.is_none());
-}
-
-#[rstest]
-#[test]
-fn test_resolve_override_value_returns_value_for_first_matching_key() {
-    let mut overrides = HashMap::new();
-    overrides.insert("session_id".to_owned(), "sess-123".to_owned());
-    overrides.insert("sessionId".to_owned(), "sess-456".to_owned());
-
-    let keys = vec!["session_id", "sessionId"];
-    let result = resolve_override_value(&overrides, &keys);
-    assert_eq!(result, Some("sess-123".to_owned()));
-}
-
-#[rstest]
-#[test]
-fn test_resolve_override_value_checks_all_aliases_in_order() {
-    let mut overrides = HashMap::new();
-    overrides.insert("sessionId".to_owned(), "sess-456".to_owned());
-
-    let keys = vec!["session_id", "sessionId"];
-    let result = resolve_override_value(&overrides, &keys);
-    assert_eq!(result, Some("sess-456".to_owned()));
-}
-
-#[rstest]
-#[test]
-fn test_resolve_override_value_ignores_empty_values() {
-    let mut overrides = HashMap::new();
-    overrides.insert("session_id".to_owned(), "   ".to_owned());
-    overrides.insert("sessionId".to_owned(), "sess-456".to_owned());
-
-    let keys = vec!["session_id", "sessionId"];
-    let result = resolve_override_value(&overrides, &keys);
-    assert_eq!(result, Some("sess-456".to_owned()));
-}
-
-#[rstest]
-#[test]
-fn test_resolve_override_bool_returns_none_when_no_keys_match() {
-    let overrides = HashMap::new();
-    let keys = vec!["delegated", "is_delegated"];
-    let result = resolve_override_bool(&overrides, &keys);
-    assert!(result.is_none());
-}
-
-#[rstest]
-#[test]
-fn test_resolve_override_bool_parses_true_variants() {
-    let test_cases = vec!["true", "True", "TRUE", "1", "yes", "YES"];
-
-    for value in test_cases {
-        let mut overrides = HashMap::new();
-        overrides.insert("delegated".to_owned(), value.to_owned());
-
-        let keys = vec!["delegated"];
-        let result = resolve_override_bool(&overrides, &keys);
-        assert_eq!(result, Some(true), "Failed for value: {value}");
-    }
-}
-
-#[rstest]
-#[test]
-fn test_resolve_override_bool_parses_false_variants() {
-    let test_cases = vec!["false", "False", "FALSE", "0", "no", "NO"];
-
-    for value in test_cases {
-        let mut overrides = HashMap::new();
-        overrides.insert("delegated".to_owned(), value.to_owned());
-
-        let keys = vec!["delegated"];
-        let result = resolve_override_bool(&overrides, &keys);
-        assert_eq!(result, Some(false), "Failed for value: {value}");
-    }
-}
-
-#[rstest]
-#[test]
-fn test_resolve_override_bool_returns_none_for_invalid_value() {
-    let mut overrides = HashMap::new();
-    overrides.insert("delegated".to_owned(), "maybe".to_owned());
-
-    let keys = vec!["delegated"];
-    let result = resolve_override_bool(&overrides, &keys);
-    assert!(result.is_none());
-}
-
-#[rstest]
-#[test]
-fn test_resolve_override_bool_checks_all_aliases_in_order() {
-    let mut overrides = HashMap::new();
-    overrides.insert("is_delegated".to_owned(), "true".to_owned());
-
-    let keys = vec!["delegated", "is_delegated"];
-    let result = resolve_override_bool(&overrides, &keys);
-    assert_eq!(result, Some(true));
-}
-
-#[rstest]
-#[test]
-fn test_str_value_creates_json_string() {
-    let result = str_value("hello");
-    assert_eq!(result, serde_json::json!("hello"));
-}
-
-#[rstest]
-#[test]
-fn test_str_value_handles_special_characters() {
-    let result = str_value("hello-world_123");
-    assert_eq!(result, serde_json::json!("hello-world_123"));
-}
-
-#[rstest]
-#[test]
-fn test_insert_override_adds_value_when_present() {
-    let mut overrides = HashMap::new();
-    insert_override(&mut overrides, "session_id", Some("sess-123".to_owned()));
-
-    assert_eq!(overrides.get("session_id"), Some(&"sess-123".to_owned()));
-}
-
-#[rstest]
-#[test]
-fn test_insert_override_does_not_add_when_none() {
-    let mut overrides = HashMap::new();
-    insert_override(&mut overrides, "session_id", None);
-
-    assert!(!overrides.contains_key("session_id"));
-}
-
-#[rstest]
-#[test]
-fn test_insert_override_does_not_add_empty_string() {
-    let mut overrides = HashMap::new();
-    insert_override(&mut overrides, "session_id", Some(String::new()));
-
-    assert!(!overrides.contains_key("session_id"));
-}
-
-#[rstest]
-#[test]
-fn test_insert_override_does_not_add_whitespace_only() {
-    let mut overrides = HashMap::new();
-    insert_override(&mut overrides, "session_id", Some("   ".to_owned()));
-
-    assert!(!overrides.contains_key("session_id"));
-}
-
-#[rstest]
-#[test]
-fn test_insert_override_trims_value_before_inserting() {
-    let mut overrides = HashMap::new();
-    insert_override(
-        &mut overrides,
-        "session_id",
-        Some("  sess-123  ".to_owned()),
+fn first_matching_alias_wins() {
+    let overrides = HashMap::from([
+        ("session_id".to_owned(), "s1".to_owned()),
+        ("sessionId".to_owned(), "s2".to_owned()),
+    ]);
+    assert_eq!(
+        resolve_override_value(&overrides, &["session_id", "sessionId"]),
+        Some("s1".to_owned())
     );
+}
 
-    assert_eq!(overrides.get("session_id"), Some(&"sess-123".to_owned()));
+#[rstest]
+fn fallback_alias_used_when_primary_missing() {
+    let overrides = HashMap::from([("sessionId".to_owned(), "s2".to_owned())]);
+    assert_eq!(
+        resolve_override_value(&overrides, &["session_id", "sessionId"]),
+        Some("s2".to_owned())
+    );
+}
+
+#[rstest]
+fn whitespace_only_values_skipped_in_resolution() {
+    let overrides = HashMap::from([
+        ("session_id".to_owned(), "   ".to_owned()),
+        ("sessionId".to_owned(), "s2".to_owned()),
+    ]);
+    assert_eq!(
+        resolve_override_value(&overrides, &["session_id", "sessionId"]),
+        Some("s2".to_owned())
+    );
+}
+
+#[rstest]
+fn no_matching_key_returns_none() {
+    assert!(resolve_override_value(&HashMap::new(), &["session_id"]).is_none());
+}
+
+// ─── Boolean override resolution ─────────────────────────────────────
+
+#[rstest]
+#[case("true", Some(true))]
+#[case("True", Some(true))]
+#[case("1", Some(true))]
+#[case("yes", Some(true))]
+#[case("false", Some(false))]
+#[case("FALSE", Some(false))]
+#[case("0", Some(false))]
+#[case("no", Some(false))]
+#[case("maybe", None)]
+fn boolean_parsing_accepts_common_variants(#[case] input: &str, #[case] expected: Option<bool>) {
+    let overrides = HashMap::from([("delegated".to_owned(), input.to_owned())]);
+    assert_eq!(resolve_override_bool(&overrides, &["delegated"]), expected);
+}
+
+// ─── Override insertion ──────────────────────────────────────────────
+
+#[rstest]
+#[case(Some("sess-1".to_owned()), true)]
+#[case(Some("  sess-1  ".to_owned()), true)]
+#[case(None, false)]
+#[case(Some(String::new()), false)]
+#[case(Some("   ".to_owned()), false)]
+fn insert_override_filters_empty_and_trims(#[case] value: Option<String>, #[case] inserted: bool) {
+    let mut map = HashMap::new();
+    insert_override(&mut map, "session_id", value);
+    assert_eq!(map.contains_key("session_id"), inserted);
+    if inserted {
+        assert_eq!(map["session_id"], "sess-1");
+    }
+}
+
+// ─── JSON value helper ───────────────────────────────────────────────
+
+#[rstest]
+fn str_value_produces_json_string() {
+    assert_eq!(str_value("hello"), serde_json::json!("hello"));
 }
