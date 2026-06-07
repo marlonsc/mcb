@@ -7,7 +7,6 @@ use std::sync::Arc;
 
 use mcb_domain::registry::ServiceResolutionContext;
 use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
-use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
 use mcb_domain::registry::events::{EventBusProviderConfig, resolve_event_bus_provider};
 use mcb_domain::registry::hybrid_search::{
     HybridSearchProviderConfig, resolve_hybrid_search_provider,
@@ -55,18 +54,6 @@ pub fn create_base_memory_args(
     }
 }
 
-/// Shared `FastEmbed` ONNX model cache directory (process-wide).
-fn shared_fastembed_cache_dir() -> std::path::PathBuf {
-    let cache_dir = std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR")
-        .or_else(|| std::env::var_os("FASTEMBED_CACHE_DIR"))
-        .map_or_else(
-            || std::env::temp_dir().join("mcb-fastembed-test-cache"),
-            std::path::PathBuf::from,
-        );
-    let _ = std::fs::create_dir_all(&cache_dir);
-    cache_dir
-}
-
 /// Build [`McbState`] with an isolated database per test via pure registry DI.
 ///
 /// Uses `mcb_domain::registry::*` to resolve all providers and
@@ -83,22 +70,9 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
     // 2. Event bus — resolved through linkme registry
     let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;
 
-    // 3. Embedding — resolved through linkme registry
-    let cache_dir = shared_fastembed_cache_dir();
-    let embedding_config = EmbeddingProviderConfig::new("fastembed")
-        .with_cache_dir(cache_dir)
-        .with_dimensions(384);
-    let embedding_provider = match resolve_embedding_provider(&embedding_config) {
-        Ok(p) => p,
-        Err(e) => {
-            mcb_domain::warn!(
-                "domain_services",
-                "SKIPPED: Embedding provider unavailable (skipping test)",
-                &e
-            );
-            return None;
-        }
-    };
+    // 3. Embedding — deterministic local provider (no ONNX model download;
+    //    contract/state tests assert MCP wiring, not embedding quality)
+    let embedding_provider = super::test_fixtures::create_test_embedding_provider(384);
 
     // 4. Vector store — resolved through linkme registry
     let vs_config = VectorStoreProviderConfig::new("edgevec")

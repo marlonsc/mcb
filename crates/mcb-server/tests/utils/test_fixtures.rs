@@ -20,6 +20,7 @@ use mcb_domain::registry::hybrid_search::{
 use mcb_domain::registry::vector_store::{
     VectorStoreProviderConfig, resolve_vector_store_provider,
 };
+use mcb_domain::value_objects::Embedding;
 use mcb_infrastructure::config::TestConfigBuilder;
 use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::mcp_server::McpServer;
@@ -29,6 +30,75 @@ use tempfile::TempDir;
 
 // Force linkme registration of all concrete providers
 extern crate mcb_providers;
+
+// ---------------------------------------------------------------------------
+// Deterministic embedding provider for test composition
+// ---------------------------------------------------------------------------
+// Contract/state tests assert MCP wiring, not embedding quality, so they use a
+// pure-CPU deterministic provider instead of the real FastEmbed ONNX model.
+// This removes the model-download dependency that flakes on macOS/Windows CI.
+
+#[derive(Debug)]
+struct DeterministicTestEmbeddingProvider {
+    dimensions: usize,
+}
+
+impl DeterministicTestEmbeddingProvider {
+    const MODEL_NAME: &'static str = "deterministic-test";
+
+    const fn new(dimensions: usize) -> Self {
+        Self { dimensions }
+    }
+
+    fn embed_text(&self, text: &str) -> Embedding {
+        let mut vector = vec![0.0; self.dimensions];
+        if self.dimensions == 0 {
+            return Embedding {
+                vector,
+                model: Self::MODEL_NAME.to_owned(),
+                dimensions: self.dimensions,
+            };
+        }
+
+        for (index, byte) in text.bytes().enumerate() {
+            let slot = index % self.dimensions;
+            vector[slot] += (f32::from(byte) + 1.0) / 256.0;
+        }
+
+        let norm = vector.iter().map(|value| value * value).sum::<f32>().sqrt();
+        if norm > 0.0 {
+            for value in &mut vector {
+                *value /= norm;
+            }
+        }
+
+        Embedding {
+            vector,
+            model: Self::MODEL_NAME.to_owned(),
+            dimensions: self.dimensions,
+        }
+    }
+}
+
+#[async_trait::async_trait]
+impl EmbeddingProvider for DeterministicTestEmbeddingProvider {
+    async fn embed_batch(&self, texts: &[String]) -> mcb_domain::Result<Vec<Embedding>> {
+        Ok(texts.iter().map(|text| self.embed_text(text)).collect())
+    }
+
+    fn dimensions(&self) -> usize {
+        self.dimensions
+    }
+
+    fn provider_name(&self) -> &str {
+        Self::MODEL_NAME
+    }
+}
+
+/// Deterministic CPU embedding provider for contract/state tests (no model download).
+pub(super) fn create_test_embedding_provider(dimensions: usize) -> Arc<dyn EmbeddingProvider> {
+    Arc::new(DeterministicTestEmbeddingProvider::new(dimensions))
+}
 
 // -----------------------------------------------------------------------------
 // Re-export ALL centralized constants and fixtures from mcb-domain SSOT
