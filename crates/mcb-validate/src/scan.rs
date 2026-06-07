@@ -61,6 +61,11 @@ where
 
         let crate_name = crate_dir.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
+        // Inventory `absolute_path`s are canonicalized; canonicalize `src_dir`
+        // too so the prefix match holds under symlinked roots (macOS
+        // /var → /private/var).
+        let src_dir = std::fs::canonicalize(&src_dir).unwrap_or(src_dir);
+
         for entry in inventory {
             if entry.absolute_path.starts_with(&src_dir) && matches_language(entry, language) {
                 f(entry, &src_dir, crate_name)?;
@@ -94,6 +99,11 @@ where
         if skip_validate_crate && is_skipped_crate_dir(&src_dir, &file_config) {
             continue;
         }
+
+        // Inventory `absolute_path`s are canonicalized; canonicalize `src_dir`
+        // too so the prefix match holds under symlinked roots (macOS
+        // /var → /private/var).
+        let src_dir = std::fs::canonicalize(&src_dir).unwrap_or(src_dir);
 
         for entry in inventory {
             if entry.absolute_path.starts_with(&src_dir)
