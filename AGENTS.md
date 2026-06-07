@@ -214,10 +214,41 @@ file; `dispatch.mk`/`Makefile` are a serial lane), validate each delivery (green
 gate + evidence) before `bd close`, then unblock dependents. No item closes red;
 out-of-scope changes become new items, never silent expansion.
 
+### Temporary Coordination Rule — Bead Audit / Docs Migration
+
+Until the current bead-audit and retired-docs migration is complete:
+
+- Own a dedicated coordination bead and split execution into child beads before
+  editing. The coordinator bead for this lane is `mcb-v5an.14`.
+- Keep this lane distinct from other agents' release/CI lanes. Do not claim or
+  rewrite another agent's active bead; link dependencies through `bd` instead.
+- Use subagents for independent audit/verification slices, with disjoint write
+  scopes and coordinator review before closing beads.
+- Run at most one active monitoring loop every five minutes in this session.
+  Between loops, either execute a scoped bead or perform non-overlapping review;
+  do not start extra polling loops.
+- Push frequent validated checkpoints while this user-authorized lane is active.
+  Use the project `make git` verbs and include the validation evidence in the
+  bead close note or commit message.
+
 > **MAXIMUM RULE — never idle-wait.** Never block waiting on an async/long action
 > (CI, builds, deploys, remote jobs). Always either *actively monitor* it (poll on a
 > cadence) or pick up an independent non-blocking bead and return when it completes.
 > Idle waiting is forbidden — there is always either monitoring or other ready work.
+>
+> **FUNDAMENTAL — push frequently.** After every commit (and at each loop step) push
+> immediately via `make git WHAT=push APPLY=Y` — work is never stranded locally. Each
+> push restarts CI (cancel-in-progress); that is expected — stop committing to let the
+> final run go green, then merge. Always end a step by stating the next concrete action.
+>
+> **FUNDAMENTAL — one self-paced loop per session.** Drive long async work with a
+> single ~5-min `ScheduleWakeup` heartbeat — never multiple overlapping loops or
+> background watchers.
+>
+> **Lane separation + delegate.** With concurrent agents, each owns a distinct bead
+> lane (respect assignees/claims; never touch another's). For your own epic, coordinate
+> via sub-beads, dispatch a subagent per sub-bead, and quality-gate each delivery (green
+> gate + evidence) before `bd close`.
 
 ## Architecture
 
