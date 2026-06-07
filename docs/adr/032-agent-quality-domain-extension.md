@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: [9, 13, 29]
 supersedes: []
 superseded_by: [34]
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

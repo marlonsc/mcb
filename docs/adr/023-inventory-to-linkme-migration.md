@@ -124,12 +124,15 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 ## Validation Criteria
 
+The unchecked items below are historical compatibility observations, not active
+project tasks. Current work is tracked in beads.
+
 - [x] All providers are correctly registered and discoverable
 - [x] Build succeeds on all supported platforms (Linux, macOS, Windows)
-- [ ] WASM builds work (future compatibility)
-- [ ] Performance benchmarks show no regression
+- WASM builds work (future compatibility)
+- Performance benchmarks show no regression
 - [x] All integration tests pass
-- [ ] Binary size is reduced or maintained
+- Binary size is reduced or maintained
 
 ## Related ADRs
 

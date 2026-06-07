@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: [12, 13, 16, 20]
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -44,7 +44,8 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 ## Decision
 
-**6-phase integration roadmap** with backward compatibility:
+Historical 6-phase integration plan with backward compatibility. This ADR is
+not the current implementation queue; use beads for active work.
 
 ### Phase 1: v0.1.1 - Foundation (RELEASED)
 
@@ -63,7 +64,7 @@ Deliverables:
 **Tools**: 4 (index, search, clear, status)
 **Tests**: 308+
 
-### Phase 2: v0.2.0 - Infrastructure (NEXT)
+### Phase 2: v0.2.0 - Infrastructure (historical target)
 
 **Focus**: Git-aware indexing + Session memory
 

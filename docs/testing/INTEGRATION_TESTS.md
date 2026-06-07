@@ -103,12 +103,12 @@ classification:
 
 | Item | Current state | Evidence |
 | ---- | ------------- | -------- |
-| Service availability reporting | Pending follow-up | No summary reporter exists beyond per-test skip output |
-| Conditional test groups | Pending follow-up | Make scopes and `MCB_RUN_DOCKER_INTEGRATION_TESTS` exist, but no all-services gate groups tests dynamically |
+| Service availability reporting | Tracked in bead `mcb-efxg` | Use `bd show mcb-efxg --json` |
+| Conditional test groups | Tracked in bead `mcb-efxg` | Use `bd show mcb-efxg --json` |
 | Docker Compose for local E2E | Completed | `tests/docker-compose.yml` and `make dev WHAT=docker-up` / `make dev WHAT=docker-test` exist |
 | Coverage integration | Superseded by current gate | `make check WHAT=coverage` excludes integration/admin test files and CI runs a dedicated coverage job |
 
-Pending follow-up work must live in beads, not as loose notes in this document.
+Future follow-up work must live in beads, not as loose notes in this document.
 
 ## Troubleshooting
 

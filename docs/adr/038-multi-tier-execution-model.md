@@ -1036,7 +1036,10 @@ CREATE TABLE session_agents (
 );
 ```
 
-### Implementation Roadmap
+### Historical Implementation Sketch
+
+This section preserves original sizing context. It is not a live task board;
+current execution work is tracked in beads.
 
 Phase 1: Core Entities & FSM (Weeks 1-2, 40 hours)
 

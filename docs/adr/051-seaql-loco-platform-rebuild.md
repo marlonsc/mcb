@@ -9,7 +9,7 @@ updated: 2026-02-23
 related: [52, 50, 3, 8, 9, 10]
 supersedes: [4, 7, 25, 26]
 superseded_by: []
-implementation_status: In Progress
+implementation_status: Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -354,6 +354,9 @@ trait ObservationRepository {
 
 ### Migration Strategy
 
+This migration sequence is historical context for the v0.3.0 rebuild, not a
+live execution board. Current work is tracked in beads.
+
 ```
 Phase 1: Validation (Contract tests, spike)
 Phase 2: Foundation (Dependencies, entities, migrations)
@@ -367,7 +370,7 @@ Phase 6: Cleanup (Delete old code, final validation)
 
 - [ROADMAP.md](../developer/ROADMAP.md) — Version roadmap with bumped versions (normative)
 - [CHANGELOG.md](../operations/CHANGELOG.md) — v0.3.0 release notes (normative)
-- [PLAN: v030-seaql-loco-rebuild.md](../../../.sisyphus/plans/v030-seaql-loco-rebuild.md) — Detailed execution plan
+- Historical execution plan: `.sisyphus/plans/v030-seaql-loco-rebuild.md`
 - [ADR 049: Axum Return for rmcp Tower Compatibility](049-axum-return-rmcp-tower-compatibility.md) — Reversion to Axum for Tower compatibility
 
 ## References

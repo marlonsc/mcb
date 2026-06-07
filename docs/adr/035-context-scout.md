@@ -586,7 +586,7 @@ impl VcsProvider for Git2Provider {
         name: &str,
         from: Option<&str>,
     ) -> Result<(), WorkflowError> {
-        // TODO: Implementation following spawn_blocking pattern
+        // Historical sketch: branch creation would follow the spawn_blocking pattern.
         unimplemented!("create_branch")
     }
 
@@ -595,17 +595,17 @@ impl VcsProvider for Git2Provider {
         path: &Path,
         branch: &str,
     ) -> Result<(), WorkflowError> {
-        // TODO: Implementation using git2::Repository::open_worktree or git2-sys raw calls
+        // Historical sketch: worktree creation would use git2 worktree APIs.
         unimplemented!("create_worktree")
     }
 
     async fn remove_worktree(&self, path: &Path) -> Result<(), WorkflowError> {
-        // TODO: Implementation
+        // Historical sketch: remove the worktree through the VCS provider boundary.
         unimplemented!("remove_worktree")
     }
 
     async fn stage_files(&self, paths: &[String]) -> Result<(), WorkflowError> {
-        // TODO: Implementation
+        // Historical sketch: stage files through the VCS provider boundary.
         unimplemented!("stage_files")
     }
 
@@ -615,17 +615,17 @@ impl VcsProvider for Git2Provider {
         author_name: Option<&str>,
         author_email: Option<&str>,
     ) -> Result<String, WorkflowError> {
-        // TODO: Implementation
+        // Historical sketch: commit through the VCS provider boundary.
         unimplemented!("commit")
     }
 
     async fn push(&self, branch: &str, force: bool) -> Result<(), WorkflowError> {
-        // TODO: Implementation
+        // Historical sketch: push through the VCS provider boundary.
         unimplemented!("push")
     }
 
     async fn pull(&self, branch: Option<&str>) -> Result<(), WorkflowError> {
-        // TODO: Implementation
+        // Historical sketch: pull through the VCS provider boundary.
         unimplemented!("pull")
     }
 
