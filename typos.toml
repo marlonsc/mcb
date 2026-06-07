@@ -5,6 +5,9 @@ extend-exclude = [
   "third-party/",
   "**/generated/**",
   "**/fixtures/**",  # external sample codebases (e.g. rustlings) used as validator inputs
+  "docs/archive/**", # archived legacy plans (bilingual/Portuguese, not active docs)
+  "**/*.bak",        # archived files
+  "**/*.bak/**",     # archived directories (e.g. legacy-v0.2-v0.3.bak/)
   "**/*.lock",
   "**/snapshots/**",
   "**/*.svg",
@@ -26,6 +29,7 @@ Atual = "Atual"
 ratatui = "ratatui"
 LOV = "LOV"
 lov = "lov"
+flext = "flext"  # FLEXT monorepo name (referenced in AGENTS.md)
 # regex prefixes in scripts/docs/py/check_outdated.py
 referenc = "referenc"
 deprecat = "deprecat"
