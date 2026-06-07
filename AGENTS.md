@@ -99,9 +99,10 @@ Agents may share one working tree. The source of truth for work, ownership, depe
 If `.beads/` is absent, initialize or request initialization before starting non-trivial work; never invent a
 parallel tracker.
 
-- The project-level `beads.role` config must be set to a valid durable authority role (default: `maintainer`
-  unless the repo documents another value). Do not mutate `beads.role` just to switch task phase; task phase
-  lives in labels.
+- The project-level `git config beads.role` value must be set to a valid durable authority role (default:
+  `maintainer` unless the repo documents another value). Do not use `bd config set beads.role ...` as a
+  substitute for this canonical Git config, and do not mutate `beads.role` just to switch task phase; task
+  phase lives in labels.
 - Every non-trivial bead carries canonical labels: `role:<role>`, `agent:<agent>`, `phase:<phase>`, and when
   useful `gate:<gate>` / `scope:<area>` / `project:<member>`. Required roles are `planner`, `coordinator`,
   `executor`, `validator`, `security`, `reviewer`, and `maintainer`.
@@ -150,7 +151,8 @@ parallel tracker.
 - Close only with evidence: command, exit code, and relevant output in the close reason or bead notes. No red
   gate, warning, skipped check, or unverified claim may be closed as done.
 - Never edit `.beads/*.jsonl` or any beads database/export by hand. Every create/update/close/dependency/status
-  change goes through `bd`, followed by the repo's `bd sync`/validation path.
+  change goes through `bd`, followed by the repo's Dolt validation path (`bd ping`, `bd status`, and
+  `bd dolt status`; use `bd export` only for JSONL snapshots/interchange, not as the source of truth).
 
 **Never overwrite or discard another agent's work** (see Rule 2); on a divergent approach, stop and escalate to
 the user.
@@ -261,13 +263,18 @@ the hook's `guard --staged` blocks only NEW violations in the commit.
 
 ## Task Tracking (beads / bd)
 
-Work items live in **beads** (`bd`, a Dolt-backed dependency graph; `.beads/` is
-already initialized). Prefer it over ad-hoc TODO lists for any multi-step work.
+Work items live in **beads** (`bd`; `.beads/` is already initialized). Prefer it
+over ad-hoc TODO lists for any multi-step work. The current repository baseline is
+`bd` 1.0.5 with the Dolt backend in embedded mode, verified by `bd context --json`
+(`backend: dolt`, `dolt_mode: embedded`, `role: maintainer`). Legacy SQLite files
+may remain as migration artifacts, but they are not the active source of truth.
 
 > **FUNDAMENTAL RULE — never edit `.beads/*.jsonl` (or any beads DB file) by hand.**
-> `.beads/issues.jsonl` is a generated **export**, not the source of truth (Dolt is).
-> Hand-editing it desyncs/corrupts the graph. **Every** create/update/close/dep/status
-> change goes through the `bd` CLI — no exceptions, no manual JSONL/DB edits, ever.
+> `.beads/issues.jsonl` is a generated **export/sync artifact**, not the hand-edit
+> surface. Dolt is authoritative for writes in the active MCB setup. Hand-editing
+> JSONL or DB files desyncs/corrupts the graph. **Every** create/update/close/dep/
+> status/export/import change goes through the `bd` CLI — no exceptions, no manual
+> JSONL/DB edits, ever.
 
 - `bd prime` — load agent workflow context + project memories.
 - `bd ready` — list work with no open blockers (actionable now).
@@ -275,6 +282,20 @@ already initialized). Prefer it over ad-hoc TODO lists for any multi-step work.
 - `bd update <id> --claim` — atomically take an item (assignee + in_progress); stops two agents touching the same work.
 - `bd show <id>` / `bd close <id> --reason "evidence"` — inspect / complete with a note.
 - Hash IDs (`bd-a1b2`) avoid merge collisions across branches/agents.
+- `git config --get beads.role` — verify Beads role routing. In this repo it must
+  be `maintainer`; if missing, fix with `git config beads.role maintainer`.
+- `bd context --json` / `bd ping --json` / `bd status --json` — inspect active
+  backend/mode, connectivity, schema, role, and issue counts. `bd doctor` exists
+  but is not the primary embedded-mode health gate in 1.0.5.
+- `bd dolt status` / `bd dolt commit` / `bd dolt push` / `bd dolt pull` — use
+  Dolt-native version-control operations when the bead database itself needs a
+  durable checkpoint or remote sync. Do not substitute Git JSONL sync for Dolt sync.
+- `bd backup init|sync|restore|status` — full Dolt backup/restore path. `bd export`
+  is only for JSONL migration/interoperability snapshots and does not preserve Dolt
+  branches, commit history, working-set state, or non-issue tables.
+- `bd repo list` / `bd repo add` / `bd repo sync` — only for explicitly configured
+  multi-repo hydration in this repo. Do not record beads from `cosmos-main`,
+  `flext`, or any other project inside MCB just because those projects are nearby.
 - Frequent permission baseline: keep `bd`, `make`, `sg`, `edit`, and `update`
   always permitted for agent workflow. Use `bd update` for bead state changes;
   use structured edits for files; never use this baseline to bypass the blocked
@@ -286,30 +307,51 @@ file; `dispatch.mk`/`Makefile` are a serial lane), validate each delivery (green
 gate + evidence) before `bd close`, then unblock dependents. No item closes red;
 out-of-scope changes become new items, never silent expansion.
 
-### Current Coordination Rule — Bead Audit / Docs Migration
+### Multi-Session And Multi-Project Beads Protocol
 
-Until the current bead-audit and retired-docs migration is complete:
+Use this protocol whenever multiple agents, terminals, or projects are active.
 
-- Own a dedicated coordination bead and split execution into child beads before
-  editing. The coordinator bead for this governance/docs migration lane is
-  `mcb-vy4k`; the v0.3.2 release/CI lane remains separate under `mcb-v5an`.
-- Keep this lane distinct from other agents' release/CI lanes. Do not claim or
-  rewrite another agent's active bead; link dependencies through `bd` instead.
-- Use subagents for independent audit/verification slices, with disjoint write
-  scopes and coordinator review before closing beads.
-- Run exactly one coordinator loop every five minutes in this session. Each
-  five-minute tick performs, in order: read `bd status`, active child beads,
-  subagent state, and `make git WHAT=status`; execute or integrate one scoped
-  sub-bead; run the smallest relevant gate plus `bd sync`; record a validated
-  checkpoint in the bead. Commit/push only when the current lane has explicit
-  user authorization for Git writes. Repeat that same single tick until the
-  claimed coordinator bead and its children are closed or blocked with evidence.
-  Between ticks, execute non-overlapping work only; do not start another poller,
-  watcher, or sleep loop.
-- When this user-authorized lane also authorizes Git writes, push frequent
-  validated checkpoints through the project `make git` verbs. Always include
-  validation evidence in the bead close note; include it in commit messages only
-  when a commit is actually authorized.
+- **Single source per project**: MCB work lives in `/home/marlonsc/mcb/.beads`.
+  Other repositories own their own `.beads` stores. Never import, create, close,
+  or reclassify `cosmos-main`, `flext`, or other-project work in MCB's bead DB.
+- **Session start**: run `bd prime`, `git config --get beads.role`,
+  `bd context --json`, `bd ping --json`, `bd status --json`, `bd ready --json`,
+  and `make git WHAT=status` before editing. Trust the installed CLI's `bd context`
+  output for the actual backend and mode; do not copy assumptions from older
+  SQLite/sync-branch instructions.
+- **Claim before write**: inspect with `bd show <id> --json`, claim with
+  `bd update <id> --claim --json`, then create child beads for subagents or
+  independent work slices. A child bead must state role, phase, project, scope,
+  acceptance criteria, expected gate, and disjoint write paths.
+- **Same-repo concurrency**: use `bd update --claim`, parent/child beads, `bd dep`,
+  and evidence notes as the lock/coordination surface. Do not rely on chat,
+  transcript summaries, local TODO files, or uncommitted markdown boards for
+  ownership or readiness.
+- **Cross-project work**: first work in that project's own repo and beads. If MCB
+  genuinely depends on another repository, record only an MCB dependency/context
+  bead plus an `--external-ref`; use `bd dep add <local> external:<repo>/<id>`
+  only when the installed `bd` and repository routing/multi-repo configuration
+  support that exact form. If `bd repo list` says single-repo/no additional repos,
+  MCB remains single-repo.
+- **Version/mode gap**: if docs, memories, or older sessions mention SQLite,
+  `beads-sync`, `bd sync`, `bd backend`, or `bd doctor` as the authoritative
+  embedded-mode gate, treat that as legacy. Confirm current behavior with
+  `bd --help`, `bd context --json`, and command-specific `--help`.
+- **Health repair**: fix only through the canonical supported command for that
+  check: `git config beads.role maintainer|contributor` for role routing,
+  `bd import` only for explicit JSONL migration, `bd export` only for snapshots,
+  `bd backup`/`bd dolt` for durable Dolt backup/sync, and `bd hooks install` for
+  hook gaps. Do not remove lock files, edit JSONL, or rerun `bd init --reinit-local`
+  unless the dry-run and user-approved plan show it is the clean source fix.
+- **One loop**: a long-running coordinator owns exactly one five-minute heartbeat
+  loop for this session. Each tick reads `bd status`/`bd ready`, active child
+  beads, subagent state, and `make git WHAT=status`; then it executes or integrates
+  one scoped bead, runs the relevant project gate plus `bd ping`/`bd status`, and
+  records the checkpoint in `bd`. Do not start overlapping pollers/watchers.
+- **Subagents**: delegate through child beads with disjoint write scopes. The
+  coordinator reviews every result, runs the named gate, and closes only with
+  command, exit code, and decisive output. Validator beads stay separate from
+  executor beads for meaningful changes.
 
 > **MAXIMUM RULE — never idle-wait.** Never block waiting on an async/long action
 > (CI, builds, deploys, remote jobs). Always either *actively monitor* it (poll on a
