@@ -1,0 +1,30 @@
+crates/mcb-providers/src/vector_store/edgevec/actor.rs
+  s_a9c0ea473656a4::t_59a3d09711bcb8 430
+  s_a9c0ea473656a4::t_a7c56fe08c5f3a 474
+  s_a9c0ea473656a4::t_bcd9eb83111683 421,440-441,446,448,458
+  s_a9c0ea473656a4::t_3f0919ca366c83 442
+  s_a9c0ea473656a4::t_da3d8a465ee6d2 302-303,310
+  s_a9c0ea473656a4::t_83458239838e88 6
+  s_a9c0ea473656a4::t_9e9b50962ba3e1 417-420,422-424,431,437-439,443,445,450-457,459-465,467,469-473,477,480-491,493-507
+  s_a9c0ea473656a4::t_d64b9785ff3409 427-429,432-435,447,449
+  s_a9c0ea473656a4::t_7bd45a738f9041 426,436,444,466,468,475-476,478-479,492
+  s_a9c0ea473656a4::t_935608851b8b61 425
+crates/mcb-utils/src/utils/path.rs
+  s_a9c0ea473656a4::t_d1cfdfa1cf808e 54-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "58215b1036edfbd9751ae2eacda5a6929c20f608",
+  "prompts": {},
+  "sessions": {
+    "s_a9c0ea473656a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4ebff32-4652-4718-9925-5874de82848c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
