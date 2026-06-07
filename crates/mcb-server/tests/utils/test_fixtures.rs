@@ -204,22 +204,13 @@ fn create_shared_test_context() -> Result<SharedTestContext, String> {
 ///
 /// # Errors
 ///
-/// Returns the real provider-resolution error if initialization failed.
-pub fn try_shared_app_context() -> Result<&'static SharedTestContext, String> {
+/// Returns the underlying provider-resolution error if the shared context could
+/// not be built (propagated verbatim — no hidden failures).
+pub fn shared_app_context() -> Result<&'static SharedTestContext, String> {
     static CTX: std::sync::OnceLock<Result<SharedTestContext, String>> = std::sync::OnceLock::new();
     CTX.get_or_init(create_shared_test_context)
         .as_ref()
         .map_err(Clone::clone)
-}
-
-/// Returns the shared test context, or the real initialization error.
-///
-/// # Errors
-///
-/// Returns the underlying provider-resolution error if the shared context could
-/// not be built (propagated verbatim — no hidden failures).
-pub fn shared_app_context() -> Result<&'static SharedTestContext, String> {
-    try_shared_app_context()
 }
 
 // ---------------------------------------------------------------------------
