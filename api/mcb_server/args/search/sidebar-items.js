@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["SearchResource"],"struct":["SearchArgs"]};
+window.SIDEBAR_ITEMS = {"enum":["SearchResource"],"struct":["SearchArgs","SearchCodeArgs","SearchMemoryArgs"]};

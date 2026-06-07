@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["cache","database","embedding","events","http","language","retry","vector_store"]};

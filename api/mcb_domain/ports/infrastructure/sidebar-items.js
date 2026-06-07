@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["config","events","graphql","lifecycle","logging","migrations","routing"]};

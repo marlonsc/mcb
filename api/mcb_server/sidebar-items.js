@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["context","entity_crud_dispatch"],"mod":["admin","args","auth","builder","constants","error_mapping","formatter","handlers","hooks","init","mcp_server","session","templates","tools","transport","utils"]};
+window.SIDEBAR_ITEMS = {"macro":["entity_crud_dispatch"],"mod":["args","auth","composition","controllers","error_mapping","formatter","graphql_store","handlers","hooks","mcp_server","session","state","tools","transport","utils"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["anthropic","fastembed","gemini","macros","ollama","openai","voyageai"]};
+window.SIDEBAR_ITEMS = {"struct":["AnthropicEmbeddingProvider","FastEmbedProvider","GeminiEmbeddingProvider","OllamaEmbeddingProvider","OpenAIEmbeddingProvider","VoyageAIEmbeddingProvider"]};

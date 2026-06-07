@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["auth_error","config_error","db_error","infrastructure_error","infrastructure_error_msg","io_error","network_error"]};

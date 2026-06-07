@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["get_suffix","is_camel_case","is_screaming_snake_case","is_snake_case","split_camel_case"]};

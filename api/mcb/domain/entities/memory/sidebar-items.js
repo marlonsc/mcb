@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["ErrorPatternCategory","ExecutionType","ObservationType","QualityGateStatus"],"struct":["ErrorPattern","ErrorPatternMatch","ExecutionMetadata","MemoryFilter","MemorySearchIndex","MemorySearchResult","Observation","ObservationMetadata","OriginContext","QualityGateResult","SessionSummary"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["GIT_REF_HEAD"]};

@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Defines a complete validator including its struct, violation enum, and traits."><title>define_validator in mcb_validate - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="mcb_validate" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0 (ac68faa20 2026-05-25)" data-channel="1.96.0" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">define_validator</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../mcb_validate/index.html">mcb_<wbr>validate</a><span class="version">0.3.1</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">mcb_validate</a></div><h1>Macro <span class="macro">define_<wbr>validator</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/mcb_validate/macros/validators.rs.html#178-279">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! define_validator {
+    (
+        name: $name_str:expr,
+        description: $desc_str:literal,
+
+        $(#[$struct_meta:meta])*
+        $struct_vis:vis struct $validator_name:ident {
+            $(
+                $(#[$field_meta:meta])*
+                $field_vis:vis $field:ident : $field_ty:ty
+            ),* $(,)?
+        }
+
+        violations: $severity_mode:ident, $category:expr,
+        $(#[$enum_meta:meta])*
+        $enum_vis:vis enum $enum_name:ident {
+            $($violation_body:tt)*
+        }
+
+        checks: [
+            $( $check_name:ident =&gt; $check_expr:expr ),* $(,)?
+        ]
+
+        $(, enabled = $enabled_expr:expr )?
+        $(,)?
+    ) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Defines a complete validator including its struct, violation enum, and traits.</p>
+<p>This unified macro replaces the need for separate <code>define_violations!</code>,
+<code>pub struct</code>, and <code>impl Validator</code> blocks.</p>
+<p>It generates:</p>
+<ol>
+<li>The violation enum (via <code>define_violations!</code>)</li>
+<li>The validator struct</li>
+<li>A <code>validate_all(&amp;self)</code> convenience method</li>
+<li>The <code>Validator</code> trait implementation</li>
+</ol>
+<p>Note: You still need to implement <code>new()</code> and/or <code>with_config()</code> yourself
+in a separate <code>impl</code> block, as configuration loading varies between validators.</p>
+</div></details></section></div></main></body></html>

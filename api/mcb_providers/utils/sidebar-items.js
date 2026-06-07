@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["embedding","http","retry","sqlite","vector_store"]};
+window.SIDEBAR_ITEMS = {"mod":["embedding","http","vector_store"]};

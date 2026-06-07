@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["LIST_FILE_PATHS_LIMIT","VALID_SECTIONS"]};

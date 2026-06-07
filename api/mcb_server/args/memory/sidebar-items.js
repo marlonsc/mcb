@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["MemoryAction","MemoryResource"],"struct":["MemoryArgs"]};
+window.SIDEBAR_ITEMS = {"enum":["MemoryAction","MemoryResource"],"struct":["GetMemoriesArgs","InjectContextArgs","ListMemoriesArgs","MemoryArgs","MemoryTimelineArgs","StoreMemoryArgs"]};

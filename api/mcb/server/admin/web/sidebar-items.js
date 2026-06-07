@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["config_page","dashboard","dashboard_ui","favicon","health_page","jobs_page","web_router"],"mod":["entity_handlers","filter","handlers","lov_handlers","pipeline","router","view_model"]};

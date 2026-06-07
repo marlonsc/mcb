@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["dashboard","indexing","provider_admin","validation"]};

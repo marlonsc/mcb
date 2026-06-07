@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["dispatch","set_log_fn"],"type":["LogFn"]};

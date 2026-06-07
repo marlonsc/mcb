@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["NamingViolation"],"mod":["constants"],"struct":["NamingValidator"]};
+window.SIDEBAR_ITEMS = {"enum":["NamingViolation"],"struct":["NamingValidator"]};

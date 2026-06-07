@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["apply_parent_scope","base_entity_args","build_entity_arguments","extract_project_id","slug_to_resource"]};

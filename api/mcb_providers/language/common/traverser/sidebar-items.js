@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["AstTraverser"]};
+window.SIDEBAR_ITEMS = {"struct":["AstTraverser","SourceRef"]};

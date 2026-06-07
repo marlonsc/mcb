@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["validator","violation"]};
+window.SIDEBAR_ITEMS = {"enum":["SsotViolation"],"struct":["SsotValidator"]};

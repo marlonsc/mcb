@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DependencyHealth","PortServiceState"],"struct":["DependencyHealthCheck","ExtendedHealthResponse"],"trait":["LifecycleManaged","ShutdownCoordinator"]};

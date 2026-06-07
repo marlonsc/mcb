@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["MetricsError"],"trait":["MetricsProvider","MetricsProviderExt"],"type":["MetricLabels","MetricsResult"]};

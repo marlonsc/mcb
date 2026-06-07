@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ServiceManagerError"],"mod":["admin","factory"],"struct":["ServiceInfo","ServiceManager"]};
+window.SIDEBAR_ITEMS = {"mod":["events","indexing","migration","validation_ops","validator_job_runner"]};

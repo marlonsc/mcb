@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["get_config_axum","reload_config_axum","update_config_section_axum"]};

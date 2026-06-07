@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["agent","index","observation","project","registry"],"struct":["SeaOrmEntityRepository"]};

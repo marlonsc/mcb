@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["AgentSessionStatus","AgentType","CheckpointType"],"struct":["AgentSession","Checkpoint","Delegation","ToolCall"]};

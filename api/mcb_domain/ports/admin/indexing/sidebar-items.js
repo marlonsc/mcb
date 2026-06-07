@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["IndexingOperationStatus"],"struct":["IndexingOperation"],"trait":["IndexingOperationsInterface"]};

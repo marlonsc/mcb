@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["list_vcs_providers","resolve_vcs_provider"],"struct":["VcsProviderConfig"]};

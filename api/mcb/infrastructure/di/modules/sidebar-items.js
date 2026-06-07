@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["domain_services"],"struct":["DomainServicesContainer","DomainServicesFactory","ServiceDependencies"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["config","config_via_middleware","dashboard","routes"],"struct":["DashboardBody","Datum"]};

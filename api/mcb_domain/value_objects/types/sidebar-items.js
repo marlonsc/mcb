@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["SupportedLanguage"],"type":["CacheProviderKind","EmbeddingProviderKind","Language","OperationType","VectorStoreProviderKind"]};
+window.SIDEBAR_ITEMS = {"enum":["SupportedLanguage"],"type":["Language","OperationType"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"type":["CacheProviderHandle","EmbeddingProviderHandle","LanguageProviderHandle","VectorStoreProviderHandle"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Hook","HookError"],"mod":["processor","types"],"struct":["HookContext","HookProcessor","PostToolUseContext","SessionStartContext"],"type":["HookResult"]};

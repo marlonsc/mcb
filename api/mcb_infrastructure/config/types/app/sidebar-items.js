@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["AppConfig","DataConfig","DatabaseConfig","DatabaseConfigContainer","EmbeddingConfigContainer","IndexingConfig","InfrastructureConfig","McpConfig","McpContextDefaultsConfig","McpContextGitDefaultsConfig","OperationsDaemonConfig","ProvidersConfig","SystemConfig","VectorStoreConfigContainer"]};

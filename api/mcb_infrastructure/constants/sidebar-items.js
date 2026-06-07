@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["ast","auth","cache","config","crypto","db","events","fs","health","highlight","http","lang","limits","logging","metadata","metrics","ops","process","providers","resilience","search","services","sync"]};

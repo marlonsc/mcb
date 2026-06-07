@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["ProcessResult"],"fn":["run_indexing_task"],"struct":["FileIndexContext","IndexingProgress","IndexingServiceDeps","IndexingServiceImpl","IndexingServiceWithHashDeps"]};

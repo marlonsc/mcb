@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["collect_spaces_of_kind","parse_file_spaces","parse_file_spaces_raw","visit_spaces"]};

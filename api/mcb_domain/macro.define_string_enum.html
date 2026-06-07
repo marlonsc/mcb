@@ -1,0 +1,30 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Defines a string enum with standard derive stack and strum serialization."><title>define_string_enum in mcb_domain - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="mcb_domain" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0 (ac68faa20 2026-05-25)" data-channel="1.96.0" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">define_string_enum</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../mcb_domain/index.html">mcb_<wbr>domain</a><span class="version">0.3.1</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">mcb_domain</a></div><h1>Macro <span class="macro">define_<wbr>string_<wbr>enum</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/mcb_domain/macros/entities.rs.html#251-314">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! define_string_enum {
+    (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident
+        [strum = $strum_case:literal $(, serde = $serde_case:literal)? , schema]
+        {
+            $(
+                $(#[$variant_meta:meta])*
+                $variant:ident
+            ),* $(,)?
+        }
+    ) =&gt; { ... };
+    (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident
+        [strum = $strum_case:literal $(, serde = $serde_case:literal)?]
+        {
+            $(
+                $(#[$variant_meta:meta])*
+                $variant:ident
+            ),* $(,)?
+        }
+    ) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Defines a string enum with standard derive stack and strum serialization.</p>
+<p>Generates: <code>Debug</code>, <code>Clone</code>, <code>PartialEq</code>, <code>Eq</code>, <code>serde::Serialize</code>,
+<code>serde::Deserialize</code>, <code>strum_macros::AsRefStr</code>, <code>strum_macros::Display</code>,
+<code>strum_macros::EnumString</code>, plus <code>impl_as_str_from_as_ref!</code>.</p>
+<p>Use <code>schema</code> to also derive <code>schemars::JsonSchema</code>.
+Use <code>serde = "..."</code> to add <code>#[serde(rename_all = "...")]</code>.</p>
+</div></details></section></div></main></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["analysis","config_manager","crypto","embedding","http","hybrid_search","language_chunking","metrics","project_detection","vcs","vector_store"]};

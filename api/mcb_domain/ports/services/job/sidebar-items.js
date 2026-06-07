@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["JobStatus","JobType"],"struct":["Job","JobCounts","JobProgressUpdate","JobResult"],"trait":["JobManagerInterface"],"type":["JobId"]};

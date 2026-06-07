@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["axum_admin_auth_layer","is_unauthenticated_route"],"struct":["AdminAuthConfig","AuthErrorResponse","AxumAdminAuth","AxumAuthError"]};

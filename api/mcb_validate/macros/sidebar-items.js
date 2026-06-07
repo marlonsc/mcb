@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["violation_field_fmt"],"trait":["ExtractFilePath"]};
+window.SIDEBAR_ITEMS = {"mod":["naming","validators","violation_field_fmt","violations"],"trait":["ExtractFilePath"]};

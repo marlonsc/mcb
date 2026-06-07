@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["REDACTED"],"fn":["redact_optional"],"struct":["Sensitive"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["CacheConfig","EmbeddingConfig","SyncBatch","VectorStoreConfig"]};
+window.SIDEBAR_ITEMS = {"struct":["CacheConfig","EmbeddingConfig","VectorStoreConfig"]};

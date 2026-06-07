@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["bytes_to_hex"],"struct":["CryptoService","HashUtils","KeyDerivation","PasswordService","SecureErasure","TokenGenerator"]};
+window.SIDEBAR_ITEMS = {"struct":["CryptoService","PasswordService","TokenGenerator"]};

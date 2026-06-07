@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":["IssueCommentRegistry","IssueEntityRepository","IssueLabelAssignmentManager","IssueLabelRegistry","IssueRegistry"]};

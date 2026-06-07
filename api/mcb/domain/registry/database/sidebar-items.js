@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["list_database_providers","resolve_database_provider"],"static":["DATABASE_PROVIDERS"],"struct":["DatabaseProviderConfig","DatabaseProviderEntry"]};

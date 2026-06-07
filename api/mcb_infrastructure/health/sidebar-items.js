@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["HealthStatus"],"mod":["checkers"],"struct":["HealthCheck","HealthRegistry","HealthResponse","HealthUtils","SystemInfo"],"trait":["HealthChecker"]};

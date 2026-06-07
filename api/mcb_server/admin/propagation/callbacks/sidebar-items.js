@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["log_level_callback","logging_callback"]};

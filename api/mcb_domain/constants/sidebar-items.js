@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["ast","embedding","http","io","keys","lang","search","time","values"]};

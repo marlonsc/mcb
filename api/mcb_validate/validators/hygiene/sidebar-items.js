@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["directory","function_naming","inline_tests","naming","quality","validator","violation"]};
+window.SIDEBAR_ITEMS = {"enum":["HygieneViolation"],"struct":["HygieneValidator"]};

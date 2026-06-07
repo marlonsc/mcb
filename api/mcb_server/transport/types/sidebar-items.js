@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["McpError","McpRequest","McpResponse"]};
+window.SIDEBAR_ITEMS = {};

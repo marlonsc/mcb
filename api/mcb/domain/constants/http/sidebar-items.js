@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["CONTENT_TYPE_JSON"]};

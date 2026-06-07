@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["adapter","mapper","resolver","unified"]};

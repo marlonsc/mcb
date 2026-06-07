@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["list_graphql_schema_providers","resolve_graphql_schema_provider"],"struct":["GraphQLSchemaProviderConfig"]};

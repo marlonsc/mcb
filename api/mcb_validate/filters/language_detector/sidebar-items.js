@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["LanguageId"],"struct":["LanguageDetector"]};
+window.SIDEBAR_ITEMS = {"fn":["language_from_rca","language_to_rca"],"struct":["LanguageDetector"]};

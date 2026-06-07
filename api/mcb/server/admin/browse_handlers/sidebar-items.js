@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["get_collection_tree_axum","get_file_chunks_axum","list_collection_files_axum","list_collections_axum"],"struct":["BrowseErrorResponse","BrowseFilesQuery","BrowseState"]};

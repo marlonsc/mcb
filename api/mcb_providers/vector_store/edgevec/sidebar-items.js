@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["MetricType"],"struct":["EdgeVecConfig","EdgeVecVectorStoreProvider","HnswConfig","QuantizerConfig"]};
+window.SIDEBAR_ITEMS = {"mod":["config"],"struct":["EdgeVecVectorStoreProvider"]};

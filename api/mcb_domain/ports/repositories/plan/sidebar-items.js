@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":["PlanEntityRepository","PlanRegistry","PlanReviewRegistry","PlanVersionRegistry"]};

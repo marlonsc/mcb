@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["compile_regex","compile_regex_pairs","compile_regex_triples","compile_regexes"]};

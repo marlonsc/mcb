@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["IndexingResult","IndexingStats","IndexingStatus"],"trait":["BatchIndexingServiceInterface","IndexingServiceInterface"]};

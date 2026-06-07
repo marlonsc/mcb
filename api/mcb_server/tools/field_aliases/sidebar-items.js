@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"constant":["BOOL_FIELD_ALIASES","STRING_FIELD_ALIASES"],"fn":["field_aliases","insert_override","normalize_text","resolve_override_bool","resolve_override_value","str_value"]};

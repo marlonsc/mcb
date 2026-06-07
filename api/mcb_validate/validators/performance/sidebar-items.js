@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["PerformanceViolation"],"mod":["constants"],"struct":["PerformanceValidator"]};
+window.SIDEBAR_ITEMS = {"enum":["PerformanceViolation"],"struct":["PerformanceValidator"]};

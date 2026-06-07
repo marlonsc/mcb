@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["list_validation_providers","resolve_validation_provider"],"static":["VALIDATION_PROVIDERS"],"struct":["ValidationProviderConfig","ValidationProviderEntry"]};
+window.SIDEBAR_ITEMS = {"fn":["build_all_validators","build_named_validators","build_report","list_validator_entries","list_validator_names","validator_count","violation_to_entry"],"static":["VALIDATOR_ENTRIES"],"struct":["ValidatorEntry"]};

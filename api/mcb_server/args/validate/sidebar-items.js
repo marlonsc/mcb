@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ValidateAction","ValidateScope"],"struct":["ValidateArgs"]};
+window.SIDEBAR_ITEMS = {"enum":["ValidateAction","ValidateScope"],"struct":["AnalyzeCodeArgs","ListRulesArgs","ValidateArgs","ValidateCodeArgs"]};

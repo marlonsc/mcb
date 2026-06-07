@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["KissViolation"],"mod":["constants"],"struct":["KissValidator"]};
+window.SIDEBAR_ITEMS = {"enum":["KissViolation"],"struct":["KissValidator"]};

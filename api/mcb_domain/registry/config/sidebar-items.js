@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["list_config_providers","resolve_config_provider"],"struct":["ConfigProviderConfig"]};

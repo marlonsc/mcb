@@ -1,0 +1,57 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Generate a complete standard HTTP embedding provider."><title>define_standard_embedding_provider in mcb_providers - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="mcb_providers" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0 (ac68faa20 2026-05-25)" data-channel="1.96.0" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../static.files/storage-41dd4d93.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"></head><body class="rustdoc macro"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><rustdoc-topbar><h2><a href="#">define_standard_embedding_provider</a></h2></rustdoc-topbar><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../mcb_providers/index.html">mcb_<wbr>providers</a><span class="version">0.3.1</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">define_<wbr>standard_<wbr>embedding_<wbr>provider</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#parameters" title="Parameters">Parameters</a></li><li><a href="#example" title="Example">Example</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate mcb_<wbr>providers</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">mcb_providers</a></div><h1>Macro <span class="macro">define_<wbr>standard_<wbr>embedding_<wbr>provider</span>&nbsp;<button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/mcb_providers/macros/embedding.rs.html#187-292">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! define_standard_embedding_provider {
+    (
+        struct_name: $struct_name:ident,
+        doc: $doc:literal,
+        provider_name: $provider_name:literal,
+        provider_slug: $provider_slug:literal,
+        base_url: $base_url:expr,
+        max_tokens: $max_tokens:expr,
+        dimensions: $dimensions_logic:expr,
+        $(extra_payload: { $($extra_key:literal : $extra_val:literal),* $(,)? },)?
+        factory_fn: $factory_fn:ident,
+        static_name: $static_name:ident,
+        description: $description:literal,
+        config_name: $config_name:literal,
+        default_model: $default_model:literal $(,)?
+    ) =&gt; { ... };
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Generate a complete standard HTTP embedding provider.</p>
+<p>This macro produces the entire provider implementation for providers that use
+the standard <code>/v1/embeddings</code> API pattern with Bearer token authentication.
+It generates: struct definition, <code>new()</code> + accessors, <code>fetch_embeddings()</code>,
+<code>parse_embedding()</code>, <code>EmbeddingProvider</code> trait impl, and linkme registration.</p>
+<h2 id="parameters"><a class="doc-anchor" href="#parameters">§</a>Parameters</h2>
+<ul>
+<li><code>struct_name</code>: Provider struct identifier</li>
+<li><code>doc</code>: Doc comment for the struct</li>
+<li><code>provider_name</code>: Display name for logging/errors (e.g. <code>"OpenAI"</code>)</li>
+<li><code>provider_slug</code>: Registry slug (e.g. <code>"openai"</code>)</li>
+<li><code>base_url</code>: Default base URL constant path</li>
+<li><code>max_tokens</code>: Max tokens constant path</li>
+<li><code>dimensions</code>: Closure <code>|model: &amp;str| -&gt; usize</code> for dimension lookup</li>
+<li><code>extra_payload</code>: Optional extra JSON fields for the request payload</li>
+<li><code>factory_fn</code>: Factory function identifier</li>
+<li><code>static_name</code>: Linkme static identifier</li>
+<li><code>description</code>: Human-readable description for the registry</li>
+<li><code>config_name</code>: Config key name</li>
+<li><code>default_model</code>: Default model name</li>
+</ul>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="macro">define_standard_embedding_provider!</span> {
+    struct_name: OpenAIEmbeddingProvider,
+    doc: <span class="string">"OpenAI embedding provider"</span>,
+    provider_name: <span class="string">"OpenAI"</span>,
+    provider_slug: <span class="string">"openai"</span>,
+    base_url: mcb_utils::constants::embedding::OPENAI_API_BASE_URL,
+    max_tokens: mcb_utils::constants::embedding::OPENAI_MAX_TOKENS_PER_REQUEST,
+    dimensions: |model: <span class="kw-2">&amp;</span>str| <span class="kw">match </span>model {
+        <span class="string">"text-embedding-3-large" </span>=&gt; EMBEDDING_DIMENSION_OPENAI_LARGE,
+        <span class="string">"text-embedding-ada-002" </span>=&gt; EMBEDDING_DIMENSION_OPENAI_ADA,
+        <span class="kw">_ </span>=&gt; EMBEDDING_DIMENSION_OPENAI_SMALL,
+    },
+    extra_payload: { <span class="string">"encoding_format"</span>: <span class="string">"float" </span>},
+    factory_fn: openai_factory,
+    static_name: OPENAI_PROVIDER,
+    description: <span class="string">"OpenAI embedding provider (text-embedding-3-small/large, ada-002)"</span>,
+    config_name: <span class="string">"OpenAI"</span>,
+    default_model: <span class="string">"text-embedding-3-small"</span>,
+}</code></pre></div></div></details></section></div></main></body></html>

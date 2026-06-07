@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["dispatch","set_log_fn"],"type":["LogFn"]};
+window.SIDEBAR_ITEMS = {"fn":["dispatch","set_log_fn","set_stderr_log_level","stderr_log_fn"],"type":["LogFn"]};

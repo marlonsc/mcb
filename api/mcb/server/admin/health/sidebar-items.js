@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["extended_health_check_axum","get_metrics_axum","liveness_check_axum","readiness_check_axum"]};

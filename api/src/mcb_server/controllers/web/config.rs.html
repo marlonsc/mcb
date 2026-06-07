@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/mcb-server/src/controllers/web/config.rs`."><title>config.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="mcb_server" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0 (ac68faa20 2026-05-25)" data-channel="1.96.0" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../../static.files/src-script-813739b1.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">mcb_server/controllers/web/</div>config.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Configuration page — shows current MCB configuration.
+<a href=#2 id=2 data-nosnippet>2</a>
+<a href=#3 id=3 data-nosnippet>3</a></span><span class="kw">use </span><span class="kw">super</span>::html_page;
+<a href=#4 id=4 data-nosnippet>4</a><span class="kw">use </span><span class="kw">crate</span>::controllers::admin_config::load_admin_config;
+<a href=#5 id=5 data-nosnippet>5</a><span class="kw">use </span><span class="kw">crate</span>::state::McbState;
+<a href=#6 id=6 data-nosnippet>6</a><span class="kw">use </span>axum::extract::Extension;
+<a href=#7 id=7 data-nosnippet>7</a><span class="kw">use </span>loco_rs::prelude::<span class="kw-2">*</span>;
+<a href=#8 id=8 data-nosnippet>8</a>
+<a href=#9 id=9 data-nosnippet>9</a><span class="doccomment">/// Helper to extract a nested JSON string or return "—".
+<a href=#10 id=10 data-nosnippet>10</a></span><span class="kw">fn </span>cfg_str&lt;<span class="lifetime">'a</span>&gt;(config: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>serde_json::Value, path: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str {
+<a href=#11 id=11 data-nosnippet>11</a>    <span class="kw">let </span><span class="kw-2">mut </span>v = config;
+<a href=#12 id=12 data-nosnippet>12</a>    <span class="kw">for </span>key <span class="kw">in </span>path {
+<a href=#13 id=13 data-nosnippet>13</a>        v = <span class="kw">match </span>v.get(<span class="kw-2">*</span>key) {
+<a href=#14 id=14 data-nosnippet>14</a>            <span class="prelude-val">Some</span>(next) =&gt; next,
+<a href=#15 id=15 data-nosnippet>15</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="string">"—"</span>,
+<a href=#16 id=16 data-nosnippet>16</a>        };
+<a href=#17 id=17 data-nosnippet>17</a>    }
+<a href=#18 id=18 data-nosnippet>18</a>    v.as_str().unwrap_or(<span class="string">"—"</span>)
+<a href=#19 id=19 data-nosnippet>19</a>}
+<a href=#20 id=20 data-nosnippet>20</a>
+<a href=#21 id=21 data-nosnippet>21</a><span class="doccomment">/// Helper to extract a nested JSON i64 or return "—".
+<a href=#22 id=22 data-nosnippet>22</a></span><span class="kw">fn </span>cfg_i64(config: <span class="kw-2">&amp;</span>serde_json::Value, path: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>str]) -&gt; String {
+<a href=#23 id=23 data-nosnippet>23</a>    <span class="kw">let </span><span class="kw-2">mut </span>v = config;
+<a href=#24 id=24 data-nosnippet>24</a>    <span class="kw">for </span>key <span class="kw">in </span>path {
+<a href=#25 id=25 data-nosnippet>25</a>        v = <span class="kw">match </span>v.get(<span class="kw-2">*</span>key) {
+<a href=#26 id=26 data-nosnippet>26</a>            <span class="prelude-val">Some</span>(next) =&gt; next,
+<a href=#27 id=27 data-nosnippet>27</a>            <span class="prelude-val">None </span>=&gt; <span class="kw">return </span><span class="string">"—"</span>.to_owned(),
+<a href=#28 id=28 data-nosnippet>28</a>        };
+<a href=#29 id=29 data-nosnippet>29</a>    }
+<a href=#30 id=30 data-nosnippet>30</a>    v.as_i64().map_or_else(|| <span class="string">"—"</span>.to_owned(), |n| n.to_string())
+<a href=#31 id=31 data-nosnippet>31</a>}
+<a href=#32 id=32 data-nosnippet>32</a>
+<a href=#33 id=33 data-nosnippet>33</a><span class="doccomment">/// Configuration page handler.
+<a href=#34 id=34 data-nosnippet>34</a>///
+<a href=#35 id=35 data-nosnippet>35</a>/// # Errors
+<a href=#36 id=36 data-nosnippet>36</a>///
+<a href=#37 id=37 data-nosnippet>37</a>/// Fails when config cannot be loaded.
+<a href=#38 id=38 data-nosnippet>38</a></span><span class="kw">pub async fn </span>config_page(Extension(state): Extension&lt;McbState&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;Response&gt; {
+<a href=#39 id=39 data-nosnippet>39</a>    <span class="kw">let </span>provider = state.embedding_provider.provider_name();
+<a href=#40 id=40 data-nosnippet>40</a>    <span class="kw">let </span>dims = state.embedding_provider.dimensions();
+<a href=#41 id=41 data-nosnippet>41</a>    <span class="kw">let </span>cfg = load_admin_config()<span class="question-mark">?</span>;
+<a href=#42 id=42 data-nosnippet>42</a>
+<a href=#43 id=43 data-nosnippet>43</a>    <span class="kw">let </span>body = <span class="macro">format!</span>(
+<a href=#44 id=44 data-nosnippet>44</a>        <span class="string">r#"&lt;h1&gt;Configuration&lt;/h1&gt;
+<a href=#45 id=45 data-nosnippet>45</a>&lt;div class="config-grid"&gt;
+<a href=#46 id=46 data-nosnippet>46</a>  &lt;div class="card"&gt;&lt;h3&gt;Embedding Provider&lt;/h3&gt;
+<a href=#47 id=47 data-nosnippet>47</a>    &lt;table class="data-table"&gt;
+<a href=#48 id=48 data-nosnippet>48</a>      &lt;tr&gt;&lt;td&gt;Provider&lt;/td&gt;&lt;td&gt;&lt;strong&gt;{provider}&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;
+<a href=#49 id=49 data-nosnippet>49</a>      &lt;tr&gt;&lt;td&gt;Dimensions&lt;/td&gt;&lt;td&gt;{dims}&lt;/td&gt;&lt;/tr&gt;
+<a href=#50 id=50 data-nosnippet>50</a>    &lt;/table&gt;
+<a href=#51 id=51 data-nosnippet>51</a>  &lt;/div&gt;
+<a href=#52 id=52 data-nosnippet>52</a>  &lt;div class="card"&gt;&lt;h3&gt;Vector Store&lt;/h3&gt;
+<a href=#53 id=53 data-nosnippet>53</a>    &lt;table class="data-table"&gt;
+<a href=#54 id=54 data-nosnippet>54</a>      &lt;tr&gt;&lt;td&gt;Provider&lt;/td&gt;&lt;td&gt;&lt;strong&gt;{vp}&lt;/strong&gt;&lt;/td&gt;&lt;/tr&gt;
+<a href=#55 id=55 data-nosnippet>55</a>      &lt;tr&gt;&lt;td&gt;Host&lt;/td&gt;&lt;td&gt;{vh}&lt;/td&gt;&lt;/tr&gt;
+<a href=#56 id=56 data-nosnippet>56</a>      &lt;tr&gt;&lt;td&gt;Port&lt;/td&gt;&lt;td&gt;{vport}&lt;/td&gt;&lt;/tr&gt;
+<a href=#57 id=57 data-nosnippet>57</a>    &lt;/table&gt;
+<a href=#58 id=58 data-nosnippet>58</a>  &lt;/div&gt;
+<a href=#59 id=59 data-nosnippet>59</a>  &lt;div class="card"&gt;&lt;h3&gt;Database&lt;/h3&gt;
+<a href=#60 id=60 data-nosnippet>60</a>    &lt;table class="data-table"&gt;
+<a href=#61 id=61 data-nosnippet>61</a>      &lt;tr&gt;&lt;td&gt;URI&lt;/td&gt;&lt;td&gt;{db}&lt;/td&gt;&lt;/tr&gt;
+<a href=#62 id=62 data-nosnippet>62</a>    &lt;/table&gt;
+<a href=#63 id=63 data-nosnippet>63</a>  &lt;/div&gt;
+<a href=#64 id=64 data-nosnippet>64</a>&lt;/div&gt;"#</span>,
+<a href=#65 id=65 data-nosnippet>65</a>        vp = cfg_str(<span class="kw-2">&amp;</span>cfg, <span class="kw-2">&amp;</span>[<span class="string">"providers"</span>, <span class="string">"vector_store"</span>, <span class="string">"provider"</span>]),
+<a href=#66 id=66 data-nosnippet>66</a>        vh = cfg_str(<span class="kw-2">&amp;</span>cfg, <span class="kw-2">&amp;</span>[<span class="string">"providers"</span>, <span class="string">"vector_store"</span>, <span class="string">"host"</span>]),
+<a href=#67 id=67 data-nosnippet>67</a>        vport = cfg_i64(<span class="kw-2">&amp;</span>cfg, <span class="kw-2">&amp;</span>[<span class="string">"providers"</span>, <span class="string">"vector_store"</span>, <span class="string">"port"</span>]),
+<a href=#68 id=68 data-nosnippet>68</a>        db = cfg_str(<span class="kw-2">&amp;</span>cfg, <span class="kw-2">&amp;</span>[<span class="string">"database"</span>, <span class="string">"uri"</span>]),
+<a href=#69 id=69 data-nosnippet>69</a>    );
+<a href=#70 id=70 data-nosnippet>70</a>    <span class="macro">html_page!</span>(<span class="string">"Configuration"</span>, body)
+<a href=#71 id=71 data-nosnippet>71</a>}
+</code></pre></div></section></main></body></html>

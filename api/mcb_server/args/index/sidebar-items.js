@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["IndexAction"],"struct":["IndexArgs"]};
+window.SIDEBAR_ITEMS = {"enum":["IndexAction"],"struct":["ClearIndexArgs","IndexArgs","IndexRepoArgs","IndexStatusArgs"]};

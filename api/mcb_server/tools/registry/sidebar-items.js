@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["create_tool_list","dispatch_tool_call"],"static":["TOOL_DESCRIPTORS"],"struct":["ToolDefinitions","ToolDescriptor"],"type":["ToolCallFn","ToolCallFuture"]};
+window.SIDEBAR_ITEMS = {"fn":["create_tool_list","dispatch_tool_call","tool_by_name"],"static":["TOOL_DESCRIPTORS"],"struct":["ToolDescriptor"],"type":["ToolCallFn","ToolCallFuture"]};

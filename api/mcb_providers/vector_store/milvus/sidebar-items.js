@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["MilvusVectorStoreProvider"]};
+window.SIDEBAR_ITEMS = {"fn":["to_milvus_name"],"mod":["admin","browser","schema"],"struct":["MilvusVectorStoreProvider"]};

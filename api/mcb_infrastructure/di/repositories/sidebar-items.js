@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["create_memory_repository","create_memory_repository_with_executor","create_vcs_entity_repository"]};

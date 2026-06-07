@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["capture_vcs_context","resolve_project_context"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["BrowseError","HighlightError"],"trait":["BrowseServiceInterface","HighlightServiceInterface"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["to_domain_error","to_domain_result"],"mod":["infra"],"trait":["ErrorContext"]};

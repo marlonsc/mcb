@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["SessionAction"],"struct":["SessionArgs"]};
+window.SIDEBAR_ITEMS = {"enum":["SessionAction"],"struct":["GetSessionArgs","ListSessionsArgs","SessionArgs","StartSessionArgs","SummarizeSessionArgs"]};

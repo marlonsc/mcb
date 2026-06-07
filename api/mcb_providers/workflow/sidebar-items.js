@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["transitions"]};
+window.SIDEBAR_ITEMS = {"mod":["orchestrator","transitions"]};

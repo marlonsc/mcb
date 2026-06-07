@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["registry","router"]};
+window.SIDEBAR_ITEMS = {"mod":["context","defaults","field_aliases","registry","router","validation"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["path_to_utf8_string","strict_canonicalize","strict_strip_prefix","workspace_relative_path"]};

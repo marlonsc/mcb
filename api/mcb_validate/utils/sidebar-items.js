@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["fs","naming","source","validation_report","yaml"]};
+window.SIDEBAR_ITEMS = {"mod":["fs","source","validation_report","yaml"]};

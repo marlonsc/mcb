@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["list_language_providers","resolve_language_provider"],"static":["LANGUAGE_PROVIDERS"],"struct":["LanguageProviderConfig","LanguageProviderEntry"]};

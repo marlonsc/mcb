@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["safe_internal_error","to_contextual_tool_error","to_opaque_mcp_error"]};

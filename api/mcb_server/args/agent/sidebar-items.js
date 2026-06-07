@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["AgentAction"],"struct":["AgentArgs"]};
+window.SIDEBAR_ITEMS = {"enum":["AgentAction"],"struct":["AgentArgs","LogDelegationArgs","LogToolCallArgs"]};

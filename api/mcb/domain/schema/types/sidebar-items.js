@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"constant":["COL_OBSERVATION_TYPE"],"enum":["ColumnType"],"struct":["ColumnDef","ForeignKeyDef","FtsDef","IndexDef","Schema","TableDef","UniqueConstraintDef"],"trait":["SchemaDdlGenerator"]};

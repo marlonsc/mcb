@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["LanguageId","Severity","ViolationCategory"],"fn":["run_checks"],"struct":["NamedCheck","ValidationConfig"],"trait":["Validator","Violation"],"type":["CheckFn","ValidatorError","ValidatorResult"]};

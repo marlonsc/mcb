@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["HighlightCategory"],"struct":["CollectionInfo","FileInfo","FileNode","FileTreeNode","HighlightSpan","HighlightedCode"]};
+window.SIDEBAR_ITEMS = {"constant":["HIGHLIGHT_NAMES"],"enum":["HighlightCategory"],"fn":["map_highlight_to_category"],"struct":["CollectionInfo","FileInfo","FileNode","FileTreeNode","HighlightSpan","HighlightedCode"]};

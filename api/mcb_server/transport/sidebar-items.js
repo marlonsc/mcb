@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["TransportMode"],"mod":["axum_http","config","http","http_client","stdio","types"]};
+window.SIDEBAR_ITEMS = {"mod":["http_client","stdio","streamable_http","types"]};

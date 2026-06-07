@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["cache","database","embedding","language","validation","vector_store"]};
+window.SIDEBAR_ITEMS = {"mod":["admin_operations","code_analysis","config","database","embedding","events","graphql","hybrid_search","language","project_detection","project_detector","resolution_context","services","validation","vcs","vector_store"]};

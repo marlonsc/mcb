@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["load_startup_config","load_startup_config_or_default"]};

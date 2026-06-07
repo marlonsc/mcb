@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["run"],"mod":["cli","domain","infrastructure","server"],"struct":["McpServer","McpServerBuilder"]};
+window.SIDEBAR_ITEMS = {"mod":["cli","initializers","loco_app"],"struct":["McpServer"]};

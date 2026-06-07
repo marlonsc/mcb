@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["QualityViolation"],"mod":["constants"],"struct":["QualityValidator"]};
+window.SIDEBAR_ITEMS = {"enum":["QualityViolation"],"struct":["QualityValidator"]};

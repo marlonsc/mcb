@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["create_test_container","init_app","init_test_app"],"struct":["AppContext"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"mod":["admin","admin_config","collections_api","graphql","health_api","jobs_api","web"]};

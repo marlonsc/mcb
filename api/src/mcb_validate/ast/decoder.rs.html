@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/mcb-validate/src/ast/decoder.rs`."><title>decoder.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mcb_validate" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">mcb_validate/ast/</div>decoder.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/mcb-validate/src/ast/decoder.rs`."><title>decoder.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mcb_validate" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0 (ac68faa20 2026-05-25)" data-channel="1.96.0" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">mcb_validate/ast/</div>decoder.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//!
 <a href=#2 id=2 data-nosnippet>2</a>//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
 <a href=#3 id=3 data-nosnippet>3</a>//!
 <a href=#4 id=4 data-nosnippet>4</a>//! AST Decoder
@@ -9,7 +9,7 @@
 <a href=#9 id=9 data-nosnippet>9</a>
 <a href=#10 id=10 data-nosnippet>10</a><span class="kw">use </span>tree_sitter::Node;
 <a href=#11 id=11 data-nosnippet>11</a>
-<a href=#12 id=12 data-nosnippet>12</a><span class="kw">use super</span>::{AstNode, Position, Span};
+<a href=#12 id=12 data-nosnippet>12</a><span class="kw">use </span>super::{AstNode, Position, Span};
 <a href=#13 id=13 data-nosnippet>13</a>
 <a href=#14 id=14 data-nosnippet>14</a><span class="doccomment">/// Decoder for Tree-sitter AST to unified format
 <a href=#15 id=15 data-nosnippet>15</a></span><span class="kw">pub struct </span>AstDecoder;
@@ -165,73 +165,75 @@
 <a href=#165 id=165 data-nosnippet>165</a>            <span class="string">"struct_item" </span>| <span class="string">"class_definition" </span>=&gt; {
 <a href=#166 id=166 data-nosnippet>166</a>                metadata.insert(<span class="string">"is_type"</span>.to_owned(), <span class="bool-val">true</span>.into());
 <a href=#167 id=167 data-nosnippet>167</a>            }
-<a href=#168 id=168 data-nosnippet>168</a>            <span class="kw">_ </span>=&gt; {}
-<a href=#169 id=169 data-nosnippet>169</a>        }
-<a href=#170 id=170 data-nosnippet>170</a>
-<a href=#171 id=171 data-nosnippet>171</a>        metadata
-<a href=#172 id=172 data-nosnippet>172</a>    }
-<a href=#173 id=173 data-nosnippet>173</a>
-<a href=#174 id=174 data-nosnippet>174</a>    <span class="doccomment">/// Extract function-specific metadata
-<a href=#175 id=175 data-nosnippet>175</a>    </span><span class="kw">fn </span>extract_function_metadata(
-<a href=#176 id=176 data-nosnippet>176</a>        node: <span class="kw-2">&amp;</span>Node,
-<a href=#177 id=177 data-nosnippet>177</a>        _source: <span class="kw-2">&amp;</span>str,
-<a href=#178 id=178 data-nosnippet>178</a>        metadata: <span class="kw-2">&amp;mut </span>HashMap&lt;String, serde_json::Value&gt;,
-<a href=#179 id=179 data-nosnippet>179</a>    ) {
-<a href=#180 id=180 data-nosnippet>180</a>        <span class="comment">// Count parameters
-<a href=#181 id=181 data-nosnippet>181</a>        </span><span class="kw">let </span>param_count = <span class="self">Self</span>::count_function_parameters(node);
-<a href=#182 id=182 data-nosnippet>182</a>        metadata.insert(<span class="string">"parameter_count"</span>.to_owned(), param_count.into());
-<a href=#183 id=183 data-nosnippet>183</a>
-<a href=#184 id=184 data-nosnippet>184</a>        <span class="comment">// Check if async
-<a href=#185 id=185 data-nosnippet>185</a>        </span><span class="kw">let </span>is_async = <span class="self">Self</span>::is_async_function(node);
-<a href=#186 id=186 data-nosnippet>186</a>        metadata.insert(<span class="string">"is_async"</span>.to_owned(), is_async.into());
-<a href=#187 id=187 data-nosnippet>187</a>
-<a href=#188 id=188 data-nosnippet>188</a>        <span class="comment">// Check if has return type
-<a href=#189 id=189 data-nosnippet>189</a>        </span><span class="kw">let </span>has_return_type = <span class="self">Self</span>::has_return_type(node);
-<a href=#190 id=190 data-nosnippet>190</a>        metadata.insert(<span class="string">"has_return_type"</span>.to_owned(), has_return_type.into());
-<a href=#191 id=191 data-nosnippet>191</a>
-<a href=#192 id=192 data-nosnippet>192</a>        <span class="comment">// Count lines
-<a href=#193 id=193 data-nosnippet>193</a>        </span><span class="kw">let </span>line_count = node.end_position().row - node.start_position().row + <span class="number">1</span>;
-<a href=#194 id=194 data-nosnippet>194</a>        metadata.insert(<span class="string">"line_count"</span>.to_owned(), line_count.into());
-<a href=#195 id=195 data-nosnippet>195</a>    }
-<a href=#196 id=196 data-nosnippet>196</a>
-<a href=#197 id=197 data-nosnippet>197</a>    <span class="doccomment">/// Count function parameters
-<a href=#198 id=198 data-nosnippet>198</a>    </span><span class="kw">fn </span>count_function_parameters(node: <span class="kw-2">&amp;</span>Node) -&gt; usize {
-<a href=#199 id=199 data-nosnippet>199</a>        <span class="kw">let </span><span class="kw-2">mut </span>count = <span class="number">0</span>;
-<a href=#200 id=200 data-nosnippet>200</a>        <span class="kw">let </span><span class="kw-2">mut </span>cursor = node.walk();
-<a href=#201 id=201 data-nosnippet>201</a>
-<a href=#202 id=202 data-nosnippet>202</a>        <span class="kw">for </span>child <span class="kw">in </span>node.children(<span class="kw-2">&amp;mut </span>cursor) {
-<a href=#203 id=203 data-nosnippet>203</a>            <span class="kw">if </span>child.kind().contains(<span class="string">"parameter"</span>) || child.kind() == <span class="string">"parameters" </span>{
-<a href=#204 id=204 data-nosnippet>204</a>                count += child.child_count();
-<a href=#205 id=205 data-nosnippet>205</a>            }
-<a href=#206 id=206 data-nosnippet>206</a>        }
-<a href=#207 id=207 data-nosnippet>207</a>
-<a href=#208 id=208 data-nosnippet>208</a>        count
-<a href=#209 id=209 data-nosnippet>209</a>    }
-<a href=#210 id=210 data-nosnippet>210</a>
-<a href=#211 id=211 data-nosnippet>211</a>    <span class="doccomment">/// Check if function is async
-<a href=#212 id=212 data-nosnippet>212</a>    </span><span class="kw">fn </span>is_async_function(node: <span class="kw-2">&amp;</span>Node) -&gt; bool {
-<a href=#213 id=213 data-nosnippet>213</a>        <span class="kw">let </span><span class="kw-2">mut </span>cursor = node.walk();
-<a href=#214 id=214 data-nosnippet>214</a>
-<a href=#215 id=215 data-nosnippet>215</a>        <span class="kw">for </span>child <span class="kw">in </span>node.children(<span class="kw-2">&amp;mut </span>cursor) {
-<a href=#216 id=216 data-nosnippet>216</a>            <span class="kw">if </span>child.kind() == <span class="string">"async" </span>|| child.kind() == <span class="string">"await" </span>{
-<a href=#217 id=217 data-nosnippet>217</a>                <span class="kw">return </span><span class="bool-val">true</span>;
-<a href=#218 id=218 data-nosnippet>218</a>            }
-<a href=#219 id=219 data-nosnippet>219</a>        }
-<a href=#220 id=220 data-nosnippet>220</a>
-<a href=#221 id=221 data-nosnippet>221</a>        <span class="bool-val">false
-<a href=#222 id=222 data-nosnippet>222</a>    </span>}
-<a href=#223 id=223 data-nosnippet>223</a>
-<a href=#224 id=224 data-nosnippet>224</a>    <span class="doccomment">/// Check if function has return type
-<a href=#225 id=225 data-nosnippet>225</a>    </span><span class="kw">fn </span>has_return_type(node: <span class="kw-2">&amp;</span>Node) -&gt; bool {
-<a href=#226 id=226 data-nosnippet>226</a>        <span class="kw">let </span><span class="kw-2">mut </span>cursor = node.walk();
-<a href=#227 id=227 data-nosnippet>227</a>
-<a href=#228 id=228 data-nosnippet>228</a>        <span class="kw">for </span>child <span class="kw">in </span>node.children(<span class="kw-2">&amp;mut </span>cursor) {
-<a href=#229 id=229 data-nosnippet>229</a>            <span class="kw">if </span>child.kind().contains(<span class="string">"return"</span>) || child.kind().contains(<span class="string">"type"</span>) {
-<a href=#230 id=230 data-nosnippet>230</a>                <span class="kw">return </span><span class="bool-val">true</span>;
-<a href=#231 id=231 data-nosnippet>231</a>            }
-<a href=#232 id=232 data-nosnippet>232</a>        }
-<a href=#233 id=233 data-nosnippet>233</a>
-<a href=#234 id=234 data-nosnippet>234</a>        <span class="bool-val">false
-<a href=#235 id=235 data-nosnippet>235</a>    </span>}
-<a href=#236 id=236 data-nosnippet>236</a>}
+<a href=#168 id=168 data-nosnippet>168</a>            _other =&gt; {
+<a href=#169 id=169 data-nosnippet>169</a>                <span class="comment">// Ignore other node types
+<a href=#170 id=170 data-nosnippet>170</a>            </span>}
+<a href=#171 id=171 data-nosnippet>171</a>        }
+<a href=#172 id=172 data-nosnippet>172</a>
+<a href=#173 id=173 data-nosnippet>173</a>        metadata
+<a href=#174 id=174 data-nosnippet>174</a>    }
+<a href=#175 id=175 data-nosnippet>175</a>
+<a href=#176 id=176 data-nosnippet>176</a>    <span class="doccomment">/// Extract function-specific metadata
+<a href=#177 id=177 data-nosnippet>177</a>    </span><span class="kw">fn </span>extract_function_metadata(
+<a href=#178 id=178 data-nosnippet>178</a>        node: <span class="kw-2">&amp;</span>Node,
+<a href=#179 id=179 data-nosnippet>179</a>        _source: <span class="kw-2">&amp;</span>str,
+<a href=#180 id=180 data-nosnippet>180</a>        metadata: <span class="kw-2">&amp;mut </span>HashMap&lt;String, serde_json::Value&gt;,
+<a href=#181 id=181 data-nosnippet>181</a>    ) {
+<a href=#182 id=182 data-nosnippet>182</a>        <span class="comment">// Count parameters
+<a href=#183 id=183 data-nosnippet>183</a>        </span><span class="kw">let </span>param_count = <span class="self">Self</span>::count_function_parameters(node);
+<a href=#184 id=184 data-nosnippet>184</a>        metadata.insert(<span class="string">"parameter_count"</span>.to_owned(), param_count.into());
+<a href=#185 id=185 data-nosnippet>185</a>
+<a href=#186 id=186 data-nosnippet>186</a>        <span class="comment">// Check if async
+<a href=#187 id=187 data-nosnippet>187</a>        </span><span class="kw">let </span>is_async = <span class="self">Self</span>::is_async_function(node);
+<a href=#188 id=188 data-nosnippet>188</a>        metadata.insert(<span class="string">"is_async"</span>.to_owned(), is_async.into());
+<a href=#189 id=189 data-nosnippet>189</a>
+<a href=#190 id=190 data-nosnippet>190</a>        <span class="comment">// Check if has return type
+<a href=#191 id=191 data-nosnippet>191</a>        </span><span class="kw">let </span>has_return_type = <span class="self">Self</span>::has_return_type(node);
+<a href=#192 id=192 data-nosnippet>192</a>        metadata.insert(<span class="string">"has_return_type"</span>.to_owned(), has_return_type.into());
+<a href=#193 id=193 data-nosnippet>193</a>
+<a href=#194 id=194 data-nosnippet>194</a>        <span class="comment">// Count lines
+<a href=#195 id=195 data-nosnippet>195</a>        </span><span class="kw">let </span>line_count = node.end_position().row - node.start_position().row + <span class="number">1</span>;
+<a href=#196 id=196 data-nosnippet>196</a>        metadata.insert(<span class="string">"line_count"</span>.to_owned(), line_count.into());
+<a href=#197 id=197 data-nosnippet>197</a>    }
+<a href=#198 id=198 data-nosnippet>198</a>
+<a href=#199 id=199 data-nosnippet>199</a>    <span class="doccomment">/// Count function parameters
+<a href=#200 id=200 data-nosnippet>200</a>    </span><span class="kw">fn </span>count_function_parameters(node: <span class="kw-2">&amp;</span>Node) -&gt; usize {
+<a href=#201 id=201 data-nosnippet>201</a>        <span class="kw">let </span><span class="kw-2">mut </span>count = <span class="number">0</span>;
+<a href=#202 id=202 data-nosnippet>202</a>        <span class="kw">let </span><span class="kw-2">mut </span>cursor = node.walk();
+<a href=#203 id=203 data-nosnippet>203</a>
+<a href=#204 id=204 data-nosnippet>204</a>        <span class="kw">for </span>child <span class="kw">in </span>node.children(<span class="kw-2">&amp;mut </span>cursor) {
+<a href=#205 id=205 data-nosnippet>205</a>            <span class="kw">if </span>child.kind().contains(<span class="string">"parameter"</span>) || child.kind() == <span class="string">"parameters" </span>{
+<a href=#206 id=206 data-nosnippet>206</a>                count += child.child_count();
+<a href=#207 id=207 data-nosnippet>207</a>            }
+<a href=#208 id=208 data-nosnippet>208</a>        }
+<a href=#209 id=209 data-nosnippet>209</a>
+<a href=#210 id=210 data-nosnippet>210</a>        count
+<a href=#211 id=211 data-nosnippet>211</a>    }
+<a href=#212 id=212 data-nosnippet>212</a>
+<a href=#213 id=213 data-nosnippet>213</a>    <span class="doccomment">/// Check if function is async
+<a href=#214 id=214 data-nosnippet>214</a>    </span><span class="kw">fn </span>is_async_function(node: <span class="kw-2">&amp;</span>Node) -&gt; bool {
+<a href=#215 id=215 data-nosnippet>215</a>        <span class="kw">let </span><span class="kw-2">mut </span>cursor = node.walk();
+<a href=#216 id=216 data-nosnippet>216</a>
+<a href=#217 id=217 data-nosnippet>217</a>        <span class="kw">for </span>child <span class="kw">in </span>node.children(<span class="kw-2">&amp;mut </span>cursor) {
+<a href=#218 id=218 data-nosnippet>218</a>            <span class="kw">if </span>child.kind() == <span class="string">"async" </span>|| child.kind() == <span class="string">"await" </span>{
+<a href=#219 id=219 data-nosnippet>219</a>                <span class="kw">return </span><span class="bool-val">true</span>;
+<a href=#220 id=220 data-nosnippet>220</a>            }
+<a href=#221 id=221 data-nosnippet>221</a>        }
+<a href=#222 id=222 data-nosnippet>222</a>
+<a href=#223 id=223 data-nosnippet>223</a>        <span class="bool-val">false
+<a href=#224 id=224 data-nosnippet>224</a>    </span>}
+<a href=#225 id=225 data-nosnippet>225</a>
+<a href=#226 id=226 data-nosnippet>226</a>    <span class="doccomment">/// Check if function has return type
+<a href=#227 id=227 data-nosnippet>227</a>    </span><span class="kw">fn </span>has_return_type(node: <span class="kw-2">&amp;</span>Node) -&gt; bool {
+<a href=#228 id=228 data-nosnippet>228</a>        <span class="kw">let </span><span class="kw-2">mut </span>cursor = node.walk();
+<a href=#229 id=229 data-nosnippet>229</a>
+<a href=#230 id=230 data-nosnippet>230</a>        <span class="kw">for </span>child <span class="kw">in </span>node.children(<span class="kw-2">&amp;mut </span>cursor) {
+<a href=#231 id=231 data-nosnippet>231</a>            <span class="kw">if </span>child.kind().contains(<span class="string">"return"</span>) || child.kind().contains(<span class="string">"type"</span>) {
+<a href=#232 id=232 data-nosnippet>232</a>                <span class="kw">return </span><span class="bool-val">true</span>;
+<a href=#233 id=233 data-nosnippet>233</a>            }
+<a href=#234 id=234 data-nosnippet>234</a>        }
+<a href=#235 id=235 data-nosnippet>235</a>
+<a href=#236 id=236 data-nosnippet>236</a>        <span class="bool-val">false
+<a href=#237 id=237 data-nosnippet>237</a>    </span>}
+<a href=#238 id=238 data-nosnippet>238</a>}
 </code></pre></div></section></main></body></html>

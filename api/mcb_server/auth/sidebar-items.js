@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["AuthHandler"]};
+window.SIDEBAR_ITEMS = {"fn":["authorize_admin_api_key","extract_api_key","is_admin_auth_exempt_path"],"struct":["AdminPrincipal"]};

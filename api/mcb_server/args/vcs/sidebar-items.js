@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["VcsAction"],"struct":["VcsArgs"]};
+window.SIDEBAR_ITEMS = {"enum":["VcsAction"],"struct":["AnalyzeImpactArgs","CompareBranchesArgs","ListReposArgs","VcsArgs"]};

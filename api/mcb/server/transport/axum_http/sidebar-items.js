@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["build_router","run_axum_server"],"struct":["AppState","AxumRouter"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["api","auth","browse","browse_handlers","cache","config","control","crud_adapter","error","handlers","health","jobs","lifecycle_handlers","models","propagation","registry","sse","web"],"struct":["AdminApi","AdminApiConfig","AdminRegistry"]};

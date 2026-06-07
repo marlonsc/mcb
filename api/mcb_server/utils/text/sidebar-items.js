@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["extract_text","extract_text_with_sep"]};

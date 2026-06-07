@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["extract_long_field","extract_string_field"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["DependencyType","IssueStatus","IssueType","PhaseStatus","ProjectType"],"struct":["DetectedProject","IssueFilter","Project","ProjectDecision","ProjectDependency","ProjectIssue","ProjectPhase"]};

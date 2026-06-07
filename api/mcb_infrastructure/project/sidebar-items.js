@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["context_resolver","workspace"],"struct":["ProjectService"]};
+window.SIDEBAR_ITEMS = {"mod":["workspace"],"struct":["ProjectService"],"type":["DetectAllFn"]};

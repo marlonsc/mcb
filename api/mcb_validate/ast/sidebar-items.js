@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["LANG"],"fn":["action","find","guess_language"],"mod":["core","decoder","query","types","unwrap_detector"],"struct":["Node"],"trait":["Callback","Search"]};
+window.SIDEBAR_ITEMS = {"enum":["LANG"],"fn":["action","find","guess_language"],"mod":["core","decoder","query","rca_helpers","selector_engine","tree_sitter_query_executor","types","unwrap_detector"],"struct":["Node"],"trait":["Callback","Search"]};

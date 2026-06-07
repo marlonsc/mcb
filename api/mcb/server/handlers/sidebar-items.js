@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["agent","entities","index","memory","project","search","session","validate","vcs"],"struct":["AgentHandler","EntityHandler","IndexHandler","IssueEntityHandler","MemoryHandler","OrgEntityHandler","PlanEntityHandler","ProjectHandler","SearchHandler","SessionHandler","ValidateHandler","VcsEntityHandler","VcsHandler"]};

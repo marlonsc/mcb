@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["VcsEntityAction","VcsEntityResource"],"struct":["VcsEntityArgs"]};

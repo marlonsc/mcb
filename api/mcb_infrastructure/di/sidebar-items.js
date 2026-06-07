@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["admin","bootstrap","database_resolver","handle","handles","modules","provider_resolvers","repositories","resolver","test_factory","vcs"],"struct":["ProviderInfo"],"trait":["CacheAdminInterface","EmbeddingAdminInterface","LanguageAdminInterface","VectorStoreAdminInterface"]};

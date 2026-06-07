@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["IssueEntityAction","IssueEntityResource","OrgEntityAction","OrgEntityResource","PlanEntityAction","PlanEntityResource","VcsEntityAction","VcsEntityResource"],"mod":["types"],"struct":["IssueEntityArgs","OrgEntityArgs","PlanEntityArgs","VcsEntityArgs"]};
+window.SIDEBAR_ITEMS = {"mod":["issue","org","plan","types","vcs"]};

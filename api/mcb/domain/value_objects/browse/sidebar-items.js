@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["HighlightCategory"],"struct":["CollectionInfo","FileInfo","FileNode","FileTreeNode","HighlightSpan","HighlightedCode"]};

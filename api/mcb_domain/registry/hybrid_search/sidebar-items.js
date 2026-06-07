@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["list_hybrid_search_providers","resolve_hybrid_search_provider"],"struct":["HybridSearchProviderConfig"]};

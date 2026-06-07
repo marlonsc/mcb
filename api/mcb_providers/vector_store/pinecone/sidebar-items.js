@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["PineconeVectorStoreProvider"]};
+window.SIDEBAR_ITEMS = {"fn":["pinecone_factory"],"struct":["PineconeVectorStoreProvider"]};

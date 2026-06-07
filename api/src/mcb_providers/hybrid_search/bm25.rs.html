@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/mcb-providers/src/hybrid_search/bm25.rs`."><title>bm25.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mcb_providers" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.1 (01f6ddf75 2026-02-11)" data-channel="1.93.1" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">mcb_providers/hybrid_search/</div>bm25.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//!
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `crates/mcb-providers/src/hybrid_search/bm25.rs`."><title>bm25.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="mcb_providers" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0 (ac68faa20 2026-05-25)" data-channel="1.96.0" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">mcb_providers/hybrid_search/</div>bm25.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//!
 <a href=#2 id=2 data-nosnippet>2</a>//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
 <a href=#3 id=3 data-nosnippet>3</a>//!
 <a href=#4 id=4 data-nosnippet>4</a>//! BM25 text ranking algorithm implementation
@@ -19,10 +19,10 @@
 <a href=#19 id=19 data-nosnippet>19</a>
 <a href=#20 id=20 data-nosnippet>20</a></span><span class="kw">use </span>std::collections::{HashMap, HashSet};
 <a href=#21 id=21 data-nosnippet>21</a>
-<a href=#22 id=22 data-nosnippet>22</a><span class="kw">use </span>mcb_domain::constants::search::{
-<a href=#23 id=23 data-nosnippet>23</a>    BM25_TOKEN_MIN_LENGTH, HYBRID_SEARCH_BM25_B, HYBRID_SEARCH_BM25_K1,
-<a href=#24 id=24 data-nosnippet>24</a>};
-<a href=#25 id=25 data-nosnippet>25</a><span class="kw">use </span>mcb_domain::entities::CodeChunk;
+<a href=#22 id=22 data-nosnippet>22</a><span class="kw">use </span>mcb_domain::entities::CodeChunk;
+<a href=#23 id=23 data-nosnippet>23</a><span class="kw">use </span>mcb_utils::constants::search::{
+<a href=#24 id=24 data-nosnippet>24</a>    BM25_TOKEN_MIN_LENGTH, HYBRID_SEARCH_BM25_B, HYBRID_SEARCH_BM25_K1,
+<a href=#25 id=25 data-nosnippet>25</a>};
 <a href=#26 id=26 data-nosnippet>26</a>
 <a href=#27 id=27 data-nosnippet>27</a><span class="doccomment">/// BM25 parameters for tuning the algorithm
 <a href=#28 id=28 data-nosnippet>28</a></span><span class="attr">#[derive(Debug, Clone)]
@@ -132,81 +132,84 @@
 <a href=#132 id=132 data-nosnippet>132</a>        </span><span class="kw">for </span>query_term <span class="kw">in </span>query_terms {
 <a href=#133 id=133 data-nosnippet>133</a>            <span class="kw">let </span>tf = doc_term_freq.get(query_term.as_str()).copied().unwrap_or(<span class="number">0</span>) <span class="kw">as </span>f64;
 <a href=#134 id=134 data-nosnippet>134</a>            <span class="kw">let </span>df = <span class="self">self</span>.document_freq.get(query_term).copied().unwrap_or(<span class="number">0</span>) <span class="kw">as </span>f64;
-<a href=#135 id=135 data-nosnippet>135</a>
-<a href=#136 id=136 data-nosnippet>136</a>            <span class="kw">if </span>df &gt; <span class="number">0.0 </span>&amp;&amp; tf &gt; <span class="number">0.0 </span>{
-<a href=#137 id=137 data-nosnippet>137</a>                <span class="comment">// IDF calculation using Lucene/Elasticsearch variant that ensures positive IDF
-<a href=#138 id=138 data-nosnippet>138</a>                // This avoids zero/negative IDF when terms appear in half or more documents
-<a href=#139 id=139 data-nosnippet>139</a>                </span><span class="kw">let </span>idf = <span class="kw">if </span><span class="self">self</span>.total_docs &gt; <span class="number">1 </span>{
-<a href=#140 id=140 data-nosnippet>140</a>                    <span class="comment">// Lucene BM25 IDF: ln(1 + (N - n + 0.5) / (n + 0.5))
-<a href=#141 id=141 data-nosnippet>141</a>                    </span>(<span class="number">1.0 </span>+ (<span class="self">self</span>.total_docs <span class="kw">as </span>f64 - df + <span class="number">0.5</span>) / (df + <span class="number">0.5</span>)).ln()
-<a href=#142 id=142 data-nosnippet>142</a>                } <span class="kw">else </span>{
-<a href=#143 id=143 data-nosnippet>143</a>                    <span class="comment">// Simplified IDF for single document (always positive)
-<a href=#144 id=144 data-nosnippet>144</a>                    </span><span class="number">1.0
-<a href=#145 id=145 data-nosnippet>145</a>                </span>};
-<a href=#146 id=146 data-nosnippet>146</a>
-<a href=#147 id=147 data-nosnippet>147</a>                <span class="comment">// Term frequency normalization
-<a href=#148 id=148 data-nosnippet>148</a>                </span><span class="kw">let </span>tf_normalized = (tf * (<span class="self">self</span>.params.k1 + <span class="number">1.0</span>))
-<a href=#149 id=149 data-nosnippet>149</a>                    / (tf
-<a href=#150 id=150 data-nosnippet>150</a>                        + <span class="self">self</span>.params.k1
-<a href=#151 id=151 data-nosnippet>151</a>                            * (<span class="number">1.0 </span>- <span class="self">self</span>.params.b
-<a href=#152 id=152 data-nosnippet>152</a>                                + <span class="self">self</span>.params.b * doc_length / <span class="self">self</span>.avg_doc_len));
-<a href=#153 id=153 data-nosnippet>153</a>
-<a href=#154 id=154 data-nosnippet>154</a>                score += idf * tf_normalized;
-<a href=#155 id=155 data-nosnippet>155</a>            }
-<a href=#156 id=156 data-nosnippet>156</a>        }
-<a href=#157 id=157 data-nosnippet>157</a>
-<a href=#158 id=158 data-nosnippet>158</a>        score
-<a href=#159 id=159 data-nosnippet>159</a>    }
+<a href=#135 id=135 data-nosnippet>135</a>            score += <span class="self">self</span>.term_score(tf, df, doc_length);
+<a href=#136 id=136 data-nosnippet>136</a>        }
+<a href=#137 id=137 data-nosnippet>137</a>
+<a href=#138 id=138 data-nosnippet>138</a>        score
+<a href=#139 id=139 data-nosnippet>139</a>    }
+<a href=#140 id=140 data-nosnippet>140</a>
+<a href=#141 id=141 data-nosnippet>141</a>    <span class="doccomment">/// BM25 contribution of a single query term given its term frequency `tf`,
+<a href=#142 id=142 data-nosnippet>142</a>    /// document frequency `df`, and the document length.
+<a href=#143 id=143 data-nosnippet>143</a>    </span><span class="kw">fn </span>term_score(<span class="kw-2">&amp;</span><span class="self">self</span>, tf: f64, df: f64, doc_length: f64) -&gt; f64 {
+<a href=#144 id=144 data-nosnippet>144</a>        <span class="kw">if </span>df &lt;= <span class="number">0.0 </span>|| tf &lt;= <span class="number">0.0 </span>{
+<a href=#145 id=145 data-nosnippet>145</a>            <span class="kw">return </span><span class="number">0.0</span>;
+<a href=#146 id=146 data-nosnippet>146</a>        }
+<a href=#147 id=147 data-nosnippet>147</a>
+<a href=#148 id=148 data-nosnippet>148</a>        <span class="comment">// IDF using the Lucene/Elasticsearch variant that stays positive even when
+<a href=#149 id=149 data-nosnippet>149</a>        // a term appears in half or more documents.
+<a href=#150 id=150 data-nosnippet>150</a>        </span><span class="kw">let </span>idf = <span class="kw">if </span><span class="self">self</span>.total_docs &gt; <span class="number">1 </span>{
+<a href=#151 id=151 data-nosnippet>151</a>            (<span class="number">1.0 </span>+ (<span class="self">self</span>.total_docs <span class="kw">as </span>f64 - df + <span class="number">0.5</span>) / (df + <span class="number">0.5</span>)).ln()
+<a href=#152 id=152 data-nosnippet>152</a>        } <span class="kw">else </span>{
+<a href=#153 id=153 data-nosnippet>153</a>            <span class="number">1.0
+<a href=#154 id=154 data-nosnippet>154</a>        </span>};
+<a href=#155 id=155 data-nosnippet>155</a>
+<a href=#156 id=156 data-nosnippet>156</a>        <span class="kw">let </span>tf_normalized = (tf * (<span class="self">self</span>.params.k1 + <span class="number">1.0</span>))
+<a href=#157 id=157 data-nosnippet>157</a>            / (tf
+<a href=#158 id=158 data-nosnippet>158</a>                + <span class="self">self</span>.params.k1
+<a href=#159 id=159 data-nosnippet>159</a>                    * (<span class="number">1.0 </span>- <span class="self">self</span>.params.b + <span class="self">self</span>.params.b * doc_length / <span class="self">self</span>.avg_doc_len));
 <a href=#160 id=160 data-nosnippet>160</a>
-<a href=#161 id=161 data-nosnippet>161</a>    <span class="doccomment">/// Score multiple documents with a single tokenization pass (batch optimization)
-<a href=#162 id=162 data-nosnippet>162</a>    ///
-<a href=#163 id=163 data-nosnippet>163</a>    /// This is more efficient than calling `score()` for each document because
-<a href=#164 id=164 data-nosnippet>164</a>    /// the query is tokenized only once.
-<a href=#165 id=165 data-nosnippet>165</a>    </span><span class="attr">#[must_use]
-<a href=#166 id=166 data-nosnippet>166</a>    </span><span class="kw">pub fn </span>score_batch(<span class="kw-2">&amp;</span><span class="self">self</span>, documents: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>CodeChunk], query: <span class="kw-2">&amp;</span>str) -&gt; Vec&lt;f64&gt; {
-<a href=#167 id=167 data-nosnippet>167</a>        <span class="kw">let </span>query_terms = <span class="self">Self</span>::tokenize(query);
-<a href=#168 id=168 data-nosnippet>168</a>        documents
-<a href=#169 id=169 data-nosnippet>169</a>            .iter()
-<a href=#170 id=170 data-nosnippet>170</a>            .map(|doc| <span class="self">self</span>.score_with_tokens(doc, <span class="kw-2">&amp;</span>query_terms))
-<a href=#171 id=171 data-nosnippet>171</a>            .collect()
-<a href=#172 id=172 data-nosnippet>172</a>    }
-<a href=#173 id=173 data-nosnippet>173</a>
-<a href=#174 id=174 data-nosnippet>174</a>    <span class="doccomment">/// Tokenize text into terms
-<a href=#175 id=175 data-nosnippet>175</a>    ///
-<a href=#176 id=176 data-nosnippet>176</a>    /// Performs lowercase normalization and splits on whitespace, punctuation,
-<a href=#177 id=177 data-nosnippet>177</a>    /// and underscores (for `snake_case` identifiers).
-<a href=#178 id=178 data-nosnippet>178</a>    /// Filters out tokens shorter than `BM25_TOKEN_MIN_LENGTH`.
-<a href=#179 id=179 data-nosnippet>179</a>    </span><span class="attr">#[must_use]
-<a href=#180 id=180 data-nosnippet>180</a>    </span><span class="kw">pub fn </span>tokenize(text: <span class="kw-2">&amp;</span>str) -&gt; Vec&lt;String&gt; {
-<a href=#181 id=181 data-nosnippet>181</a>        text.to_lowercase()
-<a href=#182 id=182 data-nosnippet>182</a>            .split(|c: char| !c.is_alphanumeric())
-<a href=#183 id=183 data-nosnippet>183</a>            .filter(|s| !s.is_empty() &amp;&amp; s.len() &gt; BM25_TOKEN_MIN_LENGTH)
-<a href=#184 id=184 data-nosnippet>184</a>            .map(std::borrow::ToOwned::to_owned)
-<a href=#185 id=185 data-nosnippet>185</a>            .collect()
-<a href=#186 id=186 data-nosnippet>186</a>    }
-<a href=#187 id=187 data-nosnippet>187</a>
-<a href=#188 id=188 data-nosnippet>188</a>    <span class="doccomment">/// Get the total number of indexed documents
-<a href=#189 id=189 data-nosnippet>189</a>    </span><span class="attr">#[must_use]
-<a href=#190 id=190 data-nosnippet>190</a>    </span><span class="kw">pub fn </span>total_docs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-<a href=#191 id=191 data-nosnippet>191</a>        <span class="self">self</span>.total_docs
-<a href=#192 id=192 data-nosnippet>192</a>    }
-<a href=#193 id=193 data-nosnippet>193</a>
-<a href=#194 id=194 data-nosnippet>194</a>    <span class="doccomment">/// Get the number of unique terms in the index
-<a href=#195 id=195 data-nosnippet>195</a>    </span><span class="attr">#[must_use]
-<a href=#196 id=196 data-nosnippet>196</a>    </span><span class="kw">pub fn </span>unique_terms(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-<a href=#197 id=197 data-nosnippet>197</a>        <span class="self">self</span>.document_freq.len()
-<a href=#198 id=198 data-nosnippet>198</a>    }
-<a href=#199 id=199 data-nosnippet>199</a>
-<a href=#200 id=200 data-nosnippet>200</a>    <span class="doccomment">/// Get the average document length
-<a href=#201 id=201 data-nosnippet>201</a>    </span><span class="attr">#[must_use]
-<a href=#202 id=202 data-nosnippet>202</a>    </span><span class="kw">pub fn </span>avg_doc_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
-<a href=#203 id=203 data-nosnippet>203</a>        <span class="self">self</span>.avg_doc_len
-<a href=#204 id=204 data-nosnippet>204</a>    }
-<a href=#205 id=205 data-nosnippet>205</a>
-<a href=#206 id=206 data-nosnippet>206</a>    <span class="doccomment">/// Get the BM25 parameters
-<a href=#207 id=207 data-nosnippet>207</a>    </span><span class="attr">#[must_use]
-<a href=#208 id=208 data-nosnippet>208</a>    </span><span class="kw">pub fn </span>params(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>BM25Params {
-<a href=#209 id=209 data-nosnippet>209</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.params
-<a href=#210 id=210 data-nosnippet>210</a>    }
-<a href=#211 id=211 data-nosnippet>211</a>}
+<a href=#161 id=161 data-nosnippet>161</a>        idf * tf_normalized
+<a href=#162 id=162 data-nosnippet>162</a>    }
+<a href=#163 id=163 data-nosnippet>163</a>
+<a href=#164 id=164 data-nosnippet>164</a>    <span class="doccomment">/// Score multiple documents with a single tokenization pass (batch optimization)
+<a href=#165 id=165 data-nosnippet>165</a>    ///
+<a href=#166 id=166 data-nosnippet>166</a>    /// This is more efficient than calling `score()` for each document because
+<a href=#167 id=167 data-nosnippet>167</a>    /// the query is tokenized only once.
+<a href=#168 id=168 data-nosnippet>168</a>    </span><span class="attr">#[must_use]
+<a href=#169 id=169 data-nosnippet>169</a>    </span><span class="kw">pub fn </span>score_batch(<span class="kw-2">&amp;</span><span class="self">self</span>, documents: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>CodeChunk], query: <span class="kw-2">&amp;</span>str) -&gt; Vec&lt;f64&gt; {
+<a href=#170 id=170 data-nosnippet>170</a>        <span class="kw">let </span>query_terms = <span class="self">Self</span>::tokenize(query);
+<a href=#171 id=171 data-nosnippet>171</a>        documents
+<a href=#172 id=172 data-nosnippet>172</a>            .iter()
+<a href=#173 id=173 data-nosnippet>173</a>            .map(|doc| <span class="self">self</span>.score_with_tokens(doc, <span class="kw-2">&amp;</span>query_terms))
+<a href=#174 id=174 data-nosnippet>174</a>            .collect()
+<a href=#175 id=175 data-nosnippet>175</a>    }
+<a href=#176 id=176 data-nosnippet>176</a>
+<a href=#177 id=177 data-nosnippet>177</a>    <span class="doccomment">/// Tokenize text into terms
+<a href=#178 id=178 data-nosnippet>178</a>    ///
+<a href=#179 id=179 data-nosnippet>179</a>    /// Performs lowercase normalization and splits on whitespace, punctuation,
+<a href=#180 id=180 data-nosnippet>180</a>    /// and underscores (for `snake_case` identifiers).
+<a href=#181 id=181 data-nosnippet>181</a>    /// Filters out tokens shorter than `BM25_TOKEN_MIN_LENGTH`.
+<a href=#182 id=182 data-nosnippet>182</a>    </span><span class="attr">#[must_use]
+<a href=#183 id=183 data-nosnippet>183</a>    </span><span class="kw">pub fn </span>tokenize(text: <span class="kw-2">&amp;</span>str) -&gt; Vec&lt;String&gt; {
+<a href=#184 id=184 data-nosnippet>184</a>        text.to_lowercase()
+<a href=#185 id=185 data-nosnippet>185</a>            .split(|c: char| !c.is_alphanumeric())
+<a href=#186 id=186 data-nosnippet>186</a>            .filter(|s| !s.is_empty() &amp;&amp; s.len() &gt; BM25_TOKEN_MIN_LENGTH)
+<a href=#187 id=187 data-nosnippet>187</a>            .map(std::borrow::ToOwned::to_owned)
+<a href=#188 id=188 data-nosnippet>188</a>            .collect()
+<a href=#189 id=189 data-nosnippet>189</a>    }
+<a href=#190 id=190 data-nosnippet>190</a>
+<a href=#191 id=191 data-nosnippet>191</a>    <span class="doccomment">/// Get the total number of indexed documents
+<a href=#192 id=192 data-nosnippet>192</a>    </span><span class="attr">#[must_use]
+<a href=#193 id=193 data-nosnippet>193</a>    </span><span class="kw">pub fn </span>total_docs(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+<a href=#194 id=194 data-nosnippet>194</a>        <span class="self">self</span>.total_docs
+<a href=#195 id=195 data-nosnippet>195</a>    }
+<a href=#196 id=196 data-nosnippet>196</a>
+<a href=#197 id=197 data-nosnippet>197</a>    <span class="doccomment">/// Get the number of unique terms in the index
+<a href=#198 id=198 data-nosnippet>198</a>    </span><span class="attr">#[must_use]
+<a href=#199 id=199 data-nosnippet>199</a>    </span><span class="kw">pub fn </span>unique_terms(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+<a href=#200 id=200 data-nosnippet>200</a>        <span class="self">self</span>.document_freq.len()
+<a href=#201 id=201 data-nosnippet>201</a>    }
+<a href=#202 id=202 data-nosnippet>202</a>
+<a href=#203 id=203 data-nosnippet>203</a>    <span class="doccomment">/// Get the average document length
+<a href=#204 id=204 data-nosnippet>204</a>    </span><span class="attr">#[must_use]
+<a href=#205 id=205 data-nosnippet>205</a>    </span><span class="kw">pub fn </span>avg_doc_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; f64 {
+<a href=#206 id=206 data-nosnippet>206</a>        <span class="self">self</span>.avg_doc_len
+<a href=#207 id=207 data-nosnippet>207</a>    }
+<a href=#208 id=208 data-nosnippet>208</a>
+<a href=#209 id=209 data-nosnippet>209</a>    <span class="doccomment">/// Get the BM25 parameters
+<a href=#210 id=210 data-nosnippet>210</a>    </span><span class="attr">#[must_use]
+<a href=#211 id=211 data-nosnippet>211</a>    </span><span class="kw">pub fn </span>params(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>BM25Params {
+<a href=#212 id=212 data-nosnippet>212</a>        <span class="kw-2">&amp;</span><span class="self">self</span>.params
+<a href=#213 id=213 data-nosnippet>213</a>    }
+<a href=#214 id=214 data-nosnippet>214</a>}
 </code></pre></div></section></main></body></html>

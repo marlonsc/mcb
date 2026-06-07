@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["analyzer","constants","detector","fingerprint","thresholds","violation"]};
+window.SIDEBAR_ITEMS = {"mod":["analyzer","detector","fingerprint","thresholds","violation"]};

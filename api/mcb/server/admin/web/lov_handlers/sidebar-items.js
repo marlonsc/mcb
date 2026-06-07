@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["lov_endpoint"],"struct":["LovItem","LovQuery"]};

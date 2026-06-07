@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["list_project_detection_services","resolve_project_detection_service"],"struct":["ProjectDetectionServiceConfig"]};

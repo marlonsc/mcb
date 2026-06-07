@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["highlight_renderer","highlight_service"]};
+window.SIDEBAR_ITEMS = {"mod":["agent_session_service","context_service","highlight_service","indexing_service","memory_service","search_service"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["EventBusProvider","PasswordAlgorithm"],"struct":["AdminApiKeyConfig","ApiKeyConfig","AuthConfig","BackupConfig","DaemonConfig","EventBusConfig","JwtConfig","OperationsConfig","SnapshotConfig","SyncConfig","SystemConfig"]};

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["execute","query_all","query_one"]};
