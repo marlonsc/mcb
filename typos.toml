@@ -1,0 +1,16 @@
+# typos (crate-ci/typos) — fast source spell-checker run in the pre-commit tier and CI.
+[files]
+extend-exclude = [
+  "target/",
+  "third-party/",
+  "**/generated/**",
+  "**/*.lock",
+  "**/snapshots/**",
+  "**/*.svg",
+]
+
+# Domain words / abbreviations that are correct (identity mapping = "this is valid").
+[default.extend-words]
+mcb = "mcb"
+ort = "ort"
+seaorm = "seaorm"

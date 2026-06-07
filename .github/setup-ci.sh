@@ -167,6 +167,14 @@ while [[ $# -gt 0 ]]; do
 		fi
 		shift
 		;;
+	--install-nextest)
+		command -v cargo-nextest &>/dev/null || cargo install cargo-nextest --locked --quiet
+		shift
+		;;
+	--install-typos)
+		command -v typos &>/dev/null || cargo install typos-cli --locked --quiet
+		shift
+		;;
 	*)
 		echo "Error: Unknown option: $1" >&2
 		exit 1
