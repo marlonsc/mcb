@@ -1,4 +1,9 @@
-#![allow(missing_docs)]
+//! Build script for `mcb-validate`.
+//!
+//! Walks the crate's `rules/` directory and embeds every `*.yml` rule file into
+//! the binary via a generated `embedded_rules_gen.rs` (a `&[(&str, &str)]` of
+//! `(relative_path, file_contents)`), so the validator ships its rule set with
+//! no runtime filesystem dependency.
 
 use std::env;
 use std::fmt::Write as _;
