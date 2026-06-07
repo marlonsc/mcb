@@ -1,0 +1,19 @@
+crates/mcb-validate/src/run_context.rs
+  s_f9d035179282ab::t_2f19f185c4242b 216-221,225-227
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "22ba26b02d7839fd846c596df16955d654aac063",
+  "prompts": {},
+  "sessions": {
+    "s_f9d035179282ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42fba31f-461c-4a02-9a34-c3462d77e248",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
