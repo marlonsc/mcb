@@ -279,6 +279,9 @@ jobs:
           else
             echo "FastEmbed model cache restored."
           fi
+      - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
+        with:
+          tool: nextest
       - name: Startup Smoke (DDL/Init)
         run: make test SCOPE=startup THREADS=4
         env:
@@ -398,6 +401,9 @@ jobs:
           else
             echo "FastEmbed model cache restored."
           fi
+      - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
+        with:
+          tool: nextest
       - name: Run tests
         run: make test THREADS=4
         env:
@@ -486,6 +492,9 @@ jobs:
           else
             echo "FastEmbed model cache restored."
           fi
+      - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
+        with:
+          tool: nextest
       - run: make test SCOPE=golden THREADS=2
         env:
           FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
