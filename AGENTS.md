@@ -182,12 +182,32 @@ make setup [WHAT=hooks|tools|adr|all]                  # hooks installs the pre-
 directory, updates MCP client configs when present, and manages the user `mcb`
 systemd service. Run it only when the user explicitly asks for installation work.
 
-Enforcement is mechanical, not honor-system: `make setup WHAT=hooks` installs a
-no-bypass pre-commit hook (staged `guard` + `check WHAT=lint` + `check
-WHAT=validate QUICK=1`); `.claude/settings.json` denies dangerous shell and
-routes every Bash through `scripts/lib/mcb.sh guard-bash`; `make guard` scans the
-full tree (CI/manual) while the hook's `guard --staged` blocks only NEW
-violations in the commit.
+Enforcement is mechanical, not honor-system: `make setup WHAT=hooks` installs
+no-bypass tiered git hooks driven by one SSOT (`make hook WHAT=pre-commit|pre-push`
+in `makefiles/dispatch.mk`). pre-commit (fast): staged `guard` + fmt + clippy
+(`--workspace`) + typos + unit tests. pre-push (full): clippy `--all-targets` + full
+suite + doctests + `validate quick`, then delegates to the beads `pre-push` hook.
+`.claude/settings.json` denies dangerous shell and routes every Bash through
+`scripts/lib/mcb.sh guard-bash`; `make guard` scans the full tree (CI/manual) while
+the hook's `guard --staged` blocks only NEW violations in the commit.
+
+## Task Tracking (beads / bd)
+
+Work items live in **beads** (`bd`, a Dolt-backed dependency graph; `.beads/` is
+already initialized). Prefer it over ad-hoc TODO lists for any multi-step work.
+
+- `bd prime` — load agent workflow context + project memories.
+- `bd ready` — list work with no open blockers (actionable now).
+- `bd create "Title" -p <prio> -t <task|bug>`; `bd dep add <child> <parent>` links dependencies.
+- `bd update <id> --claim` — atomically take an item (assignee + in_progress); stops two agents touching the same work.
+- `bd show <id>` / `bd close <id> "evidence"` — inspect / complete with a note.
+- Hash IDs (`bd-a1b2`) avoid merge collisions across branches/agents.
+
+For multi-agent execution, a coordinator owns the graph: re-analyze impact, write
+closed specs, size conflict-free batches (no two in-flight items touch the same
+file; `dispatch.mk`/`Makefile` are a serial lane), validate each delivery (green
+gate + evidence) before `bd close`, then unblock dependents. No item closes red;
+out-of-scope changes become new items, never silent expansion.
 
 ## Architecture
 
