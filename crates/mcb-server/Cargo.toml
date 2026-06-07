@@ -114,7 +114,6 @@ linkme = { workspace = true }
 
 # SeaQL + Loco ecosystem (v0.3.0)
 loco-rs = { workspace = true }
-sea-streamer = { workspace = true }
 seaography = { workspace = true }
 sea-orm = { workspace = true }
 sea-orm-pro = { workspace = true }
