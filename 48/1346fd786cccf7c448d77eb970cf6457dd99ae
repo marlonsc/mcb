@@ -1,0 +1,28 @@
+crates/mcb-validate/tests/unit/scan/discovery_tests.rs
+  s_f9d035179282ab::t_9087509997fcf4 28
+crates/mcb-validate/tests/unit/lib_tests.rs
+  s_f9d035179282ab::t_630f96251795e6 13
+crates/mcb-validate/tests/unit/validators/pattern_validator/patterns_tests.rs
+  s_f9d035179282ab::t_cc0c1399eef713 21,51
+crates/mcb-validate/tests/unit/declarative_validator_tests.rs
+  ai_agent 121-122,156-157,188-189,276-277
+crates/mcb-validate/tests/unit/validators/declarative_validator_tests.rs
+  s_f9d035179282ab::t_eb30627e9edca4 158
+  ai_agent 74-75,118-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "481346fd786cccf7c448d77eb970cf6457dd99ae",
+  "prompts": {},
+  "sessions": {
+    "s_f9d035179282ab": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "42fba31f-461c-4a02-9a34-c3462d77e248",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
