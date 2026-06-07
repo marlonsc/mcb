@@ -1,0 +1,19 @@
+.gitignore
+  s_a475cfd2777057::t_ba710a41c63a07 12,280-281
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "478a02128454ec9164f842fe2ab5aeeb9d4f161f",
+  "prompts": {},
+  "sessions": {
+    "s_a475cfd2777057": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea2cd-b65b-7262-910a-0392f963440d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
