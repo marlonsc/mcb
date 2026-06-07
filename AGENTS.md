@@ -82,12 +82,67 @@ committing. Read-only inspection (`status`/`log`/`diff`) is fine. When a commit 
 user with no agent/bot attribution — no `Co-Authored-By`, no "Generated with …" trailer, and never override
 author/committer identity.
 
-### 11. Multi-Agent Coordination
-Agents may share one working tree. Coordinate through a committed task board (e.g.
-`<repo>/.agents/coordination/tasks.md`): claim a task with an ownership + lease entry before editing, heartbeat
-the lease, set `done`/`blocked` on finish, and recover stale tasks from git history. Commit small and often so
-a fresh agent rebuilds state from `git log`. **Never overwrite or discard another agent's work** (see Rule 2);
-on a divergent approach, stop and escalate to the user.
+### 11. Beads-First Multi-Agent Coordination
+Agents may share one working tree. The source of truth for work, ownership, dependencies, and completion is
+**beads (`bd`) inside the repository**, not markdown task boards, chat, transcript memory, or ad-hoc files.
+If `.beads/` is absent, initialize or request initialization before starting non-trivial work; never invent a
+parallel tracker.
+
+- The project-level `beads.role` config must be set to a valid durable authority role (default: `maintainer`
+  unless the repo documents another value). Do not mutate `beads.role` just to switch task phase; task phase
+  lives in labels.
+- Every non-trivial bead carries canonical labels: `role:<role>`, `agent:<agent>`, `phase:<phase>`, and when
+  useful `gate:<gate>` / `scope:<area>` / `project:<member>`. Required roles are `planner`, `coordinator`,
+  `executor`, `validator`, `security`, `reviewer`, and `maintainer`.
+- Start every task with `bd ready --json`, then inspect the chosen bead with `bd show <id> --json`.
+- Claim work atomically with `bd update <id> --claim --json` before editing. If claim is unavailable, use the
+  repo's documented `bd update <id> --status in_progress --assignee <agent> --json` equivalent.
+- Structure work as `epic -> feature/task/bug/chore`; use advanced bead types only for their native purpose:
+  `gate` for validation or async release blockers, `agent` for long-lived worker sessions, `role` for standing
+  role charters, `molecule` for repeatable fan-out recipes, `event` for audit entries, `merge-request` for
+  publication/review artifacts, and `slot`/`convoy` for serialized capacity lanes. Use priorities `P0`..`P4`;
+  link ordering and discovery with `parent-child`, `blocks`, `discovered-from`, `related`, `duplicate`, or
+  `supersede`.
+- Role rules: `planner` creates epics/design/acceptance/deps; `coordinator` owns parent sequencing and subagent
+  integration; `executor` performs scoped implementation only; `validator` supplies independent evidence and
+  gate beads; `security` owns threat, secret, dependency, supply-chain, and abuse-risk work; `reviewer` performs
+  read-only/diff/ADR review; `maintainer` handles routine repo/tooling upkeep. A single agent may play multiple
+  roles only through separate beads, and may not be the only validator of its own executor bead.
+- Coordinator loop is canonical for any non-trivial bead: `bd status`/`bd ready` -> choose the unblocked parent
+  or child -> claim/update -> create or refine sub-beads -> dispatch workers with disjoint scope -> receive
+  evidence -> dispatch an independent verifier/corrector -> integrate corrections -> rerun gates -> record the
+  report in `bd` -> decide close, continue, or blocked. The loop continues until the bead is genuinely closed
+  or explicitly blocked; silent stopping is a coordination defect.
+- Worker subagents must receive a high-quality prompt containing the bead id, exact objective, allowed write
+  paths, forbidden paths, required context files, acceptance criteria, required `make`/test/security/docs gates,
+  expected evidence format, and Git policy. Workers do not own publication unless their bead explicitly grants
+  that lane and the live user has authorized Git for that lane.
+- After every worker return, a separate verifier/corrector bead is required for meaningful changes. The verifier
+  must be independent from the executor, review the diff/evidence against acceptance criteria, fix only narrowly
+  scoped issues or return blockers, and record command + exit code + decisive output in `bd`.
+- Quality interlock is mandatory: each implementation bead names its smallest relevant `make` gate, any required
+  security/docs gate, and the CI/Actions check to inspect after publication. Local `make`/test output and remote
+  CI status are recorded back into the bead; they are not tracked in a second report.
+- Git remains user-authorized only: beads record readiness, validation, release notes, and CI evidence; they do
+  not authorize `git add`/`commit`/`push` by themselves.
+- Publication interlock: when Git is explicitly authorized for the lane, the coordinator stages only the bead's
+  scoped paths, commits with no agent attribution, pushes, records commit/push/CI evidence in `bd`, and keeps
+  the bead open until remote checks finish.
+- GitOps interlock: for Kubernetes/GitOps changes, completion requires dese-first validation from ArgoCD/read-only
+  cluster evidence, then prod and control sync/soak in the documented dependency order after dese is green. The
+  bead cannot close while dese/prod/control validation is missing, red, skipped without justification, or only
+  locally verified. For non-GitOps changes, record `not applicable` with the reason in the bead.
+- Subagents require their own bead or child bead, a disjoint write scope, and their own validation evidence.
+  The coordinator integrates results and closes the bead only after review.
+- Keep long work alive with `bd agent heartbeat <agent-id>` or a repo-documented heartbeat note; stale or blocked
+  work must be visible through `bd`, not hidden in chat.
+- Close only with evidence: command, exit code, and relevant output in the close reason or bead notes. No red
+  gate, warning, skipped check, or unverified claim may be closed as done.
+- Never edit `.beads/*.jsonl` or any beads database/export by hand. Every create/update/close/dependency/status
+  change goes through `bd`, followed by the repo's `bd sync`/validation path.
+
+**Never overwrite or discard another agent's work** (see Rule 2); on a divergent approach, stop and escalate to
+the user.
 
 ### 12. When Unsure — Ask
 If a task is unclear, ambiguous, or would expand scope → ask one focused question. If an action is hard to
@@ -100,6 +155,8 @@ privileges (`sudo`/`su`), change ownership/permissions, perform remote operation
 without explicit user confirmation. Use the agent's structured file/search/edit tools over raw destructive
 shell commands.
 <!-- END UNIVERSAL AGENT LAW -->
+
+
 
 MCB (Memory Context Browser) is a Rust 2024 MCP server for persistent agent
 memory, semantic code search, and architecture validation.
@@ -207,6 +264,10 @@ already initialized). Prefer it over ad-hoc TODO lists for any multi-step work.
 - `bd update <id> --claim` — atomically take an item (assignee + in_progress); stops two agents touching the same work.
 - `bd show <id>` / `bd close <id> "evidence"` — inspect / complete with a note.
 - Hash IDs (`bd-a1b2`) avoid merge collisions across branches/agents.
+- Frequent permission baseline: keep `bd`, `make`, `sg`, `edit`, and `update`
+  always permitted for agent workflow. Use `bd update` for bead state changes;
+  use structured edits for files; never use this baseline to bypass the blocked
+  operation protocol or to edit `.beads/*.jsonl` manually.
 
 For multi-agent execution, a coordinator owns the graph: re-analyze impact, write
 closed specs, size conflict-free batches (no two in-flight items touch the same
@@ -227,24 +288,26 @@ Until the current bead-audit and retired-docs migration is complete:
 - Run exactly one coordinator loop every five minutes in this session. Each
   five-minute tick performs, in order: read `bd status`, active child beads,
   subagent state, and `make git WHAT=status`; execute or integrate one scoped
-  sub-bead; run the smallest relevant gate plus `bd sync`; commit/push a
-  validated checkpoint when changes are complete. Repeat that same single tick
+  sub-bead; run the smallest relevant gate plus `bd sync`; record a validated
+  checkpoint in the bead. Commit/push only when the current lane has explicit
+  user authorization for Git writes. Repeat that same single tick
   until `mcb-v5an.14` and its children are closed or blocked with evidence.
   Between ticks, execute non-overlapping work only; do not start another poller,
   watcher, or sleep loop.
-- Push frequent validated checkpoints while this user-authorized lane is active.
-  Use the project `make git` verbs and include the validation evidence in the
-  bead close note or commit message.
+- When this user-authorized lane also authorizes Git writes, push frequent
+  validated checkpoints through the project `make git` verbs. Always include
+  validation evidence in the bead close note; include it in commit messages only
+  when a commit is actually authorized.
 
 > **MAXIMUM RULE — never idle-wait.** Never block waiting on an async/long action
 > (CI, builds, deploys, remote jobs). Always either *actively monitor* it (poll on a
 > cadence) or pick up an independent non-blocking bead and return when it completes.
 > Idle waiting is forbidden — there is always either monitoring or other ready work.
 >
-> **FUNDAMENTAL — push frequently.** After every commit (and at each loop step) push
-> immediately via `make git WHAT=push APPLY=Y` — work is never stranded locally. Each
-> push restarts CI (cancel-in-progress); that is expected — stop committing to let the
-> final run go green, then merge. Always end a step by stating the next concrete action.
+> **FUNDAMENTAL — checkpoint frequently.** After every validated slice, record the
+> next concrete action and evidence in `bd`. If the current lane explicitly authorizes
+> commits/pushes, push immediately after each authorized commit via
+> `make git WHAT=push APPLY=Y` so work is not stranded locally.
 >
 > **FUNDAMENTAL — one self-paced loop per session.** Drive long async work with a
 > single ~5-min `ScheduleWakeup` heartbeat — never multiple overlapping loops or

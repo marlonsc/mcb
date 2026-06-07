@@ -43,7 +43,7 @@ endif
 gate = [ "$(APPLY)" = "Y" ] || { printf "DRY-RUN: would %s; set APPLY=Y to execute\n" "$(1)" >&2; exit 0; }
 
 # --- WHATS_<verb> phase SSOT (drives sub-help + error arms) -------------------
-WHATS_check   := fmt lint validate audit udeps coverage qlty all
+WHATS_check   := fmt lint validate audit udeps coverage qlty coordination all
 WHATS_fix     := fmt lint docs all
 WHATS_dev     := run docker-up docker-down docker-logs docker-test
 WHATS_docs    := build serve lint validate sync rust check setup adr adr-new diagrams

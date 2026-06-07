@@ -38,10 +38,10 @@ Pain points:
 4. Duplicate data stores (Beads SQLite vs MCB SQLite)
 5. No semantic search across workflow data
 
-## Decision
+## Historical Decision
 
-**Extend MCB domain to be the SINGLE SOURCE OF TRUTH for workflow management.**
-No support for legacy file formats (legacy-planning/, .beads/).
+**This ADR proposed extending MCB domain as the SINGLE SOURCE OF TRUTH for workflow management.**
+That target is superseded by ADR-034 and is not the current operational coordination rule.
 
 > Operational note: this ADR records the target MCB-owned workflow architecture.
 > Until that replacement is implemented, project task coordination remains in
@@ -67,10 +67,8 @@ No support for legacy file formats (legacy-planning/, .beads/).
 │  │ • checkpt  │            │             │               │ │
 │  └────────────────────────────────────────────────────────┘ │
 │                                                              │
-│  ❌ NO legacy-planning/ files                                     │
-│  ❌ NO .beads/ files                                        │
-│  ❌ NO bd CLI                                               │
-│  ❌ NO bidirectional sync                                   │
+│  Superseded target: MCB-native workflow storage             │
+│  Current coordination: bd graph per AGENTS.md               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -87,7 +85,7 @@ Total: 24 MCP tools
 
 #### 3. Full CRUD for Project State
 
-Replace GSD/Beads with complete CRUD operations:
+The superseded target was to replace external project-state surfaces with complete CRUD operations:
 
 ```ascii
 project_create          → Create project
@@ -101,15 +99,15 @@ project_get_ready_work  → Issues without blockers
 project_log_decision    → Log decision
 ```
 
-#### 4. No Legacy Support
+#### 4. Superseded No-Legacy Target
 
-| What | Decision |
+| What | Historical target |
 | ------ | ---------- |
-| legacy-planning/ import | NOT SUPPORTED |
-| .beads/ import | NOT SUPPORTED |
-| bd CLI compatibility | NOT SUPPORTED |
-| Markdown export | NOT SUPPORTED |
-| Bidirectional sync | NOT SUPPORTED |
+| legacy-planning/ import | Not part of this historical target |
+| Beads import | Not part of this historical target |
+| bd CLI compatibility | Superseded; current coordination uses bd per `AGENTS.md` |
+| Markdown export | Not part of this historical target |
+| Bidirectional sync | Not part of this historical target |
 
 **Rationale:** Simpler architecture, no sync conflicts, no parser code.
 
