@@ -182,6 +182,7 @@ fn run_file_validation(
         violations: file_violations,
     })
 }
+
 fn count_sloc(content: &str) -> usize {
     content
         .lines()

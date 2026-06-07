@@ -171,7 +171,7 @@ async fn golden_plan_list() -> TestResult {
     );
 
     let body = result_json(&list_result.expect("plan list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "plan list should have at least 2 results, got {count}"
@@ -339,7 +339,7 @@ async fn golden_plan_version_list() -> TestResult {
     );
 
     let body = result_json(&list_result.expect("version list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "version list should have at least 2 results, got {count}"
@@ -501,7 +501,7 @@ async fn golden_plan_review_list() -> TestResult {
     );
 
     let body = result_json(&list_result.expect("review list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "review list should have at least 2 results, got {count}"

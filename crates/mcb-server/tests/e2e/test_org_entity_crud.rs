@@ -134,7 +134,7 @@ async fn golden_org_list() -> TestResult {
     );
 
     let body = result_json(&list_result.expect("org list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "org list should have at least 2 results, got {count}"
@@ -334,7 +334,7 @@ async fn golden_user_list_by_org() -> TestResult {
     );
 
     let body = result_json(&list_result.expect("user list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "user list should have at least 2 users, got {count}"
@@ -516,7 +516,7 @@ async fn golden_team_list() -> TestResult {
     );
 
     let body = result_json(&list_result.expect("team list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "team list should have at least 2 teams, got {count}"

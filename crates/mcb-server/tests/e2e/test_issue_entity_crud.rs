@@ -174,7 +174,7 @@ async fn golden_issue_list() -> TestResult {
     );
 
     let body = result_json(&list_result.expect("issue list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "issue list should have at least 2 results, got {count}"
@@ -389,7 +389,7 @@ async fn golden_issue_comment_list() -> TestResult {
     );
 
     let body = result_json(&list_result.expect("comment list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "comment list should have at least 2 results, got {count}"
@@ -502,7 +502,7 @@ async fn golden_issue_label_list() -> TestResult {
     );
 
     let body = result_json(&list_result.expect("label list response"));
-    let count = body.as_array().map(std::vec::Vec::len).unwrap_or(0);
+    let count = body.as_array().map_or(0, std::vec::Vec::len);
     assert!(
         count >= 2,
         "label list should have at least 2 results, got {count}"
