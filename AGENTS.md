@@ -214,6 +214,11 @@ file; `dispatch.mk`/`Makefile` are a serial lane), validate each delivery (green
 gate + evidence) before `bd close`, then unblock dependents. No item closes red;
 out-of-scope changes become new items, never silent expansion.
 
+> **MAXIMUM RULE — never idle-wait.** Never block waiting on an async/long action
+> (CI, builds, deploys, remote jobs). Always either *actively monitor* it (poll on a
+> cadence) or pick up an independent non-blocking bead and return when it completes.
+> Idle waiting is forbidden — there is always either monitoring or other ready work.
+
 ## Architecture
 
 Clean Architecture is enforced by dependency rules and `mcb-validate`.
