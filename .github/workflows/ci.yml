@@ -310,7 +310,10 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    # 90 (not 60): the cold cache-seeding run on Windows exceeds 60 min; once
+    # rust-cache is warm subsequent runs finish well under it. Measured: a 60-min
+    # cap cancelled the job mid-run before it could populate its cache (deadlock).
+    timeout-minutes: 90
     continue-on-error: ${{ matrix.rust == 'beta' }}
     strategy:
       fail-fast: false
@@ -515,7 +518,10 @@ jobs:
       github.event_name == 'workflow_dispatch') &&
       needs.classify.outputs.is_fork == 'false'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # 90 (not 60): tarpaulin recompiles the workspace with its own instrumented
+    # RUSTFLAGS in a separate target-dir, so the cold seeding run exceeds 60 min.
+    # Measured: a 60-min cap cancelled it mid-run before its cache could save.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
