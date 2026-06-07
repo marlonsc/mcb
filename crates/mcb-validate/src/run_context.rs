@@ -213,10 +213,18 @@ impl ValidationRunContext {
 
     /// Get the active context or build a new one.
     ///
+    /// Only reuses the thread-local active context when its `workspace_root`
+    /// matches `config`'s; otherwise builds a fresh one. Without this guard, a
+    /// prior validation on the same thread (e.g. another test with a different
+    /// temp-dir root) would leak its file inventory, yielding zero matching
+    /// files for the current root — a cross-test flake.
+    ///
     /// # Errors
     /// Returns an error if the context needs to be built and it fails.
     pub fn active_or_build(config: &ValidationConfig) -> Result<Arc<Self>> {
-        if let Some(active) = Self::active() {
+        if let Some(active) = Self::active()
+            && active.workspace_root == config.workspace_root
+        {
             return Ok(active);
         }
 
