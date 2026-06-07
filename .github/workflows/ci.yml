@@ -17,9 +17,11 @@ permissions:
 
 on: # yamllint disable-line rule:truthy
   push:
+    # Only main (post-merge) + manual dispatch. Feature branches are validated via
+    # the pull_request event — this avoids firing duplicate push+PR runs (different
+    # concurrency keys) on a branch that already has an open PR.
     branches:
       - main
-      - 'feat/*'
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
