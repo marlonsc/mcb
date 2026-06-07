@@ -1,0 +1,19 @@
+AGENTS.md
+  s_a9c0ea473656a4::t_035132b2dafa00 199-203
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "1bbac6947b9f46982470218c4c1379a200e1d543",
+  "prompts": {},
+  "sessions": {
+    "s_a9c0ea473656a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4ebff32-4652-4718-9925-5874de82848c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
