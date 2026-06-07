@@ -1,7 +1,7 @@
 use mcb_domain::entities::agent::{
     AgentSession, AgentSessionStatus, AgentType, CheckpointType, Delegation,
 };
-use mcb_domain::test_utils::{
+use mcb_domain::utils::tests::utils::{
     create_test_agent_session, create_test_checkpoint, create_test_tool_call,
 };
 use rstest::rstest;

@@ -33,6 +33,7 @@ fn append_file_matches(
     for (index, line) in content.lines().enumerate() {
         if line.to_lowercase().contains(query_lower) {
             matches.push(BranchSearchMatch {
+                // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
                 path: file_path.to_str().unwrap_or_default().to_owned(),
                 line: index + 1,
                 snippet: line.trim().to_owned(),

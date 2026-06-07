@@ -29,7 +29,11 @@ impl From<project_issue::Model> for ProjectIssue {
             issue_type: m.issue_type.parse::<IssueType>().unwrap_or(IssueType::Task),
             status: m.status.parse::<IssueStatus>().unwrap_or(IssueStatus::Open),
             priority: m.priority as i32,
-            labels: serde_json::from_str(&m.labels).unwrap_or_default(),
+            labels: serde_json::from_str(&m.labels)
+                .map_err(
+                    |e| tracing::warn!(field = "labels", error = %e, "malformed JSON in DB column"),
+                )
+                .unwrap_or_default(),
         }
     }
 }

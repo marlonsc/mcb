@@ -3,30 +3,42 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an API key.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "api_keys")]
 pub struct Model {
+    /// Unique identifier for the API key.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the user who owns this key.
     #[sea_orm(column_type = "Text")]
     pub user_id: String,
+    /// Reference to the organization this key belongs to.
     #[sea_orm(column_type = "Text")]
     pub org_id: String,
+    /// Hash of the API key for verification.
     #[sea_orm(column_type = "Text")]
     pub key_hash: String,
+    /// Human-readable name for the key.
     #[sea_orm(column_type = "Text")]
     pub name: String,
+    /// JSON representation of the scopes assigned to this key.
     #[sea_orm(column_type = "Text")]
     pub scopes_json: String,
+    /// Optional timestamp when the key expires.
     pub expires_at: Option<i64>,
+    /// Timestamp when the key was created.
     pub created_at: i64,
+    /// Optional timestamp when the key was revoked.
     pub revoked_at: Option<i64>,
 }
 
+/// Relations for the API key model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the API key model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

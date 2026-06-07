@@ -4,8 +4,10 @@
 //! JavaScript/TypeScript language processor for AST-based code chunking.
 
 use crate::language::common::{
-    AST_NODE_INTERFACE_DECLARATION, BaseProcessor, CHUNK_SIZE_JAVASCRIPT, LanguageConfig,
-    NodeExtractionRule, TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION,
+    BaseProcessor, CHUNK_SIZE_JAVASCRIPT, LanguageConfig, NodeExtractionRule,
+};
+use mcb_domain::constants::ast::{
+    AST_NODE_INTERFACE_DECLARATION, TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION,
 };
 
 /// JavaScript/TypeScript language processor.

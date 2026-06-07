@@ -1,5 +1,6 @@
 //! Test for serde Deserialize form handling.
 
+use rstest::rstest;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize, PartialEq)]
@@ -33,6 +34,7 @@ fn default_per_page() -> usize {
     20
 }
 
+#[rstest]
 #[test]
 fn test_filter_params_deserialize_from_form_data() {
     // Simulate form data as would come from a POST request
@@ -54,6 +56,7 @@ fn test_filter_params_deserialize_from_form_data() {
     assert_eq!(params.per_page, 50);
 }
 
+#[rstest]
 #[test]
 fn test_filter_params_deserialize_with_defaults() {
     // Test that defaults are applied when fields are missing
@@ -71,6 +74,7 @@ fn test_filter_params_deserialize_with_defaults() {
     assert_eq!(params.per_page, 20);
 }
 
+#[rstest]
 #[test]
 fn test_filter_params_deserialize_empty() {
     // Test that all defaults are applied when form is empty

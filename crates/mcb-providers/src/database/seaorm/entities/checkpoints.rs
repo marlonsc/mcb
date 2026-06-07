@@ -3,28 +3,39 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an agent checkpoint.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "checkpoints")]
 pub struct Model {
+    /// Unique identifier for the checkpoint.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Identifier of the session this checkpoint belongs to.
     #[sea_orm(column_type = "Text")]
     pub session_id: String,
+    /// Type of checkpoint (e.g., "manual", "auto").
     #[sea_orm(column_type = "Text")]
     pub checkpoint_type: String,
+    /// Human-readable description of the checkpoint state.
     #[sea_orm(column_type = "Text")]
     pub description: String,
+    /// Serialized snapshot data.
     #[sea_orm(column_type = "Text")]
     pub snapshot_data: String,
+    /// Timestamp when the checkpoint was created.
     pub created_at: i64,
+    /// Optional timestamp when the checkpoint was last restored.
     pub restored_at: Option<i64>,
+    /// Optional expiration timestamp for the checkpoint.
     pub expired: Option<i64>,
 }
 
+/// Relations for the checkpoint model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the checkpoint model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

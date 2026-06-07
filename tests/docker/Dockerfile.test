@@ -5,14 +5,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     make \
     netcat-traditional \
+    nodejs \
+    npm \
+    lsof \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 COPY . .
 
-# Pre-fetch dependencies and create user in single layer
+# Pre-fetch Rust deps, install Playwright, create user
 RUN cargo fetch && \
-    useradd -m appuser
+    npm --prefix tests install --save-dev @playwright/test @types/node typescript 2>&1 | grep -v "^npm WARN" || true && \
+    (cd tests && npx playwright install chromium --with-deps 2>&1 | tail -3) || true && \
+    useradd -m appuser && chown -R appuser:appuser /app
 
 USER appuser
 

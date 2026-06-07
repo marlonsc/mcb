@@ -3,9 +3,8 @@
 //!
 //! Go language processor for AST-based code chunking.
 
-use crate::language::common::{
-    CHUNK_SIZE_GO, TS_NODE_FUNCTION_DECLARATION, TS_NODE_METHOD_DECLARATION,
-};
+use crate::language::common::CHUNK_SIZE_GO;
+use mcb_domain::constants::ast::{TS_NODE_FUNCTION_DECLARATION, TS_NODE_METHOD_DECLARATION};
 
 crate::impl_simple_language_processor!(
     GoProcessor,

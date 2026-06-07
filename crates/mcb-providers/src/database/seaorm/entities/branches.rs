@@ -3,33 +3,46 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a Git branch.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "branches")]
 pub struct Model {
+    /// Unique identifier for the branch.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the organization this branch belongs to.
     #[sea_orm(column_type = "Text")]
     pub org_id: String,
+    /// Optional reference to the project this branch belongs to.
     #[sea_orm(column_type = "Text", nullable)]
     pub project_id: Option<String>,
+    /// Reference to the repository this branch belongs to.
     #[sea_orm(column_type = "Text")]
     pub repository_id: String,
+    /// Name of the branch.
     #[sea_orm(column_type = "Text")]
     pub name: String,
+    /// Whether this is the default branch of the repository.
     pub is_default: i64,
+    /// Current head commit SHA of the branch.
     #[sea_orm(column_type = "Text")]
     pub head_commit: String,
+    /// Optional upstream branch reference.
     #[sea_orm(column_type = "Text", nullable)]
     pub upstream: Option<String>,
+    /// Optional context about the branch origin.
     #[sea_orm(column_type = "Text", nullable)]
     pub origin_context: Option<String>,
+    /// Timestamp when the branch was created in the database.
     pub created_at: i64,
 }
 
+/// Relations for the branch model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the branch model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

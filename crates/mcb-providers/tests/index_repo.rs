@@ -7,20 +7,18 @@ use std::sync::Arc;
 use mcb_domain::constants::keys::DEFAULT_ORG_ID;
 use mcb_domain::ports::IndexRepository;
 use mcb_domain::ports::IndexingOperationStatus;
+use mcb_domain::utils::tests::utils::TestResult;
 use mcb_domain::value_objects::CollectionId;
 use mcb_providers::database::seaorm::entities::{organization, project};
-use mcb_providers::database::seaorm::migration::Migrator;
 use mcb_providers::database::seaorm::repos::SeaOrmIndexRepository;
+use rstest::rstest;
 use sea_orm::{ActiveModelTrait, ActiveValue::Set, ConnectionTrait, Database, DatabaseConnection};
-use sea_orm_migration::MigratorTrait;
-
-type TestResult<T = ()> = Result<T, Box<dyn std::error::Error>>;
 
 const PROJECT_ID: &str = "proj-idx-001";
 
 async fn setup_db() -> TestResult<Arc<DatabaseConnection>> {
     let db = Database::connect("sqlite::memory:").await?;
-    Migrator::up(&db, None).await?;
+    mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     Ok(Arc::new(db))
 }
 
@@ -60,6 +58,7 @@ async fn make_repo(db: &Arc<DatabaseConnection>) -> TestResult<SeaOrmIndexReposi
 // Start + Get lifecycle
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn start_indexing_creates_operation() -> TestResult {
     let db = setup_db().await?;
@@ -84,6 +83,7 @@ async fn start_indexing_creates_operation() -> TestResult {
 // Progress tracking
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn update_progress_tracks_files() -> TestResult {
     let db = setup_db().await?;
@@ -116,6 +116,7 @@ async fn update_progress_tracks_files() -> TestResult {
 // Complete operation
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn complete_operation_sets_terminal_state() -> TestResult {
     let db = setup_db().await?;
@@ -140,6 +141,7 @@ async fn complete_operation_sets_terminal_state() -> TestResult {
 // Fail operation
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn fail_operation_records_error() -> TestResult {
     let db = setup_db().await?;
@@ -168,6 +170,7 @@ async fn fail_operation_records_error() -> TestResult {
 // Active operation detection
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn get_active_operation_finds_running() -> TestResult {
     let db = setup_db().await?;
@@ -194,6 +197,7 @@ async fn get_active_operation_finds_running() -> TestResult {
 // List operations
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn list_operations_returns_all() -> TestResult {
     let db = setup_db().await?;
@@ -215,6 +219,7 @@ async fn list_operations_returns_all() -> TestResult {
 // Clear index
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn clear_index_removes_data_and_cancels_active() -> TestResult {
     let db = setup_db().await?;
@@ -272,6 +277,7 @@ async fn clear_index_removes_data_and_cancels_active() -> TestResult {
 // Index stats
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn get_index_stats_reports_correctly() -> TestResult {
     let db = setup_db().await?;
@@ -329,6 +335,7 @@ async fn get_index_stats_reports_correctly() -> TestResult {
 // Error handling: operation not found
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn update_progress_on_missing_op_returns_not_found() -> TestResult {
     let db = setup_db().await?;
@@ -336,17 +343,21 @@ async fn update_progress_on_missing_op_returns_not_found() -> TestResult {
 
     let fake_id = mcb_domain::value_objects::OperationId::new();
     let result = repo.update_progress(&fake_id, None, 0).await;
-    assert!(result.is_err());
-
-    let err = result.unwrap_err();
+    let err = result.expect_err("update_progress should fail for missing operation");
+    let err_msg = err.to_string();
     assert!(
         matches!(err, mcb_domain::error::Error::NotFound { .. }),
         "expected NotFound, got: {err:?}"
+    );
+    assert!(
+        err_msg.to_lowercase().contains("not found"),
+        "expected not found message, got: {err_msg}"
     );
 
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn complete_missing_op_returns_not_found() -> TestResult {
     let db = setup_db().await?;
@@ -354,15 +365,18 @@ async fn complete_missing_op_returns_not_found() -> TestResult {
 
     let fake_id = mcb_domain::value_objects::OperationId::new();
     let result = repo.complete_operation(&fake_id).await;
-    assert!(result.is_err());
-    assert!(matches!(
-        result.unwrap_err(),
-        mcb_domain::error::Error::NotFound { .. }
-    ));
+    let err = result.expect_err("complete_operation should fail for missing operation");
+    let err_msg = err.to_string();
+    assert!(matches!(err, mcb_domain::error::Error::NotFound { .. }));
+    assert!(
+        err_msg.to_lowercase().contains("not found"),
+        "expected not found message, got: {err_msg}"
+    );
 
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn fail_missing_op_returns_not_found() -> TestResult {
     let db = setup_db().await?;
@@ -370,11 +384,13 @@ async fn fail_missing_op_returns_not_found() -> TestResult {
 
     let fake_id = mcb_domain::value_objects::OperationId::new();
     let result = repo.fail_operation(&fake_id, "oops").await;
-    assert!(result.is_err());
-    assert!(matches!(
-        result.unwrap_err(),
-        mcb_domain::error::Error::NotFound { .. }
-    ));
+    let err = result.expect_err("fail_operation should fail for missing operation");
+    let err_msg = err.to_string();
+    assert!(matches!(err, mcb_domain::error::Error::NotFound { .. }));
+    assert!(
+        err_msg.to_lowercase().contains("not found"),
+        "expected not found message, got: {err_msg}"
+    );
 
     Ok(())
 }

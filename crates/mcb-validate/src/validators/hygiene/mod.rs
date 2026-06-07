@@ -3,19 +3,30 @@
 //! **Documentation**: [`docs/modules/validate.md#hygiene`](../../../../../docs/modules/validate.md#hygiene)
 //!
 /// Test directory structure checks.
-pub mod directory;
+mod directory;
 /// Test function naming checks.
-pub mod function_naming;
+mod function_naming;
 /// Inline test module checks.
-pub mod inline_tests;
+mod inline_tests;
 /// Test file naming checks.
-pub mod naming;
+mod naming;
 /// Test assertion and quality checks.
-pub mod quality;
+mod quality;
 /// Hygiene validator orchestrator.
-pub mod validator;
+mod validator;
 /// Hygiene violation model.
-pub mod violation;
+mod violation;
 
 pub use self::validator::HygieneValidator;
 pub use self::violation::HygieneViolation;
+
+#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
+static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
+    mcb_domain::registry::validation::ValidatorEntry {
+        name: "hygiene",
+        description: "Validates test hygiene and quality",
+        build: |root| {
+            Ok(Box::new(HygieneValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
+    };

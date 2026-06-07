@@ -19,7 +19,6 @@ implementation_status: Incomplete
 
 > **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
 
-
 Proposed
 
 > Inspired by kamu-cli's production Onion/Clean Architecture patterns. Extends

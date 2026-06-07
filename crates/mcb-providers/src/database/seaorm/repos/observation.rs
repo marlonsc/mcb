@@ -1,9 +1,9 @@
-#![allow(clippy::missing_errors_doc)]
+//! SeaORM-backed observation and memory repository implementation.
 
 use async_trait::async_trait;
 use mcb_domain::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
 use mcb_domain::entities::memory::{MemoryFilter, Observation, SessionSummary};
-use mcb_domain::error::{Error, Result};
+use mcb_domain::error::Result;
 use mcb_domain::ports::{FtsSearchResult, MemoryRepository};
 use mcb_domain::value_objects::{ObservationId, SessionId};
 use sea_orm::entity::prelude::*;
@@ -13,6 +13,8 @@ use sea_orm::{
     QueryOrder, Statement, Value,
 };
 
+use super::common::db_error;
+use crate::constants::database::OBSERVATION_LIST_MAX_LIMIT;
 use crate::database::seaorm::entities::{observation, organization, project, session_summary};
 
 /// SeaORM-backed implementation for observation persistence and retrieval.
@@ -25,10 +27,6 @@ impl SeaOrmObservationRepository {
     /// Creates a new observation repository backed by the provided database connection.
     pub fn new(db: DatabaseConnection) -> Self {
         Self { db }
-    }
-
-    fn db_err(context: &str, error: DbErr) -> Error {
-        Error::memory_with_source(context, error)
     }
 
     fn ignore_not_inserted<T>(
@@ -65,7 +63,7 @@ impl SeaOrmObservationRepository {
                 .exec(&self.db)
                 .await,
         )
-        .map_err(|e| Self::db_err("auto-create default org", e))?;
+        .map_err(db_error("auto-create default org"))?;
 
         let proj = project::ActiveModel {
             id: Set(project_id.to_owned()),
@@ -86,9 +84,24 @@ impl SeaOrmObservationRepository {
                 .exec(&self.db)
                 .await,
         )
-        .map_err(|e| Self::db_err("auto-create project", e))?;
+        .map_err(db_error("auto-create project"))?;
 
         Ok(())
+    }
+
+    /// Returns the SQL expression for checking tag containment, appropriate for the
+    /// current database backend.
+    fn tag_contains_sql(&self) -> &'static str {
+        use sea_orm::DatabaseBackend;
+        match self.db.get_database_backend() {
+            DatabaseBackend::MySql => "JSON_SEARCH(tags, 'one', ?) IS NOT NULL",
+            DatabaseBackend::Postgres => {
+                "EXISTS (SELECT 1 FROM jsonb_array_elements_text(tags::jsonb) AS elem WHERE elem = ?)"
+            }
+            DatabaseBackend::Sqlite | _ => {
+                "(tags IS NOT NULL AND tags != '' AND EXISTS (SELECT 1 FROM json_each(tags) WHERE json_each.value = ?))"
+            }
+        }
     }
 
     fn build_list_sql(&self, filter: Option<&MemoryFilter>, limit: usize) -> Statement {
@@ -156,9 +169,10 @@ impl SeaOrmObservationRepository {
                 ));
             }
             if let Some(tags) = &f.tags {
+                let tag_filter_sql = self.tag_contains_sql();
                 for tag in tags {
                     query.and_where(Expr::cust_with_values(
-                        "EXISTS (SELECT 1 FROM json_each(tags) WHERE value = ?)",
+                        tag_filter_sql,
                         vec![Value::from(tag.as_str())],
                     ));
                 }
@@ -177,7 +191,7 @@ impl SeaOrmObservationRepository {
             .db
             .query_all_raw(self.build_list_sql(filter, limit))
             .await
-            .map_err(|e| Self::db_err("list observations", e))?;
+            .map_err(db_error("list observations"))?;
 
         rows.into_iter()
             .map(|row| {
@@ -195,10 +209,14 @@ impl SeaOrmObservationRepository {
                 Ok(model.into())
             })
             .collect::<std::result::Result<Vec<_>, DbErr>>()
-            .map_err(|e| Self::db_err("decode observations", e))
+            .map_err(db_error("decode observations"))
     }
 
     /// Lists observations using the optional filter and result limit.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query fails.
     pub async fn list_observations(
         &self,
         filter: Option<&MemoryFilter>,
@@ -208,6 +226,10 @@ impl SeaOrmObservationRepository {
     }
 
     /// Selects observations for context injection, capped by `max_chars` content size.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the database query fails.
     pub async fn inject_observations(
         &self,
         filter: Option<&MemoryFilter>,
@@ -233,8 +255,12 @@ impl SeaOrmObservationRepository {
 #[async_trait]
 impl MemoryRepository for SeaOrmObservationRepository {
     async fn store_observation(&self, observation: &Observation) -> Result<()> {
-        self.ensure_org_and_project(DEFAULT_ORG_ID, &observation.project_id, observation.created_at)
-            .await?;
+        self.ensure_org_and_project(
+            DEFAULT_ORG_ID,
+            &observation.project_id,
+            observation.created_at,
+        )
+        .await?;
 
         let active: observation::ActiveModel = observation.clone().into();
 
@@ -246,7 +272,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
             )
             .exec(&self.db)
             .await
-            .map_err(|e| Self::db_err("store observation", e))?;
+            .map_err(db_error("store observation"))?;
 
         Ok(())
     }
@@ -256,7 +282,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .one(&self.db)
             .await
             .map(|model| model.map(Into::into))
-            .map_err(|e| Self::db_err("get observation", e))
+            .map_err(db_error("get observation"))
     }
 
     async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
@@ -265,12 +291,11 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .one(&self.db)
             .await
             .map(|model| model.map(Into::into))
-            .map_err(|e| Self::db_err("find observation by hash", e))
+            .map_err(db_error("find observation by hash"))
     }
 
     async fn search(&self, query: &str, mut limit: usize) -> Result<Vec<FtsSearchResult>> {
-        const MAX_LIMIT: usize = 1000;
-        limit = limit.min(MAX_LIMIT);
+        limit = limit.min(OBSERVATION_LIST_MAX_LIMIT);
         if query.trim().is_empty() {
             let observations = self.list_by_filter(None, limit).await?;
             return Ok(observations
@@ -294,7 +319,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .db
             .query_all_raw(stmt)
             .await
-            .map_err(|e| Self::db_err("search observations using FTS5", e))?;
+            .map_err(db_error("search observations using FTS5"))?;
 
         rows.into_iter()
             .map(|row| {
@@ -304,14 +329,14 @@ impl MemoryRepository for SeaOrmObservationRepository {
                 })
             })
             .collect::<std::result::Result<Vec<_>, DbErr>>()
-            .map_err(|e| Self::db_err("decode FTS5 results", e))
+            .map_err(db_error("decode FTS5 results"))
     }
 
     async fn delete_observation(&self, id: &ObservationId) -> Result<()> {
         observation::Entity::delete_by_id(id.to_string())
             .exec(&self.db)
             .await
-            .map_err(|e| Self::db_err("delete observation", e))?;
+            .map_err(db_error("delete observation"))?;
         Ok(())
     }
 
@@ -327,7 +352,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .all(&self.db)
             .await
             .map(|models| models.into_iter().map(Into::into).collect())
-            .map_err(|e| Self::db_err("get observations by ids", e))
+            .map_err(db_error("get observations by ids"))
     }
 
     async fn get_timeline(
@@ -380,7 +405,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
             )
             .exec(&self.db)
             .await
-            .map_err(|e| Self::db_err("store session summary", e))?;
+            .map_err(db_error("store session summary"))?;
 
         Ok(())
     }
@@ -392,6 +417,6 @@ impl MemoryRepository for SeaOrmObservationRepository {
             .one(&self.db)
             .await
             .map(|model| model.map(Into::into))
-            .map_err(|e| Self::db_err("get session summary", e))
+            .map_err(db_error("get session summary"))
     }
 }

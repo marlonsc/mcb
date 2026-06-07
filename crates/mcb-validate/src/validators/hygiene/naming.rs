@@ -6,6 +6,7 @@ use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
 
 use super::violation::HygieneViolation;
+use crate::ValidationConfigExt;
 
 fn expected_naming_for_parent(
     parent_dir: &str,

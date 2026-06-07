@@ -27,6 +27,7 @@ fn resolve_identifier_precedence_uses_non_conflicting_values(
     assert_eq!(resolved, expected.map(ToOwned::to_owned));
 }
 
+#[rstest]
 #[test]
 fn resolve_identifier_precedence_rejects_conflicting_values() {
     let err = resolve_identifier_precedence("project_id", Some("proj-a"), Some("proj-b"))

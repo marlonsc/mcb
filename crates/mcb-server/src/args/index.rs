@@ -42,6 +42,10 @@ pub struct IndexArgs {
     ))]
     pub collection: Option<String>,
 
+    /// Repository identifier for collection auto-resolution (injected by context, hidden from MCP schema).
+    #[schemars(skip)]
+    pub repo_id: Option<String>,
+
     /// File extensions to include (for 'start' action).
     #[schemars(
         description = "File extensions to include (for 'start' action)",

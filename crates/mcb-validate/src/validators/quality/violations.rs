@@ -1,8 +1,9 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
 //!
+use crate::Severity;
 use crate::define_violations;
-use crate::{Severity, traits::violation::ViolationCategory};
+use mcb_domain::ports::validation::ViolationCategory;
 use std::path::PathBuf;
 
 define_violations! {

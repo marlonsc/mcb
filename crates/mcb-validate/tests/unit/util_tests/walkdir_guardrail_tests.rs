@@ -1,5 +1,7 @@
+use rstest::rstest;
 use std::path::PathBuf;
 
+#[rstest]
 #[test]
 fn walkdir_new_is_limited_to_run_context_inventory() {
     let crate_root = PathBuf::from(env!("CARGO_MANIFEST_DIR"));

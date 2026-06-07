@@ -1,7 +1,7 @@
 //! Use case constants for service implementations.
 //!
 //! Constants used by the application-layer use case services that live
-//! in [`crate::di::modules::use_cases`].
+//! in service registry builders.
 
 // ============================================================================
 // MEMORY / SEARCH

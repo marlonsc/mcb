@@ -10,13 +10,13 @@ use std::process::Stdio;
 
 use tokio::process::Command;
 
-use super::constants::{
-    CARGO_ARG_SEPARATOR, CLIPPY_COMMAND, CLIPPY_MESSAGE_FORMAT_JSON, CLIPPY_PREFIX,
-    CLIPPY_WARN_FLAG,
-};
 use super::parsers::run_linter_command;
 use super::types::{LintViolation, LinterType};
 use crate::Result;
+use crate::constants::linters::{
+    CARGO_ARG_SEPARATOR, CLIPPY_COMMAND, CLIPPY_MESSAGE_FORMAT_JSON, CLIPPY_PREFIX,
+    CLIPPY_WARN_FLAG,
+};
 
 /// Execute Ruff linter on files
 pub struct RuffLinter;

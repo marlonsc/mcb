@@ -3,16 +3,21 @@ use mcb_server::handlers::entities::OrgEntityHandler;
 use rmcp::handler::server::wrapper::Parameters;
 use serde_json::json;
 
-use crate::utils::text::extract_text;
+use mcb_domain::utils::tests::utils::TestResult;
+use mcb_domain::utils::text::extract_text;
+use rstest::rstest;
 
-fn create_handler() -> OrgEntityHandler {
-    let ctx = crate::utils::shared_context::shared_app_context();
-    OrgEntityHandler::new(ctx.org_entity_repository())
+fn create_handler() -> TestResult<OrgEntityHandler> {
+    let state = crate::utils::test_fixtures::shared_mcb_state()?;
+    Ok(OrgEntityHandler::new(
+        state.mcp_server.org_entity_repository(),
+    ))
 }
 
+#[rstest]
 #[tokio::test]
-async fn get_user_requires_id_or_email() {
-    let handler = create_handler();
+async fn get_user_requires_id_or_email() -> TestResult {
+    let handler = create_handler()?;
     let args = OrgEntityArgs {
         action: OrgEntityAction::Get,
         resource: OrgEntityResource::User,
@@ -29,6 +34,7 @@ async fn get_user_requires_id_or_email() {
         .await
         .expect_err("must reject missing id/email");
     assert!(err.message.contains("id or email required for user get"));
+    Ok(())
 }
 
 fn org_payload(id: &str, org_id: &str) -> serde_json::Value {
@@ -67,9 +73,10 @@ async fn list_org_count(handler: &OrgEntityHandler) -> usize {
         .unwrap_or(0)
 }
 
+#[rstest]
 #[tokio::test]
-async fn create_org_with_conflicting_org_id_rejected_without_side_effect() {
-    let handler = create_handler();
+async fn create_org_with_conflicting_org_id_rejected_without_side_effect() -> TestResult {
+    let handler = create_handler()?;
     let before_count = list_org_count(&handler).await;
 
     let create_args = OrgEntityArgs {
@@ -91,4 +98,5 @@ async fn create_org_with_conflicting_org_id_rejected_without_side_effect() {
 
     let after_count = list_org_count(&handler).await;
     assert_eq!(after_count, before_count);
+    Ok(())
 }

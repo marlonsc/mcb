@@ -5,6 +5,7 @@ use mcb_infrastructure::crypto::{
 };
 use rstest::rstest;
 
+#[rstest]
 #[test]
 fn test_crypto_service_encrypt_decrypt() {
     let master_key = CryptoService::generate_master_key();
@@ -17,12 +18,14 @@ fn test_crypto_service_encrypt_decrypt() {
     assert_eq!(plaintext.to_vec(), decrypted);
 }
 
+#[rstest]
 #[test]
 fn test_crypto_service_invalid_key_size() {
     let invalid_key = vec![0u8; 16]; // Wrong size
     assert!(CryptoService::new(invalid_key).is_err());
 }
 
+#[rstest]
 #[test]
 fn test_password_service_hash_verify() {
     let service = PasswordService::new();
@@ -34,6 +37,7 @@ fn test_password_service_hash_verify() {
     assert!(!service.verify_password("wrong_password", &hash).unwrap());
 }
 
+#[rstest]
 #[test]
 fn test_token_generator() {
     let token1 = TokenGenerator::generate_secure_token(32);
@@ -44,6 +48,7 @@ fn test_token_generator() {
     assert_ne!(token1, token2);
 }
 
+#[rstest]
 #[test]
 fn test_hash_utils_hmac() {
     let key = b"secret_key";
@@ -55,6 +60,7 @@ fn test_hash_utils_hmac() {
     assert_eq!(hmac1.len(), 32); // SHA256 output size
 }
 
+#[rstest]
 #[test]
 fn test_secure_erasure() {
     let mut data = vec![1, 2, 3, 4, 5];

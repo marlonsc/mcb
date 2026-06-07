@@ -8,6 +8,7 @@
 
 use std::path::Path;
 
+use crate::ValidationConfigExt;
 use crate::constants::common::{MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX};
 use crate::filters::LanguageId;
 use crate::run_context::{InventoryEntry, ValidationRunContext};
@@ -47,6 +48,11 @@ where
         }
 
         let crate_name = crate_dir.file_name().and_then(|n| n.to_str()).unwrap_or("");
+
+        // Inventory `absolute_path`s are canonicalized; canonicalize `src_dir`
+        // too so the prefix match holds under symlinked roots (macOS
+        // /var → /private/var).
+        let src_dir = std::fs::canonicalize(&src_dir).unwrap_or(src_dir);
 
         for entry in inventory {
             if !entry.absolute_path.starts_with(&src_dir) {
@@ -92,6 +98,12 @@ where
         {
             continue;
         }
+
+        // Inventory `absolute_path`s are canonicalized; canonicalize `src_dir`
+        // too so the prefix match holds under symlinked roots (macOS
+        // /var → /private/var), otherwise no files match and rules silently
+        // run on nothing.
+        let src_dir = std::fs::canonicalize(&src_dir).unwrap_or(src_dir);
 
         for entry in inventory {
             if !entry.absolute_path.starts_with(&src_dir) {

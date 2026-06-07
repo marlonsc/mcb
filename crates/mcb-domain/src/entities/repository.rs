@@ -4,45 +4,22 @@
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-/// Type of version control system.
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    strum_macros::Display,
-    strum_macros::AsRefStr,
-    strum_macros::EnumString,
-)]
-#[serde(rename_all = "snake_case")]
-#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
-pub enum VcsType {
-    /// Git repository.
-    #[strum(serialize = "git")]
-    Git,
-    /// Mercurial repository.
-    #[strum(serialize = "mercurial", serialize = "hg")]
-    Mercurial,
-    /// Subversion repository.
-    #[strum(serialize = "svn", serialize = "subversion")]
-    Svn,
-}
-
-impl VcsType {
-    /// Returns the string representation.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        match self {
-            Self::Git => "git",
-            Self::Mercurial => "mercurial",
-            Self::Svn => "svn",
-        }
+crate::define_string_enum! {
+    /// Type of version control system.
+    pub enum VcsType [strum = "snake_case", serde = "snake_case", schema] {
+        /// Git repository.
+        #[strum(serialize = "git")]
+        Git,
+        /// Mercurial repository.
+        #[strum(serialize = "mercurial", serialize = "hg")]
+        Mercurial,
+        /// Subversion repository.
+        #[strum(to_string = "svn", serialize = "subversion")]
+        Svn,
     }
 }
+
+impl Copy for VcsType {}
 
 // ---------------------------------------------------------------------------
 // Repository

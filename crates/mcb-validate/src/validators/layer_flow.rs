@@ -10,10 +10,10 @@ use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
 use crate::config::LayerFlowRulesConfig;
+use crate::constants::linters::CARGO_TOML_FILENAME;
 use crate::define_violations;
-use crate::linters::constants::CARGO_TOML_FILENAME;
-use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
+use mcb_domain::ports::validation::{Violation, ViolationCategory};
 
 define_violations! {
     ViolationCategory::Architecture,
@@ -108,6 +108,7 @@ impl LayerFlowValidator {
                             .filter(|dep| dep != crate_name && crate_names.contains(dep))
                             .collect()
                     })
+                    // INTENTIONAL: Dependency filter; empty list means no filtered deps
                     .unwrap_or_default();
                 Ok((crate_name.clone(), crate_deps))
             })
@@ -146,7 +147,7 @@ impl LayerFlowValidator {
     }
 }
 
-impl crate::traits::validator::Validator for LayerFlowValidator {
+impl mcb_domain::ports::validation::Validator for LayerFlowValidator {
     fn name(&self) -> &'static str {
         "layer_flow"
     }
@@ -155,7 +156,10 @@ impl crate::traits::validator::Validator for LayerFlowValidator {
         "Validates Clean Architecture layer dependency rules"
     }
 
-    fn validate(&self, config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
+    fn validate(
+        &self,
+        config: &ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
         let violations = self.check_circular_dependencies(config)?;
         Ok(violations
             .into_iter()
@@ -163,3 +167,14 @@ impl crate::traits::validator::Validator for LayerFlowValidator {
             .collect())
     }
 }
+
+#[linkme::distributed_slice(mcb_domain::registry::validation::VALIDATOR_ENTRIES)]
+static VALIDATOR_ENTRY: mcb_domain::registry::validation::ValidatorEntry =
+    mcb_domain::registry::validation::ValidatorEntry {
+        name: "layer_flow",
+        description: "Validates Clean Architecture layer dependency rules",
+        build: |root| {
+            Ok(Box::new(LayerFlowValidator::new(root))
+                as Box<dyn mcb_domain::ports::validation::Validator>)
+        },
+    };

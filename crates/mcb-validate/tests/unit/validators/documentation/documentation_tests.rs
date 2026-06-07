@@ -6,7 +6,6 @@
 //! Note: `MissingModuleDoc` violations have no line field, so line=0
 //! is used (skips line check).
 
-use mcb_validate::DocumentationValidator;
 use rstest::*;
 
 use crate::utils::test_constants::*;
@@ -20,8 +19,7 @@ use crate::utils::*;
 fn test_documentation_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = DocumentationValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "documentation").unwrap();
 
     assert_violations_exact(
         &violations,
@@ -63,8 +61,7 @@ pub fn add(a: i32, b: i32) -> i32 {
 }
 ",
     );
-    let validator = DocumentationValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "documentation").unwrap();
 
     assert_no_violations(
         &violations,

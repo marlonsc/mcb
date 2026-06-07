@@ -268,7 +268,7 @@ pub(crate) struct VectorDbRequestParams<'a> {
     pub headers: &'a [(&'a str, String)],
     pub body: Option<&'a Value>,
     pub retry_attempts: usize,
-    pub retry_backoff_secs: u64,
+    pub retry_backoff_ms: u64,
 }
 
 pub(crate) async fn send_vector_db_request(
@@ -284,7 +284,7 @@ pub(crate) async fn send_vector_db_request(
         headers,
         body,
         retry_attempts,
-        retry_backoff_secs,
+        retry_backoff_ms,
     } = params;
 
     send_json_request(JsonRequestParams {
@@ -299,7 +299,7 @@ pub(crate) async fn send_vector_db_request(
         body,
         retry: Some(RetryConfig::new(
             retry_attempts,
-            Duration::from_secs(retry_backoff_secs),
+            Duration::from_millis(retry_backoff_ms),
         )),
     })
     .await

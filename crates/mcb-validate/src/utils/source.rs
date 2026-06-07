@@ -10,7 +10,8 @@ use std::path::PathBuf;
 
 use regex::Regex;
 
-use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX};
+use crate::ValidationConfigExt;
+use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX, FN_PREFIXES};
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_file_under_root;
@@ -110,6 +111,7 @@ pub fn track_fn_name(fn_pattern: Option<&Regex>, trimmed: &str, name: &mut Strin
         *name = cap
             .get(1)
             .map(|m| m.as_str().to_owned())
+            // INTENTIONAL: Regex capture group; no match yields empty string
             .unwrap_or_default();
     }
 }
@@ -139,7 +141,6 @@ pub fn required_patterns<'a>(ids: impl Iterator<Item = &'a str>) -> Result<Vec<&
 /// Check if a line is a function signature or standalone brace.
 #[must_use]
 pub fn is_fn_signature_or_brace(line: &str) -> bool {
-    const FN_PREFIXES: [&str; 4] = ["fn ", "pub fn ", "async fn ", "pub async fn "];
     matches!(line, "{" | "}") || FN_PREFIXES.iter().any(|prefix| line.starts_with(prefix))
 }
 

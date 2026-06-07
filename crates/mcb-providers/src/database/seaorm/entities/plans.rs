@@ -3,31 +3,43 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a plan.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "plans")]
 pub struct Model {
+    /// Unique identifier for the plan.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the organization this plan belongs to.
     #[sea_orm(column_type = "Text")]
     pub org_id: String,
+    /// Reference to the project this plan belongs to.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Title of the plan.
     #[sea_orm(column_type = "Text")]
     pub title: String,
+    /// Detailed description of the plan.
     #[sea_orm(column_type = "Text")]
     pub description: String,
+    /// Current status of the plan (e.g., "draft", "completed").
     #[sea_orm(column_type = "Text")]
     pub status: String,
+    /// Identifier of the user who created the plan.
     #[sea_orm(column_type = "Text")]
     pub created_by: String,
+    /// Timestamp when the plan was created.
     pub created_at: i64,
+    /// Timestamp when the plan was last updated.
     pub updated_at: i64,
 }
 
+/// Relations for the plan model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the plan model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

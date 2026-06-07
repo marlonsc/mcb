@@ -4,7 +4,9 @@
 
 use mcb_domain::labels;
 use mcb_domain::ports::MetricLabels;
+use rstest::rstest;
 
+#[rstest]
 #[test]
 fn test_labels_macro() {
     let empty: MetricLabels = labels!();

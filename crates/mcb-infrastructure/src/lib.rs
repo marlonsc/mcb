@@ -16,22 +16,11 @@
 //! | -------- | ------------- |
 //! | [`crypto`] | AES-GCM encryption, secure key generation |
 //!
-//! ### Data & Storage
-//! | Module | Description |
-//! | -------- | ------------- |
-//! | [`cache`] | Moka/Redis caching with TTL and namespaces |
-//!
 //! ### Configuration & DI
 //! | Module | Description |
 //! | -------- | ------------- |
 //! | [`config`] | YAML configuration with hot-reload |
-//! | [`di`] | Handle-based dependency injection |
 //! | [`constants`] | Centralized configuration constants |
-//!
-//! ### Observability
-//! | Module | Description |
-//! | -------- | ------------- |
-//! | [`health`] | Health check endpoints |
 //!
 //! ### Routing & Selection
 //! | Module | Description |
@@ -40,24 +29,14 @@
 
 // Clippy allows for complex patterns in infrastructure code
 
-// Core infrastructure modules
-#[macro_use]
-pub(crate) mod macros;
-pub mod cache;
 pub mod config;
 pub mod constants;
 pub mod crypto;
-pub mod di;
-pub mod error_ext;
-pub mod events;
-pub mod health;
+pub mod infrastructure;
 
 pub mod project;
 pub mod routing;
 pub mod services;
-pub mod utils;
 pub mod validation;
 
-pub mod infrastructure;
-pub use error_ext::ErrorContext;
-pub use utils::TimedOperation;
+pub mod events;

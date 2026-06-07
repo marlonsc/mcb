@@ -22,14 +22,13 @@ pub mod project_type;
 pub mod sensitivity;
 /// Submodule path helpers.
 pub mod submodule;
+/// MCP text extraction utilities (extract_text, extract_text_with_sep).
+pub mod text;
 /// Canonical time utilities — strict, no fallbacks.
 pub mod time;
 /// VCS context data types for memory observations.
 pub mod vcs_context;
 
-pub use fs::find_files_by_extensions;
-pub use id::{compute_content_hash, compute_file_hash, correlate_id, mask_id};
-pub use naming::{
-    get_suffix, is_camel_case, is_screaming_snake_case, is_snake_case, split_camel_case,
-};
-pub use sensitivity::{REDACTED, Sensitive, redact_optional};
+#[cfg(any(test, feature = "test-utils"))]
+/// Test infrastructure — fixtures, constants, service-config helpers.
+pub mod tests;

@@ -11,9 +11,8 @@ use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
 use serde::Deserialize;
-use tokio::fs::read_to_string;
 
-use super::PROJECT_DETECTORS;
+use super::common::{parse_toml_opt, read_file_opt};
 
 #[derive(Deserialize)]
 struct PyProject {
@@ -62,8 +61,9 @@ impl ProjectDetector for PythonDetector {
 
         // Try pyproject.toml first (modern standard)
         if pyproject_path.exists()
-            && let Ok(content) = read_to_string(&pyproject_path).await
-            && let Ok(pyproject) = toml::from_str::<PyProject>(&content)
+            && let Some(content) = read_file_opt(&pyproject_path, "python").await
+            && let Some(pyproject) =
+                parse_toml_opt::<PyProject>(&content, &pyproject_path, "python")
             && let Some(project) = pyproject.project
         {
             return Ok(Some(ProjectType::Python {
@@ -80,7 +80,7 @@ impl ProjectDetector for PythonDetector {
 
         // Fall back to requirements.txt
         if requirements_path.exists()
-            && let Ok(content) = read_to_string(&requirements_path).await
+            && let Some(content) = read_file_opt(&requirements_path, "python").await
         {
             let dependencies = Self::parse_requirements(&content);
             return Ok(Some(ProjectType::Python {
@@ -114,7 +114,7 @@ fn python_factory(
 
 // linkme distributed_slice uses #[link_section] internally
 #[allow(unsafe_code)]
-#[linkme::distributed_slice(PROJECT_DETECTORS)]
+#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
 static PYTHON_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "python",
     description: "Detects Python projects with pyproject.toml or requirements.txt",

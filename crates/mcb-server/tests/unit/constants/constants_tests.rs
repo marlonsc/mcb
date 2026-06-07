@@ -11,10 +11,8 @@ fn test_jsonrpc_constants_exist(#[case] actual: i32, #[case] expected: i32) {
     assert_eq!(actual, expected);
 }
 
+#[rstest]
 #[test]
 fn test_highlight_names_length() {
-    assert_eq!(
-        mcb_infrastructure::constants::highlight::HIGHLIGHT_NAMES.len(),
-        13
-    );
+    assert_eq!(mcb_domain::value_objects::browse::HIGHLIGHT_NAMES.len(), 13);
 }

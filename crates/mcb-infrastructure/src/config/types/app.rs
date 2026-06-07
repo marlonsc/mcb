@@ -6,17 +6,13 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-use mcb_domain::value_objects::{EmbeddingConfig, ProjectSettings, VectorStoreConfig};
+use mcb_domain::value_objects::{EmbeddingConfig, VectorStoreConfig};
 use serde::{Deserialize, Serialize};
 
 pub use super::infrastructure::{
     CacheProvider, CacheSystemConfig, LimitsConfig, LoggingConfig, MetricsConfig, ResilienceConfig,
 };
 pub use super::mode::{ModeConfig, OperatingMode};
-pub use super::server::{
-    ServerConfig, ServerConfigBuilder, ServerConfigPresets, ServerCorsConfig, ServerNetworkConfig,
-    ServerSslConfig, ServerTimeoutConfig, TransportMode,
-};
 pub use super::system::{
     AdminApiKeyConfig, ApiKeyConfig, AuthConfig, BackupConfig, DaemonConfig, EventBusBackend,
     EventBusConfig, JwtConfig, OperationsConfig, PasswordAlgorithm, SnapshotConfig, SyncConfig,
@@ -89,14 +85,6 @@ pub struct ProvidersConfig {
     pub vector_store: VectorStoreConfigContainer,
 }
 
-/// Default context settings for MCP operations.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[serde(deny_unknown_fields)]
-pub struct McpContextDefaultsConfig {
-    /// Git-related context defaults.
-    pub git: McpContextGitDefaultsConfig,
-}
-
 /// Indexing configuration for file discovery.
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
@@ -111,20 +99,10 @@ pub struct IndexingConfig {
 pub struct McpConfig {
     /// Indexing subsystem settings.
     pub indexing: IndexingConfig,
-}
-
-/// Git defaults for MCP context resolution.
-#[derive(Debug, Clone, Serialize, Deserialize, Default)]
-#[serde(deny_unknown_fields)]
-pub struct McpContextGitDefaultsConfig {
-    /// Default branches to consider.
-    pub branches: Vec<String>,
-    /// Clone depth limit.
-    pub depth: usize,
-    /// Glob patterns to exclude from context.
-    pub ignore_patterns: Vec<String>,
-    /// Whether to include git submodules.
-    pub include_submodules: bool,
+    /// Disable stdio transport (HTTP-only server daemon mode).
+    pub no_stdio: bool,
+    /// Enable stdio-only mode (MCP over stdin/stdout, no HTTP).
+    pub stdio_only: bool,
 }
 
 /// Infrastructure configurations
@@ -141,20 +119,6 @@ pub struct InfrastructureConfig {
     pub resilience: ResilienceConfig,
     /// Limits configuration
     pub limits: LimitsConfig,
-}
-
-impl InfrastructureConfig {
-    /// Returns the fallback infrastructure configuration.
-    #[must_use]
-    pub fn fallback() -> Self {
-        Self {
-            cache: CacheSystemConfig::default(),
-            event_bus: EventBusConfig::in_process(),
-            metrics: MetricsConfig::default(),
-            resilience: ResilienceConfig::default(),
-            limits: LimitsConfig::default(),
-        }
-    }
 }
 
 /// Data management configurations
@@ -179,17 +143,6 @@ pub struct SystemConfig {
     pub data: DataConfig,
 }
 
-impl SystemConfig {
-    /// Returns the fallback system configuration.
-    #[must_use]
-    pub fn fallback() -> Self {
-        Self {
-            infrastructure: InfrastructureConfig::fallback(),
-            data: DataConfig::default(),
-        }
-    }
-}
-
 /// Operations and daemon configurations
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(deny_unknown_fields)]
@@ -205,8 +158,6 @@ pub struct OperationsDaemonConfig {
 pub struct AppConfig {
     /// Operating mode configuration
     pub mode: ModeConfig,
-    /// Server configuration
-    pub server: ServerConfig,
     /// Provider configurations
     pub providers: ProvidersConfig,
     /// Logging configuration
@@ -219,28 +170,4 @@ pub struct AppConfig {
     pub operations_daemon: OperationsDaemonConfig,
     /// MCP server feature configuration.
     pub mcp: McpConfig,
-    /// MCP context resolution defaults.
-    pub mcp_context: McpContextDefaultsConfig,
-    /// Project settings loaded from workspace
-    #[serde(skip)]
-    pub project_settings: Option<ProjectSettings>,
-}
-
-impl AppConfig {
-    /// Returns the fallback application configuration.
-    #[must_use]
-    pub fn fallback() -> Self {
-        Self {
-            mode: ModeConfig::default(),
-            server: ServerConfig::fallback(),
-            providers: ProvidersConfig::default(),
-            logging: LoggingConfig::default(),
-            auth: AuthConfig::default(),
-            system: SystemConfig::fallback(),
-            operations_daemon: OperationsDaemonConfig::default(),
-            mcp: McpConfig::default(),
-            mcp_context: McpContextDefaultsConfig::default(),
-            project_settings: None,
-        }
-    }
 }

@@ -7,11 +7,13 @@
 use std::path::PathBuf;
 
 use mcb_validate::Severity;
+use rstest::rstest;
 
 // ============================================================================
 // ErrorBoundaryViolation — Display parity
 // ============================================================================
 
+#[rstest]
 #[test]
 fn display_parity_quality_unwrap_smoke_test() {
     let v = mcb_validate::QualityViolation::UnwrapInProduction {
@@ -28,6 +30,7 @@ fn display_parity_quality_unwrap_smoke_test() {
     );
 }
 
+#[rstest]
 #[test]
 fn display_parity_error_boundary_missing_context() {
     let v = mcb_validate::ErrorBoundaryViolation::MissingErrorContext {
@@ -43,6 +46,7 @@ fn display_parity_error_boundary_missing_context() {
     );
 }
 
+#[rstest]
 #[test]
 fn display_parity_error_boundary_wrong_layer() {
     let v = mcb_validate::ErrorBoundaryViolation::WrongLayerError {
@@ -58,6 +62,7 @@ fn display_parity_error_boundary_wrong_layer() {
     );
 }
 
+#[rstest]
 #[test]
 fn display_parity_error_boundary_leaked_internal() {
     let v = mcb_validate::ErrorBoundaryViolation::LeakedInternalError {
@@ -76,6 +81,7 @@ fn display_parity_error_boundary_leaked_internal() {
 // RefactoringViolation — Display parity
 // ============================================================================
 
+#[rstest]
 #[test]
 fn display_parity_refactoring_orphan_import() {
     let v = mcb_validate::RefactoringViolation::OrphanImport {
@@ -91,6 +97,7 @@ fn display_parity_refactoring_orphan_import() {
     );
 }
 
+#[rstest]
 #[test]
 fn display_parity_refactoring_duplicate_definition() {
     // NOTE: Old manual Display included "in N locations:" with count.
@@ -108,6 +115,7 @@ fn display_parity_refactoring_duplicate_definition() {
     );
 }
 
+#[rstest]
 #[test]
 fn display_parity_refactoring_missing_test_file() {
     let v = mcb_validate::RefactoringViolation::MissingTestFile {
@@ -121,6 +129,7 @@ fn display_parity_refactoring_missing_test_file() {
     );
 }
 
+#[rstest]
 #[test]
 fn display_parity_refactoring_stale_reexport() {
     let v = mcb_validate::RefactoringViolation::StaleReExport {
@@ -135,6 +144,7 @@ fn display_parity_refactoring_stale_reexport() {
     );
 }
 
+#[rstest]
 #[test]
 fn display_parity_refactoring_deleted_module_reference() {
     let v = mcb_validate::RefactoringViolation::DeletedModuleReference {
@@ -149,6 +159,7 @@ fn display_parity_refactoring_deleted_module_reference() {
     );
 }
 
+#[rstest]
 #[test]
 fn display_parity_refactoring_dead_code() {
     let v = mcb_validate::RefactoringViolation::RefactoringDeadCode {
@@ -167,6 +178,7 @@ fn display_parity_refactoring_dead_code() {
 // Vec<PathBuf> rendering — macro field_to_string parity
 // ============================================================================
 
+#[rstest]
 #[test]
 fn display_parity_vec_pathbuf_rendering() {
     let v = mcb_validate::RefactoringViolation::DuplicateDefinition {

@@ -7,8 +7,8 @@ use regex::Regex;
 
 use super::super::violation::ImplementationViolation;
 use crate::Result;
-use crate::traits::violation::Severity;
 use crate::utils::source::{compile_pattern_pairs, source_lines, track_fn_name};
+use mcb_domain::ports::validation::Severity;
 
 pub fn validate_stub_macros(
     files: &[(PathBuf, String)],

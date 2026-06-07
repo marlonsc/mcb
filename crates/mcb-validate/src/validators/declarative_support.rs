@@ -5,12 +5,13 @@ use derive_more::Display;
 use crate::config::FileConfig;
 use crate::filters::rule_filters::RuleFilterExecutor;
 use crate::rules::yaml_loader::ValidatedRule;
-use crate::traits::violation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 
 pub(crate) fn build_substitution_variables(workspace_root: &Path) -> serde_yaml::Value {
     let file_config = FileConfig::load(workspace_root);
     let variables_val = serde_yaml::to_value(&file_config.rules.naming)
         .unwrap_or(serde_yaml::Value::Mapping(serde_yaml::Mapping::new()));
+    // INTENTIONAL: YAML mapping clone; empty mapping is valid default
     let mut variables = variables_val.as_mapping().cloned().unwrap_or_default();
 
     let ca_val = serde_yaml::to_value(&file_config.rules.clean_architecture)

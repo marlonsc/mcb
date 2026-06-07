@@ -7,13 +7,11 @@ use regex::Regex;
 
 use super::super::violation::ImplementationViolation;
 use crate::Result;
-use crate::traits::violation::Severity;
+use crate::constants::implementation::{HARDCODED_RETURN_PATTERNS, STUB_SKIP_FILE_KEYWORDS};
 use crate::utils::source::{
     compile_pattern_pairs, extract_functions, is_fn_signature_or_brace, non_test_lines,
 };
-use crate::validators::implementation::constants::{
-    HARDCODED_RETURN_PATTERNS, STUB_SKIP_FILE_KEYWORDS,
-};
+use mcb_domain::ports::validation::Severity;
 
 /// Detect hardcoded return values
 pub fn validate_hardcoded_returns(

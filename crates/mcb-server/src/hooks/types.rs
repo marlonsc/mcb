@@ -29,6 +29,9 @@ pub enum HookError {
     /// The tool output provided is invalid.
     #[error("Invalid tool output: {0}")]
     InvalidToolOutput(String),
+    /// Failed to obtain a timestamp from the system clock.
+    #[error("Timestamp error: {0}")]
+    TimestampError(String),
 }
 
 /// Represents the type of hook event being triggered.
@@ -85,25 +88,26 @@ pub struct HookContext {
 impl PostToolUseContext {
     /// Creates a new `PostToolUseContext` from a tool name and error status.
     ///
-    /// This avoids cloning the entire `CallToolResult` — only the `is_error`
-    /// flag is needed by the hook processor.
-    #[must_use]
-    pub fn new(tool_name: String, is_error: bool) -> Self {
+    /// # Errors
+    ///
+    /// Returns an error if the system clock cannot provide a timestamp.
+    pub fn new(tool_name: String, is_error: bool) -> Result<Self, HookError> {
         let status = if is_error {
             ToolExecutionStatus::Error
         } else {
             ToolExecutionStatus::Success
         };
 
-        let timestamp = domain_time::epoch_secs_u64().unwrap_or(0);
+        let timestamp =
+            domain_time::epoch_secs_u64().map_err(|e| HookError::TimestampError(e.to_string()))?;
 
-        Self {
+        Ok(Self {
             tool_name,
             status,
             timestamp,
             session_id: None,
             metadata: HashMap::new(),
-        }
+        })
     }
 
     /// Sets the session ID for the context.
@@ -123,13 +127,17 @@ impl PostToolUseContext {
 
 impl SessionStartContext {
     /// Creates a new `SessionStartContext` for a given session ID.
-    #[must_use]
-    pub fn new(session_id: SessionId) -> Self {
-        let timestamp = domain_time::epoch_secs_u64().unwrap_or(0);
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the system clock cannot provide a timestamp.
+    pub fn new(session_id: SessionId) -> Result<Self, HookError> {
+        let timestamp =
+            domain_time::epoch_secs_u64().map_err(|e| HookError::TimestampError(e.to_string()))?;
 
-        Self {
+        Ok(Self {
             session_id,
             timestamp,
-        }
+        })
     }
 }

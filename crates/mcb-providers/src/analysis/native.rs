@@ -3,19 +3,17 @@
 //!
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 use mcb_domain::error::Error;
-use mcb_domain::ports::{
-    ComplexityAnalyzer, ComplexityFinding, DeadCodeDetector, DeadCodeFinding, TdgFinding, TdgScorer,
-};
+use mcb_domain::error::Result;
+use mcb_domain::ports::{AnalysisFinding, CODE_ANALYZERS, CodeAnalyzer, CodeAnalyzerEntry};
 use mcb_domain::utils::analysis;
 use walkdir::WalkDir;
 
-use crate::Result;
-
 /// Native PMAT-style analyzer implementation.
 #[derive(Debug, Default, Clone, Copy)]
-pub struct NativePmatAnalyzer;
+struct NativePmatAnalyzer;
 
 impl NativePmatAnalyzer {
     /// Loads Rust files from the workspace.
@@ -40,29 +38,25 @@ impl NativePmatAnalyzer {
     }
 }
 
-impl ComplexityAnalyzer for NativePmatAnalyzer {
+impl CodeAnalyzer for NativePmatAnalyzer {
     fn analyze_complexity(
         &self,
         workspace_root: &Path,
         threshold: u32,
-    ) -> Result<Vec<ComplexityFinding>> {
+    ) -> Result<Vec<AnalysisFinding>> {
         let files = Self::load_rust_files(workspace_root)?;
         let functions = analysis::collect_functions(&files)?;
         Ok(analysis::filter_complex_functions(functions, threshold))
     }
-}
 
-impl DeadCodeDetector for NativePmatAnalyzer {
-    fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<DeadCodeFinding>> {
+    fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<AnalysisFinding>> {
         let files = Self::load_rust_files(workspace_root)?;
         let functions = analysis::collect_functions(&files)?;
         let contents: Vec<String> = files.iter().map(|(_, c)| c.clone()).collect();
         analysis::detect_dead_functions(functions, &contents)
     }
-}
 
-impl TdgScorer for NativePmatAnalyzer {
-    fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<TdgFinding>> {
+    fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<AnalysisFinding>> {
         let files = Self::load_rust_files(workspace_root)?;
         let functions = analysis::collect_functions(&files)?;
         let dead_code = self.detect_dead_code(workspace_root)?;
@@ -71,3 +65,12 @@ impl TdgScorer for NativePmatAnalyzer {
         ))
     }
 }
+
+// Auto-registration via linkme distributed slice
+#[allow(unsafe_code)]
+#[linkme::distributed_slice(CODE_ANALYZERS)]
+static NATIVE_REGEX_ANALYZER: CodeAnalyzerEntry = CodeAnalyzerEntry {
+    name: "native-regex",
+    description: "Regex-based code analyzer",
+    build: || Ok(Arc::new(NativePmatAnalyzer)),
+};

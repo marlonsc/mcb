@@ -7,8 +7,8 @@ use crate::pattern_registry::required_pattern;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity, ValidationConfig};
 
-use super::constants::BACKGROUND_FN_PATTERNS;
 use super::violation::AsyncViolation;
+use crate::constants::async_patterns::BACKGROUND_FN_PATTERNS;
 
 /// Detect spawn without await patterns
 pub fn validate_spawn_patterns(config: &ValidationConfig) -> Result<Vec<AsyncViolation>> {

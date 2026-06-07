@@ -5,8 +5,12 @@
 
 /// AST and tree-sitter node type constants.
 pub mod ast;
+/// Authentication constants (API keys, token prefixes).
+pub mod auth;
 /// Embedding dimension constants for each provider and model family.
 pub mod embedding;
+/// Event bus and messaging constants.
+pub mod events;
 /// HTTP constants
 pub mod http;
 /// I/O and buffer size constants.

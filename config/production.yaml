@@ -1,0 +1,177 @@
+# MCB — Loco configuration (production)
+#
+# Deployed by `make install` to ~/.local/share/mcb/config/production.yaml
+# Loco-native sections handled by Loco; MCB settings under `settings:`.
+
+logger:
+  enable: true
+  pretty_backtrace: false
+  level: info
+  format: compact
+
+server:
+  port: 8080
+  binding: 127.0.0.1
+  host: http://127.0.0.1:8080
+  middlewares:
+    static:
+      enable: false
+
+database:
+  uri: sqlite://mcb.db?mode=rwc
+  enable_logging: false
+  min_connections: 1
+  max_connections: 10
+  connect_timeout: 500
+  idle_timeout: 500
+  auto_migrate: true
+  dangerously_truncate: false
+  dangerously_recreate: false
+
+cache:
+  kind: InMem
+  max_capacity: 33554432
+
+# MCB application settings — deserialized into mcb_infrastructure::config::AppConfig
+settings:
+  mode:
+    type: standalone
+    server_url: "http://127.0.0.1:8080"
+    session_prefix: ""
+    timeout_secs: 30
+    auto_reconnect: true
+    max_reconnect_attempts: 5
+
+  providers:
+    database:
+      provider: sqlite
+      configs:
+        default:
+          provider: sqlite
+          path: ""
+    embedding:
+      provider: ollama
+      model: nomic-embed-text
+      base_url: "http://localhost:11434"
+      dimensions: 768
+      configs:
+        default:
+          provider: ollama
+          model: nomic-embed-text
+          dimensions: 768
+          base_url: "http://localhost:11434"
+    vector_store:
+      provider: milvus
+      address: "http://localhost:29530"
+      dimensions: 768
+      collection: default
+      configs:
+        default:
+          provider: milvus
+          dimensions: 768
+          collection: default
+          address: "http://localhost:29530"
+
+  mcp:
+    no_stdio: false
+    stdio_only: false
+    indexing:
+      supported_extensions:
+        - rs
+        - py
+        - js
+        - ts
+        - java
+        - cpp
+        - c
+        - go
+
+  logging:
+    level: info
+    json_format: false
+    max_file_size: 10485760
+    max_files: 5
+    event_bus_level: warn
+
+  auth:
+    enabled: false
+    password_algorithm: Argon2
+    jwt:
+      secret: ""
+      expiration_secs: 86400
+      refresh_expiration_secs: 604800
+    api_key:
+      enabled: true
+      header: "X-API-Key"
+    admin:
+      enabled: true
+      header: "X-Admin-Key"
+
+  system:
+    infrastructure:
+      cache:
+        enabled: true
+        provider: Moka
+        default_ttl_secs: 3600
+        max_size: 1000000
+        redis_pool_size: 10
+        namespace: mcb
+      event_bus:
+        provider: in_process
+        capacity: 1024
+        connection_timeout_ms: 5000
+        max_reconnect_attempts: 5
+      metrics:
+        enabled: true
+        collection_interval_secs: 10
+        prefix: mcb
+        endpoint_enabled: true
+        endpoint_path: "/metrics"
+      resilience:
+        circuit_breaker_failure_threshold: 5
+        circuit_breaker_timeout_secs: 30
+        circuit_breaker_success_threshold: 3
+        rate_limiter_rps: 100
+        rate_limiter_burst: 200
+        retry_attempts: 3
+        retry_delay_ms: 1000
+      limits:
+        memory_limit: 2147483648
+        cpu_limit: 4
+        disk_io_limit: 104857600
+        max_connections: 1000
+        max_requests_per_connection: 100
+    data:
+      snapshot:
+        enabled: false
+        directory: "./snapshots"
+        max_file_size: 104857600
+        compression_enabled: true
+        change_detection_enabled: true
+      sync:
+        enabled: true
+        watching_enabled: false
+        batch_size: 100
+        debounce_delay_ms: 1000
+        timeout_secs: 60
+        max_concurrent: 4
+      backup:
+        enabled: false
+        directory: "./backups"
+        interval_secs: 86400
+        max_backups: 7
+        compress: true
+        encrypt: false
+
+  operations_daemon:
+    daemon:
+      enabled: true
+      check_interval_secs: 30
+      restart_delay_secs: 5
+      max_restart_attempts: 10
+      auto_start: true
+    operations:
+      tracking_enabled: true
+      cleanup_interval_secs: 3600
+      retention_secs: 2592000
+      max_operations_in_memory: 10000

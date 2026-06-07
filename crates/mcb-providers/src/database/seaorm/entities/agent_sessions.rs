@@ -3,41 +3,60 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an agent session.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "agent_sessions")]
 pub struct Model {
+    /// Unique identifier for the session.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Optional project ID this session belongs to.
     #[sea_orm(column_type = "Text", nullable)]
     pub project_id: Option<String>,
+    /// Optional worktree ID active during this session.
     #[sea_orm(column_type = "Text", nullable)]
     pub worktree_id: Option<String>,
+    /// Reference to the session summary.
     #[sea_orm(column_type = "Text")]
     pub session_summary_id: String,
+    /// Type of agent (e.g., "primary", "worker").
     #[sea_orm(column_type = "Text")]
     pub agent_type: String,
+    /// The AI model used during the session.
     #[sea_orm(column_type = "Text")]
     pub model: String,
+    /// Optional link to a parent session if this is a delegated task.
     #[sea_orm(column_type = "Text", nullable)]
     pub parent_session_id: Option<String>,
+    /// Timestamp when the session started.
     pub started_at: i64,
+    /// Timestamp when the session ended.
     pub ended_at: Option<i64>,
+    /// Total duration of the session in milliseconds.
     pub duration_ms: Option<i64>,
+    /// Status of the session (e.g., "completed", "failed").
     #[sea_orm(column_type = "Text")]
     pub status: String,
+    /// Optional summary of the input prompt.
     #[sea_orm(column_type = "Text", nullable)]
     pub prompt_summary: Option<String>,
+    /// Optional summary of the session result.
     #[sea_orm(column_type = "Text", nullable)]
     pub result_summary: Option<String>,
+    /// Total tokens consumed during the session.
     pub token_count: Option<i64>,
+    /// Number of tool calls made in this session.
     pub tool_calls_count: Option<i64>,
+    /// Number of delegations performed from this session.
     pub delegations_count: Option<i64>,
 }
 
+/// Relations for the agent session model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the agent session model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

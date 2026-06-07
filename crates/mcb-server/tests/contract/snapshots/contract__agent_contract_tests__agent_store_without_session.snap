@@ -1,0 +1,31 @@
+---
+source: crates/mcb-server/tests/contract/agent_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "id": 1,
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "action": "log_tool",
+        "data": {
+          "duration_ms": 5,
+          "success": true,
+          "tool_name": "search"
+        },
+        "session_id": "nonexistent-session-00000"
+      },
+      "name": "agent"
+    }
+  },
+  "response": {
+    "error": {
+      "code": -32602,
+      "message": "Failed to parse arguments: UUID parsing failed: invalid character: expected an optional prefix of `urn:uuid:` followed by [0-9a-fA-F-], found `n` at 1"
+    },
+    "id": 1,
+    "jsonrpc": "2.0"
+  },
+  "status": 200
+}

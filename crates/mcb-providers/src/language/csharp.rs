@@ -3,9 +3,9 @@
 //!
 //! C# language processor for AST-based code chunking.
 
-use crate::language::common::{
-    AST_NODE_INTERFACE_DECLARATION, CHUNK_SIZE_CSHARP, TS_NODE_CLASS_DECLARATION,
-    TS_NODE_METHOD_DECLARATION,
+use crate::language::common::CHUNK_SIZE_CSHARP;
+use mcb_domain::constants::ast::{
+    AST_NODE_INTERFACE_DECLARATION, TS_NODE_CLASS_DECLARATION, TS_NODE_METHOD_DECLARATION,
 };
 
 crate::impl_simple_language_processor!(

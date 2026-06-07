@@ -3,29 +3,40 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a version of a plan.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "plan_versions")]
 pub struct Model {
+    /// Unique identifier for the plan version.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the organization this plan version belongs to.
     #[sea_orm(column_type = "Text")]
     pub org_id: String,
+    /// Reference to the plan this version belongs to.
     #[sea_orm(column_type = "Text")]
     pub plan_id: String,
+    /// Version number of the plan.
     pub version_number: i64,
+    /// JSON content of the plan version.
     #[sea_orm(column_type = "Text")]
     pub content_json: String,
+    /// Summary of changes made in this version.
     #[sea_orm(column_type = "Text")]
     pub change_summary: String,
+    /// Identifier of the user who created this version.
     #[sea_orm(column_type = "Text")]
     pub created_by: String,
+    /// Timestamp when this version was created.
     pub created_at: i64,
 }
 
+/// Relations for the plan version model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the plan version model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

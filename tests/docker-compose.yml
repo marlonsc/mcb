@@ -13,10 +13,12 @@ services:
     networks:
       - mcp-test
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 1080"]
+      # mockserver has no shell/nc/curl — java -version proves JVM/server is alive.
+      test: ["CMD", "java", "-version"]
       interval: 5s
       timeout: 3s
       retries: 10
+      start_period: 15s
 
   # Redis - Cache layer
   redis:
@@ -200,19 +202,14 @@ services:
         condition: service_healthy
       nats:
         condition: service_healthy
-      ollama:
-        condition: service_healthy
+      # ollama: optional — tests use fastembed by default, not ollama
       postgres:
         condition: service_healthy
-    networks:
-      - mcp-test
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
     command:
       [
         "sh",
         "-c",
-        "echo '🚀 Starting integration tests...' && make test-rust",
+        "echo '\U0001f680 Starting Rust test suite...' && make test-rust",
       ]
 
 volumes:

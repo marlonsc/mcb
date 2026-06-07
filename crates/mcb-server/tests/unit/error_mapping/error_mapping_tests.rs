@@ -4,7 +4,7 @@ use mcb_server::error_mapping::{
 };
 use rstest::rstest;
 
-use crate::utils::text::extract_text;
+use mcb_domain::utils::text::extract_text;
 
 #[rstest]
 #[case(Error::NotFound { resource: "test".to_owned() }, "Not found: test")]

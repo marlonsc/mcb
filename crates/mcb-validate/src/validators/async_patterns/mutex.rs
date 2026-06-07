@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use super::constants::WRONG_MUTEX_PATTERNS;
+use crate::constants::async_patterns::WRONG_MUTEX_PATTERNS;
 use crate::constants::common::TEST_PATH_PATTERNS;
 use crate::filters::LanguageId;
 use crate::pattern_registry::{compile_regex_triples, required_pattern};

@@ -121,117 +121,67 @@ pub struct DetectedProject {
 // Workflow State
 // ============================================================================
 
-/// Represents the execution state of a project phase.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
-pub enum PhaseStatus {
-    /// Indicates the phase is scheduled but hasn't started.
-    Planned,
-    /// Indicates the phase is actively being worked on.
-    InProgress,
-    /// Indicates the phase cannot proceed due to impediments.
-    Blocked,
-    /// Indicates the phase has been successfully finished.
-    Completed,
-    /// Indicates the phase was intentionally bypassed.
-    Skipped,
+crate::define_string_enum! {
+    /// Represents the execution state of a project phase.
+    pub enum PhaseStatus [strum = "snake_case"] {
+        /// Indicates the phase is scheduled but hasn't started.
+        Planned,
+        /// Indicates the phase is actively being worked on.
+        InProgress,
+        /// Indicates the phase cannot proceed due to impediments.
+        Blocked,
+        /// Indicates the phase has been successfully finished.
+        Completed,
+        /// Indicates the phase was intentionally bypassed.
+        Skipped,
+    }
 }
 
-crate::impl_as_str_from_as_ref!(PhaseStatus);
-
-/// Classifies the nature of a project issue.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
-pub enum IssueType {
-    /// Represents a unit of work to be performed.
-    Task,
-    /// Represents a defect or error that needs resolution.
-    Bug,
-    /// Represents a new capability or functionality.
-    Feature,
-    /// Represents an improvement to existing functionality.
-    Enhancement,
-    /// Represents a documentation-only change.
-    Documentation,
+crate::define_string_enum! {
+    /// Classifies the nature of a project issue.
+    pub enum IssueType [strum = "snake_case", schema] {
+        /// Represents a unit of work to be performed.
+        Task,
+        /// Represents a defect or error that needs resolution.
+        Bug,
+        /// Represents a new capability or functionality.
+        Feature,
+        /// Represents an improvement to existing functionality.
+        Enhancement,
+        /// Represents a documentation-only change.
+        Documentation,
+    }
 }
 
-crate::impl_as_str_from_as_ref!(IssueType);
-
-/// Tracks the lifecycle state of an issue.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
-pub enum IssueStatus {
-    /// Indicates the issue is new and awaiting action.
-    Open,
-    /// Indicates the issue is actively being worked on.
-    InProgress,
-    /// Indicates the issue is blocked by external factors.
-    Blocked,
-    /// Indicates the issue work has been finished.
-    Resolved,
-    /// Indicates the issue is verified and fully completed.
-    Closed,
+crate::define_string_enum! {
+    /// Tracks the lifecycle state of an issue.
+    pub enum IssueStatus [strum = "snake_case", schema] {
+        /// Indicates the issue is new and awaiting action.
+        Open,
+        /// Indicates the issue is actively being worked on.
+        InProgress,
+        /// Indicates the issue is blocked by external factors.
+        Blocked,
+        /// Indicates the issue work has been finished.
+        Resolved,
+        /// Indicates the issue is verified and fully completed.
+        Closed,
+    }
 }
 
-crate::impl_as_str_from_as_ref!(IssueStatus);
-
-/// Defines the relationship between two project issues.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
-pub enum DependencyType {
-    /// Indicates the source issue prevents the target issue from starting.
-    Blocks,
-    /// Indicates the source issue is relevant to the target issue context.
-    RelatesTo,
-    /// Indicates the source issue describes the same problem as the target issue.
-    DuplicateOf,
-    /// Indicates the source issue is the parent container of the target issue.
-    ParentOf,
+crate::define_string_enum! {
+    /// Defines the relationship between two project issues.
+    pub enum DependencyType [strum = "snake_case"] {
+        /// Indicates the source issue prevents the target issue from starting.
+        Blocks,
+        /// Indicates the source issue is relevant to the target issue context.
+        RelatesTo,
+        /// Indicates the source issue describes the same problem as the target issue.
+        DuplicateOf,
+        /// Indicates the source issue is the parent container of the target issue.
+        ParentOf,
+    }
 }
-
-crate::impl_as_str_from_as_ref!(DependencyType);
 
 crate::define_entity! {
     /// Represents a distinct stage in the project roadmap.

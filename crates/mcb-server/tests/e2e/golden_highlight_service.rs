@@ -4,16 +4,20 @@
 //! Tests verify: All 12 languages supported, 13 highlight categories, HTML generation, edge cases.
 
 use mcb_domain::ports::HighlightServiceInterface;
-use mcb_infrastructure::services::highlight_renderer::HtmlRenderer;
-use mcb_infrastructure::services::highlight_service::HighlightServiceImpl;
+use mcb_domain::registry::services::resolve_highlight_service;
+use mcb_domain::value_objects::browse::HtmlRenderer;
 use rstest::rstest;
 
-fn get_service() -> HighlightServiceImpl {
-    HighlightServiceImpl::new()
+fn get_service() -> std::sync::Arc<dyn HighlightServiceInterface> {
+    resolve_highlight_service(&()).expect("highlight service should resolve")
 }
 
 /// Convenience wrapper: highlight code and render to HTML.
-async fn highlight_code(code: &str, language: &str, service: &HighlightServiceImpl) -> String {
+async fn highlight_code(
+    code: &str,
+    language: &str,
+    service: &std::sync::Arc<dyn HighlightServiceInterface>,
+) -> String {
     match service.highlight(code, language).await {
         Ok(highlighted) => HtmlRenderer::render(&highlighted),
         Err(_) => {
@@ -62,6 +66,7 @@ fn language_test_cases() -> Vec<LanguageTestCase> {
     ]
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_highlight_all_languages() {
     let service = get_service();
@@ -92,6 +97,7 @@ async fn test_golden_highlight_all_languages() {
 #[case("rust", "// comment")]
 #[case("rust", "let x = 1;")]
 #[case("rust", "#[derive(Debug)]")]
+#[rstest]
 #[tokio::test]
 async fn test_golden_highlight_categories(#[case] lang: &str, #[case] code: &str) {
     let service = get_service();
@@ -117,6 +123,7 @@ async fn test_golden_highlight_empty_like_input(#[case] code: &str, #[case] lang
     let _ = result;
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_highlight_unknown_language() {
     let service = get_service();
@@ -131,6 +138,7 @@ async fn test_golden_highlight_unknown_language() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_highlight_html_escaping() {
     let service = get_service();
@@ -146,6 +154,7 @@ async fn test_golden_highlight_html_escaping() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_highlight_multiline_code() {
     let service = get_service();
@@ -160,6 +169,7 @@ async fn test_golden_highlight_multiline_code() {
     assert!(result.contains("match"), "Should preserve code content");
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_highlight_very_long_lines() {
     let service = get_service();
@@ -173,6 +183,7 @@ async fn test_golden_highlight_very_long_lines() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_highlight_output_format() {
     let service = get_service();
@@ -189,6 +200,7 @@ async fn test_golden_highlight_output_format() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_highlight_consistency() {
     let service = get_service();
@@ -198,6 +210,7 @@ async fn test_golden_highlight_consistency() {
     assert_eq!(result1, result2, "Highlighting should be deterministic");
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_highlight_comments_preserved() {
     let service = get_service();
@@ -205,6 +218,7 @@ async fn test_golden_highlight_comments_preserved() {
     assert!(result.contains("hl-comment"), "Should highlight comments");
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_highlight_strings_preserved() {
     let service = get_service();

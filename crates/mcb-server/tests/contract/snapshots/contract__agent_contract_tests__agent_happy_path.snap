@@ -25,11 +25,11 @@ expression: "normalize_tool_call_ids(snapshot_payload(&request, status, &respons
     "result": {
       "content": [
         {
-          "text": "{\n  \"session_id\": \"00000000-0000-0000-0000-000000000001\",\n  \"tool_call_id\": \"tc_00000000-0000-0000-0000-000000000000\",\n  \"tool_name\": \"search\"\n}",
+          "text": "Not found: Agent session '00000000-0000-0000-0000-000000000001' not found. Sessions must be created before storing events.",
           "type": "text"
         }
       ],
-      "isError": false
+      "isError": true
     }
   },
   "status": 200

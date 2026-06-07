@@ -1,7 +1,9 @@
 //! Integration tests for entities and value objects working together
 
 use mcb_domain::{CodeChunk, Embedding, SearchResult};
+use rstest::rstest;
 
+#[rstest]
 #[test]
 fn test_code_chunk_with_embedding_integration() {
     // Test how CodeChunk entity works with Embedding value object
@@ -32,6 +34,7 @@ fn test_code_chunk_with_embedding_integration() {
     assert_eq!(embedding.vector.len(), embedding.dimensions);
 }
 
+#[rstest]
 #[test]
 fn test_search_result_from_code_chunk() {
     // Test integration between CodeChunk and SearchResult
@@ -68,6 +71,7 @@ fn test_search_result_from_code_chunk() {
     assert!(search_result.score > 0.9); // High relevance score
 }
 
+#[rstest]
 #[test]
 fn test_multi_language_code_chunks() {
     // Test integration with different programming languages
@@ -105,6 +109,7 @@ fn test_multi_language_code_chunks() {
     assert_eq!(python_chunk.metadata["name"], "calculate_mean");
 }
 
+#[rstest]
 #[test]
 fn test_embedding_vector_properties() {
     // Test integration of embedding properties
@@ -135,6 +140,7 @@ fn test_embedding_vector_properties() {
     }
 }
 
+#[rstest]
 #[test]
 fn test_search_result_ranking() {
     // Test integration of search results with different relevance scores

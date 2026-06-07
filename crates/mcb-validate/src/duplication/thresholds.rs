@@ -9,7 +9,7 @@
 use derive_more::Display;
 use serde::{Deserialize, Serialize};
 
-use super::constants;
+use crate::constants::duplication as constants;
 
 /// Clone type classification following established taxonomy
 ///

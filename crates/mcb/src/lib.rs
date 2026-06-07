@@ -8,23 +8,13 @@
 //! mcb serve --transport http
 //! mcb serve --transport stdio
 //! ```
+
+/// CLI subcommand handlers and arguments.
 pub mod cli;
+/// Loco initializers for the MCP server.
+pub mod initializers;
+/// Loco application hooks and specialized application logic.
+pub mod loco_app;
 
-/// Re-export of the domain layer.
-pub mod domain {
-    pub use mcb_domain::*;
-}
-
-/// Re-export of the server layer.
-pub mod server {
-    pub use mcb_server::*;
-}
-
-/// Re-export of the infrastructure layer.
-pub mod infrastructure {
-    pub use mcb_infrastructure::*;
-}
-
-pub use domain::*;
-pub use server::McbApp;
-pub use server::{McpServer, McpServerBuilder};
+pub use crate::loco_app::McbApp;
+pub use mcb_server::McpServer;

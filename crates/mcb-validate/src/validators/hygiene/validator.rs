@@ -9,9 +9,8 @@
 //! high quality (e.g., meaningful assertions, no raw unwraps).
 //!
 //! This validator delegates specific checks to specialized modules in the `hygiene` directory.
-
-/// Test hygiene violation types
 use super::violation::HygieneViolation;
+
 crate::create_validator!(
     HygieneValidator,
     "hygiene",

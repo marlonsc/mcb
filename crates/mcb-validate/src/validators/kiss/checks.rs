@@ -2,18 +2,23 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::constants::common::{
-    CFG_TEST_MARKER, COMMENT_PREFIX, FN_PREFIX, SHORT_PREVIEW_LENGTH, TEST_FUNCTION_PREFIX,
+    CFG_TEST_MARKER, COMMENT_PREFIX, SHORT_PREVIEW_LENGTH, TEST_FUNCTION_PREFIX,
 };
 use crate::filters::LanguageId;
 use std::path::PathBuf;
 
+use rust_code_analysis::SpaceKind;
+
+use crate::ast::rca_helpers;
 use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::thresholds::thresholds;
 use crate::{Result, Severity};
 
-use super::constants::{DI_CONTAINER_CONTAINS, DI_CONTAINER_SUFFIXES, NESTING_PROXIMITY_THRESHOLD};
 use super::{KissValidator, KissViolation};
+use crate::constants::kiss::{
+    DI_CONTAINER_CONTAINS, DI_CONTAINER_SUFFIXES, NESTING_PROXIMITY_THRESHOLD,
+};
 
 impl KissValidator {
     fn update_test_module_tracking(
@@ -60,6 +65,41 @@ impl KissValidator {
         )
     }
 
+    /// Helper for validating RCA-based function metrics.
+    /// Handles the boilerplate: `for_each_kiss_file` → `parse_file_spaces` → iterate functions → check metric.
+    /// The closure `check` is called for each non-test function and should return Some(violation) if the metric exceeds threshold.
+    fn validate_rca_fn_metric<F>(
+        &self,
+        check_label: &str,
+        mut check: F,
+    ) -> Result<Vec<KissViolation>>
+    where
+        F: FnMut(&rust_code_analysis::FuncSpace, &PathBuf) -> Option<KissViolation>,
+    {
+        let mut violations = Vec::new();
+        mcb_domain::debug!("kiss", &format!("Checking {check_label}"));
+
+        self.for_each_kiss_file(true, |path, content| {
+            let Some(root) = rca_helpers::parse_file_spaces(&path, &content) else {
+                return Ok(());
+            };
+            mcb_domain::trace!("kiss", check_label, &format!("file={}", path.display()));
+
+            for space in rca_helpers::collect_spaces_of_kind(&root, &content, SpaceKind::Function) {
+                let fn_name = space.name.as_deref().unwrap_or("");
+                if fn_name.starts_with(TEST_FUNCTION_PREFIX) {
+                    continue;
+                }
+                if let Some(violation) = check(space, &path) {
+                    violations.push(violation);
+                }
+            }
+            Ok(())
+        })?;
+
+        Ok(violations)
+    }
+
     fn for_each_non_test_line<F>(lines: &[&str], mut f: F)
     where
         F: FnMut(usize, &str, &str),
@@ -92,10 +132,7 @@ impl KissValidator {
     /// Returns an error if file scanning or reading fails.
     pub fn validate_struct_fields(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let struct_pattern = match compile_regex(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{") {
-            Ok(regex) => regex,
-            Err(e) => return Err(e.into()),
-        };
+        let struct_pattern = compile_regex(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*)\s*\{")?;
 
         self.for_each_kiss_file(false, |path, content| {
             let lines: Vec<&str> = content.lines().collect();
@@ -135,55 +172,30 @@ impl KissValidator {
         Ok(violations)
     }
 
-    /// Detects functions with too many parameters.
+    /// Detects functions with too many parameters using rust-code-analysis.
+    ///
+    /// Uses RCA's `get_function_spaces()` to obtain per-function `nargs` metrics
+    /// instead of regex-based parameter counting.
     ///
     /// # Errors
     ///
     /// Returns an error if file scanning or reading fails.
     pub fn validate_function_params(&self) -> Result<Vec<KissViolation>> {
-        let mut violations = Vec::new();
-        let fn_pattern = match compile_regex(
-            r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*(?:<[^>]*>)?\s*\(([^)]*)\)",
-        ) {
-            Ok(regex) => regex,
-            Err(e) => return Err(e.into()),
-        };
-
-        self.for_each_kiss_file(true, |path, content| {
-            let lines: Vec<&str> = content.lines().collect();
-            Self::for_each_non_test_line(&lines, |line_num, line, _trimmed| {
-                if !line.contains(FN_PREFIX) {
-                    return;
-                }
-
-                let mut full_line = line.to_owned();
-                let mut idx = line_num + 1;
-                while !full_line.contains(')') && idx < lines.len() {
-                    full_line.push_str(lines[idx]);
-                    idx += 1;
-                }
-
-                if let Some(cap) = fn_pattern.captures(&full_line) {
-                    let fn_name = cap.get(1).map_or("", |m| m.as_str());
-                    let params = cap.get(2).map_or("", |m| m.as_str());
-                    let param_count = Self::count_function_params(params);
-
-                    if param_count > self.max_function_params {
-                        violations.push(KissViolation::FunctionTooManyParams {
-                            file: path.clone(),
-                            line: line_num + 1,
-                            function_name: fn_name.to_owned(),
-                            param_count,
-                            max_allowed: self.max_function_params,
-                            severity: Severity::Warning,
-                        });
-                    }
-                }
-            });
-            Ok(())
-        })?;
-
-        Ok(violations)
+        self.validate_rca_fn_metric("function parameter counts", |space, path| {
+            let param_count = space.metrics.nargs.fn_args().round() as usize;
+            if param_count > self.max_function_params {
+                Some(KissViolation::FunctionTooManyParams {
+                    file: path.clone(),
+                    line: space.start_line,
+                    function_name: space.name.as_deref().unwrap_or("").to_owned(),
+                    param_count,
+                    max_allowed: self.max_function_params,
+                    severity: Severity::Warning,
+                })
+            } else {
+                None
+            }
+        })
     }
 
     /// Detects builder structs with too many optional fields.
@@ -193,15 +205,8 @@ impl KissValidator {
     /// Returns an error if file scanning or reading fails.
     pub fn validate_builder_complexity(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let builder_pattern =
-            match compile_regex(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*Builder)\s*") {
-                Ok(regex) => regex,
-                Err(e) => return Err(e.into()),
-            };
-        let option_pattern = match compile_regex("Option<") {
-            Ok(regex) => regex,
-            Err(e) => return Err(e.into()),
-        };
+        let builder_pattern = compile_regex(r"(?:pub\s+)?struct\s+([A-Z][a-zA-Z0-9_]*Builder)\s*")?;
+        let option_pattern = compile_regex("Option<")?;
 
         self.for_each_kiss_file(false, |path, content| {
             let lines: Vec<&str> = content.lines().collect();
@@ -237,10 +242,7 @@ impl KissValidator {
     /// Returns an error if file scanning or reading fails.
     pub fn validate_nesting_depth(&self) -> Result<Vec<KissViolation>> {
         let mut violations = Vec::new();
-        let control_flow_pattern = match compile_regex(r"\b(if|match|for|while|loop)\b") {
-            Ok(regex) => regex,
-            Err(e) => return Err(e.into()),
-        };
+        let control_flow_pattern = compile_regex(r"\b(if|match|for|while|loop)\b")?;
 
         self.for_each_kiss_file(false, |path, content| {
             let lines: Vec<&str> = content.lines().collect();
@@ -306,49 +308,29 @@ impl KissValidator {
         Ok(violations)
     }
 
-    /// Detects functions that exceed the maximum allowed line count.
+    /// Detects functions that exceed the maximum allowed line count using rust-code-analysis.
+    ///
+    /// Uses RCA's `get_function_spaces()` to obtain per-function SLOC metrics
+    /// instead of regex + brace counting.
     ///
     /// # Errors
     ///
     /// Returns an error if file scanning or reading fails.
     pub fn validate_function_length(&self) -> Result<Vec<KissViolation>> {
-        let mut violations = Vec::new();
-        let fn_pattern = match compile_regex(r"(?:pub\s+)?(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)") {
-            Ok(regex) => regex,
-            Err(e) => return Err(e.into()),
-        };
-
-        self.for_each_kiss_file(true, |path, content| {
-            let lines: Vec<&str> = content.lines().collect();
-            Self::for_each_non_test_line(&lines, |line_num, line, _trimmed| {
-                if let Some(cap) = fn_pattern.captures(line) {
-                    let fn_name = cap.get(1).map_or("", |m| m.as_str());
-
-                    if fn_name.starts_with(TEST_FUNCTION_PREFIX) {
-                        return;
-                    }
-
-                    if Self::is_trait_fn_declaration(&lines, line_num) {
-                        return;
-                    }
-
-                    let line_count = Self::count_function_lines(&lines, line_num);
-
-                    if line_count > self.max_function_lines {
-                        violations.push(KissViolation::FunctionTooLong {
-                            file: path.clone(),
-                            line: line_num + 1,
-                            function_name: fn_name.to_owned(),
-                            line_count,
-                            max_allowed: self.max_function_lines,
-                            severity: Severity::Warning,
-                        });
-                    }
-                }
-            });
-            Ok(())
-        })?;
-
-        Ok(violations)
+        self.validate_rca_fn_metric("function lengths", |space, path| {
+            let line_count = space.metrics.loc.sloc().round() as usize;
+            if line_count > self.max_function_lines {
+                Some(KissViolation::FunctionTooLong {
+                    file: path.clone(),
+                    line: space.start_line,
+                    function_name: space.name.as_deref().unwrap_or("").to_owned(),
+                    line_count,
+                    max_allowed: self.max_function_lines,
+                    severity: Severity::Warning,
+                })
+            } else {
+                None
+            }
+        })
     }
 }

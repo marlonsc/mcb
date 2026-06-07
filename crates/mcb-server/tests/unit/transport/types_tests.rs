@@ -12,6 +12,7 @@ use rstest::rstest;
     "tools/call",
     Some("search")
 )]
+#[rstest]
 #[test]
 fn test_mcp_request_serialization(
     #[case] method: &str,
@@ -59,6 +60,7 @@ fn test_mcp_response_shapes(
     }
 }
 
+#[rstest]
 #[test]
 fn test_mcp_response_serialization_roundtrip() {
     let response =
@@ -69,6 +71,7 @@ fn test_mcp_response_serialization_roundtrip() {
     assert!(deserialized.result.is_some());
 }
 
+#[rstest]
 #[test]
 fn test_mcp_request_deserialization() {
     let json = r#"{"method":"ping","params":null,"id":1}"#;

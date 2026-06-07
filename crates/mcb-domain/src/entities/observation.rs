@@ -6,37 +6,25 @@ use super::memory::{ExecutionMetadata, OriginContext, QualityGateResult};
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-/// Categorizes the type of observation recorded.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
-pub enum ObservationType {
-    /// Represents a code snippet or file content.
-    Code,
-    /// Represents a recorded decision.
-    Decision,
-    /// Represents general project context or information.
-    Context,
-    /// Represents an error or exception.
-    Error,
-    /// Represents a summary or aggregation of data.
-    Summary,
-    /// Represents an execution trace or log.
-    Execution,
-    /// Represents a quality gate check result.
-    QualityGate,
+crate::define_string_enum! {
+    /// Categorizes the type of observation recorded.
+    pub enum ObservationType [strum = "snake_case"] {
+        /// Represents a code snippet or file content.
+        Code,
+        /// Represents a recorded decision.
+        Decision,
+        /// Represents general project context or information.
+        Context,
+        /// Represents an error or exception.
+        Error,
+        /// Represents a summary or aggregation of data.
+        Summary,
+        /// Represents an execution trace or log.
+        Execution,
+        /// Represents a quality gate check result.
+        QualityGate,
+    }
 }
-
-crate::impl_as_str_from_as_ref!(ObservationType);
 
 /// Metadata associated with an observation.
 ///

@@ -3,34 +3,48 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an agent tool call.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "tool_calls")]
 pub struct Model {
+    /// Unique identifier for the tool call.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Optional organization ID.
     #[sea_orm(column_type = "Text", nullable)]
     pub org_id: Option<String>,
+    /// Optional project ID.
     #[sea_orm(column_type = "Text", nullable)]
     pub project_id: Option<String>,
+    /// Optional repository ID.
     #[sea_orm(column_type = "Text", nullable)]
     pub repo_id: Option<String>,
+    /// Identifier of the session that made the tool call.
     #[sea_orm(column_type = "Text")]
     pub session_id: String,
+    /// Name of the tool called.
     #[sea_orm(column_type = "Text")]
     pub tool_name: String,
+    /// Optional summary of the parameters passed to the tool.
     #[sea_orm(column_type = "Text", nullable)]
     pub params_summary: Option<String>,
+    /// Boolean-ish (0 or 1) indicating success of the tool call.
     pub success: i64,
+    /// Optional error message if the tool call failed.
     #[sea_orm(column_type = "Text", nullable)]
     pub error_message: Option<String>,
+    /// Duration of the tool call in milliseconds.
     pub duration_ms: Option<i64>,
+    /// Timestamp when the tool call was made.
     pub created_at: i64,
 }
 
+/// Relations for the tool call model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the tool call model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

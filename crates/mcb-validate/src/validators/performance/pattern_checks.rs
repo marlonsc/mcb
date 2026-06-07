@@ -1,7 +1,7 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use super::constants::{
+use crate::constants::performance::{
     ARC_MUTEX_OVERUSE_PATTERNS, INEFFICIENT_ITERATOR_PATTERNS, INEFFICIENT_STRING_PATTERNS,
 };
 use crate::pattern_registry::compile_regex_triples;

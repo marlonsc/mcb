@@ -1,6 +1,6 @@
 //! Contract: docs/testing/GOLDEN_TESTS_CONTRACT.md.
 
-use crate::utils::test_fixtures::{
+use mcb_domain::utils::tests::fixtures::{
     GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES, create_test_mcp_server, golden_content_to_string,
     golden_count_result_entries, golden_parse_results_found, sample_codebase_path,
 };

@@ -15,7 +15,7 @@ repository = "https://github.com/marlonsc/mcb"
 authors = ["Marlon Costa <marlonsc@gmail.com>"]
 homepage = "https://github.com/marlonsc/mcb"
 license = "MIT"
-version = "0.3.0-dev"
+version = "0.3.0"
 rust-version = "1.92"
 edition = "2024"
 
@@ -335,9 +335,6 @@ sea-query = "=1.0.0-rc.31"
 # Seaography: GraphQL schema generator for SeaORM
 seaography = "=2.0.0-rc.8"
 
-# Sea Streamer: Event streaming
-sea-streamer = { version = "0.5", features = ["file", "redis"] }
-
 async-graphql = "7"
 async-graphql-axum = "7"
 
@@ -352,9 +349,11 @@ sea-orm-pro = "0.1"
 # ============================================
 
 [profile.release]
-# Link-time optimization for smaller/faster binaries
-lto = true
-# Single codegen unit for better optimization
+# Thin LTO: preserves linkme distributed-slice registrations that full LTO strips.
+# Full LTO (lto = true) is incompatible with linkme's #[distributed_slice] entries
+# because the linker eliminates them as "unused" data.
+lto = "thin"
+# Single codegen unit for better optimization within each crate
 codegen-units = 1
 
 [profile.dev]
@@ -382,15 +381,6 @@ sea-query-sqlx           = { path = "third-party/sea-query/sea-query-sqlx" }
 # --- sea-schema ---
 sea-schema               = { path = "third-party/sea-schema" }
 sea-schema-derive        = { path = "third-party/sea-schema/sea-schema-derive" }
-
-# --- sea-streamer ---
-sea-streamer             = { path = "third-party/sea-streamer" }
-sea-streamer-types       = { path = "third-party/sea-streamer/sea-streamer-types" }
-sea-streamer-socket      = { path = "third-party/sea-streamer/sea-streamer-socket" }
-sea-streamer-runtime     = { path = "third-party/sea-streamer/sea-streamer-runtime" }
-sea-streamer-file        = { path = "third-party/sea-streamer/sea-streamer-file" }
-sea-streamer-redis       = { path = "third-party/sea-streamer/sea-streamer-redis" }
-sea-streamer-stdio       = { path = "third-party/sea-streamer/sea-streamer-stdio" }
 
 # --- seaography ---
 seaography               = { path = "third-party/seaography" }

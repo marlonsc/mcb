@@ -29,14 +29,11 @@ impl CryptoService {
     /// Returns an error if the master key size is not exactly 32 bytes.
     pub fn new(master_key: Vec<u8>) -> Result<Self> {
         if master_key.len() != AES_GCM_KEY_SIZE {
-            return Err(Error::Configuration {
-                message: format!(
-                    "Invalid master key size: expected {} bytes, got {}",
-                    AES_GCM_KEY_SIZE,
-                    master_key.len()
-                ),
-                source: None,
-            });
+            return Err(Error::configuration(format!(
+                "Invalid master key size: expected {} bytes, got {}",
+                AES_GCM_KEY_SIZE,
+                master_key.len()
+            )));
         }
 
         Ok(Self { master_key })

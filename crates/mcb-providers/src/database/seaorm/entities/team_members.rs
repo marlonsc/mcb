@@ -3,22 +3,29 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a team member (mapping between teams and users).
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "team_members")]
 pub struct Model {
+    /// Reference to the team.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub team_id: String,
+    /// Reference to the user who is a member of the team.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub user_id: String,
+    /// Role of the user within the team (e.g., "lead", "member").
     #[sea_orm(column_type = "Text")]
     pub role: String,
+    /// Timestamp when the user joined the team.
     pub joined_at: i64,
 }
 
+/// Relations for the team member model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the team member model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

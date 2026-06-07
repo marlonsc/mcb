@@ -17,7 +17,7 @@ impl From<observation::Model> for Observation {
             tags: m
                 .tags
                 .as_deref()
-                .and_then(|s| serde_json::from_str(s).ok())
+                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "tags", error = %e, "malformed JSON in DB column")).ok())
                 .unwrap_or_default(),
             r#type: m
                 .observation_type
@@ -27,7 +27,7 @@ impl From<observation::Model> for Observation {
             metadata: m
                 .metadata
                 .as_deref()
-                .and_then(|s| serde_json::from_str(s).ok())
+                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "metadata", error = %e, "malformed JSON in DB column")).ok())
                 .unwrap_or_default(),
         }
     }

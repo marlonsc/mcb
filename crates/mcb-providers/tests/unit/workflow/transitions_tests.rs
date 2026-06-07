@@ -58,6 +58,7 @@ fn transition_happy_paths(
     Ok(())
 }
 
+#[rstest]
 #[test]
 fn terminal_state_no_transitions() {
     let mut session = WorkflowSession::new("s1".to_owned(), "p1".to_owned());
@@ -66,5 +67,10 @@ fn terminal_state_no_transitions() {
     let trigger = TransitionTrigger::EndSession;
     let result = apply_transition(&mut session, &trigger);
 
-    assert!(result.is_err());
+    let err = result.expect_err("terminal state should not allow end-session transition");
+    let err_msg = err.clone();
+    assert!(
+        err_msg.to_lowercase().contains("transition"),
+        "error should mention transition, got: {err_msg}"
+    );
 }

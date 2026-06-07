@@ -1,6 +1,5 @@
-use crate::utils::test_fixtures::{
-    GOLDEN_COLLECTION, create_test_mcp_server, sample_codebase_path,
-};
+use mcb_domain::utils::tests::fixtures::{GOLDEN_COLLECTION, sample_codebase_path};
+use crate::utils::test_fixtures::create_test_mcp_server;
 use mcb_server::args::{IndexAction, IndexArgs};
 use rmcp::handler::server::wrapper::Parameters;
 

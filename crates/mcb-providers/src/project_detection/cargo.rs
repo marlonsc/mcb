@@ -12,7 +12,7 @@ use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
 use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
 
-use super::PROJECT_DETECTORS;
+use super::common::{parse_toml_opt, read_file_opt};
 
 /// Cargo project detector
 pub struct CargoDetector;
@@ -33,16 +33,12 @@ impl ProjectDetector for CargoDetector {
             return Ok(None);
         }
 
-        let manifest = match Manifest::from_path(&manifest_path) {
-            Ok(m) => m,
-            Err(e) => {
-                mcb_domain::debug!(
-                    "cargo",
-                    "Failed to parse Cargo.toml",
-                    &format!("path = {manifest_path:?}, error = {e}")
-                );
-                return Ok(None);
-            }
+        let Some(content) = read_file_opt(&manifest_path, "cargo").await else {
+            return Ok(None);
+        };
+
+        let Some(manifest) = parse_toml_opt::<Manifest>(&content, &manifest_path, "cargo") else {
+            return Ok(None);
         };
 
         let Some(package) = manifest.package else {
@@ -88,7 +84,7 @@ fn cargo_factory(
 
 // linkme distributed_slice uses #[link_section] internally
 #[allow(unsafe_code)]
-#[linkme::distributed_slice(PROJECT_DETECTORS)]
+#[linkme::distributed_slice(mcb_domain::ports::PROJECT_DETECTORS)]
 static CARGO_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
     name: "cargo",
     description: "Detects Rust projects with Cargo.toml",

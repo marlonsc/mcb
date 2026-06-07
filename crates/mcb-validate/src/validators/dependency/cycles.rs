@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 use super::DependencyValidator;
 use super::violation::{DependencyCycle, DependencyViolation};
 use crate::constants::common::MCB_DEPENDENCY_PREFIX;
-use crate::linters::constants::CARGO_TOML_FILENAME;
+use crate::constants::linters::CARGO_TOML_FILENAME;
 use crate::{Result, Severity};
 
 /// Detect circular dependencies using topological sort

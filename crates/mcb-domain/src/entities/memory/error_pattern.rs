@@ -4,39 +4,27 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-/// Categories for error patterns to classify the type of error encountered.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
-pub enum ErrorPatternCategory {
-    /// Compilation errors.
-    Compilation,
-    /// Runtime errors.
-    Runtime,
-    /// Test execution errors.
-    Test,
-    /// Linting errors.
-    Lint,
-    /// Build process errors.
-    Build,
-    /// Configuration errors.
-    Config,
-    /// Network-related errors.
-    Network,
-    /// Other error types.
-    Other,
+crate::define_string_enum! {
+    /// Categories for error patterns to classify the type of error encountered.
+    pub enum ErrorPatternCategory [strum = "lowercase"] {
+        /// Compilation errors.
+        Compilation,
+        /// Runtime errors.
+        Runtime,
+        /// Test execution errors.
+        Test,
+        /// Linting errors.
+        Lint,
+        /// Build process errors.
+        Build,
+        /// Configuration errors.
+        Config,
+        /// Network-related errors.
+        Network,
+        /// Other error types.
+        Other,
+    }
 }
-
-crate::impl_as_str_from_as_ref!(ErrorPatternCategory);
 
 /// Represents a recurring error pattern detected in a project.
 ///

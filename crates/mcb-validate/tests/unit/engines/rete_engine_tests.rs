@@ -15,13 +15,16 @@ use crate::utils::test_constants::{
     RULE_CA001,
 };
 use crate::utils::*;
+use rstest::rstest;
 
+#[rstest]
 #[test]
 fn test_rete_engine_creation() {
     let _engine = ReteEngine::new();
 }
 
 /// Verifies that GRL parsing works with our syntax.
+#[rstest]
 #[tokio::test]
 async fn test_grl_parsing_with_assertion() {
     let mut engine = ReteEngine::new();
@@ -41,6 +44,7 @@ async fn test_grl_parsing_with_assertion() {
 }
 
 /// Verifies that rules fire and modify facts.
+#[rstest]
 #[tokio::test]
 async fn test_rule_execution_modifies_facts() -> Result<(), Box<dyn std::error::Error>> {
     let mut engine = ReteEngine::new();
@@ -75,6 +79,7 @@ async fn test_rule_execution_modifies_facts() -> Result<(), Box<dyn std::error::
 
 /// End-to-end test for CA001 Domain Independence rule:
 /// YAML rule → GRL parsing → execution → violation detection.
+#[rstest]
 #[tokio::test]
 async fn test_ca001_detects_violation_end_to_end() -> Result<(), Box<dyn std::error::Error>> {
     let grl = build_grl_rule(

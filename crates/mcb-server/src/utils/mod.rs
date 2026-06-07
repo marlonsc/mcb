@@ -8,8 +8,6 @@
 
 /// Collection name normalization utilities.
 pub mod collections;
-/// Startup configuration helpers shared by transport/admin bootstrap paths.
-pub mod config;
 pub mod json;
 /// Shared helper functions for MCP tool handlers.
 pub mod mcp;

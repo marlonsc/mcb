@@ -3,29 +3,41 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for an indexing operation.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "index_operations")]
 pub struct Model {
+    /// Unique identifier for the indexing operation.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the collection being indexed.
     #[sea_orm(column_type = "Text")]
     pub collection_id: String,
+    /// Current status of the indexing operation (e.g., "running", "completed").
     #[sea_orm(column_type = "Text")]
     pub status: String,
+    /// Total number of files to be indexed.
     pub total_files: i64,
+    /// Number of files processed so far.
     pub processed_files: i64,
+    /// Path of the file currently being processed.
     #[sea_orm(column_type = "Text", nullable)]
     pub current_file: Option<String>,
+    /// Optional error message if the indexing failed.
     #[sea_orm(column_type = "Text", nullable)]
     pub error_message: Option<String>,
+    /// Timestamp when the indexing started.
     pub started_at: i64,
+    /// Optional timestamp when the indexing completed.
     pub completed_at: Option<i64>,
 }
 
+/// Relations for the indexing operation model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the indexing operation model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

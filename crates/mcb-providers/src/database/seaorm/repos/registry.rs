@@ -8,6 +8,8 @@ use mcb_domain::registry::database::{
 };
 use sea_orm::DatabaseConnection;
 
+use crate::database::seaorm::auth_repository::SeaOrmAuthRepositoryAdapter;
+use crate::database::seaorm::dashboard::SeaOrmDashboardAdapter;
 use crate::database::seaorm::repos::{
     SeaOrmAgentRepository, SeaOrmEntityRepository, SeaOrmIndexRepository,
     SeaOrmObservationRepository, SeaOrmProjectRepository,
@@ -19,13 +21,15 @@ use crate::database::seaorm::repos::{
 ///
 /// Returns an error when the boxed connection is not a `sea_orm::DatabaseConnection`.
 fn create_seaorm_repositories(
-    connection: Box<dyn Any + Send + Sync>,
+    connection: Arc<dyn Any + Send + Sync>,
     project_id: String,
-) -> Result<DatabaseRepositories, String> {
+) -> mcb_domain::error::Result<DatabaseRepositories> {
     let db = connection.downcast::<DatabaseConnection>().map_err(|_| {
-        "Expected sea_orm::DatabaseConnection but received different type".to_owned()
+        mcb_domain::error::Error::configuration(
+            "Expected sea_orm::DatabaseConnection but received different type",
+        )
     })?;
-    let db = Arc::new(*db);
+    let db = db;
 
     let observation_repo = SeaOrmObservationRepository::new((*db).clone());
     let agent_repo = SeaOrmAgentRepository::new(Arc::clone(&db));
@@ -35,6 +39,8 @@ fn create_seaorm_repositories(
 
     Ok(DatabaseRepositories {
         memory: Arc::new(observation_repo),
+        auth: Arc::new(SeaOrmAuthRepositoryAdapter::new((*db).clone())),
+        dashboard: Arc::new(SeaOrmDashboardAdapter::new((*db).clone())),
         agent: Arc::new(agent_repo),
         project: Arc::new(project_repo),
         vcs_entity: Arc::clone(&entity_repo) as _,
@@ -50,5 +56,9 @@ fn create_seaorm_repositories(
 static SEAORM_REPOS: DatabaseRepositoryEntry = DatabaseRepositoryEntry {
     name: "seaorm",
     description: "SeaORM database repositories (SQLite, PostgreSQL, MySQL)",
-    build: create_seaorm_repositories,
+    build: create_seaorm_repositories
+        as fn(
+            Arc<dyn Any + Send + Sync>,
+            String,
+        ) -> mcb_domain::error::Result<DatabaseRepositories>,
 };

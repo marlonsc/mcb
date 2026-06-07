@@ -1,10 +1,11 @@
-#![allow(missing_docs)]
+//! MCP Context Browser (MCB)
+//!
+//! A semantic code search server and context browser for Model Context Protocol (MCP).
+
 extern crate mcb_providers;
 
-mod cli;
-
 use clap::{Parser, Subcommand};
-use cli::{ServeArgs, ValidateArgs};
+use mcb::cli::{ServeArgs, ValidateArgs};
 
 #[derive(Parser, Debug)]
 #[command(name = "mcb")]

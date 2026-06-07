@@ -3,28 +3,38 @@
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 
+/// Database model for a plan review.
 #[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel, Serialize, Deserialize)]
 #[sea_orm(table_name = "plan_reviews")]
 pub struct Model {
+    /// Unique identifier for the plan review.
     #[sea_orm(primary_key, auto_increment = false, column_type = "Text")]
     pub id: String,
+    /// Reference to the organization this review belongs to.
     #[sea_orm(column_type = "Text")]
     pub org_id: String,
+    /// Reference to the plan version being reviewed.
     #[sea_orm(column_type = "Text")]
     pub plan_version_id: String,
+    /// Identifier of the user who performed the review.
     #[sea_orm(column_type = "Text")]
     pub reviewer_id: String,
+    /// Verdict of the review (e.g., "approved", "rejected").
     #[sea_orm(column_type = "Text")]
     pub verdict: String,
+    /// Detailed feedback from the reviewer.
     #[sea_orm(column_type = "Text")]
     pub feedback: String,
+    /// Timestamp when the review was created.
     pub created_at: i64,
 }
 
+/// Relations for the plan review model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {}
 
 impl ActiveModelBehavior for ActiveModel {}
 
+/// Related entities for the plan review model.
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelatedEntity)]
 pub enum RelatedEntity {}

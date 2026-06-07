@@ -16,24 +16,21 @@ impl From<error_pattern::Model> for ErrorPattern {
             first_seen_at: m.first_seen_at,
             last_seen_at: m.last_seen_at,
             embedding_id: m.embedding_id,
-            category: m
-                .category
-                .parse::<ErrorPatternCategory>()
-                .unwrap_or(ErrorPatternCategory::Other),
+            category: m.category.parse::<ErrorPatternCategory>().unwrap_or(ErrorPatternCategory::Other),
             solutions: m
                 .solutions
                 .as_deref()
-                .and_then(|s| serde_json::from_str(s).ok())
+                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "solutions", error = %e, "malformed JSON in DB column")).ok())
                 .unwrap_or_default(),
             affected_files: m
                 .affected_files
                 .as_deref()
-                .and_then(|s| serde_json::from_str(s).ok())
+                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "affected_files", error = %e, "malformed JSON in DB column")).ok())
                 .unwrap_or_default(),
             tags: m
                 .tags
                 .as_deref()
-                .and_then(|s| serde_json::from_str(s).ok())
+                .and_then(|s| serde_json::from_str(s).map_err(|e| tracing::warn!(field = "tags", error = %e, "malformed JSON in DB column")).ok())
                 .unwrap_or_default(),
         }
     }

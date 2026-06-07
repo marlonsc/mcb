@@ -6,7 +6,7 @@ use std::path::Path;
 use super::violation::PatternViolation;
 use crate::constants::common::{COMMENT_PREFIX, ERROR_FILE_PREFIX, ERROR_MODULE_FILE, USE_PREFIX};
 use crate::pattern_registry::compile_regex;
-use crate::traits::violation::Severity;
+use mcb_domain::ports::validation::Severity;
 
 /// Checks for result type usage violations in a single file.
 pub fn check_result_types(path: &Path, content: &str) -> crate::Result<Vec<PatternViolation>> {
