@@ -1,0 +1,45 @@
+crates/mcb-server/tests/utils/test_fixtures.rs
+  s_a9c0ea473656a4::t_3c40f480ab8c41 164,174,182-184,188-189,194-195,197,204-208,210-212,215,219-222
+  s_a9c0ea473656a4::t_8e49cedac358c7 209
+crates/mcb-server/tests/utils/real_providers.rs
+  s_a9c0ea473656a4::t_b714be87a68619 26-27,39-40
+AGENTS.md
+  s_a475cfd2777057::t_98b679344be1e4 102-105,285
+  s_65f02658bb707e::t_facd9bf938380d 266-268,286,288,317,340-341
+  s_a475cfd2777057::t_58cbb14db1c604 352-353
+  s_a475cfd2777057::t_89e03f7617c83e 269-270,273-276,287,289-294,316,339,342-348
+  s_a475cfd2777057::t_8c65de68604fa0 295-298,310-315,325-338,349-351,354
+  s_a475cfd2777057::t_4fd9cef33eeab2 318-324
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "e3bfaefffea10b25f162a873c1aee862e732cd43",
+  "prompts": {},
+  "sessions": {
+    "s_65f02658bb707e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea2f9-e5b7-7de1-980f-d38ae5985123",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    },
+    "s_a475cfd2777057": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019ea2cd-b65b-7262-910a-0392f963440d",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    },
+    "s_a9c0ea473656a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4ebff32-4652-4718-9925-5874de82848c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
