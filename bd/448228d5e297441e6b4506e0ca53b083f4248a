@@ -1,0 +1,21 @@
+CLAUDE.md
+  s_a9c0ea473656a4::t_17de1ec3c55bec 4-9
+.gitignore
+  s_a9c0ea473656a4::t_60f505fe53362d 282-286
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "bd448228d5e297441e6b4506e0ca53b083f4248a",
+  "prompts": {},
+  "sessions": {
+    "s_a9c0ea473656a4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4ebff32-4652-4718-9925-5874de82848c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Zed <hi@zed.dev>"
+    }
+  }
+}
