@@ -16,7 +16,10 @@
 
 ## Overview
 
-MCB implements an AI-native issue tracking and project coordination system (internally known as **Beads**). It uses a hybrid storage model combining SQLite (primary performance) and JSONL (git-tracked sync format) to manage issues, dependencies, and project scope.
+MCB implements an AI-native issue tracking and project coordination system (internally known as **Beads**). This module
+documents MCB's internal project/issue domain and historical storage contracts. The repository's active agent
+coordination uses the external `bd` CLI (`bd` 1.0.5) with Dolt shared-server mode; `.beads/issues.jsonl` is an
+export/import artifact, not the live source of truth. Use `AGENTS.md` for the operational `bd` protocol.
 
 ---
 
@@ -383,7 +386,8 @@ CREATE VIEW blocked_issues AS
 
 - One JSON object per line (JSONL format)
 - Each line is a complete issue record
-- Synced to git via `bd sync` command
+- Legacy/interchange export. Current repo coordination sync uses Dolt (`bd dolt push`/`pull`) and backups use
+  `bd backup`; do not hand-edit or publish JSONL as the active database.
 
 ### 5.2 JSONL Issue Record Example
 
@@ -434,19 +438,14 @@ CREATE VIEW blocked_issues AS
 
 # issue-prefix: "mcb"
 
-# Use no-db mode (load from JSONL, no SQLite)
-
-# no-db: false
-
-# Disable daemon for RPC communication
-
-# no-daemon: false
-
-# Disable auto-flush of database to JSONL
-
-# no-auto-flush: false
-
-# Disable auto-import from JSONL when newer
+dolt:
+  mode: server
+  shared-server: true
+  host: 127.0.0.1
+  port: 3308
+  user: root
+  database: mcb
+  auto-commit: off
 
 # no-auto-import: false
 
@@ -458,20 +457,15 @@ CREATE VIEW blocked_issues AS
 
 # actor: ""
 
-# Path to database
-
-# db: ""
-
-# Auto-start daemon if not running
-
-# auto-start-daemon: true
-
-# Debounce interval for auto-flush
-
-# flush-debounce: "5s"
-
-# Git branch for beads commits (IMPORTANT for team projects)
-sync-branch: "beads-sync"
+# Dolt shared-server is the live coordination database.
+dolt:
+  mode: server
+  shared-server: true
+  host: 127.0.0.1
+  port: 3308
+  user: root
+  database: mcb
+  auto-commit: off
 
 # Multi-repo configuration (experimental)
 
@@ -494,19 +488,19 @@ sync-branch: "beads-sync"
 
 ```json
 {
-  "database": "beads.db",
-  "jsonl_export": "issues.jsonl"
+  "backend": "dolt",
+  "mode": "shared-server",
+  "database": "mcb"
 }
 ```
 
-### 7.2 export-state/\<hash\>.JSON
+### 7.2 backup-state.JSON
 
 ```json
 {
-  "worktree_root": "/home/marlonsc/mcb/.git/beads-worktrees/beads-sync",
-  "last_export_commit": "e3483ac7c6076a88b271346f6d7badd4b7b5687b",
-  "last_export_time": "2026-01-31T19:54:29.726099827-03:00",
-  "jsonl_hash": "d6bb4b6a22dd4757f1483f807b8c7ea5e0ef0cb9331b9eae809fa7131128a20c"
+  "backup_url": "file:///home/marlonsc/.beads-backups/<timestamp>/mcb-dolt-backup",
+  "last_sync": "2026-06-07T00:00:00Z",
+  "database": "mcb"
 }
 ```
 
@@ -516,35 +510,34 @@ sync-branch: "beads-sync"
 
 ### 8.1 Sync Workflow
 
-1. **bd sync** command:
+1. **Dolt remote sync**:
 
-- Exports SQLite database to `.beads/issues.jsonl`
-- Commits changes to git
-- Pushes to remote on `sync-branch` (default: `beads-sync`)
+- `bd dolt push` publishes the Dolt database when a remote is configured.
+- `bd dolt pull` hydrates from the configured Dolt remote.
+- `bd bootstrap` discovers/restores Dolt data on fresh clones when remote state exists.
 
-1. **Auto-sync**:
+1. **Full backup**:
 
-- Daemon monitors database changes
-- Auto-flushes to JSONL on mutations
-- Debounced to prevent excessive writes
+- `bd backup init <path-or-url>` configures a full Dolt backup.
+- `bd backup sync` preserves branches, commit history, working sets, and non-issue tables.
+- `bd backup restore --force <path>` restores after a safe reinitialization.
 
-1. **Merge Conflict Resolution**:
+1. **JSONL export/import**:
 
-- Beads provides intelligent JSONL merge driver
-- Handles concurrent edits gracefully
-- Preserves dependency integrity
+- `bd export`/`bd import` are migration and interoperability tools only.
+- Do not edit `.beads/issues.jsonl` manually and do not use `bd export -o` as a normal sync path.
 
 ### 8.2 Worktrees
 
-- Beads uses git worktrees for sync operations
-- Location: `.git/beads-worktrees/beads-sync/`
-- Allows parallel sync without blocking main branch
+- Beads uses Dolt shared-server plus `bd backup` / `bd dolt` for durable coordination state.
+- Git worktrees are not the sync source of truth for the live queue.
+- Parallel agents coordinate through bead claims, dependencies, and reports.
 
 ### 8.3 Hooks
 
-- Git hooks auto-call `bd prime` for context recovery
-- Hooks auto-sync on commits
-- Can be managed with `bd hooks` command
+- Git hooks are installed with `bd hooks install --chain`.
+- Verify hook state with `bd hooks list --json`.
+- `prepare-commit-msg` must be guarded so agent trailers run only with explicit `BD_ALLOW_AGENT_COMMIT_TRAILERS=1`.
 
 ---
 
@@ -682,16 +675,16 @@ bd close <id> [flags]
 - `--reason` - Reason for closure
 - `--json` - JSON output
 
-### 9.7 Sync with Git
+### 9.7 Sync and Backup
 
 ```bash
-bd sync [flags]
+bd dolt push
+bd dolt pull
+bd backup sync
+bd backup status --json
 ```
 
-### Options (1)
-
-- `--status` - Check sync status without syncing
-- `--json` - JSON output
+Use `bd dolt push`/`pull` only when a Dolt remote is configured. Use `bd backup sync` for full database backup.
 
 ---
 
@@ -724,42 +717,39 @@ CREATE INDEX idx_events_issue ON events(issue_id);
 
 ### 11.1 Hybrid Storage Model
 
-### SQLite (Primary)
+### Dolt Shared-Server (Primary)
 
-- Fast queries and filtering
-- ACID transactions
-- Daemon-based RPC access
-- WAL mode for concurrent access
+- Shared multi-agent and multi-user coordination database
+- SQL-compatible storage with branch/remote semantics
+- Repository-local `.beads/config.yaml` selects the durable database name
+- Validated with `bd dolt show`, `bd dolt status`, and `bd backup status --json`
 
-### JSONL (Export)
+### Backup / JSONL (Recovery And Interchange)
 
-- Git-friendly format
-- Human-readable
-- Merge-friendly
-- Source of truth for sync
+- `bd backup sync` creates durable recoverable snapshots
+- JSONL is import/export material for recovery or migration only
+- JSONL files are never edited by hand and are not the live queue
 
 ### 11.2 Sync Flow
 
 ```text
-SQLite Database
-    ↓ (bd sync)
-JSONL Export
-    ↓ (git commit)
+Dolt Shared Server
+    ↓ (bd backup sync)
+Backup Snapshot
+    ↓ (bd dolt push, when remote configured)
+Dolt Remote
+    ↓ (git commit/push only for normal repository files)
 Git Repository
-    ↓ (git push)
-Remote Repository
 ```
 
 ### 11.3 Import Flow
 
 ```text
-Remote Repository
-    ↓ (git pull)
-Git Repository
-    ↓ (auto-import if newer)
-JSONL File
-    ↓ (daemon loads)
-SQLite Database
+Dolt Remote / Backup Snapshot
+    ↓ (bd dolt pull or bd backup restore/bootstrap)
+Dolt Shared Server
+    ↓ (bd status / bd ready)
+Live Work Graph
 ```
 
 ---
@@ -952,11 +942,13 @@ ORDER BY due_at ASC;
 - Database connection pooling
 - Concurrent access management
 
-### 17.3 Daemon Modes
+### 17.3 Dolt Modes
 
-- **Daemon mode** (default): Background RPC server
-- **No-daemon mode**: Direct database access
-- **No-db mode**: Load from JSONL, no SQLite
+- **Shared-server mode**: one Dolt SQL server under `~/.beads/shared-server/` serves multiple repos, each isolated by
+  database name.
+- **Server mode**: repo connects to an externally managed Dolt SQL server.
+- **Embedded mode**: single-writer in-process Dolt for solo use.
+- **Legacy SQLite/no-db modes**: historical only; do not use for current multi-agent coordination.
 
 ---
 
@@ -1001,9 +993,9 @@ ORDER BY due_at ASC;
 
 ### Database locked
 
-- Check daemon status: `bd info`
-- Restart daemon: `bd daemon restart`
-- Use `--lock-timeout` flag
+- Confirm the repo is using shared-server with `bd dolt show`.
+- Check the active database and issue count with `bd context --json` and `bd status --json`.
+- Freeze writers, preserve `.beads/`, and recover with `bd backup restore` or `bd bootstrap` after a dry run.
 
 ### Sync conflicts
 
@@ -1013,8 +1005,8 @@ ORDER BY due_at ASC;
 
 ### Stale data
 
-- Run `bd sync` to export
-- Use `--allow-stale` flag to override
+- Run `bd dolt pull` when a remote is configured, or `bd backup restore` from a known-good full backup.
+- Use `bd status --json` and `bd dep cycles --json` to validate graph health after recovery.
 
 ### Corrupted database
 

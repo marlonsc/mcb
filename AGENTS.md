@@ -344,8 +344,8 @@ Use this protocol whenever multiple agents, terminals, or projects are active.
   only when the installed `bd` and repository routing/multi-repo configuration
   support that exact form. If `bd repo list` says single-repo/no additional repos,
   MCB remains single-repo.
-- **Version/mode gap**: if docs, memories, or older sessions mention SQLite,
-  `beads-sync`, `bd sync`, `bd backend`, embedded mode, or `bd doctor` as the authoritative
+- **Version/mode gap**: if docs, memories, or older sessions mention legacy SQLite,
+  `beads-sync`, `bd sync`, `bd backend`, embedded mode, or `bd doctor` as the authoritative legacy
   gate, treat that as legacy. Confirm current behavior with
   `bd --help`, `bd context --json`, and command-specific `--help`.
 - **Health repair**: fix only through the canonical supported command for that

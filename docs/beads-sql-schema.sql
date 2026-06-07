@@ -1,5 +1,6 @@
 -- Beads Issue Tracking System - Complete SQL Schema
--- This is the SQLite schema used by Beads for persistent storage
+-- Legacy SQLite schema reference for historical/classic Beads storage.
+-- Current repository coordination uses bd 1.0.5 with Dolt shared-server mode.
 
 -- Main issues table
 CREATE TABLE issues (
