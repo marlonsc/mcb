@@ -118,8 +118,9 @@ jobs:
   # Stage 1 — Fast Checks (all parallel, ~5 min)
   # ===========================================================================
 
-  build-ubuntu-debug:
-    name: Build Ubuntu Debug
+  lint:
+    name: Lint (Rust 2024)
+    timeout-minutes: 10
     needs: [changes, classify]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
@@ -128,81 +129,11 @@ jobs:
       github.event_name == 'workflow_dispatch') ||
       needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: mozilla-actions/sccache-action@v0.0.9
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: stable
-      - run: bash .github/setup-ci.sh
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
-        with:
-          shared-key: ci-ubuntu-build-debug
-          save-if: true
-          cache-on-failure: true
-      - name: Cache fastembed models
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: .cache/mcb/fastembed
-          key: fastembed-${{ runner.os }}-allminilml6v2-v1
-          restore-keys: |
-            fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
-        shell: bash
-        run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
-      - run: cargo build --workspace
-      - run: cargo test --no-run --workspace
-      - name: Compress target directory
-        run: tar -cJf target-debug.tar.xz target/
-      - uses: actions/upload-artifact@v4
-        with:
-          name: target-debug-ubuntu
-          path: target-debug.tar.xz
-          retention-days: 1
-
-  lint:
-    name: Lint (Rust 2024)
-    timeout-minutes: 10
-    needs: [changes, classify, build-ubuntu-debug]
-    if: |
-      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      ((needs.classify.outputs.run_full == 'true' ||
-      github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch') ||
-      needs.classify.outputs.run_simplified == 'true')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - uses: actions/download-artifact@v4
-        with:
-          name: target-debug-ubuntu
-      - run: tar -xJf target-debug.tar.xz
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -310,7 +241,7 @@ jobs:
 
   test-linux:
     name: Test (ubuntu-latest, Rust stable)
-    needs: [changes, classify, lint, build-ubuntu-debug]
+    needs: [changes, classify, lint]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
       ((needs.classify.outputs.run_full == 'true' ||
@@ -324,10 +255,6 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: actions/download-artifact@v4
-        with:
-          name: target-debug-ubuntu
-      - run: tar -xJf target-debug.tar.xz
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -504,7 +431,7 @@ jobs:
 
   validate:
     name: Architecture Validation
-    needs: [changes, classify, lint, build-ubuntu-debug]
+    needs: [changes, classify, lint]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
       ((needs.classify.outputs.run_full == 'true' ||
@@ -517,10 +444,6 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: actions/download-artifact@v4
-        with:
-          name: target-debug-ubuntu
-      - run: tar -xJf target-debug.tar.xz
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -541,7 +464,7 @@ jobs:
 
   golden-tests:
     name: Golden Acceptance Tests
-    needs: [changes, classify, test-linux, build-ubuntu-debug]
+    needs: [changes, classify, test-linux]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
       (needs.classify.outputs.run_full == 'true' ||
@@ -554,10 +477,6 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - uses: actions/download-artifact@v4
-        with:
-          name: target-debug-ubuntu
-      - run: tar -xJf target-debug.tar.xz
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
