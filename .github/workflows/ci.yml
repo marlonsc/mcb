@@ -133,7 +133,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -168,7 +169,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -198,7 +200,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -226,7 +229,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           java-version: "17"
@@ -260,7 +264,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -351,7 +356,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -455,7 +461,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -491,7 +498,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -559,7 +567,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -654,7 +663,8 @@ jobs:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -860,7 +870,8 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: false
-          submodules: recursive
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - name: Initialize CodeQL
         uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
         with:
