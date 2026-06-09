@@ -87,12 +87,12 @@ error_impl_error = "allow"               # our domain Error type is idiomatic Ru
 [workspace.dependencies]
 mcb-utils = { path = "crates/mcb-utils" }
 # Core async runtime
-tokio = { version = "1.49", features = ["full"] }
+tokio = { version = "1.50", features = ["full"] }
 
 # Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-serde_with = "3.15"
+serde_with = "3.21"
 
 # Byte manipulation
 bytes = "1.11"
@@ -113,7 +113,7 @@ toml = "1.0"
 reqwest = { version = "0.13", features = ["json", "__tls"] }
 
 # CLI
-clap = { version = "4.5", features = ["derive"] }
+clap = { version = "4.6", features = ["derive"] }
 
 # File operations
 walkdir = "2.5"
@@ -130,10 +130,10 @@ chrono = { version = "0.4", features = ["serde"] }
 rust-code-analysis = "0.0.25"
 
 # Template engines
-handlebars = "6.0"
+handlebars = "6.4"
 
 # Redis
-redis = { version = "1.0", features = ["tokio-comp", "connection-manager"] }
+redis = { version = "1.2", features = ["tokio-comp", "connection-manager"] }
 
 # Cryptography
 aes-gcm = "0.10"
@@ -152,7 +152,7 @@ sha2 = "0.10"
 hex = "0.4"
 
 # Utilities
-uuid = { version = "1.21", features = ["v4", "v5", "serde"] }
+uuid = { version = "1.23", features = ["v4", "v5", "serde"] }
 dirs = "6.0"
 
 # HTTP server (Axum)
@@ -177,7 +177,7 @@ tree-sitter-ruby = "0.23"
 tree-sitter-php = "0.24"
 tree-sitter-swift = "0.7"
 tree-sitter-kotlin-ng = "1.1"
-tree-sitter-highlight = "0.26.3"
+tree-sitter-highlight = "0.26.5"
 
 # Fast globbing
 glob = "0.3"
@@ -188,10 +188,10 @@ ignore = "0.4"
 # Concurrent processing
 futures = "0.3"
 async-stream = "0.3"
-rayon = "1.8"
+rayon = "1.12"
 
 # Text processing
-unicode-segmentation = "1.12"
+unicode-segmentation = "1.13"
 html-escape = "0.2"
 
 # Schema generation for MCP
@@ -201,7 +201,7 @@ schemars = "1.2"
 validator = { version = "0.20", features = ["derive"] }
 
 # MCP SDK
-rmcp = { version = "1.4", features = [
+rmcp = { version = "1.7", features = [
     "server",
     "client",
     "macros",
@@ -212,7 +212,7 @@ rmcp = { version = "1.4", features = [
 
 # Advanced Multi-Provider Strategy
 tokio-util = { version = "0.7", features = ["time", "rt"] }
-dashmap = "6.0"
+dashmap = "6.2"
 health = "0.2"
 
 # EdgeVec high-performance vector database (fork)
@@ -238,7 +238,7 @@ itertools = "0.14"
 humantime = "2.1"
 
 # Local embeddings without external services
-fastembed = { version = "5.11", default-features = false, features = [
+fastembed = { version = "5.16", default-features = false, features = [
     "hf-hub-native-tls",
     "ort-load-dynamic",
 ] }
@@ -269,11 +269,11 @@ criterion = "0.8.1"
 linkme = "0.3"
 
 # Development/testing
-tempfile = "3.26"
-serial_test = "3.4"
+tempfile = "3.27"
+serial_test = "3.5"
 rstest = "0.26"
 mockall = "0.14"
-insta = { version = "1.41", features = ["json", "yaml", "redactions"] }
+insta = { version = "1.47", features = ["json", "yaml", "redactions"] }
 
 # ============================================
 # mcb-validate specific dependencies
@@ -296,7 +296,7 @@ git2 = "0.20"
 serde_yaml = "0.9"
 
 # Rule Engines
-rust-rule-engine = "1.19"
+rust-rule-engine = "1.20"
 evalexpr = "13"
 
 # JSON Schema validation
