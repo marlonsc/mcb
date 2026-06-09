@@ -14,11 +14,11 @@ MCB_TEST_PORT  ?= 18080
 # run them) — semantics preserved since `cargo test --all-targets` also skips doctests.
 MCB_NEXTEST := $(shell command -v cargo-nextest >/dev/null 2>&1 && echo 1)
 ifeq ($(MCB_NEXTEST),1)
-  MCB_TEST_UNIT := cargo nextest run --workspace --lib --test-threads=$$T
-  MCB_TEST_ALL  := cargo nextest run --workspace --test-threads=$$T
+  MCB_TEST_UNIT := MCB_MODEL_ID=test-model cargo nextest run --workspace --lib --test-threads=$$T
+  MCB_TEST_ALL  := MCB_MODEL_ID=test-model cargo nextest run --workspace --test-threads=$$T
 else
-  MCB_TEST_UNIT := RUST_TEST_THREADS=$$T cargo test --workspace --lib
-  MCB_TEST_ALL  := RUST_TEST_THREADS=$$T cargo test --workspace --all-targets
+  MCB_TEST_UNIT := MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T cargo test --workspace --lib
+  MCB_TEST_ALL  := MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T cargo test --workspace --all-targets
 endif
 
 # codegen
@@ -58,7 +58,7 @@ case "$(SCOPE)" in \
   doc)         cargo test --workspace --doc ;; \
   golden)      RUST_TEST_THREADS=$$T cargo test --workspace --tests golden ;; \
   startup)     cargo test -p mcb --test integration startup_smoke -- --nocapture ;; \
-  integration) RUST_TEST_THREADS=$$T cargo test --workspace --test '*integration*' ;; \
+  integration) MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T cargo test --workspace --test '*integration*' ;; \
   e2e)         $(call MCB_E2E) ;; \
   all)         $(MCB_TEST_ALL) && $(call MCB_E2E) ;; \
   '')          $(MCB_TEST_ALL) ;; \
@@ -85,7 +85,7 @@ define DISPATCH_CHECK
   validate) bash $(MCB_SH) validate $(if $(filter 1,$(QUICK)),quick,full) ;; \
   audit)    cargo audit $(foreach i,$(MCB_AUDIT_IGNORES),--ignore $(i)) && $(MAKE) check WHAT=udeps ;; \
   udeps)    command -v cargo-udeps >/dev/null 2>&1 || cargo install cargo-udeps; cargo +nightly udeps --workspace ;; \
-  coverage) cargo tarpaulin --out Lcov --output-dir coverage --exclude-files 'crates/*/tests/integration/*' --exclude-files 'crates/*/tests/admin/*' --timeout 300 ;; \
+  coverage) cargo tarpaulin --engine llvm --out Lcov --output-dir coverage --exclude-files 'crates/*/tests/integration/*' --exclude-files 'crates/*/tests/admin/*' --timeout 300 ;; \
   qlty)     mkdir -p docs/reports; ./scripts/analyze_qlty.py --scan --check --summary --markdown docs/reports/qlty-check-REPORTS.md; ./scripts/analyze_qlty.py --scan --smells --summary --markdown docs/reports/qlty-smells-REPORTS.md ;; \
   coordination) bd config get beads.role --json && bd status --json && bd hooks list --json && bash scripts/context/validate-beads-policy.sh && bd dep cycles --json && bd stale --status in_progress --days 1 --limit 25 --json && bd graph --all --compact >/dev/null ;; \
   ""|all)   cargo fmt --all -- --check && $(MAKE) lint-impl && $(MAKE) test && bash $(MCB_SH) validate $(if $(filter 1,$(QUICK)),quick,full) ;; \
@@ -208,7 +208,16 @@ chmod +x "$(INSTALL_DIR)/$(BINARY_NAME).new"; \
 mv -f "$(INSTALL_DIR)/$(BINARY_NAME).new" "$(INSTALL_DIR)/$(BINARY_NAME)" || { echo "FAIL: install binary" >&2; exit 1; }; \
 cp "$(INSTALL_DIR)/$(BINARY_NAME)" "$(CARGO_BIN_DIR)/$(BINARY_NAME)" 2>/dev/null || true; \
 $(INSTALL_DIR)/$(BINARY_NAME) --version >/dev/null 2>&1 || { echo "FAIL: binary validation" >&2; exit 1; }; \
+JWT_SECRET_FILE="$(DATA_DIR)/.jwt_secret"; \
+if [ -f "$$JWT_SECRET_FILE" ]; then \
+  JWT_SECRET=$$(cat "$$JWT_SECRET_FILE"); \
+else \
+  JWT_SECRET=$$(head -c 48 /dev/urandom | base64 | tr -d '\n'); \
+  echo "$$JWT_SECRET" > "$$JWT_SECRET_FILE"; \
+  chmod 600 "$$JWT_SECRET_FILE"; \
+fi; \
 cp systemd/mcb.service $(SYSTEMD_USER_DIR)/mcb.service || { echo "FAIL: service file" >&2; exit 1; }; \
+sed -i "s|Environment=LOCO_ENV=production|Environment=LOCO_ENV=production\\nEnvironment=JWT_SECRET=$$JWT_SECRET|" $(SYSTEMD_USER_DIR)/mcb.service; \
 systemctl --user daemon-reload || { echo "FAIL: daemon-reload" >&2; exit 1; }; \
 systemctl --user enable mcb.service 2>/dev/null || true; systemctl --user reset-failed mcb.service 2>/dev/null || true; \
 systemctl --user start mcb.service || { echo "FAIL: start service" >&2; exit 1; }; \
@@ -222,9 +231,8 @@ $(INSTALL_DIR)/$(BINARY_NAME) --version 2>/dev/null | grep -q mcb || { echo "  F
 echo "  Binary: $$($(INSTALL_DIR)/$(BINARY_NAME) --version)"; \
 [ -f "$(CONFIG_YAML_DIR)/development.yaml" ] && echo "  Config: $(CONFIG_YAML_DIR)/development.yaml" || echo "  WARN: no installed config"; \
 R=0; while [ $$R -lt 8 ]; do systemctl --user is-active --quiet mcb.service 2>/dev/null && { echo "  Service: active"; break; }; R=$$((R+1)); [ $$R -lt 8 ] && sleep 2; done; \
-[ $$R -eq 8 ] && echo "  WARN: service not active (journalctl --user -u mcb.service)" || true; \
-RES=$$(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"install-validate","version":"1.0"}}}' | timeout 15 $(INSTALL_DIR)/$(BINARY_NAME) serve --stdio 2>/dev/null); \
-echo "$$RES" | grep -q '"serverInfo"' && echo "  MCP stdio: OK" || { echo "  FAIL: MCP stdio no response" >&2; exit 1; }; \
+[ $$R -eq 8 ] && { echo "  FAIL: service not active"; exit 1; } || true; \
+H=0; while [ $$H -lt 10 ]; do curl -sf http://127.0.0.1:8080/ >/dev/null 2>&1 && { echo "  HTTP server: OK"; break; }; H=$$((H+1)); [ $$H -lt 10 ] && sleep 1; done; [ $$H -eq 10 ] && { echo "  FAIL: HTTP server not responding" >&2; exit 1; }; \
 echo "  MCB v$(VERSION) installed: $(INSTALL_DIR)/$(BINARY_NAME)"
 endef
 

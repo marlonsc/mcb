@@ -322,7 +322,8 @@ jobs:
     # 90 (not 60): the cold cache-seeding run on Windows exceeds 60 min; once
     # rust-cache is warm subsequent runs finish well under it. Measured: a 60-min
     # cap cancelled the job mid-run before it could populate its cache (deadlock).
-    timeout-minutes: 90
+    # 120 (not 90): cold cache + 1715 tests = ~89min. 90min cancelled mid-run.
+    timeout-minutes: 120
     continue-on-error: ${{ matrix.rust == 'beta' }}
     strategy:
       fail-fast: false
@@ -545,6 +546,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
+          components: llvm-tools-preview
       - run: bash .github/setup-ci.sh --install-coverage
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
