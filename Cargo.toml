@@ -140,7 +140,7 @@ aes-gcm = "0.10"
 rand = "0.10"
 
 # Authentication
-bcrypt = "0.18"
+bcrypt = "0.19"
 argon2 = "0.5"
 base64 = "0.22"
 
@@ -148,7 +148,7 @@ base64 = "0.22"
 hostname = "0.4"
 
 # Hashing
-sha2 = "0.10"
+sha2 = "0.11"
 hex = "0.4"
 
 # Utilities
@@ -257,7 +257,7 @@ moka = { version = "0.12", features = ["future"] }
 
 # Additional crypto
 pbkdf2 = { version = "0.12", features = ["simple"] }
-hmac = "0.12"
+hmac = "0.13"
 
 # Logging appenders
 tracing-appender = "0.2"
@@ -284,13 +284,13 @@ cargo_metadata = "0.23"
 
 # Manifest parsers for project detection (Phase 3: Git Advanced)
 cargo_toml = "0.22"
-quick-xml = "0.39"
+quick-xml = "0.40"
 
 # SQLite for file hash storage (Phase 3: Incremental indexing)
-sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
+sqlx = { version = "0.9", features = ["runtime-tokio", "sqlite"] }
 
 # Git repository operations (Phase 2/3: Git indexing)
-git2 = "0.20"
+git2 = "0.21"
 
 # YAML serialization
 serde_yaml = "0.9"
@@ -300,7 +300,7 @@ rust-rule-engine = "1.19"
 evalexpr = "13"
 
 # JSON Schema validation
-jsonschema = "0.42"
+jsonschema = "0.46"
 
 # JSON Path navigation
 jsonpath-rust = "1.0.4"
