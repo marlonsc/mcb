@@ -193,15 +193,16 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - run: make docs WHAT=check
-      - run: bash .github/setup-ci.sh
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
+      - run: bash .github/setup-ci.sh
       - run: |
           sudo apt-get update
           sudo apt-get install -y nodejs npm
           npm install -g markdownlint-cli
+      - run: make docs WHAT=check
       - run: make docs WHAT=validate QUICK=1
 
   docs-diagrams:
