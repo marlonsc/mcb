@@ -7,6 +7,7 @@ All optimizations were validated with objective measurements. **sccache delivers
 ## Local Benchmarks
 
 ### Environment
+
 - Machine: 62GB RAM, 20 cores
 - Rust: stable (edition 2024)
 - sccache: 0.14.0
@@ -20,7 +21,7 @@ All optimizations were validated with objective measurements. **sccache delivers
 | Warm build (sccache, jobs=8) | **101s** (1m41s) | 100% | Second build, full cache hit |
 | Partial warm (touch lib.rs) | **39s** | ~100% | Incremental change, only affected crate rebuilt |
 
-**Result: 38% faster warm builds with sccache (101s vs 164s)**
+#### Result: 38% faster warm builds with sccache (101s vs 164s)
 
 ### jobs=8 vs jobs=20 Impact
 
@@ -29,11 +30,12 @@ All optimizations were validated with objective measurements. **sccache delivers
 | jobs=8 + sccache warm | **101s** | ~28GB available |
 | jobs=20 + sccache warm | **97s** | Higher contention |
 
-**Result: jobs=8 is only 4% slower than jobs=20 (4s difference) while maintaining stable RAM usage.**
+#### Result: jobs=8 is only 4% slower than jobs=20 (4s difference) while maintaining stable RAM usage.
 
 ### sccache Cache Efficiency
 
 After populating the cache:
+
 - **Cache hits**: 1,346 (100% hit rate)
 - **Cache size**: 441 MiB
 - **Compilations avoided**: 1,330 (zero compilation calls to rustc)
@@ -41,16 +43,18 @@ After populating the cache:
 ### Multi-Session Cleanup Impact
 
 Before cleanup:
+
 - 12 rust-analyzer instances running
 - 16 Serena MCP servers running
 - 53GB RAM used + 53GB swap
 
 After `make dev-env-optimize APPLY=Y`:
+
 - 1 rust-analyzer instance
 - 2 Serena MCP servers
 - 29GB RAM used + 13GB swap
 
-**Result: 24GB RAM freed, 40GB swap freed**
+#### Result: 24GB RAM freed, 40GB swap freed
 
 ## CI Analysis
 
