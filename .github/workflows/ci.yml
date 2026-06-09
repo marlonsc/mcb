@@ -888,7 +888,6 @@ jobs:
     env:
       CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
     steps:
-      - name: Checkout repository
       - name: Manual checkout
         run: |
           git clone --depth 1 https://github.com/${{ github.repository }}.git .
