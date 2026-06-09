@@ -134,12 +134,12 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - run: bash .github/setup-ci.sh
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - run: bash .github/setup-ci.sh
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
@@ -166,11 +166,11 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - run: bash .github/setup-ci.sh --install-audit
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - run: bash .github/setup-ci.sh --install-audit
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
@@ -254,11 +254,11 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - run: bash .github/setup-ci.sh
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - run: bash .github/setup-ci.sh
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
@@ -341,6 +341,10 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: ${{ matrix.rust }}
       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
         run: bash .github/setup-ci.sh
@@ -378,10 +382,6 @@ jobs:
           Add-Content -Path $env:GITHUB_PATH -Value $ortLib
           Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
           Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: ${{ matrix.rust }}
-      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           # Per-OS cache that SAVES — previously test-cross had no shared-key and
@@ -442,11 +442,11 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - run: bash .github/setup-ci.sh
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - run: bash .github/setup-ci.sh
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
@@ -475,11 +475,11 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - run: bash .github/setup-ci.sh
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - run: bash .github/setup-ci.sh
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
@@ -540,11 +540,11 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
-      - run: bash .github/setup-ci.sh --install-coverage
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - run: bash .github/setup-ci.sh --install-coverage
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           # Coverage uses tarpaulin (RUSTFLAGS --cfg=tarpaulin -Clink-dead-code) which
@@ -631,6 +631,11 @@ jobs:
         with:
           persist-credentials: false
           submodules: recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+          targets: ${{ matrix.target }}
       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
         run: bash .github/setup-ci.sh
@@ -668,11 +673,6 @@ jobs:
           Add-Content -Path $env:GITHUB_PATH -Value $ortLib
           Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
           Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        with:
-          toolchain: stable
-          targets: ${{ matrix.target }}
-      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-release-${{ matrix.os }}
