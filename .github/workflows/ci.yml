@@ -150,6 +150,9 @@ jobs:
           tool: typos
       - run: typos
       - run: make check WHAT=lint
+      - name: Stop sccache server
+        if: always()
+        run: sccache --stop-server || true
 
   audit:
     name: Security Audit
@@ -177,6 +180,9 @@ jobs:
           save-if: true
           cache-on-failure: true
       - run: make check WHAT=audit
+      - name: Stop sccache server
+        if: always()
+        run: sccache --stop-server || true
 
   validate-docs:
     name: Validate Documentation
@@ -305,6 +311,9 @@ jobs:
         run: make test THREADS=4
         env:
           FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
+      - name: Stop sccache server
+        if: always()
+        run: sccache --stop-server || true
 
   # ===========================================================================
   # Stage 2b — Extended Testing (after linux stable, all parallel)
@@ -428,6 +437,9 @@ jobs:
         run: make test THREADS=4
         env:
           FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
+      - name: Stop sccache server
+        if: always()
+        run: sccache --stop-server || true
 
   validate:
     name: Architecture Validation
@@ -461,6 +473,9 @@ jobs:
           --quick --format json
         env:
           RUST_MIN_STACK: 16777216
+      - name: Stop sccache server
+        if: always()
+        run: sccache --stop-server || true
 
   golden-tests:
     name: Golden Acceptance Tests
@@ -522,6 +537,9 @@ jobs:
       - run: make test SCOPE=golden THREADS=2
         env:
           FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
+      - name: Stop sccache server
+        if: always()
+        run: sccache --stop-server || true
 
   coverage:
     name: Coverage
@@ -593,6 +611,9 @@ jobs:
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
+      - name: Stop sccache server
+        if: always()
+        run: sccache --stop-server || true
 
   # ===========================================================================
   # Stage 3 — Release Artifacts
@@ -701,6 +722,9 @@ jobs:
           path: dist/${{ matrix.asset_name }}
           retention-days: 7
           include-hidden-files: false
+      - name: Stop sccache server
+        if: always()
+        run: sccache --stop-server || true
 
   # ===========================================================================
   # Gate — Consolidated PR Check (required status check)
@@ -853,6 +877,9 @@ jobs:
         uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
         with:
           category: "/language:${{ matrix.language }}"
+      - name: Stop sccache server
+        if: always()
+        run: sccache --stop-server || true
 
   # ===========================================================================
   # Dependabot Auto-Merge (independent)
