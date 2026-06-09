@@ -27,7 +27,10 @@ use super::app::AppConfig;
 ///
 /// Returns an error if the config file is missing, unreadable, or invalid.
 pub fn load_app_config() -> Result<AppConfig> {
-    let env_name = std::env::var("LOCO_ENV").unwrap_or_else(|_| "test".to_owned());
+    let env_name = std::env::var("LOCO_ENV").unwrap_or_else(|_| {
+        tracing::warn!("LOCO_ENV not set; defaulting to 'test'");
+        "test".to_owned()
+    });
 
     let filenames = [format!("{env_name}.local.yaml"), format!("{env_name}.yaml")];
 
