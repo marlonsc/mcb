@@ -60,7 +60,7 @@ jobs:
         run: |
           git clone --depth 1 https://github.com/${{ github.repository }}.git .
           git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
-          git checkout ${{ github.sha }}
+          git checkout -b ${{ github.ref_name }} ${{ github.sha }}
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
