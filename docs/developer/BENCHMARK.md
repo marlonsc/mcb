@@ -15,7 +15,7 @@ All optimizations were validated with objective measurements. **sccache delivers
 ### sccache Impact
 
 | Scenario | Time | sccache Hit Rate | Notes |
-|----------|------|------------------|-------|
+| --- | --- | --- | --- |
 | Baseline (no sccache, jobs=20) | **164s** (2m44s) | 0% | First measurement before optimizations |
 | Warm build (sccache, jobs=8) | **101s** (1m41s) | 100% | Second build, full cache hit |
 | Partial warm (touch lib.rs) | **39s** | ~100% | Incremental change, only affected crate rebuilt |
@@ -25,7 +25,7 @@ All optimizations were validated with objective measurements. **sccache delivers
 ### jobs=8 vs jobs=20 Impact
 
 | Configuration | Time | RAM Usage |
-|---------------|------|-----------|
+| --- | --- | --- |
 | jobs=8 + sccache warm | **101s** | ~28GB available |
 | jobs=20 + sccache warm | **97s** | Higher contention |
 
@@ -57,7 +57,7 @@ After `make dev-env-optimize APPLY=Y`:
 ### Current CI Workflow Times (Run #27107872763)
 
 | Job | Time | Cache Config | Notes |
-|-----|------|-------------|-------|
+| --- | --- | --- | --- |
 | Lint | 2m41s | save-if=true | Rust cache + sccache |
 | Test (Linux) | 12m28s | save-if=true (was false) | Now saves on failure |
 | Test (Windows) | 90m20s | save-if=true | Cold cache (cross-platform) |
@@ -84,7 +84,7 @@ With the new configuration:
 ## Files Modified
 
 | File | Change |
-|------|--------|
+| --- | --- |
 | `.cargo/config.toml` | `rustc-wrapper = "sccache"`, `jobs = 8`, env vars |
 | `Cargo.toml` | `split-debuginfo = "packed"`, `build-override.opt-level = 1` |
 | `Makefile` | sccache mandatory (removed SCCACHE=1 opt-in) |
