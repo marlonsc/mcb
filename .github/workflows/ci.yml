@@ -56,10 +56,11 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       ci: ${{ steps.filter.outputs.ci }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
@@ -131,10 +132,11 @@ jobs:
       needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
@@ -168,10 +170,11 @@ jobs:
       github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
@@ -200,10 +203,11 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
@@ -230,10 +234,11 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
@@ -266,10 +271,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
@@ -359,10 +365,11 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
@@ -465,10 +472,11 @@ jobs:
       needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
@@ -503,10 +511,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
@@ -573,10 +582,11 @@ jobs:
     # Measured: a 60-min cap cancelled it mid-run before its cache could save.
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
@@ -670,10 +680,11 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - uses: mozilla-actions/sccache-action@v0.0.9
@@ -878,10 +889,11 @@ jobs:
       CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-        with:
-          persist-credentials: false
-          clean: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
       - name: Checkout submodules
         run: git submodule update --init --recursive
       - name: Initialize CodeQL
