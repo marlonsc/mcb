@@ -353,13 +353,16 @@ codegen-units = 1
 [profile.dev]
 # Faster local iteration without touching the release profile. incremental: reuse
 # prior compilation. line-tables-only: enough for backtraces without the full
-# debuginfo link cost. build-override opt-level=3: optimize proc-macros + build
-# scripts (sea-orm/serde/linkme derives run at compile time) — a large cold/warm win.
+# debuginfo link cost.
+# split-debuginfo=packed reduces linker memory usage (critical with multiple
+# concurrent sessions). build-override opt-level=1 (was 3) trades marginal
+# proc-macro speed for significantly lower memory pressure.
 incremental = true
 debug = "line-tables-only"
+split-debuginfo = "packed"
 
 [profile.dev.build-override]
-opt-level = 3
+opt-level = 1
 
 # ============================================
 # Patch: redirect all SeaQL + Loco ecosystem

@@ -134,6 +134,12 @@ Darwin)
 esac
 
 # Parse optional flags
+# Ensure sccache is available (mandatory compilation cache)
+if ! command -v sccache &>/dev/null; then
+	echo "Installing sccache (mandatory compilation cache)..." >&2
+	cargo install sccache --locked --quiet
+fi
+
 while [[ $# -gt 0 ]]; do
 	case $1 in
 	--install-audit)

@@ -32,11 +32,15 @@ SUB ?=
 LOG_N ?=
 export RUST_2024_LINTS := -D unsafe_op_in_unsafe_fn -D rust_2024_compatibility -W static_mut_refs
 
-# sccache (opt-in via SCCACHE=1): shared compilation cache for devs hopping across
-# projects. Disables incremental compilation (mutually exclusive with sccache).
-ifeq ($(SCCACHE),1)
+# sccache (shared compilation cache) — MANDATORY. Eliminates redundant rebuilds
+# across sessions and projects. Mutually exclusive with incremental compilation.
 export RUSTC_WRAPPER := sccache
 export CARGO_INCREMENTAL := 0
+
+# Verify sccache is installed; if not, warn and attempt install.
+ifeq ($(shell command -v sccache 2>/dev/null),)
+$(warning sccache not found in PATH. Attempting install...)
+$(shell cargo install sccache --locked 2>/dev/null || true)
 endif
 
 # Destructive-verb gate: dry-run unless APPLY=Y. Usage: $(call gate,<action>)
@@ -76,6 +80,7 @@ clean:     ; $(call DISPATCH_CLEAN)
 ci:        ; @$(MAKE) check WHAT=all
 guard:     ; @bash $(MCB_SH) guard
 hook:      ; $(call DISPATCH_HOOK)
+dev-env-optimize: ; @bash scripts/dev-env-optimize.sh $(if $(filter Y,$(APPLY)),--apply,)
 
 help:
 	@printf "\n$(BOLD)MCB — make <verb> [WHAT=phase] [SCOPE=..] [APPLY=Y]$(RESET)\n\n"
@@ -92,7 +97,8 @@ help:
 	@printf "  %-10s %s\n" sub     "Submodules (WHAT=$(WHATS_sub), SUB=, MSG=)"
 	@printf "  %-10s %s\n" setup   "Setup (WHAT=$(WHATS_setup))"
 	@printf "  %-10s %s\n" clean   "Clean [APPLY=Y] (WHAT=$(WHATS_clean))"
-	@printf "  %-10s %s\n" ci      "CI gate (check WHAT=all)"
-	@printf "  %-10s %s\n" guard   "Banned-pattern scanner"
-	@printf "  %-10s %s\n" hook    "Tiered git-hook gate (WHAT=$(WHATS_hook))"
+	@printf "  %-10s %s\n" ci               "CI gate (check WHAT=all)"
+	@printf "  %-10s %s\n" guard            "Banned-pattern scanner"
+	@printf "  %-10s %s\n" hook             "Tiered git-hook gate (WHAT=$(WHATS_hook))"
+	@printf "  %-10s %s\n" dev-env-optimize "Clean duplicate rust-analyzer/Serena [APPLY=Y]"
 	@printf "\n"
