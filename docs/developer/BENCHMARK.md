@@ -30,7 +30,7 @@ All optimizations were validated with objective measurements. **sccache delivers
 | jobs=8 + sccache warm | **101s** | ~28GB available |
 | jobs=20 + sccache warm | **97s** | Higher contention |
 
-#### Result: jobs=8 is only 4% slower than jobs=20 (4s difference) while maintaining stable RAM usage.
+#### Result: jobs=8 is only 4% slower than jobs=20 (4s difference) while maintaining stable RAM usage
 
 ### sccache Cache Efficiency
 
