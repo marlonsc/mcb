@@ -17,7 +17,7 @@ expression: "snapshot_payload(&request, status, &response)"
   "response": {
     "error": {
       "code": -32602,
-      "message": "Missing execution provenance for 'search_code': session_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp. Hint: ensure the working directory is inside a git repo, or pass the missing fields via request meta."
+      "message": "Missing execution provenance for 'search_code': session_id, repo_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
     },
     "id": 1,
     "jsonrpc": "2.0"
