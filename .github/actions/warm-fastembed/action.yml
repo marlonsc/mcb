@@ -1,0 +1,22 @@
+---
+# SSOT for the FastEmbed cache warm-up (replaces 4 identical inline blocks).
+# Populates .cache/mcb/fastembed via the SAME hf-hub Rust code path the tests use
+# (make test SCOPE=warmup runs the init test once), so the on-disk
+# blobs+refs+snapshots layout is valid in-job and tests resolve the model offline.
+# The retry loop survives a transient HF 429 on a genuine cold-cache download.
+name: Warm FastEmbed cache
+description: Populate the FastEmbed model cache via the hf-hub Rust path for offline test loads.
+runs:
+  using: composite
+  steps:
+    - name: Warm FastEmbed cache (Rust path)
+      shell: bash
+      env:
+        FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
+      run: |
+        for attempt in 1 2 3 4 5; do
+          if make test SCOPE=warmup; then break; fi
+          [ "$attempt" -eq 5 ] && { echo 'FastEmbed warm-up failed after 5 attempts' >&2; exit 1; }
+          echo "warm-up attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+          sleep $((attempt * 20))
+        done

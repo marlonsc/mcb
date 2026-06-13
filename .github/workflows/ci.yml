@@ -144,7 +144,7 @@ jobs:
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - run: bash .github/setup-ci.sh
+      - uses: ./.github/actions/native-deps
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
@@ -155,9 +155,6 @@ jobs:
           tool: typos
       - run: typos
       - run: make check WHAT=lint
-      - name: Stop sccache server
-        if: always()
-        run: sccache --stop-server || true
 
   audit:
     name: Security Audit
@@ -181,16 +178,15 @@ jobs:
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - run: bash .github/setup-ci.sh --install-audit
+      - uses: ./.github/actions/native-deps
+        with:
+          setup-flags: --install-audit
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
           cache-on-failure: true
       - run: make check WHAT=audit
-      - name: Stop sccache server
-        if: always()
-        run: sccache --stop-server || true
 
   validate-docs:
     name: Validate Documentation
@@ -214,7 +210,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - run: bash .github/setup-ci.sh
+      - uses: ./.github/actions/native-deps
       - run: |
           sudo apt-get update
           sudo apt-get install -y nodejs npm
@@ -282,7 +278,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - run: bash .github/setup-ci.sh
+      - uses: ./.github/actions/native-deps
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
@@ -295,23 +291,7 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Warm FastEmbed cache (Rust path)
-        # Populate .cache/mcb/fastembed via the SAME hf-hub Rust code path the tests
-        # use (make test SCOPE=warmup runs the init test once), so the on-disk
-        # blobs+refs+snapshots layout is valid in-job. The previous Python
-        # snapshot_download produced symlink pointers that actions/cache restore can
-        # break, making hf-hub-Rust's offline Cache::get miss and hit HF (429 flake).
-        # Retry loop survives a transient 429 on a genuine cold-cache download.
-        shell: bash
-        run: |
-          for attempt in 1 2 3 4 5; do
-            if make test SCOPE=warmup; then break; fi
-            [ "$attempt" -eq 5 ] && { echo 'FastEmbed warm-up failed after 5 attempts' >&2; exit 1; }
-            echo "warm-up attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-            sleep $((attempt * 20))
-          done
-        env:
-          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
+      - uses: ./.github/actions/warm-fastembed
       - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
         with:
           tool: nextest
@@ -323,9 +303,6 @@ jobs:
         run: make test THREADS=4
         env:
           FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
-      - name: Stop sccache server
-        if: always()
-        run: sccache --stop-server || true
 
   # ===========================================================================
   # Stage 2b — Extended Testing (after linux stable, all parallel)
@@ -371,43 +348,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ matrix.rust }}
-      - name: Install dependencies (Unix)
-        if: runner.os != 'Windows'
-        run: bash .github/setup-ci.sh
-      - name: Install protoc (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          PROTOC_VERSION: "29.3"
-          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
-        run: |
-          $base = "https://github.com/protocolbuffers/protobuf/releases/download"
-          $url = "$base/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-          $zip = "$env:TEMP\protoc.zip"
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-          if ($hash -ne $env:PROTOC_SHA256) {
-            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
-          }
-          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
-      - name: Install ONNX Runtime (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          ORT_VERSION: "1.23.2"
-        run: |
-          $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
-          $zip = "$env:TEMP\onnxruntime.zip"
-          $dest = "$env:TEMP\onnxruntime"
-          Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          Expand-Archive $zip -DestinationPath $dest -Force
-          $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
-          $ortLib = "$ortDir\lib"
-          Add-Content -Path $env:GITHUB_PATH -Value $ortLib
-          Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
-          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
+      - uses: ./.github/actions/native-deps
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           # Per-OS cache that SAVES — previously test-cross had no shared-key and
@@ -423,23 +364,7 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Warm FastEmbed cache (Rust path)
-        # Populate .cache/mcb/fastembed via the SAME hf-hub Rust code path the tests
-        # use (make test SCOPE=warmup runs the init test once), so the on-disk
-        # blobs+refs+snapshots layout is valid in-job. The previous Python
-        # snapshot_download produced symlink pointers that actions/cache restore can
-        # break, making hf-hub-Rust's offline Cache::get miss and hit HF (429 flake).
-        # Retry loop survives a transient 429 on a genuine cold-cache download.
-        shell: bash
-        run: |
-          for attempt in 1 2 3 4 5; do
-            if make test SCOPE=warmup; then break; fi
-            [ "$attempt" -eq 5 ] && { echo 'FastEmbed warm-up failed after 5 attempts' >&2; exit 1; }
-            echo "warm-up attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-            sleep $((attempt * 20))
-          done
-        env:
-          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
+      - uses: ./.github/actions/warm-fastembed
       - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
         with:
           tool: nextest
@@ -447,9 +372,6 @@ jobs:
         run: make test THREADS=4
         env:
           FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
-      - name: Stop sccache server
-        if: always()
-        run: sccache --stop-server || true
 
   validate:
     name: Architecture Validation
@@ -473,7 +395,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - run: bash .github/setup-ci.sh
+      - uses: ./.github/actions/native-deps
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
@@ -486,9 +408,6 @@ jobs:
           --quick --format json
         env:
           RUST_MIN_STACK: 16777216
-      - name: Stop sccache server
-        if: always()
-        run: sccache --stop-server || true
 
   golden-tests:
     name: Golden Acceptance Tests
@@ -512,7 +431,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - run: bash .github/setup-ci.sh
+      - uses: ./.github/actions/native-deps
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
@@ -525,32 +444,13 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Warm FastEmbed cache (Rust path)
-        # Populate .cache/mcb/fastembed via the SAME hf-hub Rust code path the tests
-        # use (make test SCOPE=warmup runs the init test once), so the on-disk
-        # blobs+refs+snapshots layout is valid in-job. The previous Python
-        # snapshot_download produced symlink pointers that actions/cache restore can
-        # break, making hf-hub-Rust's offline Cache::get miss and hit HF (429 flake).
-        # Retry loop survives a transient 429 on a genuine cold-cache download.
-        shell: bash
-        run: |
-          for attempt in 1 2 3 4 5; do
-            if make test SCOPE=warmup; then break; fi
-            [ "$attempt" -eq 5 ] && { echo 'FastEmbed warm-up failed after 5 attempts' >&2; exit 1; }
-            echo "warm-up attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-            sleep $((attempt * 20))
-          done
-        env:
-          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
+      - uses: ./.github/actions/warm-fastembed
       - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
         with:
           tool: nextest
       - run: make test SCOPE=golden THREADS=2
         env:
           FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
-      - name: Stop sccache server
-        if: always()
-        run: sccache --stop-server || true
 
   coverage:
     name: Coverage
@@ -579,7 +479,9 @@ jobs:
         with:
           toolchain: stable
           components: llvm-tools-preview
-      - run: bash .github/setup-ci.sh --install-coverage
+      - uses: ./.github/actions/native-deps
+        with:
+          setup-flags: --install-coverage
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           # Coverage uses tarpaulin (RUSTFLAGS --cfg=tarpaulin -Clink-dead-code) which
@@ -595,23 +497,7 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Warm FastEmbed cache (Rust path)
-        # Populate .cache/mcb/fastembed via the SAME hf-hub Rust code path the tests
-        # use (make test SCOPE=warmup runs the init test once), so the on-disk
-        # blobs+refs+snapshots layout is valid in-job. The previous Python
-        # snapshot_download produced symlink pointers that actions/cache restore can
-        # break, making hf-hub-Rust's offline Cache::get miss and hit HF (429 flake).
-        # Retry loop survives a transient 429 on a genuine cold-cache download.
-        shell: bash
-        run: |
-          for attempt in 1 2 3 4 5; do
-            if make test SCOPE=warmup; then break; fi
-            [ "$attempt" -eq 5 ] && { echo 'FastEmbed warm-up failed after 5 attempts' >&2; exit 1; }
-            echo "warm-up attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-            sleep $((attempt * 20))
-          done
-        env:
-          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
+      - uses: ./.github/actions/warm-fastembed
       - name: Run coverage
         run: make check WHAT=coverage THREADS=4
         env:
@@ -620,9 +506,6 @@ jobs:
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
-      - name: Stop sccache server
-        if: always()
-        run: sccache --stop-server || true
 
   # ===========================================================================
   # Stage 3 — Release Artifacts
@@ -672,43 +555,7 @@ jobs:
         with:
           toolchain: stable
           targets: ${{ matrix.target }}
-      - name: Install dependencies (Unix)
-        if: runner.os != 'Windows'
-        run: bash .github/setup-ci.sh
-      - name: Install protoc (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          PROTOC_VERSION: "29.3"
-          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
-        run: |
-          $base = "https://github.com/protocolbuffers/protobuf/releases/download"
-          $url = "$base/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-          $zip = "$env:TEMP\protoc.zip"
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-          if ($hash -ne $env:PROTOC_SHA256) {
-            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
-          }
-          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
-      - name: Install ONNX Runtime (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          ORT_VERSION: "1.23.2"
-        run: |
-          $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
-          $zip = "$env:TEMP\onnxruntime.zip"
-          $dest = "$env:TEMP\onnxruntime"
-          Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          Expand-Archive $zip -DestinationPath $dest -Force
-          $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
-          $ortLib = "$ortDir\lib"
-          Add-Content -Path $env:GITHUB_PATH -Value $ortLib
-          Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
-          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
+      - uses: ./.github/actions/native-deps
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-release-${{ matrix.os }}
@@ -734,9 +581,6 @@ jobs:
           path: dist/${{ matrix.asset_name }}
           retention-days: 7
           include-hidden-files: false
-      - name: Stop sccache server
-        if: always()
-        run: sccache --stop-server || true
 
   # ===========================================================================
   # Gate — Consolidated PR Check (required status check)
@@ -891,9 +735,6 @@ jobs:
         uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
         with:
           category: "/language:${{ matrix.language }}"
-      - name: Stop sccache server
-        if: always()
-        run: sccache --stop-server || true
 
   # ===========================================================================
   # Dependabot Auto-Merge (independent)

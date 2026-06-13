@@ -66,40 +66,15 @@ jobs:
           persist-credentials: false
           submodules: recursive
 
-      - name: Install dependencies (Unix)
-        if: runner.os != 'Windows'
-        run: bash .github/setup-ci.sh
-
-      - name: Install protoc (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          PROTOC_VERSION: "29.3"
-          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
-        run: |
-          $base = "https://github.com/protocolbuffers/protobuf/releases/download"
-          $url = "$base/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-          $zip = "$env:TEMP\protoc.zip"
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-          if ($hash -ne $env:PROTOC_SHA256) {
-            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
-          }
-          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
+      - uses: ./.github/actions/native-deps
 
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
           targets: ${{ matrix.target }}
 
-      - name: Build (Unix)
-        if: runner.os != 'Windows'
+      - name: Build
         run: make build RELEASE=1
-
-      - name: Build (Windows)
-        if: runner.os == 'Windows'
-        run: cargo build --release --target ${{ matrix.target }}
 
       - name: Create dist directory (Unix)
         if: runner.os != 'Windows'
@@ -120,7 +95,7 @@ jobs:
       - name: Copy artifact (Windows)
         if: runner.os == 'Windows'
         run: >-
-          Copy-Item "target\${{ matrix.target }}\release\${{ matrix.artifact_name }}"
+          Copy-Item "target\release\${{ matrix.artifact_name }}"
           "dist\${{ matrix.asset_name }}"
         shell: pwsh
 
@@ -282,7 +257,7 @@ jobs:
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
-      - run: bash .github/setup-ci.sh
+      - uses: ./.github/actions/native-deps
         if: steps.check_token.outputs.skip != 'true'
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         if: steps.check_token.outputs.skip != 'true'

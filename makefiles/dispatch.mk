@@ -30,6 +30,9 @@ else
   MCB_INSTALL_CRATES = cargo install --locked $(1)
 endif
 
+# Unknown-WHAT error arm (SSOT): the default case of every verb prints this.
+BAD_WHAT = printf "ERRO: WHAT '%s' invalido. Validos: $(1)\n" "$(WHAT)" >&2; exit 2
+
 # codegen
 CODEGEN_DB         := /tmp/mcb_codegen.db
 MIGRATION_RS       := crates/mcb-providers/src/database/seaorm/migration/m20260301_000001_initial_schema.rs
@@ -99,7 +102,7 @@ define DISPATCH_CHECK
   qlty)     mkdir -p docs/reports; ./scripts/analyze_qlty.py --scan --check --summary --markdown docs/reports/qlty-check-REPORTS.md; ./scripts/analyze_qlty.py --scan --smells --summary --markdown docs/reports/qlty-smells-REPORTS.md ;; \
   coordination) bd config get beads.role --json && bd status --json && bd hooks list --json && bash scripts/context/validate-beads-policy.sh && bd dep cycles --json && bd stale --status in_progress --days 1 --limit 25 --json && bd graph --all --compact >/dev/null ;; \
   ""|all)   cargo fmt --all -- --check && $(MAKE) lint-impl && $(MAKE) test && bash $(MCB_SH) validate $(if $(filter 1,$(QUICK)),quick,full) ;; \
-  *)        printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_check)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)        $(call BAD_WHAT,$(WHATS_check)) ;; \
 esac
 endef
 
@@ -120,7 +123,7 @@ define DISPATCH_HOOK
     cargo clippy --all-targets -- -D warnings && \
     $(MAKE) test && $(MAKE) test SCOPE=doc && \
     bash $(MCB_SH) validate quick ;; \
-  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_hook)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)          $(call BAD_WHAT,$(WHATS_hook)) ;; \
 esac
 endef
 
@@ -131,7 +134,7 @@ define DISPATCH_FIX
   lint)       cargo fmt --all && cargo clippy --fix --allow-dirty --all-targets ;; \
   docs)       $(MAKE) docs WHAT=lint FIX=1 ;; \
   ""|all)     cargo fmt --all && cargo clippy --fix --allow-dirty --all-targets && $(MAKE) docs WHAT=lint FIX=1 ;; \
-  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_fix)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)          $(call BAD_WHAT,$(WHATS_fix)) ;; \
 esac
 endef
 
@@ -143,7 +146,7 @@ define DISPATCH_DEV
   docker-down)  echo "Stopping Docker test services..."; docker-compose -f tests/docker-compose.yml down -v ;; \
   docker-logs)  docker-compose -f tests/docker-compose.yml logs -f ;; \
   docker-test)  docker-compose -f tests/docker-compose.yml --profile test up --build --abort-on-container-exit test-runner; docker-compose -f tests/docker-compose.yml --profile test rm -f test-runner ;; \
-  *)            printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_dev)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)            $(call BAD_WHAT,$(WHATS_dev)) ;; \
 esac
 endef
 
@@ -161,7 +164,7 @@ define DISPATCH_DOCS
   adr)       echo "Architecture Decision Records:"; ls -1 docs/adr/[0-9]*.md 2>/dev/null | while read f; do num=$$(basename "$$f" .md | cut -d- -f1); title=$$(head -1 "$$f" | sed 's/^# ADR [0-9]*: //'); printf "  %s: %s\n" "$$num" "$$title"; done ;; \
   adr-new)   ./scripts/docs/create-adr.sh 2>/dev/null || echo "create-adr.sh not found" ;; \
   diagrams)  mkdir -p docs/architecture/diagrams/generated; if command -v plantuml >/dev/null 2>&1; then for f in docs/architecture/diagrams/*.puml; do [ -f "$$f" ] && plantuml -o generated "$$f" 2>/dev/null || true; done; fi ;; \
-  *)         printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_docs)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)         $(call BAD_WHAT,$(WHATS_docs)) ;; \
 esac
 endef
 
@@ -174,7 +177,7 @@ define DISPATCH_CODEGEN
   conversions) echo "Generating conversions from $(CONVERSIONS_TOML)..."; python3 $(CONVERSIONS_SCRIPT); echo "✓ conversions in $(CONVERSIONS_DIR)/" ;; \
   clean)       rm -f $(CODEGEN_DB); echo "✓ cleaned codegen artifacts" ;; \
   ""|all)      $(MAKE) codegen WHAT=entities APPLY=Y; $(MAKE) codegen WHAT=conversions APPLY=Y; echo "✓ codegen complete" ;; \
-  *)           printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_codegen)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)           $(call BAD_WHAT,$(WHATS_codegen)) ;; \
 esac
 endef
 
@@ -185,7 +188,7 @@ define DISPATCH_RELEASE
   version)    $(call MCB_VERSION_BUMP) ;; \
   install)    $(call gate,install MCB v$(VERSION) to $(INSTALL_DIR) + systemd + MCP configs); $(call MCB_INSTALL) ;; \
   install-validate) $(call MCB_INSTALL_VALIDATE) ;; \
-  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_release)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)          $(call BAD_WHAT,$(WHATS_release)) ;; \
 esac
 endef
 
@@ -268,7 +271,7 @@ define DISPATCH_GIT
   rebase)     $(call gate,rebase onto $(BASE)); git rebase $(BASE) ;; \
   unstage)    $(call require_var,FILES); git restore --staged $(FILES) ;; \
   push-tags)  $(call require_var,TAG); $(call gate,push tag $(TAG) to origin); git push origin $(TAG) ;; \
-  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_git)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)          $(call BAD_WHAT,$(WHATS_git)) ;; \
 esac
 endef
 
@@ -279,7 +282,7 @@ define DISPATCH_PR
   ""|view)    $(call require_var,PR); gh pr view $(PR) ;; \
   merge)      $(call require_var,PR); $(call gate,merge PR #$(PR)); gh pr merge $(PR) --merge ;; \
   rerun)      $(call require_var,RUN); gh run rerun $(RUN) --failed ;; \
-  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_pr)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)          $(call BAD_WHAT,$(WHATS_pr)) ;; \
 esac
 endef
 
@@ -292,7 +295,7 @@ define DISPATCH_SUB
   commit)     $(call require_var,SUB); $(call require_var,MSG); $(call gate,commit in submodule $(SUB)); (cd third-party/$(SUB) && git add -A && git commit -m "$(MSG)") ;; \
   push)       $(call require_var,SUB); $(call gate,push submodule $(SUB)); (cd third-party/$(SUB) && git push) ;; \
   propagate)  $(call require_var,SUB); git add third-party/$(SUB); echo "staged third-party/$(SUB); commit with: make git WHAT=commit MSG='chore: update $(SUB)' APPLY=Y" ;; \
-  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_sub)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)          $(call BAD_WHAT,$(WHATS_sub)) ;; \
 esac
 endef
 
@@ -303,7 +306,7 @@ define DISPATCH_SETUP
   tools)     $(call MCB_INSTALL_CRATES,cargo-udeps cargo-audit cargo-tarpaulin cargo-nextest typos-cli) 2>/dev/null || true; echo "✓ tools installed" ;; \
   adr)       ./scripts/setup/install-adr-tools.sh ;; \
   ""|all)    cp scripts/hooks/pre-commit scripts/hooks/pre-push .git/hooks/; chmod +x .git/hooks/pre-commit .git/hooks/pre-push; echo "✓ hooks installed"; $(call MCB_INSTALL_CRATES,cargo-udeps cargo-audit cargo-tarpaulin cargo-nextest typos-cli) 2>/dev/null || true; ./scripts/setup/install-adr-tools.sh 2>/dev/null || true; echo "✓ setup complete" ;; \
-  *)         printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_setup)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)         $(call BAD_WHAT,$(WHATS_setup)) ;; \
 esac
 endef
 
@@ -313,6 +316,6 @@ define DISPATCH_CLEAN
   ""|build)  cargo clean; echo "✓ build artifacts cleaned" ;; \
   codegen)   rm -f $(CODEGEN_DB); echo "✓ codegen DB removed" ;; \
   all)       cargo clean; rm -f $(CODEGEN_DB); echo "✓ all artifacts cleaned" ;; \
-  *)         printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_clean)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)         $(call BAD_WHAT,$(WHATS_clean)) ;; \
 esac
 endef
