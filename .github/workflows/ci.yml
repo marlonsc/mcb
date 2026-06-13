@@ -317,11 +317,12 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
     runs-on: ${{ matrix.os }}
-    # 90 (not 60): the cold cache-seeding run on Windows exceeds 60 min; once
-    # rust-cache is warm subsequent runs finish well under it. Measured: a 60-min
-    # cap cancelled the job mid-run before it could populate its cache (deadlock).
-    # 120 (not 90): cold cache + 1715 tests = ~89min. 90min cancelled mid-run.
-    timeout-minutes: 120
+    # Per-leg timeout: macOS/beta finish in ~10-25min (fail-fast at 120). Windows
+    # nextest is process-per-test and the full 1715-test suite runs ~115min+ even
+    # with a warm rust-cache (process-spawn overhead, not compile) — at 120 it was
+    # cancelled mid-run on consecutive runs. 240 gives the Windows leg headroom to
+    # complete the full suite (coverage stays universal across platforms).
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 240 || 120 }}
     continue-on-error: ${{ matrix.rust == 'beta' }}
     strategy:
       fail-fast: false
