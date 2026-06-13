@@ -155,6 +155,16 @@ jobs:
         with:
           path: release-artifacts
 
+      - name: Verify workflow_dispatch tag exists
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          INPUT_TAG: ${{ github.event.inputs.tag }}
+        run: |
+          if ! git rev-parse "$INPUT_TAG" >/dev/null 2>&1; then
+            echo "ERROR: tag '$INPUT_TAG' does not exist in this repository." >&2
+            exit 1
+          fi
+
       - name: Extract version from tag
         id: extract_version
         env:
@@ -168,6 +178,8 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Generate changelog
+        env:
+          RELEASE_TAG: ${{ steps.extract_version.outputs.tag }}
         run: |
           VERSION="${{ steps.extract_version.outputs.version }}"
 
@@ -180,12 +192,13 @@ jobs:
           if [ ! -s RELEASE_NOTES.md ]; then
             PREV_TAG=$(
               git tag --list 'v*' --sort=-version:refname |
-              head -2 | tail -1
+              grep -v "^${RELEASE_TAG}$" |
+              head -1
             )
             if [ -z "$PREV_TAG" ]; then
-              git log --oneline --reverse > RELEASE_NOTES.md
+              git log --oneline --reverse "$RELEASE_TAG" > RELEASE_NOTES.md
             else
-              git log "$PREV_TAG..HEAD" --oneline > RELEASE_NOTES.md
+              git log "$PREV_TAG..$RELEASE_TAG" --oneline > RELEASE_NOTES.md
             fi
             sed -i '1s/^/## Changes\n\n/' RELEASE_NOTES.md
           fi
