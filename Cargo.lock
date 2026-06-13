@@ -3789,6 +3789,7 @@ dependencies = [
  "serde_yaml",
  "tokio",
  "tokio-util",
+ "tracing",
  "uuid",
 ]
 

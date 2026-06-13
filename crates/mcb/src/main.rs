@@ -6,7 +6,7 @@
 extern crate mcb_providers;
 
 use clap::{Parser, Subcommand};
-use mcb::cli::{ServeArgs, ValidateArgs};
+use mcb::cli::{ServeArgs, ValidateCliArgs};
 
 #[derive(Parser, Debug)]
 #[command(name = "mcb")]
@@ -21,7 +21,7 @@ struct Cli {
 enum Command {
     #[command(alias = "server")]
     Serve(ServeArgs),
-    Validate(ValidateArgs),
+    Validate(ValidateCliArgs),
 }
 
 #[tokio::main]
