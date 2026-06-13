@@ -15,7 +15,7 @@ expression: "snapshot_payload(&request, status, &response)"
   "response": {
     "error": {
       "code": -32602,
-      "message": "Missing execution provenance for 'get_memories': session_id, repo_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
+      "message": "Missing execution provenance for 'get_memories': session_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp. Hint: ensure the working directory is inside a git repo, or pass the missing fields via request meta."
     },
     "id": 1,
     "jsonrpc": "2.0"
