@@ -1456,7 +1456,7 @@ fn reciprocal_rank_fusion(
 - [ADR-001: Modular Crates Architecture][adr-001] - MemoryProvider follows trait-based DI
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async storage operations
 - [ADR-003: Unified Provider Architecture & Routing][adr-003] - Memory provider routing
-- [ADR-007: Integrated Web Administration Interface][adr-007] - Memory dashboard UI
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild][adr-051] - Memory dashboard UI
 - [ADR-008: Git-Aware Semantic Indexing][adr-008] - Git-tagged observations
 - [ADR-010: Hooks Subsystem][adr-010] - Hook observation storage
 - [ADR-012: Two-Layer DI Strategy][adr-012] - DI for memory services
@@ -1464,7 +1464,7 @@ fn reciprocal_rank_fusion(
 
 [adr-001]: 001-modular-crates-architecture.md
 [adr-003]: 003-unified-provider-architecture.md
-[adr-007]: 051-seaql-loco-platform-rebuild.md
+[adr-051]: 051-seaql-loco-platform-rebuild.md
 [adr-008]: 008-git-aware-semantic-indexing-v0.2.0.md
 [adr-010]: 010-hooks-subsystem-agent-backed.md
 [adr-012]: 012-di-strategy-two-layer-approach.md

@@ -23,7 +23,7 @@ implementation_status: Complete
 
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow FSM), [ADR-035](./035-context-scout.md) (Context Scout), [ADR-036](./036-enforcement-policies.md) (Enforcement Policies), [ADR-037](./037-workflow-orchestrator.md) (Orchestrator)
-- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI, superseded by ADR-050), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./051-seaql-loco-platform-rebuild.md) (Figment), [ADR-033](./033-mcp-handler-consolidation.md) (MCP Handlers)
+- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI, superseded by ADR-050), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-051](./051-seaql-loco-platform-rebuild.md) (Figment), [ADR-033](./033-mcp-handler-consolidation.md) (MCP Handlers)
 - **Supersedes:** None (integrating series)
 - **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md) →**ADR-038**
 
@@ -1090,4 +1090,4 @@ If implementation reveals critical issues (e.g., SQLite concurrency problems, po
 - [ADR-037: Workflow Orchestrator](./037-workflow-orchestrator.md) — MCP integration and orchestration
 - [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) — DI container history (superseded by ADR-050)
 - [ADR-013: Clean Architecture Crate Separation](./013-clean-architecture-crate-separation.md) — Crate boundaries
-- [ADR-025: Figment Configuration Migration](./051-seaql-loco-platform-rebuild.md) — Configuration loading
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild](./051-seaql-loco-platform-rebuild.md) — Configuration loading

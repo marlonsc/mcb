@@ -293,7 +293,7 @@ Rust Crates (existing):
 
 ## Related ADRs
 
-- [ADR-007: Integrated Web Administration Interface]
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild]
 (051-seaql-loco-platform-rebuild.md) - Base admin UI
 - [ADR-008: Git-Aware Semantic Indexing]
 (008-git-aware-semantic-indexing-v0.2.0.md) - Git metadata for diff view

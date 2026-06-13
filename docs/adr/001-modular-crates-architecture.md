@@ -253,5 +253,5 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md)
 - [ADR-029: Hexagonal Architecture](050-manual-composition-root-dill-removal.md) (superseded by ADR-050)
 - [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md)
-- [ADR-004: Event Bus (Local and Distributed)](051-seaql-loco-platform-rebuild.md)
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md)
 - [ADR-005: Context Cache Support (Moka and Redis)](005-context-cache-support.md)

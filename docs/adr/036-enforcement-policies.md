@@ -23,7 +23,7 @@ implementation_status: Complete
 
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout)
-- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./051-seaql-loco-platform-rebuild.md) (Figment)
+- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-051](./051-seaql-loco-platform-rebuild.md) (Figment)
 - **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) →**ADR-036** → [ADR-037](./037-workflow-orchestrator.md)
 
 ## Context
@@ -2178,5 +2178,5 @@ fn configurable_guard_factory(
 - [gatehouse](https://docs.rs/gatehouse/latest/gatehouse/) — Policy composition patterns (evaluated)
 - [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — `TransitionTrigger` consumed by guards
 - [ADR-035: Context Scout](./035-context-scout.md) — `ProjectContext` consumed by guards
-- [ADR-025: Figment Configuration](./051-seaql-loco-platform-rebuild.md) — Config pattern
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild](./051-seaql-loco-platform-rebuild.md) — Config pattern
 - [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) — DI pattern (superseded by ADR-050)

@@ -382,7 +382,7 @@ production = "milvus"       # Use Milvus for production
   Base provider abstraction
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async
   provider execution
-- [ADR-004: Event Bus (Local and Distributed)](051-seaql-loco-platform-rebuild.md) -
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md) -
   Provider event emission
 - [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) -
   Provider creation via factories

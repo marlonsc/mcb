@@ -286,7 +286,7 @@ async fn handle_mcp_get(
 
 - [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider pattern for HTTP clients
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async HTTP handling with Tokio
-- [ADR-007: Integrated Web Administration Interface](051-seaql-loco-platform-rebuild.md) - Unified port architecture
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md) - Unified port architecture
 - [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for transport services
 - [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - mcb-server crate organization
 
