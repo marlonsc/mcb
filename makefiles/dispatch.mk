@@ -21,6 +21,15 @@ else
   MCB_TEST_ALL  := MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T cargo test --workspace --all-targets
 endif
 
+# Install Rust tooling: prefer cargo-binstall when available, else cargo install.
+# This is an optimization, not a workaround; environments without binstall keep working.
+MCB_BINSTALL := $(shell command -v cargo-binstall >/dev/null 2>&1 && echo 1)
+ifeq ($(MCB_BINSTALL),1)
+  MCB_INSTALL_CRATES = cargo binstall -y $(1)
+else
+  MCB_INSTALL_CRATES = cargo install --locked $(1)
+endif
+
 # codegen
 CODEGEN_DB         := /tmp/mcb_codegen.db
 MIGRATION_RS       := crates/mcb-providers/src/database/seaorm/migration/m20260301_000001_initial_schema.rs
@@ -104,7 +113,7 @@ define DISPATCH_HOOK
     cargo fmt --all -- --check && \
     cargo clippy --workspace -- -D warnings && \
     { ! command -v typos >/dev/null 2>&1 || typos; } && \
-    $(if $(filter 1,$(MCB_NEXTEST)),cargo nextest run --workspace --lib,cargo test --workspace --lib) ;; \
+    $(MCB_TEST_UNIT) ;; \
   pre-push) \
     cargo fmt --all -- --check && \
     cargo clippy --all-targets -- -D warnings && \
@@ -290,9 +299,9 @@ endef
 define DISPATCH_SETUP
 @case "$(WHAT)" in \
   hooks)     cp scripts/hooks/pre-commit scripts/hooks/pre-push .git/hooks/; chmod +x .git/hooks/pre-commit .git/hooks/pre-push; echo "✓ pre-commit + pre-push hooks installed" ;; \
-  tools)     cargo install cargo-udeps cargo-audit cargo-tarpaulin cargo-nextest typos-cli 2>/dev/null || true; echo "✓ tools installed" ;; \
+  tools)     $(call MCB_INSTALL_CRATES,cargo-udeps cargo-audit cargo-tarpaulin cargo-nextest typos-cli) 2>/dev/null || true; echo "✓ tools installed" ;; \
   adr)       ./scripts/setup/install-adr-tools.sh ;; \
-  ""|all)    cp scripts/hooks/pre-commit scripts/hooks/pre-push .git/hooks/; chmod +x .git/hooks/pre-commit .git/hooks/pre-push; echo "✓ hooks installed"; cargo install cargo-udeps cargo-audit cargo-tarpaulin cargo-nextest typos-cli 2>/dev/null || true; ./scripts/setup/install-adr-tools.sh 2>/dev/null || true; echo "✓ setup complete" ;; \
+  ""|all)    cp scripts/hooks/pre-commit scripts/hooks/pre-push .git/hooks/; chmod +x .git/hooks/pre-commit .git/hooks/pre-push; echo "✓ hooks installed"; $(call MCB_INSTALL_CRATES,cargo-udeps cargo-audit cargo-tarpaulin cargo-nextest typos-cli) 2>/dev/null || true; ./scripts/setup/install-adr-tools.sh 2>/dev/null || true; echo "✓ setup complete" ;; \
   *)         printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_setup)\n" "$(WHAT)" >&2; exit 2 ;; \
 esac
 endef
