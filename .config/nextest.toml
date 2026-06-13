@@ -16,3 +16,8 @@ serial-shared-context = { max-threads = 1 }
 [[profile.default.overrides]]
 filter = 'package(mcb-server) and kind(test)'
 test-group = 'serial-shared-context'
+# Defense-in-depth: the CI warm-up step (`make test SCOPE=warmup`) populates the
+# hf-hub cache in-job so these load the model offline. retries absorbs a residual
+# transient HF 429 on a genuine cold-cache run — visible in nextest output, not a
+# silent fallback. Primary fix is the warm-up; this is the safety net.
+retries = 2

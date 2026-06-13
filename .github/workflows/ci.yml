@@ -295,28 +295,23 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
+      - name: Warm FastEmbed cache (Rust path)
+        # Populate .cache/mcb/fastembed via the SAME hf-hub Rust code path the tests
+        # use (make test SCOPE=warmup runs the init test once), so the on-disk
+        # blobs+refs+snapshots layout is valid in-job. The previous Python
+        # snapshot_download produced symlink pointers that actions/cache restore can
+        # break, making hf-hub-Rust's offline Cache::get miss and hit HF (429 flake).
+        # Retry loop survives a transient 429 on a genuine cold-cache download.
         shell: bash
         run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+          for attempt in 1 2 3 4 5; do
+            if make test SCOPE=warmup; then break; fi
+            [ "$attempt" -eq 5 ] && { echo 'FastEmbed warm-up failed after 5 attempts' >&2; exit 1; }
+            echo "warm-up attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+            sleep $((attempt * 20))
+          done
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
       - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
         with:
           tool: nextest
@@ -428,28 +423,23 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
+      - name: Warm FastEmbed cache (Rust path)
+        # Populate .cache/mcb/fastembed via the SAME hf-hub Rust code path the tests
+        # use (make test SCOPE=warmup runs the init test once), so the on-disk
+        # blobs+refs+snapshots layout is valid in-job. The previous Python
+        # snapshot_download produced symlink pointers that actions/cache restore can
+        # break, making hf-hub-Rust's offline Cache::get miss and hit HF (429 flake).
+        # Retry loop survives a transient 429 on a genuine cold-cache download.
         shell: bash
         run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+          for attempt in 1 2 3 4 5; do
+            if make test SCOPE=warmup; then break; fi
+            [ "$attempt" -eq 5 ] && { echo 'FastEmbed warm-up failed after 5 attempts' >&2; exit 1; }
+            echo "warm-up attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+            sleep $((attempt * 20))
+          done
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
       - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
         with:
           tool: nextest
@@ -535,28 +525,23 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
+      - name: Warm FastEmbed cache (Rust path)
+        # Populate .cache/mcb/fastembed via the SAME hf-hub Rust code path the tests
+        # use (make test SCOPE=warmup runs the init test once), so the on-disk
+        # blobs+refs+snapshots layout is valid in-job. The previous Python
+        # snapshot_download produced symlink pointers that actions/cache restore can
+        # break, making hf-hub-Rust's offline Cache::get miss and hit HF (429 flake).
+        # Retry loop survives a transient 429 on a genuine cold-cache download.
         shell: bash
         run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+          for attempt in 1 2 3 4 5; do
+            if make test SCOPE=warmup; then break; fi
+            [ "$attempt" -eq 5 ] && { echo 'FastEmbed warm-up failed after 5 attempts' >&2; exit 1; }
+            echo "warm-up attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+            sleep $((attempt * 20))
+          done
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
       - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
         with:
           tool: nextest
@@ -610,28 +595,23 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
+      - name: Warm FastEmbed cache (Rust path)
+        # Populate .cache/mcb/fastembed via the SAME hf-hub Rust code path the tests
+        # use (make test SCOPE=warmup runs the init test once), so the on-disk
+        # blobs+refs+snapshots layout is valid in-job. The previous Python
+        # snapshot_download produced symlink pointers that actions/cache restore can
+        # break, making hf-hub-Rust's offline Cache::get miss and hit HF (429 flake).
+        # Retry loop survives a transient 429 on a genuine cold-cache download.
         shell: bash
         run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+          for attempt in 1 2 3 4 5; do
+            if make test SCOPE=warmup; then break; fi
+            [ "$attempt" -eq 5 ] && { echo 'FastEmbed warm-up failed after 5 attempts' >&2; exit 1; }
+            echo "warm-up attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+            sleep $((attempt * 20))
+          done
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
       - name: Run coverage
         run: make check WHAT=coverage THREADS=4
         env:

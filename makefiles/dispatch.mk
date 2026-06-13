@@ -67,11 +67,12 @@ case "$(SCOPE)" in \
   doc)         cargo test --workspace --doc ;; \
   golden)      RUST_TEST_THREADS=$$T cargo test --workspace --tests golden ;; \
   startup)     cargo test -p mcb --test integration startup_smoke -- --nocapture ;; \
+  warmup)      cargo test -p mcb-server --test integration test_init_app_with_default_config_succeeds -- --nocapture ;; \
   integration) MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T cargo test --workspace --test '*integration*' ;; \
   e2e)         $(call MCB_E2E) ;; \
   all)         $(MCB_TEST_ALL) && $(call MCB_E2E) ;; \
   '')          $(MCB_TEST_ALL) ;; \
-  *)           printf "ERRO: SCOPE '%s' invalido. Validos: unit doc golden startup integration e2e all\n" "$(SCOPE)" >&2; exit 2 ;; \
+  *)           printf "ERRO: SCOPE '%s' invalido. Validos: unit doc golden startup warmup integration e2e all\n" "$(SCOPE)" >&2; exit 2 ;; \
 esac
 endef
 

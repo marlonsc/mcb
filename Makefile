@@ -85,7 +85,7 @@ dev-env-optimize: ; @bash scripts/dev-env-optimize.sh $(if $(filter Y,$(APPLY)),
 help:
 	@printf "\n$(BOLD)MCB — make <verb> [WHAT=phase] [SCOPE=..] [APPLY=Y]$(RESET)\n\n"
 	@printf "  %-10s %s\n" build   "Build (RELEASE=0|1)"
-	@printf "  %-10s %s\n" test    "Test (SCOPE=unit|doc|golden|startup|integration|e2e|all, THREADS=N)"
+	@printf "  %-10s %s\n" test    "Test (SCOPE=unit|doc|golden|startup|warmup|integration|e2e|all, THREADS=N)"
 	@printf "  %-10s %s\n" check   "Read-only gate (WHAT=$(WHATS_check))"
 	@printf "  %-10s %s\n" fix     "Auto-fix (WHAT=$(WHATS_fix))"
 	@printf "  %-10s %s\n" dev     "Dev/docker (WHAT=$(WHATS_dev))"
