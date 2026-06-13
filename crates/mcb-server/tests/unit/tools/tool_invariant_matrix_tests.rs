@@ -92,9 +92,16 @@ async fn provenance_gated_tools_reject_empty_context(#[case] tool_name: &str) ->
     let handlers = tool_handlers(&Arc::new(server));
     let request = empty_call_request(tool_name);
 
-    let error = route_tool_call(request, &handlers, ToolExecutionContext::default())
-        .await
-        .expect_err(&format!("{tool_name}: should reject empty provenance"));
+    let error = route_tool_call(
+        request,
+        &handlers,
+        ToolExecutionContext {
+            execution_flow: Some(EXECUTION_FLOW_STDIO_ONLY.to_owned()),
+            ..ToolExecutionContext::default()
+        },
+    )
+    .await
+    .expect_err(&format!("{tool_name}: should reject empty provenance"));
 
     assert_eq!(error.code.0, -32602);
     assert!(

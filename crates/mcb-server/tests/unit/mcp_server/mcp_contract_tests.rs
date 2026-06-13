@@ -146,7 +146,10 @@ async fn data_plane_tools_reject_empty_provenance(
     let err = route_tool_call(
         req,
         &tool_handlers(&ctx.server),
-        ToolExecutionContext::default(),
+        ToolExecutionContext {
+            execution_flow: Some(EXECUTION_FLOW_STDIO_ONLY.to_owned()),
+            ..ToolExecutionContext::default()
+        },
     )
     .await
     .expect_err("must reject empty provenance");
