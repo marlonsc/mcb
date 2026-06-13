@@ -457,16 +457,6 @@ dolt:
 
 # actor: ""
 
-# Dolt shared-server is the live coordination database.
-dolt:
-  mode: server
-  shared-server: true
-  host: 127.0.0.1
-  port: 3308
-  user: root
-  database: mcb
-  auto-commit: off
-
 # Multi-repo configuration (experimental)
 
 # repos
