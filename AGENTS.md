@@ -84,6 +84,16 @@ types at the source; depend on declared contracts, not loosely-typed escape hatc
   Build only what the task needs now; delete the rest.
 - **DI / DIP** — depend on abstractions (protocols/interfaces); inject collaborators; no hidden globals or
   hard-wired construction inside business logic.
+- **Reuse-priority ladder (negative-LOC obsession)** — before writing ANY new code, command, or config,
+  reuse what already exists, searching in this strict order: **(1) project services** (DI-wired
+  compositions, `AppContext`, linkme slices) → **(2) standardized project libraries** (`mcb-*` crates and
+  shared scripts/composite actions — and never duplicate behavior *between* libraries) → **(3) generalist
+  parametrizable OO** (traits + DIP, polymorphism over branching) → **(4) centralized constants**
+  (`mcb-utils` constants, enforced by CA016/CA018/CA019) → **(5) config** (`config/*.yaml`, never
+  hardcode). Creating something that duplicates an existing service/library/trait/constant/step is a
+  **defect** — refactor to reuse instead. Every change must aim for **negative net LOC** ("do more with
+  much less"); additive changes need an explicit reason. Enforced by `make guard` + `make check
+  WHAT=validate`; the rule applies to source, makefiles, and CI alike.
 
 ### 10. User Manages Git
 
