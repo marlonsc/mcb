@@ -21,6 +21,7 @@ crate::define_validator! {
     }
 
     violations: dynamic_severity, ViolationCategory::Organization,
+    /// Single Source of Truth violation kinds.
     pub enum SsotViolation {
         #[doc = "Duplicate declaration of the same public type or trait."]
         #[violation(

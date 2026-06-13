@@ -109,6 +109,7 @@ impl GitProvider {
     /// Convert a git2 delta status to our domain `DiffStatus`.
     fn delta_to_status(delta: git2::Delta) -> DiffStatus {
         #[allow(clippy::wildcard_enum_match_arm)]
+        // Why: git2::Delta has many uncommon variants that all map to DiffStatus::Modified.
         match delta {
             git2::Delta::Added => DiffStatus::Added,
             git2::Delta::Deleted => DiffStatus::Deleted,
