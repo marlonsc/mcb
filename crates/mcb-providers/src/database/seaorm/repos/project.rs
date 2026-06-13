@@ -8,7 +8,10 @@ use mcb_domain::entities::project::{
     IssueFilter, ProjectDecision, ProjectDependency, ProjectIssue, ProjectPhase,
 };
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::ProjectRepository;
+use mcb_domain::ports::{
+    ProjectCrudRepository, ProjectDecisionRepository, ProjectDependencyRepository,
+    ProjectIssueRepository, ProjectPhaseRepository, ProjectRepository,
+};
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, EntityTrait, PaginatorTrait, QueryFilter,
     QueryOrder, QuerySelect,
@@ -282,12 +285,10 @@ impl SeaOrmProjectRepository {
     }
 }
 
-// ── ProjectRepository trait impl ────────────────────────────────────────────
+// ── Sub-trait implementations (ISP-compliant) ──────────────────────────────
 
 #[async_trait]
-impl ProjectRepository for SeaOrmProjectRepository {
-    // ── Project ──────────────────────────────────────────────────────────
-
+impl ProjectCrudRepository for SeaOrmProjectRepository {
     async fn create(&self, project: &Project) -> Result<()> {
         sea_repo_insert!(&self.db, project, project, "create project")
     }
@@ -330,9 +331,10 @@ impl ProjectRepository for SeaOrmProjectRepository {
         sea_repo_delete_filtered!(&self.db, project, id, "delete project",
             project::Column::OrgId => org_id.to_owned())
     }
+}
 
-    // ── Phase ────────────────────────────────────────────────────────────
-
+#[async_trait]
+impl ProjectPhaseRepository for SeaOrmProjectRepository {
     async fn create_phase(&self, phase: &ProjectPhase) -> Result<()> {
         SeaOrmProjectRepository::create_phase(self, phase).await
     }
@@ -352,9 +354,10 @@ impl ProjectRepository for SeaOrmProjectRepository {
     async fn delete_phase(&self, id: &str) -> Result<()> {
         SeaOrmProjectRepository::delete_phase(self, id).await
     }
+}
 
-    // ── Issue ────────────────────────────────────────────────────────────
-
+#[async_trait]
+impl ProjectIssueRepository for SeaOrmProjectRepository {
     async fn create_issue(&self, issue: &ProjectIssue) -> Result<()> {
         SeaOrmProjectRepository::create_issue(self, issue).await
     }
@@ -382,9 +385,10 @@ impl ProjectRepository for SeaOrmProjectRepository {
     async fn delete_issue(&self, org_id: &str, id: &str) -> Result<()> {
         SeaOrmProjectRepository::delete_issue(self, org_id, id).await
     }
+}
 
-    // ── Dependency ───────────────────────────────────────────────────────
-
+#[async_trait]
+impl ProjectDependencyRepository for SeaOrmProjectRepository {
     async fn create_dependency(&self, dependency: &ProjectDependency) -> Result<()> {
         SeaOrmProjectRepository::create_dependency(self, dependency).await
     }
@@ -396,9 +400,10 @@ impl ProjectRepository for SeaOrmProjectRepository {
     async fn delete_dependency(&self, id: &str) -> Result<()> {
         SeaOrmProjectRepository::delete_dependency(self, id).await
     }
+}
 
-    // ── Decision ─────────────────────────────────────────────────────────
-
+#[async_trait]
+impl ProjectDecisionRepository for SeaOrmProjectRepository {
     async fn create_decision(&self, decision: &ProjectDecision) -> Result<()> {
         SeaOrmProjectRepository::create_decision(self, decision).await
     }
@@ -419,3 +424,6 @@ impl ProjectRepository for SeaOrmProjectRepository {
         SeaOrmProjectRepository::delete_decision(self, id).await
     }
 }
+
+#[async_trait]
+impl ProjectRepository for SeaOrmProjectRepository {}
