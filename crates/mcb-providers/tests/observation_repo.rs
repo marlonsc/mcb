@@ -101,6 +101,7 @@ async fn observation_repo_round_trip_store_get_list_timeline_and_inject() -> Tes
 
     let filtered = repo
         .list_observations(
+            mcb_utils::constants::values::DEFAULT_ORG_ID,
             Some(&MemoryFilter {
                 tags: Some(vec!["important".to_owned()]),
                 session_id: Some("ses-1".to_owned()),
@@ -140,6 +141,7 @@ async fn observation_repo_round_trip_store_get_list_timeline_and_inject() -> Tes
 
     let injected = repo
         .inject_observations(
+            mcb_utils::constants::values::DEFAULT_ORG_ID,
             Some(&MemoryFilter {
                 tags: Some(vec!["important".to_owned()]),
                 ..Default::default()

@@ -101,7 +101,12 @@ impl SeaOrmObservationRepository {
         }
     }
 
-    fn build_list_sql(&self, filter: Option<&MemoryFilter>, limit: usize) -> Statement {
+    fn build_list_sql(
+        &self,
+        org_id: &str,
+        filter: Option<&MemoryFilter>,
+        limit: usize,
+    ) -> Statement {
         let mut query = Query::select();
         query
             .columns([
@@ -117,6 +122,7 @@ impl SeaOrmObservationRepository {
                 observation::Column::EmbeddingId,
             ])
             .from(observation::Entity)
+            .and_where(Expr::col(observation::Column::OrgId).eq(org_id))
             .order_by(observation::Column::CreatedAt, Order::Desc)
             .limit(limit as u64);
         if let Some(f) = filter {
@@ -127,12 +133,13 @@ impl SeaOrmObservationRepository {
 
     async fn list_by_filter(
         &self,
+        org_id: &str,
         filter: Option<&MemoryFilter>,
         limit: usize,
     ) -> Result<Vec<Observation>> {
         let rows = self
             .db
-            .query_all_raw(self.build_list_sql(filter, limit))
+            .query_all_raw(self.build_list_sql(org_id, filter, limit))
             .await
             .map_err(db_error("list observations"))?;
         rows.into_iter()
@@ -161,10 +168,11 @@ impl SeaOrmObservationRepository {
     /// Returns an error if the database query fails.
     pub async fn list_observations(
         &self,
+        org_id: &str,
         filter: Option<&MemoryFilter>,
         limit: usize,
     ) -> Result<Vec<Observation>> {
-        self.list_by_filter(filter, limit).await
+        self.list_by_filter(org_id, filter, limit).await
     }
 
     /// Inject observations matching a filter, capped by `max_chars` total content size.
@@ -173,11 +181,12 @@ impl SeaOrmObservationRepository {
     /// Returns an error if the database query fails.
     pub async fn inject_observations(
         &self,
+        org_id: &str,
         filter: Option<&MemoryFilter>,
         limit: usize,
         max_chars: usize,
     ) -> Result<Vec<Observation>> {
-        let candidates = self.list_by_filter(filter, limit).await?;
+        let candidates = self.list_by_filter(org_id, filter, limit).await?;
         let mut selected = Vec::new();
         let mut total_chars = 0usize;
         for obs in candidates {
@@ -240,13 +249,13 @@ impl MemoryRepository for SeaOrmObservationRepository {
 
     async fn search(
         &self,
-        _org_id: &str,
+        org_id: &str,
         query: &str,
         mut limit: usize,
     ) -> Result<Vec<FtsSearchResult>> {
         limit = limit.min(OBSERVATION_LIST_MAX_LIMIT);
         if query.trim().is_empty() {
-            let observations = self.list_by_filter(None, limit).await?;
+            let observations = self.list_by_filter(org_id, None, limit).await?;
             return Ok(observations
                 .into_iter()
                 .map(|obs| FtsSearchResult {
@@ -256,11 +265,15 @@ impl MemoryRepository for SeaOrmObservationRepository {
                 .collect());
         }
         let sql = "SELECT id, bm25(observations_fts) AS rank FROM observations_fts \
-                   WHERE observations_fts MATCH ? ORDER BY bm25(observations_fts) LIMIT ?";
+                   WHERE observations_fts MATCH ? AND org_id = ? ORDER BY bm25(observations_fts) LIMIT ?";
         let stmt = Statement::from_sql_and_values(
             self.db.get_database_backend(),
             sql,
-            vec![Value::from(query), Value::from(limit as i64)],
+            vec![
+                Value::from(query),
+                Value::from(org_id),
+                Value::from(limit as i64),
+            ],
         );
         let rows = self
             .db
@@ -316,11 +329,15 @@ impl MemoryRepository for SeaOrmObservationRepository {
         let mut after_filter = filter.unwrap_or_default();
         after_filter.time_range = Some((anchor.created_at + 1, i64::MAX));
 
-        let mut before_items = self.list_by_filter(Some(&before_filter), before).await?;
+        let mut before_items = self
+            .list_by_filter(org_id, Some(&before_filter), before)
+            .await?;
         before_items.sort_by_key(|obs| obs.created_at);
         let mut timeline = before_items;
         timeline.push(anchor);
-        let mut after_items = self.list_by_filter(Some(&after_filter), after).await?;
+        let mut after_items = self
+            .list_by_filter(org_id, Some(&after_filter), after)
+            .await?;
         after_items.sort_by_key(|obs| obs.created_at);
         timeline.extend(after_items);
         Ok(timeline)
