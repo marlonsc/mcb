@@ -3,6 +3,7 @@
 //!
 use std::sync::Arc;
 
+use mcb_domain::entities::memory::OriginContext;
 use mcb_domain::ports::{CreateSessionSummaryInput, MemoryServiceInterface};
 use mcb_domain::value_objects::SessionId;
 use rmcp::ErrorData as McpError;
@@ -38,34 +39,17 @@ struct SessionSummaryPayload {
     delegated: Option<bool>,
 }
 
-/// Stores a session summary in the memory service.
-#[tracing::instrument(skip_all)]
-pub async fn store_session(
-    memory_service: &Arc<dyn MemoryServiceInterface>,
+/// Resolve the canonical origin context for a session-summary store.
+fn resolve_session_origin_context(
     args: &MemoryArgs,
-) -> Result<CallToolResult, McpError> {
-    if args.data.is_none() {
-        return Ok(tool_error("Missing data payload for session summary"));
-    }
-    let payload =
-        serde_json::from_value::<SessionSummaryPayload>(args.data.clone().unwrap_or_default())
-            .map_err(|_| McpError::invalid_params("invalid data", None))?;
-    let session_id = args
-        .session_id
-        .or_else(|| payload.session_id.as_deref().map(SessionId::from));
-    let session_id = match session_id {
-        Some(value) => value,
-        None => {
-            return Ok(tool_error("Missing session_id for session summary"));
-        }
-    };
-    let session_id_str = session_id.as_str().clone();
-
-    let origin_context = resolve_origin_context(&OriginContextInput {
+    payload: &SessionSummaryPayload,
+    session_id: &str,
+) -> Result<OriginContext, McpError> {
+    resolve_origin_context(&OriginContextInput {
         org_id: args.org_id.as_deref(),
         project_id_args: args.project_id.as_deref(),
         project_id_payload: payload.project_id.as_deref(),
-        session_from_args: Some(session_id_str.as_str()),
+        session_from_args: Some(session_id),
         parent_session_from_data: payload.parent_session_id.as_deref(),
         tool_name_args: Some("memory"),
         repo_id_args: args.repo_id.as_deref(),
@@ -78,7 +62,34 @@ pub async fn store_session(
         delegated_payload: payload.delegated,
         require_project_id: true,
         ..Default::default()
-    })?;
+    })
+}
+
+/// Stores a session summary in the memory service.
+#[tracing::instrument(skip_all)]
+pub async fn store_session(
+    memory_service: &Arc<dyn MemoryServiceInterface>,
+    args: &MemoryArgs,
+) -> Result<CallToolResult, McpError> {
+    if args.data.is_none() {
+        return Ok(tool_error("Missing data payload for session summary"));
+    }
+    let payload = serde_json::from_value::<SessionSummaryPayload>(
+        args.data
+            .clone()
+            .ok_or_else(|| McpError::invalid_params("missing required field: data", None))?,
+    )
+    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+    let session_id = match args
+        .session_id
+        .or_else(|| payload.session_id.as_deref().map(SessionId::from))
+    {
+        Some(value) => value,
+        None => return Ok(tool_error("Missing session_id for session summary")),
+    };
+    let session_id_str = session_id.as_str().clone();
+
+    let origin_context = resolve_session_origin_context(args, &payload, session_id_str.as_str())?;
     let project_id = origin_context.project_id.clone().ok_or_else(|| {
         McpError::invalid_params("project_id is required for session summary", None)
     })?;
@@ -88,7 +99,7 @@ pub async fn store_session(
             org_id: args
                 .org_id
                 .clone()
-                .unwrap_or(mcb_domain::constants::keys::DEFAULT_ORG_ID.to_owned()),
+                .unwrap_or(mcb_utils::constants::values::DEFAULT_ORG_ID.to_owned()),
             session_id,
             topics: payload.topics,
             decisions: payload.decisions,

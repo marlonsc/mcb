@@ -20,16 +20,17 @@ path = "src/lib.rs"
 [dependencies]
 # Domain layer (canonical utils)
 mcb-domain = { path = "../mcb-domain" }
+mcb-utils = { path = "../mcb-utils" }
 
 # File traversal and globbing
 walkdir.workspace = true
-glob.workspace = true
 globset.workspace = true
 
 # No external dependencies needed - using simplified detection
 
 # Pattern matching
 regex.workspace = true
+rayon.workspace = true
 
 # Serialization
 serde = { workspace = true, features = ["derive"] }
@@ -51,9 +52,6 @@ derive_more.workspace = true
 
 # Date/time for timestamps
 chrono.workspace = true
-
-# CLI
-clap = { workspace = true }
 
 # Rule Engines - Core do sistema
 rust-rule-engine.workspace = true
@@ -79,7 +77,6 @@ tree-sitter-javascript.workspace = true
 tree-sitter-typescript.workspace = true
 tree-sitter-go.workspace = true
 tree-sitter-java.workspace = true
-tree-sitter-c.workspace = true
 tree-sitter-cpp.workspace = true
 
 # Async traits
@@ -106,3 +103,5 @@ serde_yaml.workspace = true
 rstest = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
+mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+mcb-utils = { path = "../mcb-utils" }

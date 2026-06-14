@@ -5,10 +5,10 @@
 
 ```text
 .beads/
-├── beads.db              # SQLite (primary storage)
-├── issues.jsonl          # JSONL export (git-tracked)
+├── issues.jsonl          # JSONL export/interchange, not live DB
 ├── config.yaml           # Configuration
 ├── metadata.json         # Database metadata
+├── embeddeddolt/         # Legacy/solo Dolt data when embedded mode is used
 └── export-state/         # Export tracking
 ```
 
@@ -107,32 +107,33 @@ One JSON object per line:
 | `bd close <id> --reason "..."` | Close issue |
 | `bd dep add <id> <depends-on>` | Add dependency |
 | `bd dep list <id>` | List dependencies |
-| `bd sync` | Export to JSONL and push to git |
+| `bd dolt push` | Push Dolt commits when a remote is configured |
+| `bd dolt pull` | Pull Dolt commits when a remote is configured |
+| `bd backup sync` | Push a full Dolt backup to the configured destination |
 | `bd ready` | Show ready issues |
 | `bd blocked` | Show blocked issues |
 
 ## Configuration (config.yaml)
 
 ```yaml
-sync-branch: "beads-sync"        # Git branch for syncing
-
 # issue-prefix: "mcb"            # Issue prefix
 
-# no-db: false                   # Use JSONL only
-
-# no-daemon: false               # Disable daemon
-
-# no-auto-flush: false           # Disable auto-export
-
-# no-auto-import: false          # Disable auto-import
+dolt:
+  mode: server
+  shared-server: true
+  host: 127.0.0.1
+  port: 3308
+  user: root
+  database: mcb
+  auto-commit: off
 ```
 
 ## Git Integration
 
-1. **bd sync**: Export SQLite → JSONL → git commit → git push
-2. **Auto-sync**: Daemon auto-flushes on mutations (debounced)
-3. **Merge conflicts**: Intelligent JSONL merge driver
-4. **Worktrees**: `.git/beads-worktrees/beads-sync/` for parallel sync
+1. **Dolt remote sync**: `bd dolt push` / `bd dolt pull` when a remote is configured
+2. **Full backup**: `bd backup init <path-or-url>` + `bd backup sync`
+3. **JSONL**: `bd export` / `bd import` only for migration/interchange, not normal sync
+4. **Multi-agent**: shared-server mode serializes concurrent writers through one Dolt SQL server
 
 ## Performance
 
@@ -186,7 +187,7 @@ CREATE INDEX idx_labels_label ON labels(label);
 
 - **Daemon mode** (default): Background RPC server via Unix socket
 - **No-daemon mode**: Direct database access
-- **No-db mode**: Load from JSONL, no SQLite
+- **Legacy no-db mode**: historical only; do not use for current shared-server coordination
 - **Files**: daemon.pid, daemon.lock, daemon.log, bd.sock
 
 ## Advanced Features

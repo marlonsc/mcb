@@ -10,10 +10,10 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{BranchSearchMatch, BranchSearchResponse, repo_path};
 use crate::args::VcsArgs;
-use crate::constants::limits::DEFAULT_VCS_SEARCH_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
+use mcb_utils::constants::limits::DEFAULT_VCS_SEARCH_LIMIT;
 
 fn require_query(args: &VcsArgs) -> Result<&str, CallToolResult> {
     args.query
@@ -33,6 +33,7 @@ fn append_file_matches(
     for (index, line) in content.lines().enumerate() {
         if line.to_lowercase().contains(query_lower) {
             matches.push(BranchSearchMatch {
+                // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
                 path: file_path.to_str().unwrap_or_default().to_owned(),
                 line: index + 1,
                 snippet: line.trim().to_owned(),

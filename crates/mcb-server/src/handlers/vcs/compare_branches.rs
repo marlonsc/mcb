@@ -10,9 +10,9 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{BranchComparison, BranchDiffFile, repo_path};
 use crate::args::VcsArgs;
-use crate::constants::git::GIT_REF_HEAD;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use mcb_utils::constants::vcs::GIT_REF_HEAD;
 
 /// Compares two branches and returns the diff.
 #[tracing::instrument(skip_all)]
@@ -48,6 +48,7 @@ pub async fn compare_branches(
         .files
         .iter()
         .map(|file| BranchDiffFile {
+            // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
             path: file.path.to_str().unwrap_or_default().to_owned(),
             status: file.status.to_string(),
         })

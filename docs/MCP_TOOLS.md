@@ -1,26 +1,31 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 MD024 -->
 # MCP Tools Schema Documentation
 
-**Version**: 0.2.1
-**Last Updated**: 2026-02-14
+**Version**: 0.3.2
+**Last Updated**: 2026-06-04
 
-MCB exposes 9 tools through the MCP protocol. Tool names as returned by `tools/list`:
+MCB exposes 24 public tool names through the MCP protocol. `tools/list` returns
+the single-purpose names below; implementation routes them through 9 handler
+families.
 
-| # | Tool | Description |
-| --- | ------ | ------------- |
-| 1 | `index` | Index operations (start, status, clear) |
-| 2 | `search` | Search operations for code and memory |
-| 3 | `validate` | Validation and analysis operations |
-| 4 | `memory` | Memory storage, retrieval, and timeline operations |
-| 5 | `session` | Session lifecycle operations |
-| 6 | `agent` | Agent activity logging operations |
-| 7 | `project` | Project workflow management (phases, issues, dependencies, decisions) |
-| 8 | `vcs` | Version control operations (list, index, compare, search, impact) |
-| 9 | `entity` | Unified entity CRUD (vcs/plan/issue/org resources) |
+| Family | Tool names returned by `tools/list` |
+| ------ | ----------------------------------- |
+| Search | `search_code`, `search_memory` |
+| Index | `index_repo`, `index_status`, `clear_index` |
+| Validate | `validate_code`, `analyze_code`, `list_rules` |
+| Memory | `store_memory`, `get_memories`, `list_memories`, `memory_timeline`, `inject_context` |
+| Session | `start_session`, `get_session`, `list_sessions`, `summarize_session` |
+| Agent | `log_tool_call`, `log_delegation` |
+| VCS | `list_repos`, `compare_branches`, `analyze_impact` |
+| Project | `project` |
+| Entity | `entity` |
+
+The sections below document the shared handler-family schemas used by the
+single-purpose tools.
 
 ---
 
-## 1. `index` Tool
+## 1. Index Tool Family
 
 Index operations (start, git_index, status, clear).
 
@@ -40,7 +45,7 @@ Index operations (start, git_index, status, clear).
 
 ---
 
-## 2. `search` Tool
+## 2. Search Tool Family
 
 Search operations for code and memory.
 
@@ -61,7 +66,7 @@ Search operations for code and memory.
 
 ---
 
-## 3. `validate` Tool
+## 3. Validate Tool Family
 
 Validation and analysis operations.
 
@@ -77,7 +82,7 @@ Validation and analysis operations.
 
 ---
 
-## 4. `memory` Tool
+## 4. Memory Tool Family
 
 Memory storage, retrieval, and timeline operations.
 
@@ -106,7 +111,7 @@ Memory storage, retrieval, and timeline operations.
 
 ---
 
-## 5. `session` Tool
+## 5. Session Tool Family
 
 Session lifecycle operations.
 
@@ -125,7 +130,7 @@ Session lifecycle operations.
 
 ---
 
-## 6. `agent` Tool
+## 6. Agent Tool Family
 
 Agent activity logging operations.
 
@@ -157,17 +162,17 @@ Project workflow management (phases, issues, dependencies, decisions).
 
 ---
 
-## 8. `vcs` Tool
+## 8. VCS Tool Family
 
-Version control operations (list, index, compare, search, impact).
+Version control operations (list, compare, impact).
 
-**Actions**: `list_repositories`, `index_repository`, `compare_branches`, `search_branch`, `analyze_impact`
+**Public tools**: `list_repos`, `compare_branches`, `analyze_impact`
 
 | Parameter | Type | Required | Description |
 | ----------- | ------ | ---------- | ------------- |
-| `action` | enum | **yes** | `list_repositories`, `index_repository`, `compare_branches`, `search_branch`, `analyze_impact` |
-| `repo_id` | string | **yes** | Repository identifier |
-| `repo_path` | string | **yes** | Repository path on disk |
+| `action` | enum | internal | `list_repositories`, `compare_branches`, `analyze_impact` |
+| `repo_id` | string | no | Repository identifier, usually injected by context |
+| `repo_path` | string | no | Repository path on disk, usually injected by context |
 | `base_branch` | string | no | Base branch name |
 | `target_branch` | string | no | Compare/target branch name |
 | `query` | string | no | Search query for branch search |
@@ -208,27 +213,39 @@ Unified entity CRUD (vcs/plan/issue/org resources).
 
 ## Provenance Requirements
 
-Tools `index`, `search`, and `memory` require full execution provenance:
+Tools `index`, `search`, and `memory` require execution provenance. **Every field is auto-discovered at server boot** via a cascade of sources. If a field cannot be resolved and no source remains, the server **fast-fails** immediately with an actionable error message — there are no silent fallbacks and no `UNKNOWN` placeholders.
 
-| Field | Type | Required |
-| ------- | ------ | ---------- |
-| `session_id` | string | **yes** |
-| `project_id` | string | **yes** |
-| `repo_id` | string | **yes** |
-| `repo_path` | string | **yes** |
-| `worktree_id` | string | **yes** |
-| `operator_id` | string | **yes** |
-| `machine_id` | string | **yes** |
-| `agent_program` | string | **yes** |
-| `model_id` | string | **yes** |
-| `delegated` | boolean | **yes** |
-| `timestamp` | integer | **yes** |
+| Field | Type | Required | Auto-filled source | Fast-fail message |
+|-------|------|----------|-------------------|-------------------|
+| `session_id` | string | **yes** | IDE session ID (`CURSOR_TRACE_ID`, `CLAUDE_SESSION_ID`, …) or traceable ID `<agent>-<host>-<pid>-<timestamp>` | — (always traceable) |
+| `repo_path` | string | **yes** | Plugin-based workspace discovery: Git → Mercury → CVS → SVN → … → **Filesystem (CWD canonical)** | — (CWD is the ultimate happy path) |
+| `repo_id` | string | if `repo_path` absent | Git remote `origin` URL hash; absent for plain filesystem workspaces | — |
+| `project_id` | string | no | Git remote `origin` (`owner/repo`); absent for plain filesystem workspaces | — |
+| `worktree_id` | string | no | `git rev-parse --git-dir` → `git worktree list` → `.git` dir → `"main"` → **CWD path** | — (always resolved) |
+| `operator_id` | string | **yes** | `$USER` env var | — |
+| `machine_id` | string | **yes** | Hostname (`hostname::get()` or `$HOSTNAME`) | — |
+| `agent_program` | string | **yes** | Detected IDE (Cursor, Claude Code, VS Code, …) or `mcb-stdio` | — |
+| `model_id` | string | **yes** | Env vars (first hit): `OPENAI_MODEL`, `ANTHROPIC_MODEL`, `CLAUDE_MODEL`, `GEMINI_MODEL`, `OLLAMA_MODEL`, `AZURE_OPENAI_MODEL`, `COHERE_MODEL`, `MISTRAL_MODEL`, `MCB_MODEL_ID` | `model_id could not be auto-discovered. Set one of: OPENAI_MODEL, ANTHROPIC_MODEL, … Or set MCB_MODEL_ID explicitly.` |
+| `delegated` | boolean | **yes** | Defaults to `false`; inferred `true` when `parent_session_id` present | — |
+| `timestamp` | integer | **yes** | Server clock (Unix epoch) | — |
+
+### Plugin-based workspace discovery
+
+The server tries multiple workspace detectors in priority order:
+
+1. **Git** — `git` repository via `.git` directory or VCS provider.
+2. **Mercury / CVS / SVN / Perforce / Fossil / Darcs / Bazaar** — stubs ready for future backend implementations.
+3. **Filesystem** — canonicalised current working directory. This is the **ultimate happy path**: even when no version-control system is present, the server always has a valid workspace root.
+
+### Explicit override
+
+Any field can be passed via JSON-RPC request `meta` (e.g., `"meta": {"session_id": "abc"}`) and takes precedence over auto-discovery.
 
 When `delegated` is `true`, `parent_session_id` is also required.
 
 ---
 
-## Operation Mode Matrix
+## Operation Family Mode Matrix
 
 | Tool | `stdio-only` | `client-hybrid` | `server-hybrid` |
 | ------ |:---:|:---:|:---:|

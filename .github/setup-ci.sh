@@ -45,7 +45,9 @@ MINGW* | MSYS* | CYGWIN*)
 			echo "ERROR: neither sha256sum nor shasum is available to verify protoc download." >&2
 			exit 1
 		fi
-		if [[ "${ACTUAL_SHA256,,}" != "${PROTOC_SHA256,,}" ]]; then
+		ACTUAL_SHA256=$(echo "$ACTUAL_SHA256" | tr '[:upper:]' '[:lower:]')
+		PROTOC_SHA256=$(echo "$PROTOC_SHA256" | tr '[:upper:]' '[:lower:]')
+		if [[ "$ACTUAL_SHA256" != "$PROTOC_SHA256" ]]; then
 			echo "ERROR: protoc checksum mismatch. expected=${PROTOC_SHA256} got=${ACTUAL_SHA256}" >&2
 			exit 1
 		fi
@@ -66,18 +68,100 @@ if command -v protoc &>/dev/null; then
 	fi
 fi
 
+# Install ONNX Runtime (required by fastembed/ort for semantic embedding).
+# ort-sys 2.0.0-rc.11 uses ORT_API_VERSION=23 which requires ONNX Runtime >= 1.23.x.
+ORT_VERSION="1.23.2"
+
+verify_ort_checksum() {
+	local file="$1" expected="$2"
+	local actual
+	if command -v sha256sum &>/dev/null; then
+		actual=$(sha256sum "$file" | awk '{print $1}')
+	elif command -v shasum &>/dev/null; then
+		actual=$(shasum -a 256 "$file" | awk '{print $1}')
+	else
+		echo "ERROR: neither sha256sum nor shasum is available to verify ONNX Runtime download." >&2
+		exit 1
+	fi
+	actual=$(echo "$actual" | tr '[:upper:]' '[:lower:]')
+	expected=$(echo "$expected" | tr '[:upper:]' '[:lower:]')
+	if [[ "$actual" != "$expected" ]]; then
+		echo "ERROR: ONNX Runtime checksum mismatch. expected=${expected} got=${actual}" >&2
+		exit 1
+	fi
+}
+
+case "$OS" in
+Linux)
+	if ! ldconfig -p 2>/dev/null | grep -q 'libonnxruntime\.so'; then
+		ORT_ARCHIVE="onnxruntime-linux-x64-${ORT_VERSION}.tgz"
+		ORT_URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ORT_ARCHIVE}"
+		ORT_SHA256="${ORT_SHA256:-1fa4dcaef22f6f7d5cd81b28c2800414350c10116f5fdd46a2160082551c5f9b}"
+		ORT_TMP="/tmp/${ORT_ARCHIVE}"
+		echo "Installing ONNX Runtime ${ORT_VERSION} (Linux x64)..." >&2
+		curl -sSfL "$ORT_URL" -o "$ORT_TMP"
+		verify_ort_checksum "$ORT_TMP" "$ORT_SHA256"
+		tar -xzf "$ORT_TMP" -C /tmp
+		sudo cp "/tmp/onnxruntime-linux-x64-${ORT_VERSION}/lib/libonnxruntime.so.${ORT_VERSION}" /usr/local/lib/
+		sudo ln -sf "/usr/local/lib/libonnxruntime.so.${ORT_VERSION}" /usr/local/lib/libonnxruntime.so.1
+		sudo ln -sf /usr/local/lib/libonnxruntime.so.1 /usr/local/lib/libonnxruntime.so
+		sudo ldconfig
+		rm -f "$ORT_TMP"
+	fi
+	;;
+Darwin)
+	if ! find /usr/local/lib /opt/homebrew/lib -name 'libonnxruntime*.dylib' 2>/dev/null | grep -q .; then
+		ORT_ARCHIVE="onnxruntime-osx-universal2-${ORT_VERSION}.tgz"
+		ORT_URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ORT_ARCHIVE}"
+		ORT_SHA256="${ORT_SHA256_MACOS:-49ae8e3a66ccb18d98ad3fe7f5906b6d7887df8a5edd40f49eb2b14e20885809}"
+		ORT_TMP="/tmp/${ORT_ARCHIVE}"
+		echo "Installing ONNX Runtime ${ORT_VERSION} (macOS universal2)..." >&2
+		curl -sSfL "$ORT_URL" -o "$ORT_TMP"
+		verify_ort_checksum "$ORT_TMP" "$ORT_SHA256"
+		tar -xzf "$ORT_TMP" -C /tmp
+		ORT_DIR="/tmp/onnxruntime-osx-universal2-${ORT_VERSION}"
+		sudo mkdir -p /usr/local/lib
+		sudo cp "${ORT_DIR}/lib/libonnxruntime.${ORT_VERSION}.dylib" /usr/local/lib/
+		sudo ln -sf "/usr/local/lib/libonnxruntime.${ORT_VERSION}.dylib" /usr/local/lib/libonnxruntime.dylib
+		# Set DYLD_LIBRARY_PATH for the current CI run
+		export ORT_DYLIB_PATH="/usr/local/lib/libonnxruntime.dylib"
+		if [[ -n "${GITHUB_ENV:-}" ]]; then
+			echo "ORT_DYLIB_PATH=/usr/local/lib/libonnxruntime.dylib" >>"$GITHUB_ENV"
+		fi
+		rm -f "$ORT_TMP"
+	fi
+	;;
+esac
+
+# Install a Rust crate. Prefer cargo-binstall when available for speed,
+# but fall back to cargo install so environments without binstall still work.
+_mcb_install_crate() {
+	local crate="$1"
+	if command -v cargo-binstall &>/dev/null; then
+		cargo binstall -y "$crate" >/dev/null 2>&1
+	else
+		cargo install "$crate" --locked --quiet
+	fi
+}
+
 # Parse optional flags
+# Ensure sccache is available (mandatory compilation cache)
+if ! command -v sccache &>/dev/null; then
+	echo "Installing sccache (mandatory compilation cache)..." >&2
+	_mcb_install_crate sccache
+fi
+
 while [[ $# -gt 0 ]]; do
 	case $1 in
 	--install-audit)
 		if ! command -v cargo-audit &>/dev/null; then
-			cargo install cargo-audit --locked --quiet
+			_mcb_install_crate cargo-audit
 		fi
 		shift
 		;;
 	--install-coverage)
 		if ! command -v cargo-tarpaulin &>/dev/null; then
-			cargo install cargo-tarpaulin --locked --quiet
+			_mcb_install_crate cargo-tarpaulin
 		fi
 		shift
 		;;
@@ -98,6 +182,14 @@ while [[ $# -gt 0 ]]; do
 				;;
 			esac
 		fi
+		shift
+		;;
+	--install-nextest)
+		command -v cargo-nextest &>/dev/null || _mcb_install_crate cargo-nextest
+		shift
+		;;
+	--install-typos)
+		command -v typos &>/dev/null || _mcb_install_crate typos-cli
 		shift
 		;;
 	*)

@@ -1,38 +1,71 @@
-# CLAUDE.md
+# CLAUDE.md — MCB Project Instructions
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-It is the **single source of truth** for all AI agents. See [`AGENTS.md`](AGENTS.md) for the agent config index.
+Reference [`./AGENTS.md`](./AGENTS.md) for all project rules, architecture,
+commands, beads workflow, validation, and Git policy. Do not duplicate those
+rules here.
 
-## Project
+<!-- bd-doctor-divergence: ok -->
+<!-- Intentional: this file is a thin pointer to AGENTS.md (the SSOT); their
+     content legitimately differs, so the bd-doctor Agent-Doc-Divergence check
+     is opted out here rather than syncing the two. -->
 
-MCB (Memory Context Browser) — a high-performance MCP server giving AI coding agents persistent memory, semantic code search, and architecture validation. Rust edition 2024, nightly toolchain, MSRV 1.92. Version 0.2.1-dev.
+---
 
-## Build & Quality Commands
+## Quick Reference
 
-```bash
-make build                    # Debug build (RELEASE=1 for release)
-make test                     # All workspace tests (1700+)
-make test SCOPE=unit          # Unit tests only (fast feedback)
-make test SCOPE=golden        # Golden acceptance tests
-make test SCOPE=startup       # DDL/init smoke test
-make test SCOPE=integration   # Integration tests
-make test SCOPE=e2e           # Playwright browser tests
-make lint                     # clippy + fmt check (-D warnings)
-make lint FIX=1               # Auto-fix fmt + clippy
-make lint MCB_CI=1            # CI-strict (Rust 2024 lints)
-make validate                 # Architecture rule enforcement (QUICK=1 for fast)
-make check                    # Full gate: fmt --check + lint + test + validate
-make audit                    # cargo-audit + cargo-udeps
-make coverage                 # cargo-tarpaulin HTML report
-make fmt                      # Format Rust + Markdown (mutating)
+### Essentials
+
+- **Language / toolchain**: Rust 1.92+, edition 2024. Toolchain pinned in
+  `rust-toolchain.toml`.
+- **Build interface**: `make <verb> [WHAT=phase] [SCOPE=...] [APPLY=Y]`.
+  Do not call `cargo` or `git` directly for canonical workflows.
+- **SSOT**: `AGENTS.md` > `Cargo.toml` / `Makefile` / `config/*.yaml` > static
+  docs.
+
+### Common Commands
+
+| Task | Command |
+| ----- | ------- |
+| Build release | `make build RELEASE=1` |
+| Run dev server | `make dev WHAT=run` |
+| Run unit tests | `make test SCOPE=unit` |
+| Run all tests | `make test` |
+| Lint + format check | `make check WHAT=lint` |
+| Architecture validation | `make check WHAT=validate` |
+| Full CI gate | `make ci` |
+| Banned-pattern scan | `make guard` |
+| Docs lint | `make docs WHAT=lint` |
+| Pre-commit hook | `make hook WHAT=pre-commit` |
+
+### Workspace Crates
+
+```text
+mcb              CLI / Loco app
+mcb-server       MCP protocol, handlers, transport
+mcb-infrastructure  DI, config, cache, logging, AppContext
+mcb-domain       entities, value objects, port traits, errors
+mcb-providers    adapters (DB, embeddings, vector store, git, parsers)
+mcb-validate     architecture rule engine
+mcb-utils        leaf utilities
 ```
 
-Run a single test: `cargo test -p mcb-server --test unit -- test_name`
+### Must-Know Conventions
 
-Always use `make` targets — never raw `cargo` commands in CI.
+- Clean Architecture: inward-only dependencies; `mcb-domain` has no `mcb-*`
+  deps; handlers use ports, not concrete providers.
+- Error handling: `mcb_domain::error::Error` (`thiserror`) + `Result<T>`;
+  no `unwrap`/`expect`/`panic`/`todo` in production paths.
+- Provider discovery via `linkme` distributed slices.
+- Conventional commits (`feat`, `fix`, `refactor`, `docs`, `test`, `chore`,
+  `perf`, `ci`).
+- Work is tracked in **beads** (`bd`): `bd ready`, `bd update <id> --claim`,
+  `bd close <id> --reason "evidence"`.
+- `third-party/` is excluded from the workspace — do not edit unless explicitly
+  asked.
 
-## Architecture (Non-Negotiable)
+### First-Time Onboarding
 
+<<<<<<< HEAD
 Clean Architecture with strict inward-only dependency flow, enforced at compile time:
 
 ```
@@ -198,3 +231,7 @@ and `.claude/skills/orchestrate/SKILL.md` point here — they do not restate it.
 - [MCP Tools](docs/MCP_TOOLS.md) — full tool API schemas
 - [Configuration](docs/CONFIGURATION.md) — all environment variables and config options
 - [Roadmap](docs/developer/ROADMAP.md) — version plans and feature timeline
+=======
+See [`ONBOARDING.md`](./ONBOARDING.md) for a structured walkthrough of the
+stack, architecture, request lifecycle, and where to find things.
+>>>>>>> feat/v0.3.2-ci-gates

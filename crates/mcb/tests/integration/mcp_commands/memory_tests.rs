@@ -1,0 +1,84 @@
+//! Tests for public memory MCP tools.
+//!
+//! Tools: `store_memory`, `get_memories`, `list_memories`, `memory_timeline`, `inject_context`
+
+use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
+use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
+use mcb_domain::utils::tests::utils::TestResult;
+use rstest::rstest;
+
+#[rstest]
+#[tokio::test]
+async fn test_memory_list_observations() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool(&client, "list_memories", serde_json::json!({"limit": 10})).await?;
+    assert!(
+        !extract_text(&result).is_empty(),
+        "memory list should return a response"
+    );
+    shutdown_client(client).await;
+    cleanup_temp_dbs();
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_memory_store_and_list() -> TestResult {
+    let client = create_client().await?;
+    let store_result = call_tool(
+        &client,
+        "store_memory",
+        serde_json::json!({
+            "project_id": "test-proj",
+            "data": {"content": "Test observation from TDD", "observation_type": "context", "tags": ["test"]}
+        }),
+    )
+    .await?;
+    assert!(
+        !is_error(&store_result),
+        "store should succeed, got: {}",
+        extract_text(&store_result)
+    );
+
+    let list_result = call_tool(&client, "list_memories", serde_json::json!({"limit": 50})).await?;
+    assert!(
+        !extract_text(&list_result).is_empty(),
+        "list should return a response"
+    );
+    shutdown_client(client).await;
+    cleanup_temp_dbs();
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_memory_get_missing_ids() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool(&client, "get_memories", serde_json::json!({})).await;
+    assert_tool_error(result, &["id", "required", "error"]);
+    shutdown_client(client).await;
+    cleanup_temp_dbs();
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_memory_timeline_requires_anchor_id() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool(&client, "memory_timeline", serde_json::json!({})).await;
+    assert_tool_error(result, &["anchor_id", "missing field"]);
+    shutdown_client(client).await;
+    cleanup_temp_dbs();
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_store_memory_requires_data() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool(&client, "store_memory", serde_json::json!({})).await;
+    assert_tool_error(result, &["data", "payload"]);
+    shutdown_client(client).await;
+    cleanup_temp_dbs();
+    Ok(())
+}

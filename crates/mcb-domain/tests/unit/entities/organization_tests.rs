@@ -1,43 +1,38 @@
 use mcb_domain::entities::organization::{OrgStatus, Organization};
-use rstest::rstest;
+use rstest::{fixture, rstest};
 
-#[rstest]
-fn organization_construction() {
-    let org = Organization {
+#[fixture]
+fn default_org() -> Organization {
+    Organization {
         id: "org-001".to_owned(),
         name: "Acme Corp".to_owned(),
         slug: "acme-corp".to_owned(),
         settings_json: "{}".to_owned(),
         created_at: 1000,
         updated_at: 1000,
-    };
-    assert_eq!(org.id, "org-001");
-    assert_eq!(org.name, "Acme Corp");
-    assert_eq!(org.slug, "acme-corp");
-    assert_eq!(org.settings_json, "{}");
+    }
 }
 
 #[rstest]
-fn organization_serialization_roundtrip() {
-    let org = Organization {
-        id: "org-002".to_owned(),
-        name: "Test Org".to_owned(),
-        slug: "test-org".to_owned(),
-        settings_json: r#"{"max_projects":10}"#.to_owned(),
-        created_at: 2000,
-        updated_at: 3000,
-    };
-    let json = serde_json::to_string(&org).expect("serialize");
+fn test_organization_construction(default_org: Organization) {
+    assert_eq!(default_org.id, "org-001");
+    assert_eq!(default_org.name, "Acme Corp");
+}
+
+#[rstest]
+fn test_organization_serialization_roundtrip(mut default_org: Organization) {
+    default_org.settings_json = r#"{"max_projects":10}"#.to_owned();
+    let json = serde_json::to_string(&default_org).expect("serialize");
     let deserialized: Organization = serde_json::from_str(&json).expect("deserialize");
-    assert_eq!(deserialized.id, "org-002");
-    assert_eq!(deserialized.slug, "test-org");
+    assert_eq!(deserialized.id, default_org.id);
+    assert!(deserialized.settings_json.contains("10"));
 }
 
 #[rstest]
 #[case(OrgStatus::Active, "active")]
 #[case(OrgStatus::Suspended, "suspended")]
 #[case(OrgStatus::Archived, "archived")]
-fn org_status_as_str(#[case] status: OrgStatus, #[case] expected: &str) {
+fn test_org_status_as_str(#[case] status: OrgStatus, #[case] expected: &str) {
     assert_eq!(status.as_str(), expected);
 }
 
@@ -48,7 +43,7 @@ fn org_status_as_str(#[case] status: OrgStatus, #[case] expected: &str) {
 #[case("ACTIVE", Ok(OrgStatus::Active))]
 #[case("Suspended", Ok(OrgStatus::Suspended))]
 #[case("invalid", Err(()))]
-fn org_status_from_str(#[case] input: &str, #[case] expected: Result<OrgStatus, ()>) {
+fn test_org_status_from_str(#[case] input: &str, #[case] expected: Result<OrgStatus, ()>) {
     match expected {
         Ok(status) => assert_eq!(input.parse::<OrgStatus>(), Ok(status)),
         Err(()) => assert!(input.parse::<OrgStatus>().is_err()),

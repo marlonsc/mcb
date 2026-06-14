@@ -11,15 +11,15 @@ use std::path::{Path, PathBuf};
 use regex::Regex;
 
 use crate::config::TestQualityRulesConfig;
-use crate::constants::common::{
-    FORWARD_SEARCH_LINES, FUNCTION_NAME_SEARCH_LINES, MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT,
-};
 use crate::define_violations;
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
-use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
+use mcb_utils::constants::validate::{
+    FORWARD_SEARCH_LINES, FUNCTION_NAME_SEARCH_LINES, MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT,
+};
+use mcb_utils::utils::regex::compile_regex;
 
 define_violations! {
     dynamic_severity,
@@ -38,11 +38,11 @@ define_violations! {
             test_name: String,
             severity: Severity,
         },
-        /// todo!() macro in test fixture without proper stub marker
+        /// `todo` macro in test fixture without proper stub marker
         #[violation(
             id = "TST002",
             severity = Warning,
-            message = "{file}:{line} - Function '{function_name}' in test fixture contains todo!() - implement or mark as intentional stub",
+            message = "{file}:{line} - Function '{function_name}' in test fixture contains incomplete stub - implement or mark as intentional stub",
             suggestion = "Implement the test fixture function or add comment: // Intentional stub for X"
         )]
         TodoInTestFixture {
@@ -100,9 +100,33 @@ pub struct TestQualityValidator {
     rules: TestQualityRulesConfig,
 }
 
-impl crate::traits::validator::Validator for TestQualityValidator {
+/// Compiled regexes shared by the test-quality checks.
+struct TestQualityPatterns {
+    test_attr: Regex,
+    fn_decl: Regex,
+    empty_body: Regex,
+    stub_assert: Regex,
+}
+
+impl TestQualityPatterns {
+    /// Compile every test-quality pattern.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if any pattern fails to compile.
+    fn compile() -> Result<Self> {
+        Ok(Self {
+            test_attr: compile_regex(r"#\[test\]|#\[tokio::test\]")?,
+            fn_decl: compile_regex(r"fn\s+(\w+)")?,
+            empty_body: compile_regex(r"\{\s*\}")?,
+            stub_assert: compile_regex(r"assert!\(true\)|assert_eq!\(true,\s*true\)")?,
+        })
+    }
+}
+
+impl mcb_domain::ports::validation::Validator for TestQualityValidator {
     fn name(&self) -> &'static str {
-        "test-quality"
+        mcb_utils::constants::validate::VALIDATOR_TEST_QUALITY
     }
 
     fn description(&self) -> &'static str {
@@ -112,11 +136,13 @@ impl crate::traits::validator::Validator for TestQualityValidator {
     fn validate(
         &self,
         _config: &crate::ValidationConfig,
-    ) -> crate::Result<Vec<Box<dyn crate::traits::violation::Violation>>> {
+    ) -> mcb_domain::ports::validation::ValidatorResult<
+        Vec<Box<dyn mcb_domain::ports::validation::Violation>>,
+    > {
         let violations = self.validate()?;
         Ok(violations
             .into_iter()
-            .map(|v| Box::new(v) as Box<dyn crate::traits::violation::Violation>)
+            .map(|v| Box::new(v) as Box<dyn mcb_domain::ports::validation::Violation>)
             .collect())
     }
 }
@@ -142,62 +168,76 @@ impl TestQualityValidator {
             return Ok(Vec::new());
         }
         let mut violations = Vec::new();
-
-        // Regex patterns
-        let test_pattern = compile_regex(r"#\[test\]|#\[tokio::test\]")?;
-        let fn_pattern = compile_regex(r"fn\s+(\w+)")?;
-        let empty_body_pattern = compile_regex(r"\{\s*\}")?;
-        let stub_assert_pattern = compile_regex(r"assert!\(true\)|assert_eq!\(true,\s*true\)")?;
+        let patterns = TestQualityPatterns::compile()?;
 
         for_each_scan_file(
             &self.config,
             Some(LanguageId::Rust),
             false,
             |entry, _src_dir| {
-                if !entry
-                    .absolute_path
+                let path = &entry.absolute_path;
+                if !path
                     .to_str()
                     .is_some_and(|s| s.contains(TEST_DIR_FRAGMENT) || s.contains("/test_"))
                 {
                     return Ok(());
                 }
 
-                let content = std::fs::read_to_string(&entry.absolute_path)?;
+                let content = std::fs::read_to_string(path)?;
                 let lines: Vec<&str> = content.lines().collect();
-
-                Self::check_ignored_tests(
-                    &entry.absolute_path,
-                    &lines,
-                    &fn_pattern,
-                    &mut violations,
-                );
-                self.check_todo_in_fixtures(
-                    &entry.absolute_path,
-                    &lines,
-                    &fn_pattern,
-                    &mut violations,
-                );
-                Self::check_empty_test_bodies(
-                    &entry.absolute_path,
-                    &lines,
-                    &test_pattern,
-                    &fn_pattern,
-                    &empty_body_pattern,
-                    &mut violations,
-                );
-                Self::check_stub_assertions(
-                    &entry.absolute_path,
-                    &lines,
-                    &test_pattern,
-                    &stub_assert_pattern,
-                    &fn_pattern,
-                    &mut violations,
-                );
+                self.check_test_file(path, &lines, &patterns, &mut violations);
                 Ok(())
             },
         )?;
 
         Ok(violations)
+    }
+
+    /// Run every test-quality check against a single file's lines.
+    fn check_test_file(
+        &self,
+        path: &Path,
+        lines: &[&str],
+        patterns: &TestQualityPatterns,
+        violations: &mut Vec<TestQualityViolation>,
+    ) {
+        Self::check_ignored_tests(path, lines, &patterns.fn_decl, violations);
+        self.check_todo_in_fixtures(path, lines, &patterns.fn_decl, violations);
+        Self::check_empty_test_bodies(
+            path,
+            lines,
+            &patterns.test_attr,
+            &patterns.fn_decl,
+            &patterns.empty_body,
+            violations,
+        );
+        Self::check_stub_assertions(
+            path,
+            lines,
+            &patterns.test_attr,
+            &patterns.stub_assert,
+            &patterns.fn_decl,
+            violations,
+        );
+    }
+
+    /// Whether the line above an `#[ignore]` carries a justification comment.
+    fn has_ignore_justification(lines: &[&str], i: usize) -> bool {
+        let Some(prev_line) = i.checked_sub(1).map(|p| lines[p]) else {
+            return false;
+        };
+        prev_line.contains("Requires")
+            || prev_line.contains("requires")
+            || prev_line.contains(mcb_utils::constants::validate::PENDING_LABEL_TODO)
+            || prev_line.contains("WIP")
+    }
+
+    /// Whether the line above a `todo!()` marks it as an intentional stub.
+    fn has_stub_marker(lines: &[&str], i: usize) -> bool {
+        let Some(prev_line) = i.checked_sub(1).map(|p| lines[p]) else {
+            return false;
+        };
+        prev_line.contains("Intentional stub") || prev_line.contains("Test stub")
     }
 
     fn check_ignored_tests(
@@ -207,27 +247,19 @@ impl TestQualityValidator {
         violations: &mut Vec<TestQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if line.contains("#[ignore]") {
-                // Check if there's a justification comment above
-                let has_justification = i > 0 && {
-                    let prev_line = lines[i - 1];
-                    prev_line.contains("Requires")
-                        || prev_line.contains("requires")
-                        || prev_line.contains(crate::constants::labels::PENDING_LABEL_TODO)
-                        || prev_line.contains("WIP")
-                };
-
-                if !has_justification {
-                    // Find the test function name
-                    if let Some(test_name) = Self::find_test_name(lines, i, fn_pattern) {
-                        violations.push(TestQualityViolation::IgnoreWithoutJustification {
-                            file: file.to_path_buf(),
-                            line: i + 1,
-                            test_name,
-                            severity: Severity::Warning,
-                        });
-                    }
-                }
+            if !line.contains("#[ignore]") {
+                continue;
+            }
+            if Self::has_ignore_justification(lines, i) {
+                continue;
+            }
+            if let Some(test_name) = Self::find_test_name(lines, i, fn_pattern) {
+                violations.push(TestQualityViolation::IgnoreWithoutJustification {
+                    file: file.to_path_buf(),
+                    line: i + 1,
+                    test_name,
+                    severity: Severity::Warning,
+                });
             }
         }
     }
@@ -244,24 +276,19 @@ impl TestQualityValidator {
         }
 
         for (i, line) in lines.iter().enumerate() {
-            if line.contains("todo!(") {
-                // Check if it's NOT marked as intentional stub
-                let has_stub_marker = i > 0 && {
-                    let prev_line = lines[i - 1];
-                    prev_line.contains("Intentional stub") || prev_line.contains("Test stub")
-                };
-
-                if !has_stub_marker {
-                    // Find the function name
-                    if let Some(function_name) = Self::find_function_name(lines, i, fn_pattern) {
-                        violations.push(TestQualityViolation::TodoInTestFixture {
-                            file: file.to_path_buf(),
-                            line: i + 1,
-                            function_name,
-                            severity: Severity::Error,
-                        });
-                    }
-                }
+            if !(line.contains("todo!") && line.contains('(')) {
+                continue;
+            }
+            if Self::has_stub_marker(lines, i) {
+                continue;
+            }
+            if let Some(function_name) = Self::find_function_name(lines, i, fn_pattern) {
+                violations.push(TestQualityViolation::TodoInTestFixture {
+                    file: file.to_path_buf(),
+                    line: i + 1,
+                    function_name,
+                    severity: Severity::Error,
+                });
             }
         }
     }
@@ -275,29 +302,28 @@ impl TestQualityValidator {
         violations: &mut Vec<TestQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if test_pattern.is_match(line) {
-                // Find the function declaration
-                if let Some(fn_line_idx) = (i..i + FORWARD_SEARCH_LINES)
-                    .find(|&idx| idx < lines.len() && fn_pattern.is_match(lines[idx]))
-                {
-                    // Check if the function body is empty (just {})
-                    if let Some(body_start) = (fn_line_idx..fn_line_idx + 3)
-                        .find(|&idx| idx < lines.len() && lines[idx].contains('{'))
-                        && (empty_body_pattern.is_match(lines[body_start])
-                            || (body_start + 1 < lines.len()
-                                && lines[body_start + 1].trim() == "}"))
-                        && let Some(test_name) = fn_pattern
-                            .captures(lines[fn_line_idx])
-                            .and_then(|c| c.get(1))
-                    {
-                        violations.push(TestQualityViolation::EmptyTestBody {
-                            file: file.to_path_buf(),
-                            line: fn_line_idx + 1,
-                            test_name: test_name.as_str().to_owned(),
-                            severity: Severity::Error,
-                        });
-                    }
-                }
+            if !test_pattern.is_match(line) {
+                continue;
+            }
+            let Some(fn_line_idx) = (i..i + FORWARD_SEARCH_LINES)
+                .find(|&idx| idx < lines.len() && fn_pattern.is_match(lines[idx]))
+            else {
+                continue;
+            };
+            if let Some(body_start) = (fn_line_idx..fn_line_idx + 3)
+                .find(|&idx| idx < lines.len() && lines[idx].contains('{'))
+                && (empty_body_pattern.is_match(lines[body_start])
+                    || (body_start + 1 < lines.len() && lines[body_start + 1].trim() == "}"))
+                && let Some(test_name) = fn_pattern
+                    .captures(lines[fn_line_idx])
+                    .and_then(|c| c.get(1))
+            {
+                violations.push(TestQualityViolation::EmptyTestBody {
+                    file: file.to_path_buf(),
+                    line: fn_line_idx + 1,
+                    test_name: test_name.as_str().to_owned(),
+                    severity: Severity::Error,
+                });
             }
         }
     }
@@ -311,23 +337,19 @@ impl TestQualityValidator {
         violations: &mut Vec<TestQualityViolation>,
     ) {
         for (i, line) in lines.iter().enumerate() {
-            if test_pattern.is_match(line) {
-                for offset in 0..MAX_BLOCK_SEARCH_OFFSET {
-                    if i + offset >= lines.len() {
-                        break;
-                    }
-                    if stub_assert_pattern.is_match(lines[i + offset]) {
-                        if let Some(test_name) = Self::find_test_name(lines, i, fn_pattern) {
-                            violations.push(TestQualityViolation::StubTestAssertion {
-                                file: file.to_path_buf(),
-                                line: i + offset + 1,
-                                test_name,
-                                severity: Severity::Warning,
-                            });
-                        }
-                        break;
-                    }
-                }
+            if !test_pattern.is_match(line) {
+                continue;
+            }
+            let Some(offset) = first_stub_assert_offset(lines, i, stub_assert_pattern) else {
+                continue;
+            };
+            if let Some(test_name) = Self::find_test_name(lines, i, fn_pattern) {
+                violations.push(TestQualityViolation::StubTestAssertion {
+                    file: file.to_path_buf(),
+                    line: i + offset + 1,
+                    test_name,
+                    severity: Severity::Warning,
+                });
             }
         }
     }
@@ -366,4 +388,16 @@ impl TestQualityValidator {
             .iter()
             .any(|excluded| path_str.contains(excluded))
     }
+}
+
+/// Offset (from `start_idx`) of the first stub assertion within the test block,
+/// or `None` if none is found within the search window.
+fn first_stub_assert_offset(
+    lines: &[&str],
+    start_idx: usize,
+    stub_assert_pattern: &Regex,
+) -> Option<usize> {
+    (0..MAX_BLOCK_SEARCH_OFFSET)
+        .take_while(|&offset| start_idx + offset < lines.len())
+        .find(|&offset| stub_assert_pattern.is_match(lines[start_idx + offset]))
 }

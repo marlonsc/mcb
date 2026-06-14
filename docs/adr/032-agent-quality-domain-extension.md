@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: [9, 13, 29]
 supersedes: []
 superseded_by: [34]
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -40,8 +40,12 @@ Pain points:
 
 ## Decision
 
-**Extend MCB domain to be the SINGLE SOURCE OF TRUTH for workflow management.**
-No support for legacy file formats (legacy-planning/, .beads/).
+**This ADR proposed extending MCB domain as the SINGLE SOURCE OF TRUTH for workflow management.**
+That target is superseded by ADR-034 and is not the current operational coordination rule.
+
+> Operational note: this ADR records the target MCB-owned workflow architecture.
+> Until that replacement is implemented, project task coordination remains in
+> the Beads graph governed by `AGENTS.md`; changes still go through the `bd` CLI.
 
 ### Key Decisions
 
@@ -63,10 +67,8 @@ No support for legacy file formats (legacy-planning/, .beads/).
 │  │ • checkpt  │            │             │               │ │
 │  └────────────────────────────────────────────────────────┘ │
 │                                                              │
-│  ❌ NO legacy-planning/ files                                     │
-│  ❌ NO .beads/ files                                        │
-│  ❌ NO bd CLI                                               │
-│  ❌ NO bidirectional sync                                   │
+│  Superseded target: MCB-native workflow storage             │
+│  Current coordination: bd graph per AGENTS.md               │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -83,7 +85,7 @@ Total: 24 MCP tools
 
 #### 3. Full CRUD for Project State
 
-Replace GSD/Beads with complete CRUD operations:
+The superseded target was to replace external project-state surfaces with complete CRUD operations:
 
 ```ascii
 project_create          → Create project
@@ -97,15 +99,15 @@ project_get_ready_work  → Issues without blockers
 project_log_decision    → Log decision
 ```
 
-#### 4. No Legacy Support
+#### 4. Superseded No-Legacy Target
 
-| What | Decision |
+| What | Historical target |
 | ------ | ---------- |
-| legacy-planning/ import | NOT SUPPORTED |
-| .beads/ import | NOT SUPPORTED |
-| bd CLI compatibility | NOT SUPPORTED |
-| Markdown export | NOT SUPPORTED |
-| Bidirectional sync | NOT SUPPORTED |
+| legacy-planning/ import | Not part of this historical target |
+| Beads import | Not part of this historical target |
+| bd CLI compatibility | Superseded; current coordination uses bd per `AGENTS.md` |
+| Markdown export | Not part of this historical target |
+| Bidirectional sync | Not part of this historical target |
 
 **Rationale:** Simpler architecture, no sync conflicts, no parser code.
 
@@ -197,5 +199,5 @@ Rejected because:
 
 - [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
 - [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) (superseded by ADR-050)
-- [Planning Documents](../plans/archive/LEGACY_PLANNING_PROJECT.md)
+- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) (superseded by ADR-050)
+- Beads task graph (`bd`) for current planning state

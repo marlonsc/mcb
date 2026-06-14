@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: []
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -24,6 +24,8 @@ implementation_status: Incomplete
 ## Context
 
 ADR-041 defines a 5-layer context system. Layer 3 is the**Knowledge Graph** that models code structure, relationships, and dependencies. This ADR specifies:
+
+> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
 
 1. What relationships to represent
 2. How to extract them efficiently (tree-sitter-graph)

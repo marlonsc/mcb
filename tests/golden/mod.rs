@@ -19,9 +19,21 @@
 //! MCP schema (all tools), collection isolation, reindexing, performance baseline,
 //! git-aware indexing, session memory operations.
 
+#[path = "../crates/mcb-server/tests/utils/mod.rs"]
+pub mod utils;
+
+mod test_api_key_lifecycle;
 mod test_end_to_end;
 mod test_git_awareness_e2e;
 mod test_index_repository;
+mod test_issue_entity_crud;
 mod test_mcp_schemas;
 mod test_memory_operations_e2e;
+mod test_org_data_isolation;
+mod test_org_entity_crud;
+mod test_plan_entity_crud;
+mod test_project_operations;
 mod test_search_validation;
+mod test_session_lifecycle;
+mod test_validate_operations;
+mod test_vcs_entity_crud;

@@ -2,8 +2,8 @@ use mcb_domain::entities::project::{
     DependencyType, DetectedProject, IssueStatus, IssueType, PhaseStatus, ProjectDecision,
     ProjectDependency, ProjectType,
 };
-use mcb_domain::test_utils::{create_test_issue, create_test_phase};
-use rstest::rstest;
+use mcb_domain::utils::tests::utils::{create_test_issue, create_test_phase};
+use rstest::{fixture, rstest};
 
 #[rstest]
 #[case("foo", "0.1.0")]
@@ -111,62 +111,78 @@ fn dependency_type_from_str(#[case] input: &str, #[case] expected: Result<Depend
     }
 }
 
+use mcb_domain::entities::project::ProjectIssue;
+use mcb_domain::entities::project::ProjectPhase;
+
+#[fixture]
+fn project_phase() -> ProjectPhase {
+    let mut phase = create_test_phase("ph-001", "proj-1");
+    phase.sequence = 1;
+    phase.status = PhaseStatus::InProgress;
+    phase
+}
+
 #[rstest]
-#[case("phase")]
-#[case("issue")]
-#[case("dependency")]
-#[case("decision")]
-fn project_entities_construction(#[case] entity: &str) {
-    match entity {
-        "phase" => {
-            let mut phase = create_test_phase("ph-001", "proj-1");
-            phase.sequence = 1;
-            phase.status = PhaseStatus::InProgress;
+fn test_project_phase_construction(project_phase: ProjectPhase) {
+    assert_eq!(project_phase.id, "ph-001");
+    assert_eq!(project_phase.sequence, 1);
+    assert_eq!(project_phase.status, PhaseStatus::InProgress);
+}
 
-            assert_eq!(phase.id, "ph-001");
-            assert_eq!(phase.sequence, 1);
-            assert_eq!(phase.status, PhaseStatus::InProgress);
-        }
-        "issue" => {
-            let mut issue = create_test_issue("iss-001", "proj-1");
-            issue.phase_id = Some("ph-001".to_owned());
-            issue.title = "Fix bug".to_owned();
-            issue.description = "Something is broken".to_owned();
-            issue.issue_type = IssueType::Bug;
-            issue.status = IssueStatus::Open;
-            issue.priority = 1;
-            issue.assignee = Some("alice".to_owned());
-            issue.labels = vec!["urgent".to_owned()];
+#[fixture]
+fn project_issue() -> ProjectIssue {
+    let mut issue = create_test_issue("iss-001", "proj-1");
+    issue.phase_id = Some("ph-001".to_owned());
+    issue.title = "Fix bug".to_owned();
+    issue.description = "Something is broken".to_owned();
+    issue.issue_type = IssueType::Bug;
+    issue.status = IssueStatus::Open;
+    issue.priority = 1;
+    issue.assignee = Some("alice".to_owned());
+    issue.labels = vec!["urgent".to_owned()];
+    issue
+}
 
-            assert_eq!(issue.id, "iss-001");
-            assert_eq!(issue.priority, 1);
-            assert_eq!(issue.issue_type, IssueType::Bug);
-        }
-        "dependency" => {
-            let dep = ProjectDependency {
-                id: "dep-001".to_owned(),
-                from_issue_id: "iss-002".to_owned(),
-                to_issue_id: "iss-001".to_owned(),
-                dependency_type: DependencyType::Blocks,
-                created_at: 1000,
-            };
-            assert_eq!(dep.id, "dep-001");
-            assert_eq!(dep.dependency_type, DependencyType::Blocks);
-        }
-        "decision" => {
-            let decision = ProjectDecision {
-                id: "dec-001".to_owned(),
-                project_id: "proj-1".to_owned(),
-                issue_id: None,
-                title: "Use Rust".to_owned(),
-                context: "Need a fast language".to_owned(),
-                decision: "Rust for performance".to_owned(),
-                consequences: "Steeper learning curve".to_owned(),
-                created_at: 1000,
-            };
-            assert_eq!(decision.id, "dec-001");
-            assert_eq!(decision.title, "Use Rust");
-        }
-        _ => unreachable!(),
+#[rstest]
+fn test_project_issue_construction(project_issue: ProjectIssue) {
+    assert_eq!(project_issue.id, "iss-001");
+    assert_eq!(project_issue.priority, 1);
+    assert_eq!(project_issue.issue_type, IssueType::Bug);
+}
+
+#[fixture]
+fn project_dependency() -> ProjectDependency {
+    ProjectDependency {
+        id: "dep-001".to_owned(),
+        from_issue_id: "iss-002".to_owned(),
+        to_issue_id: "iss-001".to_owned(),
+        dependency_type: DependencyType::Blocks,
+        created_at: 1000,
     }
+}
+
+#[rstest]
+fn test_project_dependency_construction(project_dependency: ProjectDependency) {
+    assert_eq!(project_dependency.id, "dep-001");
+    assert_eq!(project_dependency.dependency_type, DependencyType::Blocks);
+}
+
+#[fixture]
+fn project_decision() -> ProjectDecision {
+    ProjectDecision {
+        id: "dec-001".to_owned(),
+        project_id: "proj-1".to_owned(),
+        issue_id: None,
+        title: "Use Rust".to_owned(),
+        context: "Need a fast language".to_owned(),
+        decision: "Rust for performance".to_owned(),
+        consequences: "Steeper learning curve".to_owned(),
+        created_at: 1000,
+    }
+}
+
+#[rstest]
+fn test_project_decision_construction(project_decision: ProjectDecision) {
+    assert_eq!(project_decision.id, "dec-001");
+    assert_eq!(project_decision.title, "Use Rust");
 }

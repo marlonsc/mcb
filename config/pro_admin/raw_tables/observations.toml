@@ -1,0 +1,32 @@
+[table]
+title = "Observations"
+table_size = "middle"
+page_size = 30
+order_by = { field = "created_at", order = "desc" }
+columns = [
+    { title = "ID", field = "id", width = 220 },
+    { field = "project_id", width = 150 },
+    { field = "observation_type", width = 120 },
+    { field = "content", ellipsis = true, width = 400 },
+    { field = "tags", width = 150 },
+    { field = "created_at", width = 140 },
+]
+hidden_columns = ["content_hash", "embedding_id", "metadata"]
+
+[filter]
+hidden_columns = ["content_hash", "embedding_id"]
+
+[editor]
+enable = true
+title_field = "content"
+
+[create]
+enable = true
+hidden_columns = ["content_hash", "embedding_id"]
+
+[update]
+enable = true
+readonly_columns = ["id", "created_at", "content_hash"]
+
+[delete]
+enable = true

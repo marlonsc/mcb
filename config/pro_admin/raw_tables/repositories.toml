@@ -1,0 +1,31 @@
+[table]
+title = "Repositories"
+table_size = "middle"
+page_size = 30
+order_by = { field = "created_at", order = "desc" }
+columns = [
+    { title = "ID", field = "id", width = 200 },
+    { field = "project_id", width = 150 },
+    { field = "name", width = 180 },
+    { field = "url", width = 250 },
+    { field = "vcs_type", width = 80 },
+    { field = "created_at", width = 140 },
+]
+hidden_columns = ["origin_context"]
+
+[filter]
+hidden_columns = ["origin_context"]
+
+[editor]
+enable = true
+title_field = "name"
+
+[create]
+enable = true
+
+[update]
+enable = true
+readonly_columns = ["id", "created_at"]
+
+[delete]
+enable = true

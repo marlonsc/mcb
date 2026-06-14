@@ -11,12 +11,12 @@ rationale: "Providers implement domain interfaces using application use cases"
 
 crate_name: "{{providers_crate}}"
 forbidden_prefixes: []
-allowed_dependencies: ["{{domain_crate}}", "{{application_crate}}"]
+allowed_dependencies: ["{{domain_crate}}", "{{application_crate}}", "{{utils_crate}}"]
 
 config:
   crate_name: "{{providers_crate}}"
   forbidden_prefixes: []
-  allowed_dependencies: ["{{domain_crate}}", "{{application_crate}}"]
+  allowed_dependencies: ["{{domain_crate}}", "{{application_crate}}", "{{utils_crate}}"]
 
 rule: |
   rule ProvidersBoundaries "Providers Layer Boundaries" {

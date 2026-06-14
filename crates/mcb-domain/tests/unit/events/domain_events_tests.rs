@@ -5,6 +5,7 @@ use std::sync::Mutex;
 
 use async_trait::async_trait;
 use mcb_domain::events::{DomainEvent, EventPublisher};
+use mcb_domain::utils::tests::utils::TestResult;
 
 // Mock event publisher for testing
 struct TestEventPublisher {
@@ -77,7 +78,7 @@ fn domain_event_variants(#[case] event: DomainEvent, #[case] expected_debug_frag
     assert!(debug_str.contains(expected_debug_fragment));
 }
 
-#[test]
+#[rstest]
 fn test_domain_event_clone() {
     let event1 = DomainEvent::SyncCompleted {
         path: "/code".to_owned(),
@@ -89,7 +90,7 @@ fn test_domain_event_clone() {
     assert_eq!(event1, event2);
 }
 
-#[test]
+#[rstest]
 fn test_event_publisher_creation() {
     let publisher = TestEventPublisher::new();
     let events = publisher.get_published_events();
@@ -118,13 +119,16 @@ fn has_subscribers(#[case] expected_has_subscribers: bool) {
     ],
     3
 )]
+#[rstest]
 #[tokio::test]
-async fn publish_events(#[case] events: Vec<DomainEvent>, #[case] expected_len: usize) {
+async fn publish_events(
+    #[case] events: Vec<DomainEvent>,
+    #[case] expected_len: usize,
+) -> TestResult<()> {
     let publisher = TestEventPublisher::new();
 
     for event in events {
-        let result = publisher.publish(event).await;
-        assert!(result.is_ok());
+        publisher.publish(event).await?;
     }
 
     let published_events = publisher.get_published_events();
@@ -136,15 +140,18 @@ async fn publish_events(#[case] events: Vec<DomainEvent>, #[case] expected_len: 
             DomainEvent::IndexRebuild { collection } if collection == &Some("test".to_owned())
         ));
     }
+
+    Ok(())
 }
 
-#[test]
+#[rstest]
 fn test_event_publisher_trait_object() {
     // Test that we can use EventPublisher as a trait object
     let publisher: Box<dyn EventPublisher> = Box::new(TestEventPublisher::new());
     assert!(publisher.has_subscribers());
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_event_serialization() -> Result<(), Box<dyn std::error::Error>> {
     // Events should be serializable (for transport/logging)

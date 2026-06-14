@@ -1,12 +1,4 @@
-//!
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md)
-//!
-//! Provider Routing Port
-//!
-//! Defines the contract for provider routing and selection services.
-//! Provider routing enables intelligent selection of embedding providers,
-//! vector stores, and other backend services based on health, cost,
-//! and quality requirements.
+//! Provider routing ports.
 
 use std::collections::HashMap;
 
@@ -18,57 +10,54 @@ use crate::error::Result;
 /// Health status for a provider
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 pub enum ProviderHealthStatus {
-    /// Provider is functioning normally
+    /// Provider is responding optimally.
     #[default]
     Healthy,
-    /// Provider is experiencing issues but still usable
+    /// Provider is responding but with errors or latency.
     Degraded,
-    /// Provider is not available
+    /// Provider is unreachable or failing consistently.
     Unhealthy,
 }
 
 /// Context for provider selection decisions
-///
-/// This structure carries information about the operation being performed
-/// and any preferences or constraints that should influence provider selection.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ProviderContext {
-    /// Type of operation being performed (e.g., "embedding", "search", "index")
+    /// Type of operation being performed (e.g., "fast", "accurate")
     pub operation_type: String,
-    /// Cost sensitivity (0.0 = ignore cost, 1.0 = prioritize low cost)
+    /// Importance of cost (0.0 to 1.0)
     pub cost_sensitivity: f64,
-    /// Quality requirement (0.0 = any quality, 1.0 = highest quality only)
+    /// Minimum quality threshold (0.0 to 1.0)
     pub quality_requirement: f64,
-    /// Latency sensitivity (0.0 = ignore latency, 1.0 = prioritize low latency)
+    /// Importance of low latency (0.0 to 1.0)
     pub latency_sensitivity: f64,
-    /// Preferred providers to try first (if healthy)
+    /// List of providers to prefer if available
     pub preferred_providers: Vec<String>,
-    /// Providers to exclude from selection
+    /// List of providers that should not be used
     pub excluded_providers: Vec<String>,
 }
 
 impl ProviderContext {
-    /// Create a new provider context with default values
+    /// Create a new empty provider context with default sensitivities.
     #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Set the operation type
+    /// Set the operation type for this context.
     #[must_use]
     pub fn with_operation(mut self, operation: impl Into<String>) -> Self {
         self.operation_type = operation.into();
         self
     }
 
-    /// Add a preferred provider
+    /// Add a provider to the preferred list.
     #[must_use]
     pub fn prefer(mut self, provider: impl Into<String>) -> Self {
         self.preferred_providers.push(provider.into());
         self
     }
 
-    /// Exclude a provider
+    /// Add a provider to the excluded list.
     #[must_use]
     pub fn exclude(mut self, provider: impl Into<String>) -> Self {
         self.excluded_providers.push(provider.into());
@@ -77,39 +66,20 @@ impl ProviderContext {
 }
 
 /// Provider routing interface
-///
-/// Provides intelligent routing and selection of backend providers
-/// based on health status, cost, quality, and operational requirements.
 #[async_trait]
 pub trait ProviderRouter: Send + Sync {
-    /// Select the best embedding provider based on context
-    ///
-    /// Returns the identifier of the selected provider.
+    /// Select the best embedding provider for the given context.
     async fn select_embedding_provider(&self, context: &ProviderContext) -> Result<String>;
-
-    /// Select the best vector store provider based on context
-    ///
-    /// Returns the identifier of the selected provider.
+    /// Select the best vector store provider for the given context.
     async fn select_vector_store_provider(&self, context: &ProviderContext) -> Result<String>;
-
-    /// Get the current health status of a provider
+    /// Get health status of a specific provider.
     async fn get_provider_health(&self, provider_id: &str) -> Result<ProviderHealthStatus>;
-
-    /// Report a provider failure for health tracking
-    ///
-    /// This should be called when a provider operation fails to update
-    /// the health monitoring system.
+    /// Report an operation failure for a provider.
     async fn report_failure(&self, provider_id: &str, error: &str) -> Result<()>;
-
-    /// Report a provider success for health tracking
-    ///
-    /// This should be called when a provider operation succeeds to update
-    /// the health monitoring system.
+    /// Report an operation success for a provider.
     async fn report_success(&self, provider_id: &str) -> Result<()>;
-
-    /// Get health status of all known providers
+    /// Get health status of all known providers.
     async fn get_all_health(&self) -> Result<HashMap<String, ProviderHealthStatus>>;
-
-    /// Get router statistics for monitoring
+    /// Get detailed statistics for all providers.
     async fn get_stats(&self) -> HashMap<String, serde_json::Value>;
 }

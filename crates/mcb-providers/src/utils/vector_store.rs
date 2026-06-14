@@ -14,7 +14,7 @@ use mcb_domain::value_objects::{FileInfo, SearchResult};
 use serde_json::Value;
 
 use super::http::{RequestErrorKind, handle_request_error_with_kind};
-use crate::constants::{
+use mcb_utils::constants::vector_store::{
     VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_LINE_NUMBER,
     VECTOR_FIELD_START_LINE,
 };

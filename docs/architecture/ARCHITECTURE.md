@@ -46,11 +46,11 @@ Memory Context Browser is a high-performance, extensible Model Context Protocol 
 
 ### Current Status
 
-**Version**: 0.2.1 (Memory, Session, Agent, VCS + Documentation Overhaul + rstest)
-**Architecture Maturity**: ✅ **100% Complete DI Implementation**
-**DI Status**: ✅ 20+ Port Traits, ✅ Provider Registry, ✅ Service Factory, ✅ Full Port/Adapter Wiring
+**Version**: 0.3.1 (SeaQL + Loco.rs baseline, release stabilization)
+**Architecture Maturity**: ✅ **SeaQL + Loco.rs Clean Architecture Baseline**
+**DI Status**: ✅ Linkme provider registry, ✅ AppContext composition root, ✅ Full Port/Adapter Wiring
 **Provider Registration**: ✅ Linkme distributed slices (compile-time), ✅ Inventory removed
-**Validation**: ✅ mcb-validate crate Phases 1–7 verified (349 tests); 1700+ tests project-wide
+**Validation**: ✅ `mcb-validate` architecture checks; run `make validate` for the current release verdict
 **Port Traits**: `crates/mcb-domain/src/ports/` - Provider traits in domain layer (Clean Architecture compliant)
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
@@ -540,7 +540,7 @@ Memory Context Browser implements Robert C. Martin's Clean Architecture with str
 1. **Dependency Rule**: Dependencies only point inward (toward the domain)
 2. **Abstraction Rule**: Inner layers define interfaces (ports), outer layers implement (adapters)
 3. **Entity Rule**: Domain entities have no external dependencies
-4. **Use Case Rule**: Application layer orchestrates without implementing infrastructure
+4. **Use Case Rule**: Infrastructure use-case modules orchestrate without embedding provider details
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -549,14 +549,17 @@ Memory Context Browser implements Robert C. Martin's Clean Architecture with str
 ├─────────────────────────────────────────────────────────┤
 │                 Infrastructure Layer                     │
 │               (mcb-infrastructure)                       │
-├────────────────────┬────────────────────────────────────┤
-│   Providers Layer  │      Application Layer             │
-│  (mcb-providers)   │     (mcb-application)              │
-├────────────────────┴────────────────────────────────────┤
+├─────────────────────────────────────────────────────────┤
+│                    Providers Layer                       │
+│                   (mcb-providers)                       │
+├─────────────────────────────────────────────────────────┤
 │                      Domain Layer                        │
 │                    (mcb-domain)                          │
+├─────────────────────────────────────────────────────────┤
+│                      Utils Layer                         │
+│                    (mcb-utils)                           │
 └─────────────────────────────────────────────────────────┘
-         Dependencies flow inward (toward domain)
+         Dependency flow: utils → domain → providers → infrastructure → server
 ```
 
 For complete architectural details, see [ADR-013: Clean Architecture Crate Separation](../adr/013-clean-architecture-crate-separation.md).
@@ -569,16 +572,14 @@ The project enforces strict dependency rules to maintain Clean Architecture comp
 
 | Crate | MUST NOT depend on | Allowed Dependencies |
 | ------- | -------------------- | ---------------------- |
-| mcb-domain | Any internal crate | None (pure domain) |
-| mcb-application | mcb-infrastructure, mcb-server, mcb-providers | mcb-domain only |
-| mcb-providers | mcb-infrastructure, mcb-server | mcb-domain, mcb-application* |
-| mcb-infrastructure | mcb-server | mcb-domain, mcb-application |
+| mcb-utils | Any internal crate | None (pure utilities) |
+| mcb-domain | Any internal crate except mcb-utils | mcb-utils only |
+| mcb-providers | mcb-infrastructure, mcb-server | mcb-domain, mcb-utils |
+| mcb-infrastructure | mcb-server | mcb-domain, mcb-providers, mcb-utils |
+| mcb-server | None | mcb-infrastructure, mcb-utils |
 
-**Note**: `mcb-providers` → `mcb-application` dependency is allowed ONLY for:
-
-- Registry auto-registration (`ports::registry`)
-- Admin interfaces (`ports::admin`)
-- Infrastructure ports (`ports::infrastructure`)
+**Note**: Provider implementations import contracts from `mcb-domain` and are wired by
+`mcb-infrastructure`.
 
 Provider trait implementations MUST import from `mcb-domain::ports::providers`.
 
@@ -849,22 +850,31 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 - `ports/providers/`: Provider port traits (EmbeddingProvider, VectorStoreProvider, CacheProvider, etc.)
 - `repositories/`: Repository port traits (ChunkRepository, SearchRepository)
 - `value_objects/`: Value objects (Embedding, Config, Search, Types)
-- `constants.rs`: Domain constants
 - `error.rs`: Domain error types
 
-> **Note**: All port traits (providers, infrastructure, admin, repositories, services) are defined in mcb-domain (single source of truth per ADR-029).
+#### 📦 Utils Layer (`crates/mcb-utils/`)
 
-#### 🔧 Application Layer (`crates/mcb-application/`)
+**Purpose**: Shared pure utilities, constants, and helpers with zero domain knowledge. Innermost crate (Layer 0).
 
-**Purpose**: Business logic orchestration and use case implementations.
+### Key Components
+
+- `constants/`: All project-wide constants (SSOT — ast, auth, crypto, display, embedding, events, http, io, keys, lang, limits, protocol, search, time, use_cases, validate, values, vcs, vector_store)
+- `utils/`: Pure utility functions (fs, id, naming, path, sensitivity, time, vcs_context)
+- `error.rs`: Utils-specific error types (UtilsError)
+
+> **Note**: mcb-utils has ZERO dependencies on any other mcb-* crate. All constants were consolidated here following SSOT principle (ADR-054, ADR-055).
+
+#### 🔧 Use Case Modules (`crates/mcb-infrastructure/src/di/modules/use_cases/`)
+
+**Purpose**: Service orchestration and use-case wiring through DI modules.
 
 ### Services
 
-- `use_cases/context_service.rs`: ContextService - embedding generation and vector storage coordination
-- `use_cases/indexing_service.rs`: IndexingService - codebase indexing workflow
-- `use_cases/search_service.rs`: SearchService - semantic search operations
-- `decorators/`: Service decorators for cross-cutting concerns
-- `constants.rs`: Application-level constants
+- `context_service.rs`: Context service wiring for embedding/vector workflows
+- `indexing_service.rs`: Indexing workflow composition
+- `search_service.rs`: Semantic search workflow composition
+- `memory_service.rs`: Memory and observation workflows
+- `agent_session_service.rs`: Agent session lifecycle composition
 
 #### 🔌 Providers Layer (`crates/mcb-providers/`)
 
@@ -891,7 +901,7 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 - `di/bootstrap.rs`: AppContext composition root configuration
 - `di/handles.rs`: RwLock provider handles
 - `di/admin.rs`: Admin services for runtime switching
-- `config/`: Configuration management (Figment)
+- `config/`: Configuration management (Loco YAML)
 - `cache/`: Cache infrastructure
 - `crypto/`: Encryption and hashing utilities
 - `health/`: Health check infrastructure
@@ -914,7 +924,7 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Status**: Phases 1–7 all VERIFIED (v0.2.1) - 349+ tests pass
+**Status**: Active in v0.3.1; run `make validate` for the current architecture verdict.
 
 ### Components (1)
 
@@ -1965,7 +1975,7 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 
 - [ADR-005](../adr/005-context-cache-support.md) Context Cache
 - [ADR-006](../adr/006-code-audit-and-improvements.md) Code Audit
-- [ADR-007](../adr/007-integrated-web-administration-interface.md) Admin UI
+- [ADR-007](../adr/051-seaql-loco-platform-rebuild.md) Admin UI (archived)
 - [ADR-010](../adr/010-hooks-subsystem-agent-backed.md) Hooks
 - [ADR-011](../adr/011-http-transport-request-response-pattern.md) HTTP Transport
 - [ADR-012](../adr/012-di-strategy-two-layer-approach.md) Two-Layer DI
@@ -1979,8 +1989,8 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 - [ADR-021](../adr/021-dependency-management.md) Dependency Mgmt
 - [ADR-022](../adr/022-ci-integration-strategy.md) CI
 - [ADR-023](../adr/023-inventory-to-linkme-migration.md) Linkme
-- [ADR-025](../adr/025-figment-configuration.md) Figment
-- [ADR-026](../adr/026-routing-refactor-rocket-poem.md) Routing
+- [ADR-025](../adr/051-seaql-loco-platform-rebuild.md) Figment (archived, see ADR-051)
+- [ADR-026](../adr/049-axum-return-rmcp-tower-compatibility.md) Routing (archived, see ADR-049)
 - [ADR-027](../adr/027-architecture-evolution-v013.md) Arch Evolution
 - [ADR-028](../adr/028-advanced-code-browser-v020.md) Code Browser
 - [ADR-030](../adr/030-multi-provider-strategy.md) Multi-Provider
@@ -2268,23 +2278,28 @@ impl BackupManager {
 - Multi-branch and commit history search
 - Cross-session memory with SQLite storage
 - Hybrid search for observations and decisions
-- 📋**v0.3.0**: Advanced code intelligence + Workflow FSM (Phase 8)
-- Symbol extraction and cross-referencing
-- Call graph analysis
-- Dependency impact mapping
+- ✅ **v0.3.0**: SeaQL + Loco.rs Platform Rebuild (ADR-051)
+- SeaORM persistence replacing raw SQLite
+- Loco.rs framework with Axum native server
+- Entity CRUD (vcs/plan/issue/org resources)
+- Figment→Loco YAML config migration
+- 📋**v0.4.0**: Workflow FSM + Advanced Code Intelligence (Phase 8)
 - Workflow state machines (ADR-034)
 - Freshness tracking and policies (ADR-035, ADR-036)
 - Compensation and orchestration (ADR-037)
-- 🚧**v0.4.0**: Integrated Context System (Phase 9, Feb 17 - Mar 16, 2026)
+- Symbol extraction and cross-referencing
+- 📋**v0.5.0**: Integrated Context System (Phase 9)
 - Knowledge graph with code relationships (ADR-042)
 - Hybrid search engine with RRF fusion (ADR-043)
 - Context snapshots and time-travel queries (ADR-045)
 - Policy-driven context discovery (ADR-046)
 - 70+ tests, complete documentation
 
-### v0.4.0: Integrated Context System Architecture
+### v0.5.0: Integrated Context System Architecture
 
-**Overview**: v0.4.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
+**Overview**: v0.5.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
+
+> **v0.3.x Migration Note:** This architecture is v0.4.0-v0.5.0 future work. The current v0.3.1 line uses 4 runtime layers (domain → providers → infrastructure → server) plus `mcb-utils`, `mcb-validate`, and the `mcb` CLI facade.
 
 ### 5-Layer Architecture
 

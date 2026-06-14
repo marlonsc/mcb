@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: [13, 15, 17]
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -16,6 +16,8 @@ implementation_status: Incomplete
 # ADR 021: Dependency Management Strategy
 
 ## Status
+
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
 
 **Accepted** (v0.2.0 - Implementation)
 **Date**: 2026-01-14

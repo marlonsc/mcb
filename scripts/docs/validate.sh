@@ -360,7 +360,7 @@ run_structure_validation() {
 validate_outdated_content() {
 	log_info "Scanning for outdated content patterns..."
 	if check_executable python3; then
-		python3 "$SCRIPT_DIR/py/check_outdated.py" --root "$PROJECT_ROOT" || true
+		PYTHONPATH="$PROJECT_ROOT" python3 "$SCRIPT_DIR/py/check_outdated.py" --root "$PROJECT_ROOT" || true
 	fi
 }
 
@@ -429,8 +429,8 @@ EXAMPLES:
     $0 structure links   # Multiple specific checks
 
 MAKE TARGETS:
-    make docs-check      # Runs this script with 'all'
-    make docs-validate       # Runs this script with 'adrs'
+    make docs WHAT=check      # Runs this script with 'all'
+    make docs WHAT=validate   # Runs this script with 'adrs'
 
 EOF
 }

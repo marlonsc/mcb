@@ -6,11 +6,13 @@
 
 use std::path::PathBuf;
 
+use mcb_domain::ports::validation::ValidationConfig;
+use mcb_validate::CleanArchitectureValidator;
 use mcb_validate::config::NamingRulesConfig;
-use mcb_validate::{CleanArchitectureValidator, ValidationConfig};
+use rstest::rstest;
 
 /// Test that CA009 allows composition root (di/) and flags only non-di imports
-#[test]
+#[rstest]
 fn test_ca009_infrastructure_imports_application() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
@@ -26,11 +28,12 @@ fn test_ca009_infrastructure_imports_application() {
         &file_config.rules.clean_architecture,
         &NamingRulesConfig {
             domain_crate: "mcb-domain".to_owned(),
-            application_crate: "mcb-application".to_owned(),
+            application_crate: "mcb-infrastructure".to_owned(),
             providers_crate: "mcb-providers".to_owned(),
             infrastructure_crate: "mcb-infrastructure".to_owned(),
             server_crate: "mcb-server".to_owned(),
             validate_crate: "mcb-validate".to_owned(),
+            utils_crate: "mcb-utils".to_owned(),
 
             enabled: true,
         },
@@ -43,11 +46,11 @@ fn test_ca009_infrastructure_imports_application() {
         .filter(|v| format!("{v}").contains("CA009"))
         .collect();
 
-    // Composition root (src/di/) is allowed to import mcb_application. All other
-    // mcb-infrastructure src code must not depend on Application layer.
+    // Composition root (src/di/) is allowed to import the configured application layer.
+    // All other mcb-infrastructure src code must not depend on that layer.
     assert!(
         ca009_violations.is_empty(),
-        "CA009: mcb-infrastructure (outside di/) must not import mcb_application. \
+        "CA009: mcb-infrastructure (outside di/) must not import configured application layer. \
          Violations: {:?}",
         ca009_violations
             .iter()

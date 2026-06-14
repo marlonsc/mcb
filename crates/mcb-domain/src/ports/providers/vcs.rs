@@ -1,32 +1,26 @@
-//! Version Control System provider port for repository operations.
-//!
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
-//!
+//! Version control system provider ports.
 
 use std::path::{Path, PathBuf};
 
 use async_trait::async_trait;
 
-use crate::entities::vcs::{RefDiff, RepositoryId, VcsBranch, VcsCommit, VcsRepository};
+use crate::entities::vcs::{RefDiff, VcsBranch, VcsCommit, VcsRepository};
 use crate::error::Result;
+use crate::value_objects::RepositoryId;
 
 /// Version Control System provider for repository operations.
-///
-/// Abstraction over version control systems (Git, Mercurial, SVN, etc.).
-/// The current implementation focuses on Git, but the trait is designed
-/// to support other VCS implementations in the future.
 #[async_trait]
 pub trait VcsProvider: Send + Sync {
-    /// Open a repository at the given path
+    /// Open an existing repository at the specified filesystem path.
     async fn open_repository(&self, path: &Path) -> Result<VcsRepository>;
 
-    /// Get unique repository identifier
+    /// Extract a unique identifier from a repository object.
     fn repository_id(&self, repo: &VcsRepository) -> RepositoryId;
 
-    /// List all local branches in repository
+    /// List all local and remote branches for the repository.
     async fn list_branches(&self, repo: &VcsRepository) -> Result<Vec<VcsBranch>>;
 
-    /// Get commit history for a branch with optional limit
+    /// Retrieve the commit history for a specific branch.
     async fn commit_history(
         &self,
         repo: &VcsRepository,
@@ -34,16 +28,16 @@ pub trait VcsProvider: Send + Sync {
         limit: Option<usize>,
     ) -> Result<Vec<VcsCommit>>;
 
-    /// List files in a branch at HEAD
+    /// List all tracked files in the given branch.
     async fn list_files(&self, repo: &VcsRepository, branch: &str) -> Result<Vec<PathBuf>>;
 
-    /// Read file content from a branch at HEAD
+    /// Read the full content of a file from a specific commit/branch.
     async fn read_file(&self, repo: &VcsRepository, branch: &str, path: &Path) -> Result<String>;
 
-    /// VCS type name (e.g., "git", "mercurial", "svn")
+    /// Get the unique name of this VCS implementation (e.g., "git").
     fn vcs_name(&self) -> &str;
 
-    /// Compare two refs and return the diff
+    /// Calculate the difference between two references (branches, tags, or SHAs).
     async fn diff_refs(
         &self,
         repo: &VcsRepository,
@@ -51,15 +45,6 @@ pub trait VcsProvider: Send + Sync {
         head_ref: &str,
     ) -> Result<RefDiff>;
 
-    /// Discover and list repositories under a root path
-    ///
-    /// Scans the given root directory for VCS repositories (e.g., directories containing `.git`).
-    /// Returns a list of discovered repositories.
-    ///
-    /// # Arguments
-    /// * `root` - Root directory to scan for repositories
-    ///
-    /// # Returns
-    /// Vector of discovered repositories, or empty vector if none found.
+    /// Recursive search for all repositories within a root directory.
     async fn list_repositories(&self, root: &Path) -> Result<Vec<VcsRepository>>;
 }

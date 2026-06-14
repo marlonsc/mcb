@@ -1,7 +1,8 @@
 # MCB — Gemini Code Assist Style Guide
 
-> Single source of truth: [`CLAUDE.md`](../CLAUDE.md). This file adds Gemini-specific
-> PR review priorities. See [`AGENTS.md`](../AGENTS.md) for the full agent configuration index.
+> Single source of truth: [`AGENTS.md`](../AGENTS.md). `CLAUDE.md` is only a
+> pointer back to `AGENTS.md`. This file adds Gemini-specific PR review
+> priorities without restating the universal core.
 
 ## PR Review Priorities (ordered)
 
@@ -34,14 +35,14 @@
 
 ## Quality Gate Checklist
 
-- `make lint` passes (clippy + fmt)
+- `make check WHAT=lint` passes (clippy + fmt)
 - `make test` passes (1700+ tests)
-- `make validate` passes (zero architecture violations)
+- `make check WHAT=validate` passes (zero architecture violations)
 - Conventional Commits format used
 
 ## Key Documentation
 
-- [`CLAUDE.md`](../CLAUDE.md) — all rules, patterns, commands (single source of truth)
+- [`AGENTS.md`](../AGENTS.md) — all rules, patterns, commands, and beads workflow
 - [`docs/architecture/ARCHITECTURE.md`](../docs/architecture/ARCHITECTURE.md) — architecture details
 - [`docs/developer/CONTRIBUTING.md`](../docs/developer/CONTRIBUTING.md) — contributor guide
-- [`docs/adr/`](../docs/adr/) — 48 Architecture Decision Records
+- [`docs/adr/`](../docs/adr/) — 52 Architecture Decision Records

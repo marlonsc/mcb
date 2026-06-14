@@ -6,21 +6,20 @@
 //! Note: `BadTestFileName` violations have no line field, so line=0
 //! is used (skips line check).
 
-use mcb_validate::HygieneValidator;
-
 use crate::utils::test_constants::*;
 use crate::utils::*;
+use mcb_domain::utils::tests::assertions::{assert_no_violations, assert_violations_exact};
+use rstest::rstest;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[test]
+#[rstest]
 fn test_hygiene_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
-    let validator = HygieneValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "hygiene").unwrap();
 
     assert_violations_exact(
         &violations,
@@ -31,8 +30,6 @@ fn test_hygiene_full_workspace() {
             ("my-test/tests", 0, "BadTestFileName"),
             ("integration_test.rs", 0, "BadTestFileName"),
             ("integration_test.rs", 0, "BadTestFileName"),
-            // ── BadTestFunctionName ─────────────────────────────────────
-            ("integration_test.rs", 8, "BadTestFunctionName"),
             // ── TrivialAssertion ────────────────────────────────────────
             ("integration_test.rs", 4, "TrivialAssertion"),
             ("integration_test.rs", 10, "TrivialAssertion"),
@@ -46,7 +43,7 @@ fn test_hygiene_full_workspace() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[test]
+#[rstest]
 fn test_clean_hygiene_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,
@@ -57,8 +54,7 @@ pub fn add(a: i32, b: i32) -> i32 {
 }
 ",
     );
-    let validator = HygieneValidator::new(&root);
-    let violations = validator.validate_all().unwrap();
+    let violations = run_named_validator(&root, "hygiene").unwrap();
 
     assert_no_violations(
         &violations,

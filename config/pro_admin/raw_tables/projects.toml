@@ -1,0 +1,29 @@
+[table]
+title = "Projects"
+table_size = "middle"
+page_size = 30
+order_by = { field = "created_at", order = "desc" }
+columns = [
+    { title = "ID", field = "id", width = 200 },
+    { field = "org_id", width = 150 },
+    { field = "name", width = 200 },
+    { field = "path", width = 300 },
+    { field = "created_at", width = 140 },
+]
+
+[filter]
+hidden_columns = []
+
+[editor]
+enable = true
+title_field = "name"
+
+[create]
+enable = true
+
+[update]
+enable = true
+readonly_columns = ["id", "created_at"]
+
+[delete]
+enable = true

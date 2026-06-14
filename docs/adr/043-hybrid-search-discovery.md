@@ -8,12 +8,14 @@ updated: 2026-02-05
 related: []
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
 # ADR-043: Hybrid Search & Discovery for Context
+
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
 
 **Status**: Proposed
 **Date**: 2026-02-05

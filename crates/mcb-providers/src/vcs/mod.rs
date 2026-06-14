@@ -1,19 +1,12 @@
 //!
 //! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
 //!
-//! Version Control System Providers
-//!
-//! This module contains implementations of the `VcsProvider` trait.
-//! Currently supports local Git repositories via `git2`.
+//! Version Control System Providers.
 
-/// Factory for creating VCS providers
-pub mod factory;
-/// Git2 implementation of VcsProvider
-pub mod git2_provider;
-/// Submodule handling
-pub mod submodule;
+// factory module DELETED — use linkme VCS registry
+mod git;
+mod submodule;
 
-pub use crate::project_detection::{PROJECT_DETECTORS, detect_all_projects};
-pub use factory::default_vcs_provider;
-pub use git2_provider::Git2Provider;
+// default_vcs_provider DELETED — resolve via registry
+pub use git::GitProvider;
 pub use submodule::{SubmoduleProvider, collect_submodules, collect_submodules_with_depth};

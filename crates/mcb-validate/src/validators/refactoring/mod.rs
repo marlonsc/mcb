@@ -11,7 +11,6 @@
 //! - Deleted module references
 //! - Dead code from refactoring
 
-pub mod constants;
 mod duplicates;
 mod modules;
 mod tests;
@@ -20,3 +19,12 @@ mod violation;
 
 pub use self::validator::RefactoringValidator;
 pub use self::violation::RefactoringViolation;
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_REFACTORING,
+    "Validates refactoring completeness (duplicate definitions, missing tests, stale references)",
+    |root| {
+        Ok(Box::new(RefactoringValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

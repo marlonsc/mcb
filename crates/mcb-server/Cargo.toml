@@ -31,10 +31,7 @@ workspace = true
 [dependencies]
 # Domain layer - core contracts and types
 mcb-domain = { path = "../mcb-domain" }
-# Application layer - use cases and business logic
-mcb-application = { path = "../mcb-application" }
-# Infrastructure layer - configuration and DI
-mcb-infrastructure = { path = "../mcb-infrastructure" }
+mcb-utils = { path = "../mcb-utils" }
 
 # Core async runtime
 tokio = { workspace = true }
@@ -64,7 +61,6 @@ clap = { workspace = true }
 axum = { workspace = true }
 tower-http = { workspace = true }
 walkdir = { workspace = true }
-normpath = { workspace = true }
 
 # HTTP client - for client mode connecting to remote server
 reqwest = { workspace = true }
@@ -72,20 +68,12 @@ reqwest = { workspace = true }
 # MCP SDK
 rmcp = { workspace = true }
 
-# Template engines
-handlebars = { workspace = true }
-
-# Markdown processing
-pulldown-cmark = { workspace = true }
 
 # Authentication
 # jsonwebtoken removed - unused dependency (RUSTSEC-2023-0071)
 bcrypt = { workspace = true }
 argon2 = { workspace = true }
 base64 = { workspace = true }
-
-# System metrics
-sysinfo = { workspace = true }
 
 # Hostname detection
 hostname = { workspace = true }
@@ -108,9 +96,6 @@ sha2 = { workspace = true }
 # Configuration watching
 notify = { workspace = true }
 
-# Directory paths
-dirs = { workspace = true }
-
 # Async streaming for HTTP SSE
 futures = { workspace = true }
 async-stream = { workspace = true }
@@ -118,20 +103,28 @@ async-stream = { workspace = true }
 # Plugin registration
 linkme = { workspace = true }
 
-# Providers - MUST be in dependencies for linkme inventory registration
-mcb-providers = { path = "../mcb-providers" }
+# SeaQL + Loco ecosystem (v0.3.0)
+loco-rs = { workspace = true }
+seaography = { workspace = true }
+sea-orm = { workspace = true }
+sea-orm-pro = { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-axum = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }
 fastembed = { workspace = true }
 rstest = { workspace = true }
+serial_test = { workspace = true }
 mockall = { workspace = true }
 insta = { workspace = true }
 tower = { workspace = true }
 http-body-util = { workspace = true }
 mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
-mcb-infrastructure = { path = "../mcb-infrastructure", features = ["test-utils"] }
-
+mcb-utils = { path = "../mcb-utils" }
+mcb-providers = { path = "../mcb-providers" }
+mcb-infrastructure = { path = "../mcb-infrastructure" }
+mcb-validate = { path = "../mcb-validate" }
 [[test]]
 name = "unit"
 path = "tests/unit/mod.rs"
@@ -143,3 +136,7 @@ path = "tests/integration/mod.rs"
 [[test]]
 name = "e2e"
 path = "tests/e2e/mod.rs"
+
+[[test]]
+name = "contract"
+path = "tests/contract/mod.rs"

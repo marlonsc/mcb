@@ -11,7 +11,9 @@ Accepted
 
 ## Detailed Plan
 
-[Observability Strategy Plan](../plans/v0.2.2-observability-strategy.md)
+This ADR is the canonical observability strategy record. The former planning
+artifact was retired with the non-canonical plans archive; live follow-up work
+belongs in beads.
 
 ## Context
 

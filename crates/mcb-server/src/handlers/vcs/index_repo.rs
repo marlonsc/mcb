@@ -4,10 +4,10 @@
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use mcb_domain::ports::VcsProvider;
-use mcb_infrastructure::config::McpContextConfig;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
+
+use mcb_domain::ports::VcsProvider;
 
 use super::responses::{IndexResult, repo_path};
 use crate::args::VcsArgs;
@@ -32,7 +32,7 @@ pub async fn index_repository(
     };
 
     // Load config from repository path
-    let config = McpContextConfig::load_from_path_or_default(Path::new(&path));
+    let config = load_repo_context_config(Path::new(&path));
 
     // Determine depth: args.depth > config.git.depth > default 1000
     let depth = args.depth.unwrap_or(config.git.depth);
@@ -41,36 +41,21 @@ pub async fn index_repository(
         .branches
         .clone()
         .unwrap_or_else(|| vec![repo.default_branch().to_owned()]);
-    let mut total_files = 0;
-    for branch in &branches {
-        match vcs_provider.list_files(&repo, branch).await {
-            Ok(files) => {
-                let filtered_files = filter_files_by_patterns(&files, &config.git.ignore_patterns);
-                total_files += filtered_files.len();
-            }
-            Err(e) => {
-                let _ = branch;
-                return Ok(to_contextual_tool_error(e));
-            }
-        }
-    }
+    let total_files =
+        match count_filtered_files(vcs_provider, &repo, &branches, &config.git.ignore_patterns)
+            .await
+        {
+            Ok(count) => count,
+            Err(e) => return Ok(to_contextual_tool_error(e)),
+        };
     let commits_indexed = if args.include_commits.unwrap_or(false) {
-        let mut count = 0;
-        for branch in &branches {
-            if let Ok(commits) = vcs_provider
-                .commit_history(&repo, branch, Some(depth))
-                .await
-            {
-                count += commits.len();
-            }
-        }
-        count
+        count_commits(vcs_provider, &repo, &branches, depth).await
     } else {
         0
     };
     let result = IndexResult {
         repository_id: repo.id().to_string(),
-        path: repo.path().to_str().unwrap_or_default().to_owned(),
+        path: repo.path().to_string_lossy().into_owned(),
         default_branch: repo.default_branch().to_owned(),
         branches_found: branches.clone(),
         total_files,
@@ -78,6 +63,44 @@ pub async fn index_repository(
     };
 
     ResponseFormatter::json_success(&result)
+}
+
+/// Count files across `branches` after applying ignore patterns.
+async fn count_filtered_files(
+    vcs_provider: &Arc<dyn VcsProvider>,
+    repo: &mcb_domain::entities::vcs::VcsRepository,
+    branches: &[String],
+    ignore_patterns: &[String],
+) -> mcb_domain::Result<usize> {
+    let mut total_files = 0;
+    for branch in branches {
+        let files = vcs_provider.list_files(repo, branch).await?;
+        total_files += filter_files_by_patterns(&files, ignore_patterns).len();
+    }
+    Ok(total_files)
+}
+
+/// Count commits across `branches`; per-branch failures are logged and skipped.
+async fn count_commits(
+    vcs_provider: &Arc<dyn VcsProvider>,
+    repo: &mcb_domain::entities::vcs::VcsRepository,
+    branches: &[String],
+    depth: usize,
+) -> usize {
+    let mut count = 0;
+    for branch in branches {
+        match vcs_provider.commit_history(repo, branch, Some(depth)).await {
+            Ok(commits) => count += commits.len(),
+            Err(e) => {
+                mcb_domain::warn!(
+                    "vcs",
+                    "Failed to index commits",
+                    &format!("branch={branch}: {e}")
+                );
+            }
+        }
+    }
+    count
 }
 
 /// Filter files by ignore patterns (gitignore-style)
@@ -98,26 +121,63 @@ fn should_ignore_file(file: &Path, patterns: &[String]) -> bool {
     let Some(file_str) = file.to_str() else {
         return false;
     };
+    patterns
+        .iter()
+        .any(|pattern| pattern_matches(file_str, pattern))
+}
 
-    for pattern in patterns {
-        // Handle directory patterns (ending with /)
-        if pattern.ends_with('/') {
-            let dir_pattern = &pattern[..pattern.len() - 1];
-            if file_str.contains(dir_pattern) {
-                return true;
-            }
-        }
-        // Handle wildcard patterns (*.ext)
-        else if let Some(ext) = pattern.strip_prefix('*') {
-            if file_str.ends_with(ext) {
-                return true;
-            }
-        }
-        // Handle exact matches and path patterns
-        else if file_str.contains(pattern) || file_str.ends_with(pattern) {
-            return true;
+/// Match a single gitignore-style pattern against a file path string.
+fn pattern_matches(file_str: &str, pattern: &str) -> bool {
+    // Directory patterns end with `/`.
+    if let Some(dir_pattern) = pattern.strip_suffix('/') {
+        return file_str.contains(dir_pattern);
+    }
+    // Wildcard patterns start with `*` (e.g. `*.ext`).
+    if let Some(ext) = pattern.strip_prefix('*') {
+        return file_str.ends_with(ext);
+    }
+    // Exact matches and path patterns.
+    file_str.contains(pattern) || file_str.ends_with(pattern)
+}
+
+// ---------------------------------------------------------------------------
+// Repository-local .mcp-context.toml config (inlined to avoid cross-crate dep)
+// ---------------------------------------------------------------------------
+
+/// Git section of .mcp-context.toml.
+#[derive(serde::Deserialize)]
+struct GitContextConfig {
+    #[serde(default = "default_git_depth")]
+    depth: usize,
+    #[serde(default)]
+    ignore_patterns: Vec<String>,
+}
+
+fn default_git_depth() -> usize {
+    50
+}
+
+impl Default for GitContextConfig {
+    fn default() -> Self {
+        Self {
+            depth: default_git_depth(),
+            ignore_patterns: Vec::new(),
         }
     }
+}
 
-    false
+/// Root .mcp-context.toml config.
+#[derive(Default, serde::Deserialize)]
+struct RepoContextConfig {
+    #[serde(default)]
+    git: GitContextConfig,
+}
+
+/// Load `.mcp-context.toml` from the given directory, returning defaults on any error.
+fn load_repo_context_config(path: &Path) -> RepoContextConfig {
+    let config_path = path.join(".mcp-context.toml");
+    std::fs::read_to_string(&config_path)
+        .ok()
+        .and_then(|content| toml::from_str(&content).ok())
+        .unwrap_or_default()
 }

@@ -1,0 +1,26 @@
+---
+source: crates/mcb-server/tests/contract/memory_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "limit": "not_a_number"
+      },
+      "name": "list_memories"
+    }
+  },
+  "response": {
+    "error": {
+      "code": -32602,
+      "message": "Missing execution provenance for 'list_memories': session_id, repo_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
+    },
+    "id": 1,
+    "jsonrpc": "2.0"
+  },
+  "status": 200
+}

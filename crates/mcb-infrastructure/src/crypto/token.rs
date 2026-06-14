@@ -5,7 +5,7 @@
 
 use aes_gcm::aead::{OsRng as AeadOsRng, rand_core::RngCore as AeadRngCore};
 
-use super::utils::bytes_to_hex;
+use mcb_utils::utils::crypto::bytes_to_hex;
 
 /// Secure token generation
 pub struct TokenGenerator;

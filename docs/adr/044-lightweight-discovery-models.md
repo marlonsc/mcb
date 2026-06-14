@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: []
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -236,6 +236,8 @@ impl MlBasedRouter {
 ```toml
 
 # config/default.toml
+
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
 
 [routing]
 

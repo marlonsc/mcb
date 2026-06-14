@@ -1,9 +1,9 @@
 //! Tests for strong-typed ID value objects
 
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::ids::{
     ChunkId, CollectionId, ObservationId, OperationId, RepositoryId, SessionId,
 };
+use mcb_utils::utils::id;
 use rstest::rstest;
 
 #[rstest]
@@ -33,7 +33,7 @@ use rstest::rstest;
     "operation",
     "op1"
 )]
-fn id_string_conversion_determinism<T: ToString>(
+fn test_id_string_conversion_determinism<T: ToString>(
     #[case] id_obj: T,
     #[case] namespace: &str,
     #[case] input: &str,
@@ -43,7 +43,7 @@ fn id_string_conversion_determinism<T: ToString>(
 }
 
 #[rstest]
-fn collection_id_determinism() {
+fn test_collection_id_determinism() {
     let id1 = CollectionId::from_uuid(id::deterministic("collection", "test"));
     let id2 = CollectionId::from_uuid(id::deterministic("collection", "test"));
     assert_eq!(id1, id2);
@@ -54,7 +54,7 @@ fn collection_id_determinism() {
 }
 
 #[rstest]
-fn collection_id_into_string() {
+fn test_collection_id_into_string() {
     let id = CollectionId::from_uuid(id::deterministic("collection", "test"));
     let s: String = id.into();
     assert_eq!(s, id.to_string());

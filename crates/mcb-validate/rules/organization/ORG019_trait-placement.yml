@@ -18,7 +18,7 @@ config:
 filters:
   file_patterns:
     - "crates/mcb-infrastructure/**/*.rs"
-    - "crates/mcb-application/**/*.rs"
+    - "crates/mcb-infrastructure/src/di/modules/use_cases/**/*.rs"
     - "crates/mcb-server/**/*.rs"
   skip:
     file_patterns:

@@ -3,14 +3,17 @@ use std::path::{Path, PathBuf};
 use derive_more::Display;
 
 use crate::config::FileConfig;
+use crate::filters::dependency_parser::WorkspaceDependencies;
 use crate::filters::rule_filters::RuleFilterExecutor;
 use crate::rules::yaml_loader::ValidatedRule;
-use crate::traits::violation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
+use mcb_utils::constants::validate::{SEVERITY_ERROR, SEVERITY_WARNING};
 
 pub(crate) fn build_substitution_variables(workspace_root: &Path) -> serde_yaml::Value {
     let file_config = FileConfig::load(workspace_root);
     let variables_val = serde_yaml::to_value(&file_config.rules.naming)
         .unwrap_or(serde_yaml::Value::Mapping(serde_yaml::Mapping::new()));
+    // INTENTIONAL: YAML mapping clone; empty mapping is valid default
     let mut variables = variables_val.as_mapping().cloned().unwrap_or_default();
 
     let ca_val = serde_yaml::to_value(&file_config.rules.clean_architecture)
@@ -21,6 +24,15 @@ pub(crate) fn build_substitution_variables(workspace_root: &Path) -> serde_yaml:
         }
     }
 
+    insert_crate_module_variables(&mut variables);
+    insert_project_prefix(&mut variables);
+
+    serde_yaml::Value::Mapping(variables)
+}
+
+/// For each `<name>_crate` variable, derive a `<name>_module` variable with
+/// dashes replaced by underscores.
+fn insert_crate_module_variables(variables: &mut serde_yaml::Mapping) {
     let crates = [
         "domain",
         "application",
@@ -31,31 +43,32 @@ pub(crate) fn build_substitution_variables(workspace_root: &Path) -> serde_yaml:
     ];
     for name in crates {
         let key = format!("{name}_crate");
-        if let Some(val) = variables.get(serde_yaml::Value::String(key.clone()))
+        if let Some(val) = variables.get(serde_yaml::Value::String(key))
             && let Some(s) = val.as_str()
         {
+            let module = s.replace('-', "_");
             variables.insert(
                 serde_yaml::Value::String(format!("{name}_module")),
-                serde_yaml::Value::String(s.replace('-', "_")),
+                serde_yaml::Value::String(module),
             );
         }
     }
+}
 
+/// Derive the `project_prefix` variable from the `domain_crate` value (the part
+/// before the first dash, or the whole value).
+fn insert_project_prefix(variables: &mut serde_yaml::Mapping) {
     if let Some(domain_val) = variables.get(serde_yaml::Value::String("domain_crate".into()))
         && let Some(domain_str) = domain_val.as_str()
     {
-        let prefix = if let Some(idx) = domain_str.find('-') {
-            domain_str[0..idx].to_string()
-        } else {
-            domain_str.to_owned()
-        };
+        let prefix = domain_str
+            .split_once('-')
+            .map_or_else(|| domain_str.to_owned(), |(head, _)| head.to_owned());
         variables.insert(
             serde_yaml::Value::String("project_prefix".into()),
             serde_yaml::Value::String(prefix),
         );
     }
-
-    serde_yaml::Value::Mapping(variables)
 }
 
 #[derive(Debug, Display)]
@@ -97,31 +110,21 @@ impl Violation for PatternMatchViolation {
 
 pub(crate) fn parse_severity(s: &str) -> Severity {
     match s.to_lowercase().as_str() {
-        "error" => Severity::Error,
-        "warning" => Severity::Warning,
+        SEVERITY_ERROR => Severity::Error,
+        SEVERITY_WARNING => Severity::Warning,
         _ => Severity::Info,
     }
 }
 
 pub(crate) fn parse_category(s: &str) -> ViolationCategory {
-    match s.to_lowercase().as_str() {
-        "architecture" | "clean-architecture" => ViolationCategory::Architecture,
-        "performance" => ViolationCategory::Performance,
-        "testing" => ViolationCategory::Testing,
-        "documentation" => ViolationCategory::Documentation,
-        "naming" => ViolationCategory::Naming,
-        "organization" => ViolationCategory::Organization,
-        "solid" => ViolationCategory::Solid,
-        "implementation" => ViolationCategory::Implementation,
-        "refactoring" => ViolationCategory::Refactoring,
-        _ => ViolationCategory::Quality,
-    }
+    s.parse().unwrap_or(ViolationCategory::Quality)
 }
 
 pub(crate) fn validate_path_rules(
-    workspace_root: &Path,
     rules: &[ValidatedRule],
     files: &[PathBuf],
+    filter_executor: &RuleFilterExecutor,
+    workspace_deps: &WorkspaceDependencies,
 ) -> Vec<Box<dyn Violation>> {
     let path_rules: Vec<&ValidatedRule> = rules
         .iter()
@@ -132,29 +135,16 @@ pub(crate) fn validate_path_rules(
         return Vec::new();
     }
 
-    let filter_executor = RuleFilterExecutor::new(workspace_root.to_path_buf());
-    let workspace_deps = match filter_executor.parse_workspace_dependencies() {
-        Ok(deps) => deps,
-        Err(e) => {
-            mcb_domain::warn!(
-                "validate",
-                "Failed to parse workspace dependencies for path rules",
-                &e.to_string()
-            );
-            return Vec::new();
-        }
-    };
-
     let mut violations: Vec<Box<dyn Violation>> = Vec::new();
 
-    for rule in &path_rules {
-        for file in files {
+    for file in files {
+        for rule in &path_rules {
             let Some(filters) = &rule.filters else {
                 continue;
             };
 
             let should_exec = filter_executor
-                .should_execute_rule(filters, file, None, &workspace_deps)
+                .should_execute_rule(filters, file, None, workspace_deps)
                 .unwrap_or(false);
 
             if should_exec {

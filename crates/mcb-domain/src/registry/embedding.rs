@@ -46,10 +46,12 @@ crate::impl_config_builder!(EmbeddingProviderConfig {
 });
 
 crate::impl_registry!(
-    provider_trait: crate::ports::EmbeddingProvider,
+    provider_trait: crate::ports::providers::embedding::EmbeddingProvider,
     config_type: EmbeddingProviderConfig,
     entry_type: EmbeddingProviderEntry,
     slice_name: EMBEDDING_PROVIDERS,
     resolve_fn: resolve_embedding_provider,
-    list_fn: list_embedding_providers
+    list_fn: list_embedding_providers,
+    register_macro: register_embedding_provider,
+    module: embedding
 );

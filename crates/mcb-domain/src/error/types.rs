@@ -220,11 +220,11 @@ pub enum Error {
 
     /// Browse operation error
     #[error("Browse error: {0}")]
-    Browse(#[from] crate::ports::BrowseError),
+    Browse(#[from] crate::ports::services::browse::BrowseError),
 
     /// Highlighting operation error
     #[error("Highlighting error: {0}")]
-    Highlight(#[from] crate::ports::HighlightError),
+    Highlight(#[from] crate::ports::services::browse::HighlightError),
 }
 
 impl Error {
@@ -360,6 +360,49 @@ impl Error {
         }
     }
 
+    /// Create a database error with source
+    pub fn database_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Database {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create a configuration error with source
+    pub fn config_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Configuration {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create an infrastructure error with source
+    pub fn infrastructure_with_source<
+        S: Into<String>,
+        E: std::error::Error + Send + Sync + 'static,
+    >(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Infrastructure {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create a config invalid error
+    pub fn config_invalid<S1: Into<String>, S2: Into<String>>(key: S1, message: S2) -> Self {
+        Self::ConfigInvalid {
+            key: key.into(),
+            message: message.into(),
+        }
+    }
     /// Create a repository not found error
     pub fn repository_not_found<S: Into<String>>(path: S) -> Self {
         Self::RepositoryNotFound { path: path.into() }
@@ -423,5 +466,12 @@ impl Error {
     /// ```
     pub fn not_found_or<T>(opt: Option<T>, entity_type: &str, id: &str) -> Result<T> {
         opt.ok_or_else(|| Error::not_found(format!("{entity_type} with id {id} not found")))
+    }
+}
+
+// ── Conversion from mcb-utils error types ──────────────────────────
+impl From<mcb_utils::UtilsError> for Error {
+    fn from(err: mcb_utils::UtilsError) -> Self {
+        Self::internal(err.to_string())
     }
 }

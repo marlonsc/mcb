@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: [1, 2, 3, 9, 12, 13]
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -16,6 +16,8 @@ implementation_status: Incomplete
 # ADR 008: Git-Aware Semantic Indexing v0.2.0
 
 ## Status
+
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
 
 **Proposed**(Planned for v0.2.0)
 

@@ -1,0 +1,368 @@
+# =============================================================================
+# Domain ↔ SeaORM Conversion Mappings
+# =============================================================================
+#
+# Used by `scripts/codegen-conversions.py` to generate Rust conversion files.
+# Run `make codegen-conversions` to regenerate.
+#
+# Converter types:
+#   direct            — Same field name, same type (default for `fields` list)
+#   enum              — String ↔ strum enum: parse/to_string
+#   enum_opt          — Option<String> ↔ enum: as_deref → parse → unwrap_or
+#   bool              — i64 ↔ bool: != 0 / i64::from
+#   bool_opt          — Option<i64> ↔ bool: is_some_and(|v| v != 0) / Some(i64::from)
+#   opt_bool          — Option<i64> ↔ Option<bool>: map(|v| v != 0) / map(i64::from)
+#   opt_int_cast      — Option<i64> ↔ Option<i32>: map(|v| v as i32) / map(i64::from)
+#   int_cast          — i64 ↔ i32: as i32 / i64::from
+#   json_array        — Option<String> ↔ Vec<String>: serde_json
+#   json_array_required — String ↔ Vec<String>: serde_json (non-optional DB field)
+#   json_object       — Option<String> ↔ T: serde_json with unwrap_or_default
+#   json_object_opt   — Option<String> ↔ Option<T>: serde_json
+#   json_value        — String ↔ serde_json::Value
+#   not_set           — Entity field not in domain (ActiveValue::NotSet)
+#   unwrap_default    — Option<T> → T with unwrap_or_default (domain required, DB optional)
+#   computed           — Custom Rust expression (from_model / to_active)
+
+# -----------------------------------------------------------------------------
+# TRIVIAL — Pure field-by-field mapping
+# -----------------------------------------------------------------------------
+
+[organization]
+domain = "Organization"
+import = "mcb_domain::entities::Organization"
+entity = "organization"
+fields = ["id", "name", "slug", "settings_json", "created_at", "updated_at"]
+
+[api_key]
+domain = "ApiKey"
+import = "mcb_domain::entities::ApiKey"
+entity = "api_key"
+fields = ["id", "org_id", "user_id", "key_hash", "name", "scopes_json", "expires_at", "created_at", "revoked_at"]
+
+[issue_comment]
+domain = "IssueComment"
+import = "mcb_domain::entities::IssueComment"
+entity = "issue_comment"
+fields = ["id", "issue_id", "author_id", "content", "created_at"]
+
+[issue_label]
+domain = "IssueLabel"
+import = "mcb_domain::entities::IssueLabel"
+entity = "issue_label"
+fields = ["id", "org_id", "project_id", "name", "color", "created_at"]
+
+[plan_version]
+domain = "PlanVersion"
+import = "mcb_domain::entities::plan::PlanVersion"
+entity = "plan_version"
+fields = ["id", "org_id", "plan_id", "version_number", "content_json", "change_summary", "created_by", "created_at"]
+
+[project]
+domain = "Project"
+import = "mcb_domain::entities::Project"
+entity = "project"
+fields = ["id", "org_id", "name", "path", "created_at", "updated_at"]
+
+[project_decision]
+domain = "ProjectDecision"
+import = "mcb_domain::entities::project::ProjectDecision"
+entity = "project_decision"
+fields = ["id", "project_id", "issue_id", "title", "context", "decision", "consequences", "created_at"]
+
+[team]
+domain = "Team"
+import = "mcb_domain::entities::Team"
+entity = "team"
+fields = ["id", "org_id", "name", "created_at"]
+
+# -----------------------------------------------------------------------------
+# MODERATE — Enum, bool, or int_cast converters
+# -----------------------------------------------------------------------------
+
+[agent_session]
+domain = "AgentSession"
+import = "mcb_domain::entities::AgentSession"
+extra_imports = ["mcb_domain::entities::agent::{AgentSessionStatus, AgentType}"]
+entity = "agent_session"
+fields = ["id", "session_summary_id", "model", "parent_session_id", "started_at", "ended_at", "duration_ms", "prompt_summary", "result_summary", "token_count", "tool_calls_count", "delegations_count", "project_id", "worktree_id"]
+
+[agent_session.convert.agent_type]
+type = "enum"
+enum_type = "AgentType"
+default = "AgentType::Sisyphus"
+
+[agent_session.convert.status]
+type = "enum"
+enum_type = "AgentSessionStatus"
+default = "AgentSessionStatus::Active"
+
+[agent_worktree_assignment]
+domain = "AgentWorktreeAssignment"
+import = "mcb_domain::entities::AgentWorktreeAssignment"
+entity = "agent_worktree_assignment"
+fields = ["id", "agent_session_id", "worktree_id", "assigned_at", "released_at"]
+not_set = ["origin_context"]
+
+[branch]
+domain = "Branch"
+import = "mcb_domain::entities::Branch"
+entity = "branch"
+fields = ["id", "org_id", "repository_id", "name", "head_commit", "upstream", "created_at"]
+not_set = ["project_id", "origin_context"]
+
+[branch.convert.is_default]
+type = "bool"
+
+[delegation]
+domain = "Delegation"
+import = "mcb_domain::entities::Delegation"
+entity = "delegation"
+fields = ["id", "parent_session_id", "child_session_id", "prompt", "prompt_embedding_id", "result", "created_at", "completed_at", "duration_ms"]
+
+[delegation.convert.success]
+type = "bool"
+
+[plan]
+domain = "Plan"
+import = "mcb_domain::entities::Plan"
+extra_imports = ["mcb_domain::entities::plan::PlanStatus"]
+entity = "plan"
+fields = ["id", "org_id", "project_id", "title", "description", "created_by", "created_at", "updated_at"]
+
+[plan.convert.status]
+type = "enum"
+enum_type = "PlanStatus"
+default = "PlanStatus::Draft"
+
+[plan_review]
+domain = "PlanReview"
+import = "mcb_domain::entities::plan::{PlanReview, ReviewVerdict}"
+entity = "plan_review"
+fields = ["id", "org_id", "plan_version_id", "reviewer_id", "feedback", "created_at"]
+
+[plan_review.convert.verdict]
+type = "enum"
+enum_type = "ReviewVerdict"
+default = "ReviewVerdict::NeedsRevision"
+
+[project_dependency]
+domain = "ProjectDependency"
+import = "mcb_domain::entities::project::{DependencyType, ProjectDependency}"
+entity = "project_dependency"
+fields = ["id", "from_issue_id", "to_issue_id", "created_at"]
+
+[project_dependency.convert.dependency_type]
+type = "enum"
+enum_type = "DependencyType"
+default = "DependencyType::RelatesTo"
+
+[project_phase]
+domain = "ProjectPhase"
+import = "mcb_domain::entities::project::{PhaseStatus, ProjectPhase}"
+entity = "project_phase"
+fields = ["id", "project_id", "name", "description", "started_at", "completed_at", "created_at", "updated_at"]
+
+[project_phase.convert.sequence]
+type = "int_cast"
+
+[project_phase.convert.status]
+type = "enum"
+enum_type = "PhaseStatus"
+default = "PhaseStatus::Planned"
+
+[repository]
+domain = "Repository"
+import = "mcb_domain::entities::Repository"
+extra_imports = ["mcb_domain::entities::repository::VcsType"]
+entity = "repository"
+fields = ["id", "org_id", "project_id", "name", "url", "local_path", "created_at", "updated_at"]
+not_set = ["origin_context"]
+
+[repository.convert.vcs_type]
+type = "enum"
+enum_type = "VcsType"
+default = "VcsType::Git"
+
+[tool_call]
+domain = "ToolCall"
+import = "mcb_domain::entities::ToolCall"
+entity = "tool_call"
+fields = ["id", "session_id", "tool_name", "params_summary", "error_message", "duration_ms", "created_at"]
+not_set = ["org_id", "project_id", "repo_id"]
+
+[tool_call.convert.success]
+type = "bool"
+
+[user]
+domain = "User"
+import = "mcb_domain::entities::User"
+extra_imports = ["mcb_domain::entities::user::UserRole"]
+entity = "user"
+fields = ["id", "org_id", "email", "display_name", "api_key_hash", "created_at", "updated_at"]
+
+[user.convert.role]
+type = "enum"
+enum_type = "UserRole"
+default = ""
+
+[worktree]
+domain = "Worktree"
+import = "mcb_domain::entities::Worktree"
+extra_imports = ["mcb_domain::entities::worktree::WorktreeStatus"]
+entity = "worktree"
+fields = ["id", "repository_id", "branch_id", "path", "assigned_agent_id", "created_at", "updated_at"]
+not_set = ["org_id", "project_id", "origin_context"]
+
+[worktree.convert.status]
+type = "enum"
+enum_type = "WorktreeStatus"
+default = "WorktreeStatus::Active"
+
+# -----------------------------------------------------------------------------
+# COMPLEX — JSON, computed IDs, multiple converters
+# -----------------------------------------------------------------------------
+
+[checkpoint]
+domain = "Checkpoint"
+import = "mcb_domain::entities::Checkpoint"
+extra_imports = ["mcb_domain::entities::agent::CheckpointType"]
+entity = "checkpoint"
+fields = ["id", "session_id", "description", "created_at", "restored_at"]
+
+[checkpoint.convert.checkpoint_type]
+type = "enum"
+enum_type = "CheckpointType"
+default = "CheckpointType::File"
+
+[checkpoint.convert.snapshot_data]
+type = "json_value"
+
+[checkpoint.convert.expired]
+type = "bool_opt"
+
+[error_pattern]
+domain = "ErrorPattern"
+import = "mcb_domain::entities::memory::{ErrorPattern, ErrorPatternCategory}"
+entity = "error_pattern"
+fields = ["id", "project_id", "pattern_signature", "description", "occurrence_count", "first_seen_at", "last_seen_at", "embedding_id"]
+
+[error_pattern.convert.category]
+type = "enum"
+enum_type = "ErrorPatternCategory"
+default = "ErrorPatternCategory::Other"
+
+[error_pattern.convert.solutions]
+type = "json_array"
+
+[error_pattern.convert.affected_files]
+type = "json_array"
+
+[error_pattern.convert.tags]
+type = "json_array"
+
+[error_pattern_match]
+domain = "ErrorPatternMatch"
+import = "mcb_domain::entities::memory::ErrorPatternMatch"
+entity = "error_pattern_match"
+fields = ["id", "pattern_id", "observation_id", "confidence", "matched_at", "resolved_at"]
+
+[error_pattern_match.convert.solution_applied]
+type = "opt_int_cast"
+
+[error_pattern_match.convert.resolution_successful]
+type = "opt_bool"
+
+[issue_label_assignment]
+domain = "IssueLabelAssignment"
+import = "mcb_domain::entities::issue::IssueLabelAssignment"
+extra_imports = ["mcb_domain::value_objects::ids::IssueLabelAssignmentId"]
+entity = "issue_label_assignment"
+fields = ["issue_id", "label_id", "created_at"]
+
+[issue_label_assignment.convert.id]
+type = "computed"
+from_model = 'IssueLabelAssignmentId::from(format!("{}:{}", m.issue_id, m.label_id).as_str())'
+
+[observation]
+domain = "Observation"
+import = "mcb_domain::entities::observation::{Observation, ObservationType}"
+entity = "observation"
+fields = ["id", "project_id", "content", "content_hash", "created_at", "embedding_id"]
+
+[observation.convert.tags]
+type = "json_array"
+
+[observation.convert.observation_type]
+type = "enum_opt"
+enum_type = "ObservationType"
+default = "ObservationType::Context"
+domain_field = "r#type"
+
+[observation.convert.metadata]
+type = "json_object"
+object_type = "ObservationMetadata"
+
+[project_issue]
+domain = "ProjectIssue"
+import = "mcb_domain::entities::ProjectIssue"
+extra_imports = ["mcb_domain::entities::project::{IssueStatus, IssueType}"]
+entity = "project_issue"
+fields = ["id", "org_id", "project_id", "created_by", "phase_id", "title", "description", "assignee", "estimated_minutes", "actual_minutes", "notes", "design", "parent_issue_id", "created_at", "updated_at", "closed_at", "closed_reason"]
+
+[project_issue.convert.issue_type]
+type = "enum"
+enum_type = "IssueType"
+default = "IssueType::Task"
+
+[project_issue.convert.status]
+type = "enum"
+enum_type = "IssueStatus"
+default = "IssueStatus::Open"
+
+[project_issue.convert.priority]
+type = "int_cast"
+
+[project_issue.convert.labels]
+type = "json_array_required"
+
+[session_summary]
+domain = "SessionSummary"
+import = "mcb_domain::entities::memory::{OriginContext, SessionSummary}"
+entity = "session_summary"
+fields = ["id", "project_id", "session_id", "created_at"]
+not_set = ["repo_id"]
+
+[session_summary.convert.org_id]
+type = "unwrap_default"
+
+[session_summary.convert.topics]
+type = "json_array"
+
+[session_summary.convert.decisions]
+type = "json_array"
+
+[session_summary.convert.next_steps]
+type = "json_array"
+
+[session_summary.convert.key_files]
+type = "json_array"
+
+[session_summary.convert.origin_context]
+type = "json_object_opt"
+object_type = "OriginContext"
+
+[team_member]
+domain = "TeamMember"
+import = "mcb_domain::entities::team::{TeamMember, TeamMemberRole}"
+extra_imports = ["mcb_domain::value_objects::ids::TeamMemberId"]
+entity = "team_member"
+fields = ["team_id", "user_id", "joined_at"]
+
+[team_member.convert.id]
+type = "computed"
+from_model = 'TeamMemberId::from(format!("{}:{}", m.team_id, m.user_id).as_str())'
+
+[team_member.convert.role]
+type = "enum"
+enum_type = "TeamMemberRole"
+default = "TeamMemberRole::Member"

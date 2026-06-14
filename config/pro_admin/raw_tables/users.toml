@@ -1,0 +1,33 @@
+[table]
+title = "Users"
+table_size = "middle"
+page_size = 30
+order_by = { field = "created_at", order = "desc" }
+columns = [
+    { title = "ID", field = "id", width = 200 },
+    { field = "org_id", width = 150 },
+    { field = "email", width = 200 },
+    { field = "display_name", width = 180 },
+    { field = "role", width = 100 },
+    { field = "created_at", width = 140 },
+]
+hidden_columns = ["api_key_hash"]
+
+[filter]
+hidden_columns = ["api_key_hash"]
+
+[editor]
+enable = true
+title_field = "display_name"
+
+[create]
+enable = true
+hidden_columns = ["api_key_hash"]
+
+[update]
+enable = true
+readonly_columns = ["id", "created_at"]
+hidden_columns = ["api_key_hash"]
+
+[delete]
+enable = true

@@ -124,15 +124,18 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 ## Validation Criteria
 
+The unchecked items below are historical compatibility observations, not active
+project tasks. Current work is tracked in beads.
+
 - [x] All providers are correctly registered and discoverable
 - [x] Build succeeds on all supported platforms (Linux, macOS, Windows)
-- [ ] WASM builds work (future compatibility)
-- [ ] Performance benchmarks show no regression
+- WASM builds work (future compatibility)
+- Performance benchmarks show no regression
 - [x] All integration tests pass
-- [ ] Binary size is reduced or maintained
+- Binary size is reduced or maintained
 
 ## Related ADRs
 
-- [ADR 029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) - Historical DI strategy (superseded by ADR-050)
+- [ADR 029: Hexagonal Architecture](050-manual-composition-root-dill-removal.md) - Historical DI strategy (superseded by ADR-050)
 - [ADR 003: Unified Provider Architecture](003-unified-provider-architecture.md) - Provider registration system
 - [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Multi-crate organization

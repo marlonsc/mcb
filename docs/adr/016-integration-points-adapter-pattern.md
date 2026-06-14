@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: [13, 15, 19]
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -16,6 +16,8 @@ implementation_status: Incomplete
 # ADR 016: Integration Points and Adapter Pattern
 
 ## Status
+
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
 
 **Accepted** (v0.2.0 - Preparation)
 **Date**: 2026-01-14
@@ -171,12 +173,15 @@ Mitigation:
 - Use inline conversions where possible
 - Benchmark to ensure <1% overhead
 
-## Implementation Checklist (v0.2.0)
+## Historical Implementation Notes (v0.2.0)
 
-- [ ] Create `crates/mcb-providers/src/analyzers/` directory
-- [ ] Define `AnalysisAdapter` trait
-- [ ] Document conversion patterns
-- [ ] Create adapter templates for v0.3.0
+These notes preserve the original design intent and are not a live task board.
+Current implementation work is tracked in beads.
+
+- Create `crates/mcb-providers/src/analyzers/` directory
+- Define `AnalysisAdapter` trait
+- Document conversion patterns
+- Create adapter templates for v0.3.0
 
 ## Related ADRs
 

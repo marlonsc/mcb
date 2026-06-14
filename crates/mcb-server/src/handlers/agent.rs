@@ -12,7 +12,7 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::CallToolResult;
 use serde_json::Value;
 
-use mcb_domain::utils::id as domain_id;
+use mcb_utils::utils::id as domain_id;
 use validator::Validate;
 
 use crate::args::{AgentAction, AgentArgs};
@@ -43,13 +43,27 @@ impl AgentHandler {
         args.validate()
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
-        let session_id = args.session_id.as_str();
-        if session_id.is_empty()
-            || args.session_id.inner() == uuid::Uuid::nil()
-            || args.session_id == mcb_domain::value_objects::SessionId::from_name("")
-        {
-            return Err(McpError::invalid_params("session_id is required", None));
-        }
+        let session_id = match &args.session_id {
+            Some(id) => {
+                if id.as_str().is_empty()
+                    || id.inner() == uuid::Uuid::nil()
+                    || *id == mcb_domain::value_objects::SessionId::from_name("")
+                {
+                    return Err(McpError::invalid_params(
+                        "session_id resolved but is invalid (nil or empty-derived)",
+                        None,
+                    ));
+                }
+                id
+            }
+            None => {
+                return Err(McpError::invalid_params(
+                    "session_id is required (not resolved from context)",
+                    None,
+                ));
+            }
+        };
+        let session_id_str = session_id.as_str();
 
         let data = match args.data.as_object() {
             Some(data) => data,
@@ -57,88 +71,93 @@ impl AgentHandler {
                 return Ok(tool_error("Data must be a JSON object"));
             }
         };
-        let now = mcb_domain::utils::time::epoch_secs_i64()
+        let now = mcb_utils::utils::time::epoch_secs_i64()
             .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
 
         match args.action {
-            AgentAction::LogTool => {
-                let tool_name = match data
-                    .get("tool_name")
-                    .and_then(Value::as_str)
-                    .map(str::to_owned)
-                {
-                    Some(value) => value,
-                    None => {
-                        return Ok(tool_error("Missing tool_name"));
-                    }
-                };
-                let tool_call = ToolCall {
-                    id: format!("tc_{}", domain_id::generate()),
-                    session_id: session_id.clone(),
-                    tool_name: tool_name.clone(),
-                    params_summary: data
-                        .get("params_summary")
-                        .and_then(Value::as_str)
-                        .map(str::to_owned),
-                    success: data.get("success").and_then(Value::as_bool).unwrap_or(true),
-                    error_message: data
-                        .get("error_message")
-                        .and_then(Value::as_str)
-                        .map(str::to_owned),
-                    duration_ms: data.get("duration_ms").and_then(Value::as_i64),
-                    created_at: now,
-                };
-                match self.agent_service.store_tool_call(tool_call).await {
-                    Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
-                        "tool_call_id": id,
-                        "session_id": session_id,
-                        "tool_name": tool_name,
-                    })),
-                    Err(e) => Ok(to_contextual_tool_error(e)),
-                }
-            }
+            AgentAction::LogTool => self.handle_log_tool(data, &session_id_str, now).await,
             AgentAction::LogDelegation => {
-                let child_session_id = match data
-                    .get("child_session_id")
-                    .and_then(Value::as_str)
-                    .map(str::to_owned)
-                {
-                    Some(value) => value,
-                    None => {
-                        return Ok(tool_error("Missing child_session_id"));
-                    }
-                };
-                let delegation = Delegation {
-                    id: format!("del_{}", domain_id::generate()),
-                    parent_session_id: session_id.clone(),
-                    child_session_id: child_session_id.clone(),
-                    prompt: data
-                        .get("prompt")
-                        .and_then(Value::as_str)
-                        .map(str::to_owned)
-                        .unwrap_or_default(),
-                    prompt_embedding_id: data
-                        .get("prompt_embedding_id")
-                        .and_then(Value::as_str)
-                        .map(str::to_owned),
-                    result: data
-                        .get("result")
-                        .and_then(Value::as_str)
-                        .map(str::to_owned),
-                    success: data.get("success").and_then(Value::as_bool).unwrap_or(true),
-                    created_at: now,
-                    completed_at: None,
-                    duration_ms: data.get("duration_ms").and_then(Value::as_i64),
-                };
-                match self.agent_service.store_delegation(delegation).await {
-                    Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
-                        "delegation_id": id,
-                        "parent_session_id": session_id,
-                        "child_session_id": child_session_id,
-                    })),
-                    Err(e) => Ok(to_contextual_tool_error(e)),
-                }
+                self.handle_log_delegation(data, &session_id_str, now).await
             }
+        }
+    }
+
+    async fn handle_log_tool(
+        &self,
+        data: &serde_json::Map<String, Value>,
+        session_id_str: &str,
+        now: i64,
+    ) -> Result<CallToolResult, McpError> {
+        let tool_name = match data.get("tool_name").and_then(Value::as_str) {
+            Some(value) => value.to_owned(),
+            None => return Ok(tool_error("Missing tool_name")),
+        };
+        let tool_call = ToolCall {
+            id: format!("tc_{}", domain_id::generate()),
+            session_id: session_id_str.to_owned(),
+            tool_name: tool_name.clone(),
+            params_summary: data
+                .get("params_summary")
+                .and_then(Value::as_str)
+                .map(str::to_owned),
+            success: data.get("success").and_then(Value::as_bool).unwrap_or(true),
+            error_message: data
+                .get("error_message")
+                .and_then(Value::as_str)
+                .map(str::to_owned),
+            duration_ms: data.get("duration_ms").and_then(Value::as_i64),
+            created_at: now,
+        };
+        match self.agent_service.store_tool_call(tool_call).await {
+            Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
+                "tool_call_id": id,
+                "session_id": session_id_str,
+                "tool_name": tool_name,
+            })),
+            Err(e) => Ok(to_contextual_tool_error(e)),
+        }
+    }
+
+    async fn handle_log_delegation(
+        &self,
+        data: &serde_json::Map<String, Value>,
+        session_id_str: &str,
+        now: i64,
+    ) -> Result<CallToolResult, McpError> {
+        let child_session_id = match data.get("child_session_id").and_then(Value::as_str) {
+            Some(value) => value.to_owned(),
+            None => return Ok(tool_error("Missing child_session_id")),
+        };
+        let delegation = Delegation {
+            id: format!("del_{}", domain_id::generate()),
+            parent_session_id: session_id_str.to_owned(),
+            child_session_id: child_session_id.clone(),
+            prompt: data
+                .get("prompt")
+                .and_then(Value::as_str)
+                .map(str::to_owned)
+                // INTENTIONAL: Optional prompt field; empty string is valid default
+                .unwrap_or_default(),
+            prompt_embedding_id: data
+                .get("prompt_embedding_id")
+                .and_then(Value::as_str)
+                .map(str::to_owned),
+            result: data
+                .get("result")
+                .and_then(Value::as_str)
+                .map(str::to_owned),
+            success: data.get("success").and_then(Value::as_bool).unwrap_or(true),
+            created_at: now,
+            completed_at: None,
+            duration_ms: data.get("duration_ms").and_then(Value::as_i64),
+        };
+        match self.agent_service.store_delegation(delegation).await {
+            Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
+                "delegation_id": id,
+                "parent_session_id": session_id_str,
+                "child_session_id": child_session_id,
+            })),
+            Err(e) => Ok(to_contextual_tool_error(e)),
         }
     }
 }

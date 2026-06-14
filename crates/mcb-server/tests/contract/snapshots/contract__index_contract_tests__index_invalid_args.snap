@@ -1,0 +1,26 @@
+---
+source: crates/mcb-server/tests/contract/index_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "max_file_size": "not_a_number"
+      },
+      "name": "index_repo"
+    }
+  },
+  "response": {
+    "error": {
+      "code": -32602,
+      "message": "Missing execution provenance for 'index_repo': session_id, repo_id, operator_id, machine_id, agent_program, model_id, delegated, timestamp"
+    },
+    "id": 1,
+    "jsonrpc": "2.0"
+  },
+  "status": 200
+}

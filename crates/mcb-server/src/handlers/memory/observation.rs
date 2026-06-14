@@ -3,7 +3,7 @@
 //!
 use std::sync::Arc;
 
-use mcb_domain::ports::MemoryServiceInterface;
+use mcb_domain::ports::{MemoryServiceInterface, StoreObservationInput};
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
@@ -13,12 +13,16 @@ use super::common::{
     resolve_memory_origin_context, str_vec,
 };
 use crate::args::MemoryArgs;
-use crate::constants::fields::{
-    FIELD_BRANCH, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE, FIELD_OBSERVATIONS,
-};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+<<<<<<< HEAD
 use crate::utils::mcp::{resolve_org_id, tool_error};
+=======
+use crate::utils::mcp::tool_error;
+use mcb_utils::constants::keys::{
+    FIELD_BRANCH, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE, FIELD_OBSERVATIONS,
+};
+>>>>>>> feat/v0.3.2-ci-gates
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -54,6 +58,7 @@ pub async fn store_observation(
     );
     let org_id = resolve_org_id(args.org_id.as_deref());
     match memory_service
+<<<<<<< HEAD
         .store_observation(
             org_id,
             origin.project_id,
@@ -62,6 +67,15 @@ pub async fn store_observation(
             tags,
             metadata,
         )
+=======
+        .store_observation(StoreObservationInput {
+            project_id: origin.project_id,
+            content,
+            r#type: observation_type,
+            tags,
+            metadata,
+        })
+>>>>>>> feat/v0.3.2-ci-gates
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({
@@ -78,7 +92,10 @@ pub async fn get_observations(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let ids = args.ids.clone().unwrap_or_default();
+    let ids = match args.ids.clone() {
+        Some(ids) => ids,
+        None => return Ok(tool_error("Missing required field: ids")),
+    };
     if ids.is_empty() {
         return Ok(tool_error("Missing observation ids"));
     }

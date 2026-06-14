@@ -1,0 +1,23 @@
+# cargo-nextest configuration.
+#
+# mcb-server integration tests share a process-wide test context
+# (`tests/utils/test_fixtures.rs`: `OnceLock<Option<SharedTestContext>>` with a
+# heavy provider/DB init). Under `cargo test` that context initializes ONCE per
+# test binary and is shared by all threads. nextest instead runs ONE PROCESS PER
+# TEST, so each test re-initializes the context; running them concurrently makes
+# several heavy inits collide and return `None` ("shared test context init
+# failed"). Serialize the integration tests so only one init runs at a time —
+# this matches the cargo-test execution semantics without losing nextest's speed
+# on the rest of the suite.
+
+[test-groups]
+serial-shared-context = { max-threads = 1 }
+
+[[profile.default.overrides]]
+filter = 'package(mcb-server) and kind(test)'
+test-group = 'serial-shared-context'
+# Defense-in-depth: the CI warm-up step (`make test SCOPE=warmup`) populates the
+# hf-hub cache in-job so these load the model offline. retries absorbs a residual
+# transient HF 429 on a genuine cold-cache run — visible in nextest output, not a
+# silent fallback. Primary fix is the warm-up; this is the safety net.
+retries = 2

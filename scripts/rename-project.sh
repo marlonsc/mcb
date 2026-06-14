@@ -53,7 +53,7 @@ SPECIAL_FILES=(
 	"Cargo.toml"
 	"src/main.rs"
 	"systemd/mcb.service"
-	"config/default.toml"
+	"config/development.yaml"
 )
 
 show_help() {

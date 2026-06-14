@@ -25,21 +25,6 @@ mcb/
 │   │       ├── events/
 │   │       └── error.rs
 │   │
-│   ├── mcb-application/              # Application layer (use cases)
-│   │   └── src/
-│   │       ├── use_cases/
-│   │       │   ├── agent_session_service.rs
-│   │       │   ├── context_service.rs
-│   │       │   ├── indexing_service.rs
-│   │       │   ├── memory_service.rs
-│   │       │   ├── search_service.rs
-│   │       │   ├── validation_service.rs
-│   │       │   └── mod.rs
-│   │       ├── decorators/
-│   │       │   └── instrumented_embedding.rs
-│   │       ├── constants.rs
-│   │       └── lib.rs
-│   │
 │   ├── mcb-infrastructure/           # Infrastructure layer (DI, config, utilities)
 │   │   └── src/
 │   │       ├── di/
@@ -110,7 +95,6 @@ mcb/
 | Layer | Crate | Purpose |
 | ------- | ------- | --------- |
 | Domain | `mcb-domain` | Entities, value objects, domain ports |
-| Application | `mcb-application` | Use-case orchestration |
 | Infrastructure | `mcb-infrastructure` | DI, config, routing, technical services |
 | Providers | `mcb-providers` | External adapters and implementations |
 | Server | `mcb-server` | MCP protocol handlers and admin/web surfaces |

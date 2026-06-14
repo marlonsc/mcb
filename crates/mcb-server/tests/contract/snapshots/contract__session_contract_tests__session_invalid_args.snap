@@ -1,0 +1,26 @@
+---
+source: crates/mcb-server/tests/contract/session_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "id": 1,
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "arguments": {
+        "limit": "not_a_number"
+      },
+      "name": "list_sessions"
+    }
+  },
+  "response": {
+    "error": {
+      "code": -32602,
+      "message": "Failed to parse arguments: invalid type: string \"not_a_number\", expected u32"
+    },
+    "id": 1,
+    "jsonrpc": "2.0"
+  },
+  "status": 200
+}

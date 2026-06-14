@@ -3,6 +3,7 @@
 pub mod architecture;
 pub mod async_patterns;
 pub mod cargo_dependency;
+pub mod declarative_validator_tests;
 pub mod dependency;
 pub mod documentation;
 pub mod error_boundary_tests;

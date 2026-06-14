@@ -111,6 +111,6 @@ impl RefactoringValidator {
 
 crate::impl_validator!(
     RefactoringValidator,
-    "refactoring",
+    mcb_utils::constants::validate::VALIDATOR_REFACTORING,
     "Validates refactoring completeness (duplicate definitions, missing tests, stale references)"
 );

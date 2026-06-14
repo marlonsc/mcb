@@ -8,10 +8,9 @@ use rstest::rstest;
 use rstest::*;
 
 use crate::utils::test_constants::{EXPECT_METHOD, UNWRAP_METHOD};
+use mcb_domain::utils::tests::utils::TestResult;
 
-type TestResult = Result<(), Box<dyn std::error::Error>>;
-
-#[test]
+#[rstest]
 fn test_detector_creation() {
     let detector = UnwrapDetector::new();
     assert!(
@@ -42,7 +41,7 @@ fn detect_single_unwrap_or_expect(
     Ok(())
 }
 
-#[test]
+#[rstest]
 fn test_detect_multiple() -> TestResult {
     let mut detector = UnwrapDetector::new()?;
     let code =
@@ -56,7 +55,7 @@ fn test_detect_multiple() -> TestResult {
     Ok(())
 }
 
-#[test]
+#[rstest]
 fn test_ignore_safe_alternatives() -> TestResult {
     let mut detector = UnwrapDetector::new()?;
     let code = "fn main() {\n    let x = Some(1).unwrap_or(0);\n    let y = Some(2).unwrap_or_default();\n}";
@@ -67,7 +66,7 @@ fn test_ignore_safe_alternatives() -> TestResult {
     Ok(())
 }
 
-#[test]
+#[rstest]
 fn test_detect_in_test_module() -> TestResult {
     let mut detector = UnwrapDetector::new()?;
     let code =
@@ -80,7 +79,7 @@ fn test_detect_in_test_module() -> TestResult {
     Ok(())
 }
 
-#[test]
+#[rstest]
 fn test_line_numbers_are_correct() -> TestResult {
     let mut detector = UnwrapDetector::new()?;
     let code = "fn main() {\n    let x = Some(1).unwrap();\n}\n";

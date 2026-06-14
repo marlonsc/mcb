@@ -4,10 +4,13 @@
 use std::path::Path;
 
 use super::super::violation::NamingViolation;
-use crate::traits::violation::Severity;
-use crate::utils::naming::is_snake_case;
-use crate::validators::naming::constants::{MODULE_FILE_NAME, MODULE_SPECIAL_FILES};
+use mcb_domain::ports::validation::Severity;
+use mcb_utils::constants::validate::{MODULE_FILE_NAME, MODULE_SPECIAL_FILES};
+use mcb_utils::utils::naming::is_snake_case;
 
+/// Validates that a module file name (and, for `mod.rs`, its directory name)
+/// uses `snake_case`, returning a `BadModuleName` violation otherwise. Special
+/// files yield `None`.
 pub fn validate_module_name(path: &Path) -> Option<NamingViolation> {
     let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
     let parent_name = path

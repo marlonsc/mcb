@@ -31,11 +31,14 @@ handler_new!(IndexHandler {
 
 impl IndexHandler {
     fn validate_request(args: &IndexArgs) -> Result<(PathBuf, CollectionId), McpError> {
-        let path_str = args
+        let path = args
             .path
             .as_ref()
-            .ok_or_else(|| McpError::invalid_params("Missing required parameter: path", None))?;
-        let path = PathBuf::from(path_str);
+            .map(PathBuf::from)
+            .or_else(|| std::env::current_dir().ok())
+            .ok_or_else(|| {
+                McpError::invalid_params("path is required (working directory unavailable)", None)
+            })?;
         if !path.exists() {
             return Err(McpError::invalid_params(
                 "Specified path does not exist",
@@ -48,12 +51,20 @@ impl IndexHandler {
                 None,
             ));
         }
-        let collection_name = args
-            .collection
-            .as_deref()
-            .ok_or_else(|| McpError::invalid_params("collection parameter is required", None))?;
-        let collection_id = normalize_collection_name(collection_name)
-            .map_err(|reason| McpError::invalid_params(reason, None))?;
+        let collection_id = match args.collection.as_deref() {
+            Some(name) => normalize_collection_name(name)
+                .map_err(|reason| McpError::invalid_params(reason, None))?,
+            None => match args.repo_id.as_deref() {
+                Some(repo_id) => normalize_collection_name(repo_id)
+                    .map_err(|reason| McpError::invalid_params(reason, None))?,
+                None => {
+                    return Err(McpError::invalid_params(
+                        "collection parameter is required (no repo_id available for auto-resolution)",
+                        None,
+                    ));
+                }
+            },
+        };
         Ok((path, collection_id))
     }
 
@@ -70,62 +81,67 @@ impl IndexHandler {
             .map_err(|_| McpError::invalid_params("invalid arguments", None))?;
 
         match args.action {
-            IndexAction::Start | IndexAction::GitIndex => {
-                let (path, collection_id) = Self::validate_request(&args)?;
-                let timer = Instant::now();
-                match self
-                    .indexing_service
-                    .index_codebase(&path, &collection_id)
-                    .await
-                {
-                    Ok(result) => Ok(ResponseFormatter::format_indexing_success(
-                        &result,
-                        &path,
-                        timer.elapsed(),
-                    )),
-                    Err(e) => Ok(to_contextual_tool_error(e)),
-                }
-            }
+            IndexAction::Start | IndexAction::GitIndex => self.start_index(&args).await,
             IndexAction::Status => {
                 let status = self.indexing_service.get_status();
                 Ok(ResponseFormatter::format_indexing_status(&status))
             }
-            IndexAction::Clear => {
-                let error_path = args
-                    .path
-                    .as_ref()
-                    .map(PathBuf::from)
-                    .or_else(|| std::env::current_dir().ok())
-                    .ok_or_else(|| {
-                        McpError::invalid_params(
-                            "path parameter is required (working directory unavailable)",
-                            None,
-                        )
-                    })?;
-                let collection_name = args.collection.as_deref().ok_or_else(|| {
-                    McpError::invalid_params("collection parameter is required", None)
-                })?;
-                let milvus_collection = match normalize_collection_name(collection_name) {
-                    Ok(id) => id,
-                    Err(reason) => {
-                        return Err(McpError::invalid_params(reason, None));
-                    }
-                };
-                let milvus_collection_str = milvus_collection.to_string();
-                match self
-                    .indexing_service
-                    .clear_collection(&milvus_collection)
-                    .await
-                {
-                    Ok(()) => Ok(ResponseFormatter::format_clear_index(
-                        &milvus_collection_str,
-                    )),
-                    Err(e) => Ok(ResponseFormatter::format_indexing_error(
-                        &format!("Failed to clear collection {milvus_collection_str}: {e}"),
-                        &error_path,
-                    )),
+            IndexAction::Clear => self.clear_index(&args).await,
+        }
+    }
+
+    /// Index a codebase for the `Start`/`GitIndex` actions.
+    async fn start_index(&self, args: &IndexArgs) -> Result<CallToolResult, McpError> {
+        let (path, collection_id) = Self::validate_request(args)?;
+        let timer = Instant::now();
+        match self
+            .indexing_service
+            .index_codebase(&path, &collection_id)
+            .await
+        {
+            Ok(result) => Ok(ResponseFormatter::format_indexing_success(
+                &result,
+                &path,
+                timer.elapsed(),
+            )),
+            Err(e) => Ok(to_contextual_tool_error(e)),
+        }
+    }
+
+    /// Clear an index collection for the `Clear` action.
+    async fn clear_index(&self, args: &IndexArgs) -> Result<CallToolResult, McpError> {
+        let error_path = args
+            .path
+            .as_ref()
+            .map(PathBuf::from)
+            .or_else(|| std::env::current_dir().ok())
+            .ok_or_else(|| {
+                McpError::invalid_params(
+                    "path parameter is required (working directory unavailable)",
+                    None,
+                )
+            })?;
+        let collection_id = match args.collection.as_deref() {
+            Some(name) => normalize_collection_name(name)
+                .map_err(|reason| McpError::invalid_params(reason, None))?,
+            None => match args.repo_id.as_deref() {
+                Some(repo_id) => normalize_collection_name(repo_id)
+                    .map_err(|reason| McpError::invalid_params(reason, None))?,
+                None => {
+                    return Err(McpError::invalid_params(
+                        "collection parameter is required (no repo_id available for auto-resolution)",
+                        None,
+                    ));
                 }
-            }
+            },
+        };
+        let collection_str = collection_id.to_string();
+        match self.indexing_service.clear_collection(&collection_id).await {
+            Ok(()) => Ok(ResponseFormatter::format_clear_index(&collection_str)),
+            Err(e) => Ok(ResponseFormatter::format_indexing_error(
+                &format!("Failed to clear collection {collection_str}: {e}"),
+                &error_path,
+            )),
         }
     }
 }
