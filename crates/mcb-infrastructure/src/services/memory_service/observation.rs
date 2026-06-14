@@ -137,7 +137,7 @@ impl MemoryServiceImpl {
 
         let content_hash = compute_content_hash(&input.content);
 
-        // Deferred (ADR-056, bead mcb-6pjx.1.4): pass org_id to find_by_hash for tenant-scoped dedup.
+        // Tenant-scoped dedup (ADR-056): org_id flows to find_by_hash, which enforces org isolation.
         if let Some(existing) = self
             .repository
             .find_by_hash(&input.org_id, &content_hash)

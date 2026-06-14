@@ -284,7 +284,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
 
     async fn get_observations_by_ids(
         &self,
-        _org_id: &str,
+        org_id: &str,
         ids: &[ObservationId],
     ) -> Result<Vec<Observation>> {
         if ids.is_empty() {
@@ -293,6 +293,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
         let id_values: Vec<String> = ids.iter().map(ToString::to_string).collect();
         observation::Entity::find()
             .filter(observation::Column::Id.is_in(id_values))
+            .filter(observation::Column::OrgId.eq(org_id))
             .all(&self.db)
             .await
             .map(|models| models.into_iter().map(Into::into).collect())
