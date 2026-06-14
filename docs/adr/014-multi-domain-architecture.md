@@ -116,7 +116,10 @@ Mitigation:
 - Enforce port traits for cross-domain communication
 - Document domain boundaries clearly
 
-## Implementation Checklist
+## Historical Implementation Notes
+
+The lists below preserve the original phased design context. They are not a
+current task board; current work is tracked in beads.
 
 v0.1.1 (Completed):
 
@@ -125,18 +128,18 @@ v0.1.1 (Completed):
 - [x] 20+ port traits with `Send + Sync` bounds (in mcb-domain)
 - [x] mcb-validate enforces layer boundaries
 
-v0.3.0 (Planned):
+v0.3.0 (Historical target):
 
-- [ ] Create `crates/mcb-domain/src/ports/analysis/` (analysis domain ports; per ADR-050 current DI architecture, ports are in mcb-domain)
-- [ ] Create `crates/mcb-providers/src/analyzers/` (PMAT adapters)
-- [ ] Define `AnalysisInterface` trait
-- [ ] Port PMAT complexity/TDG/SATD algorithms
+- Create `crates/mcb-domain/src/ports/analysis/` (analysis domain ports; per ADR-050 current DI architecture, ports are in mcb-domain)
+- Create `crates/mcb-providers/src/analyzers/` (PMAT adapters)
+- Define `AnalysisInterface` trait
+- Port PMAT complexity/TDG/SATD algorithms
 
-v0.5.0 (Planned):
+v0.5.0 (Historical target):
 
-- [ ] Define `QualityInterface` trait
-- [ ] Define `GitInterface` trait
-- [ ] Implement quality and git domain services
+- Define `QualityInterface` trait
+- Define `GitInterface` trait
+- Implement quality and git domain services
 
 ## Canonical References
 

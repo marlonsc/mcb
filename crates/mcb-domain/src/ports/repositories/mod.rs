@@ -46,7 +46,10 @@ pub use org::{
     ApiKeyRegistry, OrgEntityRepository, OrgRegistry, TeamMemberManager, TeamRegistry, UserRegistry,
 };
 pub use plan::{PlanEntityRepository, PlanRegistry, PlanReviewRegistry, PlanVersionRegistry};
-pub use project::ProjectRepository;
+pub use project::{
+    ProjectCrudRepository, ProjectDecisionRepository, ProjectDependencyRepository,
+    ProjectIssueRepository, ProjectPhaseRepository, ProjectRepository,
+};
 pub use vcs::{
     AgentAssignmentManager, VcsBranchRegistry, VcsEntityRepository, VcsRepositoryRegistry,
     VcsWorktreeRegistry,

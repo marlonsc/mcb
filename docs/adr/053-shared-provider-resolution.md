@@ -9,7 +9,7 @@ related: [50, 23, 24]
 extends: [50]
 supersedes: []
 superseded_by: []
-implementation_status: In Progress
+implementation_status: Complete
 ---
 
 # ADR 053: Shared Provider Resolution via ServiceResolutionContext

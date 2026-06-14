@@ -9,6 +9,30 @@
 MDBOOK         := $(shell command -v mdbook 2>/dev/null || echo "$(HOME)/.cargo/bin/mdbook")
 MCB_TEST_PORT  ?= 18080
 
+# Test runner: prefer cargo-nextest (faster, parallel, better output) when installed;
+# fall back to `cargo test`. Doctests always use `cargo test --doc` (nextest can't
+# run them) — semantics preserved since `cargo test --all-targets` also skips doctests.
+MCB_NEXTEST := $(shell command -v cargo-nextest >/dev/null 2>&1 && echo 1)
+ifeq ($(MCB_NEXTEST),1)
+  MCB_TEST_UNIT := MCB_MODEL_ID=test-model cargo nextest run --workspace --lib --test-threads=$$T
+  MCB_TEST_ALL  := MCB_MODEL_ID=test-model cargo nextest run --workspace --test-threads=$$T
+else
+  MCB_TEST_UNIT := MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T cargo test --workspace --lib
+  MCB_TEST_ALL  := MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T cargo test --workspace --all-targets
+endif
+
+# Install Rust tooling: prefer cargo-binstall when available, else cargo install.
+# This is an optimization, not a workaround; environments without binstall keep working.
+MCB_BINSTALL := $(shell command -v cargo-binstall >/dev/null 2>&1 && echo 1)
+ifeq ($(MCB_BINSTALL),1)
+  MCB_INSTALL_CRATES = cargo binstall -y $(1)
+else
+  MCB_INSTALL_CRATES = cargo install --locked $(1)
+endif
+
+# Unknown-WHAT error arm (SSOT): the default case of every verb prints this.
+BAD_WHAT = printf "ERRO: WHAT '%s' invalido. Validos: $(1)\n" "$(WHAT)" >&2; exit 2
+
 # codegen
 CODEGEN_DB         := /tmp/mcb_codegen.db
 MIGRATION_RS       := crates/mcb-providers/src/database/seaorm/migration/m20260301_000001_initial_schema.rs
@@ -42,15 +66,16 @@ endef
 define DISPATCH_TEST
 @T="$(THREADS)"; case "$$T" in ''|*[!0-9]*|0) T=1;; esac; \
 case "$(SCOPE)" in \
-  unit)        RUST_TEST_THREADS=$$T cargo test --workspace --lib ;; \
+  unit)        $(MCB_TEST_UNIT) ;; \
   doc)         cargo test --workspace --doc ;; \
   golden)      RUST_TEST_THREADS=$$T cargo test --workspace --tests golden ;; \
   startup)     cargo test -p mcb --test integration startup_smoke -- --nocapture ;; \
-  integration) RUST_TEST_THREADS=$$T cargo test --workspace --test '*integration*' ;; \
+  warmup)      cargo test -p mcb-server --test integration test_init_app_with_default_config_succeeds -- --nocapture ;; \
+  integration) MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T cargo test --workspace --test '*integration*' ;; \
   e2e)         $(call MCB_E2E) ;; \
-  all)         RUST_TEST_THREADS=$$T cargo test --workspace --all-targets && $(call MCB_E2E) ;; \
-  '')          RUST_TEST_THREADS=$$T cargo test --workspace --all-targets ;; \
-  *)           printf "ERRO: SCOPE '%s' invalido. Validos: unit doc golden startup integration e2e all\n" "$(SCOPE)" >&2; exit 2 ;; \
+  all)         $(MCB_TEST_ALL) && $(call MCB_E2E) ;; \
+  '')          $(MCB_TEST_ALL) ;; \
+  *)           printf "ERRO: SCOPE '%s' invalido. Validos: unit doc golden startup warmup integration e2e all\n" "$(SCOPE)" >&2; exit 2 ;; \
 esac
 endef
 
@@ -73,10 +98,32 @@ define DISPATCH_CHECK
   validate) bash $(MCB_SH) validate $(if $(filter 1,$(QUICK)),quick,full) ;; \
   audit)    cargo audit $(foreach i,$(MCB_AUDIT_IGNORES),--ignore $(i)) && $(MAKE) check WHAT=udeps ;; \
   udeps)    command -v cargo-udeps >/dev/null 2>&1 || cargo install cargo-udeps; cargo +nightly udeps --workspace ;; \
-  coverage) cargo tarpaulin --out Lcov --output-dir coverage --exclude-files 'crates/*/tests/integration/*' --exclude-files 'crates/*/tests/admin/*' --timeout 300 ;; \
+  coverage) cargo tarpaulin --engine llvm --out Lcov --output-dir coverage --exclude-files 'crates/*/tests/integration/*' --exclude-files 'crates/*/tests/admin/*' --timeout 300 ;; \
   qlty)     mkdir -p docs/reports; ./scripts/analyze_qlty.py --scan --check --summary --markdown docs/reports/qlty-check-REPORTS.md; ./scripts/analyze_qlty.py --scan --smells --summary --markdown docs/reports/qlty-smells-REPORTS.md ;; \
+  coordination) bd config get beads.role --json && bd status --json && bd hooks list --json && bash scripts/context/validate-beads-policy.sh && bd dep cycles --json && bd stale --status in_progress --days 1 --limit 25 --json && bd graph --all --compact >/dev/null ;; \
   ""|all)   cargo fmt --all -- --check && $(MAKE) lint-impl && $(MAKE) test && bash $(MCB_SH) validate $(if $(filter 1,$(QUICK)),quick,full) ;; \
-  *)        printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_check)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)        $(call BAD_WHAT,$(WHATS_check)) ;; \
+esac
+endef
+
+# --- hook (tiered native git-hook gates; SSOT for pre-commit/pre-push) --------
+# pre-commit (fast): guard + fmt + clippy(workspace, no test/bench compile) + typos
+#   + unit tests. pre-push (full): clippy --all-targets + full suite + doctests +
+#   validate. Same gates the CI runs, one definition. No bypass (AGENTS.md §3).
+define DISPATCH_HOOK
+@case "$(WHAT)" in \
+  pre-commit) \
+    bash $(MCB_SH) guard --staged && \
+    cargo fmt --all -- --check && \
+    cargo clippy --workspace -- -D warnings && \
+    { ! command -v typos >/dev/null 2>&1 || typos; } && \
+    $(MCB_TEST_UNIT) ;; \
+  pre-push) \
+    cargo fmt --all -- --check && \
+    cargo clippy --all-targets -- -D warnings && \
+    $(MAKE) test && $(MAKE) test SCOPE=doc && \
+    bash $(MCB_SH) validate quick ;; \
+  *)          $(call BAD_WHAT,$(WHATS_hook)) ;; \
 esac
 endef
 
@@ -87,7 +134,7 @@ define DISPATCH_FIX
   lint)       cargo fmt --all && cargo clippy --fix --allow-dirty --all-targets ;; \
   docs)       $(MAKE) docs WHAT=lint FIX=1 ;; \
   ""|all)     cargo fmt --all && cargo clippy --fix --allow-dirty --all-targets && $(MAKE) docs WHAT=lint FIX=1 ;; \
-  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_fix)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)          $(call BAD_WHAT,$(WHATS_fix)) ;; \
 esac
 endef
 
@@ -99,7 +146,7 @@ define DISPATCH_DEV
   docker-down)  echo "Stopping Docker test services..."; docker-compose -f tests/docker-compose.yml down -v ;; \
   docker-logs)  docker-compose -f tests/docker-compose.yml logs -f ;; \
   docker-test)  docker-compose -f tests/docker-compose.yml --profile test up --build --abort-on-container-exit test-runner; docker-compose -f tests/docker-compose.yml --profile test rm -f test-runner ;; \
-  *)            printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_dev)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)            $(call BAD_WHAT,$(WHATS_dev)) ;; \
 esac
 endef
 
@@ -117,7 +164,7 @@ define DISPATCH_DOCS
   adr)       echo "Architecture Decision Records:"; ls -1 docs/adr/[0-9]*.md 2>/dev/null | while read f; do num=$$(basename "$$f" .md | cut -d- -f1); title=$$(head -1 "$$f" | sed 's/^# ADR [0-9]*: //'); printf "  %s: %s\n" "$$num" "$$title"; done ;; \
   adr-new)   ./scripts/docs/create-adr.sh 2>/dev/null || echo "create-adr.sh not found" ;; \
   diagrams)  mkdir -p docs/architecture/diagrams/generated; if command -v plantuml >/dev/null 2>&1; then for f in docs/architecture/diagrams/*.puml; do [ -f "$$f" ] && plantuml -o generated "$$f" 2>/dev/null || true; done; fi ;; \
-  *)         printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_docs)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)         $(call BAD_WHAT,$(WHATS_docs)) ;; \
 esac
 endef
 
@@ -130,7 +177,7 @@ define DISPATCH_CODEGEN
   conversions) echo "Generating conversions from $(CONVERSIONS_TOML)..."; python3 $(CONVERSIONS_SCRIPT); echo "✓ conversions in $(CONVERSIONS_DIR)/" ;; \
   clean)       rm -f $(CODEGEN_DB); echo "✓ cleaned codegen artifacts" ;; \
   ""|all)      $(MAKE) codegen WHAT=entities APPLY=Y; $(MAKE) codegen WHAT=conversions APPLY=Y; echo "✓ codegen complete" ;; \
-  *)           printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_codegen)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)           $(call BAD_WHAT,$(WHATS_codegen)) ;; \
 esac
 endef
 
@@ -141,7 +188,7 @@ define DISPATCH_RELEASE
   version)    $(call MCB_VERSION_BUMP) ;; \
   install)    $(call gate,install MCB v$(VERSION) to $(INSTALL_DIR) + systemd + MCP configs); $(call MCB_INSTALL) ;; \
   install-validate) $(call MCB_INSTALL_VALIDATE) ;; \
-  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_release)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)          $(call BAD_WHAT,$(WHATS_release)) ;; \
 esac
 endef
 
@@ -174,7 +221,16 @@ chmod +x "$(INSTALL_DIR)/$(BINARY_NAME).new"; \
 mv -f "$(INSTALL_DIR)/$(BINARY_NAME).new" "$(INSTALL_DIR)/$(BINARY_NAME)" || { echo "FAIL: install binary" >&2; exit 1; }; \
 cp "$(INSTALL_DIR)/$(BINARY_NAME)" "$(CARGO_BIN_DIR)/$(BINARY_NAME)" 2>/dev/null || true; \
 $(INSTALL_DIR)/$(BINARY_NAME) --version >/dev/null 2>&1 || { echo "FAIL: binary validation" >&2; exit 1; }; \
+JWT_SECRET_FILE="$(DATA_DIR)/.jwt_secret"; \
+if [ -f "$$JWT_SECRET_FILE" ]; then \
+  JWT_SECRET=$$(cat "$$JWT_SECRET_FILE"); \
+else \
+  JWT_SECRET=$$(head -c 48 /dev/urandom | base64 | tr -d '\n'); \
+  echo "$$JWT_SECRET" > "$$JWT_SECRET_FILE"; \
+  chmod 600 "$$JWT_SECRET_FILE"; \
+fi; \
 cp systemd/mcb.service $(SYSTEMD_USER_DIR)/mcb.service || { echo "FAIL: service file" >&2; exit 1; }; \
+sed -i "s|Environment=LOCO_ENV=production|Environment=LOCO_ENV=production\\nEnvironment=JWT_SECRET=$$JWT_SECRET|" $(SYSTEMD_USER_DIR)/mcb.service; \
 systemctl --user daemon-reload || { echo "FAIL: daemon-reload" >&2; exit 1; }; \
 systemctl --user enable mcb.service 2>/dev/null || true; systemctl --user reset-failed mcb.service 2>/dev/null || true; \
 systemctl --user start mcb.service || { echo "FAIL: start service" >&2; exit 1; }; \
@@ -188,9 +244,8 @@ $(INSTALL_DIR)/$(BINARY_NAME) --version 2>/dev/null | grep -q mcb || { echo "  F
 echo "  Binary: $$($(INSTALL_DIR)/$(BINARY_NAME) --version)"; \
 [ -f "$(CONFIG_YAML_DIR)/development.yaml" ] && echo "  Config: $(CONFIG_YAML_DIR)/development.yaml" || echo "  WARN: no installed config"; \
 R=0; while [ $$R -lt 8 ]; do systemctl --user is-active --quiet mcb.service 2>/dev/null && { echo "  Service: active"; break; }; R=$$((R+1)); [ $$R -lt 8 ] && sleep 2; done; \
-[ $$R -eq 8 ] && echo "  WARN: service not active (journalctl --user -u mcb.service)" || true; \
-RES=$$(echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"install-validate","version":"1.0"}}}' | timeout 15 $(INSTALL_DIR)/$(BINARY_NAME) serve --stdio 2>/dev/null); \
-echo "$$RES" | grep -q '"serverInfo"' && echo "  MCP stdio: OK" || { echo "  FAIL: MCP stdio no response" >&2; exit 1; }; \
+[ $$R -eq 8 ] && { echo "  FAIL: service not active"; exit 1; } || true; \
+H=0; while [ $$H -lt 10 ]; do curl -sf http://127.0.0.1:8080/ >/dev/null 2>&1 && { echo "  HTTP server: OK"; break; }; H=$$((H+1)); [ $$H -lt 10 ] && sleep 1; done; [ $$H -eq 10 ] && { echo "  FAIL: HTTP server not responding" >&2; exit 1; }; \
 echo "  MCB v$(VERSION) installed: $(INSTALL_DIR)/$(BINARY_NAME)"
 endef
 
@@ -216,7 +271,7 @@ define DISPATCH_GIT
   rebase)     $(call gate,rebase onto $(BASE)); git rebase $(BASE) ;; \
   unstage)    $(call require_var,FILES); git restore --staged $(FILES) ;; \
   push-tags)  $(call require_var,TAG); $(call gate,push tag $(TAG) to origin); git push origin $(TAG) ;; \
-  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_git)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)          $(call BAD_WHAT,$(WHATS_git)) ;; \
 esac
 endef
 
@@ -227,7 +282,7 @@ define DISPATCH_PR
   ""|view)    $(call require_var,PR); gh pr view $(PR) ;; \
   merge)      $(call require_var,PR); $(call gate,merge PR #$(PR)); gh pr merge $(PR) --merge ;; \
   rerun)      $(call require_var,RUN); gh run rerun $(RUN) --failed ;; \
-  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_pr)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)          $(call BAD_WHAT,$(WHATS_pr)) ;; \
 esac
 endef
 
@@ -240,18 +295,18 @@ define DISPATCH_SUB
   commit)     $(call require_var,SUB); $(call require_var,MSG); $(call gate,commit in submodule $(SUB)); (cd third-party/$(SUB) && git add -A && git commit -m "$(MSG)") ;; \
   push)       $(call require_var,SUB); $(call gate,push submodule $(SUB)); (cd third-party/$(SUB) && git push) ;; \
   propagate)  $(call require_var,SUB); git add third-party/$(SUB); echo "staged third-party/$(SUB); commit with: make git WHAT=commit MSG='chore: update $(SUB)' APPLY=Y" ;; \
-  *)          printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_sub)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)          $(call BAD_WHAT,$(WHATS_sub)) ;; \
 esac
 endef
 
 # --- setup -------------------------------------------------------------------
 define DISPATCH_SETUP
 @case "$(WHAT)" in \
-  hooks)     cp scripts/hooks/pre-commit .git/hooks/pre-commit; chmod +x .git/hooks/pre-commit; echo "✓ pre-commit hook installed" ;; \
-  tools)     cargo install cargo-udeps cargo-audit cargo-tarpaulin 2>/dev/null || true; echo "✓ tools installed" ;; \
+  hooks)     cp scripts/hooks/pre-commit scripts/hooks/pre-push .git/hooks/; chmod +x .git/hooks/pre-commit .git/hooks/pre-push; echo "✓ pre-commit + pre-push hooks installed" ;; \
+  tools)     $(call MCB_INSTALL_CRATES,cargo-udeps cargo-audit cargo-tarpaulin cargo-nextest typos-cli) 2>/dev/null || true; echo "✓ tools installed" ;; \
   adr)       ./scripts/setup/install-adr-tools.sh ;; \
-  ""|all)    cp scripts/hooks/pre-commit .git/hooks/pre-commit; chmod +x .git/hooks/pre-commit; echo "✓ pre-commit hook installed"; cargo install cargo-udeps cargo-audit cargo-tarpaulin 2>/dev/null || true; ./scripts/setup/install-adr-tools.sh 2>/dev/null || true; echo "✓ setup complete" ;; \
-  *)         printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_setup)\n" "$(WHAT)" >&2; exit 2 ;; \
+  ""|all)    cp scripts/hooks/pre-commit scripts/hooks/pre-push .git/hooks/; chmod +x .git/hooks/pre-commit .git/hooks/pre-push; echo "✓ hooks installed"; $(call MCB_INSTALL_CRATES,cargo-udeps cargo-audit cargo-tarpaulin cargo-nextest typos-cli) 2>/dev/null || true; ./scripts/setup/install-adr-tools.sh 2>/dev/null || true; echo "✓ setup complete" ;; \
+  *)         $(call BAD_WHAT,$(WHATS_setup)) ;; \
 esac
 endef
 
@@ -261,6 +316,6 @@ define DISPATCH_CLEAN
   ""|build)  cargo clean; echo "✓ build artifacts cleaned" ;; \
   codegen)   rm -f $(CODEGEN_DB); echo "✓ codegen DB removed" ;; \
   all)       cargo clean; rm -f $(CODEGEN_DB); echo "✓ all artifacts cleaned" ;; \
-  *)         printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_clean)\n" "$(WHAT)" >&2; exit 2 ;; \
+  *)         $(call BAD_WHAT,$(WHATS_clean)) ;; \
 esac
 endef

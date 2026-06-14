@@ -8,12 +8,41 @@ use async_trait::async_trait;
 use axum::Router as AxumRouter;
 use loco_rs::Result;
 use loco_rs::app::{AppContext as LocoAppContext, Hooks, Initializer};
-use loco_rs::boot::{BootResult, StartMode, create_app};
+use loco_rs::boot::{BootResult, ServeParams, StartMode, create_app};
 use loco_rs::config::Config as LocoConfig;
 use loco_rs::controller::AppRoutes;
 use loco_rs::environment::Environment;
 use mcb_infrastructure::infrastructure::DynamicMigrator;
+use std::net::SocketAddr;
 use std::path::{Path, PathBuf};
+use tokio::signal;
+
+/// Waits for a shutdown signal (Ctrl+C or Unix terminate).
+async fn wait_for_shutdown_signal() {
+    let ctrl_c = async {
+        if let Err(e) = signal::ctrl_c().await {
+            tracing::warn!("Failed to install Ctrl+C handler: {e}");
+        }
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        match signal::unix::signal(signal::unix::SignalKind::terminate()) {
+            Ok(mut s) => {
+                s.recv().await;
+            }
+            Err(e) => tracing::warn!("Failed to install terminate signal handler: {e}"),
+        }
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        () = ctrl_c => {},
+        () = terminate => {},
+    }
+}
 
 /// Extract the filesystem path from a `SQLite` URI, returning `None` for
 /// in-memory or non-SQLite databases.
@@ -117,6 +146,52 @@ impl Hooks for McbApp {
             Box::new(crate::initializers::graphql::GraphQLInitializer),
             Box::new(crate::initializers::mcp_server::McpServerInitializer),
         ])
+    }
+
+    async fn serve(
+        app: AxumRouter,
+        ctx: &LocoAppContext,
+        serve_params: &ServeParams,
+    ) -> Result<()> {
+        let stdio_only = ctx
+            .config
+            .settings
+            .as_ref()
+            .and_then(|s| s.get("mcp"))
+            .and_then(|mcp| mcp.get("stdio_only"))
+            .and_then(serde_json::Value::as_bool)
+            .unwrap_or(false);
+
+        if stdio_only {
+            tracing::info!(
+                "stdio-only mode: HTTP server disabled (port {})",
+                serve_params.port
+            );
+            wait_for_shutdown_signal().await;
+            tracing::info!("shutting down...");
+            Self::on_shutdown(ctx).await;
+            return Ok(());
+        }
+
+        let listener = tokio::net::TcpListener::bind(&format!(
+            "{}:{}",
+            serve_params.binding, serve_params.port
+        ))
+        .await?;
+
+        let cloned_ctx = ctx.clone();
+        axum::serve(
+            listener,
+            app.into_make_service_with_connect_info::<SocketAddr>(),
+        )
+        .with_graceful_shutdown(async move {
+            wait_for_shutdown_signal().await;
+            tracing::info!("shutting down...");
+            Self::on_shutdown(&cloned_ctx).await;
+        })
+        .await?;
+
+        Ok(())
     }
 
     async fn after_routes(router: AxumRouter, _ctx: &LocoAppContext) -> Result<AxumRouter> {

@@ -360,7 +360,7 @@ run_structure_validation() {
 validate_outdated_content() {
 	log_info "Scanning for outdated content patterns..."
 	if check_executable python3; then
-		python3 "$SCRIPT_DIR/py/check_outdated.py" --root "$PROJECT_ROOT" || true
+		PYTHONPATH="$PROJECT_ROOT" python3 "$SCRIPT_DIR/py/check_outdated.py" --root "$PROJECT_ROOT" || true
 	fi
 }
 

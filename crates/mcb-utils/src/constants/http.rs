@@ -5,15 +5,6 @@
 
 /// MIME type for JSON content
 pub const CONTENT_TYPE_JSON: &str = "application/json";
-/// Default HTTP server port.
-pub const DEFAULT_HTTP_PORT: u16 = 8080;
-
-/// Default HTTPS server port.
-pub const DEFAULT_HTTPS_PORT: u16 = 8443;
-
-/// Default server host address (localhost).
-pub const DEFAULT_SERVER_HOST: &str = "127.0.0.1";
-
 /// Connection timeout in seconds.
 pub const CONNECTION_TIMEOUT_SECS: u64 = 10;
 

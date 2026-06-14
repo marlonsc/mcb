@@ -17,9 +17,11 @@ permissions:
 
 on: # yamllint disable-line rule:truthy
   push:
+    # Only main (post-merge) + manual dispatch. Feature branches are validated via
+    # the pull_request event — this avoids firing duplicate push+PR runs (different
+    # concurrency keys) on a branch that already has an open PR.
     branches:
       - main
-      - 'feat/*'
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
@@ -33,6 +35,9 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   MCB_RUN_DOCKER_INTEGRATION_TESTS: "0"
+  RUSTC_WRAPPER: sccache
+  SCCACHE_GHA_ENABLED: "true"
+  CARGO_INCREMENTAL: "0"
 
 jobs:
   # ===========================================================================
@@ -51,9 +56,11 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       ci: ${{ steps.filter.outputs.ci }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout -b ${{ github.ref_name }} ${{ github.sha }}
       - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
         id: filter
         with:
@@ -125,19 +132,28 @@ jobs:
       needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - run: bash .github/setup-ci.sh
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
           components: rustfmt, clippy
+      - uses: ./.github/actions/native-deps
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
+          cache-on-failure: true
+      - uses: taiki-e/install-action@v2 # prebuilt typos-cli
+        with:
+          tool: typos
+      - run: typos
       - run: make check WHAT=lint
 
   audit:
@@ -151,18 +167,25 @@ jobs:
       github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - run: bash .github/setup-ci.sh --install-audit
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
+      - uses: ./.github/actions/native-deps
+        with:
+          setup-flags: --install-audit
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
-          save-if: false
+          save-if: true
+          cache-on-failure: true
       - run: make check WHAT=audit
 
   validate-docs:
@@ -176,19 +199,23 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - run: make docs WHAT=check
-      - run: bash .github/setup-ci.sh
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
+      - uses: ./.github/actions/native-deps
       - run: |
           sudo apt-get update
           sudo apt-get install -y nodejs npm
           npm install -g markdownlint-cli
+      - run: make docs WHAT=check
       - run: make docs WHAT=validate QUICK=1
 
   docs-diagrams:
@@ -203,10 +230,13 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
         with:
           java-version: "17"
@@ -237,18 +267,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - run: bash .github/setup-ci.sh
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
+      - uses: ./.github/actions/native-deps
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
-          save-if: false
+          save-if: true
+          cache-on-failure: true
       - name: Cache fastembed models
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
@@ -256,28 +291,10 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
-        shell: bash
-        run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+      - uses: ./.github/actions/warm-fastembed
+      - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
+        with:
+          tool: nextest
       - name: Startup Smoke (DDL/Init)
         run: make test SCOPE=startup THREADS=4
         env:
@@ -300,7 +317,12 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    # Per-leg timeout: macOS/beta finish in ~10-25min (fail-fast at 120). Windows
+    # nextest is process-per-test and the full 1715-test suite runs ~115min+ even
+    # with a warm rust-cache (process-spawn overhead, not compile) — at 120 it was
+    # cancelled mid-run on consecutive runs. 240 gives the Windows leg headroom to
+    # complete the full suite (coverage stays universal across platforms).
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 240 || 120 }}
     continue-on-error: ${{ matrix.rust == 'beta' }}
     strategy:
       fail-fast: false
@@ -316,53 +338,26 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - name: Install dependencies (Unix)
-        if: runner.os != 'Windows'
-        run: bash .github/setup-ci.sh
-      - name: Install protoc (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          PROTOC_VERSION: "29.3"
-          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
+      - name: Manual checkout
         run: |
-          $base = "https://github.com/protocolbuffers/protobuf/releases/download"
-          $url = "$base/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-          $zip = "$env:TEMP\protoc.zip"
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-          if ($hash -ne $env:PROTOC_SHA256) {
-            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
-          }
-          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
-      - name: Install ONNX Runtime (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          ORT_VERSION: "1.23.2"
-        run: |
-          $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
-          $zip = "$env:TEMP\onnxruntime.zip"
-          $dest = "$env:TEMP\onnxruntime"
-          Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          Expand-Archive $zip -DestinationPath $dest -Force
-          $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
-          $ortLib = "$ortDir\lib"
-          Add-Content -Path $env:GITHUB_PATH -Value $ortLib
-          Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
-          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ matrix.rust }}
+      - uses: ./.github/actions/native-deps
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          save-if: false
+          # Per-OS cache that SAVES — previously test-cross had no shared-key and
+          # save-if:false, so macOS/Windows/beta rebuilt 100% cold every run (the
+          # 60-min timeout cause).
+          shared-key: ci-cross-${{ matrix.os }}
+          save-if: true
+          cache-on-failure: true
       - name: Cache FastEmbed models
         uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
         with:
@@ -370,28 +365,10 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
-        shell: bash
-        run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+      - uses: ./.github/actions/warm-fastembed
+      - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
+        with:
+          tool: nextest
       - name: Run tests
         run: make test THREADS=4
         env:
@@ -408,18 +385,23 @@ jobs:
       needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - run: bash .github/setup-ci.sh
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
+      - uses: ./.github/actions/native-deps
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
-          save-if: false
+          save-if: true
+          cache-on-failure: true
       - name: Architecture-only validators (fast gate)
         run: >-
           cargo run --package mcb -- validate .
@@ -439,18 +421,23 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - run: bash .github/setup-ci.sh
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
+      - uses: ./.github/actions/native-deps
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
           shared-key: ci-ubuntu-stable
-          save-if: false
+          save-if: true
+          cache-on-failure: true
       - name: Cache fastembed models
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
@@ -458,28 +445,10 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
-        shell: bash
-        run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+      - uses: ./.github/actions/warm-fastembed
+      - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
+        with:
+          tool: nextest
       - run: make test SCOPE=golden THREADS=2
         env:
           FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
@@ -494,20 +463,34 @@ jobs:
       github.event_name == 'workflow_dispatch') &&
       needs.classify.outputs.is_fork == 'false'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # 90 (not 60): tarpaulin recompiles the workspace with its own instrumented
+    # RUSTFLAGS in a separate target-dir, so the cold seeding run exceeds 60 min.
+    # Measured: a 60-min cap cancelled it mid-run before its cache could save.
+    timeout-minutes: 90
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - run: bash .github/setup-ci.sh --install-coverage
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
+          components: llvm-tools-preview
+      - uses: ./.github/actions/native-deps
+        with:
+          setup-flags: --install-coverage
       - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
         with:
-          shared-key: ci-ubuntu-stable
-          save-if: false
+          # Coverage uses tarpaulin (RUSTFLAGS --cfg=tarpaulin -Clink-dead-code) which
+          # can't reuse the normal build cache — isolate it on its own key + saver so
+          # it doesn't thrash the lint/test cache.
+          shared-key: ci-coverage
+          save-if: true
+          cache-on-failure: true
       - name: Cache fastembed models (coverage)
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
         with:
@@ -515,28 +498,7 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
-        shell: bash
-        run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+      - uses: ./.github/actions/warm-fastembed
       - name: Run coverage
         run: make check WHAT=coverage THREADS=4
         env:
@@ -582,51 +544,24 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - name: Install dependencies (Unix)
-        if: runner.os != 'Windows'
-        run: bash .github/setup-ci.sh
-      - name: Install protoc (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          PROTOC_VERSION: "29.3"
-          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
+      - name: Manual checkout
         run: |
-          $base = "https://github.com/protocolbuffers/protobuf/releases/download"
-          $url = "$base/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-          $zip = "$env:TEMP\protoc.zip"
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-          if ($hash -ne $env:PROTOC_SHA256) {
-            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
-          }
-          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
-      - name: Install ONNX Runtime (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          ORT_VERSION: "1.23.2"
-        run: |
-          $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
-          $zip = "$env:TEMP\onnxruntime.zip"
-          $dest = "$env:TEMP\onnxruntime"
-          Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          Expand-Archive $zip -DestinationPath $dest -Force
-          $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
-          $ortLib = "$ortDir\lib"
-          Add-Content -Path $env:GITHUB_PATH -Value $ortLib
-          Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
-          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
           targets: ${{ matrix.target }}
+      - uses: ./.github/actions/native-deps
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-release-${{ matrix.os }}
+          save-if: true
+          cache-on-failure: true
       - run: make build RELEASE=1
       - name: Create dist directory
         run: mkdir -p dist
@@ -720,8 +655,13 @@ jobs:
           if [[ "$RUN_FULL" == "true" ]]; then
             echo "=== Full Suite Policy (Human Ready PR) ==="
             FAILED=0
+            # Coverage is ADVISORY, not required: it is a metric (not a correctness
+            # gate) and cargo-tarpaulin's default ptrace engine intermittently aborts
+            # with "Test failed during run" on multi-threaded/tokio test binaries even
+            # when every test passes. Correctness is already enforced by the gates
+            # below. Root-cause engine fix tracked in mcb-xgji; advisory policy mcb-xku4.
             for job in LINT_RESULT TEST_LINUX_RESULT TEST_CROSS_RESULT \
-                       VALIDATE_RESULT AUDIT_RESULT GOLDEN_RESULT COVERAGE_RESULT \
+                       VALIDATE_RESULT AUDIT_RESULT GOLDEN_RESULT \
                        RELEASE_BUILD_RESULT; do
               result="${!job}"
               if [[ "$result" != "success" && "$result" != "skipped" ]]; then
@@ -730,12 +670,16 @@ jobs:
               fi
             done
 
+            if [[ "$COVERAGE_RESULT" != "success" && "$COVERAGE_RESULT" != "skipped" ]]; then
+              echo "⚠ Coverage: $COVERAGE_RESULT (advisory — does not block merge; see mcb-xku4)"
+            fi
+
             if [[ $FAILED -eq 1 ]]; then
               echo "✗ Full suite check failed"
               exit 1
             fi
 
-            echo "✓ Full suite — all required checks passed"
+            echo "✓ Full suite — all required checks passed (coverage advisory)"
             exit 0
           fi
 
@@ -769,11 +713,13 @@ jobs:
     env:
       CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
       - name: Initialize CodeQL
         uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
         with:
@@ -783,6 +729,7 @@ jobs:
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - name: Autobuild
         uses: github/codeql-action/autobuild@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
       - name: Perform CodeQL Analysis

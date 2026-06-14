@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 MD024 -->
 # MCP Tools Schema Documentation
 
-**Version**: 0.3.1
+**Version**: 0.3.2
 **Last Updated**: 2026-06-04
 
 MCB exposes 24 public tool names through the MCP protocol. `tools/list` returns
@@ -213,21 +213,33 @@ Unified entity CRUD (vcs/plan/issue/org resources).
 
 ## Provenance Requirements
 
-Tools `index`, `search`, and `memory` require full execution provenance:
+Tools `index`, `search`, and `memory` require execution provenance. **Every field is auto-discovered at server boot** via a cascade of sources. If a field cannot be resolved and no source remains, the server **fast-fails** immediately with an actionable error message — there are no silent fallbacks and no `UNKNOWN` placeholders.
 
-| Field | Type | Required |
-| ------- | ------ | ---------- |
-| `session_id` | string | **yes** |
-| `project_id` | string | **yes** |
-| `repo_id` | string | **yes** |
-| `repo_path` | string | **yes** |
-| `worktree_id` | string | **yes** |
-| `operator_id` | string | **yes** |
-| `machine_id` | string | **yes** |
-| `agent_program` | string | **yes** |
-| `model_id` | string | **yes** |
-| `delegated` | boolean | **yes** |
-| `timestamp` | integer | **yes** |
+| Field | Type | Required | Auto-filled source | Fast-fail message |
+|-------|------|----------|-------------------|-------------------|
+| `session_id` | string | **yes** | IDE session ID (`CURSOR_TRACE_ID`, `CLAUDE_SESSION_ID`, …) or traceable ID `<agent>-<host>-<pid>-<timestamp>` | — (always traceable) |
+| `repo_path` | string | **yes** | Plugin-based workspace discovery: Git → Mercury → CVS → SVN → … → **Filesystem (CWD canonical)** | — (CWD is the ultimate happy path) |
+| `repo_id` | string | if `repo_path` absent | Git remote `origin` URL hash; absent for plain filesystem workspaces | — |
+| `project_id` | string | no | Git remote `origin` (`owner/repo`); absent for plain filesystem workspaces | — |
+| `worktree_id` | string | no | `git rev-parse --git-dir` → `git worktree list` → `.git` dir → `"main"` → **CWD path** | — (always resolved) |
+| `operator_id` | string | **yes** | `$USER` env var | — |
+| `machine_id` | string | **yes** | Hostname (`hostname::get()` or `$HOSTNAME`) | — |
+| `agent_program` | string | **yes** | Detected IDE (Cursor, Claude Code, VS Code, …) or `mcb-stdio` | — |
+| `model_id` | string | **yes** | Env vars (first hit): `OPENAI_MODEL`, `ANTHROPIC_MODEL`, `CLAUDE_MODEL`, `GEMINI_MODEL`, `OLLAMA_MODEL`, `AZURE_OPENAI_MODEL`, `COHERE_MODEL`, `MISTRAL_MODEL`, `MCB_MODEL_ID` | `model_id could not be auto-discovered. Set one of: OPENAI_MODEL, ANTHROPIC_MODEL, … Or set MCB_MODEL_ID explicitly.` |
+| `delegated` | boolean | **yes** | Defaults to `false`; inferred `true` when `parent_session_id` present | — |
+| `timestamp` | integer | **yes** | Server clock (Unix epoch) | — |
+
+### Plugin-based workspace discovery
+
+The server tries multiple workspace detectors in priority order:
+
+1. **Git** — `git` repository via `.git` directory or VCS provider.
+2. **Mercury / CVS / SVN / Perforce / Fossil / Darcs / Bazaar** — stubs ready for future backend implementations.
+3. **Filesystem** — canonicalised current working directory. This is the **ultimate happy path**: even when no version-control system is present, the server always has a valid workspace root.
+
+### Explicit override
+
+Any field can be passed via JSON-RPC request `meta` (e.g., `"meta": {"session_id": "abc"}`) and takes precedence over auto-discovery.
 
 When `delegated` is `true`, `parent_session_id` is also required.
 

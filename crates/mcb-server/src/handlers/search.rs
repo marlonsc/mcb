@@ -67,8 +67,9 @@ impl SearchHandler {
         Parameters(args): Parameters<SearchArgs>,
     ) -> Result<CallToolResult, McpError> {
         if let Err(e) = args.validate() {
+            tracing::debug!(error = %e, "Request validation failed");
             return Ok(to_contextual_tool_error(Error::invalid_argument(
-                e.to_string(),
+                "One or more request parameters are invalid.".to_owned(),
             )));
         }
 

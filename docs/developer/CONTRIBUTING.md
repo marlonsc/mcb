@@ -231,7 +231,7 @@ make docs-validate QUICK=1
 
 ## 🚀 Code References
 
-- **Config**: `mcb_infrastructure::config::ConfigLoader` — See [CONFIGURATION.md](../CONFIGURATION.md), [ADR-051](../adr/051-seaql-loco-platform-rebuild.md) (supersedes [ADR-025](../adr/archive/superseded-025-figment-configuration.md))
+- **Config**: `mcb_infrastructure::config::ConfigLoader` — See [CONFIGURATION.md](../CONFIGURATION.md), [ADR-051](../adr/051-seaql-loco-platform-rebuild.md) (supersedes [ADR-025](../adr/051-seaql-loco-platform-rebuild.md))
 - **DI**: `mcb_infrastructure::di::bootstrap::init_app(config)` — See [ADR-050](../adr/050-manual-composition-root-dill-removal.md) (ADR-029 superseded)
 - **Patterns**: See [PATTERNS.md](../architecture/PATTERNS.md) for implementation patterns
 - **Run server**: `cargo run --bin mcb` or `make build` then run the binary
@@ -245,4 +245,3 @@ make docs-validate QUICK=1
 - [ROADMAP.md](./ROADMAP.md) — Project state and roadmap
 - [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) — Current state
 - [DEPLOYMENT.md](../operations/DEPLOYMENT.md) — Deployment guide
-- [CI_RELEASE.md](../operations/CI_RELEASE.md) — CI/CD and release process

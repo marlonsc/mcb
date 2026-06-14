@@ -99,6 +99,7 @@ impl AstSelectorEngine {
 
         let id = LanguageId::from_name(language)?;
         #[allow(clippy::wildcard_enum_match_arm)]
+        // Why: only specific LanguageId variants have tree-sitter grammars; unsupported variants map to None.
         match id {
             LanguageId::Rust => Some(tree_sitter_rust::LANGUAGE.into()),
             LanguageId::Python => Some(tree_sitter_python::LANGUAGE.into()),

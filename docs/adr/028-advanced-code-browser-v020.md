@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: [7, 8, 26]
 supersedes: []
 superseded_by: []
-implementation_status: Partial
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -293,12 +293,12 @@ Rust Crates (existing):
 
 ## Related ADRs
 
-- [ADR-007: Integrated Web Administration Interface]
-(archive/superseded-007-web-admin-interface.md) - Base admin UI
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild]
+(051-seaql-loco-platform-rebuild.md) - Base admin UI
 - [ADR-008: Git-Aware Semantic Indexing]
 (008-git-aware-semantic-indexing-v0.2.0.md) - Git metadata for diff view
 - [ADR-026: Routing Refactor Rocket]
-(archive/superseded-026-routing-refactor-rocket-poem.md) - Rocket web framework
+(049-axum-return-rmcp-tower-compatibility.md) - Rocket web framework
 
 ## References
 

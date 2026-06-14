@@ -10,4 +10,4 @@ pub mod serve;
 pub mod validate;
 
 pub use serve::ServeArgs;
-pub use validate::ValidateArgs;
+pub use validate::ValidateCliArgs;

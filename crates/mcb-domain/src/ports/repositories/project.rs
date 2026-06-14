@@ -7,14 +7,11 @@ use crate::entities::project::{
 };
 use crate::error::Result;
 
-/// Port for project persistence with row-level tenant isolation.
-///
-/// Covers the full project management domain: projects, phases, issues,
-/// dependencies, and decisions.
-#[async_trait]
-pub trait ProjectRepository: Send + Sync {
-    // ── Project ──────────────────────────────────────────────────────────
+// ── Sub-traits (ISP-compliant) ─────────────────────────────────────────────
 
+/// Project CRUD operations.
+#[async_trait]
+pub trait ProjectCrudRepository: Send + Sync {
     /// Create a project.
     async fn create(&self, project: &Project) -> Result<()>;
     /// Get a project by ID.
@@ -29,9 +26,11 @@ pub trait ProjectRepository: Send + Sync {
     async fn update(&self, project: &Project) -> Result<()>;
     /// Delete a project.
     async fn delete(&self, org_id: &str, id: &str) -> Result<()>;
+}
 
-    // ── Phase ────────────────────────────────────────────────────────────
-
+/// Project phase operations.
+#[async_trait]
+pub trait ProjectPhaseRepository: Send + Sync {
     /// Create a project phase.
     async fn create_phase(&self, phase: &ProjectPhase) -> Result<()>;
     /// Get a phase by ID.
@@ -42,9 +41,11 @@ pub trait ProjectRepository: Send + Sync {
     async fn update_phase(&self, phase: &ProjectPhase) -> Result<()>;
     /// Delete a phase.
     async fn delete_phase(&self, id: &str) -> Result<()>;
+}
 
-    // ── Issue ────────────────────────────────────────────────────────────
-
+/// Project issue operations.
+#[async_trait]
+pub trait ProjectIssueRepository: Send + Sync {
     /// Create a project issue.
     async fn create_issue(&self, issue: &ProjectIssue) -> Result<()>;
     /// Get an issue by ID (org-scoped).
@@ -61,18 +62,22 @@ pub trait ProjectRepository: Send + Sync {
     async fn update_issue(&self, issue: &ProjectIssue) -> Result<()>;
     /// Delete an issue (org-scoped).
     async fn delete_issue(&self, org_id: &str, id: &str) -> Result<()>;
+}
 
-    // ── Dependency ───────────────────────────────────────────────────────
-
+/// Project dependency operations.
+#[async_trait]
+pub trait ProjectDependencyRepository: Send + Sync {
     /// Create a dependency edge between issues.
     async fn create_dependency(&self, dependency: &ProjectDependency) -> Result<()>;
     /// List dependencies for an issue (both directions).
     async fn list_dependencies(&self, issue_id: &str) -> Result<Vec<ProjectDependency>>;
     /// Delete a dependency edge.
     async fn delete_dependency(&self, id: &str) -> Result<()>;
+}
 
-    // ── Decision ─────────────────────────────────────────────────────────
-
+/// Project decision operations.
+#[async_trait]
+pub trait ProjectDecisionRepository: Send + Sync {
     /// Create a project decision.
     async fn create_decision(&self, decision: &ProjectDecision) -> Result<()>;
     /// Get a decision by ID.
@@ -83,4 +88,23 @@ pub trait ProjectRepository: Send + Sync {
     async fn update_decision(&self, decision: &ProjectDecision) -> Result<()>;
     /// Delete a decision.
     async fn delete_decision(&self, id: &str) -> Result<()>;
+}
+
+// ── Consolidated port (super-trait) ────────────────────────────────────────
+
+/// Port for project persistence with row-level tenant isolation.
+///
+/// Covers the full project management domain: projects, phases, issues,
+/// dependencies, and decisions.
+///
+/// This is a **super-trait** composed of smaller ISP-compliant interfaces.
+/// Consumers should prefer the sub-traits when they only need a subset.
+#[async_trait]
+pub trait ProjectRepository:
+    ProjectCrudRepository
+    + ProjectPhaseRepository
+    + ProjectIssueRepository
+    + ProjectDependencyRepository
+    + ProjectDecisionRepository
+{
 }

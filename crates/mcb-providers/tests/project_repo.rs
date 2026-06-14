@@ -4,7 +4,7 @@ use mcb_domain::entities::project::{
     DependencyType, IssueFilter, IssueStatus, IssueType, PhaseStatus, ProjectDecision,
     ProjectDependency, ProjectIssue, ProjectPhase,
 };
-use mcb_domain::ports::ProjectRepository;
+use mcb_domain::ports::ProjectCrudRepository;
 use mcb_domain::utils::tests::utils::TestResult;
 use mcb_providers::database::seaorm::repos::project::SeaOrmProjectRepository;
 use rstest::rstest;

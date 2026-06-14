@@ -287,14 +287,17 @@ Phase 9 builds on Phase 8's workflow system:
 - **ADR-023**: Inventory to Linkme Migration
 - **ADR-029**: Hexagonal Architecture (superseded by ADR-050)
 
-## Implementation Roadmap
+## Historical Planning Snapshot
 
-See [`docs/implementation/phase-9-roadmap.md`](../../implementation/phase-9-roadmap.md) for detailed 4-week execution plan:
+The original Phase 9 execution notes are historical design context, not the
+current work queue. Current v0.4 workflow/context work is tracked in beads under
+`mcb-6pjx` and its children.
 
-- **Week 1** (Feb 17-23): Context Architecture & Graph
-- **Week 2** (Feb 24-Mar 2): Hybrid Search & Versioning
-- **Week 3** (Mar 3-9): Integration & Policies
-- **Week 4** (Mar 10-16): Testing & Documentation
+Use this command for current state:
+
+```bash
+bd list --status open,in_progress,deferred --label scope:v0.4 --json
+```
 
 ## Feature Guides
 
@@ -302,31 +305,7 @@ See [`docs/implementation/phase-9-roadmap.md`](../../implementation/phase-9-road
 - [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) – Migration guide from v0.3
 - [`docs/architecture/CLEAN_ARCHITECTURE.md`](../../architecture/CLEAN_ARCHITECTURE.md) – Architecture patterns
 
-## Testing
+## Tracking And Validation
 
-**Target**: 70+ tests across all components
-
-- CodeGraph: 15+ tests
-- HybridSearchEngine: 15+ tests
-- ContextSnapshot: 10+ tests
-- PolicyEngine: 10+ tests
-- MCP Tools: 15+ integration tests
-- End-to-end: 5+ tests
-
-### Success Criteria
-
-- [ ] All ADR-041-046 complete
-- [ ] 70+ tests passing
-- [ ] Zero architecture violations
-- [ ] Clean lint and docs-lint
-- [ ] Migration guide complete
-- [ ] Feature guides complete
-- [ ] v0.4.0 released
-
-## Next Steps
-
-1. Review ADR-034-037 (Phase 8 foundation)
-2. Review ADR-041-046 (Phase 9 design)
-3. Create Beads issues for each ADR
-4. Start Week 1 implementation (Feb 17)
-5. Track progress weekly
+Testing targets and success criteria belong in the relevant beads' acceptance
+criteria. Do not use this ADR index as a live checklist.

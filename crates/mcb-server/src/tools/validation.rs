@@ -133,7 +133,12 @@ fn validate_operation_mode_matrix(
 
 /// Normalize execution flow string to enum.
 fn normalize_execution_flow(flow: Option<&str>) -> Result<ExecutionFlow, McpError> {
-    let raw = flow.unwrap_or(ExecutionFlow::StdioOnly.as_str());
+    let Some(raw) = flow else {
+        return Err(McpError::invalid_params(
+            "execution_flow is required".to_owned(),
+            None,
+        ));
+    };
     raw.parse::<ExecutionFlow>()
         .map_err(|e| McpError::invalid_params(e, None))
 }

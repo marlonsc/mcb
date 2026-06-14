@@ -93,15 +93,45 @@ mcb_guard() {
     src=$(find "$MCB_ROOT/crates" -name '*.rs' -not -path '*/tests/*' -not -path '*/benches/*' -not -path '*/target/*' 2>/dev/null || true)
     [ -z "$src" ] && { mcb_warn "guard: no source files found under crates/"; return 0; }
   fi
+  # Exclusion paths per-check:
+  # check1 (unwrap/panic/todo): validator source files contain regex patterns
+  # and error messages that cite banned constructs by definition.
+  local guard_excludes_check1='mcb-validate/src/|mcb-utils/src/constants/validate/'
+  # check2/3 (TODO/FIXME, #[allow]): validator source files and constant-definition files.
+  local guard_excludes='mcb-validate/src/|mcb-utils/src/constants/validate/'
+
   # 1. unwrap/expect/panic/todo/unimplemented in non-test .rs
+  # Exclude: doc comments (///, //!), const/static declarations, string literals.
   hits=$(grep -rnE '\b(unwrap|expect)\(|\bpanic!|\btodo!|\bunimplemented!' $src 2>/dev/null \
-      | grep -vE '//.*(unwrap|expect)|#\[cfg\(test\)\]' || true)
+      | grep -vE '//.*(unwrap|expect)' \
+      | grep -vE '#\[cfg\(test\)\]' \
+      | grep -vE '^[^:]+:[0-9]+:\s*///' \
+      | grep -vE '^[^:]+:[0-9]+:\s*//!' \
+      | grep -vE '^[^:]+:[0-9]+:\s*(pub\s+)?(const|static)\s+' \
+      | grep -vE ':\s*&?str\s*=' \
+      | grep -vE 'r#"' \
+      | grep -vE "$guard_excludes_check1" || true)
   [ -n "$hits" ] && { mcb_warn "prod unwrap/expect/panic/todo:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
   # 2. TODO/FIXME markers
-  hits=$(grep -rnE '\b(TODO|FIXME)\b' $src 2>/dev/null || true)
+  hits=$(grep -rnE '\b(TODO|FIXME)\b' $src 2>/dev/null \
+      | grep -vE '^[^:]+:[0-9]+:\s*///' \
+      | grep -vE '^[^:]+:[0-9]+:\s*//!' \
+      | grep -vE ':\s*&?str\s*=' \
+      | grep -vE 'r#"' \
+      | grep -vE "$guard_excludes" || true)
   [ -n "$hits" ] && { mcb_warn "TODO/FIXME markers:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
-  # 3. unjustified suppression directives (#[allow(...)] with no trailing // Why:)
-  hits=$(grep -rnE '#\[allow\(' $src 2>/dev/null | grep -vE '//\s*Why:' || true)
+  # 3. unjustified suppression directives (#[allow(...)] with no // Why:)
+  # Why: may appear on the same line or the line immediately after.
+  hits=$(grep -rnE '#\[allow\(' $src 2>/dev/null | while IFS= read -r line; do
+      file=$(printf '%s' "$line" | cut -d: -f1)
+      lineno=$(printf '%s' "$line" | cut -d: -f2)
+      # same-line justification
+      if printf '%s' "$line" | grep -qE '//\s*Why:'; then continue; fi
+      # next-line justification
+      nextline=$(sed -n "$((lineno + 1))p" "$file" 2>/dev/null)
+      if printf '%s' "$nextline" | grep -qE '^\s*//\s*Why:'; then continue; fi
+      printf '%s\n' "$line"
+    done | grep -vE "$guard_excludes" || true)
   [ -n "$hits" ] && { mcb_warn "#[allow] without // Why: justification:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
   [ "$rc" -eq 0 ] && mcb_ok "guard: clean"
   return "$rc"

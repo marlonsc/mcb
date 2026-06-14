@@ -9,6 +9,7 @@ target/
 dist/
 exports/
 *.rlib
+/clippy_*.json
 
 # ---------------------------------------------------------------------------
 # IDE / Editor files
@@ -88,7 +89,7 @@ arbor-graph.json
 # AI / Agent — tracked config files (DO NOT add these to ignore)
 # ---------------------------------------------------------------------------
 # AGENTS.md          — agent configuration index
-# CLAUDE.md          — single source of truth
+# CLAUDE.md          — thin pointer to AGENTS.md
 # CONVENTIONS.md     — Aider conventions pointer
 # codex.md           — Codex pointer
 # .clinerules        — Cline pointer
@@ -190,8 +191,14 @@ coverage/
 # Database files
 # ---------------------------------------------------------------------------
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
+*.sqlite-shm
+*.sqlite-wal
 *.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
 
 # ---------------------------------------------------------------------------
 # Environment / secrets
@@ -218,8 +225,6 @@ __pycache__/
 book/
 docs/generated/
 docs/reports/
-docs/plans/
-!docs/adr/archive/*
 docs/**/*backup*
 docs/**/*bak*
 docs/**/*old*
@@ -270,3 +275,12 @@ reference/
 # Archived files (moved out of project, kept locally for reference)
 # ---------------------------------------------------------------------------
 archive/
+!docs/archive/
+!docs/archive/**
+!docs/adr/archive/
+!docs/adr/archive/**
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+.beads-credential-key
+.beads/proxieddb/

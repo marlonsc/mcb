@@ -133,18 +133,35 @@ Darwin)
 	;;
 esac
 
+# Install a Rust crate. Prefer cargo-binstall when available for speed,
+# but fall back to cargo install so environments without binstall still work.
+_mcb_install_crate() {
+	local crate="$1"
+	if command -v cargo-binstall &>/dev/null; then
+		cargo binstall -y "$crate" >/dev/null 2>&1
+	else
+		cargo install "$crate" --locked --quiet
+	fi
+}
+
 # Parse optional flags
+# Ensure sccache is available (mandatory compilation cache)
+if ! command -v sccache &>/dev/null; then
+	echo "Installing sccache (mandatory compilation cache)..." >&2
+	_mcb_install_crate sccache
+fi
+
 while [[ $# -gt 0 ]]; do
 	case $1 in
 	--install-audit)
 		if ! command -v cargo-audit &>/dev/null; then
-			cargo install cargo-audit --locked --quiet
+			_mcb_install_crate cargo-audit
 		fi
 		shift
 		;;
 	--install-coverage)
 		if ! command -v cargo-tarpaulin &>/dev/null; then
-			cargo install cargo-tarpaulin --locked --quiet
+			_mcb_install_crate cargo-tarpaulin
 		fi
 		shift
 		;;
@@ -165,6 +182,14 @@ while [[ $# -gt 0 ]]; do
 				;;
 			esac
 		fi
+		shift
+		;;
+	--install-nextest)
+		command -v cargo-nextest &>/dev/null || _mcb_install_crate cargo-nextest
+		shift
+		;;
+	--install-typos)
+		command -v typos &>/dev/null || _mcb_install_crate typos-cli
 		shift
 		;;
 	*)
