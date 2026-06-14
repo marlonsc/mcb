@@ -13,6 +13,7 @@ pub mod scan;
 pub mod util_tests;
 pub mod validators;
 
+mod config_tests;
 mod declarative_validator_tests;
 mod embedded_rules_tests;
 mod lib_tests;

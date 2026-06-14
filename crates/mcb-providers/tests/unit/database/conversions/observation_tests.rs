@@ -7,6 +7,7 @@ use rstest::rstest;
 fn sample_observation() -> observation::Model {
     observation::Model {
         id: "observation_test_001".into(),
+        org_id: "ref_org_id_001".into(),
         project_id: "ref_project_id_001".into(),
         content: "test_content".into(),
         content_hash: "hash_observation_001".into(),
