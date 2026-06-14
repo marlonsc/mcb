@@ -92,7 +92,7 @@ types at the source; depend on declared contracts, not loosely-typed escape hatc
   (`mcb-utils` constants, enforced by CA016/CA018/CA019) → **(5) config** (`config/*.yaml`, never
   hardcode). Creating something that duplicates an existing service/library/trait/constant/step is a
   **defect** — refactor to reuse instead. Every change must aim for **negative net LOC** ("do more with
-  much less"); additive changes need an explicit reason. Enforced by `make guard` + `make check
+  much less"); additive changes need an explicit reason. Enforced by `make check WHAT=guard` + `make check
   WHAT=validate`; the rule applies to source, makefiles, and CI alike.
 
 ### 10. User Manages Git
@@ -229,24 +229,23 @@ monopoly script `scripts/lib/mcb.sh`. Pattern: `make <verb> [WHAT=phase]
 ```bash
 make help                          # All verbs + their WHAT= phases
 make build [RELEASE=0|1]           # Release build by default
-make dev   [WHAT=run|docker-up|docker-down|docker-logs|docker-test]
+make check WHAT=dev ACT=run|docker-up|docker-down|docker-logs|docker-test
 make test  [SCOPE=unit|doc|golden|startup|integration|e2e|all] [THREADS=N]
 make check [WHAT=fmt|lint|validate|audit|udeps|coverage|qlty|all] [QUICK=1]
-make fix   [WHAT=fmt|lint|docs|all]   # Mutating auto-fix (rustfmt, clippy --fix, markdown)
-make docs  [WHAT=build|serve|lint|validate|sync|rust|check|setup|adr|adr-new|diagrams] [QUICK=1] [FIX=1]
-make ci                            # CI gate (check WHAT=all)
-make guard                         # Banned-pattern scanner (prod unwrap/expect/panic/todo, TODO/FIXME, unjustified #[allow])
+make check WHAT=fix ACT=fmt|lint|docs|all   # Mutating auto-fix (rustfmt, clippy --fix, markdown)
+make build WHAT=docs ACT=build|serve|lint|validate|sync|rust|check|setup|adr|adr-new|diagrams [QUICK=1] [FIX=1]
+make check WHAT=ci                 # CI gate (check WHAT=all)
+make check WHAT=guard              # Banned-pattern scanner (prod unwrap/expect/panic/todo, TODO/FIXME, unjustified #[allow])
 ```
 
 Read-only git / PR / submodule inspection flows through the same monopoly:
 
 ```bash
-make git WHAT=status|diff|log|show|branch|tags|stash-list
-make pr  WHAT=view|checks PR=<n>
-make sub WHAT=status|diff
+make ship WHAT=status|diff|log|show|branch|tags|stash-list
+make ship WHAT=pr  ACT=view|checks PR=<n>
+make ship WHAT=sub ACT=status|diff
 ```
 
-<<<<<<< HEAD
 ## Coordination
 
 Multiple agents/sessions share this repo. The canonical rules of engagement — claim-before-edit,
@@ -255,11 +254,8 @@ live in **`CLAUDE.md › Multi-Agent Coordination Doctrine`** (SSOT). Execution 
 `.claude/skills/orchestrate/SKILL.md`. Task tracking is **beads (`bd`) only**. Do not restate the
 doctrine here.
 
-## Documentation References (git-tracked)
-=======
 Single-test local debugging is allowed when it is materially faster than the
 verb:
->>>>>>> feat/v0.3.2-ci-gates
 
 ```bash
 cargo test -p mcb-server --test unit -- test_name
@@ -268,25 +264,25 @@ cargo test -p mcb-server --test unit -- test_name
 Destructive verbs are DRY-RUN by default and require `APPLY=Y` to execute:
 
 ```bash
-make codegen [WHAT=all|cli|db|entities|conversions|clean] APPLY=Y
-make release [WHAT=package|version|install|install-validate] [BUMP=patch|minor|major] APPLY=Y
+make build WHAT=codegen ACT=all|cli|db|entities|conversions|clean APPLY=Y
+make ship WHAT=release ACT=package|version|install|install-validate [BUMP=patch|minor|major] APPLY=Y
 make clean   [WHAT=build|codegen|all] APPLY=Y
-make git WHAT=commit MSG='...' [FILES='...'] APPLY=Y   # also push|merge|rebase
-make sub WHAT=commit|push SUB=<name> [MSG='...'] APPLY=Y
-make setup [WHAT=hooks|tools|adr|all]                  # hooks installs the pre-commit gate
+make ship WHAT=commit MSG='...' [FILES='...'] APPLY=Y   # also push|merge|rebase
+make ship WHAT=sub ACT=commit|push SUB=<name> [MSG='...'] APPLY=Y
+make boot  [WHAT=hooks|tools|adr|all]                  # hooks installs the pre-commit gate
 ```
 
-`make release WHAT=install APPLY=Y` builds, installs config under the user's home
-directory, updates MCP client configs when present, and manages the user `mcb`
-systemd service. Run it only when the user explicitly asks for installation work.
+`make ship WHAT=release ACT=install APPLY=Y` builds, installs config under the
+user's home directory, updates MCP client configs when present, and manages the
+user `mcb` systemd service. Run it only when the user explicitly asks for installation work.
 
-Enforcement is mechanical, not honor-system: `make setup WHAT=hooks` installs
-no-bypass tiered git hooks driven by one SSOT (`make hook WHAT=pre-commit|pre-push`
+Enforcement is mechanical, not honor-system: `make boot WHAT=hooks` installs
+no-bypass tiered git hooks driven by one SSOT (`make boot WHAT=hook ACT=pre-commit|pre-push`
 in `makefiles/dispatch.mk`). pre-commit (fast): staged `guard` + fmt + clippy
 (`--workspace`) + typos + unit tests. pre-push (full): clippy `--all-targets` + full
 suite + doctests + `validate quick`, then delegates to the beads `pre-push` hook.
 `.claude/settings.json` denies dangerous shell and routes every Bash through
-`scripts/lib/mcb.sh guard-bash`; `make guard` scans the full tree (CI/manual) while
+`scripts/lib/mcb.sh guard-bash`; `make check WHAT=guard` scans the full tree (CI/manual) while
 the hook's `guard --staged` blocks only NEW violations in the commit.
 
 ## Task Tracking (beads / bd)
@@ -345,7 +341,7 @@ Use this protocol whenever multiple agents, terminals, or projects are active.
   or reclassify `cosmos-main`, `flext`, or other-project work in MCB's bead DB.
 - **Session start**: run `bd prime`, `git config --get beads.role`,
   `bd context --json`, `bd dolt show`, `bd backup status --json`, `bd status --json`, `bd ready --json`,
-  and `make git WHAT=status` before editing. Trust `bd context --json` for
+  and `make ship WHAT=status` before editing. Trust `bd context --json` for
   backend identity, database, role, repository routing, and schema; trust
   `bd dolt show --json` or `bd dolt status` for the actual Dolt connection mode.
   If `bd context` shows `dolt_mode: embedded` but `bd dolt show` reports
@@ -381,7 +377,7 @@ Use this protocol whenever multiple agents, terminals, or projects are active.
   unless the dry-run and user-approved plan show it is the clean source fix.
 - **One loop**: a long-running coordinator owns exactly one five-minute heartbeat
   loop for this session. Each tick reads `bd status`/`bd ready`, active child
-  beads, subagent state, and `make git WHAT=status`; then it executes or integrates
+  beads, subagent state, and `make ship WHAT=status`; then it executes or integrates
   one scoped bead, runs the relevant project gate plus `bd ping`/`bd status`, and
   records the checkpoint in `bd`. Do not start overlapping pollers/watchers.
 - **Subagents**: delegate through child beads with disjoint write scopes. The
@@ -397,7 +393,7 @@ Use this protocol whenever multiple agents, terminals, or projects are active.
 > **FUNDAMENTAL — checkpoint frequently.** After every validated slice, record the
 > next concrete action and evidence in `bd`. If the current lane explicitly authorizes
 > commits/pushes, push immediately after each authorized commit via
-> `make git WHAT=push APPLY=Y` so work is not stranded locally.
+> `make ship WHAT=push APPLY=Y` so work is not stranded locally.
 >
 > **FUNDAMENTAL — one self-paced loop per session.** Drive long async work with a
 > single ~5-min `ScheduleWakeup` heartbeat — never multiple overlapping loops or
@@ -506,10 +502,10 @@ the change touches shared behavior:
 - Rust code: `make check WHAT=lint` plus the relevant `make test SCOPE=...`.
 - Architecture rules, dependencies, or crate boundaries: add
   `make check WHAT=validate QUICK=1` or `make check WHAT=validate`.
-- Docs-only changes: `make docs WHAT=lint`.
-- Public docs plus architecture/status changes: `make docs WHAT=validate QUICK=1`
+- Docs-only changes: `make build WHAT=docs ACT=lint`.
+- Public docs plus architecture/status changes: `make build WHAT=docs ACT=validate QUICK=1`
   when practical.
-- Release/install paths: `make release APPLY=Y` only when explicitly requested.
+- Release/install paths: `make ship WHAT=release APPLY=Y` only when explicitly requested.
 
 Report command, exit code, and the meaningful output. Do not claim a full gate
 passed unless that exact gate was run in the current turn.

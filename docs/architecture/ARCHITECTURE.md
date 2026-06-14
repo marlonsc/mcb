@@ -50,7 +50,7 @@ Memory Context Browser is a high-performance, extensible Model Context Protocol 
 **Architecture Maturity**: ✅ **SeaQL + Loco.rs Clean Architecture Baseline**
 **DI Status**: ✅ Linkme provider registry, ✅ AppContext composition root, ✅ Full Port/Adapter Wiring
 **Provider Registration**: ✅ Linkme distributed slices (compile-time), ✅ Inventory removed
-**Validation**: ✅ `mcb-validate` architecture checks; run `make validate` for the current release verdict
+**Validation**: ✅ `mcb-validate` architecture checks; run `make check WHAT=validate` for the current release verdict
 **Port Traits**: `crates/mcb-domain/src/ports/` - Provider traits in domain layer (Clean Architecture compliant)
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
@@ -585,7 +585,7 @@ Provider trait implementations MUST import from `mcb-domain::ports::providers`.
 
 #### Automatic Enforcement
 
-Run `make validate` to check compliance. The mcb-validate crate enforces:
+Run `make check WHAT=validate` to check compliance. The mcb-validate crate enforces:
 
 - **Phase 1**: Linter checks (Clippy, Ruff)
 - **Phase 2**: AST pattern queries (Tree-sitter)
@@ -924,7 +924,7 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Status**: Active in v0.3.1; run `make validate` for the current architecture verdict.
+**Status**: Active in v0.3.1; run `make check WHAT=validate` for the current architecture verdict.
 
 ### Components (1)
 
@@ -962,7 +962,7 @@ Validation Pipeline (Pure Rust):
 ### Usage
 
 ```bash
-make validate  # Run all architecture validation rules
+make check WHAT=validate  # Run all architecture validation rules
 ```
 
 ### Features

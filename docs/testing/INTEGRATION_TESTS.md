@@ -82,18 +82,18 @@ make test SCOPE=integration
 make test SCOPE=all
 ```
 
-Start and stop local Docker services through the `dev` verb:
+Start and stop local Docker services through the `dev` sub-phase of `check`:
 
 ```bash
-make dev WHAT=docker-up
+make check WHAT=dev ACT=docker-up
 make test SCOPE=integration
-make dev WHAT=docker-down
+make check WHAT=dev ACT=docker-down
 ```
 
 For the containerized test runner:
 
 ```bash
-make dev WHAT=docker-test
+make check WHAT=dev ACT=docker-test
 ```
 
 ## Item-by-item Classification Of Archived Future Notes
@@ -105,7 +105,7 @@ classification:
 | ---- | ------------- | -------- |
 | Service availability reporting | Tracked in bead `mcb-efxg` | Use `bd show mcb-efxg --json` |
 | Conditional test groups | Tracked in bead `mcb-efxg` | Use `bd show mcb-efxg --json` |
-| Docker Compose for local E2E | Completed | `tests/docker-compose.yml` and `make dev WHAT=docker-up` / `make dev WHAT=docker-test` exist |
+| Docker Compose for local E2E | Completed | `tests/docker-compose.yml` and `make check WHAT=dev ACT=docker-up` / `make check WHAT=dev ACT=docker-test` exist |
 | Coverage integration | Superseded by current gate | `make check WHAT=coverage` excludes integration/admin test files and CI runs a dedicated coverage job |
 
 Future follow-up work must live in beads, not as loose notes in this document.

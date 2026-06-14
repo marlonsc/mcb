@@ -23,7 +23,7 @@ Accepted
 >
 > - ADR validation via automation.sh (100% compliance verification)
 > - mdbook integration for documentation publishing
-> - make docs commands for build/serve/check
+> - make build WHAT=docs commands for build/serve/check
 > - Structured ADR directory with README and graph
 
 ## Context
@@ -209,7 +209,7 @@ jobs:
 -   name: Link Validation
         run: cargo deadlinks
 -   name: Documentation Generation
-        run: make docs
+        run: make build WHAT=docs
 ```
 
 ## Success Metrics Tracking

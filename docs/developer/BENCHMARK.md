@@ -48,7 +48,7 @@ Before cleanup:
 - 16 Serena MCP servers running
 - 53GB RAM used + 53GB swap
 
-After `make dev-env-optimize APPLY=Y`:
+After `make check WHAT=optimize APPLY=Y`:
 
 - 1 rust-analyzer instance
 - 2 Serena MCP servers
@@ -100,7 +100,7 @@ With the new configuration:
 
 ## Recommendations
 
-1. **Run `make dev-env-optimize APPLY=Y` before starting new sessions** to prevent RAM exhaustion
+1. **Run `make check WHAT=optimize APPLY=Y` before starting new sessions** to prevent RAM exhaustion
 2. **Limit concurrent sessions to 2-3** on this machine (62GB RAM)
 3. **CI will now be significantly faster** on repeated runs due to sccache + rust-cache
 4. **Even failed CI runs are valuable** — they populate the cache for the next attempt

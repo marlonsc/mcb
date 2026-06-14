@@ -107,6 +107,7 @@ impl SeaOrmObservationRepository {
             .columns([
                 observation::Column::Id,
                 observation::Column::ProjectId,
+                observation::Column::OrgId,
                 observation::Column::Content,
                 observation::Column::ContentHash,
                 observation::Column::Tags,
@@ -139,6 +140,7 @@ impl SeaOrmObservationRepository {
                 let model = observation::Model {
                     id: row.try_get("", "id")?,
                     project_id: row.try_get("", "project_id")?,
+                    org_id: row.try_get("", "org_id")?,
                     content: row.try_get("", "content")?,
                     content_hash: row.try_get("", "content_hash")?,
                     tags: row.try_get("", "tags")?,
@@ -212,26 +214,36 @@ impl MemoryRepository for SeaOrmObservationRepository {
         Ok(())
     }
 
-    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
-        sea_repo_get_opt!(
-            &self.db,
-            observation,
-            Observation,
-            id.to_string(),
-            "get observation"
-        )
+    async fn get_observation(
+        &self,
+        org_id: &str,
+        id: &ObservationId,
+    ) -> Result<Option<Observation>> {
+        observation::Entity::find()
+            .filter(observation::Column::Id.eq(id.to_string()))
+            .filter(observation::Column::OrgId.eq(org_id))
+            .one(&self.db)
+            .await
+            .map(|model| model.map(Into::into))
+            .map_err(db_error("get observation"))
     }
 
-    async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
+    async fn find_by_hash(&self, org_id: &str, content_hash: &str) -> Result<Option<Observation>> {
         observation::Entity::find()
             .filter(observation::Column::ContentHash.eq(content_hash))
+            .filter(observation::Column::OrgId.eq(org_id))
             .one(&self.db)
             .await
             .map(|model| model.map(Into::into))
             .map_err(db_error("find observation by hash"))
     }
 
-    async fn search(&self, query: &str, mut limit: usize) -> Result<Vec<FtsSearchResult>> {
+    async fn search(
+        &self,
+        _org_id: &str,
+        query: &str,
+        mut limit: usize,
+    ) -> Result<Vec<FtsSearchResult>> {
         limit = limit.min(OBSERVATION_LIST_MAX_LIMIT);
         if query.trim().is_empty() {
             let observations = self.list_by_filter(None, limit).await?;
@@ -270,7 +282,11 @@ impl MemoryRepository for SeaOrmObservationRepository {
         sea_repo_delete!(&self.db, observation, id.to_string(), "delete observation")
     }
 
-    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
+    async fn get_observations_by_ids(
+        &self,
+        _org_id: &str,
+        ids: &[ObservationId],
+    ) -> Result<Vec<Observation>> {
         if ids.is_empty() {
             return Ok(Vec::new());
         }
@@ -285,12 +301,13 @@ impl MemoryRepository for SeaOrmObservationRepository {
 
     async fn get_timeline(
         &self,
+        org_id: &str,
         anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>> {
-        let Some(anchor) = self.get_observation(anchor_id).await? else {
+        let Some(anchor) = self.get_observation(org_id, anchor_id).await? else {
             return Ok(Vec::new());
         };
         let mut before_filter = filter.clone().unwrap_or_default();
@@ -335,7 +352,11 @@ impl MemoryRepository for SeaOrmObservationRepository {
         Ok(())
     }
 
-    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
+    async fn get_session_summary(
+        &self,
+        _org_id: &str,
+        session_id: &SessionId,
+    ) -> Result<Option<SessionSummary>> {
         session_summary::Entity::find()
             .filter(session_summary::Column::SessionId.eq(session_id.to_string()))
             .order_by_desc(session_summary::Column::CreatedAt)

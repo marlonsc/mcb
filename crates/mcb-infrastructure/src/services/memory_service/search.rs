@@ -23,6 +23,7 @@ use super::MemoryServiceImpl;
 impl MemoryServiceImpl {
     async fn calculate_rrf_scores(
         &self,
+        org_id: &str,
         fts_results: &[mcb_domain::ports::FtsSearchResult],
         vector_results: &[mcb_domain::value_objects::SearchResult],
     ) -> HashMap<String, f32> {
@@ -36,7 +37,8 @@ impl MemoryServiceImpl {
 
         for (rank, vec_result) in vector_results.iter().enumerate() {
             let content_hash = compute_content_hash(&vec_result.content);
-            if let Ok(Some(obs)) = self.repository.find_by_hash(&content_hash).await {
+            // ADR-056 (bead mcb-6pjx.1.4): org_id passed through for tenant-scoped hash lookup.
+            if let Ok(Some(obs)) = self.repository.find_by_hash(org_id, &content_hash).await {
                 let score = RRF_SCORE_NUMERATOR / (RRF_K + rank as f32 + 1.0);
                 let key = obs.id.clone();
                 *rrf_scores.entry(key).or_default() += score;
@@ -49,6 +51,7 @@ impl MemoryServiceImpl {
     /// Search memories using hybrid FTS + vector search with RRF ranking.
     pub(crate) async fn search_memories_impl(
         &self,
+        org_id: &str,
         query: &str,
         filter: Option<MemoryFilter>,
         limit: usize,
@@ -62,7 +65,7 @@ impl MemoryServiceImpl {
         ));
 
         let (fts_result, vector_result) = tokio::join!(
-            self.repository.search(query, candidate_limit),
+            self.repository.search(org_id, query, candidate_limit),
             self.vector_store.search_similar(
                 &collection_id,
                 query_embedding.vector.as_slice(),
@@ -84,7 +87,7 @@ impl MemoryServiceImpl {
         };
 
         let rrf_scores = self
-            .calculate_rrf_scores(&fts_results, &vector_results)
+            .calculate_rrf_scores(org_id, &fts_results, &vector_results)
             .await;
 
         let mut ranked: Vec<(String, f32)> = rrf_scores.into_iter().collect();
@@ -92,12 +95,14 @@ impl MemoryServiceImpl {
         ranked.truncate(limit);
 
         let applied_filter = filter.unwrap_or_default();
-        self.build_ranked_results(ranked, &applied_filter).await
+        self.build_ranked_results(org_id, ranked, &applied_filter)
+            .await
     }
 
     /// Build ranked results from RRF scores, applying filters and fetching full observations.
     async fn build_ranked_results(
         &self,
+        org_id: &str,
         ranked: Vec<(String, f32)>,
         filter: &MemoryFilter,
     ) -> Result<Vec<MemorySearchResult>> {
@@ -105,7 +110,11 @@ impl MemoryServiceImpl {
             .iter()
             .filter_map(|(id, _)| ObservationId::from_str(id).ok())
             .collect();
-        let observations = self.repository.get_observations_by_ids(&top_ids).await?;
+        // ADR-056 (bead mcb-6pjx.1.4): org_id forwarded for tenant-scoped batch fetch.
+        let observations = self
+            .repository
+            .get_observations_by_ids(org_id, &top_ids)
+            .await?;
 
         let obs_map: HashMap<String, Observation> = observations
             .into_iter()

@@ -11,10 +11,10 @@ MCB is a Rust 2024 Loco application exposing MCP over stdio and HTTP.
 
 | Mode | Command | Purpose |
 | ---- | ------- | ------- |
-| Development | `make dev WHAT=run` | Local development server from the workspace |
+| Development | `make check WHAT=dev ACT=run` | Local development server from the workspace |
 | MCP stdio | `mcb serve --stdio` | MCP client process transport |
 | HTTP daemon | `mcb serve --server` | HTTP/admin runtime without stdio |
-| Release install | `make release WHAT=install APPLY=Y` | User service install with config and MCP client updates |
+| Release install | `make ship WHAT=release ACT=install APPLY=Y` | User service install with config and MCP client updates |
 
 Do not use the removed `config.toml` provider format. Runtime configuration is
 Loco YAML under `config/`, with MCB-specific fields under `settings:`.
@@ -45,14 +45,14 @@ make check WHAT=validate QUICK=1
 For release packaging, use:
 
 ```bash
-make release WHAT=package APPLY=Y
+make ship WHAT=release ACT=package APPLY=Y
 ```
 
 For user-local installation, use:
 
 ```bash
-make release WHAT=install APPLY=Y
-make release WHAT=install-validate
+make ship WHAT=release ACT=install APPLY=Y
+make ship WHAT=release ACT=install-validate
 ```
 
 The install flow builds the release binary, installs MCB under the user's home
@@ -84,7 +84,7 @@ validation, VCS, project, and entity families.
 Use the smallest relevant gate first, then broaden:
 
 ```bash
-make release WHAT=install-validate
+make ship WHAT=release ACT=install-validate
 make check WHAT=lint
 make test SCOPE=startup
 make check WHAT=validate QUICK=1
@@ -93,14 +93,14 @@ make check WHAT=validate QUICK=1
 For CI and PR state, use:
 
 ```bash
-make pr WHAT=checks PR=<number>
+make ship WHAT=pr ACT=checks PR=<number>
 ```
 
 For Git state, use:
 
 ```bash
-make git WHAT=status
-make git WHAT=diff
+make ship WHAT=status
+make ship WHAT=diff
 ```
 
 ## Kubernetes And GitOps

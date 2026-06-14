@@ -90,28 +90,28 @@ This documentation is fully automated and validated. Use these commands:
 ```bash
 
 # Generate all documentation (metrics, Rust API docs, mdbook)
-make docs
+make build WHAT=docs
 
 # Validate documentation (ADRs, structure, links). QUICK=1 skips external link checks
-make docs-validate
-make docs-validate QUICK=1
+make build WHAT=docs ACT=validate
+make build WHAT=docs ACT=validate QUICK=1
 
 # Lint markdown. FIX=1 runs markdownlint -f to auto-fix
-make docs-lint
-make docs-lint FIX=1
+make build WHAT=docs ACT=lint
+make build WHAT=docs ACT=lint FIX=1
 
 # Fix markdown (metrics + markdownlint -f). Run before commit
-make docs-lint FIX=1
+make build WHAT=docs ACT=lint FIX=1
 
 # Generate architecture diagrams (PlantUML)
-make diagrams
+make build WHAT=docs ACT=diagrams
 
 # List ADRs / create new ADR
-make adr
-make adr-new
+make build WHAT=docs ACT=adr
+make build WHAT=docs ACT=adr-new
 ```
 
-`make docs-lint` and `make docs-validate` do not require a Rust build (useful
+`make build WHAT=docs ACT=lint` and `make build WHAT=docs ACT=validate` do not require a Rust build (useful
 when `target/` is broken or for docs-only CI).
 
 ## 📊 Documentation Quality
@@ -145,7 +145,7 @@ When contributing to documentation:
 
 1. **Use Templates**- Follow established templates for consistency
 2. **Automate Updates**- Ensure documentation updates are automated
-3. **Validate Changes** - Run `make docs-validate` before committing
+3. **Validate Changes** - Run `make build WHAT=docs ACT=validate` before committing
 4. **Update References**- Keep cross-references current
 5. **Follow Standards**- Adhere to established formatting and structure
 

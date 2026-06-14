@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-# Installed by `make setup WHAT=hooks`. Tier-2 full gate (tests + doctests +
+# Installed by `make boot WHAT=hooks`. Tier-2 full gate (tests + doctests +
 # validate) before push, then delegates to the beads (bd) pre-push hook if present
 # so issue-graph sync is preserved. No bypass (AGENTS.md §3).
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-make hook WHAT=pre-push
+make boot WHAT=hook ACT=pre-push
 if command -v bd >/dev/null 2>&1; then
   exec bd hooks run pre-push "$@"
 fi

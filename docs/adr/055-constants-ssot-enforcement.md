@@ -197,7 +197,7 @@ The `mcb-validate` crate implements the 3 new CA rules:
 ### Validation Output
 
 ```bash
-$ make validate
+$ make check WHAT=validate
 Architecture validation: 0 violations
 ```
 

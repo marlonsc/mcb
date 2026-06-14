@@ -27,15 +27,15 @@ rules here.
 | Task | Command |
 | ----- | ------- |
 | Build release | `make build RELEASE=1` |
-| Run dev server | `make dev WHAT=run` |
+| Run dev server | `make check WHAT=dev ACT=run` |
 | Run unit tests | `make test SCOPE=unit` |
 | Run all tests | `make test` |
 | Lint + format check | `make check WHAT=lint` |
 | Architecture validation | `make check WHAT=validate` |
-| Full CI gate | `make ci` |
-| Banned-pattern scan | `make guard` |
-| Docs lint | `make docs WHAT=lint` |
-| Pre-commit hook | `make hook WHAT=pre-commit` |
+| Full CI gate | `make check WHAT=ci` |
+| Banned-pattern scan | `make check WHAT=guard` |
+| Docs lint | `make build WHAT=docs ACT=lint` |
+| Pre-commit hook | `make boot WHAT=hook ACT=pre-commit` |
 
 ### Workspace Crates
 
@@ -65,7 +65,6 @@ mcb-utils        leaf utilities
 
 ### First-Time Onboarding
 
-<<<<<<< HEAD
 Clean Architecture with strict inward-only dependency flow, enforced at compile time:
 
 ```
@@ -163,9 +162,9 @@ CI adds: `-D clippy::multiple_unsafe_ops_per_block`, `-D clippy::undocumented_un
 
 ## Quality Gates (All PRs Must Pass)
 
-- `make lint` — zero clippy warnings, consistent formatting
+- `make check WHAT=lint` — zero clippy warnings, consistent formatting
 - `make test` — all tests green
-- `make validate` — zero architecture violations (mcb-validate)
+- `make check WHAT=validate` — zero architecture violations (mcb-validate)
 - No `unwrap()`/`expect()` in production, no `#[allow(unused)]` hiding issues
 
 ## Architecture Violation Codes
@@ -231,7 +230,3 @@ and `.claude/skills/orchestrate/SKILL.md` point here — they do not restate it.
 - [MCP Tools](docs/MCP_TOOLS.md) — full tool API schemas
 - [Configuration](docs/CONFIGURATION.md) — all environment variables and config options
 - [Roadmap](docs/developer/ROADMAP.md) — version plans and feature timeline
-=======
-See [`ONBOARDING.md`](./ONBOARDING.md) for a structured walkthrough of the
-stack, architecture, request lifecycle, and where to find things.
->>>>>>> feat/v0.3.2-ci-gates

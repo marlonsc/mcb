@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Installed by `make setup WHAT=hooks`. Tier-1 fast gate via the canonical make
+# Installed by `make boot WHAT=hooks`. Tier-1 fast gate via the canonical make
 # verb (single source of truth in makefiles/dispatch.mk). No bypass — fix the
 # cause, not the gate (AGENTS.md §3).
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-exec make hook WHAT=pre-commit
+exec make boot WHAT=hook ACT=pre-commit

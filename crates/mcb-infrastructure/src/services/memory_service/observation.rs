@@ -23,6 +23,7 @@ use super::MemoryServiceImpl;
 /// Owned inputs describing an observation to be stored.
 pub(crate) struct ObservationInput {
     pub project_id: String,
+    pub org_id: String,
     pub content: String,
     pub r#type: ObservationType,
     pub tags: Vec<String>,
@@ -103,6 +104,7 @@ impl MemoryServiceImpl {
         let observation = Observation {
             id: id::generate().to_string(),
             project_id: input.project_id,
+            org_id: input.org_id,
             content: input.content,
             content_hash: vector.content_hash,
             tags: input.tags,
@@ -135,7 +137,12 @@ impl MemoryServiceImpl {
 
         let content_hash = compute_content_hash(&input.content);
 
-        if let Some(existing) = self.repository.find_by_hash(&content_hash).await? {
+        // Deferred (ADR-056, bead mcb-6pjx.1.4): pass org_id to find_by_hash for tenant-scoped dedup.
+        if let Some(existing) = self
+            .repository
+            .find_by_hash(&input.org_id, &content_hash)
+            .await?
+        {
             return Ok((existing.id, true));
         }
 

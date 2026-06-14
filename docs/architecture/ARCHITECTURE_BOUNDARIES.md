@@ -477,7 +477,7 @@ impl ContextService {
 ```bash
 
 # Run architecture validation
-make validate
+make check WHAT=validate
 
 # Expected output
 Architecture validation: 0 violations
@@ -535,7 +535,7 @@ Architecture validation: 0 violations
 
 # .github/workflows/ci.yml
 -   name: Validate Architecture
-  run: make validate
+  run: make check WHAT=validate
 
 # Fails if any violations detected
 ```
@@ -545,7 +545,7 @@ Architecture validation: 0 violations
 ```bash
 
 # .git/hooks/pre-commit
-make validate QUICK=1  # Fast validation
+make check WHAT=validate QUICK=1  # Fast validation
 ```
 
 ## Quality Gate

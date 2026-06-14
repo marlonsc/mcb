@@ -215,8 +215,8 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y nodejs npm
           npm install -g markdownlint-cli
-      - run: make docs WHAT=check
-      - run: make docs WHAT=validate QUICK=1
+      - run: make build WHAT=docs ACT=check
+      - run: make build WHAT=docs ACT=validate QUICK=1
 
   docs-diagrams:
     name: Generate Diagrams
@@ -243,7 +243,7 @@ jobs:
           distribution: "temurin"
       - name: Install PlantUML
         run: sudo apt-get update && sudo apt-get install -y plantuml
-      - run: make docs WHAT=diagrams
+      - run: make build WHAT=docs ACT=diagrams
       - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         with:
           name: architecture-diagrams

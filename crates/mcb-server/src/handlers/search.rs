@@ -25,6 +25,7 @@ use crate::args::{SearchArgs, SearchResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::collections::normalize_collection_name;
+use crate::utils::mcp::resolve_org_id;
 use mcb_utils::constants::keys::{
     FIELD_BRANCH, FIELD_COMMIT, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE,
     FIELD_QUERY, FIELD_RESULTS,
@@ -245,11 +246,12 @@ impl SearchHandler {
             }),
             ..Default::default()
         };
+        let org_id = resolve_org_id(args.org_id.as_deref());
         let limit = args.limit.unwrap_or(DEFAULT_SEARCH_LIMIT as u32) as usize;
 
         match self
             .memory_service
-            .search_memories(query, Some(filter), limit)
+            .search_memories(&org_id, query, Some(filter), limit)
             .await
         {
             Ok(results) => Self::format_memory_results(query, results),

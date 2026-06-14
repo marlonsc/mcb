@@ -12,7 +12,7 @@ use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
 use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
-use crate::utils::mcp::tool_error;
+use crate::utils::mcp::{resolve_org_id, tool_error};
 use mcb_utils::constants::keys::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
 use mcb_utils::constants::limits::{DEFAULT_MEMORY_LIST_LIMIT, DEFAULT_TIMELINE_DEPTH};
 
@@ -23,11 +23,12 @@ pub async fn list_observations(
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
     let filter = build_memory_filter(args, None, args.tags.clone());
+    let org_id = resolve_org_id(args.org_id.as_deref());
     let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIST_LIMIT as u32) as usize;
     // INTENTIONAL: Optional query parameter; empty string means no filter
     let query = args.query.clone().unwrap_or_default();
     match memory_service
-        .memory_search(&query, Some(filter), limit)
+        .memory_search(&org_id, &query, Some(filter), limit)
         .await
     {
         Ok(results) => {
@@ -72,8 +73,9 @@ async fn resolve_timeline_anchor_id(
     let Some(query) = args.query.clone() else {
         return Ok(Err(tool_error("Missing anchor_id or query for timeline")));
     };
+    let org_id = resolve_org_id(args.org_id.as_deref());
     let results = memory_service
-        .search_memories(&query, None, 1)
+        .search_memories(&org_id, &query, None, 1)
         .await
         .map_err(|e| to_opaque_mcp_error(&e))?;
     match results.first() {
@@ -93,10 +95,12 @@ pub async fn get_timeline(
         Err(response) => return Ok(response),
     };
     let filter = build_memory_filter(args, None, None);
+    let org_id = resolve_org_id(args.org_id.as_deref());
     let depth_before = args.depth_before.unwrap_or(DEFAULT_TIMELINE_DEPTH);
     let depth_after = args.depth_after.unwrap_or(DEFAULT_TIMELINE_DEPTH);
     match memory_service
         .get_timeline(
+            &org_id,
             &ObservationId::from_string(&anchor_id),
             depth_before,
             depth_after,

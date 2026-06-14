@@ -3,7 +3,7 @@
 # =============================================================================
 #
 # Used by `scripts/codegen-conversions.py` to generate Rust conversion files.
-# Run `make codegen-conversions` to regenerate.
+# Run `make build WHAT=codegen ACT=conversions APPLY=Y` to regenerate.
 #
 # Converter types:
 #   direct            — Same field name, same type (default for `fields` list)
@@ -287,7 +287,7 @@ from_model = 'IssueLabelAssignmentId::from(format!("{}:{}", m.issue_id, m.label_
 domain = "Observation"
 import = "mcb_domain::entities::observation::{Observation, ObservationType}"
 entity = "observation"
-fields = ["id", "project_id", "content", "content_hash", "created_at", "embedding_id"]
+fields = ["id", "project_id", "org_id", "content", "content_hash", "created_at", "embedding_id"]
 
 [observation.convert.tags]
 type = "json_array"

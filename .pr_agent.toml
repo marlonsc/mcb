@@ -170,7 +170,7 @@ content = """\
 - Use #[tokio::test] for async, tempfile for filesystem tests
 
 ### Build System
-- Always use make targets: make build, make test, make lint, make validate
+- Always use make targets: make build, make test, make check WHAT=lint, make check WHAT=validate
 - CI pipeline: lint -> test -> startup-smoke -> validate -> audit -> docs
 
 ### Commits

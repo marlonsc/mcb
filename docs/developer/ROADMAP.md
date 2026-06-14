@@ -24,7 +24,7 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 | -------- | ------- |
 | Beads issues | Use `bd status --json` for current totals |
 | Avg lead time | Use `bd status --json` for current lead-time metrics |
-| TODO/FIXME | Use `make guard` and the relevant bead for current remediation state |
+| TODO/FIXME | Use `make check WHAT=guard` and the relevant bead for current remediation state |
 | Languages | 14 via tree-sitter |
 | Embedding providers | 6 (FastEmbed, OpenAI, VoyageAI, Ollama, Gemini, Anthropic) |
 | Vector stores | 5+ (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted) |
@@ -55,7 +55,7 @@ typos/doc validation, and release workflow resilience.
 | Rust cache and nextest CI tuning | Implemented; verification tracked in `mcb-v5an.11` |
 | Typos and hook gates | Implemented |
 | Docs/governance cleanup | Completed under `mcb-vy4k`; current release docs tracked in `mcb-v5an` |
-| Final PR/check validation | Use `bd show mcb-v5an.11 --json` and `make pr WHAT=checks PR=<id>` |
+| Final PR/check validation | Use `bd show mcb-v5an.11 --json` and `make ship WHAT=pr ACT=checks PR=<id>` |
 
 ---
 

@@ -80,11 +80,12 @@ endef
 define MCB_HOOK
 case "$(ACT)" in \
   pre-commit) \
+    T="$(THREADS)"; case "$$T" in ''|*[!0-9]*|0) T=1;; esac; \
     bash $(MCB_SH) guard --staged && \
     cargo fmt --all -- --check && \
     cargo clippy --workspace -- -D warnings && \
     { ! command -v typos >/dev/null 2>&1 || typos; } && \
-    T="$(THREADS)"; case "$$T" in ''|*[!0-9]*|0) T=1;; esac; $(MCB_TEST_UNIT) ;; \
+    $(MCB_TEST_UNIT) ;; \
   pre-push) \
     cargo fmt --all -- --check && \
     cargo clippy --all-targets -- -D warnings && \

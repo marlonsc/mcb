@@ -429,8 +429,8 @@ EXAMPLES:
     $0 structure links   # Multiple specific checks
 
 MAKE TARGETS:
-    make docs WHAT=check      # Runs this script with 'all'
-    make docs WHAT=validate   # Runs this script with 'adrs'
+    make build WHAT=docs ACT=check      # Runs this script with 'all'
+    make build WHAT=docs ACT=validate   # Runs this script with 'adrs'
 
 EOF
 }

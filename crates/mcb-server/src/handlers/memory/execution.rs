@@ -17,7 +17,7 @@ use super::common::{
 };
 use crate::args::MemoryArgs;
 use crate::formatter::ResponseFormatter;
-use crate::utils::mcp::tool_error;
+use crate::utils::mcp::{resolve_org_id, tool_error};
 use mcb_utils::constants::keys::FIELD_OBSERVATION_ID;
 use mcb_utils::constants::values::{TAG_EXECUTION, TAG_FAILURE, TAG_SUCCESS};
 
@@ -151,8 +151,10 @@ pub async fn store_execution(
         None,
     );
 
+    let org_id = resolve_org_id(args.org_id.as_deref());
     persist_execution_observation(
         memory_service,
+        org_id,
         origin.project_id,
         content,
         tags,
@@ -164,6 +166,7 @@ pub async fn store_execution(
 /// Store the execution observation and format the MCP response.
 async fn persist_execution_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
+    org_id: String,
     project_id: String,
     content: String,
     tags: Vec<String>,
@@ -172,6 +175,7 @@ async fn persist_execution_observation(
     match memory_service
         .store_observation(StoreObservationInput {
             project_id,
+            org_id,
             content,
             r#type: ObservationType::Execution,
             tags,

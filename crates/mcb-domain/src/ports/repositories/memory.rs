@@ -27,20 +27,12 @@ pub trait MemoryRepository: Send + Sync {
         id: &ObservationId,
     ) -> Result<Option<Observation>>;
     /// Finds an observation by content hash, scoped to `org_id` for tenant isolation.
-    async fn find_by_hash(
-        &self,
-        org_id: &str,
-        content_hash: &str,
-    ) -> Result<Option<Observation>>;
+    async fn find_by_hash(&self, org_id: &str, content_hash: &str) -> Result<Option<Observation>>;
 
     /// Full-text search returning IDs with BM25 rank scores for hybrid fusion,
     /// scoped to `org_id` so results never cross organizations.
-    async fn search(
-        &self,
-        org_id: &str,
-        query: &str,
-        limit: usize,
-    ) -> Result<Vec<FtsSearchResult>>;
+    async fn search(&self, org_id: &str, query: &str, limit: usize)
+    -> Result<Vec<FtsSearchResult>>;
 
     /// Performs the delete observation operation.
     async fn delete_observation(&self, id: &ObservationId) -> Result<()>;

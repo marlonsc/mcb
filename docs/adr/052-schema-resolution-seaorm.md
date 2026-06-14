@@ -37,7 +37,7 @@ Constraints:
 
 - Clean Architecture dependency flow must remain inward.
 - Domain must not depend on provider/ORM frameworks.
-- `make validate` enforces architecture boundaries and should remain green
+- `make check WHAT=validate` enforces architecture boundaries and should remain green
   without adding framework coupling exceptions.
 
 ## Decision
@@ -65,7 +65,7 @@ Decision detail:
   swappable and testable.
 - Protects portability if additional database providers or non-SeaORM adapters
   are introduced.
-- Keeps `make validate` unchanged: existing boundary rules continue to pass
+- Keeps `make check WHAT=validate` unchanged: existing boundary rules continue to pass
   without introducing domain->provider exceptions.
 - Avoids coupling domain contracts to ORM query APIs (`EntityTrait`/
   `ColumnTrait`) that are operational rather than canonical specification.

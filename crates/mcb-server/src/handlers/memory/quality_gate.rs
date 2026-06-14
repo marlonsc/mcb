@@ -16,6 +16,7 @@ use super::common::{
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::utils::mcp::resolve_org_id;
 use mcb_utils::utils::id as domain_id;
 
 use mcb_utils::constants::keys::{FIELD_MESSAGE, FIELD_OBSERVATION_ID};
@@ -81,8 +82,10 @@ pub async fn store_quality_gate(
         Some(quality_gate),
     );
 
+    let org_id = resolve_org_id(args.org_id.as_deref());
     persist_quality_gate_observation(
         memory_service,
+        org_id,
         origin.project_id,
         content,
         tags,
@@ -94,6 +97,7 @@ pub async fn store_quality_gate(
 /// Store the quality gate observation and format the MCP response.
 async fn persist_quality_gate_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
+    org_id: String,
     project_id: String,
     content: String,
     tags: Vec<String>,
@@ -102,6 +106,7 @@ async fn persist_quality_gate_observation(
     match memory_service
         .store_observation(StoreObservationInput {
             project_id,
+            org_id,
             content,
             r#type: ObservationType::QualityGate,
             tags,

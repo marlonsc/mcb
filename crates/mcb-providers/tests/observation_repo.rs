@@ -20,6 +20,8 @@ fn make_observation(
     Observation {
         id: id.to_owned(),
         project_id: "proj-memory".to_owned(),
+        // TODO(ADR-056): org_id not yet enforced; using default sentinel.
+        org_id: mcb_utils::constants::values::DEFAULT_ORG_ID.to_owned(),
         content: content.to_owned(),
         content_hash: compute_content_hash(content),
         tags: tags.iter().map(|tag| (*tag).to_owned()).collect(),
@@ -88,9 +90,10 @@ async fn observation_repo_round_trip_store_get_list_timeline_and_inject() -> Tes
     repo.store_observation(&obs3).await?;
 
     let fetched = repo
-        .get_observation(&ObservationId::from_string(
-            "22222222-2222-2222-2222-222222222222",
-        ))
+        .get_observation(
+            mcb_utils::constants::values::DEFAULT_ORG_ID,
+            &ObservationId::from_string("22222222-2222-2222-2222-222222222222"),
+        )
         .await?
         .ok_or("obs2 should exist")?;
     assert_eq!(fetched.id, "22222222-2222-2222-2222-222222222222");
@@ -118,6 +121,7 @@ async fn observation_repo_round_trip_store_get_list_timeline_and_inject() -> Tes
 
     let timeline = repo
         .get_timeline(
+            mcb_utils::constants::values::DEFAULT_ORG_ID,
             &ObservationId::from_string("22222222-2222-2222-2222-222222222222"),
             1,
             1,
@@ -167,7 +171,9 @@ async fn search_handles_empty_query_for_memory_list_bug_regression() -> TestResu
     );
     repo.store_observation(&observation).await?;
 
-    let results = repo.search("", 10).await?;
+    let results = repo
+        .search(mcb_utils::constants::values::DEFAULT_ORG_ID, "", 10)
+        .await?;
     assert!(
         results
             .iter()

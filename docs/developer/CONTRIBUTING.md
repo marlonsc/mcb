@@ -87,7 +87,7 @@ crates/
 ### Formatting (rustfmt.toml)
 
 - **Edition**: 2024 | **Max width**: 100 | **Tab size**: 4
-- Run `make fmt` before committing
+- Run `make check WHAT=fix ACT=fmt` before committing
 
 ### Workspace Lints (Cargo.toml)
 
@@ -139,7 +139,7 @@ Fixes #<issue-id>
 
 ```bash
 ./scripts/commit_analyze.sh             # Analyze staged changes
-make lint && make validate QUICK=1      # Pre-commit validation
+make check WHAT=lint && make check WHAT=validate QUICK=1   # Pre-commit validation
 git commit                              # Commit (pre-commit hook runs checks)
 git push                                # Push
 ```
@@ -167,12 +167,12 @@ cargo test test_name -- --nocapture     # Specific test with output
 | Command | Purpose |
 | --------- | --------- |
 | `make build` | Build all crates |
-| `make fmt` | Auto-format code |
-| `make lint` | Format check + clippy |
+| `make check WHAT=fix ACT=fmt` | Auto-format code |
+| `make check WHAT=lint` | Format check + clippy |
 | `make test` | All unit + integration tests |
-| `make validate` | Architecture rule enforcement |
-| `make check` | Full CI pipeline |
-| `make audit` | Security advisory scan |
+| `make check WHAT=validate` | Architecture rule enforcement |
+| `make check WHAT=ci` | Full CI pipeline |
+| `make check WHAT=audit` | Security advisory scan |
 
 ## 📦 Dependency Management
 
@@ -199,8 +199,8 @@ cargo test test_name -- --nocapture     # Specific test with output
 ### Before Submitting
 
 - [ ] Tests pass: `make test`
-- [ ] Code formats correctly: `make fmt`
-- [ ] No Rust lint errors: `make lint`
+- [ ] Code formats correctly: `make check WHAT=fix ACT=fmt`
+- [ ] No Rust lint errors: `make check WHAT=lint`
 - [ ] Quality checks pass: `make check`
 - [ ] Documentation updated if needed
 
@@ -225,8 +225,8 @@ cargo clean && make build && make check
 ### Docs-only validation (no Rust build)
 
 ```bash
-make docs-lint
-make docs-validate QUICK=1
+make build WHAT=docs ACT=lint
+make build WHAT=docs ACT=validate QUICK=1
 ```
 
 ## 🚀 Code References

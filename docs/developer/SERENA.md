@@ -326,10 +326,10 @@ Run the optimizer before starting a new session:
 
 ```bash
 # Dry-run (safe — reports only)
-make dev-env-optimize
+make check WHAT=optimize
 
 # Actually kill duplicate processes
-make dev-env-optimize APPLY=Y
+make check WHAT=optimize APPLY=Y
 ```
 
 This script:
@@ -340,7 +340,7 @@ This script:
 
 ### Recommended Workflow
 
-1. **Before starting a new session**, run `make dev-env-optimize APPLY=Y`
+1. **Before starting a new session**, run `make check WHAT=optimize APPLY=Y`
 2. **Limit concurrent sessions** to 2–3 maximum on this machine
 3. **Keep one "primary" session** alive for continuity; kill idle ones
 4. **Run builds sequentially** when possible — avoid `cargo check` in 2+ sessions simultaneously

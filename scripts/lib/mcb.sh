@@ -35,7 +35,7 @@ mcb_log()  { printf '%s\n' "$*" >&2; }
 mcb_ok()   { printf '%b✓%b %s\n' "$GREEN" "$RESET" "$*" >&2; }
 mcb_warn() { printf '%b!%b %s\n' "$YELLOW" "$RESET" "$*" >&2; }
 mcb_die()  { local c="$1"; shift; printf '%bERRO:%b %s\n' "$RED" "$RESET" "$*" >&2; exit "$c"; }
-mcb_require_cmd() { command -v "$1" >/dev/null 2>&1 || mcb_die "$EX_PREREQ" "comando '$1' ausente (instale via: make setup WHAT=tools)"; }
+mcb_require_cmd() { command -v "$1" >/dev/null 2>&1 || mcb_die "$EX_PREREQ" "comando '$1' ausente (instale via: make boot WHAT=tools)"; }
 
 # --- single mutation gate (APPLY=Y, destructive verbs only) ------------------
 mcb_require_apply() {

@@ -26,7 +26,7 @@ MCB uses a 4-layer architecture. Each layer is documented in its core module fil
 ### SSOT Verification
 Run the automated documentation audit regularly to ensure integrity:
 ```bash
-make docs-validate
+make build WHAT=docs ACT=validate
 ```
 
 ---
