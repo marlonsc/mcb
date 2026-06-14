@@ -339,6 +339,37 @@ async fn migrate_and_verify_schema(pool: &sqlx::SqlitePool) -> Result<()> {
         }
     }
 
+    backfill_observation_org_id(pool).await?;
+    Ok(())
+}
+
+/// Backfill `observations.org_id` for rows persisted before tenant isolation
+/// existed. Pre-multitenant data implicitly belonged to the bootstrap org, so
+/// NULL/empty values are assigned the canonical default-org id. The value is
+/// taken from [`OrgContext::default`] so it matches exactly what the read paths
+/// resolve for default-tenant callers (`resolve_org_id(None)`). Explicit and
+/// logged — no silent invention: only genuinely missing values are touched.
+async fn backfill_observation_org_id(pool: &sqlx::SqlitePool) -> Result<()> {
+    use mcb_domain::error::Error;
+    use mcb_domain::value_objects::OrgContext;
+
+    let default_org_id = OrgContext::default().id_str();
+
+    let result =
+        sqlx::query("UPDATE observations SET org_id = ? WHERE org_id IS NULL OR org_id = ''")
+            .bind(&default_org_id)
+            .execute(pool)
+            .await
+            .map_err(|e| Error::memory_with_source("backfill observations.org_id", e))?;
+
+    let affected = result.rows_affected();
+    if affected > 0 {
+        mcb_domain::info!(
+            "sqlite",
+            "Backfilled observations.org_id to bootstrap org",
+            &format!("rows = {affected}, org_id = {default_org_id}")
+        );
+    }
     Ok(())
 }
 

@@ -11,6 +11,9 @@ pub fn table() -> TableDef {
         [
             crate::col!("id", Text, pk),
             crate::col!("project_id", Text),
+            // Nullable so existing single-tenant databases can migrate via
+            // `ALTER TABLE ADD COLUMN`; new rows always set it explicitly.
+            crate::col!("org_id", Text, nullable),
             crate::col!("content", Text),
             crate::col!("content_hash", Text, unique),
             crate::col!("tags", Text, nullable),
@@ -24,6 +27,7 @@ pub fn table() -> TableDef {
 
 pub fn indexes() -> Vec<IndexDef> {
     vec![
+        crate::index!("idx_obs_org", "observations", ["org_id"]),
         crate::index!("idx_obs_project", "observations", ["project_id"]),
         crate::index!("idx_obs_hash", "observations", ["content_hash"]),
         crate::index!("idx_obs_created", "observations", ["created_at"]),

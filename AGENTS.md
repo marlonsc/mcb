@@ -42,6 +42,14 @@ CLAUDE.md (single source of truth — all rules, patterns, commands)
 3. **Agent-specific files must stay under 50 lines** — they are pointers, not copies.
 4. When updating architecture, conventions, or quality gates, update `CLAUDE.md` only.
 
+## Coordination
+
+Multiple agents/sessions share this repo. The canonical rules of engagement — claim-before-edit,
+never-revert-others, no-pattern-deviation, breaking-glass-to-operator, converge-fast, return-to-plan —
+live in **`CLAUDE.md › Multi-Agent Coordination Doctrine`** (SSOT). Execution loop:
+`.claude/skills/orchestrate/SKILL.md`. Task tracking is **beads (`bd`) only**. Do not restate the
+doctrine here.
+
 ## Documentation References (git-tracked)
 
 - [Architecture](docs/architecture/ARCHITECTURE.md) — layers, crate map, dependency flow

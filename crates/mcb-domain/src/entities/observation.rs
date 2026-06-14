@@ -116,6 +116,8 @@ pub struct Observation {
     pub id: String,
     /// Identifier of the project this observation belongs to.
     pub project_id: String,
+    /// Organization identifier for tenant isolation.
+    pub org_id: String,
     /// The actual content or payload of the observation.
     pub content: String,
     /// Hash of the content for deduplication.

@@ -55,9 +55,9 @@ fn serialize_summary_fields(
 ///
 /// Returns a `(sql_fragment, params)` tuple where `sql_fragment` starts with
 /// `"SELECT * FROM observations WHERE 1=1"` followed by any filter conditions.
-fn build_timeline_filter_sql(filter: Option<&MemoryFilter>) -> (String, Vec<SqlParam>) {
-    let mut sql = String::from("SELECT * FROM observations WHERE 1=1");
-    let mut params: Vec<SqlParam> = Vec::new();
+fn build_timeline_filter_sql(org_id: &str, filter: Option<&MemoryFilter>) -> (String, Vec<SqlParam>) {
+    let mut sql = String::from("SELECT * FROM observations WHERE org_id = ?");
+    let mut params: Vec<SqlParam> = vec![SqlParam::String(org_id.to_owned())];
 
     let Some(f) = filter else {
         return (sql, params);
@@ -96,6 +96,7 @@ async fn assemble_timeline(
     before_rows: &[Arc<dyn mcb_domain::ports::SqlRow>],
     after_rows: &[Arc<dyn mcb_domain::ports::SqlRow>],
     repo: &SqliteMemoryRepository,
+    org_id: &str,
     anchor_id: &ObservationId,
 ) -> Result<Vec<Observation>> {
     let mut timeline = Vec::new();
@@ -105,7 +106,7 @@ async fn assemble_timeline(
                 .map_err(|e| Error::memory_with_source("decode observation", e))?,
         );
     }
-    if let Some(anchor_obs) = repo.get_observation(anchor_id).await? {
+    if let Some(anchor_obs) = repo.get_observation(org_id, anchor_id).await? {
         timeline.push(anchor_obs);
     }
     for row in after_rows {
@@ -171,6 +172,7 @@ impl MemoryRepository for SqliteMemoryRepository {
         let params = [
             SqlParam::String(observation.id.clone()),
             SqlParam::String(observation.project_id.clone()),
+            SqlParam::String(observation.org_id.clone()),
             SqlParam::String(observation.content.clone()),
             SqlParam::String(observation.content_hash.clone()),
             SqlParam::String(tags_json),
@@ -186,8 +188,8 @@ impl MemoryRepository for SqliteMemoryRepository {
         self.executor
             .execute(
                 "
-                INSERT INTO observations (id, project_id, content, content_hash, tags, observation_type, metadata, created_at, embedding_id)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO observations (id, project_id, org_id, content, content_hash, tags, observation_type, metadata, created_at, embedding_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(content_hash) DO UPDATE SET
                     tags = excluded.tags,
                     metadata = excluded.metadata
@@ -200,35 +202,63 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(())
     }
 
-    /// Retrieves an observation by ID.
-    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
+    /// Retrieves an observation by ID, scoped to `org_id`.
+    async fn get_observation(
+        &self,
+        org_id: &str,
+        id: &ObservationId,
+    ) -> Result<Option<Observation>> {
         query_helpers::query_one(
             &self.executor,
-            "SELECT * FROM observations WHERE id = ?",
-            &[SqlParam::String(id.to_string())],
+            "SELECT * FROM observations WHERE id = ? AND org_id = ?",
+            &[
+                SqlParam::String(id.to_string()),
+                SqlParam::String(org_id.to_owned()),
+            ],
             row_convert::row_to_observation,
         )
         .await
     }
 
-    /// Retrieves an observation by content hash.
-    async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
+    /// Retrieves an observation by content hash, scoped to `org_id`.
+    async fn find_by_hash(
+        &self,
+        org_id: &str,
+        content_hash: &str,
+    ) -> Result<Option<Observation>> {
         query_helpers::query_one(
             &self.executor,
-            "SELECT * FROM observations WHERE content_hash = ?",
-            &[SqlParam::String(content_hash.to_owned())],
+            "SELECT * FROM observations WHERE content_hash = ? AND org_id = ?",
+            &[
+                SqlParam::String(content_hash.to_owned()),
+                SqlParam::String(org_id.to_owned()),
+            ],
             row_convert::row_to_observation,
         )
         .await
     }
 
-    /// Searches observations using FTS.
-    async fn search(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>> {
+    /// Searches observations using FTS, scoped to `org_id` via a join on the
+    /// base table so results never cross organizations.
+    async fn search(
+        &self,
+        org_id: &str,
+        query: &str,
+        limit: usize,
+    ) -> Result<Vec<FtsSearchResult>> {
         let rows = self
             .executor
             .query_all(
-                "SELECT id, rank FROM observations_fts WHERE observations_fts MATCH ? ORDER BY rank LIMIT ?",
-                &[SqlParam::String(query.to_owned()), SqlParam::I64(limit as i64)],
+                "SELECT f.id AS id, f.rank AS rank
+                 FROM observations_fts f
+                 JOIN observations o ON o.id = f.id
+                 WHERE observations_fts MATCH ? AND o.org_id = ?
+                 ORDER BY f.rank LIMIT ?",
+                &[
+                    SqlParam::String(query.to_owned()),
+                    SqlParam::String(org_id.to_owned()),
+                    SqlParam::I64(limit as i64),
+                ],
             )
             .await?;
 
@@ -253,21 +283,23 @@ impl MemoryRepository for SqliteMemoryRepository {
             .await
     }
 
-    /// Retrieves multiple observations by ID.
-    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
+    /// Retrieves multiple observations by ID, scoped to `org_id`.
+    async fn get_observations_by_ids(
+        &self,
+        org_id: &str,
+        ids: &[ObservationId],
+    ) -> Result<Vec<Observation>> {
         if ids.is_empty() {
             return Ok(Vec::new());
         }
 
         let placeholders: Vec<String> = ids.iter().map(|_| "?".to_owned()).collect();
         let sql = format!(
-            "SELECT * FROM observations WHERE id IN ({})",
+            "SELECT * FROM observations WHERE org_id = ? AND id IN ({})",
             placeholders.join(",")
         );
-        let params: Vec<SqlParam> = ids
-            .iter()
-            .map(|id| SqlParam::String(id.to_string()))
-            .collect();
+        let mut params: Vec<SqlParam> = vec![SqlParam::String(org_id.to_owned())];
+        params.extend(ids.iter().map(|id| SqlParam::String(id.to_string())));
 
         query_helpers::query_all(
             &self.executor,
@@ -285,18 +317,19 @@ impl MemoryRepository for SqliteMemoryRepository {
     /// optionally filtered by session, repository, or observation type.
     async fn get_timeline(
         &self,
+        org_id: &str,
         anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>> {
-        let anchor = self.get_observation(anchor_id).await?;
+        let anchor = self.get_observation(org_id, anchor_id).await?;
         let anchor_time = match anchor {
             Some(obs) => obs.created_at,
             None => return Ok(Vec::new()),
         };
 
-        let (base_sql, base_params) = build_timeline_filter_sql(filter.as_ref());
+        let (base_sql, base_params) = build_timeline_filter_sql(org_id, filter.as_ref());
 
         let before_rows = self
             .query_timeline_window(&base_sql, &base_params, anchor_time, before, "DESC")
@@ -305,7 +338,7 @@ impl MemoryRepository for SqliteMemoryRepository {
             .query_timeline_window(&base_sql, &base_params, anchor_time, after, "ASC")
             .await?;
 
-        assemble_timeline(&before_rows, &after_rows, self, anchor_id).await
+        assemble_timeline(&before_rows, &after_rows, self, org_id, anchor_id).await
     }
 
     /// Persists a session summary to the database, updating it if it already exists.
@@ -359,12 +392,19 @@ impl MemoryRepository for SqliteMemoryRepository {
         Ok(())
     }
 
-    /// Retrieves the latest summary for a session.
-    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
+    /// Retrieves the latest summary for a session, scoped to `org_id`.
+    async fn get_session_summary(
+        &self,
+        org_id: &str,
+        session_id: &SessionId,
+    ) -> Result<Option<SessionSummary>> {
         query_helpers::query_one(
             &self.executor,
-            "SELECT * FROM session_summaries WHERE session_id = ? ORDER BY created_at DESC LIMIT 1",
-            &[SqlParam::String(session_id.to_string())],
+            "SELECT * FROM session_summaries WHERE session_id = ? AND org_id = ? ORDER BY created_at DESC LIMIT 1",
+            &[
+                SqlParam::String(session_id.to_string()),
+                SqlParam::String(org_id.to_owned()),
+            ],
             row_convert::row_to_session_summary,
         )
         .await

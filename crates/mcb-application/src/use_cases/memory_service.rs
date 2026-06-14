@@ -91,6 +91,7 @@ impl MemoryServiceImpl {
 impl MemoryServiceImpl {
     async fn store_observation_impl(
         &self,
+        org_id: String,
         project_id: String,
         content: String,
         r#type: ObservationType,
@@ -105,7 +106,7 @@ impl MemoryServiceImpl {
 
         let content_hash = compute_content_hash(&content);
 
-        if let Some(existing) = self.repository.find_by_hash(&content_hash).await? {
+        if let Some(existing) = self.repository.find_by_hash(&org_id, &content_hash).await? {
             return Ok((existing.id, true));
         }
 
@@ -124,6 +125,10 @@ impl MemoryServiceImpl {
         vector_metadata.insert(
             "project_id".to_owned(),
             serde_json::Value::String(project_id.clone()),
+        );
+        vector_metadata.insert(
+            mcb_domain::constants::keys::ORG_ID.to_owned(),
+            serde_json::Value::String(org_id.clone()),
         );
 
         if let Some(session_id) = &metadata.session_id {
@@ -147,6 +152,7 @@ impl MemoryServiceImpl {
         let observation = Observation {
             id: id::generate().to_string(),
             project_id,
+            org_id,
             content,
             content_hash,
             tags,
@@ -165,6 +171,7 @@ impl MemoryServiceImpl {
 impl MemoryServiceImpl {
     async fn search_memories_impl(
         &self,
+        org_id: &str,
         query: &str,
         filter: Option<MemoryFilter>,
         limit: usize,
@@ -176,7 +183,7 @@ impl MemoryServiceImpl {
             CollectionId::from_uuid(id::deterministic("collection", MEMORY_COLLECTION_NAME));
 
         let (fts_result, vector_result) = tokio::join!(
-            self.repository.search(query, candidate_limit),
+            self.repository.search(org_id, query, candidate_limit),
             self.vector_store.search_similar(
                 &collection_id,
                 query_embedding.vector.as_slice(),
@@ -207,7 +214,8 @@ impl MemoryServiceImpl {
 
         for (rank, vec_result) in vector_results.iter().enumerate() {
             let content_hash = compute_content_hash(&vec_result.content);
-            if let Ok(Some(obs)) = self.repository.find_by_hash(&content_hash).await {
+            // Org-scoped lookup: a cross-tenant vector hit is dropped here.
+            if let Ok(Some(obs)) = self.repository.find_by_hash(org_id, &content_hash).await {
                 let score = RRF_SCORE_NUMERATOR / (RRF_K + rank as f32 + 1.0);
                 let key = obs.id.clone();
                 *rrf_scores.entry(key).or_default() += score;
@@ -219,11 +227,13 @@ impl MemoryServiceImpl {
         ranked.truncate(limit);
 
         let applied_filter = filter.unwrap_or_default();
-        self.build_ranked_results(ranked, &applied_filter).await
+        self.build_ranked_results(org_id, ranked, &applied_filter)
+            .await
     }
 
     async fn build_ranked_results(
         &self,
+        org_id: &str,
         ranked: Vec<(String, f32)>,
         filter: &MemoryFilter,
     ) -> Result<Vec<MemorySearchResult>> {
@@ -231,7 +241,10 @@ impl MemoryServiceImpl {
             .iter()
             .filter_map(|(id, _)| ObservationId::from_str(id).ok())
             .collect();
-        let observations = self.repository.get_observations_by_ids(&top_ids).await?;
+        let observations = self
+            .repository
+            .get_observations_by_ids(org_id, &top_ids)
+            .await?;
 
         let obs_map: HashMap<String, Observation> = observations
             .into_iter()
@@ -329,30 +342,35 @@ impl MemoryServiceImpl {
 
     async fn get_timeline_impl(
         &self,
+        org_id: &str,
         anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>> {
         self.repository
-            .get_timeline(anchor_id, before, after, filter)
+            .get_timeline(org_id, anchor_id, before, after, filter)
             .await
     }
 
     async fn get_observations_by_ids_impl(
         &self,
+        org_id: &str,
         ids: &[ObservationId],
     ) -> Result<Vec<Observation>> {
-        self.repository.get_observations_by_ids(ids).await
+        self.repository.get_observations_by_ids(org_id, ids).await
     }
 
     async fn memory_search_impl(
         &self,
+        org_id: &str,
         query: &str,
         filter: Option<MemoryFilter>,
         limit: usize,
     ) -> Result<Vec<MemorySearchIndex>> {
-        let results = self.search_memories_impl(query, filter, limit).await?;
+        let results = self
+            .search_memories_impl(org_id, query, filter, limit)
+            .await?;
         Ok(Self::build_memory_index(results))
     }
 }
@@ -364,6 +382,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
     /// Returns an error if embedding generation, vector storage, or repository persistence fails.
     async fn store_observation(
         &self,
+        org_id: String,
         project_id: String,
         content: String,
         r#type: ObservationType,
@@ -371,7 +390,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
         metadata: ObservationMetadata,
     ) -> Result<(ObservationId, bool)> {
         let (id, new) = self
-            .store_observation_impl(project_id, content, r#type, tags, metadata)
+            .store_observation_impl(org_id, project_id, content, r#type, tags, metadata)
             .await?;
         let obs_id = ObservationId::from_str(&id)
             .map_err(|e| mcb_domain::error::Error::invalid_argument(e.to_string()))?;
@@ -381,7 +400,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
     /// # Errors
     ///
     /// Returns an error if serialization or observation storage fails.
-    async fn store_error_pattern(&self, pattern: ErrorPattern) -> Result<String> {
+    async fn store_error_pattern(&self, org_id: &str, pattern: ErrorPattern) -> Result<String> {
         let content = serde_json::to_string(&pattern)
             .map_err(|e| mcb_domain::error::Error::generic(e.to_string()))?;
 
@@ -392,6 +411,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
 
         let (id, _) = self
             .store_observation(
+                org_id.to_owned(),
                 pattern.project_id.clone(),
                 content,
                 ObservationType::Error,
@@ -408,6 +428,7 @@ impl MemoryServiceInterface for MemoryServiceImpl {
     /// Returns an error if the memory search fails.
     async fn search_error_patterns(
         &self,
+        org_id: &str,
         query: &str,
         project_id: String,
         limit: usize,
@@ -418,7 +439,9 @@ impl MemoryServiceInterface for MemoryServiceImpl {
             ..Default::default()
         };
 
-        let results = self.search_memories(query, Some(filter), limit).await?;
+        let results = self
+            .search_memories(org_id, query, Some(filter), limit)
+            .await?;
 
         let mut patterns = Vec::new();
         for res in results {
@@ -434,18 +457,25 @@ impl MemoryServiceInterface for MemoryServiceImpl {
     /// Returns an error if the hybrid search (FTS or vector) fails.
     async fn search_memories(
         &self,
+        org_id: &str,
         query: &str,
         filter: Option<MemoryFilter>,
         limit: usize,
     ) -> Result<Vec<MemorySearchResult>> {
-        self.search_memories_impl(query, filter, limit).await
+        self.search_memories_impl(org_id, query, filter, limit).await
     }
 
     /// # Errors
     ///
     /// Returns an error if the repository query fails.
-    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
-        self.repository.get_session_summary(session_id).await
+    async fn get_session_summary(
+        &self,
+        org_id: &str,
+        session_id: &SessionId,
+    ) -> Result<Option<SessionSummary>> {
+        self.repository
+            .get_session_summary(org_id, session_id)
+            .await
     }
 
     /// # Errors
@@ -458,8 +488,12 @@ impl MemoryServiceInterface for MemoryServiceImpl {
     /// # Errors
     ///
     /// Returns an error if the repository query fails.
-    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
-        self.repository.get_observation(id).await
+    async fn get_observation(
+        &self,
+        org_id: &str,
+        id: &ObservationId,
+    ) -> Result<Option<Observation>> {
+        self.repository.get_observation(org_id, id).await
     }
 
     /// # Errors
@@ -474,20 +508,25 @@ impl MemoryServiceInterface for MemoryServiceImpl {
     /// Returns an error if the repository timeline query fails.
     async fn get_timeline(
         &self,
+        org_id: &str,
         anchor_id: &ObservationId,
         before: usize,
         after: usize,
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>> {
-        self.get_timeline_impl(anchor_id, before, after, filter)
+        self.get_timeline_impl(org_id, anchor_id, before, after, filter)
             .await
     }
 
     /// # Errors
     ///
     /// Returns an error if the repository query fails.
-    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
-        self.get_observations_by_ids_impl(ids).await
+    async fn get_observations_by_ids(
+        &self,
+        org_id: &str,
+        ids: &[ObservationId],
+    ) -> Result<Vec<Observation>> {
+        self.get_observations_by_ids_impl(org_id, ids).await
     }
 
     /// # Errors
@@ -495,11 +534,12 @@ impl MemoryServiceInterface for MemoryServiceImpl {
     /// Returns an error if the hybrid search fails.
     async fn memory_search(
         &self,
+        org_id: &str,
         query: &str,
         filter: Option<MemoryFilter>,
         limit: usize,
     ) -> Result<Vec<MemorySearchIndex>> {
-        self.memory_search_impl(query, filter, limit).await
+        self.memory_search_impl(org_id, query, filter, limit).await
     }
 
     /// # Errors

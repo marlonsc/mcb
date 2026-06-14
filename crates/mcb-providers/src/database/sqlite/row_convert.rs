@@ -38,6 +38,12 @@ pub fn row_to_observation(row: &dyn SqlRow) -> Result<Observation> {
     Ok(Observation {
         id: req_str(row, schema::ID)?,
         project_id: req_str(row, "project_id")?,
+        // Pre-backfill legacy rows may have NULL org_id; treat them as the
+        // bootstrap org (same value the read paths resolve for default tenants)
+        // rather than failing the read.
+        org_id: row
+            .try_get_string(schema::ORG_ID)?
+            .unwrap_or_else(|| mcb_domain::value_objects::OrgContext::default().id_str()),
         content: req_str(row, "content")?,
         content_hash: req_str(row, "content_hash")?,
         tags,

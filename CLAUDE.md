@@ -159,6 +159,34 @@ CI adds: `-D clippy::multiple_unsafe_ops_per_block`, `-D clippy::undocumented_un
 - **MVI 200**: every source file should stay under ~200 lines; split into submodules when growing
 - **Config via `ConfigLoader`**: no hardcoded paths or fallback values
 
+## Multi-Agent Coordination Doctrine
+
+This is the **single source of truth** for how multiple agents/sessions work the same repo. `AGENTS.md`
+and `.claude/skills/orchestrate/SKILL.md` point here — they do not restate it. Tracking is **beads only**
+(`bd`); never TodoWrite/markdown for shared work. The execution loop is the `orchestrate` skill.
+
+1. **Claim before edit.** Never modify a file without an owned bead (`bd update <id> --claim`). Check
+   `bd ready` / `bd blocked` first. No claim → no edit. This prevents two agents competing on one file.
+2. **Don't excuse yourself.** Another agent's change is not a reason to abandon your task — converge on it
+   through the bead and the agreed pattern. Coordinate by beads + these rules, not by stepping aside.
+3. **Never revert another agent's code.** Evolve together. Conflict → discuss in the bead (`bd update --notes`,
+   `bd human`), never `git checkout`/overwrite their in-flight work. Uncommitted changes you didn't author
+   are off-limits; scope your commits to your own files.
+4. **Never deviate from an agreed pattern** — not even as a temporary or local fix. A deviation requires an
+   explicit bead + operator sign-off (`bd human`). No silent pattern drift.
+5. **Professional and honest.** Evidence before assertion — no green claim without timestamped `make check`
+   output. Report failures plainly (LEI SUPREMA: resolve at the root, never hide).
+6. **Manage context.** Canonical source order: this `CLAUDE.md` → `AGENTS.md` → relevant ADR → the bead.
+   Use Scope/Serena and `bd memories <kw>` before re-reading whole files. Fewer sources, less divergence.
+7. **No degradation.** Never permit data loss or unavailability. Anything irreversible (drop, migration,
+   downtime) is **negotiated with the operator first** (breaking-glass), never assumed.
+8. **Converge fast.** After tests go green, close the bead and integrate immediately. Don't let
+   `in_progress`/`ready` age — `bd stale`/`bd preflight` must stay clean.
+9. **Don't idle-wait.** Monitor actively; on an impasse, breaking-glass to the operator (`bd human` /
+   AskUserQuestion) rather than blocking or guessing.
+10. **Don't drift from the plan.** Always return to the active plan and bead. The objective lives in the
+    bead; don't start unrelated work and forget the goal.
+
 ## Key Documentation (git-tracked)
 
 - [AGENTS.md](AGENTS.md) — AI agent configuration index (all agents reference this file)

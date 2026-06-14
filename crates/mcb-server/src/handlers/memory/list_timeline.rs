@@ -14,7 +14,7 @@ use crate::constants::fields::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
 use crate::constants::limits::{DEFAULT_MEMORY_LIMIT, DEFAULT_TIMELINE_DEPTH};
 use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
-use crate::utils::mcp::tool_error;
+use crate::utils::mcp::{resolve_org_id, tool_error};
 
 /// Lists semantic memories based on the provided search query and filters.
 #[tracing::instrument(skip_all)]

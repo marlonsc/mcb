@@ -23,23 +23,43 @@ pub struct FtsSearchResult {
 pub trait MemoryRepository: Send + Sync {
     /// Performs the store observation operation.
     async fn store_observation(&self, observation: &Observation) -> Result<()>;
-    /// Performs the get observation operation.
-    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>>;
-    /// Performs the find by hash operation.
-    async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>>;
+    /// Gets an observation by ID, scoped to `org_id` for tenant isolation.
+    async fn get_observation(
+        &self,
+        org_id: &str,
+        id: &ObservationId,
+    ) -> Result<Option<Observation>>;
+    /// Finds an observation by content hash, scoped to `org_id` for tenant isolation.
+    async fn find_by_hash(
+        &self,
+        org_id: &str,
+        content_hash: &str,
+    ) -> Result<Option<Observation>>;
 
-    /// Full-text search returning IDs with BM25 rank scores for hybrid fusion
-    async fn search(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>>;
+    /// Full-text search returning IDs with BM25 rank scores for hybrid fusion,
+    /// scoped to `org_id` so results never cross organizations.
+    async fn search(
+        &self,
+        org_id: &str,
+        query: &str,
+        limit: usize,
+    ) -> Result<Vec<FtsSearchResult>>;
 
     /// Performs the delete observation operation.
     async fn delete_observation(&self, id: &ObservationId) -> Result<()>;
 
-    /// Get multiple observations by IDs (batch fetch for hybrid search)
-    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>>;
+    /// Get multiple observations by IDs (batch fetch for hybrid search),
+    /// scoped to `org_id` for tenant isolation.
+    async fn get_observations_by_ids(
+        &self,
+        org_id: &str,
+        ids: &[ObservationId],
+    ) -> Result<Vec<Observation>>;
 
-    /// Get observations in timeline order around an anchor
+    /// Get observations in timeline order around an anchor, scoped to `org_id`.
     async fn get_timeline(
         &self,
+        org_id: &str,
         anchor_id: &ObservationId,
         before: usize,
         after: usize,
@@ -48,6 +68,10 @@ pub trait MemoryRepository: Send + Sync {
 
     /// Performs the store session summary operation.
     async fn store_session_summary(&self, summary: &SessionSummary) -> Result<()>;
-    /// Performs the get session summary operation.
-    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>>;
+    /// Gets the latest session summary, scoped to `org_id` for tenant isolation.
+    async fn get_session_summary(
+        &self,
+        org_id: &str,
+        session_id: &SessionId,
+    ) -> Result<Option<SessionSummary>>;
 }
