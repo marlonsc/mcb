@@ -12,13 +12,9 @@ use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
 use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
-<<<<<<< HEAD
-use crate::utils::mcp::{resolve_org_id, tool_error};
-=======
 use crate::utils::mcp::tool_error;
 use mcb_utils::constants::keys::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
 use mcb_utils::constants::limits::{DEFAULT_MEMORY_LIST_LIMIT, DEFAULT_TIMELINE_DEPTH};
->>>>>>> feat/v0.3.2-ci-gates
 
 /// Lists semantic memories based on the provided search query and filters.
 #[tracing::instrument(skip_all)]

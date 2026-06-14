@@ -15,14 +15,10 @@ use super::common::{
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-<<<<<<< HEAD
 use crate::utils::mcp::{resolve_org_id, tool_error};
-=======
-use crate::utils::mcp::tool_error;
 use mcb_utils::constants::keys::{
     FIELD_BRANCH, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE, FIELD_OBSERVATIONS,
 };
->>>>>>> feat/v0.3.2-ci-gates
 
 /// Stores a new semantic observation with the provided content, type, and tags.
 #[tracing::instrument(skip_all)]
@@ -58,24 +54,14 @@ pub async fn store_observation(
     );
     let org_id = resolve_org_id(args.org_id.as_deref());
     match memory_service
-<<<<<<< HEAD
-        .store_observation(
-            org_id,
-            origin.project_id,
-            content,
-            observation_type,
-            tags,
-            metadata,
-        )
-=======
         .store_observation(StoreObservationInput {
             project_id: origin.project_id,
+            org_id,
             content,
             r#type: observation_type,
             tags,
             metadata,
         })
->>>>>>> feat/v0.3.2-ci-gates
         .await
     {
         Ok((observation_id, deduplicated)) => ResponseFormatter::json_success(&serde_json::json!({
