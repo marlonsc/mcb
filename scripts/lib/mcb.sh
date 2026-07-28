@@ -64,9 +64,9 @@ mcb_install_hooks() {
   local hooks_dir
   hooks_dir="$(mcb_git_hooks_dir "$repo")"
   mkdir -p "$hooks_dir"
-  cp "$MCB_ROOT/scripts/hooks/pre-commit" "$hooks_dir/pre-commit"
-  chmod +x "$hooks_dir/pre-commit"
-  mcb_ok "pre-commit hook installed at $hooks_dir/pre-commit"
+  cp "$MCB_ROOT/scripts/hooks/pre-commit" "$MCB_ROOT/scripts/hooks/pre-push" "$hooks_dir/"
+  chmod +x "$hooks_dir/pre-commit" "$hooks_dir/pre-push"
+  mcb_ok "pre-commit and pre-push hooks installed at $hooks_dir"
 }
 
 # Binary lookup chain: PATH > target/release > target/debug > cargo run
