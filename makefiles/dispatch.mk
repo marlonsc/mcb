@@ -76,6 +76,7 @@ define DISPATCH_CHECK
   coverage) cargo tarpaulin --out Lcov --output-dir coverage --exclude-files 'crates/*/tests/integration/*' --exclude-files 'crates/*/tests/admin/*' --timeout 300 ;; \
   qlty)     mkdir -p docs/reports; ./scripts/analyze_qlty.py --scan --check --summary --markdown docs/reports/qlty-check-REPORTS.md; ./scripts/analyze_qlty.py --scan --smells --summary --markdown docs/reports/qlty-smells-REPORTS.md ;; \
   hooks)    bash scripts/lib/tests/test-hooks.sh ;; \
+  guard)    bash $(MCB_SH) guard ;; \
   ""|all)   cargo fmt --all -- --check && $(MAKE) lint-impl && $(MAKE) test && bash $(MCB_SH) validate $(if $(filter 1,$(QUICK)),quick,full) ;; \
   *)        printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_check)\n" "$(WHAT)" >&2; exit 2 ;; \
 esac

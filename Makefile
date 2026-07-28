@@ -36,7 +36,7 @@ export RUST_2024_LINTS := -D unsafe_op_in_unsafe_fn -D rust_2024_compatibility -
 gate = [ "$(APPLY)" = "Y" ] || { printf "DRY-RUN: would %s; set APPLY=Y to execute\n" "$(1)" >&2; exit 0; }
 
 # --- WHATS_<verb> phase SSOT (drives sub-help + error arms) -------------------
-WHATS_check   := fmt lint validate audit udeps coverage qlty hooks all
+WHATS_check   := fmt lint validate audit udeps coverage qlty hooks guard all
 WHATS_fix     := fmt lint docs all
 WHATS_dev     := run docker-up docker-down docker-logs docker-test
 WHATS_docs    := build serve lint validate sync rust check setup adr adr-new diagrams
