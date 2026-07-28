@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Installed by `make setup WHAT=hooks`. Runs the same gates as CI, via the
-# canonical monopoly. No bypass — fix the cause, not the gate (AGENTS.md §3).
+# Installed by `make setup WHAT=hooks`. Runs the canonical commit gates without
+# bypassing hooks or calling removed Make targets.
 # guard runs in --staged mode so it blocks NEW violations in this commit, not
 # the retroactive baseline; `make guard` (full tree) is the CI/manual scan.
 set -euo pipefail

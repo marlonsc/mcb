@@ -51,6 +51,24 @@ mcb_retry() { local n="$1" s="$2"; shift 2; local t=1; while ! "$@"; do [ "$t" -
 # --- SSOT readers ------------------------------------------------------------
 mcb_version() { grep -m1 '^version =' "$MCB_ROOT/Cargo.toml" | sed 's/.*"\([^"]*\)".*/\1/'; }
 
+mcb_git_hooks_dir() {
+  local repo="${1:-$MCB_ROOT}"
+  local common_dir
+  common_dir="$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir)" \
+    || mcb_die "$EX_PREREQ" "nao foi possivel resolver o diretorio Git comum de '$repo'"
+  printf '%s/hooks\n' "$common_dir"
+}
+
+mcb_install_hooks() {
+  local repo="${1:-$MCB_ROOT}"
+  local hooks_dir
+  hooks_dir="$(mcb_git_hooks_dir "$repo")"
+  mkdir -p "$hooks_dir"
+  cp "$MCB_ROOT/scripts/hooks/pre-commit" "$hooks_dir/pre-commit"
+  chmod +x "$hooks_dir/pre-commit"
+  mcb_ok "pre-commit hook installed at $hooks_dir/pre-commit"
+}
+
 # Binary lookup chain: PATH > target/release > target/debug > cargo run
 mcb_bin() {
   command -v mcb 2>/dev/null && return 0
@@ -127,6 +145,8 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     version)        mcb_version ;;
     bin)            mcb_bin ;;
     ignores)        printf '%s\n' "${MCB_AUDIT_IGNORES[*]}" ;;
+    git-hooks-dir)  mcb_git_hooks_dir "${2:-$MCB_ROOT}" ;;
+    install-hooks)  mcb_install_hooks "${2:-$MCB_ROOT}" ;;
     validate)       mcb_validate "${2:-full}" ;;
     guard)          shift; mcb_guard "$@" ;;
     guard-bash)     mcb_guard_bash ;;
