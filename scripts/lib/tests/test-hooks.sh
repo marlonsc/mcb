@@ -7,6 +7,8 @@ trap 'rm -rf "$FIXTURE"' EXIT
 
 PRIMARY="$FIXTURE/primary"
 LINKED="$FIXTURE/linked"
+SUB_SOURCE="$FIXTURE/sub-source"
+SUB_ARCHIVE="$FIXTURE/sub-archive"
 BIN="$FIXTURE/bin"
 MAKE_LOG="$FIXTURE/make.log"
 
@@ -61,5 +63,26 @@ test "$(grep -c 'check WHAT=lint' "$MAKE_LOG")" -eq 2
 test "$(grep -c 'check WHAT=validate QUICK=1' "$MAKE_LOG")" -eq 2
 grep -q "^$PRIMARY|check WHAT=lint$" "$MAKE_LOG"
 grep -q "^$LINKED|check WHAT=lint$" "$MAKE_LOG"
+
+git init -q "$SUB_SOURCE"
+git -C "$SUB_SOURCE" config user.email test@example.com
+git -C "$SUB_SOURCE" config user.name "MCB Test"
+printf '[package]\nname = "fixture"\nversion = "0.1.0"\n' > "$SUB_SOURCE/Cargo.toml"
+git -C "$SUB_SOURCE" add Cargo.toml
+git -C "$SUB_SOURCE" commit -q -m initial
+git -C "$PRIMARY" -c protocol.file.allow=always submodule add -q "$SUB_SOURCE" vendor/sample
+PATH="$BIN:$PATH" git -C "$PRIMARY" commit -q -am 'add fixture submodule'
+
+mkdir -p "$SUB_ARCHIVE"
+mv "$PRIMARY/vendor/sample/Cargo.toml" "$SUB_ARCHIVE/Cargo.toml"
+git -C "$PRIMARY/vendor/sample" read-tree --empty
+test ! -f "$PRIMARY/vendor/sample/Cargo.toml"
+test "$(git -C "$PRIMARY/vendor/sample" ls-files | wc -l)" -eq 0
+bash "$PRIMARY/scripts/lib/mcb.sh" sync-submodules "$PRIMARY"
+test -f "$PRIMARY/vendor/sample/Cargo.toml"
+
+printf 'preserved local content\n' > "$PRIMARY/vendor/sample/Cargo.toml"
+bash "$PRIMARY/scripts/lib/mcb.sh" sync-submodules "$PRIMARY"
+grep -q '^preserved local content$' "$PRIMARY/vendor/sample/Cargo.toml"
 
 printf 'hook fixtures: primary and linked worktree install and commit gates passed via %s\n' "$EXPECTED_HOOKS"

@@ -69,6 +69,36 @@ mcb_install_hooks() {
   mcb_ok "pre-commit and pre-push hooks installed at $hooks_dir"
 }
 
+mcb_sync_submodules() {
+  local repo="${1:-$MCB_ROOT}"
+  local materialized
+
+  git -C "$repo" submodule sync --recursive
+  git -C "$repo" submodule update --init --recursive
+
+  while :; do
+    materialized="$(git -C "$repo" submodule foreach --quiet --recursive '
+      present="$(git ls-files -z | while IFS= read -r -d "" path; do
+        if [ -e "$path" ] || [ -L "$path" ]; then
+          printf 1
+          break
+        fi
+      done)"
+      [ -n "$present" ] && exit 0
+      tracked="$(git ls-files | wc -l)"
+      if [ "$tracked" -eq 0 ]; then
+        git read-tree HEAD
+        tracked="$(git ls-files | wc -l)"
+      fi
+      [ "$tracked" -eq 0 ] && exit 0
+      git checkout-index --all
+      printf "%s\n" "$sm_path"
+    ')"
+    [ -z "$materialized" ] && break
+    git -C "$repo" submodule update --init --recursive
+  done
+}
+
 # Binary lookup chain: PATH > target/release > target/debug > cargo run
 mcb_bin() {
   command -v mcb 2>/dev/null && return 0
@@ -152,6 +182,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     ignores)        printf '%s\n' "${MCB_AUDIT_IGNORES[*]}" ;;
     git-hooks-dir)  mcb_git_hooks_dir "${2:-$MCB_ROOT}" ;;
     install-hooks)  mcb_install_hooks "${2:-$MCB_ROOT}" ;;
+    sync-submodules) mcb_sync_submodules "${2:-$MCB_ROOT}" ;;
     validate)       mcb_validate "${2:-full}" ;;
     guard)          shift; mcb_guard "$@" ;;
     guard-bash)     mcb_guard_bash ;;
