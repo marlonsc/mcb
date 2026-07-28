@@ -26,13 +26,17 @@ test "$PRIMARY_GIT_DIR" != "$LINKED_GIT_DIR"
 test -f "$LINKED/.git"
 
 cp "$ROOT/scripts/hooks/pre-commit" "$PRIMARY/pre-commit"
+cp "$ROOT/scripts/hooks/pre-push" "$PRIMARY/pre-push"
 cp "$ROOT/scripts/lib/mcb.sh" "$PRIMARY/mcb.sh"
 mkdir -p "$PRIMARY/scripts/hooks" "$PRIMARY/scripts/lib"
 mv "$PRIMARY/pre-commit" "$PRIMARY/scripts/hooks/pre-commit"
+mv "$PRIMARY/pre-push" "$PRIMARY/scripts/hooks/pre-push"
 mv "$PRIMARY/mcb.sh" "$PRIMARY/scripts/lib/mcb.sh"
 bash "$PRIMARY/scripts/lib/mcb.sh" install-hooks "$LINKED"
 cmp "$ROOT/scripts/hooks/pre-commit" "$EXPECTED_HOOKS/pre-commit"
+cmp "$ROOT/scripts/hooks/pre-push" "$EXPECTED_HOOKS/pre-push"
 test -x "$EXPECTED_HOOKS/pre-commit"
+test -x "$EXPECTED_HOOKS/pre-push"
 if grep -q 'make boot' "$EXPECTED_HOOKS/pre-commit"; then
   printf 'installed pre-commit references removed make boot target\n' >&2
   exit 1
