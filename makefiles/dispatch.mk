@@ -237,7 +237,7 @@ endef
 define DISPATCH_SUB
 @case "$(WHAT)" in \
   ""|status)  git submodule status ;; \
-  sync)       git submodule sync --recursive; git submodule update --init --recursive ;; \
+  sync)       bash $(MCB_SH) sync-submodules ;; \
   diff)       git submodule foreach --quiet 'D=$$(git diff); [ -n "$$D" ] && { echo "=== $$name ==="; git diff; } || true' ;; \
   commit)     $(call require_var,SUB); $(call require_var,MSG); $(call gate,commit in submodule $(SUB)); (cd third-party/$(SUB) && git add -A && git commit -m "$(MSG)") ;; \
   push)       $(call require_var,SUB); $(call gate,push submodule $(SUB)); (cd third-party/$(SUB) && git push) ;; \
