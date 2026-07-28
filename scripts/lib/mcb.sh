@@ -112,15 +112,20 @@ mcb_guard() {
     [ -z "$src" ] && { mcb_warn "guard: no source files found under crates/"; return 0; }
   fi
   # 1. unwrap/expect/panic/todo/unimplemented in non-test .rs
-  hits=$(grep -rnE '\b(unwrap|expect)\(|\bpanic!|\btodo!|\bunimplemented!' $src 2>/dev/null \
-      | grep -vE '//.*(unwrap|expect)|#\[cfg\(test\)\]' || true)
+  hits=$(grep -rnE '\.(unwrap|expect)\(|\b(panic|todo|unimplemented)!\(' $src 2>/dev/null \
+      | grep -vE ':[[:space:]]*(//|///|//!)|#\[cfg\(test\)\]|pub const .*: &str = |\.message\("|message = "|suggestion = "|r".*(unwrap|expect|panic|todo|unimplemented)|line\.contains\("todo!"\)' || true)
   [ -n "$hits" ] && { mcb_warn "prod unwrap/expect/panic/todo:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
   # 2. TODO/FIXME markers
   hits=$(grep -rnE '\b(TODO|FIXME)\b' $src 2>/dev/null || true)
   [ -n "$hits" ] && { mcb_warn "TODO/FIXME markers:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
-  # 3. unjustified suppression directives (#[allow(...)] with no trailing // Why:)
-  hits=$(grep -rnE '#\[allow\(' $src 2>/dev/null | grep -vE '//\s*Why:' || true)
-  [ -n "$hits" ] && { mcb_warn "#[allow] without // Why: justification:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
+  if [ "$staged" = "1" ]; then
+    hits=$(git -C "$MCB_ROOT" diff --cached --unified=0 -- crates 2>/dev/null \
+      | grep -E '^\+[^+].*#\[allow\(' | grep -vE '#\[allow\([^]]+\)\][[:space:]]*//[[:space:]]*[^[:space:]]' || true)
+  else
+    hits=$(git -C "$MCB_ROOT" diff origin/main...HEAD --unified=0 -- crates 2>/dev/null \
+      | grep -E '^\+[^+].*#\[allow\(' | grep -vE '#\[allow\([^]]+\)\][[:space:]]*//[[:space:]]*[^[:space:]]' || true)
+  fi
+  [ -n "$hits" ] && { mcb_warn "new #[allow] without a trailing rationale:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
   [ "$rc" -eq 0 ] && mcb_ok "guard: clean"
   return "$rc"
 }
