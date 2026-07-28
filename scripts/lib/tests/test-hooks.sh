@@ -21,6 +21,12 @@ git -C "$PRIMARY" add scripts
 git -C "$PRIMARY" commit -q -m initial
 git -C "$PRIMARY" worktree add -q -b linked-test "$LINKED"
 
+NON_MCB="$FIXTURE/non-mcb"
+git init -q "$NON_MCB"
+git -C "$NON_MCB" config user.email test@example.com
+git -C "$NON_MCB" config user.name "MCB Test"
+git -C "$NON_MCB" commit --allow-empty -q -m initial
+
 PRIMARY_HOOKS="$(bash "$ROOT/scripts/lib/mcb.sh" git-hooks-dir "$PRIMARY")"
 LINKED_HOOKS="$(bash "$ROOT/scripts/lib/mcb.sh" git-hooks-dir "$LINKED")"
 EXPECTED_HOOKS="$(git -C "$PRIMARY" rev-parse --path-format=absolute --git-common-dir)/hooks"

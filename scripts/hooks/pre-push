@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Installed by `make setup WHAT=hooks`. Runs the canonical full gate before
+# push, then preserves Beads hook processing when available.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+[ -f scripts/lib/mcb.sh ] || exit 0
+make check WHAT=all
+if command -v bd >/dev/null 2>&1; then
+  exec bd hooks run pre-push "$@"
+fi
