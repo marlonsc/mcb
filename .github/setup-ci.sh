@@ -148,8 +148,13 @@ _mcb_install_crate() {
 # Ensure sccache is available (mandatory compilation cache)
 if ! command -v sccache &>/dev/null; then
 	echo "Installing sccache (mandatory compilation cache)..." >&2
-	_mcb_install_crate sccache
+	RUSTC_WRAPPER= _mcb_install_crate sccache
 fi
+SCCACHE_BIN=$(command -v sccache) || {
+	echo "ERROR: sccache installation completed without an executable in PATH." >&2
+	exit 1
+}
+"$SCCACHE_BIN" rustc -vV >/dev/null
 
 while [[ $# -gt 0 ]]; do
 	case $1 in
