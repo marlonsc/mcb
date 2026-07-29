@@ -1,25 +1,40 @@
 //! Trait-level tests for `EventBusProvider`
 //!
-//! Tests exercise the trait contract via `default_event_bus()`.
+//! Tests exercise the trait contract via `BroadcastEventBus`.
 //! Concrete implementation tests live in `mcb-providers/tests/unit/events/`.
 
 use mcb_domain::events::DomainEvent;
-use mcb_infrastructure::infrastructure::default_event_bus;
+use mcb_domain::ports::EventBusProvider;
+use mcb_domain::registry::events::{EventBusProviderConfig, resolve_event_bus_provider};
+use mcb_domain::utils::tests::utils::TestResult;
+use rstest::{fixture, rstest};
+use std::sync::Arc;
 
+#[fixture]
+fn event_bus() -> TestResult<Arc<dyn EventBusProvider>> {
+    resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).map_err(Into::into)
+}
+
+#[rstest]
 #[tokio::test]
-async fn test_publish_event_no_subscribers() {
-    let bus = default_event_bus();
+async fn test_publish_event_no_subscribers(
+    event_bus: TestResult<Arc<dyn EventBusProvider>>,
+) -> TestResult {
+    let bus = event_bus?;
     let event = DomainEvent::IndexingStarted {
         collection: "test".to_owned(),
         total_files: 5,
     };
-    let result = bus.publish_event(event).await;
-    assert!(result.is_ok());
+    bus.publish_event(event).await?;
+    Ok(())
 }
 
+#[rstest]
 #[tokio::test]
-async fn test_publish_invalid_payload() {
-    let bus = default_event_bus();
-    let result = bus.publish("topic", b"not-valid-json").await;
-    assert!(result.is_ok());
+async fn test_publish_invalid_payload(
+    event_bus: TestResult<Arc<dyn EventBusProvider>>,
+) -> TestResult {
+    let bus = event_bus?;
+    bus.publish("topic", b"not-valid-json").await?;
+    Ok(())
 }

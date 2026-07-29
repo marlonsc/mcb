@@ -34,5 +34,5 @@ def is_palindrome(s: str) -> bool:
     Returns:
         True if palindrome, False otherwise
     """
-    cleaned = ''.join(c.lower() for c in s if c.isalnum())
+    cleaned = "".join(c.lower() for c in s if c.isalnum())
     return cleaned == cleaned[::-1]

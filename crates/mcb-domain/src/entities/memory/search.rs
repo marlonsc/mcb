@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
@@ -71,11 +74,11 @@ impl std::fmt::Debug for MemoryFilter {
         f.debug_struct("MemoryFilter")
             .field("id", &self.id)
             .field("tags", &self.tags)
-            .field(crate::schema::COL_OBSERVATION_TYPE, &self.r#type)
+            .field("observation_type", &self.r#type)
             .field(
                 "session_id_present",
                 &if self.session_id.is_some() {
-                    "REDACTED"
+                    mcb_utils::constants::REDACTED
                 } else {
                     "NONE"
                 },
@@ -83,7 +86,7 @@ impl std::fmt::Debug for MemoryFilter {
             .field(
                 "parent_session_id_present",
                 &if self.parent_session_id.is_some() {
-                    "REDACTED"
+                    mcb_utils::constants::REDACTED
                 } else {
                     "NONE"
                 },
@@ -100,55 +103,56 @@ impl MemoryFilter {
     /// Returns true when the observation satisfies all populated filter fields.
     #[must_use]
     pub fn matches(&self, obs: &Observation) -> bool {
-        if self
+        self.matches_identity(obs) && self.matches_metadata(obs)
+    }
+
+    /// Checks the filter fields stored directly on the observation.
+    fn matches_identity(&self, obs: &Observation) -> bool {
+        let project_ok = self
             .project_id
             .as_ref()
-            .is_some_and(|id| obs.project_id != *id)
-        {
-            return false;
-        }
-        if self
+            .is_none_or(|id| obs.project_id == *id);
+
+        let type_ok = self.r#type.as_ref().is_none_or(|t| &obs.r#type == t);
+
+        let time_ok = self
+            .time_range
+            .as_ref()
+            .is_none_or(|(start, end)| obs.created_at >= *start && obs.created_at <= *end);
+
+        project_ok && type_ok && time_ok
+    }
+
+    /// Checks the filter fields stored on the observation metadata.
+    fn matches_metadata(&self, obs: &Observation) -> bool {
+        let session_ok = self
             .session_id
             .as_ref()
-            .is_some_and(|id| obs.metadata.session_id.as_ref() != Some(id))
-        {
-            return false;
-        }
-        if self.parent_session_id.as_ref().is_some_and(|id| {
+            .is_none_or(|id| obs.metadata.session_id.as_ref() == Some(id));
+
+        let parent_session_ok = self.parent_session_id.as_ref().is_none_or(|id| {
             obs.metadata
                 .origin_context
                 .as_ref()
                 .and_then(|ctx| ctx.parent_session_id.as_ref())
-                != Some(id)
-        }) {
-            return false;
-        }
-        if self
+                == Some(id)
+        });
+
+        let repo_ok = self
             .repo_id
             .as_ref()
-            .is_some_and(|id| obs.metadata.repo_id.as_ref() != Some(id))
-        {
-            return false;
-        }
-        if self.r#type.as_ref().is_some_and(|t| &obs.r#type != t) {
-            return false;
-        }
-        if self
-            .time_range
-            .as_ref()
-            .is_some_and(|(start, end)| obs.created_at < *start || obs.created_at > *end)
-        {
-            return false;
-        }
-        if self
+            .is_none_or(|id| obs.metadata.repo_id.as_ref() == Some(id));
+
+        let branch_ok = self
             .branch
             .as_ref()
-            .is_some_and(|b| obs.metadata.branch.as_ref() != Some(b))
-        {
-            return false;
-        }
-        self.commit
+            .is_none_or(|b| obs.metadata.branch.as_ref() == Some(b));
+
+        let commit_ok = self
+            .commit
             .as_ref()
-            .is_none_or(|c| obs.metadata.commit.as_ref() == Some(c))
+            .is_none_or(|c| obs.metadata.commit.as_ref() == Some(c));
+
+        session_ok && parent_session_ok && repo_ok && branch_ok && commit_ok
     }
 }

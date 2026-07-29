@@ -1,8 +1,10 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Go language processor for AST-based code chunking.
 
-use crate::language::common::{
-    CHUNK_SIZE_GO, TS_NODE_FUNCTION_DECLARATION, TS_NODE_METHOD_DECLARATION,
-};
+use mcb_utils::constants::ast::{TS_NODE_FUNCTION_DECLARATION, TS_NODE_METHOD_DECLARATION};
+use mcb_utils::constants::lang::CHUNK_SIZE_GO;
 
 crate::impl_simple_language_processor!(
     GoProcessor,

@@ -7,20 +7,16 @@ rules_path = "crates/mcb-validate/rules"
 project_prefix = "mcb"
 internal_dep_prefix = "mcb-"
 skip_dir_patterns = ["/fixtures/"]
-exclude_patterns = []
+exclude_patterns = ["target/", "tests/fixtures/", "seaorm/entities/"]
 
 [rules.architecture]
 enabled = true
 
 [rules.architecture.layer_boundaries]
-application_internal_deps = ["mcb-domain"]
-providers_internal_deps = ["mcb-domain", "mcb-application"]
-infrastructure_internal_deps = [
-    "mcb-domain",
-    "mcb-application",
-    "mcb-providers",
-]
-server_internal_deps = ["mcb-domain", "mcb-application", "mcb-infrastructure"]
+application_internal_deps = ["mcb-domain", "mcb-utils"]
+providers_internal_deps = ["mcb-domain", "mcb-utils"]
+infrastructure_internal_deps = ["mcb-domain", "mcb-providers", "mcb-utils"]
+server_internal_deps = ["mcb-domain", "mcb-infrastructure", "mcb-utils"]
 
 [rules.naming]
 enabled = true
@@ -35,9 +31,10 @@ module_pattern = "^[a-z][a-z0-9_]*$"
 server_crate = "mcb-server"
 domain_crate = "mcb-domain"
 infrastructure_crate = "mcb-infrastructure"
-application_crate = "mcb-application"
+application_crate = ""
 providers_crate = "mcb-providers"
 validate_crate = "mcb-validate"
+utils_crate = "mcb-utils"
 
 [rules.kiss]
 enabled = true
@@ -76,8 +73,36 @@ utility_types = [
     "Arc",
     "Mutex",
 ]
-skip_files = ["mod.rs", "lib.rs", "main.rs", "errors.rs", "error.rs"]
-skip_dir_patterns = ["/fixtures/"]
+skip_files = [
+    "mod.rs",
+    "lib.rs",
+    "main.rs",
+    "errors.rs",
+    "error.rs",
+    "composition.rs",
+    "exports.rs",
+    "graphql_store.rs",
+    "loco_app.rs",
+    "logging.rs",
+]
+# Definitional layers (macros, linkme registries, protocol/type defs) and
+# integration/golden/contract-tested layers (controllers, Loco initializers,
+# provider adapters) are not unit-tested 1:1 with source files in this project.
+skip_dir_patterns = [
+    "fixtures/",
+    "macros/",
+    "registry/",
+    "protocol/",
+    "controllers/",
+    "initializers/",
+    "embedding/",
+    "language/",
+    "project_detection/",
+    "hybrid_search/",
+    "vector_store/",
+    "cli/",
+    "project/",
+]
 known_migration_pairs = [["mcb-core", "mcb-domain"], ["mcb-std", "mcb-common"]]
 
 [rules.performance]
@@ -111,15 +136,15 @@ excluded_paths = [
 [rules.clean_architecture]
 enabled = true
 domain_dependencies = []
-application_dependencies = ["mcb-domain"]
-infrastructure_dependencies = ["mcb-application", "mcb-domain"]
+application_dependencies = []
+infrastructure_dependencies = ["mcb-domain"]
 server_path = "crates/mcb-server/src"
 handlers_path = "crates/mcb-server/src/handlers"
 domain_path = "crates/mcb-domain/src"
 entities_path = "crates/mcb-domain/src/entities"
 vo_path = "crates/mcb-domain/src/value_objects"
 infrastructure_path = "crates/mcb-infrastructure/src"
-application_path = "crates/mcb-application/src"
+application_path = ""
 ports_providers_path = "crates/mcb-domain/src/ports"
 identity_skip_suffixes = ["Builder", "Options", "Config", "Changes", "Filter"]
 
@@ -134,7 +159,6 @@ server_exempt_files = ["auth.rs", "middleware.rs"]
 enabled = true
 scan_crates = [
     "mcb-domain",
-    "mcb-application",
     "mcb-providers",
     "mcb-infrastructure",
     "mcb-server",

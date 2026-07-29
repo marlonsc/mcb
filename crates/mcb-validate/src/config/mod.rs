@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Configuration Module
 //!
 //! Provides file-based configuration for mcb-validate via figment

@@ -1,10 +1,13 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
+//!
 //! Organization violation types and trait implementations
 
 use std::path::PathBuf;
 
 use crate::Severity;
 use crate::define_violations;
-use crate::traits::violation::ViolationCategory;
+use mcb_domain::ports::validation::ViolationCategory;
 
 define_violations! {
     ViolationCategory::Organization,

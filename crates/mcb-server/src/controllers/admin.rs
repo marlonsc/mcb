@@ -1,0 +1,134 @@
+use crate::{controllers::admin_config::load_admin_config, state::McbState};
+use axum::extract::Extension;
+use axum::http::HeaderMap;
+use loco_rs::prelude::*;
+use serde::{Deserialize, Serialize};
+
+/// JSON body for dashboard query requests.
+#[derive(Debug, Deserialize, Serialize)]
+pub struct DashboardBody {
+    /// Graph identifier (e.g. `observations_by_month`, `sessions_by_day`).
+    pub graph: String,
+    /// Optional row limit.
+    pub limit: Option<usize>,
+}
+
+/// Key-value pair for dashboard series data.
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
+pub struct Datum {
+    /// Label (e.g. month, day, tool name).
+    pub key: String,
+    /// Count or value.
+    pub val: i64,
+}
+
+fn datum(key: String, val: i64) -> Datum {
+    Datum { key, val }
+}
+
+/// Returns admin config as JSON (sea-orm-pro).
+///
+/// # Errors
+///
+/// Fails when config cannot be loaded or serialized, or when auth fails.
+pub async fn config(
+    State(ctx): State<AppContext>,
+    headers: HeaderMap,
+    Extension(state): Extension<McbState>,
+) -> Result<Response> {
+    crate::auth::authorize_admin_api_key(
+        state.auth_repo.as_ref(),
+        &headers,
+        ctx.config.settings.as_ref(),
+    )
+    .await?;
+    format::json(load_admin_config()?)
+}
+
+/// Returns dashboard series data for the requested graph.
+///
+/// # Errors
+///
+/// Fails when the dashboard port fails or graph is unknown, or when auth fails.
+pub async fn dashboard(
+    State(ctx): State<AppContext>,
+    headers: HeaderMap,
+    Extension(state): Extension<McbState>,
+    Json(body): Json<DashboardBody>,
+) -> Result<Response> {
+    crate::auth::authorize_admin_api_key(
+        state.auth_repo.as_ref(),
+        &headers,
+        ctx.config.settings.as_ref(),
+    )
+    .await?;
+    let limit = body
+        .limit
+        .unwrap_or(mcb_utils::constants::DEFAULT_DASHBOARD_LIMIT);
+    let data = dashboard_series(&state, &body.graph, limit).await?;
+    format::json(data)
+}
+
+/// Resolve the dashboard series for a named graph, mapping port errors to Loco errors.
+async fn dashboard_series(state: &McbState, graph: &str, limit: usize) -> Result<Vec<Datum>> {
+    let data = match graph {
+        "observations_by_month" => state
+            .dashboard
+            .get_observations_by_month(limit)
+            .await
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?
+            .into_iter()
+            .map(|it| datum(it.month, it.count))
+            .collect::<Vec<_>>(),
+        "sessions_by_day" | "observations_by_day" => state
+            .dashboard
+            .get_observations_by_day(limit)
+            .await
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?
+            .into_iter()
+            .map(|it| datum(it.day, it.count))
+            .collect::<Vec<_>>(),
+        "tool_calls_by_tool" => state
+            .dashboard
+            .get_tool_call_counts()
+            .await
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?
+            .into_iter()
+            .map(|it| datum(it.tool_name, it.count))
+            .collect::<Vec<_>>(),
+        "agent_session_stats" => {
+            let stats = state
+                .dashboard
+                .get_agent_session_stats()
+                .await
+                .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+            vec![
+                datum("total_sessions".to_owned(), stats.total_sessions),
+                datum("total_agents".to_owned(), stats.total_agents),
+            ]
+        }
+        _ => not_found()?,
+    };
+    Ok(data)
+}
+
+/// Returns admin config as JSON for routes guarded by external middleware.
+///
+/// Auth is enforced by the calling route's middleware; no per-request
+/// re-authentication is needed here.
+///
+/// # Errors
+///
+/// Fails when config cannot be loaded or serialized.
+pub async fn config_via_middleware(Extension(_state): Extension<McbState>) -> Result<Response> {
+    format::json(load_admin_config()?)
+}
+
+/// Registers admin routes under `/admin`.
+#[must_use]
+pub fn routes() -> Routes {
+    Routes::new()
+        .prefix("admin")
+        .add("/config", get(config))
+        .add("/dashboard", post(dashboard))
+}

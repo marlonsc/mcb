@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Template Engine for YAML Rules
 //!
 //! Provides template inheritance and variable substitution for DRY rule definitions.
@@ -8,9 +11,9 @@ use std::path::Path;
 use serde_yaml;
 
 use crate::Result;
-use crate::constants::rules::{YAML_FIELD_BASE, YAML_FIELD_NAME};
-use crate::pattern_registry::compile_regex;
 use crate::utils::fs::collect_yaml_files;
+use mcb_utils::constants::validate::{YAML_FIELD_BASE, YAML_FIELD_NAME};
+use mcb_utils::utils::regex::compile_regex;
 
 /// Template engine for YAML rules with inheritance and substitution
 pub struct TemplateEngine {
@@ -126,10 +129,7 @@ impl TemplateEngine {
             let registry_name = template
                 .get(YAML_FIELD_NAME)
                 .and_then(|v| v.as_str())
-                .map_or_else(
-                    || template_name.to_owned(),
-                    std::string::ToString::to_string,
-                );
+                .map_or_else(|| template_name.to_owned(), str::to_owned);
             self.templates.insert(registry_name, template);
         }
         Ok(())
@@ -167,10 +167,7 @@ impl TemplateEngine {
                 let registry_name = template
                     .get(YAML_FIELD_NAME)
                     .and_then(|v| v.as_str())
-                    .map_or_else(
-                        || template_name.to_owned(),
-                        std::string::ToString::to_string,
-                    );
+                    .map_or_else(|| template_name.to_owned(), str::to_owned);
                 self.templates.insert(registry_name, template);
             }
         }
@@ -306,7 +303,7 @@ impl TemplateEngine {
                     let strings: Vec<String> = seq
                         .iter()
                         .filter_map(|v| v.as_str())
-                        .map(std::string::ToString::to_string)
+                        .map(str::to_owned)
                         .collect();
                     Ok(strings.join(","))
                 }

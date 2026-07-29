@@ -10,10 +10,7 @@ fn normalize_identifier_treats_blank_as_missing(
     #[case] input: Option<&str>,
     #[case] expected: Option<&str>,
 ) {
-    assert_eq!(
-        normalize_identifier(input),
-        expected.map(std::string::ToString::to_string)
-    );
+    assert_eq!(normalize_identifier(input), expected.map(ToOwned::to_owned));
 }
 
 #[rstest]
@@ -27,10 +24,10 @@ fn resolve_identifier_precedence_uses_non_conflicting_values(
 ) {
     let resolved = resolve_identifier_precedence("project_id", args_value, payload_value)
         .expect("should resolve");
-    assert_eq!(resolved, expected.map(std::string::ToString::to_string));
+    assert_eq!(resolved, expected.map(ToOwned::to_owned));
 }
 
-#[test]
+#[rstest]
 fn resolve_identifier_precedence_rejects_conflicting_values() {
     let err = resolve_identifier_precedence("project_id", Some("proj-a"), Some("proj-b"))
         .expect_err("should reject conflicting identifiers");

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Validate handler for code validation operations.
 
 use std::path::PathBuf;
@@ -21,12 +24,11 @@ pub struct ValidateHandler {
     validation_service: Arc<dyn ValidationServiceInterface>,
 }
 
-impl ValidateHandler {
-    /// Create a new `ValidateHandler`.
-    pub fn new(validation_service: Arc<dyn ValidationServiceInterface>) -> Self {
-        Self { validation_service }
-    }
+handler_new!(ValidateHandler {
+    validation_service: Arc<dyn ValidationServiceInterface>,
+});
 
+impl ValidateHandler {
     /// Handle a validate tool request.
     ///
     /// # Errors
@@ -70,12 +72,9 @@ impl ValidateHandler {
     }
 
     async fn handle_list_rules(&self, args: &ValidateArgs) -> Result<CallToolResult, McpError> {
-        if let Some(ref category) = args.category {
-            match self
-                .validation_service
-                .get_rules(Some(category.as_str()))
-                .await
-            {
+        let effective_category = args.category.as_deref().filter(|c| !c.trim().is_empty());
+        if let Some(category) = effective_category {
+            match self.validation_service.get_rules(Some(category)).await {
                 Ok(rules) => ResponseFormatter::json_success(&serde_json::json!({
                     "rules": rules,
                     "count": rules.len(),

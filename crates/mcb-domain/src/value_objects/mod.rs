@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#value-objects)
+//!
 //! Domain Value Objects
 //!
 //! Immutable value objects that represent concepts in the domain
@@ -47,7 +50,4 @@ pub use project_settings::{
     ProjectEmbeddingConfig, ProjectProvidersSettings, ProjectSettings, ProjectVectorStoreConfig,
 };
 pub use search::SearchResult;
-pub use types::{
-    CacheProviderKind, EmbeddingProviderKind, Language, OperationType, SupportedLanguage,
-    VectorStoreProviderKind,
-};
+pub use types::{Language, OperationType, SupportedLanguage};

@@ -1,6 +1,12 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 use regex::Regex;
 
-use crate::constants::common::{ATTRIBUTE_PREFIX, COMMENT_PREFIX, FN_PREFIX};
+use mcb_utils::constants::validate::{
+    ATTRIBUTE_PREFIX, COMMENT_PREFIX, CONTROL_FLOW_CONTAINS_TOKENS,
+    CONTROL_FLOW_STARTS_WITH_TOKENS, FN_PREFIX,
+};
 
 use super::FunctionInfo;
 
@@ -19,6 +25,7 @@ pub(super) fn extract_functions_impl(
             let fn_name = cap
                 .get(1)
                 .map(|m| m.as_str().to_owned())
+                // INTENTIONAL: Regex capture group; no match yields empty string
                 .unwrap_or_default();
             let fn_start = orig_idx + 1;
 
@@ -63,50 +70,24 @@ pub(super) fn extract_functions_with_body_impl(
             continue;
         }
 
-        if let Some(re) = impl_pattern
-            && let Some(cap) = re.captures(trimmed)
-        {
-            *current_struct = cap
-                .get(1)
-                .map(|m| m.as_str().to_owned())
-                .unwrap_or_default();
+        if let Some(name) = impl_pattern.and_then(|re| first_capture(re, trimmed)) {
+            *current_struct = name;
         }
 
-        if let Some(re) = fn_pattern
-            && let Some(cap) = re.captures(trimmed)
-        {
-            current_fn_name = cap
-                .get(1)
-                .map(|m| m.as_str().to_owned())
-                .unwrap_or_default();
+        if let Some(name) = fn_pattern.and_then(|re| first_capture(re, trimmed)) {
+            current_fn_name = name;
             fn_start_line = orig_idx + 1;
             fn_body_lines.clear();
             in_fn = true;
             brace_depth = 0;
         }
 
-        if !in_fn {
-            continue;
-        }
-
-        let opens =
-            i32::try_from(trimmed.chars().filter(|c| *c == '{').count()).unwrap_or(i32::MAX);
-        let closes =
-            i32::try_from(trimmed.chars().filter(|c| *c == '}').count()).unwrap_or(i32::MAX);
-        brace_depth += opens - closes;
-
-        if !trimmed.is_empty() && !trimmed.starts_with(ATTRIBUTE_PREFIX) {
-            fn_body_lines.push(trimmed.to_owned());
-        }
-
-        if brace_depth <= 0 && opens > 0 {
-            functions.push(FunctionInfo {
-                name: current_fn_name.clone(),
-                start_line: fn_start_line,
-                meaningful_body: meaningful_lines(&fn_body_lines),
-                has_control_flow: has_control_flow(&fn_body_lines),
-                body_lines: fn_body_lines.clone(),
-            });
+        if in_fn && accumulate_body_line(trimmed, &mut brace_depth, &mut fn_body_lines) {
+            functions.push(build_function_info(
+                &current_fn_name,
+                fn_start_line,
+                &fn_body_lines,
+            ));
             in_fn = false;
             fn_body_lines.clear();
         }
@@ -115,28 +96,51 @@ pub(super) fn extract_functions_with_body_impl(
     functions
 }
 
-fn find_function_end(lines: &[(usize, &str)], start_idx: usize) -> usize {
-    let mut brace_depth: i32 = 0;
-    let mut fn_started = false;
-    let mut fn_end_idx = start_idx;
+/// Update brace depth and accumulate a body line. Returns true when the function body closes.
+fn accumulate_body_line(
+    trimmed: &str,
+    brace_depth: &mut i32,
+    body_lines: &mut Vec<String>,
+) -> bool {
+    let opens = i32::try_from(trimmed.chars().filter(|c| *c == '{').count()).unwrap_or(i32::MAX);
+    let closes = i32::try_from(trimmed.chars().filter(|c| *c == '}').count()).unwrap_or(i32::MAX);
+    *brace_depth += opens - closes;
 
-    for (j, (_, line_content)) in lines[start_idx..].iter().enumerate() {
-        let opens =
-            i32::try_from(line_content.chars().filter(|c| *c == '{').count()).unwrap_or(i32::MAX);
-        let closes =
-            i32::try_from(line_content.chars().filter(|c| *c == '}').count()).unwrap_or(i32::MAX);
-
-        if opens > 0 {
-            fn_started = true;
-        }
-        brace_depth += opens - closes;
-        if fn_started && brace_depth <= 0 {
-            fn_end_idx = start_idx + j;
-            break;
-        }
+    if !trimmed.is_empty() && !trimmed.starts_with(ATTRIBUTE_PREFIX) {
+        body_lines.push(trimmed.to_owned());
     }
 
-    fn_end_idx
+    *brace_depth <= 0 && opens > 0
+}
+
+/// Return the first regex capture group of `trimmed` as an owned string, if the regex matches.
+fn first_capture(re: &Regex, trimmed: &str) -> Option<String> {
+    let cap = re.captures(trimmed)?;
+    // INTENTIONAL: Regex capture group; no match yields empty string
+    Some(
+        cap.get(1)
+            .map(|m| m.as_str().to_owned())
+            .unwrap_or_default(),
+    )
+}
+
+/// Build a [`FunctionInfo`] from an accumulated function body.
+fn build_function_info(name: &str, start_line: usize, body_lines: &[String]) -> FunctionInfo {
+    FunctionInfo {
+        name: name.to_owned(),
+        start_line,
+        meaningful_body: meaningful_lines(body_lines),
+        has_control_flow: has_control_flow(body_lines),
+        body_lines: body_lines.to_vec(),
+    }
+}
+
+fn find_function_end(lines: &[(usize, &str)], start_idx: usize) -> usize {
+    mcb_domain::utils::analysis::count_balanced_block_lines(
+        lines[start_idx..].iter().map(|(_, l)| l),
+        usize::MAX,
+    )
+    .map_or(start_idx, |len| start_idx + len - 1)
 }
 
 fn meaningful_lines(body: &[String]) -> Vec<String> {
@@ -151,13 +155,12 @@ fn is_structural_line(line: &str) -> bool {
 }
 
 fn has_control_flow(body: &[String]) -> bool {
-    const CONTAINS_TOKENS: [&str; 4] = [" if ", "} else", " match ", " else {"];
-    const STARTS_WITH_TOKENS: [&str; 5] = ["if ", "match ", "for ", "while ", "loop "];
-
     body.iter().any(|line| {
         line.contains("else {")
-            || CONTAINS_TOKENS.iter().any(|token| line.contains(token))
-            || STARTS_WITH_TOKENS
+            || CONTROL_FLOW_CONTAINS_TOKENS
+                .iter()
+                .any(|token| line.contains(token))
+            || CONTROL_FLOW_STARTS_WITH_TOKENS
                 .iter()
                 .any(|token| line.starts_with(token))
     })

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Code Duplication Detection (Phase 5)
 //!
 //! Provides clone detection using a hybrid approach:
@@ -29,11 +32,9 @@
 //! ```
 
 pub mod analyzer;
-pub mod constants;
 pub mod detector;
 pub mod fingerprint;
 pub mod thresholds;
-pub(crate) mod utils;
 pub mod violation;
 
 pub use self::analyzer::{DuplicationAnalyzer, DuplicationStats};

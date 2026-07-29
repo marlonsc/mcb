@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Expression Engine Wrapper
 //!
 //! Wrapper for evalexpr crate providing simple boolean expression evaluation.
@@ -10,16 +13,13 @@ use evalexpr::{ContextWithMutableVariables, HashMapContext, Value as EvalValue};
 use serde_json::Value;
 
 use crate::Result;
-use crate::constants::common::{
-    ASYNC_FN_PREFIX, EXPECT_CALL, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, UNWRAP_CALL,
-};
-use crate::constants::rules::{
-    DEFAULT_EXPR_MESSAGE, DEFAULT_EXPR_RULE_ID, YAML_FIELD_CATEGORY, YAML_FIELD_EXPRESSION,
-    YAML_FIELD_ID, YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY,
-};
-use crate::constants::severities::{SEVERITY_ERROR, SEVERITY_WARNING};
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
-use crate::traits::violation::{Severity, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
+use mcb_utils::constants::validate::{
+    ASYNC_FN_PREFIX, DEFAULT_EXPR_MESSAGE, DEFAULT_EXPR_RULE_ID, EXPECT_CALL, SEVERITY_ERROR,
+    SEVERITY_WARNING, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, UNWRAP_CALL, YAML_FIELD_CATEGORY,
+    YAML_FIELD_EXPRESSION, YAML_FIELD_ID, YAML_FIELD_MESSAGE, YAML_FIELD_SEVERITY,
+};
 
 /// Wrapper for evalexpr engine
 ///
@@ -30,6 +30,22 @@ use crate::traits::violation::{Severity, ViolationCategory};
 pub struct ExpressionEngine {
     /// Cached contexts for repeated evaluations
     cached_contexts: HashMap<String, HashMapContext>,
+}
+
+/// `ExpressionRuleInput` struct.
+pub struct ExpressionRuleInput<'a> {
+    /// Rule ID
+    pub rule_id: &'a str,
+    /// Expression to evaluate
+    pub expression: &'a str,
+    /// Rule context containing file contents
+    pub context: &'a RuleContext,
+    /// Violation message
+    pub message: &'a str,
+    /// Violation severity
+    pub severity: Severity,
+    /// Violation category
+    pub category: ViolationCategory,
 }
 
 impl Default for ExpressionEngine {
@@ -172,13 +188,17 @@ impl ExpressionEngine {
     /// Returns an error if expression evaluation fails.
     pub async fn execute_expression_rule(
         &self,
-        rule_id: &str,
-        expression: &str,
-        context: &RuleContext,
-        message: &str,
-        severity: Severity,
-        category: ViolationCategory,
+        input: ExpressionRuleInput<'_>,
     ) -> Result<Vec<RuleViolation>> {
+        let ExpressionRuleInput {
+            rule_id,
+            expression,
+            context,
+            message,
+            severity,
+            category,
+        } = input;
+
         let mut violations = Vec::new();
 
         match self.evaluate_expression(expression, context) {
@@ -217,7 +237,6 @@ impl RuleEngine for ExpressionEngine {
         rule_definition: &Value,
         context: &RuleContext,
     ) -> Result<Vec<RuleViolation>> {
-        // Extract expression from rule definition
         let expression = rule_definition
             .get(YAML_FIELD_EXPRESSION)
             .and_then(|v| v.as_str())
@@ -249,18 +268,19 @@ impl RuleEngine for ExpressionEngine {
         let category = rule_definition
             .get(YAML_FIELD_CATEGORY)
             .and_then(|v| v.as_str())
-            .map_or(ViolationCategory::Quality, |c| match c {
-                crate::constants::severities::CATEGORY_ARCHITECTURE => {
-                    ViolationCategory::Architecture
-                }
-                crate::constants::severities::CATEGORY_PERFORMANCE => {
-                    ViolationCategory::Performance
-                }
-                _ => ViolationCategory::Quality,
+            .map_or(ViolationCategory::Quality, |c| {
+                c.parse().unwrap_or(ViolationCategory::Quality)
             });
 
-        self.execute_expression_rule(rule_id, expression, context, message, severity, category)
-            .await
+        self.execute_expression_rule(ExpressionRuleInput {
+            rule_id,
+            expression,
+            context,
+            message,
+            severity,
+            category,
+        })
+        .await
     }
 }
 

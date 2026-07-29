@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md)
+//!
 use std::path::{Path, PathBuf};
 
 use super::catch_all::validate_empty_catch_alls;
@@ -6,8 +9,8 @@ use super::hardcoded::validate_hardcoded_returns;
 use super::logging::validate_log_only_methods;
 use super::stubs::validate_stub_macros;
 use super::wrappers::validate_pass_through_wrappers;
-use crate::constants::common::TEST_DIR_FRAGMENT;
 use crate::pattern_registry::required_pattern;
+use mcb_utils::constants::validate::TEST_DIR_FRAGMENT;
 
 use crate::config::ImplementationRulesConfig;
 use crate::filters::LanguageId;
@@ -95,6 +98,6 @@ fn is_test_path(path: &Path) -> bool {
 
 crate::impl_validator!(
     ImplementationQualityValidator,
-    "implementation",
+    mcb_utils::constants::validate::VALIDATOR_IMPLEMENTATION,
     "Validates implementation quality patterns (empty methods, hardcoded returns, stubs)"
 );

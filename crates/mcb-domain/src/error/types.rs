@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Error handling types organized by domain
 
 use thiserror::Error;
@@ -217,11 +220,11 @@ pub enum Error {
 
     /// Browse operation error
     #[error("Browse error: {0}")]
-    Browse(#[from] crate::ports::BrowseError),
+    Browse(#[from] crate::ports::services::browse::BrowseError),
 
     /// Highlighting operation error
     #[error("Highlighting error: {0}")]
-    Highlight(#[from] crate::ports::HighlightError),
+    Highlight(#[from] crate::ports::services::browse::HighlightError),
 }
 
 impl Error {
@@ -357,6 +360,49 @@ impl Error {
         }
     }
 
+    /// Create a database error with source
+    pub fn database_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Database {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create a configuration error with source
+    pub fn config_with_source<S: Into<String>, E: std::error::Error + Send + Sync + 'static>(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Configuration {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create an infrastructure error with source
+    pub fn infrastructure_with_source<
+        S: Into<String>,
+        E: std::error::Error + Send + Sync + 'static,
+    >(
+        message: S,
+        source: E,
+    ) -> Self {
+        Self::Infrastructure {
+            message: message.into(),
+            source: Some(Box::new(source)),
+        }
+    }
+
+    /// Create a config invalid error
+    pub fn config_invalid<S1: Into<String>, S2: Into<String>>(key: S1, message: S2) -> Self {
+        Self::ConfigInvalid {
+            key: key.into(),
+            message: message.into(),
+        }
+    }
     /// Create a repository not found error
     pub fn repository_not_found<S: Into<String>>(path: S) -> Self {
         Self::RepositoryNotFound { path: path.into() }
@@ -386,5 +432,46 @@ impl Error {
             message: full_message,
             source: Some(Box::new(source)),
         }
+    }
+
+    /// Convert an `Option<T>` to a `Result<T>` with a not found error
+    ///
+    /// This helper consolidates the common pattern of converting an optional value
+    /// to a result, returning a not found error if the value is `None`.
+    ///
+    /// # Arguments
+    ///
+    /// * `opt` - The optional value to convert
+    /// * `entity_type` - The type of entity that was not found (e.g., "Repository", "Branch")
+    /// * `id` - The identifier of the entity that was not found
+    ///
+    /// # Returns
+    ///
+    /// * `Ok(value)` if `opt` is `Some(value)`
+    /// * `Err(Error::not_found(...))` if `opt` is `None`
+    ///
+    /// # Errors
+    ///
+    /// Returns `Error::not_found` if the option is `None`.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let repo = find_repo(id)?;
+    /// let branch = repo.get_branch(name)
+    ///     .ok_or_else(|| Error::not_found(format!("Branch with id {name} not found")))?;
+    ///
+    /// // Can be simplified to:
+    /// let branch = Error::not_found_or(repo.get_branch(name), "Branch", name)?;
+    /// ```
+    pub fn not_found_or<T>(opt: Option<T>, entity_type: &str, id: &str) -> Result<T> {
+        opt.ok_or_else(|| Error::not_found(format!("{entity_type} with id {id} not found")))
+    }
+}
+
+// ── Conversion from mcb-utils error types ──────────────────────────
+impl From<mcb_utils::UtilsError> for Error {
+    fn from(err: mcb_utils::UtilsError) -> Self {
+        Self::internal(err.to_string())
     }
 }

@@ -1,10 +1,13 @@
-use super::constants::PANIC_REGEX;
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
+//!
 use super::{QualityValidator, QualityViolation};
-use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX};
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::PANIC_REGEX;
+use mcb_utils::constants::validate::{CFG_TEST_MARKER, COMMENT_PREFIX};
+use mcb_utils::utils::regex::compile_regex;
 
 /// Scans production code for usage of the `panic!()` macro.
 pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
@@ -30,22 +33,11 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
             for (line_num, line) in content.lines().enumerate() {
                 let trimmed = line.trim();
 
-                // Skip comments
-                if trimmed.starts_with(COMMENT_PREFIX) {
-                    continue;
-                }
-
-                if trimmed.contains(CFG_TEST_MARKER) {
-                    in_test_module = true;
-                    continue;
-                }
-
-                if in_test_module {
-                    continue;
-                }
-
-                // Check for panic!
-                if panic_pattern.is_match(line) {
+                in_test_module = in_test_module || trimmed.contains(CFG_TEST_MARKER);
+                if !trimmed.starts_with(COMMENT_PREFIX)
+                    && !in_test_module
+                    && panic_pattern.is_match(line)
+                {
                     violations.push(QualityViolation::PanicInProduction {
                         file: entry.absolute_path.clone(),
                         line: line_num + 1,

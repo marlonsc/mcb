@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
+//!
 //! Shared file-scanning helpers for validators.
 //!
 //! Provides generic language-aware scan functions. All filtering uses
@@ -5,15 +8,28 @@
 
 use std::path::Path;
 
-use crate::constants::common::{MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX};
+use crate::ValidationConfigExt;
 use crate::filters::LanguageId;
 use crate::run_context::{InventoryEntry, ValidationRunContext};
 use crate::{Result, ValidationConfig};
+use mcb_utils::constants::validate::{
+    MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX,
+};
 
 /// True if a path points to a test file or tests directory.
 #[must_use]
 pub fn is_test_path(path: &str) -> bool {
     path.contains(TEST_FILE_SUFFIX) || path.contains(TEST_DIR_FRAGMENT)
+}
+
+/// Files under `constants/validate/` hold the validators' own detection-pattern
+/// data (anti-pattern strings, rule ids, category names). Content scanners would
+/// otherwise flag those literals as the very anti-patterns they describe, so the
+/// pattern-definition directory is excluded from file scanning.
+fn is_validator_pattern_data(path: &Path) -> bool {
+    path.to_str()
+        .map(|s| s.replace('\\', "/"))
+        .is_some_and(|s| s.contains("/constants/validate/"))
 }
 
 // ---------------------------------------------------------------------------
@@ -45,14 +61,15 @@ where
 
         let crate_name = crate_dir.file_name().and_then(|n| n.to_str()).unwrap_or("");
 
+        // Inventory `absolute_path`s are canonicalized; canonicalize `src_dir`
+        // too so the prefix match holds under symlinked roots (macOS
+        // /var → /private/var).
+        let src_dir = std::fs::canonicalize(&src_dir).unwrap_or(src_dir);
+
         for entry in inventory {
-            if !entry.absolute_path.starts_with(&src_dir) {
-                continue;
+            if entry.absolute_path.starts_with(&src_dir) && matches_language(entry, language) {
+                f(entry, &src_dir, crate_name)?;
             }
-            if !matches_language(entry, language) {
-                continue;
-            }
-            f(entry, &src_dir, crate_name)?;
         }
     }
 
@@ -79,29 +96,41 @@ where
     let file_config = crate::config::FileConfig::load(&config.workspace_root);
 
     for src_dir in config.get_scan_dirs()? {
-        if skip_validate_crate
-            && let Some(dir_name) = src_dir.file_name().and_then(|n| n.to_str())
-            && file_config
-                .general
-                .skip_crates
-                .iter()
-                .any(|skip| dir_name.contains(skip))
-        {
+        if skip_validate_crate && is_skipped_crate_dir(&src_dir, &file_config) {
             continue;
         }
 
+        // Inventory `absolute_path`s are canonicalized; canonicalize `src_dir`
+        // too so the prefix match holds under symlinked roots (macOS
+        // /var → /private/var), otherwise no files match and rules silently
+        // run on nothing.
+        let src_dir = std::fs::canonicalize(&src_dir).unwrap_or(src_dir);
+
         for entry in inventory {
-            if !entry.absolute_path.starts_with(&src_dir) {
-                continue;
+            if entry.absolute_path.starts_with(&src_dir)
+                && matches_language(entry, language)
+                && !is_validator_pattern_data(&entry.absolute_path)
+            {
+                f(entry, &src_dir)?;
             }
-            if !matches_language(entry, language) {
-                continue;
-            }
-            f(entry, &src_dir)?;
         }
     }
 
     Ok(())
+}
+
+/// Returns true when `src_dir`'s crate name matches a configured `skip_crates` entry.
+fn is_skipped_crate_dir(src_dir: &Path, file_config: &crate::config::FileConfig) -> bool {
+    src_dir
+        .file_name()
+        .and_then(|n| n.to_str())
+        .is_some_and(|dir_name| {
+            file_config
+                .general
+                .skip_crates
+                .iter()
+                .any(|skip| dir_name.contains(skip))
+        })
 }
 
 /// Iterate over files matching `language` under a root directory.
@@ -122,12 +151,8 @@ where
 
     let context = ValidationRunContext::active_or_build(config)?;
     let inventory = context.file_inventory();
-    let normalized_root = std::fs::canonicalize(root).map_err(|e| {
-        crate::ValidationError::Config(format!(
-            "Failed to canonicalize root {}: {e}",
-            root.display()
-        ))
-    })?;
+    let normalized_root = mcb_utils::utils::path::strict_canonicalize(root)
+        .map_err(|e| crate::ValidationError::Config(e.to_string()))?;
 
     for entry in inventory {
         if !entry.absolute_path.starts_with(&normalized_root) {
@@ -154,41 +179,15 @@ fn matches_language(entry: &InventoryEntry, language: Option<LanguageId>) -> boo
 }
 
 /// Extracts a code block defined by balanced braces `{}` starting search from `start_line_idx`.
-/// Returns the lines inclusive of the start and end lines, and the index of the last line.
 #[must_use]
 pub fn extract_balanced_block<'a>(
     lines: &'a [&'a str],
     start_line_idx: usize,
 ) -> Option<(Vec<&'a str>, usize)> {
-    let mut brace_balance = 0;
-    let mut found_start = false;
-
-    if start_line_idx >= lines.len() {
-        return None;
-    }
-
-    for (offset, line) in lines[start_line_idx..].iter().enumerate() {
-        let current_idx = start_line_idx + offset;
-
-        let open_count = line.chars().filter(|c| *c == '{').count() as i32;
-        let close_count = line.chars().filter(|c| *c == '}').count() as i32;
-
-        if open_count > 0 {
-            found_start = true;
-        }
-
-        if found_start {
-            brace_balance += open_count;
-            brace_balance -= close_count;
-
-            if brace_balance <= 0 {
-                let block_lines = lines[start_line_idx..=current_idx].to_vec();
-                return Some((block_lines, current_idx));
-            }
-        } else if offset > MAX_BLOCK_SEARCH_OFFSET {
-            return None;
-        }
-    }
-
-    None
+    let count = mcb_domain::utils::analysis::count_balanced_block_lines(
+        &lines[start_line_idx..],
+        MAX_BLOCK_SEARCH_OFFSET,
+    )?;
+    let end_idx = start_line_idx + count - 1;
+    Some((lines[start_line_idx..=end_idx].to_vec(), end_idx))
 }

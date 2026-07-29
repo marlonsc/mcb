@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! HTTP Response Utilities
 //!
 //! Helper functions for processing HTTP responses from API providers.

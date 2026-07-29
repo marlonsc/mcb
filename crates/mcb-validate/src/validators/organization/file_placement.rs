@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
+//!
 use super::violation::OrganizationViolation;
 use crate::{Result, ValidationConfig};
 

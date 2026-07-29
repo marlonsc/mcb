@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! # Validation Rule Engines
 //!
 //! Five engines, each serving a distinct purpose:

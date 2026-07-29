@@ -1,5 +1,7 @@
 //! Codebase State Entities
 //!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
+//!
 //! Entities for managing codebase state, snapshots, and change tracking.
 //! These entities enable the system to track changes over time and
 //! maintain consistency across indexing operations.

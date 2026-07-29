@@ -1,8 +1,71 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::filters::LanguageId;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
 
 use super::violation::HygieneViolation;
+use crate::ValidationConfigExt;
+
+/// Naming suggestion for an `integration/` test file lacking a purpose marker.
+fn integration_naming(file_name: &str) -> Option<(String, Severity)> {
+    let ok = ["integration", "workflow"]
+        .iter()
+        .any(|kw| file_name.contains(kw) || file_name.ends_with(&format!("_{kw}")));
+    (!ok).then(|| {
+        (
+            format!(
+                "{file_name}_integration.rs or {file_name}_workflow.rs (integration tests should indicate their purpose)"
+            ),
+            Severity::Info,
+        )
+    })
+}
+
+/// Naming suggestion for an `e2e/` test file lacking an end-to-end marker.
+fn e2e_naming(file_name: &str) -> Option<(String, Severity)> {
+    let ok = ["e2e", "end_to_end"]
+        .iter()
+        .any(|kw| file_name.contains(kw))
+        || file_name.starts_with("test_");
+    (!ok).then(|| {
+        (
+            format!(
+                "{file_name}_e2e.rs or test_{file_name}.rs (e2e tests should indicate they're end-to-end)"
+            ),
+            Severity::Info,
+        )
+    })
+}
+
+fn expected_naming_for_parent(
+    parent_dir: &str,
+    file_name: &str,
+    file_full: &str,
+) -> Option<(String, Severity)> {
+    match parent_dir {
+        "unit" => (!file_name.ends_with("_tests")).then(|| {
+            (
+                format!("{file_name}_tests.rs (unit tests must end with _tests)"),
+                Severity::Warning,
+            )
+        }),
+        "integration" => integration_naming(file_name),
+        "e2e" => e2e_naming(file_name),
+        "tests" => (!matches!(
+            file_full,
+            "lib.rs" | "mod.rs" | "utils.rs" | "unit.rs" | "integration.rs" | "e2e.rs"
+        ))
+        .then(|| {
+            (
+                "Move to a subdirectory (e.g., tests/unit/)".to_owned(),
+                Severity::Warning,
+            )
+        }),
+        _other => None,
+    }
+}
 
 /// Checks test file naming conventions and directory structure compliance.
 ///
@@ -19,98 +82,47 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
         }
 
         for_each_file_under_root(config, &tests_dir, Some(LanguageId::Rust), |entry| {
-            let path = &entry.absolute_path;
-            let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-
-            // Skip lib.rs and mod.rs
-            if file_name == "lib" || file_name == "mod" {
-                return Ok(());
-            }
-
-            // Skip test utility files (mocks, fixtures, helpers)
-            let Some(path_str) = path.to_str() else {
-                return Ok(());
-            };
-            if path_str.contains("utils")
-                || file_name.contains("mock")
-                || file_name.contains("fixture")
-                || file_name.contains("helper")
-            {
-                return Ok(());
-            }
-
-            // Check directory-based naming conventions
-            let parent_dir = path
-                .parent()
-                .and_then(|p| p.file_name())
-                .and_then(|n| n.to_str())
-                .unwrap_or("");
-
-            match parent_dir {
-                "unit" => {
-                    // Unit tests must follow [module]_tests.rs pattern
-                    if !file_name.ends_with("_tests") {
-                        violations.push(HygieneViolation::BadTestFileName {
-                            file: path.clone(),
-                            suggestion: format!(
-                                "{file_name}_tests.rs (unit tests must end with _tests)"
-                            ),
-                            severity: Severity::Warning,
-                        });
-                    }
-                }
-                "integration" => {
-                    // Integration tests can be more flexible but should indicate their purpose
-                    let is_valid_integration = file_name.contains("integration")
-                        || file_name.contains("workflow")
-                        || file_name.ends_with("_integration")
-                        || file_name.ends_with("_workflow");
-
-                    if !is_valid_integration {
-                        violations.push(HygieneViolation::BadTestFileName {
-                            file: path.clone(),
-                            suggestion: format!("{file_name}_integration.rs or {file_name}_workflow.rs (integration tests should indicate their purpose)"),
-                            severity: Severity::Info,
-                        });
-                    }
-                }
-                "e2e" => {
-                    // E2E tests should clearly indicate they're end-to-end
-                    let is_valid_e2e = file_name.contains("e2e")
-                        || file_name.contains("end_to_end")
-                        || file_name.starts_with("test_");
-
-                    if !is_valid_e2e {
-                        violations.push(HygieneViolation::BadTestFileName {
-                            file: path.clone(),
-                            suggestion: format!("{file_name}_e2e.rs or test_{file_name}.rs (e2e tests should indicate they're end-to-end)"),
-                            severity: Severity::Info,
-                        });
-                    }
-                }
-                "tests" => {
-                    // Files directly in tests/ directory (not in any subdirectory)
-                    // are violations UNLESS they are entry points
-                    let file_full = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-                    if !matches!(
-                        file_full,
-                        "lib.rs" | "mod.rs" | "utils.rs" | "unit.rs" | "integration.rs" | "e2e.rs"
-                    ) {
-                        violations.push(HygieneViolation::BadTestFileName {
-                            file: path.clone(),
-                            suggestion: "Move to a subdirectory (e.g., tests/unit/)".to_owned(),
-                            severity: Severity::Warning,
-                        });
-                    }
-                }
-                _ => {
-                    // Files in subdirectories are allowed (module structure)
-                    // No violation
-                }
+            if let Some(violation) = check_test_file_naming(&entry.absolute_path) {
+                violations.push(violation);
             }
             Ok(())
         })?;
     }
 
     Ok(violations)
+}
+
+/// Returns a `BadTestFileName` violation when `path` (a test file) does not
+/// follow the naming convention for its parent directory, or `None` for files
+/// that are exempt (entry points, helpers, fixtures, mocks).
+fn check_test_file_naming(path: &std::path::Path) -> Option<HygieneViolation> {
+    let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+
+    if ["lib", "mod"].contains(&file_name) {
+        return None;
+    }
+
+    let path_str = path.to_str()?;
+    if path_str.contains("utils")
+        || ["mock", "fixture", "helper"]
+            .iter()
+            .any(|kw| file_name.contains(kw))
+    {
+        return None;
+    }
+
+    let parent_dir = path
+        .parent()
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str())
+        .unwrap_or("");
+    let file_full = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+
+    expected_naming_for_parent(parent_dir, file_name, file_full).map(|(suggestion, severity)| {
+        HygieneViolation::BadTestFileName {
+            file: path.to_path_buf(),
+            suggestion,
+            severity,
+        }
+    })
 }

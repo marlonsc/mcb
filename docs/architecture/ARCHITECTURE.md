@@ -1,10 +1,6 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Memory Context Browser - Comprehensive Architecture Documentation
 
-[![Version](https://img.shields.io/badge/version-0.2.1--dev-blue)](https://github.com/marlonsc/mcb/releases)
-[![Rust](https://img.shields.io/badge/rust-1.92%2B-orange)](https://www.rust-lang.org/)
-[![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-
 ## Model Context Protocol Server for Semantic Code Analysis using Vector Embeddings
 
 ---
@@ -50,11 +46,11 @@ Memory Context Browser is a high-performance, extensible Model Context Protocol 
 
 ### Current Status
 
-**Version**: 0.2.1 (Memory, Session, Agent, VCS + Documentation Overhaul + rstest)
-**Architecture Maturity**: ✅ **100% Complete DI Implementation**
-**DI Status**: ✅ 20+ Port Traits, ✅ Provider Registry, ✅ Service Factory, ✅ Full Port/Adapter Wiring
+**Version**: 0.3.1 (SeaQL + Loco.rs baseline, release stabilization)
+**Architecture Maturity**: ✅ **SeaQL + Loco.rs Clean Architecture Baseline**
+**DI Status**: ✅ Linkme provider registry, ✅ AppContext composition root, ✅ Full Port/Adapter Wiring
 **Provider Registration**: ✅ Linkme distributed slices (compile-time), ✅ Inventory removed
-**Validation**: ✅ mcb-validate crate Phases 1–7 verified (349 tests); 1700+ tests project-wide
+**Validation**: ✅ `mcb-validate` architecture checks; run `make validate` for the current release verdict
 **Port Traits**: `crates/mcb-domain/src/ports/` - Provider traits in domain layer (Clean Architecture compliant)
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
@@ -211,7 +207,7 @@ graph TB
 | Container | Technology | Responsibility | Interfaces |
 | ----------- | ------------ | ---------------- | ------------ |
 | **MCP Server** | Rust/Tokio | Protocol translation, request routing | MCP Protocol (stdio), Internal APIs |
-| **REST API** | Rust/Rocket | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
+| **REST API** | Rust/Poem | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
 | **WebSocket** | Rust/Tokio | Real-time notifications, live updates | WebSocket protocol |
 
 #### Application Containers
@@ -531,7 +527,7 @@ Beyond embedding and vector store providers, the system defines 12 additional po
 | `IndexingServiceInterface` | Codebase indexing | `IndexingService` |
 | `ChunkingOrchestratorInterface` | Batch chunking coordination | `ChunkingOrchestrator` |
 
-All 20+ port traits are defined in mcb-domain and registered in dill Catalog for DI container integration.
+All 20+ port traits are defined in mcb-domain and wired through the AppContext composition root for DI integration.
 
 ---
 
@@ -544,7 +540,7 @@ Memory Context Browser implements Robert C. Martin's Clean Architecture with str
 1. **Dependency Rule**: Dependencies only point inward (toward the domain)
 2. **Abstraction Rule**: Inner layers define interfaces (ports), outer layers implement (adapters)
 3. **Entity Rule**: Domain entities have no external dependencies
-4. **Use Case Rule**: Application layer orchestrates without implementing infrastructure
+4. **Use Case Rule**: Infrastructure use-case modules orchestrate without embedding provider details
 
 ```text
 ┌─────────────────────────────────────────────────────────┐
@@ -553,14 +549,17 @@ Memory Context Browser implements Robert C. Martin's Clean Architecture with str
 ├─────────────────────────────────────────────────────────┤
 │                 Infrastructure Layer                     │
 │               (mcb-infrastructure)                       │
-├────────────────────┬────────────────────────────────────┤
-│   Providers Layer  │      Application Layer             │
-│  (mcb-providers)   │     (mcb-application)              │
-├────────────────────┴────────────────────────────────────┤
+├─────────────────────────────────────────────────────────┤
+│                    Providers Layer                       │
+│                   (mcb-providers)                       │
+├─────────────────────────────────────────────────────────┤
 │                      Domain Layer                        │
 │                    (mcb-domain)                          │
+├─────────────────────────────────────────────────────────┤
+│                      Utils Layer                         │
+│                    (mcb-utils)                           │
 └─────────────────────────────────────────────────────────┘
-         Dependencies flow inward (toward domain)
+         Dependency flow: utils → domain → providers → infrastructure → server
 ```
 
 For complete architectural details, see [ADR-013: Clean Architecture Crate Separation](../adr/013-clean-architecture-crate-separation.md).
@@ -573,16 +572,14 @@ The project enforces strict dependency rules to maintain Clean Architecture comp
 
 | Crate | MUST NOT depend on | Allowed Dependencies |
 | ------- | -------------------- | ---------------------- |
-| mcb-domain | Any internal crate | None (pure domain) |
-| mcb-application | mcb-infrastructure, mcb-server, mcb-providers | mcb-domain only |
-| mcb-providers | mcb-infrastructure, mcb-server | mcb-domain, mcb-application* |
-| mcb-infrastructure | mcb-server | mcb-domain, mcb-application |
+| mcb-utils | Any internal crate | None (pure utilities) |
+| mcb-domain | Any internal crate except mcb-utils | mcb-utils only |
+| mcb-providers | mcb-infrastructure, mcb-server | mcb-domain, mcb-utils |
+| mcb-infrastructure | mcb-server | mcb-domain, mcb-providers, mcb-utils |
+| mcb-server | None | mcb-infrastructure, mcb-utils |
 
-**Note**: `mcb-providers` → `mcb-application` dependency is allowed ONLY for:
-
-- Registry auto-registration (`ports::registry`)
-- Admin interfaces (`ports::admin`)
-- Infrastructure ports (`ports::infrastructure`)
+**Note**: Provider implementations import contracts from `mcb-domain` and are wired by
+`mcb-infrastructure`.
 
 Provider trait implementations MUST import from `mcb-domain::ports::providers`.
 
@@ -610,7 +607,7 @@ Provider port traits are defined in `mcb-domain/src/ports/providers/`:
 | `CryptoProvider` | Encryption services |
 | `ConfigProvider` | Configuration access |
 
-The `mcb-application` layer re-exports these traits for backward compatibility, but implementations in `mcb-providers` import directly from `mcb-domain`.
+All provider port traits are defined in `mcb-domain/src/ports/providers/` (single source of truth per ADR-029). Implementations in `mcb-providers` import directly from `mcb-domain`.
 
 ### Extensibility - Adding New Providers
 
@@ -707,32 +704,27 @@ pub static CONCRETE_NEW_SERVICE: ProviderRegistration = ProviderRegistration {
 
 ### Guidelines (2)
 
-- Define registry slice in `mcb-application/src/ports/registry/`
+- Define registry slice in `mcb-domain/src/ports/registry/` (all ports are in mcb-domain per ADR-029)
 - Register all implementations in provider module
 - Use async factory for initialization
 - Return `Arc<dyn Trait>` from factory
 
 This pattern enables compile-time provider discovery with zero runtime overhead while maintaining Clean Architecture boundaries.
 
-### DI Strategy (ADR-024 → ADR-029)
+### DI Strategy (ADR-024 → ADR-029 → ADR-050)
 
-The dependency injection system uses a**handle-based pattern with dill IoC Container** documented in [ADR-029: Hexagonal Architecture with dill](../adr/029-hexagonal-architecture-dill.md):
+The dependency injection system uses a handle-based pattern with a manual composition root documented in [ADR-050](../adr/050-manual-composition-root-dill-removal.md):
 
-#### dill Catalog (IoC Container)
+#### AppContext (Manual Composition Root)
 
-The dill `Catalog` manages service registration and resolution:
+`init_app()` wires service registration and resolution into `AppContext`:
 
 ```rust
-// Build catalog with all services (mcb-infrastructure/src/di/catalog.rs)
-pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
-    CatalogBuilder::new()
-        .add_value(config)
-        .add_value(embedding_provider)    // From linkme registry
-        .add_value(embedding_handle)      // RwLock wrapper
-        .add_value(embedding_admin)       // Runtime switching
-        .add_value(performance_metrics)   // AtomicPerformanceMetrics
-        .add_value(event_bus)             // TokioBroadcast
-        .build()
+// Build AppContext with all services (mcb-infrastructure/src/di/bootstrap.rs)
+pub async fn init_app(config: AppConfig) -> Result<AppContext> {
+    // Resolve providers from linkme registries
+    // Construct handles/admin services
+    // Return AppContext with typed fields
 }
 
 // Service retrieval via AppContext (bootstrap.rs)
@@ -744,7 +736,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 
 **DI Components** (in `mcb-infrastructure/src/di/`):
 
-- `catalog.rs`: dill Catalog configuration and service resolution
+- `bootstrap.rs`: AppContext composition root and service wiring
 - `handles.rs`: RwLock wrappers for runtime provider switching
 - `provider_resolvers.rs`: linkme registry access
 - `admin.rs`: Admin services for API-based provider management
@@ -772,11 +764,11 @@ impl EmbeddingProviderHandle {
 
 ### Why This Pattern
 
-| Aspect | dill Catalog | Provider Handles |
+| Aspect | AppContext composition root | Provider Handles |
 | -------- | -------------- | ------------------ |
-| **When** | Runtime | Runtime |
-| **Purpose** | Service resolution | Provider switching |
-| **Configuration** | `add_value()` | Via admin API |
+| **When** | Startup/bootstrap | Runtime |
+| **Purpose** | Explicit service wiring | Provider switching |
+| **Configuration** | `init_app()` field assignment | Via admin API |
 | **Async Init** | Fully supported | Via resolvers |
 
 ### Port/Adapter Pattern
@@ -811,10 +803,10 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 | Category | Location | Examples |
 | ---------- | ---------- | ---------- |
 | Provider Ports | `mcb-domain/src/ports/providers/` | EmbeddingProvider, VectorStoreProvider, CacheProvider |
-| Infrastructure Ports | `mcb-application/src/ports/infrastructure/` | SyncProvider, SnapshotProvider, EventPublisher |
-| Admin Ports | `mcb-application/src/ports/admin.rs` | PerformanceMetrics, IndexingOperations |
+| Infrastructure Ports | `mcb-domain/src/ports/infrastructure/` | SyncProvider, SnapshotProvider, EventPublisher |
+| Admin Ports | `mcb-domain/src/ports/admin/` | PerformanceMetrics, IndexingOperations |
 
-> **Note**: Provider ports are defined in mcb-domain (single source of truth). Application layer re-exports for backward compatibility.
+> **Note**: All port traits are defined in mcb-domain (single source of truth per ADR-029).
 
 ### Testing with DI
 
@@ -830,10 +822,10 @@ async fn test_search_service() {
     // Test without infrastructure dependencies
 }
 
-// Integration testing - default providers via dill Catalog
+// Integration testing - default providers via AppContext composition root
 #[tokio::test]
 async fn test_full_flow() {
-    let catalog = build_catalog(AppConfig::default()).await?;
+    let app_context = init_app(AppConfig::default()).await?;
     // Uses MokaCacheProvider, FastEmbedProvider, etc.
     // Safe for CI/CD without external services
 }
@@ -858,23 +850,31 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 - `ports/providers/`: Provider port traits (EmbeddingProvider, VectorStoreProvider, CacheProvider, etc.)
 - `repositories/`: Repository port traits (ChunkRepository, SearchRepository)
 - `value_objects/`: Value objects (Embedding, Config, Search, Types)
-- `constants.rs`: Domain constants
 - `error.rs`: Domain error types
 
-> **Note**: All provider port traits are defined in mcb-domain (single source of truth). Application layer re-exports for backward compatibility.
+#### 📦 Utils Layer (`crates/mcb-utils/`)
 
-#### 🔧 Application Layer (`crates/mcb-application/`)
+**Purpose**: Shared pure utilities, constants, and helpers with zero domain knowledge. Innermost crate (Layer 0).
 
-**Purpose**: Business logic orchestration and use case implementations.
+### Key Components
+
+- `constants/`: All project-wide constants (SSOT — ast, auth, crypto, display, embedding, events, http, io, keys, lang, limits, protocol, search, time, use_cases, validate, values, vcs, vector_store)
+- `utils/`: Pure utility functions (fs, id, naming, path, sensitivity, time, vcs_context)
+- `error.rs`: Utils-specific error types (UtilsError)
+
+> **Note**: mcb-utils has ZERO dependencies on any other mcb-* crate. All constants were consolidated here following SSOT principle (ADR-054, ADR-055).
+
+#### 🔧 Use Case Modules (`crates/mcb-infrastructure/src/di/modules/use_cases/`)
+
+**Purpose**: Service orchestration and use-case wiring through DI modules.
 
 ### Services
 
-- `use_cases/context_service.rs`: ContextService - embedding generation and vector storage coordination
-- `use_cases/indexing_service.rs`: IndexingService - codebase indexing workflow
-- `use_cases/search_service.rs`: SearchService - semantic search operations
-- `domain_services/chunking.rs`: ChunkingOrchestrator - batch chunking coordination
-- `ports/registry/`: linkme distributed slices for provider auto-registration
-- `ports/providers/`: Re-exports from mcb-domain (backward compatibility)
+- `context_service.rs`: Context service wiring for embedding/vector workflows
+- `indexing_service.rs`: Indexing workflow composition
+- `search_service.rs`: Semantic search workflow composition
+- `memory_service.rs`: Memory and observation workflows
+- `agent_session_service.rs`: Agent session lifecycle composition
 
 #### 🔌 Providers Layer (`crates/mcb-providers/`)
 
@@ -897,11 +897,11 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 ### Key Components (1)
 
-- `di/`: dill IoC Container with handle-based pattern (ADR-029)
-- `di/catalog.rs`: dill Catalog configuration
+- `di/`: AppContext manual composition root with handle-based pattern (ADR-050)
+- `di/bootstrap.rs`: AppContext composition root configuration
 - `di/handles.rs`: RwLock provider handles
 - `di/admin.rs`: Admin services for runtime switching
-- `config/`: Configuration management (Figment)
+- `config/`: Configuration management (Loco YAML)
 - `cache/`: Cache infrastructure
 - `crypto/`: Encryption and hashing utilities
 - `health/`: Health check infrastructure
@@ -924,7 +924,7 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Status**: Phases 1–7 all VERIFIED (v0.2.1) - 349+ tests pass
+**Status**: Active in v0.3.1; run `make validate` for the current architecture verdict.
 
 ### Components (1)
 
@@ -1248,7 +1248,7 @@ CREATE INDEX idx_chunks_metadata ON code_chunks USING GIN(metadata);
 1. **Default Cache**: Moka in-memory LRU cache (high-performance, single-node)
 2. **Distributed Cache**: Redis (optional, for multi-node deployments)
 
-Cache provider is resolved via DI (linkme registry → dill Catalog → `CacheProviderHandle`).
+Cache provider is resolved via DI (linkme registry → AppContext composition root → `CacheProviderHandle`).
 
 ### Data Lifecycle Management
 
@@ -1936,22 +1936,22 @@ impl QualityGateChecker {
 - ⚠️ Configuration complexity
 - ⚠️ Testing complexity across providers
 
-#### ADR-024 → ADR-029: Hexagonal Architecture with dill
+#### ADR-024 → ADR-029 → ADR-050: DI evolution
 
-**Status**: Accepted (ADR-024 superseded by ADR-029)
+**Status**: Accepted (ADR-024 superseded by ADR-029; ADR-029 superseded by ADR-050)
 
-**Context**: Handle-based DI pattern needed IoC container for proper service lifecycle management and architectural enforcement.
+**Context**: Handle-based DI pattern needed explicit composition root wiring for service lifecycle management and architectural enforcement.
 
-**Decision**: Use dill Catalog as IoC Container with handle-based pattern for runtime provider switching. Ports defined in mcb-domain.
+**Decision**: Use `init_app()` + `AppContext` as manual composition root with handle-based pattern for runtime provider switching. Ports remain defined in mcb-domain.
 
 ### Consequences (4)
 
 - ✅ Clear layer separation (hexagonal architecture)
-- ✅ dill Catalog manages service lifecycle
+- ✅ AppContext composition root manages service lifecycle
 - ✅ Runtime switching via admin API
 - ✅ Architecture enforced via mcb-validate (CA007–CA009)
 
-See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
+See [ADR-050](../adr/050-manual-composition-root-dill-removal.md) for full details.
 
 #### ADR-013: Clean Architecture Crate Separation
 
@@ -1975,7 +1975,7 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 
 - [ADR-005](../adr/005-context-cache-support.md) Context Cache
 - [ADR-006](../adr/006-code-audit-and-improvements.md) Code Audit
-- [ADR-007](../adr/007-integrated-web-administration-interface.md) Admin UI
+- [ADR-007](../adr/archive/superseded-007-web-admin-interface.md) Admin UI (archived)
 - [ADR-010](../adr/010-hooks-subsystem-agent-backed.md) Hooks
 - [ADR-011](../adr/011-http-transport-request-response-pattern.md) HTTP Transport
 - [ADR-012](../adr/012-di-strategy-two-layer-approach.md) Two-Layer DI
@@ -1989,8 +1989,8 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 - [ADR-021](../adr/021-dependency-management.md) Dependency Mgmt
 - [ADR-022](../adr/022-ci-integration-strategy.md) CI
 - [ADR-023](../adr/023-inventory-to-linkme-migration.md) Linkme
-- [ADR-025](../adr/025-figment-configuration.md) Figment
-- [ADR-026](../adr/026-routing-refactor-rocket-poem.md) Routing
+- [ADR-025](../adr/archive/superseded-025-figment-configuration.md) Figment (archived, see ADR-051)
+- [ADR-026](../adr/archive/superseded-026-routing-refactor-rocket-poem.md) Routing (archived, see ADR-049)
 - [ADR-027](../adr/027-architecture-evolution-v013.md) Arch Evolution
 - [ADR-028](../adr/028-advanced-code-browser-v020.md) Code Browser
 - [ADR-030](../adr/030-multi-provider-strategy.md) Multi-Provider
@@ -2278,23 +2278,28 @@ impl BackupManager {
 - Multi-branch and commit history search
 - Cross-session memory with SQLite storage
 - Hybrid search for observations and decisions
-- 📋**v0.3.0**: Advanced code intelligence + Workflow FSM (Phase 8)
-- Symbol extraction and cross-referencing
-- Call graph analysis
-- Dependency impact mapping
+- ✅ **v0.3.0**: SeaQL + Loco.rs Platform Rebuild (ADR-051)
+- SeaORM persistence replacing raw SQLite
+- Loco.rs framework with Axum native server
+- Entity CRUD (vcs/plan/issue/org resources)
+- Figment→Loco YAML config migration
+- 📋**v0.4.0**: Workflow FSM + Advanced Code Intelligence (Phase 8)
 - Workflow state machines (ADR-034)
 - Freshness tracking and policies (ADR-035, ADR-036)
 - Compensation and orchestration (ADR-037)
-- 🚧**v0.4.0**: Integrated Context System (Phase 9, Feb 17 - Mar 16, 2026)
+- Symbol extraction and cross-referencing
+- 📋**v0.5.0**: Integrated Context System (Phase 9)
 - Knowledge graph with code relationships (ADR-042)
 - Hybrid search engine with RRF fusion (ADR-043)
 - Context snapshots and time-travel queries (ADR-045)
 - Policy-driven context discovery (ADR-046)
 - 70+ tests, complete documentation
 
-### v0.4.0: Integrated Context System Architecture
+### v0.5.0: Integrated Context System Architecture
 
-**Overview**: v0.4.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
+**Overview**: v0.5.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
+
+> **v0.3.x Migration Note:** This architecture is v0.4.0-v0.5.0 future work. The current v0.3.1 line uses 4 runtime layers (domain → providers → infrastructure → server) plus `mcb-utils`, `mcb-validate`, and the `mcb` CLI facade.
 
 ### 5-Layer Architecture
 

@@ -1,137 +1,162 @@
-#![allow(unused_imports)]
-use crate::constants::common::CFG_TEST_MARKER;
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#refactoring)
+//!
 use crate::filters::LanguageId;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::CFG_TEST_MARKER;
+use std::collections::HashSet;
+use std::path::Path;
 
 use super::RefactoringValidator;
 use super::violation::RefactoringViolation;
+
+fn insert_test_keys(test_files: &mut HashSet<String>, stem: &str) {
+    test_files.insert(stem.to_owned());
+    test_files.insert(format!("{stem}_test"));
+    test_files.insert(format!("{stem}_tests"));
+    for suffix in ["_test", "_tests"] {
+        if let Some(base) = stem.strip_suffix(suffix) {
+            test_files.insert(base.to_owned());
+        }
+    }
+}
+
+fn has_test_key(test_files: &HashSet<String>, stem: &str) -> bool {
+    [stem, &format!("{stem}_test"), &format!("{stem}_tests")]
+        .iter()
+        .any(|name| test_files.contains(*name))
+}
+
+fn has_test_coverage(
+    relative: &Path,
+    test_files: &HashSet<String>,
+    test_dirs: &HashSet<String>,
+) -> bool {
+    let file_name = relative.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+    if has_test_key(test_files, file_name) {
+        return true;
+    }
+
+    // Tests are organized by module/feature under tests/ (e.g. tests/unit/<module>/),
+    // not 1:1 with source files. A file counts as covered when any of its module
+    // path segments has a matching test directory or file.
+    relative
+        .parent()
+        .into_iter()
+        .flat_map(Path::components)
+        .filter_map(|c| c.as_os_str().to_str())
+        .any(|segment| test_dirs.contains(segment) || has_test_key(test_files, segment))
+}
+
+fn collect_test_index(
+    config: &crate::ValidationConfig,
+    tests_dir: &Path,
+) -> Result<(HashSet<String>, HashSet<String>)> {
+    let mut test_files: HashSet<String> = HashSet::new();
+    let mut test_dirs: HashSet<String> = HashSet::new();
+
+    for_each_file_under_root(config, tests_dir, Some(LanguageId::Rust), |entry| {
+        let path = &entry.absolute_path;
+        if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+            insert_test_keys(&mut test_files, stem);
+        }
+
+        for dir in path
+            .parent()
+            .into_iter()
+            .flat_map(std::path::Path::ancestors)
+            .take_while(|dir| dir.starts_with(tests_dir))
+        {
+            if let Some(name) = dir.file_name().and_then(|n| n.to_str()) {
+                test_dirs.insert(name.to_owned());
+            }
+        }
+
+        Ok(())
+    })?;
+
+    Ok((test_files, test_dirs))
+}
 
 /// Check for source files without corresponding test files
 pub fn validate_missing_test_files(
     validator: &RefactoringValidator,
 ) -> Result<Vec<RefactoringViolation>> {
     let mut violations = Vec::new();
+
     for crate_dir in validator.get_crate_dirs()? {
         let src_dir = crate_dir.join("src");
         let tests_dir = crate_dir.join("tests");
 
-        if !src_dir.exists() {
+        if !src_dir.exists() || !tests_dir.exists() || validator.should_skip_crate(&crate_dir) {
             continue;
         }
 
-        if validator.should_skip_crate(&crate_dir) {
-            continue;
-        }
+        let (test_files, test_dirs) = collect_test_index(&validator.config, &tests_dir)?;
 
-        // If tests directory doesn't exist, skip this crate (no test infrastructure)
-        if !tests_dir.exists() {
-            continue;
-        }
-
-        // Collect existing test files and directories
-        let mut test_files: std::collections::HashSet<String> = std::collections::HashSet::new();
-        let mut test_dirs: std::collections::HashSet<String> = std::collections::HashSet::new();
-
-        for_each_file_under_root(
-            &validator.config,
-            &tests_dir,
-            Some(LanguageId::Rust),
-            |entry| {
-                let path = &entry.absolute_path;
-                if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                    test_files.insert(stem.to_owned());
-                    if let Some(base) = stem.strip_suffix("_test") {
-                        test_files.insert(base.to_owned());
-                    }
-                    if let Some(base) = stem.strip_suffix("_tests") {
-                        test_files.insert(base.to_owned());
-                    }
-                }
-
-                let mut parent = path.parent();
-                while let Some(dir) = parent {
-                    if !dir.starts_with(&tests_dir) {
-                        break;
-                    }
-                    if let Some(name) = dir.file_name().and_then(|s| s.to_str()) {
-                        test_dirs.insert(name.to_owned());
-                    }
-                    parent = dir.parent();
-                }
-
-                Ok(())
-            },
-        )?;
-
-        // Check each source file
         for_each_file_under_root(
             &validator.config,
             &src_dir,
             Some(LanguageId::Rust),
             |entry| {
-                let path = &entry.absolute_path;
-                let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-
-                // Skip common files that don't need dedicated tests
-                if validator.skip_files.contains(file_name) {
-                    return Ok(());
+                if let Some(violation) = missing_test_file_violation(
+                    validator,
+                    &entry.absolute_path,
+                    &src_dir,
+                    &tests_dir,
+                    (&test_files, &test_dirs),
+                )? {
+                    violations.push(violation);
                 }
-
-                // Get relative path for directory checks
-                let relative = path.strip_prefix(&src_dir).unwrap_or(path);
-                let Some(path_str) = relative.to_str() else {
-                    return Ok(());
-                };
-
-                // Skip files in directories that are tested via integration tests
-                let in_skip_dir = validator
-                    .skip_dir_patterns
-                    .iter()
-                    .any(|pattern| path_str.contains(pattern));
-                if in_skip_dir {
-                    return Ok(());
-                }
-
-                // Check if file has inline tests (#[cfg(test)] module)
-                let content = std::fs::read_to_string(path)?;
-                if content.contains(CFG_TEST_MARKER) {
-                    // File has inline tests, skip it
-                    return Ok(());
-                }
-
-                // Check if this file or its parent module has a test
-                let has_test = test_files.contains(file_name)
-                    || test_files.contains(&format!("{file_name}_test"))
-                    || test_files.contains(&format!("{file_name}_tests"));
-
-                // For files in subdirectories, also check parent directory coverage
-                let parent_covered = if relative.components().count() > 1 {
-                    let parent_name = relative
-                        .parent()
-                        .and_then(|p| p.file_name())
-                        .and_then(|s| s.to_str())
-                        .unwrap_or("");
-                    test_files.contains(parent_name)
-                        || test_dirs.contains(parent_name)
-                        || test_files.contains(&format!("{parent_name}_test"))
-                        || test_files.contains(&format!("{parent_name}_tests"))
-                } else {
-                    false
-                };
-
-                if !has_test && !parent_covered {
-                    violations.push(RefactoringViolation::MissingTestFile {
-                        source_file: path.clone(),
-                        expected_test: tests_dir.join(format!("{file_name}_test.rs")),
-                        severity: Severity::Warning, // Warning, not Error - tests are quality, not critical
-                    });
-                }
-
                 Ok(())
             },
         )?;
     }
 
     Ok(violations)
+}
+
+/// Returns a `MissingTestFile` violation when `path` is a non-skipped,
+/// non-inline-tested source file lacking corresponding test coverage.
+///
+/// # Errors
+///
+/// Returns an error if the file content cannot be read.
+fn missing_test_file_violation(
+    validator: &RefactoringValidator,
+    path: &Path,
+    src_dir: &Path,
+    tests_dir: &Path,
+    test_index: (&HashSet<String>, &HashSet<String>),
+) -> Result<Option<RefactoringViolation>> {
+    let (test_files, test_dirs) = test_index;
+    let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+    // skip_files is configured with full names (e.g. "lib.rs"), so the skip check
+    // must compare the file name including its extension.
+    let full_name = path.file_name().and_then(|s| s.to_str()).unwrap_or("");
+    let relative = path.strip_prefix(src_dir).unwrap_or(path);
+    let Some(path_str) = relative.to_str() else {
+        return Ok(None);
+    };
+
+    if validator.skip_files.contains(full_name)
+        || validator
+            .skip_dir_patterns
+            .iter()
+            .any(|pattern| path_str.contains(pattern))
+    {
+        return Ok(None);
+    }
+
+    let content = std::fs::read_to_string(path)?;
+    if content.contains(CFG_TEST_MARKER) || has_test_coverage(relative, test_files, test_dirs) {
+        return Ok(None);
+    }
+
+    Ok(Some(RefactoringViolation::MissingTestFile {
+        source_file: path.to_path_buf(),
+        expected_test: tests_dir.join(format!("{file_name}_test.rs")),
+        severity: Severity::Warning,
+    }))
 }

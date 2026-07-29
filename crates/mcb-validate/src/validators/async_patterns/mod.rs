@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 //! Async Pattern Validation
 //!
 //! Detects async-specific anti-patterns based on Tokio documentation:
@@ -8,7 +11,7 @@
 
 mod block_on;
 mod blocking;
-pub mod constants;
+mod helpers;
 mod mutex;
 mod spawn;
 mod validator;
@@ -16,3 +19,13 @@ mod violation;
 
 pub use self::validator::AsyncPatternValidator;
 pub use self::violation::AsyncViolation;
+pub(crate) use helpers::for_each_async_fn_line;
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_ASYNC_PATTERNS,
+    "Validates async patterns (blocking calls, mutex types, spawn patterns)",
+    |root| {
+        Ok(Box::new(AsyncPatternValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

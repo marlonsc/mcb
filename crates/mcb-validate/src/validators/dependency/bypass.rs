@@ -1,6 +1,9 @@
-use crate::constants::common::COMMENT_PREFIX;
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::COMMENT_PREFIX;
 
 use std::path::{Path, PathBuf};
 
@@ -27,22 +30,24 @@ pub fn validate_bypass_boundaries(
         let pattern = boundary.pattern.clone();
 
         scan_bypass_patterns(
-            validator,
-            &scan_root,
-            |rel| !allowed.iter().any(|a| rel == Path::new(a)),
-            &pattern,
-            |file, line, context| match violation_id.as_str() {
-                "DEP005" => DependencyViolation::CliBypassPath {
-                    file,
-                    line,
-                    context,
-                    severity: Severity::Error,
-                },
-                _ => DependencyViolation::AdminBypassImport {
-                    file,
-                    line,
-                    context,
-                    severity: Severity::Error,
+            ScanBypassParams {
+                validator,
+                scan_root: &scan_root,
+                should_check_file: |rel| !allowed.iter().any(|a| rel == Path::new(a)),
+                pattern: &pattern,
+                make_violation: |file, line, context| match violation_id.as_str() {
+                    "DEP005" => DependencyViolation::CliBypassPath {
+                        file,
+                        line,
+                        context,
+                        severity: Severity::Error,
+                    },
+                    _ => DependencyViolation::AdminBypassImport {
+                        file,
+                        line,
+                        context,
+                        severity: Severity::Error,
+                    },
                 },
             },
             &mut violations,
@@ -53,17 +58,21 @@ pub fn validate_bypass_boundaries(
 }
 
 fn scan_bypass_patterns<F, G>(
-    validator: &DependencyValidator,
-    scan_root: &Path,
-    should_check_file: F,
-    pattern: &str,
-    make_violation: G,
+    params: ScanBypassParams<'_, F, G>,
     out: &mut Vec<DependencyViolation>,
 ) -> Result<()>
 where
     F: Fn(&Path) -> bool,
     G: Fn(PathBuf, usize, String) -> DependencyViolation,
 {
+    let ScanBypassParams {
+        validator,
+        scan_root,
+        should_check_file,
+        pattern,
+        make_violation,
+    } = params;
+
     if !scan_root.exists() {
         return Ok(());
     }
@@ -82,23 +91,48 @@ where
             }
 
             let content = std::fs::read_to_string(path)?;
-            for (line_num, line) in content.lines().enumerate() {
-                let trimmed = line.trim();
-                if trimmed.starts_with(COMMENT_PREFIX) {
-                    continue;
-                }
-                if line.contains(pattern) {
-                    out.push(make_violation(
-                        path.clone(),
-                        line_num + 1,
-                        trimmed.to_owned(),
-                    ));
-                }
-            }
-
+            collect_pattern_matches(path, &content, pattern, &make_violation, out);
             Ok(())
         },
     )?;
 
     Ok(())
+}
+
+/// Push a violation for every non-comment line of `content` that contains
+/// `pattern`.
+fn collect_pattern_matches<G>(
+    path: &Path,
+    content: &str,
+    pattern: &str,
+    make_violation: &G,
+    out: &mut Vec<DependencyViolation>,
+) where
+    G: Fn(PathBuf, usize, String) -> DependencyViolation,
+{
+    for (line_num, line) in content.lines().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.starts_with(COMMENT_PREFIX) {
+            continue;
+        }
+        if line.contains(pattern) {
+            out.push(make_violation(
+                path.to_path_buf(),
+                line_num + 1,
+                trimmed.to_owned(),
+            ));
+        }
+    }
+}
+
+struct ScanBypassParams<'a, F, G>
+where
+    F: Fn(&Path) -> bool,
+    G: Fn(PathBuf, usize, String) -> DependencyViolation,
+{
+    validator: &'a DependencyValidator,
+    scan_root: &'a Path,
+    should_check_file: F,
+    pattern: &'a str,
+    make_violation: G,
 }

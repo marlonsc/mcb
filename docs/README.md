@@ -3,8 +3,8 @@
 
 [![Documentation Status](https://img.shields.io/badge/docs-automated-green)](https://github.com/marlonsc/mcb/actions)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue)](https://github.com/marlonsc/mcb/releases)
-[![Architecture](https://img.shields.io/badge/architecture-C4--model-blue)](docs/architecture/ARCHITECTURE.md)
-[![ADRs](https://img.shields.io/badge/ADRs-49-blue)](adr/README.md)
+[![Architecture](https://img.shields.io/badge/architecture-C4--model-blue)](architecture/ARCHITECTURE.md)
+[![ADRs](https://img.shields.io/badge/ADRs-52-blue)](adr/README.md)
 
 ## Comprehensive documentation for the Memory Context Browser project
 
@@ -35,31 +35,28 @@ Technical architecture documentation following C4 model principles.
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 - **[Architecture Overview](architecture/ARCHITECTURE.md)** - Comprehensive system architecture
-- **[Architecture Diagrams](diagrams/)** - Visual architecture documentation
-- [System Context](diagrams/generated/index.html) - System boundaries and external systems
-- [Container Architecture](diagrams/generated/index.html) - Service and deployment architecture
-- **[Architecture Decision Records](adr/README.md)** - Historical architectural decisions (48 ADRs total)
+- **[Architecture Diagrams](diagrams/)** - Visual architecture documentation (PlantUML sources)
+- **[Architecture Decision Records](adr/README.md)** - Historical architectural decisions (52 ADRs total)
 - [ADR 001: Modular Crates Architecture](adr/001-modular-crates-architecture.md)
 - [ADR 002: Async-First Architecture](adr/002-async-first-architecture.md)
 - [ADR 003: Unified Provider Architecture](adr/003-unified-provider-architecture.md)
 - [ADR 012: Two-Layer DI Strategy](adr/012-di-strategy-two-layer-approach.md) - historical
 - [ADR 013: Clean Architecture Crate Separation](adr/013-clean-architecture-crate-separation.md) - historical
-- [ADR 024: Simplified Dependency Injection](adr/024-simplified-dependency-injection.md) → ADR-029
-- [ADR 029: Hexagonal Architecture with dill](adr/029-hexagonal-architecture-dill.md) - DI IoC
+- [ADR 024: Simplified Dependency Injection](adr/024-simplified-dependency-injection.md) → ADR-029 (superseded by ADR-050)
+- [ADR 029: Hexagonal Architecture](adr/archive/superseded-029-hexagonal-architecture-dill.md) - Superseded by ADR-050 (manual composition root)
 - [ADR 030: Multi-Provider Strategy](adr/030-multi-provider-strategy.md)
 - [ADR 031: Documentation Excellence](adr/031-documentation-excellence.md)
-- [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.3-v0.4.0)
-- [Full ADR Index](adr/README.md) - 48 ADRs total
+- [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.4.0-v0.5.0)
+- [Full ADR Index](adr/README.md) - 52 ADRs total
 
 ### 📦 Modules (v0.2.1 Crate Structure)
 
-Module documentation organized by the seven-crate Clean Architecture:
+Module documentation organized by the six-crate architecture:
 
 - **[Module Index](modules/README.md)** - Complete module documentation
 - [Domain Layer](modules/domain.md) - Core business logic (`mcb-domain`)
-- [Application Layer](modules/application.md) - Business services (`mcb-application`)
 - [Providers](modules/providers.md) - External integrations (`mcb-providers`)
-- [Infrastructure](modules/infrastructure.md) - Cross-cutting concerns (`mcb-infrastructure`)
+- [Infrastructure](modules/infrastructure.md) - DI, use cases, cross-cutting concerns (`mcb-infrastructure`)
 - [Server](modules/server.md) - MCP protocol (`mcb-server`)
 - [Validation](modules/validate.md) - Architecture validation (`mcb-validate`)
 
@@ -83,20 +80,11 @@ Documentation templates and standards.
 
 ### 📚 Additional References
 
-- **[API Reference](API_REFERENCE.md)** - API and tool reference index
-- **[Environment Variables](configuration/ENVIRONMENT_VARIABLES.md)** - Full
-  environment variable matrix
-- **[MCB Context Config](configuration/MCB_CONTEXT.md)** - `.mcp-context.toml`
-  reference
-- **Generated Metrics** - Generated automatically by `make docs` (see output in `docs/generated/`)
+- **[Tool Specification](MCP_TOOLS.md)** - Definitions of all available MCP tools
+- **[Environment Variables](configuration/ENVIRONMENT_VARIABLES.md)** - Full environment variable matrix
+- **[MCB Context Config](configuration/MCB_CONTEXT.md)** - `.mcp-context.toml` reference
 - **[Testing Integration](testing/E2E_INTEGRATION.md)** - End-to-end testing strategy
-- **[Context Discovery Research](research/CONTEXT_DISCOVERY_GIT_INTEGRATION.md)**
-  - Git-aware context findings
-- **[Project Management Research](research/PROJECT_MANAGEMENT_RESEARCH.md)** -
-  Planning and workflow research
-- **[FastEmbed Provider](providers/fastembed.md)** - Provider-specific documentation
-- **[v0.4.0 Knowledge Graph Spec](v040-KNOWLEDGE-GRAPH-SPEC.md)** - Advanced
-  context system specification
+- **[v0.5.0 Knowledge Graph Spec](v040-KNOWLEDGE-GRAPH-SPEC.md)** - Future context system specification (Draft)
 
 ## 🔧 Documentation Automation
 

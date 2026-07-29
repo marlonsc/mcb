@@ -1,11 +1,14 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! High-level project detection facade.
 
 use std::path::Path;
 
 use mcb_domain::entities::project::ProjectType;
-use mcb_domain::ports::ProjectDetectorConfig;
+use mcb_domain::registry::ProjectDetectorConfig;
 
-use super::registry::PROJECT_DETECTORS;
+use mcb_domain::registry::PROJECT_DETECTORS;
 
 /// Detect all project types at a given path
 /// Returns multiple `ProjectTypes` if overlapping (e.g., Cargo.toml + package.json)
@@ -25,27 +28,31 @@ pub async fn detect_all_projects(path: &Path) -> Vec<ProjectType> {
         match (entry.build)(&config) {
             Ok(detector) => match detector.detect(path).await {
                 Ok(Some(project_type)) => {
-                    tracing::debug!(
-                        detector = entry.name,
-                        project = ?project_type.name(),
-                        "Project detected"
+                    mcb_domain::debug!(
+                        "detector",
+                        "Project detected",
+                        &format!(
+                            "detector = {}, project = {:?}",
+                            entry.name,
+                            project_type.name()
+                        )
                     );
                     results.push(project_type);
                 }
                 Ok(None) => {}
                 Err(e) => {
-                    tracing::warn!(
-                        detector = entry.name,
-                        error = %e,
-                        "Project detection failed"
+                    mcb_domain::warn!(
+                        "detector",
+                        "Project detection failed",
+                        &format!("detector = {}, error = {}", entry.name, e)
                     );
                 }
             },
             Err(e) => {
-                tracing::warn!(
-                    detector = entry.name,
-                    error = %e,
-                    "Failed to create detector"
+                mcb_domain::warn!(
+                    "detector",
+                    "Failed to create detector",
+                    &format!("detector = {}, error = {}", entry.name, e)
                 );
             }
         }

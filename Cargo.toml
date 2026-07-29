@@ -2,20 +2,21 @@
 resolver = "2"
 members = [
     "crates/mcb",
+    "crates/mcb-utils",
     "crates/mcb-domain",
-    "crates/mcb-application",
     "crates/mcb-infrastructure",
     "crates/mcb-providers",
     "crates/mcb-server",
     "crates/mcb-validate",
 ]
+exclude = ["third-party"]
 
 [workspace.package]
 repository = "https://github.com/marlonsc/mcb"
 authors = ["Marlon Costa <marlonsc@gmail.com>"]
 homepage = "https://github.com/marlonsc/mcb"
 license = "MIT"
-version = "0.2.1-dev"
+version = "0.3.1"
 rust-version = "1.92"
 edition = "2024"
 
@@ -84,6 +85,7 @@ used_underscore_binding = "warn"         # don't use bindings prefixed with _
 error_impl_error = "allow"               # our domain Error type is idiomatic Rust
 
 [workspace.dependencies]
+mcb-utils = { path = "crates/mcb-utils" }
 # Core async runtime
 tokio = { version = "1.49", features = ["full"] }
 
@@ -92,8 +94,8 @@ serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 serde_with = "3.15"
 
-# Byte manipulation (RUSTSEC-2026-0007: require >=1.11.1)
-bytes = "1.11.1"
+# Byte manipulation
+bytes = "1.11"
 
 # Error handling
 anyhow = "1.0"
@@ -115,7 +117,6 @@ clap = { version = "4.5", features = ["derive"] }
 
 # File operations
 walkdir = "2.5"
-normpath = "1"
 globset = "0.4"
 fs2 = "0.4"
 
@@ -126,13 +127,10 @@ regex = "1.12"
 chrono = { version = "0.4", features = ["serde"] }
 
 # Mozilla Rust Code Analysis (fork with tree-sitter 0.26.3 + Kotlin)
-rust-code-analysis = { git = "https://github.com/marlon-costa-dc/rust-code-analysis", branch = "master" }
+rust-code-analysis = "0.0.25"
 
 # Template engines
 handlebars = "6.0"
-
-# Markdown processing
-pulldown-cmark = "0.13"
 
 # Redis
 redis = { version = "1.0", features = ["tokio-comp", "connection-manager"] }
@@ -142,14 +140,9 @@ aes-gcm = "0.10"
 rand = "0.10"
 
 # Authentication
-# NOTE: jsonwebtoken removed in v0.1.4 (RUSTSEC-2023-0071) - was never actually used
 bcrypt = "0.18"
 argon2 = "0.5"
 base64 = "0.22"
-
-# Database
-r2d2 = "0.8"
-r2d2_postgres = "0.18"
 
 # Hostname
 hostname = "0.4"
@@ -159,15 +152,16 @@ sha2 = "0.10"
 hex = "0.4"
 
 # Utilities
-uuid = { version = "1.20", features = ["v4", "v5", "serde"] }
+uuid = { version = "1.21", features = ["v4", "v5", "serde"] }
 dirs = "6.0"
 
-# HTTP server - Rocket (migrated from Axum in v0.1.2 - ADR-026)
-rocket = { version = "0.5", features = ["json"] }
+# HTTP server (Axum)
+axum = "0.8"
+axum-extra = { version = "0.12", features = ["typed-header", "query"] }
+tower = { version = "0.5", features = ["util"] }
+http-body-util = "0.1"
+tower-http = { version = "0.6", features = ["cors", "trace"] }
 
-
-# System metrics
-sysinfo = "0.38"
 nix = { version = "0.31", features = ["fs"] }
 tree-sitter = "0.26"
 tree-sitter-c = "0.24"
@@ -207,12 +201,13 @@ schemars = "1.2"
 validator = { version = "0.20", features = ["derive"] }
 
 # MCP SDK
-rmcp = { version = "0.15", features = [
+rmcp = { version = "1.4", features = [
     "server",
     "client",
     "macros",
     "transport-io",
     "transport-child-process",
+    "transport-streamable-http-server",
 ] }
 
 # Advanced Multi-Provider Strategy
@@ -220,11 +215,10 @@ tokio-util = { version = "0.7", features = ["time", "rt"] }
 dashmap = "6.0"
 health = "0.2"
 
-# EdgeVec high-performance vector database
-edgevec = "0.8"
+# EdgeVec high-performance vector database (fork)
+edgevec = "0.9.0"
 
-# Milvus vector database client (from git - crates.io v0.2 has lifetime bug)
-milvus-sdk-rust = { version = "0.1.0", git = "https://github.com/milvus-io/milvus-sdk-rust.git" }
+milvus-sdk-rust = "0.1.0"
 
 # Graph algorithms
 petgraph = "0.8"
@@ -234,8 +228,8 @@ async-trait = "0.1"
 downcast-rs = "2.0"
 futures-util = "0.3"
 derive_more = { version = "2.0", features = ["full"] }
-strum = "0.27"
-strum_macros = "0.27"
+strum = "0.28"
+strum_macros = "0.28"
 delegate = "0.13"
 typed-builder = "0.23"
 
@@ -243,20 +237,15 @@ typed-builder = "0.23"
 itertools = "0.14"
 humantime = "2.1"
 
-# Event bus providers
-async-nats = "0.46"
-
 # Local embeddings without external services
-fastembed = { version = "5.9", default-features = false, features = [
-    "default",
+fastembed = { version = "5.11", default-features = false, features = [
+    "hf-hub-native-tls",
+    "ort-load-dynamic",
 ] }
 
 # Configuration watching
 notify = "8.2"
 arc-swap = "1.8"
-
-# Shell expansion
-shellexpand = "3.1"
 
 # Compression
 flate2 = "1.1"
@@ -276,15 +265,12 @@ tracing-appender = "0.2"
 # Benchmarking
 criterion = "0.8.1"
 
-# Dependency Injection (IoC Container)
-dill = "0.15"
-
-# Plugin registration
+# Plugin registration (compile-time provider discovery)
 linkme = "0.3"
 
 # Development/testing
-tempfile = "3.25"
-serial_test = "3.2"
+tempfile = "3.26"
+serial_test = "3.4"
 rstest = "0.26"
 mockall = "0.14"
 insta = { version = "1.41", features = ["json", "yaml", "redactions"] }
@@ -311,18 +297,10 @@ serde_yaml = "0.9"
 
 # Rule Engines
 rust-rule-engine = "1.19"
-rusty-rules = "0.2"
 evalexpr = "13"
-
-# Additional validation
-garde = { version = "0.22", features = ["derive"] }
 
 # JSON Schema validation
 jsonschema = "0.42"
-
-# Pest parser for DSL
-pest = "2.8"
-pest_derive = "2.8"
 
 # JSON Path navigation
 jsonpath-rust = "1.0.4"
@@ -331,15 +309,89 @@ jsonpath-rust = "1.0.4"
 once_cell = "1.19"
 
 # ============================================
+# SeaQL Ecosystem (v0.3.0 — SQLite + PostgreSQL)
+# ============================================
+
+# SeaORM: Entity-first ORM with schema-sync and dense format
+# Pinned to exact RC version per v0.3.0 guardrails (not caret)
+# Both sqlx-sqlite and sqlx-postgres enabled — runtime selection via connection string
+sea-orm = { version = "=2.0.0-rc.38", features = [
+    "sqlx-sqlite", "sqlx-postgres", "runtime-tokio-rustls",
+    "entity-registry", "schema-sync",
+] }
+
+# SeaORM migrations
+sea-orm-migration = "=2.0.0-rc.38"
+
+# SeaQuery: SQL builder (explicit requirement)
+sea-query = "=1.0.0"
+
+# Seaography: GraphQL schema generator for SeaORM
+seaography = "=2.0.0-rc.8"
+
+async-graphql = "7"
+async-graphql-axum = "7"
+
+loco-rs = "=0.16.4"
+
+sea-schema = "=0.18.0"
+
+sea-orm-pro = "0.1"
+
+# ============================================
 # Build Profiles
 # ============================================
 
 [profile.release]
-# Link-time optimization for smaller/faster binaries
-lto = true
-# Single codegen unit for better optimization
+# Thin LTO: preserves linkme distributed-slice registrations that full LTO strips.
+# Full LTO (lto = true) is incompatible with linkme's #[distributed_slice] entries
+# because the linker eliminates them as "unused" data.
+lto = "thin"
+# Single codegen unit for better optimization within each crate
 codegen-units = 1
 
 [profile.dev]
-# Faster compile times in development
 incremental = true
+
+# ============================================
+# Patch: redirect all SeaQL + Loco ecosystem
+# crates to local forks in third-party/
+# ============================================
+
+[patch.crates-io]
+
+# --- sea-orm ---
+sea-orm                  = { path = "third-party/sea-orm" }
+sea-orm-macros           = { path = "third-party/sea-orm/sea-orm-macros" }
+sea-orm-arrow            = { path = "third-party/sea-orm/sea-orm-arrow" }
+sea-orm-cli              = { path = "third-party/sea-orm/sea-orm-cli" }
+sea-orm-migration        = { path = "third-party/sea-orm/sea-orm-migration" }
+
+# --- sea-query ---
+sea-query                = { path = "third-party/sea-query" }
+sea-query-derive         = { path = "third-party/sea-query/sea-query-derive" }
+sea-query-sqlx           = { path = "third-party/sea-query/sea-query-sqlx" }
+
+# --- sea-schema ---
+sea-schema               = { path = "third-party/sea-schema" }
+sea-schema-derive        = { path = "third-party/sea-schema/sea-schema-derive" }
+
+# --- seaography ---
+seaography               = { path = "third-party/seaography" }
+seaography-macros        = { path = "third-party/seaography/macros" }
+
+# --- loco ---
+loco-rs                  = { path = "third-party/loco" }
+loco-gen                 = { path = "third-party/loco/loco-gen" }
+
+# --- sea-orm-pro (1 crate) ---
+sea-orm-pro              = { path = "third-party/sea-orm-pro/sea-orm-pro" }
+
+# --- rust-code-analysis (1 crate) ---
+rust-code-analysis       = { path = "third-party/rust-code-analysis" }
+
+# --- edgevec (1 crate) ---
+edgevec                  = { path = "third-party/edgevec" }
+
+# --- milvus-sdk-rust (1 crate) ---
+milvus-sdk-rust          = { path = "third-party/milvus-sdk-rust" }

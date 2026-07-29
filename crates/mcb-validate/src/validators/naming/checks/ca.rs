@@ -1,10 +1,56 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../../docs/modules/validate.md)
+//!
 use std::path::Path;
 
 use super::super::violation::NamingViolation;
-use crate::constants::common::STANDARD_SKIP_FILES;
-use crate::traits::violation::Severity;
-use crate::validators::naming::constants::*;
+use crate::apply_ca_rule;
+use mcb_domain::ports::validation::Severity;
+use mcb_utils::constants::validate::STANDARD_SKIP_FILES;
+use mcb_utils::constants::validate::{
+    ADAPTERS_DIR, CA_ADAPTERS_REPOSITORY_DIR, CA_DI_DIR, CA_DOMAIN_PROVIDER_KEYWORD,
+    CA_DOMAIN_REPOSITORY_KEYWORD, CA_HANDLER_DIRS, CA_HANDLER_KEYWORD, CA_INFRA_ADAPTER_KEYWORD,
+    CA_INFRA_IMPL_SUFFIX, CA_MODULE_KEYWORD, CA_PORTS_PROVIDERS_DIR, CA_REPOSITORIES_DIR,
+    PORTS_DIR,
+};
 
+fn ca_violation(
+    path: &Path,
+    detected_type: &str,
+    issue: &str,
+    suggestion: &str,
+    severity: Severity,
+) -> NamingViolation {
+    NamingViolation::BadCaNaming {
+        path: path.to_path_buf(),
+        detected_type: detected_type.to_owned(),
+        issue: issue.to_owned(),
+        suggestion: suggestion.to_owned(),
+        severity,
+    }
+}
+
+#[derive(Clone, Copy)]
+enum NameMatch<'a> {
+    Contains(&'a str),
+    EndsWith(&'a str),
+}
+
+fn name_matches(file_name: &str, matcher: NameMatch<'_>) -> bool {
+    match matcher {
+        NameMatch::Contains(value) => file_name.contains(value),
+        NameMatch::EndsWith(value) => file_name.ends_with(value),
+    }
+}
+
+fn in_any_dir(path_str: &str, dirs: &[&str]) -> bool {
+    dirs.iter().any(|dir| path_str.contains(dir))
+}
+
+/// Validates Clean Architecture file placement by crate role, returning a
+/// `BadCaNaming` violation when a role-bearing file (provider, repository,
+/// adapter, DI module, handler) sits outside its expected directory. Standard
+/// skip files yield `None`.
 pub fn validate_ca_naming(
     path: &Path,
     crate_name: &str,
@@ -20,79 +66,103 @@ pub fn validate_ca_naming(
         return None;
     }
 
-    // Domain crate: port traits should be in ports/
     if crate_name == domain_crate {
-        // Files with "provider" in name should be in ports/providers/
-        if file_name.contains(CA_DOMAIN_PROVIDER_KEYWORD)
-            && !path_str.contains(CA_PORTS_PROVIDERS_DIR)
-            && !path_str.contains(CA_PORTS_DIR)
-        {
-            return Some(NamingViolation::BadCaNaming {
-                path: path.to_path_buf(),
-                detected_type: "Provider Port".to_owned(),
-                issue: "Provider file outside ports/ directory".to_owned(),
-                suggestion: "Move to ports/providers/".to_owned(),
-                severity: Severity::Warning,
-            });
-        }
-
-        // Files with "repository" in name should be in repositories/
-        if file_name.contains(CA_DOMAIN_REPOSITORY_KEYWORD)
-            && !path_str.contains(CA_REPOSITORIES_DIR)
-            && !path_str.contains(CA_ADAPTERS_REPOSITORY_DIR)
-        {
-            return Some(NamingViolation::BadCaNaming {
-                path: path.to_path_buf(),
-                detected_type: "Repository Port".to_owned(),
-                issue: "Repository file outside repositories/ directory".to_owned(),
-                suggestion: "Move to repositories/".to_owned(),
-                severity: Severity::Warning,
-            });
-        }
+        return check_domain_naming(path, file_name, path_str);
     }
-
-    // Infrastructure crate: adapters should be in adapters/
     if crate_name == infrastructure_crate {
-        // Implementation files should be in adapters/
-        if (file_name.ends_with(CA_INFRA_IMPL_SUFFIX)
-            || file_name.contains(CA_INFRA_ADAPTER_KEYWORD))
-            && !path_str.contains(CA_ADAPTERS_DIR)
-        {
-            return Some(NamingViolation::BadCaNaming {
-                path: path.to_path_buf(),
-                detected_type: "Adapter".to_owned(),
-                issue: "Adapter/implementation file outside adapters/ directory".to_owned(),
-                suggestion: "Move to adapters/".to_owned(),
-                severity: Severity::Warning,
-            });
-        }
-
-        // DI modules should be in di/
-        if file_name.contains(CA_MODULE_KEYWORD) && !path_str.contains(CA_DI_DIR) {
-            return Some(NamingViolation::BadCaNaming {
-                path: path.to_path_buf(),
-                detected_type: "DI Module".to_owned(),
-                issue: "Module file outside di/ directory".to_owned(),
-                suggestion: "Move to di/modules/".to_owned(),
-                severity: Severity::Info,
-            });
-        }
+        return check_infrastructure_naming(path, file_name, path_str);
     }
-
-    // Server crate: handlers should be in handlers/ or admin/
     if crate_name == server_crate {
-        // Allow handlers in handlers/, admin/, or tools/ directories
-        let in_allowed_handler_dir = CA_HANDLER_DIRS.iter().any(|d| path_str.contains(d));
-        if file_name.contains(CA_HANDLER_KEYWORD) && !in_allowed_handler_dir {
-            return Some(NamingViolation::BadCaNaming {
-                path: path.to_path_buf(),
-                detected_type: "Handler".to_owned(),
-                issue: "Handler file outside handlers/ directory".to_owned(),
-                suggestion: "Move to handlers/, admin/, or tools/".to_owned(),
-                severity: Severity::Warning,
-            });
-        }
+        return check_server_naming(path, file_name, path_str);
     }
 
     None
+}
+
+/// CA placement rules for the domain crate (provider and repository ports).
+fn check_domain_naming(path: &Path, file_name: &str, path_str: &str) -> Option<NamingViolation> {
+    apply_ca_rule!(
+        path,
+        file_name,
+        path_str,
+        NameMatch::Contains(CA_DOMAIN_PROVIDER_KEYWORD),
+        &[CA_PORTS_PROVIDERS_DIR, PORTS_DIR],
+        "Provider Port",
+        "Provider file outside ports/ directory",
+        "Move to ports/providers/",
+        Severity::Warning
+    )
+    .or_else(|| {
+        apply_ca_rule!(
+            path,
+            file_name,
+            path_str,
+            NameMatch::Contains(CA_DOMAIN_REPOSITORY_KEYWORD),
+            &[CA_REPOSITORIES_DIR, CA_ADAPTERS_REPOSITORY_DIR],
+            "Repository Port",
+            "Repository file outside repositories/ directory",
+            "Move to repositories/",
+            Severity::Warning
+        )
+    })
+}
+
+/// CA placement rules for the infrastructure crate (adapters and DI modules).
+fn check_infrastructure_naming(
+    path: &Path,
+    file_name: &str,
+    path_str: &str,
+) -> Option<NamingViolation> {
+    apply_ca_rule!(
+        path,
+        file_name,
+        path_str,
+        NameMatch::EndsWith(CA_INFRA_IMPL_SUFFIX),
+        &[ADAPTERS_DIR],
+        "Adapter",
+        "Adapter/implementation file outside adapters/ directory",
+        "Move to adapters/",
+        Severity::Warning
+    )
+    .or_else(|| {
+        apply_ca_rule!(
+            path,
+            file_name,
+            path_str,
+            NameMatch::Contains(CA_INFRA_ADAPTER_KEYWORD),
+            &[ADAPTERS_DIR],
+            "Adapter",
+            "Adapter/implementation file outside adapters/ directory",
+            "Move to adapters/",
+            Severity::Warning
+        )
+    })
+    .or_else(|| {
+        apply_ca_rule!(
+            path,
+            file_name,
+            path_str,
+            NameMatch::Contains(CA_MODULE_KEYWORD),
+            &[CA_DI_DIR],
+            "DI Module",
+            "Module file outside di/ directory",
+            "Move to di/modules/",
+            Severity::Info
+        )
+    })
+}
+
+/// CA placement rules for the server crate (handlers).
+fn check_server_naming(path: &Path, file_name: &str, path_str: &str) -> Option<NamingViolation> {
+    apply_ca_rule!(
+        path,
+        file_name,
+        path_str,
+        NameMatch::Contains(CA_HANDLER_KEYWORD),
+        CA_HANDLER_DIRS,
+        "Handler",
+        "Handler file outside handlers/ directory",
+        "Move to handlers/, admin/, or tools/",
+        Severity::Warning
+    )
 }

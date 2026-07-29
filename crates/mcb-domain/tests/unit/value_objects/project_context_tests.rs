@@ -11,14 +11,11 @@ use rstest::rstest;
 #[case("", None)]
 #[case("not-a-url", None)]
 fn test_parse_owner_repo(#[case] input: &str, #[case] expected: Option<&str>) {
-    assert_eq!(
-        parse_owner_repo(input),
-        expected.map(std::string::ToString::to_string)
-    );
+    assert_eq!(parse_owner_repo(input), expected.map(ToOwned::to_owned));
 }
 
 #[rstest]
-fn new_constructs_project_context() {
+fn test_project_context_construction() {
     let context = ProjectContext::new("marlonsc/mcb", "mcb");
 
     assert_eq!(context.project_id, "marlonsc/mcb");

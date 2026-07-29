@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 

@@ -13,6 +13,13 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
+use rstest::rstest;
+
+fn acquire_process_lock() -> crate::process_lock::ProcessLock {
+    crate::process_lock::ProcessLock::acquire()
+        .unwrap_or_else(|e| unreachable!("acquire process lock: {e}"))
+}
+
 /// Locate the mcb binary from env or target directory.
 ///
 /// # Panics
@@ -24,17 +31,18 @@ fn get_mcb_path() -> PathBuf {
     }
 
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
-    let debug_path = PathBuf::from(manifest_dir).join("../../target/debug/mcb");
+    let bin = format!("mcb{}", std::env::consts::EXE_SUFFIX);
+    let debug_path = PathBuf::from(manifest_dir).join(format!("../../target/debug/{bin}"));
     if debug_path.exists() {
         return debug_path;
     }
 
-    let release_path = PathBuf::from(manifest_dir).join("../../target/release/mcb");
+    let release_path = PathBuf::from(manifest_dir).join(format!("../../target/release/{bin}"));
     if release_path.exists() {
         release_path
     } else {
         unreachable!(
-            "mcb binary not found. Checked CARGO_BIN_EXE_mcb and target/debug|release/mcb from {manifest_dir}"
+            "mcb binary not found. Checked CARGO_BIN_EXE_mcb and target/debug|release/{bin} from {manifest_dir}"
         )
     }
 }
@@ -47,27 +55,36 @@ fn unique_temp_path(name: &str) -> PathBuf {
     std::env::temp_dir().join(format!("mcb-startup-smoke-{name}-{stamp}"))
 }
 
-fn config_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../config/smoke-test.toml")
-}
-
 /// Spawn the MCB server process for testing.
 ///
 /// # Panics
 ///
 /// Panics if the process cannot be spawned.
 fn spawn_mcb_serve(db_path: &std::path::Path) -> Child {
-    Command::new(get_mcb_path())
-        .arg("serve")
+    // Set CWD to workspace root so Loco can find config/test.yaml.
+    let workspace_root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let mut cmd = Command::new(get_mcb_path());
+    cmd.arg("serve")
         .arg("--server")
-        .arg("--config")
-        .arg(config_path())
-        .env("MCP__SERVER__TRANSPORT_MODE", "hybrid")
-        .env("MCP__PROVIDERS__DATABASE__CONFIGS__DEFAULT__PATH", db_path)
+        .current_dir(&workspace_root)
+        // Use Loco test environment (config/test.yaml with Tera template for DATABASE_URL)
+        .env("LOCO_ENV", "test")
+        .env(
+            "DATABASE_URL",
+            // Use forward slashes — backslashes in Windows paths break YAML
+            // parsing when Tera renders the template (e.g. \U → unicode escape).
+            format!(
+                "sqlite://{}?mode=rwc",
+                db_path.display().to_string().replace('\\', "/")
+            ),
+        )
         .env("RUST_LOG", "info")
         .stderr(Stdio::piped())
-        .stdout(Stdio::piped())
-        .spawn()
+        .stdout(Stdio::piped());
+    for key in ["RUST_TEST_THREADS", "THREADS", "SCOPE", "RELEASE"] {
+        cmd.env_remove(key);
+    }
+    cmd.spawn()
         .unwrap_or_else(|e| unreachable!("spawn mcb process: {e}"))
 }
 
@@ -86,8 +103,9 @@ fn cleanup_temp_files(db_path: &std::path::Path, prefix: &str) {
     }
 }
 
-#[test]
+#[rstest]
 fn corrupted_db_is_backed_up_and_recreated() {
+    let _lock = acquire_process_lock();
     let db_path = unique_temp_path("corrupt.db");
     fs::write(&db_path, b"this-is-not-a-valid-sqlite-database")
         .unwrap_or_else(|e| unreachable!("write corrupt db fixture: {e}"));
@@ -110,6 +128,7 @@ fn corrupted_db_is_backed_up_and_recreated() {
                 || line.contains("Memory database recreated")
             {
                 recovered_clone.store(true, Ordering::SeqCst);
+                break;
             }
         }
     });
@@ -143,14 +162,14 @@ fn corrupted_db_is_backed_up_and_recreated() {
 
     assert!(
         has_backup || recovered.load(Ordering::SeqCst),
-        "corrupt DB should trigger backup-and-recreate"
+        "corrupt DB should trigger backup-and-recreate (SeaORM migration path may need recovery logic)"
     );
 }
 
-#[test]
+#[rstest]
 fn ddl_error_messages_include_source_context() {
+    let _lock = acquire_process_lock();
     let db_path = unique_temp_path("ddl-ctx.db");
-    // Write just enough zeros to look like a file but be invalid header
     fs::write(&db_path, vec![0u8; 100]).unwrap_or_else(|e| unreachable!("write invalid db: {e}"));
 
     let mut child = spawn_mcb_serve(&db_path);
@@ -161,25 +180,39 @@ fn ddl_error_messages_include_source_context() {
         .unwrap_or_else(|| unreachable!("capture stderr"));
     let reader = BufReader::new(stderr);
 
-    let mut logs = String::new();
-    // Read logs for a bit
-    let start = std::time::Instant::now();
-    for line in reader.lines() {
-        if start.elapsed() > Duration::from_secs(5) {
-            break;
-        }
-        if let Ok(l) = line {
-            logs.push_str(&l);
-            logs.push('\n');
-            if l.contains("Memory database recreated") || l.contains("Observation storage error") {
+    let logs = Arc::new(std::sync::Mutex::new(String::new()));
+    let found = Arc::new(AtomicBool::new(false));
+    let logs_w = Arc::clone(&logs);
+    let found_w = Arc::clone(&found);
+
+    let log_thread = thread::spawn(move || {
+        for line in reader.lines().map_while(Result::ok) {
+            let has_target = line.contains("Memory database recreated")
+                || line.contains("Observation storage error");
+            {
+                let mut buf = logs_w.lock().unwrap();
+                buf.push_str(&line);
+                buf.push('\n');
+            }
+            if has_target {
+                found_w.store(true, Ordering::SeqCst);
                 break;
             }
         }
+    });
+
+    for _ in 0..10 {
+        if found.load(Ordering::SeqCst) {
+            break;
+        }
+        thread::sleep(Duration::from_millis(500));
     }
 
     let _ = child.kill();
     let _ = child.wait();
+    let _ = log_thread.join();
 
+    let logs = logs.lock().unwrap();
     let recovery_worked = logs.contains("recreated") || logs.contains("backing up");
     let error_has_context = logs.contains("Observation storage error")
         || logs.contains("connect SQLite")

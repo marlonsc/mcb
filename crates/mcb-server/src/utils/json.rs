@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! JSON utilities for MCP server tool handlers.
 //!
 use serde_json::{Map, Value};

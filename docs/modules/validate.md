@@ -5,6 +5,15 @@
 **Crate**: `mcb-validate`
 **Lines of Code**: ~8,000+
 
+## ↔ Code ↔ Docs cross-reference
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-validate/src/lib.rs`](../../crates/mcb-validate/src/lib.rs) links here |
+| Docs → Code | [`crates/mcb-validate/src/lib.rs`](../../crates/mcb-validate/src/lib.rs) — crate root |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) · [`ADR-020`](../adr/020-testing-strategy-integration.md) |
+| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
+
 ## Overview
 
 The validation module provides comprehensive architecture enforcement and code quality validation for the Memory Context Browser project. It implements a multi-phase validation pipeline that ensures Clean Architecture compliance, code quality standards, and architectural decision record (ADR) adherence.
@@ -32,112 +41,62 @@ Validation Pipeline (Pure Rust):
 └─────────────────────────────────────────────┘
 ```
 
-### Key Components
+## Rules & Validators
 
-### Validators (`validators/`)
+The validation system implements over 100 rules categorized by their architectural intent. Below are the core rule sets.
 
-Domain-specific validators implementing the `Validator` trait:
+### 🏗️ Clean Architecture (CA)
+Enforces layer boundaries and dependency direction.
 
-- **Clean Architecture** (`clean_architecture/`) — CA001-CA009 boundary enforcement
-- **SOLID** (`solid/`) — SOLID principle checks
-- **Quality** (`quality/`) — Code quality rules
-- **Organization** (`organization/`) — Module and file organization rules
-- **Hygiene** (`hygiene/`) — Code hygiene checks
-- **Implementation** (`implementation/`) — Implementation pattern validation
-- `async_patterns.rs` — Async pattern detection
-- `config_quality.rs` — Configuration quality checks
-- `declarative_validator.rs` — Declarative validation framework
-- `dependency.rs` — Dependency validation
-- `documentation.rs` — Documentation quality checks
-- `error_boundary.rs` — Error handling pattern validation
-- `kiss.rs` — KISS principle enforcement
-- `layer_flow.rs` — Layer dependency flow validation
-- `naming.rs` — Naming convention enforcement
-- `pattern_validator.rs` — Pattern-based validation
-- `performance.rs` — Performance pattern checks
-- `pmat.rs` / `pmat_native.rs` — Process Maturity Analysis
-- `port_adapter.rs` — Port/Adapter pattern validation
-- `refactoring.rs` — Refactoring opportunity detection
-- `test_quality.rs` — Test quality analysis
-- `visibility.rs` — Visibility and encapsulation checks
+| Rule ID | Name | Description | Source |
+| ------- | ---- | ----------- | ------ |
+| `CA001` | Domain Independence | Domain crate must not depend on any internal crates | [`CA001_domain-independence.yml`](../../crates/mcb-validate/src/rules/clean-architecture/CA001_domain-independence.yml) |
+| `CA003` | Domain Traits Only | Domain ports must be traits, not concrete implementations | [`CA003_domain-traits-only.yml`](../../crates/mcb-validate/src/rules/clean-architecture/CA003_domain-traits-only.yml) |
+| `CA009` | Infra NO Application | Infrastructure cannot depend on Application services | [`CA009_infrastructure-no-application.yml`](../../crates/mcb-validate/src/rules/clean-architecture/CA009_infrastructure-no-application.yml) |
 
-### Traits (`traits/`)
+### 📁 Organization (ORG)
+Validates file placement, module structure, and domain purity.
 
-Core validation abstractions:
+| Rule ID | Name | Description | Source |
+| ------- | ---- | ----------- | ------ |
+| `ORG015` | Adapter Location | Adapters must reside in `crates/mcb-providers/src/` | [`ORG015_adapter-location.yml`](../../crates/mcb-validate/src/rules/organization/ORG015_adapter-location.yml) |
+| `ORG018` | Port Location | Traits/Ports must reside in `crates/mcb-domain/src/ports/` | [`ORG018_port-location.yml`](../../crates/mcb-validate/src/rules/organization/ORG018_port-location.yml) |
+| `ORG020` | Domain Purity | Domain logic cannot leak into infrastructure adapters | [`domain_purity.rs`](../../crates/mcb-validate/src/validators/organization/domain_purity.rs) |
 
-- `validator.rs` — `Validator` trait definition and registry
-- `violation.rs` — `Violation` trait and violation types
+### ♻️ Refactoring (REF)
+Detects technical debt and refactoring opportunities.
 
-### Extractor (`extractor/`)
+| Rule ID | Name | Description | Source |
+| ------- | ---- | ----------- | ------ |
+| `REF001` | Module Integrity | Detects `mod` declarations referencing deleted files | [`modules.rs`](../../crates/mcb-validate/src/validators/refactoring/modules.rs) |
+| `REF002` | Large Method | Detects methods exceeding 50 lines (RCA-based) | [`metrics/`](../../crates/mcb-validate/src/metrics/) |
 
-Fact extraction from source code:
+### 💎 Quality (QUAL)
+Enforces safety and performance standards.
 
+| Rule ID | Name | Description |
+| ------- | ---- | ----------- |
+| `QUAL001` | No Unwrap | Bans `unwrap()` in production code (use `Result`) |
+| `QUAL002` | No Expect | Bans `expect()` in production code |
+| `ASYNC001`| Async Patterns | Detects blocking calls in async contexts |
+
+---
+
+## Technical Details
+
+### Registry & Orchestration
+- `traits/validator.rs` — `Validator` trait definition and registry
+- `traits/violation.rs` — `Violation` trait and violation types
+
+### Fact Extraction (`extractor/`)
+The system extracts facts from the AST for rule evaluation:
 - `fact.rs` — Fact data model
 - `rust_extractor.rs` — Rust-specific fact extraction
 
-### Filters (`filters/`)
-
-File and rule filtering:
-
-- `dependency_parser.rs` — Dependency graph parsing
-- `file_matcher.rs` — File pattern matching
-- `language_detector.rs` — Source language detection
-- `rule_filters.rs` — Rule applicability filters
-
-### Reporter (`reporter/`)
-
-Validation report generation:
-
-- `summary.rs` — Summary report generation
-
-### Pattern Registry (`pattern_registry/`)
-
-- `registry.rs` — Pattern registration and lookup
-
-### Dependency Graph (`graph/`)
-
-- `dep_graph.rs` — Dependency graph construction and analysis
-
-### Linters (`linters/`)
-
-Code quality linting via external tools:
-
-- `engine.rs` — Linter engine orchestration
-- `executor.rs` — Linter execution
-- `parsers.rs` — Output parsing
-- `runners.rs` — Linter runners
-
-### AST Queries (`ast/`)
-
-Tree-sitter based AST parsing and querying:
-
-- `core.rs` — AST core abstractions
-- `decoder.rs` — AST node decoding
-- `query.rs` — AST query execution
-- `types.rs` — AST type definitions
-
 ### Rule Engines (`engines/`)
-
-Multiple rule engine implementations:
-
-- `expression_engine.rs` — evalexpr-based expression evaluation
-- `hybrid_engine.rs` — Combined engine approach
-- `rete_engine.rs` — RETE algorithm for pattern matching
-- `router.rs` — Rule routing and selection
-- `rusty_rules_engine.rs` — Rusty-rules integration
-- `validator_engine.rs` — Validator trait integration
-
-### Metrics (`metrics/`)
-
-Code metrics analysis using Rust-code-analysis:
-
-- `rca_analyzer.rs` — Rust-code-analysis integration (feature-gated)
-- `thresholds.rs` — Metric threshold definitions
-- `violation.rs` — Metrics violation types
-
-### Duplication Detection (`duplication/`)
-
-Code clone detection using Rabin-Karp algorithm:
+- `hybrid_engine.rs` — Combined engine approach (Static + Dynamic)
+- `rete_engine.rs` — RETE algorithm for high-performance pattern matching
+- `expression_engine.rs` — `evalexpr`-based logic evaluation
 
 - `analyzer.rs` — Duplication analysis orchestration
 - `detector.rs` — Clone detection logic
@@ -179,6 +138,18 @@ make validate QUICK=1
 # Strict validation
 make validate
 ```
+
+## Single Source of Truth (SSOT)
+
+The validation module enforces SSOT through the following mechanisms:
+1. **Bidirectional Links**: Code headers must link to documentation files, and documentation must reference the relevant code items.
+2. **Automated Audits**: `make docs-validate` checks for broken links and missing documentation headers.
+3. **Traceability**: All architectural rules in `mcb-validate` are mapped to ADRs or core design principles documented in `docs/architecture/`.
+
+### SSOT Rules
+- `SSOT01` - Every `mod.rs` and `lib.rs` must have a documentation header.
+- `SSOT02` - Documentation links must be valid and resolve to existing sections.
+- `SSOT03` - Architecture decisions must be backed by an ADR.
 
 ## Programmatic API
 
@@ -290,10 +261,10 @@ crates/mcb-validate/src/
 ## Related Documentation
 
 - [Architecture Overview](../architecture/ARCHITECTURE.md#validation-layer) - Validation layer details
-- [Implementation Status](../developer/IMPLEMENTATION_STATUS.md) - Detailed traceability
 - [ADR-013](../adr/013-clean-architecture-crate-separation.md) - Clean Architecture separation
-- [ADR-029](../adr/029-hexagonal-architecture-dill.md) - DI architecture (CA007-CA009)
+- [SSOT Principles](./README.md#documentation-principles) - Single Source of Truth
+- [Validators Implementation](./validate.md#validators-validators) - List of active validators
 
 ---
 
-**Last Updated**: 2026-02-14
+**Last Updated**: 2026-02-20 - Consolidated SSOT and traceability (v0.2.1)

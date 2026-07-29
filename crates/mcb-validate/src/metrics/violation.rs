@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! `MetricViolation` implementation.
 
 use std::path::PathBuf;
@@ -5,7 +8,7 @@ use std::path::PathBuf;
 use derive_more::Display;
 
 use super::MetricType;
-use crate::traits::violation::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 
 /// A metric violation when a threshold is exceeded
 #[derive(Debug, Clone, Display)]
@@ -53,7 +56,7 @@ impl Violation for MetricViolation {
     }
 
     fn category(&self) -> ViolationCategory {
-        ViolationCategory::Quality
+        ViolationCategory::Metrics
     }
 
     fn severity(&self) -> Severity {

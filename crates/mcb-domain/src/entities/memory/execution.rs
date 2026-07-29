@@ -1,35 +1,20 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-/// Type of execution or command that was run.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
-pub enum ExecutionType {
-    /// Test execution.
-    Test,
-    /// Linting execution.
-    Lint,
-    /// Build execution.
-    Build,
-    /// Continuous integration execution.
-    CI,
-}
-
-impl ExecutionType {
-    /// Returns the string representation of the execution type.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
+crate::define_string_enum! {
+    /// Type of execution or command that was run.
+    pub enum ExecutionType [strum = "lowercase"] {
+        /// Test execution.
+        Test,
+        /// Linting execution.
+        Lint,
+        /// Build execution.
+        Build,
+        /// Continuous integration execution.
+        CI,
     }
 }
 

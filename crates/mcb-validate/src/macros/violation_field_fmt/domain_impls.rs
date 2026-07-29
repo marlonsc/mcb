@@ -1,19 +1,11 @@
-use super::ViolationFieldFmt;
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
+use super::impl_violation_field_fmt;
 
-impl ViolationFieldFmt for crate::Severity {
-    fn fmt_field(&self) -> String {
-        format!("{self}")
-    }
-}
+impl_violation_field_fmt!(crate::Severity, crate::ComponentType);
 
-impl ViolationFieldFmt for crate::ComponentType {
-    fn fmt_field(&self) -> String {
-        format!("{self}")
-    }
-}
-
-impl ViolationFieldFmt for crate::validators::dependency::DependencyCycle {
-    fn fmt_field(&self) -> String {
-        self.0.join(" -> ")
-    }
-}
+impl_violation_field_fmt!(
+    crate::validators::dependency::DependencyCycle =>
+        |value: &crate::validators::dependency::DependencyCycle| value.0.join(" -> ")
+);

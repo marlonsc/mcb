@@ -1,9 +1,12 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use std::path::Path;
 
 use super::violation::PatternViolation;
-use crate::constants::common::ATTR_SEARCH_LINES;
-use crate::pattern_registry::compile_regex;
-use crate::traits::violation::Severity;
+use mcb_domain::ports::validation::Severity;
+use mcb_utils::constants::validate::ATTR_SEARCH_LINES;
+use mcb_utils::utils::regex::compile_regex;
 
 /// Checks for async trait usage in a single file.
 pub fn check_async_traits(path: &Path, content: &str) -> crate::Result<Vec<PatternViolation>> {
@@ -16,67 +19,75 @@ pub fn check_async_traits(path: &Path, content: &str) -> crate::Result<Vec<Patte
     let async_trait_attr = compile_regex(r"#\[(async_trait::)?async_trait\]")?;
     let allow_async_fn_trait = compile_regex(r"#\[allow\(async_fn_in_trait\)\]")?;
 
+    let has_async_methods = |trait_line: usize| {
+        crate::scan::extract_balanced_block(&lines, trait_line).is_some_and(|(body_lines, _)| {
+            body_lines.into_iter().any(|l| async_fn_pattern.is_match(l))
+        })
+    };
+
+    let has_attr_nearby = |line_num: usize, pattern: &regex::Regex| {
+        line_num > 0
+            && lines[..line_num]
+                .iter()
+                .rev()
+                .take(ATTR_SEARCH_LINES)
+                .any(|l| pattern.is_match(l))
+    };
+
     for (line_num, line) in lines.iter().enumerate() {
-        // Find trait definitions
-        if let Some(cap) = trait_pattern.captures(line) {
-            let trait_name = cap.get(1).map_or("", |m| m.as_str());
-
-            // Look ahead to see if trait has async methods
-            let mut has_async_methods = false;
-
-            // Use shared scan helper
-            if let Some((body_lines, _)) = crate::scan::extract_balanced_block(&lines, line_num) {
-                for subsequent_line in body_lines {
-                    if async_fn_pattern.is_match(subsequent_line) {
-                        has_async_methods = true;
-                        break;
-                    }
-                }
-            }
-
-            if has_async_methods {
-                let has_async_trait_attr = if line_num > 0 {
-                    lines[..line_num]
-                        .iter()
-                        .rev()
-                        .take(ATTR_SEARCH_LINES)
-                        .any(|l| async_trait_attr.is_match(l) || allow_async_fn_trait.is_match(l))
-                } else {
-                    false
-                };
-
-                // Check if using native async trait support
-                let uses_native_async = if line_num > 0 {
-                    lines[..line_num]
-                        .iter()
-                        .rev()
-                        .take(ATTR_SEARCH_LINES)
-                        .any(|l| allow_async_fn_trait.is_match(l))
-                } else {
-                    false
-                };
-
-                if !has_async_trait_attr {
-                    violations.push(PatternViolation::MissingAsyncTrait {
-                        file: path.to_path_buf(),
-                        line: line_num + 1,
-                        trait_name: trait_name.to_owned(),
-                        severity: Severity::Error,
-                    });
-                }
-
-                // Check for Send + Sync bounds (skip for native async traits)
-                if !send_sync_pattern.is_match(line) && !uses_native_async {
-                    violations.push(PatternViolation::MissingSendSync {
-                        file: path.to_path_buf(),
-                        line: line_num + 1,
-                        trait_name: trait_name.to_owned(),
-                        missing_bound: "Send + Sync".to_owned(),
-                        severity: Severity::Warning,
-                    });
-                }
-            }
+        let Some(cap) = trait_pattern.captures(line) else {
+            continue;
+        };
+        if line.contains('=') || !has_async_methods(line_num) {
+            continue;
         }
+        let trait_name = cap.get(1).map_or("", |m| m.as_str());
+
+        let uses_native_async = has_attr_nearby(line_num, &allow_async_fn_trait);
+        let has_async_trait_attr =
+            uses_native_async || has_attr_nearby(line_num, &async_trait_attr);
+
+        push_async_trait_violations(
+            path,
+            line,
+            line_num,
+            trait_name,
+            (has_async_trait_attr, uses_native_async),
+            &send_sync_pattern,
+            &mut violations,
+        );
     }
     Ok(violations)
+}
+
+/// Push `MissingAsyncTrait` and/or `MissingSendSync` violations for one async
+/// trait declaration. `flags` is `(has_async_trait_attr, uses_native_async)`.
+fn push_async_trait_violations(
+    path: &Path,
+    line: &str,
+    line_num: usize,
+    trait_name: &str,
+    flags: (bool, bool),
+    send_sync_pattern: &regex::Regex,
+    violations: &mut Vec<PatternViolation>,
+) {
+    let (has_async_trait_attr, uses_native_async) = flags;
+    if !has_async_trait_attr {
+        violations.push(PatternViolation::MissingAsyncTrait {
+            file: path.to_path_buf(),
+            line: line_num + 1,
+            trait_name: trait_name.to_owned(),
+            severity: Severity::Error,
+        });
+    }
+
+    if !send_sync_pattern.is_match(line) && !uses_native_async {
+        violations.push(PatternViolation::MissingSendSync {
+            file: path.to_path_buf(),
+            line: line_num + 1,
+            trait_name: trait_name.to_owned(),
+            missing_bound: "Send + Sync".to_owned(),
+            severity: Severity::Warning,
+        });
+    }
 }

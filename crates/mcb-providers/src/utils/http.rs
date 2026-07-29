@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! HTTP Client Utilities
 //!
 //! Shared HTTP client creation and error handling utilities
@@ -10,15 +13,11 @@ use reqwest::Client;
 use serde_json::Value;
 
 use super::http_response::HttpResponseUtils;
-use super::retry::retry_with_backoff;
-use crate::constants::ERROR_MSG_REQUEST_TIMEOUT;
+pub(crate) use mcb_utils::constants::http::{DEFAULT_HTTP_TIMEOUT, ERROR_MSG_REQUEST_TIMEOUT};
+use mcb_utils::utils::retry::retry_with_backoff;
 
 // Re-export so callers of `send_json_request` can build `JsonRequestParams.retry`.
-pub(crate) use super::retry::RetryConfig;
-
-/// Default timeout for HTTP requests (30 seconds)
-pub(crate) const DEFAULT_HTTP_TIMEOUT: Duration =
-    Duration::from_secs(crate::constants::DEFAULT_HTTP_TIMEOUT_SECS);
+pub(crate) use mcb_utils::utils::retry::RetryConfig;
 
 #[derive(Debug, Clone, Copy)]
 /// Classification used to map HTTP request failures to domain errors.
@@ -43,16 +42,16 @@ pub(crate) enum RequestErrorKind {
 ///
 /// let client = create_client(30)?;
 /// ```
-pub(crate) fn create_client(timeout_secs: u64) -> std::result::Result<Client, String> {
+pub(crate) fn create_client(timeout_secs: u64) -> mcb_domain::error::Result<Client> {
     Client::builder()
         .timeout(Duration::from_secs(timeout_secs))
         .build()
-        .map_err(|e| format!("Failed to create HTTP client: {e}"))
+        .map_err(|e| Error::network(format!("Failed to create HTTP client: {e}")))
 }
 
 /// Create an HTTP client with the default 30-second timeout
-pub(crate) fn create_default_client() -> std::result::Result<Client, String> {
-    create_client(30)
+pub(crate) fn create_default_client() -> mcb_domain::error::Result<Client> {
+    create_client(mcb_utils::constants::http::HTTP_REQUEST_TIMEOUT_SECS)
 }
 
 pub(crate) fn handle_request_error_with_kind(
@@ -156,11 +155,11 @@ pub(crate) fn create_http_provider_config(
     config: &mcb_domain::registry::embedding::EmbeddingProviderConfig,
     provider_name: &str,
     default_model: &str,
-) -> std::result::Result<HttpProviderConfig, String> {
+) -> mcb_domain::error::Result<HttpProviderConfig> {
     let api_key = config
         .api_key
         .clone()
-        .ok_or_else(|| format!("{provider_name} requires api_key"))?;
+        .ok_or_else(|| Error::configuration(format!("{provider_name} requires api_key")))?;
 
     let base_url = config.base_url.clone();
 
@@ -253,4 +252,51 @@ pub(crate) async fn send_json_request(
         None => execute().await,
         Some(config) => retry_with_backoff(config, |_| execute(), is_retryable_error).await,
     }
+}
+
+pub(crate) struct VectorDbRequestParams<'a> {
+    pub client: &'a Client,
+    pub method: reqwest::Method,
+    pub url: String,
+    pub timeout: Duration,
+    pub provider: &'a str,
+    pub operation: &'a str,
+    pub headers: &'a [(&'a str, String)],
+    pub body: Option<&'a Value>,
+    pub retry_attempts: usize,
+    pub retry_backoff_ms: u64,
+}
+
+pub(crate) async fn send_vector_db_request(
+    params: VectorDbRequestParams<'_>,
+) -> mcb_domain::error::Result<Value> {
+    let VectorDbRequestParams {
+        client,
+        method,
+        url,
+        timeout,
+        provider,
+        operation,
+        headers,
+        body,
+        retry_attempts,
+        retry_backoff_ms,
+    } = params;
+
+    send_json_request(JsonRequestParams {
+        client,
+        method,
+        url,
+        timeout,
+        provider,
+        operation,
+        kind: RequestErrorKind::VectorDb,
+        headers,
+        body,
+        retry: Some(RetryConfig::new(
+            retry_attempts,
+            Duration::from_millis(retry_backoff_ms),
+        )),
+    })
+    .await
 }

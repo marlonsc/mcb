@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! AST Decoder
 //!
 //! Converts Tree-sitter concrete syntax trees to unified `AstNode` format.
@@ -109,9 +112,7 @@ impl AstDecoder {
 
         // If node itself is an identifier
         if node.kind() == "identifier" || node.kind() == "type_identifier" {
-            node.utf8_text(source.as_bytes())
-                .ok()
-                .map(std::string::ToString::to_string)
+            node.utf8_text(source.as_bytes()).ok().map(str::to_owned)
         } else {
             None
         }
@@ -134,10 +135,7 @@ impl AstDecoder {
         let mut cursor = node.walk();
         for child in node.children(&mut cursor) {
             if child.kind().contains("type") && child.kind() != "type" {
-                return child
-                    .utf8_text(source.as_bytes())
-                    .ok()
-                    .map(std::string::ToString::to_string);
+                return child.utf8_text(source.as_bytes()).ok().map(str::to_owned);
             }
         }
         None
@@ -167,7 +165,9 @@ impl AstDecoder {
             "struct_item" | "class_definition" => {
                 metadata.insert("is_type".to_owned(), true.into());
             }
-            _ => {}
+            _other => {
+                // Ignore other node types
+            }
         }
 
         metadata

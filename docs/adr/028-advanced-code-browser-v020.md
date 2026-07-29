@@ -294,11 +294,11 @@ Rust Crates (existing):
 ## Related ADRs
 
 - [ADR-007: Integrated Web Administration Interface]
-(007-integrated-web-administration-interface.md) - Base admin UI
+(archive/superseded-007-web-admin-interface.md) - Base admin UI
 - [ADR-008: Git-Aware Semantic Indexing]
 (008-git-aware-semantic-indexing-v0.2.0.md) - Git metadata for diff view
 - [ADR-026: Routing Refactor Rocket]
-(026-routing-refactor-rocket-poem.md) - Rocket web framework
+(archive/superseded-026-routing-refactor-rocket-poem.md) - Rocket web framework
 
 ## References
 

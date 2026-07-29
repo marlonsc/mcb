@@ -1,23 +1,13 @@
 //! Integration tests that validate the actual workspace
 
 use rstest::rstest;
-use std::path::PathBuf;
 
-use mcb_validate::{Severity, ValidationConfig, ValidatorRegistry, Violation};
-
-fn get_workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .ancestors()
-        .nth(2)
-        .map_or_else(
-            || PathBuf::from(env!("CARGO_MANIFEST_DIR")),
-            std::path::Path::to_path_buf,
-        )
-}
+use mcb_domain::ports::validation::{Severity, ValidationConfig, Violation};
+use mcb_validate::ValidationConfigExt;
 
 #[rstest]
 #[case("dependency", "Dependency Violations", true)]
-#[case("patterns", "Pattern Violations", false)]
+#[case("pattern", "Pattern Violations", false)]
 #[case("hygiene", "Test Hygiene Violations", false)]
 #[case("naming", "Naming Violations", false)]
 fn validate_workspace_group(
@@ -25,12 +15,10 @@ fn validate_workspace_group(
     #[case] header: &str,
     #[case] must_be_clean: bool,
 ) {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root);
-    let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let violations = registry
-        .validate_named(&config, &[validator_name])
-        .unwrap_or_default();
+    let violations =
+        mcb_validate::validators::validate_named(&config, &[validator_name]).unwrap_or_default();
 
     println!("\n=== {header} ===");
     for v in &violations {
@@ -47,14 +35,12 @@ fn validate_workspace_group(
     }
 }
 
-#[test]
+#[rstest]
 fn test_validate_workspace_quality() {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root);
-    let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let violations = registry
-        .validate_named(&config, &["quality"])
-        .unwrap_or_default();
+    let violations =
+        mcb_validate::validators::validate_named(&config, &["quality"]).unwrap_or_default();
 
     println!("\n=== Quality Violations ===");
     let errors: Vec<_> = violations
@@ -88,14 +74,12 @@ fn test_validate_workspace_quality() {
     }
 }
 
-#[test]
+#[rstest]
 fn test_validate_workspace_documentation() {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root);
-    let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let violations = registry
-        .validate_named(&config, &["documentation"])
-        .unwrap_or_default();
+    let violations =
+        mcb_validate::validators::validate_named(&config, &["documentation"]).unwrap_or_default();
 
     println!("\n=== Documentation Violations ===");
     let by_severity = |sev: Severity| violations.iter().filter(|v| v.severity() == sev).count();
@@ -117,7 +101,7 @@ fn test_validate_workspace_documentation() {
     println!("Total: {} documentation violations\n", violations.len());
 }
 
-#[test]
+#[rstest]
 fn test_full_validation_report() {
     let handle = match std::thread::Builder::new()
         .name("full-report".into())
@@ -126,37 +110,44 @@ fn test_full_validation_report() {
     {
         Ok(handle) => handle,
         Err(err) => {
-            tracing::warn!("Failed to spawn full-report thread: {err}");
+            mcb_domain::warn!(
+                "validate_test",
+                "Failed to spawn full-report thread",
+                &err.to_string()
+            );
             std::thread::spawn(run_full_validation_report)
         }
     };
 
     if handle.join().is_err() {
-        tracing::warn!("full-report thread join failed");
+        mcb_domain::warn!("validate_test", "full-report thread join failed");
     }
 }
 
+#[allow(clippy::unwrap_used)]
 fn run_full_validation_report() {
-    let workspace_root = get_workspace_root();
-    let validator_names = ValidatorRegistry::standard_validator_names();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
+    let validator_names = mcb_validate::validators::standard_validator_names();
 
     let mut all_violations: Vec<Box<dyn Violation>> = Vec::new();
 
-    for &name in validator_names {
+    for name in &validator_names {
         let root = workspace_root.clone();
-        let vname = name.to_owned();
+        let vname = name.clone();
+        let vname_fallback = vname.clone();
         let result = std::thread::Builder::new()
             .name(format!("validator-{vname}"))
             .stack_size(16 * 1024 * 1024)
             .spawn(move || {
                 let config = ValidationConfig::new(&root);
-                let registry = ValidatorRegistry::standard_for(&root);
-                let v = registry.validators().iter().find(|v| v.name() == vname);
-                assert!(v.is_some(), "validator must exist");
-                v.and_then(|v| v.validate(&config).ok())
+                mcb_validate::validators::validate_named(&config, &[&vname]).ok()
             })
             .unwrap_or_else(|_| {
-                tracing::warn!("Failed to spawn validator thread for {name}");
+                mcb_domain::warn!(
+                    "validate_test",
+                    "Failed to spawn validator thread",
+                    &vname_fallback
+                );
                 std::thread::spawn(|| None)
             })
             .join();
@@ -164,10 +155,18 @@ fn run_full_validation_report() {
         match result {
             Ok(Some(violations)) => all_violations.extend(violations),
             Ok(None) => {
-                tracing::warn!("Validator '{name}' returned error or was not found");
+                mcb_domain::warn!(
+                    "validate_test",
+                    "Validator returned error or was not found",
+                    name
+                );
             }
             Err(_) => {
-                tracing::warn!("Validator '{name}' panicked (likely stack overflow)");
+                mcb_domain::warn!(
+                    "validate_test",
+                    "Validator panicked (likely stack overflow)",
+                    name
+                );
             }
         }
     }
@@ -182,9 +181,9 @@ fn run_full_validation_report() {
     );
 }
 
-#[test]
+#[rstest]
 fn test_validation_config() {
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root)
         .with_additional_path("src.legacy")
         .with_exclude_pattern("target/");

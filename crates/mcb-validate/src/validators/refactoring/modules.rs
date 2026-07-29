@@ -1,9 +1,12 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#refactoring)
+//!
 use std::path::Path;
 
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
+use mcb_utils::utils::regex::compile_regex;
 
 use super::RefactoringValidator;
 use super::violation::RefactoringViolation;
@@ -15,58 +18,66 @@ pub fn validate_mod_declarations(
     let mut violations = Vec::new();
     let mod_pattern = compile_regex(r"(?:pub\s+)?mod\s+([a-z_][a-z0-9_]*)(?:\s*;)")?;
 
-    for src_dir in validator.config.get_scan_dirs()? {
-        if validator.should_skip_crate(&src_dir) {
-            continue;
-        }
+    for_each_scan_file(
+        &validator.config,
+        Some(LanguageId::Rust),
+        false,
+        |entry, candidate_src_dir| {
+            if validator.should_skip_crate(candidate_src_dir) {
+                return Ok(());
+            }
 
-        for_each_scan_file(
-            &validator.config,
-            Some(LanguageId::Rust),
-            false,
-            |entry, candidate_src_dir| {
-                let path = &entry.absolute_path;
-                if candidate_src_dir != src_dir {
-                    return Ok(());
-                }
-
-                let parent_dir = path.parent().unwrap_or(Path::new("."));
-                let content = std::fs::read_to_string(path)?;
-                let lines: Vec<&str> = content.lines().collect();
-
-                for (line_num, line) in lines.iter().enumerate() {
-                    if let Some(cap) = mod_pattern.captures(line) {
-                        let mod_name = cap.get(1).map_or("", |m| m.as_str());
-
-                        // Check if module file exists (Rust: same dir or parent_name/mod_name)
-                        let mod_file = parent_dir.join(format!("{mod_name}.rs"));
-                        let mod_dir = parent_dir.join(mod_name).join("mod.rs");
-                        let module_subdir = path.file_stem().and_then(|s| s.to_str()).map(|stem| {
-                            (
-                                parent_dir.join(stem).join(format!("{mod_name}.rs")),
-                                parent_dir.join(stem).join(mod_name).join("mod.rs"),
-                            )
-                        });
-
-                        let exists = mod_file.exists()
-                            || mod_dir.exists()
-                            || module_subdir.is_some_and(|(f, d)| f.exists() || d.exists());
-
-                        if !exists {
-                            violations.push(RefactoringViolation::DeletedModuleReference {
-                                referencing_file: path.clone(),
-                                line: line_num + 1,
-                                deleted_module: mod_name.to_owned(),
-                                severity: Severity::Warning,
-                            });
-                        }
-                    }
-                }
-
-                Ok(())
-            },
-        )?;
-    }
+            let path = &entry.absolute_path;
+            let content = std::fs::read_to_string(path)?;
+            collect_deleted_module_refs(path, &content, &mod_pattern, &mut violations);
+            Ok(())
+        },
+    )?;
 
     Ok(violations)
+}
+
+/// Whether a file backing `mod <mod_name>;` declared in `path` exists, checking
+/// both sibling and nested (`<file_stem>/`) layouts.
+fn module_decl_exists(path: &Path, mod_name: &str) -> bool {
+    let parent_dir = path.parent().unwrap_or(Path::new("."));
+    let file_stem = path.file_stem().and_then(|s| s.to_str());
+
+    let direct = [
+        parent_dir.join(format!("{mod_name}.rs")),
+        parent_dir.join(mod_name).join("mod.rs"),
+    ];
+    let nested = file_stem.map(|stem| {
+        [
+            parent_dir.join(stem).join(format!("{mod_name}.rs")),
+            parent_dir.join(stem).join(mod_name).join("mod.rs"),
+        ]
+    });
+
+    direct.into_iter().any(|p| p.exists())
+        || nested.is_some_and(|paths| paths.into_iter().any(|p| p.exists()))
+}
+
+/// Push a `DeletedModuleReference` violation for each `mod x;` in `content`
+/// whose backing file no longer exists.
+fn collect_deleted_module_refs(
+    path: &Path,
+    content: &str,
+    mod_pattern: &regex::Regex,
+    violations: &mut Vec<RefactoringViolation>,
+) {
+    for (line_num, line) in content.lines().enumerate() {
+        let Some(cap) = mod_pattern.captures(line) else {
+            continue;
+        };
+        let mod_name = cap.get(1).map_or("", |m| m.as_str());
+        if !module_decl_exists(path, mod_name) {
+            violations.push(RefactoringViolation::DeletedModuleReference {
+                referencing_file: path.to_path_buf(),
+                line: line_num + 1,
+                deleted_module: mod_name.to_owned(),
+                severity: Severity::Warning,
+            });
+        }
+    }
 }

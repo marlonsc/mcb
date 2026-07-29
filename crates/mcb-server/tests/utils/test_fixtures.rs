@@ -1,268 +1,326 @@
-//! Test fixtures for mcb-server tests
+//! Test fixtures for mcb-server tests.
 //!
 //! Provides factory functions for creating test data and temporary directories.
+//! MCP server and state are built via [`mcb_server::build_mcp_server_bootstrap`]
+//! with pure registry DI through `mcb_domain::registry::*`.
 //!
-//! Uses a process-wide shared `AppContext` to avoid re-loading the ONNX model
-//! (~5-10s) per test.  Each call to [`create_test_mcp_server`] gets an isolated
-//! `SQLite` database backed by its own `TempDir`.
+//! **Entity fixtures and constants live in `mcb_domain::test_utils`.**
+//! This module provides mcb-server-specific test infrastructure (DI, MCP server).
 
-use mcb_domain::ports::IndexingResult;
-use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
-use mcb_infrastructure::di::modules::domain_services::DomainServicesFactory;
-use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use mcb_server::McpServerBuilder;
+use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider};
+use mcb_domain::registry::ServiceResolutionContext;
+use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
+use mcb_domain::registry::embedding::{EmbeddingProviderConfig, resolve_embedding_provider};
+use mcb_domain::registry::events::{EventBusProviderConfig, resolve_event_bus_provider};
+use mcb_domain::registry::hybrid_search::{
+    HybridSearchProviderConfig, resolve_hybrid_search_provider,
+};
+use mcb_domain::registry::vector_store::{
+    VectorStoreProviderConfig, resolve_vector_store_provider,
+};
+use mcb_domain::value_objects::Embedding;
+use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::mcp_server::McpServer;
+use mcb_server::state::McbState;
+use mcb_server::tools::ExecutionFlow;
 use tempfile::TempDir;
 
-// -----------------------------------------------------------------------------
-// Common test fixture constants
-// -----------------------------------------------------------------------------
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
+extern crate mcb_providers;
 
-/// Test fixture: default project identifier.
-pub const TEST_PROJECT_ID: &str = "test-project";
-
-/// Test fixture: default session identifier.
-pub const TEST_SESSION_ID: &str = "test-session";
-
-/// Test fixture: default repository name.
-pub const TEST_REPO_NAME: &str = "test-repo";
-
-/// Test fixture: default organization identifier.
-pub const TEST_ORG_ID: &str = "test-org";
-
-/// Test fixture: default embedding dimensions (`FastEmbed` BGE-small-en-v1.5).
-pub const TEST_EMBEDDING_DIMENSIONS: usize = 384;
+// Import centralized fixtures from mcb-domain
+use mcb_domain::utils::tests::utils::{create_temp_codebase, create_test_indexing_result};
+// Import test constants from canonical source (mcb-utils)
+use mcb_utils::constants::testing::{TEST_ORG_ID, TEST_REPO_NAME, TEST_SESSION_ID};
 
 // -----------------------------------------------------------------------------
 // Golden test helpers (shared by tests/golden and integration)
 // -----------------------------------------------------------------------------
 
-pub const GOLDEN_COLLECTION: &str = "mcb_golden_test";
+// ---------------------------------------------------------------------------
+// Shared FastEmbed cache directory
+// ---------------------------------------------------------------------------
 
-/// Path to `sample_codebase` fixture (used by golden tests).
-pub fn sample_codebase_path() -> PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/sample_codebase")
-}
-
-/// Extract text content from `CallToolResult` for assertions (joined by space).
-pub fn golden_content_to_string(res: &rmcp::model::CallToolResult) -> String {
-    super::text::extract_text_with_sep(&res.content, " ")
-}
-
-/// Parse "**Results found:** N" from search response text.
-pub fn golden_parse_results_found(text: &str) -> Option<usize> {
-    let prefix = "**Results found:**";
-    text.find(prefix).and_then(|i| {
-        let rest = text[i + prefix.len()..].trim_start();
-        let num_str: String = rest.chars().take_while(char::is_ascii_digit).collect();
-        num_str.parse().ok()
-    })
-}
-
-/// Count result lines (each has "📁") in search response.
-pub fn golden_count_result_entries(text: &str) -> usize {
-    text.lines().filter(|line| line.contains("📁")).count()
-}
-
-/// Expected files in `sample_codebase` for search assertions.
-pub const SAMPLE_CODEBASE_FILES: &[&str] = &[
-    "embedding.rs",
-    "vector_store.rs",
-    "handlers.rs",
-    "cache.rs",
-    "di.rs",
-    "error.rs",
-    "chunking.rs",
-];
-
-/// Create a temporary codebase directory with sample code files
-pub fn create_temp_codebase() -> (TempDir, PathBuf) {
-    let temp_dir_result = TempDir::new();
-    assert!(temp_dir_result.is_ok(), "Failed to create temp directory");
-    let temp_dir = match temp_dir_result {
-        Ok(value) => value,
-        Err(_) => {
-            return (
-                TempDir::new().unwrap_or_else(|_| unreachable!()),
-                PathBuf::new(),
+/// Process-wide shared `FastEmbed` ONNX model cache directory.
+#[must_use]
+pub fn shared_fastembed_test_cache_dir() -> std::path::PathBuf {
+    static DIR: std::sync::OnceLock<std::path::PathBuf> = std::sync::OnceLock::new();
+    DIR.get_or_init(|| {
+        let cache_dir = std::env::var_os("FASTEMBED_CACHE_DIR")
+            .or_else(|| std::env::var_os("MCB_FASTEMBED_TEST_CACHE_DIR"))
+            .map_or_else(
+                || std::env::temp_dir().join("mcb-fastembed-test-cache"),
+                std::path::PathBuf::from,
             );
+        if let Err(err) = std::fs::create_dir_all(&cache_dir) {
+            mcb_domain::warn!(
+                "test_fixtures",
+                "failed to create shared fastembed cache dir",
+                &err.to_string()
+            );
+            return std::env::temp_dir().join("mcb-fastembed-test-cache");
         }
-    };
-    let codebase_path = temp_dir.path().to_path_buf();
-
-    // Create sample Rust files
-    let write_lib = std::fs::write(
-        codebase_path.join("lib.rs"),
-        r#"//! Sample library
-pub fn hello() {
-    println!("Hello, world!");
-}
-"#,
-    );
-    assert!(write_lib.is_ok(), "Failed to write lib.rs");
-
-    let write_main = std::fs::write(
-        codebase_path.join("main.rs"),
-        "fn main() {
-    mylib::hello();
-}
-",
-    );
-    assert!(write_main.is_ok(), "Failed to write main.rs");
-
-    // Create a subdirectory with more files
-    let src_dir = codebase_path.join("src");
-    let mkdir_src = std::fs::create_dir_all(&src_dir);
-    assert!(mkdir_src.is_ok(), "Failed to create src directory");
-
-    let write_utils = std::fs::write(
-        src_dir.join("utils.rs"),
-        r#"pub fn helper() -> String {
-    "helper".to_string()
-}
-"#,
-    );
-    assert!(write_utils.is_ok(), "Failed to write utils.rs");
-
-    (temp_dir, codebase_path)
+        cache_dir
+    })
+    .clone()
 }
 
-/// Create a test indexing result
-pub fn create_test_indexing_result(
-    files_processed: usize,
-    chunks_created: usize,
-    error_count: usize,
-) -> IndexingResult {
-    let errors = (0..error_count)
-        .map(|i| format!("Test error {i}"))
-        .collect();
+// ---------------------------------------------------------------------------
+// Deterministic embedding provider for unit test composition
+// ---------------------------------------------------------------------------
 
-    IndexingResult {
-        files_processed,
-        chunks_created,
-        files_skipped: 0,
-        errors,
-        operation_id: None,
-        status: "completed".to_owned(),
+#[derive(Debug)]
+struct DeterministicTestEmbeddingProvider {
+    dimensions: usize,
+}
+
+impl DeterministicTestEmbeddingProvider {
+    const MODEL_NAME: &'static str = "deterministic-test";
+
+    const fn new(dimensions: usize) -> Self {
+        Self { dimensions }
+    }
+
+    fn embed_text(&self, text: &str) -> Embedding {
+        let mut vector = vec![0.0; self.dimensions];
+        if self.dimensions == 0 {
+            return Embedding {
+                vector,
+                model: Self::MODEL_NAME.to_owned(),
+                dimensions: self.dimensions,
+            };
+        }
+
+        for (index, byte) in text.bytes().enumerate() {
+            let slot = index % self.dimensions;
+            vector[slot] += (f32::from(byte) + 1.0) / 256.0;
+        }
+
+        let norm = vector.iter().map(|value| value * value).sum::<f32>().sqrt();
+        if norm > 0.0 {
+            for value in &mut vector {
+                *value /= norm;
+            }
+        }
+
+        Embedding {
+            vector,
+            model: Self::MODEL_NAME.to_owned(),
+            dimensions: self.dimensions,
+        }
     }
 }
 
+#[async_trait::async_trait]
+impl EmbeddingProvider for DeterministicTestEmbeddingProvider {
+    async fn embed_batch(&self, texts: &[String]) -> mcb_domain::Result<Vec<Embedding>> {
+        Ok(texts.iter().map(|text| self.embed_text(text)).collect())
+    }
+
+    fn dimensions(&self) -> usize {
+        self.dimensions
+    }
+
+    fn provider_name(&self) -> &str {
+        Self::MODEL_NAME
+    }
+}
+
+pub(super) fn create_test_embedding_provider(dimensions: usize) -> Arc<dyn EmbeddingProvider> {
+    Arc::new(DeterministicTestEmbeddingProvider::new(dimensions))
+}
+
 // ---------------------------------------------------------------------------
-// Shared AppContext (process-wide, ONNX model loaded once)
+// SharedTestContext — DI-resolved providers for integration tests
 // ---------------------------------------------------------------------------
 
-mcb_infrastructure::define_shared_test_context!("mcb-fixtures-shared.db");
+/// Shared test context with DI-resolved providers.
+///
+/// Resolves embedding and vector store providers through the same linkme registry
+/// as production code. Process-wide shared to avoid re-loading ONNX models per test.
+pub struct SharedTestContext {
+    /// DI-resolved embedding provider.
+    embedding: Arc<dyn EmbeddingProvider>,
+    /// DI-resolved vector store provider.
+    vector_store: Arc<dyn VectorStoreProvider>,
+}
+
+impl SharedTestContext {
+    /// Get the DI-resolved embedding provider.
+    #[must_use]
+    pub fn embedding_provider(&self) -> Arc<dyn EmbeddingProvider> {
+        Arc::clone(&self.embedding)
+    }
+
+    /// Get the DI-resolved vector store provider.
+    #[must_use]
+    pub fn vector_store_provider(&self) -> Arc<dyn VectorStoreProvider> {
+        Arc::clone(&self.vector_store)
+    }
+}
+
+fn create_shared_test_context() -> Option<SharedTestContext> {
+    // Create a persistent multi-thread runtime for provider actor tasks.
+    // FastEmbed and EdgeVec use `tokio::spawn` for actor loops that must outlive
+    // individual `#[tokio::test]` runtimes (each test creates/drops its own runtime).
+    // Intentionally leaked because SharedTestContext is process-wide via OnceLock.
+    let persistent_rt = Box::leak(Box::new(
+        tokio::runtime::Builder::new_multi_thread()
+            .worker_threads(2)
+            .enable_all()
+            .build()
+            .ok()?,
+    ));
+    // Enter the persistent runtime so tokio::spawn calls (inside provider constructors)
+    // target it instead of the calling test's short-lived runtime.
+    let _guard = persistent_rt.enter();
+
+    let cache_dir = shared_fastembed_test_cache_dir();
+
+    // Resolve providers through domain registry (pure CA/DI/Linkme)
+    let embedding_config = EmbeddingProviderConfig::new("fastembed")
+        .with_cache_dir(cache_dir)
+        .with_dimensions(384);
+    let embedding = resolve_embedding_provider(&embedding_config).ok()?;
+
+    let vs_config = VectorStoreProviderConfig::new("edgevec")
+        .with_dimensions(384)
+        .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
+    let vector_store = resolve_vector_store_provider(&vs_config).ok()?;
+
+    Some(SharedTestContext {
+        embedding,
+        vector_store,
+    })
+}
+
+/// Process-wide shared test context. Builds once via linkme registry resolution.
+#[must_use]
+pub fn try_shared_app_context() -> Option<&'static SharedTestContext> {
+    static CTX: std::sync::OnceLock<Option<SharedTestContext>> = std::sync::OnceLock::new();
+    CTX.get_or_init(create_shared_test_context).as_ref()
+}
+
+/// Returns the shared test context, or an error if initialization failed.
+///
+/// # Errors
+///
+/// Returns an error if the shared context was not initialized.
+pub fn shared_app_context() -> Result<&'static SharedTestContext, &'static str> {
+    try_shared_app_context().ok_or("shared test context init failed")
+}
+
+// ---------------------------------------------------------------------------
+// create_test_mcb_state — delegates to domain_services
+// ---------------------------------------------------------------------------
+
+/// Create an [`McbState`] with an isolated database via pure registry DI.
+///
+/// Thin wrapper around [`create_real_domain_services`](super::domain_services::create_real_domain_services).
+/// Returns `Option` — `None` means a provider is unavailable and the test should skip.
+pub async fn create_test_mcb_state() -> Option<(McbState, TempDir)> {
+    super::domain_services::create_real_domain_services().await
+}
 
 // ---------------------------------------------------------------------------
 // create_test_mcp_server
 // ---------------------------------------------------------------------------
 
-/// Create an MCP server with default providers (`SQLite`, `EdgeVec`, `FastEmbed`, Tokio)
+/// Create an MCP server with default local providers and an isolated DB.
 ///
-/// Reuses the process-wide [`shared_app_context`] so the ONNX embedding model
-/// is loaded only once, but gives each call an **isolated `SQLite` database**
-/// backed by its own `TempDir`.
+/// Builds state via pure registry DI: resolve providers through `mcb_domain::registry::*`,
+/// build [`ServiceResolutionContext`], then [`build_mcp_server_bootstrap`].
+/// Each call gets its own [`TempDir`] and database.
 ///
-/// Returns `(server, temp_dir)` -- `temp_dir` must be kept alive by the caller.
-pub async fn create_test_mcp_server() -> (McpServer, TempDir) {
-    let ctx = shared_app_context();
-
-    // Fresh temp dir and database for this test
-    let temp_dir_result = tempfile::tempdir();
-    assert!(temp_dir_result.is_ok(), "create temp dir");
-    let temp_dir = match temp_dir_result {
-        Ok(value) => value,
-        Err(_) => {
-            return (
-                McpServerBuilder::new()
-                    .build()
-                    .unwrap_or_else(|_| unreachable!()),
-                TempDir::new().unwrap_or_else(|_| unreachable!()),
-            );
-        }
-    };
+/// Returns `(server, temp_dir)` — keep `temp_dir` alive for the test.
+///
+/// # Errors
+///
+/// Returns an error if the resolution context or MCP bootstrap could not be built.
+pub async fn create_test_mcp_server() -> Result<(McpServer, TempDir), Box<dyn std::error::Error>> {
+    let temp_dir = tempfile::tempdir()?;
     let db_path = temp_dir.path().join("test.db");
 
-    let db_provider_result = resolve_database_provider(&DatabaseProviderConfig::new("sqlite"));
-    assert!(db_provider_result.is_ok(), "resolve sqlite provider");
-    let db_provider = match db_provider_result {
-        Ok(value) => value,
-        Err(_) => {
-            return (
-                McpServerBuilder::new()
-                    .build()
-                    .unwrap_or_else(|_| unreachable!()),
-                temp_dir,
-            );
-        }
-    };
-    let db_executor_result = db_provider.connect(&db_path).await;
-    assert!(db_executor_result.is_ok(), "connect fresh test database");
-    let db_executor = match db_executor_result {
-        Ok(value) => value,
-        Err(_) => {
-            return (
-                McpServerBuilder::new()
-                    .build()
-                    .unwrap_or_else(|_| unreachable!()),
-                temp_dir,
-            );
-        }
-    };
+    // Resolve all providers through domain registry
+    let db_config = DatabaseProviderConfig::new("sqlite").with_path(db_path);
+    let db = resolve_database_provider(&db_config).await?;
 
-    let project_id = TEST_PROJECT_ID.to_owned();
+    let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess"))?;
 
-    let deps = mcb_infrastructure::di::test_factory::create_test_dependencies(
-        project_id,
-        &db_executor,
-        ctx,
-    );
+    let embedding_provider = create_test_embedding_provider(384);
 
-    let services_result = DomainServicesFactory::create_services(deps).await;
-    assert!(services_result.is_ok(), "build domain services");
-    let services = match services_result {
-        Ok(value) => value,
-        Err(_) => {
-            return (
-                McpServerBuilder::new()
-                    .build()
-                    .unwrap_or_else(|_| unreachable!()),
-                temp_dir,
-            );
-        }
+    let vs_config = VectorStoreProviderConfig::new("edgevec")
+        .with_dimensions(384)
+        .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
+    let vector_store_provider = resolve_vector_store_provider(&vs_config)?;
+
+    let hybrid_search = resolve_hybrid_search_provider(&HybridSearchProviderConfig::new(
+        mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+    ))?;
+
+    // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
+    let config_provider = mcb_domain::registry::config::resolve_config_provider(
+        &mcb_domain::registry::config::ConfigProviderConfig::new(
+            mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
+        ),
+    )?;
+    let app_config = *config_provider
+        .load_config()?
+        .downcast::<mcb_infrastructure::config::app::AppConfig>()
+        .map_err(|_| {
+            mcb_domain::error::Error::internal("ConfigProvider returned unexpected type")
+        })?;
+
+    let resolution_ctx = ServiceResolutionContext {
+        db: Arc::clone(&db),
+        config: Arc::new(app_config),
+        event_bus,
+        embedding_provider: Arc::clone(&embedding_provider),
+        vector_store_provider: Arc::clone(&vector_store_provider),
     };
 
-    let server_result = McpServerBuilder::new()
-        .with_indexing_service(services.indexing_service)
-        .with_context_service(services.context_service)
-        .with_search_service(services.search_service)
-        .with_validation_service(services.validation_service)
-        .with_memory_service(services.memory_service)
-        .with_agent_session_service(services.agent_session_service)
-        .with_project_service(services.project_service)
-        .with_project_workflow_service(services.project_repository)
-        .with_vcs_provider(services.vcs_provider)
-        .with_vcs_entity_repository(services.vcs_entity_repository)
-        .with_plan_entity_repository(services.plan_entity_repository)
-        .with_issue_entity_repository(services.issue_entity_repository)
-        .with_org_entity_repository(services.org_entity_repository)
-        .build();
-    assert!(server_result.is_ok(), "Failed to build MCP server");
-    let server = match server_result {
-        Ok(value) => value,
-        Err(_) => {
-            return (
-                McpServerBuilder::new()
-                    .build()
-                    .unwrap_or_else(|_| unreachable!()),
-                temp_dir,
-            );
-        }
-    };
+    let bootstrap = build_mcp_server_bootstrap(
+        &resolution_ctx,
+        db,
+        embedding_provider,
+        vector_store_provider,
+        hybrid_search,
+        ExecutionFlow::ServerHybrid,
+    )?;
+    let server = Arc::unwrap_or_clone(bootstrap.mcp_server);
 
-    (server, temp_dir)
+    Ok((server, temp_dir))
+}
+
+/// Process-wide shared [`McbState`] for unit tests. Builds once via
+/// [`create_real_domain_services`](super::domain_services::create_real_domain_services).
+#[must_use]
+pub fn try_shared_mcb_state() -> Option<&'static McbState> {
+    static STATE: std::sync::OnceLock<Option<(McbState, Box<TempDir>)>> =
+        std::sync::OnceLock::new();
+    STATE.get_or_init(|| {
+        // Spawn a separate thread so the new runtime doesn't conflict with an
+        // existing #[tokio::test] runtime on the calling thread.
+        std::thread::spawn(|| {
+            let rt = tokio::runtime::Runtime::new().ok()?;
+            rt.block_on(async { super::domain_services::create_real_domain_services().await })
+        })
+        .join()
+        .ok()?
+        .map(|(s, t)| (s, Box::new(t)))
+    });
+    STATE.get().and_then(|o| o.as_ref()).map(|(s, _)| s as &_)
+}
+
+/// Returns the shared `McbState`, or an error if initialization failed.
+///
+/// # Errors
+///
+/// Returns an error if the shared state was not initialized.
+pub fn shared_mcb_state() -> Result<&'static McbState, &'static str> {
+    try_shared_mcb_state().ok_or("shared McbState init failed")
 }
 
 #[cfg(test)]

@@ -66,6 +66,7 @@
 
 pub mod bm25;
 pub mod engine;
+mod registry;
 
 // Re-export main types
 pub use bm25::{BM25Params, BM25Scorer};

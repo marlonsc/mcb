@@ -1,20 +1,46 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Maven project detector.
 
 use std::path::Path;
-use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::entities::project::ProjectType;
 use mcb_domain::error::Result;
-use mcb_domain::ports::{ProjectDetector, ProjectDetectorConfig, ProjectDetectorEntry};
+use mcb_domain::ports::ProjectDetector;
+use mcb_domain::registry::ProjectDetectorConfig;
 use quick_xml::Reader;
 use quick_xml::events::Event;
-use tokio::fs::read_to_string;
 
-use super::PROJECT_DETECTORS;
+use super::common::read_file_opt;
 
 /// Maven project detector
 pub struct MavenDetector;
+
+struct MavenPomState {
+    group_id: String,
+    artifact_id: String,
+    version: String,
+    dependencies: Vec<String>,
+    in_dependency: bool,
+    dep_group_id: String,
+    dep_artifact_id: String,
+}
+
+impl MavenPomState {
+    fn new() -> Self {
+        Self {
+            group_id: String::new(),
+            artifact_id: String::new(),
+            version: String::new(),
+            dependencies: Vec::new(),
+            in_dependency: false,
+            dep_group_id: String::new(),
+            dep_artifact_id: String::new(),
+        }
+    }
+}
 
 impl MavenDetector {
     /// Create a new Maven detector
@@ -24,80 +50,27 @@ impl MavenDetector {
     }
 
     /// Parses a `pom.xml` file to extract project metadata.
-    // TODO(qlty): Function with high complexity (count = 31): parse_pom
     fn parse_pom(content: &str) -> Option<(String, String, String, Vec<String>)> {
         let mut reader = Reader::from_str(content);
         reader.config_mut().trim_text(true);
 
-        let mut group_id = String::new();
-        let mut artifact_id = String::new();
-        let mut version = String::new();
-        let mut dependencies = Vec::new();
+        let mut state = MavenPomState::new();
 
         let mut current_path: Vec<String> = Vec::new();
-        let mut in_dependency = false;
-        let mut dep_group_id = String::new();
-        let mut dep_artifact_id = String::new();
 
         loop {
             match reader.read_event() {
                 Ok(Event::Start(e)) => {
                     let name = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                    current_path.push(name.clone());
-
-                    if Self::path_matches(&current_path, &["project", "dependencies", "dependency"])
-                    {
-                        in_dependency = true;
-                        dep_group_id.clear();
-                        dep_artifact_id.clear();
-                    }
+                    current_path.push(name);
+                    Self::handle_start_event(&current_path, &mut state);
                 }
                 Ok(Event::Text(e)) => {
-                    // In quick-xml 0.39, BytesText doesn't have unescape() method
-                    // We decode the bytes directly to string
                     let text = String::from_utf8_lossy(e.as_ref()).to_string();
-
-                    if Self::path_matches(&current_path, &["project", "groupId"])
-                        && group_id.is_empty()
-                    {
-                        group_id = text;
-                    } else if Self::path_matches(&current_path, &["project", "artifactId"])
-                        && artifact_id.is_empty()
-                    {
-                        artifact_id = text;
-                    } else if Self::path_matches(&current_path, &["project", "version"])
-                        && version.is_empty()
-                    {
-                        version = text;
-                    } else if Self::path_matches(
-                        &current_path,
-                        &["project", "dependencies", "dependency", "groupId"],
-                    ) && in_dependency
-                    {
-                        dep_group_id = text;
-                    } else if Self::path_matches(
-                        &current_path,
-                        &["project", "dependencies", "dependency", "artifactId"],
-                    ) && in_dependency
-                    {
-                        dep_artifact_id = text;
-                    }
+                    Self::handle_text_event(&current_path, &text, &mut state);
                 }
                 Ok(Event::End(_)) => {
-                    if Self::path_matches(&current_path, &["project", "dependencies", "dependency"])
-                        && in_dependency
-                    {
-                        if !dep_artifact_id.is_empty() {
-                            // TODO(qlty): Deeply nested control flow (level = 5)
-                            let dep = if dep_group_id.is_empty() {
-                                std::mem::take(&mut dep_artifact_id)
-                            } else {
-                                format!("{dep_group_id}:{dep_artifact_id}")
-                            };
-                            dependencies.push(dep);
-                        }
-                        in_dependency = false;
-                    }
+                    Self::handle_end_event(&current_path, &mut state);
                     current_path.pop();
                 }
                 Ok(Event::Eof) | Err(_) => break,
@@ -105,11 +78,68 @@ impl MavenDetector {
             }
         }
 
-        if artifact_id.is_empty() {
+        if state.artifact_id.is_empty() {
             return None;
         }
 
-        Some((group_id, artifact_id, version, dependencies))
+        Some((
+            state.group_id,
+            state.artifact_id,
+            state.version,
+            state.dependencies,
+        ))
+    }
+
+    fn handle_start_event(path: &[String], state: &mut MavenPomState) {
+        if Self::path_matches(path, &["project", "dependencies", "dependency"]) {
+            state.in_dependency = true;
+            state.dep_group_id.clear();
+            state.dep_artifact_id.clear();
+        }
+    }
+
+    fn handle_end_event(path: &[String], state: &mut MavenPomState) {
+        if !Self::path_matches(path, &["project", "dependencies", "dependency"])
+            || !state.in_dependency
+        {
+            return;
+        }
+        if !state.dep_artifact_id.is_empty() {
+            state.dependencies.push(Self::format_dependency(
+                &state.dep_group_id,
+                &state.dep_artifact_id,
+            ));
+        }
+        state.in_dependency = false;
+    }
+
+    fn handle_text_event(path: &[String], text: &str, state: &mut MavenPomState) {
+        if Self::path_matches(path, &["project", "groupId"]) && state.group_id.is_empty() {
+            state.group_id = text.to_owned();
+        } else if Self::path_matches(path, &["project", "artifactId"])
+            && state.artifact_id.is_empty()
+        {
+            state.artifact_id = text.to_owned();
+        } else if Self::path_matches(path, &["project", "version"]) && state.version.is_empty() {
+            state.version = text.to_owned();
+        } else if state.in_dependency {
+            if Self::path_matches(path, &["project", "dependencies", "dependency", "groupId"]) {
+                state.dep_group_id = text.to_owned();
+            } else if Self::path_matches(
+                path,
+                &["project", "dependencies", "dependency", "artifactId"],
+            ) {
+                state.dep_artifact_id = text.to_owned();
+            }
+        }
+    }
+
+    fn format_dependency(group_id: &str, artifact_id: &str) -> String {
+        if group_id.is_empty() {
+            artifact_id.to_owned()
+        } else {
+            format!("{group_id}:{artifact_id}")
+        }
     }
 
     /// Checks if the current XML path matches the expected path.
@@ -134,12 +164,8 @@ impl ProjectDetector for MavenDetector {
             return Ok(None);
         }
 
-        let content = match read_to_string(&pom_path).await {
-            Ok(c) => c,
-            Err(e) => {
-                tracing::debug!(path = ?pom_path, error = %e, "Failed to read pom.xml");
-                return Ok(None);
-            }
+        let Some(content) = read_file_opt(&pom_path, "maven").await else {
+            return Ok(None);
         };
 
         match Self::parse_pom(&content) {
@@ -164,19 +190,9 @@ impl ProjectDetector for MavenDetector {
     }
 }
 
-/// Factory function for creating Maven detector instances.
-fn maven_factory(
-    config: &ProjectDetectorConfig,
-) -> mcb_domain::error::Result<Arc<dyn ProjectDetector>> {
-    Ok(Arc::new(MavenDetector::new(config)))
-}
-
-// linkme distributed_slice uses #[link_section] internally
-#[allow(unsafe_code)]
-#[linkme::distributed_slice(PROJECT_DETECTORS)]
-static MAVEN_DETECTOR: ProjectDetectorEntry = ProjectDetectorEntry {
-    name: "maven",
-    description: "Detects Maven projects with pom.xml",
-    marker_files: &["pom.xml"],
-    build: maven_factory,
-};
+mcb_domain::register_project_detector!(
+    "maven",
+    "Detects Maven projects with pom.xml",
+    &["pom.xml"],
+    |_config| Ok(std::sync::Arc::new(MavenDetector))
+);

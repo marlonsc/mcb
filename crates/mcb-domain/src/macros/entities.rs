@@ -1,24 +1,9 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Entity and value-object macros.
 //!
 //! Used by `entities/` and `value_objects/` modules.
-
-/// Implement `BaseEntity` for structs using `EntityMetadata`
-#[macro_export]
-macro_rules! impl_base_entity {
-    ($t:ty) => {
-        impl $crate::entities::BaseEntity for $t {
-            fn id(&self) -> &str {
-                &self.metadata.id
-            }
-            fn created_at(&self) -> i64 {
-                self.metadata.created_at
-            }
-            fn updated_at(&self) -> i64 {
-                self.metadata.updated_at
-            }
-        }
-    };
-}
 
 /// Define a strong-typed UUID identifier for a domain entity.
 ///
@@ -124,5 +109,206 @@ macro_rules! define_id {
                 Self::from_string(s)
             }
         }
+    };
+}
+
+/// Define an entity with a selected set of shared fields.
+#[macro_export]
+macro_rules! define_entity {
+    ($name:ident { $($field:ident),* $(,)? }) => {
+        define_entity! { pub struct $name { $($field),* } {} }
+    };
+    ($(#[$meta:meta])* $vis:vis struct $name:ident { $($field:ident),* $(,)? } { $($body:tt)* }) => {
+        define_entity!(
+            @collect
+            [$(#[$meta])*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            []
+            $($field),*
+        );
+    };
+    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*]) => {
+        $($meta)*
+        $vis struct $name {
+            $($body)*
+            $($shared)*
+        }
+    };
+    (@collect [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] $field:ident $(, $rest:ident)*) => {
+        define_entity!(
+            @expand_field
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [$($shared)*]
+            [$($rest),*]
+            $field
+        );
+    };
+    (@expand_field [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] [$($rest:tt)*] id) => {
+        define_entity!(
+            @collect
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [
+                $($shared)*
+                /// Unique identifier for the entity.
+                pub id: String,
+            ]
+            $($rest)*
+        );
+    };
+    (@expand_field [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] [$($rest:tt)*] org_id) => {
+        define_entity!(
+            @collect
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [
+                $($shared)*
+                /// Organization identifier for tenant isolation.
+                pub org_id: String,
+            ]
+            $($rest)*
+        );
+    };
+    (@expand_field [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] [$($rest:tt)*] project_id) => {
+        define_entity!(
+            @collect
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [
+                $($shared)*
+                /// Project identifier the entity belongs to.
+                pub project_id: String,
+            ]
+            $($rest)*
+        );
+    };
+    (@expand_field [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] [$($rest:tt)*] created_at) => {
+        define_entity!(
+            @collect
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [
+                $($shared)*
+                /// Timestamp when the entity was created (Unix epoch).
+                pub created_at: i64,
+            ]
+            $($rest)*
+        );
+    };
+    (@expand_field [$($meta:tt)*] [$vis:vis] [$name:ident] [$($body:tt)*] [$($shared:tt)*] [$($rest:tt)*] updated_at) => {
+        define_entity!(
+            @collect
+            [$($meta)*]
+            [$vis]
+            [$name]
+            [$($body)*]
+            [
+                $($shared)*
+                /// Timestamp when the entity was last updated (Unix epoch).
+                pub updated_at: i64,
+            ]
+            $($rest)*
+        );
+    };
+}
+
+/// Implement `as_str()` by delegating to `AsRefStr::as_ref()`.
+#[macro_export]
+macro_rules! impl_as_str_from_as_ref {
+    ($type:ty) => {
+        impl $type {
+            /// Returns the canonical string representation.
+            #[must_use]
+            pub fn as_str(&self) -> &str {
+                self.as_ref()
+            }
+        }
+    };
+}
+
+/// Defines a string enum with standard derive stack and strum serialization.
+///
+/// Generates: `Debug`, `Clone`, `PartialEq`, `Eq`, `serde::Serialize`,
+/// `serde::Deserialize`, `strum_macros::AsRefStr`, `strum_macros::Display`,
+/// `strum_macros::EnumString`, plus `impl_as_str_from_as_ref!`.
+///
+/// Use `schema` to also derive `schemars::JsonSchema`.
+/// Use `serde = "..."` to add `#[serde(rename_all = "...")]`.
+#[macro_export]
+macro_rules! define_string_enum {
+    (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident
+        [strum = $strum_case:literal $(, serde = $serde_case:literal)? , schema]
+        {
+            $(
+                $(#[$variant_meta:meta])*
+                $variant:ident
+            ),* $(,)?
+        }
+    ) => {
+        #[derive(
+            Debug,
+            Clone,
+            PartialEq,
+            Eq,
+            serde::Serialize,
+            serde::Deserialize,
+            schemars::JsonSchema,
+            strum_macros::AsRefStr,
+            strum_macros::Display,
+            strum_macros::EnumString,
+        )]
+        $(#[serde(rename_all = $serde_case)])*
+        #[strum(serialize_all = $strum_case, ascii_case_insensitive)]
+        $(#[$meta])*
+        $vis enum $name {
+            $($(#[$variant_meta])* $variant,)*
+        }
+        $crate::impl_as_str_from_as_ref!($name);
+    };
+
+    (
+        $(#[$meta:meta])*
+        $vis:vis enum $name:ident
+        [strum = $strum_case:literal $(, serde = $serde_case:literal)?]
+        {
+            $(
+                $(#[$variant_meta:meta])*
+                $variant:ident
+            ),* $(,)?
+        }
+    ) => {
+        #[derive(
+            Debug,
+            Clone,
+            PartialEq,
+            Eq,
+            serde::Serialize,
+            serde::Deserialize,
+            strum_macros::AsRefStr,
+            strum_macros::Display,
+            strum_macros::EnumString,
+        )]
+        $(#[serde(rename_all = $serde_case)])*
+        #[strum(serialize_all = $strum_case, ascii_case_insensitive)]
+        $(#[$meta])*
+        $vis enum $name {
+            $($(#[$variant_meta])* $variant,)*
+        }
+        $crate::impl_as_str_from_as_ref!($name);
     };
 }

@@ -1,8 +1,6 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # .MCP-context.toml Schema Documentation
 
-**Version**: 0.2.0
-
 Complete schema reference for `.mcp-context.toml` git-aware indexing configuration.
 
 ## Table of Contents

@@ -38,7 +38,7 @@ fn traverse_variants(#[case] nested: bool) {
     }
 }
 
-#[test]
+#[rstest]
 fn test_display_trait_formats_tree() {
     let mut root = FileTreeNode::directory("src", "src");
     root = root.with_child(FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust"));
@@ -108,7 +108,7 @@ fn test_to_html_valid_structure_and_icons(
     assert!(html.contains("📄"));
 }
 
-#[test]
+#[rstest]
 fn test_to_html_escapes_special_characters() {
     let mut root = FileTreeNode::directory("src<script>", "src");
     root = root.with_child(FileTreeNode::file(
@@ -137,7 +137,7 @@ fn test_to_html_includes_chunk_count(#[case] chunk_count: u32) {
     assert!(html.contains(&chunk_count.to_string()));
 }
 
-#[test]
+#[rstest]
 fn test_traverse_empty_tree() {
     let root = FileTreeNode::directory("empty", "empty");
 
@@ -181,7 +181,7 @@ fn nested_structure_rendering(#[case] render_mode: &str) {
     }
 }
 
-#[test]
+#[rstest]
 fn test_traverse_callback_receives_correct_nodes() {
     let mut root = FileTreeNode::directory("src", "src");
     let file1 = FileTreeNode::file("lib.rs", "src/lib.rs", 10, "rust");

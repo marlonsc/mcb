@@ -1,4 +1,3 @@
-//! Test utilities for mcb-providers
-#![allow(dead_code)]
+//! Shared test utilities for mcb-providers
 
-pub mod entity;
+/// Centralized test result type.

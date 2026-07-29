@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
@@ -14,7 +17,7 @@ pub(super) fn require_session_id(args: &SessionArgs) -> Result<&SessionId, CallT
 }
 
 pub(super) fn require_session_id_str(args: &SessionArgs) -> Result<String, CallToolResult> {
-    require_session_id(args).map(mcb_domain::SessionId::as_str)
+    require_session_id(args).map(SessionId::as_str)
 }
 
 pub(super) fn parse_agent_type(

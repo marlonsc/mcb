@@ -1,10 +1,63 @@
 #!/usr/bin/env python3
+import argparse
 import os
 import sys
-import argparse
+
+from scripts.docs.py import utils
 
 
-import utils
+def _process_links(links, filepath, rel_filepath, project_root):
+    broken_in_file = []
+    checked_in_file = 0
+
+    for text, link in links:
+        checked_in_file += 1
+        if link.startswith(("http", "mailto:", "ftp:")):
+            continue
+
+        # Resolve target path
+        if link.startswith("/"):
+            # Absolute from project root
+            target = os.path.join(project_root, link.lstrip("/"))
+        else:
+            # Relative to current file
+            target = os.path.normpath(os.path.join(os.path.dirname(filepath), link))
+
+        if not os.path.exists(target):
+            broken_in_file.append(
+                (rel_filepath, text, link, os.path.relpath(target, project_root))
+            )
+
+    return broken_in_file, checked_in_file
+
+
+def _check_files(docs_dir, project_root):
+    broken = []
+    checked_files = 0
+    checked_links = 0
+
+    md_files = utils.find_md_files(docs_dir)
+
+    for filepath in md_files:
+        rel_filepath = os.path.relpath(filepath, project_root)
+        checked_files += 1
+
+        try:
+            with open(filepath, "r", encoding="utf-8") as fh:
+                content = fh.read()
+        except Exception as e:
+            print(f"Error reading {rel_filepath}: {e}")
+            continue
+
+        links = utils.extract_links(content)
+        file_broken, file_links = _process_links(
+            links, filepath, rel_filepath, project_root
+        )
+
+        broken.extend(file_broken)
+        checked_links += file_links
+
+    return broken, checked_files, checked_links
 
 
 def main():
@@ -24,51 +77,7 @@ def main():
         print(f"Error: docs directory not found at {docs_dir}")
         sys.exit(1)
 
-    broken = []
-    checked_files = 0
-    checked_links = 0
-
-    md_files = utils.find_md_files(docs_dir)
-
-    for filepath in md_files:
-        rel_filepath = os.path.relpath(filepath, project_root)
-        checked_files += 1
-
-        try:
-            with open(filepath, "r", encoding="utf-8") as fh:
-                content = fh.read()
-        except Exception as e:
-            print(f"Error reading {rel_filepath}: {e}")
-            continue
-
-        links = utils.extract_links(content)
-
-        for text, link in links:
-            checked_links += 1
-            if (
-                link.startswith("http")
-                or link.startswith("mailto:")
-                or link.startswith("ftp:")
-            ):
-                continue
-
-            # Resolve target path
-            if link.startswith("/"):
-                # Absolute from project root (rarely used in MD but valid in some contexts)
-                target = os.path.join(project_root, link.lstrip("/"))
-            else:
-                # Relative to current file
-                target = os.path.normpath(os.path.join(os.path.dirname(filepath), link))
-
-            if not os.path.exists(target):
-                broken.append(
-                    (
-                        rel_filepath,
-                        text,
-                        link,
-                        os.path.relpath(target, project_root),
-                    )
-                )
+    broken, checked_files, checked_links = _check_files(docs_dir, project_root)
 
     print(f"Checked {checked_files} files, {checked_links} internal links.")
 

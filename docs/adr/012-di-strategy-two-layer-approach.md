@@ -21,7 +21,7 @@ implementation_status: Incomplete
 
 > **DEPRECATED**: This two-layer approach (Shaku + runtime factories) will be simplified to direct constructor injection. The complex Shaku infrastructure will be removed in favor of simpler service composition patterns.
 >
-> **Code examples** below use `DiContainerBuilder` (removed). Current DI: dill Catalog, handles, linkme — see [ADR-029](029-hexagonal-architecture-dill.md).
+> **Code examples** below use `DiContainerBuilder` (removed). Current DI: AppContext composition root (`init_app()`), handles, linkme — see [ADR-050](050-manual-composition-root-dill-removal.md) (ADR-029 superseded).
 
 **Originally Accepted** (v0.1.2)
 
@@ -169,7 +169,7 @@ let services = DomainServicesFactory::create_services(
 ```rust
 #[tokio::test]
 async fn test_with_default_providers() {
-    // dill Catalog resolves default providers from config
+    // AppContext composition root resolves default providers from config
     let app_context = init_app(AppConfig::default()).await.unwrap();
     // app_context has MokaCacheProvider, FastEmbedProvider, etc.
 }
@@ -217,7 +217,7 @@ The public service interfaces will remain stable. Only the internal composition 
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md) - **SUPERSEDED** by [ADR 024](024-simplified-dependency-injection.md)
 - [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider factory selection
 - [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - DI pattern enforcement
-- [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - AdminService DI
+- [ADR-007: Integrated Web Administration Interface](archive/superseded-007-web-admin-interface.md) - AdminService DI
 - [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - GitProvider factory (v0.2.0)
 - [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - MemoryProvider DI (v0.2.0)
 - [ADR-010: Hooks Subsystem](010-hooks-subsystem-agent-backed.md) - HookProcessor DI (v0.2.0)
@@ -226,6 +226,6 @@ The public service interfaces will remain stable. Only the internal composition 
 
 ## References
 
-- [dill Documentation](https://docs.rs/dill) (current DI; see ADR-029)
+- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI; see ADR-050)
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - Workspace-next refactoring plan (January 2026)

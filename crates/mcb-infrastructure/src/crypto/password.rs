@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Password hashing service using Argon2
 
 use argon2::{
@@ -47,10 +50,8 @@ impl PasswordService {
     ///
     /// Returns an error if the hash format is invalid.
     pub fn verify_password(&self, password: &str, hash: &str) -> Result<bool> {
-        let parsed_hash = PasswordHash::new(hash).map_err(|e| Error::Authentication {
-            message: format!("Invalid password hash format: {e}"),
-            source: None,
-        })?;
+        let parsed_hash = PasswordHash::new(hash)
+            .map_err(|e| Error::authentication(format!("Invalid password hash format: {e}")))?;
 
         Ok(self
             .argon2

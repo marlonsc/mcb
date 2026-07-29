@@ -1,23 +1,25 @@
-/// Constants for organization validators.
-pub mod constants;
-/// Domain layer purity checks.
+//! Module and directory organization validation
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
+//!
 pub mod domain_purity;
-/// Duplicate string detection checks.
 pub mod duplicate_strings;
-/// File placement checks.
 pub mod file_placement;
-/// Cross-layer dependency violation checks.
 pub mod layer_violations;
-/// Magic number checks.
 pub mod magic_numbers;
-/// Strict directory rule checks.
 pub mod strict_directory;
-/// Trait placement checks.
 pub mod trait_placement;
-/// Organization validator orchestrator.
 pub mod validator;
-/// Organization violation model.
 pub mod violation;
 
 pub use self::validator::OrganizationValidator;
 pub use self::violation::OrganizationViolation;
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_ORGANIZATION,
+    "Validates code organization patterns",
+    |root| {
+        Ok(Box::new(OrganizationValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

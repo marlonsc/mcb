@@ -11,12 +11,43 @@ This document defines the strict architectural boundaries for the MCB (Memory Co
 
 ## Table of Contents
 
-1. [Crate Structure](#crate-structure)
-2. [Layer Dependency Rules](#layer-dependency-rules)
-3. [Port/Adapter Pattern](#portadapter-pattern)
-4. [Module Ownership](#module-ownership)
-5. [Boundary Violations](#boundary-violations)
-6. [Validation Rules](#validation-rules)
+1. [v0.2.1 Standardization Contract](#v021-standardization-contract)
+2. [Crate Structure](#crate-structure)
+3. [Layer Dependency Rules](#layer-dependency-rules)
+4. [Port/Adapter Pattern](#portadapter-pattern)
+5. [Module Ownership](#module-ownership)
+6. [Boundary Violations](#boundary-violations)
+7. [Validation Rules](#validation-rules)
+
+---
+
+## v0.2.1 Standardization Contract
+
+This release applies architecture optimization only (no net-new features).
+
+### Scope Guardrails
+
+- Allowed:
+  - deduplication, refactoring, schema tightening, naming unification
+  - removal of legacy/duplicate pathways
+  - stricter validation and fast-fail enforcement
+- Not allowed:
+  - new endpoints, new commands, new providers, new env/config surfaces
+  - compatibility shims or dual-path implementations
+
+### Canonical Ownership
+
+- IDs: `mcb-domain/src/value_objects/ids.rs` via `define_id!`.
+- Port traits: `mcb-domain/src/ports/**` only.
+- Domain entities/value objects: `mcb-domain/src/entities/**`, `mcb-domain/src/value_objects/**`.
+- DTO-to-domain mapping: boundary layers only (`mcb-server`, provider adapters), never in domain.
+
+### Fast-Fail Rules
+
+- Reject raw `String` or `Uuid` IDs in domain entities/value objects.
+- Reject duplicate port trait declarations outside `mcb-domain/src/ports/**`.
+- Reject leaking internal error strings across API boundaries.
+- Reject compatibility wrappers that keep old pathways alive.
 
 ---
 
@@ -27,11 +58,11 @@ MCB follows a layered architecture across 7 Cargo workspace crates:
 ```text
 crates/
 ├── mcb/                 # Facade (re-exports public API)
+├── mcb-utils/           # Layer 0: Pure utilities, constants (innermost)
 ├── mcb-domain/          # Layer 1: Entities, ports (traits), errors
-├── mcb-application/     # Layer 2: Use cases, services, registry
-├── mcb-providers/       # Layer 3: Provider implementations
-├── mcb-infrastructure/  # Layer 4: DI, config, health, logging
-├── mcb-server/          # Layer 5: MCP protocol, handlers, transport
+├── mcb-providers/       # Layer 2: Provider implementations
+├── mcb-infrastructure/  # Layer 3: DI, config, health, logging
+├── mcb-server/          # Layer 4: MCP protocol, handlers, transport
 ├── mcb-validate/        # Dev tooling: architecture validation
 └── (tests/)             # Integration and golden tests
 ```
@@ -39,12 +70,51 @@ crates/
 ### Dependency Direction (Inward Only)
 
 ```text
-mcb-server → mcb-infrastructure → mcb-application → mcb-domain
-                    ↓                    ↑
-              mcb-providers ─────────────┘
+mcb-server → mcb-infrastructure → mcb-providers → mcb-domain → mcb-utils
 ```
 
 **Critical Rule**: Dependencies ALWAYS point inward. Outer layers depend on inner layers, never the reverse.
+
+---
+
+### Layer 0: mcb-utils (Utilities)
+
+**Purpose**: Pure shared utilities and project-wide constants (SSOT)
+
+#### Allowed Dependencies
+
+- Standard library only
+- `thiserror` for error types
+- `serde` for serialization
+- Third-party utility crates (chrono, uuid, sha2, hex, walkdir, regex, etc.)
+
+#### Prohibited Dependencies
+
+- NO dependencies on ANY mcb-* crate (enforced by CA015)
+- NO domain knowledge (entities, ports, value objects)
+
+#### Exports
+
+- `constants/`: All project-wide constants (SSOT — ast, auth, crypto, display, embedding, events, http, io, keys, lang, limits, protocol, search, time, use_cases, validate, values, vcs, vector_store)
+- Utils: fs, id, naming, path, sensitivity, time, vcs_context
+- Errors: `UtilsError`
+
+#### Module Structure
+
+```text
+mcb-utils/src/
+├── constants/         # All project constants (SSOT)
+│   ├── auth.rs        # Authentication constants
+│   ├── events.rs      # Event type constants
+│   ├── keys.rs        # Storage keys
+│   └── ...            # 15 constant modules total
+├── utils/             # Pure utility functions
+│   ├── fs.rs          # Filesystem utilities
+│   ├── id.rs          # ID generation
+│   ├── time.rs        # Time formatting
+│   └── ...            # 7 utility modules total
+└── error.rs           # UtilsError types
+```
 
 ---
 
@@ -59,10 +129,11 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 - Standard library only
 - `thiserror` for error types
 - `serde` for serialization (optional feature)
+- `mcb-utils` (shared constants and utilities)
 
 #### Prohibited Dependencies
 
-- NO dependencies on other MCB crates
+- NO dependencies on other MCB crates except `mcb-utils`
 - NO infrastructure concerns (HTTP, database, filesystem)
 - NO concrete implementations (only trait definitions)
 
@@ -86,69 +157,14 @@ mcb-domain/src/
 
 ---
 
-### Layer 2: mcb-application (Use Cases)
-
-**Purpose**: Application services, use cases, business logic orchestration
-
-#### Allowed Dependencies
-
-- `mcb-domain` (ports, entities, errors)
-- `async-trait` for async traits
-- `tokio` for async runtime
-- `linkme` for provider registration
-
-#### Prohibited Dependencies
-
-- NO direct dependency on `mcb-providers` (use ports from mcb-domain)
-- NO direct dependency on `mcb-infrastructure` (use DI)
-- NO HTTP/transport concerns
-
-#### Exports
-
-- Services: `ContextService`, `SearchService`, `IndexingService`
-- Registry: `EMBEDDING_PROVIDERS`, `VECTOR_STORE_PROVIDERS` (linkme slices)
-- Admin ports: `IndexingOperationsInterface`, `PerformanceMetricsInterface`
-- Infrastructure ports: `EventBusProvider`, `AuthServiceInterface`
-
-#### Module Structure
-
-```text
-mcb-application/src/
-├── use_cases/          # Application services
-│   ├── context_service.rs
-│   ├── search_service.rs
-│   └── indexing_service.rs
-├── ports/              # Application-level ports
-│   ├── admin/          # Admin operation interfaces
-│   └── registry/       # Provider registry (linkme)
-└── errors/             # Application errors
-```
-
-**Registry Pattern** (linkme):
-
-```rust
-// Declare slice in mcb-application
-#[linkme::distributed_slice]
-pub static EMBEDDING_PROVIDERS: [EmbeddingProviderEntry] = [..];
-
-// Register in mcb-providers
-#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-    name: "ollama",
-    factory: ollama_factory,  // Function pointer
-};
-```
-
----
-
-### Layer 3: mcb-providers (Adapters)
+### Layer 2: mcb-providers (Adapters)
 
 **Purpose**: Concrete implementations of port traits
 
 #### Allowed Dependencies
 
 - `mcb-domain` (implement port traits)
-- `mcb-application` (register in linkme slices)
+- `mcb-utils` (shared constants and utilities)
 - External provider SDKs (OpenAI, Ollama, Milvus, etc.)
 - `linkme` for auto-registration
 
@@ -194,16 +210,16 @@ mcb-providers/src/
 
 ---
 
-### Layer 4: mcb-infrastructure (Infrastructure)
+### Layer 3: mcb-infrastructure (Infrastructure)
 
 **Purpose**: Cross-cutting concerns (DI, config, health, logging, metrics)
 
 #### Allowed Dependencies
 
 - `mcb-domain` (port traits for DI)
-- `mcb-application` (services for DI composition)
 - `mcb-providers` (concrete implementations for DI)
-- `dill` for IoC container (ADR-029)
+- `mcb-utils` (shared constants and utilities)
+- manual composition root via `AppContext` + `init_app()` with `linkme` discovery (ADR-050)
 - `figment` for configuration (ADR-025)
 - Infrastructure libraries (tracing, metrics, etc.)
 
@@ -213,7 +229,7 @@ mcb-providers/src/
 
 #### Exports
 
-- DI: `Catalog`, `build_catalog()`, `get_service<T>()`
+- DI: `AppContext`, `init_app()`, typed accessors
 - Config: `AppConfig`, `load_config()`
 - Handles: `EmbeddingProviderHandle`, `VectorStoreProviderHandle`
 - Admin services: `EmbeddingAdminService`, `VectorStoreAdminService`
@@ -225,10 +241,10 @@ mcb-providers/src/
 
 ```text
 mcb-infrastructure/src/
-├── di/                 # Dependency injection (dill)
-│   ├── catalog.rs      # IoC container
+├── di/                 # Dependency injection (manual composition root)
+│   ├── bootstrap.rs    # AppContext composition root
 │   └── resolvers.rs    # Service resolution
-├── config/             # Configuration (Figment)
+├── config/             # Configuration (Loco YAML)
 │   ├── loader.rs
 │   └── types/
 ├── infrastructure/     # Admin types (metrics, indexing ops)
@@ -238,17 +254,14 @@ mcb-infrastructure/src/
 └── logging/            # Logging configuration (tracing)
 ```
 
-**DI Pattern** (ADR-029):
+**DI Pattern** (ADR-050):
 
 ```rust
-// Build catalog
-pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
-    CatalogBuilder::new()
-        .add_value(config)
-        .add_value(embedding_provider)    // From linkme registry
-        .add_value(embedding_handle)      // RwLock wrapper
-        .add_value(embedding_admin)       // Runtime switching
-        .build()
+// Build AppContext (manual composition root)
+pub async fn init_app(config: AppConfig) -> Result<AppContext> {
+    // resolve providers from linkme registry
+    // construct handles and admin services
+    // return explicit AppContext fields
 }
 
 // Service retrieval via AppContext (bootstrap.rs)
@@ -259,17 +272,16 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 
 ---
 
-### Layer 5: mcb-server (Server/Transport)
+### Layer 4: mcb-server (Server/Transport)
 
 **Purpose**: MCP protocol implementation, HTTP/stdio transport, tool handlers
 
 #### Allowed Dependencies
 
 - `mcb-domain` (entities, errors)
-- `mcb-application` (services via DI)
-- `mcb-infrastructure` (DI catalog, config, health)
+- `mcb-infrastructure` (AppContext bootstrap, config, health)
 - MCP libraries
-- HTTP libraries (Rocket)
+- HTTP libraries (Poem)
 
 #### Prohibited Dependencies
 
@@ -287,7 +299,7 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 mcb-server/src/
 ├── mcp_server.rs       # MCP server core
 ├── transport/          # Transport implementations
-│   ├── http.rs         # HTTP transport (Rocket)
+│   ├── http.rs         # HTTP transport (Poem)
 │   └── stdio.rs        # Stdio transport
 ├── handlers/           # MCP tool handlers
 │   ├── index.rs
@@ -310,7 +322,7 @@ mcb-server/src/
 #### Exports
 
 - Public entities from `mcb-domain`
-- Public services from `mcb-application`
+- Public use-case services from `mcb-infrastructure`
 - Public config from `mcb-infrastructure`
 - Binary entry point in `src/main.rs`
 
@@ -368,10 +380,10 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 };
 ```
 
-### Usage via DI (mcb-application)
+### Usage via DI (mcb-infrastructure)
 
 ```rust
-// Service in mcb-application uses port trait
+// Service wiring in mcb-infrastructure uses port trait
 pub struct ContextService {
     embedding_provider: Arc<dyn EmbeddingProvider>,  // Trait object
 }
@@ -396,12 +408,12 @@ impl ContextService {
 ### Ownership Map
 
 | Concept | Owner | Importers |
-| --------- | ------- | ----------- |
-| Port traits | `mcb-domain` | `mcb-application`, `mcb-providers` |
+|---------|-------|-----------|
+| Port traits | `mcb-domain` | `mcb-providers`, `mcb-infrastructure` |
 | Domain entities | `mcb-domain` | All layers |
-| Services | `mcb-application` | `mcb-infrastructure`, `mcb-server` |
+| Services | `mcb-infrastructure` | `mcb-server` |
 | Providers | `mcb-providers` | `mcb-infrastructure` (via DI) |
-| DI container | `mcb-infrastructure` | `mcb-server` |
+| AppContext composition root | `mcb-infrastructure` | `mcb-server` |
 | Config types | `mcb-infrastructure` | `mcb-server` |
 | MCP handlers | `mcb-server` | None (entry point) |
 
@@ -413,12 +425,12 @@ impl ContextService {
 
 **CA001**: Layer Dependency Violation
 
-- **Example**: `mcb-domain` importing from `mcb-application`
+- **Example**: `mcb-domain` importing from `mcb-providers`
 - **Fix**: Move shared code to domain, or use dependency inversion
 
 **CA002**: Circular Dependency
 
-- **Example**: `mcb-application` → `mcb-infrastructure` → `mcb-application`
+- **Example**: `mcb-providers` → `mcb-infrastructure` → `mcb-providers`
 - **Fix**: Extract interface to domain, use DI
 
 **CA004**: Missing Entity ID
@@ -428,13 +440,28 @@ impl ContextService {
 
 **CA007**: Port Duplication
 
-- **Example**: Port trait defined in both `mcb-domain` and `mcb-application`
-- **Fix**: Define once in `mcb-domain`, import in `mcb-application`
+- **Example**: Port trait defined in both `mcb-domain` and `mcb-infrastructure`
+- **Fix**: Define once in `mcb-domain`, import in `mcb-infrastructure`
 
 **CA008**: Admin Service Typing
 
 - **Example**: Admin service using `Arc<ConcreteType>` instead of `Arc<dyn Trait>`
 - **Fix**: Use trait objects for runtime polymorphism
+
+**CA016**: Constants SSOT Enforcement
+
+- **Example**: `mcb-server` defining `pub mod constants;` instead of using `mcb-utils`
+- **Fix**: Remove local constants module, import from `mcb_utils::constants`
+
+**CA018**: No Proxy/Wrapper Re-exports
+
+- **Example**: `pub use mcb_utils::constants::*;` in non-mcb-utils crates
+- **Fix**: Import directly from `mcb_utils`, remove re-exports
+
+**CA019**: Outer Crate Isolation
+
+- **Example**: `mcb-server` importing from `mcb-providers::embedding::ollama`
+- **Fix**: Import domain traits from `mcb-domain`, not provider implementations
 
 **LAYER002**: Cross-Layer Import Violation
 
@@ -484,7 +511,7 @@ Architecture validation: 0 violations
 **Phase 5**: Integration Validation
 
 - Verify linkme registration
-- Check DI catalog composition
+- Check AppContext composition
 - Validate config loading
 
 **Phase 6**: Metrics Validation
@@ -533,19 +560,19 @@ make validate QUICK=1  # Fast validation
 - **ADR-002**: Async-First Architecture
 - **ADR-013**: Clean Architecture Crate Separation
 - **ADR-023**: Inventory to Linkme Migration
-- **ADR-024**: Handle-Based Dependency Injection (deprecated → ADR-029)
-- **ADR-025**: Figment Configuration Loading
+- **ADR-024**: Handle-Based Dependency Injection (deprecated → ADR-029, superseded by ADR-050)
+- **ADR-025**: Figment Configuration Loading (archived, superseded by ADR-051 Loco YAML)
 - **ADR-027**: Architecture Evolution v0.1.3
-- **ADR-029**: Hexagonal Architecture with dill
+- **ADR-029**: Hexagonal Architecture (superseded by ADR-050)
 
 ---
 
 ## Version History
 
 | Version | Date | Changes |
-| --------- | ------ | --------- |
+|---------|------|---------|
 | v0.2.0 | 2026-01-28 | Baseline documentation for architecture boundaries |
-| v0.2.1 | 2026-02-15 | Fixed crate count to 7, removed non-existent mcb-ast-utils and mcb-language-support |
+| v0.2.1 | 2026-02-15 | Fixed crate count to 6, removed non-existent mcb-ast-utils and mcb-language-support |
 
 ---
 

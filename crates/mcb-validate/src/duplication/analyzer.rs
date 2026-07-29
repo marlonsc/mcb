@@ -1,10 +1,13 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! `DuplicationAnalyzer` and `DuplicationStats` implementation.
 
 use std::fs;
 use std::path::{Path, PathBuf};
 
 use crate::filters::LanguageDetector;
-use crate::pattern_registry::compile_regex;
+use mcb_utils::utils::regex::compile_regex;
 
 use super::detector::{CloneDetector, tokenize_source};
 use super::fingerprint::TokenFingerprinter;
@@ -86,12 +89,11 @@ impl DuplicationAnalyzer {
         let Some(path_str) = path.to_str() else {
             return false;
         };
+        // Normalize path separators to forward slashes for consistent regex matching across OSes
+        let normalized_path = path_str.replace('\\', "/");
         for pattern in &self.thresholds.exclude_patterns {
             let pattern_regex = pattern.replace("**", ".*").replace('*', "[^/]*");
-            if compile_regex(&pattern_regex)
-                .map(|r| r.is_match(path_str))
-                .unwrap_or(false)
-            {
+            if compile_regex(&pattern_regex).is_ok_and(|r| r.is_match(&normalized_path)) {
                 return false;
             }
         }
@@ -116,7 +118,7 @@ impl DuplicationAnalyzer {
             "rb" => "ruby",
             "php" => "php",
             "swift" => "swift",
-            _ => "unknown",
+            _ => mcb_utils::constants::FALLBACK_UNKNOWN,
         }
     }
 

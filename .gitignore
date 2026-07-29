@@ -71,6 +71,7 @@ CONTINUATION_*.md
 
 # OpenCode: ignore runtime (node_modules, bun.lock), no config to track
 .opencode/
+opencode.jsonc
 
 # Codex: ignore runtime cache
 .codex/
@@ -144,6 +145,7 @@ list_unpinned.py
 # Log files
 # ---------------------------------------------------------------------------
 *.log
+.logs/
 *.txt
 !LICENSE.txt
 mcb.20??-??-??
@@ -166,6 +168,7 @@ coverage/
 # ---------------------------------------------------------------------------
 *.bak
 *.bak?
+*.bak.*
 *.bkp
 *.backup
 *.backup*
@@ -256,6 +259,12 @@ reference/
 .mypy_cache/
 .pytest_cache/
 .venv/
+
+# ---------------------------------------------------------------------------
+# Code-intelligence index caches (local only)
+# ---------------------------------------------------------------------------
+.scope/
+.serena/
 
 # ---------------------------------------------------------------------------
 # Archived files (moved out of project, kept locally for reference)

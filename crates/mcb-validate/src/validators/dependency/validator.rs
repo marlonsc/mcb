@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
@@ -101,6 +104,6 @@ impl DependencyValidator {
 
 crate::impl_validator!(
     DependencyValidator,
-    "dependency",
+    mcb_utils::constants::validate::VALIDATOR_DEPENDENCY,
     "Validates Clean Architecture layer dependencies"
 );

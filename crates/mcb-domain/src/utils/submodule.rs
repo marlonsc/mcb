@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 use crate::entities::submodule::SubmoduleInfo;
 
 /// Helpers for working with submodules in Phase 6 hybrid search.

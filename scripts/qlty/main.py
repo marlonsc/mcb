@@ -4,10 +4,10 @@ import argparse
 import sys
 from pathlib import Path
 
-from qlty.model import Severity, SarifIssue
+from qlty.model import SarifIssue, Severity
 from qlty.parser import parse_sarif_file
-from qlty.runner import run_qlty_check, run_qlty_smells
 from qlty.report import analyze_issues
+from qlty.runner import run_qlty_check, run_qlty_smells
 
 
 def _load_checks_from_file(
@@ -162,7 +162,7 @@ def _apply_exclude_file_filter(
     return filtered
 
 
-def main() -> int:
+def main() -> None:
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Analyze SARIF quality reports")
 
@@ -247,7 +247,7 @@ def main() -> int:
 
     if not all_issues:
         print("✅ No issues found to analyze")
-        return 0
+        return
 
     # Apply filters
     filtered = all_issues
@@ -261,7 +261,7 @@ def main() -> int:
 
     if not filtered:
         print("✅ No issues matched filters")
-        return 0
+        return
 
     # Analyze
     report = analyze_issues(filtered)
@@ -275,8 +275,6 @@ def main() -> int:
         args.report_file.write_text(md_content, encoding="utf-8")
         print(f"\n📝 Detailed report written to {args.report_file}")
 
-    return 0
-
 
 if __name__ == "__main__":
-    sys.exit(main())
+    main()

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#value-objects)
+//!
 use serde::{Deserialize, Serialize};
 
 /// Summary information about an indexed file

@@ -1,20 +1,27 @@
-/// Validation macros (`mk_validators!`, `impl_validator!`, `define_violations!`)
-pub mod macros;
+//! Architecture Validators - Clean Architecture, SOLID, Quality, and hygiene
+//!
+//! **Documentation**: [`docs/modules/validate.md#validators-validators`](../../../../docs/modules/validate.md#validators-validators)
+//!
+//! Validation macros (`impl_validator!`, `define_violations!`) live in `crate::macros`.
 
 pub mod async_patterns;
 pub mod clean_architecture;
 pub mod config_quality;
 pub(crate) mod declarative_support;
 pub mod declarative_validator;
+/// Dependency validation module
 pub mod dependency;
 pub mod documentation;
 pub mod error_boundary;
-/// Hygiene validation (e.g., TODOs, formatting)
+mod helpers;
+/// Hygiene validation module (e.g., TODOs, formatting)
 pub mod hygiene;
+/// Implementation pattern validation module
 pub mod implementation;
 /// KISS principle validation (Keep It Simple, Stupid).
 pub mod kiss;
 pub mod layer_flow;
+/// Naming convention validation module
 pub mod naming;
 /// Organization validation (e.g., directory structure)
 pub mod organization;
@@ -23,14 +30,18 @@ pub mod performance;
 pub mod pmat;
 pub(crate) mod pmat_native;
 pub mod port_adapter;
-/// Quality validation (e.g., unwrap, panic, metrics)
+/// Code quality validation module (unwrap, panic, metrics)
 pub mod quality;
 pub mod refactoring;
+mod runner;
+/// SOLID principles validation module
 pub mod solid;
-/// Single-source-of-truth invariants validator.
+/// Single Source of Truth (SSOT) invariants validator
 pub mod ssot;
 pub mod test_quality;
 pub mod visibility;
+
+pub(crate) use helpers::for_each_non_test_non_comment_line;
 
 pub use self::async_patterns::{AsyncPatternValidator, AsyncViolation};
 pub use self::clean_architecture::{CleanArchitectureValidator, CleanArchitectureViolation};
@@ -51,6 +62,7 @@ pub use self::pmat::{PmatValidator, PmatViolation};
 pub use self::port_adapter::{PortAdapterValidator, PortAdapterViolation};
 pub use self::quality::{QualityValidator, QualityViolation};
 pub use self::refactoring::{RefactoringValidator, RefactoringViolation};
+pub use self::runner::{standard_validator_names, validate_all, validate_named};
 pub use self::solid::{SolidValidator, SolidViolation};
 pub use self::ssot::{SsotValidator, SsotViolation};
 pub use self::test_quality::{TestQualityValidator, TestQualityViolation};

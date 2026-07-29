@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Dependency graph construction and layer-boundary analysis.
 //!
 //! Builds a `petgraph` directed graph from extracted [`Fact`]s, enabling

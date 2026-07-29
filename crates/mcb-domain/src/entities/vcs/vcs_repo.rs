@@ -1,8 +1,11 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-pub use crate::value_objects::RepositoryId;
+use crate::value_objects::RepositoryId;
 
 /// `VcsRepository` entity.
 #[derive(Debug, Clone, Serialize, Deserialize)]

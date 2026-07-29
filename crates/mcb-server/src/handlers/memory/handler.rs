@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 //! Memory handler implementation.
 
 use std::sync::Arc;
@@ -11,12 +14,12 @@ use validator::Validate;
 
 use super::{execution, inject, list_timeline, observation, quality_gate, session};
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
-use crate::constants::fields::FIELD_COUNT;
-use crate::constants::limits::DEFAULT_MEMORY_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::json;
 use crate::utils::mcp::{resolve_identifier_precedence, tool_error};
+use mcb_utils::constants::keys::FIELD_COUNT;
+use mcb_utils::constants::limits::DEFAULT_MEMORY_LIST_LIMIT;
 
 /// Handler for memory-related MCP tool operations.
 ///
@@ -27,12 +30,11 @@ pub struct MemoryHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
 }
 
-impl MemoryHandler {
-    /// Creates a new `MemoryHandler` with the given memory service.
-    pub fn new(memory_service: Arc<dyn MemoryServiceInterface>) -> Self {
-        Self { memory_service }
-    }
+handler_new!(MemoryHandler {
+    memory_service: Arc<dyn MemoryServiceInterface>,
+});
 
+impl MemoryHandler {
     /// Handles a memory tool invocation.
     ///
     /// # Errors
@@ -70,7 +72,10 @@ impl MemoryHandler {
         args: &MemoryArgs,
         action: MemoryResourceAction,
     ) -> Result<CallToolResult, McpError> {
-        match (action, args.resource) {
+        crate::entity_crud_dispatch! {
+            action = action,
+            resource = args.resource,
+            {
             (MemoryResourceAction::Store, MemoryResource::Observation) => {
                 observation::store_observation(&self.memory_service, args).await
             }
@@ -100,6 +105,7 @@ impl MemoryHandler {
             }
             (MemoryResourceAction::Get, MemoryResource::ErrorPattern) => {
                 self.handle_get_error_pattern(args).await
+            }
             }
         }
     }
@@ -154,8 +160,9 @@ impl MemoryHandler {
             McpError::invalid_params("project_id is required for error pattern search", None)
         })?;
 
+        // INTENTIONAL: Optional query parameter; empty string means no filter
         let query = args.query.clone().unwrap_or_default();
-        let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIMIT as u32) as usize;
+        let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIST_LIMIT as u32) as usize;
 
         match self
             .memory_service
@@ -193,7 +200,7 @@ impl MemoryHandler {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 enum MemoryResourceAction {
     Store,
     Get,

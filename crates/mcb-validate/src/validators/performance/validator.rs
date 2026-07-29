@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use crate::config::PerformanceRulesConfig;
 use crate::{Result, ValidationConfig};
 
@@ -45,18 +48,12 @@ impl PerformanceValidator {
 
     /// Check if a crate should be skipped based on configuration.
     pub(crate) fn should_skip_crate(&self, src_dir: &std::path::Path) -> bool {
-        let Some(path_str) = src_dir.to_str() else {
-            return false;
-        };
-        self.rules
-            .excluded_crates
-            .iter()
-            .any(|excluded| path_str.contains(excluded))
+        crate::validators::helpers::should_skip_crate(src_dir, &self.rules.excluded_crates)
     }
 }
 
 crate::impl_validator!(
     PerformanceValidator,
-    "performance",
+    mcb_utils::constants::validate::VALIDATOR_PERFORMANCE,
     "Validates performance patterns (clones, allocations, Arc/Mutex usage)"
 );

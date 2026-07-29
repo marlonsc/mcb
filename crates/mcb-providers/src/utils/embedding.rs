@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 use std::future::Future;
 use std::time::Duration;
 
@@ -23,23 +26,26 @@ pub(crate) struct HttpEmbeddingClient {
     pub(crate) client: Client,
 }
 
+pub(crate) struct HttpEmbeddingClientConfig {
+    pub(crate) api_key: String,
+    pub(crate) base_url: Option<String>,
+    pub(crate) default_base_url: String,
+    pub(crate) model: String,
+    pub(crate) timeout: Duration,
+    pub(crate) client: Client,
+}
+
 impl HttpEmbeddingClient {
-    /// Creates a new HTTP embedding client with the given configuration.
     #[must_use]
-    pub(crate) fn new(
-        api_key: &str,
-        base_url: Option<String>,
-        default_base_url: &str,
-        model: String,
-        timeout: Duration,
-        client: Client,
-    ) -> Self {
+    pub(crate) fn new(config: HttpEmbeddingClientConfig) -> Self {
         Self {
-            api_key: api_key.to_owned(),
-            base_url: base_url.unwrap_or_else(|| default_base_url.to_owned()),
-            model,
-            timeout,
-            client,
+            api_key: config.api_key,
+            base_url: config
+                .base_url
+                .unwrap_or_else(|| config.default_base_url.clone()),
+            model: config.model,
+            timeout: config.timeout,
+            client: config.client,
         }
     }
 }
@@ -96,7 +102,7 @@ pub(crate) fn parse_standard_embedding(
 ) -> Result<Embedding> {
     let embedding_vec = super::http::parse_embedding_vector(
         item,
-        crate::constants::EMBEDDING_RESPONSE_FIELD,
+        mcb_utils::constants::embedding::EMBEDDING_RESPONSE_FIELD,
         index,
     )?;
     Ok(Embedding {

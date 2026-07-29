@@ -1,5 +1,8 @@
 //! Workflow FSM entities for session state management and transitions.
 //!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
+//!
+//!
 //! This module implements the finite state machine (FSM) for workflow orchestration.
 //! It defines the various states, transition triggers, and audit records required
 //! to manage the lifecycle of an agent-led workflow session.
@@ -171,27 +174,34 @@ pub struct Transition {
     pub timestamp: i64,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+/// Input payload for creating a transition record.
+pub struct TransitionInput {
+    /// Unique identifier for the transition record.
+    pub id: String,
+    /// Session identifier where the transition happened.
+    pub session_id: String,
+    /// Previous workflow state.
+    pub from_state: WorkflowState,
+    /// Next workflow state.
+    pub to_state: WorkflowState,
+    /// Trigger that caused the transition.
+    pub trigger: TransitionTrigger,
+    /// Optional guard evaluation result.
+    pub guard_result: Option<String>,
+}
+
 impl Transition {
-    /// Creates a new transition audit record.
-    ///
-    /// # Parameters
-    /// TODO(qlty): Function with many parameters (count = 6).
+    /// Creates a new transition audit record from a structured input.
     #[must_use]
-    pub fn new(
-        id: String,
-        session_id: String,
-        from_state: WorkflowState,
-        to_state: WorkflowState,
-        trigger: TransitionTrigger,
-        guard_result: Option<String>,
-    ) -> Self {
+    pub fn new(input: TransitionInput) -> Self {
         Self {
-            id,
-            session_id,
-            from_state,
-            to_state,
-            trigger,
-            guard_result,
+            id: input.id,
+            session_id: input.session_id,
+            from_state: input.from_state,
+            to_state: input.to_state,
+            trigger: input.trigger,
+            guard_result: input.guard_result,
             timestamp: Utc::now().timestamp(),
         }
     }

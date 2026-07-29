@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Code fact extraction from source files.
 //!
 //! This module provides AST-based extraction of code "facts" (modules, structs,

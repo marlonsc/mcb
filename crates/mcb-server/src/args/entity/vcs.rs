@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use validator::Validate;

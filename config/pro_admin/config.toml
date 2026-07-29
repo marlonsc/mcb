@@ -1,0 +1,19 @@
+[site.theme]
+# Title of admin panel
+title = "MCB Admin"
+# File path of admin panel logo
+logo = "/admin/favicon.ico"
+# File path of admin panel login banner
+login_banner = "/admin/logo.png"
+
+[site.navbar]
+# Whether to show the GraphQL playground button
+graphql_playground = true
+
+[site.menu]
+# Title of "Dashboard" in the menu
+dashboard = { title = "Dashboard" }
+# Title of "Raw Tables" in the menu
+raw_table = { title = "Tables" }
+# Title of "Composite Tables" in the menu
+composite_table = { title = "Composite" }

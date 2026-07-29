@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use std::path::PathBuf;
 use std::sync::Arc;
 
@@ -22,7 +25,10 @@ pub async fn list_repositories(
         .map(PathBuf::from)
         .or_else(|| std::env::current_dir().ok())
         .ok_or_else(|| {
-            tracing::error!("no repo_path provided and current_dir() failed");
+            mcb_domain::error!(
+                "list_repositories",
+                "no repo_path provided and current_dir() failed"
+            );
             McpError::invalid_params(
                 "repo_path is required when working directory cannot be determined",
                 None,
@@ -34,10 +40,19 @@ pub async fn list_repositories(
         .await
         .map_err(|e| to_opaque_mcp_error(&e))?;
 
-    let repositories: Vec<String> = discovered_repos
+    let mut repositories: Vec<String> = discovered_repos
         .iter()
+        // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
         .map(|repo| repo.path().to_str().unwrap_or_default().to_owned())
         .collect();
+
+    // Sort alphabetically for deterministic output across environments.
+    repositories.sort();
+
+    // Apply limit if specified.
+    if let Some(limit) = args.limit {
+        repositories.truncate(limit as usize);
+    }
 
     let result = ListRepositoriesResponse {
         count: repositories.len(),

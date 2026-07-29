@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 //! VCS Commit Entity
 //!
 //! This module defines the `VcsCommit` entity, representing a single commit
@@ -18,29 +21,37 @@ pub struct VcsCommit {
     parent_hashes: Vec<String>,
 }
 
+/// `VcsCommitInput` struct.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct VcsCommitInput {
+    /// Unique identifier
+    pub id: String,
+    /// Commit hash
+    pub hash: String,
+    /// Commit message
+    pub message: String,
+    /// Author name
+    pub author: String,
+    /// Author email
+    pub author_email: String,
+    /// Unix timestamp
+    pub timestamp: i64,
+    /// Parent commit hashes
+    pub parent_hashes: Vec<String>,
+}
+
 impl VcsCommit {
-    /// Creates a new `VcsCommit` instance.
-    ///
-    /// # Parameters
-    /// TODO(qlty): Function with many parameters (count = 7).
+    /// Creates a new `VcsCommit`.
     #[must_use]
-    pub fn new(
-        id: String,
-        hash: String,
-        message: String,
-        author: String,
-        author_email: String,
-        timestamp: i64,
-        parent_hashes: Vec<String>,
-    ) -> Self {
+    pub fn new(input: VcsCommitInput) -> Self {
         Self {
-            id,
-            hash,
-            message,
-            author,
-            author_email,
-            timestamp,
-            parent_hashes,
+            id: input.id,
+            hash: input.hash,
+            message: input.message,
+            author: input.author,
+            author_email: input.author_email,
+            timestamp: input.timestamp,
+            parent_hashes: input.parent_hashes,
         }
     }
 

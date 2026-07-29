@@ -1,6 +1,8 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Golden Tests Contract
 
+**Total test count: 118 tests across 14 sections**
+
 Golden tests validate**real** MCP tool behaviour: indexing, search, status, and
 clear. They run with the real DI stack (FastEmbedProvider + EdgeVecVectorStoreProvider) and
 assert on handler responses and content.
@@ -88,3 +90,158 @@ assert on handler responses and content.
   strengthening tests.
 - Golden-queries E2E is split into three tests (setup, one query, all handlers
   succeed) to keep each test short and avoid timeouts.
+
+---
+
+## 6. Org Entity CRUD (19 tests)
+
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+| Test | Contract |
+| ------ | ---------- |
+| `golden_org_create_and_get` | org_entity (action=create, resource=org) with data succeeds; org_entity (action=get, resource=org) with id succeeds; response contains id and name. |
+| `golden_org_list` | org_entity (action=list, resource=org) succeeds; response is array with at least 2 orgs. |
+| `golden_org_update` | org_entity (action=update, resource=org) with updated data succeeds; get after update reflects changes. |
+| `golden_org_delete` | org_entity (action=delete, resource=org) succeeds; get after delete fails. |
+| `golden_org_create_missing_data` | org_entity (action=create, resource=org) without data fails. |
+| `golden_user_create_and_get` | org_entity (action=create, resource=user) with data succeeds; get returns user with id, email, org_id. |
+| `golden_user_get_by_email` | org_entity (action=get, resource=user) with email succeeds; returns matching user. |
+| `golden_user_list_by_org` | org_entity (action=list, resource=user) with org_id succeeds; returns array of users for that org. |
+| `golden_user_update` | org_entity (action=update, resource=user) with updated data succeeds; get reflects changes. |
+| `golden_user_delete` | org_entity (action=delete, resource=user) succeeds; get after delete fails. |
+| `golden_user_create_missing_data` | org_entity (action=create, resource=user) without data fails. |
+| `golden_user_get_missing_id_and_email` | org_entity (action=get, resource=user) without id/email fails with appropriate error. |
+| `golden_team_create_and_get` | org_entity (action=create, resource=team) with data succeeds; get returns team with id. |
+| `golden_team_list` | org_entity (action=list, resource=team) with org_id succeeds; returns array with at least 2 teams. |
+| `golden_team_delete` | org_entity (action=delete, resource=team) succeeds; get after delete fails. |
+| `golden_team_update_unsupported` | org_entity (action=update, resource=team) returns unsupported error. |
+| `golden_team_member_add_and_list` | org_entity (action=create, resource=team_member) succeeds; list returns members including newly added. |
+| `golden_team_member_remove` | org_entity (action=delete, resource=team_member) succeeds; list after delete no longer includes member. |
+| `golden_team_member_get_unsupported` | org_entity (action=get, resource=team_member) returns unsupported error. |
+
+---
+
+## 7. Data Isolation (6 tests)
+
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+| Test | Contract |
+| ------ | ---------- |
+| `golden_isolation_users_scoped_to_org` | Users created in org-A do not appear in org-B user list. |
+| `golden_isolation_teams_scoped_to_org` | Teams created in org-A do not appear in org-B team list. |
+| `golden_isolation_api_keys_scoped_to_org` | API keys created in org-A do not appear in org-B api key list. |
+| `golden_isolation_org_a_invisible_to_org_b` | Full scenario: users, teams, and keys in org-A are invisible to org-B lists. |
+| `golden_isolation_cross_org_get_fails` | Attempting to get a user from org-A using org-B context returns empty or error. |
+| `golden_isolation_both_orgs_coexist` | Both orgs can coexist; each lists only its own users. |
+
+---
+
+## 8. API Key Lifecycle (9 tests)
+
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+| Test | Contract |
+| ------ | ---------- |
+| `golden_api_key_create_and_get` | org_entity (action=create, resource=api_key) with data succeeds; get returns key with id, user_id, org_id, name, key_hash. |
+| `golden_api_key_list_by_org` | org_entity (action=list, resource=api_key) with org_id succeeds; returns array of keys for that org. |
+| `golden_api_key_revoke` | org_entity (action=update, resource=api_key) with revoked_at timestamp succeeds; get reflects revoked_at. |
+| `golden_api_key_delete` | org_entity (action=delete, resource=api_key) succeeds; get after delete fails. |
+| `golden_api_key_create_with_scopes` | org_entity (action=create, resource=api_key) with scopes_json succeeds; get returns scopes. |
+| `golden_api_key_create_with_expiration` | org_entity (action=create, resource=api_key) with expires_at succeeds; get returns expires_at. |
+| `golden_api_key_revoke_sets_timestamp` | org_entity (action=update, resource=api_key) with revoked_at sets timestamp > 0. |
+| `golden_api_key_create_missing_data` | org_entity (action=create, resource=api_key) without data fails. |
+| `golden_api_key_full_lifecycle` | Create → list (1 key) → revoke → list (1 revoked) → delete → list (0 keys). |
+
+---
+
+## 9. Session Lifecycle (6 tests)
+
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+| Test | Contract |
+| ------ | ---------- |
+| `golden_session_create_and_get` | session (action=create) with data succeeds; get returns session with id, status=active, agent_type, model, started_at. |
+| `golden_session_list` | session (action=list) succeeds; returns array with at least 2 sessions and count field. |
+| `golden_session_end` | session (action=update) with status=completed succeeds; get reflects completed status. |
+| `golden_session_create_missing_data` | session (action=create) without data returns error or is_error=true. |
+| `golden_session_get_nonexistent` | session (action=get) with fake id returns error or 'not found' text. |
+| `golden_session_summary` | session (action=summarize) with data succeeds; response contains summary_id or session_id. |
+
+---
+
+## 10. VCS Entity CRUD (10 tests)
+
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+| Test | Contract |
+| ------ | ---------- |
+| `golden_vcs_repo_create_and_get` | vcs_entity (action=create, resource=repository) with data succeeds; get returns repo with id, name, url. |
+| `golden_vcs_repo_list` | vcs_entity (action=list, resource=repository) with org_id and project_id succeeds; returns array with at least 2 repos. |
+| `golden_vcs_repo_update` | vcs_entity (action=update, resource=repository) with updated data succeeds; get reflects changes. |
+| `golden_vcs_repo_delete` | vcs_entity (action=delete, resource=repository) succeeds; get after delete fails. |
+| `golden_vcs_branch_create_and_get` | vcs_entity (action=create, resource=branch) with data succeeds; get returns branch with id, name, repository_id. |
+| `golden_vcs_branch_list` | vcs_entity (action=list, resource=branch) with repository_id succeeds; returns array with at least 2 branches. |
+| `golden_vcs_branch_delete` | vcs_entity (action=delete, resource=branch) succeeds; get after delete fails. |
+| `golden_vcs_worktree_create_and_get` | vcs_entity (action=create, resource=worktree) with data succeeds; get returns worktree with id, repository_id, branch_id. |
+| `golden_vcs_worktree_list` | vcs_entity (action=list, resource=worktree) with repository_id succeeds; returns array with at least 2 worktrees. |
+| `golden_vcs_worktree_delete` | vcs_entity (action=delete, resource=worktree) succeeds; get after delete fails. |
+
+---
+
+## 11. Plan Entity CRUD (12 tests)
+
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+| Test | Contract |
+| ------ | ---------- |
+| `golden_plan_create_and_get` | plan_entity (action=create, resource=plan) with data succeeds; get returns plan with id, title, project_id. |
+| `golden_plan_list` | plan_entity (action=list, resource=plan) with project_id succeeds; returns array with at least 2 plans. |
+| `golden_plan_update` | plan_entity (action=update, resource=plan) with updated data succeeds; get reflects changes. |
+| `golden_plan_delete` | plan_entity (action=delete, resource=plan) succeeds; get after delete fails. |
+| `golden_plan_version_create_and_get` | plan_entity (action=create, resource=version) with data succeeds; get returns version with id, plan_id, version_number. |
+| `golden_plan_version_list` | plan_entity (action=list, resource=version) with plan_id succeeds; returns array with at least 2 versions. |
+| `golden_plan_version_delete` | plan_entity (action=delete, resource=version) either unsupported or succeeds; get after delete fails if supported. |
+| `golden_plan_review_create_and_get` | plan_entity (action=create, resource=review) with data succeeds; get returns review with id, plan_version_id, verdict. |
+| `golden_plan_review_list` | plan_entity (action=list, resource=review) with plan_version_id succeeds; returns array with at least 2 reviews. |
+| `golden_plan_review_delete` | plan_entity (action=delete, resource=review) either unsupported or succeeds; get after delete fails if supported. |
+| `golden_plan_create_missing_data` | plan_entity (action=create, resource=plan) without data fails. |
+| `golden_plan_get_nonexistent` | plan_entity (action=get, resource=plan) with fake id fails. |
+
+---
+
+## 12. Issue Entity CRUD (13 tests)
+
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+| Test | Contract |
+| ------ | ---------- |
+| `golden_issue_create_and_get` | issue_entity (action=create, resource=issue) with data succeeds; get returns issue with id, title, project_id. |
+| `golden_issue_list` | issue_entity (action=list, resource=issue) with project_id succeeds; returns array with at least 2 issues. |
+| `golden_issue_update_status` | issue_entity (action=update, resource=issue) with status change succeeds; get reflects new status. |
+| `golden_issue_update_assignee` | issue_entity (action=update, resource=issue) with assignee change succeeds; get reflects new assignee. |
+| `golden_issue_delete` | issue_entity (action=delete, resource=issue) succeeds; get after delete fails. |
+| `golden_issue_comment_create_and_get` | issue_entity (action=create, resource=comment) with data succeeds; get returns comment with id, content, issue_id. |
+| `golden_issue_comment_list` | issue_entity (action=list, resource=comment) with issue_id succeeds; returns array with at least 2 comments. |
+| `golden_issue_comment_delete` | issue_entity (action=delete, resource=comment) succeeds; get after delete fails. |
+| `golden_issue_label_create_and_get` | issue_entity (action=create, resource=label) with data succeeds; get returns label with id, name, project_id. |
+| `golden_issue_label_list` | issue_entity (action=list, resource=label) with project_id succeeds; returns array with at least 2 labels. |
+| `golden_issue_label_assign_to_issue` | issue_entity (action=create, resource=label_assignment) succeeds; list returns assignment with label_id. |
+| `golden_issue_create_missing_fields` | issue_entity (action=create, resource=issue) without data fails. |
+| `golden_issue_get_nonexistent` | issue_entity (action=get, resource=issue) with fake id fails. |
+
+---
+
+## 13. Validate Operations (4 tests)
+
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+| Test | Contract |
+| ------ | ---------- |
+| `golden_validate_analyze` | validate (action=analyze, scope=file) with valid file path succeeds; response is not error. |
+| `golden_validate_status` | validate (action=list_rules) succeeds; response is not error and contains validators/count. |
+| `golden_validate_missing_path` | validate (action=run, scope=file) with nonexistent path returns Ok with is_error=true. |
+| `golden_validate_empty_args` | validate (action=analyze) without path returns MCP error. |
+
+---
+
+## 14. Project Operations (4 tests)
+
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+| Test | Contract |
+| ------ | ---------- |
+| `golden_project_create_phase` | project (action=create, resource=phase) returns unsupported error (not yet implemented). |
+| `golden_project_list_phases` | project (action=list, resource=phase) returns unsupported error (not yet implemented). |
+| `golden_project_create_decision` | project (action=create, resource=decision) returns unsupported error (not yet implemented). |
+| `golden_project_missing_project_id` | project (action=get, resource=project) without project_id returns error mentioning project_id is required. |

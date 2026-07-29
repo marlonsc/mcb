@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 use std::path::PathBuf;
 
 use regex::Regex;
@@ -12,22 +15,18 @@ pub fn within_block<F>(lines: &[&str], start_line: usize, mut visitor: F)
 where
     F: FnMut(&str, usize) -> bool,
 {
-    let mut brace_depth = 0;
-    let mut in_block = false;
+    let mut start_offset = 0;
+    let slice = &lines[start_line..];
+    while start_offset < slice.len() && !slice[start_offset].contains('{') {
+        start_offset += 1;
+    }
 
-    for (idx, line) in lines[start_line..].iter().enumerate() {
-        if line.contains('{') {
-            in_block = true;
-        }
-        if in_block {
-            brace_depth += line.chars().filter(|c| *c == '{').count();
-            brace_depth -= line.chars().filter(|c| *c == '}').count();
-
-            if !visitor(line, idx) {
-                break;
-            }
-
-            if brace_depth == 0 {
+    if start_offset < slice.len()
+        && let Some(count) =
+            mcb_domain::utils::analysis::count_balanced_block_lines(slice, usize::MAX)
+    {
+        for (offset, line) in slice[start_offset..count].iter().enumerate() {
+            if !visitor(line, start_offset + offset) {
                 break;
             }
         }
@@ -37,12 +36,17 @@ where
 /// Count lines in a brace-balanced block.
 #[must_use]
 pub fn count_block_lines(lines: &[&str], start_line: usize) -> usize {
-    let mut count = 0;
-    within_block(lines, start_line, |_, _| {
-        count += 1;
-        true
-    });
-    count
+    let mut start_offset = 0;
+    let slice = &lines[start_line..];
+    while start_offset < slice.len() && !slice[start_offset].contains('{') {
+        start_offset += 1;
+    }
+    if let Some(count) = mcb_domain::utils::analysis::count_balanced_block_lines(slice, usize::MAX)
+        && count > start_offset
+    {
+        return count - start_offset;
+    }
+    0
 }
 
 /// Count regex matches inside a brace-balanced block.

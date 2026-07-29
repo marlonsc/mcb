@@ -1,5 +1,7 @@
 //! Language Chunking Provider Implementations
 //!
+//! **Documentation**: [`docs/modules/providers.md#language-providers`](../../../../docs/modules/providers.md#language-providers)
+//!
 //! Provides AST-based code parsing for various programming languages.
 //! This is the single source of truth for all language-related
 //! chunking functionality, including processors and the intelligent chunker.

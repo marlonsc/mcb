@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Code fact data types.
 //!
 //! Defines the [`Fact`], [`FactType`], and [`Location`] types used to represent

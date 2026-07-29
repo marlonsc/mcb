@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#value-objects)
+//!
 use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};

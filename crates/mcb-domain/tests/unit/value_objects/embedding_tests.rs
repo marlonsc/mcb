@@ -1,6 +1,6 @@
 //! Unit tests for Embedding value object
 
-use mcb_domain::Embedding;
+use mcb_domain::value_objects::Embedding;
 use rstest::rstest;
 
 #[rstest]

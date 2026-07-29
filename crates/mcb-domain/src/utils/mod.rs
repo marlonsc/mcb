@@ -1,21 +1,22 @@
-//! Cross-crate utility modules for the MCB workspace.
 //!
-//! **Policy**: See [`UTILITIES_POLICY.md`](./UTILITIES_POLICY.md) for naming, strictness,
-//! and no-wrapper rules before adding code here.
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
+//! Domain-specific utility modules.
+//!
+//! Pure utilities (fs, id, naming, path, sensitivity, time, vcs_context)
+//! live in `mcb-utils` (Layer 0). Import them via `mcb_utils::utils::*`.
 
 /// Complexity and analysis utilities.
 pub mod analysis;
-/// ID generation, deterministic correlation (UUID v5), content hashing, and masking.
-pub mod id;
-/// Canonical path utilities — strict, no fallbacks.
-pub mod path;
+/// Configuration helpers — simplified CA/DI access.
+pub mod config;
 /// Project type detection helpers.
 pub mod project_type;
 /// Submodule path helpers.
 pub mod submodule;
-/// Canonical time utilities — strict, no fallbacks.
-pub mod time;
-/// VCS context data types for memory observations.
-pub mod vcs_context;
+/// MCP text extraction utilities (extract_text, extract_text_with_sep).
+pub mod text;
 
-pub use id::{compute_content_hash, compute_file_hash, correlate_id, mask_id};
+#[cfg(any(test, feature = "test-utils"))]
+/// Test infrastructure — fixtures, constants, service-config helpers.
+pub mod tests;

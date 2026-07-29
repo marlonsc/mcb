@@ -1,7 +1,6 @@
-use super::ViolationFieldFmt;
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
+use super::impl_violation_field_fmt;
 
-impl ViolationFieldFmt for bool {
-    fn fmt_field(&self) -> String {
-        self.to_string()
-    }
-}
+impl_violation_field_fmt!(bool);

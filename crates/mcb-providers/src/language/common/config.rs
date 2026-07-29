@@ -1,9 +1,12 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! Configuration structures for intelligent code chunking
 //!
 //! Defines the core configuration types used for language-specific
 //! chunking rules and settings.
 
-use super::constants::{
+use mcb_utils::constants::lang::{
     DEFAULT_CHUNK_SIZE, NODE_EXTRACTION_DEFAULT_PRIORITY, NODE_EXTRACTION_MAX_DEPTH,
     NODE_EXTRACTION_MIN_LENGTH, NODE_EXTRACTION_MIN_LINES,
 };
@@ -30,7 +33,7 @@ impl NodeExtractionRule {
     #[must_use]
     pub fn primary(types: &[&str]) -> Self {
         Self {
-            node_types: types.iter().map(std::string::ToString::to_string).collect(),
+            node_types: types.iter().map(|s| (*s).to_owned()).collect(),
             min_length: 40,
             min_lines: 2,
             max_depth: 4,
@@ -43,7 +46,7 @@ impl NodeExtractionRule {
     #[must_use]
     pub fn secondary(types: &[&str]) -> Self {
         Self {
-            node_types: types.iter().map(std::string::ToString::to_string).collect(),
+            node_types: types.iter().map(|s| (*s).to_owned()).collect(),
             min_length: 25,
             min_lines: 1,
             max_depth: 3,
@@ -56,7 +59,7 @@ impl NodeExtractionRule {
     #[must_use]
     pub fn tertiary(types: &[&str]) -> Self {
         Self {
-            node_types: types.iter().map(std::string::ToString::to_string).collect(),
+            node_types: types.iter().map(|s| (*s).to_owned()).collect(),
             min_length: 15,
             min_lines: 1,
             max_depth: 2,

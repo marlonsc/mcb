@@ -1,4 +1,7 @@
-use crate::validators::solid::constants::{
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
+use mcb_utils::constants::validate::{
     MAX_AFFIX_LENGTH, MIN_AFFIX_LENGTH, MIN_NAMES_FOR_RELATION_CHECK,
     MIN_WORD_LENGTH_FOR_COMPARISON,
 };
@@ -70,54 +73,54 @@ fn has_purpose_suffix(names: &[String]) -> bool {
         .any(|n| PURPOSE_SUFFIXES.iter().any(|suffix| n.ends_with(suffix)))
 }
 
-fn has_shared_keyword(names: &[String]) -> bool {
-    const DOMAIN_KEYWORDS: [&str; 44] = [
-        "Config",
-        "Options",
-        "Settings",
-        "Error",
-        "Result",
-        "Builder",
-        "Handler",
-        "Provider",
-        "Service",
-        "Health",
-        "Crypto",
-        "Admin",
-        "Http",
-        "Args",
-        "Request",
-        "Response",
-        "State",
-        "Status",
-        "Info",
-        "Data",
-        "Message",
-        "Event",
-        "Token",
-        "Auth",
-        "Cache",
-        "Index",
-        "Search",
-        "Chunk",
-        "Embed",
-        "Vector",
-        "Transport",
-        "Operation",
-        "Mcp",
-        "Protocol",
-        "Server",
-        "Client",
-        "Connection",
-        "Session",
-        "Route",
-        "Endpoint",
-        "Memory",
-        "Observation",
-        "Filter",
-        "Pattern",
-    ];
+const DOMAIN_KEYWORDS: [&str; 44] = [
+    "Config",
+    "Options",
+    "Settings",
+    "Error",
+    "Result",
+    "Builder",
+    "Handler",
+    "Provider",
+    "Service",
+    "Health",
+    "Crypto",
+    "Admin",
+    "Http",
+    "Args",
+    "Request",
+    "Response",
+    "State",
+    "Status",
+    "Info",
+    "Data",
+    "Message",
+    "Event",
+    "Token",
+    "Auth",
+    "Cache",
+    "Index",
+    "Search",
+    "Chunk",
+    "Embed",
+    "Vector",
+    "Transport",
+    "Operation",
+    "Mcp",
+    "Protocol",
+    "Server",
+    "Client",
+    "Connection",
+    "Session",
+    "Route",
+    "Endpoint",
+    "Memory",
+    "Observation",
+    "Filter",
+    "Pattern",
+];
 
+fn has_shared_keyword(names: &[String]) -> bool {
     DOMAIN_KEYWORDS.iter().any(|keyword| {
         let has_keyword: Vec<_> = names.iter().filter(|n| n.contains(keyword)).collect();
         has_keyword.len() > names.len() / 2
@@ -125,7 +128,10 @@ fn has_shared_keyword(names: &[String]) -> bool {
 }
 
 fn has_common_words(names: &[String]) -> bool {
-    let words: Vec<Vec<&str>> = names.iter().map(|n| split_camel_case(n)).collect();
+    let words: Vec<Vec<&str>> = names
+        .iter()
+        .map(|n| mcb_utils::utils::naming::split_camel_case(n))
+        .collect();
 
     if let Some(first_words) = words.first() {
         for word in first_words {
@@ -138,21 +144,4 @@ fn has_common_words(names: &[String]) -> bool {
         }
     }
     false
-}
-
-fn split_camel_case(s: &str) -> Vec<&str> {
-    let mut words = Vec::new();
-    let mut start = 0;
-    for (i, c) in s.char_indices() {
-        if c.is_uppercase() && i > 0 {
-            if start < i {
-                words.push(&s[start..i]);
-            }
-            start = i;
-        }
-    }
-    if start < s.len() {
-        words.push(&s[start..]);
-    }
-    words
 }

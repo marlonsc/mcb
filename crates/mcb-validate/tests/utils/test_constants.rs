@@ -3,7 +3,6 @@
 //! All test crate names, fixture paths, file names, and commonly used
 //! string literals live here. Tests MUST import from this module instead
 //! of hardcoding values.
-#![allow(dead_code)]
 
 // ---------------------------------------------------------------------------
 // Test crate names
@@ -96,6 +95,7 @@ pub const CRATE_LAYER_MAPPINGS: &[(&str, &str, &str)] = &[
     ("infrastructure", "my-infrastructure", "my_infrastructure"),
     ("server", "my-server", "my_server"),
     ("validate", "my-validate", "my_validate"),
+    ("utils", "my-utils", "my_utils"),
 ];
 
 // ---------------------------------------------------------------------------
@@ -112,9 +112,6 @@ pub const FILE_SIZE_LOW_THRESHOLD: usize = 100;
 /// Architecture rule for domain layer boundary.
 pub const RULE_CA001: &str = "CA001";
 
-/// Engine used by architecture rules.
-pub const ENGINE_RUST_RULE: &str = "rust-rule-engine";
-
 /// Expected keyword in CA001 rule name.
 pub const RULE_CA001_NAME_KEYWORD: &str = "Domain";
 
@@ -128,22 +125,6 @@ pub const RUFF_EXTENSION: &str = "py";
 /// Clippy linter file extension.
 pub const CLIPPY_EXTENSION: &str = "rs";
 
-/// Severity level: error.
-pub const SEVERITY_ERROR: &str = "error";
-
-/// Severity level: warning.
-pub const SEVERITY_WARNING: &str = "warning";
-
-/// Severity level: info.
-pub const SEVERITY_INFO: &str = "info";
-
-// ---------------------------------------------------------------------------
-// Ruff rule codes for severity mapping tests
-// ---------------------------------------------------------------------------
-
-/// Ruff error-level rule code.
-pub const RUFF_CODE_ERROR: &str = "F401";
-
 /// Ruff warning-level rule code.
 pub const RUFF_CODE_WARNING: &str = "W291";
 
@@ -155,19 +136,6 @@ pub const CLIPPY_LEVEL_NOTE: &str = "note";
 
 // ---------------------------------------------------------------------------
 // Engine routing constants (used by router_tests)
-// ---------------------------------------------------------------------------
-
-/// Engine name for RETE/GRL-based rules.
-pub const ENGINE_NAME_RETE: &str = "rete";
-
-/// Engine name for expression-based rules.
-pub const ENGINE_NAME_EXPRESSION: &str = "expression";
-
-/// Engine name for rust-rule-engine (full name used in YAML rules).
-pub const ENGINE_NAME_RUST_RULE: &str = "rust-rule-engine";
-
-// ---------------------------------------------------------------------------
-// GRL rule templates (used by rete_engine_tests)
 // ---------------------------------------------------------------------------
 
 /// Simple GRL rule template — single condition, single action.
@@ -216,6 +184,13 @@ pub const UNWRAP_METHOD: &str = "unwrap";
 
 /// Method name detected for `.expect()` calls.
 pub const EXPECT_METHOD: &str = "expect";
+
+// ---------------------------------------------------------------------------
+// Ruff rule codes for severity mapping tests
+// ---------------------------------------------------------------------------
+
+/// Ruff error-level rule code.
+pub const RUFF_CODE_ERROR: &str = "F401";
 
 // ---------------------------------------------------------------------------
 // Inline code snippets for engine tests

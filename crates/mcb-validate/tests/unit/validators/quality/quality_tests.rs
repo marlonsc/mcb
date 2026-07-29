@@ -11,12 +11,16 @@ use crate::utils::test_constants::{
     FIXTURE_SERVER_HANDLER_PATH, INFRA_CRATE, LIB_RS, SERVER_CRATE, TEST_CRATE,
 };
 use crate::utils::*;
+use mcb_domain::utils::tests::assertions::{
+    assert_has_violation_matching, assert_no_violation_from_file, assert_no_violations,
+    assert_violations_exact,
+};
 
 // ─────────────────────────────────────────────────────────────────────────────
 // validate_all() — full workspace, precise assertions
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[test]
+#[rstest]
 fn test_quality_full_workspace() {
     let (_temp, root) =
         with_fixture_workspace(&[TEST_CRATE, DOMAIN_CRATE, SERVER_CRATE, INFRA_CRATE]);
@@ -41,19 +45,9 @@ fn test_quality_full_workspace() {
             // ── PanicInProduction ──────────────────────────────────────
             (&test_lib, 39, "PanicInProduction"),
             // ── TodoComment ────────────────────────────────────────────
-            (&domain_service, 66, "TodoComment"),
             (&domain_service, 71, "TodoComment"),
-            (&domain_service, 151, "TodoComment"),
-            (&domain_service, 159, "TodoComment"),
-            (&domain_service, 180, "TodoComment"),
-            (&domain_service, 183, "TodoComment"),
-            (&test_lib, 9, "TodoComment"),
-            (&test_lib, 15, "TodoComment"),
             (&test_lib, 18, "TodoComment"),
-            (&test_lib, 24, "TodoComment"),
             (&test_lib, 26, "TodoComment"),
-            (&test_lib, 334, "TodoComment"),
-            (&test_lib, 336, "TodoComment"),
             // ── DeadCodeAllowNotPermitted ──────────────────────────────
             (&test_lib, 43, "DeadCodeAllowNotPermitted"),
             (&test_lib, 44, "DeadCodeAllowNotPermitted"),
@@ -108,7 +102,7 @@ fn file_size_threshold_behavior(
 // Exemptions
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[test]
+#[rstest]
 fn test_unwrap_exempt_in_test_code() {
     let (_temp, root) = with_fixture_crate(TEST_CRATE);
     let validator = QualityValidator::new(&root);
@@ -122,7 +116,7 @@ fn test_unwrap_exempt_in_test_code() {
 // Negative test: clean code
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[test]
+#[rstest]
 fn test_clean_code_no_violations() {
     let (_temp, root) = with_inline_crate(
         TEST_CRATE,

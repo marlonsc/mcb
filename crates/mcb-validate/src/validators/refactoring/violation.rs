@@ -1,8 +1,11 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#refactoring)
+//!
 use std::path::PathBuf;
 
 use crate::Severity;
 use crate::define_violations;
-use crate::traits::violation::ViolationCategory;
+use mcb_domain::ports::validation::ViolationCategory;
 
 define_violations! {
     dynamic_severity,

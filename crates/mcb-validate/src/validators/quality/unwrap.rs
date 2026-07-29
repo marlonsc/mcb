@@ -1,12 +1,15 @@
-use super::constants::{
-    COMMENT_SEARCH_RADIUS, IGNORE_HINT_KEYWORDS, LOCK_POISONING_STRINGS, SAFETY_COMMENT_MARKERS,
-};
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#quality)
+//!
 use super::{QualityValidator, QualityViolation};
 use crate::ast::UnwrapDetector;
-use crate::constants::common::TEST_PATH_PATTERNS;
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::TEST_PATH_PATTERNS;
+use mcb_utils::constants::validate::{
+    COMMENT_SEARCH_RADIUS, IGNORE_HINT_KEYWORDS, LOCK_POISONING_STRINGS, SAFETY_COMMENT_MARKERS,
+};
 
 fn has_ignore_hint(line: &str, violation_type: &str) -> bool {
     line.contains(&format!("mcb-validate-ignore: {violation_type}"))
@@ -81,11 +84,15 @@ fn push_violation(
             });
         }
         other => {
-            tracing::debug!(
-                method = other,
-                file = %file.display(),
-                line = detection.line,
-                "unhandled detection method type"
+            mcb_domain::debug!(
+                "unwrap",
+                "unhandled detection method type",
+                &format!(
+                    "method = {:?}, file = {}, line = {}",
+                    other,
+                    file.display(),
+                    detection.line
+                )
             );
         }
     }

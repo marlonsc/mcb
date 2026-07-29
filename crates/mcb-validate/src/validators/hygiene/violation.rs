@@ -1,8 +1,11 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
+//!
 use std::path::PathBuf;
 
 use crate::Severity;
 use crate::define_violations;
-use crate::traits::violation::ViolationCategory;
+use mcb_domain::ports::validation::ViolationCategory;
 
 define_violations! {
     ViolationCategory::Testing,
@@ -28,20 +31,6 @@ define_violations! {
         )]
         BadTestFileName {
             file: PathBuf,
-            suggestion: String,
-            severity: Severity,
-        },
-        /// Test function with incorrect naming
-        #[violation(
-            id = "TEST003",
-            severity = Warning,
-            message = "Bad test function name: {file}:{line} - {function_name} (use {suggestion})",
-            suggestion = "Rename to {suggestion}"
-        )]
-        BadTestFunctionName {
-            file: PathBuf,
-            line: usize,
-            function_name: String,
             suggestion: String,
             severity: Severity,
         },

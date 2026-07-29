@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -49,16 +52,7 @@ pub enum AgentType {
     MultimodalLooker,
 }
 
-impl AgentType {
-    /// Converts the agent type to its string representation.
-    ///
-    /// # Returns
-    /// A static string slice representing the agent type in lowercase.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(AgentType);
 
 impl_from_str!(AgentType, "Unknown agent type: {}. Valid types: sisyphus, oracle, explore, prometheus, momus, librarian, metis, sisyphus-junior (aliases: sisyphus_junior, junior), hephaestus, atlas, multimodal-looker (aliases: multimodal_looker, looker)", {
     "sisyphus" => Self::Sisyphus,
@@ -102,16 +96,7 @@ pub enum AgentSessionStatus {
     Failed,
 }
 
-impl AgentSessionStatus {
-    /// Converts the session status to its string representation.
-    ///
-    /// # Returns
-    /// A static string slice representing the status in lowercase.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(AgentSessionStatus);
 
 impl_from_str!(AgentSessionStatus, "Unknown agent session status: {}", {
     "active" => Self::Active,
@@ -143,16 +128,7 @@ pub enum CheckpointType {
     Config,
 }
 
-impl CheckpointType {
-    /// Converts the checkpoint type to its string representation.
-    ///
-    /// # Returns
-    /// A static string slice representing the checkpoint type in lowercase.
-    #[must_use]
-    pub fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+crate::impl_as_str_from_as_ref!(CheckpointType);
 
 impl_from_str!(CheckpointType, "Unknown checkpoint type: {}", {
     "git" => Self::Git,

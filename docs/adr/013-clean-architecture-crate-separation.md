@@ -17,6 +17,8 @@ implementation_status: Complete
 
 ## Status
 
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+
 Implemented (v0.1.1) - Six crates
 Updated (v0.1.2) - Added mcb-validate as 7th crate
 
@@ -141,7 +143,7 @@ mcb-providers/src/
 Characteristics:
 
 - Depends on `mcb-domain`, `mcb-application`, `mcb-providers`
-- Contains the dill+linkme DI system (ADR-029)
+- Contains the linkme + Handle DI system with AppContext composition root (ADR-050; ADR-029 superseded)
 - Contains configuration management (Figment)
 - Contains cross-cutting services (metrics, events)
 - Provides factories for production provider creation
@@ -152,7 +154,7 @@ Key Directories:
 mcb-infrastructure/src/
 ├── di/
 │   ├── bootstrap.rs    # Application init (init_app)
-│   ├── catalog.rs      # dill Catalog composition root
+│   ├── bootstrap.rs    # AppContext manual composition root
 │   ├── admin.rs        # Admin service wiring
 │   └── resolvers/      # Provider resolvers (from linkme registry)
 ├── config/             # Configuration types (Figment)
@@ -312,7 +314,7 @@ cargo run -p mcb-validate
 
 ### Adding a New Use Case
 
-1. Define service interface in `mcb-application/src/ports/`
+1. Define service interface in `mcb-domain/src/ports/` (port traits are in domain per ADR-029, superseded by ADR-050)
 2. Implement service in `mcb-application/src/services/`
 3. Inject port dependencies via constructor
 4. Wire in `mcb-infrastructure/src/di/` if needed
@@ -329,14 +331,22 @@ async fn test_search_service() {
     // Test without infrastructure
 }
 
-// Integration test (mcb-server) — uses dill Catalog (ADR-029)
+// Integration test (mcb-server) — uses AppContext composition root (ADR-050)
 #[tokio::test]
 async fn test_full_indexing_flow() {
-    let catalog = build_catalog(&config).await?;
-    let service: Arc<dyn IndexingService> = catalog.get().unwrap();
+    let app_context = init_app(config).await?;
+    let service: Arc<dyn IndexingService> = app_context.indexing_service().clone();
     // Uses default providers resolved from config
 }
 ```
+
+## Canonical References
+
+> **Note**: This ADR is a historical decision record. For current architecture
+> details, consult the normative documents listed below.
+
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
 
 ## Related ADRs
 
@@ -346,7 +356,7 @@ async fn test_full_indexing_flow() {
 - [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - mcb-providers organization
 - [ADR-031: Documentation Excellence](031-documentation-excellence.md) - Documentation per crate
 - [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Quality standards per layer
-- [ADR-007: Integrated Web Administration Interface](007-integrated-web-administration-interface.md) - mcb-server admin module
+- [ADR-007: Integrated Web Administration Interface](archive/superseded-007-web-admin-interface.md) - mcb-server admin module
 - [ADR-011: HTTP Transport](011-http-transport-request-response-pattern.md) - mcb-server transport layer
 - [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI in mcb-infrastructure
 - **Extended by**: [ADR-027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Introduces bounded contexts within layers
@@ -354,5 +364,5 @@ async fn test_full_indexing_flow() {
 ## References
 
 - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-- [dill Documentation](https://docs.rs/dill) (current DI; see ADR-029)
+- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI; see ADR-050)
 - Workspace-next refactoring plan (January 2026)

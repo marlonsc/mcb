@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Encryption/decryption service using AES-GCM
 
 use aes_gcm::{
@@ -7,7 +10,7 @@ use aes_gcm::{
 use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{CryptoProvider, EncryptedData};
 
-use crate::constants::crypto::{AES_GCM_KEY_SIZE, AES_GCM_NONCE_SIZE};
+use mcb_utils::constants::crypto::{AES_GCM_KEY_SIZE, AES_GCM_NONCE_SIZE};
 
 /// Encryption/decryption service
 ///
@@ -26,14 +29,11 @@ impl CryptoService {
     /// Returns an error if the master key size is not exactly 32 bytes.
     pub fn new(master_key: Vec<u8>) -> Result<Self> {
         if master_key.len() != AES_GCM_KEY_SIZE {
-            return Err(Error::Configuration {
-                message: format!(
-                    "Invalid master key size: expected {} bytes, got {}",
-                    AES_GCM_KEY_SIZE,
-                    master_key.len()
-                ),
-                source: None,
-            });
+            return Err(Error::configuration(format!(
+                "Invalid master key size: expected {} bytes, got {}",
+                AES_GCM_KEY_SIZE,
+                master_key.len()
+            )));
         }
 
         Ok(Self { master_key })
