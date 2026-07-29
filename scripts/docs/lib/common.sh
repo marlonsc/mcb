@@ -224,6 +224,8 @@ find_markdown_files() {
         -not -path "*/third-party/*" \
         -not -path "*/node_modules/*" \
         -not -path "*/target/*" \
+        -not -path "*.bak/*" \
+        -not -path "*.bkp/*" \
         2>/dev/null
 }
 

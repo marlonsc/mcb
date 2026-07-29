@@ -16,9 +16,8 @@ use std::time::Duration;
 
 use hostname;
 use mcb_domain::{debug, error, info, warn};
-use mcb_utils::constants::FALLBACK_UNKNOWN;
 use mcb_utils::constants::headers::{
-    HEADER_AGENT_PROGRAM, HEADER_DELEGATED, HEADER_MACHINE_ID, HEADER_MODEL_ID, HEADER_OPERATOR_ID,
+    HEADER_AGENT_PROGRAM, HEADER_DELEGATED, HEADER_MACHINE_ID, HEADER_OPERATOR_ID,
     HEADER_REPO_PATH, HEADER_SESSION_ID, HEADER_WORKSPACE_ROOT,
 };
 use mcb_utils::constants::http::{CONTENT_TYPE_JSON, HTTP_HEADER_CONTENT_TYPE};
@@ -378,15 +377,15 @@ async fn post_mcp_request(
         builder = builder.header(HEADER_OPERATOR_ID, user);
     }
 
-    let machine_id = hostname::get()
+    if let Some(machine_id) = hostname::get()
         .ok()
         .and_then(|h| h.into_string().ok())
         .or_else(|| std::env::var("HOSTNAME").ok())
-        .unwrap_or_else(|| FALLBACK_UNKNOWN.to_owned());
-    builder = builder.header(HEADER_MACHINE_ID, machine_id);
+    {
+        builder = builder.header(HEADER_MACHINE_ID, machine_id);
+    }
 
     builder = builder.header(HEADER_AGENT_PROGRAM, IDE_MCB_CLIENT);
-    builder = builder.header(HEADER_MODEL_ID, FALLBACK_UNKNOWN);
     builder = builder.header(HEADER_DELEGATED, "false");
 
     builder.json(request).send().await

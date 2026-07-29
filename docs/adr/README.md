@@ -103,7 +103,11 @@ These ADRs have been superseded by newer decisions and moved to [`archive/`](arc
 | 029 — Hexagonal Architecture (dill) | [ADR 050](050-manual-composition-root-dill-removal.md) | Replaced by linkme + Handle pattern |
 | 032 — Agent Quality Domain | [ADR 034](034-workflow-core-fsm.md) | Replaced by Workflow Core FSM |
 
-## Version Roadmap (ADR alignment)
+## Historical Version Alignment
+
+This table explains how ADRs map to release themes. It is not a live roadmap or
+task board. Use `bd ready --json` and bead-specific `bd show <id> --json`
+commands for current work state.
 
 | Version | Theme | Key ADRs |
 |---|---|---|
@@ -113,10 +117,14 @@ These ADRs have been superseded by newer decisions and moved to [`archive/`](arc
 | v0.2.1 | Handler consolidation, context boundaries | 033, 039–040 |
 | v0.2.2 | Observability (OpenTelemetry) | 048 |
 | **v0.3.0** | **SeaQL + Loco.rs platform rebuild** | **049–052** |
-| v0.4.0 | Workflow FSM & enforcement policies | 034–038 |
-| v0.5.0 | Integrated context system, knowledge graph | 041–047 |
+| v0.4.0 | Workflow FSM & enforcement policies | 034–038; current backlog tracked in `mcb-6pjx` |
+| v0.5.0 | Integrated context system, knowledge graph | 041–047; create beads before implementation |
 
 ## ADR Status Legend
+
+ADR `status` records the decision lifecycle. Any `implementation_status` value
+inside an ADR is a historical snapshot unless that ADR explicitly names a bead;
+live implementation state is tracked in `bd`.
 
 | Status | Meaning |
 |---|---|
@@ -128,10 +136,10 @@ These ADRs have been superseded by newer decisions and moved to [`archive/`](arc
 
 ## ADR Count
 
-**Total ADRs**: 53 (ADR-001 through ADR-053)
+**Total ADRs**: 55 (ADR-001 through ADR-055)
 
-- **Active**: 48 ADRs in this directory
-- **Archived**: 8 superseded ADRs in [`archive/`](archive/)
+- **Active numbered files**: 50 ADRs in this directory
+- **Archived copies**: 3 superseded ADR files in [`archive/`](archive/)
 - **Core Architecture**: ADR-001–006 (5 active)
 - **v0.2.0 Features**: ADR-008–010 (3 ADRs)
 - **Infrastructure**: ADR-011–022 (12 ADRs)
@@ -139,6 +147,7 @@ These ADRs have been superseded by newer decisions and moved to [`archive/`](arc
 - **v0.2.1 Additions**: ADR-032–033, 039–040 (4 ADRs)
 - **v0.2.2 Observability**: ADR-048 (1 ADR)
 - **v0.3.0 Platform Rebuild**: ADR-049–053 (5 ADRs)
+- **v0.3.2 Governance/SSOT**: ADR-054–055 (2 ADRs)
 - **v0.4.0 Workflow**: ADR-034–038 (5 ADRs)
 - **v0.5.0 Context System**: ADR-041–047 (7 ADRs)
 

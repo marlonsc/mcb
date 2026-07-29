@@ -53,7 +53,7 @@ use mcb_utils::constants::{
 /// # Errors
 ///
 /// Returns a domain error if any service or repository resolution fails.
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments)] // Why: bootstrap wiring requires many independently-configured ports; extraction would obscure the DI graph.
 pub fn build_mcp_server_bootstrap(
     registry_ctx: &dyn std::any::Any,
     db_connection: Arc<dyn std::any::Any + Send + Sync>,

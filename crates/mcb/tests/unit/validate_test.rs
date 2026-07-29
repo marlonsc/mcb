@@ -1,6 +1,6 @@
 //! Integration tests for the validate command.
 
-use mcb::cli::validate::ValidateArgs;
+use mcb::cli::validate::ValidateCliArgs as ValidateArgs;
 use rstest::*;
 use std::fs;
 

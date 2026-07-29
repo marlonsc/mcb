@@ -277,7 +277,7 @@ tools:
             &self.auto_init_sessions,
             &self.auto_init_projects,
         )
-        .await;
+        .await?;
 
         route_tool_call(request, &self.handlers, execution_context).await
     }
@@ -354,17 +354,18 @@ fn merge_meta_overrides(
 /// Auto-create agent session and project per unique context (T10 + T11).
 ///
 /// Uses `DashSet` guards to ensure each session ID and (org, project) pair is
-/// created at most once. Failures are non-fatal: logged as warnings but
-/// never propagated to tool callers.
+/// created at most once. Input validation errors are propagated; DB failures
+/// are logged and swallowed to avoid blocking tool calls.
 async fn auto_create_session_and_project(
     services: &McpServices,
     defaults: &RuntimeDefaults,
     ctx: &ToolExecutionContext,
     init_sessions: &DashSet<String>,
     init_projects: &DashSet<(String, String)>,
-) {
-    auto_create_session(services, defaults, ctx, init_sessions).await;
-    auto_create_project(services, ctx, init_projects).await;
+) -> Result<(), McpError> {
+    auto_create_session(services, defaults, ctx, init_sessions).await?;
+    auto_create_project(services, ctx, init_projects).await?;
+    Ok(())
 }
 
 /// T10: Auto-create an agent session with IDE identity (once per session id).
@@ -373,27 +374,35 @@ async fn auto_create_session(
     defaults: &RuntimeDefaults,
     ctx: &ToolExecutionContext,
     init_sessions: &DashSet<String>,
-) {
+) -> Result<(), McpError> {
     let Some(session_id) = ctx.session_id.as_ref() else {
-        return;
+        return Ok(());
     };
     if !init_sessions.insert(session_id.clone()) {
-        return;
+        return Ok(());
     }
-    let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
+    let now = mcb_utils::utils::time::epoch_secs_i64()
+        .map_err(|e| McpError::internal_error(format!("Failed to get current time: {e}"), None))?;
     let ide_label = defaults
         .agent_program
         .as_deref()
         .or(ctx.agent_program.as_deref())
         .unwrap_or(mcb_utils::constants::ide::IDE_MCB_STDIO);
+    let model = ctx
+        .model_id
+        .clone()
+        .filter(|s| !s.trim().is_empty())
+        .ok_or_else(|| {
+            McpError::internal_error(
+                "model_id is required to auto-create session".to_owned(),
+                None,
+            )
+        })?;
     let session = AgentSession {
         id: session_id.clone(),
         session_summary_id: format!("auto_{}", mcb_utils::utils::id::generate().simple()),
         agent_type: AgentType::Sisyphus,
-        model: ctx
-            .model_id
-            .clone()
-            .unwrap_or_else(|| mcb_utils::constants::FALLBACK_UNKNOWN.to_owned()),
+        model,
         parent_session_id: ctx.parent_session_id.clone(),
         started_at: now,
         ended_at: None,
@@ -407,10 +416,16 @@ async fn auto_create_session(
         project_id: ctx.project_id.clone(),
         worktree_id: ctx.worktree_id.clone(),
     };
-    match services.agent_session.create_session(session).await {
-        Ok(_) => tracing::info!("Auto-session created: {session_id} via {ide_label}"),
-        Err(e) => tracing::warn!("Auto-session creation failed (non-fatal): {e}"),
-    }
+    services
+        .agent_session
+        .create_session(session)
+        .await
+        .map_err(|e| {
+            tracing::warn!("Auto-session creation failed (non-fatal): {e}");
+            McpError::internal_error(format!("Auto-session creation failed: {e}"), None)
+        })?;
+    tracing::info!("Auto-session created: {session_id} via {ide_label}");
+    Ok(())
 }
 
 /// T11: Auto-create a project from VCS context (once per org/project pair).
@@ -418,16 +433,21 @@ async fn auto_create_project(
     services: &McpServices,
     ctx: &ToolExecutionContext,
     init_projects: &DashSet<(String, String)>,
-) {
+) -> Result<(), McpError> {
     let (Some(org_id), Some(repo_path)) = (&ctx.org_id, &ctx.repo_path) else {
-        return;
+        return Ok(());
     };
     let project_name = Path::new(repo_path.as_str())
         .file_name()
         .and_then(|n| n.to_str())
-        .unwrap_or(mcb_utils::constants::FALLBACK_UNKNOWN);
+        .ok_or_else(|| {
+            McpError::internal_error(
+                format!("Invalid repo_path '{repo_path}': cannot derive project name"),
+                None,
+            )
+        })?;
     if !init_projects.insert((org_id.clone(), project_name.to_owned())) {
-        return;
+        return Ok(());
     }
     if services
         .project_workflow
@@ -436,9 +456,10 @@ async fn auto_create_project(
         .is_ok()
     {
         tracing::debug!("Project '{project_name}' already exists for org '{org_id}'");
-        return;
+        return Ok(());
     }
-    let now = mcb_utils::utils::time::epoch_secs_i64().unwrap_or(0);
+    let now = mcb_utils::utils::time::epoch_secs_i64()
+        .map_err(|e| McpError::internal_error(format!("Failed to get current time: {e}"), None))?;
     let project = Project {
         id: mcb_utils::utils::id::generate().to_string(),
         org_id: org_id.clone(),
@@ -447,8 +468,14 @@ async fn auto_create_project(
         created_at: now,
         updated_at: now,
     };
-    match services.project_workflow.create(&project).await {
-        Ok(()) => tracing::info!("Auto-project created: '{project_name}' for org '{org_id}'"),
-        Err(e) => tracing::warn!("Auto-project creation failed (non-fatal): {e}"),
-    }
+    services
+        .project_workflow
+        .create(&project)
+        .await
+        .map_err(|e| {
+            tracing::warn!("Auto-project creation failed (non-fatal): {e}");
+            McpError::internal_error(format!("Auto-project creation failed: {e}"), None)
+        })?;
+    tracing::info!("Auto-project created: '{project_name}' for org '{org_id}'");
+    Ok(())
 }

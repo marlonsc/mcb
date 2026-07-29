@@ -19,7 +19,13 @@ def find_md_files(root_dir, exclude_dirs=None):
     for root, dirs, files in os.walk(root_dir):
         # Filter excludes in-place to prevent traversing them
         # We start iterating from a copy of the list to safely modify it
-        dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith(".")]
+        dirs[:] = [
+            d
+            for d in dirs
+            if d not in exclude_dirs
+            and not d.startswith(".")
+            and not d.endswith((".bak", ".bkp"))
+        ]
 
         md_files.extend(os.path.join(root, f) for f in files if f.endswith(".md"))
     return md_files

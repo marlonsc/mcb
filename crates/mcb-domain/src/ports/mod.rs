@@ -72,9 +72,11 @@ pub use repositories::{
     FileHashRepository, FtsSearchResult, IndexRepository, IndexStats, IssueCommentRegistry,
     IssueEntityRepository, IssueLabelAssignmentManager, IssueLabelRegistry, IssueRegistry,
     MemoryRepository, OrgEntityRepository, OrgRegistry, PlanEntityRepository, PlanRegistry,
-    PlanReviewRegistry, PlanVersionRegistry, ProjectRepository, TeamMemberManager, TeamRegistry,
-    TransitionRepository, UserRegistry, UserWithApiKey, VcsBranchRegistry, VcsEntityRepository,
-    VcsRepositoryRegistry, VcsWorktreeRegistry, WorkflowSessionRepository,
+    PlanReviewRegistry, PlanVersionRegistry, ProjectCrudRepository, ProjectDecisionRepository,
+    ProjectDependencyRepository, ProjectIssueRepository, ProjectPhaseRepository, ProjectRepository,
+    TeamMemberManager, TeamRegistry, TransitionRepository, UserRegistry, UserWithApiKey,
+    VcsBranchRegistry, VcsEntityRepository, VcsRepositoryRegistry, VcsWorktreeRegistry,
+    WorkflowSessionRepository,
 };
 
 // --- Services ---

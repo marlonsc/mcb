@@ -161,7 +161,7 @@ impl SharedTestContext {
     }
 }
 
-fn create_shared_test_context() -> Option<SharedTestContext> {
+fn create_shared_test_context() -> Result<SharedTestContext, String> {
     // Create a persistent multi-thread runtime for provider actor tasks.
     // FastEmbed and EdgeVec use `tokio::spawn` for actor loops that must outlive
     // individual `#[tokio::test]` runtimes (each test creates/drops its own runtime).
@@ -171,7 +171,7 @@ fn create_shared_test_context() -> Option<SharedTestContext> {
             .worker_threads(2)
             .enable_all()
             .build()
-            .ok()?,
+            .map_err(|e| format!("persistent runtime build failed: {e}"))?,
     ));
     // Enter the persistent runtime so tokio::spawn calls (inside provider constructors)
     // target it instead of the calling test's short-lived runtime.
@@ -179,37 +179,38 @@ fn create_shared_test_context() -> Option<SharedTestContext> {
 
     let cache_dir = shared_fastembed_test_cache_dir();
 
-    // Resolve providers through domain registry (pure CA/DI/Linkme)
+    // Resolve providers through domain registry (pure CA/DI/Linkme).
+    // Errors are propagated verbatim — never swallowed — so CI shows the real cause
+    // (model load, runtime nesting, cache miss) instead of a generic "init failed".
     let embedding_config = EmbeddingProviderConfig::new("fastembed")
         .with_cache_dir(cache_dir)
         .with_dimensions(384);
-    let embedding = resolve_embedding_provider(&embedding_config).ok()?;
+    let embedding = resolve_embedding_provider(&embedding_config)
+        .map_err(|e| format!("resolve fastembed embedding provider failed: {e}"))?;
 
     let vs_config = VectorStoreProviderConfig::new("edgevec")
         .with_dimensions(384)
         .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
-    let vector_store = resolve_vector_store_provider(&vs_config).ok()?;
+    let vector_store = resolve_vector_store_provider(&vs_config)
+        .map_err(|e| format!("resolve edgevec vector store provider failed: {e}"))?;
 
-    Some(SharedTestContext {
+    Ok(SharedTestContext {
         embedding,
         vector_store,
     })
 }
 
 /// Process-wide shared test context. Builds once via linkme registry resolution.
-#[must_use]
-pub fn try_shared_app_context() -> Option<&'static SharedTestContext> {
-    static CTX: std::sync::OnceLock<Option<SharedTestContext>> = std::sync::OnceLock::new();
-    CTX.get_or_init(create_shared_test_context).as_ref()
-}
-
-/// Returns the shared test context, or an error if initialization failed.
 ///
 /// # Errors
 ///
-/// Returns an error if the shared context was not initialized.
-pub fn shared_app_context() -> Result<&'static SharedTestContext, &'static str> {
-    try_shared_app_context().ok_or("shared test context init failed")
+/// Returns the underlying provider-resolution error if the shared context could
+/// not be built (propagated verbatim — no hidden failures).
+pub fn shared_app_context() -> Result<&'static SharedTestContext, String> {
+    static CTX: std::sync::OnceLock<Result<SharedTestContext, String>> = std::sync::OnceLock::new();
+    CTX.get_or_init(create_shared_test_context)
+        .as_ref()
+        .map_err(Clone::clone)
 }
 
 // ---------------------------------------------------------------------------

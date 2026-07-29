@@ -23,7 +23,7 @@ implementation_status: Complete
 
 - **Deciders:** Project team
 - **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM)
-- **Related:** [ADR-029](./archive/superseded-029-hexagonal-architecture-dill.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-025](./archive/superseded-025-figment-configuration.md) (Figment)
+- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-051](./051-seaql-loco-platform-rebuild.md) (Figment)
 - **Series:**[ADR-034](./034-workflow-core-fsm.md) →**ADR-035** → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
 
 ## Context
@@ -37,7 +37,7 @@ Today, context discovery is scattered:
 | Git status | Shell `git status --porcelain` | Parsed ad-hoc, not typed, not cached |
 | Branch info | Shell `git branch --show-current` | Same |
 | Issue tracker | `bd ready`, `bd list` (Beads CLI) | External process, JSON parsing, slow |
-| Project phases | `docs/plans/archive/LEGACY_PLANNING_STATE.md` (historical GSD) | Markdown, no schema, no search |
+| Project phases | Beads (`bd`) | Canonical task graph; historical GSD planning files are retired |
 | Stash/commits | Shell commands | No integration with MCB |
 
 **This ADR** defines a typed `ProjectContext` entity and a `ContextScoutProvider` port that discovers and caches project state using `git2` (already in MCB's dependency tree) and direct SQLite queries (for issues/phases stored by the workflow engine).
@@ -586,7 +586,7 @@ impl VcsProvider for Git2Provider {
         name: &str,
         from: Option<&str>,
     ) -> Result<(), WorkflowError> {
-        // TODO: Implementation following spawn_blocking pattern
+        // Historical sketch: branch creation would follow the spawn_blocking pattern.
         unimplemented!("create_branch")
     }
 
@@ -595,17 +595,17 @@ impl VcsProvider for Git2Provider {
         path: &Path,
         branch: &str,
     ) -> Result<(), WorkflowError> {
-        // TODO: Implementation using git2::Repository::open_worktree or git2-sys raw calls
+        // Historical sketch: worktree creation would use git2 worktree APIs.
         unimplemented!("create_worktree")
     }
 
     async fn remove_worktree(&self, path: &Path) -> Result<(), WorkflowError> {
-        // TODO: Implementation
+        // Historical sketch: remove the worktree through the VCS provider boundary.
         unimplemented!("remove_worktree")
     }
 
     async fn stage_files(&self, paths: &[String]) -> Result<(), WorkflowError> {
-        // TODO: Implementation
+        // Historical sketch: stage files through the VCS provider boundary.
         unimplemented!("stage_files")
     }
 
@@ -615,17 +615,17 @@ impl VcsProvider for Git2Provider {
         author_name: Option<&str>,
         author_email: Option<&str>,
     ) -> Result<String, WorkflowError> {
-        // TODO: Implementation
+        // Historical sketch: commit through the VCS provider boundary.
         unimplemented!("commit")
     }
 
     async fn push(&self, branch: &str, force: bool) -> Result<(), WorkflowError> {
-        // TODO: Implementation
+        // Historical sketch: push through the VCS provider boundary.
         unimplemented!("push")
     }
 
     async fn pull(&self, branch: Option<&str>) -> Result<(), WorkflowError> {
-        // TODO: Implementation
+        // Historical sketch: pull through the VCS provider boundary.
         unimplemented!("pull")
     }
 
@@ -1535,7 +1535,10 @@ WHERE i.status = 'open'
 - **VCS Provider Abstraction**: All VCS operations flow through `VcsProvider` trait (never direct git2). Enables MVP with git2 + Phase 2+ with GitHub/GitLab APIs.
 - **Worktree Isolation**: Each workflow session gets dedicated worktree. Multiple sessions work independently without conflicts.
 - **Worktree Safety**: Entire worktree can be discarded if task fails; main repo unaffected. Enables easy rollback and retry.
-- **Zero shell dependencies**: All discovery via `git2` FFI and direct SQLite — no `git`, `bd`, or `legacy-planning/` commands.
+- **Zero shell dependencies in the provider**: discovery uses `git2` FFI and
+  typed state adapters instead of shelling out to `git`, `bd`, or retired
+  `legacy-planning/` commands. While Beads remains the operational task graph,
+  integration must read it through the typed adapter boundary.
 - **Typed state**: `ProjectContext` with strong types eliminates String parsing errors.
 - **Performant**: Moka cache with 30s TTL. Cold: 5–20ms (git2). Warm: < 1ms.
 - **Composable**: `git_status()` and `tracker_state()` can be called independently for partial discovery.
@@ -1624,7 +1627,7 @@ WHERE i.status = 'open'
   status patterns
 - [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — FSM and
   persistence layer (dependency)
-- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md)
+- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md)
   — DI pattern (superseded by ADR-050)
 - [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md)
   — Schema reference

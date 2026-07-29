@@ -61,7 +61,7 @@ impl GitProvider {
         repo.head()
             // INTENTIONAL: Best-effort default branch detection; falls back to None
             .ok()
-            .and_then(|head| head.shorthand().map(String::from))
+            .and_then(|head| head.shorthand().ok().map(String::from))
             .ok_or_else(|| {
                 Error::vcs(
                     "Cannot determine default branch: repository has no HEAD (possibly empty/uninitialized)",
@@ -73,7 +73,7 @@ impl GitProvider {
         repo.find_remote("origin")
             // INTENTIONAL: Best-effort remote URL detection; falls back to None
             .ok()
-            .and_then(|remote| remote.url().map(String::from))
+            .and_then(|remote| remote.url().ok().map(String::from))
     }
 
     fn list_branch_names(repo: &Repository) -> Result<Vec<String>> {
@@ -109,6 +109,7 @@ impl GitProvider {
     /// Convert a git2 delta status to our domain `DiffStatus`.
     fn delta_to_status(delta: git2::Delta) -> DiffStatus {
         #[allow(clippy::wildcard_enum_match_arm)]
+        // Why: git2::Delta has many uncommon variants that all map to DiffStatus::Modified.
         match delta {
             git2::Delta::Added => DiffStatus::Added,
             git2::Delta::Deleted => DiffStatus::Deleted,
@@ -319,7 +320,7 @@ impl VcsProvider for GitProvider {
         let mut files = Vec::new();
         tree.walk(git2::TreeWalkMode::PreOrder, |dir, entry| {
             if entry.kind() == Some(git2::ObjectType::Blob)
-                && let Some(name) = entry.name()
+                && let Ok(name) = entry.name()
             {
                 let path = if dir.is_empty() {
                     PathBuf::from(name)

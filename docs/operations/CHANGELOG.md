@@ -13,6 +13,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.2] - 2026-06-07
+
+### Added
+
+- Tiered CI/release gate tracking through beads for the v0.3.2 release lane.
+- Release workflow recovery via `workflow_dispatch(tag)` and fail-soft artifact publishing.
+
+### Changed
+
+- CI uses nextest, typos, isolated rust-cache keys, and extended cross-platform coverage/test timeouts for cold cache runs.
+- Project task-status docs now point to `bd` instead of carrying duplicate roadmap or TODO queues.
+
+### Fixed
+
+- ADR/docs validation tracking now resolves through bead-backed evidence instead of duplicate release checklists.
+
+---
+
 ## [0.3.1] - 2026-06-06
 
 ### Added

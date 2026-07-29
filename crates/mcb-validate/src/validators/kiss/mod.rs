@@ -44,6 +44,7 @@ crate::define_validator! {
     }
 
     violations: dynamic_severity, ViolationCategory::Kiss,
+    /// KISS principle violation kinds.
     pub enum KissViolation {
         /// Struct has too many fields, violating simplicity.
         #[violation(

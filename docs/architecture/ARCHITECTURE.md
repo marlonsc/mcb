@@ -1975,7 +1975,7 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 
 - [ADR-005](../adr/005-context-cache-support.md) Context Cache
 - [ADR-006](../adr/006-code-audit-and-improvements.md) Code Audit
-- [ADR-007](../adr/archive/superseded-007-web-admin-interface.md) Admin UI (archived)
+- [ADR-007](../adr/051-seaql-loco-platform-rebuild.md) Admin UI (archived)
 - [ADR-010](../adr/010-hooks-subsystem-agent-backed.md) Hooks
 - [ADR-011](../adr/011-http-transport-request-response-pattern.md) HTTP Transport
 - [ADR-012](../adr/012-di-strategy-two-layer-approach.md) Two-Layer DI
@@ -1989,8 +1989,8 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 - [ADR-021](../adr/021-dependency-management.md) Dependency Mgmt
 - [ADR-022](../adr/022-ci-integration-strategy.md) CI
 - [ADR-023](../adr/023-inventory-to-linkme-migration.md) Linkme
-- [ADR-025](../adr/archive/superseded-025-figment-configuration.md) Figment (archived, see ADR-051)
-- [ADR-026](../adr/archive/superseded-026-routing-refactor-rocket-poem.md) Routing (archived, see ADR-049)
+- [ADR-025](../adr/051-seaql-loco-platform-rebuild.md) Figment (archived, see ADR-051)
+- [ADR-026](../adr/049-axum-return-rmcp-tower-compatibility.md) Routing (archived, see ADR-049)
 - [ADR-027](../adr/027-architecture-evolution-v013.md) Arch Evolution
 - [ADR-028](../adr/028-advanced-code-browser-v020.md) Code Browser
 - [ADR-030](../adr/030-multi-provider-strategy.md) Multi-Provider

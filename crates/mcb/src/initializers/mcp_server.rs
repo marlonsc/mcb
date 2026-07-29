@@ -27,15 +27,14 @@ use tokio_util::sync::CancellationToken;
 /// Build the embedding provider config from the resolved `AppConfig`.
 fn build_embedding_config(
     app_config: &mcb_infrastructure::config::app::AppConfig,
-) -> EmbeddingProviderConfig {
-    let mut embed_cfg = EmbeddingProviderConfig::new(
-        app_config
-            .providers
-            .embedding
-            .provider
-            .as_deref()
-            .unwrap_or(mcb_utils::constants::DEFAULT_NULL_PROVIDER),
-    );
+) -> Result<EmbeddingProviderConfig, loco_rs::Error> {
+    let provider = app_config
+        .providers
+        .embedding
+        .provider
+        .as_deref()
+        .ok_or_else(|| loco_rs::Error::string("Embedding provider is not configured"))?;
+    let mut embed_cfg = EmbeddingProviderConfig::new(provider);
     if let Some(ref v) = app_config.providers.embedding.cache_dir {
         embed_cfg = embed_cfg.with_cache_dir(v.clone());
     }
@@ -51,21 +50,20 @@ fn build_embedding_config(
     if let Some(d) = app_config.providers.embedding.dimensions {
         embed_cfg = embed_cfg.with_dimensions(d);
     }
-    embed_cfg
+    Ok(embed_cfg)
 }
 
 /// Build the vector store provider config from the resolved `AppConfig`.
 fn build_vector_store_config(
     app_config: &mcb_infrastructure::config::app::AppConfig,
-) -> VectorStoreProviderConfig {
-    let mut vec_cfg = VectorStoreProviderConfig::new(
-        app_config
-            .providers
-            .vector_store
-            .provider
-            .as_deref()
-            .unwrap_or(mcb_utils::constants::DEFAULT_NULL_PROVIDER),
-    );
+) -> Result<VectorStoreProviderConfig, loco_rs::Error> {
+    let provider = app_config
+        .providers
+        .vector_store
+        .provider
+        .as_deref()
+        .ok_or_else(|| loco_rs::Error::string("Vector store provider is not configured"))?;
+    let mut vec_cfg = VectorStoreProviderConfig::new(provider);
     if let Some(ref v) = app_config.providers.vector_store.address {
         vec_cfg = vec_cfg.with_uri(v.clone());
     }
@@ -75,7 +73,7 @@ fn build_vector_store_config(
     if let Some(d) = app_config.providers.vector_store.dimensions {
         vec_cfg = vec_cfg.with_dimensions(d);
     }
-    vec_cfg
+    Ok(vec_cfg)
 }
 
 /// Public routes — no auth required (static assets + redirect).
@@ -252,11 +250,11 @@ fn build_resolution_ctx(
     .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
     // Resolve providers via mcb-domain registries — no infrastructure helpers
-    let embedding_provider = resolve_embedding_provider(&build_embedding_config(&app_config))
+    let embedding_provider = resolve_embedding_provider(&build_embedding_config(&app_config)?)
         .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
     let vector_store_provider =
-        resolve_vector_store_provider(&build_vector_store_config(&app_config))
+        resolve_vector_store_provider(&build_vector_store_config(&app_config)?)
             .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
 
     Ok(ServiceResolutionContext {

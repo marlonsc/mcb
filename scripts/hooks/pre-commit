@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
-# Installed by `make setup WHAT=hooks`. Runs the same gates as CI, via the
-# canonical monopoly. No bypass — fix the cause, not the gate (AGENTS.md §3).
-# guard runs in --staged mode so it blocks NEW violations in this commit, not
-# the retroactive baseline; `make guard` (full tree) is the CI/manual scan.
+# Installed by `make setup WHAT=hooks`. Tier-1 fast gate via the canonical make
+# verb (single source of truth in makefiles/dispatch.mk). No bypass — fix the
+# cause, not the gate (AGENTS.md §3).
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-echo "→ guard (staged)…";   bash scripts/lib/mcb.sh guard --staged
-echo "→ lint…";             make check WHAT=lint
-echo "→ validate (quick)…"; make check WHAT=validate QUICK=1
-echo "✓ pre-commit passed"
+exec make hook WHAT=pre-commit

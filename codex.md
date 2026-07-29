@@ -1,16 +1,8 @@
 # Codex Instructions — MCB
 
-All project rules, architecture, conventions, and commands are defined in
-[`CLAUDE.md`](CLAUDE.md) at the repository root. Follow it as the single source of truth.
+[`AGENTS.md`](AGENTS.md) is the project single source of truth for all agent
+rules, architecture, conventions, commands, beads workflow, validation, and Git
+policy.
 
-See [`AGENTS.md`](AGENTS.md) for the full agent configuration index.
-
-## Essential Rules
-
-- **Architecture**: Clean Architecture — dependencies flow inward only. Run `make validate` to verify.
-- **Error handling**: Use `Error::vcs("msg")` constructors, never `unwrap()`/`expect()` in production.
-- **Lints**: `unsafe_code = "deny"`, `dead_code = "deny"`. Zero clippy warnings required.
-- **Testing**: `make test` (1700+ tests). New logic must include tests.
-- **Build**: Always use `make` targets (`make build`, `make lint`, `make test`, `make check`).
-- **Commits**: Conventional Commits format — `feat(scope): description`.
-- **Change philosophy**: Surgical edits, maximum reuse, no bypasses. Fix all warnings every cycle.
+`CLAUDE.md` is intentionally only a thin pointer back to `AGENTS.md`; do not use
+it as a second rule source and do not duplicate the universal core here.

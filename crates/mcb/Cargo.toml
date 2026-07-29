@@ -70,6 +70,9 @@ serde_yaml = { workspace = true }
 # MCP protocol - rmcp transport for StreamableHttpService
 rmcp = { workspace = true }
 
+# Logging
+tracing = { workspace = true }
+
 # Re-export key domain types for convenience
 [package.metadata.docs.rs]
 all-features = true

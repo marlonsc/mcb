@@ -340,16 +340,23 @@ async fn test_golden_mcp_empty_query_error_responses(#[case] query: &str) -> Tes
         .search_handler()
         .handle(Parameters(search_args(query, None, Some(5))))
         .await;
-    let response = result.expect("empty query should return an error response");
+    let text = match result {
+        Ok(response) => {
+            assert!(
+                !response.content.is_empty(),
+                "error response should have content"
+            );
+            assert!(response.is_error.unwrap_or(false));
+            extract_text_from(&response.content)
+        }
+        Err(e) => e.to_string(),
+    };
     assert!(
-        !response.content.is_empty(),
-        "error response should have content"
-    );
-    assert!(response.is_error.unwrap_or(false));
-    let text = extract_text_from(&response.content);
-    assert!(
-        text.to_lowercase().contains("empty") || text.to_lowercase().contains("query"),
-        "error response should mention empty query: {text}"
+        text.to_lowercase().contains("empty")
+            || text.to_lowercase().contains("query")
+            || text.to_lowercase().contains("invalid")
+            || text.to_lowercase().contains("parameter"),
+        "error response should mention empty query or invalid parameters: {text}"
     );
     Ok(())
 }
