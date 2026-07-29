@@ -56,12 +56,10 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       ci: ${{ steps.filter.outputs.ci }}
     steps:
-      - name: Manual checkout
-        run: |
-          git clone --depth 1 https://github.com/${{ github.repository }}.git .
-          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
-          git checkout -b ${{ github.ref_name }} ${{ github.sha }}
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
         id: filter
         with:
           filters: |
@@ -132,20 +130,16 @@ jobs:
       needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-      - name: Manual checkout
-        run: |
-          git clone --depth 1 https://github.com/${{ github.repository }}.git .
-          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
-          git checkout ${{ github.sha }}
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - uses: ./.github/actions/native-deps
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
@@ -167,21 +161,15 @@ jobs:
       github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
-      - name: Manual checkout
-        run: |
-          git clone --depth 1 https://github.com/${{ github.repository }}.git .
-          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
-          git checkout ${{ github.sha }}
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh --install-audit
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: ./.github/actions/native-deps
-        with:
-          setup-flags: --install-audit
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
@@ -199,14 +187,12 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
     steps:
-      - name: Manual checkout
-        run: |
-          git clone --depth 1 https://github.com/${{ github.repository }}.git .
-          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
-          git checkout ${{ github.sha }}
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: make docs WHAT=check
+      - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
@@ -230,21 +216,18 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
     steps:
-      - name: Manual checkout
-        run: |
-          git clone --depth 1 https://github.com/${{ github.repository }}.git .
-          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
-          git checkout ${{ github.sha }}
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - uses: actions/setup-java@1bcf9fb12cf4aa7d266a90ae39939e61372fe520 # v5.4.0
         with:
           java-version: "17"
           distribution: "temurin"
       - name: Install PlantUML
         run: sudo apt-get update && sudo apt-get install -y plantuml
       - run: make docs WHAT=diagrams
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: architecture-diagrams
           path: docs/architecture/diagrams/generated/
@@ -267,25 +250,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - name: Manual checkout
-        run: |
-          git clone --depth 1 https://github.com/${{ github.repository }}.git .
-          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
-          git checkout ${{ github.sha }}
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: ./.github/actions/native-deps
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
           cache-on-failure: true
       - name: Cache fastembed models
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .cache/mcb/fastembed
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
@@ -338,7 +317,19 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - name: Manual checkout
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          PROTOC_VERSION: "29.3"
+          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
         run: |
           git clone --depth 1 https://github.com/${{ github.repository }}.git .
           git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
@@ -349,8 +340,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ matrix.rust }}
-      - uses: ./.github/actions/native-deps
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           # Per-OS cache that SAVES — previously test-cross had no shared-key and
           # save-if:false, so macOS/Windows/beta rebuilt 100% cold every run (the
@@ -359,7 +349,7 @@ jobs:
           save-if: true
           cache-on-failure: true
       - name: Cache FastEmbed models
-        uses: actions/cache@5a3ec84eff668545956fd18022155c47e93e2684 # v4.2.3
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .cache/mcb/fastembed
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
@@ -393,19 +383,15 @@ jobs:
       needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-      - name: Manual checkout
-        run: |
-          git clone --depth 1 https://github.com/${{ github.repository }}.git .
-          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
-          git checkout ${{ github.sha }}
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: ./.github/actions/native-deps
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
@@ -429,25 +415,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Manual checkout
-        run: |
-          git clone --depth 1 https://github.com/${{ github.repository }}.git .
-          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
-          git checkout ${{ github.sha }}
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: ./.github/actions/native-deps
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
           cache-on-failure: true
       - name: Cache fastembed models
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .cache/mcb/fastembed
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
@@ -476,22 +458,15 @@ jobs:
     # Measured: a 60-min cap cancelled it mid-run before its cache could save.
     timeout-minutes: 90
     steps:
-      - name: Manual checkout
-        run: |
-          git clone --depth 1 https://github.com/${{ github.repository }}.git .
-          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
-          git checkout ${{ github.sha }}
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
-      - uses: mozilla-actions/sccache-action@v0.0.9
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - run: bash .github/setup-ci.sh --install-coverage
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-          components: llvm-tools-preview
-      - uses: ./.github/actions/native-deps
-        with:
-          setup-flags: --install-coverage
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           # Coverage uses tarpaulin (RUSTFLAGS --cfg=tarpaulin -Clink-dead-code) which
           # can't reuse the normal build cache — isolate it on its own key + saver so
@@ -500,7 +475,7 @@ jobs:
           save-if: true
           cache-on-failure: true
       - name: Cache fastembed models (coverage)
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: .cache/mcb/fastembed
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
@@ -511,7 +486,7 @@ jobs:
         run: make check WHAT=coverage THREADS=4
         env:
           FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
-      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+      - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
@@ -552,7 +527,19 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - name: Manual checkout
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          PROTOC_VERSION: "29.3"
+          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
         run: |
           git clone --depth 1 https://github.com/${{ github.repository }}.git .
           git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
@@ -584,7 +571,7 @@ jobs:
         run: Copy-Item "target\release\${{ matrix.artifact_name }}" "dist\${{ matrix.asset_name }}"
         shell: pwsh
       - name: Upload artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-artifacts-${{ matrix.target }}
           path: dist/${{ matrix.asset_name }}
@@ -721,15 +708,13 @@ jobs:
     env:
       CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
     steps:
-      - name: Manual checkout
-        run: |
-          git clone --depth 1 https://github.com/${{ github.repository }}.git .
-          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
-          git checkout ${{ github.sha }}
-      - name: Checkout submodules
-        run: git submodule update --init --recursive
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          persist-credentials: false
+          submodules: recursive
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
+        uses: github/codeql-action/init@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v3.28.13
         with:
           languages: ${{ matrix.language }}
           config-file: ./.github/codeql-config.yml
@@ -739,9 +724,9 @@ jobs:
           toolchain: stable
       - uses: mozilla-actions/sccache-action@v0.0.9
       - name: Autobuild
-        uses: github/codeql-action/autobuild@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
+        uses: github/codeql-action/autobuild@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v3.28.13
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@89a39a4e59826350b863aa6b6252a07ad50cf83e # v3.28.13
+        uses: github/codeql-action/analyze@8aad20d150bbac5944a9f9d289da16a4b0d87c1e # v3.28.13
         with:
           category: "/language:${{ matrix.language }}"
 
@@ -760,7 +745,7 @@ jobs:
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 
