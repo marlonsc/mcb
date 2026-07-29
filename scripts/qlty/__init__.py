@@ -1,1 +1,0 @@
-"""Qlty analysis package."""
