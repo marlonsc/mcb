@@ -51,6 +51,18 @@ pub fn path_to_utf8_string(path: &Path) -> Result<String, UtilsError> {
     Ok(s.replace('\\', "/"))
 }
 
+/// Normalizes path separators to forward slashes.
+///
+/// Replaces every backslash (`\`) with a forward slash (`/`) so that
+/// paths stored or compared inside vector-store metadata are consistent
+/// across Windows and Unix platforms.
+///
+/// This is a pure string operation and does **not** access the filesystem.
+#[must_use]
+pub fn normalize_path_separators(path: &str) -> String {
+    path.replace('\\', "/")
+}
+
 /// Canonicalizes a path via the filesystem.
 ///
 /// # Errors
