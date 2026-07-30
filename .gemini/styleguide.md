@@ -44,4 +44,4 @@
 - [`CLAUDE.md`](../CLAUDE.md) — all rules, patterns, commands (single source of truth)
 - [`docs/architecture/ARCHITECTURE.md`](../docs/architecture/ARCHITECTURE.md) — architecture details
 - [`docs/developer/CONTRIBUTING.md`](../docs/developer/CONTRIBUTING.md) — contributor guide
-- [`docs/adr/`](../docs/adr/) — 48 Architecture Decision Records
+- [`docs/adr/`](../docs/adr/) — 52 Architecture Decision Records

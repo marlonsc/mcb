@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::Severity;
 use crate::define_violations;
-use crate::traits::violation::ViolationCategory;
+use mcb_domain::ports::validation::ViolationCategory;
 
 /// Wrapper for dependency cycle to provide custom formatting.
 #[derive(Clone, Serialize, Deserialize)]

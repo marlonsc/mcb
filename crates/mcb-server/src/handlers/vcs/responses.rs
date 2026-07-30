@@ -138,14 +138,14 @@ pub struct ImpactResponse {
 ///
 /// * `Ok(PathBuf)` - The resolved filesystem path to the repository.
 /// * `Err(CallToolResult)` - Error if the repository cannot be found or arguments are missing.
-pub fn repo_path(args: &VcsArgs) -> Result<PathBuf, CallToolResult> {
+pub fn repo_path(args: &VcsArgs) -> Result<PathBuf, Box<CallToolResult>> {
     if let Some(path) = args.repo_path.as_ref() {
         return Ok(PathBuf::from(path));
     }
     if let Some(repo_id) = args.repo_id.as_ref() {
-        return Err(tool_error(format!(
+        return Err(Box::new(tool_error(format!(
             "Repository not found: {repo_id}. Provide repo_path instead."
-        )));
+        ))));
     }
-    Err(tool_error("Missing repo_path or repo_id"))
+    Err(Box::new(tool_error("Missing repo_path or repo_id")))
 }

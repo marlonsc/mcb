@@ -1,40 +1,54 @@
 //! Cryptography Tests
+#![allow(clippy::expect_used)]
 
-use mcb_infrastructure::crypto::{
-    CryptoService, HashUtils, PasswordService, SecureErasure, TokenGenerator,
-};
-use rstest::rstest;
+use mcb_infrastructure::crypto::{CryptoService, PasswordService, TokenGenerator};
+use mcb_utils::utils::crypto::{HashUtils, SecureErasure};
+use rstest::{fixture, rstest};
 
-#[test]
-fn test_crypto_service_encrypt_decrypt() {
-    let master_key = CryptoService::generate_master_key();
-    let service = CryptoService::new(master_key).unwrap();
+#[fixture]
+fn master_key() -> Vec<u8> {
+    CryptoService::generate_master_key()
+}
 
+#[fixture]
+fn crypto_service(master_key: Vec<u8>) -> CryptoService {
+    CryptoService::new(master_key).expect("CryptoService should initialize with valid key")
+}
+
+#[fixture]
+fn password_service() -> PasswordService {
+    PasswordService::new()
+}
+
+#[rstest]
+fn test_crypto_service_encrypt_decrypt(crypto_service: CryptoService) {
     let plaintext = b"Hello, World!";
-    let encrypted = service.encrypt(plaintext).unwrap();
-    let decrypted = service.decrypt(&encrypted).unwrap();
+    let encrypted = crypto_service.encrypt(plaintext).unwrap();
+    let decrypted = crypto_service.decrypt(&encrypted).unwrap();
 
     assert_eq!(plaintext.to_vec(), decrypted);
 }
 
-#[test]
+#[rstest]
 fn test_crypto_service_invalid_key_size() {
     let invalid_key = vec![0u8; 16]; // Wrong size
     assert!(CryptoService::new(invalid_key).is_err());
 }
 
-#[test]
-fn test_password_service_hash_verify() {
-    let service = PasswordService::new();
-
+#[rstest]
+fn test_password_service_hash_verify(password_service: PasswordService) {
     let password = "test_password_123";
-    let hash = service.hash_password(password).unwrap();
+    let hash = password_service.hash_password(password).unwrap();
 
-    assert!(service.verify_password(password, &hash).unwrap());
-    assert!(!service.verify_password("wrong_password", &hash).unwrap());
+    assert!(password_service.verify_password(password, &hash).unwrap());
+    assert!(
+        !password_service
+            .verify_password("wrong_password", &hash)
+            .unwrap()
+    );
 }
 
-#[test]
+#[rstest]
 fn test_token_generator() {
     let token1 = TokenGenerator::generate_secure_token(32);
     let token2 = TokenGenerator::generate_secure_token(32);
@@ -44,7 +58,7 @@ fn test_token_generator() {
     assert_ne!(token1, token2);
 }
 
-#[test]
+#[rstest]
 fn test_hash_utils_hmac() {
     let key = b"secret_key";
     let data = b"test_data";
@@ -55,7 +69,7 @@ fn test_hash_utils_hmac() {
     assert_eq!(hmac1.len(), 32); // SHA256 output size
 }
 
-#[test]
+#[rstest]
 fn test_secure_erasure() {
     let mut data = vec![1, 2, 3, 4, 5];
     SecureErasure::zeroize(&mut data);

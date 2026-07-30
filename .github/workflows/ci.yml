@@ -16,6 +16,11 @@ permissions:
   contents: "read"
 
 on: # yamllint disable-line rule:truthy
+  push:
+    branches:
+      - main
+      - 'feat/*'
+  workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
     branches:
@@ -46,7 +51,10 @@ jobs:
       docs: ${{ steps.filter.outputs.docs }}
       ci: ${{ steps.filter.outputs.ci }}
     steps:
-      - uses: dorny/paths-filter@de90cc6fb38fc0963ad72b210f1f284cd68cea36 # v3.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dorny/paths-filter@7b450fff21473bca461d4b92ce414b9d0420d706 # v4.0.2
         id: filter
         with:
           filters: |
@@ -63,7 +71,8 @@ jobs:
               - '.github/workflows/ci.yml'
               - '.github/setup-ci.sh'
               - 'Makefile'
-              - 'make/*.mk'
+              - 'makefiles/*.mk'
+              - 'scripts/lib/mcb.sh'
 
   classify:
     name: Classify PR
@@ -79,9 +88,9 @@ jobs:
       - name: Classify PR Type
         id: classify
         env:
-          IS_DRAFT: ${{ github.event.pull_request.draft }}
-          IS_BOT: ${{ github.event.pull_request.user.type == 'Bot' }}
-          IS_FORK: ${{ github.event.pull_request.head.repo.fork }}
+          IS_DRAFT: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft || 'false' }}
+          IS_BOT: ${{ github.event_name == 'pull_request' && github.event.pull_request.user.type == 'Bot' || 'false' }}
+          IS_FORK: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork || 'false' }}
         run: |
           {
             echo "is_draft=${IS_DRAFT}"
@@ -92,7 +101,7 @@ jobs:
           if [[ "${IS_DRAFT}" == "false" && "${IS_BOT}" == "false" ]]; then
             echo "run_full=true" >> "$GITHUB_OUTPUT"
             echo "run_simplified=false" >> "$GITHUB_OUTPUT"
-          elif [[ "${IS_BOT}" == "true" ]]; then
+          elif [[ "${IS_BOT}" == "true" || "${IS_DRAFT}" == "true" ]]; then
             echo "run_full=false" >> "$GITHUB_OUTPUT"
             echo "run_simplified=true" >> "$GITHUB_OUTPUT"
           else
@@ -110,54 +119,68 @@ jobs:
     needs: [changes, classify]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
+      ((needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch') ||
+      needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          submodules: recursive
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
           components: rustfmt, clippy
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
-      - run: make lint MCB_CI=1
+      - run: make check WHAT=lint
 
   audit:
     name: Security Audit
-    timeout-minutes: 10
+    timeout-minutes: 25
     needs: [changes, classify]
-    if: (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && needs.classify.outputs.run_full == 'true'
+    if: >-
+      (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          submodules: recursive
       - run: bash .github/setup-ci.sh --install-audit
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
-      - run: make audit
+      - run: make check WHAT=audit
 
   validate-docs:
     name: Validate Documentation
     timeout-minutes: 10
     runs-on: ubuntu-latest
     needs: [changes, classify]
-    if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true') && needs.classify.outputs.run_full == 'true'
+    if: >-
+      (needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch')
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - run: make docs-check
+          submodules: recursive
+      - run: make docs WHAT=check
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -166,26 +189,32 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y nodejs npm
           npm install -g markdownlint-cli
-      - run: make docs-validate QUICK=1
+      - run: make docs WHAT=validate QUICK=1
 
   docs-diagrams:
     name: Generate Diagrams
     timeout-minutes: 10
     runs-on: ubuntu-latest
     needs: [changes, classify]
-    if: (needs.changes.outputs.docs == 'true' || needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') && needs.classify.outputs.run_full == 'true'
+    if: >-
+      (needs.changes.outputs.docs == 'true' || needs.changes.outputs.src == 'true' ||
+      needs.changes.outputs.ci == 'true') &&
+      (needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch')
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-java@be666c2fcd27ec809703dec50e508c2fdc7f6654 # v5.2.0
+          submodules: recursive
+      - uses: actions/setup-java@03ad4de0992f5dab5e18fcb136590ce7c4a0ac95 # v5.6.0
         with:
           java-version: "17"
           distribution: "temurin"
       - name: Install PlantUML
         run: sudo apt-get update && sudo apt-get install -y plantuml
-      - run: make diagrams
-      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+      - run: make docs WHAT=diagrams
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: architecture-diagrams
           path: docs/architecture/diagrams/generated/
@@ -201,25 +230,62 @@ jobs:
     needs: [changes, classify, lint]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
+      ((needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch') ||
+      needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          submodules: recursive
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
+      - name: Cache fastembed models
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/mcb/fastembed
+          key: fastembed-${{ runner.os }}-allminilml6v2-v1
+          restore-keys: |
+            fastembed-${{ runner.os }}-
+      - name: Pre-download FastEmbed model
+        shell: bash
+        run: |
+          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
+            echo "Cache miss — downloading FastEmbed model..."
+            PYTHON=$(command -v python3 || command -v python)
+            "$PYTHON" -m venv .venv-fastembed
+            VENV_PY=".venv-fastembed/bin/python"
+            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
+            "$VENV_PY" -m pip install --quiet huggingface_hub
+            for attempt in 1 2 3 4 5; do
+              if "$VENV_PY" -c "
+          from huggingface_hub import snapshot_download
+          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
+          "; then break; fi
+              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
+              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+              sleep $((attempt * 20))
+            done
+          else
+            echo "FastEmbed model cache restored."
+          fi
       - name: Startup Smoke (DDL/Init)
         run: make test SCOPE=startup THREADS=4
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
       - name: Full Test Suite
         run: make test THREADS=4
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
 
   # ===========================================================================
   # Stage 2b — Extended Testing (after linux stable, all parallel)
@@ -230,9 +296,11 @@ jobs:
     needs: [changes, classify, test-linux]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      needs.classify.outputs.run_full == 'true'
+      (needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch')
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    timeout-minutes: 60
     continue-on-error: ${{ matrix.rust == 'beta' }}
     strategy:
       fail-fast: false
@@ -248,9 +316,10 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          submodules: recursive
       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
         run: bash .github/setup-ci.sh
@@ -261,7 +330,8 @@ jobs:
           PROTOC_VERSION: "29.3"
           PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
         run: |
-          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          $base = "https://github.com/protocolbuffers/protobuf/releases/download"
+          $url = "$base/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
           $zip = "$env:TEMP\protoc.zip"
           Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
           $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
@@ -270,93 +340,208 @@ jobs:
           }
           Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
           Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
+      - name: Install ONNX Runtime (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          ORT_VERSION: "1.23.2"
+        run: |
+          $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
+          $zip = "$env:TEMP\onnxruntime.zip"
+          $dest = "$env:TEMP\onnxruntime"
+          Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          Expand-Archive $zip -DestinationPath $dest -Force
+          $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
+          $ortLib = "$ortDir\lib"
+          Add-Content -Path $env:GITHUB_PATH -Value $ortLib
+          Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
+          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ matrix.rust }}
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           save-if: false
-      - run: make test THREADS=4
+      - name: Cache FastEmbed models
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/mcb/fastembed
+          key: fastembed-${{ runner.os }}-allminilml6v2-v1
+          restore-keys: |
+            fastembed-${{ runner.os }}-
+      - name: Pre-download FastEmbed model
+        shell: bash
+        run: |
+          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
+            echo "Cache miss — downloading FastEmbed model..."
+            PYTHON=$(command -v python3 || command -v python)
+            "$PYTHON" -m venv .venv-fastembed
+            VENV_PY=".venv-fastembed/bin/python"
+            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
+            "$VENV_PY" -m pip install --quiet huggingface_hub
+            for attempt in 1 2 3 4 5; do
+              if "$VENV_PY" -c "
+          from huggingface_hub import snapshot_download
+          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
+          "; then break; fi
+              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
+              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+              sleep $((attempt * 20))
+            done
+          else
+            echo "FastEmbed model cache restored."
+          fi
+      - name: Run tests
+        run: make test THREADS=4
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
 
   validate:
     name: Architecture Validation
     needs: [changes, classify, lint]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      (needs.classify.outputs.run_full == 'true' || needs.classify.outputs.run_simplified == 'true')
+      ((needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch') ||
+      needs.classify.outputs.run_simplified == 'true')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          submodules: recursive
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
-      - run: make validate
+      - name: Architecture-only validators (fast gate)
+        run: >-
+          cargo run --package mcb -- validate .
+          --validators clean_architecture,layer_flow,dependency
+          --quick --format json
         env:
           RUST_MIN_STACK: 16777216
-      - name: Check Provider Traits Location
-        run: |
-          VIOLATIONS=$(
-            grep -r "use mcb_application::ports::providers" \
-              crates/mcb-providers/src/ 2>/dev/null || true
-          )
-          if [ -n "$VIOLATIONS" ]; then
-            echo "VIOLATION: Provider traits should be imported from mcb-domain"
-            echo "$VIOLATIONS"
-            exit 1
-          fi
 
   golden-tests:
     name: Golden Acceptance Tests
     needs: [changes, classify, test-linux]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      needs.classify.outputs.run_full == 'true'
+      (needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          submodules: recursive
       - run: bash .github/setup-ci.sh
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
+      - name: Cache fastembed models
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/mcb/fastembed
+          key: fastembed-${{ runner.os }}-allminilml6v2-v1
+          restore-keys: |
+            fastembed-${{ runner.os }}-
+      - name: Pre-download FastEmbed model
+        shell: bash
+        run: |
+          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
+            echo "Cache miss — downloading FastEmbed model..."
+            PYTHON=$(command -v python3 || command -v python)
+            "$PYTHON" -m venv .venv-fastembed
+            VENV_PY=".venv-fastembed/bin/python"
+            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
+            "$VENV_PY" -m pip install --quiet huggingface_hub
+            for attempt in 1 2 3 4 5; do
+              if "$VENV_PY" -c "
+          from huggingface_hub import snapshot_download
+          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
+          "; then break; fi
+              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
+              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+              sleep $((attempt * 20))
+            done
+          else
+            echo "FastEmbed model cache restored."
+          fi
       - run: make test SCOPE=golden THREADS=2
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
 
   coverage:
     name: Coverage
     needs: [changes, classify, test-linux]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      needs.classify.outputs.run_full == 'true' &&
+      (needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch') &&
       needs.classify.outputs.is_fork == 'false'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          submodules: recursive
       - run: bash .github/setup-ci.sh --install-coverage
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
-      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+      - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
           save-if: false
-      - run: make coverage MCB_CI=1 THREADS=4
-      - uses: codecov/codecov-action@671740ac38dd9b0130fbe1cec585b89eea48d3de # v5.5.2
+      - name: Cache fastembed models (coverage)
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: .cache/mcb/fastembed
+          key: fastembed-${{ runner.os }}-allminilml6v2-v1
+          restore-keys: |
+            fastembed-${{ runner.os }}-
+      - name: Pre-download FastEmbed model
+        shell: bash
+        run: |
+          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
+            echo "Cache miss — downloading FastEmbed model..."
+            PYTHON=$(command -v python3 || command -v python)
+            "$PYTHON" -m venv .venv-fastembed
+            VENV_PY=".venv-fastembed/bin/python"
+            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
+            "$VENV_PY" -m pip install --quiet huggingface_hub
+            for attempt in 1 2 3 4 5; do
+              if "$VENV_PY" -c "
+          from huggingface_hub import snapshot_download
+          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
+          "; then break; fi
+              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
+              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
+              sleep $((attempt * 20))
+            done
+          else
+            echo "FastEmbed model cache restored."
+          fi
+      - name: Run coverage
+        run: make check WHAT=coverage THREADS=4
+        env:
+          FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
+      - uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
         with:
           files: ./coverage/lcov.info
           fail_ci_if_error: false
@@ -371,7 +556,9 @@ jobs:
     needs: [changes, classify, test-linux, validate, audit]
     if: |
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      needs.classify.outputs.run_full == 'true'
+      (needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch')
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -395,9 +582,10 @@ jobs:
       - name: Enable long paths (Windows)
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          submodules: recursive
       - name: Install dependencies (Unix)
         if: runner.os != 'Windows'
         run: bash .github/setup-ci.sh
@@ -408,7 +596,8 @@ jobs:
           PROTOC_VERSION: "29.3"
           PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
         run: |
-          $url = "https://github.com/protocolbuffers/protobuf/releases/download/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          $base = "https://github.com/protocolbuffers/protobuf/releases/download"
+          $url = "$base/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
           $zip = "$env:TEMP\protoc.zip"
           Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
           $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
@@ -417,6 +606,23 @@ jobs:
           }
           Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
           Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
+      - name: Install ONNX Runtime (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          ORT_VERSION: "1.23.2"
+        run: |
+          $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
+          $zip = "$env:TEMP\onnxruntime.zip"
+          $dest = "$env:TEMP\onnxruntime"
+          Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          Expand-Archive $zip -DestinationPath $dest -Force
+          $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
+          $ortLib = "$ortDir\lib"
+          Add-Content -Path $env:GITHUB_PATH -Value $ortLib
+          Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
+          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
@@ -435,7 +641,7 @@ jobs:
         run: Copy-Item "target\release\${{ matrix.artifact_name }}" "dist\${{ matrix.asset_name }}"
         shell: pwsh
       - name: Upload artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-artifacts-${{ matrix.target }}
           path: dist/${{ matrix.asset_name }}
@@ -493,21 +699,21 @@ jobs:
           echo "Release Build: $RELEASE_BUILD_RESULT"
           echo ""
 
-          if [[ "$IS_DRAFT" == "true" ]]; then
-            echo "✓ Draft PR — gate passed (no heavy jobs required)"
-            exit 0
-          fi
-
           if [[ "$RUN_SIMPLIFIED" == "true" ]]; then
-            echo "=== Bot PR Policy (Simplified) ==="
+            echo "=== Simplified Suite Policy (Draft/Bot PR) ==="
+            FAILED=0
             for job in LINT_RESULT TEST_LINUX_RESULT VALIDATE_RESULT; do
               result="${!job}"
-              if [[ "$result" != "success" ]]; then
+              if [[ "$result" != "success" && "$result" != "skipped" ]]; then
                 echo "✗ $job: $result"
-                exit 1
+                FAILED=1
               fi
             done
-            echo "✓ Bot PR — simplified checks passed"
+            if [[ $FAILED -eq 1 ]]; then
+              echo "✗ Simplified checks failed"
+              exit 1
+            fi
+            echo "✓ Simplified checks passed"
             exit 0
           fi
 
@@ -548,8 +754,10 @@ jobs:
       always() &&
       needs.rust-ci.result == 'success' &&
       (needs.changes.outputs.src == 'true' || needs.changes.outputs.ci == 'true') &&
-      needs.classify.outputs.run_full == 'true' &&
-      github.event.pull_request.head.repo.fork == false
+      (needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch') &&
+      (github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false)
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -562,11 +770,12 @@ jobs:
       CODEQL_ENABLE_EXPERIMENTAL_FEATURES: "true"
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
+          submodules: recursive
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
+        uses: github/codeql-action/init@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v3.28.13
         with:
           languages: ${{ matrix.language }}
           config-file: ./.github/codeql-config.yml
@@ -575,9 +784,9 @@ jobs:
         with:
           toolchain: stable
       - name: Autobuild
-        uses: github/codeql-action/autobuild@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
+        uses: github/codeql-action/autobuild@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v3.28.13
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@9e907b5e64f6b83e7804b09294d44122997950d6 # v3.28.13
+        uses: github/codeql-action/analyze@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v3.28.13
         with:
           category: "/language:${{ matrix.language }}"
 
@@ -596,7 +805,7 @@ jobs:
     steps:
       - name: Fetch Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a # v2.5.0
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
 

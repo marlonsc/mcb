@@ -4,7 +4,7 @@
 use serde::{Deserialize, Serialize};
 
 use super::ids::OrgId;
-use crate::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
+use mcb_utils::constants::values::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
 
 /// Tenant context for row-level isolation.
 ///
@@ -36,7 +36,7 @@ impl OrgContext {
 impl Default for OrgContext {
     fn default() -> Self {
         Self {
-            org_id: OrgId::from_uuid(crate::utils::id::deterministic("org", DEFAULT_ORG_ID)),
+            org_id: OrgId::from_uuid(mcb_utils::utils::id::deterministic("org", DEFAULT_ORG_ID)),
             org_name: DEFAULT_ORG_NAME.to_owned(),
         }
     }

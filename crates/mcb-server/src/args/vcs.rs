@@ -81,3 +81,74 @@ pub struct VcsArgs {
     pub limit: Option<u32>,
 }
 }
+
+// ---------------------------------------------------------------------------
+// MCP-facing single-purpose tools
+// ---------------------------------------------------------------------------
+
+tool_action! {
+    /// Arguments for the `list_repos` tool.
+    pub struct ListReposArgs => VcsArgs {
+        #[schemars(description = "Maximum results", with = "u32")]
+        limit: Option<u32>
+        ;
+        hidden {
+            org_id: Option<String>, repo_id: Option<String>,
+            repo_path: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: VcsAction::ListRepositories, base_branch: None, target_branch: None,
+            query: None, branches: None, include_commits: None, depth: None, limit: a.limit,
+        }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `compare_branches` tool.
+    pub struct CompareBranchesArgs => VcsArgs {
+        #[schemars(description = "Base branch name")]
+        base_branch: String,
+        #[schemars(description = "Target branch name")]
+        target_branch: String,
+        #[schemars(description = "Include commit history", with = "bool")]
+        include_commits: Option<bool>,
+        #[schemars(description = "Commit history depth (default: 50)", with = "usize")]
+        depth: Option<usize>
+        ;
+        hidden {
+            org_id: Option<String>, repo_id: Option<String>,
+            repo_path: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: VcsAction::CompareBranches,
+            base_branch: Some(a.base_branch), target_branch: Some(a.target_branch),
+            query: None, branches: None,
+            include_commits: a.include_commits, depth: a.depth, limit: None,
+        }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `analyze_impact` tool.
+    pub struct AnalyzeImpactArgs => VcsArgs {
+        #[schemars(description = "Branches to analyze", with = "Vec<String>")]
+        branches: Option<Vec<String>>,
+        #[schemars(description = "Analysis depth (default: 1000)", with = "usize")]
+        depth: Option<usize>,
+        #[schemars(description = "Maximum results", with = "u32")]
+        limit: Option<u32>
+        ;
+        hidden {
+            org_id: Option<String>, repo_id: Option<String>,
+            repo_path: Option<String>,
+        }
+        ;
+        convert |a| {
+            action: VcsAction::AnalyzeImpact, base_branch: None, target_branch: None,
+            query: None, branches: a.branches, include_commits: None,
+            depth: a.depth, limit: a.limit,
+        }
+    }
+}

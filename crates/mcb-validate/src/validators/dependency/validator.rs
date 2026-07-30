@@ -104,6 +104,6 @@ impl DependencyValidator {
 
 crate::impl_validator!(
     DependencyValidator,
-    "dependency",
+    mcb_utils::constants::validate::VALIDATOR_DEPENDENCY,
     "Validates Clean Architecture layer dependencies"
 );

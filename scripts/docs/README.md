@@ -27,8 +27,8 @@ Commands:
 
 | Script | Function | Called by |
 | -------- | -------- | ------------- |
-| `generate-mdbook.sh` | mdbook interactive platform management | `make docs-build`, `make docs-serve` |
-| `generate-diagrams.sh` | PlantUML diagrams generation | `make diagrams` |
+| `generate-mdbook.sh` | mdbook interactive platform management | `make docs WHAT=build`, `make docs WHAT=serve` |
+| `generate-diagrams.sh` | PlantUML diagrams generation | `make docs WHAT=diagrams` |
 
 ---
 
@@ -38,15 +38,15 @@ Commands:
 
 ```bash
 make docs          # Generate complete documentation (metrics, Rust API, mdBook)
-make docs-validate # Validate quality, structure, ADR compliance, and quality gates
-make docs-setup    # Configure documentation tools
+make docs WHAT=validate # Validate quality, structure, ADR compliance, and quality gates
+make docs WHAT=setup    # Configure documentation tools
 ```
 
 ### 📖 **Docs commands**
 
 ```bash
-make docs-build    # Build interactive documentation
-make docs-serve    # Development server
+make docs WHAT=build    # Build interactive documentation
+make docs WHAT=serve    # Development server
 ```
 
 ### 📋 **ADR Management**
@@ -129,22 +129,22 @@ Obsolete scripts moved to `archive/`:
 ### 1️⃣ **Initial Configuration**
 
 ```bash
-make docs-setup  # Install all tools
+make docs WHAT=setup  # Install all tools
 ```
 
 ### 2️⃣ **Development**
 
 ```bash
 make docs           # Generate documentation
-make docs-serve     # Preview interactively
+make docs WHAT=serve     # Preview interactively
 ```
 
 ### 3️⃣ **Quality Assurance**
 
 ```bash
-make docs-validate  # Check quality
-make docs-validate  # Validate architecture
-make docs-validate  # Complete validation
+make docs WHAT=validate  # Check quality
+make docs WHAT=validate  # Validate architecture
+make docs WHAT=validate  # Complete validation
 ```
 
 ### 4️⃣ **Production**

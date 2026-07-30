@@ -7,9 +7,16 @@ use regex::Regex;
 
 use super::super::violation::ImplementationViolation;
 use crate::Result;
-use crate::traits::violation::Severity;
 use crate::utils::source::{extract_functions_with_body, non_test_lines, required_patterns};
+use mcb_domain::ports::validation::Severity;
 
+/// Detects methods whose entire body is logging statements (and thus perform no
+/// real work) and reports each as a `LogOnlyMethod` violation.
+///
+/// # Errors
+///
+/// Returns an error if any required IMPL001 logging pattern is missing from the
+/// pattern registry.
 pub fn validate_log_only_methods(
     files: &[(PathBuf, String)],
     fn_pattern: &Regex,

@@ -19,3 +19,12 @@ mod violation;
 
 pub use self::validator::DependencyValidator;
 pub use self::violation::{DependencyCycle, DependencyViolation};
+
+mcb_domain::register_validator!(
+    "dependency",
+    "Validates Clean Architecture layer dependencies",
+    |root| {
+        Ok(Box::new(DependencyValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

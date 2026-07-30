@@ -6,6 +6,38 @@ use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
 
 use super::violation::HygieneViolation;
+use crate::ValidationConfigExt;
+
+/// Naming suggestion for an `integration/` test file lacking a purpose marker.
+fn integration_naming(file_name: &str) -> Option<(String, Severity)> {
+    let ok = ["integration", "workflow"]
+        .iter()
+        .any(|kw| file_name.contains(kw) || file_name.ends_with(&format!("_{kw}")));
+    (!ok).then(|| {
+        (
+            format!(
+                "{file_name}_integration.rs or {file_name}_workflow.rs (integration tests should indicate their purpose)"
+            ),
+            Severity::Info,
+        )
+    })
+}
+
+/// Naming suggestion for an `e2e/` test file lacking an end-to-end marker.
+fn e2e_naming(file_name: &str) -> Option<(String, Severity)> {
+    let ok = ["e2e", "end_to_end"]
+        .iter()
+        .any(|kw| file_name.contains(kw))
+        || file_name.starts_with("test_");
+    (!ok).then(|| {
+        (
+            format!(
+                "{file_name}_e2e.rs or test_{file_name}.rs (e2e tests should indicate they're end-to-end)"
+            ),
+            Severity::Info,
+        )
+    })
+}
 
 fn expected_naming_for_parent(
     parent_dir: &str,
@@ -19,33 +51,8 @@ fn expected_naming_for_parent(
                 Severity::Warning,
             )
         }),
-        "integration" => {
-            let ok = ["integration", "workflow"]
-                .iter()
-                .any(|kw| file_name.contains(kw) || file_name.ends_with(&format!("_{kw}")));
-            (!ok).then(|| {
-                (
-                    format!(
-                        "{file_name}_integration.rs or {file_name}_workflow.rs (integration tests should indicate their purpose)"
-                    ),
-                    Severity::Info,
-                )
-            })
-        }
-        "e2e" => {
-            let ok = ["e2e", "end_to_end"]
-                .iter()
-                .any(|kw| file_name.contains(kw))
-                || file_name.starts_with("test_");
-            (!ok).then(|| {
-                (
-                    format!(
-                        "{file_name}_e2e.rs or test_{file_name}.rs (e2e tests should indicate they're end-to-end)"
-                    ),
-                    Severity::Info,
-                )
-            })
-        }
+        "integration" => integration_naming(file_name),
+        "e2e" => e2e_naming(file_name),
         "tests" => (!matches!(
             file_full,
             "lib.rs" | "mod.rs" | "utils.rs" | "unit.rs" | "integration.rs" | "e2e.rs"
@@ -56,7 +63,7 @@ fn expected_naming_for_parent(
                 Severity::Warning,
             )
         }),
-        _ => None,
+        _other => None,
     }
 }
 
@@ -75,44 +82,47 @@ pub fn validate_test_naming(config: &ValidationConfig) -> Result<Vec<HygieneViol
         }
 
         for_each_file_under_root(config, &tests_dir, Some(LanguageId::Rust), |entry| {
-            let path = &entry.absolute_path;
-            let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
-
-            if ["lib", "mod"].contains(&file_name) {
-                return Ok(());
+            if let Some(violation) = check_test_file_naming(&entry.absolute_path) {
+                violations.push(violation);
             }
-
-            let Some(path_str) = path.to_str() else {
-                return Ok(());
-            };
-            if path_str.contains("utils")
-                || ["mock", "fixture", "helper"]
-                    .iter()
-                    .any(|kw| file_name.contains(kw))
-            {
-                return Ok(());
-            }
-
-            let parent_dir = path
-                .parent()
-                .and_then(|p| p.file_name())
-                .and_then(|n| n.to_str())
-                .unwrap_or("");
-
-            let file_full = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-            if let Some((suggestion, severity)) =
-                expected_naming_for_parent(parent_dir, file_name, file_full)
-            {
-                violations.push(HygieneViolation::BadTestFileName {
-                    file: path.clone(),
-                    suggestion,
-                    severity,
-                });
-            }
-
             Ok(())
         })?;
     }
 
     Ok(violations)
+}
+
+/// Returns a `BadTestFileName` violation when `path` (a test file) does not
+/// follow the naming convention for its parent directory, or `None` for files
+/// that are exempt (entry points, helpers, fixtures, mocks).
+fn check_test_file_naming(path: &std::path::Path) -> Option<HygieneViolation> {
+    let file_name = path.file_stem().and_then(|s| s.to_str()).unwrap_or("");
+
+    if ["lib", "mod"].contains(&file_name) {
+        return None;
+    }
+
+    let path_str = path.to_str()?;
+    if path_str.contains("utils")
+        || ["mock", "fixture", "helper"]
+            .iter()
+            .any(|kw| file_name.contains(kw))
+    {
+        return None;
+    }
+
+    let parent_dir = path
+        .parent()
+        .and_then(|p| p.file_name())
+        .and_then(|n| n.to_str())
+        .unwrap_or("");
+    let file_full = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+
+    expected_naming_for_parent(parent_dir, file_name, file_full).map(|(suggestion, severity)| {
+        HygieneViolation::BadTestFileName {
+            file: path.to_path_buf(),
+            suggestion,
+            severity,
+        }
+    })
 }

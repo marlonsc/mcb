@@ -21,6 +21,8 @@ Phase 9 implements the**Integrated Context System** for v0.4.0, building on Phas
 **Summary**:
 Defines the 5-layer context system architecture:
 
+> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
+
 1. Code Indexing & Embeddings (AST parsing, vector embeddings)
 2. Knowledge Graph (code relationships, freshness metadata)
 3. Hybrid Search Engine (semantic + keyword search, RRF fusion)
@@ -29,7 +31,7 @@ Defines the 5-layer context system architecture:
 
 Key Decisions:
 
-- 5-layer architecture with clear separation of concerns
+- 5-layer architecture with clear separation of concerns (v0.4.0-v0.5.0 target)
 - Knowledge graph as central component (petgraph-based)
 - Hybrid search combining semantic and keyword approaches
 - Snapshot-based versioning for time-travel queries

@@ -6,15 +6,15 @@
 //! Used by `handlers/memory/` and `handlers/entities/` to reduce
 //! repetitive match + early-return boilerplate.
 
-/// Extract a value from a `Result<T, CallToolResult>`, returning the error as `Ok(err)`.
+/// Extract a value from a `Result<T, Box<CallToolResult>>`, returning the error as `Ok(err)`.
 ///
-/// The `require_*` helpers return `Result<T, CallToolResult>` where the `Err` variant
+/// The `require_*` helpers return `Result<T, Box<CallToolResult>>` where the `Err` variant
 /// is a tool-level error (not a protocol error). This macro converts the match:
 ///
 /// ```ignore
 /// let value = match require_str(data, "field") {
 ///     Ok(v) => v,
-///     Err(error_result) => return Ok(error_result),
+///     Err(error_result) => return Ok(*error_result),
 /// };
 /// ```
 ///
@@ -27,7 +27,7 @@ macro_rules! extract_field {
     ($expr:expr) => {
         match $expr {
             Ok(value) => value,
-            Err(error_result) => return Ok(error_result),
+            Err(error_result) => return Ok(*error_result),
         }
     };
 }
@@ -81,70 +81,6 @@ macro_rules! require_arg {
     ($opt:expr, $msg:literal) => {
         $opt.as_deref()
             .ok_or_else(|| McpError::invalid_params($msg, None))?
-    };
-}
-
-/// Extract a required `Option` field from `AdminState`, returning
-/// `AdminError::unavailable` when `None`.
-///
-/// ```ignore
-/// let cache = require_service!(state, cache, "Cache provider not available");
-/// ```
-macro_rules! require_service {
-    ($state:expr, $field:ident, $msg:literal) => {
-        match $state.$field {
-            Some(ref svc) => svc,
-            None => return Err($crate::admin::error::AdminError::unavailable($msg)),
-        }
-    };
-}
-
-/// Generate a simple template page handler that renders a Handlebars template
-/// with standard nav context.
-///
-/// ```ignore
-/// template_page!(config_page, "admin/config", "Configuration", "config");
-/// ```
-macro_rules! template_page {
-    ($fn_name:ident, $template:literal, $title:literal, $page:literal) => {
-        #[allow(missing_docs)]
-        pub async fn $fn_name() -> $crate::templates::Template {
-            mcb_domain::info!("web", concat!(stringify!($fn_name), " called"));
-            $crate::templates::Template::render(
-                $template,
-                context! {
-                    title: $title,
-                    current_page: $page,
-                    nav_groups: $crate::admin::web::view_model::nav_groups(),
-                },
-            )
-        }
-    };
-}
-
-macro_rules! template_page_with_path {
-    (
-        $fn_name:ident,
-        $param:ident : $param_ty:ty,
-        $template:literal,
-        $title:literal,
-        $current_page:literal
-    ) => {
-        #[allow(missing_docs)]
-        pub async fn $fn_name(
-            axum::extract::Path($param): axum::extract::Path<$param_ty>,
-        ) -> $crate::templates::Template {
-            let _ = $param;
-            mcb_domain::info!("web", concat!(stringify!($fn_name), " called"));
-            $crate::templates::Template::render(
-                $template,
-                context! {
-                    title: $title,
-                    current_page: $current_page,
-                    nav_groups: $crate::admin::web::view_model::nav_groups(),
-                },
-            )
-        }
     };
 }
 

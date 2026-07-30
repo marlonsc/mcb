@@ -3,7 +3,8 @@
 //!
 //! Python language processor for AST-based code chunking.
 
-use crate::language::common::{CHUNK_SIZE_PYTHON, TS_NODE_FUNCTION_DEFINITION};
+use mcb_utils::constants::ast::TS_NODE_FUNCTION_DEFINITION;
+use mcb_utils::constants::lang::CHUNK_SIZE_PYTHON;
 
 crate::impl_simple_language_processor!(
     PythonProcessor,

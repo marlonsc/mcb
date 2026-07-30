@@ -71,7 +71,9 @@ pub use vcs::{VcsBranch, VcsCommit, VcsRepository};
 
 /// Workflow FSM entities for session state management
 pub mod workflow;
-pub use workflow::{Transition, TransitionTrigger, WorkflowSession, WorkflowState};
+pub use workflow::{
+    Transition, TransitionInput, TransitionTrigger, WorkflowSession, WorkflowState,
+};
 
 /// Git worktree entities
 pub mod worktree;

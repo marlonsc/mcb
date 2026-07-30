@@ -1,11 +1,11 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use super::constants::{
+use crate::{Result, Severity};
+use mcb_utils::constants::validate::{
     ARC_MUTEX_OVERUSE_PATTERNS, INEFFICIENT_ITERATOR_PATTERNS, INEFFICIENT_STRING_PATTERNS,
 };
-use crate::pattern_registry::compile_regex_triples;
-use crate::{Result, Severity};
+use mcb_utils::utils::regex::compile_regex_triples;
 
 use super::PerformanceValidator;
 use super::loops::scan_files_with_patterns;

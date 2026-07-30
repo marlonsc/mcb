@@ -9,7 +9,7 @@ use super::violation::AsyncViolation;
 
 crate::create_validator!(
     AsyncPatternValidator,
-    "async_patterns",
+    mcb_utils::constants::validate::VALIDATOR_ASYNC_PATTERNS,
     "Validates async patterns (blocking calls, mutex types, spawn patterns)",
     AsyncViolation,
     [

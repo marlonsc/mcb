@@ -1,8 +1,4 @@
-//! Unit tests.
-
-/// Browse handlers tests.
-pub mod browse_handlers_tests;
-/// Entity handler tests.
+//! Handler unit tests.
 pub mod entities;
-/// Project handler tests.
+/// Project handler unit tests.
 pub mod project_handler_tests;

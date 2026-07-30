@@ -9,9 +9,17 @@
 //! - Modules/Files: `snake_case`
 
 mod checks;
-pub mod constants;
 mod validator;
 mod violation;
 
 pub use self::validator::NamingValidator;
 pub use self::violation::NamingViolation;
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_NAMING,
+    "Validates naming conventions",
+    |root| {
+        Ok(Box::new(NamingValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

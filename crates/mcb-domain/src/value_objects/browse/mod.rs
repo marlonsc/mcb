@@ -11,6 +11,8 @@ mod tree;
 
 pub use collection::CollectionInfo;
 pub use file::FileInfo;
-pub use highlight::{HighlightCategory, HighlightSpan, HighlightedCode};
+pub use highlight::{
+    HIGHLIGHT_NAMES, HighlightCategory, HighlightSpan, HighlightedCode, map_highlight_to_category,
+};
 pub use node::FileNode;
 pub use tree::FileTreeNode;

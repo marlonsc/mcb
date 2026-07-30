@@ -45,30 +45,27 @@ impl WorkspaceExplorer {
     /// Returns paths to `src/` directories of detected crates.
     #[must_use]
     pub fn scan_crate_sources(workspace_root: &Path, exclude_patterns: &[&str]) -> Vec<PathBuf> {
-        let mut scan_dirs = Vec::new();
         let crates_dir = workspace_root.join("crates");
 
-        if crates_dir.exists() {
-            for entry in std::fs::read_dir(crates_dir)
-                .into_iter()
-                .flatten()
-                .flatten()
-            {
-                let path = entry.path();
-                if path.is_dir() {
-                    // Check excludes
-                    let path_str = path.to_string_lossy();
-                    if exclude_patterns.iter().any(|p| path_str.contains(*p)) {
-                        continue;
-                    }
+        std::fs::read_dir(crates_dir)
+            .into_iter()
+            .flatten()
+            .flatten()
+            .filter_map(|entry| Self::crate_src_dir(&entry.path(), exclude_patterns))
+            .collect()
+    }
 
-                    let src = path.join("src");
-                    if src.exists() {
-                        scan_dirs.push(src);
-                    }
-                }
-            }
+    /// Return the `src/` directory for a crate path when it is a non-excluded
+    /// directory that contains a `src/` folder.
+    fn crate_src_dir(path: &Path, exclude_patterns: &[&str]) -> Option<PathBuf> {
+        if !path.is_dir() {
+            return None;
         }
-        scan_dirs
+        let path_str = path.to_string_lossy();
+        if exclude_patterns.iter().any(|p| path_str.contains(*p)) {
+            return None;
+        }
+        let src = path.join("src");
+        src.exists().then_some(src)
     }
 }

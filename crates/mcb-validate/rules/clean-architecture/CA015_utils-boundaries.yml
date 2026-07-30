@@ -1,0 +1,66 @@
+_template: "cargo_dependency_check"
+id: "CA015"
+name: "Utils Crate Boundaries"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Utils crate is the innermost layer with zero mcb-* dependencies"
+rationale: "mcb-utils provides pure utilities and constants shared by all crates, so it must not depend on any other workspace crate"
+
+crate_name: "{{utils_crate}}"
+forbidden_prefixes: ["{{project_prefix}}-"]
+allowed_dependencies:
+  [
+    "std",
+    "serde",
+    "serde_json",
+    "thiserror",
+    "uuid",
+    "chrono",
+    "sha2",
+    "hex",
+    "walkdir",
+    "regex",
+    "unicode-segmentation",
+    "normpath",
+    "globset",
+    "tokio",
+    "base64",
+    "hmac",
+  ]
+
+config:
+  crate_name: "{{utils_crate}}"
+  forbidden_prefixes: ["{{project_prefix}}-"]
+  allowed_dependencies:
+    [
+      "std",
+      "serde",
+      "serde_json",
+      "thiserror",
+      "uuid",
+      "chrono",
+      "sha2",
+      "hex",
+      "walkdir",
+      "regex",
+      "unicode-segmentation",
+      "normpath",
+      "globset",
+      "tokio",
+      "base64",
+      "hmac",
+    ]
+
+rule: |
+  rule UtilsBoundaries "Utils Crate Boundaries" {
+      when
+          Facts.crate_name == "{{utils_crate}}" &&
+          Facts.has_internal_dependencies == true
+      then
+          Facts.violation_triggered = true;
+          Facts.violation_message = "Utils crate (innermost layer) cannot depend on any {{project_prefix}}-* crate";
+          Facts.violation_rule_name = "CA015";
+  }

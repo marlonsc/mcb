@@ -4,15 +4,16 @@
 //! - `create_rule_context` — eliminates duplicated `RuleContext` construction
 //! - `cargo_toml_with_deps` — eliminates inline Cargo.toml template strings
 
-use mcb_validate::ValidationConfig;
+use mcb_domain::ports::validation::ValidationConfig;
 use mcb_validate::engines::hybrid_engine::RuleEngine;
 use mcb_validate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
 use serde_json::json;
 
 use crate::utils::test_constants::*;
 use crate::utils::*;
+use rstest::rstest;
 
-#[test]
+#[rstest]
 fn test_cargo_dependency_detection() {
     let engine = RustyRulesEngineWrapper::new();
     let context = create_rule_context();
@@ -40,7 +41,7 @@ fn test_cargo_dependency_detection() {
     );
 }
 
-#[test]
+#[rstest]
 fn test_cargo_dependency_detection_with_violation() {
     let temp_dir = tempfile::TempDir::new().unwrap();
     let cargo_path = temp_dir.path().join("Cargo.toml");

@@ -25,6 +25,8 @@ implementation_status: Incomplete
 
 ADR-041 defines a 5-layer context system. Layer 3 is the**Knowledge Graph** that models code structure, relationships, and dependencies. This ADR specifies:
 
+> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
+
 1. What relationships to represent
 2. How to extract them efficiently (tree-sitter-graph)
 3. How to store them (petgraph DAG + slotmap)

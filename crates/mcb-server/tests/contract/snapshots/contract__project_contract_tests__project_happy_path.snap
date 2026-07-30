@@ -1,0 +1,33 @@
+---
+source: crates/mcb-server/tests/contract/project_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "name": "project",
+      "arguments": {
+        "action": "list",
+        "resource": "project",
+        "project_id": "project-contract"
+      }
+    },
+    "id": 1
+  },
+  "status": 200,
+  "response": {
+    "jsonrpc": "2.0",
+    "result": {
+      "content": [
+        {
+          "type": "text",
+          "text": "[]"
+        }
+      ],
+      "isError": false
+    },
+    "id": 1
+  }
+}

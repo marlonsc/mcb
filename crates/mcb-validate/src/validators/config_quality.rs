@@ -13,14 +13,14 @@ use std::path::{Path, PathBuf};
 
 use regex::Regex;
 
-use crate::constants::architecture::ARCH_PATH_CONFIG;
-use crate::constants::common::{COMMENT_PREFIX, DOC_COMMENT_PREFIX};
 use crate::define_violations;
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_scan_file;
-use crate::traits::violation::ViolationCategory;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::{Violation, ViolationCategory};
+use mcb_utils::constants::validate::ARCH_PATH_CONFIG;
+use mcb_utils::constants::validate::{COMMENT_PREFIX, DOC_COMMENT_PREFIX};
+use mcb_utils::utils::regex::compile_regex;
 
 define_violations! {
     dynamic_severity,
@@ -101,10 +101,35 @@ pub struct ConfigQualityValidator {
     config: ValidationConfig,
 }
 
+/// Compiled regexes for detecting hardcoded configuration values.
+struct ConfigQualityPatterns {
+    namespace: Regex,
+    client_name: Regex,
+    header: Regex,
+    default_impl: Regex,
+}
+
+impl ConfigQualityPatterns {
+    /// Compile the hardcoded-config detection patterns.
+    fn compile() -> Result<Self> {
+        Ok(Self {
+            namespace: compile_regex(r#"namespace:\s*"([^"]+)".to_string\(\)"#)?,
+            client_name: compile_regex(r#"client_name:\s*Some\("([^"]+)".to_string\(\)\)"#)?,
+            header: compile_regex(r#"header:\s*"([^"]+)".to_string\(\)"#)?,
+            default_impl: compile_regex(r"impl\s+Default\s+for\s+(\w+)")?,
+        })
+    }
+}
+
 impl ConfigQualityValidator {
-    /// Create a new configuration quality validator with the given configuration
+    /// Create a new configuration quality validator for the workspace root.
+    pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
+        Self::with_config(ValidationConfig::new(workspace_root))
+    }
+
+    /// Create a new configuration quality validator with explicit config.
     #[must_use]
-    pub fn new(config: ValidationConfig) -> Self {
+    pub fn with_config(config: ValidationConfig) -> Self {
         Self { config }
     }
 
@@ -115,65 +140,48 @@ impl ConfigQualityValidator {
     /// Returns an error if regex compilation or file scanning fails.
     pub fn validate(&self) -> Result<Vec<ConfigQualityViolation>> {
         let mut violations = Vec::new();
-
-        // Regex patterns
-        let namespace_pattern = compile_regex(r#"namespace:\s*"([^"]+)".to_string\(\)"#)?;
-        let client_name_pattern =
-            compile_regex(r#"client_name:\s*Some\("([^"]+)".to_string\(\)\)"#)?;
-        let header_pattern = compile_regex(r#"header:\s*"([^"]+)".to_string\(\)"#)?;
-        let default_impl_pattern = compile_regex(r"impl\s+Default\s+for\s+(\w+)")?;
+        let patterns = ConfigQualityPatterns::compile()?;
 
         for_each_scan_file(
             &self.config,
             Some(LanguageId::Rust),
             false,
             |entry, _src_dir| {
-                let is_config_file = entry
-                    .absolute_path
-                    .to_str()
-                    .is_some_and(|s| s.contains(ARCH_PATH_CONFIG))
-                    || entry
-                        .absolute_path
-                        .file_name()
-                        .and_then(|name| name.to_str())
-                        .is_some_and(|name| name.contains("config"));
-                if !is_config_file {
+                if !Self::is_config_file(&entry.absolute_path) {
                     return Ok(());
                 }
 
                 let content = std::fs::read_to_string(&entry.absolute_path)?;
                 let lines: Vec<&str> = content.lines().collect();
-
-                Self::check_hardcoded_namespaces(
-                    &entry.absolute_path,
-                    &lines,
-                    &namespace_pattern,
-                    &mut violations,
-                );
-                Self::check_hardcoded_client_names(
-                    &entry.absolute_path,
-                    &lines,
-                    &client_name_pattern,
-                    &mut violations,
-                );
-                Self::check_hardcoded_headers(
-                    &entry.absolute_path,
-                    &lines,
-                    &header_pattern,
-                    &mut violations,
-                );
-                Self::check_undocumented_defaults(
-                    &entry.absolute_path,
-                    &lines,
-                    &default_impl_pattern,
-                    &mut violations,
-                );
-
+                Self::scan_config_file(&entry.absolute_path, &lines, &patterns, &mut violations);
                 Ok(())
             },
         )?;
 
         Ok(violations)
+    }
+
+    /// Run every hardcoded-config check against a single file's lines.
+    fn scan_config_file(
+        path: &Path,
+        lines: &[&str],
+        patterns: &ConfigQualityPatterns,
+        violations: &mut Vec<ConfigQualityViolation>,
+    ) {
+        Self::check_hardcoded_namespaces(path, lines, &patterns.namespace, violations);
+        Self::check_hardcoded_client_names(path, lines, &patterns.client_name, violations);
+        Self::check_hardcoded_headers(path, lines, &patterns.header, violations);
+        Self::check_undocumented_defaults(path, lines, &patterns.default_impl, violations);
+    }
+
+    /// Returns `true` when `path` lives under the config directory or its file
+    /// name contains `config`.
+    fn is_config_file(path: &Path) -> bool {
+        path.to_str().is_some_and(|s| s.contains(ARCH_PATH_CONFIG))
+            || path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.contains("config"))
     }
 
     fn check_hardcoded_namespaces(
@@ -296,5 +304,26 @@ impl ConfigQualityValidator {
         // Check if the line itself uses a constant
         let current_line = lines[line_idx];
         current_line.contains("const") || current_line.contains("DEFAULT_")
+    }
+}
+
+impl mcb_domain::ports::validation::Validator for ConfigQualityValidator {
+    fn name(&self) -> &'static str {
+        mcb_utils::constants::validate::VALIDATOR_CONFIG_QUALITY
+    }
+
+    fn description(&self) -> &'static str {
+        "Validates configuration code quality and anti-patterns"
+    }
+
+    fn validate(
+        &self,
+        _config: &ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
+        let violations = ConfigQualityValidator::validate(self)?;
+        Ok(violations
+            .into_iter()
+            .map(|v| Box::new(v) as Box<dyn Violation>)
+            .collect())
     }
 }

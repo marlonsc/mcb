@@ -382,13 +382,13 @@ production = "milvus"       # Use Milvus for production
   Base provider abstraction
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async
   provider execution
-- [ADR-004: Event Bus (Local and Distributed)](004-event-bus-local-distributed.md) -
+- [ADR-004: Event Bus (Local and Distributed)](archive/superseded-004-event-bus-local-distributed.md) -
   Provider event emission
 - [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) -
   Provider creation via factories
 - [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
   Provider crate organization
-- [ADR-029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) -
+- [ADR-029: Hexagonal Architecture](archive/superseded-029-hexagonal-architecture-dill.md) -
   Historical DI implementation (superseded by ADR-050)
 
 ## References

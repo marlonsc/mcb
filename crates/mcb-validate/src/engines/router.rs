@@ -15,18 +15,15 @@ use derive_more::Display;
 use serde_json::Value;
 
 use crate::Result;
-use crate::constants::engines::{
-    ENGINE_TYPE_EVALEXPR, ENGINE_TYPE_EXPRESSION, ENGINE_TYPE_GRL, ENGINE_TYPE_JSON_DSL,
-    ENGINE_TYPE_RETE, ENGINE_TYPE_RUST_RULE, ENGINE_TYPE_RUSTY_RULES,
-};
-use crate::constants::rules::{
-    YAML_FIELD_ACTION, YAML_FIELD_CONDITION, YAML_FIELD_ENGINE, YAML_FIELD_EXPRESSION,
-    YAML_FIELD_GRL, YAML_FIELD_RULE, YAML_FIELD_RULE_DEFINITION,
-};
 use crate::engines::expression_engine::ExpressionEngine;
 use crate::engines::hybrid_engine::{RuleContext, RuleViolation};
 use crate::engines::rete_engine::ReteEngine;
 use crate::engines::rusty_rules_engine::RustyRulesEngineWrapper;
+use mcb_utils::constants::validate::{
+    ENGINE_TYPE_EVALEXPR, ENGINE_TYPE_JSON_DSL, ENGINE_TYPE_RETE, ENGINE_TYPE_RUST_RULE, GRL,
+    GRL_KEYWORD_THEN, GRL_KEYWORD_WHEN, RUSTY_RULES, YAML_FIELD_ACTION, YAML_FIELD_CONDITION,
+    YAML_FIELD_ENGINE, YAML_FIELD_EXPRESSION, YAML_FIELD_RULE, YAML_FIELD_RULE_DEFINITION,
+};
 
 /// Engine type determined by router
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Display)]
@@ -80,9 +77,9 @@ impl RuleEngineRouter {
             .and_then(|v| v.as_str())
         {
             return match engine {
-                ENGINE_TYPE_RETE | ENGINE_TYPE_RUST_RULE | ENGINE_TYPE_GRL => RoutedEngine::Rete,
-                ENGINE_TYPE_EXPRESSION | ENGINE_TYPE_EVALEXPR => RoutedEngine::Expression,
-                ENGINE_TYPE_RUSTY_RULES | ENGINE_TYPE_JSON_DSL => RoutedEngine::RustyRules,
+                ENGINE_TYPE_RETE | ENGINE_TYPE_RUST_RULE | GRL => RoutedEngine::Rete,
+                YAML_FIELD_EXPRESSION | ENGINE_TYPE_EVALEXPR => RoutedEngine::Expression,
+                RUSTY_RULES | ENGINE_TYPE_JSON_DSL => RoutedEngine::RustyRules,
                 _ => Self::detect_by_content(rule_definition),
             };
         }
@@ -118,11 +115,11 @@ impl RuleEngineRouter {
         // Check "rule" or "grl" field for when/then keywords
         if let Some(rule_str) = rule_definition
             .get(YAML_FIELD_RULE)
-            .or_else(|| rule_definition.get(YAML_FIELD_GRL))
+            .or_else(|| rule_definition.get(GRL))
             .and_then(|v| v.as_str())
         {
             let lower = rule_str.to_lowercase();
-            return lower.contains("when") && lower.contains("then");
+            return lower.contains(GRL_KEYWORD_WHEN) && lower.contains(GRL_KEYWORD_THEN);
         }
 
         // Check if there's a rule definition with GRL markers
@@ -131,7 +128,7 @@ impl RuleEngineRouter {
             .and_then(|v| v.as_str())
         {
             let lower = rule_str.to_lowercase();
-            return lower.contains("when") && lower.contains("then");
+            return lower.contains(GRL_KEYWORD_WHEN) && lower.contains(GRL_KEYWORD_THEN);
         }
 
         false
@@ -227,7 +224,7 @@ impl RuleEngineRouter {
             RoutedEngine::Rete => {
                 // Validate GRL syntax
                 if rule_definition.get(YAML_FIELD_RULE).is_none()
-                    && rule_definition.get(YAML_FIELD_GRL).is_none()
+                    && rule_definition.get(GRL).is_none()
                 {
                     return Err(crate::ValidationError::Config(
                         "RETE rule must have 'rule' or 'grl' field".into(),

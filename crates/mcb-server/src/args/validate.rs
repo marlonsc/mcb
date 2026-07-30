@@ -54,3 +54,47 @@ pub struct ValidateArgs {
     pub category: Option<String>,
 }
 }
+
+// ---------------------------------------------------------------------------
+// MCP-facing single-purpose tools
+// ---------------------------------------------------------------------------
+
+tool_action! {
+    /// Arguments for the `validate_code` tool.
+    pub struct ValidateCodeArgs => ValidateArgs {
+        #[schemars(description = "Scope: file or project (default: project)", with = "ValidateScope")]
+        scope: Option<ValidateScope>,
+        #[schemars(description = "Specific rules to run (empty = all)", with = "Vec<String>")]
+        rules: Option<Vec<String>>,
+        #[schemars(description = "Rule category filter", with = "String")]
+        category: Option<String>
+        ;
+        hidden { path: Option<String> }
+        ;
+        convert |a| { action: ValidateAction::Run, scope: a.scope, rules: a.rules, category: a.category }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `analyze_code` tool.
+    pub struct AnalyzeCodeArgs => ValidateArgs {
+        #[schemars(description = "Path to file or directory", with = "String")]
+        path: Option<String>
+        ;
+        hidden { }
+        ;
+        convert |a| { action: ValidateAction::Analyze, scope: None, path: a.path, rules: None, category: None }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `list_rules` tool.
+    pub struct ListRulesArgs => ValidateArgs {
+        #[schemars(description = "Filter by category", with = "String")]
+        category: Option<String>
+        ;
+        hidden { }
+        ;
+        convert |a| { action: ValidateAction::ListRules, scope: None, path: None, rules: None, category: a.category }
+    }
+}

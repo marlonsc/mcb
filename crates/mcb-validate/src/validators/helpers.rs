@@ -1,4 +1,4 @@
-use crate::constants::common::{CFG_TEST_MARKER, COMMENT_PREFIX};
+use mcb_utils::constants::validate::{CFG_TEST_MARKER, COMMENT_PREFIX};
 
 pub(crate) fn for_each_non_test_non_comment_line<F>(content: &str, mut visit: F)
 where
@@ -19,4 +19,13 @@ where
         }
         visit(line_num, line, trimmed);
     }
+}
+
+pub(crate) fn should_skip_crate(src_dir: &std::path::Path, excluded_crates: &[String]) -> bool {
+    let Some(path_str) = src_dir.to_str() else {
+        return false;
+    };
+    excluded_crates
+        .iter()
+        .any(|excluded| path_str.contains(excluded))
 }

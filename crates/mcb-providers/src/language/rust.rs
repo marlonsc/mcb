@@ -3,7 +3,8 @@
 //!
 //! Rust language processor for AST-based code chunking.
 
-use crate::language::common::{BaseProcessor, CHUNK_SIZE_RUST, LanguageConfig, NodeExtractionRule};
+use crate::language::common::{BaseProcessor, LanguageConfig, NodeExtractionRule};
+use mcb_utils::constants::lang::CHUNK_SIZE_RUST;
 
 /// Rust language processor with comprehensive AST extraction rules.
 pub struct RustProcessor {

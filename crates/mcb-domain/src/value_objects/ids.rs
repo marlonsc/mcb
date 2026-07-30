@@ -41,11 +41,6 @@ define_id!(
 );
 define_id!(IssueLabelId, "Strong typed identifier for an issue label");
 
-define_id!(CodebaseId, "Strong typed identifier for a codebase");
-define_id!(FileId, "Strong typed identifier for a file");
-define_id!(FunctionId, "Strong typed identifier for a function");
-define_id!(ClassId, "Strong typed identifier for a class");
-
 define_id!(TeamMemberId, "Strong typed identifier for a team member");
 define_id!(
     IssueLabelAssignmentId,
@@ -63,24 +58,11 @@ define_id!(
     TransitionId,
     "Strong typed identifier for a workflow transition"
 );
-define_id!(SubmoduleId, "Strong typed identifier for a submodule");
 define_id!(
     DelegationId,
     "Strong typed identifier for an agent delegation"
 );
 define_id!(ToolCallId, "Strong typed identifier for a tool call");
-define_id!(
-    CheckpointId,
-    "Strong typed identifier for an agent checkpoint"
-);
-define_id!(
-    ErrorPatternId,
-    "Strong typed identifier for an error pattern"
-);
-define_id!(
-    ErrorPatternMatchId,
-    "Strong typed identifier for an error pattern match"
-);
 define_id!(
     ExecutionId,
     "Strong typed identifier for an execution record"
@@ -89,11 +71,6 @@ define_id!(
     QualityGateId,
     "Strong typed identifier for a quality gate result"
 );
-define_id!(DiffId, "Strong typed identifier for a file or ref diff");
-define_id!(
-    SnapshotId,
-    "Strong typed identifier for a codebase snapshot"
-);
 define_id!(
     SessionSummaryId,
     "Strong typed identifier for a session summary"
@@ -101,8 +78,4 @@ define_id!(
 define_id!(
     OriginContextId,
     "Strong typed identifier for an origin context"
-);
-define_id!(
-    MemorySearchId,
-    "Strong typed identifier for a memory search entry"
 );

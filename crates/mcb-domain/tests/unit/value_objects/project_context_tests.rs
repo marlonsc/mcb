@@ -15,7 +15,7 @@ fn test_parse_owner_repo(#[case] input: &str, #[case] expected: Option<&str>) {
 }
 
 #[rstest]
-fn new_constructs_project_context() {
+fn test_project_context_construction() {
     let context = ProjectContext::new("marlonsc/mcb", "mcb");
 
     assert_eq!(context.project_id, "marlonsc/mcb");

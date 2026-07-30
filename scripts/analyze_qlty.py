@@ -6,8 +6,8 @@ This wrapper keeps compatibility with older invocations that used
 """
 
 import sys
-from qlty.main import main
 
+from qlty.main import main
 
 if __name__ == "__main__":
     if "--markdown" in sys.argv:

@@ -3,46 +3,29 @@
 //!
 use std::path::PathBuf;
 
-use super::ViolationFieldFmt;
+use super::impl_violation_field_fmt;
 
-impl ViolationFieldFmt for Vec<String> {
-    fn fmt_field(&self) -> String {
-        self.join(", ")
-    }
-}
+impl_violation_field_fmt!(Vec<String> => |value: &Vec<String>| value.join(", "));
 
-impl ViolationFieldFmt for Vec<PathBuf> {
-    fn fmt_field(&self) -> String {
-        self.iter()
-            .map(|p| p.display().to_string())
-            .collect::<Vec<_>>()
-            .join(", ")
-    }
-}
-
-impl ViolationFieldFmt for Vec<(PathBuf, usize)> {
-    fn fmt_field(&self) -> String {
-        self.iter()
-            .map(|(p, n)| format!("{}:{}", p.display(), n))
-            .collect::<Vec<_>>()
-            .join(", ")
-    }
-}
-
-impl ViolationFieldFmt for Vec<(PathBuf, usize, String)> {
-    fn fmt_field(&self) -> String {
-        self.iter()
-            .map(|(p, n, s)| format!("{}:{}:{}", p.display(), n, s))
-            .collect::<Vec<_>>()
-            .join(", ")
-    }
-}
-
-impl ViolationFieldFmt for Vec<(PathBuf, String)> {
-    fn fmt_field(&self) -> String {
-        self.iter()
-            .map(|(p, s)| format!("{}:{}", p.display(), s))
-            .collect::<Vec<_>>()
-            .join(", ")
-    }
-}
+impl_violation_field_fmt!(
+    Vec<PathBuf> => |value: &Vec<PathBuf>| value
+        .iter()
+        .map(|p| p.display().to_string())
+        .collect::<Vec<_>>()
+        .join(", "),
+    Vec<(PathBuf, usize)> => |value: &Vec<(PathBuf, usize)>| value
+        .iter()
+        .map(|(p, n)| format!("{}:{}", p.display(), n))
+        .collect::<Vec<_>>()
+        .join(", "),
+    Vec<(PathBuf, usize, String)> => |value: &Vec<(PathBuf, usize, String)>| value
+        .iter()
+        .map(|(p, n, s)| format!("{}:{}:{}", p.display(), n, s))
+        .collect::<Vec<_>>()
+        .join(", "),
+    Vec<(PathBuf, String)> => |value: &Vec<(PathBuf, String)>| value
+        .iter()
+        .map(|(p, s)| format!("{}:{}", p.display(), s))
+        .collect::<Vec<_>>()
+        .join(", ")
+);

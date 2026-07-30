@@ -51,59 +51,32 @@ fn map_client_error(error: &Error) -> Option<String> {
 }
 
 fn map_provider_error(error: &Error) -> Option<String> {
-    let message = match error {
-        Error::Database { message, .. } => {
-            error!("Database", "database operation failed", message);
-            format_error("Database error", message)
-        }
-        Error::VectorDb { message } => {
-            error!("VectorDb", "vector database operation failed", message);
-            format_error("Vector database error", message)
-        }
-        Error::Embedding { message } => {
-            error!("Embedding", "embedding operation failed", message);
-            format_error("Embedding error", message)
-        }
-        Error::Network { message, .. } => {
-            error!("Network", "network operation failed", message);
-            format_error("Network error", message)
-        }
-        Error::ObservationStorage { message, .. } => {
-            error!("Memory", "observation storage failed", message);
-            format_error("Memory storage error", message)
-        }
-        Error::Vcs { message, .. } => {
-            error!("Vcs", "VCS operation failed", message);
-            format_error("VCS error", message)
-        }
-        Error::IoSimple { .. }
-        | Error::Io { .. }
-        | Error::Json { .. }
-        | Error::Generic(_)
-        | Error::Utf8(_)
-        | Error::Base64(_)
-        | Error::InvalidRegex { .. }
-        | Error::NotFound { .. }
-        | Error::InvalidArgument { .. }
-        | Error::Config { .. }
-        | Error::Configuration { .. }
-        | Error::ConfigMissing(_)
-        | Error::ConfigInvalid { .. }
-        | Error::Authentication { .. }
-        | Error::Internal { .. }
-        | Error::Cache { .. }
-        | Error::Infrastructure { .. }
-        | Error::RepositoryNotFound { .. }
-        | Error::BranchNotFound { .. }
-        | Error::ObservationNotFound { .. }
-        | Error::DuplicateObservation { .. }
-        | Error::Browse(_)
-        | Error::Highlight(_) => {
-            trace!("ErrorMapping", "provider mapper skipped unmatched variant");
-            return None;
-        }
-    };
-    Some(message)
+    if let Error::Database { message, .. } = error {
+        error!("Database", "database operation failed", message);
+        return Some(format_error("Database error", message));
+    }
+    if let Error::VectorDb { message } = error {
+        error!("VectorDb", "vector database operation failed", message);
+        return Some(format_error("Vector database error", message));
+    }
+    if let Error::Embedding { message } = error {
+        error!("Embedding", "embedding operation failed", message);
+        return Some(format_error("Embedding error", message));
+    }
+    if let Error::Network { message, .. } = error {
+        error!("Network", "network operation failed", message);
+        return Some(format_error("Network error", message));
+    }
+    if let Error::ObservationStorage { message, .. } = error {
+        error!("Memory", "observation storage failed", message);
+        return Some(format_error("Memory storage error", message));
+    }
+    if let Error::Vcs { message, .. } = error {
+        error!("Vcs", "VCS operation failed", message);
+        return Some(format_error("VCS error", message));
+    }
+    trace!("ErrorMapping", "provider mapper skipped unmatched variant");
+    None
 }
 
 fn map_config_error(error: &Error) -> Option<String> {

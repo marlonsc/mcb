@@ -1,26 +1,24 @@
-//!
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
-//!
+//! HTTP client provider ports.
+
 use std::time::Duration;
 
-use reqwest::Client;
+use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-/// HTTP client configuration
-///
-/// Controls connection pooling, timeouts, and other HTTP client behavior.
-/// Used by `HttpClientProvider` to configure HTTP requests.
+use crate::error::Result;
+
+/// HTTP client configuration.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct HttpClientConfig {
-    /// Maximum idle connections per host
+    /// Maximum number of idle connections per host.
     pub max_idle_per_host: usize,
-    /// Idle connection timeout
+    /// Maximum idle time for a connection.
     pub idle_timeout: Duration,
-    /// TCP keep-alive duration
+    /// Connection keep-alive interval.
     pub keepalive: Duration,
-    /// Total timeout for requests
+    /// Request timeout.
     pub timeout: Duration,
-    /// User agent string
+    /// User agent string for outgoing requests.
     pub user_agent: String,
 }
 
@@ -36,27 +34,28 @@ impl Default for HttpClientConfig {
     }
 }
 
-/// HTTP client provider trait
+/// HTTP client provider trait.
 ///
-/// Defines the interface for HTTP client operations used by API-based providers.
+/// Provides an abstract HTTP client interface without coupling to any
+/// concrete HTTP library. Implementations live in the provider or
+/// infrastructure layer and wrap a real HTTP client.
+#[async_trait]
 pub trait HttpClientProvider: Send + Sync {
-    /// Get a reference to the underlying reqwest Client
-    fn client(&self) -> &Client;
-
-    /// Get the configuration
+    /// Get the HTTP client configuration.
     fn config(&self) -> &HttpClientConfig;
 
-    /// Create a new client with custom timeout for specific operations.
+    /// Execute a GET request and return the response body as bytes.
     ///
     /// # Errors
-    ///
-    /// Returns an error if the HTTP client cannot be constructed with the
-    /// given timeout configuration.
-    fn client_with_timeout(
-        &self,
-        timeout: Duration,
-    ) -> Result<Client, Box<dyn std::error::Error + Send + Sync>>;
+    /// Returns an error if the request fails.
+    async fn get(&self, url: &str) -> Result<Vec<u8>>;
 
-    /// Check if the client pool is enabled
+    /// Execute a POST request with a raw byte body and return the response body.
+    ///
+    /// # Errors
+    /// Returns an error if the request fails.
+    async fn post(&self, url: &str, body: &[u8]) -> Result<Vec<u8>>;
+
+    /// Return true if the HTTP client is configured and enabled.
     fn is_enabled(&self) -> bool;
 }

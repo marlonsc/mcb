@@ -1,33 +1,36 @@
-#[cfg(test)]
-mod tests {
-    use sqlx::sqlite::SqlitePool;
+#![allow(clippy::expect_used)]
 
-    #[tokio::test]
-    async fn test_fts5_availability() {
-        let pool = SqlitePool::connect("sqlite::memory:").await.unwrap();
+use rstest::{fixture, rstest};
+use sqlx::sqlite::SqlitePool;
 
-        // Try creating an FTS5 table
-        let result = sqlx::query("CREATE VIRTUAL TABLE test_fts USING fts5(content)")
-            .execute(&pool)
-            .await;
+#[fixture]
+async fn pool() -> SqlitePool {
+    SqlitePool::connect(mcb_utils::constants::SQLITE_MEMORY_DSN)
+        .await
+        .expect("failed to connect to memory sqlite")
+}
 
-        match result {
-            Ok(_) => println!("FTS5 is available"),
-            Err(e) => panic!("FTS5 check failed: {e}"),
-        }
+#[rstest]
+#[tokio::test]
+async fn test_fts5_availability(#[future] pool: SqlitePool) {
+    let pool = pool.await;
+    // Try creating an FTS5 table
+    sqlx::query("CREATE VIRTUAL TABLE test_fts USING fts5(content)")
+        .execute(&pool)
+        .await
+        .expect("FTS5 table creation failed - FTS5 may not be available");
 
-        // Try a simple insert and match
-        sqlx::query("INSERT INTO test_fts (content) VALUES ('hello world')")
-            .execute(&pool)
+    // Try a simple insert and match
+    sqlx::query("INSERT INTO test_fts (content) VALUES ('hello world')")
+        .execute(&pool)
+        .await
+        .expect("FTS5 insert failed");
+
+    let (count,): (i64,) =
+        sqlx::query_as("SELECT count(*) FROM test_fts WHERE test_fts MATCH 'hello'")
+            .fetch_one(&pool)
             .await
-            .unwrap();
+            .expect("FTS5 match query failed");
 
-        let row: (i64,) =
-            sqlx::query_as("SELECT count(*) FROM test_fts WHERE test_fts MATCH 'hello'")
-                .fetch_one(&pool)
-                .await
-                .unwrap();
-
-        assert_eq!(row.0, 1);
-    }
+    assert_eq!(count, 1);
 }

@@ -3,9 +3,9 @@
 //!
 use crate::config::PatternRulesConfig;
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_crate_file;
 use crate::{Result, ValidationConfig};
+use mcb_utils::utils::regex::compile_regex;
 
 use super::async_check::check_async_traits;
 use super::di::check_arc_usage;
@@ -82,6 +82,6 @@ impl PatternValidator {
 
 crate::impl_validator!(
     PatternValidator,
-    "pattern",
+    mcb_utils::constants::validate::VALIDATOR_PATTERN,
     "Validates code patterns (DI, Async, Result types)"
 );

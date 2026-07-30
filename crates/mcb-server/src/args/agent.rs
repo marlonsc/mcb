@@ -29,7 +29,7 @@ pub struct AgentArgs {
 
     /// Session ID for the agent
     #[schemars(description = "Session ID for the agent")]
-    pub session_id: SessionId,
+    pub session_id: Option<SessionId>,
 
     /// Activity data payload. `log_tool`: {`tool_name`, `params_summary`?, success, `error_message`?, `duration_ms`?}; `log_delegation`: {`child_session_id`, prompt, `prompt_embedding_id`?, result?, success, `duration_ms`?}
     #[schemars(
@@ -37,4 +37,32 @@ pub struct AgentArgs {
     )]
     pub data: serde_json::Value,
 }
+}
+
+// ---------------------------------------------------------------------------
+// MCP-facing single-purpose tools
+// ---------------------------------------------------------------------------
+
+tool_action! {
+    /// Arguments for the `log_tool_call` tool.
+    pub struct LogToolCallArgs => AgentArgs {
+        #[schemars(description = "Tool call data: {tool_name, params_summary?, success, error_message?, duration_ms?}")]
+        data: serde_json::Value
+        ;
+        hidden { org_id: Option<String>, session_id: Option<SessionId> }
+        ;
+        convert |a| { action: AgentAction::LogTool, data: a.data }
+    }
+}
+
+tool_action! {
+    /// Arguments for the `log_delegation` tool.
+    pub struct LogDelegationArgs => AgentArgs {
+        #[schemars(description = "Delegation data: {child_session_id, prompt, result?, success, duration_ms?}")]
+        data: serde_json::Value
+        ;
+        hidden { org_id: Option<String>, session_id: Option<SessionId> }
+        ;
+        convert |a| { action: AgentAction::LogDelegation, data: a.data }
+    }
 }

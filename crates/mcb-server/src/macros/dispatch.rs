@@ -24,10 +24,11 @@ macro_rules! entity_crud_dispatch {
         resource = $resource:expr,
         { $($arms:tt)* }
     ) => {
+        #[allow(unreachable_patterns)] // Why: some (action,resource) expansions cover every variant, making the macro's explicit `_` fallback unreachable; keeps the generic macro body warning-free across all uses.
         match ($action, $resource) {
             $($arms)*
-            (action, resource) => Err(rmcp::model::ErrorData::invalid_params(
-                format!("Unsupported action {:?} for resource {:?}", action, resource),
+            _ => Err(rmcp::model::ErrorData::invalid_params(
+                format!("Unsupported action {:?} for resource {:?}", $action, $resource),
                 None,
             )),
         }

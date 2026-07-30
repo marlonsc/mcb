@@ -2,8 +2,7 @@
 //!
 //! **Documentation**: [`docs/modules/validate.md#validators-validators`](../../../../docs/modules/validate.md#validators-validators)
 //!
-/// Validation macros (`mk_validators!`, `impl_validator!`, `define_violations!`)
-pub mod macros;
+//! Validation macros (`impl_validator!`, `define_violations!`) live in `crate::macros`.
 
 pub mod async_patterns;
 pub mod clean_architecture;
@@ -34,6 +33,7 @@ pub mod port_adapter;
 /// Code quality validation module (unwrap, panic, metrics)
 pub mod quality;
 pub mod refactoring;
+mod runner;
 /// SOLID principles validation module
 pub mod solid;
 /// Single Source of Truth (SSOT) invariants validator
@@ -62,6 +62,7 @@ pub use self::pmat::{PmatValidator, PmatViolation};
 pub use self::port_adapter::{PortAdapterValidator, PortAdapterViolation};
 pub use self::quality::{QualityValidator, QualityViolation};
 pub use self::refactoring::{RefactoringValidator, RefactoringViolation};
+pub use self::runner::{standard_validator_names, validate_all, validate_named};
 pub use self::solid::{SolidValidator, SolidViolation};
 pub use self::ssot::{SsotValidator, SsotViolation};
 pub use self::test_quality::{TestQualityValidator, TestQualityViolation};

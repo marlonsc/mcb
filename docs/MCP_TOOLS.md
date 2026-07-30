@@ -1,26 +1,31 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 MD024 -->
 # MCP Tools Schema Documentation
 
-**Version**: 0.2.1
-**Last Updated**: 2026-02-14
+**Version**: 0.3.1
+**Last Updated**: 2026-06-04
 
-MCB exposes 9 tools through the MCP protocol. Tool names as returned by `tools/list`:
+MCB exposes 24 public tool names through the MCP protocol. `tools/list` returns
+the single-purpose names below; implementation routes them through 9 handler
+families.
 
-| # | Tool | Description |
-| --- | ------ | ------------- |
-| 1 | `index` | Index operations (start, status, clear) |
-| 2 | `search` | Search operations for code and memory |
-| 3 | `validate` | Validation and analysis operations |
-| 4 | `memory` | Memory storage, retrieval, and timeline operations |
-| 5 | `session` | Session lifecycle operations |
-| 6 | `agent` | Agent activity logging operations |
-| 7 | `project` | Project workflow management (phases, issues, dependencies, decisions) |
-| 8 | `vcs` | Version control operations (list, index, compare, search, impact) |
-| 9 | `entity` | Unified entity CRUD (vcs/plan/issue/org resources) |
+| Family | Tool names returned by `tools/list` |
+| ------ | ----------------------------------- |
+| Search | `search_code`, `search_memory` |
+| Index | `index_repo`, `index_status`, `clear_index` |
+| Validate | `validate_code`, `analyze_code`, `list_rules` |
+| Memory | `store_memory`, `get_memories`, `list_memories`, `memory_timeline`, `inject_context` |
+| Session | `start_session`, `get_session`, `list_sessions`, `summarize_session` |
+| Agent | `log_tool_call`, `log_delegation` |
+| VCS | `list_repos`, `compare_branches`, `analyze_impact` |
+| Project | `project` |
+| Entity | `entity` |
+
+The sections below document the shared handler-family schemas used by the
+single-purpose tools.
 
 ---
 
-## 1. `index` Tool
+## 1. Index Tool Family
 
 Index operations (start, git_index, status, clear).
 
@@ -40,7 +45,7 @@ Index operations (start, git_index, status, clear).
 
 ---
 
-## 2. `search` Tool
+## 2. Search Tool Family
 
 Search operations for code and memory.
 
@@ -61,7 +66,7 @@ Search operations for code and memory.
 
 ---
 
-## 3. `validate` Tool
+## 3. Validate Tool Family
 
 Validation and analysis operations.
 
@@ -77,7 +82,7 @@ Validation and analysis operations.
 
 ---
 
-## 4. `memory` Tool
+## 4. Memory Tool Family
 
 Memory storage, retrieval, and timeline operations.
 
@@ -106,7 +111,7 @@ Memory storage, retrieval, and timeline operations.
 
 ---
 
-## 5. `session` Tool
+## 5. Session Tool Family
 
 Session lifecycle operations.
 
@@ -125,7 +130,7 @@ Session lifecycle operations.
 
 ---
 
-## 6. `agent` Tool
+## 6. Agent Tool Family
 
 Agent activity logging operations.
 
@@ -157,17 +162,17 @@ Project workflow management (phases, issues, dependencies, decisions).
 
 ---
 
-## 8. `vcs` Tool
+## 8. VCS Tool Family
 
-Version control operations (list, index, compare, search, impact).
+Version control operations (list, compare, impact).
 
-**Actions**: `list_repositories`, `index_repository`, `compare_branches`, `search_branch`, `analyze_impact`
+**Public tools**: `list_repos`, `compare_branches`, `analyze_impact`
 
 | Parameter | Type | Required | Description |
 | ----------- | ------ | ---------- | ------------- |
-| `action` | enum | **yes** | `list_repositories`, `index_repository`, `compare_branches`, `search_branch`, `analyze_impact` |
-| `repo_id` | string | **yes** | Repository identifier |
-| `repo_path` | string | **yes** | Repository path on disk |
+| `action` | enum | internal | `list_repositories`, `compare_branches`, `analyze_impact` |
+| `repo_id` | string | no | Repository identifier, usually injected by context |
+| `repo_path` | string | no | Repository path on disk, usually injected by context |
 | `base_branch` | string | no | Base branch name |
 | `target_branch` | string | no | Compare/target branch name |
 | `query` | string | no | Search query for branch search |
@@ -228,7 +233,7 @@ When `delegated` is `true`, `parent_session_id` is also required.
 
 ---
 
-## Operation Mode Matrix
+## Operation Family Mode Matrix
 
 | Tool | `stdio-only` | `client-hybrid` | `server-hybrid` |
 | ------ |:---:|:---:|:---:|

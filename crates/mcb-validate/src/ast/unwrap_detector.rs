@@ -10,8 +10,8 @@ use std::path::Path;
 
 use rust_code_analysis::{Callback, Node, ParserTrait, action, guess_language};
 
-use crate::constants::common::{CFG_TEST_MARKER, EXPECT_CALL, MOD_PREFIX, UNWRAP_CALL};
 use crate::{Result, ValidationError};
+use mcb_utils::constants::validate::{CFG_TEST_MARKER, EXPECT_CALL, MOD_PREFIX, UNWRAP_CALL};
 
 /// Detection result for unwrap/expect usage
 #[derive(Debug, Clone)]
@@ -119,30 +119,11 @@ fn find_test_modules_recursive(node: &Node, code: &[u8], ranges: &mut Vec<(usize
     while let Some(ts_node) = stack.pop() {
         let current = Node(ts_node);
 
-        if current.kind() == "mod_item" {
-            let start = current.start_byte();
-            let search_start = start.saturating_sub(50);
-            let before = std::str::from_utf8(&code[search_start..start]).unwrap_or("");
-            if before.contains(CFG_TEST_MARKER) {
-                ranges.push((current.start_byte(), current.end_byte()));
-                continue;
-            }
-
-            if let Some(name_text) = current.utf8_text(code)
-                && (name_text.contains(&format!("{MOD_PREFIX}tests"))
-                    || name_text.contains(&format!("{MOD_PREFIX}test")))
-            {
-                let all_before = std::str::from_utf8(&code[..start]).unwrap_or("");
-                if let Some(attr_pos) = all_before.rfind(CFG_TEST_MARKER) {
-                    let between = &all_before[attr_pos..];
-                    if !between.contains(MOD_PREFIX)
-                        || between.rfind(MOD_PREFIX).unwrap_or(0) == between.len() - name_text.len()
-                    {
-                        ranges.push((current.start_byte(), current.end_byte()));
-                        continue;
-                    }
-                }
-            }
+        if current.kind() == "mod_item"
+            && let Some(range) = test_module_range(&current, code)
+        {
+            ranges.push(range);
+            continue;
         }
 
         let mut cursor = ts_node.walk();
@@ -151,6 +132,34 @@ fn find_test_modules_recursive(node: &Node, code: &[u8], ranges: &mut Vec<(usize
             stack.push(child);
         }
     }
+}
+
+/// Returns the byte range of a `mod_item` node when it is a `#[cfg(test)]` module.
+fn test_module_range(current: &Node, code: &[u8]) -> Option<(usize, usize)> {
+    let start = current.start_byte();
+    let search_start = start.saturating_sub(50);
+    let before = std::str::from_utf8(&code[search_start..start]).unwrap_or("");
+    if before.contains(CFG_TEST_MARKER) {
+        return Some((current.start_byte(), current.end_byte()));
+    }
+
+    let name_text = current.utf8_text(code)?;
+    if !name_text.contains(&format!("{MOD_PREFIX}tests"))
+        && !name_text.contains(&format!("{MOD_PREFIX}test"))
+    {
+        return None;
+    }
+
+    let all_before = std::str::from_utf8(&code[..start]).unwrap_or("");
+    let attr_pos = all_before.rfind(CFG_TEST_MARKER)?;
+    let between = &all_before[attr_pos..];
+    if !between.contains(MOD_PREFIX)
+        || between.rfind(MOD_PREFIX).unwrap_or(0) == between.len() - name_text.len()
+    {
+        return Some((current.start_byte(), current.end_byte()));
+    }
+
+    None
 }
 
 /// RCA Callback for finding test module ranges

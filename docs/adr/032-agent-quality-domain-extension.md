@@ -197,5 +197,5 @@ Rejected because:
 
 - [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
 - [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
-- [ADR-029: Hexagonal Architecture](./029-hexagonal-architecture-dill.md) (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](./archive/superseded-029-hexagonal-architecture-dill.md) (superseded by ADR-050)
 - [Planning Documents](../plans/archive/LEGACY_PLANNING_PROJECT.md)

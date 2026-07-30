@@ -1,72 +1,65 @@
-//! Native PMAT-style analysis provider ports.
-//!
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#provider-ports)
-//!
+//! Code analysis provider ports.
 
 use std::path::{Path, PathBuf};
 
 use crate::error::Result;
 
-/// Complexity finding for a single function.
+/// Unified analysis finding - all code analysis results use this type.
 #[derive(Debug, Clone)]
-pub struct ComplexityFinding {
-    /// Source file where the function is defined.
-    pub file: PathBuf,
-    /// Function name.
-    pub function: String,
-    /// Computed cyclomatic complexity.
-    pub complexity: u32,
+pub enum AnalysisFinding {
+    /// High cyclomatic complexity in a function.
+    Complexity {
+        /// File containing the complex function.
+        file: PathBuf,
+        /// Name of the function.
+        function: String,
+        /// Calculated complexity score.
+        complexity: u32,
+    },
+    /// Dead code symbol detected.
+    DeadCode {
+        /// File containing the dead code.
+        file: PathBuf,
+        /// Line number where the item is defined.
+        line: usize,
+        /// Type of the dead item (e.g., function, struct).
+        item_type: String,
+        /// Name of the dead item.
+        name: String,
+    },
+    /// Technical debt gradient score for a file.
+    TechnicalDebt {
+        /// File being scored.
+        file: PathBuf,
+        /// Normalized debt score.
+        score: u32,
+    },
 }
 
-/// Dead code finding for a single symbol.
-#[derive(Debug, Clone)]
-pub struct DeadCodeFinding {
-    /// Source file where the symbol is defined.
-    pub file: PathBuf,
-    /// 1-based line number of the declaration.
-    pub line: usize,
-    /// Symbol type (e.g. function).
-    pub item_type: String,
-    /// Symbol name.
-    pub name: String,
-}
-
-/// TDG finding for a single file.
-#[derive(Debug, Clone)]
-pub struct TdgFinding {
-    /// Source file for the score.
-    pub file: PathBuf,
-    /// Computed technical debt score.
-    pub score: u32,
-}
-
-/// Complexity analysis provider.
-pub trait ComplexityAnalyzer: Send + Sync {
-    /// Analyze workspace and return functions above the provided threshold.
+/// Unified code analysis provider.
+///
+/// Covers complexity analysis, dead code detection, and technical debt scoring.
+/// Implementations register via the `CODE_ANALYZERS` linkme distributed slice.
+pub trait CodeAnalyzer: Send + Sync {
+    /// Analyze code complexity in the workspace.
     ///
     /// # Errors
-    /// Returns an error if file analysis or traversal fails.
+    /// Returns an error if workspace scanning or analysis fails.
     fn analyze_complexity(
         &self,
         workspace_root: &Path,
         threshold: u32,
-    ) -> Result<Vec<ComplexityFinding>>;
-}
+    ) -> Result<Vec<AnalysisFinding>>;
 
-/// Dead code detection provider.
-pub trait DeadCodeDetector: Send + Sync {
-    /// Analyze workspace and return dead code symbols.
+    /// Detect dead code symbols in the workspace.
     ///
     /// # Errors
-    /// Returns an error if file analysis fails.
-    fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<DeadCodeFinding>>;
-}
+    /// Returns an error if workspace scanning fails.
+    fn detect_dead_code(&self, workspace_root: &Path) -> Result<Vec<AnalysisFinding>>;
 
-/// Technical Debt Gradient scoring provider.
-pub trait TdgScorer: Send + Sync {
-    /// Analyze workspace and return files with score above threshold.
+    /// Calculate technical debt gradient scores for workspace files.
     ///
     /// # Errors
-    /// Returns an error if file analysis fails.
-    fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<TdgFinding>>;
+    /// Returns an error if workspace scanning or scoring fails.
+    fn score_tdg(&self, workspace_root: &Path, threshold: u32) -> Result<Vec<AnalysisFinding>>;
 }

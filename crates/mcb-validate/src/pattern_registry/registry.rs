@@ -9,15 +9,15 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 use regex::Regex;
-use tracing::{error, warn};
 
 use crate::Result;
-use crate::constants::rules::{
+use crate::rules::templates::TemplateEngine;
+use mcb_domain::error;
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
+use mcb_utils::constants::validate::{
     YAML_FIELD_ALLOWED_DEPS, YAML_FIELD_CONFIG, YAML_FIELD_CRATE_NAME, YAML_FIELD_ID,
     YAML_FIELD_PATTERNS, YAML_FIELD_REGEX, YAML_FIELD_SELECTORS,
 };
-use crate::linters::constants::CARGO_TOML_FILENAME;
-use crate::rules::templates::TemplateEngine;
 
 /// Registry of compiled regex patterns and configurations loaded from YAML rules
 pub struct PatternRegistry {
@@ -50,10 +50,10 @@ impl PatternRegistry {
         let rule_files = crate::utils::fs::collect_yaml_files(rules_dir)?;
         for path in rule_files.into_iter().filter(|p| !is_template_path(p)) {
             if let Err(e) = registry.load_rule_file(&path, naming_config, project_prefix) {
-                warn!(
-                    path = %path.display(),
-                    error = %e,
-                    "Failed to load patterns/config"
+                mcb_domain::warn!(
+                    "pattern_registry",
+                    "Failed to load patterns/config",
+                    &format!("path={} error={}", path.display(), e)
                 );
             }
         }
@@ -71,42 +71,13 @@ impl PatternRegistry {
         let content = std::fs::read_to_string(path)?;
         let mut yaml: serde_yaml::Value = serde_yaml::from_str(&content)?;
 
-        // Build template variables from configuration (no hardcoded crate names)
-        let mut variables = serde_yaml::Mapping::new();
-        variables.insert(
-            serde_yaml::Value::String("project_prefix".to_owned()),
-            serde_yaml::Value::String(project_prefix.to_owned()),
-        );
-
-        // Map each layer key to (crate_name, module_name) from NamingRulesConfig
-        let crates: [(&str, &str); 6] = [
-            ("domain", &naming_config.domain_crate),
-            ("application", &naming_config.application_crate),
-            ("providers", &naming_config.providers_crate),
-            ("infrastructure", &naming_config.infrastructure_crate),
-            ("server", &naming_config.server_crate),
-            ("validate", &naming_config.validate_crate),
-        ];
-
-        for (key, crate_name) in crates {
-            let module_name = crate_name.replace('-', "_");
-            variables.insert(
-                serde_yaml::Value::String(format!("{key}_crate")),
-                serde_yaml::Value::String(crate_name.to_owned()),
-            );
-            variables.insert(
-                serde_yaml::Value::String(format!("{key}_module")),
-                serde_yaml::Value::String(module_name),
-            );
-        }
-
+        let variables_value = template_variables(naming_config, project_prefix);
         let engine = TemplateEngine::new();
-        let variables_value = serde_yaml::Value::Mapping(variables);
         if let Err(e) = engine.substitute_variables(&mut yaml, &variables_value) {
-            warn!(
-                path = %path.display(),
-                error = %e,
-                "Failed to substitute variables"
+            mcb_domain::warn!(
+                "pattern_registry",
+                "Failed to substitute variables",
+                &format!("path={} error={}", path.display(), e)
             );
         }
 
@@ -114,14 +85,28 @@ impl PatternRegistry {
         let rule_id = yaml
             .get(YAML_FIELD_ID)
             .and_then(|v| v.as_str())
-            .unwrap_or("unknown");
+            .unwrap_or(mcb_utils::constants::FALLBACK_UNKNOWN)
+            .to_owned();
 
-        // Load patterns from "patterns" section
+        self.register_yaml_patterns(&yaml, &rule_id)?;
+
+        // Load generic configuration from "config" section
+        if let Some(config) = yaml.get(YAML_FIELD_CONFIG) {
+            self.configs.insert(rule_id.clone(), config.clone());
+        }
+
+        self.merge_dependency_shorthand(&yaml, &rule_id);
+
+        Ok(())
+    }
+
+    /// Register `patterns` and `selectors` sections of a rule file, namespaced by `rule_id`.
+    fn register_yaml_patterns(&mut self, yaml: &serde_yaml::Value, rule_id: &str) -> Result<()> {
         for (name, pattern) in yaml
             .get(YAML_FIELD_PATTERNS)
             .and_then(|v| v.as_mapping())
             .into_iter()
-            .flat_map(|patterns| patterns.iter())
+            .flat_map(serde_yaml::Mapping::iter)
         {
             if let (Some(name_str), Some(pattern_str)) = (name.as_str(), pattern.as_str()) {
                 let pattern_id = format!("{rule_id}.{name_str}");
@@ -129,7 +114,6 @@ impl PatternRegistry {
             }
         }
 
-        // Load patterns from "selectors" section (for AST patterns)
         for (i, selector) in yaml
             .get(YAML_FIELD_SELECTORS)
             .and_then(|v| v.as_sequence())
@@ -143,38 +127,36 @@ impl PatternRegistry {
             }
         }
 
-        // Load generic configuration from "config" section
-        if let Some(config) = yaml.get(YAML_FIELD_CONFIG) {
-            self.configs.insert(rule_id.to_owned(), config.clone());
-        }
-
-        // Also load top-level crate_name and allowed_dependencies if present (shorthand for dependency rules)
-        if let Some(crate_name) = yaml.get(YAML_FIELD_CRATE_NAME) {
-            let mut map = serde_yaml::Mapping::new();
-            map.insert(
-                serde_yaml::Value::from(YAML_FIELD_CRATE_NAME),
-                crate_name.clone(),
-            );
-            if let Some(allowed) = yaml.get(YAML_FIELD_ALLOWED_DEPS) {
-                map.insert(
-                    serde_yaml::Value::from(YAML_FIELD_ALLOWED_DEPS),
-                    allowed.clone(),
-                );
-            }
-
-            // Merge into config for this rule if it doesn't already have one, or extend it
-            let entry = self
-                .configs
-                .entry(rule_id.to_owned())
-                .or_insert_with(|| serde_yaml::Value::Mapping(serde_yaml::Mapping::new()));
-            if let Some(config_map) = entry.as_mapping_mut() {
-                for (k, v) in map {
-                    config_map.insert(k, v);
-                }
-            }
-        }
-
         Ok(())
+    }
+
+    /// Merge top-level `crate_name`/`allowed_dependencies` shorthand into the rule config.
+    fn merge_dependency_shorthand(&mut self, yaml: &serde_yaml::Value, rule_id: &str) {
+        let Some(crate_name) = yaml.get(YAML_FIELD_CRATE_NAME) else {
+            return;
+        };
+
+        let mut map = serde_yaml::Mapping::new();
+        map.insert(
+            serde_yaml::Value::from(YAML_FIELD_CRATE_NAME),
+            crate_name.clone(),
+        );
+        if let Some(allowed) = yaml.get(YAML_FIELD_ALLOWED_DEPS) {
+            map.insert(
+                serde_yaml::Value::from(YAML_FIELD_ALLOWED_DEPS),
+                allowed.clone(),
+            );
+        }
+
+        let entry = self
+            .configs
+            .entry(rule_id.to_owned())
+            .or_insert_with(|| serde_yaml::Value::Mapping(serde_yaml::Mapping::new()));
+        if let Some(config_map) = entry.as_mapping_mut() {
+            for (k, v) in map {
+                config_map.insert(k, v);
+            }
+        }
     }
 
     /// Register a pattern with the given ID
@@ -213,6 +195,7 @@ impl PatternRegistry {
                     .filter_map(|v| v.as_str().map(str::to_owned))
                     .collect()
             })
+            // INTENTIONAL: YAML sequence parsing; empty patterns list is valid
             .unwrap_or_default()
     }
 
@@ -240,6 +223,42 @@ impl PatternRegistry {
     }
 }
 
+/// Build the YAML template variables (`*_crate`, `*_module`, `project_prefix`) from naming config.
+fn template_variables(
+    naming_config: &crate::config::NamingRulesConfig,
+    project_prefix: &str,
+) -> serde_yaml::Value {
+    let mut variables = serde_yaml::Mapping::new();
+    variables.insert(
+        serde_yaml::Value::String("project_prefix".to_owned()),
+        serde_yaml::Value::String(project_prefix.to_owned()),
+    );
+
+    let crates: [(&str, &str); 7] = [
+        ("domain", &naming_config.domain_crate),
+        ("application", &naming_config.application_crate),
+        ("providers", &naming_config.providers_crate),
+        ("infrastructure", &naming_config.infrastructure_crate),
+        ("server", &naming_config.server_crate),
+        ("validate", &naming_config.validate_crate),
+        ("utils", &naming_config.utils_crate),
+    ];
+
+    for (key, crate_name) in crates {
+        let module_name = crate_name.replace('-', "_");
+        variables.insert(
+            serde_yaml::Value::String(format!("{key}_crate")),
+            serde_yaml::Value::String(crate_name.to_owned()),
+        );
+        variables.insert(
+            serde_yaml::Value::String(format!("{key}_module")),
+            serde_yaml::Value::String(module_name),
+        );
+    }
+
+    serde_yaml::Value::Mapping(variables)
+}
+
 fn is_template_path(path: &Path) -> bool {
     path.components()
         .any(|component| component.as_os_str() == "templates")
@@ -262,31 +281,13 @@ impl Default for PatternRegistry {
 #[must_use]
 pub fn default_rules_dir() -> PathBuf {
     // 1. Explicit override via environment variable
-    if let Ok(rules_dir) = std::env::var("MCB_RULES_DIR") {
-        let path = PathBuf::from(rules_dir);
-        if path.exists() {
-            return path;
-        }
+    if let Some(dir) = env_rules_dir() {
+        return dir;
     }
 
-    // 2. Try CARGO_MANIFEST_DIR (works when building mcb-validate directly)
-    if let Ok(manifest_dir) = std::env::var("CARGO_MANIFEST_DIR") {
-        let rules_dir = PathBuf::from(&manifest_dir).join("rules");
-        if rules_dir.exists() {
-            return rules_dir;
-        }
-
-        // 3. When used as dependency, CARGO_MANIFEST_DIR points to consumer crate
-        // Try to find mcb-validate/rules relative to workspace root
-        if let Some(workspace_root) = PathBuf::from(&manifest_dir)
-            .ancestors()
-            .find(|p| p.join(CARGO_TOML_FILENAME).exists() && p.join("crates").exists())
-        {
-            let validate_rules = workspace_root.join("crates/mcb-validate/rules");
-            if validate_rules.exists() {
-                return validate_rules;
-            }
-        }
+    // 2-3. Derived from CARGO_MANIFEST_DIR (direct build or workspace dependency)
+    if let Some(dir) = manifest_rules_dir() {
+        return dir;
     }
 
     // 4. Try relative to current directory (works when running from workspace root)
@@ -299,6 +300,29 @@ pub fn default_rules_dir() -> PathBuf {
     PathBuf::from("rules")
 }
 
+/// Rules directory from the `MCB_RULES_DIR` override, if it exists.
+fn env_rules_dir() -> Option<PathBuf> {
+    let path = PathBuf::from(std::env::var("MCB_RULES_DIR").ok()?);
+    path.exists().then_some(path)
+}
+
+/// Rules directory derived from `CARGO_MANIFEST_DIR` (direct build or workspace dependency).
+fn manifest_rules_dir() -> Option<PathBuf> {
+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR").ok()?;
+
+    let rules_dir = PathBuf::from(&manifest_dir).join("rules");
+    if rules_dir.exists() {
+        return Some(rules_dir);
+    }
+
+    let workspace_root = PathBuf::from(&manifest_dir)
+        .ancestors()
+        .find(|p| p.join(CARGO_TOML_FILENAME).exists() && p.join("crates").exists())?
+        .to_path_buf();
+    let validate_rules = workspace_root.join("crates/mcb-validate/rules");
+    validate_rules.exists().then_some(validate_rules)
+}
+
 /// Global pattern registry, lazy-loaded from YAML rules and configuration
 pub static PATTERNS: std::sync::LazyLock<PatternRegistry> = std::sync::LazyLock::new(|| {
     let rules_dir = default_rules_dir();
@@ -308,7 +332,7 @@ pub static PATTERNS: std::sync::LazyLock<PatternRegistry> = std::sync::LazyLock:
     let project_prefix = &file_config.general.project_prefix;
     PatternRegistry::load_from_rules(&rules_dir, naming_config, project_prefix).unwrap_or_else(
         |e| {
-            error!(error = %e, "Failed to load pattern registry");
+            error!("pattern_registry", "Failed to load pattern registry", &e);
             PatternRegistry::new()
         },
     )

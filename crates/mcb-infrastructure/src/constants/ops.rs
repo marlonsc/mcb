@@ -1,9 +1,0 @@
-//!
-//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
-//!
-/// Constant value for `OPERATIONS_CLEANUP_INTERVAL_SECS`.
-pub const OPERATIONS_CLEANUP_INTERVAL_SECS: u64 = 3600;
-/// Constant value for `OPERATIONS_RETENTION_SECS`.
-pub const OPERATIONS_RETENTION_SECS: u64 = 604800;
-/// Constant value for `OPERATIONS_MAX_IN_MEMORY`.
-pub const OPERATIONS_MAX_IN_MEMORY: usize = 10000;

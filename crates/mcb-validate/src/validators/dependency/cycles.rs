@@ -5,43 +5,16 @@ use std::collections::{HashMap, HashSet};
 
 use super::DependencyValidator;
 use super::violation::{DependencyCycle, DependencyViolation};
-use crate::constants::common::MCB_DEPENDENCY_PREFIX;
-use crate::linters::constants::CARGO_TOML_FILENAME;
 use crate::{Result, Severity};
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
+use mcb_utils::constants::validate::MCB_DEPENDENCY_PREFIX;
 
 /// Detect circular dependencies using topological sort
 pub fn detect_circular_dependencies(
     validator: &DependencyValidator,
 ) -> Result<Vec<DependencyViolation>> {
     let mut violations = Vec::new();
-    let mut graph: HashMap<String, HashSet<String>> = HashMap::new();
-
-    // Build dependency graph from Cargo.toml files
-    for crate_name in validator.allowed_deps.keys() {
-        let cargo_toml = validator
-            .config
-            .workspace_root
-            .join("crates")
-            .join(crate_name)
-            .join(CARGO_TOML_FILENAME);
-
-        if !cargo_toml.exists() {
-            continue;
-        }
-
-        let content = std::fs::read_to_string(&cargo_toml)?;
-        let parsed: toml::Value = toml::from_str(&content)?;
-
-        let mut deps = HashSet::new();
-        if let Some(dependencies) = parsed.get("dependencies").and_then(|d| d.as_table()) {
-            for dep_name in dependencies.keys() {
-                if dep_name.starts_with(MCB_DEPENDENCY_PREFIX) {
-                    deps.insert(dep_name.replace('_', "-"));
-                }
-            }
-        }
-        graph.insert(crate_name.clone(), deps);
-    }
+    let graph = build_dependency_graph(validator)?;
 
     // Detect cycles using DFS
     for start in graph.keys() {
@@ -56,6 +29,51 @@ pub fn detect_circular_dependencies(
     }
 
     Ok(violations)
+}
+
+/// Build the inter-crate dependency graph from each crate's `Cargo.toml`,
+/// keeping only `mcb-` workspace dependencies.
+///
+/// # Errors
+///
+/// Returns an error if a `Cargo.toml` cannot be read or parsed.
+fn build_dependency_graph(
+    validator: &DependencyValidator,
+) -> Result<HashMap<String, HashSet<String>>> {
+    let mut graph: HashMap<String, HashSet<String>> = HashMap::new();
+
+    for crate_name in validator.allowed_deps.keys() {
+        let cargo_toml = validator
+            .config
+            .workspace_root
+            .join("crates")
+            .join(crate_name)
+            .join(CARGO_TOML_FILENAME);
+
+        if !cargo_toml.exists() {
+            continue;
+        }
+
+        graph.insert(crate_name.clone(), read_mcb_dependencies(&cargo_toml)?);
+    }
+
+    Ok(graph)
+}
+
+/// Parse a crate's `Cargo.toml` and return its internal (`mcb-*`) dependency names.
+fn read_mcb_dependencies(cargo_toml: &std::path::Path) -> Result<HashSet<String>> {
+    let content = std::fs::read_to_string(cargo_toml)?;
+    let parsed: toml::Value = toml::from_str(&content)?;
+
+    let Some(dependencies) = parsed.get("dependencies").and_then(|d| d.as_table()) else {
+        return Ok(HashSet::new());
+    };
+
+    Ok(dependencies
+        .keys()
+        .filter(|name| name.starts_with(MCB_DEPENDENCY_PREFIX))
+        .map(|name| name.replace('_', "-"))
+        .collect())
 }
 
 /// Detects cycles in the dependency graph using depth-first search.

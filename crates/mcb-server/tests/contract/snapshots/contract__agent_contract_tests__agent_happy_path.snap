@@ -1,0 +1,30 @@
+---
+source: crates/mcb-server/tests/contract/agent_contract_tests.rs
+expression: "normalize_tool_call_ids(snapshot_payload(&request, status, &response))"
+---
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "name": "log_tool_call",
+      "arguments": {
+        "data": {
+          "tool_name": "search",
+          "success": true,
+          "duration_ms": 5
+        }
+      }
+    },
+    "id": 1
+  },
+  "status": 200,
+  "response": {
+    "jsonrpc": "2.0",
+    "error": {
+      "code": -32602,
+      "message": "session_id is required (not resolved from context)"
+    },
+    "id": 1
+  }
+}

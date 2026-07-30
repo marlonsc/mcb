@@ -10,17 +10,18 @@ use rmcp::model::CallToolResult;
 
 use super::responses::{BranchSearchMatch, BranchSearchResponse, repo_path};
 use crate::args::VcsArgs;
-use crate::constants::limits::DEFAULT_VCS_SEARCH_LIMIT;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
+use mcb_utils::constants::limits::DEFAULT_VCS_SEARCH_LIMIT;
 
-fn require_query(args: &VcsArgs) -> Result<&str, CallToolResult> {
+fn require_query(args: &VcsArgs) -> Result<&str, Box<CallToolResult>> {
     args.query
         .as_deref()
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .ok_or_else(|| tool_error("Missing query for branch search"))
+        .map_err(Box::new)
 }
 
 fn append_file_matches(
@@ -33,6 +34,7 @@ fn append_file_matches(
     for (index, line) in content.lines().enumerate() {
         if line.to_lowercase().contains(query_lower) {
             matches.push(BranchSearchMatch {
+                // INTENTIONAL: Path to_str conversion; non-UTF8 paths yield empty string
                 path: file_path.to_str().unwrap_or_default().to_owned(),
                 line: index + 1,
                 snippet: line.trim().to_owned(),
@@ -52,11 +54,11 @@ pub async fn search_branch(
 ) -> Result<CallToolResult, McpError> {
     let query = match require_query(args) {
         Ok(value) => value,
-        Err(error_result) => return Ok(error_result),
+        Err(error_result) => return Ok(*error_result),
     };
     let path = match repo_path(args) {
         Ok(p) => p,
-        Err(error_result) => return Ok(error_result),
+        Err(error_result) => return Ok(*error_result),
     };
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,

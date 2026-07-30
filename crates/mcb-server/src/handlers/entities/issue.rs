@@ -12,8 +12,9 @@ use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolResult, ErrorData as McpError};
 
 use crate::args::{IssueEntityAction, IssueEntityArgs, IssueEntityResource};
+use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::{
-    map_opaque_error, ok_json, ok_text, require_data, require_id, require_resolved_identifier,
+    map_opaque_error, ok_text, require_data, require_id, require_resolved_identifier,
     resolve_org_id,
 };
 
@@ -37,7 +38,20 @@ impl IssueEntityHandler {
         Parameters(args): Parameters<IssueEntityArgs>,
     ) -> Result<CallToolResult, McpError> {
         let org_id = resolve_org_id(args.org_id.as_deref());
+        match args.resource {
+            IssueEntityResource::Issue => self.handle_issue(&org_id, args).await,
+            IssueEntityResource::Comment => self.handle_comment(args).await,
+            IssueEntityResource::Label => self.handle_label(&org_id, args).await,
+            IssueEntityResource::LabelAssignment => self.handle_label_assignment(args).await,
+        }
+    }
 
+    /// Dispatch CRUD actions for the `Issue` resource.
+    async fn handle_issue(
+        &self,
+        org_id: &str,
+        args: IssueEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
         crate::entity_crud_dispatch! {
             action = args.action,
             resource = args.resource,
@@ -50,66 +64,103 @@ impl IssueEntityHandler {
                     Some(issue.project_id.as_str()),
                     "project_id required for issue create",
                 )?;
-                issue.org_id = org_id.clone();
+                issue.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.create_issue(&issue).await)?;
-                ok_json(&issue)
+                ResponseFormatter::json_success(&issue)
             }
             (IssueEntityAction::Get, IssueEntityResource::Issue) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_issue(org_id.as_str(), &id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_issue(org_id, &id).await)?)
             }
             (IssueEntityAction::List, IssueEntityResource::Issue) => {
                 let project_id = require_arg!(args.project_id, "project_id required for list");
-                ok_json(&map_opaque_error(self.repo.list_issues(org_id.as_str(), project_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_issues(org_id, project_id).await)?)
             }
             (IssueEntityAction::Update, IssueEntityResource::Issue) => {
                 let mut issue: ProjectIssue = require_data(args.data, "data required for update")?;
-                issue.org_id = org_id.clone();
+                issue.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.update_issue(&issue).await)?;
                 ok_text("updated")
             }
             (IssueEntityAction::Delete, IssueEntityResource::Issue) => {
                 let id = require_id(&args.id)?;
-                map_opaque_error(self.repo.delete_issue(org_id.as_str(), &id).await)?;
+                map_opaque_error(self.repo.delete_issue(org_id, &id).await)?;
                 ok_text("deleted")
             }
+            }
+        }
+    }
+
+    /// Dispatch CRUD actions for the `Comment` resource.
+    async fn handle_comment(&self, args: IssueEntityArgs) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (IssueEntityAction::Create, IssueEntityResource::Comment) => {
                 let comment: IssueComment = require_data(args.data, "data required")?;
                 map_opaque_error(self.repo.create_comment(&comment).await)?;
-                ok_json(&comment)
+                ResponseFormatter::json_success(&comment)
             }
             (IssueEntityAction::Get, IssueEntityResource::Comment) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_comment(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_comment(&id).await)?)
             }
             (IssueEntityAction::List, IssueEntityResource::Comment) => {
                 let issue_id = require_arg!(args.issue_id, "issue_id required");
-                ok_json(&map_opaque_error(self.repo.list_comments_by_issue(issue_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_comments_by_issue(issue_id).await)?)
             }
             (IssueEntityAction::Delete, IssueEntityResource::Comment) => {
                 let id = require_id(&args.id)?;
                 map_opaque_error(self.repo.delete_comment(&id).await)?;
                 ok_text("deleted")
             }
+            }
+        }
+    }
+
+    /// Dispatch CRUD actions for the `Label` resource.
+    async fn handle_label(
+        &self,
+        org_id: &str,
+        args: IssueEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (IssueEntityAction::Create, IssueEntityResource::Label) => {
                 let mut label: IssueLabel = require_data(args.data, "data required")?;
-                label.org_id = org_id.clone();
+                label.org_id = org_id.to_owned();
                 map_opaque_error(self.repo.create_label(&label).await)?;
-                ok_json(&label)
+                ResponseFormatter::json_success(&label)
             }
             (IssueEntityAction::Get, IssueEntityResource::Label) => {
                 let id = require_id(&args.id)?;
-                ok_json(&map_opaque_error(self.repo.get_label(&id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.get_label(&id).await)?)
             }
             (IssueEntityAction::List, IssueEntityResource::Label) => {
                 let project_id = require_arg!(args.project_id, "project_id required for list");
-                ok_json(&map_opaque_error(self.repo.list_labels(org_id.as_str(), project_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_labels(org_id, project_id).await)?)
             }
             (IssueEntityAction::Delete, IssueEntityResource::Label) => {
                 let id = require_id(&args.id)?;
                 map_opaque_error(self.repo.delete_label(&id).await)?;
                 ok_text("deleted")
             }
+            }
+        }
+    }
+
+    /// Dispatch CRUD actions for the `LabelAssignment` resource.
+    async fn handle_label_assignment(
+        &self,
+        args: IssueEntityArgs,
+    ) -> Result<CallToolResult, McpError> {
+        crate::entity_crud_dispatch! {
+            action = args.action,
+            resource = args.resource,
+            {
             (IssueEntityAction::Create, IssueEntityResource::LabelAssignment) => {
                 let assignment: IssueLabelAssignment =
                     require_data(args.data, "data required")?;
@@ -124,7 +175,7 @@ impl IssueEntityHandler {
             }
             (IssueEntityAction::List, IssueEntityResource::LabelAssignment) => {
                 let issue_id = require_arg!(args.issue_id, "issue_id required");
-                ok_json(&map_opaque_error(self.repo.list_labels_for_issue(issue_id).await)?)
+                ResponseFormatter::json_success(&map_opaque_error(self.repo.list_labels_for_issue(issue_id).await)?)
             }
             }
         }

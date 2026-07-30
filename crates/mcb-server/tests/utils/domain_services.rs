@@ -1,16 +1,31 @@
+//! Domain-services test helpers (mcb-server specific).
+//!
+//! Builds [`McbState`] from pure registry DI — no infrastructure imports.
+//! All providers resolved through `mcb_domain::registry::*` linkme slices.
+
 use std::sync::Arc;
 
+use mcb_domain::registry::ServiceResolutionContext;
 use mcb_domain::registry::database::{DatabaseProviderConfig, resolve_database_provider};
-use mcb_domain::value_objects::SessionId;
-use mcb_infrastructure::di::modules::domain_services::{
-    DomainServicesContainer, DomainServicesFactory,
+use mcb_domain::registry::events::{EventBusProviderConfig, resolve_event_bus_provider};
+use mcb_domain::registry::hybrid_search::{
+    HybridSearchProviderConfig, resolve_hybrid_search_provider,
 };
+use mcb_domain::registry::vector_store::{
+    VectorStoreProviderConfig, resolve_vector_store_provider,
+};
+use mcb_domain::value_objects::SessionId;
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
+use mcb_server::build_mcp_server_bootstrap;
+use mcb_server::state::McbState;
+use mcb_server::tools::ExecutionFlow;
 
-use crate::utils::test_fixtures::{TEST_PROJECT_ID, try_shared_app_context};
+// linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
+extern crate mcb_providers;
 
-/// Helper to create a base `MemoryArgs` with common defaults
-pub(crate) fn create_base_memory_args(
+/// Helper to create a base `MemoryArgs` with common defaults.
+#[must_use]
+pub fn create_base_memory_args(
     action: MemoryAction,
     resource: MemoryResource,
     data: Option<serde_json::Value>,
@@ -39,27 +54,78 @@ pub(crate) fn create_base_memory_args(
     }
 }
 
-/// Build domain services with an **isolated database** per test, reusing the
-/// shared embedding/vector/cache/language providers from [`shared_app_context`].
-pub(crate) async fn create_real_domain_services()
--> Option<(DomainServicesContainer, tempfile::TempDir)> {
-    let ctx = try_shared_app_context()?;
-
+/// Build [`McbState`] with an isolated database per test via pure registry DI.
+///
+/// Uses `mcb_domain::registry::*` to resolve all providers and
+/// [`build_mcp_server_bootstrap`] for the full MCP server composition.
+/// No `mcb_infrastructure` imports.
+pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDir)> {
     let temp_dir = tempfile::tempdir().ok()?;
     let db_path = temp_dir.path().join("test.db");
 
-    // Create a fresh SQLite database for this test
-    let db_provider = resolve_database_provider(&DatabaseProviderConfig::new("sqlite")).ok()?;
-    let db_executor = db_provider.connect(&db_path).await.ok()?;
+    // 1. Database — resolved through linkme registry
+    let db_config = DatabaseProviderConfig::new("sqlite").with_path(db_path);
+    let db = resolve_database_provider(&db_config).await.ok()?;
 
-    let project_id = TEST_PROJECT_ID.to_owned();
+    // 2. Event bus — resolved through linkme registry
+    let event_bus = resolve_event_bus_provider(&EventBusProviderConfig::new("inprocess")).ok()?;
 
-    let deps = mcb_infrastructure::di::test_factory::create_test_dependencies(
-        project_id,
-        &db_executor,
-        ctx,
-    );
+    // 3. Embedding — deterministic local provider for unit test composition
+    let embedding_provider = super::test_fixtures::create_test_embedding_provider(384);
 
-    let services = DomainServicesFactory::create_services(deps).await.ok()?;
-    Some((services, temp_dir))
+    // 4. Vector store — resolved through linkme registry
+    let vs_config = VectorStoreProviderConfig::new("edgevec")
+        .with_dimensions(384)
+        .with_collection(mcb_utils::constants::DEFAULT_NAMESPACE);
+    let vector_store_provider = match resolve_vector_store_provider(&vs_config) {
+        Ok(p) => p,
+        Err(e) => {
+            mcb_domain::warn!(
+                "domain_services",
+                "SKIPPED: Vector store provider unavailable (skipping test)",
+                &e
+            );
+            return None;
+        }
+    };
+
+    // 5. Hybrid search — resolved through linkme registry
+    let hybrid_search = resolve_hybrid_search_provider(&HybridSearchProviderConfig::new(
+        mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
+    ))
+    .ok()?;
+
+    // 6. Build ServiceResolutionContext (domain-level opaque DI context)
+    let resolution_ctx = ServiceResolutionContext {
+        db: Arc::clone(&db),
+        config: Arc::new(
+            *mcb_domain::registry::config::resolve_config_provider(
+                &mcb_domain::registry::config::ConfigProviderConfig::new(
+                    mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
+                ),
+            )
+            .ok()?
+            .load_config()
+            .ok()?
+            .downcast::<mcb_infrastructure::config::app::AppConfig>()
+            .ok()?,
+        ), // Real AppConfig loaded via CA/DI (ConfigProvider → load_config() → downcast)
+        event_bus,
+        embedding_provider: Arc::clone(&embedding_provider),
+        vector_store_provider: Arc::clone(&vector_store_provider),
+    };
+
+    // 7. Compose MCP server via Loco-style bootstrap (6-arg pure DI)
+    let bootstrap = build_mcp_server_bootstrap(
+        &resolution_ctx,
+        db,
+        embedding_provider,
+        vector_store_provider,
+        hybrid_search,
+        ExecutionFlow::ServerHybrid,
+    )
+    .ok()?;
+
+    let state = bootstrap.into_mcb_state();
+    Some((state, temp_dir))
 }

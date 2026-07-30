@@ -19,6 +19,7 @@ allowed_dependencies:
     "{{server_crate}}",
     "{{providers_crate}}",
     "{{validate_crate}}",
+    "{{utils_crate}}",
   ]
 
 config:
@@ -32,6 +33,7 @@ config:
       "{{server_crate}}",
       "{{providers_crate}}",
       "{{validate_crate}}",
+      "{{utils_crate}}",
     ]
 
 rule: |

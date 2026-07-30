@@ -7,8 +7,10 @@
 
 use std::path::Path;
 
-use super::constants::CLIPPY_PREFIX;
 use super::types::{ClippyOutput, LintViolation, RuffViolation};
+use mcb_utils::constants::validate::{
+    CATEGORY_QUALITY, CLIPPY_PREFIX, SEVERITY_ERROR, SEVERITY_INFO, SEVERITY_WARNING,
+};
 
 /// Execute linter command
 ///
@@ -46,6 +48,7 @@ pub async fn run_linter_command(
 #[must_use]
 pub fn parse_ruff_output(output: &str) -> Vec<LintViolation> {
     serde_json::from_str::<Vec<RuffViolation>>(output)
+        // INTENTIONAL: JSON parse fallback for linter output; empty array is safe default
         .unwrap_or_default()
         .into_iter()
         .map(|ruff_violation| LintViolation {
@@ -56,7 +59,7 @@ pub fn parse_ruff_output(output: &str) -> Vec<LintViolation> {
             column: ruff_violation.location.column,
             message: ruff_violation.message,
             severity: map_ruff_severity(&ruff_violation.code),
-            category: "quality".to_owned(),
+            category: CATEGORY_QUALITY.to_owned(),
         })
         .collect()
 }
@@ -99,15 +102,16 @@ pub fn parse_clippy_output(output: &str) -> Vec<LintViolation> {
         .filter(|line| !line.trim().is_empty())
         .filter_map(|line| serde_json::from_str::<ClippyOutput>(line).ok())
         .filter(|clippy_output| {
-            clippy_output.reason == super::constants::CLIPPY_REASON_COMPILER_MESSAGE
+            clippy_output.reason == mcb_utils::constants::validate::CLIPPY_REASON_COMPILER_MESSAGE
         })
         .filter_map(|clippy_output| {
             let msg = clippy_output.message;
             let span = msg.spans.into_iter().find(|s| s.is_primary)?;
+            // INTENTIONAL: Clippy JSON parse fallback; empty array is safe default
             let raw_code = msg.code.map(|c| c.code).unwrap_or_default();
             let rule_code = normalize_clippy_rule(raw_code)?;
             let category = if rule_code.contains("clippy") {
-                "quality"
+                CATEGORY_QUALITY
             } else {
                 "correctness"
             }
@@ -134,7 +138,10 @@ pub fn find_project_root(files: &[&Path]) -> Option<std::path::PathBuf> {
     if let Some(first_file) = files.first() {
         let mut current = first_file.parent()?;
         loop {
-            if current.join(super::constants::CARGO_TOML_FILENAME).exists() {
+            if current
+                .join(mcb_utils::constants::validate::CARGO_TOML_FILENAME)
+                .exists()
+            {
                 return Some(current.to_path_buf());
             }
             current = current.parent()?;
@@ -147,9 +154,9 @@ pub fn find_project_root(files: &[&Path]) -> Option<std::path::PathBuf> {
 #[must_use]
 pub fn map_ruff_severity(code: &str) -> String {
     match code.chars().next() {
-        Some('F' | 'E') => "error".to_owned(), // Pyflakes / pycodestyle errors
-        Some('W') => "warning".to_owned(),     // pycodestyle warnings
-        Some(_) | None => "info".to_owned(),
+        Some('F' | 'E') => SEVERITY_ERROR.to_owned(),
+        Some('W') => SEVERITY_WARNING.to_owned(),
+        Some(_) | None => SEVERITY_INFO.to_owned(),
     }
 }
 
@@ -157,8 +164,8 @@ pub fn map_ruff_severity(code: &str) -> String {
 #[must_use]
 pub fn map_clippy_level(level: &str) -> String {
     match level {
-        "error" => "error".to_owned(),
-        "warning" => "warning".to_owned(),
-        _ => "info".to_owned(), // note, help, and others
+        SEVERITY_ERROR => SEVERITY_ERROR.to_owned(),
+        SEVERITY_WARNING => SEVERITY_WARNING.to_owned(),
+        _ => SEVERITY_INFO.to_owned(), // note, help, and others
     }
 }

@@ -1,0 +1,26 @@
+---
+source: crates/mcb-server/tests/contract/validate_contract_tests.rs
+expression: "snapshot_payload(&request, status, &response)"
+---
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "tools/call",
+    "params": {
+      "name": "validate_code",
+      "arguments": {
+        "scope": 123
+      }
+    },
+    "id": 1
+  },
+  "status": 200,
+  "response": {
+    "jsonrpc": "2.0",
+    "error": {
+      "code": -32602,
+      "message": "Failed to parse arguments: invalid type: integer `123`, expected string or map"
+    },
+    "id": 1
+  }
+}

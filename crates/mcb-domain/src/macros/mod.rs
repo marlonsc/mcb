@@ -1,13 +1,9 @@
+//! Declarative macros for the domain layer.
 //!
-//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
-//!
-//! Domain macros organized by usage context.
-//!
-//! Sub-modules group macros by the domain area they serve:
-//! - [`entities`]: Entity and value-object type macros
-//! - [`ports`]: Port trait definition macros
-//! - [`schema`]: DDL schema builder macros
-//! - [`registry`]: Provider registry infrastructure macros
+//! Groups reusable `macro_rules!` definitions for entity boilerplate, logging,
+//! port trait scaffolding, registry generation, service helpers, and test
+//! fixtures. Each submodule is `#[macro_use]` so its macros are available
+//! crate-wide.
 
 #[macro_use]
 mod entities;
@@ -16,6 +12,8 @@ mod logging;
 #[macro_use]
 mod ports;
 #[macro_use]
-mod schema;
-#[macro_use]
 mod registry;
+#[macro_use]
+mod services;
+#[macro_use]
+mod testing;

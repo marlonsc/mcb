@@ -129,7 +129,7 @@ fn schema_required_fields_include_contract(
 #[case("index", schema_json::<IndexArgs>(), vec!["action", "path", "collection"])]
 #[case("vcs", schema_json::<VcsArgs>(), vec!["action", "repo_id", "repo_path", "query"])]
 #[case("search", schema_json::<SearchArgs>(), vec!["resource", "session_id", "query"])]
-#[case("entity", schema_json::<EntityArgs>(), vec!["action", "resource", "data", "org_id"])]
+#[case("entity", schema_json::<EntityArgs>(), vec!["action", "resource", "data", "id"])]
 #[case("validate", schema_json::<ValidateArgs>(), vec!["action", "scope", "path"])]
 fn schema_has_expected_property_names(
     #[case] schema_name: &str,

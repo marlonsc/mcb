@@ -1,19 +1,20 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md#organization)
 //!
-use super::constants::{
-    DUPLICATE_STRING_MIN_FILES, DUPLICATE_STRING_REGEX, DUPLICATE_STRING_SKIP_PATTERNS,
-};
 use super::violation::OrganizationViolation;
-use crate::constants::common::{
-    ATTRIBUTE_PREFIX, CONST_DECLARATION_PREFIXES, CONSTANTS_FILE_KEYWORDS,
-};
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::{for_each_crate_file, is_test_path};
 use crate::{Result, Severity, ValidationConfig};
+use mcb_utils::constants::validate::{
+    ATTRIBUTE_PREFIX, CONST_DECLARATION_PREFIXES, CONSTANTS_FILE_KEYWORDS,
+};
+use mcb_utils::constants::validate::{
+    DUPLICATE_STRING_MIN_FILES, DUPLICATE_STRING_REGEX, DUPLICATE_STRING_SKIP_PATTERNS,
+};
+use mcb_utils::utils::regex::compile_regex;
+use regex::Regex;
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Scans for string literals duplicated across multiple files that should be centralized.
 ///
@@ -44,31 +45,7 @@ pub fn validate_duplicate_strings(config: &ValidationConfig) -> Result<Vec<Organ
             }
 
             let content = std::fs::read_to_string(path)?;
-            crate::validators::for_each_non_test_non_comment_line(
-                &content,
-                |line_num, line, trimmed| {
-                    let skip_line = trimmed.starts_with(ATTRIBUTE_PREFIX)
-                        || CONST_DECLARATION_PREFIXES
-                            .iter()
-                            .any(|p| trimmed.starts_with(p));
-                    if skip_line {
-                        return;
-                    }
-
-                    string_occurrences.extend(
-                        string_pattern
-                            .captures_iter(line)
-                            .filter_map(|cap| cap.get(1).map(|m| m.as_str().to_owned()))
-                            .filter(|s| {
-                                !DUPLICATE_STRING_SKIP_PATTERNS
-                                    .iter()
-                                    .any(|pat| s.contains(pat))
-                            })
-                            .map(|string_val| (string_val, vec![(path.clone(), line_num + 1)])),
-                    );
-                },
-            );
-
+            collect_string_occurrences(path, &content, &string_pattern, &mut string_occurrences);
             Ok(())
         },
     )?;
@@ -91,4 +68,35 @@ pub fn validate_duplicate_strings(config: &ValidationConfig) -> Result<Vec<Organ
     );
 
     Ok(violations)
+}
+
+/// Record every qualifying string literal in `content` (keyed by value) along
+/// with its file and line, skipping attributes and const declarations.
+fn collect_string_occurrences(
+    path: &Path,
+    content: &str,
+    string_pattern: &Regex,
+    string_occurrences: &mut HashMap<String, Vec<(PathBuf, usize)>>,
+) {
+    crate::validators::for_each_non_test_non_comment_line(content, |line_num, line, trimmed| {
+        let skip_line = trimmed.starts_with(ATTRIBUTE_PREFIX)
+            || CONST_DECLARATION_PREFIXES
+                .iter()
+                .any(|p| trimmed.starts_with(p));
+        if skip_line {
+            return;
+        }
+
+        string_occurrences.extend(
+            string_pattern
+                .captures_iter(line)
+                .filter_map(|cap| cap.get(1).map(|m| m.as_str().to_owned()))
+                .filter(|s| {
+                    !DUPLICATE_STRING_SKIP_PATTERNS
+                        .iter()
+                        .any(|pat| s.contains(pat))
+                })
+                .map(|value| (value, vec![(path.to_path_buf(), line_num + 1)])),
+        );
+    });
 }

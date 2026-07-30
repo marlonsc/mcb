@@ -21,35 +21,21 @@ crate::define_entity! {
     }
 }
 
-/// Lifecycle status for a plan.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    strum_macros::Display,
-    strum_macros::AsRefStr,
-    strum_macros::EnumString,
-)]
-#[serde(rename_all = "snake_case")]
-#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
-pub enum PlanStatus {
-    /// Plan is in draft state.
-    Draft,
-    /// Plan is active and ready to execute.
-    Active,
-    /// Plan is currently being executed.
-    Executing,
-    /// Plan execution is complete.
-    Completed,
-    /// Plan is archived.
-    Archived,
+crate::define_string_enum! {
+    /// Lifecycle status for a plan.
+    pub enum PlanStatus [strum = "snake_case", serde = "snake_case", schema] {
+        /// Plan is in draft state.
+        Draft,
+        /// Plan is active and ready to execute.
+        Active,
+        /// Plan is currently being executed.
+        Executing,
+        /// Plan execution is complete.
+        Completed,
+        /// Plan is archived.
+        Archived,
+    }
 }
-
-crate::impl_as_str_from_as_ref!(PlanStatus);
 
 /// A versioned snapshot of a plan's content.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -91,28 +77,14 @@ pub struct PlanReview {
     pub created_at: i64,
 }
 
-/// Verdict values for a plan review.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    JsonSchema,
-    strum_macros::Display,
-    strum_macros::AsRefStr,
-    strum_macros::EnumString,
-)]
-#[serde(rename_all = "snake_case")]
-#[strum(serialize_all = "snake_case", ascii_case_insensitive)]
-pub enum ReviewVerdict {
-    /// Review approved the plan version.
-    Approved,
-    /// Review rejected the plan version.
-    Rejected,
-    /// Review requires revision before approval.
-    NeedsRevision,
+crate::define_string_enum! {
+    /// Verdict values for a plan review.
+    pub enum ReviewVerdict [strum = "snake_case", serde = "snake_case", schema] {
+        /// Review approved the plan version.
+        Approved,
+        /// Review rejected the plan version.
+        Rejected,
+        /// Review requires revision before approval.
+        NeedsRevision,
+    }
 }
-
-crate::impl_as_str_from_as_ref!(ReviewVerdict);

@@ -52,6 +52,68 @@ macro_rules! tool_crud_action_enum {
     };
 }
 
+/// Define a focused MCP tool with minimal visible args, hidden context, and
+/// automatic `From<Self> for CompoundArgs` conversion.
+///
+/// - Visible fields appear in the MCP schema with `#[schemars(description)]`.
+/// - Hidden fields get `#[schemars(skip)]` and auto-passthrough in `From`.
+/// - Convert maps visible + fixed values to the compound type.
+///
+/// ```ignore
+/// tool_action! {
+///     /// Search code by natural language.
+///     pub struct SearchCodeArgs => SearchArgs {
+///         #[schemars(description = "Query")]
+///         #[validate(length(min = 1))]
+///         query: String,
+///         ;
+///         hidden { org_id: Option<String>, repo_id: Option<String> }
+///         ;
+///         convert |a| { query: a.query, resource: SearchResource::Code }
+///     }
+/// }
+/// ```
+macro_rules! tool_action {
+    (
+        $(#[$struct_meta:meta])*
+        $vis:vis struct $name:ident => $compound:ident {
+            $(
+                $(#[$fmeta:meta])*
+                $fname:ident : $fty:ty
+            ),* $(,)?
+            ;
+            hidden { $( $hname:ident : $hty:ty ),* $(,)? }
+            ;
+            convert |$binding:ident| { $( $cfield:ident : $cexpr:expr ),* $(,)? }
+        }
+    ) => {
+        tool_schema! {
+            $(#[$struct_meta])*
+            $vis struct $name {
+                $(
+                    $(#[$fmeta])*
+                    #[doc = concat!("See `", stringify!($name), "` tool.")]
+                    pub $fname: $fty,
+                )*
+                $(
+                    #[doc = concat!(stringify!($hname), " (auto-injected).")]
+                    #[schemars(skip)]
+                    pub $hname: $hty,
+                )*
+            }
+        }
+
+        impl From<$name> for $compound {
+            fn from($binding: $name) -> Self {
+                Self {
+                    $( $cfield: $cexpr, )*
+                    $( $hname: $binding.$hname, )*
+                }
+            }
+        }
+    };
+}
+
 /// Define a unified entity args schema with action and resource types
 macro_rules! entity_args_schema {
     (
@@ -82,8 +144,8 @@ macro_rules! entity_args_schema {
                 #[schemars(description = "Resource ID (for get/update/delete)")]
                 pub id: Option<String>,
 
-                #[doc = "Organization ID (uses default if omitted)"]
-                #[schemars(description = "Organization ID (uses default if omitted)")]
+                #[doc = "Organization ID (auto-injected)."]
+                #[schemars(skip)]
                 pub org_id: Option<String>,
 
                 $(
@@ -95,7 +157,7 @@ macro_rules! entity_args_schema {
                 #[doc = "Data payload for create/update (JSON object)"]
                 #[schemars(
                     description = "Data payload for create/update (JSON object)",
-                    with = "serde_json::Value"
+                    with = "crate::args::schema_helpers::ObjectDataSchema"
                 )]
                 pub data: Option<serde_json::Value>,
             }

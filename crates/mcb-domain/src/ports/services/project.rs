@@ -1,16 +1,14 @@
-//!
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
-//!
-//! Provides project domain definitions.
+//! Project detection service ports.
+
 use std::path::Path;
 
 use async_trait::async_trait;
 
 use crate::entities::project::ProjectType;
 
-#[async_trait]
 /// Defines behavior for `ProjectDetectorService`.
+#[async_trait]
 pub trait ProjectDetectorService: Send + Sync {
-    /// Performs the detect all operation.
+    /// Perform project detection on all subdirectories within `path`.
     async fn detect_all(&self, path: &Path) -> Vec<ProjectType>;
 }

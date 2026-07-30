@@ -168,6 +168,7 @@ coverage/
 # ---------------------------------------------------------------------------
 *.bak
 *.bak?
+*.bak.*
 *.bkp
 *.backup
 *.backup*
@@ -258,6 +259,12 @@ reference/
 .mypy_cache/
 .pytest_cache/
 .venv/
+
+# ---------------------------------------------------------------------------
+# Code-intelligence index caches (local only)
+# ---------------------------------------------------------------------------
+.scope/
+.serena/
 
 # ---------------------------------------------------------------------------
 # Archived files (moved out of project, kept locally for reference)

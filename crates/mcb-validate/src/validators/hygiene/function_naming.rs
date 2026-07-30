@@ -2,11 +2,12 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::filters::LanguageId;
-use crate::pattern_registry::compile_regex;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_utils::utils::regex::compile_regex;
 
 use super::violation::HygieneViolation;
+use crate::ValidationConfigExt;
 
 const SMOKE_TEST_PATTERNS: [&str; 5] = [
     "_trait_object",
@@ -23,7 +24,12 @@ struct NamingScanInput<'a> {
     assert_pattern: &'a regex::Regex,
 }
 
-/// Verifies that test functions follow the `test_*` naming pattern.
+/// Verifies test-function hygiene: every attributed test carries a real
+/// assertion.
+///
+/// Test functions use descriptive behavioral names (e.g.
+/// `agent_happy_path_contract`); a `test_` prefix is not required, so naming is
+/// not flagged here — only missing assertions are.
 ///
 /// # Errors
 ///
@@ -34,7 +40,7 @@ pub fn validate_test_function_naming(config: &ValidationConfig) -> Result<Vec<Hy
     let tokio_test_pattern = compile_regex(r"#\[tokio::test\]")?;
     let fn_pattern = compile_regex(r"(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\(")?;
     let assert_pattern = compile_regex(
-        r"assert!|assert_eq!|assert_ne!|panic!|should_panic|\.unwrap\(|\.expect\(|Box<dyn\s|type_name::",
+        r"assert[a-z_]*!|assert_[a-z_]+\(|panic!|should_panic|\.unwrap\(|\.expect\(|Box<dyn\s|type_name::",
     )?;
     let scan_input = NamingScanInput {
         test_attr_pattern: &test_attr_pattern,
@@ -51,6 +57,9 @@ pub fn validate_test_function_naming(config: &ValidationConfig) -> Result<Vec<Hy
 
         for_each_file_under_root(config, &tests_dir, Some(LanguageId::Rust), |entry| {
             let path = &entry.absolute_path;
+            if path.to_str().is_some_and(|s| s.contains("/fixtures/")) {
+                return Ok(());
+            }
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
 
@@ -88,25 +97,6 @@ fn find_next_test_function(
             let fn_name = captures.get(1).map_or("", |m| m.as_str());
             Some((line_idx, fn_name.to_owned()))
         })
-}
-
-fn append_naming_violation_if_needed(
-    violations: &mut Vec<HygieneViolation>,
-    path: &std::path::Path,
-    fn_line_idx: usize,
-    fn_name: &str,
-) {
-    if fn_name.starts_with("test_") {
-        return;
-    }
-
-    violations.push(HygieneViolation::BadTestFunctionName {
-        file: path.to_path_buf(),
-        line: fn_line_idx + 1,
-        function_name: fn_name.to_owned(),
-        suggestion: format!("test_{fn_name}"),
-        severity: Severity::Warning,
-    });
 }
 
 fn has_assertion_in_test_body(
@@ -148,8 +138,6 @@ fn collect_naming_violations_for_file(
         else {
             continue;
         };
-
-        append_naming_violation_if_needed(&mut violations, path, fn_line_idx, &fn_name);
 
         let has_assertion =
             has_assertion_in_test_body(lines, fn_line_idx, scan_input.assert_pattern);

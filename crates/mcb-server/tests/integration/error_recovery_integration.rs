@@ -10,42 +10,19 @@
 //! 3. Invalid configurations fail fast with clear messages
 //! 4. Partial failures don't corrupt state
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
+// Providers are resolved via DI registries in mcb-domain
 
 use std::sync::Arc;
 
-use mcb_domain::registry::cache::*;
 use mcb_domain::registry::embedding::*;
 use mcb_domain::registry::language::*;
 use mcb_domain::registry::vector_store::*;
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::{AppConfig, ConfigLoader};
 use rstest::rstest;
 
-use crate::utils::collection::unique_collection;
-use crate::utils::test_fixtures::{TEST_EMBEDDING_DIMENSIONS, safe_init_app};
-
-fn unique_test_config() -> Result<AppConfig, Box<dyn std::error::Error>> {
-    let mut config = ConfigLoader::new().load()?;
-    let stamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)?
-        .as_nanos();
-    let thread_id = std::thread::current().id();
-    let db_path =
-        std::env::temp_dir().join(format!("mcb-errrecovery-test-{stamp}-{thread_id:?}.db"));
-    config.providers.database.configs.insert(
-        "default".to_owned(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_owned(),
-            path: Some(db_path),
-        },
-    );
-    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-    Ok(config)
-}
-
-use crate::utils::test_fixtures::shared_fastembed_test_cache_dir;
+use crate::utils::test_fixtures::shared_app_context;
+use mcb_domain::utils::tests::collection::unique_collection;
+use mcb_utils::constants::testing::TEST_EMBEDDING_DIMENSIONS;
 
 // ============================================================================
 // Provider Resolution Error Handling
@@ -54,7 +31,6 @@ use crate::utils::test_fixtures::shared_fastembed_test_cache_dir;
 #[rstest]
 #[case("embedding")]
 #[case("vector_store")]
-#[case("cache")]
 #[case("language")]
 fn test_unknown_provider_error_message(
     #[case] provider_kind: &str,
@@ -70,9 +46,6 @@ fn test_unknown_provider_error_message(
                 .err()
                 .map(|e| e.to_string())
         }
-        "cache" => resolve_cache_provider(&CacheProviderConfig::new("nonexistent_xyz_cache"))
-            .err()
-            .map(|e| e.to_string()),
         "language" => {
             resolve_language_provider(&LanguageProviderConfig::new("nonexistent_xyz_lang"))
                 .err()
@@ -95,14 +68,14 @@ fn test_unknown_provider_error_message(
 // Search on Empty/Missing Collections
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_search_empty_collection_returns_empty_not_error()
 -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context()?;
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
 
     let collection = unique_collection("error-empty");
 
@@ -137,36 +110,34 @@ async fn test_search_empty_collection_returns_empty_not_error()
 // Configuration Validation
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_init_app_with_default_config_succeeds() -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    safe_init_app(config).await?;
+    // Verify the shared (OnceLock) AppContext initialised successfully.
+    let _ = shared_app_context()?;
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_provider_handles_return_valid_instances() -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context()?;
 
     // All handles should return valid providers
-    let embedding = ctx.embedding_handle().get();
+    let embedding = ctx.embedding_provider();
     assert!(
         embedding.dimensions() > 0,
         "Embedding should have positive dimensions"
     );
 
-    let vector_store = ctx.vector_store_handle().get();
+    let vector_store = ctx.vector_store_provider();
     assert!(
         !vector_store.provider_name().is_empty(),
         "Vector store should have a name"
     );
 
-    let cache = ctx.cache_handle().get();
-    assert!(
-        !cache.provider_name().is_empty(),
-        "Cache should have a name"
-    );
+    // Note: CacheProvider is delegated to Loco, not registered via linkme.
+    // No cache_provider() accessor on SharedTestContext.
     Ok(())
 }
 
@@ -174,13 +145,13 @@ async fn test_provider_handles_return_valid_instances() -> Result<(), Box<dyn st
 // Multiple Operation Error Isolation
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_failed_search_doesnt_corrupt_state() -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context()?;
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
 
     let collection = unique_collection("error-isolation");
 
@@ -237,15 +208,14 @@ async fn test_failed_search_doesnt_corrupt_state() -> Result<(), Box<dyn std::er
 // Registry Robustness
 // ============================================================================
 
-#[test]
+#[rstest]
 fn test_list_providers_never_panics() {
     // These should never panic, even if registry is empty
     let embedding_providers = list_embedding_providers();
     let vector_store_providers = list_vector_store_providers();
-    let cache_providers = list_cache_providers();
+    // Note: CacheProvider is delegated to Loco — no linkme registry for cache.
     let language_providers = list_language_providers();
 
-    // With extern crate mcb_providers, none should be empty
     assert!(
         !embedding_providers.is_empty(),
         "Should have embedding providers"
@@ -254,14 +224,13 @@ fn test_list_providers_never_panics() {
         !vector_store_providers.is_empty(),
         "Should have vector store providers"
     );
-    assert!(!cache_providers.is_empty(), "Should have cache providers");
     assert!(
         !language_providers.is_empty(),
         "Should have language providers"
     );
 }
 
-#[test]
+#[rstest]
 fn test_resolve_with_empty_config_values() {
     // Config with empty strings should fail gracefully
     let embedding_config = EmbeddingProviderConfig::new("");
@@ -274,22 +243,16 @@ fn test_resolve_with_empty_config_values() {
 // Concurrent Access Safety
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
-async fn test_concurrent_handle_access() -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    let ctx = safe_init_app(config).await?;
-
-    let handle = ctx.embedding_handle();
-
+async fn test_concurrent_provider_access() -> Result<(), Box<dyn std::error::Error>> {
+    let ctx = shared_app_context()?;
+    let provider = ctx.embedding_provider();
     let mut tasks = Vec::new();
     for _ in 0..10 {
-        let h = Arc::clone(&handle);
-        tasks.push(tokio::spawn(async move {
-            let provider = h.get();
-            provider.dimensions()
-        }));
+        let p = Arc::clone(&provider);
+        tasks.push(tokio::spawn(async move { p.dimensions() }));
     }
-
     for task in tasks {
         let dims = task.await?;
         assert_eq!(

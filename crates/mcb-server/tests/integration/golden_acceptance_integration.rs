@@ -11,10 +11,9 @@
 //! 3. Search returns results matching `expected_files`
 //! 4. The architecture works end-to-end without external dependencies
 //!
-//! Uses `extern crate mcb_providers` to force linkme registration.
+//! Uses DI registries in mcb-domain for provider resolution.
 
-// Force linkme registration of all providers
-extern crate mcb_providers;
+// Providers are resolved via DI registries in mcb-domain
 
 use std::collections::HashMap;
 use std::fs;
@@ -24,11 +23,12 @@ use std::time::{Duration, Instant};
 use mcb_domain::entities::CodeChunk;
 // Note: EmbeddingProvider/VectorStoreProvider traits are used via ctx.embedding_handle().get()
 use mcb_domain::value_objects::CollectionId;
-use mcb_infrastructure::config::{AppConfig, ConfigLoader};
+use mcb_utils::constants::FALLBACK_UNKNOWN;
 use rstest::rstest;
 use serde_json::json;
 
-use crate::utils::test_fixtures::safe_init_app;
+use crate::utils::test_fixtures::shared_app_context;
+use mcb_domain::utils::tests::collection::unique_collection;
 
 /// Test query structure matching the JSON fixture format
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -53,7 +53,8 @@ pub struct GoldenQueriesConfig {
 /// Query configuration
 #[derive(Debug, Clone, serde::Deserialize)]
 pub struct QueryConfig {
-    pub collection_name: String,
+    #[serde(rename = "collection_name")]
+    pub _collection_name: String,
     pub timeout_ms: u64,
     pub relevance_threshold: f64,
     pub top_k: usize,
@@ -89,7 +90,7 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
                 let file_name = path
                     .file_name()
                     .and_then(|n| n.to_str())
-                    .unwrap_or("unknown")
+                    .unwrap_or(FALLBACK_UNKNOWN)
                     .to_owned();
 
                 let line_count = content.lines().count();
@@ -114,7 +115,7 @@ fn read_sample_codebase_files() -> Vec<CodeChunk> {
 // Fixture Validation Tests (always run)
 // ============================================================================
 
-#[test]
+#[rstest]
 fn test_golden_queries_fixture_valid() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_golden_queries()?;
 
@@ -168,7 +169,7 @@ fn test_config_values_reasonable(
     Ok(())
 }
 
-#[test]
+#[rstest]
 fn test_query_ids_unique() -> Result<(), Box<dyn std::error::Error>> {
     let config = load_golden_queries()?;
     let mut seen = std::collections::HashSet::new();
@@ -183,7 +184,7 @@ fn test_query_ids_unique() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[test]
+#[rstest]
 fn test_sample_codebase_files_exist() {
     let chunks = read_sample_codebase_files();
 
@@ -226,52 +227,29 @@ fn test_sample_codebase_contains_expected_file(#[case] expected_file: &str) {
     );
 }
 
-/// Create a test configuration with a unique database path to allow parallel execution
-///
-/// # Errors
-///
-/// Returns an error if configuration cannot be loaded or system time is unavailable.
-fn unique_test_config() -> Result<AppConfig, Box<dyn std::error::Error>> {
-    let mut config = ConfigLoader::new().load()?;
-    let stamp = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)?
-        .as_nanos();
-    let thread_id = std::thread::current().id();
-    let db_path = std::env::temp_dir().join(format!("mcb-golden-test-{stamp}-{thread_id:?}.db"));
-    config.providers.database.configs.insert(
-        "default".to_owned(),
-        mcb_infrastructure::config::DatabaseConfig {
-            provider: "sqlite".to_owned(),
-            path: Some(db_path),
-        },
-    );
-    config.providers.embedding.cache_dir = Some(shared_fastembed_test_cache_dir());
-    Ok(config)
-}
-
-use crate::utils::test_fixtures::shared_fastembed_test_cache_dir;
-
 // ============================================================================
 // Real Provider Tests (using FastEmbed + EdgeVec)
 // ============================================================================
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context()?;
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
 
-    let golden_config = load_golden_queries()?;
-    let collection = &golden_config.config.collection_name;
+    let collection = unique_collection("golden-index");
     let chunks = read_sample_codebase_files();
 
     assert!(!chunks.is_empty(), "Should have files to index");
 
     // Step 1: Create collection
     let create_result = vector_store
-        .create_collection(&CollectionId::from_name(collection), embedding.dimensions())
+        .create_collection(
+            &CollectionId::from_name(&collection),
+            embedding.dimensions(),
+        )
         .await;
     assert!(
         create_result.is_ok(),
@@ -313,7 +291,7 @@ async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>
 
     // Step 4: Insert into vector store
     let ids = vector_store
-        .insert_vectors(&CollectionId::from_name(collection), &embeddings, metadata)
+        .insert_vectors(&CollectionId::from_name(&collection), &embeddings, metadata)
         .await
         .expect("Insert should succeed");
 
@@ -325,21 +303,24 @@ async fn test_golden_index_real_files() -> Result<(), Box<dyn std::error::Error>
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context()?;
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
 
     let golden_config = load_golden_queries()?;
-    let collection = "golden_expected_files_test";
+    let collection = unique_collection("golden-search");
     let chunks = read_sample_codebase_files();
 
     // Setup: Create collection and index real files
     vector_store
-        .create_collection(&CollectionId::from_name(collection), embedding.dimensions())
+        .create_collection(
+            &CollectionId::from_name(&collection),
+            embedding.dimensions(),
+        )
         .await
         .expect("Create collection");
 
@@ -357,7 +338,7 @@ async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std
         .collect();
 
     vector_store
-        .insert_vectors(&CollectionId::from_name(collection), &embeddings, metadata)
+        .insert_vectors(&CollectionId::from_name(&collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -372,7 +353,7 @@ async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std
 
     let results = vector_store
         .search_similar(
-            &CollectionId::from_name(collection),
+            &CollectionId::from_name(&collection),
             &query_embedding[0].vector,
             golden_config.config.top_k,
             None,
@@ -419,21 +400,24 @@ async fn test_golden_search_validates_expected_files() -> Result<(), Box<dyn std
 /// semantic-like matching without requiring external embedding services.
 /// The provider generates vectors based on domain keywords
 /// (embedding, `vector_store`, handler, cache, di, error, chunking, etc.)
+#[rstest]
 #[tokio::test]
 async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std::error::Error>> {
-    let config = unique_test_config()?;
-    let ctx = safe_init_app(config).await?;
+    let ctx = shared_app_context()?;
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
 
     let golden_config = load_golden_queries()?;
-    let collection = "golden_all_queries_test";
+    let collection = unique_collection("golden-all-queries");
     let chunks = read_sample_codebase_files();
 
     // Setup collection with real files
     vector_store
-        .create_collection(&CollectionId::from_name(collection), embedding.dimensions())
+        .create_collection(
+            &CollectionId::from_name(&collection),
+            embedding.dimensions(),
+        )
         .await
         .expect("Create collection");
 
@@ -451,7 +435,7 @@ async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std
         .collect();
 
     vector_store
-        .insert_vectors(&CollectionId::from_name(collection), &embeddings, metadata)
+        .insert_vectors(&CollectionId::from_name(&collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -469,7 +453,7 @@ async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std
 
         let results = vector_store
             .search_similar(
-                &CollectionId::from_name(collection),
+                &CollectionId::from_name(&collection),
                 &query_embedding[0].vector,
                 golden_config.config.top_k,
                 None,
@@ -527,6 +511,7 @@ async fn test_golden_all_queries_find_expected_files() -> Result<(), Box<dyn std
     Ok(())
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error::Error>> {
     // This test validates the complete golden test workflow:
@@ -537,19 +522,21 @@ async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error
     // 5. Search with all golden queries
     // 6. Validate expected_files found
 
-    let app_config = unique_test_config()?;
-    let ctx = safe_init_app(app_config).await?;
+    let ctx = shared_app_context()?;
 
-    let embedding = ctx.embedding_handle().get();
-    let vector_store = ctx.vector_store_handle().get();
+    let embedding = ctx.embedding_provider();
+    let vector_store = ctx.vector_store_provider();
     let golden_config = load_golden_queries()?;
 
-    let collection = &golden_config.config.collection_name;
+    let collection = unique_collection("golden-e2e");
     let chunks = read_sample_codebase_files();
 
     // Create collection
     vector_store
-        .create_collection(&CollectionId::from_name(collection), embedding.dimensions())
+        .create_collection(
+            &CollectionId::from_name(&collection),
+            embedding.dimensions(),
+        )
         .await
         .expect("Create collection");
 
@@ -568,7 +555,7 @@ async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error
         .collect();
 
     let ids = vector_store
-        .insert_vectors(&CollectionId::from_name(collection), &embeddings, metadata)
+        .insert_vectors(&CollectionId::from_name(&collection), &embeddings, metadata)
         .await
         .expect("Insert");
 
@@ -585,7 +572,7 @@ async fn test_golden_full_workflow_end_to_end() -> Result<(), Box<dyn std::error
 
         let results = vector_store
             .search_similar(
-                &CollectionId::from_name(collection),
+                &CollectionId::from_name(&collection),
                 &query_embedding[0].vector,
                 golden_config.config.top_k,
                 None,

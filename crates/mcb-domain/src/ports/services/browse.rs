@@ -1,13 +1,8 @@
-//!
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
-//!
-//! Browse and Highlight Port Definitions
-//!
-//! Traits for browsing file trees and syntax highlighting.
-//! These define the contract for the browse service implementation.
+//! Browse and highlight service ports.
 
 use std::path::{Path, PathBuf};
 
+use async_trait::async_trait;
 use thiserror::Error;
 
 use crate::error::Result;
@@ -46,25 +41,25 @@ pub enum HighlightError {
 }
 
 /// Browse service trait (agnóstico interface)
-#[async_trait::async_trait]
+#[async_trait]
 pub trait BrowseServiceInterface: Send + Sync {
-    /// Get file tree from given root path
+    /// Get file tree from given root path.
     async fn get_file_tree(&self, root: &Path, max_depth: usize) -> Result<FileNode>;
 
-    /// Get raw code from file
+    /// Get raw code from file.
     async fn get_code(&self, path: &Path) -> Result<String>;
 
-    /// Highlight code with given language
+    /// Highlight code with given language.
     async fn highlight(&self, code: &str, language: &str) -> Result<HighlightedCode>;
 
-    /// Get code with highlighting
+    /// Get code with highlighting.
     async fn get_highlighted_code(&self, path: &Path) -> Result<HighlightedCode>;
 }
 
 /// Highlight service trait (agnóstico interface)
-#[async_trait::async_trait]
+#[async_trait]
 pub trait HighlightServiceInterface: Send + Sync {
-    /// Highlight code with given language
+    /// Highlight code with given language.
     ///
     /// Returns structured highlight spans with byte offsets.
     /// Falls back to empty spans if highlighting fails.

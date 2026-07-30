@@ -1,21 +1,19 @@
-//!
-//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
-//!
 //! Server macros organized by usage context.
 //!
 //! Sub-modules group macros by the server area they serve:
+//! - [`accessors`]: Arc accessor generation (used by `mcp_server`)
 //! - [`args`]: Tool argument derive macros (used by `args/`)
-//! - [`browse`]: Axum browse endpoint macros (used by `admin/browse`)
 //! - [`dispatch`]: Entity handler dispatch macros (used by `handlers/entities/`)
-//! - [`web`]: Template macros (used by `templates/`)
+//! - [`handlers`]: Field extraction and validation macros (used by `handlers/`)
+//! - [`registry`]: Tool registration macros (used by `tools/registry`)
 
 #[macro_use]
-mod args;
+mod accessors;
 #[macro_use]
-mod browse;
+mod args;
 #[macro_use]
 mod dispatch;
 #[macro_use]
 mod handlers;
 #[macro_use]
-mod web;
+mod registry;

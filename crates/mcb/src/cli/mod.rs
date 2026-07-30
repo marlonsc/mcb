@@ -4,7 +4,9 @@
 //! - `serve` - Run as MCP server (default)
 //! - `validate` - Run architecture validation
 
+/// MCP server subcommand.
 pub mod serve;
+/// Architecture validation subcommand.
 pub mod validate;
 
 pub use serve::ServeArgs;

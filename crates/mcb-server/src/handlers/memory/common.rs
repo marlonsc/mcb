@@ -4,22 +4,22 @@
 use mcb_domain::entities::memory::{ExecutionMetadata, ObservationMetadata, QualityGateResult};
 use std::sync::Arc;
 
-use mcb_domain::utils::id as domain_id;
 use mcb_domain::{
     entities::memory::{MemoryFilter, MemorySearchResult, ObservationType},
     ports::MemoryServiceInterface,
 };
-use mcb_infrastructure::project::context_resolver::capture_vcs_context;
+use mcb_utils::utils::id as domain_id;
+use mcb_utils::utils::vcs_context::{VcsContext, capture_vcs_context};
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::{Map, Value};
 
 use crate::args::MemoryArgs;
-use crate::constants::limits::{DEFAULT_MEMORY_LIMIT, MEMORY_FETCH_MULTIPLIER};
 use crate::utils::mcp::{OriginPayloadFields, resolve_origin_context};
 pub(super) use crate::utils::mcp::{
     opt_str, require_bool, require_data_map, require_i32, require_i64, require_str, str_vec,
 };
+use mcb_utils::constants::limits::{DEFAULT_MEMORY_LIST_LIMIT, MEMORY_FETCH_MULTIPLIER};
 
 pub(super) struct MemoryOriginResolution {
     pub project_id: String,
@@ -69,15 +69,7 @@ pub(super) fn resolve_memory_origin_context(
     input.timestamp = opts.timestamp;
     let mut origin_context = resolve_origin_context(&input)?;
 
-    if origin_context.repo_id.is_none() {
-        origin_context.repo_id = vcs_context.repo_id;
-    }
-    if origin_context.branch.is_none() {
-        origin_context.branch = vcs_context.branch;
-    }
-    if origin_context.commit.is_none() {
-        origin_context.commit = vcs_context.commit;
-    }
+    overlay_vcs_context(&mut origin_context, vcs_context);
 
     origin_context.session_id = None;
     origin_context.session_id_correlation = canonical_session_id.clone();
@@ -94,6 +86,22 @@ pub(super) fn resolve_memory_origin_context(
         canonical_session_id,
         origin_context,
     })
+}
+
+/// Fill any unset repo/branch/commit fields on `origin_context` from the captured VCS context.
+fn overlay_vcs_context(
+    origin_context: &mut mcb_domain::entities::memory::OriginContext,
+    vcs_context: VcsContext,
+) {
+    if origin_context.repo_id.is_none() {
+        origin_context.repo_id = vcs_context.repo_id;
+    }
+    if origin_context.branch.is_none() {
+        origin_context.branch = vcs_context.branch;
+    }
+    if origin_context.commit.is_none() {
+        origin_context.commit = vcs_context.commit;
+    }
 }
 
 pub(super) fn build_observation_metadata(
@@ -125,7 +133,7 @@ where
 {
     let filter = build_memory_filter(args, Some(spec.obs_type), None);
 
-    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIMIT as u32) as usize;
+    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIST_LIMIT as u32) as usize;
     let fetch_limit = limit * MEMORY_FETCH_MULTIPLIER;
     match memory_service
         .search_memories(spec.query, Some(filter), fetch_limit)

@@ -10,8 +10,8 @@ use mcb_domain::entities::CodeChunk;
 use mcb_domain::value_objects::Language;
 
 use super::config::LanguageConfig;
-use super::traverser::AstTraverser;
-use crate::constants::{LANGUAGE_MAX_CHUNKS_PER_FILE, LANGUAGE_PRIORITY_THRESHOLD};
+use super::traverser::{AstTraverser, SourceRef};
+use mcb_utils::constants::lang::{LANGUAGE_MAX_CHUNKS_PER_FILE, LANGUAGE_PRIORITY_THRESHOLD};
 
 /// Trait for language-specific processing
 ///
@@ -86,7 +86,12 @@ impl LanguageProcessor for BaseProcessor {
         if cursor.goto_first_child() {
             let traverser = AstTraverser::new(&self.config().extraction_rules, language)
                 .with_max_chunks(LANGUAGE_MAX_CHUNKS_PER_FILE);
-            traverser.traverse_and_extract(&mut cursor, content, file_name, 0, &mut chunks);
+            traverser.traverse_and_extract(
+                &mut cursor,
+                SourceRef::new(content, file_name),
+                0,
+                &mut chunks,
+            );
         }
 
         // Sort chunks by priority (highest first) and then by line number

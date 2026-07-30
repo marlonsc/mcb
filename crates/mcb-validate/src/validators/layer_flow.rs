@@ -11,9 +11,9 @@ use std::path::PathBuf;
 
 use crate::config::LayerFlowRulesConfig;
 use crate::define_violations;
-use crate::linters::constants::CARGO_TOML_FILENAME;
-use crate::traits::violation::{Violation, ViolationCategory};
 use crate::{Result, ValidationConfig};
+use mcb_domain::ports::validation::{Violation, ViolationCategory};
+use mcb_utils::constants::validate::CARGO_TOML_FILENAME;
 
 define_violations! {
     ViolationCategory::Architecture,
@@ -78,18 +78,18 @@ impl LayerFlowValidator {
         }
     }
 
-    fn check_circular_dependencies(
+    /// Build a map from each checked crate to the subset of its workspace
+    /// dependencies that are themselves checked crates.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if a `Cargo.toml` cannot be read or parsed.
+    fn build_filtered_deps(
         &self,
-        config: &ValidationConfig,
-    ) -> Result<Vec<LayerFlowViolation>> {
-        let crates_dir = config.workspace_root.join("crates");
-        if !crates_dir.exists() {
-            return Ok(Vec::new());
-        }
-
+        crates_dir: &std::path::Path,
+    ) -> Result<HashMap<String, HashSet<String>>> {
         let crate_names = &self.circular_dependency_check_crates;
-
-        let deps: HashMap<String, HashSet<String>> = crate_names
+        crate_names
             .iter()
             .filter_map(|crate_name| {
                 let cargo_toml = crates_dir.join(crate_name).join(CARGO_TOML_FILENAME);
@@ -108,10 +108,23 @@ impl LayerFlowValidator {
                             .filter(|dep| dep != crate_name && crate_names.contains(dep))
                             .collect()
                     })
+                    // INTENTIONAL: Dependency filter; empty list means no filtered deps
                     .unwrap_or_default();
                 Ok((crate_name.clone(), crate_deps))
             })
-            .collect::<Result<_>>()?;
+            .collect()
+    }
+
+    fn check_circular_dependencies(
+        &self,
+        config: &ValidationConfig,
+    ) -> Result<Vec<LayerFlowViolation>> {
+        let crates_dir = config.workspace_root.join("crates");
+        if !crates_dir.exists() {
+            return Ok(Vec::new());
+        }
+
+        let deps = self.build_filtered_deps(&crates_dir)?;
 
         Ok(deps
             .keys()
@@ -146,16 +159,19 @@ impl LayerFlowValidator {
     }
 }
 
-impl crate::traits::validator::Validator for LayerFlowValidator {
+impl mcb_domain::ports::validation::Validator for LayerFlowValidator {
     fn name(&self) -> &'static str {
-        "layer_flow"
+        mcb_utils::constants::validate::VALIDATOR_LAYER_FLOW
     }
 
     fn description(&self) -> &'static str {
         "Validates Clean Architecture layer dependency rules"
     }
 
-    fn validate(&self, config: &ValidationConfig) -> crate::Result<Vec<Box<dyn Violation>>> {
+    fn validate(
+        &self,
+        config: &ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
         let violations = self.check_circular_dependencies(config)?;
         Ok(violations
             .into_iter()
@@ -163,3 +179,12 @@ impl crate::traits::validator::Validator for LayerFlowValidator {
             .collect())
     }
 }
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_LAYER_FLOW,
+    "Validates Clean Architecture layer dependency rules",
+    |root| {
+        Ok(Box::new(LayerFlowValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
 """Scan docs/ for references to source paths that don't exist."""
 
+import argparse
 import os
 import re
 import sys
-import argparse
 
-
-import scripts.docs.py.utils as utils
+from scripts.docs.py import utils
 
 
 def _check_files(docs_dir, project_root):

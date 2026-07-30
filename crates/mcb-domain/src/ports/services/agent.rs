@@ -1,34 +1,27 @@
-//!
-//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#service-ports)
-//!
-//! Agent Service Port
-//!
-//! # Overview
-//! Defines the interface for managing agent session lifecycle, delegation tracking,
-//! and state checkpoints.
+//! Agent session service ports.
+
 use async_trait::async_trait;
 
 use crate::entities::agent::{AgentSession, AgentSessionStatus, Checkpoint, Delegation, ToolCall};
 use crate::error::Result;
-use crate::ports::AgentSessionQuery;
+use crate::ports::repositories::agent::AgentSessionQuery;
 
-/// Port for agent session lifecycle and delegation tracking.
-#[async_trait]
 /// Manages agent session lifecycle.
+#[async_trait]
 pub trait AgentSessionManager: Send + Sync {
-    /// Performs the create session operation.
+    /// Create a new agent session.
     async fn create_session(&self, session: AgentSession) -> Result<String>;
-    /// Performs the get session operation.
+    /// Get an agent session by ID.
     async fn get_session(&self, id: &str) -> Result<Option<AgentSession>>;
-    /// Performs the update session operation.
+    /// Update an existing agent session.
     async fn update_session(&self, session: AgentSession) -> Result<()>;
-    /// Performs the list sessions operation.
+    /// List agent sessions matching query filters.
     async fn list_sessions(&self, query: AgentSessionQuery) -> Result<Vec<AgentSession>>;
-    /// Performs the list sessions by project operation.
+    /// List agent sessions associated with a project.
     async fn list_sessions_by_project(&self, project_id: &str) -> Result<Vec<AgentSession>>;
-    /// Performs the list sessions by worktree operation.
+    /// List agent sessions associated with a worktree.
     async fn list_sessions_by_worktree(&self, worktree_id: &str) -> Result<Vec<AgentSession>>;
-    /// Performs the end session operation.
+    /// Mark a session as ended with final status.
     async fn end_session(
         &self,
         id: &str,
@@ -37,23 +30,23 @@ pub trait AgentSessionManager: Send + Sync {
     ) -> Result<()>;
 }
 
-#[async_trait]
 /// Tracks delegations and tool calls.
+#[async_trait]
 pub trait DelegationTracker: Send + Sync {
-    /// Performs the store delegation operation.
+    /// Store a delegation record.
     async fn store_delegation(&self, delegation: Delegation) -> Result<String>;
-    /// Performs the store tool call operation.
+    /// Store a tool call record.
     async fn store_tool_call(&self, tool_call: ToolCall) -> Result<String>;
 }
 
-#[async_trait]
 /// Manages checkpoints and restoration.
+#[async_trait]
 pub trait CheckpointManager: Send + Sync {
-    /// Performs the store checkpoint operation.
+    /// Store an agent checkpoint.
     async fn store_checkpoint(&self, checkpoint: Checkpoint) -> Result<String>;
-    /// Performs the get checkpoint operation.
+    /// Get a checkpoint by its ID.
     async fn get_checkpoint(&self, id: &str) -> Result<Option<Checkpoint>>;
-    /// Performs the restore checkpoint operation.
+    /// Restore an agent state from a checkpoint.
     async fn restore_checkpoint(&self, id: &str) -> Result<()>;
 }
 

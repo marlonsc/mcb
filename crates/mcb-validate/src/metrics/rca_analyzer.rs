@@ -16,7 +16,7 @@
 use std::path::Path;
 
 use crate::filters::LanguageDetector;
-use rust_code_analysis::{FuncSpace, LANG, get_function_spaces};
+use rust_code_analysis::{FuncSpace, LANG, SpaceKind, get_function_spaces};
 
 use super::MetricViolation;
 use super::thresholds::{MetricThresholds, MetricType};
@@ -105,6 +105,17 @@ impl RcaAnalyzer {
     ///
     /// Returns an error if the file cannot be read or its language is unsupported.
     pub fn analyze_file(&self, path: &Path) -> Result<Vec<RcaFunctionMetrics>> {
+        // Try RCA cache first (avoids redundant file reads + tree-sitter parses)
+        if let Some(ctx) = crate::run_context::ValidationRunContext::active()
+            && let Ok(content) = ctx.read_cached(path)
+            && let Some(root) = ctx.parse_rca_cached(path, &content)
+        {
+            let mut results = Vec::new();
+            Self::extract_function_metrics(&root, &mut results);
+            return Ok(results);
+        }
+
+        // Fallback: uncached path
         let lang = self.detect_language(path).ok_or_else(|| {
             ValidationError::Config(format!("Unsupported language for file: {}", path.display()))
         })?;
@@ -162,10 +173,16 @@ impl RcaAnalyzer {
         }
     }
 
-    /// Recursively extract metrics from function spaces
+    /// Recursively extract metrics from function spaces.
+    ///
+    /// Only [`SpaceKind::Function`] spaces are recorded. The root unit space is
+    /// named after the file path (not `<unit>`) and `impl`/`struct`/`trait`
+    /// spaces carry the type name, so a name-only filter mis-counts whole files
+    /// and type blocks as oversized "functions". Function-level thresholds must
+    /// only see actual functions and methods.
     fn extract_function_metrics(space: &FuncSpace, results: &mut Vec<RcaFunctionMetrics>) {
         let name = space.name.as_deref().unwrap_or("");
-        if !name.is_empty() && name != "<unit>" {
+        if space.kind == SpaceKind::Function && !name.is_empty() && name != "<unit>" {
             results.push(RcaFunctionMetrics {
                 name: name.to_owned(),
                 start_line: space.start_line,
@@ -185,57 +202,79 @@ impl RcaAnalyzer {
     /// Returns an error if file analysis fails.
     pub fn find_violations(&self, path: &Path) -> Result<Vec<MetricViolation>> {
         let functions = self.analyze_file(path)?;
+        Ok(Self::find_violations_in_functions(
+            path,
+            &functions,
+            &self.thresholds,
+        ))
+    }
+
+    #[must_use]
+    pub(crate) fn find_violations_in_functions(
+        path: &Path,
+        functions: &[RcaFunctionMetrics],
+        thresholds: &MetricThresholds,
+    ) -> Vec<MetricViolation> {
         let mut violations = Vec::new();
 
         let to_u32_metric = |x: f64| x.round().max(0.0) as u32;
         for func in functions {
-            if let Some(threshold) = self.thresholds.get(MetricType::CyclomaticComplexity) {
-                let value = to_u32_metric(func.metrics.cyclomatic);
-                if value > threshold.max_value {
-                    violations.push(MetricViolation {
-                        file: path.to_path_buf(),
-                        line: func.start_line,
-                        item_name: func.name.clone(),
-                        metric_type: MetricType::CyclomaticComplexity,
-                        actual_value: value,
-                        threshold: threshold.max_value,
-                        severity: threshold.severity,
-                    });
-                }
-            }
+            let cyclomatic = to_u32_metric(func.metrics.cyclomatic);
+            let cognitive = to_u32_metric(func.metrics.cognitive);
+            let length = u32::try_from(func.metrics.sloc).unwrap_or(u32::MAX);
 
-            if let Some(threshold) = self.thresholds.get(MetricType::CognitiveComplexity) {
-                let value = to_u32_metric(func.metrics.cognitive);
-                if value > threshold.max_value {
-                    violations.push(MetricViolation {
-                        file: path.to_path_buf(),
-                        line: func.start_line,
-                        item_name: func.name.clone(),
-                        metric_type: MetricType::CognitiveComplexity,
-                        actual_value: value,
-                        threshold: threshold.max_value,
-                        severity: threshold.severity,
-                    });
-                }
-            }
-
-            if let Some(threshold) = self.thresholds.get(MetricType::FunctionLength) {
-                let value = u32::try_from(func.metrics.sloc).unwrap_or(u32::MAX);
-                if value > threshold.max_value {
-                    violations.push(MetricViolation {
-                        file: path.to_path_buf(),
-                        line: func.start_line,
-                        item_name: func.name.clone(),
-                        metric_type: MetricType::FunctionLength,
-                        actual_value: value,
-                        threshold: threshold.max_value,
-                        severity: threshold.severity,
-                    });
-                }
-            }
+            Self::push_metric_violation(
+                path,
+                func,
+                thresholds,
+                MetricType::CyclomaticComplexity,
+                cyclomatic,
+                &mut violations,
+            );
+            Self::push_metric_violation(
+                path,
+                func,
+                thresholds,
+                MetricType::CognitiveComplexity,
+                cognitive,
+                &mut violations,
+            );
+            Self::push_metric_violation(
+                path,
+                func,
+                thresholds,
+                MetricType::FunctionLength,
+                length,
+                &mut violations,
+            );
         }
 
-        Ok(violations)
+        violations
+    }
+
+    /// Append a `MetricViolation` when `value` exceeds the configured threshold for `metric_type`.
+    fn push_metric_violation(
+        path: &Path,
+        func: &RcaFunctionMetrics,
+        thresholds: &MetricThresholds,
+        metric_type: MetricType,
+        value: u32,
+        violations: &mut Vec<MetricViolation>,
+    ) {
+        let Some(threshold) = thresholds.get(metric_type) else {
+            return;
+        };
+        if value > threshold.max_value {
+            violations.push(MetricViolation {
+                file: path.to_path_buf(),
+                line: func.start_line,
+                item_name: func.name.clone(),
+                metric_type,
+                actual_value: value,
+                threshold: threshold.max_value,
+                severity: threshold.severity,
+            });
+        }
     }
 
     /// Get file-level metrics (aggregated)

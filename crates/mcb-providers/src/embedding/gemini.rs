@@ -8,20 +8,19 @@
 use std::time::Duration;
 
 use async_trait::async_trait;
-use mcb_domain::constants::embedding::EMBEDDING_DIMENSION_GEMINI;
-use mcb_domain::constants::http::CONTENT_TYPE_JSON;
+use mcb_utils::constants::embedding::EMBEDDING_DIMENSION_GEMINI;
+use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
-use crate::constants::{
-    EMBEDDING_RETRY_BACKOFF_MS, EMBEDDING_RETRY_COUNT, HTTP_HEADER_CONTENT_TYPE,
-};
 use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
+use mcb_utils::constants::http::{
+    HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT,
+};
 use reqwest::Client;
 
 use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
 use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
-use crate::{define_http_embedding_provider, impl_http_provider_base, register_http_provider};
 
 define_http_embedding_provider!(
     /// Gemini embedding provider
@@ -33,7 +32,7 @@ define_http_embedding_provider!(
 
 impl_http_provider_base!(
     GeminiEmbeddingProvider,
-    crate::constants::GEMINI_API_BASE_URL
+    mcb_utils::constants::embedding::GEMINI_API_BASE_URL
 );
 
 impl GeminiEmbeddingProvider {
@@ -49,7 +48,7 @@ impl GeminiEmbeddingProvider {
     /// Get the maximum tokens supported by this provider
     #[must_use]
     pub fn max_tokens(&self) -> usize {
-        crate::constants::GEMINI_MAX_TOKENS
+        mcb_utils::constants::embedding::GEMINI_MAX_TOKENS
     }
 
     /// Get the API key for this provider
@@ -86,8 +85,8 @@ impl GeminiEmbeddingProvider {
             headers: &headers,
             body: Some(&payload),
             retry: Some(RetryConfig::new(
-                EMBEDDING_RETRY_COUNT,
-                std::time::Duration::from_millis(EMBEDDING_RETRY_BACKOFF_MS),
+                PROVIDER_RETRY_COUNT,
+                std::time::Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
             )),
         })
         .await
@@ -143,13 +142,6 @@ impl EmbeddingProvider for GeminiEmbeddingProvider {
 // ============================================================================
 // Auto-registration via linkme distributed slice
 // ============================================================================
-
-use std::sync::Arc;
-
-use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::embedding::{
-    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
-};
 
 register_http_provider!(
     GeminiEmbeddingProvider,

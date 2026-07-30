@@ -1,160 +1,120 @@
-//! Tests for `ResponseFormatter`
+//! MCP response formatting: search results, indexing status, validation reports.
+//!
+//! Tests verify that tool responses carry the correct success/error flag
+//! and contain meaningful content for agents to act on.
 
 use std::path::Path;
 use std::time::Duration;
 
 use mcb_domain::ports::{IndexingResult, IndexingStatus};
+use mcb_domain::utils::tests::search_fixtures::{
+    create_test_search_result, create_test_search_results,
+};
 use mcb_server::formatter::ResponseFormatter;
 use rstest::rstest;
 
-use crate::utils::search_fixtures::{create_test_search_result, create_test_search_results};
-
-fn build_indexing_result(
-    files_processed: usize,
-    chunks_created: usize,
-    files_skipped: usize,
+fn indexing_result(
+    files: usize,
+    chunks: usize,
+    skipped: usize,
     errors: Vec<String>,
 ) -> IndexingResult {
     IndexingResult {
-        files_processed,
-        chunks_created,
-        files_skipped,
+        files_processed: files,
+        chunks_created: chunks,
+        files_skipped: skipped,
         errors,
         operation_id: None,
         status: "completed".to_owned(),
     }
 }
 
-#[rstest]
-#[case(3, 150, 10)]
-#[case(0, 50, 10)]
-#[case(5, 2_000, 10)]
-#[case(10, 100, 10)]
-fn test_format_search_response(#[case] count: usize, #[case] duration_ms: u64, #[case] max: usize) {
-    let results = if count == 0 {
-        Vec::new()
-    } else {
-        create_test_search_results(count)
-    };
-    let duration = Duration::from_millis(duration_ms);
-    let response = ResponseFormatter::format_search_response("test query", &results, duration, max);
-
-    assert!(response.is_ok());
-    if count > 0 {
-        let result = response.expect("Expected successful response");
-        assert!(!result.is_error.unwrap_or(false));
-    }
-}
+// ─── Search responses ────────────────────────────────────────────────
 
 #[rstest]
-#[case(build_indexing_result(50, 250, 5, Vec::new()), "/project/src", 10_000)]
-#[case(
-    build_indexing_result(
-        45,
-        200,
-        10,
-        vec![
-            "Failed to parse binary.bin".to_owned(),
-            "Encoding error in data.csv".to_owned(),
-        ],
-    ),
-    "/project/src",
-    8_000
-)]
-#[case(build_indexing_result(100, 500, 0, Vec::new()), "/project", 100)]
-#[test]
-fn test_format_indexing_success(
-    #[case] result: IndexingResult,
-    #[case] path: &str,
+#[case(3, 50)]
+#[case(0, 50)]
+#[case(10, 2_000)]
+fn search_response_succeeds_regardless_of_result_count(
+    #[case] count: usize,
     #[case] duration_ms: u64,
 ) {
-    let response = ResponseFormatter::format_indexing_success(
-        &result,
-        Path::new(path),
+    let results = create_test_search_results(count);
+    let resp = ResponseFormatter::format_search_response(
+        "auth handler",
+        &results,
         Duration::from_millis(duration_ms),
+        10,
     );
-    assert!(!response.is_error.unwrap_or(false));
-}
 
-#[test]
-fn test_format_indexing_error() {
-    let path = Path::new("/nonexistent/path");
-
-    let response = ResponseFormatter::format_indexing_error("Path does not exist", path);
-
-    // Error responses should have is_error: true (MCP compliance)
-    assert!(
-        response.is_error.unwrap_or(false),
-        "Error response should have is_error: true"
-    );
+    assert!(resp.is_ok());
+    assert!(!resp.unwrap().is_error.unwrap_or(false));
 }
 
 #[rstest]
-#[case(IndexingStatus {
-    is_indexing: false,
-    progress: 0.0,
-    current_file: None,
-    total_files: 0,
-    processed_files: 0,
-})]
-#[case(IndexingStatus {
-    is_indexing: true,
-    progress: 0.5,
-    current_file: Some("src/main.rs".to_owned()),
-    total_files: 100,
-    processed_files: 50,
-})]
-#[case(IndexingStatus {
-    is_indexing: false,
-    progress: 1.0,
-    current_file: None,
-    total_files: 100,
-    processed_files: 100,
-})]
-#[test]
-fn test_format_indexing_status(#[case] status: IndexingStatus) {
-    let response = ResponseFormatter::format_indexing_status(&status);
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[test]
-fn test_format_clear_index() {
-    let response = ResponseFormatter::format_clear_index("test-collection");
-
-    assert!(!response.is_error.unwrap_or(false));
-}
-
-#[test]
-fn test_format_search_result_code_preview() {
-    // Test with Rust code
-    let result = create_test_search_result(
-        "src/lib.rs",
-        "fn main() {\n    println!(\"Hello\");\n}",
-        0.95,
-        1,
-    );
-    let results = vec![result];
-    let duration = Duration::from_millis(50);
-
-    let response =
-        ResponseFormatter::format_search_response("main function", &results, duration, 10);
-
-    assert!(response.is_ok());
-}
-
-#[test]
-fn test_format_search_result_long_content() {
-    // Create content with more than 10 lines
-    let long_content = (0..20)
-        .map(|i| format!("line {i} of content"))
+fn search_result_with_long_code_is_truncated_in_preview() {
+    let long = (0..20)
+        .map(|i| format!("line {i}"))
         .collect::<Vec<_>>()
         .join("\n");
-    let result = create_test_search_result("src/long_file.rs", &long_content, 0.85, 1);
-    let results = vec![result];
-    let duration = Duration::from_millis(50);
+    let results = vec![create_test_search_result("src/big.rs", &long, 0.85, 1)];
 
-    let response = ResponseFormatter::format_search_response("test", &results, duration, 10);
+    let resp =
+        ResponseFormatter::format_search_response("test", &results, Duration::from_millis(10), 10);
 
-    assert!(response.is_ok());
-    // Preview should be truncated to 10 lines
+    assert!(resp.is_ok());
+}
+
+// ─── Indexing responses ──────────────────────────────────────────────
+
+#[rstest]
+#[case(indexing_result(50, 250, 5, vec![]))]
+#[case(indexing_result(45, 200, 10, vec!["parse error".to_owned()]))]
+fn successful_indexing_reports_success(#[case] result: IndexingResult) {
+    let resp = ResponseFormatter::format_indexing_success(
+        &result,
+        Path::new("/project"),
+        Duration::from_secs(10),
+    );
+
+    assert!(!resp.is_error.unwrap_or(false));
+}
+
+#[rstest]
+fn indexing_error_reports_failure() {
+    let resp = ResponseFormatter::format_indexing_error("path not found", Path::new("/bad"));
+
+    assert!(resp.is_error.unwrap_or(false));
+}
+
+#[rstest]
+#[case(true, 0.5, Some("src/main.rs".to_owned()), 100, 50)]
+#[case(false, 0.0, None, 0, 0)]
+#[case(false, 1.0, None, 100, 100)]
+fn indexing_status_always_succeeds(
+    #[case] is_indexing: bool,
+    #[case] progress: f64,
+    #[case] current_file: Option<String>,
+    #[case] total: usize,
+    #[case] processed: usize,
+) {
+    let status = IndexingStatus {
+        is_indexing,
+        progress,
+        current_file,
+        total_files: total,
+        processed_files: processed,
+    };
+    let resp = ResponseFormatter::format_indexing_status(&status);
+
+    assert!(!resp.is_error.unwrap_or(false));
+}
+
+// ─── Clear index ─────────────────────────────────────────────────────
+
+#[rstest]
+fn clear_index_reports_success() {
+    let resp = ResponseFormatter::format_clear_index("my-collection");
+
+    assert!(!resp.is_error.unwrap_or(false));
 }

@@ -1,8 +1,8 @@
 //! Unit tests for org context value object.
 
-use mcb_domain::constants::keys::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
-use mcb_domain::utils::id;
 use mcb_domain::value_objects::{OrgContext, OrgId};
+use mcb_utils::constants::values::{DEFAULT_ORG_ID, DEFAULT_ORG_NAME};
+use mcb_utils::utils::id;
 use rstest::rstest;
 
 #[rstest]

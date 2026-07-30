@@ -527,5 +527,5 @@ The existing router pattern extends to new provider types:
 - [Circuit Breaker Pattern](https://microservices.io/patterns/reliability/circuit-breaker.html)
 - [Provider Selection Strategies](https://aws.amazon.com/blogs/architecture/)
 - [Multicloud on AWS](https://aws.amazon.com/multicloud/)
-- [ADR-029: Hexagonal Architecture](029-hexagonal-architecture-dill.md) - Historical DI (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](archive/superseded-029-hexagonal-architecture-dill.md) - Historical DI (superseded by ADR-050)
 - [linkme Documentation](https://docs.rs/linkme) - Compile-time provider discovery

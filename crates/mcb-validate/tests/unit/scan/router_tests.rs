@@ -3,6 +3,9 @@
 //! Uses `ENGINE_NAME_*` constants instead of hardcoded engine strings,
 //! and `DOMAIN_CRATE` / `FORBIDDEN_PREFIX_PATTERN` from shared constants.
 
+use mcb_utils::constants::validate::{
+    ENGINE_TYPE_RETE, ENGINE_TYPE_RUST_RULE, YAML_FIELD_EXPRESSION,
+};
 use mcb_validate::engines::{RoutedEngine, RuleEngineRouter};
 use rstest::rstest;
 use serde_json::json;
@@ -11,7 +14,7 @@ use crate::utils::test_constants::*;
 
 #[rstest]
 #[case(
-    json!({"engine": ENGINE_NAME_RUST_RULE, "rule": "rule Test { when true then Action(); }"}),
+    json!({"engine": ENGINE_TYPE_RUST_RULE, "rule": "rule Test { when true then Action(); }"}),
     RoutedEngine::Rete
 )]
 #[case(
@@ -36,16 +39,16 @@ fn detect_engine(#[case] rule: serde_json::Value, #[case] expected: RoutedEngine
 
 #[rstest]
 #[case(
-    json!({"engine": ENGINE_NAME_RETE, "rule": "rule Test { when true then Action(); }"}),
+    json!({"engine": ENGINE_TYPE_RETE, "rule": "rule Test { when true then Action(); }"}),
     true
 )]
-#[case(json!({"engine": ENGINE_NAME_RETE, "message": "Something"}), false)]
+#[case(json!({"engine": ENGINE_TYPE_RETE, "message": "Something"}), false)]
 #[case(
-    json!({"engine": ENGINE_NAME_EXPRESSION, "expression": "x > 5"}),
+    json!({"engine": YAML_FIELD_EXPRESSION, "expression": "x > 5"}),
     true
 )]
 #[case(
-    json!({"engine": ENGINE_NAME_EXPRESSION, "message": "Something"}),
+    json!({"engine": YAML_FIELD_EXPRESSION, "message": "Something"}),
     false
 )]
 fn validate_rule(#[case] rule: serde_json::Value, #[case] expected: bool) {

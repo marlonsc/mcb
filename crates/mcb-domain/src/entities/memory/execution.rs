@@ -4,31 +4,19 @@
 use serde::{Deserialize, Serialize};
 use serde_with::skip_serializing_none;
 
-/// Type of execution or command that was run.
-#[derive(
-    Debug,
-    Clone,
-    PartialEq,
-    Eq,
-    Serialize,
-    Deserialize,
-    strum_macros::AsRefStr,
-    strum_macros::Display,
-    strum_macros::EnumString,
-)]
-#[strum(serialize_all = "lowercase", ascii_case_insensitive)]
-pub enum ExecutionType {
-    /// Test execution.
-    Test,
-    /// Linting execution.
-    Lint,
-    /// Build execution.
-    Build,
-    /// Continuous integration execution.
-    CI,
+crate::define_string_enum! {
+    /// Type of execution or command that was run.
+    pub enum ExecutionType [strum = "lowercase"] {
+        /// Test execution.
+        Test,
+        /// Linting execution.
+        Lint,
+        /// Build execution.
+        Build,
+        /// Continuous integration execution.
+        CI,
+    }
 }
-
-crate::impl_as_str_from_as_ref!(ExecutionType);
 
 /// Metadata about an execution event (test, lint, build, or CI).
 #[skip_serializing_none]

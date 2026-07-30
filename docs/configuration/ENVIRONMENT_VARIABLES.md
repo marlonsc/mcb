@@ -6,7 +6,10 @@ Complete reference for all environment variables supported by Memory Context Bro
 **Version**: 0.2.1
 **Last Updated**: 2026-02-14
 
-See also [CONFIGURATION.md](../CONFIGURATION.md) for Figment-based config (ADR-025) and `MCP__` env pattern.
+See also [CONFIGURATION.md](../CONFIGURATION.md) for Loco YAML-based config ([ADR-051](../adr/051-seaql-loco-platform-rebuild.md)).
+
+> **Note (v0.3.0):** The `MCP__` env prefix pattern (via Figment) was removed. Configuration is now
+> loaded from `config/{env}.yaml` files. Provider-specific env vars (e.g. `OPENAI_API_KEY`) still work.
 
 ---
 
@@ -14,9 +17,9 @@ See also [CONFIGURATION.md](../CONFIGURATION.md) for Figment-based config (ADR-0
 
 Memory Context Browser uses a hierarchical configuration system:
 
-1.**Configuration Files**: `config/default.toml` and `config/local.toml`
-2.**Environment Variables**: Override config file settings with prefix `MCP__`
-3.**Defaults**: Canonical defaults from `config/default.toml`
+1.**Configuration Files**: Environment-based Loco YAML (`config/{env}.yaml`)
+2.**Environment Variables**: Provider-specific env vars (e.g. `OPENAI_API_KEY`, `OLLAMA_BASE_URL`)
+3.**Defaults**: Canonical defaults in `config/development.yaml` under `settings:`
 
 All environment variables use the pattern:
 
@@ -419,9 +422,9 @@ See [admin helpers](../../crates/mcb-server/src/admin/web/helpers.rs) for operat
 
 Settings are loaded in this order (highest priority first):
 
-1.**Environment Variables**(prefix `MCP__`)
-2.**Local Config File**(`config/local.toml`)
-3.**Default Config File**(`config/default.toml`)
+1.**Environment Variables**: Provider-specific (e.g. `OPENAI_API_KEY`, `OLLAMA_BASE_URL`)
+2.**Loco Config File**: `config/{env}.yaml` (environment-based)
+3.**Defaults**: Built-in defaults in Loco config structs
 
 Example: To override default port:
 
