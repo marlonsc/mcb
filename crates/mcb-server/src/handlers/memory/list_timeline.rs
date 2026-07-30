@@ -65,12 +65,14 @@ pub async fn list_observations(
 async fn resolve_timeline_anchor_id(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
-) -> Result<Result<String, CallToolResult>, McpError> {
+) -> Result<Result<String, Box<CallToolResult>>, McpError> {
     if let Some(anchor_id) = args.anchor_id.clone() {
         return Ok(Ok(anchor_id));
     }
     let Some(query) = args.query.clone() else {
-        return Ok(Err(tool_error("Missing anchor_id or query for timeline")));
+        return Ok(Err(Box::new(tool_error(
+            "Missing anchor_id or query for timeline",
+        ))));
     };
     let results = memory_service
         .search_memories(&query, None, 1)
@@ -78,7 +80,7 @@ async fn resolve_timeline_anchor_id(
         .map_err(|e| to_opaque_mcp_error(&e))?;
     match results.first() {
         Some(first) => Ok(Ok(first.observation.id.clone())),
-        None => Ok(Err(tool_error("No anchor observation found"))),
+        None => Ok(Err(Box::new(tool_error("No anchor observation found")))),
     }
 }
 
@@ -90,7 +92,7 @@ pub async fn get_timeline(
 ) -> Result<CallToolResult, McpError> {
     let anchor_id = match resolve_timeline_anchor_id(memory_service, args).await? {
         Ok(anchor_id) => anchor_id,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
     let filter = build_memory_filter(args, None, None);
     let depth_before = args.depth_before.unwrap_or(DEFAULT_TIMELINE_DEPTH);

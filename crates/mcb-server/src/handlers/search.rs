@@ -87,21 +87,21 @@ impl SearchHandler {
         }
     }
 
-    async fn resolve_collection(args: &SearchArgs) -> Result<&str, CallToolResult> {
+    async fn resolve_collection(args: &SearchArgs) -> Result<&str, Box<CallToolResult>> {
         args.collection
             .as_deref()
             .or(args.repo_id.as_deref())
             .ok_or_else(|| {
-                to_contextual_tool_error(Error::invalid_argument(
+                Box::new(to_contextual_tool_error(Error::invalid_argument(
                     "collection could not be resolved: provide collection or ensure a repository is detected",
-                ))
+                )))
             })
     }
 
     /// Resolve the collection name and its normalized id for a code search.
     async fn resolve_search_collection(
         args: &SearchArgs,
-    ) -> Result<(&str, mcb_domain::value_objects::CollectionId), CallToolResult> {
+    ) -> Result<(&str, mcb_domain::value_objects::CollectionId), Box<CallToolResult>> {
         let collection_name = Self::resolve_collection(args).await?;
         let collection_id = normalize_collection_name(collection_name)
             .map_err(|reason| to_contextual_tool_error(Error::invalid_argument(reason)))?;
@@ -115,7 +115,7 @@ impl SearchHandler {
     ) -> Result<CallToolResult, McpError> {
         let (collection_name, collection_id) = match Self::resolve_search_collection(args).await {
             Ok(pair) => pair,
-            Err(err) => return Ok(err),
+            Err(err) => return Ok(*err),
         };
 
         let timer = Instant::now();

@@ -194,7 +194,7 @@ impl SubmoduleProvider {
             return None;
         }
 
-        let Some(url) = submodule.url().map(str::to_owned) else {
+        let Ok(Some(url)) = submodule.url().map(|u| u.map(str::to_owned)) else {
             mcb_domain::warn!(
                 "submodule",
                 "Orphaned submodule (no URL in .gitmodules), skipping",

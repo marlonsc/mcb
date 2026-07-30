@@ -41,8 +41,9 @@ pub async fn config(
         &headers,
         ctx.config.settings.as_ref(),
     )
-    .await?;
-    format::json(load_admin_config()?)
+    .await
+    .map_err(map_auth_error)?;
+    format::json(load_admin_config().map_err(|e| *e)?)
 }
 
 /// Returns dashboard series data for the requested graph.
@@ -61,7 +62,8 @@ pub async fn dashboard(
         &headers,
         ctx.config.settings.as_ref(),
     )
-    .await?;
+    .await
+    .map_err(map_auth_error)?;
     let limit = body
         .limit
         .unwrap_or(mcb_utils::constants::DEFAULT_DASHBOARD_LIMIT);
@@ -112,6 +114,14 @@ async fn dashboard_series(state: &McbState, graph: &str, limit: usize) -> Result
     Ok(data)
 }
 
+/// Map auth-domain errors back to Loco HTTP errors at the controller boundary.
+fn map_auth_error(err: crate::auth::AuthError) -> loco_rs::errors::Error {
+    match err {
+        crate::auth::AuthError::Unauthorized(msg) => loco_rs::errors::Error::Unauthorized(msg),
+        crate::auth::AuthError::Internal => loco_rs::errors::Error::InternalServerError,
+    }
+}
+
 /// Returns admin config as JSON for routes guarded by external middleware.
 ///
 /// Auth is enforced by the calling route's middleware; no per-request
@@ -121,7 +131,7 @@ async fn dashboard_series(state: &McbState, graph: &str, limit: usize) -> Result
 ///
 /// Fails when config cannot be loaded or serialized.
 pub async fn config_via_middleware(Extension(_state): Extension<McbState>) -> Result<Response> {
-    format::json(load_admin_config()?)
+    format::json(load_admin_config().map_err(|e| *e)?)
 }
 
 /// Registers admin routes under `/admin`.

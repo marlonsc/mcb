@@ -10,13 +10,14 @@ use crate::utils::mcp::tool_error;
 pub(super) use crate::utils::mcp::{opt_str, require_data_map, require_str, str_vec};
 use mcb_domain::value_objects::ids::SessionId;
 
-pub(super) fn require_session_id(args: &SessionArgs) -> Result<&SessionId, CallToolResult> {
+pub(super) fn require_session_id(args: &SessionArgs) -> Result<&SessionId, Box<CallToolResult>> {
     args.session_id
         .as_ref()
         .ok_or_else(|| tool_error("Missing session_id"))
+        .map_err(Box::new)
 }
 
-pub(super) fn require_session_id_str(args: &SessionArgs) -> Result<String, CallToolResult> {
+pub(super) fn require_session_id_str(args: &SessionArgs) -> Result<String, Box<CallToolResult>> {
     require_session_id(args).map(SessionId::as_str)
 }
 

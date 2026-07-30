@@ -4,29 +4,29 @@ expression: "snapshot_payload(&request, status, &response)"
 ---
 {
   "request": {
-    "id": 1,
     "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
+      "name": "entity",
       "arguments": {
         "action": "list",
         "resource": "org"
-      },
-      "name": "entity"
-    }
+      }
+    },
+    "id": 1
   },
+  "status": 200,
   "response": {
-    "id": 1,
     "jsonrpc": "2.0",
     "result": {
       "content": [
         {
-          "text": "[]",
-          "type": "text"
+          "type": "text",
+          "text": "[]"
         }
       ],
       "isError": false
-    }
-  },
-  "status": 200
+    },
+    "id": 1
+  }
 }
