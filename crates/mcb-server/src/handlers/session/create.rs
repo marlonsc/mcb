@@ -80,7 +80,7 @@ fn parse_create_payload(args: &SessionArgs) -> Result<CreateSessionPayload, McpE
 fn resolve_agent_type(
     args: &SessionArgs,
     payload: &CreateSessionPayload,
-) -> Result<Result<AgentType, CallToolResult>, McpError> {
+) -> Result<Result<AgentType, Box<CallToolResult>>, McpError> {
     let agent_type_value = resolve_identifier_precedence(
         "agent_type",
         args.agent_type.as_deref(),
@@ -88,9 +88,9 @@ fn resolve_agent_type(
     )?;
     match agent_type_value {
         Some(value) => Ok(Ok(parse_agent_type(&value)?)),
-        None => Ok(Err(tool_error(
+        None => Ok(Err(Box::new(tool_error(
             "Missing agent_type for create (expected in args or data)",
-        ))),
+        )))),
     }
 }
 
@@ -138,13 +138,13 @@ pub async fn create_session(
 ) -> Result<CallToolResult, McpError> {
     let data = match require_data_map(&args.data, "Missing data payload for create") {
         Ok(data) => data,
-        Err(error_result) => return Ok(error_result),
+        Err(error_result) => return Ok(*error_result),
     };
     let payload = parse_create_payload(args)?;
 
     let agent_type: AgentType = match resolve_agent_type(args, &payload)? {
         Ok(value) => value,
-        Err(error_result) => return Ok(error_result),
+        Err(error_result) => return Ok(*error_result),
     };
     let now = mcb_utils::utils::time::epoch_secs_i64()
         .map_err(|e| safe_internal_error("resolve timestamp", &e))?;
@@ -154,7 +154,7 @@ pub async fn create_session(
         Some(value) => value,
         None => match require_str(data, schema::MODEL) {
             Ok(value) => value,
-            Err(error_result) => return Ok(error_result),
+            Err(error_result) => return Ok(*error_result),
         },
     };
     let session = build_agent_session(BuildSessionParams {

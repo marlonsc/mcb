@@ -24,7 +24,7 @@ pub async fn analyze_impact(
 ) -> Result<CallToolResult, McpError> {
     let path = match repo_path(args) {
         Ok(p) => p,
-        Err(error_result) => return Ok(error_result),
+        Err(error_result) => return Ok(*error_result),
     };
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,

@@ -4,28 +4,28 @@ expression: "snapshot_payload(&request, status, &response)"
 ---
 {
   "request": {
-    "id": 1,
     "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
+      "name": "list_sessions",
       "arguments": {
         "limit": 10
-      },
-      "name": "list_sessions"
-    }
+      }
+    },
+    "id": 1
   },
+  "status": 200,
   "response": {
-    "id": 1,
     "jsonrpc": "2.0",
     "result": {
       "content": [
         {
-          "text": "{\n  \"count\": 0,\n  \"sessions\": []\n}",
-          "type": "text"
+          "type": "text",
+          "text": "{\n  \"sessions\": [],\n  \"count\": 0\n}"
         }
       ],
       "isError": false
-    }
-  },
-  "status": 200
+    },
+    "id": 1
+  }
 }

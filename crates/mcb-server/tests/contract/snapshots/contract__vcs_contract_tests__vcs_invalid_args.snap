@@ -4,23 +4,23 @@ expression: "snapshot_payload(&request, status, &response)"
 ---
 {
   "request": {
-    "id": 1,
     "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
+      "name": "list_repos",
       "arguments": {
         "limit": "not_a_number"
-      },
-      "name": "list_repos"
-    }
+      }
+    },
+    "id": 1
   },
+  "status": 200,
   "response": {
+    "jsonrpc": "2.0",
     "error": {
       "code": -32602,
       "message": "Failed to parse arguments: invalid type: string \"not_a_number\", expected u32"
     },
-    "id": 1,
-    "jsonrpc": "2.0"
-  },
-  "status": 200
+    "id": 1
+  }
 }

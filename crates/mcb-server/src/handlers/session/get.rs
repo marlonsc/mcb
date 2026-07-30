@@ -24,7 +24,7 @@ pub async fn get_session(
 ) -> Result<CallToolResult, McpError> {
     let session_id = match require_session_id_str(args) {
         Ok(id) => id,
-        Err(error_result) => return Ok(error_result),
+        Err(error_result) => return Ok(*error_result),
     };
     match agent_service.get_session(&session_id).await {
         Ok(Some(session)) => ResponseFormatter::json_success(&serde_json::json!({

@@ -6,15 +6,15 @@
 //! Used by `handlers/memory/` and `handlers/entities/` to reduce
 //! repetitive match + early-return boilerplate.
 
-/// Extract a value from a `Result<T, CallToolResult>`, returning the error as `Ok(err)`.
+/// Extract a value from a `Result<T, Box<CallToolResult>>`, returning the error as `Ok(err)`.
 ///
-/// The `require_*` helpers return `Result<T, CallToolResult>` where the `Err` variant
+/// The `require_*` helpers return `Result<T, Box<CallToolResult>>` where the `Err` variant
 /// is a tool-level error (not a protocol error). This macro converts the match:
 ///
 /// ```ignore
 /// let value = match require_str(data, "field") {
 ///     Ok(v) => v,
-///     Err(error_result) => return Ok(error_result),
+///     Err(error_result) => return Ok(*error_result),
 /// };
 /// ```
 ///
@@ -27,7 +27,7 @@ macro_rules! extract_field {
     ($expr:expr) => {
         match $expr {
             Ok(value) => value,
-            Err(error_result) => return Ok(error_result),
+            Err(error_result) => return Ok(*error_result),
         }
     };
 }
