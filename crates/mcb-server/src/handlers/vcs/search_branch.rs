@@ -15,12 +15,13 @@ use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::tool_error;
 use mcb_utils::constants::limits::DEFAULT_VCS_SEARCH_LIMIT;
 
-fn require_query(args: &VcsArgs) -> Result<&str, CallToolResult> {
+fn require_query(args: &VcsArgs) -> Result<&str, Box<CallToolResult>> {
     args.query
         .as_deref()
         .map(str::trim)
         .filter(|value| !value.is_empty())
         .ok_or_else(|| tool_error("Missing query for branch search"))
+        .map_err(Box::new)
 }
 
 fn append_file_matches(
@@ -53,11 +54,11 @@ pub async fn search_branch(
 ) -> Result<CallToolResult, McpError> {
     let query = match require_query(args) {
         Ok(value) => value,
-        Err(error_result) => return Ok(error_result),
+        Err(error_result) => return Ok(*error_result),
     };
     let path = match repo_path(args) {
         Ok(p) => p,
-        Err(error_result) => return Ok(error_result),
+        Err(error_result) => return Ok(*error_result),
     };
     let repo = match vcs_provider.open_repository(Path::new(&path)).await {
         Ok(repo) => repo,

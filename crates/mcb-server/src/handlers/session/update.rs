@@ -28,7 +28,7 @@ pub async fn update_session(
 ) -> Result<CallToolResult, McpError> {
     let session_id = match require_session_id_str(args) {
         Ok(id) => id,
-        Err(error_result) => return Ok(error_result),
+        Err(error_result) => return Ok(*error_result),
     };
     let data = json_map(&args.data);
     let status = parse_status(args, data)?;

@@ -8,14 +8,32 @@
 use argon2::password_hash::PasswordHash;
 use argon2::{Argon2, PasswordVerifier};
 use axum::http::HeaderMap;
-use loco_rs::errors::Error;
-use loco_rs::prelude::Result;
 use mcb_domain::ports::AuthRepositoryPort;
 use mcb_utils::constants::auth::{API_KEY_HEADER, BEARER_PREFIX};
 use mcb_utils::constants::http::HTTP_HEADER_AUTHORIZATION;
+use thiserror::Error;
 
 // Support both direct app routes (`/alive`) and prefixed ingress rewrites (`/api/alive`).
 const ADMIN_AUTH_EXEMPT_PATHS: &[&str] = &["/alive", "/api/alive"];
+
+/// Authentication/authorization failures for admin endpoints.
+#[derive(Debug, Error)]
+pub enum AuthError {
+    /// API key is missing, malformed, or did not match any active user.
+    #[error("unauthorized: {0}")]
+    Unauthorized(String),
+    /// Underlying repository or crypto failure.
+    #[error("internal error")]
+    Internal,
+}
+
+impl AuthError {
+    /// Shorthand for unauthorized with a static message.
+    #[must_use]
+    pub fn unauthorized(message: impl Into<String>) -> Self {
+        Self::Unauthorized(message.into())
+    }
+}
 
 /// Authenticated admin principal.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -40,7 +58,7 @@ pub async fn authorize_admin_api_key(
     auth_repo: &dyn AuthRepositoryPort,
     headers: &HeaderMap,
     settings: Option<&serde_json::Value>,
-) -> Result<AdminPrincipal> {
+) -> Result<AdminPrincipal, AuthError> {
     let api_key_header = configured_api_key_header(settings);
     let api_key = extract_api_key(headers, &api_key_header)?;
 
@@ -49,7 +67,7 @@ pub async fn authorize_admin_api_key(
         .await
         .map_err(|e| {
             mcb_domain::error!("auth", "auth repository lookup failed", &e);
-            Error::InternalServerError
+            AuthError::Internal
         })?;
 
     for user_with_key in users_with_keys {
@@ -63,7 +81,7 @@ pub async fn authorize_admin_api_key(
         }
     }
 
-    Err(Error::Unauthorized("invalid api key".to_owned()))
+    Err(AuthError::unauthorized("invalid api key"))
 }
 
 pub(crate) fn configured_api_key_header(settings: Option<&serde_json::Value>) -> String {
@@ -96,11 +114,11 @@ pub fn is_admin_auth_exempt_path(path: &str) -> bool {
 /// # Errors
 ///
 /// Returns `Unauthorized` when the key is missing or header value is invalid.
-pub fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String> {
+pub fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String, AuthError> {
     if let Some(value) = headers.get(header_name) {
         let key = value
             .to_str()
-            .map_err(|_| Error::Unauthorized("invalid api key header value".to_owned()))?
+            .map_err(|_| AuthError::unauthorized("invalid api key header value"))?
             .trim();
         if !key.is_empty() {
             return Ok(key.to_owned());
@@ -110,7 +128,7 @@ pub fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String>
     if let Some(value) = headers.get(HTTP_HEADER_AUTHORIZATION) {
         let value = value
             .to_str()
-            .map_err(|_| Error::Unauthorized("invalid authorization header value".to_owned()))?;
+            .map_err(|_| AuthError::unauthorized("invalid authorization header value"))?;
         if let Some(token) = value.strip_prefix(BEARER_PREFIX) {
             let key = token.trim();
             if !key.is_empty() {
@@ -119,12 +137,12 @@ pub fn extract_api_key(headers: &HeaderMap, header_name: &str) -> Result<String>
         }
     }
 
-    Err(Error::Unauthorized(format!(
+    Err(AuthError::unauthorized(format!(
         "missing api key header ({header_name} or authorization bearer)"
     )))
 }
 
-fn verify_api_key(hash: &str, candidate: &str) -> Result<bool> {
+fn verify_api_key(hash: &str, candidate: &str) -> Result<bool, AuthError> {
     if let Ok(parsed) = PasswordHash::new(hash) {
         return Ok(Argon2::default()
             .verify_password(candidate.as_bytes(), &parsed)
@@ -134,7 +152,7 @@ fn verify_api_key(hash: &str, candidate: &str) -> Result<bool> {
     if hash.starts_with("$2a$") || hash.starts_with("$2b$") || hash.starts_with("$2y$") {
         return bcrypt::verify(candidate, hash).map_err(|e| {
             mcb_domain::error!("auth", "bcrypt verification failed", &e);
-            Error::InternalServerError
+            AuthError::Internal
         });
     }
 

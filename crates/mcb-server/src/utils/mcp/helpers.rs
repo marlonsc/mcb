@@ -120,6 +120,8 @@ pub fn map_opaque_error<T>(result: Result<T, Error>) -> Result<T, McpError> {
 pub fn require_data_map<'a>(
     data: &'a Option<serde_json::Value>,
     missing_message: &'static str,
-) -> Result<&'a serde_json::Map<String, serde_json::Value>, CallToolResult> {
-    json_map(data).ok_or_else(|| tool_error(missing_message))
+) -> Result<&'a serde_json::Map<String, serde_json::Value>, Box<CallToolResult>> {
+    json_map(data)
+        .ok_or_else(|| tool_error(missing_message))
+        .map_err(Box::new)
 }
