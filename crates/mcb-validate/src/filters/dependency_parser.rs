@@ -75,10 +75,7 @@ impl WorkspaceDependencies {
 
             current.file_name()?;
 
-            match current.parent() {
-                Some(parent) => current = parent,
-                None => return None,
-            }
+            current = current.parent()?;
         }
     }
 
