@@ -71,15 +71,21 @@ mcb_install_hooks() {
 
 # Binary lookup chain: PATH > target/release > target/debug > cargo run
 mcb_bin() {
-  command -v mcb 2>/dev/null && return 0
-  [ -x "$MCB_ROOT/target/release/mcb" ] && { echo "$MCB_ROOT/target/release/mcb"; return 0; }
   [ -x "$MCB_ROOT/target/debug/mcb" ]   && { echo "$MCB_ROOT/target/debug/mcb";   return 0; }
+  [ -x "$MCB_ROOT/target/release/mcb" ] && { echo "$MCB_ROOT/target/release/mcb"; return 0; }
+  command -v mcb 2>/dev/null && return 0
   echo "cargo run --package mcb --"
 }
 
 # Single source for the RUSTSEC/CVE audit-ignore list.
+# RUSTSEC-2026-0194/0195 (quick-xml DoS via duplicate attributes / namespace
+# exhaustion): opendal (vendored loco storage driver) pins quick-xml <0.41 and
+# no released opendal consumes quick-xml >=0.41 yet; the XML-parsing services
+# are not enabled in this workspace (services-memory/services-fs only), so the
+# vulnerable paths are unreachable. Revisit on the next opendal bump.
 MCB_AUDIT_IGNORES=(RUSTSEC-2023-0071 RUSTSEC-2023-0089 RUSTSEC-2025-0119 \
-                   RUSTSEC-2024-0436 RUSTSEC-2025-0134 CVE-2023-49092)
+                   RUSTSEC-2024-0436 RUSTSEC-2025-0134 CVE-2023-49092 \
+                   RUSTSEC-2026-0194 RUSTSEC-2026-0195)
 export MCB_AUDIT_IGNORES
 
 mcb_validate() {  # $1 = "quick" | "full"

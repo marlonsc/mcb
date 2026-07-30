@@ -32,7 +32,9 @@ struct ValidatedExecutionData {
 
 impl ValidatedExecutionData {
     /// Validate and extract all required fields from JSON data
-    fn validate(data: &serde_json::Map<String, serde_json::Value>) -> Result<Self, CallToolResult> {
+    fn validate(
+        data: &serde_json::Map<String, serde_json::Value>,
+    ) -> Result<Self, Box<CallToolResult>> {
         let command = require_str(data, "command")?;
         let exit_code = require_i32(data, "exit_code")?;
         let duration_ms = require_i64(data, "duration_ms")?;

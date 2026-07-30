@@ -209,27 +209,33 @@ fn stdio_enabled(mcp: &mcb_infrastructure::config::app::McpConfig) -> bool {
 }
 
 /// Resolve and validate `AppConfig` from Loco settings via the config provider.
-fn resolve_app_config(ctx: &AppContext) -> Result<mcb_infrastructure::config::app::AppConfig> {
-    let settings = ctx
-        .config
-        .settings
-        .clone()
-        .ok_or_else(|| loco_rs::Error::string("missing loco settings for AppConfig"))?;
+fn resolve_app_config(
+    ctx: &AppContext,
+) -> Result<mcb_infrastructure::config::app::AppConfig, Box<loco_rs::Error>> {
+    let settings = ctx.config.settings.clone().ok_or_else(|| {
+        Box::new(loco_rs::Error::string(
+            "missing loco settings for AppConfig",
+        ))
+    })?;
 
     // Resolve config provider via CA/DI registry
     let config_provider = resolve_config_provider(&ConfigProviderConfig::new(
         mcb_utils::constants::DEFAULT_CONFIG_PROVIDER,
     ))
-    .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+    .map_err(|e| Box::new(loco_rs::Error::string(&e.to_string())))?;
 
     // Deserialize + validate via resolved provider (production path)
     let app_config_any = config_provider
         .deserialize_from_value(&settings)
-        .map_err(|e| loco_rs::Error::string(&format!("AppConfig: {e}")))?;
+        .map_err(|e| Box::new(loco_rs::Error::string(&format!("AppConfig: {e}"))))?;
 
     let app_config = *app_config_any
         .downcast::<mcb_infrastructure::config::app::AppConfig>()
-        .map_err(|_| loco_rs::Error::string("ConfigProvider returned unexpected type"))?;
+        .map_err(|_| {
+            Box::new(loco_rs::Error::string(
+                "ConfigProvider returned unexpected type",
+            ))
+        })?;
 
     Ok(app_config)
 }
@@ -238,7 +244,7 @@ fn resolve_app_config(ctx: &AppContext) -> Result<mcb_infrastructure::config::ap
 fn build_resolution_ctx(
     ctx: &AppContext,
     app_config: mcb_infrastructure::config::app::AppConfig,
-) -> Result<ServiceResolutionContext> {
+) -> Result<ServiceResolutionContext, Box<loco_rs::Error>> {
     let event_bus = mcb_domain::registry::events::resolve_event_bus_provider(
         &mcb_domain::registry::events::EventBusProviderConfig::new(
             app_config
@@ -249,15 +255,15 @@ fn build_resolution_ctx(
                 .provider_name(),
         ),
     )
-    .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+    .map_err(|e| Box::new(loco_rs::Error::string(&e.to_string())))?;
 
     // Resolve providers via mcb-domain registries — no infrastructure helpers
     let embedding_provider = resolve_embedding_provider(&build_embedding_config(&app_config))
-        .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+        .map_err(|e| Box::new(loco_rs::Error::string(&e.to_string())))?;
 
     let vector_store_provider =
         resolve_vector_store_provider(&build_vector_store_config(&app_config))
-            .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+            .map_err(|e| Box::new(loco_rs::Error::string(&e.to_string())))?;
 
     Ok(ServiceResolutionContext {
         db: Arc::new(ctx.db.clone()),
@@ -273,7 +279,9 @@ fn build_resolution_ctx(
 /// Centralizes config-provider deserialization, provider resolution, and the
 /// bootstrap wiring so `after_routes` reads as a short orchestration. Returns
 /// the bootstrap plus whether the stdio transport should be started.
-fn build_bootstrap(ctx: &AppContext) -> Result<(mcb_server::state::McpServerBootstrap, bool)> {
+fn build_bootstrap(
+    ctx: &AppContext,
+) -> Result<(mcb_server::state::McpServerBootstrap, bool), Box<loco_rs::Error>> {
     let app_config = resolve_app_config(ctx)?;
 
     let execution_flow = if app_config.mcp.stdio_only {
@@ -291,7 +299,7 @@ fn build_bootstrap(ctx: &AppContext) -> Result<(mcb_server::state::McpServerBoot
                 mcb_utils::constants::DEFAULT_HYBRID_SEARCH_PROVIDER,
             ),
         )
-        .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+        .map_err(|e| Box::new(loco_rs::Error::string(&e.to_string())))?;
 
     let bootstrap = build_mcp_server_bootstrap(
         &resolution_ctx,
@@ -301,7 +309,7 @@ fn build_bootstrap(ctx: &AppContext) -> Result<(mcb_server::state::McpServerBoot
         hybrid_search,
         execution_flow,
     )
-    .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+    .map_err(|e| Box::new(loco_rs::Error::string(&e.to_string())))?;
     Ok((bootstrap, start_stdio))
 }
 
@@ -348,7 +356,7 @@ impl Initializer for McpServerInitializer {
     async fn after_routes(&self, router: AxumRouter, ctx: &AppContext) -> Result<AxumRouter> {
         mcb_domain::infra::logging::set_log_fn(mcb_infrastructure::logging::tracing_log_fn);
 
-        let (bootstrap, start_stdio) = build_bootstrap(ctx)?;
+        let (bootstrap, start_stdio) = build_bootstrap(ctx).map_err(|e| *e)?;
 
         if start_stdio {
             spawn_stdio_server(Arc::clone(&bootstrap.mcp_server));
