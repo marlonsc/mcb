@@ -1,0 +1,142 @@
+[package]
+name = "mcb-server"
+keywords = [
+    "mcp",
+    "server",
+    "semantic-search",
+    "code-analysis",
+    "vector-embeddings",
+]
+categories = [
+    "development-tools",
+    "api-bindings",
+    "science::artificial-intelligence",
+]
+description = "MCP Context Browser - Server transport and protocol layer"
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "mcb_server"
+path = "src/lib.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+# Domain layer - core contracts and types
+mcb-domain = { path = "../mcb-domain" }
+mcb-utils = { path = "../mcb-utils" }
+
+# Core async runtime
+tokio = { workspace = true }
+async-trait = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_with = { workspace = true }
+toml = { workspace = true }
+
+# Date/time
+chrono = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# CLI
+clap = { workspace = true }
+
+# HTTP server (Axum)
+axum = { workspace = true }
+tower-http = { workspace = true }
+walkdir = { workspace = true }
+
+# HTTP client - for client mode connecting to remote server
+reqwest = { workspace = true }
+
+# MCP SDK
+rmcp = { workspace = true }
+
+
+# Authentication
+# jsonwebtoken removed - unused dependency (RUSTSEC-2023-0071)
+bcrypt = { workspace = true }
+argon2 = { workspace = true }
+base64 = { workspace = true }
+
+# Hostname detection
+hostname = { workspace = true }
+
+# Utilities
+uuid = { workspace = true }
+
+# Schema generation for MCP
+schemars = { workspace = true }
+# Input validation
+validator = { workspace = true }
+
+# Advanced Multi-Provider Strategy
+dashmap = { workspace = true }
+health = { workspace = true }
+
+# Hashing for simple embeddings
+sha2 = { workspace = true }
+
+# Configuration watching
+notify = { workspace = true }
+
+# Async streaming for HTTP SSE
+futures = { workspace = true }
+async-stream = { workspace = true }
+
+# Plugin registration
+linkme = { workspace = true }
+
+# SeaQL + Loco ecosystem (v0.3.0)
+loco-rs = { workspace = true }
+seaography = { workspace = true }
+sea-orm = { workspace = true }
+sea-orm-pro = { workspace = true }
+async-graphql = { workspace = true }
+async-graphql-axum = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+fastembed = { workspace = true }
+rstest = { workspace = true }
+serial_test = { workspace = true }
+mockall = { workspace = true }
+insta = { workspace = true }
+tower = { workspace = true }
+http-body-util = { workspace = true }
+mcb-domain = { path = "../mcb-domain", features = ["test-utils"] }
+mcb-utils = { path = "../mcb-utils" }
+mcb-providers = { path = "../mcb-providers" }
+mcb-infrastructure = { path = "../mcb-infrastructure" }
+mcb-validate = { path = "../mcb-validate" }
+[[test]]
+name = "unit"
+path = "tests/unit/mod.rs"
+
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"
+
+[[test]]
+name = "e2e"
+path = "tests/e2e/mod.rs"
+
+[[test]]
+name = "contract"
+path = "tests/contract/mod.rs"

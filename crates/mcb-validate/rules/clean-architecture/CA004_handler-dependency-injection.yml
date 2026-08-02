@@ -1,0 +1,19 @@
+schema: "rule/v1"
+id: "CA004"
+name: "Handler Dependency Injection"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Handlers must receive dependencies via injection, not create them"
+rationale: "Direct instantiation couples handlers to concrete implementations"
+
+rule: |
+    rule HandlerDependencyInjection "Handler Dependency Injection" {
+        when
+            Handler() &&
+            (CreatesConcreteType() || UsesSingleton())
+        then
+            Violation("Handlers must receive dependencies via injection, not create them");
+    }

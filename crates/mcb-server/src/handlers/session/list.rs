@@ -1,0 +1,63 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
+use std::sync::Arc;
+
+use mcb_domain::ports::AgentSessionQuery;
+use mcb_domain::ports::AgentSessionServiceInterface;
+use rmcp::ErrorData as McpError;
+use rmcp::model::CallToolResult;
+
+use crate::args::SessionArgs;
+use crate::error_mapping::to_contextual_tool_error;
+use crate::formatter::ResponseFormatter;
+use mcb_utils::constants::keys::{FIELD_COUNT, FIELD_SESSIONS};
+use mcb_utils::constants::limits::DEFAULT_SESSION_LIST_LIMIT;
+
+/// Lists agent sessions based on filters.
+#[tracing::instrument(skip_all)]
+pub async fn list_sessions(
+    agent_service: &Arc<dyn AgentSessionServiceInterface>,
+    args: &SessionArgs,
+) -> Result<CallToolResult, McpError> {
+    let query = AgentSessionQuery {
+        session_summary_id: None,
+        parent_session_id: args.parent_session_id.clone(),
+        agent_type: args
+            .agent_type
+            .as_ref()
+            .and_then(|value| value.parse().ok()),
+        status: args
+            .status
+            .as_ref()
+            .filter(|value| !value.is_empty())
+            .map(|value| value.parse())
+            .transpose()
+            .map_err(|_| McpError::invalid_params("Invalid status", None))?,
+        project_id: args.project_id.clone(),
+        worktree_id: args.worktree_id.clone(),
+        limit: Some(args.limit.unwrap_or(DEFAULT_SESSION_LIST_LIMIT as u32) as usize),
+    };
+    match agent_service.list_sessions(query).await {
+        Ok(sessions) => {
+            let items: Vec<_> = sessions
+                .iter()
+                .map(|session| {
+                    serde_json::json!({
+                        "id": session.id,
+                        "parent_session_id": session.parent_session_id,
+                        "agent_type": session.agent_type.as_str(),
+                        "status": session.status.as_str(),
+                        "started_at": session.started_at,
+                        "duration_ms": session.duration_ms,
+                    })
+                })
+                .collect();
+            ResponseFormatter::json_success(&serde_json::json!({
+                (FIELD_SESSIONS): items,
+                (FIELD_COUNT): items.len(),
+            }))
+        }
+        Err(e) => Ok(to_contextual_tool_error(e)),
+    }
+}

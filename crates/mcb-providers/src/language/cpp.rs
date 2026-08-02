@@ -1,0 +1,19 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
+//! C++ language processor for AST-based code chunking.
+
+use mcb_utils::constants::ast::{AST_NODE_STRUCT_SPECIFIER, TS_NODE_FUNCTION_DEFINITION};
+use mcb_utils::constants::lang::CHUNK_SIZE_CPP;
+
+crate::impl_simple_language_processor!(
+    CppProcessor,
+    language = tree_sitter_cpp::LANGUAGE.into(),
+    chunk_size = CHUNK_SIZE_CPP,
+    max_depth = 3,
+    nodes = [
+        TS_NODE_FUNCTION_DEFINITION,
+        "class_specifier",
+        AST_NODE_STRUCT_SPECIFIER
+    ]
+);

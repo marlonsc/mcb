@@ -1,0 +1,96 @@
+[package]
+name = "mcb-domain"
+keywords = ["domain", "types", "mcp", "semantic-search"]
+categories = ["development-tools", "api-bindings"]
+description = "Domain layer for MCP Context Browser - Core business logic and types"
+homepage.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+
+[lib]
+name = "mcb_domain"
+path = "src/lib.rs"
+
+[dependencies]
+# Shared utilities layer (Layer 0)
+mcb-utils = { workspace = true }
+
+# Serialization - pure lib acceptable for domain
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_with = { workspace = true }
+
+# Error handling - pure lib acceptable for domain
+thiserror = { workspace = true }
+derive_more = { workspace = true }
+strum = { workspace = true }
+strum_macros = { workspace = true }
+typed-builder = { workspace = true }
+
+# Async traits - needed for port definitions
+async-trait = { workspace = true }
+
+
+# Dependency injection interfaces - port traits (linkme + AppContext)
+
+# Schema generation for MCP - pure lib acceptable for domain
+schemars = { workspace = true, features = ["uuid1"] }
+
+# Hashing utilities
+sha2 = { workspace = true }
+
+# UUID generation
+uuid = { workspace = true }
+
+# Base64 encoding
+base64 = { workspace = true }
+
+hex = { workspace = true }
+
+# Regex for text processing
+regex = { workspace = true }
+
+# Date/time handling
+chrono = { workspace = true }
+
+# Async stream traits for event ports
+futures = { workspace = true }
+
+# Plugin registration
+linkme = { workspace = true }
+
+toml = { workspace = true, optional = true }
+tempfile = { workspace = true, optional = true }
+# MCP SDK types — optional, only for test utilities
+rmcp = { workspace = true, optional = true }
+
+[features]
+default = []
+test-utils = ["dep:toml", "dep:tempfile", "dep:rmcp"]
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+# Testing utilities
+tempfile = { workspace = true }
+tokio = { workspace = true, features = ["rt-multi-thread", "macros"] }
+rstest = { workspace = true }
+mockall = { workspace = true }
+rmcp = { workspace = true }
+insta = { workspace = true }
+toml = { workspace = true }
+
+[[test]]
+name = "unit"
+path = "tests/unit/mod.rs"
+required-features = ["test-utils"]
+
+[[test]]
+name = "integration"
+path = "tests/integration/mod.rs"
+required-features = ["test-utils"]

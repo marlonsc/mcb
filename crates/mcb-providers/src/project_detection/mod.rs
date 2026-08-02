@@ -1,0 +1,17 @@
+//! Project detection with auto-registration via linkme.
+
+mod cargo;
+mod common;
+mod detector;
+mod go;
+mod maven;
+mod npm;
+mod python;
+mod registry;
+
+pub use cargo::CargoDetector;
+pub use detector::detect_all_projects;
+pub use go::GoDetector;
+pub use maven::MavenDetector;
+pub use npm::NpmDetector;
+pub use python::PythonDetector;

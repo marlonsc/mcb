@@ -1,0 +1,25 @@
+schema: "rule/v1"
+id: "QUAL002"
+name: "No Expect in Production"
+category: "quality"
+severity: "warning"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Production code should not use .expect()"
+rationale: "Expect can cause panics; use ? operator with context"
+
+config:
+  allow_in_tests: true
+  allow_in_examples: false
+  custom_exclusions: []
+
+rule: |
+  rule NoExpectCheck "Avoid expect() in production" {
+      when
+          AST.MethodCall(name == "expect") &&
+          !TestFunction() &&
+          !ExampleFunction()
+      then
+          Violation("Avoid .expect() in production code, use ? with context");
+  }

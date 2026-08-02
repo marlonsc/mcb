@@ -1,0 +1,68 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
+use std::sync::Arc;
+
+use mcb_domain::error;
+use mcb_domain::ports::MemoryServiceInterface;
+use mcb_utils::utils::vcs_context::capture_vcs_context;
+use rmcp::ErrorData as McpError;
+use rmcp::model::CallToolResult;
+
+use super::common::build_memory_filter;
+use crate::args::MemoryArgs;
+use crate::formatter::ResponseFormatter;
+use crate::utils::mcp::tool_error;
+use mcb_utils::constants::limits::{
+    CHARS_PER_TOKEN_ESTIMATE, DEFAULT_MAX_CONTEXT_TOKENS, DEFAULT_MEMORY_LIST_LIMIT,
+};
+
+/// Injects semantic memory context into the MCP tool result based on the provided filter.
+#[tracing::instrument(skip_all)]
+pub async fn inject_context(
+    memory_service: &Arc<dyn MemoryServiceInterface>,
+    args: &MemoryArgs,
+) -> Result<CallToolResult, McpError> {
+    let filter = build_memory_filter(args, None, None);
+    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIST_LIMIT as u32) as usize;
+    let max_tokens = args.max_tokens.unwrap_or(DEFAULT_MAX_CONTEXT_TOKENS);
+    let vcs_context = capture_vcs_context();
+    match memory_service
+        .search_memories("", Some(filter), limit)
+        .await
+    {
+        Ok(results) => {
+            let mut context = String::new();
+            let mut observation_ids = Vec::new();
+            let max_chars = max_tokens * CHARS_PER_TOKEN_ESTIMATE;
+            for result in results {
+                let obs = result.observation;
+                let entry = format!(
+                    "[{}] {}: {}\n\n",
+                    obs.r#type.as_str().to_uppercase(),
+                    obs.id,
+                    obs.content
+                );
+                observation_ids.push(obs.id);
+                if context.len() + entry.len() > max_chars {
+                    break;
+                }
+                context.push_str(&entry);
+            }
+            ResponseFormatter::json_success(&serde_json::json!({
+                "observation_count": observation_ids.len(),
+                "observation_ids": observation_ids,
+                "context": context,
+                "estimated_tokens": context.len() / CHARS_PER_TOKEN_ESTIMATE,
+                "vcs_context": {
+                    "branch": vcs_context.branch,
+                    "commit": vcs_context.commit,
+                }
+            }))
+        }
+        Err(e) => {
+            error!("inject_context", "Failed to inject context", &e);
+            Ok(tool_error("Failed to inject context"))
+        }
+    }
+}

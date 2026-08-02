@@ -1,0 +1,70 @@
+# =============================================================================
+# Gemini Code Assist Configuration — MCB (Memory Context Browser)
+# =============================================================================
+# Documentation: https://developers.google.com/gemini-code-assist/docs/customize-gemini-behavior-github
+# =============================================================================
+
+# Fun features (poems in PR summaries, etc.)
+have_fun: false
+
+# Persistent memory for improving responses across PRs
+memory_config:
+  disabled: false
+
+# Code review settings
+code_review:
+  disable: false
+
+  # Only surface MEDIUM+ findings to reduce noise on large PRs.
+  # LOW captures trivial style nits already caught by rustfmt/clippy.
+  comment_severity_threshold: MEDIUM
+
+  # No cap on review comments — the CI pipeline is the real gate.
+  max_review_comments: -1
+
+  pull_request_opened:
+    # Post the help comment on new PRs (disabled — contributors know the flow)
+    help: false
+    # Always generate a PR summary
+    summary: true
+    # Always run code review on open
+    code_review: true
+    # Review draft PRs too (catch issues early)
+    include_drafts: true
+
+# Files and directories Gemini should skip entirely.
+# These are generated, vendored, fixture, or binary files that add noise.
+ignore_patterns:
+  # Build artifacts
+  - "target/**"
+  - "coverage/**"
+
+  # Generated / vendored
+  - "Cargo.lock"
+  - "*.lock"
+
+  # Test fixtures (checked-in reference projects, not our code)
+  - "crates/mcb-validate/tests/fixtures/**"
+  - "tests/fixtures/**"
+
+  # Documentation build output
+  - "book/**"
+  - "docs/generated/**"
+
+  # Binary / media files
+  - "*.png"
+  - "*.jpg"
+  - "*.svg"
+  - "*.ico"
+  - "*.woff"
+  - "*.woff2"
+
+  # E2E test artifacts
+  - "tests/e2e/node_modules/**"
+  - "tests/e2e/test-results/**"
+
+  # Kubernetes manifests (reviewed separately)
+  - "k8s/**"
+
+  # Beads issue tracking data
+  - ".beads/**"

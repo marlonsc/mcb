@@ -1,0 +1,299 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
+//! Provider registry infrastructure macros.
+//!
+//! Used by `registry/` modules for auto-registration via `linkme`.
+
+/// Implement registry infrastructure for a provider type
+#[macro_export]
+macro_rules! impl_registry {
+    (
+        provider_trait: $trait:path,
+        config_type: $config:ty,
+        entry_type: $entry:ident,
+        slice_name: $slice:ident,
+        resolve_fn: $resolve:ident,
+        list_fn: $list:ident,
+        register_macro: $register_macro:ident,
+        module: $module:ident
+    ) => {
+        /// Register a provider in the distributed slice.
+        ///
+        /// # Safety rationale
+        ///
+        /// `linkme::distributed_slice` uses linker-section manipulation that
+        /// the compiler classifies as `unsafe_code`. The `#[allow]` is scoped
+        /// to the single generated static — not to the enclosing module — and
+        /// no user-written unsafe code is involved.
+        #[macro_export]
+        macro_rules! $register_macro {
+            ($name:expr, $desc:expr, $build:expr) => {
+                #[allow(unsafe_code)] // required by linkme::distributed_slice — see safety rationale above
+                #[linkme::distributed_slice($crate::registry::$module::$slice)]
+                static PROVIDER: $crate::registry::$module::$entry =
+                    $crate::registry::$module::$entry {
+                        name: $name,
+                        description: $desc,
+                        build: $build,
+                    };
+            };
+            ($name:expr, $desc:expr, $build:expr,) => {
+                $crate::$register_macro!($name, $desc, $build);
+            };
+        }
+
+        /// Registry entry for providers
+        #[doc(hidden)]
+        pub struct $entry {
+            /// Unique provider name
+            pub name: &'static str,
+            /// Human-readable description
+            pub description: &'static str,
+            /// Constructor function to create provider instance
+            pub build: fn(&$config) -> $crate::error::Result<std::sync::Arc<dyn $trait>>,
+        }
+
+        #[doc(hidden)]
+        #[linkme::distributed_slice]
+        /// Stores the static value static value.
+        pub static $slice: [$entry] = [..];
+
+        /// Resolve provider by name from registry.
+        ///
+        /// # Errors
+        ///
+        /// Returns an error if the requested provider name is not found in the
+        /// registry or if the provider constructor fails to construct an instance.
+        pub fn $resolve(config: &$config) -> $crate::error::Result<std::sync::Arc<dyn $trait>> {
+            let provider_name = &config.provider;
+
+            for entry in $slice {
+                if entry.name == provider_name {
+                    return (entry.build)(config).map_err(|e| {
+                        $crate::error::Error::configuration(format!(
+                            "provider '{provider_name}' construction failed: {e}"
+                        ))
+                    });
+                }
+            }
+
+            let available: Vec<&str> = $slice.iter().map(|e| e.name).collect();
+
+            Err($crate::error::Error::configuration(format!(
+                "Unknown provider '{}'. Available providers: {:?}",
+                provider_name, available
+            )))
+        }
+
+        /// List all registered providers as `(name, description)` pairs.
+        pub fn $list() -> Vec<(&'static str, &'static str)> {
+            $slice.iter().map(|e| (e.name, e.description)).collect()
+        }
+    };
+}
+
+/// Generate `new()`, builder methods, and `with_extra()` for a provider config struct.
+///
+/// Fields marked `into` generate `impl Into<T>` parameters; others take the type directly.
+///
+/// ```ignore
+/// crate::impl_config_builder!(MyConfig {
+///     /// Set the model
+///     model: with_model(into String),
+///     /// Set the dimensions
+///     dimensions: with_dimensions(usize),
+/// });
+/// ```
+#[macro_export]
+macro_rules! impl_config_builder {
+    (
+        $config:ident {
+            $(
+                $(#[doc = $doc:literal])*
+                $field:ident : $method:ident ( $($kind:tt)+ )
+            ),* $(,)?
+        }
+    ) => {
+        impl $config {
+            /// Create a new config with the given provider name
+            pub fn new(provider: impl Into<String>) -> Self {
+                Self { provider: provider.into(), ..Default::default() }
+            }
+
+            $(
+                impl_config_builder!(@builder_method $(#[doc = $doc])* ; $field ; $method ; $($kind)+);
+            )*
+
+            /// Add extra configuration
+            #[must_use]
+            pub fn with_extra(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+                self.extra.insert(key.into(), value.into());
+                self
+            }
+        }
+    };
+
+    (@builder_method $(#[$meta:meta])* ; $field:ident ; $method:ident ; into $ty:ty) => {
+        $(#[$meta])*
+        #[must_use]
+        pub fn $method(mut self, value: impl Into<$ty>) -> Self {
+            self.$field = Some(value.into());
+            self
+        }
+    };
+
+    (@builder_method $(#[$meta:meta])* ; $field:ident ; $method:ident ; $ty:ty) => {
+        $(#[$meta])*
+        #[must_use]
+        pub fn $method(mut self, value: $ty) -> Self {
+            self.$field = Some(value);
+            self
+        }
+    };
+}
+
+/// Register a project detector in the distributed slice.
+#[macro_export]
+macro_rules! register_project_detector {
+    ($name:expr, $desc:expr, $markers:expr, $build:expr $(,)?) => {
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
+        #[linkme::distributed_slice($crate::registry::project_detector::PROJECT_DETECTORS)]
+        static DETECTOR: $crate::registry::project_detector::ProjectDetectorEntry =
+            $crate::registry::project_detector::ProjectDetectorEntry {
+                name: $name,
+                description: $desc,
+                marker_files: $markers,
+                build: $build,
+            };
+    };
+}
+
+/// Register a code analyzer in the distributed slice.
+#[macro_export]
+macro_rules! register_code_analyzer {
+    ($name:expr, $desc:expr, $build:expr $(,)?) => {
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
+        #[linkme::distributed_slice($crate::registry::code_analysis::CODE_ANALYZERS)]
+        static ANALYZER: $crate::registry::code_analysis::CodeAnalyzerEntry =
+            $crate::registry::code_analysis::CodeAnalyzerEntry {
+                name: $name,
+                description: $desc,
+                build: $build,
+            };
+    };
+}
+
+/// Register a validator in the distributed slice.
+///
+/// # Example
+///
+/// ```ignore
+/// mcb_domain::register_validator!("my_validator", "Validates X", |root| {
+///     Ok(Box::new(MyValidator::new(root)) as Box<dyn mcb_domain::ports::validation::Validator>)
+/// });
+/// ```
+#[macro_export]
+macro_rules! register_validator {
+    ($name:expr, $desc:expr, $build:expr $(,)?) => {
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
+        #[linkme::distributed_slice($crate::registry::validation::VALIDATOR_ENTRIES)]
+        static VALIDATOR_ENTRY: $crate::registry::validation::ValidatorEntry =
+            $crate::registry::validation::ValidatorEntry {
+                name: $name,
+                description: $desc,
+                build: $build,
+            };
+    };
+}
+
+/// Register a service in the distributed slice.
+///
+/// # Example
+///
+/// ```ignore
+/// mcb_domain::register_service!(
+///     mcb_utils::constants::SERVICE_NAME_SEARCH,
+///     mcb_domain::registry::services::ServiceBuilder::Search(|ctx| { ... })
+/// );
+/// ```
+#[macro_export]
+macro_rules! register_service {
+    ($name:expr, $builder:expr $(,)?) => {
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
+        #[linkme::distributed_slice($crate::registry::services::SERVICES_REGISTRY)]
+        static SERVICE_ENTRY: $crate::registry::services::ServiceRegistryEntry =
+            $crate::registry::services::ServiceRegistryEntry {
+                name: $name,
+                build: $builder,
+            };
+    };
+}
+
+/// Register a database connection provider in the distributed slice.
+///
+/// # Example
+///
+/// ```ignore
+/// mcb_domain::register_database_connection!(DB_CONN_SQLITE, "sqlite", |config| {
+///     Box::pin(async move { /* build connection */ })
+/// });
+/// ```
+#[macro_export]
+macro_rules! register_database_connection {
+    ($ident:ident, $name:expr, $build:expr $(,)?) => {
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
+        #[linkme::distributed_slice($crate::registry::database::DATABASE_CONNECTION_PROVIDERS)]
+        static $ident: $crate::registry::database::DatabaseConnectionEntry =
+            $crate::registry::database::DatabaseConnectionEntry {
+                name: $name,
+                build: $build,
+            };
+    };
+}
+
+/// Register a database repository provider in the distributed slice.
+///
+/// # Example
+///
+/// ```ignore
+/// mcb_domain::register_database_repository!("seaorm", "SeaORM repositories", |conn, ns| {
+///     /* build repositories */
+/// });
+/// ```
+#[macro_export]
+macro_rules! register_database_repository {
+    ($name:expr, $desc:expr, $build:expr $(,)?) => {
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
+        #[linkme::distributed_slice($crate::registry::database::DATABASE_REPOSITORY_PROVIDERS)]
+        static DB_REPO_ENTRY: $crate::registry::database::DatabaseRepositoryEntry =
+            $crate::registry::database::DatabaseRepositoryEntry {
+                name: $name,
+                description: $desc,
+                build: $build,
+            };
+    };
+}
+
+/// Register a migration provider in the distributed slice.
+///
+/// # Example
+///
+/// ```ignore
+/// mcb_domain::register_migration_provider!("seaorm", "SeaORM migrations", || {
+///     Arc::new(MyMigrationProvider)
+/// });
+/// ```
+#[macro_export]
+macro_rules! register_migration_provider {
+    ($name:expr, $desc:expr, $build:expr $(,)?) => {
+        #[allow(unsafe_code)] // required by linkme::distributed_slice
+        #[linkme::distributed_slice($crate::registry::database::MIGRATION_PROVIDERS)]
+        static MIGRATION_ENTRY: $crate::registry::database::MigrationProviderEntry =
+            $crate::registry::database::MigrationProviderEntry {
+                name: $name,
+                description: $desc,
+                build: $build,
+            };
+    };
+}

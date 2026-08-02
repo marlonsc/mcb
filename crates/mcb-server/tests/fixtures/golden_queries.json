@@ -1,0 +1,82 @@
+{
+  "version": "0.1.2",
+  "description": "Golden acceptance test queries for MCP Context Browser (using sample_codebase fixtures)",
+  "queries": [
+    {
+      "id": "embedding_provider",
+      "query": "embedding provider implementation vectors",
+      "description": "Find code related to embedding providers",
+      "expected_files": [
+        "embedding.rs"
+      ],
+      "max_latency_ms": 45000,
+      "min_results": 1
+    },
+    {
+      "id": "vector_store",
+      "query": "vector store search similarity milvus",
+      "description": "Find vector store implementations",
+      "expected_files": [
+        "vector_store.rs"
+      ],
+      "max_latency_ms": 45000,
+      "min_results": 1
+    },
+    {
+      "id": "mcp_handler",
+      "query": "MCP protocol handler request response",
+      "description": "Find MCP protocol handling code",
+      "expected_files": [
+        "handlers.rs"
+      ],
+      "max_latency_ms": 45000,
+      "min_results": 1
+    },
+    {
+      "id": "cache_provider",
+      "query": "caching redis moka performance",
+      "description": "Find cache provider implementations",
+      "expected_files": [
+        "cache.rs"
+      ],
+      "max_latency_ms": 45000,
+      "min_results": 1
+    },
+    {
+      "id": "di_injection",
+      "query": "dependency injection service registration bootstrap",
+      "description": "Find DI-related code",
+      "expected_files": [
+        "di.rs"
+      ],
+      "max_latency_ms": 45000,
+      "min_results": 1
+    },
+    {
+      "id": "error_handling",
+      "query": "error handling domain errors thiserror",
+      "description": "Find error handling patterns",
+      "expected_files": [
+        "error.rs"
+      ],
+      "max_latency_ms": 45000,
+      "min_results": 1
+    },
+    {
+      "id": "chunking",
+      "query": "code chunking text splitting tree-sitter",
+      "description": "Find code chunking implementations",
+      "expected_files": [
+        "chunking.rs"
+      ],
+      "max_latency_ms": 45000,
+      "min_results": 1
+    }
+  ],
+  "config": {
+    "collection_name": "golden-sample-codebase",
+    "timeout_ms": 30000,
+    "relevance_threshold": 0.3,
+    "top_k": 10
+  }
+}

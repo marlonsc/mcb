@@ -1,0 +1,20 @@
+schema: "rule/v1"
+id: "SHAKU003"
+name: "Concrete Type in Handler"
+category: "dependency_injection"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Handler uses concrete type instead of Arc<dyn Trait>"
+rationale: "Handlers should depend on abstractions, not concretions"
+
+rule: |
+    rule ConcreteTypeInHandler "Check for concrete types in handlers" {
+        when
+            Handler() &&
+            UsesConcreteType() &&
+            !UsesArcDynTrait()
+        then
+            Violation("Handler uses concrete type instead of Arc<dyn Trait>");
+    }

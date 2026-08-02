@@ -1,0 +1,48 @@
+_template: "cargo_dependency_check"
+id: "CA001"
+name: "Domain Layer Independence"
+category: "architecture"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Domain crate depends only on mcb-utils (innermost shared utilities)"
+rationale: "Domain layer contains pure business logic independent of frameworks"
+
+patterns:
+  provider_import: 'use\s+{{providers_module}}(?:::|;)'
+  service_constructor: '(\w+Service)(?:Impl)?::new\s*\('
+  provider_constructor: '(\w+Provider)(?:Impl)?::new\s*\('
+  repository_constructor: '(\w+Repository)(?:Impl)?::new\s*\('
+  app_import: 'use\s+{{application_module}}(?:::|;)'
+  app_import_path: 'use\s+({{application_module}}::\S+)'
+  pub_struct_brace: 'pub\s+struct\s+(\w+)\s*\{'
+  id_field: '\bid\s*:|uuid\s*:|entity_id\s*:'
+  impl_block: 'impl\s+(\w+)\s*\{'
+  mut_self_method: 'fn\s+(\w+)\s*\(\s*&mut\s+self'
+
+crate_name: "{{domain_crate}}"
+forbidden_prefixes: ["{{project_prefix}}-"]
+allowed_dependencies: ["std", "serde", "thiserror", "uuid", "chrono", "{{utils_crate}}"]
+
+config:
+  crate_name: "{{domain_crate}}"
+  forbidden_prefixes: ["{{project_prefix}}-"]
+  allowed_dependencies: ["std", "serde", "thiserror", "uuid", "chrono", "{{utils_crate}}"]
+
+# GRL rule using rust-rule-engine syntax
+# IMPORTANT: All facts and violations must use "Facts." prefix for GRL compatibility
+# Facts available:
+#   - Facts.crate_name: current crate being analyzed
+#   - Facts.has_internal_dependencies: true if crate depends on mcb-* crates
+#   - Facts.internal_dependencies_count: number of internal dependencies
+rule: |
+  rule "DomainIndependence" salience 10 {
+      when
+          Facts.has_internal_dependencies == true &&
+          Facts.internal_dependencies_count > 1
+      then
+          Facts.violation_triggered = true;
+          Facts.violation_message = "Domain layer can only depend on {{utils_crate}}, no other {{project_prefix}}-* crates";
+          Facts.violation_rule_name = "CA001";
+  }

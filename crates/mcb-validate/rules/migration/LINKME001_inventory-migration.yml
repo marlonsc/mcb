@@ -1,0 +1,22 @@
+schema: "rule/v1"
+id: "LINKME001"
+name: "Inventory Migration Required"
+category: "dependency_injection"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Code still uses inventory::submit! or inventory::collect!"
+rationale: "inventory crate is being replaced by linkme for simpler plugin registration"
+
+config:
+  migration_deadline: "v0.2.0"
+
+rule: |
+  rule InventoryMigrationRequired "Check for inventory usage" {
+      when
+          UsesMacro("inventory::submit") ||
+          UsesMacro("inventory::collect")
+      then
+          Violation("Code still uses inventory::submit! or inventory::collect!, migrate to linkme by ${migration_deadline}");
+  }

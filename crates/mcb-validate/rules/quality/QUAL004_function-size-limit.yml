@@ -1,0 +1,24 @@
+schema: "rule/v1"
+id: "QUAL004"
+name: "Function Size Limit"
+category: "quality"
+severity: "warning"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "Function exceeds maximum line count"
+rationale: "Large functions violate Single Responsibility Principle"
+
+config:
+  max_lines: 50
+  exclude_patterns: []
+
+rule: |
+  rule FunctionSizeLimit "Check function size limits" {
+      when
+          AST.Function(line_count > ${max_lines}) &&
+          !TestFunction() &&
+          !ExampleFunction()
+      then
+          Violation("Function exceeds maximum line count of ${max_lines}");
+  }

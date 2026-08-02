@@ -1,0 +1,29 @@
+schema: "template/v1"
+_base: true
+name: "cargo_dependency_check"
+description: "Template for checking Cargo.toml dependencies"
+category: "architecture"
+severity: "error"
+enabled: true
+
+config:
+  crate_name: "{{crate_name}}"
+  forbidden_prefixes: "{{forbidden_prefixes}}"
+  allowed_dependencies: "{{allowed_dependencies}}"
+
+validation:
+  fields:
+    crate_name: ["length(min=1)"]
+    forbidden_prefixes: ["length(min=1)"]
+
+rule:
+  type: "cargo_dependencies"
+  condition: "not_exists"
+  pattern: "{{forbidden_prefixes}}"
+  target: "{{crate_name}}"
+  message: "Crate '{{crate_name}}' must not depend on {{forbidden_prefixes}}"
+
+fixes:
+  - type: "remove_dependencies"
+    pattern: "{{forbidden_prefixes}}"
+    message: "Remove forbidden dependencies from {{crate_name}}/Cargo.toml"
