@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 const testPort = process.env.MCB_TEST_PORT || '18080';
 const testDbPath = `/tmp/mcb-playwright-${testPort}.db`;
+const testTimeoutSeconds = Number(process.env.MCB_TEST_TIMEOUT_SECONDS);
+const processTimeoutSeconds = Number(process.env.MCB_PROCESS_TIMEOUT_SECONDS);
 
 /**
  * Read environment variables from file.
@@ -16,10 +18,10 @@ export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 0,
+  retries: 0,
   workers: 1,
   reporter: process.env.CI ? 'github' : 'list',
-  timeout: 30000,
+  timeout: testTimeoutSeconds * 1000,
   use: {
     baseURL: `http://localhost:${testPort}`,
     trace: process.env.CI ? 'off' : 'on-first-retry',
@@ -39,7 +41,7 @@ export default defineConfig({
     command: `cd .. && rm -f ${testDbPath} && MCB_BIN=$([ -x target/release/mcb ] && echo target/release/mcb || echo "") && if [ -n "$MCB_BIN" ]; then $MCB_BIN serve --server; else cargo run --release --bin mcb -- serve --server; fi`,
     url: `http://localhost:${testPort}`,
     reuseExistingServer: false,
-    timeout: 600 * 1000,
+    timeout: processTimeoutSeconds * 1000,
     env: {
       'SERVER_PORT': testPort,
       'LOCO_ENV': 'test',

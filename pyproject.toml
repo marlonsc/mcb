@@ -19,6 +19,7 @@ dependencies = [
 dev = [
     "mypy>=1.20",
     "pytest>=8.0",
+    "pytest-timeout>=2.4",
     "pyrefly>=1.0.0",
     "pyright>=1.1.410",
     "ruff>=0.15",
@@ -151,6 +152,9 @@ unknown-name = "error"
 
 [tool.pytest.ini_options]
 pythonpath = ["scripts"]
+timeout = 10
+timeout_method = "thread"
+timeout_func_only = false
 testpaths = [
     "scripts/lib/tests",
     "scripts/qlty/tests",

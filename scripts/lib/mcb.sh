@@ -45,6 +45,15 @@ mcb_require_apply() {
 }
 mcb_apply_y() { [ "${APPLY:-N}" = "Y" ]; }
 
+mcb_deadline() {
+  local seconds="${1:-}"
+  shift || true
+  [[ "$seconds" =~ ^[1-9][0-9]*$ ]] || mcb_die "$EX_PREREQ" "deadline requires positive integer seconds"
+  [ "$#" -gt 0 ] || mcb_die "$EX_PREREQ" "deadline requires a command"
+  mcb_require_cmd timeout
+  timeout --signal=TERM --kill-after=1s "$seconds" "$@"
+}
+
 mcb_run() {
   local run_cmd
   local -a env_args
@@ -180,6 +189,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     validate)       mcb_validate "${2:-full}" ;;
     guard)          shift; mcb_guard "$@" ;;
     guard-bash)     mcb_guard_bash ;;
+    deadline)       shift; mcb_deadline "$@" ;;
     run)            shift; [ "$#" -gt 0 ] || mcb_die "$EX_PREREQ" "mcb run requires a command"; mcb_run "$@" ;;
     files-safe)     mcb_files_safe "${2:-}" ;;
     *)              mcb_die "$EX_PREREQ" "unknown command: ${1:-<none>}" ;;

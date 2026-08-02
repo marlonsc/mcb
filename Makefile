@@ -13,6 +13,8 @@ MCB_AUDIT_IGNORES := $(shell bash $(MCB_SH) ignores)
 # Use for external commands that should run through mise when present.
 MCB_TOOL := bash $(MCB_SH)
 MCB_RUN := bash $(MCB_SH) run
+export MCB_TEST_TIMEOUT_SECONDS ?= 10
+export MCB_PROCESS_TIMEOUT_SECONDS ?= 60
 
 include makefiles/ui.mk
 include makefiles/dispatch.mk

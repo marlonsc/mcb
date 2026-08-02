@@ -12,6 +12,7 @@ MCB_TEST_PORT  ?= 18080
 # Cap pre-push test parallelism to avoid overwhelming the host when nproc is high.
 # Honor user-supplied THREADS if it is already <= 4; otherwise clamp to 4.
 MCB_PUSH_THREADS := $(or $(filter 1 2 3 4,$(THREADS)),4)
+MCB_DEADLINE = $(MCB_TOOL) deadline $(MCB_PROCESS_TIMEOUT_SECONDS)
 
 # Detect cargo-nextest robustly (the binary is installed as `cargo-nextest`,
 # but `cargo nextest --version` is the portable check).
@@ -24,17 +25,17 @@ MCB_NEXTEST_PROFILE := $(or $(NEXTEST_PROFILE),$(if $(filter true 1,$(CI)),ci,de
 # fall back to `cargo test`. Doctests always use `cargo test --doc` (nextest can't
 # run them) — semantics preserved since `cargo test --all-targets` also skips doctests.
 ifeq ($(MCB_NEXTEST),1)
-  MCB_TEST_UNIT := MCB_MODEL_ID=test-model NEXTEST_TEST_THREADS=$$T $(MCB_RUN) cargo nextest run --profile $(MCB_NEXTEST_PROFILE) --workspace --test unit
-  MCB_TEST_ALL  := MCB_MODEL_ID=test-model NEXTEST_TEST_THREADS=$$T $(MCB_RUN) cargo nextest run --profile $(MCB_NEXTEST_PROFILE) --workspace
+  MCB_TEST_UNIT := $(MCB_DEADLINE) env MCB_MODEL_ID=test-model NEXTEST_TEST_THREADS=$$T $(MCB_RUN) cargo nextest run --profile $(MCB_NEXTEST_PROFILE) --workspace --test unit
+  MCB_TEST_ALL  := $(MCB_DEADLINE) env MCB_MODEL_ID=test-model NEXTEST_TEST_THREADS=$$T $(MCB_RUN) cargo nextest run --profile $(MCB_NEXTEST_PROFILE) --workspace
   # Run only crates that contain changed .rs files vs origin/$(BRANCH).
 else
-  MCB_TEST_UNIT := MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --test unit --test-threads=$$T
-  MCB_TEST_ALL  := MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --all-targets --test-threads=$$T
+  MCB_TEST_UNIT := $(MCB_DEADLINE) env MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --test unit --test-threads=$$T
+  MCB_TEST_ALL  := $(MCB_DEADLINE) env MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --all-targets --test-threads=$$T
 endif
 
 # Helper to test a specific set of crates (shell $$CRATES must be set).
 define MCB_TEST_CRATES
-if [ "$(MCB_NEXTEST)" = "1" ]; then MCB_MODEL_ID=test-model NEXTEST_TEST_THREADS=$$T $(MCB_RUN) cargo nextest run --profile $(MCB_NEXTEST_PROFILE) $$CRATES; else MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --all-targets --test-threads=$$T $$CRATES; fi
+if [ "$(MCB_NEXTEST)" = "1" ]; then $(MCB_DEADLINE) env MCB_MODEL_ID=test-model NEXTEST_TEST_THREADS=$$T $(MCB_RUN) cargo nextest run --profile $(MCB_NEXTEST_PROFILE) $$CRATES; else $(MCB_DEADLINE) env MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --all-targets --test-threads=$$T $$CRATES; fi
 endef
 
 # Install Rust tooling: prefer cargo-binstall when available, else cargo install.
@@ -129,7 +130,7 @@ define DISPATCH_BUILD
     else echo "Building debug..."; $(MCB_RUN) cargo build; fi ;; \
   release) echo "Building release..."; $(MCB_RUN) cargo build --release ;; \
   debug)   echo "Building debug..."; $(MCB_RUN) cargo build ;; \
-  prebuild) echo "Pre-building all test targets..."; $(MCB_RUN) cargo test --workspace --all-targets --no-run ;; \
+  prebuild) echo "Pre-building all test targets..."; $(MCB_DEADLINE) $(MCB_RUN) cargo test --workspace --all-targets --no-run ;; \
   codegen) $(call MCB_CODEGEN) ;; \
   docs)    $(call MCB_DOCS) ;; \
   *)       $(call BAD_WHAT,$(WHATS_build)) ;; \
@@ -174,14 +175,13 @@ define DISPATCH_TEST
 @T="$(THREADS)"; case "$$T" in ''|*[!0-9]*|0) T=1;; esac; \
 case "$(SCOPE)" in \
   unit)        $(MCB_TEST_UNIT) ;; \
-  doc)         $(MCB_RUN) cargo test --workspace --doc ;; \
-  golden)      RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --tests golden ;; \
-  startup)     $(MCB_RUN) cargo test -p mcb --test integration startup_smoke -- --nocapture ;; \
-  warmup)      $(MCB_RUN) cargo test -p mcb-server --test integration test_init_app_with_default_config_succeeds -- --nocapture ;; \
-  integration) MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --test '*integration*' ;; \
+  doc)         $(MCB_DEADLINE) $(MCB_RUN) cargo test --workspace --doc ;; \
+  golden)      $(MCB_DEADLINE) env RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --tests golden ;; \
+  startup)     $(MCB_DEADLINE) $(MCB_RUN) cargo test -p mcb --test integration startup_smoke -- --nocapture ;; \
+  warmup)      $(MCB_DEADLINE) $(MCB_RUN) cargo test -p mcb-server --test integration test_init_app_with_default_config_succeeds -- --nocapture ;; \
+  integration) $(MCB_DEADLINE) env MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --test '*integration*' ;; \
   external)    UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync python scripts/lib/external_services_check.py && \
-                 { MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --test '*integration*'; } || \
-                 { echo "⊘ External test group skipped: services unavailable."; exit 0; } ;; \
+                 $(MCB_DEADLINE) env MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --test '*integration*' ;; \
   changed)     MCB_MODEL_ID=test-model $(MCB_RUN) echo "Running tests for changed crates..."; \
                CRATES="$$(git diff --name-only origin/$$(git rev-parse --abbrev-ref HEAD) -- 'crates/**/*.rs' 'crates/**/*.toml' | sed -n 's|^crates/\\([^/]*\\)/.*|-p \\1|p' | sort -u | tr '\\n' ' ')"; \
                [ -z "$$CRATES" ] && { echo "No changed crates; running full workspace tests."; $(MCB_TEST_ALL); } || { echo "Changed crates: $$CRATES"; $(call MCB_TEST_CRATES); } ;; \
@@ -201,7 +201,7 @@ if [ ! -d tests/node_modules/@playwright ]; then echo "Installing Playwright..."
   $(MCB_RUN) npm --prefix tests install --save-dev @playwright/test @types/node typescript 2>&1 | grep -v "npm WARN" || true; \
   (cd tests && $(MCB_RUN) npm exec -- playwright install chromium --with-deps 2>&1 | tail -5); fi; \
 $(MCB_RUN) cargo build --release --bin mcb; \
-cd tests && $(MCB_RUN) npm exec -- playwright test --config=playwright.config.ts --reporter=list
+$(MCB_DEADLINE) $(MCB_RUN) npm --prefix tests exec -- playwright test --config=playwright.config.ts --reporter=list
 endef
 
 # =============================================================================
@@ -244,14 +244,14 @@ case "$(ACT)" in \
     if [ -z "$$STAGED" ]; then echo "lint-staged: no staged Python files"; exit 0; fi; \
     echo "lint-staged: $$STAGED"; \
     UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync ruff check $$STAGED && UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync mypy $$STAGED ;; \
-  test)      UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync pytest scripts/lib/tests ;; \
+  test)      $(MCB_DEADLINE) env UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync pytest $(or $(PYTEST_ARGS),scripts/lib/tests) ;; \
   test-staged) \
     STAGED_TESTS="$$(git diff --cached --name-only --diff-filter=ACM -- '*.py' | grep '^scripts/lib/tests/' || true)"; \
     if [ -z "$$STAGED_TESTS" ]; then echo "test-staged: no staged Python test files"; exit 0; fi; \
     echo "test-staged: $$STAGED_TESTS"; \
-    UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync pytest $$STAGED_TESTS ;; \
+    $(MCB_DEADLINE) env UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync pytest $$STAGED_TESTS ;; \
   guard)     $(MCB_TOOL) guard ;; \
-  ""|all)    UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync ruff check scripts/ && UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync mypy scripts/lib && UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync pytest scripts/lib/tests && $(MCB_TOOL) guard ;; \
+  ""|all)    UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync ruff check scripts/ && UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync mypy scripts/lib && $(MCB_DEADLINE) env UV_CACHE_DIR=.cache/uv $(MCB_RUN) uv run --no-sync pytest scripts/lib/tests && $(MCB_TOOL) guard ;; \
   *)         printf "ERRO: ACT '%s' invalido. Validos: $(ACTS_python)\n" "$(ACT)" >&2; exit 2 ;; \
 esac
 endef

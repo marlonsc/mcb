@@ -1,6 +1,5 @@
 # BEGIN AI-HUB CRG GLOBAL POLICY
 build/**
-.claude/worktrees/**
 .worktrees/**
 worktrees/**
 .agents/worktrees/**
@@ -21,4 +20,12 @@ coverage/**
 .cache/**
 tmp/**
 temp/**
+.claude/worktrees/**
+.codex/worktrees/**
+.gemini/worktrees/**
+.kimi-code/worktrees/**
+.cursor/worktrees/**
+.config/worktrees/**
+.vscode/worktrees/**
+.aider/worktrees/**
 # END AI-HUB CRG GLOBAL POLICY
