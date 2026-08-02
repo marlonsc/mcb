@@ -51,6 +51,54 @@ mcb_retry() { local n="$1" s="$2"; shift 2; local t=1; while ! "$@"; do [ "$t" -
 # --- SSOT readers ------------------------------------------------------------
 mcb_version() { grep -m1 '^version =' "$MCB_ROOT/Cargo.toml" | sed 's/.*"\([^"]*\)".*/\1/'; }
 
+mcb_git_hooks_dir() {
+  local repo="${1:-$MCB_ROOT}"
+  local common_dir
+  common_dir="$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir)" \
+    || mcb_die "$EX_PREREQ" "nao foi possivel resolver o diretorio Git comum de '$repo'"
+  printf '%s/hooks\n' "$common_dir"
+}
+
+mcb_install_hooks() {
+  local repo="${1:-$MCB_ROOT}"
+  local hooks_dir
+  hooks_dir="$(mcb_git_hooks_dir "$repo")"
+  mkdir -p "$hooks_dir"
+  cp "$MCB_ROOT/scripts/hooks/pre-commit" "$MCB_ROOT/scripts/hooks/pre-push" "$hooks_dir/"
+  chmod +x "$hooks_dir/pre-commit" "$hooks_dir/pre-push"
+  mcb_ok "pre-commit and pre-push hooks installed at $hooks_dir"
+}
+
+mcb_sync_submodules() {
+  local repo="${1:-$MCB_ROOT}"
+  local materialized
+
+  git -C "$repo" submodule sync --recursive
+  git -C "$repo" submodule update --init --recursive
+
+  while :; do
+    materialized="$(git -C "$repo" submodule foreach --quiet --recursive '
+      present="$(git ls-files -z | while IFS= read -r -d "" path; do
+        if [ -e "$path" ] || [ -L "$path" ]; then
+          printf 1
+          break
+        fi
+      done)"
+      [ -n "$present" ] && exit 0
+      tracked="$(git ls-files | wc -l)"
+      if [ "$tracked" -eq 0 ]; then
+        git read-tree HEAD
+        tracked="$(git ls-files | wc -l)"
+      fi
+      [ "$tracked" -eq 0 ] && exit 0
+      git checkout-index --all
+      printf "%s\n" "$sm_path"
+    ')"
+    [ -z "$materialized" ] && break
+    git -C "$repo" submodule update --init --recursive
+  done
+}
+
 # Binary lookup chain: PATH > target/release > target/debug > cargo run
 mcb_bin() {
   command -v mcb 2>/dev/null && return 0
@@ -77,6 +125,38 @@ mcb_validate() {  # $1 = "quick" | "full"
 # FILES word-split safety (ported from cosmos Makefile:80): refuse shell metachars.
 mcb_files_safe() { printf '%s' "${1:-}" | grep -qE '[;|&`$()<>]' && mcb_die "$EX_PREREQ" "FILES contem metacaractere de shell perigoso; liste apenas caminhos"; return 0; }
 
+mcb_check_staged() {
+  local crate_dir deadline=60 manifest package packages=""
+  local staged
+
+  mcb_require_cmd timeout
+  staged="$(git -C "$MCB_ROOT" diff --cached --name-only --diff-filter=ACMR)"
+  [ -n "$staged" ] || { mcb_ok "staged check: no staged paths"; return 0; }
+
+  if printf '%s\n' "$staged" | grep -qE '^Cargo\.(toml|lock)$'; then
+    packages="--workspace"
+  else
+    while IFS= read -r path; do
+      case "$path" in
+        crates/*/src/*.rs)
+          crate_dir="$(printf '%s\n' "$path" | cut -d/ -f1-2)"
+          manifest="$crate_dir/Cargo.toml"
+          [ -f "$MCB_ROOT/$manifest" ] || continue
+          package="$(sed -n '/^\[package\]/,/^\[/s/^name = "\([^"]*\)"/\1/p' "$MCB_ROOT/$manifest" | head -1)"
+          [ -n "$package" ] || mcb_die "$EX_PREREQ" "package name ausente em '$manifest'"
+          case " $packages " in *" -p $package "*) ;; *) packages="$packages -p $package" ;; esac
+          ;;
+      esac
+    done <<< "$staged"
+  fi
+
+  [ -n "$packages" ] || { mcb_ok "staged check: no Rust package affected"; return 0; }
+  mcb_log "staged check: cargo fmt/clippy scope:$packages (deadline ${deadline}s each)"
+  timeout --signal=TERM --kill-after=5s "${deadline}s" cargo fmt $packages -- --check
+  timeout --signal=TERM --kill-after=5s "${deadline}s" cargo clippy $packages --all-targets -- -D warnings
+  mcb_ok "staged check: clean"
+}
+
 # --- banned-pattern guard ----------------------------------------------------
 # Scans first-party crates/ for the constructs AGENTS.md forbids in prod paths.
 # Excludes: tests, #[cfg(test)] modules, target/. Fails EX_GUARD.
@@ -94,15 +174,20 @@ mcb_guard() {
     [ -z "$src" ] && { mcb_warn "guard: no source files found under crates/"; return 0; }
   fi
   # 1. unwrap/expect/panic/todo/unimplemented in non-test .rs
-  hits=$(grep -rnE '\b(unwrap|expect)\(|\bpanic!|\btodo!|\bunimplemented!' $src 2>/dev/null \
-      | grep -vE '//.*(unwrap|expect)|#\[cfg\(test\)\]' || true)
+  hits=$(grep -rnE '\.(unwrap|expect)\(|\b(panic|todo|unimplemented)!\(' $src 2>/dev/null \
+      | grep -vE ':[[:space:]]*(//|///|//!)|#\[cfg\(test\)\]|pub const .*: &str = |\.message\("|message = "|suggestion = "|r".*(unwrap|expect|panic|todo|unimplemented)|line\.contains\("todo!"\)' || true)
   [ -n "$hits" ] && { mcb_warn "prod unwrap/expect/panic/todo:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
   # 2. TODO/FIXME markers
   hits=$(grep -rnE '\b(TODO|FIXME)\b' $src 2>/dev/null || true)
   [ -n "$hits" ] && { mcb_warn "TODO/FIXME markers:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
-  # 3. unjustified suppression directives (#[allow(...)] with no trailing // Why:)
-  hits=$(grep -rnE '#\[allow\(' $src 2>/dev/null | grep -vE '//\s*Why:' || true)
-  [ -n "$hits" ] && { mcb_warn "#[allow] without // Why: justification:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
+  if [ "$staged" = "1" ]; then
+    hits=$(git -C "$MCB_ROOT" diff --cached --unified=0 -- crates 2>/dev/null \
+      | grep -E '^\+[^+].*#\[allow\(' | grep -vE '#\[allow\([^]]+\)\][[:space:]]*//[[:space:]]*[^[:space:]]' || true)
+  else
+    hits=$(git -C "$MCB_ROOT" diff origin/main...HEAD --unified=0 -- crates 2>/dev/null \
+      | grep -E '^\+[^+].*#\[allow\(' | grep -vE '#\[allow\([^]]+\)\][[:space:]]*//[[:space:]]*[^[:space:]]' || true)
+  fi
+  [ -n "$hits" ] && { mcb_warn "new #[allow] without a trailing rationale:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
   [ "$rc" -eq 0 ] && mcb_ok "guard: clean"
   return "$rc"
 }
@@ -127,7 +212,11 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     version)        mcb_version ;;
     bin)            mcb_bin ;;
     ignores)        printf '%s\n' "${MCB_AUDIT_IGNORES[*]}" ;;
+    git-hooks-dir)  mcb_git_hooks_dir "${2:-$MCB_ROOT}" ;;
+    install-hooks)  mcb_install_hooks "${2:-$MCB_ROOT}" ;;
+    sync-submodules) mcb_sync_submodules "${2:-$MCB_ROOT}" ;;
     validate)       mcb_validate "${2:-full}" ;;
+    check-staged)   mcb_check_staged ;;
     guard)          shift; mcb_guard "$@" ;;
     guard-bash)     mcb_guard_bash ;;
     files-safe)     mcb_files_safe "${2:-}" ;;
