@@ -19,6 +19,7 @@ filters:
       - "**/admin/**"
       - "**/config/**"
       - "**/config.rs" # config.rs at root is allowed
+      - "**/ports/providers/**"
       - "**/tests/**"
       - "**/controllers/**"
       - "**/validators/**"

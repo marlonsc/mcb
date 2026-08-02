@@ -1,7 +1,15 @@
-"""Reporting and analysis logic."""
+"""Qlty Report.
+
+Copyright (c) 2025 MCB Contributors. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
+
+from lib.core import r
 
 from qlty.model import SarifIssue, Severity
 from qlty.strategies import get_strategy
@@ -103,9 +111,7 @@ class AnalysisReport:
             lines.append(f"| `{file_path}` | {count} |")
         lines.append("")
 
-    def _generate_rule_section(
-        self, lines: list[str], rule: str, rule_issues: list[SarifIssue]
-    ) -> None:
+    def _generate_rule_section(self, lines: list[str], rule: str, rule_issues: list[SarifIssue]) -> None:
         lines.append(f"### {rule} ({len(rule_issues)} issues)")
         lines.append("")
 
@@ -150,9 +156,7 @@ class AnalysisReport:
         for issue in sev_issues:
             by_rule[issue.rule_id].append(issue)
 
-        for rule, rule_issues in sorted(
-            by_rule.items(), key=lambda x: len(x[1]), reverse=True
-        ):
+        for rule, rule_issues in sorted(by_rule.items(), key=lambda x: len(x[1]), reverse=True):
             self._generate_rule_section(lines, rule, rule_issues)
 
     def generate_markdown(self, title: str = "Quality Analysis Report") -> str:
@@ -179,9 +183,7 @@ def _populate_severity_counts(report: AnalysisReport, issues: list[SarifIssue]) 
         report.by_severity[issue.level] += 1
 
 
-def _populate_category_and_rule_counts(
-    report: AnalysisReport, issues: list[SarifIssue]
-) -> None:
+def _populate_category_and_rule_counts(report: AnalysisReport, issues: list[SarifIssue]) -> None:
     for issue in issues:
         report.by_rule[issue.rule_id] += 1
         report.by_category[issue.rule_category] += 1
@@ -192,7 +194,7 @@ def _populate_file_counts(report: AnalysisReport, issues: list[SarifIssue]) -> N
         report.by_file[issue.file_path] += 1
 
 
-def analyze_issues(issues: list[SarifIssue]) -> AnalysisReport:
+def analyze_issues(issues: list[SarifIssue]) -> r[AnalysisReport]:
     """Generate statistical analysis of issues."""
     report = AnalysisReport()
     report.total_issues = len(issues)
@@ -205,4 +207,4 @@ def analyze_issues(issues: list[SarifIssue]) -> AnalysisReport:
     report.top_files = report.by_file.most_common(20)
     report.top_rules = report.by_rule.most_common(20)
 
-    return report
+    return r[AnalysisReport].ok(report)

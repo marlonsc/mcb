@@ -4,6 +4,7 @@
 use crate::filters::LanguageId;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, Severity, ValidationConfig};
+use mcb_utils::constants::validate::COMMENT_PREFIX;
 use mcb_utils::utils::regex::compile_regex;
 
 use super::violation::HygieneViolation;
@@ -18,8 +19,6 @@ const SMOKE_TEST_PATTERNS: [&str; 5] = [
 ];
 
 struct NamingScanInput<'a> {
-    test_attr_pattern: &'a regex::Regex,
-    tokio_test_pattern: &'a regex::Regex,
     fn_pattern: &'a regex::Regex,
     assert_pattern: &'a regex::Regex,
 }
@@ -36,15 +35,11 @@ struct NamingScanInput<'a> {
 /// Returns an error if source directory enumeration or file reading fails.
 pub fn validate_test_function_naming(config: &ValidationConfig) -> Result<Vec<HygieneViolation>> {
     let mut violations = Vec::new();
-    let test_attr_pattern = compile_regex(r"#\[test\]")?;
-    let tokio_test_pattern = compile_regex(r"#\[tokio::test\]")?;
     let fn_pattern = compile_regex(r"(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\(")?;
     let assert_pattern = compile_regex(
         r"assert[a-z_]*!|assert_[a-z_]+\(|panic!|should_panic|\.unwrap\(|\.expect\(|Box<dyn\s|type_name::",
     )?;
     let scan_input = NamingScanInput {
-        test_attr_pattern: &test_attr_pattern,
-        tokio_test_pattern: &tokio_test_pattern,
         fn_pattern: &fn_pattern,
         assert_pattern: &assert_pattern,
     };
@@ -75,12 +70,9 @@ pub fn validate_test_function_naming(config: &ValidationConfig) -> Result<Vec<Hy
     Ok(violations)
 }
 
-fn is_test_attr_line(
-    line: &str,
-    test_attr_pattern: &regex::Regex,
-    tokio_test_pattern: &regex::Regex,
-) -> bool {
-    test_attr_pattern.is_match(line) || tokio_test_pattern.is_match(line)
+fn is_test_attr_line(line: &str) -> bool {
+    let trimmed = line.trim();
+    trimmed == "#[test]" || trimmed == "#[tokio::test]"
 }
 
 fn find_next_test_function(
@@ -88,15 +80,16 @@ fn find_next_test_function(
     start_idx: usize,
     fn_pattern: &regex::Regex,
 ) -> Option<(usize, String)> {
-    lines
-        .iter()
-        .enumerate()
-        .skip(start_idx)
-        .find_map(|(line_idx, potential_fn)| {
-            let captures = fn_pattern.captures(potential_fn)?;
-            let fn_name = captures.get(1).map_or("", |m| m.as_str());
-            Some((line_idx, fn_name.to_owned()))
-        })
+    for (line_idx, potential_fn) in lines.iter().enumerate().skip(start_idx) {
+        let trimmed = potential_fn.trim();
+        if trimmed.is_empty() || trimmed.starts_with("#[") {
+            continue;
+        }
+        let captures = fn_pattern.captures(potential_fn)?;
+        let fn_name = captures.get(1).map_or("", |m| m.as_str());
+        return Some((line_idx, fn_name.to_owned()));
+    }
+    None
 }
 
 fn has_assertion_in_test_body(
@@ -125,11 +118,8 @@ fn collect_naming_violations_for_file(
     let mut violations = Vec::new();
 
     for (line_idx, line) in lines.iter().enumerate() {
-        if !is_test_attr_line(
-            line,
-            scan_input.test_attr_pattern,
-            scan_input.tokio_test_pattern,
-        ) {
+        let trimmed = line.trim();
+        if trimmed.starts_with(COMMENT_PREFIX) || !is_test_attr_line(trimmed) {
             continue;
         }
 

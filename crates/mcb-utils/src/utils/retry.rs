@@ -42,18 +42,20 @@ where
 {
     let attempts = config.max_attempts.max(1);
 
-    for attempt in 0..attempts {
+    // `loop {}` (not `for`) so the compiler proves every exit is a `return`,
+    // making a trailing unreachable!/panic path unnecessary.
+    let mut attempt = 0;
+    loop {
         match operation(attempt).await {
             Ok(value) => return Ok(value),
             Err(error) => {
-                if attempt + 1 == attempts || !should_retry(&error) {
+                attempt += 1;
+                if attempt == attempts || !should_retry(&error) {
                     return Err(error);
                 }
 
-                tokio::time::sleep(config.base_delay.mul_f64((attempt + 1) as f64)).await;
+                tokio::time::sleep(config.base_delay.mul_f64(attempt as f64)).await;
             }
         }
     }
-
-    unreachable!("retry loop must return success or error")
 }

@@ -112,6 +112,22 @@ pub const QDRANT_DISTANCE_METRIC: &str = "Cosine";
 pub const PINECONE_UPSERT_BATCH_SIZE: usize = 100;
 
 // ============================================================================
+// Weaviate Configuration
+// ============================================================================
+
+/// Weaviate vector index distance metric.
+pub const WEAVIATE_DISTANCE_METRIC: &str = "cosine";
+
+/// Weaviate batch size for `/v1/batch/objects` inserts and `Get` pagination.
+pub const WEAVIATE_BATCH_SIZE: usize = 100;
+
+/// Weaviate class-name prefix (classes must match `^[A-Z][_0-9A-Za-z]*$`).
+pub const WEAVIATE_CLASS_PREFIX: &str = "Mcb";
+
+/// Weaviate authentication scheme for the `Authorization` header.
+pub const WEAVIATE_AUTH_SCHEME: &str = "Bearer";
+
+// ============================================================================
 // Stats Fields
 // ============================================================================
 

@@ -87,18 +87,11 @@ impl SubmoduleProvider {
 
         let mut results = Vec::new();
         let mut visited: HashSet<String> = HashSet::new();
-
-        // BFS queue: (Repository, parent_id, current_depth)
         let mut queue: VecDeque<(Repository, String, usize)> = VecDeque::new();
         queue.push_back((repo, parent_repo_id.to_owned(), 0));
 
         while let Some((current_repo, parent_id, depth)) = queue.pop_front() {
-            if depth >= max_depth {
-                mcb_domain::debug!(
-                    "submodule",
-                    "Max submodule depth reached, stopping traversal",
-                    &format!("depth = {depth}, max_depth = {max_depth}")
-                );
+            if Self::at_max_depth(depth, max_depth) {
                 continue;
             }
 
@@ -124,13 +117,31 @@ impl SubmoduleProvider {
             }
         }
 
+        Self::log_discovery_complete(results.len(), max_depth);
+        Ok(results)
+    }
+
+    /// Returns `true` when the current depth has reached the configured limit.
+    fn at_max_depth(depth: usize, max_depth: usize) -> bool {
+        if depth >= max_depth {
+            mcb_domain::debug!(
+                "submodule",
+                "Max submodule depth reached, stopping traversal",
+                &format!("depth = {depth}, max_depth = {max_depth}")
+            );
+            true
+        } else {
+            false
+        }
+    }
+
+    /// Log completion of submodule discovery.
+    fn log_discovery_complete(count: usize, max_depth: usize) {
         mcb_domain::info!(
             "submodule",
             "Submodule discovery complete",
-            &format!("count = {}, max_depth = {}", results.len(), max_depth)
+            &format!("count = {count}, max_depth = {max_depth}")
         );
-
-        Ok(results)
     }
 
     /// List submodules of a repository, mapping the BFS error policy.

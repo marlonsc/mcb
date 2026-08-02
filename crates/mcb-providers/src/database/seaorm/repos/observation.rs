@@ -3,10 +3,9 @@
 use async_trait::async_trait;
 use mcb_domain::entities::memory::{MemoryFilter, Observation, SessionSummary};
 use mcb_domain::error::Result;
-use mcb_domain::ports::{FtsSearchResult, MemoryRepository};
+use mcb_domain::ports::{FtsSearchResult, MemoryRepository, TimelineQuery};
 use mcb_domain::value_objects::{ObservationId, SessionId};
 use mcb_utils::constants::limits::OBSERVATION_LIST_MAX_LIMIT;
-use mcb_utils::constants::values::DEFAULT_ORG_ID;
 use sea_orm::entity::prelude::*;
 use sea_orm::sea_query::{Expr, ExprTrait, OnConflict, Order, Query};
 use sea_orm::{
@@ -101,12 +100,18 @@ impl SeaOrmObservationRepository {
         }
     }
 
-    fn build_list_sql(&self, filter: Option<&MemoryFilter>, limit: usize) -> Statement {
+    fn build_list_sql(
+        &self,
+        org_id: &str,
+        filter: Option<&MemoryFilter>,
+        limit: usize,
+    ) -> Statement {
         let mut query = Query::select();
         query
             .columns([
                 observation::Column::Id,
                 observation::Column::ProjectId,
+                observation::Column::OrgId,
                 observation::Column::Content,
                 observation::Column::ContentHash,
                 observation::Column::Tags,
@@ -116,6 +121,7 @@ impl SeaOrmObservationRepository {
                 observation::Column::EmbeddingId,
             ])
             .from(observation::Entity)
+            .and_where(Expr::col(observation::Column::OrgId).eq(org_id))
             .order_by(observation::Column::CreatedAt, Order::Desc)
             .limit(limit as u64);
         if let Some(f) = filter {
@@ -126,12 +132,13 @@ impl SeaOrmObservationRepository {
 
     async fn list_by_filter(
         &self,
+        org_id: &str,
         filter: Option<&MemoryFilter>,
         limit: usize,
     ) -> Result<Vec<Observation>> {
         let rows = self
             .db
-            .query_all_raw(self.build_list_sql(filter, limit))
+            .query_all_raw(self.build_list_sql(org_id, filter, limit))
             .await
             .map_err(db_error("list observations"))?;
         rows.into_iter()
@@ -139,6 +146,7 @@ impl SeaOrmObservationRepository {
                 let model = observation::Model {
                     id: row.try_get("", "id")?,
                     project_id: row.try_get("", "project_id")?,
+                    org_id: row.try_get("", "org_id")?,
                     content: row.try_get("", "content")?,
                     content_hash: row.try_get("", "content_hash")?,
                     tags: row.try_get("", "tags")?,
@@ -159,10 +167,11 @@ impl SeaOrmObservationRepository {
     /// Returns an error if the database query fails.
     pub async fn list_observations(
         &self,
+        org_id: &str,
         filter: Option<&MemoryFilter>,
         limit: usize,
     ) -> Result<Vec<Observation>> {
-        self.list_by_filter(filter, limit).await
+        self.list_by_filter(org_id, filter, limit).await
     }
 
     /// Inject observations matching a filter, capped by `max_chars` total content size.
@@ -171,11 +180,12 @@ impl SeaOrmObservationRepository {
     /// Returns an error if the database query fails.
     pub async fn inject_observations(
         &self,
+        org_id: &str,
         filter: Option<&MemoryFilter>,
         limit: usize,
         max_chars: usize,
     ) -> Result<Vec<Observation>> {
-        let candidates = self.list_by_filter(filter, limit).await?;
+        let candidates = self.list_by_filter(org_id, filter, limit).await?;
         let mut selected = Vec::new();
         let mut total_chars = 0usize;
         for obs in candidates {
@@ -194,7 +204,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
     async fn store_observation(&self, observation: &Observation) -> Result<()> {
         ensure_org_and_project(
             &self.db,
-            DEFAULT_ORG_ID,
+            &observation.org_id,
             &observation.project_id,
             observation.created_at,
         )
@@ -202,7 +212,7 @@ impl MemoryRepository for SeaOrmObservationRepository {
         let active: observation::ActiveModel = observation.clone().into();
         observation::Entity::insert(active)
             .on_conflict(
-                OnConflict::column(observation::Column::ContentHash)
+                OnConflict::columns([observation::Column::OrgId, observation::Column::ContentHash])
                     .update_columns([observation::Column::Tags, observation::Column::Metadata])
                     .to_owned(),
             )
@@ -212,29 +222,39 @@ impl MemoryRepository for SeaOrmObservationRepository {
         Ok(())
     }
 
-    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>> {
-        sea_repo_get_opt!(
-            &self.db,
-            observation,
-            Observation,
-            id.to_string(),
-            "get observation"
-        )
+    async fn get_observation(
+        &self,
+        org_id: &str,
+        id: &ObservationId,
+    ) -> Result<Option<Observation>> {
+        observation::Entity::find()
+            .filter(observation::Column::Id.eq(id.to_string()))
+            .filter(observation::Column::OrgId.eq(org_id))
+            .one(&self.db)
+            .await
+            .map(|model| model.map(Into::into))
+            .map_err(db_error("get observation"))
     }
 
-    async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>> {
+    async fn find_by_hash(&self, org_id: &str, content_hash: &str) -> Result<Option<Observation>> {
         observation::Entity::find()
             .filter(observation::Column::ContentHash.eq(content_hash))
+            .filter(observation::Column::OrgId.eq(org_id))
             .one(&self.db)
             .await
             .map(|model| model.map(Into::into))
             .map_err(db_error("find observation by hash"))
     }
 
-    async fn search(&self, query: &str, mut limit: usize) -> Result<Vec<FtsSearchResult>> {
+    async fn search(
+        &self,
+        org_id: &str,
+        query: &str,
+        mut limit: usize,
+    ) -> Result<Vec<FtsSearchResult>> {
         limit = limit.min(OBSERVATION_LIST_MAX_LIMIT);
         if query.trim().is_empty() {
-            let observations = self.list_by_filter(None, limit).await?;
+            let observations = self.list_by_filter(org_id, None, limit).await?;
             return Ok(observations
                 .into_iter()
                 .map(|obs| FtsSearchResult {
@@ -244,11 +264,15 @@ impl MemoryRepository for SeaOrmObservationRepository {
                 .collect());
         }
         let sql = "SELECT id, bm25(observations_fts) AS rank FROM observations_fts \
-                   WHERE observations_fts MATCH ? ORDER BY bm25(observations_fts) LIMIT ?";
+                   WHERE observations_fts MATCH ? AND org_id = ? ORDER BY bm25(observations_fts) LIMIT ?";
         let stmt = Statement::from_sql_and_values(
             self.db.get_database_backend(),
             sql,
-            vec![Value::from(query), Value::from(limit as i64)],
+            vec![
+                Value::from(query),
+                Value::from(org_id),
+                Value::from(limit as i64),
+            ],
         );
         let rows = self
             .db
@@ -270,39 +294,42 @@ impl MemoryRepository for SeaOrmObservationRepository {
         sea_repo_delete!(&self.db, observation, id.to_string(), "delete observation")
     }
 
-    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>> {
+    async fn get_observations_by_ids(
+        &self,
+        org_id: &str,
+        ids: &[ObservationId],
+    ) -> Result<Vec<Observation>> {
         if ids.is_empty() {
             return Ok(Vec::new());
         }
         let id_values: Vec<String> = ids.iter().map(ToString::to_string).collect();
         observation::Entity::find()
             .filter(observation::Column::Id.is_in(id_values))
+            .filter(observation::Column::OrgId.eq(org_id))
             .all(&self.db)
             .await
             .map(|models| models.into_iter().map(Into::into).collect())
             .map_err(db_error("get observations by ids"))
     }
 
-    async fn get_timeline(
-        &self,
-        anchor_id: &ObservationId,
-        before: usize,
-        after: usize,
-        filter: Option<MemoryFilter>,
-    ) -> Result<Vec<Observation>> {
-        let Some(anchor) = self.get_observation(anchor_id).await? else {
+    async fn get_timeline(&self, query: TimelineQuery<'_>) -> Result<Vec<Observation>> {
+        let Some(anchor) = self.get_observation(query.org_id, query.anchor_id).await? else {
             return Ok(Vec::new());
         };
-        let mut before_filter = filter.clone().unwrap_or_default();
+        let mut before_filter = query.filter.clone().unwrap_or_default();
         before_filter.time_range = Some((i64::MIN, anchor.created_at - 1));
-        let mut after_filter = filter.unwrap_or_default();
+        let mut after_filter = query.filter.unwrap_or_default();
         after_filter.time_range = Some((anchor.created_at + 1, i64::MAX));
 
-        let mut before_items = self.list_by_filter(Some(&before_filter), before).await?;
+        let mut before_items = self
+            .list_by_filter(query.org_id, Some(&before_filter), query.before)
+            .await?;
         before_items.sort_by_key(|obs| obs.created_at);
         let mut timeline = before_items;
         timeline.push(anchor);
-        let mut after_items = self.list_by_filter(Some(&after_filter), after).await?;
+        let mut after_items = self
+            .list_by_filter(query.org_id, Some(&after_filter), query.after)
+            .await?;
         after_items.sort_by_key(|obs| obs.created_at);
         timeline.extend(after_items);
         Ok(timeline)
@@ -335,9 +362,14 @@ impl MemoryRepository for SeaOrmObservationRepository {
         Ok(())
     }
 
-    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>> {
+    async fn get_session_summary(
+        &self,
+        org_id: &str,
+        session_id: &SessionId,
+    ) -> Result<Option<SessionSummary>> {
         session_summary::Entity::find()
             .filter(session_summary::Column::SessionId.eq(session_id.to_string()))
+            .filter(session_summary::Column::OrgId.eq(org_id))
             .order_by_desc(session_summary::Column::CreatedAt)
             .one(&self.db)
             .await

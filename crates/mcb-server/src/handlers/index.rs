@@ -17,6 +17,7 @@ use validator::Validate;
 use crate::args::{IndexAction, IndexArgs};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::utils::args::resolve_workspace_path;
 use crate::utils::collections::normalize_collection_name;
 
 /// Handler for codebase indexing MCP tool operations.
@@ -31,26 +32,7 @@ handler_new!(IndexHandler {
 
 impl IndexHandler {
     fn validate_request(args: &IndexArgs) -> Result<(PathBuf, CollectionId), McpError> {
-        let path = args
-            .path
-            .as_ref()
-            .map(PathBuf::from)
-            .or_else(|| std::env::current_dir().ok())
-            .ok_or_else(|| {
-                McpError::invalid_params("path is required (working directory unavailable)", None)
-            })?;
-        if !path.exists() {
-            return Err(McpError::invalid_params(
-                "Specified path does not exist",
-                None,
-            ));
-        }
-        if !path.is_dir() {
-            return Err(McpError::invalid_params(
-                "Specified path is not a directory",
-                None,
-            ));
-        }
+        let path = resolve_workspace_path(args.path.as_deref())?;
         let collection_id = match args.collection.as_deref() {
             Some(name) => normalize_collection_name(name)
                 .map_err(|reason| McpError::invalid_params(reason, None))?,

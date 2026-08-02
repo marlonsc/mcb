@@ -88,8 +88,9 @@ impl NamingValidator {
 
     /// Validates that constants and statics follow `SCREAMING_SNAKE_CASE` convention.
     fn run_constant_name_check(&self) -> Result<Vec<NamingViolation>> {
-        let const_pattern = compile_regex(r"(?:pub\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*:")?;
-        let static_pattern = compile_regex(r"(?:pub\s+)?static\s+([A-Za-z_][A-Za-z0-9_]*)\s*:")?;
+        let const_pattern = compile_regex(r"^\s*(?:pub\s+)?const\s+([A-Za-z_][A-Za-z0-9_]*)\s*:")?;
+        let static_pattern =
+            compile_regex(r"^\s*(?:pub\s+)?static\s+([A-Za-z_][A-Za-z0-9_]*)\s*:")?;
 
         let mut violations = Vec::new();
         self.for_each_crate_src_rs_path(|path| {

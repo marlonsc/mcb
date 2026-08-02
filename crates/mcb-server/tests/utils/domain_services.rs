@@ -16,9 +16,9 @@ use mcb_domain::registry::vector_store::{
 };
 use mcb_domain::value_objects::SessionId;
 use mcb_server::args::{MemoryAction, MemoryArgs, MemoryResource};
-use mcb_server::build_mcp_server_bootstrap;
 use mcb_server::state::McbState;
 use mcb_server::tools::ExecutionFlow;
+use mcb_server::{McpBootstrapProviders, build_mcp_server_bootstrap};
 
 // linkme force-link only — DO NOT use for type/function imports (CA019 enforced)
 extern crate mcb_providers;
@@ -45,11 +45,9 @@ pub fn create_base_memory_args(
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     }
 }
@@ -119,10 +117,12 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
     let bootstrap = build_mcp_server_bootstrap(
         &resolution_ctx,
         db,
-        embedding_provider,
-        vector_store_provider,
-        hybrid_search,
-        ExecutionFlow::ServerHybrid,
+        McpBootstrapProviders {
+            embedding: embedding_provider,
+            vector_store: vector_store_provider,
+            hybrid_search,
+            execution_flow: ExecutionFlow::ServerHybrid,
+        },
     )
     .ok()?;
 

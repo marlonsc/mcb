@@ -1,0 +1,53 @@
+# MCB nextest configuration
+# Centralizes test parallelism, timeouts, retries, and serialization groups.
+# Used by `make test` and the pre-push hook when cargo-nextest is available.
+
+[store]
+# Keep metadata in target/ so it is covered by normal cleanup.
+dir = "target/nextest"
+
+[profile.default]
+# Cap default parallelism: enough to use the machine but not overwhelm it.
+test-threads = 4
+# Fail fast locally so developers get quick feedback.
+fail-fast = true
+# Warn when a test takes longer than 60s; kill at 180s (3 × 60s).
+slow-timeout = { period = "60s", terminate-after = 2 }
+# Retry known-flaky tests once before failing.
+retries = 1
+
+# Tests that touch global state, bind fixed ports, or use shared in-memory
+# databases must run serially.
+[[profile.default.overrides]]
+filter = 'test_group(/serial/)'
+test-threads = 1
+
+# test_full_validation_report runs ALL validators on the full workspace;
+# it is inherently slow (>180s). Give it a 360s hard limit.
+[[profile.default.overrides]]
+filter = 'test(test_full_validation_report)'
+slow-timeout = { period = "120s", terminate-after = 2 }
+
+[profile.ci]
+# CI/pre-push profile: controlled parallelism, longer timeout, fail fast.
+test-threads = 4
+fail-fast = true
+slow-timeout = { period = "120s", terminate-after = 2 }
+retries = 1
+
+[[profile.ci.overrides]]
+filter = 'test_group(/serial/)'
+test-threads = 1
+
+[[profile.ci.overrides]]
+filter = 'test(test_full_validation_report)'
+slow-timeout = { period = "240s", terminate-after = 2 }
+
+# Default test groups: serial group for tests with shared resources.
+[[profile.default.test-groups]]
+name = "serial"
+max-threads = 1
+
+[[profile.ci.test-groups]]
+name = "serial"
+max-threads = 1

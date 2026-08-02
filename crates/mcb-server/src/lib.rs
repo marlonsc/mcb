@@ -19,6 +19,8 @@ pub mod args;
 pub mod auth;
 pub mod composition;
 pub mod controllers;
+/// Reusable Axum route builders for production and tests.
+pub use controllers::routes as axum_routes;
 pub mod error_mapping;
 pub mod formatter;
 pub mod graphql_store;

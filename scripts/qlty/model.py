@@ -1,4 +1,10 @@
-"""Core data models for qlty analysis."""
+"""Qlty Model.
+
+Copyright (c) 2025 MCB Contributors. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import IntEnum
@@ -14,7 +20,7 @@ class Severity(IntEnum):
     NONE = 0
 
     @classmethod
-    def from_str(cls, s: str) -> "Severity":
+    def from_str(cls, s: str) -> Severity:
         mapping = {
             "error": cls.ERROR,
             "warning": cls.WARNING,

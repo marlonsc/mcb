@@ -8,7 +8,7 @@ use clap::Args;
 
 /// Arguments for the validate command
 #[derive(Args, Debug, Clone)]
-pub struct ValidateArgs {
+pub struct ValidateCliArgs {
     /// Path to workspace root (default: current directory)
     #[arg(default_value = ".")]
     pub path: PathBuf,
@@ -74,7 +74,7 @@ impl ValidationResult {
     }
 }
 
-impl ValidateArgs {
+impl ValidateCliArgs {
     /// Initialize logging based on verbosity flags
     fn init_logging(&self) {
         use mcb_domain::ports::LogLevel;

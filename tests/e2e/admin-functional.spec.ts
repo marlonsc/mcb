@@ -1,16 +1,23 @@
 import { test, expect } from '@playwright/test';
 import * as path from 'path';
 import * as fs from 'fs';
+import { ensureE2eAdminAuth } from './helpers/mcp-auth';
 
 const testPort = process.env.MCB_TEST_PORT || '18080';
 const baseURL = `http://localhost:${testPort}`;
+let authHeaders: Record<string, string>;
 
 test.describe('Admin Functional Tests - Real Data Processing', () => {
   test.beforeAll(async () => {
-    const testDataDir = path.join(process.cwd(), 'tests', 'fixtures', 'test-codebase');
+    authHeaders = (await ensureE2eAdminAuth()).headers;
+    const testDataDir = path.join(process.cwd(), 'fixtures', 'sample_codebase');
     if (!fs.existsSync(testDataDir)) {
       console.warn(`Test data directory not found: ${testDataDir}`);
     }
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await page.setExtraHTTPHeaders(authHeaders);
   });
 
   test('Health page should show actual system metrics', async ({ page }) => {
@@ -63,8 +70,12 @@ test.describe('Admin Functional Tests - Real Data Processing', () => {
 });
 
 test.describe('Admin API Integration Tests', () => {
+  test.beforeAll(async () => {
+    authHeaders = (await ensureE2eAdminAuth()).headers;
+  });
+
   test('Health endpoint should return JSON', async ({ request }) => {
-    const response = await request.get(`${baseURL}/health`);
+    const response = await request.get(`${baseURL}/health`, { headers: authHeaders });
 
     expect(response.ok()).toBeTruthy();
     expect(response.headers()['content-type']).toContain('application/json');
@@ -74,7 +85,7 @@ test.describe('Admin API Integration Tests', () => {
   });
 
   test('Config endpoint should return configuration', async ({ request }) => {
-    const response = await request.get(`${baseURL}/config`);
+    const response = await request.get(`${baseURL}/config`, { headers: authHeaders });
 
     expect(response.ok()).toBeTruthy();
 
@@ -83,7 +94,7 @@ test.describe('Admin API Integration Tests', () => {
   });
 
   test('Jobs status endpoint should return status', async ({ request }) => {
-    const response = await request.get(`${baseURL}/jobs`);
+    const response = await request.get(`${baseURL}/jobs`, { headers: authHeaders });
 
     expect(response.ok()).toBeTruthy();
 
@@ -95,7 +106,7 @@ test.describe('Admin API Integration Tests', () => {
   });
 
   test('Collections endpoint should return array', async ({ request }) => {
-    const response = await request.get(`${baseURL}/collections`);
+    const response = await request.get(`${baseURL}/collections`, { headers: authHeaders });
 
     expect(response.ok()).toBeTruthy();
 
@@ -105,6 +116,14 @@ test.describe('Admin API Integration Tests', () => {
 });
 
 test.describe('Theme and UX Tests', () => {
+  test.beforeAll(async () => {
+    authHeaders = (await ensureE2eAdminAuth()).headers;
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await page.setExtraHTTPHeaders(authHeaders);
+  });
+
   test('Theme toggle should work across all pages', async ({ page }) => {
     const pages = [
       '/ui',
@@ -176,6 +195,14 @@ test.describe('Theme and UX Tests', () => {
 });
 
 test.describe('Error Handling and Edge Cases', () => {
+  test.beforeAll(async () => {
+    authHeaders = (await ensureE2eAdminAuth()).headers;
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await page.setExtraHTTPHeaders(authHeaders);
+  });
+
   test('Invalid collection should show error message', async ({ page }) => {
     await page.goto(`${baseURL}/ui/browse/nonexistent-collection-12345`);
 
@@ -222,6 +249,6 @@ test.describe('Error Handling and Edge Cases', () => {
       /TypeError|ReferenceError|SyntaxError|Unhandled Promise Rejection/i.test(err)
     );
 
-    expect(runtimeFatalErrors.length).toBeLessThanOrEqual(2);
+    expect(runtimeFatalErrors).toEqual([]);
   });
 });

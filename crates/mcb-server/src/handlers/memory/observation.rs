@@ -15,7 +15,7 @@ use super::common::{
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::utils::mcp::tool_error;
+use crate::utils::mcp::{resolve_org_id, tool_error};
 use mcb_utils::constants::keys::{
     FIELD_BRANCH, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE, FIELD_OBSERVATIONS,
 };
@@ -52,9 +52,11 @@ pub async fn store_observation(
         None,
         None,
     );
+    let org_id = resolve_org_id(args.org_id.as_deref());
     match memory_service
         .store_observation(StoreObservationInput {
             project_id: origin.project_id,
+            org_id,
             content,
             r#type: observation_type,
             tags,
@@ -83,8 +85,10 @@ pub async fn get_observations(
     if ids.is_empty() {
         return Ok(tool_error("Missing observation ids"));
     }
+    let org_id = resolve_org_id(args.org_id.as_deref());
     match memory_service
         .get_observations_by_ids(
+            &org_id,
             &ids.iter()
                 .map(|id| ObservationId::from_string(id))
                 .collect::<Vec<_>>(),

@@ -8,7 +8,7 @@ This directory contains templates and standards for Memory Context Browser docum
 ### ADR Template
 
 - **[ADR template](adr-template.md)** - Architecture Decision Record template
-- **Usage**: `make adr-new` to create new ADR interactively
+- **Usage**: `make build WHAT=docs ACT=adr-new` to create new ADR interactively
 
 ### Document Standards
 
@@ -80,7 +80,7 @@ See [Contributing Guide](../developer/CONTRIBUTING.md) for guidelines.
 4. **Validate before committing**:
 
    ```bash
-   make docs-validate
+   make build WHAT=docs ACT=validate
    ```
 
 ## 📊 Quality Standards
@@ -115,15 +115,15 @@ Templates are integrated with the build system:
 ```bash
 
 # Create new ADR
-make adr-new
+make build WHAT=docs ACT=adr-new
 
 # Validate all documentation (ADRs, structure, links)
-make docs-validate
+make build WHAT=docs ACT=validate
 
 # Lint markdown (FIX=1 to auto-fix)
-make docs-lint
+make build WHAT=docs ACT=lint
 
 # Build / serve documentation
-make docs
-make docs-serve
+make build WHAT=docs
+make build WHAT=docs ACT=serve
 ```

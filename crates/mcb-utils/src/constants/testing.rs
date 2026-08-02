@@ -87,7 +87,11 @@ pub const TEST_TIMEOUT_SECS: u64 = 30;
 pub const TEST_STARTUP_TIMEOUT_SECS: u64 = 120;
 
 /// Operation timeout for MCP command tests (seconds).
-pub const TEST_OP_TIMEOUT_SECS: u64 = 10;
+///
+/// MCP command integration tests exercise real stdio transport, indexing, and
+/// semantic search under the full `nextest` workload, so individual tool calls
+/// use the same bound as the broader integration timeout.
+pub const TEST_OP_TIMEOUT_SECS: u64 = TEST_TIMEOUT_SECS;
 
 // ============================================================================
 // Test Model / Provider Names

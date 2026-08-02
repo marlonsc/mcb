@@ -99,6 +99,7 @@ notify = { workspace = true }
 # Async streaming for HTTP SSE
 futures = { workspace = true }
 async-stream = { workspace = true }
+tokio-util = { workspace = true }
 
 # Plugin registration
 linkme = { workspace = true }

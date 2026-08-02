@@ -1,0 +1,6 @@
+# Serena local data — should not be committed
+# Memories, caches, and logs are local to each developer
+cache/
+logs/
+prompt_templates/
+language_servers/

@@ -10,6 +10,7 @@ pub mod error_boundary_tests;
 pub mod hygiene;
 pub mod implementation;
 pub mod kiss;
+pub mod naming;
 pub mod organization;
 pub mod pattern_validator;
 pub mod performance;

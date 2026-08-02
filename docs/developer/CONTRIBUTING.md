@@ -3,7 +3,7 @@
 
 Thank you for your interest in contributing! This guide covers everything you need for MCB development.
 
-**Last updated:** 2026-02-14 | **Version:** v0.2.1
+**Last updated:** 2026-06-28 | **Version:** v0.4.0
 
 ## 🚀 Getting Started
 
@@ -17,9 +17,10 @@ Thank you for your interest in contributing! This guide covers everything you ne
 ```bash
 git clone https://github.com/marlonsc/mcb.git
 cd mcb
+make boot       # install hooks + tools
 make build
-make test       # 1700+ tests across 6 crates
-make check      # Full quality pipeline
+make test       # full workspace tests
+make check      # full quality pipeline
 ```
 
 ## 🔄 Development Workflow
@@ -63,15 +64,16 @@ crates/mcb-{name}/
     └── utils/      ← Shared test helpers
 ```
 
-### Code Structure (v0.2.1 Clean Architecture)
+### Code Structure (v0.4.0 Clean Architecture)
 
 ```text
 crates/
-├── mcb/                # Unified facade crate (public API)
-├── mcb-domain/         # Core types, ports, entities (innermost)
-├── mcb-providers/      # External integrations (embedding, vector store, language)
+├── mcb/                # CLI facade binary
+├── mcb-utils/          # Shared leaf utilities (innermost, no mcb-* deps)
+├── mcb-domain/         # Core types, ports, entities, errors
+├── mcb-providers/      # External integrations (embedding, vector store, DB, git)
 ├── mcb-infrastructure/ # Shared systems (DI, config, cross-cutting services)
-├── mcb-server/         # MCP protocol, HTTP transport, admin
+├── mcb-server/         # MCP protocol, HTTP transport, admin UI
 └── mcb-validate/       # Architecture validation
 ```
 
@@ -87,7 +89,7 @@ crates/
 ### Formatting (rustfmt.toml)
 
 - **Edition**: 2024 | **Max width**: 100 | **Tab size**: 4
-- Run `make fmt` before committing
+- Run `make check WHAT=fix ACT=fmt` before committing
 
 ### Workspace Lints (Cargo.toml)
 
@@ -139,7 +141,7 @@ Fixes #<issue-id>
 
 ```bash
 ./scripts/commit_analyze.sh             # Analyze staged changes
-make lint && make validate QUICK=1      # Pre-commit validation
+make check WHAT=lint && make check WHAT=validate QUICK=1   # Pre-commit validation
 git commit                              # Commit (pre-commit hook runs checks)
 git push                                # Push
 ```
@@ -149,10 +151,14 @@ git push                                # Push
 ### Running Tests
 
 ```bash
-make test                               # All 10,000+ test functions
+make test                               # Full workspace test suite
 make test SCOPE=unit                    # Unit tests only
-cargo test test_name -- --nocapture     # Specific test with output
+make test SCOPE=integration             # Integration tests
+make test SCOPE=doc                     # Doctests
+cargo test -p mcb-server --test unit -- test_name --nocapture  # Specific test
 ```
+
+`cargo-nextest` is used automatically when installed; otherwise falls back to `cargo test`.
 
 ### Test Patterns
 
@@ -164,15 +170,24 @@ cargo test test_name -- --nocapture     # Specific test with output
 
 ## 🔨 Make-First Workflow
 
+Never call `cargo`/`git` directly. Use `make <verb> [WHAT=phase] [ACT=sub] [APPLY=Y]`.
+
 | Command | Purpose |
 | --------- | --------- |
-| `make build` | Build all crates |
-| `make fmt` | Auto-format code |
-| `make lint` | Format check + clippy |
+| `make build` | Build all crates (debug) |
+| `make build RELEASE=1` | Release build |
+| `make check WHAT=fix ACT=fmt` | Auto-format code |
+| `make check WHAT=lint` | Format check + clippy (`-D warnings`) |
 | `make test` | All unit + integration tests |
-| `make validate` | Architecture rule enforcement |
-| `make check` | Full CI pipeline |
-| `make audit` | Security advisory scan |
+| `make test SCOPE=unit` | Unit tests only |
+| `make check WHAT=validate QUICK=1` | Architecture rule enforcement (quick) |
+| `make check WHAT=guard` | Banned-pattern scanner (prod unwrap/panic/TODO/allow) |
+| `make check WHAT=ci` | Full CI pipeline |
+| `make check WHAT=audit` | Security advisory scan |
+| `make build WHAT=docs ACT=lint` | Lint markdown |
+| `make build WHAT=docs ACT=validate QUICK=1` | Validate docs and links |
+
+> Destructive verbs (`commit`, `push`, `clean`, `codegen`, `release`) are DRY-RUN unless `APPLY=Y`.
 
 ## 📦 Dependency Management
 
@@ -199,8 +214,8 @@ cargo test test_name -- --nocapture     # Specific test with output
 ### Before Submitting
 
 - [ ] Tests pass: `make test`
-- [ ] Code formats correctly: `make fmt`
-- [ ] No Rust lint errors: `make lint`
+- [ ] Code formats correctly: `make check WHAT=fix ACT=fmt`
+- [ ] No Rust lint errors: `make check WHAT=lint`
 - [ ] Quality checks pass: `make check`
 - [ ] Documentation updated if needed
 
@@ -219,22 +234,22 @@ Include: what changed, why, how to test, any breaking changes.
 ### `make check` or `make build` fails with linker errors
 
 ```bash
-cargo clean && make build && make check
+make clean WHAT=build APPLY=Y && make build && make check
 ```
 
 ### Docs-only validation (no Rust build)
 
 ```bash
-make docs-lint
-make docs-validate QUICK=1
+make build WHAT=docs ACT=lint
+make build WHAT=docs ACT=validate QUICK=1
 ```
 
 ## 🚀 Code References
 
-- **Config**: `mcb_infrastructure::config::ConfigLoader` — See [CONFIGURATION.md](../CONFIGURATION.md), [ADR-051](../adr/051-seaql-loco-platform-rebuild.md) (supersedes [ADR-025](../adr/archive/superseded-025-figment-configuration.md))
+- **Config**: `mcb_infrastructure::config::ConfigLoader` — See [CONFIGURATION.md](../CONFIGURATION.md), [ADR-051](../adr/051-seaql-loco-platform-rebuild.md) (supersedes [ADR-025](../adr/051-seaql-loco-platform-rebuild.md))
 - **DI**: `mcb_infrastructure::di::bootstrap::init_app(config)` — See [ADR-050](../adr/050-manual-composition-root-dill-removal.md) (ADR-029 superseded)
 - **Patterns**: See [PATTERNS.md](../architecture/PATTERNS.md) for implementation patterns
-- **Run server**: `cargo run --bin mcb` or `make build` then run the binary
+- **Run server**: `make build` then run `./target/debug/mcb` or `./target/release/mcb`
 
 ---
 
@@ -242,7 +257,8 @@ make docs-validate QUICK=1
 
 - [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — System overview
 - [PATTERNS.md](../architecture/PATTERNS.md) — Implementation patterns
+- [FLEXT_TO_MCB_MAPPING.md](./FLEXT_TO_MCB_MAPPING.md) — FLEXT pattern translation for MCB
+- [SKILL_INDEX.md](./SKILL_INDEX.md) — Project ECC skills (under `.agents/skills/`) index
 - [ROADMAP.md](./ROADMAP.md) — Project state and roadmap
 - [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) — Current state
 - [DEPLOYMENT.md](../operations/DEPLOYMENT.md) — Deployment guide
-- [CI_RELEASE.md](../operations/CI_RELEASE.md) — CI/CD and release process

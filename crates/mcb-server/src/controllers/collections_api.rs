@@ -3,8 +3,17 @@
 use mcb_domain::value_objects::CollectionId;
 
 use crate::state::McbState;
-use axum::extract::Extension;
+use crate::utils::collections::normalize_collection_name;
+use axum::extract::{Extension, Query};
 use loco_rs::prelude::*;
+use serde::Deserialize;
+
+/// Optional chunk listing filters.
+#[derive(Debug, Deserialize)]
+pub struct ChunkQuery {
+    /// Restrict chunks to one vector-store collection.
+    pub collection: Option<String>,
+}
 
 /// Returns a list of all vector store collections.
 ///
@@ -24,7 +33,7 @@ pub async fn collections(Extension(state): Extension<McbState>) -> Result<Respon
     format::json(collections)
 }
 
-/// Returns all code chunks from all collections — used by the Browse UI.
+/// Returns code chunks from one collection, or all collections when omitted.
 ///
 /// Iterates every collection via `list_collections()`, then calls
 /// `list_vectors(id, 50)` to retrieve up to 50 chunks per collection.
@@ -32,22 +41,36 @@ pub async fn collections(Extension(state): Extension<McbState>) -> Result<Respon
 /// # Errors
 ///
 /// Returns an empty list if the provider is unavailable (graceful degradation).
-pub async fn chunks(Extension(state): Extension<McbState>) -> Result<Response> {
-    let collections = state
-        .vector_store
-        .list_collections()
-        .await
-        .unwrap_or_default();
-
+pub async fn chunks(
+    Extension(state): Extension<McbState>,
+    Query(query): Query<ChunkQuery>,
+) -> Result<Response> {
     let mut all_chunks = Vec::new();
-    for collection in &collections {
-        let id = CollectionId::from_string(&collection.name);
+    if let Some(collection) = query.collection {
+        let id = normalize_collection_name(&collection)
+            .map_err(|reason| loco_rs::Error::string(&reason))?;
         let vecs = state
             .vector_store
             .list_vectors(&id, mcb_utils::constants::DEFAULT_BROWSE_LIMIT)
             .await
             .unwrap_or_default();
         all_chunks.extend(vecs);
+    } else {
+        let collections = state
+            .vector_store
+            .list_collections()
+            .await
+            .unwrap_or_default();
+
+        for collection in &collections {
+            let id = CollectionId::from_string(&collection.name);
+            let vecs = state
+                .vector_store
+                .list_vectors(&id, mcb_utils::constants::DEFAULT_BROWSE_LIMIT)
+                .await
+                .unwrap_or_default();
+            all_chunks.extend(vecs);
+        }
     }
 
     format::json(all_chunks)

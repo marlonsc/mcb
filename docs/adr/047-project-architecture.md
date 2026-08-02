@@ -4,11 +4,11 @@ adr: 47
 title: Project Architecture - Central Hub and Multi-Dimensional Coordination
 status: PROPOSED
 created: 2026-02-08
-updated: 2026-02-08
-related: [14, 34, 41]
+updated: 2026-06-27
+related: [14, 34, 41, 57]
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -67,7 +67,12 @@ Each worktree within a project will maintain its own isolated semantic index (Mi
 
 ### 4. Multi-Agent Coordination
 
-Projects will track active agent sessions, allowing parallel agents to work on the same project while maintaining shared context and individual session state.
+Projects will track active agent sessions, allowing parallel agents to work on
+the same project while maintaining shared context and individual session state.
+The operational coordination contract lives in
+[`AGENTS.md`](../../AGENTS.md) and
+[ADR-057](057-multi-agent-coordination-ssot-consolidation.md); this ADR only
+defines the project-domain anchor.
 
 ## Consequences
 
@@ -99,6 +104,6 @@ Projects will track active agent sessions, allowing parallel agents to work on t
 
 ## References
 
-- [MCB Comprehensive Gap Analysis](../plans/archive/MCB-COMPREHENSIVE-GAPS.md)
+- Beads task graph (`bd`) for current gap tracking
 - [ADR-014: Multi-Domain Architecture Strategy](./014-multi-domain-architecture.md)
 - [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md)

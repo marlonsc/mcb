@@ -2,7 +2,7 @@
 # Memory Context Browser - Documentation
 
 [![Documentation Status](https://img.shields.io/badge/docs-automated-green)](https://github.com/marlonsc/mcb/actions)
-[![Version](https://img.shields.io/badge/version-0.2.1-blue)](https://github.com/marlonsc/mcb/releases)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue)](https://github.com/marlonsc/mcb/releases)
 [![Architecture](https://img.shields.io/badge/architecture-C4--model-blue)](architecture/ARCHITECTURE.md)
 [![ADRs](https://img.shields.io/badge/ADRs-52-blue)](adr/README.md)
 
@@ -27,6 +27,10 @@ Documentation for developers contributing to the project.
 
 - **[Contributing](developer/CONTRIBUTING.md)** - Development setup and
   contribution guidelines
+- **[Quick Reference](developer/QUICK_REFERENCE.md)** - One-pager for daily MCB work
+- **[FLEXT to MCB Mapping](developer/FLEXT_TO_MCB_MAPPING.md)** - Pattern translation
+  from the FLEXT workspace
+- **[Skill Index](developer/SKILL_INDEX.md)** - Project ECC skills
 - **[Roadmap](developer/ROADMAP.md)** - Development roadmap and milestones
 
 ### 🏗️ Architecture
@@ -43,7 +47,7 @@ Technical architecture documentation following C4 model principles.
 - [ADR 012: Two-Layer DI Strategy](adr/012-di-strategy-two-layer-approach.md) - historical
 - [ADR 013: Clean Architecture Crate Separation](adr/013-clean-architecture-crate-separation.md) - historical
 - [ADR 024: Simplified Dependency Injection](adr/024-simplified-dependency-injection.md) → ADR-029 (superseded by ADR-050)
-- [ADR 029: Hexagonal Architecture](adr/archive/superseded-029-hexagonal-architecture-dill.md) - Superseded by ADR-050 (manual composition root)
+- [ADR 029: Hexagonal Architecture](adr/050-manual-composition-root-dill-removal.md) - Superseded by ADR-050 (manual composition root)
 - [ADR 030: Multi-Provider Strategy](adr/030-multi-provider-strategy.md)
 - [ADR 031: Documentation Excellence](adr/031-documentation-excellence.md)
 - [Phase 8-9: Workflow & Context System](adr/phase-9/README.md) - ADR-034-046 (v0.4.0-v0.5.0)
@@ -67,9 +71,6 @@ Operational documentation for deployment and maintenance.
 - **[Deployment Guide](operations/DEPLOYMENT.md)** - Deployment configurations
   and environments
 - **[Changelog](operations/CHANGELOG.md)** - Version history and release notes
-- **[CI Optimization](operations/CI_OPTIMIZATION.md)** - CI performance and
-  workflow tuning
-- **[CI/CD & Release](operations/CI_RELEASE.md)** - CI pipeline, CodeQL, and release process
 
 ### 📋 Templates
 
@@ -93,28 +94,28 @@ This documentation is fully automated and validated. Use these commands:
 ```bash
 
 # Generate all documentation (metrics, Rust API docs, mdbook)
-make docs
+make build WHAT=docs
 
 # Validate documentation (ADRs, structure, links). QUICK=1 skips external link checks
-make docs-validate
-make docs-validate QUICK=1
+make build WHAT=docs ACT=validate
+make build WHAT=docs ACT=validate QUICK=1
 
 # Lint markdown. FIX=1 runs markdownlint -f to auto-fix
-make docs-lint
-make docs-lint FIX=1
+make build WHAT=docs ACT=lint
+make build WHAT=docs ACT=lint FIX=1
 
 # Fix markdown (metrics + markdownlint -f). Run before commit
-make docs-lint FIX=1
+make build WHAT=docs ACT=lint FIX=1
 
 # Generate architecture diagrams (PlantUML)
-make diagrams
+make build WHAT=docs ACT=diagrams
 
 # List ADRs / create new ADR
-make adr
-make adr-new
+make build WHAT=docs ACT=adr
+make build WHAT=docs ACT=adr-new
 ```
 
-`make docs-lint` and `make docs-validate` do not require a Rust build (useful
+`make build WHAT=docs ACT=lint` and `make build WHAT=docs ACT=validate` do not require a Rust build (useful
 when `target/` is broken or for docs-only CI).
 
 ## 📊 Documentation Quality
@@ -148,7 +149,7 @@ When contributing to documentation:
 
 1. **Use Templates**- Follow established templates for consistency
 2. **Automate Updates**- Ensure documentation updates are automated
-3. **Validate Changes** - Run `make docs-validate` before committing
+3. **Validate Changes** - Run `make build WHAT=docs ACT=validate` before committing
 4. **Update References**- Keep cross-references current
 5. **Follow Standards**- Adhere to established formatting and structure
 

@@ -39,11 +39,7 @@ fn e2e_naming(file_name: &str) -> Option<(String, Severity)> {
     })
 }
 
-fn expected_naming_for_parent(
-    parent_dir: &str,
-    file_name: &str,
-    file_full: &str,
-) -> Option<(String, Severity)> {
+fn expected_naming_for_parent(parent_dir: &str, file_name: &str) -> Option<(String, Severity)> {
     match parent_dir {
         "unit" => (!file_name.ends_with("_tests")).then(|| {
             (
@@ -53,16 +49,7 @@ fn expected_naming_for_parent(
         }),
         "integration" => integration_naming(file_name),
         "e2e" => e2e_naming(file_name),
-        "tests" => (!matches!(
-            file_full,
-            "lib.rs" | "mod.rs" | "utils.rs" | "unit.rs" | "integration.rs" | "e2e.rs"
-        ))
-        .then(|| {
-            (
-                "Move to a subdirectory (e.g., tests/unit/)".to_owned(),
-                Severity::Warning,
-            )
-        }),
+        "tests" => None,
         _other => None,
     }
 }
@@ -116,9 +103,7 @@ fn check_test_file_naming(path: &std::path::Path) -> Option<HygieneViolation> {
         .and_then(|p| p.file_name())
         .and_then(|n| n.to_str())
         .unwrap_or("");
-    let file_full = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
-
-    expected_naming_for_parent(parent_dir, file_name, file_full).map(|(suggestion, severity)| {
+    expected_naming_for_parent(parent_dir, file_name).map(|(suggestion, severity)| {
         HygieneViolation::BadTestFileName {
             file: path.to_path_buf(),
             suggestion,

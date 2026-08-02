@@ -1,16 +1,22 @@
 #!/usr/bin/env python3
-"""Wrapper for qlty analysis package.
+"""Analyze Qlty.
 
-This wrapper keeps compatibility with older invocations that used
-`--markdown <path>` to request a markdown report.
+Thin entrypoint that delegates to scripts/qlty/main.py.
+
+Copyright (c) 2025 MCB Contributors. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
-import sys
+from __future__ import annotations
 
-from qlty.main import main
+import sys
+from pathlib import Path
+
+SCRIPTS = Path(__file__).resolve().parent
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+from qlty.main import main  # noqa: E402
 
 if __name__ == "__main__":
-    if "--markdown" in sys.argv:
-        idx = sys.argv.index("--markdown")
-        sys.argv[idx] = "--report-file"
-    sys.exit(main())
+    main()

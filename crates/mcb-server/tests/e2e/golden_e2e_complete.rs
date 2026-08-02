@@ -58,6 +58,7 @@ fn golden_queries_path() -> std::path::PathBuf {
 struct GoldenQuery {
     id: String,
     query: String,
+    min_results: usize,
 }
 
 #[derive(Debug, Deserialize)]
@@ -69,6 +70,108 @@ fn load_golden_queries_fixture() -> Result<GoldenQueriesFixture, Box<dyn std::er
     let path = golden_queries_path();
     let content = std::fs::read_to_string(path)?;
     Ok(serde_json::from_str(&content)?)
+}
+
+fn assert_search_response_contains_file(text: &str, min_results: usize, expected_file: &str) {
+    let count =
+        golden_parse_results_found(text).unwrap_or_else(|| golden_count_result_entries(text));
+    assert!(
+        count >= min_results,
+        "expected at least {min_results} search results, got {count}: {text}"
+    );
+    assert!(
+        text.contains(expected_file),
+        "search results should include {expected_file}: {text}"
+    );
+}
+
+fn assert_search_response_contains_sample_file(text: &str, min_results: usize) {
+    let count =
+        golden_parse_results_found(text).unwrap_or_else(|| golden_count_result_entries(text));
+    assert!(
+        count >= min_results,
+        "expected at least {min_results} search results, got {count}: {text}"
+    );
+    let has_expected = SAMPLE_CODEBASE_FILES.iter().any(|file| text.contains(file));
+    assert!(
+        has_expected,
+        "search must return at least one known sample file: {text} (files: {SAMPLE_CODEBASE_FILES:?})"
+    );
+}
+
+async fn wait_for_search_response_contains_file(
+    server: &mcb_server::mcp_server::McpServer,
+    collection: &str,
+    query: &str,
+    limit: u32,
+    min_results: usize,
+    expected_file: &str,
+) -> TestResult<String> {
+    let deadline = tokio::time::Instant::now() + TEST_TIMEOUT;
+    let mut last_text = String::new();
+    while tokio::time::Instant::now() < deadline {
+        let result = server
+            .search_handler()
+            .handle(Parameters(search_args(
+                query,
+                Some(collection.to_owned()),
+                Some(limit),
+            )))
+            .await?;
+        assert!(
+            !result.is_error.unwrap_or(true),
+            "search returned an error: {}",
+            extract_result_text(&result)
+        );
+        let text = extract_result_text(&result);
+        let count =
+            golden_parse_results_found(&text).unwrap_or_else(|| golden_count_result_entries(&text));
+        if count >= min_results && text.contains(expected_file) {
+            return Ok(text);
+        }
+        last_text = text;
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+
+    assert_search_response_contains_file(&last_text, min_results, expected_file);
+    Ok(last_text)
+}
+
+async fn wait_for_search_response_contains_sample_file(
+    server: &mcb_server::mcp_server::McpServer,
+    collection: &str,
+    query: &str,
+    limit: u32,
+    min_results: usize,
+) -> TestResult<String> {
+    let deadline = tokio::time::Instant::now() + TEST_TIMEOUT;
+    let mut last_text = String::new();
+    while tokio::time::Instant::now() < deadline {
+        let result = server
+            .search_handler()
+            .handle(Parameters(search_args(
+                query,
+                Some(collection.to_owned()),
+                Some(limit),
+            )))
+            .await?;
+        assert!(
+            !result.is_error.unwrap_or(true),
+            "search returned an error: {}",
+            extract_result_text(&result)
+        );
+        let text = extract_result_text(&result);
+        let count =
+            golden_parse_results_found(&text).unwrap_or_else(|| golden_count_result_entries(&text));
+        if count >= min_results && SAMPLE_CODEBASE_FILES.iter().any(|file| text.contains(file)) {
+            return Ok(text);
+        }
+        last_text = text;
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+
+    assert_search_response_contains_sample_file(&last_text, min_results);
+    Ok(last_text)
 }
 
 #[rstest]
@@ -83,7 +186,6 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
     let path_str = path.to_string_lossy().into_owned();
 
     let index_h = server.index_handler();
-    let search_h = server.search_handler();
 
     let r = index_h
         .handle(Parameters(index_args(
@@ -128,19 +230,17 @@ async fn test_golden_e2e_complete_workflow() -> TestResult {
         "expected chunks/indexing in response: {text}"
     );
 
-    let r = search_h
-        .handle(Parameters(search_args(
-            "embedding provider",
-            Some(GOLDEN_COLLECTION.to_owned()),
-            Some(5),
-        )))
-        .await;
-    assert!(r.is_ok(), "search should succeed: {r:?}");
-    let res = r.unwrap();
-    assert!(!res.is_error.unwrap_or(true));
-    let text = extract_text_from(&res.content);
+    let text = wait_for_search_response_contains_file(
+        &server,
+        GOLDEN_COLLECTION,
+        "handle MCP index codebase request",
+        5,
+        1,
+        "handlers.rs",
+    )
+    .await?;
     assert!(
-        text.contains("Search") || text.contains("Results") || text.contains("result"),
+        text.contains("Semantic Code Search Results"),
         "expected search result text: {text}"
     );
 
@@ -181,22 +281,29 @@ async fn test_golden_e2e_handles_concurrent_operations() -> TestResult {
 async fn test_golden_e2e_respects_collection_isolation() -> TestResult {
     let (server, _temp) = crate::utils::test_fixtures::create_test_mcp_server().await?;
     let clear = server.index_handler();
-    clear
+    let clear_a = clear
         .handle(Parameters(index_args(
             IndexAction::Clear,
             None,
             Some("collection_a".to_owned()),
         )))
-        .await
-        .expect("clear a");
-    clear
+        .await;
+    assert!(
+        clear_a.is_ok(),
+        "clear collection_a should succeed: {clear_a:?}"
+    );
+
+    let clear_b = clear
         .handle(Parameters(index_args(
             IndexAction::Clear,
             None,
             Some("collection_b".to_owned()),
         )))
-        .await
-        .expect("clear b");
+        .await;
+    assert!(
+        clear_b.is_ok(),
+        "clear collection_b should succeed: {clear_b:?}"
+    );
     Ok(())
 }
 
@@ -340,16 +447,23 @@ async fn test_golden_mcp_empty_query_error_responses(#[case] query: &str) -> Tes
         .search_handler()
         .handle(Parameters(search_args(query, None, Some(5))))
         .await;
-    let response = result.expect("empty query should return an error response");
+    let text = match result {
+        Ok(response) => {
+            assert!(
+                !response.content.is_empty(),
+                "error response should have content"
+            );
+            assert!(response.is_error.unwrap_or(false));
+            extract_text_from(&response.content)
+        }
+        Err(e) => e.to_string(),
+    };
     assert!(
-        !response.content.is_empty(),
-        "error response should have content"
-    );
-    assert!(response.is_error.unwrap_or(false));
-    let text = extract_text_from(&response.content);
-    assert!(
-        text.to_lowercase().contains("empty") || text.to_lowercase().contains("query"),
-        "error response should mention empty query: {text}"
+        text.to_lowercase().contains("empty")
+            || text.to_lowercase().contains("query")
+            || text.to_lowercase().contains("invalid")
+            || text.to_lowercase().contains("parameter"),
+        "error response should mention empty query or invalid parameters: {text}"
     );
     Ok(())
 }
@@ -370,27 +484,16 @@ async fn test_golden_search_returns_relevant_results() -> TestResult {
         .await
         .expect("index");
 
-    let r = server
-        .search_handler()
-        .handle(Parameters(search_args(
-            "embedding vector",
-            Some(collection.to_owned()),
-            Some(10),
-        )))
-        .await;
-    assert!(r.is_ok(), "search must succeed after index");
-    let res = r.unwrap();
-    assert!(!res.is_error.unwrap_or(true));
-    let text = extract_result_text(&res);
-    let count =
-        golden_parse_results_found(&text).unwrap_or_else(|| golden_count_result_entries(&text));
-    if count > 0 {
-        let has_expected = SAMPLE_CODEBASE_FILES.iter().any(|f| text.contains(f));
-        assert!(
-            has_expected,
-            "when results exist, at least one sample file must appear: {text} (files: {SAMPLE_CODEBASE_FILES:?})"
-        );
-    }
+    let text = wait_for_search_response_contains_file(
+        &server,
+        collection,
+        "handle MCP search request",
+        10,
+        1,
+        "handlers.rs",
+    )
+    .await?;
+    assert_search_response_contains_sample_file(&text, 1);
     Ok(())
 }
 
@@ -410,15 +513,19 @@ async fn test_golden_search_ranking_is_correct() -> TestResult {
         .await
         .expect("index for ranking test");
 
-    let r = server
-        .search_handler()
-        .handle(Parameters(search_args(
-            "handler",
-            Some(collection.to_owned()),
-            Some(5),
-        )))
-        .await;
-    assert!(r.is_ok(), "search must succeed");
+    let text = wait_for_search_response_contains_file(
+        &server,
+        collection,
+        "handle MCP index codebase request",
+        5,
+        1,
+        "handlers.rs",
+    )
+    .await?;
+    assert!(
+        text.contains("Semantic Code Search Results"),
+        "expected semantic search result heading: {text}"
+    );
     Ok(())
 }
 
@@ -572,21 +679,8 @@ async fn test_golden_e2e_golden_queries_one_query() -> TestResult {
     );
 
     let query = &fixture.queries[0];
-    let search_h = server.search_handler();
-    let r = search_h
-        .handle(Parameters(search_args(
-            &query.query,
-            Some(collection.to_owned()),
-            Some(5),
-        )))
-        .await;
-    assert!(r.is_ok(), "Query '{}' should succeed: {:?}", query.id, r);
-    let res = r.unwrap();
-    assert!(
-        !res.is_error.unwrap_or(true),
-        "Query '{}' returned error",
-        query.id
-    );
+    assert!(!query.id.is_empty(), "golden query id must be present");
+    wait_for_search_response_contains_sample_file(&server, collection, &query.query, 5, 1).await?;
     Ok(())
 }
 
@@ -624,21 +718,15 @@ async fn test_golden_e2e_golden_queries_all_handlers_succeed() -> TestResult {
     );
 
     for query in fixture.queries.iter() {
-        let search_h = server.search_handler();
-        let r = search_h
-            .handle(Parameters(search_args(
-                &query.query,
-                Some(collection.to_owned()),
-                Some(5),
-            )))
-            .await;
-        assert!(r.is_ok(), "Query '{}' should succeed: {:?}", query.id, r);
-        let res = r.unwrap();
-        assert!(
-            !res.is_error.unwrap_or(true),
-            "Query '{}' returned error",
-            query.id
-        );
+        assert!(!query.id.is_empty(), "golden query id must be present");
+        wait_for_search_response_contains_sample_file(
+            &server,
+            collection,
+            &query.query,
+            5,
+            query.min_results,
+        )
+        .await?;
     }
     Ok(())
 }

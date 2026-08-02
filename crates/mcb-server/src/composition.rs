@@ -35,6 +35,18 @@ use mcb_utils::constants::{
     DEFAULT_DATABASE_PROVIDER, DEFAULT_LANGUAGE_PROVIDER, DEFAULT_NAMESPACE, DEFAULT_VCS_PROVIDER,
 };
 
+/// Shared providers resolved before MCP server composition.
+pub struct McpBootstrapProviders {
+    /// Shared embedding provider resolved at startup.
+    pub embedding: Arc<dyn EmbeddingProvider>,
+    /// Shared vector store provider resolved at startup.
+    pub vector_store: Arc<dyn VectorStoreProvider>,
+    /// Hybrid search provider for combined BM25 and semantic search.
+    pub hybrid_search: Arc<dyn HybridSearchProvider>,
+    /// Execution flow selected from runtime MCP configuration.
+    pub execution_flow: ExecutionFlow,
+}
+
 /// Build MCP server and dashboard/auth ports from decomposed DI parts.
 ///
 /// Uses **pure registry DI** (ADR-050 + ADR-053): shared providers are pre-resolved
@@ -45,22 +57,15 @@ use mcb_utils::constants::{
 ///
 /// * `registry_ctx` - Opaque context for linkme service registry resolution (downcast internally).
 /// * `db_connection` - Database connection boxed as `Any` for registry database resolution.
-/// * `embedding_provider` - Shared embedding provider resolved at startup.
-/// * `vector_store_provider` - Shared vector store provider resolved at startup.
-/// * `hybrid_search` - Hybrid search provider for combined BM25/semantic search.
-/// * `execution_flow` - Whether to run in stdio-only or hybrid mode.
+/// * `providers` - Shared providers and execution flow resolved at startup.
 ///
 /// # Errors
 ///
 /// Returns a domain error if any service or repository resolution fails.
-#[allow(clippy::too_many_arguments)]
 pub fn build_mcp_server_bootstrap(
     registry_ctx: &dyn std::any::Any,
     db_connection: Arc<dyn std::any::Any + Send + Sync>,
-    embedding_provider: Arc<dyn EmbeddingProvider>,
-    vector_store_provider: Arc<dyn VectorStoreProvider>,
-    hybrid_search: Arc<dyn HybridSearchProvider>,
-    execution_flow: ExecutionFlow,
+    providers: McpBootstrapProviders,
 ) -> mcb_domain::Result<McpServerBootstrap> {
     // 1. Resolve DB repos
     let repos = resolve_database_repositories(
@@ -73,13 +78,13 @@ pub fn build_mcp_server_bootstrap(
     let (indexing_ops, validation_ops) = resolve_admin_operation_trackers()?;
 
     // 3. Build MCP services struct from registry-resolved services
-    let mcp_services = build_mcp_services(registry_ctx, &repos, hybrid_search)?;
+    let mcp_services = build_mcp_services(registry_ctx, &repos, providers.hybrid_search)?;
 
     let vcs_for_defaults = Arc::clone(&mcp_services.vcs);
     let mcp_server = Arc::new(McpServer::new(
         mcp_services,
         &vcs_for_defaults,
-        Some(execution_flow),
+        Some(providers.execution_flow),
     ));
 
     // 5. Build bootstrap with shared ports from context
@@ -87,8 +92,8 @@ pub fn build_mcp_server_bootstrap(
         mcp_server,
         dashboard: repos.dashboard,
         auth_repo: repos.auth,
-        embedding_provider,
-        vector_store: vector_store_provider,
+        embedding_provider: providers.embedding,
+        vector_store: providers.vector_store,
         indexing_ops,
         validation_ops,
     })

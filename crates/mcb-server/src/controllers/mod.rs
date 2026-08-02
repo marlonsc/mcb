@@ -12,5 +12,7 @@ pub mod graphql;
 pub mod health_api;
 /// Jobs API (indexing and validation operations).
 pub mod jobs_api;
+/// Reusable Axum route construction for admin/UI/MCP endpoints.
+pub mod routes;
 /// Web UI pages (dashboard, config, health, jobs, browse, 404).
 pub mod web;

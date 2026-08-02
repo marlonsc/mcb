@@ -228,19 +228,21 @@ const UP_STATEMENTS: &[&str] = &[
     "CREATE TABLE IF NOT EXISTS observations (
         id TEXT PRIMARY KEY,
         project_id TEXT NOT NULL,
+        org_id TEXT NOT NULL,
         content TEXT NOT NULL,
-        content_hash TEXT NOT NULL UNIQUE,
+        content_hash TEXT NOT NULL,
         tags TEXT,
         observation_type TEXT,
         metadata TEXT,
         created_at INTEGER NOT NULL,
         embedding_id TEXT
     )",
-    // FTS5 virtual table for full-text search on observations
-    "CREATE VIRTUAL TABLE IF NOT EXISTS observations_fts USING fts5(id UNINDEXED, content)",
-    "CREATE TRIGGER IF NOT EXISTS obs_ai AFTER INSERT ON observations BEGIN INSERT INTO observations_fts(rowid, id, content) VALUES (new.rowid, new.id, new.content); END;",
+    // FTS5 virtual table for full-text search on observations (org_id UNINDEXED enables
+    // tenant-scoped MATCH queries without crossing organizations — ADR-056).
+    "CREATE VIRTUAL TABLE IF NOT EXISTS observations_fts USING fts5(id UNINDEXED, org_id UNINDEXED, content)",
+    "CREATE TRIGGER IF NOT EXISTS obs_ai AFTER INSERT ON observations BEGIN INSERT INTO observations_fts(rowid, id, org_id, content) VALUES (new.rowid, new.id, new.org_id, new.content); END;",
     "CREATE TRIGGER IF NOT EXISTS obs_ad AFTER DELETE ON observations BEGIN DELETE FROM observations_fts WHERE rowid = old.rowid; END;",
-    "CREATE TRIGGER IF NOT EXISTS obs_au AFTER UPDATE ON observations BEGIN DELETE FROM observations_fts WHERE rowid = old.rowid; INSERT INTO observations_fts(rowid, id, content) VALUES (new.rowid, new.id, new.content); END;",
+    "CREATE TRIGGER IF NOT EXISTS obs_au AFTER UPDATE ON observations BEGIN DELETE FROM observations_fts WHERE rowid = old.rowid; INSERT INTO observations_fts(rowid, id, org_id, content) VALUES (new.rowid, new.id, new.org_id, new.content); END;",
     "CREATE TABLE IF NOT EXISTS collections (
         id TEXT PRIMARY KEY,
         project_id TEXT NOT NULL,
@@ -342,6 +344,7 @@ const UP_STATEMENTS: &[&str] = &[
         resolved_at INTEGER
     )",
     "CREATE INDEX IF NOT EXISTS idx_obs_project ON observations(project_id)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_obs_org_content_hash ON observations(org_id, content_hash)",
     "CREATE INDEX IF NOT EXISTS idx_organizations_name ON organizations(name)",
     "CREATE INDEX IF NOT EXISTS idx_branches_repo ON branches(repository_id)",
 ];

@@ -97,14 +97,11 @@ macro_rules! define_route_method {
         |$args:ident, $action:ident, $resource:ident| $build_args:expr
     ) => {
         async fn $fn_name(&self, args: EntityArgs) -> Result<CallToolResult, McpError> {
-            self.route_entity(
-                args,
-                $map_action,
-                $map_resource,
-                |$args, $action, $resource| $build_args,
-                |tool_args| self.$handler_field.handle(Parameters(tool_args)),
-            )
-            .await
+            let $action = $map_action(args.action)?;
+            let $resource = $map_resource(args.resource)?;
+            let $args = args;
+            let tool_args: $args_ty = $build_args;
+            self.$handler_field.handle(Parameters(tool_args)).await
         }
     };
 }

@@ -17,9 +17,11 @@ permissions:
 
 on: # yamllint disable-line rule:truthy
   push:
+    # Only main (post-merge) + manual dispatch. Feature branches are validated via
+    # the pull_request event — this avoids firing duplicate push+PR runs (different
+    # concurrency keys) on a branch that already has an open PR.
     branches:
       - main
-      - 'feat/*'
   workflow_dispatch:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
@@ -33,6 +35,13 @@ concurrency:
 env:
   CARGO_TERM_COLOR: always
   MCB_RUN_DOCKER_INTEGRATION_TESTS: "0"
+  RUSTC_WRAPPER: sccache
+  SCCACHE_GHA_ENABLED: "true"
+  # CI uses incremental=0 because sccache caches full compilation units;
+  # incremental artifacts would bloat the shared cache and reduce hit rate.
+  CARGO_INCREMENTAL: "0"
+  # Bound sccache size to avoid unbounded growth in the GitHub Actions cache.
+  SCCACHE_CACHE_SIZE: "10G"
 
 jobs:
   # ===========================================================================
@@ -70,9 +79,24 @@ jobs:
             ci:
               - '.github/workflows/ci.yml'
               - '.github/setup-ci.sh'
+              - '.clinerules'
+              - '.continue/rules/mcb.md'
+              - '.cursor/rules/mcb.mdc'
+              - '.gemini/styleguide.md'
               - 'Makefile'
+              - 'AGENTS.md'
+              - 'CLAUDE.md'
+              - 'CONVENTIONS.md'
+              - 'GEMINI.md'
+              - 'codex.md'
               - 'makefiles/*.mk'
+              - 'scripts/lib/agent_pointers.py'
               - 'scripts/lib/mcb.sh'
+              - 'scripts/lib/tests/test_agent_pointers.py'
+              - 'typos.toml'
+              - 'workspace_custom.mk'
+              - '.github/copilot-instructions.md'
+              - '.windsurfrules'
 
   classify:
     name: Classify PR
@@ -138,7 +162,32 @@ jobs:
         with:
           shared-key: ci-ubuntu-stable
           save-if: true
+          cache-on-failure: true
+      - uses: taiki-e/install-action@v2 # prebuilt typos-cli
+        with:
+          tool: typos
+      - run: typos
       - run: make check WHAT=lint
+
+  agent-pointers:
+    name: Agent Pointer Sync
+    timeout-minutes: 5
+    needs: [changes, classify]
+    if: |
+      (needs.changes.outputs.docs == 'true' || needs.changes.outputs.ci == 'true') &&
+      ((needs.classify.outputs.run_full == 'true' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch') ||
+      needs.classify.outputs.run_simplified == 'true')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Manual checkout
+        run: |
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Verify generated agent pointers
+        run: make gen-agent-pointers CHECK=1
 
   audit:
     name: Security Audit
@@ -162,7 +211,8 @@ jobs:
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
-          save-if: false
+          save-if: true
+          cache-on-failure: true
       - run: make check WHAT=audit
 
   validate-docs:
@@ -185,11 +235,13 @@ jobs:
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
+      - uses: ./.github/actions/native-deps
       - run: |
           sudo apt-get update
           sudo apt-get install -y nodejs npm
           npm install -g markdownlint-cli
-      - run: make docs WHAT=validate QUICK=1
+      - run: make build WHAT=docs ACT=check
+      - run: make build WHAT=docs ACT=validate QUICK=1
 
   docs-diagrams:
     name: Generate Diagrams
@@ -248,7 +300,8 @@ jobs:
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
-          save-if: false
+          save-if: true
+          cache-on-failure: true
       - name: Cache fastembed models
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -256,28 +309,10 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
-        shell: bash
-        run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+      - uses: ./.github/actions/warm-fastembed
+      - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
+        with:
+          tool: nextest
       - name: Startup Smoke (DDL/Init)
         run: make test SCOPE=startup THREADS=4
         env:
@@ -300,7 +335,12 @@ jobs:
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch')
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
+    # Per-leg timeout: macOS/beta finish in ~10-25min (fail-fast at 120). Windows
+    # nextest is process-per-test and the full 1715-test suite runs ~115min+ even
+    # with a warm rust-cache (process-spawn overhead, not compile) — at 120 it was
+    # cancelled mid-run on consecutive runs. 240 gives the Windows leg headroom to
+    # complete the full suite (coverage stays universal across platforms).
+    timeout-minutes: ${{ matrix.os == 'windows-latest' && 240 || 120 }}
     continue-on-error: ${{ matrix.rust == 'beta' }}
     strategy:
       fail-fast: false
@@ -346,23 +386,23 @@ jobs:
         env:
           ORT_VERSION: "1.23.2"
         run: |
-          $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
-          $zip = "$env:TEMP\onnxruntime.zip"
-          $dest = "$env:TEMP\onnxruntime"
-          Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          Expand-Archive $zip -DestinationPath $dest -Force
-          $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
-          $ortLib = "$ortDir\lib"
-          Add-Content -Path $env:GITHUB_PATH -Value $ortLib
-          Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
-          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: ${{ matrix.rust }}
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
-          save-if: false
+          # Per-OS cache that SAVES — previously test-cross had no shared-key and
+          # save-if:false, so macOS/Windows/beta rebuilt 100% cold every run (the
+          # 60-min timeout cause).
+          shared-key: ci-cross-${{ matrix.os }}
+          save-if: true
+          cache-on-failure: true
       - name: Cache FastEmbed models
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -370,28 +410,10 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
-        shell: bash
-        run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+      - uses: ./.github/actions/warm-fastembed
+      - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
+        with:
+          tool: nextest
       - name: Run tests
         run: make test THREADS=4
         env:
@@ -419,7 +441,8 @@ jobs:
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
-          save-if: false
+          save-if: true
+          cache-on-failure: true
       - name: Architecture-only validators (fast gate)
         run: >-
           cargo run --package mcb -- validate .
@@ -450,7 +473,8 @@ jobs:
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
           shared-key: ci-ubuntu-stable
-          save-if: false
+          save-if: true
+          cache-on-failure: true
       - name: Cache fastembed models
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -458,28 +482,10 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
-        shell: bash
-        run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+      - uses: ./.github/actions/warm-fastembed
+      - uses: taiki-e/install-action@v2 # prebuilt binary; make test auto-uses nextest
+        with:
+          tool: nextest
       - run: make test SCOPE=golden THREADS=2
         env:
           FASTEMBED_CACHE_DIR: .cache/mcb/fastembed
@@ -494,7 +500,10 @@ jobs:
       github.event_name == 'workflow_dispatch') &&
       needs.classify.outputs.is_fork == 'false'
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # 90 (not 60): tarpaulin recompiles the workspace with its own instrumented
+    # RUSTFLAGS in a separate target-dir, so the cold seeding run exceeds 60 min.
+    # Measured: a 60-min cap cancelled it mid-run before its cache could save.
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -506,8 +515,12 @@ jobs:
           toolchain: stable
       - uses: Swatinem/rust-cache@c19371144df3bb44fab255c43d04cbc2ab54d1c4 # v2.9.1
         with:
-          shared-key: ci-ubuntu-stable
-          save-if: false
+          # Coverage uses tarpaulin (RUSTFLAGS --cfg=tarpaulin -Clink-dead-code) which
+          # can't reuse the normal build cache — isolate it on its own key + saver so
+          # it doesn't thrash the lint/test cache.
+          shared-key: ci-coverage
+          save-if: true
+          cache-on-failure: true
       - name: Cache fastembed models (coverage)
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -515,28 +528,7 @@ jobs:
           key: fastembed-${{ runner.os }}-allminilml6v2-v1
           restore-keys: |
             fastembed-${{ runner.os }}-
-      - name: Pre-download FastEmbed model
-        shell: bash
-        run: |
-          if [ ! -d ".cache/mcb/fastembed/models--Qdrant--all-MiniLM-L6-v2-onnx" ]; then
-            echo "Cache miss — downloading FastEmbed model..."
-            PYTHON=$(command -v python3 || command -v python)
-            "$PYTHON" -m venv .venv-fastembed
-            VENV_PY=".venv-fastembed/bin/python"
-            [ -x "$VENV_PY" ] || VENV_PY=".venv-fastembed/Scripts/python"
-            "$VENV_PY" -m pip install --quiet huggingface_hub
-            for attempt in 1 2 3 4 5; do
-              if "$VENV_PY" -c "
-          from huggingface_hub import snapshot_download
-          snapshot_download('Qdrant/all-MiniLM-L6-v2-onnx', cache_dir='.cache/mcb/fastembed')
-          "; then break; fi
-              [ "$attempt" -eq 5 ] && { echo 'FastEmbed download failed after 5 attempts' >&2; exit 1; }
-              echo "download attempt $attempt failed (likely HF 429); backing off $((attempt*20))s..."
-              sleep $((attempt * 20))
-            done
-          else
-            echo "FastEmbed model cache restored."
-          fi
+      - uses: ./.github/actions/warm-fastembed
       - name: Run coverage
         run: make check WHAT=coverage THREADS=4
         env:
@@ -596,37 +588,22 @@ jobs:
           PROTOC_VERSION: "29.3"
           PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
         run: |
-          $base = "https://github.com/protocolbuffers/protobuf/releases/download"
-          $url = "$base/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
-          $zip = "$env:TEMP\protoc.zip"
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
-          if ($hash -ne $env:PROTOC_SHA256) {
-            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
-          }
-          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
-          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
-      - name: Install ONNX Runtime (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
-        env:
-          ORT_VERSION: "1.23.2"
-        run: |
-          $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
-          $zip = "$env:TEMP\onnxruntime.zip"
-          $dest = "$env:TEMP\onnxruntime"
-          Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
-          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
-          Expand-Archive $zip -DestinationPath $dest -Force
-          $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
-          $ortLib = "$ortDir\lib"
-          Add-Content -Path $env:GITHUB_PATH -Value $ortLib
-          Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
-          Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"
+          git clone --depth 1 https://github.com/${{ github.repository }}.git .
+          git fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +${{ github.sha }}:refs/remotes/origin/temp
+          git checkout ${{ github.sha }}
+      - name: Checkout submodules
+        run: git submodule update --init --recursive
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
           targets: ${{ matrix.target }}
+      - uses: ./.github/actions/native-deps
+      - uses: Swatinem/rust-cache@779680da715d629ac1d338a641029a2f4372abb5 # v2.8.2
+        with:
+          shared-key: ci-release-${{ matrix.os }}
+          save-if: true
+          cache-on-failure: true
       - run: make build RELEASE=1
       - name: Create dist directory
         run: mkdir -p dist
@@ -660,6 +637,7 @@ jobs:
       - changes
       - classify
       - lint
+      - agent-pointers
       - test-linux
       - test-cross
       - validate
@@ -676,6 +654,7 @@ jobs:
           RUN_FULL: ${{ needs.classify.outputs.run_full }}
           RUN_SIMPLIFIED: ${{ needs.classify.outputs.run_simplified }}
           LINT_RESULT: ${{ needs.lint.result }}
+          AGENT_POINTERS_RESULT: ${{ needs.agent-pointers.result }}
           TEST_LINUX_RESULT: ${{ needs.test-linux.result }}
           TEST_CROSS_RESULT: ${{ needs.test-cross.result }}
           VALIDATE_RESULT: ${{ needs.validate.result }}
@@ -690,6 +669,7 @@ jobs:
           echo ""
           echo "=== Job Results ==="
           echo "Lint:          $LINT_RESULT"
+          echo "Agent Pointers: $AGENT_POINTERS_RESULT"
           echo "Test Linux:    $TEST_LINUX_RESULT"
           echo "Test Cross:    $TEST_CROSS_RESULT"
           echo "Validate:      $VALIDATE_RESULT"
@@ -702,7 +682,7 @@ jobs:
           if [[ "$RUN_SIMPLIFIED" == "true" ]]; then
             echo "=== Simplified Suite Policy (Draft/Bot PR) ==="
             FAILED=0
-            for job in LINT_RESULT TEST_LINUX_RESULT VALIDATE_RESULT; do
+            for job in LINT_RESULT AGENT_POINTERS_RESULT TEST_LINUX_RESULT VALIDATE_RESULT; do
               result="${!job}"
               if [[ "$result" != "success" && "$result" != "skipped" ]]; then
                 echo "✗ $job: $result"
@@ -720,8 +700,13 @@ jobs:
           if [[ "$RUN_FULL" == "true" ]]; then
             echo "=== Full Suite Policy (Human Ready PR) ==="
             FAILED=0
-            for job in LINT_RESULT TEST_LINUX_RESULT TEST_CROSS_RESULT \
-                       VALIDATE_RESULT AUDIT_RESULT GOLDEN_RESULT COVERAGE_RESULT \
+            # Coverage is ADVISORY, not required: it is a metric (not a correctness
+            # gate) and cargo-tarpaulin's default ptrace engine intermittently aborts
+            # with "Test failed during run" on multi-threaded/tokio test binaries even
+            # when every test passes. Correctness is already enforced by the gates
+            # below. Root-cause engine fix tracked in mcb-xgji; advisory policy mcb-xku4.
+            for job in LINT_RESULT AGENT_POINTERS_RESULT TEST_LINUX_RESULT TEST_CROSS_RESULT \
+                       VALIDATE_RESULT AUDIT_RESULT GOLDEN_RESULT \
                        RELEASE_BUILD_RESULT; do
               result="${!job}"
               if [[ "$result" != "success" && "$result" != "skipped" ]]; then
@@ -730,12 +715,16 @@ jobs:
               fi
             done
 
+            if [[ "$COVERAGE_RESULT" != "success" && "$COVERAGE_RESULT" != "skipped" ]]; then
+              echo "⚠ Coverage: $COVERAGE_RESULT (advisory — does not block merge; see mcb-xku4)"
+            fi
+
             if [[ $FAILED -eq 1 ]]; then
               echo "✗ Full suite check failed"
               exit 1
             fi
 
-            echo "✓ Full suite — all required checks passed"
+            echo "✓ Full suite — all required checks passed (coverage advisory)"
             exit 0
           fi
 
@@ -783,6 +772,7 @@ jobs:
         uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
           toolchain: stable
+      - uses: mozilla-actions/sccache-action@v0.0.9
       - name: Autobuild
         uses: github/codeql-action/autobuild@e4fba868fa4b1b91e1fdab776edc8cfbe6e9fb81 # v3.28.13
       - name: Perform CodeQL Analysis

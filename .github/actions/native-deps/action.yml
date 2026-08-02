@@ -1,0 +1,53 @@
+---
+# SSOT for native build dependencies (protoc + ONNX Runtime), cross-platform.
+# Replaces the Unix `setup-ci.sh` call plus the Windows protoc/ONNX PowerShell
+# blocks that were copy-pasted across ci.yml (test-cross, release-build) and
+# release.yml. One definition, used everywhere.
+name: Native build dependencies
+description: Install protoc and ONNX Runtime for the current OS (Unix via setup-ci.sh, Windows via PowerShell).
+inputs:
+  setup-flags:
+    description: Extra flags forwarded to .github/setup-ci.sh on Unix (e.g. --install-audit).
+    required: false
+    default: ""
+runs:
+  using: composite
+  steps:
+    - name: Install dependencies (Unix)
+      if: runner.os != 'Windows'
+      shell: bash
+      run: bash .github/setup-ci.sh ${{ inputs.setup-flags }}
+    - name: Install protoc (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        PROTOC_VERSION: "29.3"
+        PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
+      run: |
+        $base = "https://github.com/protocolbuffers/protobuf/releases/download"
+        $url = "$base/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+        $zip = "$env:TEMP\protoc.zip"
+        Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+        $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+        if ($hash -ne $env:PROTOC_SHA256) {
+          throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
+        }
+        Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
+        Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
+    - name: Install ONNX Runtime (Windows)
+      if: runner.os == 'Windows'
+      shell: pwsh
+      env:
+        ORT_VERSION: "1.23.2"
+      run: |
+        $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
+        $zip = "$env:TEMP\onnxruntime.zip"
+        $dest = "$env:TEMP\onnxruntime"
+        Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
+        Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+        Expand-Archive $zip -DestinationPath $dest -Force
+        $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
+        $ortLib = "$ortDir\lib"
+        Add-Content -Path $env:GITHUB_PATH -Value $ortLib
+        Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"
+        Add-Content -Path $env:GITHUB_ENV -Value "PATH=$ortLib;$env:PATH"

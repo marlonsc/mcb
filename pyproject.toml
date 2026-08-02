@@ -1,27 +1,162 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mcb-scripts"
+version = "0.4.0"
+description = "Repository-local automation helpers for MCB"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "flext-core @ file:///home/marlonsc/flext/flext-core",
+    "flext-cli @ file:///home/marlonsc/flext/flext-cli",
+    "pydantic>=2.13.4",
+    "pydantic-settings>=2.14.2",
+    "structlog>=26.1.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "mypy>=1.20",
+    "pytest>=8.0",
+    "pyrefly>=1.0.0",
+    "pyright>=1.1.410",
+    "ruff>=0.15",
+]
+gitops = [
+    "hvac",
+    "kubernetes",
+    "kubernetes-validate",
+    "requests",
+    "ruamel.yaml",
+]
+
+[tool.setuptools]
+packages = []
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 88
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["B", "C4", "E", "F", "I", "SIM", "UP", "W"]
+ignore = ["E501"]
+
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.13"
+mypy_path = "scripts"
+files = [
+    "scripts/check",
+    "scripts/lib",
+    "scripts/qlty",
+]
+explicit_package_bases = true
+check_untyped_defs = true
+extra_checks = true
+follow_imports = "normal"
+ignore_missing_imports = true
+local_partial_types = true
+namespace_packages = true
+no_implicit_reexport = true
+plugins = ["pydantic.mypy"]
+strict_equality = true
+warn_redundant_casts = true
+warn_unreachable = true
+warn_unused_ignores = true
 warn_return_any = true
 warn_unused_configs = true
-mypy_path = "scripts"
-explicit_package_bases = true
-namespace_packages = true
-check_untyped_defs = true
-disallow_untyped_defs = false
+disallow_untyped_defs = true
+
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
 
 [[tool.mypy.overrides]]
 module = "qlty.*"
 disallow_untyped_defs = true
 
-[tool.pylint.master]
-# Add scripts to python path for pylint
-init-hook = 'import sys; sys.path.append("./scripts")'
+[[tool.mypy.overrides]]
+module = "lib.tests.*"
+ignore_errors = true
 
-[tool.pylint.format]
-max-line-length = 100
+# flext_core type stubs expose Result factory methods as returning the base
+# protocol type, so return-value checks fail for FlextResult-typed helpers.
+[[tool.mypy.overrides]]
+module = ["lib.agent_pointers", "lib.gitops"]
+ignore_errors = true
 
-[tool.pylint.messages_control]
-disable = [
-    "C0114", # missing-module-docstring
-    "C0115", # missing-class-docstring
-    "C0116", # missing-function-docstring
+[tool.pyright]
+include = ["scripts"]
+exclude = [
+    ".venv",
+    "target",
+    "node_modules",
+    "__pycache__",
+]
+extraPaths = ["scripts"]
+pythonPlatform = "Linux"
+pythonVersion = "3.13"
+typeCheckingMode = "strict"
+venv = ".venv"
+venvPath = "."
+reportMissingImports = "error"
+reportMissingModuleSource = "error"
+reportMissingTypeStubs = "none"
+reportPrivateUsage = "warning"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUntypedFunctionDecorator = "none"
+reportUnusedImport = "error"
+reportUnusedVariable = "error"
+
+[tool.pyrefly]
+disable-project-excludes-heuristics = true
+ignore-errors-in-generated-code = true
+project-includes = ["scripts/**/*.py*"]
+project-excludes = [
+    "**/.venv/**",
+    "**/__pycache__",
+    "**/__pyrefly_virtual__/**",
+    "**/node_modules",
+    "**/site-packages/**",
+    "**/target/**",
+    "**/venv/**",
+    ".venv/**",
+    "target/**",
+]
+python-version = "3.13"
+search-path = ["scripts"]
+skip-interpreter-query = true
+use-ignore-files = false
+
+[tool.pyrefly.errors]
+annotation-mismatch = "error"
+bad-argument-type = "error"
+bad-assignment = "error"
+bad-return = "error"
+implicit-any = "error"
+missing-import = "error"
+missing-attribute = "error"
+unannotated-parameter = "error"
+unannotated-return = "error"
+unknown-name = "error"
+
+[tool.pytest.ini_options]
+pythonpath = ["scripts"]
+testpaths = [
+    "scripts/lib/tests",
+    "scripts/qlty/tests",
+]
+
+[dependency-groups]
+dev = [
+    "code-review-graph[all]==2.3.6",
 ]

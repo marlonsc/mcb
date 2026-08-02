@@ -154,5 +154,14 @@ async fn migration_is_idempotent() -> TestResult {
 
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
     mcb_domain::registry::database::migrate_up(Box::new(db.clone()), None).await?;
+    let table_names = query_names(
+        &db,
+        "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'",
+    )
+    .await?;
+    assert!(
+        table_names.iter().any(|name| name == "seaql_migrations"),
+        "idempotent migration should leave migration metadata table, found: {table_names:?}"
+    );
     Ok(())
 }

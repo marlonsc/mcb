@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: [3, 6, 12, 13]
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -23,7 +23,7 @@ Accepted
 >
 > - ADR validation via automation.sh (100% compliance verification)
 > - mdbook integration for documentation publishing
-> - make docs commands for build/serve/check
+> - make build WHAT=docs commands for build/serve/check
 > - Structured ADR directory with README and graph
 
 ## Context
@@ -209,7 +209,7 @@ jobs:
 -   name: Link Validation
         run: cargo deadlinks
 -   name: Documentation Generation
-        run: make docs
+        run: make build WHAT=docs
 ```
 
 ## Success Metrics Tracking

@@ -1,91 +1,87 @@
 import { test, expect, Page } from '@playwright/test';
-import * as http from 'http';
+import * as path from 'path';
+import { callMcpTool, ensureE2eAdminAuth } from './helpers/mcp-auth';
+
+const fixturePath = path.resolve(process.cwd(), 'fixtures', 'sample_codebase');
+const browseCollection = `playwright-browse-${process.pid}`;
+const browseUrl = `/ui/browse?collection=${encodeURIComponent(browseCollection)}`;
+const sampleFiles = ['src/handlers.rs', 'src/main.rs', 'src/di.rs'];
+let authHeaders: Record<string, string>;
+
+function isSampleFilePath(filePath: string): boolean {
+  return sampleFiles.some(file => filePath === file || filePath.endsWith(`/${file}`));
+}
+
+async function waitForRenderedChunks(page: Page, minimum = 1): Promise<number> {
+  const deadline = Date.now() + 30000;
+  let count = 0;
+  while (Date.now() < deadline) {
+    count = await page.locator('[data-chunk-id]').count();
+    if (count >= minimum) {
+      return count;
+    }
+    await page.waitForTimeout(500);
+    await page.reload({ waitUntil: 'networkidle' });
+  }
+  expect(count).toBeGreaterThanOrEqual(minimum);
+  return count;
+}
+
+async function gotoBrowseWithChunks(page: Page, minimum = 1): Promise<number> {
+  await page.goto(browseUrl);
+  await page.waitForLoadState('networkidle');
+  return waitForRenderedChunks(page, minimum);
+}
 
 test.describe('MCB Browse UI - E2E Tests', () => {
   let page: Page;
 
   test.beforeAll(async ({ request }) => {
     test.setTimeout(120000); // 2 min — indexing can take a while
+    authHeaders = (await ensureE2eAdminAuth()).headers;
 
-    // Check if chunks are already indexed
-    const checkResp = await request.get('/chunks').catch(() => null);
-    if (checkResp?.ok()) {
-      const chunks = await checkResp.json().catch(() => []);
-      if (Array.isArray(chunks) && chunks.length > 0) return;
-    }
+    await callMcpTool('clear_index', {
+      path: fixturePath,
+      collection: browseCollection,
+    });
 
-    // Helper: POST to MCP endpoint, reads until first SSE data event or timeout
-    function mcpPost(body: string): Promise<string> {
-      return new Promise((resolve) => {
-        const data = Buffer.from(body, 'utf8');
-        const req = http.request({
-          hostname: 'localhost',
-          port: 18080,
-          path: '/mcp',
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json, text/event-stream',
-            'Content-Length': data.length,
-          },
-        }, (res) => {
-          let acc = '';
-          res.setEncoding('utf8');
-          res.on('data', (chunk: string) => {
-            acc += chunk;
-            if (acc.includes('\n\n')) { res.destroy(); resolve(acc); }
-          });
-          res.on('end', () => resolve(acc));
-          const timer = setTimeout(() => { res.destroy(); resolve(acc); }, 12000);
-          res.on('close', () => clearTimeout(timer));
-        });
-        req.on('error', () => resolve(''));
-        req.setTimeout(15000, () => { req.destroy(); resolve(''); });
-        req.write(data);
-        req.end();
-      });
-    }
+    await callMcpTool('index_repo', {
+      path: fixturePath,
+      collection: browseCollection,
+      extensions: ['rs'],
+    });
 
-    // 1. Initialize MCP session
-    await mcpPost(JSON.stringify({
-      jsonrpc: '2.0', id: 1, method: 'initialize',
-      params: { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'e2e-setup', version: '1.0' } },
-    }));
-
-    // 2. Clear stale hashes so incremental indexing doesn't skip files
-    await mcpPost(JSON.stringify({
-      jsonrpc: '2.0', id: 2, method: 'tools/call',
-      params: {
-        name: 'clear_index',
-        arguments: {},
-      },
-    }));
-
-    // 3. Trigger fresh indexing of fixture codebase
-    await mcpPost(JSON.stringify({
-      jsonrpc: '2.0', id: 3, method: 'tools/call',
-      params: {
-        name: 'index_repo',
-        arguments: {
-          extensions: ['rs', 'ts', 'js', 'py', 'go'],
-        },
-      },
-    }));
-
-    // 4. Poll /chunks until data appears (max 90 s)
+    // Poll the collection just indexed; unrelated existing chunks must not satisfy this setup.
+    let indexedChunks = 0;
+    let indexedFilePath = '';
     for (let attempt = 0; attempt < 45; attempt++) {
       await new Promise(r => setTimeout(r, 2000));
-      const r = await request.get('/chunks').catch(() => null);
+      const r = await request
+        .get(`/chunks?collection=${encodeURIComponent(browseCollection)}`, { headers: authHeaders })
+        .catch(() => null);
       if (r?.ok()) {
         const c = await r.json().catch(() => []);
-        if (Array.isArray(c) && c.length > 0) break;
+        const matchingChunk = Array.isArray(c)
+          ? c.find(chunk =>
+              typeof chunk?.file_path === 'string' &&
+              isSampleFilePath(chunk.file_path)
+            )
+          : undefined;
+        if (matchingChunk) {
+          indexedChunks = c.length;
+          indexedFilePath = matchingChunk.file_path;
+          break;
+        }
       }
     }
+    expect(indexedChunks).toBeGreaterThan(0);
+    expect(isSampleFilePath(indexedFilePath)).toBe(true);
   });
 
   test.beforeEach(async ({ browser }) => {
     page = await browser.newPage();
-    await page.goto('/ui/browse');
+    await page.setExtraHTTPHeaders(authHeaders);
+    await page.goto(browseUrl);
     await page.waitForLoadState('networkidle');
   });
 
@@ -95,11 +91,8 @@ test.describe('MCB Browse UI - E2E Tests', () => {
 
   test.describe('Suite 1: Keyboard Navigation', () => {
     test('should navigate between code chunks with j/k keys', async () => {
-      await page.goto('/ui/browse');
-      await page.waitForLoadState('networkidle');
-
-      const chunks = await page.locator('[data-chunk-id]').count();
-      test.skip(chunks === 0, 'No code chunks available in fixture data');
+      const chunks = await gotoBrowseWithChunks(page);
+      expect(chunks).toBeGreaterThan(0);
 
       const firstChunk = page.locator('[data-chunk-id]').first();
       await firstChunk.focus();
@@ -125,11 +118,8 @@ test.describe('MCB Browse UI - E2E Tests', () => {
     });
 
     test('should go to start with g key and end with G key', async () => {
-      await page.goto('/ui/browse');
-      await page.waitForLoadState('networkidle');
-
-      const chunks = await page.locator('[data-chunk-id]').count();
-      test.skip(chunks < 2, 'Need at least two chunks for navigation assertions');
+      const chunks = await gotoBrowseWithChunks(page, 2);
+      expect(chunks).toBeGreaterThanOrEqual(2);
 
       await page.keyboard.press('End');
       await page.waitForTimeout(100);
@@ -161,11 +151,10 @@ test.describe('MCB Browse UI - E2E Tests', () => {
     });
 
     test('should copy code with c key and dismiss with Esc', async () => {
-      await page.goto('/ui/browse');
-      await page.waitForLoadState('networkidle');
+      await gotoBrowseWithChunks(page);
 
       const firstChunk = page.locator('[data-chunk-id]').first();
-      test.skip((await firstChunk.count()) === 0, 'No chunks available for copy test');
+      await expect(firstChunk).toBeVisible();
       await firstChunk.focus();
 
       const codeContent = await firstChunk.textContent();
@@ -197,19 +186,17 @@ test.describe('MCB Browse UI - E2E Tests', () => {
     });
 
     test('should show visual feedback with ring highlight on active chunk', async () => {
-      await page.goto('/ui/browse');
-      await page.waitForLoadState('networkidle');
+      await gotoBrowseWithChunks(page);
 
       const firstChunk = page.locator('[data-chunk-id]').first();
-      test.skip((await firstChunk.count()) === 0, 'No chunks available for highlight test');
+      await expect(firstChunk).toBeVisible();
       await firstChunk.focus();
 
       await expect(firstChunk).toBeVisible();
     });
 
     test('should maintain keyboard navigation in dark mode', async () => {
-      await page.goto('/ui/browse');
-      await page.waitForLoadState('networkidle');
+      await gotoBrowseWithChunks(page);
 
       const themeToggle = page.locator('button[title="Toggle Theme"]');
       await themeToggle.click();
@@ -220,7 +207,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
       expect(['light', 'dark']).toContain(theme);
 
       const firstChunk = page.locator('[data-chunk-id]').first();
-      test.skip((await firstChunk.count()) === 0, 'No chunks available for keyboard test');
+      await expect(firstChunk).toBeVisible();
       await firstChunk.focus();
 
       await page.keyboard.press('j');
@@ -242,7 +229,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
 
   test.describe('Suite 2: Theme Toggle', () => {
     test('should cycle through themes: auto → light → dark → auto', async () => {
-      await page.goto('/ui/browse');
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
 
       const themeToggle = page.locator('button[title="Toggle Theme"]');
@@ -268,7 +255,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
     });
 
     test('should persist theme in localStorage and restore on reload', async () => {
-      await page.goto('/ui/browse');
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
 
       const themeToggle = page.locator('button[title="Toggle Theme"]');
@@ -290,7 +277,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
     });
 
     test('should apply correct CSS colors for light and dark modes', async () => {
-      await page.goto('/ui/browse');
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
 
       const body = page.locator('body');
@@ -314,11 +301,10 @@ test.describe('MCB Browse UI - E2E Tests', () => {
     });
 
     test('should change syntax highlighting colors with theme', async () => {
-      await page.goto('/ui/browse');
-      await page.waitForLoadState('networkidle');
+      await gotoBrowseWithChunks(page);
 
       const codeBlock = page.locator('[data-chunk-id]').first();
-      test.skip((await codeBlock.count()) === 0, 'No code blocks available for theme color test');
+      await expect(codeBlock).toBeVisible();
       const themeToggle = page.locator('button[title="Toggle Theme"]');
 
       const lightColor = await codeBlock.evaluate((el) => {
@@ -339,9 +325,10 @@ test.describe('MCB Browse UI - E2E Tests', () => {
     test('should respect prefers-color-scheme in auto mode', async ({ browser }) => {
       const darkContext = await browser.newContext({
         colorScheme: 'dark',
+        extraHTTPHeaders: authHeaders,
       });
       const darkPage = await darkContext.newPage();
-      await darkPage.goto('/ui/browse');
+      await darkPage.goto(browseUrl);
       await darkPage.waitForLoadState('networkidle');
 
       const isDarkMode = await darkPage.evaluate(() => {
@@ -363,7 +350,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
   test.describe('Suite 3: Responsive Layout', () => {
     test('should display 4-column grid on desktop (1920px)', async () => {
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await page.goto('/ui/browse');
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
 
       const grid = page.locator('#collections-grid');
@@ -382,7 +369,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
 
     test('should display 2-column grid on tablet (768px)', async () => {
       await page.setViewportSize({ width: 768, height: 1024 });
-      await page.goto('/ui/browse');
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
 
       const grid = page.locator('#collections-grid');
@@ -401,7 +388,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
 
     test('should display 1-column stacked layout on mobile (375px)', async () => {
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.goto('/ui/browse');
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
 
       const grid = page.locator('#collections-grid');
@@ -428,7 +415,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
 
       for (const bp of breakpoints) {
         await page.setViewportSize({ width: bp.width, height: bp.height });
-        await page.goto('/ui/browse');
+        await page.goto(browseUrl);
         await page.waitForLoadState('networkidle');
 
         const horizontalOverflow = await page.evaluate(() => {
@@ -441,7 +428,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
 
     test('should scale font sizes appropriately on mobile', async () => {
       await page.setViewportSize({ width: 1920, height: 1080 });
-      await page.goto('/ui/browse');
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
 
       const desktopFontSize = await page.locator('h1').evaluate((el) => {
@@ -464,7 +451,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
 
     test('should handle orientation changes (landscape/portrait on mobile)', async () => {
       await page.setViewportSize({ width: 375, height: 667 });
-      await page.goto('/ui/browse');
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
 
       let horizontalOverflow = await page.evaluate(() => {
@@ -491,7 +478,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
 
       for (const width of breakpoints) {
         await page.setViewportSize({ width, height: 1080 });
-        await page.goto('/ui/browse');
+        await page.goto(browseUrl);
         await page.waitForLoadState('networkidle');
 
         const textElements = page.locator('p, h1, h2, h3, span');
@@ -512,7 +499,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
 
   test.describe('Suite 4: Error Handling & Performance', () => {
     test('should handle network errors gracefully', async () => {
-      await page.goto('/ui/browse');
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
 
       await page.context().setOffline(true);
@@ -528,7 +515,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
 
     test('should load page in under 2 seconds', async () => {
       const startTime = Date.now();
-      await page.goto('/ui/browse');
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
       const loadTime = Date.now() - startTime;
 
@@ -536,7 +523,7 @@ test.describe('MCB Browse UI - E2E Tests', () => {
     });
 
     test('should handle missing collections gracefully', async () => {
-      await page.goto('/ui/browse');
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
 
       const grid = page.locator('#collections-grid');
@@ -553,11 +540,11 @@ test.describe('MCB Browse UI - E2E Tests', () => {
       ).toBe(true);
     });
 
-    test('should capture screenshot on failure', async () => {
-      await page.goto('/ui/browse');
+    test('should capture screenshot on failure', async ({}, testInfo) => {
+      await page.goto(browseUrl);
       await page.waitForLoadState('networkidle');
 
-      const screenshot = await page.screenshot({ path: 'e2e/screenshots/browse-ui.png' });
+      const screenshot = await page.screenshot({ path: testInfo.outputPath('browse-ui.png') });
       expect(screenshot).toBeTruthy();
     });
   });

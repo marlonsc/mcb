@@ -40,6 +40,21 @@ fn write_source_file(root: &Path, content: &str) -> io::Result<()> {
     Ok(())
 }
 
+fn write_named_source_file(root: &Path, relative_path: &str, content: &str) -> io::Result<()> {
+    let src_dir = root.join("crates/demo/src");
+    fs::create_dir_all(&src_dir)?;
+    fs::write(
+        root.join("crates/demo/Cargo.toml"),
+        "[package]\nname = \"demo\"\nversion = \"0.1.0\"\nedition = \"2024\"\n",
+    )?;
+    let source = src_dir.join(relative_path);
+    if let Some(parent) = source.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    fs::write(source, content)?;
+    Ok(())
+}
+
 fn write_rule(root: &Path, file_name: &str, content: &str) -> io::Result<()> {
     let rules_dir = root.join("rules");
     fs::create_dir_all(&rules_dir)?;
@@ -196,4 +211,27 @@ ast_query: "(function_item name: (identifier) @name"
 
     let err = result.expect_err("expected validation to fail for invalid tree-sitter query");
     assert!(err.to_string().contains("Invalid tree-sitter query"));
+}
+
+#[rstest]
+fn config_manager_port_is_not_scattered_configuration() -> io::Result<()> {
+    let temp = TempDir::new()?;
+    let root = temp.path();
+    write_workspace_manifest(root)?;
+    write_named_source_file(
+        root,
+        "ports/providers/config_manager.rs",
+        "pub trait ConfigManager { fn load(&self) -> String; }\n",
+    )?;
+
+    let violations = run_named_validator(root, "declarative_rules")
+        .map_err(|e| io::Error::other(e.to_string()))?;
+
+    assert!(
+        violations
+            .iter()
+            .all(|violation| violation.id() != "ORG022"),
+        "config_manager.rs under ports/providers is a domain port contract, not a scattered config file"
+    );
+    Ok(())
 }

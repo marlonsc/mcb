@@ -19,8 +19,8 @@ async fn setup() -> TestResult<DatabaseConnection> {
 /// Insert test observations with specific timestamps.
 async fn insert_observation(db: &DatabaseConnection, id: &str, created_at: i64) -> TestResult {
     let sql = format!(
-        "INSERT INTO observations (id, project_id, content, content_hash, tags, observation_type, metadata, created_at) \
-         VALUES ('{id}', 'proj-1', 'content-{id}', 'hash-{id}', '[]', 'code', '{{}}', {created_at})"
+        "INSERT INTO observations (id, org_id, project_id, content, content_hash, tags, observation_type, metadata, created_at) \
+         VALUES ('{id}', 'org-1', 'proj-1', 'content-{id}', 'hash-{id}', '[]', 'code', '{{}}', {created_at})"
     );
     db.execute_unprepared(&sql).await?;
     Ok(())

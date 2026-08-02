@@ -12,6 +12,7 @@ use super::responses::{BranchSearchMatch, BranchSearchResponse, repo_path};
 use crate::args::VcsArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::utils::args::resolve_limit;
 use crate::utils::mcp::tool_error;
 use mcb_utils::constants::limits::DEFAULT_VCS_SEARCH_LIMIT;
 
@@ -75,7 +76,7 @@ pub async fn search_branch(
             return Ok(to_contextual_tool_error(e));
         }
     };
-    let limit = args.limit.unwrap_or(DEFAULT_VCS_SEARCH_LIMIT as u32) as usize;
+    let limit = resolve_limit(args.limit, DEFAULT_VCS_SEARCH_LIMIT as u32);
     let query_lower = query.to_lowercase();
     let mut matches = Vec::new();
     for file_path in files {

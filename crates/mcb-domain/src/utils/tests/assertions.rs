@@ -116,23 +116,26 @@ pub fn assert_violations_exact<V: std::fmt::Debug>(
         .map(|v| normalize_path(&format!("{v:?}")))
         .collect();
 
-    let missing: Vec<String> = expected
-        .iter()
-        .filter(|exp| !debug_strs.iter().any(|d| debug_matches_expected(d, exp)))
-        .map(|(suffix, line, msg)| format!("  {}:{line} {msg:?}", normalize_path(suffix)))
-        .collect();
+    let mut matched_debug_indexes = vec![false; debug_strs.len()];
+    let mut missing = Vec::new();
 
-    // A count mismatch is the only way to have unexpected violations.
-    let extras: Vec<String> = if violations.len() == expected.len() {
-        Vec::new()
-    } else {
-        debug_strs
-            .iter()
-            .enumerate()
-            .filter(|(_, d)| !expected.iter().any(|exp| debug_matches_expected(d, exp)))
-            .map(|(i, d)| format!("  [{i}] {d}"))
-            .collect()
-    };
+    for exp in expected {
+        if let Some(index) = debug_strs.iter().enumerate().find_map(|(index, debug)| {
+            (!matched_debug_indexes[index] && debug_matches_expected(debug, exp)).then_some(index)
+        }) {
+            matched_debug_indexes[index] = true;
+        } else {
+            let (suffix, line, msg) = exp;
+            missing.push(format!("  {}:{line} {msg:?}", normalize_path(suffix)));
+        }
+    }
+
+    let extras: Vec<String> = debug_strs
+        .iter()
+        .enumerate()
+        .filter(|(index, _)| !matched_debug_indexes[*index])
+        .map(|(index, debug)| format!("  [{index}] {debug}"))
+        .collect();
 
     assert!(
         missing.is_empty() && extras.is_empty(),

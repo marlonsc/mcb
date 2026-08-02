@@ -9,6 +9,7 @@ target/
 dist/
 exports/
 *.rlib
+/clippy_*.json
 
 # ---------------------------------------------------------------------------
 # IDE / Editor files
@@ -43,7 +44,6 @@ oracle/
 .oracle/
 **/oracle/
 **/.oracle/
-GEMINI.md
 .check_*
 .test_*
 .mcp.json
@@ -88,7 +88,7 @@ arbor-graph.json
 # AI / Agent — tracked config files (DO NOT add these to ignore)
 # ---------------------------------------------------------------------------
 # AGENTS.md          — agent configuration index
-# CLAUDE.md          — single source of truth
+# CLAUDE.md          — thin pointer to AGENTS.md
 # CONVENTIONS.md     — Aider conventions pointer
 # codex.md           — Codex pointer
 # .clinerules        — Cline pointer
@@ -190,14 +190,21 @@ coverage/
 # Database files
 # ---------------------------------------------------------------------------
 *.db
+*.db-shm
+*.db-wal
 *.sqlite
+*.sqlite-shm
+*.sqlite-wal
 *.sqlite3
+*.sqlite3-shm
+*.sqlite3-wal
 
 # ---------------------------------------------------------------------------
 # Environment / secrets
 # ---------------------------------------------------------------------------
 .env
 .env.local
+.venv/
 .envrc
 .direnv/
 
@@ -207,6 +214,8 @@ coverage/
 node_modules/
 .fastembed_cache/
 .cache/
+.gitops-cache/
+*.egg-info/
 __pycache__/
 *.pyc
 *.pyo
@@ -218,8 +227,6 @@ __pycache__/
 book/
 docs/generated/
 docs/reports/
-docs/plans/
-!docs/adr/archive/*
 docs/**/*backup*
 docs/**/*bak*
 docs/**/*old*
@@ -270,3 +277,15 @@ reference/
 # Archived files (moved out of project, kept locally for reference)
 # ---------------------------------------------------------------------------
 archive/
+!docs/archive/
+!docs/archive/**
+!docs/adr/archive/
+!docs/adr/archive/**
+
+# Git worktrees (created transiently for cross-branch work)
+.worktrees/
+
+# Beads / Dolt files (added by bd init)
+.dolt/
+.beads-credential-key
+.beads/proxieddb/
