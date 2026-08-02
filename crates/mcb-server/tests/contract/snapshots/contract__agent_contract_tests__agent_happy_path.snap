@@ -4,27 +4,27 @@ expression: "normalize_tool_call_ids(snapshot_payload(&request, status, &respons
 ---
 {
   "request": {
-    "id": 1,
     "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
+      "name": "log_tool_call",
       "arguments": {
         "data": {
-          "duration_ms": 5,
+          "tool_name": "search",
           "success": true,
-          "tool_name": "search"
+          "duration_ms": 5
         }
-      },
-      "name": "log_tool_call"
-    }
+      }
+    },
+    "id": 1
   },
+  "status": 200,
   "response": {
+    "jsonrpc": "2.0",
     "error": {
       "code": -32602,
       "message": "session_id is required (not resolved from context)"
     },
-    "id": 1,
-    "jsonrpc": "2.0"
-  },
-  "status": 200
+    "id": 1
+  }
 }

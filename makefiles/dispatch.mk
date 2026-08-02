@@ -75,6 +75,8 @@ define DISPATCH_CHECK
   udeps)    command -v cargo-udeps >/dev/null 2>&1 || cargo install cargo-udeps; cargo +nightly udeps --workspace ;; \
   coverage) cargo tarpaulin --out Lcov --output-dir coverage --exclude-files 'crates/*/tests/integration/*' --exclude-files 'crates/*/tests/admin/*' --timeout 300 ;; \
   qlty)     mkdir -p docs/reports; ./scripts/analyze_qlty.py --scan --check --summary --markdown docs/reports/qlty-check-REPORTS.md; ./scripts/analyze_qlty.py --scan --smells --summary --markdown docs/reports/qlty-smells-REPORTS.md ;; \
+  hooks)    bash scripts/lib/tests/test-hooks.sh ;; \
+  guard)    bash $(MCB_SH) guard ;; \
   ""|all)   cargo fmt --all -- --check && $(MAKE) lint-impl && $(MAKE) test && bash $(MCB_SH) validate $(if $(filter 1,$(QUICK)),quick,full) ;; \
   *)        printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_check)\n" "$(WHAT)" >&2; exit 2 ;; \
 esac
@@ -202,7 +204,7 @@ define DISPATCH_GIT
   log)        git log --oneline -$(or $(LOG_N),10) ;; \
   show)       git show --stat $(or $(REF),HEAD) ;; \
   add)        bash $(MCB_SH) files-safe "$(FILES)"; $(call require_var,FILES); git add $(FILES) ;; \
-  commit)     $(call require_var,MSG); bash $(MCB_SH) files-safe "$(FILES)"; [ -n "$(FILES)" ] && git add $(FILES) || true; $(call gate,commit); git commit -m "$(MSG)" ;; \
+  commit)     $(call require_var,MSG); bash $(MCB_SH) files-safe "$(FILES)"; $(call gate,commit); [ -n "$(FILES)" ] && git add $(FILES) || true; git commit -m "$(MSG)" ;; \
   push)       $(call gate,push $(BRANCH)); git push origin $(BRANCH) ;; \
   pull)       git pull origin $(BRANCH) ;; \
   branch)     [ -z "$(REF)" ] && git branch -a || git branch $(REF) $(BASE) ;; \
@@ -247,10 +249,10 @@ endef
 # --- setup -------------------------------------------------------------------
 define DISPATCH_SETUP
 @case "$(WHAT)" in \
-  hooks)     cp scripts/hooks/pre-commit .git/hooks/pre-commit; chmod +x .git/hooks/pre-commit; echo "✓ pre-commit hook installed" ;; \
+  hooks)     bash $(MCB_SH) install-hooks ;; \
   tools)     cargo install cargo-udeps cargo-audit cargo-tarpaulin 2>/dev/null || true; echo "✓ tools installed" ;; \
   adr)       ./scripts/setup/install-adr-tools.sh ;; \
-  ""|all)    cp scripts/hooks/pre-commit .git/hooks/pre-commit; chmod +x .git/hooks/pre-commit; echo "✓ pre-commit hook installed"; cargo install cargo-udeps cargo-audit cargo-tarpaulin 2>/dev/null || true; ./scripts/setup/install-adr-tools.sh 2>/dev/null || true; echo "✓ setup complete" ;; \
+  ""|all)    bash $(MCB_SH) install-hooks; cargo install cargo-udeps cargo-audit cargo-tarpaulin 2>/dev/null || true; ./scripts/setup/install-adr-tools.sh 2>/dev/null || true; echo "✓ setup complete" ;; \
   *)         printf "ERRO: WHAT '%s' invalido. Validos: $(WHATS_setup)\n" "$(WHAT)" >&2; exit 2 ;; \
 esac
 endef
