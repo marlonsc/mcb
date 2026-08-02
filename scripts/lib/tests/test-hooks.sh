@@ -11,6 +11,7 @@ SUB_SOURCE="$FIXTURE/sub-source"
 SUB_ARCHIVE="$FIXTURE/sub-archive"
 BIN="$FIXTURE/bin"
 MAKE_LOG="$FIXTURE/make.log"
+CARGO_LOG="$FIXTURE/cargo.log"
 
 git init -q "$PRIMARY"
 git -C "$PRIMARY" config user.email test@example.com
@@ -57,12 +58,53 @@ printf '%s|%s\n' "\$PWD" "\$*" >> "$MAKE_LOG"
 EOF
 chmod +x "$BIN/make"
 
+cat > "$BIN/cargo" <<EOF
+#!/usr/bin/env bash
+printf '%s\n' "\$*" >> "$CARGO_LOG"
+EOF
+chmod +x "$BIN/cargo"
+
+cat > "$BIN/timeout" <<'EOF'
+#!/usr/bin/env bash
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --signal=*|--kill-after=*|*[smhd]) shift ;;
+    *) break ;;
+  esac
+done
+exec "$@"
+EOF
+chmod +x "$BIN/timeout"
+
 (cd "$PRIMARY" && PATH="$BIN:$PATH" "$EXPECTED_HOOKS/pre-commit")
 (cd "$LINKED" && PATH="$BIN:$PATH" "$EXPECTED_HOOKS/pre-commit")
-test "$(grep -c 'check WHAT=lint' "$MAKE_LOG")" -eq 2
-test "$(grep -c 'check WHAT=validate QUICK=1' "$MAKE_LOG")" -eq 2
-grep -q "^$PRIMARY|check WHAT=lint$" "$MAKE_LOG"
-grep -q "^$LINKED|check WHAT=lint$" "$MAKE_LOG"
+test "$(grep -c 'check WHAT=staged' "$MAKE_LOG")" -eq 2
+if grep -qE 'check WHAT=(lint|validate)' "$MAKE_LOG"; then
+  printf 'pre-commit invoked an unrelated full-workspace gate\n' >&2
+  exit 1
+fi
+grep -q "^$PRIMARY|check WHAT=staged$" "$MAKE_LOG"
+grep -q "^$LINKED|check WHAT=staged$" "$MAKE_LOG"
+
+: > "$MAKE_LOG"
+(cd "$PRIMARY" && PATH="$BIN:$PATH" "$EXPECTED_HOOKS/pre-push")
+grep -q "^$PRIMARY|check WHAT=all$" "$MAKE_LOG"
+
+mkdir -p "$PRIMARY/crates/sample/src"
+cat > "$PRIMARY/crates/sample/Cargo.toml" <<'EOF'
+[package]
+name = "sample"
+version = "0.1.0"
+EOF
+printf 'pub fn staged() {}\n' > "$PRIMARY/crates/sample/src/lib.rs"
+git -C "$PRIMARY" add crates/sample
+(cd "$PRIMARY" && PATH="$BIN:$PATH" bash scripts/lib/mcb.sh check-staged)
+grep -q '^fmt -p sample -- --check$' "$CARGO_LOG"
+grep -q '^clippy -p sample --all-targets -- -D warnings$' "$CARGO_LOG"
+if grep -q -- '--workspace' "$CARGO_LOG"; then
+  printf 'staged crate check expanded to unrelated workspace scope\n' >&2
+  exit 1
+fi
 
 git init -q "$SUB_SOURCE"
 git -C "$SUB_SOURCE" config user.email test@example.com

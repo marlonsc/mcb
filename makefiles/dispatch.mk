@@ -70,6 +70,7 @@ define DISPATCH_CHECK
 @case "$(WHAT)" in \
   fmt)      cargo fmt --all -- --check ;; \
   lint)     cargo fmt --all -- --check && cargo clippy --all-targets -- -D warnings ;; \
+  staged)   bash $(MCB_SH) check-staged ;; \
   validate) bash $(MCB_SH) validate $(if $(filter 1,$(QUICK)),quick,full) ;; \
   audit)    cargo audit $(foreach i,$(MCB_AUDIT_IGNORES),--ignore $(i)) && $(MAKE) check WHAT=udeps ;; \
   udeps)    command -v cargo-udeps >/dev/null 2>&1 || cargo install cargo-udeps; cargo +nightly udeps --workspace ;; \

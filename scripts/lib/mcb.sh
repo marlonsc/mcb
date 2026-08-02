@@ -125,6 +125,38 @@ mcb_validate() {  # $1 = "quick" | "full"
 # FILES word-split safety (ported from cosmos Makefile:80): refuse shell metachars.
 mcb_files_safe() { printf '%s' "${1:-}" | grep -qE '[;|&`$()<>]' && mcb_die "$EX_PREREQ" "FILES contem metacaractere de shell perigoso; liste apenas caminhos"; return 0; }
 
+mcb_check_staged() {
+  local crate_dir deadline=60 manifest package packages=""
+  local staged
+
+  mcb_require_cmd timeout
+  staged="$(git -C "$MCB_ROOT" diff --cached --name-only --diff-filter=ACMR)"
+  [ -n "$staged" ] || { mcb_ok "staged check: no staged paths"; return 0; }
+
+  if printf '%s\n' "$staged" | grep -qE '^Cargo\.(toml|lock)$'; then
+    packages="--workspace"
+  else
+    while IFS= read -r path; do
+      case "$path" in
+        crates/*/src/*.rs)
+          crate_dir="$(printf '%s\n' "$path" | cut -d/ -f1-2)"
+          manifest="$crate_dir/Cargo.toml"
+          [ -f "$MCB_ROOT/$manifest" ] || continue
+          package="$(sed -n '/^\[package\]/,/^\[/s/^name = "\([^"]*\)"/\1/p' "$MCB_ROOT/$manifest" | head -1)"
+          [ -n "$package" ] || mcb_die "$EX_PREREQ" "package name ausente em '$manifest'"
+          case " $packages " in *" -p $package "*) ;; *) packages="$packages -p $package" ;; esac
+          ;;
+      esac
+    done <<< "$staged"
+  fi
+
+  [ -n "$packages" ] || { mcb_ok "staged check: no Rust package affected"; return 0; }
+  mcb_log "staged check: cargo fmt/clippy scope:$packages (deadline ${deadline}s each)"
+  timeout --signal=TERM --kill-after=5s "${deadline}s" cargo fmt $packages -- --check
+  timeout --signal=TERM --kill-after=5s "${deadline}s" cargo clippy $packages --all-targets -- -D warnings
+  mcb_ok "staged check: clean"
+}
+
 # --- banned-pattern guard ----------------------------------------------------
 # Scans first-party crates/ for the constructs AGENTS.md forbids in prod paths.
 # Excludes: tests, #[cfg(test)] modules, target/. Fails EX_GUARD.
@@ -184,6 +216,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     install-hooks)  mcb_install_hooks "${2:-$MCB_ROOT}" ;;
     sync-submodules) mcb_sync_submodules "${2:-$MCB_ROOT}" ;;
     validate)       mcb_validate "${2:-full}" ;;
+    check-staged)   mcb_check_staged ;;
     guard)          shift; mcb_guard "$@" ;;
     guard-bash)     mcb_guard_bash ;;
     files-safe)     mcb_files_safe "${2:-}" ;;
