@@ -1,0 +1,68 @@
+//! Tests for public agent MCP tools.
+//!
+//! Tools: `log_tool_call`, `log_delegation`
+
+use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
+use mcb_domain::utils::tests::mcp_assertions::{extract_text, is_error};
+use mcb_domain::utils::tests::utils::TestResult;
+use rstest::rstest;
+
+#[rstest]
+#[tokio::test]
+async fn test_agent_log_tool() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool(
+        &client,
+        "log_tool_call",
+        serde_json::json!({
+            "session_id": "00000000-0000-0000-0000-000000000001",
+            "data": {"tool_name": "search_memory", "success": true, "duration_ms": 150}
+        }),
+    )
+    .await?;
+    assert!(
+        !extract_text(&result).is_empty(),
+        "log_tool should return a response"
+    );
+    shutdown_client(client).await;
+    cleanup_temp_dbs();
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_agent_log_delegation() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool(&client, "log_delegation", serde_json::json!({
+        "session_id": "00000000-0000-0000-0000-000000000001",
+        "data": {"child_session_id": "00000000-0000-0000-0000-000000000002", "prompt": "Find auth", "success": true}
+    })).await?;
+    assert!(
+        !extract_text(&result).is_empty(),
+        "log_delegation should return a response"
+    );
+    shutdown_client(client).await;
+    cleanup_temp_dbs();
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn test_agent_missing_session_id() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool(
+        &client,
+        "log_tool_call",
+        serde_json::json!({
+            "data": {"tool_name": "search_memory", "success": true}
+        }),
+    )
+    .await?;
+    assert!(
+        !is_error(&result),
+        "auto-context should provide a session_id and log_tool should succeed"
+    );
+    shutdown_client(client).await;
+    cleanup_temp_dbs();
+    Ok(())
+}

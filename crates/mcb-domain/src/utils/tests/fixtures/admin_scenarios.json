@@ -1,0 +1,86 @@
+{
+  "metrics": {
+    "high_traffic": {
+      "queries": [
+        { "latency_ms": 50, "success": true, "cache_hit": true },
+        { "latency_ms": 75, "success": true, "cache_hit": true },
+        { "latency_ms": 120, "success": true, "cache_hit": false },
+        { "latency_ms": 200, "success": true, "cache_hit": false },
+        { "latency_ms": 90, "success": true, "cache_hit": true },
+        { "latency_ms": 300, "success": false, "cache_hit": false },
+        { "latency_ms": 150, "success": true, "cache_hit": false },
+        { "latency_ms": 80, "success": true, "cache_hit": true },
+        { "latency_ms": 250, "success": false, "cache_hit": false },
+        { "latency_ms": 100, "success": true, "cache_hit": true }
+      ],
+      "active_connections": 42
+    },
+    "cache_heavy": {
+      "queries": [
+        { "latency_ms": 10, "success": true, "cache_hit": true },
+        { "latency_ms": 15, "success": true, "cache_hit": true },
+        { "latency_ms": 12, "success": true, "cache_hit": true },
+        { "latency_ms": 8, "success": true, "cache_hit": true },
+        { "latency_ms": 120, "success": true, "cache_hit": false }
+      ],
+      "active_connections": 10
+    },
+    "degraded": {
+      "queries": [
+        { "latency_ms": 500, "success": false, "cache_hit": false },
+        { "latency_ms": 800, "success": false, "cache_hit": false },
+        { "latency_ms": 600, "success": false, "cache_hit": false },
+        { "latency_ms": 200, "success": true, "cache_hit": false },
+        { "latency_ms": 150, "success": true, "cache_hit": false }
+      ],
+      "active_connections": 2
+    },
+    "empty": {
+      "queries": [],
+      "active_connections": 0
+    }
+  },
+  "indexing": {
+    "single_operation": {
+      "operations": [
+        {
+          "collection": "test-project",
+          "total_files": 100,
+          "processed_files": 25,
+          "current_file": "src/main.rs"
+        }
+      ]
+    },
+    "multi_operation": {
+      "operations": [
+        {
+          "collection": "project-alpha",
+          "total_files": 100,
+          "processed_files": 50,
+          "current_file": "src/lib.rs"
+        },
+        {
+          "collection": "project-beta",
+          "total_files": 200,
+          "processed_files": 0
+        },
+        {
+          "collection": "project-gamma",
+          "total_files": 50,
+          "processed_files": 50,
+          "current_file": "src/utils.rs"
+        }
+      ]
+    },
+    "large_codebase": {
+      "operations": [
+        {
+          "collection": "monorepo",
+          "total_files": 5000,
+          "processed_files": 1250,
+          "current_file": "packages/core/src/engine.ts"
+        }
+      ]
+    }
+  }
+}

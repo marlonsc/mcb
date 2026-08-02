@@ -1,0 +1,19 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
+//! Kotlin language processor for AST-based code chunking.
+
+use mcb_utils::constants::ast::{TS_NODE_CLASS_DECLARATION, TS_NODE_FUNCTION_DECLARATION};
+use mcb_utils::constants::lang::CHUNK_SIZE_KOTLIN;
+
+crate::impl_simple_language_processor!(
+    KotlinProcessor,
+    language = tree_sitter_kotlin_ng::LANGUAGE.into(),
+    chunk_size = CHUNK_SIZE_KOTLIN,
+    max_depth = 3,
+    nodes = [
+        TS_NODE_FUNCTION_DECLARATION,
+        TS_NODE_CLASS_DECLARATION,
+        "object_declaration"
+    ]
+);

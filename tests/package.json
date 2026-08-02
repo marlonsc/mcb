@@ -1,0 +1,36 @@
+{
+  "name": "mcb",
+  "version": "1.0.0",
+  "description": "E2E test suite for Memory Context Browser (MCB)",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "playwright test --config=playwright.config.ts",
+    "test:admin": "playwright test --config=playwright.config.ts e2e/admin-ui-routes.spec.ts",
+    "test:browse": "playwright test --config=playwright.config.ts e2e/browse-ui.spec.ts",
+    "test:all": "playwright test --config=playwright.config.ts e2e/",
+    "test:ui": "playwright test --config=playwright.config.ts --ui",
+    "test:debug": "playwright test --config=playwright.config.ts --debug",
+    "test:report": "playwright show-report"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marlonsc/mcb.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/marlonsc/mcb/issues"
+  },
+  "homepage": "https://github.com/marlonsc/mcb#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "@types/node": "^25.2.3",
+    "typescript": "^5.9.3"
+  }
+}

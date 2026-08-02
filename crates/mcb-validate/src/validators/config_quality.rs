@@ -1,0 +1,329 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
+//! Configuration Quality Validation
+//!
+//! Validates configuration code quality:
+//! - Detects hardcoded strings that should be configurable
+//! - Detects magic numbers outside constants
+//! - Detects default values without documentation
+//! - Ensures proper use of configuration patterns
+
+use std::path::{Path, PathBuf};
+
+use regex::Regex;
+
+use crate::define_violations;
+use crate::filters::LanguageId;
+use crate::scan::for_each_scan_file;
+use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::{Violation, ViolationCategory};
+use mcb_utils::constants::validate::ARCH_PATH_CONFIG;
+use mcb_utils::constants::validate::{COMMENT_PREFIX, DOC_COMMENT_PREFIX};
+use mcb_utils::utils::regex::compile_regex;
+
+define_violations! {
+    dynamic_severity,
+    ViolationCategory::Configuration,
+    pub enum ConfigQualityViolation {
+        /// Hardcoded string in configuration that should be configurable
+        #[violation(
+            id = "CFG001",
+            severity = Warning,
+            message = "{file}:{line} - Hardcoded string '{string_value}' in {context} - should be configurable",
+            suggestion = "Extract to configuration field with Option<String> and provide safe default"
+        )]
+        HardcodedConfigString {
+            file: PathBuf,
+            line: usize,
+            string_value: String,
+            context: String,
+            severity: Severity,
+        },
+        /// Magic number in code outside constants module
+        #[violation(
+            id = "CFG002",
+            severity = Warning,
+            message = "{file}:{line} - Magic number {number} in {context} - extract to constant",
+            suggestion = "Define as const in constants.rs or as configuration field"
+        )]
+        MagicNumber {
+            file: PathBuf,
+            line: usize,
+            number: String,
+            context: String,
+            severity: Severity,
+        },
+        /// Default implementation without documentation
+        #[violation(
+            id = "CFG003",
+            severity = Info,
+            message = "{file}:{line} - Default implementation for '{struct_name}' missing documentation comment",
+            suggestion = "Add documentation comment explaining default values and when to override"
+        )]
+        UndocumentedDefault {
+            file: PathBuf,
+            line: usize,
+            struct_name: String,
+            severity: Severity,
+        },
+        /// Configuration field without documentation
+        #[violation(
+            id = "CFG004",
+            severity = Info,
+            message = "{file}:{line} - Configuration field '{field_name}' missing documentation comment",
+            suggestion = "Add documentation comment explaining the field's purpose and valid values"
+        )]
+        UndocumentedConfigField {
+            file: PathBuf,
+            line: usize,
+            field_name: String,
+            severity: Severity,
+        },
+        /// Hardcoded namespace or prefix that should be configurable
+        #[violation(
+            id = "CFG005",
+            severity = Warning,
+            message = "{file}:{line} - Hardcoded namespace '{namespace}' - should be configurable with safe default",
+            suggestion = "Make configurable via Option<String> with documented default value"
+        )]
+        HardcodedNamespace {
+            file: PathBuf,
+            line: usize,
+            namespace: String,
+            severity: Severity,
+        },
+    }
+}
+
+/// Configuration quality validator
+pub struct ConfigQualityValidator {
+    config: ValidationConfig,
+}
+
+/// Compiled regexes for detecting hardcoded configuration values.
+struct ConfigQualityPatterns {
+    namespace: Regex,
+    client_name: Regex,
+    header: Regex,
+    default_impl: Regex,
+}
+
+impl ConfigQualityPatterns {
+    /// Compile the hardcoded-config detection patterns.
+    fn compile() -> Result<Self> {
+        Ok(Self {
+            namespace: compile_regex(r#"namespace:\s*"([^"]+)".to_string\(\)"#)?,
+            client_name: compile_regex(r#"client_name:\s*Some\("([^"]+)".to_string\(\)\)"#)?,
+            header: compile_regex(r#"header:\s*"([^"]+)".to_string\(\)"#)?,
+            default_impl: compile_regex(r"impl\s+Default\s+for\s+(\w+)")?,
+        })
+    }
+}
+
+impl ConfigQualityValidator {
+    /// Create a new configuration quality validator for the workspace root.
+    pub fn new(workspace_root: impl Into<PathBuf>) -> Self {
+        Self::with_config(ValidationConfig::new(workspace_root))
+    }
+
+    /// Create a new configuration quality validator with explicit config.
+    #[must_use]
+    pub fn with_config(config: ValidationConfig) -> Self {
+        Self { config }
+    }
+
+    /// Validate configuration quality across all config files
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if regex compilation or file scanning fails.
+    pub fn validate(&self) -> Result<Vec<ConfigQualityViolation>> {
+        let mut violations = Vec::new();
+        let patterns = ConfigQualityPatterns::compile()?;
+
+        for_each_scan_file(
+            &self.config,
+            Some(LanguageId::Rust),
+            false,
+            |entry, _src_dir| {
+                if !Self::is_config_file(&entry.absolute_path) {
+                    return Ok(());
+                }
+
+                let content = std::fs::read_to_string(&entry.absolute_path)?;
+                let lines: Vec<&str> = content.lines().collect();
+                Self::scan_config_file(&entry.absolute_path, &lines, &patterns, &mut violations);
+                Ok(())
+            },
+        )?;
+
+        Ok(violations)
+    }
+
+    /// Run every hardcoded-config check against a single file's lines.
+    fn scan_config_file(
+        path: &Path,
+        lines: &[&str],
+        patterns: &ConfigQualityPatterns,
+        violations: &mut Vec<ConfigQualityViolation>,
+    ) {
+        Self::check_hardcoded_namespaces(path, lines, &patterns.namespace, violations);
+        Self::check_hardcoded_client_names(path, lines, &patterns.client_name, violations);
+        Self::check_hardcoded_headers(path, lines, &patterns.header, violations);
+        Self::check_undocumented_defaults(path, lines, &patterns.default_impl, violations);
+    }
+
+    /// Returns `true` when `path` lives under the config directory or its file
+    /// name contains `config`.
+    fn is_config_file(path: &Path) -> bool {
+        path.to_str().is_some_and(|s| s.contains(ARCH_PATH_CONFIG))
+            || path
+                .file_name()
+                .and_then(|name| name.to_str())
+                .is_some_and(|name| name.contains("config"))
+    }
+
+    fn check_hardcoded_namespaces(
+        file: &Path,
+        lines: &[&str],
+        namespace_pattern: &Regex,
+        violations: &mut Vec<ConfigQualityViolation>,
+    ) {
+        for (i, line) in lines.iter().enumerate() {
+            if let Some(captures) = namespace_pattern.captures(line)
+                && let Some(namespace) = captures.get(1)
+            {
+                let namespace_str = namespace.as_str();
+                // Skip if it's already using a constant or documented default
+                if !Self::is_documented_or_constant(lines, i) {
+                    violations.push(ConfigQualityViolation::HardcodedNamespace {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        namespace: namespace_str.to_owned(),
+                        severity: Severity::Warning,
+                    });
+                }
+            }
+        }
+    }
+
+    fn check_hardcoded_client_names(
+        file: &Path,
+        lines: &[&str],
+        client_name_pattern: &Regex,
+        violations: &mut Vec<ConfigQualityViolation>,
+    ) {
+        for (i, line) in lines.iter().enumerate() {
+            if let Some(captures) = client_name_pattern.captures(line)
+                && let Some(client_name) = captures.get(1)
+            {
+                let client_name_str = client_name.as_str();
+                // This is actually acceptable as a default - skip if properly documented
+                if !Self::is_documented_or_constant(lines, i) {
+                    violations.push(ConfigQualityViolation::HardcodedConfigString {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        string_value: client_name_str.to_owned(),
+                        context: "client_name".to_owned(),
+                        severity: Severity::Info,
+                    });
+                }
+            }
+        }
+    }
+
+    fn check_hardcoded_headers(
+        file: &Path,
+        lines: &[&str],
+        header_pattern: &Regex,
+        violations: &mut Vec<ConfigQualityViolation>,
+    ) {
+        for (i, line) in lines.iter().enumerate() {
+            if let Some(captures) = header_pattern.captures(line)
+                && let Some(header) = captures.get(1)
+            {
+                let header_str = header.as_str();
+                // Skip if it's a well-known constant like API_KEY_HEADER
+                if header_str.starts_with("X-")
+                    && !line.contains("API_KEY_HEADER")
+                    && !Self::is_documented_or_constant(lines, i)
+                {
+                    violations.push(ConfigQualityViolation::HardcodedConfigString {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        string_value: header_str.to_owned(),
+                        context: "HTTP header".to_owned(),
+                        severity: Severity::Warning,
+                    });
+                }
+            }
+        }
+    }
+
+    fn check_undocumented_defaults(
+        file: &Path,
+        lines: &[&str],
+        default_impl_pattern: &Regex,
+        violations: &mut Vec<ConfigQualityViolation>,
+    ) {
+        for (i, line) in lines.iter().enumerate() {
+            if let Some(captures) = default_impl_pattern.captures(line)
+                && let Some(struct_name) = captures.get(1)
+            {
+                // Check if there's a doc comment above
+                let has_doc_comment = i > 0 && {
+                    lines[i - 1].trim().starts_with(DOC_COMMENT_PREFIX)
+                        || (i > 1 && lines[i - 2].trim().starts_with(DOC_COMMENT_PREFIX))
+                };
+
+                if !has_doc_comment {
+                    violations.push(ConfigQualityViolation::UndocumentedDefault {
+                        file: file.to_path_buf(),
+                        line: i + 1,
+                        struct_name: struct_name.as_str().to_owned(),
+                        severity: Severity::Info,
+                    });
+                }
+            }
+        }
+    }
+
+    fn is_documented_or_constant(lines: &[&str], line_idx: usize) -> bool {
+        // Check for documentation comment or constant usage
+        if line_idx > 0 {
+            let prev_line = lines[line_idx - 1];
+            if prev_line.contains(DOC_COMMENT_PREFIX)
+                || prev_line.contains(COMMENT_PREFIX)
+                || prev_line.contains("const")
+            {
+                return true;
+            }
+        }
+
+        // Check if the line itself uses a constant
+        let current_line = lines[line_idx];
+        current_line.contains("const") || current_line.contains("DEFAULT_")
+    }
+}
+
+impl mcb_domain::ports::validation::Validator for ConfigQualityValidator {
+    fn name(&self) -> &'static str {
+        mcb_utils::constants::validate::VALIDATOR_CONFIG_QUALITY
+    }
+
+    fn description(&self) -> &'static str {
+        "Validates configuration code quality and anti-patterns"
+    }
+
+    fn validate(
+        &self,
+        _config: &ValidationConfig,
+    ) -> mcb_domain::ports::validation::ValidatorResult<Vec<Box<dyn Violation>>> {
+        let violations = ConfigQualityValidator::validate(self)?;
+        Ok(violations
+            .into_iter()
+            .map(|v| Box::new(v) as Box<dyn Violation>)
+            .collect())
+    }
+}

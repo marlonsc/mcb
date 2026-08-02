@@ -1,0 +1,167 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
+use regex::Regex;
+
+use mcb_utils::constants::validate::{
+    ATTRIBUTE_PREFIX, COMMENT_PREFIX, CONTROL_FLOW_CONTAINS_TOKENS,
+    CONTROL_FLOW_STARTS_WITH_TOKENS, FN_PREFIX,
+};
+
+use super::FunctionInfo;
+
+pub(super) fn extract_functions_impl(
+    fn_pattern: Option<&Regex>,
+    lines: &[(usize, &str)],
+) -> Vec<FunctionInfo> {
+    let mut functions = Vec::new();
+
+    let mut i = 0;
+    while i < lines.len() {
+        let (orig_idx, trimmed) = lines[i];
+        if let Some(re) = fn_pattern
+            && let Some(cap) = re.captures(trimmed)
+        {
+            let fn_name = cap
+                .get(1)
+                .map(|m| m.as_str().to_owned())
+                // INTENTIONAL: Regex capture group; no match yields empty string
+                .unwrap_or_default();
+            let fn_start = orig_idx + 1;
+
+            let fn_end_idx = find_function_end(lines, i);
+            let body: Vec<String> = lines[i..=fn_end_idx]
+                .iter()
+                .map(|(_, l)| l.trim().to_owned())
+                .filter(|l| !l.is_empty() && !l.starts_with(COMMENT_PREFIX))
+                .collect();
+
+            functions.push(FunctionInfo {
+                name: fn_name,
+                start_line: fn_start,
+                meaningful_body: meaningful_lines(&body),
+                has_control_flow: has_control_flow(&body),
+                body_lines: body,
+            });
+
+            i = fn_end_idx;
+        }
+        i += 1;
+    }
+
+    functions
+}
+
+pub(super) fn extract_functions_with_body_impl(
+    fn_pattern: Option<&Regex>,
+    impl_pattern: Option<&Regex>,
+    lines: &[(usize, &str)],
+    current_struct: &mut String,
+) -> Vec<FunctionInfo> {
+    let mut functions = Vec::new();
+    let mut current_fn_name = String::new();
+    let mut fn_start_line: usize = 0;
+    let mut fn_body_lines: Vec<String> = Vec::new();
+    let mut brace_depth: i32 = 0;
+    let mut in_fn = false;
+
+    for &(orig_idx, trimmed) in lines {
+        if trimmed.starts_with(COMMENT_PREFIX) {
+            continue;
+        }
+
+        if let Some(name) = impl_pattern.and_then(|re| first_capture(re, trimmed)) {
+            *current_struct = name;
+        }
+
+        if let Some(name) = fn_pattern.and_then(|re| first_capture(re, trimmed)) {
+            current_fn_name = name;
+            fn_start_line = orig_idx + 1;
+            fn_body_lines.clear();
+            in_fn = true;
+            brace_depth = 0;
+        }
+
+        if in_fn && accumulate_body_line(trimmed, &mut brace_depth, &mut fn_body_lines) {
+            functions.push(build_function_info(
+                &current_fn_name,
+                fn_start_line,
+                &fn_body_lines,
+            ));
+            in_fn = false;
+            fn_body_lines.clear();
+        }
+    }
+
+    functions
+}
+
+/// Update brace depth and accumulate a body line. Returns true when the function body closes.
+fn accumulate_body_line(
+    trimmed: &str,
+    brace_depth: &mut i32,
+    body_lines: &mut Vec<String>,
+) -> bool {
+    let opens = i32::try_from(trimmed.chars().filter(|c| *c == '{').count()).unwrap_or(i32::MAX);
+    let closes = i32::try_from(trimmed.chars().filter(|c| *c == '}').count()).unwrap_or(i32::MAX);
+    *brace_depth += opens - closes;
+
+    if !trimmed.is_empty() && !trimmed.starts_with(ATTRIBUTE_PREFIX) {
+        body_lines.push(trimmed.to_owned());
+    }
+
+    *brace_depth <= 0 && opens > 0
+}
+
+/// Return the first regex capture group of `trimmed` as an owned string, if the regex matches.
+fn first_capture(re: &Regex, trimmed: &str) -> Option<String> {
+    let cap = re.captures(trimmed)?;
+    // INTENTIONAL: Regex capture group; no match yields empty string
+    Some(
+        cap.get(1)
+            .map(|m| m.as_str().to_owned())
+            .unwrap_or_default(),
+    )
+}
+
+/// Build a [`FunctionInfo`] from an accumulated function body.
+fn build_function_info(name: &str, start_line: usize, body_lines: &[String]) -> FunctionInfo {
+    FunctionInfo {
+        name: name.to_owned(),
+        start_line,
+        meaningful_body: meaningful_lines(body_lines),
+        has_control_flow: has_control_flow(body_lines),
+        body_lines: body_lines.to_vec(),
+    }
+}
+
+fn find_function_end(lines: &[(usize, &str)], start_idx: usize) -> usize {
+    mcb_domain::utils::analysis::count_balanced_block_lines(
+        lines[start_idx..].iter().map(|(_, l)| l),
+        usize::MAX,
+    )
+    .map_or(start_idx, |len| start_idx + len - 1)
+}
+
+fn meaningful_lines(body: &[String]) -> Vec<String> {
+    body.iter()
+        .filter(|line| !is_structural_line(line) && !line.starts_with(FN_PREFIX))
+        .cloned()
+        .collect()
+}
+
+fn is_structural_line(line: &str) -> bool {
+    line.starts_with('{') || line.starts_with('}') || matches!(line, "{" | "}")
+}
+
+fn has_control_flow(body: &[String]) -> bool {
+    body.iter().any(|line| {
+        line.contains("else {")
+            || CONTROL_FLOW_CONTAINS_TOKENS
+                .iter()
+                .any(|token| line.contains(token))
+            || CONTROL_FLOW_STARTS_WITH_TOKENS
+                .iter()
+                .any(|token| line.starts_with(token))
+    })
+}

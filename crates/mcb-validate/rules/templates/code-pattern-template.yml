@@ -1,0 +1,31 @@
+schema: "template/v1"
+_base: true
+name: "code_pattern_check"
+description: "Template for checking code patterns in source files"
+category: "quality"
+severity: "warning"
+enabled: true
+
+config:
+  file_patterns: { { file_patterns } }
+  exclude_patterns: { { exclude_patterns } }
+  forbidden_patterns: { { forbidden_patterns } }
+
+validation:
+  fields:
+    file_patterns: ["length(min=1)"]
+    forbidden_patterns: ["length(min=1)"]
+
+rule:
+  type: "ast_pattern"
+  engine: "rusty-rules"
+  condition: "file_matches_any_pattern"
+  patterns: "{{file_patterns}}"
+  excludes: "{{exclude_patterns}}"
+  forbidden: "{{forbidden_patterns}}"
+  message: "Code violates quality standards: {{forbidden_patterns}}"
+
+fixes:
+  - type: "replace_pattern"
+    pattern: "{{forbidden_patterns}}"
+    suggestion: "{{suggestion}}"

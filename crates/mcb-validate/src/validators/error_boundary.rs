@@ -1,0 +1,233 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
+//! Error Boundary Validation
+//!
+//! Validates Clean Architecture error handling patterns:
+//! - Layer error wrapping (domain wraps infrastructure errors)
+//! - Context preservation across layers
+//! - Error type placement (right layer)
+
+use crate::filters::LanguageId;
+use mcb_utils::constants::validate::{ARCH_PATH_DOMAIN, ARCH_PATH_HANDLERS};
+use mcb_utils::constants::validate::{
+    CFG_TEST_MARKER, COMMENT_PREFIX, ERROR_MODULE_FILE, HANDLER_FILE_SUFFIX, TEST_DIR_FRAGMENT,
+    VAL_ERROR,
+};
+use std::path::{Path, PathBuf};
+
+use crate::define_violations;
+use crate::scan::for_each_scan_file;
+use crate::{Result, Severity, ValidationConfig};
+use mcb_domain::ports::validation::ViolationCategory;
+use mcb_utils::utils::regex::compile_regex_pairs;
+
+define_violations! {
+    dynamic_severity,
+    ViolationCategory::ErrorBoundary,
+    pub enum ErrorBoundaryViolation {
+        /// Infrastructure error type used in domain layer
+        #[violation(
+            id = "ERR002",
+            severity = Warning,
+            message = "Wrong layer error: {file}:{line} - {error_type} in {layer}",
+            suggestion = "Wrap {error_type} in a domain error type instead of using it directly in {layer}"
+        )]
+        WrongLayerError {
+            file: PathBuf,
+            line: usize,
+            error_type: String,
+            layer: String,
+            severity: Severity,
+        },
+        /// Internal error details leaked to external API
+        #[violation(
+            id = "ERR003",
+            severity = Error,
+            message = "Leaked internal error: {file}:{line} - {pattern}",
+            suggestion = "Replace {pattern} with a sanitized error response that doesn't expose internal details"
+        )]
+        LeakedInternalError {
+            file: PathBuf,
+            line: usize,
+            pattern: String,
+            severity: Severity,
+        },
+    }
+}
+
+crate::create_validator!(
+    ErrorBoundaryValidator,
+    mcb_utils::constants::validate::VALIDATOR_ERROR_BOUNDARY,
+    "Validates error handling patterns across layer boundaries",
+    ErrorBoundaryViolation,
+    [
+        Self::validate_layer_error_types,
+        Self::validate_leaked_errors,
+    ]
+);
+
+impl ErrorBoundaryValidator {
+    fn scan_relevant_lines<FileFilter, LineHandler>(
+        config: &ValidationConfig,
+        file_filter: FileFilter,
+        mut line_handler: LineHandler,
+    ) -> Result<()>
+    where
+        FileFilter: Fn(&Path, &str) -> bool,
+        LineHandler: FnMut(&PathBuf, usize, &str, &str),
+    {
+        for_each_scan_file(config, Some(LanguageId::Rust), false, |entry, _src_dir| {
+            let path = &entry.absolute_path;
+            let Some(path_str) = path.to_str() else {
+                return Ok(());
+            };
+            let normalized_path = path_str.replace('\\', "/");
+
+            if normalized_path.contains(TEST_DIR_FRAGMENT)
+                || !file_filter(path, normalized_path.as_str())
+            {
+                return Ok(());
+            }
+
+            let content = std::fs::read_to_string(path)?;
+            Self::scan_file_lines(path, &content, &mut line_handler);
+            Ok(())
+        })
+    }
+
+    /// Invoke `line_handler` for each production line of `content`, skipping
+    /// comments and everything inside a `#[cfg(test)]` module.
+    fn scan_file_lines<LineHandler>(path: &PathBuf, content: &str, line_handler: &mut LineHandler)
+    where
+        LineHandler: FnMut(&PathBuf, usize, &str, &str),
+    {
+        let mut in_test_module = false;
+        for (line_num, line) in content.lines().enumerate() {
+            let trimmed = line.trim();
+
+            if trimmed.starts_with(COMMENT_PREFIX) {
+                continue;
+            }
+
+            if trimmed.contains(CFG_TEST_MARKER) {
+                in_test_module = true;
+                continue;
+            }
+
+            if in_test_module {
+                continue;
+            }
+
+            line_handler(path, line_num + 1, line, trimmed);
+        }
+    }
+
+    /// Detects infrastructure error types used in domain layer (layer boundary violation)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if regex compilation or source file reading fails.
+    pub fn validate_layer_error_types(
+        config: &ValidationConfig,
+    ) -> Result<Vec<ErrorBoundaryViolation>> {
+        let mut violations = Vec::new();
+
+        // Infrastructure error types that shouldn't appear in domain
+        let infra_errors = [
+            ("std::io::Error", "std::io::Error"),
+            ("reqwest::Error", "reqwest::Error"),
+            ("sqlx::Error", "sqlx::Error"),
+            ("tokio::.*Error", "tokio Error"),
+            ("hyper::Error", "hyper::Error"),
+            ("serde_json::Error", "serde_json::Error"),
+        ];
+
+        let compiled_errors = compile_regex_pairs(&infra_errors)?;
+
+        Self::scan_relevant_lines(
+            config,
+            |path, path_str| {
+                if !path_str.contains(ARCH_PATH_DOMAIN) {
+                    return false;
+                }
+                let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                file_name != ERROR_MODULE_FILE && !file_name.starts_with(VAL_ERROR)
+            },
+            |path, line_num, line, _trimmed| {
+                for (pattern, desc) in &compiled_errors {
+                    if pattern.is_match(line) {
+                        violations.push(ErrorBoundaryViolation::WrongLayerError {
+                            file: path.clone(),
+                            line: line_num,
+                            error_type: desc.to_string(),
+                            layer: "domain".to_owned(),
+                            severity: Severity::Warning,
+                        });
+                    }
+                }
+            },
+        )?;
+
+        Ok(violations)
+    }
+
+    /// Detects internal error details leaked to API responses (information disclosure)
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if regex compilation or source file reading fails.
+    pub fn validate_leaked_errors(
+        config: &ValidationConfig,
+    ) -> Result<Vec<ErrorBoundaryViolation>> {
+        let mut violations = Vec::new();
+
+        // Patterns that indicate internal errors being exposed
+        let leak_patterns = [
+            (
+                r#"format!\s*\(\s*"\{\:?\?\}""#,
+                "Debug formatting in response",
+            ),
+            (
+                r"\b(?:err|error|e)\b\.to_string\(\)",
+                "Error .to_string() in response",
+            ),
+            (
+                r#"serde_json::json!\s*\(\s*\{\s*"error"\s*:\s*format!"#,
+                "Internal error in JSON response",
+            ),
+        ];
+
+        let compiled_leaks = compile_regex_pairs(&leak_patterns)?;
+
+        Self::scan_relevant_lines(
+            config,
+            |_path, path_str| {
+                path_str.contains(ARCH_PATH_HANDLERS) || path_str.contains(HANDLER_FILE_SUFFIX)
+            },
+            |path, line_num, line, _trimmed| {
+                for (pattern, desc) in &compiled_leaks {
+                    if pattern.is_match(line) {
+                        violations.push(ErrorBoundaryViolation::LeakedInternalError {
+                            file: path.clone(),
+                            line: line_num,
+                            pattern: desc.to_string(),
+                            severity: Severity::Info,
+                        });
+                    }
+                }
+            },
+        )?;
+
+        Ok(violations)
+    }
+}
+
+mcb_domain::register_validator!(
+    mcb_utils::constants::validate::VALIDATOR_ERROR_BOUNDARY,
+    "Validates error handling patterns across layer boundaries",
+    |root| {
+        Ok(Box::new(ErrorBoundaryValidator::new(root))
+            as Box<dyn mcb_domain::ports::validation::Validator>)
+    }
+);

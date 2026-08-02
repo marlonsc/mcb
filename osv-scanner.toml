@@ -1,0 +1,26 @@
+# OSV Scanner Configuration
+# https://google.github.io/osv-scanner/configuration/
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2023-0089"
+reason = "atomic-polyfill unmaintained - transitive dependency via fastembed, no fix available"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2025-0119"
+reason = "number_prefix unmaintained - transitive dependency via fastembed, no fix available"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2024-0436"
+reason = "paste unmaintained - transitive dependency via fastembed, author says 'finished' not abandoned"
+
+[[IgnoredVulns]]
+id = "CVE-2023-49092"
+reason = "rsa timing attack - NO FIX AVAILABLE, not in dependency tree"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2023-0071"
+reason = "rsa timing attack - same as CVE-2023-49092"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2025-0134"
+reason = "rustls-pemfile unmaintained - transitive dependency via async-nats/milvus-sdk-rust"

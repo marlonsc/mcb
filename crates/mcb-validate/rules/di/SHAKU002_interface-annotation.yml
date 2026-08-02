@@ -1,0 +1,19 @@
+schema: "rule/v1"
+id: "SHAKU002"
+name: "Interface Annotation Required"
+category: "dependency_injection"
+severity: "error"
+enabled: true
+engine: "rust-rule-engine"
+
+description: "dill provider missing interface binding annotation"
+rationale: "Interface annotation connects provider to its port trait (ADR-029)"
+
+rule: |
+    rule InterfaceAnnotationRequired "Check for dill interface annotation" {
+        when
+            HasAttribute("derive(Component)") &&
+            !HasAttribute("dill(interface")
+        then
+            Violation("dill provider missing interface binding annotation");
+    }
