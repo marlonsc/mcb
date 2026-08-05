@@ -54,7 +54,7 @@ impl SecureErasure {
     }
 
     /// Securely erase a string by overwriting its buffer
-    #[allow(unsafe_code)]
+    #[allow(unsafe_code)] // Why: zeroizing String bytes requires unsafe as_mut_bytes(); exclusive access guarantees safety.
     pub fn erase_string(s: &mut String) {
         // SAFETY: We have exclusive mutable access to the String, and we only
         // overwrite the bytes without changing the length. The bytes remain

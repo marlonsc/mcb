@@ -1,18 +1,29 @@
-"""Runner for qlty commands."""
+"""Qlty Runner.
+
+Copyright (c) 2025 MCB Contributors. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
 
 import subprocess  # nosec B404
-import sys
 from pathlib import Path
+
+from lib.core import get_logger, r
+from lib.settings import McbSettings
 
 from qlty.model import SarifIssue
 from qlty.parser import parse_sarif_file
 
+logger = get_logger(__name__)
+
 
 def run_qlty_check(
-    output_file: Path = Path("qlty.check.current.sarif"),
-) -> list[SarifIssue]:
+    output_file: Path | None = None,
+) -> r[list[SarifIssue]]:
     """Run qlty check --all --sarif, save to file, and parse SARIF output."""
-    print("🔄 Running qlty check --all --sarif...")
+    output_file = output_file or McbSettings().qlty_check_sarif
+    logger.info("Running qlty check --all --sarif...")
 
     try:
         result = subprocess.run(  # nosec B603 B607
@@ -22,31 +33,32 @@ def run_qlty_check(
             timeout=300,
             check=False,
         )
-
-        if not result.stdout.strip():
-            print("   ✅ No issues found (clean)")
-            return []
-
-        output_file.write_text(result.stdout, encoding="utf-8")
-        print(f"   💾 Saved SARIF to {output_file}")
-
-        issues = parse_sarif_file(output_file)
-        print(f"   📊 Found {len(issues)} issues")
-        return issues
-
     except subprocess.TimeoutExpired:
-        print("   ❌ qlty check timed out after 300s", file=sys.stderr)
-        return []
-    except (OSError, subprocess.SubprocessError) as e:
-        print(f"   ❌ Error running qlty: {e}", file=sys.stderr)
-        return []
+        return r[list[SarifIssue]].fail("qlty check timed out after 300s")
+    except (OSError, subprocess.SubprocessError) as exc:
+        return r[list[SarifIssue]].fail(f"error running qlty check: {exc}")
+
+    if not result.stdout.strip():
+        logger.info("No issues found (clean)")
+        return r[list[SarifIssue]].ok([])
+
+    output_file.write_text(result.stdout, encoding="utf-8")
+    logger.info(f"Saved SARIF to {output_file}")
+
+    parsed = parse_sarif_file(output_file)
+    if parsed.failure:
+        return parsed
+    issues = parsed.unwrap()
+    logger.info(f"Found {len(issues)} issues")
+    return r[list[SarifIssue]].ok(issues)
 
 
 def run_qlty_smells(
-    output_file: Path = Path("qlty.smells.sarif"),
-) -> list[SarifIssue]:
+    output_file: Path | None = None,
+) -> r[list[SarifIssue]]:
     """Run qlty smells --all --sarif, save to file, and parse SARIF output."""
-    print("🔄 Running qlty smells --all --sarif...")
+    output_file = output_file or McbSettings().qlty_smells_sarif
+    logger.info("Running qlty smells --all --sarif...")
 
     try:
         result = subprocess.run(  # nosec B603 B607
@@ -56,26 +68,26 @@ def run_qlty_smells(
             timeout=300,
             check=False,
         )
-
-        if not result.stdout.strip():
-            print("   ✅ No smells found (clean)")
-            return []
-
-        output_file.write_text(result.stdout, encoding="utf-8")
-        print(f"   💾 Saved SARIF to {output_file}")
-
-        issues = parse_sarif_file(output_file)
-        # Mark issues as 'smell' category if not present
-        for issue in issues:
-            if not issue.category:
-                issue.category = "smell"
-
-        print(f"   📊 Found {len(issues)} smells")
-        return issues
-
     except subprocess.TimeoutExpired:
-        print("   ❌ qlty smells timed out after 300s", file=sys.stderr)
-        return []
-    except (OSError, subprocess.SubprocessError) as e:
-        print(f"   ❌ Error running qlty smells: {e}", file=sys.stderr)
-        return []
+        return r[list[SarifIssue]].fail("qlty smells timed out after 300s")
+    except (OSError, subprocess.SubprocessError) as exc:
+        return r[list[SarifIssue]].fail(f"error running qlty smells: {exc}")
+
+    if not result.stdout.strip():
+        logger.info("No smells found (clean)")
+        return r[list[SarifIssue]].ok([])
+
+    output_file.write_text(result.stdout, encoding="utf-8")
+    logger.info(f"Saved SARIF to {output_file}")
+
+    parsed = parse_sarif_file(output_file)
+    if parsed.failure:
+        return parsed
+    issues = parsed.unwrap()
+    # Mark issues as 'smell' category if not present
+    for issue in issues:
+        if not issue.category:
+            issue.category = "smell"
+
+    logger.info(f"Found {len(issues)} smells")
+    return r[list[SarifIssue]].ok(issues)

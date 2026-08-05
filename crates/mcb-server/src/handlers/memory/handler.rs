@@ -16,8 +16,9 @@ use super::{execution, inject, list_timeline, observation, quality_gate, session
 use crate::args::{MemoryAction, MemoryArgs, MemoryResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::utils::args::resolve_limit;
 use crate::utils::json;
-use crate::utils::mcp::{resolve_identifier_precedence, tool_error};
+use crate::utils::mcp::{resolve_identifier_precedence, resolve_org_id, tool_error};
 use mcb_utils::constants::keys::FIELD_COUNT;
 use mcb_utils::constants::limits::DEFAULT_MEMORY_LIST_LIMIT;
 
@@ -144,7 +145,12 @@ impl MemoryHandler {
             ..pattern
         };
 
-        match self.memory_service.store_error_pattern(pattern).await {
+        let org_id = resolve_org_id(args.org_id.as_deref());
+        match self
+            .memory_service
+            .store_error_pattern(&org_id, pattern)
+            .await
+        {
             Ok(id) => ResponseFormatter::json_success(&serde_json::json!({
                 "id": id,
             })),
@@ -162,11 +168,12 @@ impl MemoryHandler {
 
         // INTENTIONAL: Optional query parameter; empty string means no filter
         let query = args.query.clone().unwrap_or_default();
-        let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIST_LIMIT as u32) as usize;
+        let limit = resolve_limit(args.limit, DEFAULT_MEMORY_LIST_LIMIT as u32);
 
+        let org_id = resolve_org_id(args.org_id.as_deref());
         match self
             .memory_service
-            .search_error_patterns(&query, project_id, limit)
+            .search_error_patterns(&org_id, &query, project_id, limit)
             .await
         {
             Ok(patterns) => ResponseFormatter::json_success(&serde_json::json!({

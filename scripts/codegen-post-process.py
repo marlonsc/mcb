@@ -30,7 +30,7 @@ def singularize(plural: str) -> str:
     return plural
 
 
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
         print("Usage: codegen-post-process.py <mod.rs>", file=sys.stderr)
         sys.exit(1)

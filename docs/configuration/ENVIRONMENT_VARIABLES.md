@@ -10,6 +10,10 @@ See also [CONFIGURATION.md](../CONFIGURATION.md) for Loco YAML-based config ([AD
 
 > **Note (v0.3.0):** The `MCP__` env prefix pattern (via Figment) was removed. Configuration is now
 > loaded from `config/{env}.yaml` files. Provider-specific env vars (e.g. `OPENAI_API_KEY`) still work.
+>
+> **This document is legacy/transitionary.** For new work, prefer `config/development.yaml`,
+> `config/test.yaml`, and `config/production.yaml` as the SSOT. See [CONFIGURATION.md](../CONFIGURATION.md)
+> and [ADR-051](../adr/051-seaql-loco-platform-rebuild.md).
 
 ---
 

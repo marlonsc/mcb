@@ -17,7 +17,7 @@ def extract_sql(migration_file: str) -> list[str]:
     return re.findall(pattern, content, re.DOTALL)
 
 
-def main():
+def main() -> None:
     if len(sys.argv) < 2:
         print("Usage: extract-migration-sql.py <migration.rs>", file=sys.stderr)
         sys.exit(1)

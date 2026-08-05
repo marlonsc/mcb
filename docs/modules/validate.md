@@ -130,20 +130,20 @@ YAML-based rule definitions:
 ```bash
 
 # Run all validation rules
-make validate
+make check WHAT=validate
 
 # Quick validation (skip tests)
-make validate QUICK=1
+make check WHAT=validate QUICK=1
 
 # Strict validation
-make validate
+make check WHAT=validate
 ```
 
 ## Single Source of Truth (SSOT)
 
 The validation module enforces SSOT through the following mechanisms:
 1. **Bidirectional Links**: Code headers must link to documentation files, and documentation must reference the relevant code items.
-2. **Automated Audits**: `make docs-validate` checks for broken links and missing documentation headers.
+2. **Automated Audits**: `make build WHAT=docs ACT=validate` checks for broken links and missing documentation headers.
 3. **Traceability**: All architectural rules in `mcb-validate` are mapped to ADRs or core design principles documented in `docs/architecture/`.
 
 ### SSOT Rules

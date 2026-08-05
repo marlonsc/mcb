@@ -3,7 +3,6 @@
 //!
 //! Unified entity CRUD handler implementation.
 
-use std::future::Future;
 use std::sync::Arc;
 
 use rmcp::handler::server::wrapper::Parameters;
@@ -135,36 +134,6 @@ impl EntityHandler {
             data: args.data,
         }
     );
-
-    async fn route_entity<
-        RawAction,
-        RawResource,
-        RoutedArgs,
-        MapAction,
-        MapResource,
-        BuildArgs,
-        HandleFn,
-        HandleFuture,
-    >(
-        &self,
-        args: EntityArgs,
-        map_action: MapAction,
-        map_resource: MapResource,
-        build_args: BuildArgs,
-        handle: HandleFn,
-    ) -> Result<CallToolResult, McpError>
-    where
-        MapAction: FnOnce(EntityAction) -> Result<RawAction, McpError>,
-        MapResource: FnOnce(EntityResource) -> Result<RawResource, McpError>,
-        BuildArgs: FnOnce(EntityArgs, RawAction, RawResource) -> RoutedArgs,
-        HandleFn: FnOnce(RoutedArgs) -> HandleFuture,
-        HandleFuture: Future<Output = Result<CallToolResult, McpError>>,
-    {
-        let action = map_action(args.action)?;
-        let resource = map_resource(args.resource)?;
-        let routed_args = build_args(args, action, resource);
-        handle(routed_args).await
-    }
 }
 
 fn unsupported(msg: &'static str) -> McpError {

@@ -1,279 +1,247 @@
-"""Main CLI entry point for qlty analysis."""
+"""Qlty Main.
 
-import argparse
-import sys
+Copyright (c) 2025 MCB Contributors. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
+import fnmatch
 from pathlib import Path
+
+import typer
+from flext_core import p
+from lib.cli import create_app_with_common_params, register_result_command
+from lib.core import get_logger, r
+from lib.settings import McbSettings
+from pydantic import BaseModel, Field
 
 from qlty.model import SarifIssue, Severity
 from qlty.parser import parse_sarif_file
-from qlty.report import analyze_issues
+from qlty.report import AnalysisReport, analyze_issues
 from qlty.runner import run_qlty_check, run_qlty_smells
 
-
-def _load_checks_from_file(
-    args: argparse.Namespace, all_issues: list[SarifIssue]
-) -> bool:
-    if args.checks_file and args.checks_file.exists():
-        print(f"📖 Reading checks from {args.checks_file}")
-        checks = parse_sarif_file(args.checks_file)
-        for check in checks:
-            check.category = "check"
-        all_issues.extend(checks)
-        print(f"   Found {len(checks)} check issues")
-        return True
-    return False
+logger = get_logger(__name__)
 
 
-def _collect_smells_issues(
-    args: argparse.Namespace, all_issues: list[SarifIssue]
-) -> None:
-    if args.smells_file.exists() and not args.scan:
-        print(f"📖 Reading smells from {args.smells_file}")
-        smells = parse_sarif_file(args.smells_file)
+class QltyParams(BaseModel):
+    scan: bool = False
+    checks_file: Path | None = None
+    smells_file: Path = Field(default_factory=lambda: McbSettings().qlty_smells_sarif)
+    type: str = "both"
+    check: bool = False
+    smells: bool = False
+    severity: str | None = None
+    rule: str | None = None
+    category: str | None = None
+    file: str | None = None
+    exclude_rule: list[str] = Field(default_factory=list)
+    exclude_category: list[str] = Field(default_factory=list)
+    exclude_file: list[str] = Field(default_factory=list)
+    summary_only: bool = False
+    report_file: Path = Field(default_factory=lambda: McbSettings().qlty_report_md)
+
+
+def _load_checks_from_file(checks_file: Path, all_issues: list[SarifIssue]) -> r[None]:
+    if not checks_file.exists():
+        return r[None].ok(None)
+    logger.info(f"📖 Reading checks from {checks_file}")
+    checks_result = parse_sarif_file(checks_file)
+    if checks_result.failure:
+        return r[None].fail(checks_result.error or "failed to parse checks file")
+    checks = checks_result.unwrap()
+    for check in checks:
+        check.category = "check"
+    all_issues.extend(checks)
+    logger.info(f"   Found {len(checks)} check issues")
+    return r[None].ok(None)
+
+
+def _collect_smells_issues(params: QltyParams, all_issues: list[SarifIssue]) -> r[None]:
+    if params.smells_file.exists() and not params.scan:
+        logger.info(f"📖 Reading smells from {params.smells_file}")
+        smells_result = parse_sarif_file(params.smells_file)
+        if smells_result.failure:
+            return r[None].fail(smells_result.error or "failed to parse smells file")
+        smells = smells_result.unwrap()
         for smell in smells:
             smell.category = "smell"
         all_issues.extend(smells)
-        print(f"   Found {len(smells)} code smells")
-    elif args.scan:
-        smells = run_qlty_smells(args.smells_file or Path("qlty.smells.sarif"))
+        logger.info(f"   Found {len(smells)} code smells")
+    elif params.scan:
+        smells_result = run_qlty_smells(params.smells_file or McbSettings().qlty_smells_sarif)
+        if smells_result.failure:
+            return r[None].fail(smells_result.error or "qlty smells failed")
+        smells = smells_result.unwrap()
         all_issues.extend(smells)
     else:
-        print(f"⚠️  Smells file not found: {args.smells_file}", file=sys.stderr)
+        logger.error(f"⚠️  Smells file not found: {params.smells_file}")
+    return r[None].ok(None)
 
 
-def _collect_checks_issues(
-    args: argparse.Namespace, all_issues: list[SarifIssue]
-) -> None:
-    if args.scan:
-        outfile = (
-            args.checks_file if args.checks_file else Path("qlty.check.current.sarif")
-        )
-        checks = run_qlty_check(output_file=outfile)
+def _collect_checks_issues(params: QltyParams, all_issues: list[SarifIssue]) -> r[None]:
+    if params.scan:
+        outfile = params.checks_file if params.checks_file else McbSettings().qlty_check_sarif
+        checks_result = run_qlty_check(output_file=outfile)
+        if checks_result.failure:
+            return r[None].fail(checks_result.error or "qlty check failed")
+        checks = checks_result.unwrap()
         for check in checks:
             check.category = "check"
         all_issues.extend(checks)
-    elif _load_checks_from_file(args, all_issues):
-        return
-    else:
-        if args.checks_file:
-            print(f"⚠️  Checks file not found: {args.checks_file}", file=sys.stderr)
+        return r[None].ok(None)
+
+    if params.checks_file:
+        loaded = _load_checks_from_file(params.checks_file, all_issues)
+        if loaded.failure:
+            return loaded
+        return r[None].ok(None)
+
+    logger.error("⚠️  No checks file specified and --scan not set")
+    return r[None].ok(None)
 
 
-def _collect_all_issues(args: argparse.Namespace) -> list[SarifIssue]:
-    all_issues: list[SarifIssue] = []
+def _resolve_issue_types(params: QltyParams) -> tuple[bool, bool]:
+    do_checks = params.type in ("checks", "both")
+    do_smells = params.type in ("smells", "both")
 
-    # Determine types based on flags or default
-    do_checks = args.type in ("checks", "both")
-    do_smells = args.type in ("smells", "both")
-
-    if args.check:
+    if params.check:
         do_checks = True
-        if not args.smells and not args.type:
-            do_smells = False  # Exclusive if only check specified without type
+        if not params.smells and params.type == "both":
+            do_smells = False
 
-    if args.smells:
+    if params.smells:
         do_smells = True
-        if not args.check and not args.type:
-            do_checks = False  # Exclusive if only smells specified without type
+        if not params.check and params.type == "both":
+            do_checks = False
 
-    if args.check or args.smells:
-        do_checks = args.check
-        do_smells = args.smells
+    if params.check or params.smells:
+        do_checks = params.check
+        do_smells = params.smells
+
+    return do_checks, do_smells
+
+
+def _collect_all_issues(params: QltyParams) -> r[list[SarifIssue]]:
+    all_issues: list[SarifIssue] = []
+    do_checks, do_smells = _resolve_issue_types(params)
 
     if do_checks:
-        _collect_checks_issues(args, all_issues)
+        checks_result = _collect_checks_issues(params, all_issues)
+        if checks_result.failure:
+            return r[list[SarifIssue]].fail(checks_result.error or "checks collection failed")
 
     if do_smells:
-        _collect_smells_issues(args, all_issues)
+        smells_result = _collect_smells_issues(params, all_issues)
+        if smells_result.failure:
+            return r[list[SarifIssue]].fail(smells_result.error or "smells collection failed")
 
-    return all_issues
+    return r[list[SarifIssue]].ok(all_issues)
 
 
-def _apply_severity_filter(
-    args: argparse.Namespace, filtered: list[SarifIssue]
-) -> list[SarifIssue]:
-    if args.severity:
-        target_sev = Severity.from_str(args.severity)
+def _apply_severity_filter(severity: str | None, filtered: list[SarifIssue]) -> list[SarifIssue]:
+    if severity:
+        target_sev = Severity.from_str(severity)
         filtered = [i for i in filtered if i.level == target_sev]
-        print(f"🔍 Filtered to {len(filtered)} {args.severity} issues")
+        logger.info(f"🔍 Filtered to {len(filtered)} {severity} issues")
     return filtered
 
 
-def _apply_rule_filter(
-    args: argparse.Namespace, filtered: list[SarifIssue]
-) -> list[SarifIssue]:
-    if args.rule:
-        filtered = [i for i in filtered if args.rule in i.rule_id]
-        print(f"🔍 Filtered to {len(filtered)} issues matching rule '{args.rule}'")
+def _apply_rule_filter(rule: str | None, filtered: list[SarifIssue]) -> list[SarifIssue]:
+    if rule:
+        filtered = [i for i in filtered if rule in i.rule_id]
+        logger.info(f"🔍 Filtered to {len(filtered)} issues matching rule '{rule}'")
     return filtered
 
 
-def _apply_category_filter(
-    args: argparse.Namespace, filtered: list[SarifIssue]
-) -> list[SarifIssue]:
-    if args.category:
-        filtered = [i for i in filtered if args.category in i.rule_category]
-        print(f"🔍 Filtered to {len(filtered)} issues in category '{args.category}'")
+def _apply_category_filter(category: str | None, filtered: list[SarifIssue]) -> list[SarifIssue]:
+    if category:
+        filtered = [i for i in filtered if category in i.rule_category]
+        logger.info(f"🔍 Filtered to {len(filtered)} issues in category '{category}'")
     return filtered
 
 
-def _apply_file_filter(
-    args: argparse.Namespace, filtered: list[SarifIssue]
-) -> list[SarifIssue]:
-    if args.file:
-        import fnmatch
-
-        filtered = [i for i in filtered if fnmatch.fnmatch(i.file_path, args.file)]
-        print(f"🔍 Filtered to {len(filtered)} issues in files matching '{args.file}'")
+def _apply_file_filter(file_pattern: str | None, filtered: list[SarifIssue]) -> list[SarifIssue]:
+    if file_pattern:
+        filtered = [i for i in filtered if fnmatch.fnmatch(i.file_path, file_pattern)]
+        logger.info(f"🔍 Filtered to {len(filtered)} issues in files matching '{file_pattern}'")
     return filtered
 
 
-def _apply_exclude_rule_filter(
-    args: argparse.Namespace, filtered: list[SarifIssue]
-) -> list[SarifIssue]:
-    if args.exclude_rule:
-        for rule in args.exclude_rule:
-            filtered = [i for i in filtered if rule not in i.rule_id]
-            print(f"🔍 Excluded issues matching rule '{rule}'")
+def _apply_exclude_rule_filter(exclude_rules: list[str], filtered: list[SarifIssue]) -> list[SarifIssue]:
+    for rule in exclude_rules:
+        filtered = [i for i in filtered if rule not in i.rule_id]
+        logger.info(f"🔍 Excluded issues matching rule '{rule}'")
     return filtered
 
 
-def _apply_exclude_category_filter(
-    args: argparse.Namespace, filtered: list[SarifIssue]
-) -> list[SarifIssue]:
-    if args.exclude_category:
-        for cat in args.exclude_category:
-            filtered = [i for i in filtered if cat not in i.rule_category]
-            print(f"🔍 Excluded issues in category '{cat}'")
+def _apply_exclude_category_filter(exclude_categories: list[str], filtered: list[SarifIssue]) -> list[SarifIssue]:
+    for cat in exclude_categories:
+        filtered = [i for i in filtered if cat not in i.rule_category]
+        logger.info(f"🔍 Excluded issues in category '{cat}'")
     return filtered
 
 
-def _apply_exclude_file_filter(
-    args: argparse.Namespace, filtered: list[SarifIssue]
-) -> list[SarifIssue]:
-    if args.exclude_file:
-        import fnmatch
-
-        for pattern in args.exclude_file:
-            filtered = [
-                i for i in filtered if not fnmatch.fnmatch(i.file_path, pattern)
-            ]
-            print(f"🔍 Excluded issues in files matching '{pattern}'")
+def _apply_exclude_file_filter(exclude_files: list[str], filtered: list[SarifIssue]) -> list[SarifIssue]:
+    for pattern in exclude_files:
+        filtered = [i for i in filtered if not fnmatch.fnmatch(i.file_path, pattern)]
+        logger.info(f"🔍 Excluded issues in files matching '{pattern}'")
     return filtered
+
+
+def analyze(params: QltyParams) -> p.Result[AnalysisReport]:
+    """Analyze SARIF quality reports."""
+    issues_result = _collect_all_issues(params)
+    if issues_result.failure:
+        return r[AnalysisReport].fail(issues_result.error or "issue collection failed")
+
+    all_issues = issues_result.unwrap()
+
+    if not all_issues:
+        logger.info("✅ No issues found to analyze")
+        return r[AnalysisReport].ok(AnalysisReport(issues=[]))
+
+    filtered = all_issues
+    filtered = _apply_severity_filter(params.severity, filtered)
+    filtered = _apply_rule_filter(params.rule, filtered)
+    filtered = _apply_category_filter(params.category, filtered)
+    filtered = _apply_file_filter(params.file, filtered)
+    filtered = _apply_exclude_rule_filter(params.exclude_rule, filtered)
+    filtered = _apply_exclude_category_filter(params.exclude_category, filtered)
+    filtered = _apply_exclude_file_filter(params.exclude_file, filtered)
+
+    if not filtered:
+        logger.info("✅ No issues matched filters")
+        return r[AnalysisReport].ok(AnalysisReport(issues=[]))
+
+    report_result = analyze_issues(filtered)
+    if report_result.failure:
+        return r[AnalysisReport].fail(report_result.error or "analysis failed")
+    report = report_result.unwrap()
+
+    logger.info("\n" + report.generate_summary())
+
+    if not params.summary_only:
+        md_content = report.generate_markdown()
+        params.report_file.write_text(md_content, encoding="utf-8")
+        logger.info(f"\n📝 Detailed report written to {params.report_file}")
+
+    return r[AnalysisReport].ok(report)
 
 
 def main() -> None:
-    """Main entry point."""
-    parser = argparse.ArgumentParser(description="Analyze SARIF quality reports")
-
-    # Mode selection
-    parser.add_argument(
-        "--scan", action="store_true", help="Run qlty scan instead of reading files"
+    app = create_app_with_common_params(
+        name="qlty",
+        help_text="Analyze SARIF quality reports.",
     )
-
-    # Input files
-    parser.add_argument(
-        "--checks-file",
-        type=Path,
-        help="SARIF file for qlty checks (default: qlty.check.current.sarif)",
+    register_result_command(
+        app,
+        name="analyze",
+        help_text="Analyze SARIF quality reports.",
+        model_cls=QltyParams,
+        handler=analyze,
     )
-    parser.add_argument(
-        "--smells-file",
-        type=Path,
-        default=Path("qlty.smells.sarif"),
-        help="SARIF file for qlty smells (default: qlty.smells.sarif)",
-    )
-
-    # Issue type selection
-    parser.add_argument(
-        "--type",
-        choices=["both", "checks", "smells"],
-        default="both",
-        help="Types of issues to analyze (default: both)",
-    )
-    parser.add_argument(
-        "--check",
-        action="store_true",
-        help="Analyze checks only (alias for --type checks)",
-    )
-    parser.add_argument(
-        "--smells",
-        action="store_true",
-        help="Analyze smells only (alias for --type smells)",
-    )
-
-    # Filters
-    parser.add_argument(
-        "--severity",
-        choices=["error", "warning", "note"],
-        help="Filter by severity",
-    )
-    parser.add_argument("--rule", help="Filter by rule ID substring")
-    parser.add_argument("--category", help="Filter by rule category")
-    parser.add_argument("--file", help="Filter by file path pattern (glob)")
-
-    # Exclusions
-    parser.add_argument(
-        "--exclude-rule",
-        action="append",
-        help="Exclude rule ID substring (can be used multiple times)",
-    )
-    parser.add_argument(
-        "--exclude-category",
-        action="append",
-        help="Exclude rule category (can be used multiple times)",
-    )
-    parser.add_argument(
-        "--exclude-file",
-        action="append",
-        help="Exclude file path pattern (can be used multiple times)",
-    )
-
-    # Output control
-    parser.add_argument(
-        "--summary-only", action="store_true", help="Print only summary, no report"
-    )
-    parser.add_argument(
-        "--report-file",
-        type=Path,
-        default=Path("QUALITY_REPORT.md"),
-        help="Output markdown report file (default: QUALITY_REPORT.md)",
-    )
-
-    args = parser.parse_args()
-
-    # Collect issues
-    all_issues = _collect_all_issues(args)
-
-    if not all_issues:
-        print("✅ No issues found to analyze")
-        return
-
-    # Apply filters
-    filtered = all_issues
-    filtered = _apply_severity_filter(args, filtered)
-    filtered = _apply_rule_filter(args, filtered)
-    filtered = _apply_category_filter(args, filtered)
-    filtered = _apply_file_filter(args, filtered)
-    filtered = _apply_exclude_rule_filter(args, filtered)
-    filtered = _apply_exclude_category_filter(args, filtered)
-    filtered = _apply_exclude_file_filter(args, filtered)
-
-    if not filtered:
-        print("✅ No issues matched filters")
-        return
-
-    # Analyze
-    report = analyze_issues(filtered)
-
-    # Print summary
-    print("\n" + report.generate_summary())
-
-    # Generate Markdown Report
-    if not args.summary_only:
-        md_content = report.generate_markdown()
-        args.report_file.write_text(md_content, encoding="utf-8")
-        print(f"\n📝 Detailed report written to {args.report_file}")
+    typer.main.get_command(app)()
 
 
 if __name__ == "__main__":

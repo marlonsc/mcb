@@ -32,15 +32,19 @@ fn ca_violation(
 
 #[derive(Clone, Copy)]
 enum NameMatch<'a> {
-    Contains(&'a str),
+    RoleWord(&'a str),
     EndsWith(&'a str),
 }
 
 fn name_matches(file_name: &str, matcher: NameMatch<'_>) -> bool {
     match matcher {
-        NameMatch::Contains(value) => file_name.contains(value),
+        NameMatch::RoleWord(value) => role_word_matches(file_name, value),
         NameMatch::EndsWith(value) => file_name.ends_with(value),
     }
+}
+
+fn role_word_matches(file_name: &str, role: &str) -> bool {
+    file_name != role && file_name.split('_').any(|part| part == role)
 }
 
 fn in_any_dir(path_str: &str, dirs: &[&str]) -> bool {
@@ -85,7 +89,7 @@ fn check_domain_naming(path: &Path, file_name: &str, path_str: &str) -> Option<N
         path,
         file_name,
         path_str,
-        NameMatch::Contains(CA_DOMAIN_PROVIDER_KEYWORD),
+        NameMatch::RoleWord(CA_DOMAIN_PROVIDER_KEYWORD),
         &[CA_PORTS_PROVIDERS_DIR, PORTS_DIR],
         "Provider Port",
         "Provider file outside ports/ directory",
@@ -97,7 +101,7 @@ fn check_domain_naming(path: &Path, file_name: &str, path_str: &str) -> Option<N
             path,
             file_name,
             path_str,
-            NameMatch::Contains(CA_DOMAIN_REPOSITORY_KEYWORD),
+            NameMatch::RoleWord(CA_DOMAIN_REPOSITORY_KEYWORD),
             &[CA_REPOSITORIES_DIR, CA_ADAPTERS_REPOSITORY_DIR],
             "Repository Port",
             "Repository file outside repositories/ directory",
@@ -129,7 +133,7 @@ fn check_infrastructure_naming(
             path,
             file_name,
             path_str,
-            NameMatch::Contains(CA_INFRA_ADAPTER_KEYWORD),
+            NameMatch::RoleWord(CA_INFRA_ADAPTER_KEYWORD),
             &[ADAPTERS_DIR],
             "Adapter",
             "Adapter/implementation file outside adapters/ directory",
@@ -142,7 +146,7 @@ fn check_infrastructure_naming(
             path,
             file_name,
             path_str,
-            NameMatch::Contains(CA_MODULE_KEYWORD),
+            NameMatch::RoleWord(CA_MODULE_KEYWORD),
             &[CA_DI_DIR],
             "DI Module",
             "Module file outside di/ directory",
@@ -158,7 +162,7 @@ fn check_server_naming(path: &Path, file_name: &str, path_str: &str) -> Option<N
         path,
         file_name,
         path_str,
-        NameMatch::Contains(CA_HANDLER_KEYWORD),
+        NameMatch::RoleWord(CA_HANDLER_KEYWORD),
         CA_HANDLER_DIRS,
         "Handler",
         "Handler file outside handlers/ directory",

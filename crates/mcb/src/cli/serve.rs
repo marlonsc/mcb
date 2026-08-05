@@ -3,6 +3,7 @@ use loco_rs::app::Hooks;
 use loco_rs::boot::{self, ServeParams, StartMode};
 use loco_rs::environment::Environment;
 
+use crate::initializers::mcp_server::StdioServerShutdown;
 use crate::loco_app::McbApp;
 
 /// Arguments for the `serve` subcommand.
@@ -39,6 +40,19 @@ impl ServeArgs {
 
         let boot_result =
             McbApp::boot(StartMode::server_only(), &environment, loco_config.clone()).await?;
+
+        if self.stdio {
+            // Stdio-only mode: the MCP server was started by the initializer. Do not
+            // start the HTTP server; block until stdio shuts down.
+            if let Some(shutdown) = boot_result
+                .app_context
+                .shared_store
+                .get::<StdioServerShutdown>()
+            {
+                shutdown.wait().await;
+            }
+            return Ok(());
+        }
 
         // Allow SERVER_PORT env var to override the config file port (used for E2E testing).
         let port = std::env::var("SERVER_PORT")

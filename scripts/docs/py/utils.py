@@ -1,31 +1,41 @@
+"""Docs Py Utils.
+
+Copyright (c) 2025 MCB Contributors. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
+
+from __future__ import annotations
+
 import os
 import re
 
 
-def get_project_root():
+def get_project_root() -> str:
     """Returns the absolute path to the project root."""
     # scripts/docs/py/utils.py -> ../../../
     return os.path.abspath(os.path.join(os.path.dirname(__file__), "../../../"))
 
 
-def find_md_files(root_dir, exclude_dirs=None):
+def find_md_files(root_dir: str, exclude_dirs: set[str] | None = None) -> list[str]:
     """
     Recursively finds all .md files in root_dir, skipping excluded directories.
     """
     if exclude_dirs is None:
         exclude_dirs = {".git", "fixtures", "node_modules", "target", "generated"}
 
-    md_files = []
+    md_files: list[str] = []
     for root, dirs, files in os.walk(root_dir):
         # Filter excludes in-place to prevent traversing them
         # We start iterating from a copy of the list to safely modify it
-        dirs[:] = [d for d in dirs if d not in exclude_dirs and not d.startswith(".")]
+        dirs[:] = [
+            d for d in dirs if d not in exclude_dirs and not d.startswith(".") and not d.endswith((".bak", ".bkp"))
+        ]
 
         md_files.extend(os.path.join(root, f) for f in files if f.endswith(".md"))
     return md_files
 
 
-def extract_links(content):
+def extract_links(content: str) -> list[tuple[str, str]]:
     """
     Extracts links from markdown content.
     Returns list of (text, url) tuples.

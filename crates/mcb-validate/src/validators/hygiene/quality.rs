@@ -19,7 +19,6 @@ struct QualityPatterns {
 }
 
 struct QualityScanInput<'a> {
-    test_attr_pattern: &'a Regex,
     fn_pattern: &'a Regex,
     real_assert_pattern: &'a Regex,
     unwrap_pattern: &'a Regex,
@@ -29,7 +28,6 @@ struct QualityScanInput<'a> {
 /// Owns the compiled regexes used to scan test files so they outlive the
 /// borrowed [`QualityScanInput`] view.
 struct QualityScanRegexes {
-    test_attr_pattern: Regex,
     fn_pattern: Regex,
     real_assert_pattern: Regex,
     unwrap_pattern: Regex,
@@ -60,7 +58,6 @@ impl QualityScanRegexes {
     /// Returns an error if any pattern fails to compile.
     fn compile() -> Result<Self> {
         Ok(Self {
-            test_attr_pattern: compile_regex(r"#\[(?:tokio::)?test\]")?,
             fn_pattern: compile_regex(r"(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\(")?,
             // Match common assertion macros, allowing leading whitespace/punctuation
             // to avoid false positives like "some_assert!".
@@ -75,7 +72,6 @@ impl QualityScanRegexes {
     /// Borrow these regexes as a [`QualityScanInput`].
     fn as_scan_input(&self) -> QualityScanInput<'_> {
         QualityScanInput {
-            test_attr_pattern: &self.test_attr_pattern,
             fn_pattern: &self.fn_pattern,
             real_assert_pattern: &self.real_assert_pattern,
             unwrap_pattern: &self.unwrap_pattern,
@@ -140,15 +136,16 @@ fn find_next_test_fn(
     start_idx: usize,
     fn_pattern: &Regex,
 ) -> Option<(usize, String)> {
-    lines
-        .iter()
-        .enumerate()
-        .skip(start_idx)
-        .find_map(|(line_idx, candidate)| {
-            let captures = fn_pattern.captures(candidate)?;
-            let fn_name = captures.get(1).map_or("", |m| m.as_str());
-            Some((line_idx, fn_name.to_owned()))
-        })
+    for (line_idx, candidate) in lines.iter().enumerate().skip(start_idx) {
+        let trimmed = candidate.trim();
+        if trimmed.is_empty() || trimmed.starts_with("#[") {
+            continue;
+        }
+        let captures = fn_pattern.captures(candidate)?;
+        let fn_name = captures.get(1).map_or("", |m| m.as_str());
+        return Some((line_idx, fn_name.to_owned()));
+    }
+    None
 }
 
 fn process_quality_file(
@@ -161,8 +158,10 @@ fn process_quality_file(
     check_forbidden_patterns(path, lines, patterns, &mut violations);
 
     for (line_idx, line) in lines.iter().enumerate() {
-        if line.trim().starts_with(MODULE_DOC_PREFIX)
-            || !scan_input.test_attr_pattern.is_match(line)
+        let trimmed = line.trim();
+        if trimmed.starts_with(COMMENT_PREFIX)
+            || trimmed.starts_with(MODULE_DOC_PREFIX)
+            || !is_test_attribute_line(trimmed)
         {
             continue;
         }
@@ -186,6 +185,12 @@ fn process_quality_file(
     }
 
     violations
+}
+
+fn is_test_attribute_line(trimmed: &str) -> bool {
+    const TEST_ATTR: &str = concat!("#[", "test]");
+    const TOKIO_TEST_ATTR: &str = concat!("#[tokio::", "test]");
+    trimmed == TEST_ATTR || trimmed == TOKIO_TEST_ATTR
 }
 
 /// Tracks which kinds of meaningful code a test body contains.

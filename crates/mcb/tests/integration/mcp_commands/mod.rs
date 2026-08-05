@@ -16,3 +16,4 @@ mod search_tests;
 mod session_tests;
 mod validate_tests;
 mod vcs_tests;
+mod workflow_tests;

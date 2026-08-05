@@ -76,6 +76,8 @@ impl HookProcessor {
         memory_service
             .store_observation(StoreObservationInput {
                 project_id,
+                // ADR-056 (bead mcb-6pjx.1.2): org_id deferred; hooks do not yet carry org context.
+                org_id: mcb_utils::constants::values::DEFAULT_ORG_ID.to_owned(),
                 content,
                 r#type: ObservationType::Execution,
                 tags,
@@ -122,6 +124,8 @@ impl HookProcessor {
 
         let results = memory_service
             .memory_search(
+                // ADR-056 (bead mcb-6pjx.1.2): org_id deferred; session-start hooks lack org context.
+                mcb_utils::constants::values::DEFAULT_ORG_ID,
                 "session context",
                 Some(filter),
                 mcb_utils::constants::SESSION_SEARCH_LIMIT,

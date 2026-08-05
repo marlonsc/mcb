@@ -61,9 +61,12 @@ impl TemplateEngine {
                             ))
                         })?;
 
-                let content = tokio::fs::read_to_string(path)
-                    .await
-                    .map_err(crate::ValidationError::Io)?;
+                let content = tokio::fs::read_to_string(path).await.map_err(|e| {
+                    crate::ValidationError::Read {
+                        file: path.to_path_buf(),
+                        source: e,
+                    }
+                })?;
 
                 self.parse_and_add_template(path, &content, template_name)?;
             }
@@ -98,7 +101,11 @@ impl TemplateEngine {
                             ))
                         })?;
 
-                let content = std::fs::read_to_string(path).map_err(crate::ValidationError::Io)?;
+                let content =
+                    std::fs::read_to_string(path).map_err(|e| crate::ValidationError::Read {
+                        file: path.to_path_buf(),
+                        source: e,
+                    })?;
 
                 self.parse_and_add_template(path, &content, template_name)?;
             }

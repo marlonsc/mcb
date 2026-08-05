@@ -1,0 +1,48 @@
+# cargo-nextest configuration.
+#
+# mcb-server integration tests share a process-wide test context
+# (`tests/utils/test_fixtures.rs`: `OnceLock<Option<SharedTestContext>>` with a
+# heavy provider/DB init). Under `cargo test` that context initializes ONCE per
+# test binary and is shared by all threads. nextest instead runs ONE PROCESS PER
+# TEST, so each test re-initializes the context; running them concurrently makes
+# several heavy inits collide and return `None` ("shared test context init
+# failed"). Serialize the integration tests so only one init runs at a time —
+# this matches the cargo-test execution semantics without losing nextest's speed
+# on the rest of the suite.
+
+[test-groups]
+serial-shared-context = { max-threads = 1 }
+
+[profile.default]
+# Use all available CPUs by default; Makefile still passes --test-threads=$T to
+# allow explicit overrides (e.g. THREADS=1 for debugging).
+test-threads = "num-cpus"
+# Surface slow tests so they can be optimized instead of silently dragging the
+# suite. "warn" prints without failing; "terminate" would kill long hangs.
+slow-timeout = { period = "60s", terminate-after = 3 }
+
+[[profile.default.overrides]]
+filter = 'package(mcb-server) and kind(test)'
+test-group = 'serial-shared-context'
+# Defense-in-depth: the CI warm-up step (`make test SCOPE=warmup`) populates the
+# hf-hub cache in-job so these load the model offline. retries absorbs a residual
+# transient HF 429 on a genuine cold-cache run — visible in nextest output, not a
+# silent fallback. Primary fix is the warm-up; this is the safety net.
+retries = 2
+
+# Quality-validator unit tests scan the live workspace and exceed the default
+# slow-timeout on large trees (pre-commit unit gate).
+[[profile.default.overrides]]
+filter = 'test(/test_validate_(with_specific_validator|mcb_workspace_quality)/)'
+slow-timeout = { period = "120s", terminate-after = 3 }
+
+[profile.ci]
+# CI: keep going to see the full picture, retry once for transient failures.
+test-threads = "num-cpus"
+fail-fast = false
+retries = 1
+slow-timeout = { period = "60s", terminate-after = 3 }
+
+[[profile.ci.overrides]]
+filter = 'test(/test_validate_(with_specific_validator|mcb_workspace_quality)/)'
+slow-timeout = { period = "120s", terminate-after = 3 }

@@ -9,42 +9,46 @@ use super::tool_error;
 ///
 /// # Errors
 /// Returns an error when the key is missing or value is not a string.
-pub fn require_str(data: &Map<String, Value>, key: &str) -> Result<String, CallToolResult> {
+pub fn require_str(data: &Map<String, Value>, key: &str) -> Result<String, Box<CallToolResult>> {
     data.get(key)
         .and_then(Value::as_str)
         .map(str::to_owned)
         .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
+        .map_err(Box::new)
 }
 
 /// Requires an i64 value from a JSON object, returning an error if missing.
 ///
 /// # Errors
 /// Returns an error when the key is missing or value is not an integer.
-pub fn require_i64(data: &Map<String, Value>, key: &str) -> Result<i64, CallToolResult> {
+pub fn require_i64(data: &Map<String, Value>, key: &str) -> Result<i64, Box<CallToolResult>> {
     data.get(key)
         .and_then(Value::as_i64)
         .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
+        .map_err(Box::new)
 }
 
 /// Requires an i32 value from a JSON object, returning an error if missing or out of range.
 ///
 /// # Errors
 /// Returns an error when the key is missing, value is not an integer, or exceeds i32 range.
-pub fn require_i32(data: &Map<String, Value>, key: &str) -> Result<i32, CallToolResult> {
+pub fn require_i32(data: &Map<String, Value>, key: &str) -> Result<i32, Box<CallToolResult>> {
     data.get(key)
         .and_then(Value::as_i64)
         .and_then(|value| value.try_into().ok())
         .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
+        .map_err(Box::new)
 }
 
 /// Requires a boolean value from a JSON object, returning an error if missing.
 ///
 /// # Errors
 /// Returns an error when the key is missing or value is not a boolean.
-pub fn require_bool(data: &Map<String, Value>, key: &str) -> Result<bool, CallToolResult> {
+pub fn require_bool(data: &Map<String, Value>, key: &str) -> Result<bool, Box<CallToolResult>> {
     data.get(key)
         .and_then(Value::as_bool)
         .ok_or_else(|| tool_error(format!("Missing required field: {key}")))
+        .map_err(Box::new)
 }
 
 /// Extracts an optional string value from a JSON object.

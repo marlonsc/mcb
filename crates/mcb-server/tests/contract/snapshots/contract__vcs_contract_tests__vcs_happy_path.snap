@@ -4,28 +4,28 @@ expression: "snapshot_payload(&request, status, &response)"
 ---
 {
   "request": {
-    "id": 1,
     "jsonrpc": "2.0",
     "method": "tools/call",
     "params": {
+      "name": "list_repos",
       "arguments": {
         "limit": 1
-      },
-      "name": "list_repos"
-    }
+      }
+    },
+    "id": 1
   },
+  "status": 200,
   "response": {
-    "id": 1,
     "jsonrpc": "2.0",
     "result": {
       "content": [
         {
-          "text": "{\n  \"repositories\": [],\n  \"count\": 0\n}",
-          "type": "text"
+          "type": "text",
+          "text": "{\n  \"repositories\": [],\n  \"count\": 0\n}"
         }
       ],
       "isError": false
-    }
-  },
-  "status": 200
+    },
+    "id": 1
+  }
 }

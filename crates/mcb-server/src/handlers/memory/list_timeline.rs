@@ -3,7 +3,7 @@
 //!
 use std::sync::Arc;
 
-use mcb_domain::ports::MemoryServiceInterface;
+use mcb_domain::ports::{MemoryServiceInterface, TimelineQuery};
 use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
@@ -12,7 +12,8 @@ use super::common::build_memory_filter;
 use crate::args::MemoryArgs;
 use crate::error_mapping::{to_contextual_tool_error, to_opaque_mcp_error};
 use crate::formatter::ResponseFormatter;
-use crate::utils::mcp::tool_error;
+use crate::utils::args::resolve_limit;
+use crate::utils::mcp::{resolve_org_id, tool_error};
 use mcb_utils::constants::keys::{FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE};
 use mcb_utils::constants::limits::{DEFAULT_MEMORY_LIST_LIMIT, DEFAULT_TIMELINE_DEPTH};
 
@@ -23,11 +24,12 @@ pub async fn list_observations(
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
     let filter = build_memory_filter(args, None, args.tags.clone());
-    let limit = args.limit.unwrap_or(DEFAULT_MEMORY_LIST_LIMIT as u32) as usize;
+    let org_id = resolve_org_id(args.org_id.as_deref());
+    let limit = resolve_limit(args.limit, DEFAULT_MEMORY_LIST_LIMIT as u32);
     // INTENTIONAL: Optional query parameter; empty string means no filter
     let query = args.query.clone().unwrap_or_default();
     match memory_service
-        .memory_search(&query, Some(filter), limit)
+        .memory_search(&org_id, &query, Some(filter), limit)
         .await
     {
         Ok(results) => {
@@ -65,20 +67,23 @@ pub async fn list_observations(
 async fn resolve_timeline_anchor_id(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
-) -> Result<Result<String, CallToolResult>, McpError> {
+) -> Result<Result<String, Box<CallToolResult>>, McpError> {
     if let Some(anchor_id) = args.anchor_id.clone() {
         return Ok(Ok(anchor_id));
     }
     let Some(query) = args.query.clone() else {
-        return Ok(Err(tool_error("Missing anchor_id or query for timeline")));
+        return Ok(Err(Box::new(tool_error(
+            "Missing anchor_id or query for timeline",
+        ))));
     };
+    let org_id = resolve_org_id(args.org_id.as_deref());
     let results = memory_service
-        .search_memories(&query, None, 1)
+        .search_memories(&org_id, &query, None, 1)
         .await
         .map_err(|e| to_opaque_mcp_error(&e))?;
     match results.first() {
         Some(first) => Ok(Ok(first.observation.id.clone())),
-        None => Ok(Err(tool_error("No anchor observation found"))),
+        None => Ok(Err(Box::new(tool_error("No anchor observation found")))),
     }
 }
 
@@ -90,18 +95,27 @@ pub async fn get_timeline(
 ) -> Result<CallToolResult, McpError> {
     let anchor_id = match resolve_timeline_anchor_id(memory_service, args).await? {
         Ok(anchor_id) => anchor_id,
-        Err(response) => return Ok(response),
+        Err(response) => return Ok(*response),
     };
     let filter = build_memory_filter(args, None, None);
-    let depth_before = args.depth_before.unwrap_or(DEFAULT_TIMELINE_DEPTH);
-    let depth_after = args.depth_after.unwrap_or(DEFAULT_TIMELINE_DEPTH);
+    let org_id = resolve_org_id(args.org_id.as_deref());
+    let depth_before = args
+        .timeline_depth
+        .depth_before
+        .unwrap_or(DEFAULT_TIMELINE_DEPTH);
+    let depth_after = args
+        .timeline_depth
+        .depth_after
+        .unwrap_or(DEFAULT_TIMELINE_DEPTH);
+    let anchor_observation_id = ObservationId::from_string(&anchor_id);
     match memory_service
-        .get_timeline(
-            &ObservationId::from_string(&anchor_id),
-            depth_before,
-            depth_after,
-            Some(filter),
-        )
+        .get_timeline(TimelineQuery {
+            org_id: &org_id,
+            anchor_id: &anchor_observation_id,
+            before: depth_before,
+            after: depth_after,
+            filter: Some(filter),
+        })
         .await
     {
         Ok(timeline) => {

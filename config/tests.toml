@@ -4,7 +4,13 @@
 # Uncomment and configure the services available in your environment.
 
 [test_services]
+# Uncomment and configure the services available in your environment.
+# Default ports match `tests/docker-compose.yml`.
 # milvus = "http://localhost:19530"
+# ollama = "http://localhost:11434"
+# redis = "redis://localhost:26379"
+# postgres = "postgresql://mcb_test:mcb_test_pass@localhost:25432/mcb_test"
+# nats = "nats://localhost:24222"
+# api_mock = "http://localhost:21080"
 # pinecone_api_key = "pk-test-..."
 # pinecone_uri = "https://my-index.svc.pinecone.io"
-# ollama = "http://localhost:11434"

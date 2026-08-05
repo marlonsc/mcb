@@ -1,27 +1,590 @@
+# @flext-managed: continuous
+# @flext-regenerate: make deps WHAT=upgrade APPLY=Y
+# @flext-ssot: flext-infra/src/flext_infra/_constants/deps.py
+# @flext-maintenance: do not edit managed sections; edit the SSOT
+# [MANAGED] FLEXT pyproject standardization
+# Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
+# Sections with [CUSTOM] are project-specific extension points.
+
+# [CUSTOM] project metadata
+[project]
+dependencies = [
+  "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0rc2",
+  "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0rc2",
+  "pydantic>=2.13.4",
+  "pydantic-settings>=2.14.2",
+  "structlog>=26.1.0",
+]
+description = "Repository-local automation helpers for MCB"
+name = "mcb-scripts"
+requires-python = ">=3.13,<3.14"
+version = "0.4.0"
+
+# [MANAGED] consolidated development dependencies
+[project.optional-dependencies]
+gitops = [
+  "hvac",
+  "kubernetes",
+  "kubernetes-validate",
+  "requests",
+  "ruamel.yaml",
+]
+
+# [MANAGED] build system
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
+# [MANAGED] codespell
+[tool.codespell]
+check-filenames = true
+ignore-words-list = "crate,nd"
+
+# [MANAGED] coverage
+[tool.coverage.report]
+exclude_also = [
+  "if TYPE_CHECKING:",
+  "if _t.TYPE_CHECKING:",
+  "if typing.TYPE_CHECKING:",
+]
+fail_under = 45
+precision = 2
+show_missing = true
+skip_covered = false
+
+[tool.coverage.run]
+omit = [
+  "*/_protocols/*",
+  "*/dependency_injector/providers.pyx",
+  "*/protocols.py",
+]
+source = ["src"]
+
+# [MANAGED] deptry
+[tool.deptry]
+known_first_party = ["flext_cli", "flext_core", "flext_tests", "mcb_scripts"]
+pep621_dev_dependency_groups = ["dev"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+# [MANAGED] mypy
 [tool.mypy]
-python_version = "3.10"
-warn_return_any = true
-warn_unused_configs = true
-mypy_path = "scripts"
-explicit_package_bases = true
-namespace_packages = true
+# FLEXT mypy suppression rationale (validated at the facade-MRO boundary):
+# FLEXT mypy[assignment]: Dependency-injector descriptors lose their MRO-bound type only in Mypy.
+# FLEXT mypy[attr-defined]: PEP 562 facade members inherited through MRO are invisible to Mypy.
+# FLEXT mypy[call-arg]: Pydantic v2 init signatures behind facade MRO are incomplete in Mypy.
+# FLEXT mypy[misc]: Valid PEP 695 nested facade aliases are rejected under Mypy's misc bucket.
+# FLEXT mypy[name-defined]: Generated PEP 562 exports are installed at runtime but absent to Mypy.
+# FLEXT mypy[prop-decorator]: Mypy loses Pydantic computed-field descriptors across composed MRO.
+# FLEXT mypy[valid-type]: Mypy rejects facade namespaces used as owners in valid PEP 695 aliases.
 check_untyped_defs = true
-disallow_untyped_defs = false
+disable_error_code = [
+  "assignment",
+  "attr-defined",
+  "call-arg",
+  "misc",
+  "name-defined",
+  "prop-decorator",
+  "valid-type",
+]
+disallow_untyped_defs = true
+explicit_package_bases = true
+extra_checks = true
+files = ["scripts/check", "scripts/lib", "scripts/qlty"]
+follow_imports = "normal"
+ignore_missing_imports = true
+local_partial_types = true
+mypy_path = ["."]
+namespace_packages = true
+no_implicit_reexport = true
+plugins = ["pydantic.mypy"]
+python_version = "3.13"
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unreachable = true
+warn_unused_configs = true
+warn_unused_ignores = true
 
 [[tool.mypy.overrides]]
-module = "qlty.*"
-disallow_untyped_defs = true
+disable_error_code = ["arg-type"]
+module = ["*.cli"]
 
-[tool.pylint.master]
-# Add scripts to python path for pylint
-init-hook = 'import sys; sys.path.append("./scripts")'
+[[tool.mypy.overrides]]
+disable_error_code = ["unreachable"]
+module = ["dcdoc._utilities._charts._matplotlib_renderer._renders_spec"]
 
-[tool.pylint.format]
-max-line-length = 100
+# [MANAGED] pydantic-mypy
+[tool.pydantic-mypy]
+init_forbid_extra = true
+init_typed = true
+warn_required_dynamic_aliases = true
+warn_untyped_fields = true
 
-[tool.pylint.messages_control]
-disable = [
-    "C0114", # missing-module-docstring
-    "C0115", # missing-class-docstring
-    "C0116", # missing-function-docstring
+# [MANAGED] pyrefly
+[tool.pyrefly]
+disable-project-excludes-heuristics = true
+ignore-errors-in-generated-code = true
+project-excludes = [
+  "**/*_pb2*.py",
+  "**/*_pb2_grpc*.py",
+  "**/.venv/**",
+  "**/__pycache__",
+  "**/__pyrefly_virtual__/**",
+  "**/node_modules",
+  "**/site-packages/**",
+  "**/typings/**",
+  "**/vendor/**",
+  "**/venv/**",
+  ".venv/**",
+  "typings/**",
+  "vendor/**",
+]
+project-includes = ["scripts/**/*.py*", "tests/**/*.py*"]
+python-version = "3.13"
+search-path = ["."]
+use-ignore-files = false
+
+[tool.pyrefly.errors]
+abstract-method-call = false
+bad-argument-count = "error"
+bad-argument-type = "error"
+bad-assignment = "error"
+bad-class-definition = "error"
+bad-context-manager = "error"
+bad-dunder-all = "error"
+bad-function-definition = "error"
+bad-index = "error"
+bad-instantiation = "error"
+bad-keyword-argument = "error"
+bad-match = "error"
+bad-override = false
+bad-param-name-override = "error"
+bad-raise = "error"
+bad-return = "error"
+bad-specialization = "error"
+bad-typed-dict = "error"
+bad-typed-dict-key = "error"
+bad-unpacking = "error"
+deprecated = "error"
+implicit-abstract-class = "error"
+implicit-any = "error"
+implicit-import = "error"
+implicitly-defined-attribute = "error"
+inconsistent-inheritance = "error"
+inconsistent-overload = "error"
+inconsistent-overload-default = "error"
+invalid-annotation = "error"
+invalid-argument = "error"
+invalid-decorator = "error"
+invalid-inheritance = "error"
+invalid-literal = "error"
+invalid-overload = "error"
+invalid-param-spec = "error"
+invalid-pattern = "error"
+invalid-self-type = "error"
+invalid-super-call = "error"
+invalid-type-alias = "error"
+invalid-type-var = "error"
+invalid-type-var-tuple = "error"
+invalid-variance = "error"
+invalid-yield = "error"
+missing-argument = "error"
+missing-attribute = "error"
+missing-import = "error"
+missing-module-attribute = "error"
+missing-override-decorator = "error"
+missing-source = "error"
+missing-source-for-stubs = "error"
+no-access = "error"
+no-matching-overload = "error"
+non-convergent-recursion = false
+non-exhaustive-match = false
+not-a-type = "error"
+not-async = "error"
+not-callable = "error"
+not-iterable = "error"
+not-required-key-access = "error"
+open-unpacking = "error"
+protocol-implicitly-defined-attribute = "error"
+read-only = "error"
+redefinition = "error"
+redundant-cast = "error"
+redundant-condition = "error"
+unannotated-attribute = "error"
+unannotated-parameter = "error"
+unannotated-return = "error"
+unbound-name = "error"
+unexpected-keyword = "error"
+unexpected-positional-argument = "error"
+unknown-name = "error"
+unnecessary-comparison = "error"
+unnecessary-type-conversion = "error"
+unreachable = "error"
+unresolvable-dunder-all = "error"
+unsafe-overlap = "error"
+unsupported = "error"
+unsupported-delete = "error"
+unsupported-operation = "error"
+untyped-import = "error"
+unused-coroutine = "error"
+unused-ignore = "error"
+variance-mismatch = "error"
+
+# [MANAGED] pyright
+[tool.pyright]
+# FLEXT Pyright suppression rationale (validated at the facade-MRO boundary):
+# FLEXT pyright[reportAssignmentType]: Pyright rejects the canonical class-alias rebind after MRO facade composition although runtime and the other analyzers resolve it.
+# FLEXT pyright[reportGeneralTypeIssues]: Pyright groups the same valid MRO facade alias rebind under its broad general diagnostic in every execution environment.
+exclude = [
+  "**/.*",
+  "**/.mypy_cache",
+  "**/.pytest_cache",
+  "**/.ruff_cache",
+  "**/.venv",
+  "**/.venv/**",
+  "**/__pycache__",
+  "**/__pyrefly_virtual__/**",
+  "**/dist-packages",
+  "**/dist-packages/**",
+  "**/node_modules",
+  "**/site-packages",
+  "**/site-packages/**",
+  "**/tests/fixtures",
+  "**/tests/fixtures/**",
+  "**/venv",
+  "**/venv/**",
+  ".git",
+  ".reports",
+  ".venv",
+  "vendor",
+]
+extraPaths = ["src", "."]
+include = ["scripts", "tests"]
+pythonPlatform = "Linux"
+pythonVersion = "3.13"
+reportArgumentType = "none"
+reportAttributeAccessIssue = "none"
+reportCallIssue = "none"
+reportConstantRedefinition = "error"
+reportIncompatibleMethodOverride = "error"
+reportIncompatibleVariableOverride = "none"
+reportInconsistentConstructor = "error"
+reportInvalidTypeForm = "none"
+reportMissingImports = "error"
+reportMissingModuleSource = "error"
+reportMissingTypeStubs = "none"
+reportPrivateUsage = "warning"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnnecessaryCast = "error"
+reportUnnecessaryComparison = "warning"
+reportUnnecessaryIsInstance = "warning"
+reportUnreachable = "none"
+reportUnsupportedDunderAll = "none"
+reportUntypedBaseClass = "none"
+reportUntypedFunctionDecorator = "none"
+reportUnusedClass = "error"
+reportUnusedFunction = "error"
+reportUnusedImport = "error"
+reportUnusedVariable = "error"
+typeCheckingMode = "strict"
+venv = ".venv"
+venvPath = "."
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportArgumentType = "none"
+reportAssignmentType = "none"
+reportAttributeAccessIssue = "none"
+reportGeneralTypeIssues = "none"
+reportInvalidTypeForm = "none"
+reportPrivateImportUsage = "none"
+reportPrivateUsage = "none"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
+root = "scripts"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportArgumentType = "none"
+reportAssignmentType = "none"
+reportAttributeAccessIssue = "none"
+reportGeneralTypeIssues = "none"
+reportInvalidTypeForm = "none"
+reportPrivateImportUsage = "none"
+reportPrivateUsage = "none"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
+root = "tests"
+
+# [MANAGED] pytest
+[tool.pytest.ini_options]
+addopts = [
+  "--benchmark-disable",
+  "--durations=10",
+  "--markdown-docs",
+  "--strict-markers",
+  "--timeout=30",
+]
+filterwarnings = [
+  "error",
+  "module::flext_core._constants.enforcement.FlextMroViolation",
+]
+markers = [
+  "docker: tests requiring Docker",
+  "e2e: end-to-end integration tests",
+  "edge_cases: edge case tests",
+  "integration: integration tests",
+  "performance: performance and benchmark tests",
+  "remote: tests requiring remote/external network services",
+  "resilience: resilience tests",
+  "slow: slow-running tests",
+  "timeout: per-test timeout override (pytest-timeout)",
+  "smoke: public-interface smoke tests",
+  "stress: stress tests",
+  "unit: unit tests",
+]
+minversion = "8.0"
+python_classes = ["Test*"]
+python_files = ["*_test.py", "*_tests.py", "test_*.py"]
+pythonpath = ["scripts"]
+testpaths = [".", "docs", "examples", "scripts", "src", "tests"]
+
+# [MANAGED] ruff
+[tool.ruff]
+exclude = [
+  "**/.archive/**",
+  "**/__pyrefly_virtual__/**",
+  ".archive",
+  ".archive/**",
+  ".git",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".venv",
+  "__pycache__",
+  "archive",
+  "backup",
+  "build",
+  "dist",
+  "htmlcov",
+  "temp-backup",
+  "typings",
+  "vendor",
+  "venv",
+]
+fix = false
+line-length = 88
+namespace-packages = ["examples", "scripts", "tests"]
+preview = true
+respect-gitignore = true
+show-fixes = true
+src = ["examples", "scripts", "src", "tests"]
+target-version = "py313"
+
+[tool.ruff.format]
+docstring-code-format = true
+indent-style = "space"
+line-ending = "lf"
+quote-style = "double"
+skip-magic-trailing-comma = true
+
+[tool.ruff.lint]
+# FLEXT Ruff suppression rationale (validated against semantic facet order):
+# FLEXT ruff[import-outside-top-level]: Public facade models are imported lazily only at validation and construction sites to preserve the c-t-p-m-u graph and prevent runtime cycles.
+# FLEXT ruff[unsorted-imports]: Ruff sorts TYPE_CHECKING imports lexically and reverses the mandatory semantic c-t-p-m-u dependency order in FLEXT facades.
+ignore = [
+  "ambiguous-unicode-character-comment",
+  "ambiguous-unicode-character-docstring",
+  "ambiguous-unicode-character-string",
+  "assert-raises-exception",
+  "bad-dunder-method-name",
+  "bad-quotes-inline-string",
+  "blank-line-with-whitespace",
+  "blind-except",
+  "boolean-positional-value-in-call",
+  "camelcase-imported-as-lowercase",
+  "collection-literal-concatenation",
+  "commented-out-code",
+  "complex-structure",
+  "docstring-extraneous-exception",
+  "docstring-extraneous-returns",
+  "docstring-missing-exception",
+  "docstring-missing-returns",
+  "docstring-missing-yields",
+  "get-attr-with-constant",
+  "hardcoded-sql-expression",
+  "import-outside-top-level",
+  "incorrect-blank-line-before-class",
+  "invalid-first-argument-name-for-method",
+  "line-too-long",
+  "logging-f-string",
+  "missing-copyright-notice",
+  "missing-return-type-private-function",
+  "missing-trailing-comma",
+  "mixed-case-variable-in-global-scope",
+  "multi-line-summary-second-line",
+  "no-self-use",
+  "non-imperative-mood",
+  "non-pep695-type-alias",
+  "raise-vanilla-args",
+  "raise-within-try",
+  "redefined-loop-name",
+  "set-attr-with-constant",
+  "snake-case-type-alias",
+  "too-many-arguments",
+  "too-many-branches",
+  "too-many-locals",
+  "too-many-nested-blocks",
+  "too-many-positional-arguments",
+  "too-many-public-methods",
+  "too-many-return-statements",
+  "too-many-statements",
+  "try-consider-else",
+  "typing-only-first-party-import",
+  "typing-only-standard-library-import",
+  "typing-only-third-party-import",
+  "undocumented-param",
+  "unnecessary-lambda",
+  "unnecessary-placeholder",
+  "unsorted-imports",
+]
+select = ["ALL"]
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.argparse]
+msg = "Use cli.register_result_command + Pydantic model from flext_cli."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.click]
+msg = "Use flext_cli.cli application, registration, execution, and invocation methods."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.rich]
+msg = "Use cli.print / cli.display_message / cli.render_panel / cli.render_table."
+
+[tool.ruff.lint.flake8-tidy-imports.banned-api.typer]
+msg = "Use cli.create_app_with_common_params / cli.register_command from flext_cli."
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-single-line = false
+known-first-party = ["flext_cli", "flext_core", "flext_tests", "mcb_scripts"]
+split-on-trailing-comma = false
+
+[tool.ruff.lint.per-file-ignores]
+
+"scripts/**" = [
+  "ANN401",
+  "ARG001",
+  "D101", "D102", "D103", "D107", "D200", "D202", "D205", "D212",
+  "EM101", "EM102",
+  "EXE001",
+  "FBT001", "FBT002",
+  "FURB101", "FURB103", "FURB110", "FURB113",
+  "G003",
+  "N806", "N999",
+  "PERF401", "PERF402",
+  "PIE810",
+  "PLC0207", "PLC2701", "PLR2004", "PLR6201", "PLW1514",
+  "PTH100", "PTH110", "PTH118", "PTH120", "PTH123", "PTH201",
+  "Q003",
+  "RUF022", "RUF052", "RUF100", "RUF105",
+  "S404", "S603", "S607",
+  "T201",
+  "TC006",
+  "TID251", "TID252",
+  "TRY400", "TRY401",
+]
+
+"**/.vulture_whitelist.py" = ["ALL"]
+"**/*_pb2*.py" = ["ALL"]
+"scripts/cmd/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
+"**/examples/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
+"**/tests/**" = [
+  "assert",
+  "compare-to-empty-string",
+  "magic-value-comparison",
+  "suspicious-subprocess-import",
+  "subprocess-without-shell-equals-true",
+  "undocumented-public-class",
+  "undocumented-public-function",
+  "undocumented-public-method",
+]
+"scripts/check/surface.py" = [
+  "shebang-not-executable",
+  "suspicious-subprocess-import",
+  "subprocess-without-shell-equals-true",
+  "start-process-with-partial-path",
+]
+"**/__init__.py" = [
+  "any-type",
+  "builtin-import-shadowing",
+  "implicit-namespace-package",
+  "import-private-name",
+  "invalid-module-name",
+  "non-empty-init-module",
+  "runtime-import-in-type-checking-block",
+  "undefined-export",
+  "undefined-local-with-import-star",
+  "undefined-local-with-import-star-usage",
+  "undocumented-public-init",
+  "unused-import",
+]
+
+[tool.setuptools]
+packages = []
+
+# [MANAGED] tomlsort
+[tool.tomlsort]
+all = true
+in_place = true
+sort_first = ["build-system", "dependency-groups", "project", "tool"]
+
+[tool.uv]
+exclude-newer = "2026-08-05T00:00:00Z"
+link-mode = "copy"
+package = false
+
+[tool.vulture]
+exclude = ["*/_protocols/*"]
+min_confidence = 100
+paths = ["src"]
+verbose = false
+
+# [MANAGED] yamlfix
+[tool.yamlfix]
+explicit_start = false
+line_length = 88
+preserve_quotes = true
+section_whitelines = 1
+whitelines = 1
+
+[dependency-groups]
+dev = [
+  "actionlint-py>=1.7.12.24",
+  "bandit>=1.8",
+  "code-review-graph[all]==2.3.6",
+  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0rc2",
+  "mypy>=2.3.0",
+  "pyrefly>=1.1.1",
+  "pyright>=1.1.411",
+  "pytest>=9.0.3",
+  "pytest-testmon>=2.2.0",
+  "ruff>=0.15.12",
+  "rumdl>=0.2.45",
+  "vulture>=2.16",
+  "yamlfix>=1.19.1",
 ]

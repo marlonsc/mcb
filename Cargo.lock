@@ -156,7 +156,7 @@ version = "1.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "40c48f72fd53cd289104fc64099abca73db4166ad86ea0b4341abe65af83dadc"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -167,7 +167,7 @@ checksum = "291e6a250ff86cd4a820112fb8898808a366d8f9f58ce16d1f538353ad55747d"
 dependencies = [
  "anstyle",
  "once_cell_polyfill",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -486,6 +486,17 @@ dependencies = [
  "rustix",
  "slab",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "async-lock"
+version = "3.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "290f7f2596bd5b78a9fec8088ccd89180d7f9f55b94b0576823bbbdc72ee8311"
+dependencies = [
+ "event-listener",
+ "event-listener-strategy",
+ "pin-project-lite",
 ]
 
 [[package]]
@@ -1203,7 +1214,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "117725a109d387c937a1533ce01b450cbde6b88abceea8473c4d7a85853cda3c"
 dependencies = [
  "lazy_static",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -1859,7 +1870,7 @@ dependencies = [
  "libc",
  "option-ext",
  "redox_users",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1968,6 +1979,7 @@ dependencies = [
 [[package]]
 name = "edgevec"
 version = "0.9.0"
+source = "git+https://github.com/marlon-costa-dc/edgevec.git?rev=11977efbef83e05e469e04110a331e62f09a0f92#11977efbef83e05e469e04110a331e62f09a0f92"
 dependencies = [
  "bitvec",
  "bytemuck",
@@ -2091,7 +2103,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3303,7 +3315,7 @@ dependencies = [
  "portable-atomic",
  "portable-atomic-util",
  "serde_core",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -3680,6 +3692,7 @@ dependencies = [
 [[package]]
 name = "loco-gen"
 version = "0.16.4"
+source = "git+https://github.com/marlon-costa-dc/loco.git?rev=24f77de77f240677030defdf2940a48ca9b5e55c#24f77de77f240677030defdf2940a48ca9b5e55c"
 dependencies = [
  "chrono",
  "clap",
@@ -3700,6 +3713,7 @@ dependencies = [
 [[package]]
 name = "loco-rs"
 version = "0.16.4"
+source = "git+https://github.com/marlon-costa-dc/loco.git?rev=24f77de77f240677030defdf2940a48ca9b5e55c#24f77de77f240677030defdf2940a48ca9b5e55c"
 dependencies = [
  "argon2",
  "async-trait",
@@ -3828,7 +3842,7 @@ dependencies = [
 
 [[package]]
 name = "mcb"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "axum",
@@ -3850,12 +3864,13 @@ dependencies = [
  "serde_yaml",
  "tokio",
  "tokio-util",
+ "tracing",
  "uuid",
 ]
 
 [[package]]
 name = "mcb-domain"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "base64 0.22.1",
@@ -3887,7 +3902,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-infrastructure"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "aes-gcm",
  "argon2",
@@ -3947,7 +3962,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-providers"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -4006,7 +4021,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-server"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "anyhow",
  "argon2",
@@ -4050,6 +4065,7 @@ dependencies = [
  "tempfile",
  "thiserror 2.0.19",
  "tokio",
+ "tokio-util",
  "toml 1.0.6+spec-1.1.0",
  "tower",
  "tower-http",
@@ -4062,7 +4078,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-utils"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "aes-gcm",
  "hex",
@@ -4081,7 +4097,7 @@ dependencies = [
 
 [[package]]
 name = "mcb-validate"
-version = "0.3.1"
+version = "0.4.0"
 dependencies = [
  "async-trait",
  "cargo_metadata",
@@ -4150,6 +4166,7 @@ dependencies = [
 [[package]]
 name = "milvus-sdk-rust"
 version = "0.1.0"
+source = "git+https://github.com/marlon-costa-dc/milvus-sdk-rust.git?rev=e96d3df3202999b0d5a1581d3327c7876b9e8d1b#e96d3df3202999b0d5a1581d3327c7876b9e8d1b"
 dependencies = [
  "anyhow",
  "base64 0.22.1",
@@ -4410,7 +4427,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -4550,12 +4567,6 @@ dependencies = [
  "autocfg",
  "libm",
 ]
-
-[[package]]
-name = "number_prefix"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "830b246a0e5f20af87141b25c173cd1b609bd7779a4617d6ec582abaf90870f3"
 
 [[package]]
 name = "once_cell"
@@ -5296,7 +5307,7 @@ version = "0.14.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "343d3bd7056eda839b03204e68deff7d1b13aba7af2b2fd16890697274262ee7"
 dependencies = [
- "heck 0.4.1",
+ "heck 0.5.0",
  "itertools",
  "log",
  "multimap",
@@ -5486,7 +5497,7 @@ dependencies = [
  "bytes",
  "getrandom 0.4.1",
  "lru-slab",
- "rand 0.10.1",
+ "rand 0.10.2",
  "rand_pcg",
  "ring",
  "rustc-hash",
@@ -6070,6 +6081,7 @@ dependencies = [
 [[package]]
 name = "rust-code-analysis"
 version = "0.0.25"
+source = "git+https://github.com/marlon-costa-dc/rust-code-analysis.git?rev=fc16d618c6c5629ce5e8042ccf2bf5838420e41b#fc16d618c6c5629ce5e8042ccf2bf5838420e41b"
 dependencies = [
  "aho-corasick",
  "crossbeam",
@@ -6152,7 +6164,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -6211,7 +6223,7 @@ dependencies = [
  "security-framework",
  "security-framework-sys",
  "webpki-root-certs",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -6351,6 +6363,7 @@ dependencies = [
 [[package]]
 name = "sea-orm"
 version = "2.0.0-rc.38"
+source = "git+https://github.com/marlon-costa-dc/sea-orm.git?rev=c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0#c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0"
 dependencies = [
  "async-stream",
  "async-trait",
@@ -6384,6 +6397,7 @@ dependencies = [
 [[package]]
 name = "sea-orm-arrow"
 version = "2.0.0-rc.4"
+source = "git+https://github.com/marlon-costa-dc/sea-orm.git?rev=c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0#c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0"
 dependencies = [
  "arrow",
  "sea-query",
@@ -6393,6 +6407,7 @@ dependencies = [
 [[package]]
 name = "sea-orm-cli"
 version = "2.0.0-rc.38"
+source = "git+https://github.com/marlon-costa-dc/sea-orm.git?rev=c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0#c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0"
 dependencies = [
  "chrono",
  "clap",
@@ -6411,6 +6426,7 @@ dependencies = [
 [[package]]
 name = "sea-orm-macros"
 version = "2.0.0-rc.38"
+source = "git+https://github.com/marlon-costa-dc/sea-orm.git?rev=c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0#c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0"
 dependencies = [
  "heck 0.5.0",
  "itertools",
@@ -6426,6 +6442,7 @@ dependencies = [
 [[package]]
 name = "sea-orm-migration"
 version = "2.0.0-rc.38"
+source = "git+https://github.com/marlon-costa-dc/sea-orm.git?rev=c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0#c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0"
 dependencies = [
  "async-trait",
  "clap",
@@ -6440,6 +6457,7 @@ dependencies = [
 [[package]]
 name = "sea-orm-pro"
 version = "0.1.0"
+source = "git+https://github.com/marlon-costa-dc/sea-orm-pro.git?rev=0d280ecb5c06c1dbedbe550e8bbe03caab6b200e#0d280ecb5c06c1dbedbe550e8bbe03caab6b200e"
 dependencies = [
  "anyhow",
  "indexmap 2.13.0",
@@ -6451,6 +6469,7 @@ dependencies = [
 [[package]]
 name = "sea-query"
 version = "1.0.0"
+source = "git+https://github.com/marlon-costa-dc/sea-query.git?rev=97de2087640a56992bc2d1ec9224c91f0efcbd60#97de2087640a56992bc2d1ec9224c91f0efcbd60"
 dependencies = [
  "chrono",
  "itoa",
@@ -6465,6 +6484,7 @@ dependencies = [
 [[package]]
 name = "sea-query-derive"
 version = "1.0.0"
+source = "git+https://github.com/marlon-costa-dc/sea-query.git?rev=97de2087640a56992bc2d1ec9224c91f0efcbd60#97de2087640a56992bc2d1ec9224c91f0efcbd60"
 dependencies = [
  "darling 0.20.11",
  "heck 0.4.1",
@@ -6477,6 +6497,7 @@ dependencies = [
 [[package]]
 name = "sea-query-sqlx"
 version = "0.8.1"
+source = "git+https://github.com/marlon-costa-dc/sea-query.git?rev=97de2087640a56992bc2d1ec9224c91f0efcbd60#97de2087640a56992bc2d1ec9224c91f0efcbd60"
 dependencies = [
  "sea-query",
  "sqlx",
@@ -6485,6 +6506,7 @@ dependencies = [
 [[package]]
 name = "sea-schema"
 version = "0.18.0"
+source = "git+https://github.com/marlon-costa-dc/sea-schema.git?rev=60ddf8b12634d04955b908c03f5900412a47f5c0#60ddf8b12634d04955b908c03f5900412a47f5c0"
 dependencies = [
  "async-trait",
  "sea-query",
@@ -6496,6 +6518,7 @@ dependencies = [
 [[package]]
 name = "sea-schema-derive"
 version = "0.3.0"
+source = "git+https://github.com/marlon-costa-dc/sea-schema.git?rev=60ddf8b12634d04955b908c03f5900412a47f5c0#60ddf8b12634d04955b908c03f5900412a47f5c0"
 dependencies = [
  "heck 0.4.1",
  "proc-macro2",
@@ -6512,6 +6535,7 @@ checksum = "1c107b6f4780854c8b126e228ea8869f4d7b71260f962fefb57b996b8959ba6b"
 [[package]]
 name = "seaography"
 version = "2.0.0-rc.8"
+source = "git+https://github.com/marlon-costa-dc/seaography.git?rev=6efb529fa6d702b6c3903acf4b82b74187ca9b56#6efb529fa6d702b6c3903acf4b82b74187ca9b56"
 dependencies = [
  "async-graphql",
  "fnv",
@@ -6528,6 +6552,7 @@ dependencies = [
 [[package]]
 name = "seaography-macros"
 version = "2.0.0-rc.8"
+source = "git+https://github.com/marlon-costa-dc/seaography.git?rev=6efb529fa6d702b6c3903acf4b82b74187ca9b56#6efb529fa6d702b6c3903acf4b82b74187ca9b56"
 dependencies = [
  "darling 0.21.3",
  "heck 0.5.0",
@@ -7410,7 +7435,7 @@ dependencies = [
  "getrandom 0.4.1",
  "once_cell",
  "rustix",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -8073,6 +8098,7 @@ dependencies = [
 [[package]]
 name = "tree-sitter-ccomment"
 version = "0.20.3"
+source = "git+https://github.com/marlon-costa-dc/rust-code-analysis.git?rev=fc16d618c6c5629ce5e8042ccf2bf5838420e41b#fc16d618c6c5629ce5e8042ccf2bf5838420e41b"
 dependencies = [
  "cc",
  "tree-sitter-language",
@@ -8159,6 +8185,7 @@ checksum = "009994f150cc0cd50ff54917d5bc8bffe8cad10ca10d81c34da2ec421ae61782"
 [[package]]
 name = "tree-sitter-mozcpp"
 version = "0.20.4"
+source = "git+https://github.com/marlon-costa-dc/rust-code-analysis.git?rev=fc16d618c6c5629ce5e8042ccf2bf5838420e41b#fc16d618c6c5629ce5e8042ccf2bf5838420e41b"
 dependencies = [
  "cc",
  "tree-sitter-cpp",
@@ -8168,6 +8195,7 @@ dependencies = [
 [[package]]
 name = "tree-sitter-mozjs"
 version = "0.20.3"
+source = "git+https://github.com/marlon-costa-dc/rust-code-analysis.git?rev=fc16d618c6c5629ce5e8042ccf2bf5838420e41b#fc16d618c6c5629ce5e8042ccf2bf5838420e41b"
 dependencies = [
  "cc",
  "tree-sitter-javascript",
@@ -8187,6 +8215,7 @@ dependencies = [
 [[package]]
 name = "tree-sitter-preproc"
 version = "0.20.3"
+source = "git+https://github.com/marlon-costa-dc/rust-code-analysis.git?rev=fc16d618c6c5629ce5e8042ccf2bf5838420e41b#fc16d618c6c5629ce5e8042ccf2bf5838420e41b"
 dependencies = [
  "cc",
  "tree-sitter-language",

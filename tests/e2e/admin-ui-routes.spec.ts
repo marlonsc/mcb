@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { ensureE2eAdminAuth } from './helpers/mcp-auth';
 
 /**
  * CRITICAL E2E Tests for Admin Web UI Routes
@@ -17,6 +18,15 @@ import { test, expect } from '@playwright/test';
 test.describe('Admin UI Routes - HTTP Accessibility', () => {
   const testPort = process.env.MCB_TEST_PORT || '18080';
   const baseURL = `http://localhost:${testPort}`;
+  let authHeaders: Record<string, string>;
+
+  test.beforeAll(async () => {
+    authHeaders = (await ensureE2eAdminAuth()).headers;
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await page.setExtraHTTPHeaders(authHeaders);
+  });
 
   test('Dashboard (/) should return 200 OK with HTML', async ({ page }) => {
     const response = await page.goto(`${baseURL}/`);
@@ -143,6 +153,15 @@ test.describe('Admin UI Routes - HTTP Accessibility', () => {
 test.describe('Admin UI Routes - Error Cases', () => {
   const testPort = process.env.MCB_TEST_PORT || '18080';
   const baseURL = `http://localhost:${testPort}`;
+  let authHeaders: Record<string, string>;
+
+  test.beforeAll(async () => {
+    authHeaders = (await ensureE2eAdminAuth()).headers;
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await page.setExtraHTTPHeaders(authHeaders);
+  });
 
   test('Non-existent route should return 404', async ({ page }) => {
     const response = await page.goto(`${baseURL}/non-existent-route-12345`, {

@@ -1,5 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const testPort = process.env.MCB_TEST_PORT || '18080';
+const testDbPath = `/tmp/mcb-playwright-${testPort}.db`;
+
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -18,9 +21,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   timeout: 30000,
   use: {
-    baseURL: process.env.MCB_TEST_PORT
-      ? `http://localhost:${process.env.MCB_TEST_PORT}`
-      : 'http://localhost:18080',
+    baseURL: `http://localhost:${testPort}`,
     trace: process.env.CI ? 'off' : 'on-first-retry',
     screenshot: 'only-on-failure',
     video: process.env.CI ? 'off' : 'retain-on-failure',
@@ -35,16 +36,17 @@ export default defineConfig({
   ],
 
   webServer: {
-    command: `rm -f /tmp/mcb-playwright.db && MCB_BIN=$([ -x ../target/release/mcb ] && echo ../target/release/mcb || echo target/release/mcb) && if [ -x $MCB_BIN ]; then SERVER_PORT=${process.env.MCB_TEST_PORT || '18080'} MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http $MCB_BIN serve --server; else SERVER_PORT=${process.env.MCB_TEST_PORT || '18080'} MCP__AUTH__USER_DB_PATH=/tmp/mcb-playwright.db MCP__SERVER__TRANSPORT_MODE=http cargo run --release --bin mcb -- serve --server; fi`,
-    url: process.env.MCB_TEST_PORT
-      ? `http://localhost:${process.env.MCB_TEST_PORT}`
-      : 'http://localhost:18080',
-    reuseExistingServer: !process.env.CI,
+    command: `cd .. && rm -f ${testDbPath} && MCB_BIN=$([ -x target/release/mcb ] && echo target/release/mcb || echo "") && if [ -n "$MCB_BIN" ]; then $MCB_BIN serve --server; else cargo run --release --bin mcb -- serve --server; fi`,
+    url: `http://localhost:${testPort}`,
+    reuseExistingServer: false,
     timeout: 600 * 1000,
     env: {
-      'SERVER_PORT': process.env.MCB_TEST_PORT || '18080',
+      'SERVER_PORT': testPort,
+      'LOCO_ENV': 'test',
+      'DATABASE_URL': `sqlite://${testDbPath}?mode=rwc`,
       'MCP__SERVER__TRANSPORT_MODE': 'http',
-      'MCP__AUTH__USER_DB_PATH': '/tmp/mcb-playwright.db',
+      'MCP__AUTH__USER_DB_PATH': testDbPath,
+      'MCB_MODEL_ID': process.env.MCB_MODEL_ID || 'playwright-e2e',
       'RUST_LOG': process.env.CI ? 'warn' : 'info',
     },
   },

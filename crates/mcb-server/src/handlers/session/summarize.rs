@@ -11,7 +11,7 @@ use super::common::{json_map, str_vec};
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
-use crate::utils::mcp::{OriginPayloadFields, resolve_origin_context, tool_error};
+use crate::utils::mcp::{OriginPayloadFields, resolve_org_id, resolve_origin_context, tool_error};
 
 /// Creates or retrieves a session summary.
 #[tracing::instrument(skip_all)]
@@ -23,9 +23,10 @@ pub async fn summarize_session(
         Some(id) => id,
         None => return Ok(tool_error("Missing session_id")),
     };
+    let org_id = resolve_org_id(args.org_id.as_deref());
     match json_map(&args.data) {
         Some(data) => create_summary(memory_service, args, session_id, data).await,
-        None => fetch_summary(memory_service, session_id).await,
+        None => fetch_summary(memory_service, &org_id, session_id).await,
     }
 }
 
@@ -82,9 +83,10 @@ async fn create_summary(
 /// Retrieve an existing session summary by id.
 async fn fetch_summary(
     memory_service: &Arc<dyn MemoryServiceInterface>,
+    org_id: &str,
     session_id: &mcb_domain::value_objects::SessionId,
 ) -> Result<CallToolResult, McpError> {
-    match memory_service.get_session_summary(session_id).await {
+    match memory_service.get_session_summary(org_id, session_id).await {
         Ok(Some(summary)) => ResponseFormatter::json_success(&serde_json::json!({
             "session_id": summary.session_id,
             "topics": summary.topics,

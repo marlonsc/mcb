@@ -178,6 +178,28 @@ config:
 
 #[rstest]
 #[tokio::test]
+async fn test_load_rule_file_missing_path_reports_failing_entry(
+    temp_rules_dir: Result<(TempDir, PathBuf), Box<dyn Error>>,
+) -> TestResult {
+    let (_temp, rules_dir) = temp_rules_dir?;
+    let missing = rules_dir.join("does-not-exist.yml");
+
+    let loader = YamlRuleLoader::new(rules_dir)?;
+    let err = match loader.load_rule_file(&missing).await {
+        Ok(_) => return Err("missing rule file must produce a read error".into()),
+        Err(e) => e,
+    };
+
+    let rendered = err.to_string();
+    assert!(
+        rendered.contains("does-not-exist.yml"),
+        "discovery read error must name the failing entry path, got: {rendered}"
+    );
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
 async fn test_yaml_rule_execution_detects_violations(
     workspace_root: Result<PathBuf, Box<dyn Error>>,
 ) -> TestResult {

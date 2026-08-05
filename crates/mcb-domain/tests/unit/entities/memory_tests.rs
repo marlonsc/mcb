@@ -57,6 +57,7 @@ fn default_observation() -> Observation {
     Observation {
         id: "id1".to_owned(),
         project_id: "test-project".to_owned(),
+        org_id: "test-org".to_owned(),
         content: "c".to_owned(),
         content_hash: "h".to_owned(),
         tags: vec![],

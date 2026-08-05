@@ -38,7 +38,7 @@ fn cfg_i64(config: &serde_json::Value, path: &[&str]) -> String {
 pub async fn config_page(Extension(state): Extension<McbState>) -> Result<Response> {
     let provider = state.embedding_provider.provider_name();
     let dims = state.embedding_provider.dimensions();
-    let cfg = load_admin_config()?;
+    let cfg = load_admin_config().map_err(|e| *e)?;
 
     let body = format!(
         r#"<h1>Configuration</h1>

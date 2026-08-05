@@ -6,6 +6,8 @@
 //! This module contains shared logic that doesn't fit into a specific domain,
 //! such as collection normalization and JSON handling.
 
+/// Common argument resolution helpers for MCP handlers.
+pub mod args;
 /// Collection name normalization utilities.
 pub mod collections;
 pub mod json;

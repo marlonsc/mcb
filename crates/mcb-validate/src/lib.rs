@@ -192,6 +192,16 @@ pub enum ValidationError {
     #[error("I/O error: {0}")]
     Io(#[from] std::io::Error),
 
+    /// File read error carrying the failing entry path
+    #[error("Failed to read {file}: {source}")]
+    Read {
+        /// Path to the file that could not be read
+        file: PathBuf,
+        /// Underlying I/O error
+        #[source]
+        source: std::io::Error,
+    },
+
     /// Parse error
     #[error("Parse error in {file}: {message}")]
     Parse {

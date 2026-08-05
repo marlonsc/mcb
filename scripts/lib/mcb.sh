@@ -35,7 +35,7 @@ mcb_log()  { printf '%s\n' "$*" >&2; }
 mcb_ok()   { printf '%b✓%b %s\n' "$GREEN" "$RESET" "$*" >&2; }
 mcb_warn() { printf '%b!%b %s\n' "$YELLOW" "$RESET" "$*" >&2; }
 mcb_die()  { local c="$1"; shift; printf '%bERRO:%b %s\n' "$RED" "$RESET" "$*" >&2; exit "$c"; }
-mcb_require_cmd() { command -v "$1" >/dev/null 2>&1 || mcb_die "$EX_PREREQ" "comando '$1' ausente (instale via: make setup WHAT=tools)"; }
+mcb_require_cmd() { command -v "$1" >/dev/null 2>&1 || mcb_die "$EX_PREREQ" "comando '$1' ausente (instale via: make boot WHAT=tools)"; }
 
 # --- single mutation gate (APPLY=Y, destructive verbs only) ------------------
 mcb_require_apply() {
@@ -45,17 +45,37 @@ mcb_require_apply() {
 }
 mcb_apply_y() { [ "${APPLY:-N}" = "Y" ]; }
 
+mcb_run() {
+  local run_cmd
+  local -a env_args
+  [ "$#" -gt 0 ] || mcb_die "$EX_PREREQ" "mcb run recebeu nenhum comando"
+  run_cmd="$1"
+  shift
+  while [ "$#" -gt 0 ] && [[ "$run_cmd" == *"="* ]] && printf '%s' "$run_cmd" | grep -qEq '^[A-Za-z_][A-Za-z0-9_]*='; do
+    env_args+=("$run_cmd")
+    run_cmd="$1"
+    shift
+  done
+  [ -n "$run_cmd" ] || mcb_die "$EX_PREREQ" "mcb run recebeu comando vazio"
+  printf '%s' "$run_cmd" | grep -qEq '^[A-Za-z_][A-Za-z0-9_]*=' && mcb_die "$EX_PREREQ" "mcb run recebeu somente variáveis de ambiente"
+  if command -v mise >/dev/null 2>&1 && mise which "$run_cmd" >/dev/null 2>&1; then
+    env "${env_args[@]}" mise exec --quiet -- "$run_cmd" "$@"
+  else
+    env "${env_args[@]}" "$run_cmd" "$@"
+  fi
+}
+
 # --- retry helper ------------------------------------------------------------
 mcb_retry() { local n="$1" s="$2"; shift 2; local t=1; while ! "$@"; do [ "$t" -ge "$n" ] && return 1; sleep "$s"; t=$((t+1)); done; }
 
 # --- SSOT readers ------------------------------------------------------------
 mcb_version() { grep -m1 '^version =' "$MCB_ROOT/Cargo.toml" | sed 's/.*"\([^"]*\)".*/\1/'; }
 
-# Binary lookup chain: PATH > target/release > target/debug > cargo run
+# Binary lookup chain: workspace target > PATH > cargo run
 mcb_bin() {
-  command -v mcb 2>/dev/null && return 0
-  [ -x "$MCB_ROOT/target/release/mcb" ] && { echo "$MCB_ROOT/target/release/mcb"; return 0; }
   [ -x "$MCB_ROOT/target/debug/mcb" ]   && { echo "$MCB_ROOT/target/debug/mcb";   return 0; }
+  [ -x "$MCB_ROOT/target/release/mcb" ] && { echo "$MCB_ROOT/target/release/mcb"; return 0; }
+  command -v mcb 2>/dev/null && return 0
   echo "cargo run --package mcb --"
 }
 
@@ -93,15 +113,45 @@ mcb_guard() {
     src=$(find "$MCB_ROOT/crates" -name '*.rs' -not -path '*/tests/*' -not -path '*/benches/*' -not -path '*/target/*' 2>/dev/null || true)
     [ -z "$src" ] && { mcb_warn "guard: no source files found under crates/"; return 0; }
   fi
+  # Exclusion paths per-check:
+  # check1 (unwrap/panic/todo): validator source files contain regex patterns
+  # and error messages that cite banned constructs by definition.
+  local guard_excludes_check1='mcb-validate/src/|mcb-utils/src/constants/validate/'
+  # check2/3 (TODO/FIXME, #[allow]): validator source files and constant-definition files.
+  local guard_excludes='mcb-validate/src/|mcb-utils/src/constants/validate/'
+
   # 1. unwrap/expect/panic/todo/unimplemented in non-test .rs
+  # Exclude: doc comments (///, //!), const/static declarations, string literals.
   hits=$(grep -rnE '\b(unwrap|expect)\(|\bpanic!|\btodo!|\bunimplemented!' $src 2>/dev/null \
-      | grep -vE '//.*(unwrap|expect)|#\[cfg\(test\)\]' || true)
+      | grep -vE '//.*(unwrap|expect)' \
+      | grep -vE '#\[cfg\(test\)\]' \
+      | grep -vE '^[^:]+:[0-9]+:\s*///' \
+      | grep -vE '^[^:]+:[0-9]+:\s*//!' \
+      | grep -vE '^[^:]+:[0-9]+:\s*(pub\s+)?(const|static)\s+' \
+      | grep -vE ':\s*&?str\s*=' \
+      | grep -vE 'r#"' \
+      | grep -vE "$guard_excludes_check1" || true)
   [ -n "$hits" ] && { mcb_warn "prod unwrap/expect/panic/todo:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
   # 2. TODO/FIXME markers
-  hits=$(grep -rnE '\b(TODO|FIXME)\b' $src 2>/dev/null || true)
+  hits=$(grep -rnE '\b(TODO|FIXME)\b' $src 2>/dev/null \
+      | grep -vE '^[^:]+:[0-9]+:\s*///' \
+      | grep -vE '^[^:]+:[0-9]+:\s*//!' \
+      | grep -vE ':\s*&?str\s*=' \
+      | grep -vE 'r#"' \
+      | grep -vE "$guard_excludes" || true)
   [ -n "$hits" ] && { mcb_warn "TODO/FIXME markers:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
-  # 3. unjustified suppression directives (#[allow(...)] with no trailing // Why:)
-  hits=$(grep -rnE '#\[allow\(' $src 2>/dev/null | grep -vE '//\s*Why:' || true)
+  # 3. unjustified suppression directives (#[allow(...)] with no // Why:)
+  # Why: may appear on the same line or the line immediately after.
+  hits=$(grep -rnE '#\[allow\(' $src 2>/dev/null | while IFS= read -r line; do
+      file=$(printf '%s' "$line" | cut -d: -f1)
+      lineno=$(printf '%s' "$line" | cut -d: -f2)
+      # same-line justification
+      if printf '%s' "$line" | grep -qE '//\s*Why:'; then continue; fi
+      # next-line justification
+      nextline=$(sed -n "$((lineno + 1))p" "$file" 2>/dev/null)
+      if printf '%s' "$nextline" | grep -qE '^\s*//\s*Why:'; then continue; fi
+      printf '%s\n' "$line"
+    done | grep -vE "$guard_excludes" || true)
   [ -n "$hits" ] && { mcb_warn "#[allow] without // Why: justification:"; printf '%s\n' "$hits" >&2; rc=$EX_GUARD; }
   [ "$rc" -eq 0 ] && mcb_ok "guard: clean"
   return "$rc"
@@ -130,6 +180,7 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     validate)       mcb_validate "${2:-full}" ;;
     guard)          shift; mcb_guard "$@" ;;
     guard-bash)     mcb_guard_bash ;;
+    run)            shift; [ "$#" -gt 0 ] || mcb_die "$EX_PREREQ" "mcb run requires a command"; mcb_run "$@" ;;
     files-safe)     mcb_files_safe "${2:-}" ;;
     *)              mcb_die "$EX_PREREQ" "unknown command: ${1:-<none>}" ;;
   esac

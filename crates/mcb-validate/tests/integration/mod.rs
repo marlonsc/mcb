@@ -4,8 +4,8 @@
 pub mod utils;
 
 mod ca001_integration_tests;
-mod ca009_tests;
-mod ca016_ca018_ca019_tests;
+mod ca009_tests_integration;
+mod ca016_ca018_ca019_tests_integration;
 mod integration_architecture;
 mod integration_ast;
 mod integration_duplication;
@@ -16,4 +16,4 @@ mod integration_metrics;
 mod integration_rca_metrics;
 mod integration_tests;
 mod integration_yaml_metrics;
-mod test_individual;
+mod test_individual_integration;

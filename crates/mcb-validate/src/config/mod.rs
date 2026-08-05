@@ -7,10 +7,12 @@
 //! layered providers (embedded TOML + filesystem overrides + env vars).
 
 mod file_config;
+mod schema;
 
-pub use file_config::{
+pub use file_config::FileConfig;
+pub use schema::{
     ArchitectureRulesConfig, BypassBoundaryConfig, CleanArchitectureRulesConfig,
-    DependencyRulesConfig, FileConfig, GeneralConfig, ImplementationRulesConfig, KISSRulesConfig,
+    DependencyRulesConfig, GeneralConfig, ImplementationRulesConfig, KISSRulesConfig,
     LayerBoundariesConfig, LayerFlowRulesConfig, NamingRulesConfig, OrganizationRulesConfig,
     PatternRulesConfig, PerformanceRulesConfig, PortAdapterRulesConfig, QualityRulesConfig,
     RefactoringRulesConfig, RulesConfig, SolidRulesConfig, TestQualityRulesConfig,

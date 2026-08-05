@@ -16,7 +16,7 @@ repository = "https://github.com/marlonsc/mcb"
 authors = ["Marlon Costa <marlonsc@gmail.com>"]
 homepage = "https://github.com/marlonsc/mcb"
 license = "MIT"
-version = "0.3.1"
+version = "0.4.0"
 rust-version = "1.92"
 edition = "2024"
 
@@ -351,47 +351,58 @@ lto = "thin"
 codegen-units = 1
 
 [profile.dev]
+# Faster local iteration without touching the release profile. incremental: reuse
+# prior compilation. line-tables-only: enough for backtraces without the full
+# debuginfo link cost.
+# split-debuginfo=packed reduces linker memory usage (critical with multiple
+# concurrent sessions). build-override opt-level=1 (was 3) trades marginal
+# proc-macro speed for significantly lower memory pressure.
 incremental = true
+debug = "line-tables-only"
+split-debuginfo = "packed"
+
+[profile.dev.build-override]
+opt-level = 1
 
 # ============================================
 # Patch: redirect all SeaQL + Loco ecosystem
-# crates to local forks in third-party/
+# crates to private forks on GitHub.
+# Forks hold small temporary patches before upstream acceptance.
 # ============================================
 
 [patch.crates-io]
 
-# --- sea-orm ---
-sea-orm                  = { path = "third-party/sea-orm" }
-sea-orm-macros           = { path = "third-party/sea-orm/sea-orm-macros" }
-sea-orm-arrow            = { path = "third-party/sea-orm/sea-orm-arrow" }
-sea-orm-cli              = { path = "third-party/sea-orm/sea-orm-cli" }
-sea-orm-migration        = { path = "third-party/sea-orm/sea-orm-migration" }
+# --- sea-orm fork ---
+sea-orm                  = { git = "https://github.com/marlon-costa-dc/sea-orm.git", rev = "c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0" }
+sea-orm-macros           = { git = "https://github.com/marlon-costa-dc/sea-orm.git", rev = "c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0" }
+sea-orm-cli              = { git = "https://github.com/marlon-costa-dc/sea-orm.git", rev = "c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0" }
+sea-orm-migration        = { git = "https://github.com/marlon-costa-dc/sea-orm.git", rev = "c1b8409a45c5dc20de91e331ee0cbb86fb9a72d0" }
 
-# --- sea-query ---
-sea-query                = { path = "third-party/sea-query" }
-sea-query-derive         = { path = "third-party/sea-query/sea-query-derive" }
-sea-query-sqlx           = { path = "third-party/sea-query/sea-query-sqlx" }
+# --- sea-query fork ---
+sea-query                = { git = "https://github.com/marlon-costa-dc/sea-query.git", rev = "97de2087640a56992bc2d1ec9224c91f0efcbd60" }
+sea-query-derive         = { git = "https://github.com/marlon-costa-dc/sea-query.git", rev = "97de2087640a56992bc2d1ec9224c91f0efcbd60" }
+sea-query-sqlx           = { git = "https://github.com/marlon-costa-dc/sea-query.git", rev = "97de2087640a56992bc2d1ec9224c91f0efcbd60" }
 
-# --- sea-schema ---
-sea-schema               = { path = "third-party/sea-schema" }
-sea-schema-derive        = { path = "third-party/sea-schema/sea-schema-derive" }
+# --- sea-schema fork ---
+sea-schema               = { git = "https://github.com/marlon-costa-dc/sea-schema.git", rev = "60ddf8b12634d04955b908c03f5900412a47f5c0" }
+sea-schema-derive        = { git = "https://github.com/marlon-costa-dc/sea-schema.git", rev = "60ddf8b12634d04955b908c03f5900412a47f5c0" }
 
-# --- seaography ---
-seaography               = { path = "third-party/seaography" }
-seaography-macros        = { path = "third-party/seaography/macros" }
+# --- seaography fork ---
+seaography               = { git = "https://github.com/marlon-costa-dc/seaography.git", rev = "6efb529fa6d702b6c3903acf4b82b74187ca9b56" }
+seaography-macros        = { git = "https://github.com/marlon-costa-dc/seaography.git", rev = "6efb529fa6d702b6c3903acf4b82b74187ca9b56" }
 
-# --- loco ---
-loco-rs                  = { path = "third-party/loco" }
-loco-gen                 = { path = "third-party/loco/loco-gen" }
+# --- loco fork ---
+loco-rs                  = { git = "https://github.com/marlon-costa-dc/loco.git", rev = "24f77de77f240677030defdf2940a48ca9b5e55c" }
+loco-gen                 = { git = "https://github.com/marlon-costa-dc/loco.git", rev = "24f77de77f240677030defdf2940a48ca9b5e55c" }
 
-# --- sea-orm-pro (1 crate) ---
-sea-orm-pro              = { path = "third-party/sea-orm-pro/sea-orm-pro" }
+# --- sea-orm-pro fork ---
+sea-orm-pro              = { git = "https://github.com/marlon-costa-dc/sea-orm-pro.git", rev = "0d280ecb5c06c1dbedbe550e8bbe03caab6b200e" }
 
-# --- rust-code-analysis (1 crate) ---
-rust-code-analysis       = { path = "third-party/rust-code-analysis" }
+# --- rust-code-analysis fork ---
+rust-code-analysis       = { git = "https://github.com/marlon-costa-dc/rust-code-analysis.git", rev = "fc16d618c6c5629ce5e8042ccf2bf5838420e41b" }
 
-# --- edgevec (1 crate) ---
-edgevec                  = { path = "third-party/edgevec" }
+# --- edgevec fork ---
+edgevec                  = { git = "https://github.com/marlon-costa-dc/edgevec.git", rev = "11977efbef83e05e469e04110a331e62f09a0f92" }
 
-# --- milvus-sdk-rust (1 crate) ---
-milvus-sdk-rust          = { path = "third-party/milvus-sdk-rust" }
+# --- milvus-sdk-rust fork ---
+milvus-sdk-rust          = { git = "https://github.com/marlon-costa-dc/milvus-sdk-rust.git", rev = "e96d3df3202999b0d5a1581d3327c7876b9e8d1b" }

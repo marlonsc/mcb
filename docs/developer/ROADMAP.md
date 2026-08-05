@@ -1,7 +1,7 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Development Roadmap
 
-**Last updated:** 2026-06-04
+**Last updated:** 2026-06-28
 
 Development roadmap for **Memory Context Browser (MCB)** — a high-performance MCP server for semantic code search, persistent memory, and agent-aware context management.
 
@@ -11,38 +11,98 @@ Development roadmap for **Memory Context Browser (MCB)** — a high-performance 
 
 | Field | Value |
 | ------- | ------- |
-| **Version** | v0.3.1 |
-| **Branch** | `release/v0.3.1` |
-| **Build** | ✅ `make lint` passes locally as of 2026-06-04 |
-| **Tests** | Release gate pending: run `make test` and `make validate` before tag |
+| **Version** | v0.4.0 from `Cargo.toml` |
+| **Branch** | `feat/v0.4.0-multitenant-weaviate` |
+| **Build** | `cargo check -p mcb-server` clean; `make check WHAT=ci` green |
+| **Tests** | 578 passing in `mcb-server` (251 unit + 154 integration + 145 e2e + 28 contract) |
 | **Crates** | 7 first-party workspace crates |
-| **ADRs** | 55 tracked ADRs |
+| **ADRs** | 56 tracked ADRs |
 
 ### Project Metrics
 
 | Metric | Value |
 | -------- | ------- |
-| Beads issues | 312+ total |
-| Avg lead time | 9.5 hours |
-| TODO/FIXME | Verify TODO and FIXME markers in `crates/` before release notes |
+| Beads issues | Use `bd status --json` for current totals |
+| Avg lead time | Use `bd status --json` for current lead-time metrics |
+| TODO/FIXME | `make check WHAT=guard` clean |
 | Languages | 14 via tree-sitter |
 | Embedding providers | 6 (FastEmbed, OpenAI, VoyageAI, Ollama, Gemini, Anthropic) |
 | Vector stores | 5+ (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted) |
 
 ### Technical Debt
 
-1. **mcb-validate** coupled to runtime — should be decoupled
-2. **Duplicate tree-sitter** logic across crates — need centralization
-3. **Missing provider health** checks — no centralized validation
-4. **TODO/FIXME backlog** — count from source before each release note
-5. **missing_docs warnings** — tracked by workspace lint policy
+Current work, blockers, and technical-debt ordering are tracked in beads.
+
+- Use `bd ready --json` for actionable work.
+- Use `bd list --status open,in_progress --json` for the full open graph.
+- Use `bd show <id> --json` for an individual item's acceptance criteria and evidence.
 
 ---
 
-### v0.3.1 — Current Release Stabilization
+### v0.4.0 — Released
 
-**Status:** In release hardening
-**Branch:** `release/v0.3.1`
+**Tracking:** `bd show mcb-6pjx.1 --json`
+**Branch:** `feat/v0.4.0-multitenant-weaviate`
+**Tracking bead:** `mcb-6pjx.1`
+
+Closes the MCP server and Admin UI surface as stable and green. All 24 public
+MCP tools, 9 handler families, Admin UI pages, and Admin API endpoints are
+implemented, tested, and passing gates.
+
+| Area | Status |
+| ------ | -------- |
+| MCP handlers (24 tools / 9 families) | Implemented; 28 contract tests green |
+| Admin UI pages (dashboard, jobs, health, config, browse, 404) | Implemented; auth middleware tests green |
+| Admin API (health, jobs, collections, config, dashboard) | Implemented; integration tests green |
+| Org-scoped entity CRUD + data isolation | Implemented; golden e2e tests green |
+| Version bump + docs sync | Released |
+
+---
+
+### v0.4.1 — AuthZ Hardening + AgentSession Schema + Webhook / OTEL
+
+**Status:** In planning  
+**Tracking:** `bd show mcb-9cft --json`  
+**Branch:** `feat/v0.4.0-multitenant-weaviate` (continues v0.4.0 branch)  
+**Tracking bead:** `mcb-9cft`
+
+Work discovered during v0.4.0 closure that was not in the released scope:
+per-request authenticated principal (RequestPrincipal), Keycloak OIDC JWT
+validation, scope enforcement, AgentSession conformance to
+`agent-session.schema.json`, webhook ingress for session creation, and OTEL
+spans for the session lifecycle.
+
+| Area | Status |
+| ------ | -------- |
+| RequestPrincipal + Keycloak JWT + scope enforcement | Open; bead `mcb-6pjx.1.2` |
+| AgentSession schema conformance + migration | Open; bead `mcb-6pjx.1.5` |
+| Webhook ingress (cosmos-hook) → AgentSession | Open; bead `mcb-6pjx.1.7` |
+| OTEL spans for session lifecycle | Open; bead `mcb-6pjx.1.6` |
+
+---
+
+### v0.3.2 — CI/CD Gates And Release Reliability (Historical)
+
+**Status:** Released
+**Tracking:** `bd show mcb-v5an --json`
+**Branch:** `feat/v0.3.2-ci-gates`
+**Tracking bead:** `mcb-v5an`
+
+Hardens the release pipeline and development gates after v0.3.1 shipped. The
+scope is CI cache efficiency, nextest/test-gate reliability, hook enforcement,
+typos/doc validation, and release workflow resilience.
+
+| Area | Status |
+| ------ | -------- |
+| Release workflow resilience | Released |
+| Rust cache and nextest CI tuning | Released |
+| Typos and hook gates | Released |
+| Docs/governance cleanup | Released |
+| Final PR/check validation | Released |
+
+---
+
+### v0.3.1 — Released
 
 Stabilizes the SeaQL + Loco baseline for release by closing handler response
 format drift, Docker runtime configuration, test helper reuse, and agent
@@ -50,11 +110,11 @@ instruction canonicalization.
 
 | Area | Status |
 | ------ | -------- |
-| MCP JSON response formatting cleanup | In progress |
-| Loco inline config for Docker profiles | In progress |
-| Docker app/stdio compose profiles | In progress |
-| Agent instruction canonicalization | In progress |
-| Release gates (`make test`, `make validate`, `make check`) | Pending |
+| MCP JSON response formatting cleanup | Released |
+| Loco inline config for Docker profiles | Released |
+| Docker app/stdio compose profiles | Released |
+| Agent instruction canonicalization | Released |
+| Release gates | Completed for v0.3.1 release publication |
 
 ---
 
@@ -96,8 +156,7 @@ Full platform rebuild on SeaQL (SeaORM, SeaQuery, SeaSchema, SeaStreamer) and Lo
 ---
 
 ### v0.4.0 — Workflow System
-**Status:** Planning
-**Target:** After v0.3.x stabilization
+**Tracking:** `bd show mcb-6pjx --json`
 **Key ADRs:** 034 (FSM), 035 (Scout), 036 (Policies), 037 (Orchestrator), 038 (Tiers)
 Implements complete workflow system with FSM-based task orchestration, context scouting, and policy enforcement.
 
@@ -115,8 +174,7 @@ Implements complete workflow system with FSM-based task orchestration, context s
 
 ### v0.5.0 — Integrated Context System
 
-**Status:** Design phase (parallel to v0.4.0)
-**Target:** Q3 2026 (after v0.4.0)
+**Tracking:** future beads created from ADR-041 through ADR-046 when this milestone becomes active
 **Key ADRs:** 041-046
 Multi-source integrated context with knowledge graphs, hybrid search, and temporal queries.
 
@@ -132,8 +190,7 @@ Multi-source integrated context with knowledge graphs, hybrid search, and tempor
 
 ### v1.0.0 — Production Enterprise
 
-**Status:** Conceptual
-**Target:** After v0.5.0
+**Tracking:** conceptual milestone; create beads before implementation work starts
 
 Enterprise-grade platform with SLA guarantees, compliance certifications, and high-availability deployment.
 

@@ -24,7 +24,9 @@ use crate::error_mapping::safe_internal_error;
 use crate::args::{SearchArgs, SearchResource};
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::utils::args::resolve_limit;
 use crate::utils::collections::normalize_collection_name;
+use crate::utils::mcp::resolve_org_id;
 use mcb_utils::constants::keys::{
     FIELD_BRANCH, FIELD_COMMIT, FIELD_COUNT, FIELD_OBSERVATION_ID, FIELD_OBSERVATION_TYPE,
     FIELD_QUERY, FIELD_RESULTS,
@@ -67,8 +69,9 @@ impl SearchHandler {
         Parameters(args): Parameters<SearchArgs>,
     ) -> Result<CallToolResult, McpError> {
         if let Err(e) = args.validate() {
+            tracing::debug!(error = %e, "Request validation failed");
             return Ok(to_contextual_tool_error(Error::invalid_argument(
-                e.to_string(),
+                "One or more request parameters are invalid.".to_owned(),
             )));
         }
 
@@ -87,21 +90,21 @@ impl SearchHandler {
         }
     }
 
-    async fn resolve_collection(args: &SearchArgs) -> Result<&str, CallToolResult> {
+    async fn resolve_collection(args: &SearchArgs) -> Result<&str, Box<CallToolResult>> {
         args.collection
             .as_deref()
             .or(args.repo_id.as_deref())
             .ok_or_else(|| {
-                to_contextual_tool_error(Error::invalid_argument(
+                Box::new(to_contextual_tool_error(Error::invalid_argument(
                     "collection could not be resolved: provide collection or ensure a repository is detected",
-                ))
+                )))
             })
     }
 
     /// Resolve the collection name and its normalized id for a code search.
     async fn resolve_search_collection(
         args: &SearchArgs,
-    ) -> Result<(&str, mcb_domain::value_objects::CollectionId), CallToolResult> {
+    ) -> Result<(&str, mcb_domain::value_objects::CollectionId), Box<CallToolResult>> {
         let collection_name = Self::resolve_collection(args).await?;
         let collection_id = normalize_collection_name(collection_name)
             .map_err(|reason| to_contextual_tool_error(Error::invalid_argument(reason)))?;
@@ -115,11 +118,11 @@ impl SearchHandler {
     ) -> Result<CallToolResult, McpError> {
         let (collection_name, collection_id) = match Self::resolve_search_collection(args).await {
             Ok(pair) => pair,
-            Err(err) => return Ok(err),
+            Err(err) => return Ok(*err),
         };
 
         let timer = Instant::now();
-        let limit = args.limit.unwrap_or(DEFAULT_SEARCH_LIMIT as u32) as usize;
+        let limit = resolve_limit(args.limit, DEFAULT_SEARCH_LIMIT as u32);
 
         match self
             .search_service
@@ -244,11 +247,12 @@ impl SearchHandler {
             }),
             ..Default::default()
         };
-        let limit = args.limit.unwrap_or(DEFAULT_SEARCH_LIMIT as u32) as usize;
+        let org_id = resolve_org_id(args.org_id.as_deref());
+        let limit = resolve_limit(args.limit, DEFAULT_SEARCH_LIMIT as u32);
 
         match self
             .memory_service
-            .search_memories(query, Some(filter), limit)
+            .search_memories(&org_id, query, Some(filter), limit)
             .await
         {
             Ok(results) => Self::format_memory_results(query, results),
