@@ -1,4 +1,4 @@
-FROM rust:slim AS builder
+FROM rust:alpine AS builder
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
@@ -14,7 +14,7 @@ WORKDIR /src
 COPY . .
 RUN cargo build --release --bin mcb
 
-FROM debian:bookworm-slim
+FROM debian:13-slim
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends ca-certificates libssl3 \
