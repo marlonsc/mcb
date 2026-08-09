@@ -53,7 +53,8 @@ pub use infrastructure::{
     ConfigProvider, DependencyHealth, DependencyHealthCheck, DomainEventStream, EventBusProvider,
     ExtendedHealthResponse, GraphQLSchemaProvider, LifecycleManaged, LogLevel, MigrationProvider,
     OperationLogger, PortServiceState, ProviderContext, ProviderHealthStatus, ProviderRouter,
-    SharedGraphQLSchemaProvider, SharedMigrationProvider, ShutdownCoordinator,
+    ReadinessDependency, ReadinessProvider, ReadinessReport, SharedGraphQLSchemaProvider,
+    SharedMigrationProvider, ShutdownCoordinator,
 };
 
 // --- Providers ---

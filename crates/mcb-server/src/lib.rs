@@ -27,6 +27,7 @@ pub mod hooks;
 
 /// Loco app hooks and MCP server composition root.
 pub mod mcp_server;
+pub mod observability;
 pub mod session;
 pub mod state;
 pub mod tools;

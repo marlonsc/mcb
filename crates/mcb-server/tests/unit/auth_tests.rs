@@ -33,9 +33,20 @@ fn extract_api_key_rejects_missing_headers() {
 }
 
 #[rstest]
-fn admin_auth_exempt_path_allows_alive_endpoint() {
-    assert!(is_admin_auth_exempt_path("/alive"));
-    assert!(is_admin_auth_exempt_path("/api/alive"));
+fn admin_auth_exempt_path_allows_observability_endpoints() {
+    for path in [
+        "/alive",
+        "/api/alive",
+        "/ready",
+        "/api/ready",
+        "/metrics",
+        "/api/metrics",
+    ] {
+        assert!(
+            is_admin_auth_exempt_path(path),
+            "{path} must be probe-accessible"
+        );
+    }
 }
 
 #[rstest]

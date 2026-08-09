@@ -118,14 +118,22 @@ pub async fn create_real_domain_services() -> Option<(McbState, tempfile::TempDi
     // 7. Compose MCP server via Loco-style bootstrap (6-arg pure DI)
     let bootstrap = build_mcp_server_bootstrap(
         &resolution_ctx,
-        db,
-        embedding_provider,
-        vector_store_provider,
+        Arc::clone(&db),
+        Arc::clone(&embedding_provider),
+        Arc::clone(&vector_store_provider),
         hybrid_search,
         ExecutionFlow::ServerHybrid,
     )
     .ok()?;
 
-    let state = bootstrap.into_mcb_state();
+    let readiness = std::sync::Arc::new(mcb_infrastructure::infrastructure::RuntimeReadiness::new(
+        (*db.downcast_ref::<sea_orm::DatabaseConnection>()?).clone(),
+        std::sync::Arc::clone(&embedding_provider),
+        std::sync::Arc::clone(&vector_store_provider),
+    ));
+    let state = bootstrap.into_mcb_state(
+        readiness,
+        mcb_server::observability::ServerMetrics::default(),
+    );
     Some((state, temp_dir))
 }

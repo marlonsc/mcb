@@ -14,6 +14,8 @@ pub mod lifecycle;
 pub mod logging;
 /// Database migration ports.
 pub mod migrations;
+/// Runtime readiness ports.
+pub mod readiness;
 /// Provider routing ports.
 pub mod routing;
 // Re-exports for canonical access via `ports::infrastructure::{...}`
@@ -26,4 +28,5 @@ pub use lifecycle::{
 };
 pub use logging::{LogLevel, OperationLogger};
 pub use migrations::{MigrationProvider, SharedMigrationProvider};
+pub use readiness::{ReadinessDependency, ReadinessProvider, ReadinessReport};
 pub use routing::{ProviderContext, ProviderHealthStatus, ProviderRouter};

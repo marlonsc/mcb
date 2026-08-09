@@ -9,10 +9,11 @@ use std::sync::Arc;
 
 use mcb_domain::ports::{
     AuthRepositoryPort, DashboardQueryPort, EmbeddingProvider, IndexingOperationsInterface,
-    ValidationOperationsInterface, VectorStoreProvider,
+    ReadinessProvider, ValidationOperationsInterface, VectorStoreProvider,
 };
 
 use crate::mcp_server::McpServer;
+use crate::observability::ServerMetrics;
 
 /// Result of MCP server composition: server plus ports for dashboard/auth.
 ///
@@ -38,7 +39,11 @@ pub struct McpServerBootstrap {
 impl McpServerBootstrap {
     /// Build [`McbState`] from this bootstrap (for use in route layers).
     #[must_use]
-    pub fn into_mcb_state(self) -> McbState {
+    pub fn into_mcb_state(
+        self,
+        readiness: Arc<dyn ReadinessProvider>,
+        metrics: ServerMetrics,
+    ) -> McbState {
         McbState {
             dashboard: self.dashboard,
             auth_repo: self.auth_repo,
@@ -47,6 +52,8 @@ impl McpServerBootstrap {
             vector_store: self.vector_store,
             indexing_ops: self.indexing_ops,
             validation_ops: self.validation_ops,
+            readiness,
+            metrics,
         }
     }
 }
@@ -76,4 +83,8 @@ pub struct McbState {
     pub indexing_ops: Arc<dyn IndexingOperationsInterface>,
     /// Shared validation operations tracker for jobs admin
     pub validation_ops: Arc<dyn ValidationOperationsInterface>,
+    /// Runtime dependency readiness checker.
+    pub readiness: Arc<dyn ReadinessProvider>,
+    /// Process-local HTTP metrics registry.
+    pub metrics: ServerMetrics,
 }

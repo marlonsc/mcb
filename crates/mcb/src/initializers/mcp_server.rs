@@ -8,6 +8,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use axum::Extension;
 use axum::Router as AxumRouter;
+use axum::middleware;
 use loco_rs::prelude::*;
 
 use mcb_domain::registry::ServiceResolutionContext;
@@ -81,6 +82,18 @@ fn build_vector_store_config(
 /// Public routes — no auth required (static assets + redirect).
 fn build_public_routes() -> AxumRouter {
     axum::Router::new()
+        .route(
+            "/alive",
+            axum::routing::get(mcb_server::controllers::health_api::alive),
+        )
+        .route(
+            "/ready",
+            axum::routing::get(mcb_server::controllers::health_api::ready),
+        )
+        .route(
+            "/metrics",
+            axum::routing::get(mcb_server::controllers::health_api::metrics),
+        )
         .route(
             "/",
             axum::routing::get(|| async { axum::response::Redirect::temporary("/ui/") }),
@@ -354,7 +367,13 @@ impl Initializer for McpServerInitializer {
             spawn_stdio_server(Arc::clone(&bootstrap.mcp_server));
         }
 
-        let mcb_state = bootstrap.into_mcb_state();
+        let readiness = Arc::new(mcb_infrastructure::infrastructure::RuntimeReadiness::new(
+            ctx.db.clone(),
+            Arc::clone(&bootstrap.embedding_provider),
+            Arc::clone(&bootstrap.vector_store),
+        ));
+        let metrics = mcb_server::observability::ServerMetrics::default();
+        let mcb_state = bootstrap.into_mcb_state(readiness, metrics.clone());
         ctx.shared_store.insert(mcb_state.clone());
 
         let mcp_service = build_mcp_service(Arc::clone(&mcb_state.mcp_server));
@@ -366,7 +385,10 @@ impl Initializer for McpServerInitializer {
         let router = router
             .merge(build_public_routes())
             .merge(protected_routes)
-            .layer(Extension(mcb_state));
+            .layer(Extension(mcb_state))
+            .layer(middleware::from_fn(move |request, next| {
+                mcb_server::observability::track_http(metrics.clone(), request, next)
+            }));
         let mcp_routes = axum::Router::new().nest_service("/mcp", mcp_service);
 
         // 404 fallback handler for unknown routes

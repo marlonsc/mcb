@@ -32,10 +32,9 @@ HTTP API for metrics access via admin router.
 
 | Endpoint | Method | Purpose |
 | ---------- | -------- | --------- |
-| `/health` | GET | Health check |
-| `/health/ready` | GET | Readiness probe |
-| `/health/live` | GET | Liveness probe |
-| `/metrics` | GET | Performance metrics JSON |
+| `/alive` | GET | Process liveness without dependency checks |
+| `/ready` | GET | Database, migration, embedding, and vector-store readiness |
+| `/metrics` | GET | Prometheus text exposition |
 
 ## File Structure
 
@@ -60,10 +59,10 @@ pub use admin::{metrics_handler, MetricsResponse};
 
 ## Configuration
 
-Environment variables:
-
-- `MCP__SYSTEM__INFRASTRUCTURE__METRICS__ENABLED=true` - Enable metrics collection
-- `MCP__SERVER__NETWORK__PORT=3000` - Unified HTTP port (Admin + Metrics + MCP)
+The three operational endpoints are intentionally unauthenticated so Kubernetes
+probes and Prometheus can use them without application credentials. They expose
+only process state, dependency names/status, request labels, and aggregate job
+counts. Administrative and MCP routes retain their existing authentication.
 
 ## Cross-References
 

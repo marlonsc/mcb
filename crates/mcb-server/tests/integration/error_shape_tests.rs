@@ -118,7 +118,18 @@ async fn create_test_mcb_state() -> Option<(McbState, tempfile::TempDir)> {
         ExecutionFlow::ServerHybrid,
     )
     .ok()?;
-    let state = bootstrap.into_mcb_state();
+    let readiness = std::sync::Arc::new(mcb_infrastructure::infrastructure::RuntimeReadiness::new(
+        (*resolution_ctx
+            .db
+            .downcast_ref::<sea_orm::DatabaseConnection>()?)
+        .clone(),
+        std::sync::Arc::clone(&resolution_ctx.embedding_provider),
+        std::sync::Arc::clone(&resolution_ctx.vector_store_provider),
+    ));
+    let state = bootstrap.into_mcb_state(
+        readiness,
+        mcb_server::observability::ServerMetrics::default(),
+    );
     Some((state, temp_dir))
 }
 

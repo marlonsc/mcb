@@ -16,7 +16,7 @@ groups:
           description: "MCP Context Browser has been down for more than 5 minutes."
 
       - alert: McpHighErrorRate
-        expr: rate(mcp_http_requests_total{status=~"5.."}[5m]) / rate(mcp_http_requests_total[5m]) > 0.05
+        expr: rate(mcb_http_requests_total{status=~"5.."}[5m]) / rate(mcb_http_requests_total[5m]) > 0.05
         for: 5m
         labels:
           severity: critical
@@ -26,7 +26,7 @@ groups:
           description: "Error rate is {{ $value | printf \"%.2f\" }}% over the last 5 minutes."
 
       - alert: McpHighLatency
-        expr: histogram_quantile(0.95, rate(mcp_http_request_duration_seconds_bucket[5m])) > 2.0
+        expr: histogram_quantile(0.95, rate(mcb_http_request_duration_seconds_bucket[5m])) > 2.0
         for: 10m
         labels:
           severity: warning
@@ -34,62 +34,6 @@ groups:
         annotations:
           summary: "High request latency detected"
           description: "95th percentile latency is {{ $value | printf \"%.2f\" }}s over the last 5 minutes."
-
-  # Resource Usage Alerts
-  - name: mcp_resource_usage
-    rules:
-      - alert: McpHighCpuUsage
-        expr: mcp_cpu_usage_percent > 85
-        for: 5m
-        labels:
-          severity: warning
-          service: mcb
-        annotations:
-          summary: "High CPU usage detected"
-          description: "CPU usage is {{ $value | printf \"%.1f\" }}%."
-
-      - alert: McpHighMemoryUsage
-        expr: mcp_memory_usage_percent > 85
-        for: 5m
-        labels:
-          severity: warning
-          service: mcb
-        annotations:
-          summary: "High memory usage detected"
-          description: "Memory usage is {{ $value | printf \"%.1f\" }}%."
-
-      - alert: McpLowDiskSpace
-        expr: (1 - mcp_disk_free_bytes / mcp_disk_total_bytes) > 0.85
-        for: 10m
-        labels:
-          severity: warning
-          service: mcb
-        annotations:
-          summary: "Low disk space"
-          description: "Disk usage is {{ $value | printf \"%.1f\" }}%."
-
-  # Cache Performance Alerts
-  - name: mcp_cache_performance
-    rules:
-      - alert: McpLowCacheHitRate
-        expr: mcp_cache_hit_rate < 0.7
-        for: 15m
-        labels:
-          severity: warning
-          service: mcb
-        annotations:
-          summary: "Low cache hit rate"
-          description: "Cache hit rate is {{ $value | printf \"%.2f\" }}% (below 70% threshold)."
-
-      - alert: McpHighCacheEvictions
-        expr: rate(mcp_cache_evictions_total[5m]) > 100
-        for: 5m
-        labels:
-          severity: warning
-          service: mcb
-        annotations:
-          summary: "High cache eviction rate"
-          description: "Cache evictions per second: {{ $value | printf \"%.1f\" }}."
 
   # SLO-based Alerts
   - name: mcp_slo_alerts
@@ -107,7 +51,7 @@ groups:
 
       # Query latency SLO (< 500ms P95)
       - alert: McpLatencySLOViolation
-        expr: histogram_quantile(0.95, rate(mcp_http_request_duration_seconds_bucket{endpoint="/api/search"}[30d])) > 0.5
+        expr: histogram_quantile(0.95, rate(mcb_http_request_duration_seconds_bucket{path="/mcp"}[30d])) > 0.5
         labels:
           severity: warning
           service: mcb
@@ -118,7 +62,7 @@ groups:
 
       # Error rate SLO (< 0.1% errors)
       - alert: McpErrorRateSLOViolation
-        expr: rate(mcp_http_requests_total{status=~"5.."}[30d]) / rate(mcp_http_requests_total[30d]) > 0.001
+        expr: rate(mcb_http_requests_total{status=~"5.."}[30d]) / rate(mcb_http_requests_total[30d]) > 0.001
         labels:
           severity: warning
           service: mcb
@@ -130,18 +74,8 @@ groups:
   # Capacity Planning Alerts
   - name: mcp_capacity_planning
     rules:
-      - alert: McpHighConnectionCount
-        expr: mcp_active_connections > 900
-        for: 5m
-        labels:
-          severity: info
-          service: mcb
-        annotations:
-          summary: "High connection count - capacity planning"
-          description: "Active connections: {{ $value }} (approaching 1000 limit)."
-
       - alert: McpHighRequestRate
-        expr: rate(mcp_http_requests_total[5m]) > 800
+        expr: rate(mcb_http_requests_total[5m]) > 800
         for: 10m
         labels:
           severity: info
@@ -150,48 +84,37 @@ groups:
           summary: "High request rate - capacity planning"
           description: "Request rate: {{ $value | printf \"%.1f\" }}/s (approaching 1000/s limit)."
 
-      - alert: McpMemoryTrendIncreasing
-        expr: predict_linear(mcp_memory_usage_percent[1h], 3600) > 90
-        for: 30m
-        labels:
-          severity: info
-          service: mcb
-        annotations:
-          summary: "Memory usage trending up - capacity planning"
-          description: "Memory usage predicted to reach 90% in 1 hour."
-
-  # Dependency Health Alerts
-  - name: mcp_dependencies
-    rules:
-      - alert: McpRedisDown
-        expr: up{job="redis"} == 0
-        for: 2m
-        labels:
-          severity: critical
-          service: redis
-          dependency: mcb
-        annotations:
-          summary: "Redis dependency down"
-          description: "Redis service is down, affecting MCP Context Browser caching."
-
-      - alert: McpDatabaseDown
-        expr: up{job="postgresql"} == 0
-        for: 2m
-        labels:
-          severity: critical
-          service: postgresql
-          dependency: mcb
-        annotations:
-          summary: "Database dependency down"
-          description: "PostgreSQL service is down, affecting MCP Context Browser metadata storage."
-
-      - alert: McpVectorStoreDown
-        expr: up{job="milvus"} == 0
+      - alert: McpNotReady
+        expr: mcb_ready == 0
         for: 5m
         labels:
           severity: critical
-          service: milvus
+          service: mcb
+        annotations:
+          summary: "MCB dependencies are not ready"
+          description: "At least one required MCB runtime dependency has been unusable for 5 minutes."
+
+  # Dependency Health Alerts
+  - name: mcb_dependencies
+    rules:
+      - alert: McpDatabaseDown
+        expr: mcb_dependency_ready{dependency="database"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: mcb
+          dependency: mcb
+        annotations:
+          summary: "Database dependency down"
+          description: "The configured MCB database is not usable."
+
+      - alert: McpVectorStoreDown
+        expr: mcb_dependency_ready{dependency="vector_store"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: mcb
           dependency: mcb
         annotations:
           summary: "Vector store dependency down"
-          description: "Milvus vector store is down, affecting MCP Context Browser search functionality."
+          description: "The configured MCB vector store is not usable."

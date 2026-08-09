@@ -2,7 +2,10 @@
 
 use crate::state::McbState;
 use axum::extract::Extension;
+use axum::http::{StatusCode, header};
+use axum::response::IntoResponse;
 use loco_rs::prelude::*;
+use mcb_domain::ports::{IndexingOperationStatus, ValidationStatus};
 
 /// Returns health status of embedding and vector store providers.
 ///
@@ -44,6 +47,68 @@ pub async fn alive() -> Result<Response> {
     format::json(serde_json::json!({
         "status": "alive",
     }))
+}
+
+/// Returns dependency-aware readiness for traffic admission.
+///
+/// # Errors
+///
+/// Returns an error if the readiness response cannot be constructed.
+pub async fn ready(Extension(state): Extension<McbState>) -> Result<Response> {
+    let report = state.readiness.check().await;
+    let status = if report.ready {
+        StatusCode::OK
+    } else {
+        StatusCode::SERVICE_UNAVAILABLE
+    };
+    Ok((
+        status,
+        axum::Json(serde_json::json!({
+            "status": if report.ready { "ready" } else { "not_ready" },
+            "dependencies": report.dependencies,
+        })),
+    )
+        .into_response())
+}
+
+/// Returns live Prometheus text metrics.
+///
+/// # Errors
+///
+/// Returns an error if the metrics response cannot be constructed.
+pub async fn metrics(Extension(state): Extension<McbState>) -> Result<Response> {
+    let readiness = state.readiness.check().await;
+    let indexing = state.indexing_ops.get_operations();
+    let validation = state.validation_ops.get_operations();
+    let active_indexing = indexing
+        .values()
+        .filter(|operation| {
+            matches!(
+                operation.status,
+                IndexingOperationStatus::Starting | IndexingOperationStatus::InProgress
+            )
+        })
+        .count();
+    let active_validation = validation
+        .values()
+        .filter(|operation| {
+            matches!(
+                operation.status,
+                ValidationStatus::Queued | ValidationStatus::InProgress
+            )
+        })
+        .count();
+    let body = state
+        .metrics
+        .render(&readiness, active_indexing, active_validation);
+    Ok((
+        [(
+            header::CONTENT_TYPE,
+            "text/plain; version=0.0.4; charset=utf-8",
+        )],
+        body,
+    )
+        .into_response())
 }
 
 /// Registers health API routes.

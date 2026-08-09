@@ -5,6 +5,7 @@
 //! the existing handler integration test pattern.
 
 use axum::extract::Extension;
+use axum::http::{StatusCode, header};
 use http_body_util::BodyExt;
 use serde_json::Value;
 
@@ -105,8 +106,57 @@ async fn test_health_endpoint_provider_name_is_nonempty() -> Result<(), Box<dyn 
 #[tokio::test]
 async fn test_alive_endpoint_returns_alive_status() -> Result<(), Box<dyn std::error::Error>> {
     let response = mcb_server::controllers::health_api::alive().await?;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response.headers().get(header::CONTENT_TYPE),
+        Some(&header::HeaderValue::from_static("application/json"))
+    );
     let body = json_body(response).await?;
     assert_eq!(body["status"].as_str(), Some("alive"));
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn ready_endpoint_reports_real_dependencies() -> Result<(), Box<dyn std::error::Error>> {
+    let Some((state, _tmp)) = create_test_mcb_state().await else {
+        return Ok(());
+    };
+
+    let response = mcb_server::controllers::health_api::ready(Extension(state)).await?;
+    assert_eq!(response.status(), StatusCode::OK);
+    let body = json_body(response).await?;
+    assert_eq!(body["status"].as_str(), Some("ready"));
+    assert_eq!(body["dependencies"].as_array().map(Vec::len), Some(4));
+    assert!(
+        body["dependencies"]
+            .as_array()
+            .is_some_and(|dependencies| dependencies.iter().all(|item| item["ready"] == true))
+    );
+    Ok(())
+}
+
+#[rstest]
+#[tokio::test]
+async fn metrics_endpoint_emits_prometheus_text() -> Result<(), Box<dyn std::error::Error>> {
+    let Some((state, _tmp)) = create_test_mcb_state().await else {
+        return Ok(());
+    };
+
+    let response = mcb_server::controllers::health_api::metrics(Extension(state)).await?;
+    assert_eq!(response.status(), StatusCode::OK);
+    assert_eq!(
+        response.headers().get(header::CONTENT_TYPE),
+        Some(&header::HeaderValue::from_static(
+            "text/plain; version=0.0.4; charset=utf-8"
+        ))
+    );
+    let bytes = response.into_body().collect().await?.to_bytes();
+    let body = std::str::from_utf8(&bytes)?;
+    assert!(body.contains("# HELP mcb_http_requests_total"));
+    assert!(body.contains("# TYPE mcb_http_requests_total counter"));
+    assert!(body.contains("mcb_ready 1"));
+    assert!(body.contains("mcb_dependency_ready{dependency=\"database\"} 1"));
     Ok(())
 }
 
