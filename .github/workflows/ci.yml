@@ -80,6 +80,8 @@ jobs:
               - 'scripts/docs/**'
             ci:
               - '.github/workflows/ci.yml'
+              - '.github/workflows/docs-build.yml'
+              - '.github/workflows/release.yml'
               - '.github/setup-ci.sh'
               - '.clinerules'
               - '.continue/rules/mcb.md'
@@ -442,10 +444,7 @@ jobs:
           save-if: true
           cache-on-failure: true
       - name: Architecture-only validators (fast gate)
-        run: >-
-          cargo run --package mcb -- validate .
-          --validators clean_architecture,layer_flow,dependency
-          --quick --format json
+        run: make check WHAT=validate QUICK=1
         env:
           RUST_MIN_STACK: 16777216
 

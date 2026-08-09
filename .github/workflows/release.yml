@@ -2,7 +2,6 @@
 # =============================================================================
 # Release Workflow
 # =============================================================================
-# Triggered only on version tags (v*)
 # Builds release binaries for Linux, macOS, Windows
 # Creates GitHub Release with artifacts and changelog
 # =============================================================================
@@ -11,32 +10,60 @@ name: Release
 
 permissions:
   contents: read
-  pages: write
 
 on: # yamllint disable-line rule:truthy
-  push:
-    tags:
-      - "v*"
-  # Recovery path: manually (re)publish a GitHub Release for an existing tag without
-  # re-tagging — e.g. when a build leg failed or a release needs re-running.
   workflow_dispatch:
     inputs:
       tag:
-        description: Existing tag to (re)publish a GitHub Release for (e.g. v0.3.2)
+        description: Existing version tag authorized for publication (e.g. v0.3.2)
         required: true
         type: string
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ inputs.tag }}
   cancel-in-progress: false
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  publication-gate:
+    name: Canonical Publication Gate
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+          ref: ${{ inputs.tag }}
+          submodules: recursive
+      - run: bash .github/setup-ci.sh
+      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+      - name: Verify authorized tag
+        env:
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]]; then
+            echo "ERROR: '$RELEASE_TAG' is not a supported version tag." >&2
+            exit 1
+          fi
+          if [[ "$(git describe --tags --exact-match)" != "$RELEASE_TAG" ]]; then
+            echo "ERROR: checkout does not resolve exactly to '$RELEASE_TAG'." >&2
+            exit 1
+          fi
+      - name: Run canonical publication gate
+        run: make ship WHAT=release ACT=package APPLY=Y
+
   release-build:
     name: Build Release (${{ matrix.target }})
     timeout-minutes: 30
+    needs: publication-gate
     runs-on: ${{ matrix.os }}
     permissions:
       contents: read
@@ -48,7 +75,7 @@ jobs:
             target: x86_64-unknown-linux-gnu
             artifact_name: mcb
             asset_name: mcb-x86_64-linux-gnu
-          - os: macos-latest
+          - os: macos-15-intel
             target: x86_64-apple-darwin
             artifact_name: mcb
             asset_name: mcb-x86_64-macos
@@ -61,12 +88,33 @@ jobs:
         if: runner.os == 'Windows'
         run: git config --system core.longpaths true
 
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           persist-credentials: false
+          ref: ${{ inputs.tag }}
           submodules: recursive
 
-      - uses: ./.github/actions/native-deps
+      - name: Install dependencies (Unix)
+        if: runner.os != 'Windows'
+        run: bash .github/setup-ci.sh
+
+      - name: Install protoc (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          PROTOC_VERSION: "29.3"
+          PROTOC_SHA256: "57ea59e9f551ad8d71ffaa9b5cfbe0ca1f4e720972a1db7ec2d12ab44bff9383"
+        run: |
+          $base = "https://github.com/protocolbuffers/protobuf/releases/download"
+          $url = "$base/v${env:PROTOC_VERSION}/protoc-${env:PROTOC_VERSION}-win64.zip"
+          $zip = "$env:TEMP\protoc.zip"
+          Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
+          $hash = (Get-FileHash $zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne $env:PROTOC_SHA256) {
+            throw "protoc checksum mismatch: expected $($env:PROTOC_SHA256), got $hash"
+          }
+          Expand-Archive $zip -DestinationPath "$env:TEMP\protoc" -Force
+          Add-Content -Path $env:GITHUB_PATH -Value "$env:TEMP\protoc\bin"
 
       - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
         with:
@@ -100,7 +148,7 @@ jobs:
         shell: pwsh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: release-artifacts-${{ matrix.target }}
           path: dist/${{ matrix.asset_name }}
@@ -112,38 +160,25 @@ jobs:
     timeout-minutes: 10
     runs-on: ubuntu-latest
     needs: release-build
-    # Resilient: publish the release even if some platform build legs failed, so a
-    # single failing build never blocks the whole release (the v0.3.0 failure mode).
-    if: ${{ always() && !cancelled() }}
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
           persist-credentials: false
+          ref: ${{ inputs.tag }}
           submodules: recursive
 
       - name: Download all artifacts
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           path: release-artifacts
-
-      - name: Verify workflow_dispatch tag exists
-        if: github.event_name == 'workflow_dispatch'
-        env:
-          INPUT_TAG: ${{ github.event.inputs.tag }}
-        run: |
-          if ! git rev-parse "$INPUT_TAG" >/dev/null 2>&1; then
-            echo "ERROR: tag '$INPUT_TAG' does not exist in this repository." >&2
-            exit 1
-          fi
 
       - name: Extract version from tag
         id: extract_version
         env:
-          INPUT_TAG: ${{ github.event.inputs.tag }}
+          INPUT_TAG: ${{ inputs.tag }}
         run: |
           TAG="${INPUT_TAG:-${GITHUB_REF#refs/tags/}}"
           VERSION=${TAG#v}
@@ -179,7 +214,7 @@ jobs:
           fi
 
       - name: Create Release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v3.0.1
         with:
           tag_name: ${{ steps.extract_version.outputs.tag }}
           name: Release ${{ steps.extract_version.outputs.version }}
@@ -188,8 +223,7 @@ jobs:
             release-artifacts/release-artifacts-x86_64-unknown-linux-gnu/mcb-x86_64-linux-gnu
             release-artifacts/release-artifacts-x86_64-apple-darwin/mcb-x86_64-macos
             release-artifacts/release-artifacts-x86_64-pc-windows-msvc/mcb-x86_64-windows.exe
-          # Missing binaries (a failed build leg) must not fail the release — notes still publish.
-          fail_on_unmatched_files: false
+          fail_on_unmatched_files: true
           draft: false
           prerelease: false
 
@@ -213,71 +247,15 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
   # ===========================================================================
-  # Documentation Build + Deploy (triggered on every release tag)
+  # Documentation Build + Deploy
   # ===========================================================================
 
   docs:
     name: Build & Deploy Documentation
-    needs: release-build
+    needs: [publication-gate, release-build]
     uses: ./.github/workflows/docs-build.yml
     with:
       deploy: true
+      validate: true
     permissions:
       contents: write
-
-  # ===========================================================================
-  # Cargo Publish (gated - requires CARGO_REGISTRY_TOKEN secret)
-  # ===========================================================================
-  # NOTE: Currently blocked by git dependencies (rust-code-analysis fork,
-  # milvus-sdk-rust). This step is gated by the CARGO_REGISTRY_TOKEN secret
-  # and will be skipped if the secret is not configured. Infrastructure is
-  # ready for when git dependencies are resolved and published to crates.io.
-
-  publish-crates:
-    name: Publish to crates.io
-    timeout-minutes: 15
-    runs-on: ubuntu-latest
-    needs: create-release
-    if: github.event_name == 'push'
-    permissions:
-      contents: read
-    steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-        with:
-          persist-credentials: false
-          submodules: recursive
-      - name: Check for registry token
-        id: check_token
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            echo "::notice::CARGO_REGISTRY_TOKEN not configured - skipping crates.io publish"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
-          fi
-      - uses: ./.github/actions/native-deps
-        if: steps.check_token.outputs.skip != 'true'
-      - uses: dtolnay/rust-toolchain@e97e2d8cc328f1b50210efc529dca0028893a2d9 # v1
-        if: steps.check_token.outputs.skip != 'true'
-        with:
-          toolchain: stable
-      - name: Dry-run publish
-        if: steps.check_token.outputs.skip != 'true'
-        # NOTE: Workspace publish requires publishing crates in dependency order.
-        # When git deps are resolved, replace with katyo/publish-crates action
-        # or per-crate `cargo publish -p <crate>` in topological order:
-        # mcb-domain -> mcb-providers -> mcb-infrastructure -> mcb-validate -> mcb-server -> mcb
-        run: cargo publish --dry-run -p mcb-domain
-      - name: Publish to crates.io
-        if: steps.check_token.outputs.skip != 'true'
-        env:
-          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
-        run: |
-          set -e
-          for crate in mcb-domain mcb-providers mcb-infrastructure mcb-validate mcb-server mcb; do
-            echo "Publishing $crate..."
-            cargo publish -p "$crate"
-            sleep 30
-          done
