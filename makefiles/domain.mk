@@ -101,7 +101,7 @@ ifeq ($(MCB_NEXTEST),1)
   # Run only crates that contain changed .rs files vs origin/$(BRANCH).
 else
   MCB_TEST_UNIT := MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --test unit --test-threads=$$T
-  MCB_TEST_UNIT_PRECOMMIT := MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --test unit --test-threads=$$T -- --skip test_validate_with_specific_validator --skip test_validate_with_specific_validator_filters_correctly --skip test_validate_with_specific_validator_does_not_fail_on_unrelated_validators --skip test_validate_mcb_workspace_quality_only
+  MCB_TEST_UNIT_PRECOMMIT := MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --test unit -- --test-threads=$$T --skip test_validate_with_specific_validator --skip test_validate_with_specific_validator_filters_correctly --skip test_validate_with_specific_validator_does_not_fail_on_unrelated_validators --skip test_validate_mcb_workspace_quality_only
   MCB_TEST_ALL  := MCB_MODEL_ID=test-model RUST_TEST_THREADS=$$T $(MCB_RUN) cargo test --workspace --all-targets --test-threads=$$T
 endif
 
