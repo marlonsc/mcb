@@ -106,7 +106,7 @@ let result = provider.embed(text).await.unwrap();
 
 ## Configuration
 
-Configuration is loaded from Loco environment-based YAML files (see [ADR-051](../adr/051-seaql-loco-platform-rebuild.md); supersedes [ADR-025](../adr/051-seaql-loco-platform-rebuild.md)):
+Configuration is loaded from Loco environment-based YAML files (see [ADR-051](../adr/051-seaql-loco-platform-rebuild.md); supersedes ADR-025 (Figment configuration; archived)):
 
 - **Hierarchical**: `AppConfig → {ProvidersConfig, ServerConfig, AuthConfig}`
 - **Loader**: Environment-based YAML (`config/{env}.yaml`, e.g. `config/development.yaml`)
