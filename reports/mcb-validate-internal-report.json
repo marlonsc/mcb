@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-08-05 05:08:22 UTC",
+  "workspace_root": "/home/marlonsc/mcb",
+  "summary": {
+    "total_violations": 0,
+    "errors": 0,
+    "warnings": 0,
+    "infos": 0,
+    "by_category": {},
+    "passed": true
+  },
+  "violations_by_category": {}
+}

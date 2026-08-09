@@ -1,0 +1,909 @@
+{
+  "timestamp": "2026-06-06 02:45:34 UTC",
+  "workspace_root": "/home/marlonsc/mcb/.",
+  "summary": {
+    "total_violations": 95,
+    "errors": 0,
+    "warnings": 91,
+    "infos": 4,
+    "by_category": {
+      "Documentation": 5,
+      "clean-architecture": 1,
+      "Refactoring": 4,
+      "Metrics": 18,
+      "Organization": 1,
+      "Performance": 2,
+      "Async": 1,
+      "Implementation": 1,
+      "Testing": 45,
+      "SOLID": 1,
+      "Naming": 3,
+      "error_boundary": 1,
+      "KISS": 12
+    },
+    "passed": true
+  },
+  "violations_by_category": {
+    "clean-architecture": [
+      {
+        "id": "PORT003",
+        "category": "clean-architecture",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/ports/repositories/project.rs",
+        "line": 15,
+        "message": "Port ProjectRepository has 26 methods (>10) at /home/marlonsc/mcb/crates/mcb-domain/src/ports/repositories/project.rs:15",
+        "suggestion": "Consider splitting into smaller interfaces (ISP)"
+      }
+    ],
+    "error_boundary": [
+      {
+        "id": "ERR003",
+        "category": "error_boundary",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/handlers/search.rs",
+        "line": 71,
+        "message": "Leaked internal error: /home/marlonsc/mcb/crates/mcb-server/src/handlers/search.rs:71 - Error .to_string() in response",
+        "suggestion": "Replace Error .to_string() in response with a sanitized error response that doesn't expose internal details"
+      }
+    ],
+    "Naming": [
+      {
+        "id": "NAME003",
+        "category": "Naming",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/utils/tests/services_config.rs",
+        "line": 29,
+        "message": "Bad constant name: /home/marlonsc/mcb/crates/mcb-domain/src/utils/tests/services_config.rs:29 - toml (expected SCREAMING_SNAKE_CASE)",
+        "suggestion": "Rename 'toml' to SCREAMING_SNAKE_CASE format"
+      },
+      {
+        "id": "NAME006",
+        "category": "Naming",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/macros/handlers.rs",
+        "line": null,
+        "message": "CA naming: /home/marlonsc/mcb/crates/mcb-server/src/macros/handlers.rs (Handler): Handler file outside handlers/ directory - Move to handlers/, admin/, or tools/",
+        "suggestion": "Move to handlers/, admin/, or tools/"
+      },
+      {
+        "id": "NAME006",
+        "category": "Naming",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/entities/repository.rs",
+        "line": null,
+        "message": "CA naming: /home/marlonsc/mcb/crates/mcb-domain/src/entities/repository.rs (Repository Port): Repository file outside repositories/ directory - Move to repositories/",
+        "suggestion": "Move to repositories/"
+      }
+    ],
+    "Organization": [
+      {
+        "id": "ORG022",
+        "category": "Organization",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/ports/providers/config_manager.rs",
+        "line": 0,
+        "message": "[ORG022] File placement violation: Configuration files should be centralized in the config/ directory.",
+        "suggestion": null
+      }
+    ],
+    "Performance": [
+      {
+        "id": "PERF001",
+        "category": "Performance",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/utils/analysis.rs",
+        "line": 235,
+        "message": "Clone in loop: /home/marlonsc/mcb/crates/mcb-domain/src/utils/analysis.rs:235 - *dead_by_file.entry(file.clone()).or_insert(0) += 1; (Consider borrowing or moving instead of cloning)",
+        "suggestion": "Consider borrowing or moving instead of cloning"
+      },
+      {
+        "id": "PERF001",
+        "category": "Performance",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs",
+        "line": 124,
+        "message": "Clone in loop: /home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs:124 - queue.push_back((sub_repo, info.id.clone(), depth + 1)); (Consider borrowing or moving instead of cloning)",
+        "suggestion": "Consider borrowing or moving instead of cloning"
+      }
+    ],
+    "Async": [
+      {
+        "id": "ASYNC003",
+        "category": "Async",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-infrastructure/src/services/highlight_service.rs",
+        "line": 55,
+        "message": "Wrong mutex type: /home/marlonsc/mcb/crates/mcb-infrastructure/src/services/highlight_service.rs:55 - std::sync::Mutex type (Use tokio::sync::Mutex for async code)",
+        "suggestion": "Use tokio::sync::Mutex for async code"
+      }
+    ],
+    "Implementation": [
+      {
+        "id": "IMPL006",
+        "category": "Implementation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/engines/rete_engine.rs",
+        "line": 223,
+        "message": "Empty catch-all: /home/marlonsc/mcb/crates/mcb-validate/src/engines/rete_engine.rs:223 - catch-all match arm silently ignores cases: _ => None,",
+        "suggestion": "Handle the catch-all case explicitly or log unhandled variants"
+      }
+    ],
+    "SOLID": [
+      {
+        "id": "SOLID003",
+        "category": "SOLID",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/ports/repositories/project.rs",
+        "line": 15,
+        "message": "ISP: Trait ProjectRepository too large: /home/marlonsc/mcb/crates/mcb-domain/src/ports/repositories/project.rs:15 (26 methods, max: 10) - Consider splitting into smaller, focused traits",
+        "suggestion": "Consider splitting into smaller, focused traits"
+      }
+    ],
+    "Refactoring": [
+      {
+        "id": "REF002",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/macros/ports.rs",
+        "line": null,
+        "message": "Duplicate definition 'PlanRegistry' in [/home/marlonsc/mcb/crates/mcb-domain/src/macros/ports.rs, /home/marlonsc/mcb/crates/mcb-domain/src/ports/repositories/plan.rs] - Type 'PlanRegistry' is defined 2 times in different directories within the same crate. Consolidate to single location.",
+        "suggestion": "Type 'PlanRegistry' is defined 2 times in different directories within the same crate. Consolidate to single location."
+      },
+      {
+        "id": "REF002",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/args/validate.rs",
+        "line": null,
+        "message": "Duplicate definition 'ValidateArgs' in [/home/marlonsc/mcb/crates/mcb-server/src/args/validate.rs, /home/marlonsc/mcb/crates/mcb/src/cli/validate.rs] - Type 'ValidateArgs' is defined in {\"mcb-server\", \"mcb\"}. Consider consolidating to one location.",
+        "suggestion": "Type 'ValidateArgs' is defined in {\"mcb-server\", \"mcb\"}. Consider consolidating to one location."
+      },
+      {
+        "id": "REF002",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/macros/ports.rs",
+        "line": null,
+        "message": "Duplicate definition 'TeamRegistry' in [/home/marlonsc/mcb/crates/mcb-domain/src/macros/ports.rs, /home/marlonsc/mcb/crates/mcb-domain/src/ports/repositories/org.rs] - Type 'TeamRegistry' is defined 2 times in different directories within the same crate. Consolidate to single location.",
+        "suggestion": "Type 'TeamRegistry' is defined 2 times in different directories within the same crate. Consolidate to single location."
+      },
+      {
+        "id": "REF002",
+        "category": "Refactoring",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/macros/ports.rs",
+        "line": null,
+        "message": "Duplicate definition 'PlanVersionRegistry' in [/home/marlonsc/mcb/crates/mcb-domain/src/macros/ports.rs, /home/marlonsc/mcb/crates/mcb-domain/src/ports/repositories/plan.rs] - Type 'PlanVersionRegistry' is defined 2 times in different directories within the same crate. Consolidate to single location.",
+        "suggestion": "Type 'PlanVersionRegistry' is defined 2 times in different directories within the same crate. Consolidate to single location."
+      }
+    ],
+    "Metrics": [
+      {
+        "id": "METRIC002",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/handlers/entities/vcs.rs",
+        "line": 73,
+        "message": "Function `handle_repository` has length of 72 (threshold: 50)",
+        "suggestion": "Consider extracting helper functions or using the Extract Method refactoring. Functions should ideally do one thing well."
+      },
+      {
+        "id": "METRIC002",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/handlers/memory/execution.rs",
+        "line": 90,
+        "message": "Function `store_execution` has length of 60 (threshold: 50)",
+        "suggestion": "Consider extracting helper functions or using the Extract Method refactoring. Functions should ideally do one thing well."
+      },
+      {
+        "id": "METRIC002",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/handlers/session/create.rs",
+        "line": 99,
+        "message": "Function `create_session` has length of 55 (threshold: 50)",
+        "suggestion": "Consider extracting helper functions or using the Extract Method refactoring. Functions should ideally do one thing well."
+      },
+      {
+        "id": "METRIC001",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/database/seaorm/repos/project.rs",
+        "line": 225,
+        "message": "Function `traverse_dependencies` has cognitive complexity of 11 (threshold: 10)",
+        "suggestion": "Consider breaking this function into smaller, focused functions. Extract complex conditions into named functions or early returns."
+      },
+      {
+        "id": "METRIC001",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs",
+        "line": 69,
+        "message": "Function `collect_submodules_sync` has cognitive complexity of 18 (threshold: 15)",
+        "suggestion": "Consider breaking this function into smaller, focused functions. Extract complex conditions into named functions or early returns."
+      },
+      {
+        "id": "METRIC002",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs",
+        "line": 69,
+        "message": "Function `collect_submodules_sync` has length of 79 (threshold: 50)",
+        "suggestion": "Consider extracting helper functions or using the Extract Method refactoring. Functions should ideally do one thing well."
+      },
+      {
+        "id": "METRIC002",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs",
+        "line": 151,
+        "message": "Function `build_submodule_info` has length of 57 (threshold: 50)",
+        "suggestion": "Consider extracting helper functions or using the Extract Method refactoring. Functions should ideally do one thing well."
+      },
+      {
+        "id": "METRIC001",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs",
+        "line": 69,
+        "message": "Function `collect_submodules_sync` has cognitive complexity of 18 (threshold: 10)",
+        "suggestion": "Consider breaking this function into smaller, focused functions. Extract complex conditions into named functions or early returns."
+      },
+      {
+        "id": "METRIC002",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/config_quality.rs",
+        "line": 121,
+        "message": "Function `validate` has length of 53 (threshold: 50)",
+        "suggestion": "Consider extracting helper functions or using the Extract Method refactoring. Functions should ideally do one thing well."
+      },
+      {
+        "id": "METRIC002",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/declarative_validator.rs",
+        "line": 591,
+        "message": "Function `run_parallel_slices` has length of 51 (threshold: 50)",
+        "suggestion": "Consider extracting helper functions or using the Extract Method refactoring. Functions should ideally do one thing well."
+      },
+      {
+        "id": "METRIC002",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/declarative_validator.rs",
+        "line": 779,
+        "message": "Function `validate` has length of 67 (threshold: 50)",
+        "suggestion": "Consider extracting helper functions or using the Extract Method refactoring. Functions should ideally do one thing well."
+      },
+      {
+        "id": "METRIC001",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/dependency/cycles.rs",
+        "line": 40,
+        "message": "Function `build_dependency_graph` has cognitive complexity of 12 (threshold: 10)",
+        "suggestion": "Consider breaking this function into smaller, focused functions. Extract complex conditions into named functions or early returns."
+      },
+      {
+        "id": "METRIC002",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/documentation/validator.rs",
+        "line": 123,
+        "message": "Function `validate_pub_item_docs` has length of 78 (threshold: 50)",
+        "suggestion": "Consider extracting helper functions or using the Extract Method refactoring. Functions should ideally do one thing well."
+      },
+      {
+        "id": "METRIC001",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/kiss/checks.rs",
+        "line": 306,
+        "message": "Function `process_nesting_line` has cognitive complexity of 11 (threshold: 10)",
+        "suggestion": "Consider breaking this function into smaller, focused functions. Extract complex conditions into named functions or early returns."
+      },
+      {
+        "id": "METRIC002",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/pattern_validator/violation.rs",
+        "line": 87,
+        "message": "Function `fmt` has length of 57 (threshold: 50)",
+        "suggestion": "Consider extracting helper functions or using the Extract Method refactoring. Functions should ideally do one thing well."
+      },
+      {
+        "id": "METRIC002",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/ssot.rs",
+        "line": 198,
+        "message": "Function `analyze_line` has length of 97 (threshold: 50)",
+        "suggestion": "Consider extracting helper functions or using the Extract Method refactoring. Functions should ideally do one thing well."
+      },
+      {
+        "id": "METRIC001",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs",
+        "line": 224,
+        "message": "Function `check_ignored_tests` has cognitive complexity of 11 (threshold: 10)",
+        "suggestion": "Consider breaking this function into smaller, focused functions. Extract complex conditions into named functions or early returns."
+      },
+      {
+        "id": "METRIC001",
+        "category": "Metrics",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs",
+        "line": 256,
+        "message": "Function `check_todo_in_fixtures` has cognitive complexity of 11 (threshold: 10)",
+        "suggestion": "Consider breaking this function into smaller, focused functions. Extract complex conditions into named functions or early returns."
+      }
+    ],
+    "Documentation": [
+      {
+        "id": "DOC001",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/database/mod.rs",
+        "line": null,
+        "message": "Missing module doc: /home/marlonsc/mcb/crates/mcb-providers/src/database/mod.rs",
+        "suggestion": "Add //! module-level documentation at the top of the file"
+      },
+      {
+        "id": "DOC001",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/database/seaorm/graphql/mod.rs",
+        "line": null,
+        "message": "Missing module doc: /home/marlonsc/mcb/crates/mcb-providers/src/database/seaorm/graphql/mod.rs",
+        "suggestion": "Add //! module-level documentation at the top of the file"
+      },
+      {
+        "id": "DOC003",
+        "category": "Documentation",
+        "severity": "INFO",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/lib.rs",
+        "line": 104,
+        "message": "Missing example: /home/marlonsc/mcb/crates/mcb-validate/src/lib.rs:104 - ValidationConfigExt",
+        "suggestion": "Add # Example section to ValidationConfigExt documentation"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/kiss/mod.rs",
+        "line": 47,
+        "message": "Missing enum doc: /home/marlonsc/mcb/crates/mcb-validate/src/validators/kiss/mod.rs:47 - KissViolation",
+        "suggestion": "Add /// documentation for enum KissViolation"
+      },
+      {
+        "id": "DOC002",
+        "category": "Documentation",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/ssot.rs",
+        "line": 24,
+        "message": "Missing enum doc: /home/marlonsc/mcb/crates/mcb-validate/src/validators/ssot.rs:24 - SsotViolation",
+        "suggestion": "Add /// documentation for enum SsotViolation"
+      }
+    ],
+    "KISS": [
+      {
+        "id": "KISS001",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/args/memory.rs",
+        "line": 45,
+        "message": "KISS: Struct MemoryArgs has too many fields: /home/marlonsc/mcb/crates/mcb-server/src/args/memory.rs:45 (18 fields, max: 16)",
+        "suggestion": "Split 'MemoryArgs' into smaller structs or use composition. 18 fields exceeds the maximum of 16."
+      },
+      {
+        "id": "KISS002",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-infrastructure/src/services/memory_service/observation.rs",
+        "line": 87,
+        "message": "KISS: Function create_and_store_observation has too many parameters: /home/marlonsc/mcb/crates/mcb-infrastructure/src/services/memory_service/observation.rs:87 (6 params, max: 5)",
+        "suggestion": "Refactor 'create_and_store_observation' to use a config/options struct instead of 6 parameters. Maximum allowed is 5."
+      },
+      {
+        "id": "KISS002",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/composition.rs",
+        "line": 57,
+        "message": "KISS: Function build_mcp_server_bootstrap has too many parameters: /home/marlonsc/mcb/crates/mcb-server/src/composition.rs:57 (6 params, max: 5)",
+        "suggestion": "Refactor 'build_mcp_server_bootstrap' to use a config/options struct instead of 6 parameters. Maximum allowed is 5."
+      },
+      {
+        "id": "KISS002",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/handlers/entities/common.rs",
+        "line": 139,
+        "message": "KISS: Function route_entity has too many parameters: /home/marlonsc/mcb/crates/mcb-server/src/handlers/entities/common.rs:139 (6 params, max: 5)",
+        "suggestion": "Refactor 'route_entity' to use a config/options struct instead of 6 parameters. Maximum allowed is 5."
+      },
+      {
+        "id": "KISS002",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/handlers/session/update.rs",
+        "line": 51,
+        "message": "KISS: Function apply_and_persist has too many parameters: /home/marlonsc/mcb/crates/mcb-server/src/handlers/session/update.rs:51 (6 params, max: 5)",
+        "suggestion": "Refactor 'apply_and_persist' to use a config/options struct instead of 6 parameters. Maximum allowed is 5."
+      },
+      {
+        "id": "KISS002",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/language/common/traverser.rs",
+        "line": 70,
+        "message": "KISS: Function traverse_and_extract has too many parameters: /home/marlonsc/mcb/crates/mcb-providers/src/language/common/traverser.rs:70 (6 params, max: 5)",
+        "suggestion": "Refactor 'traverse_and_extract' to use a config/options struct instead of 6 parameters. Maximum allowed is 5."
+      },
+      {
+        "id": "KISS002",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs",
+        "line": 151,
+        "message": "KISS: Function build_submodule_info has too many parameters: /home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs:151 (6 params, max: 5)",
+        "suggestion": "Refactor 'build_submodule_info' to use a config/options struct instead of 6 parameters. Maximum allowed is 5."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/handlers/entities/vcs.rs",
+        "line": 73,
+        "message": "KISS: Function handle_repository is too long: /home/marlonsc/mcb/crates/mcb-server/src/handlers/entities/vcs.rs:73 (72 lines, max: 50)",
+        "suggestion": "Break 'handle_repository' into smaller, focused functions. 72 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/handlers/memory/execution.rs",
+        "line": 90,
+        "message": "KISS: Function store_execution is too long: /home/marlonsc/mcb/crates/mcb-server/src/handlers/memory/execution.rs:90 (60 lines, max: 50)",
+        "suggestion": "Break 'store_execution' into smaller, focused functions. 60 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/src/handlers/session/create.rs",
+        "line": 99,
+        "message": "KISS: Function create_session is too long: /home/marlonsc/mcb/crates/mcb-server/src/handlers/session/create.rs:99 (55 lines, max: 50)",
+        "suggestion": "Break 'create_session' into smaller, focused functions. 55 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs",
+        "line": 69,
+        "message": "KISS: Function collect_submodules_sync is too long: /home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs:69 (79 lines, max: 50)",
+        "suggestion": "Break 'collect_submodules_sync' into smaller, focused functions. 79 lines exceeds the maximum of 50."
+      },
+      {
+        "id": "KISS005",
+        "category": "KISS",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs",
+        "line": 151,
+        "message": "KISS: Function build_submodule_info is too long: /home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs:151 (57 lines, max: 50)",
+        "suggestion": "Break 'build_submodule_info' into smaller, focused functions. 57 lines exceeds the maximum of 50."
+      }
+    ],
+    "Testing": [
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/macros/testing.rs",
+        "line": 11,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-domain/src/macros/testing.rs:11 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/utils/tests/collection.rs",
+        "line": 14,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-domain/src/utils/tests/collection.rs:14 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/utils/tests/utils.rs",
+        "line": 15,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-domain/src/utils/tests/utils.rs:15 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-domain/src/utils/text.rs",
+        "line": 68,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-domain/src/utils/text.rs:68 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/ast/rca_helpers.rs",
+        "line": 60,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-validate/src/ast/rca_helpers.rs:60 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/ast/rca_helpers.rs",
+        "line": 118,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-validate/src/ast/rca_helpers.rs:118 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/ast/unwrap_detector.rs",
+        "line": 137,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-validate/src/ast/unwrap_detector.rs:137 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/utils/source.rs",
+        "line": 61,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-validate/src/utils/source.rs:61 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/utils/source.rs",
+        "line": 84,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-validate/src/utils/source.rs:84 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/error_boundary.rs",
+        "line": 100,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-validate/src/validators/error_boundary.rs:100 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/inline_tests.rs",
+        "line": 56,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/inline_tests.rs:56 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST001",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-utils/src/constants/validate/patterns.rs",
+        "line": 8,
+        "message": "Inline test module: /home/marlonsc/mcb/crates/mcb-utils/src/constants/validate/patterns.rs:8 - move to tests/ directory",
+        "suggestion": "Move test module to tests/ directory"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/tests/agent_repo.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-providers/tests/agent_repo.rs (use Move to tests/unit/, tests/integration/, or tests/e2e/ directory)",
+        "suggestion": "Rename to Move to tests/unit/, tests/integration/, or tests/e2e/ directory"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/tests/index_repo.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-providers/tests/index_repo.rs (use Move to tests/unit/, tests/integration/, or tests/e2e/ directory)",
+        "suggestion": "Rename to Move to tests/unit/, tests/integration/, or tests/e2e/ directory"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/tests/observation_repo.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-providers/tests/observation_repo.rs (use Move to tests/unit/, tests/integration/, or tests/e2e/ directory)",
+        "suggestion": "Rename to Move to tests/unit/, tests/integration/, or tests/e2e/ directory"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/tests/project_repo.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-providers/tests/project_repo.rs (use Move to tests/unit/, tests/integration/, or tests/e2e/ directory)",
+        "suggestion": "Rename to Move to tests/unit/, tests/integration/, or tests/e2e/ directory"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/e2e/gap_fixes.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-server/tests/e2e/gap_fixes.rs (use gap_fixes_e2e.rs or test_gap_fixes.rs (e2e tests should indicate they're end-to-end))",
+        "suggestion": "Rename to gap_fixes_e2e.rs or test_gap_fixes.rs (e2e tests should indicate they're end-to-end)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/e2e/golden_highlight_service.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-server/tests/e2e/golden_highlight_service.rs (use golden_highlight_service_e2e.rs or test_golden_highlight_service.rs (e2e tests should indicate they're end-to-end))",
+        "suggestion": "Rename to golden_highlight_service_e2e.rs or test_golden_highlight_service.rs (e2e tests should indicate they're end-to-end)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/e2e/golden_memory_project.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-server/tests/e2e/golden_memory_project.rs (use golden_memory_project_e2e.rs or test_golden_memory_project.rs (e2e tests should indicate they're end-to-end))",
+        "suggestion": "Rename to golden_memory_project_e2e.rs or test_golden_memory_project.rs (e2e tests should indicate they're end-to-end)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/e2e/golden_tools.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-server/tests/e2e/golden_tools.rs (use golden_tools_e2e.rs or test_golden_tools.rs (e2e tests should indicate they're end-to-end))",
+        "suggestion": "Rename to golden_tools_e2e.rs or test_golden_tools.rs (e2e tests should indicate they're end-to-end)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/e2e/validation_fixes.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-server/tests/e2e/validation_fixes.rs (use validation_fixes_e2e.rs or test_validation_fixes.rs (e2e tests should indicate they're end-to-end))",
+        "suggestion": "Rename to validation_fixes_e2e.rs or test_validation_fixes.rs (e2e tests should indicate they're end-to-end)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/integration/admin_api_tests.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-server/tests/integration/admin_api_tests.rs (use admin_api_tests_integration.rs or admin_api_tests_workflow.rs (integration tests should indicate their purpose))",
+        "suggestion": "Rename to admin_api_tests_integration.rs or admin_api_tests_workflow.rs (integration tests should indicate their purpose)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/integration/auto_context_tests.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-server/tests/integration/auto_context_tests.rs (use auto_context_tests_integration.rs or auto_context_tests_workflow.rs (integration tests should indicate their purpose))",
+        "suggestion": "Rename to auto_context_tests_integration.rs or auto_context_tests_workflow.rs (integration tests should indicate their purpose)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/integration/error_shape_tests.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-server/tests/integration/error_shape_tests.rs (use error_shape_tests_integration.rs or error_shape_tests_workflow.rs (integration tests should indicate their purpose))",
+        "suggestion": "Rename to error_shape_tests_integration.rs or error_shape_tests_workflow.rs (integration tests should indicate their purpose)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/integration/form_deserialization_test.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-server/tests/integration/form_deserialization_test.rs (use form_deserialization_test_integration.rs or form_deserialization_test_workflow.rs (integration tests should indicate their purpose))",
+        "suggestion": "Rename to form_deserialization_test_integration.rs or form_deserialization_test_workflow.rs (integration tests should indicate their purpose)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/tests/agent_repo.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-providers/tests/agent_repo.rs (use Move to a subdirectory (e.g., tests/unit/))",
+        "suggestion": "Rename to Move to a subdirectory (e.g., tests/unit/)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/tests/index_repo.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-providers/tests/index_repo.rs (use Move to a subdirectory (e.g., tests/unit/))",
+        "suggestion": "Rename to Move to a subdirectory (e.g., tests/unit/)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/tests/observation_repo.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-providers/tests/observation_repo.rs (use Move to a subdirectory (e.g., tests/unit/))",
+        "suggestion": "Rename to Move to a subdirectory (e.g., tests/unit/)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/tests/project_repo.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-providers/tests/project_repo.rs (use Move to a subdirectory (e.g., tests/unit/))",
+        "suggestion": "Rename to Move to a subdirectory (e.g., tests/unit/)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/tests/integration/ca009_tests.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-validate/tests/integration/ca009_tests.rs (use ca009_tests_integration.rs or ca009_tests_workflow.rs (integration tests should indicate their purpose))",
+        "suggestion": "Rename to ca009_tests_integration.rs or ca009_tests_workflow.rs (integration tests should indicate their purpose)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/tests/integration/ca016_ca018_ca019_tests.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-validate/tests/integration/ca016_ca018_ca019_tests.rs (use ca016_ca018_ca019_tests_integration.rs or ca016_ca018_ca019_tests_workflow.rs (integration tests should indicate their purpose))",
+        "suggestion": "Rename to ca016_ca018_ca019_tests_integration.rs or ca016_ca018_ca019_tests_workflow.rs (integration tests should indicate their purpose)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/tests/integration/test_individual.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb-validate/tests/integration/test_individual.rs (use test_individual_integration.rs or test_individual_workflow.rs (integration tests should indicate their purpose))",
+        "suggestion": "Rename to test_individual_integration.rs or test_individual_workflow.rs (integration tests should indicate their purpose)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb/tests/integration/process_lock.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb/tests/integration/process_lock.rs (use process_lock_integration.rs or process_lock_workflow.rs (integration tests should indicate their purpose))",
+        "suggestion": "Rename to process_lock_integration.rs or process_lock_workflow.rs (integration tests should indicate their purpose)"
+      },
+      {
+        "id": "TEST002",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb/tests/unit/validate_test.rs",
+        "line": null,
+        "message": "Bad test file name: /home/marlonsc/mcb/crates/mcb/tests/unit/validate_test.rs (use validate_test_tests.rs (unit tests must end with _tests))",
+        "suggestion": "Rename to validate_test_tests.rs (unit tests must end with _tests)"
+      },
+      {
+        "id": "TEST004",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-infrastructure/tests/unit/events/events_tests.rs",
+        "line": 20,
+        "message": "Test without assertion: /home/marlonsc/mcb/crates/mcb-infrastructure/tests/unit/events/events_tests.rs:20 - test_publish_event_no_subscribers",
+        "suggestion": "Add assertion to test_publish_event_no_subscribers or use smoke test suffix"
+      },
+      {
+        "id": "TEST004",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-infrastructure/tests/unit/events/events_tests.rs",
+        "line": 34,
+        "message": "Test without assertion: /home/marlonsc/mcb/crates/mcb-infrastructure/tests/unit/events/events_tests.rs:34 - test_publish_invalid_payload",
+        "suggestion": "Add assertion to test_publish_invalid_payload or use smoke test suffix"
+      },
+      {
+        "id": "TEST004",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/integration/auto_context_tests.rs",
+        "line": 111,
+        "message": "Test without assertion: /home/marlonsc/mcb/crates/mcb-server/tests/integration/auto_context_tests.rs:111 - test_ide_probe_runtime_defaults",
+        "suggestion": "Add assertion to test_ide_probe_runtime_defaults or use smoke test suffix"
+      },
+      {
+        "id": "TEST004",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/utils/test_fixtures.rs",
+        "line": 201,
+        "message": "Test without assertion: /home/marlonsc/mcb/crates/mcb-server/tests/utils/test_fixtures.rs:201 - try_shared_app_context",
+        "suggestion": "Add assertion to try_shared_app_context or use smoke test suffix"
+      },
+      {
+        "id": "TEST004",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/utils/test_fixtures.rs",
+        "line": 322,
+        "message": "Test without assertion: /home/marlonsc/mcb/crates/mcb-server/tests/utils/test_fixtures.rs:322 - shared_mcb_state",
+        "suggestion": "Add assertion to shared_mcb_state or use smoke test suffix"
+      },
+      {
+        "id": "TEST004",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-providers/tests/migration/mod.rs",
+        "line": 152,
+        "message": "Test without assertion: /home/marlonsc/mcb/crates/mcb-providers/tests/migration/mod.rs:152 - migration_is_idempotent",
+        "suggestion": "Add assertion to migration_is_idempotent or use smoke test suffix"
+      },
+      {
+        "id": "TEST004",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/tests/integration/integration_engines.rs",
+        "line": 173,
+        "message": "Test without assertion: /home/marlonsc/mcb/crates/mcb-validate/tests/integration/integration_engines.rs:173 - test_load_grl_rule",
+        "suggestion": "Add assertion to test_load_grl_rule or use smoke test suffix"
+      },
+      {
+        "id": "TEST004",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/tests/integration/integration_engines.rs",
+        "line": 531,
+        "message": "Test without assertion: /home/marlonsc/mcb/crates/mcb-validate/tests/integration/integration_engines.rs:531 - test_ca001_grl_loading",
+        "suggestion": "Add assertion to test_ca001_grl_loading or use smoke test suffix"
+      },
+      {
+        "id": "TEST004",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-validate/tests/integration/integration_engines.rs",
+        "line": 559,
+        "message": "Test without assertion: /home/marlonsc/mcb/crates/mcb-validate/tests/integration/integration_engines.rs:559 - test_ca001_via_hybrid_engine",
+        "suggestion": "Add assertion to test_ca001_via_hybrid_engine or use smoke test suffix"
+      },
+      {
+        "id": "TEST005",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-infrastructure/tests/unit/validation/validation_service_tests.rs",
+        "line": 106,
+        "message": "Trivial assertion: /home/marlonsc/mcb/crates/mcb-infrastructure/tests/unit/validation/validation_service_tests.rs:106 - test_validate_detects_inline_tests_in_src_via_registry_path uses 'assert_eq!(1, 1)' (always passes)",
+        "suggestion": "Replace assert_eq!(1, 1) with meaningful assertion"
+      },
+      {
+        "id": "TEST006",
+        "category": "Testing",
+        "severity": "WARNING",
+        "file": "/home/marlonsc/mcb/crates/mcb-server/tests/e2e/golden_e2e_complete.rs",
+        "line": 181,
+        "message": "Unwrap-only test: /home/marlonsc/mcb/crates/mcb-server/tests/e2e/golden_e2e_complete.rs:181 - test_golden_e2e_respects_collection_isolation has no real assertion, only .unwrap()",
+        "suggestion": "Add explicit assert! or assert_eq! instead of relying on .unwrap()"
+      }
+    ]
+  }
+}

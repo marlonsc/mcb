@@ -1,0 +1,144 @@
+    Checking mcb-domain v0.3.0 (/home/marlonsc/mcb/crates/mcb-domain)
+   Compiling milvus-sdk-rust v0.1.0 (/home/marlonsc/mcb/third-party/milvus-sdk-rust)
+    Checking mcb-providers v0.3.0 (/home/marlonsc/mcb/crates/mcb-providers)
+    Checking mcb-validate v0.3.0 (/home/marlonsc/mcb/crates/mcb-validate)
+    Checking mcb-server v0.3.0 (/home/marlonsc/mcb/crates/mcb-server)
+    Checking mcb-infrastructure v0.3.0 (/home/marlonsc/mcb/crates/mcb-infrastructure)
+warning: used `expect()` on a `Result` value
+  --> crates/mcb-infrastructure/src/infrastructure/migration.rs:31:24
+   |
+31 |   ... = mcb_domain::registry::database::res...
+   |  _______^
+32 | | ..."No migration provider registered");
+   | |______________________________________^
+   |
+   = note: if this value is an `Err`, it will panic
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#expect_used
+   = note: requested on the command line with `-W clippy::expect-used`
+
+warning: `mcb-infrastructure` (lib) generated 1 warning
+warning: wildcard match will also match any future added variants
+   --> crates/mcb-validate/src/validators/pmat.rs:212:17
+    |
+212 | ...     _ => None,
+    |         ^ help: try: `AnalysisFinding::DeadCode { .. } | AnalysisFinding::TechnicalDebt { .. }`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#wildcard_enum_match_arm
+    = note: requested on the command line with `-W clippy::wildcard-enum-match-arm`
+
+warning: wildcard match will also match any future added variants
+   --> crates/mcb-validate/src/validators/pmat.rs:248:17
+    |
+248 | ...     _ => None,
+    |         ^ help: try: `AnalysisFinding::Complexity { .. } | AnalysisFinding::TechnicalDebt { .. }`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#wildcard_enum_match_arm
+
+warning: wildcard match will also match any future added variants
+   --> crates/mcb-validate/src/validators/pmat.rs:284:17
+    |
+284 | ...     _ => None,
+    |         ^ help: try: `AnalysisFinding::Complexity { .. } | AnalysisFinding::DeadCode { .. }`
+    |
+    = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#wildcard_enum_match_arm
+
+warning: `mcb-validate` (lib) generated 3 warnings
+warning: item in documentation is missing backticks
+  --> crates/mcb-providers/src/database/seaorm/entities/project_issues.rs:31:53
+   |
+31 | ..., "in_progress", ...
+   |       ^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#doc_markdown
+   = note: requested on the command line with `-W clippy::doc-markdown`
+help: try
+   |
+31 -     /// Current status of the issue (e.g., "todo", "in_progress", "done").
+31 +     /// Current status of the issue (e.g., "todo", "`in_progress`", "done").
+   |
+
+warning: item in documentation is missing backticks
+  --> crates/mcb-providers/src/database/seaorm/entities/project_phases.rs:24:56
+   |
+24 | ..., "in_progress", ...
+   |       ^^^^^^^^^^^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#doc_markdown
+help: try
+   |
+24 -     /// Current status of the phase (e.g., "pending", "in_progress", "completed").
+24 +     /// Current status of the phase (e.g., "pending", "`in_progress`", "completed").
+   |
+
+warning: very complex type used. Consider factoring parts into `type` definitions
+  --> crates/mcb-providers/src/project_detection/mod.rs:39:16
+   |
+39 |       detect_fn: Arc<
+   |  ________________^
+40 | |         dyn for<'a>...
+41 | |             + Send
+42 | |             + Sync,
+43 | |     >,
+   | |_____^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#type_complexity
+   = note: `#[warn(clippy::type_complexity)]` on by default
+
+warning: very complex type used. Consider factoring parts into `type` definitions
+  --> crates/mcb-providers/src/project_detection/mod.rs:59:28
+   |
+59 |               let detect_fn: Arc<
+   |  ____________________________^
+60 | |                 dyn for<'a> Fn(
+61 | |                         &'a Path,
+...  |
+65 | |                     + Sync,
+66 | |             > = Arc::new(|path|...
+   | |_____________^
+   |
+   = help: for further information visit https://rust-lang.github.io/rust-clippy/rust-1.93.0/index.html#type_complexity
+
+warning: missing documentation for a function
+   --> crates/mcb-providers/src/database/seaorm/entities/mod.rs:69:1
+    |
+ 69 | / seaography::regi...
+ 70 | |     agent_sessions,
+ 71 | |     agent_worktr...
+ 72 | |     api_keys,
+...   |
+100 | |     worktrees,
+101 | | ]);
+    | |__^
+    |
+    = note: requested on the command line with `-W missing-docs`
+    = note: this warning originates in the macro `seaography::register_entity_modules` (in Nightly builds, run with -Z macro-backtrace for more info)
+
+warning: missing documentation for a struct
+  --> crates/mcb-providers/src/database/seaorm/repos/agent.rs:23:1
+   |
+23 | pub struct SeaOrmAgentRepository {
+   | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+warning: missing documentation for an associated function
+  --> crates/mcb-providers/src/database/seaorm/repos/agent.rs:29:5
+   |
+29 |     pu...on>) -> Self {
+   |     ^^...^^^^^^^^^^^^
+
+warning: `mcb-providers` (lib) generated 7 warnings (run `cargo clippy --fix --lib -p mcb-providers` to apply 2 suggestions)
+    Checking mcb v0.3.0 (/home/marlonsc/mcb/crates/mcb)
+warning: missing documentation for the crate
+  --> crates/mcb/src/main.rs:1:1
+   |
+ 1 | / extern crate mcb_...
+ 2 | |
+ 3 | | use clap::{Parser...
+ 4 | | use mcb::cli::{Se...
+...  |
+36 | | }
+   | |_^
+   |
+   = note: requested on the command line with `-W missing-docs`
+
+warning: `mcb` (bin "mcb") generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 35.62s

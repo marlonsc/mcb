@@ -1,27 +1,46 @@
-# Microsoft Waza configuration for the ~/.ai-hub skill control plane.
-# Enforces the workspace standard: SKILL.md must stay ≤500 tokens.
+# Microsoft Waza configuration for the ~/.ai-hub governance control plane.
+# Enforces the workspace standard: SKILL.md must stay <=500 tokens.
+# SSOT owner for SKILL.md / UNIVERSAL_CORE budgets: config.AiHub.skills.budget
+# (config/skills.yaml). Keep these waza limits equal to that typed budget.
 # Distributed to governed projects via `ai-hub ssot-relink`.
+#
+# waza 0.38.3 matcher rules (empirically verified, ai-hub-bw54):
+#   * Keys are matched with Go filepath.Match. There is NO `**`: a key
+#     containing `**` NEVER matches and its budget is silently dead. Use an
+#     exact repo-relative path, or a same-directory single-star glob
+#     (`docs/*.md` matches files directly in docs/, not nested ones).
+#   * `paths.skills` unmarshals into a single STRING. Written as a YAML list
+#     it fails to parse and waza DISCARDS every token override. Keep it a
+#     string. `skills/` is where all authored SKILL.md live; `.agents/skills`
+#     is the git-ignored deployed projection and is never an authoring root.
+#   * overrides win over defaults; both are resolved most-specific-first.
 
 tokens:
   warningThreshold: 450
   fallbackLimit: 500
   limits:
     defaults:
+      # basename globs match anywhere in the tree
       "SKILL.md": 500
-      "references/**/*.md": 1000
+      "references/*.md": 1000
       "*.md": 2000
     overrides:
+      # Per-request governance surfaces (injected into every system prompt or
+      # loaded as required instructions) — exact repo-relative paths.
       "AGENTS.md": 3000
       "README.md": 3000
       "CLAUDE.md": 3000
-      "GEMINI.md": 3000
-      "docs/**/*.md": 5000
-      "docs/references/**/*.md": 15000
-      "docs/prompts/**/*.md": 10000
-      "docs/architecture/**/*.md": 10000
-      ".agents/skills/frontend-slides/STYLE_PRESETS.md": 3000
+      # Reference documentation lives directly under docs/ (same-dir star).
+      "docs/*.md": 5000
+      # docs/agent-law-full.md is the full cross-project law corpus, not a
+      # per-request surface; it carries a deliberately generous exact-path
+      # budget so its real size stays measured rather than masked by *.md.
+      "docs/agent-law-full.md": 20000
+      # Nested docs subtrees (one same-dir star per directory that exists).
+      "docs/adr/*.md": 5000
+      "docs/plans/*.md": 5000
+      "docs/guides/*.md": 5000
+      "docs/api-reference/*.md": 5000
 
 paths:
-  skills:
-    - skills
-    - .agents/skills
+  skills: skills

@@ -1,0 +1,64 @@
+    Checking mcb-domain v0.3.0 (/home/marlonsc/mcb/crates/mcb-domain)
+   Compiling milvus-sdk-rust v0.1.0 (/home/marlonsc/mcb/third-party/milvus-sdk-rust)
+    Checking mcb-providers v0.3.0 (/home/marlonsc/mcb/crates/mcb-providers)
+    Checking mcb-server v0.3.0 (/home/marlonsc/mcb/crates/mcb-server)
+    Checking mcb-validate v0.3.0 (/home/marlonsc/mcb/crates/mcb-validate)
+    Checking mcb-infrastructure v0.3.0 (/home/marlonsc/mcb/crates/mcb-infrastructure)
+error[E0407]: method `run_discovery` is not a member of trait `IndexingServiceInterface`
+  --> crates/mcb-infrastructure/src/services/indexing_service/interface.rs:17:5
+   |
+17 | /     async fn run_...
+18 | |         let mut p...
+19 | |         let files...
+...  |
+41 | |         (files, p...
+42 | |     }
+   | |_____^ not a member of trait `IndexingServiceInterface`
+
+error[E0407]: method `start_tracking` is not a member of trait `IndexingServiceInterface`
+  --> crates/mcb-infrastructure/src/services/indexing_service/interface.rs:44:5
+   |
+44 | /     async fn star...
+45 | |         &self,
+46 | |         collectio...
+47 | |         total_fil...
+...  |
+62 | |         operation_id
+63 | |     }
+   | |_____^ not a member of trait `IndexingServiceInterface`
+
+error[E0599]: no method named `run_discovery` found for reference `&...` in the current scope
+  --> crates/mcb-infrastructure/src/services/indexing_service/interface.rs:75:39
+   |
+75 | ...lf.run_discovery(pa...
+   |       ^^^^^^^^^^^^^ method not found in `&...`
+   |
+   = note: the full name for the type has been written to '/home/marlonsc/mcb/target/debug/deps/mcb_infrastructure-e912ebf673406976.long-type-2499117498077750146.txt'
+   = note: consider using `--verbose` to print the full type name to the console
+
+error[E0282]: type annotations needed for `(_, _)`
+  --> crates/mcb-infrastructure/src/services/indexing_service/interface.rs:75:13
+   |
+75 | ...et (files, _progress) = s...
+   |       ^^^^^^^^^^^^^^^^^^
+76 | ...et total_files = files.le...
+   |                     ----- type must be known at this point
+   |
+help: consider giving this pattern a type, where the placeholders `_` are specified
+   |
+75 |         let (files, _progress): (_, _) = self.run_discovery(path).await;
+   |                               ++++++++
+
+error[E0599]: no method named `start_tracking` found for reference `&...` in the current scope
+  --> crates/mcb-infrastructure/src/services/indexing_service/interface.rs:78:33
+   |
+78 | ...lf.start_tracking(co...
+   |       ^^^^^^^^^^^^^^ method not found in `&...`
+   |
+   = note: the full name for the type has been written to '/home/marlonsc/mcb/target/debug/deps/mcb_infrastructure-e912ebf673406976.long-type-2499117498077750146.txt'
+   = note: consider using `--verbose` to print the full type name to the console
+
+Some errors have detailed explanations: E0282, E0407, E0599.
+For more information about an error, try `rustc --explain E0282`.
+error: could not compile `mcb-infrastructure` (lib) due to 5 previous errors
+warning: build failed, waiting for other jobs to finish...

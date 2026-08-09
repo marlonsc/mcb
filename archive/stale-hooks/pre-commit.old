@@ -1,0 +1,27 @@
+#!/bin/bash
+# =============================================================================
+# Pre-commit hook - Uses same Makefile verbs as CI (validation only, no tests)
+# =============================================================================
+# Install: make install-hooks
+#
+# Runs the same checks as CI but skips tests (QUICK mode for faster feedback).
+# Full test suite runs in CI pipeline before merge.
+# =============================================================================
+
+set -e
+
+echo "Running pre-commit validation..."
+# NOTE: docs-metrics removed from pre-commit to avoid cross-worktree
+# merge conflicts. Metrics are centralized in docs/generated/METRICS.md.
+# Run 'make docs-metrics' or './scripts/docs/inject-metrics.sh --propagate'
+# manually before releases.
+
+echo "  → Linting (Rust 2024 compliance)..."
+make lint CI_MODE=1
+
+echo "  → Architecture validation (QUICK mode, skipping tests)..."
+make validate QUICK=1
+
+echo "✓ Pre-commit validation passed!"
+echo ""
+echo "Tip: Run 'make quality' locally for full checks including tests."

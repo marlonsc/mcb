@@ -311,3 +311,6 @@ CLAUDE.local.md
 !config/
 !config/workspace.yaml
 !custom.mk
+
+# Local Arbor database (GitHub rejects the 405 MiB blob)
+.arbor/cache/db

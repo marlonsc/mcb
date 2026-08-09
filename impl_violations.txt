@@ -1,0 +1,2 @@
+IMPL006 Empty catch-all: /home/marlonsc/mcb/crates/mcb-infrastructure/src/services/highlight_service.rs:107 - catch-all match arm silently ignores cases: _ => None, /home/marlonsc/mcb/crates/mcb-infrastructure/src/services/highlight_service.rs:107
+IMPL006 Empty catch-all: /home/marlonsc/mcb/crates/mcb-infrastructure/src/services/highlight_service.rs:155 - catch-all match arm silently ignores cases: _ => None, /home/marlonsc/mcb/crates/mcb-infrastructure/src/services/highlight_service.rs:155
