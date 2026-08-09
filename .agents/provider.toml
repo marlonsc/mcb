@@ -1,1 +1,12 @@
-../../flext/.agents/provider.toml
+source_project_id = "flext-sh/flext"
+marker_distribution = "flext-core"
+router_skill = "flext-context-routing"
+session_command = ".agents/commands/flext-law.md"
+codemod_provider = "flext-infra/src/flext_infra/codemod/sgconfig.yml"
+marketplaces_key = "extraKnownMarketplaces"
+enabled_plugins_key = "enabledPlugins"
+required_surfaces = ["flext-infra/src/flext_infra/codemod/sgconfig.yml"]
+
+[surfaces]
+always = [".agents/skills/flext-context-routing/SKILL.md"]
+on_demand = [".agents/skills/flext-law/SKILL.md"]

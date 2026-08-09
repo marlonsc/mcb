@@ -1,0 +1,44 @@
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-domain/src/ports/services.rs:758 - TODO: (qlty): Found 16 lines of similar code with `crates/mcb-validate/src/generic_reporter.rs`. /home/marlonsc/mcb/crates/mcb-domain/src/ports/services.rs:758
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-domain/src/value_objects/browse/highlight.rs:10 - TODO: (qlty): Found 22 lines of similar code in 2 locations (mass = 54) /home/marlonsc/mcb/crates/mcb-domain/src/value_objects/browse/highlight.rs:10
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-providers/src/project_detection/go.rs:47 - TODO: (qlty): Function with high complexity (count = 19): detect /home/marlonsc/mcb/crates/mcb-providers/src/project_detection/go.rs:47
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs:69 - TODO: (qlty): Function with high complexity (count = 33): collect_submodules_sync /home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs:69
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/quality.rs:17 - TODO: Regex, /home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/quality.rs:17
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/quality.rs:50 - TODO: compile_regex(r"\btodo!\(")?, /home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/quality.rs:50
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/quality.rs:257 - TODO: .is_match(line) { /home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/quality.rs:257
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/quality.rs:261 - TODO: ".to_owned(), /home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/quality.rs:261
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/violation.rs:134 - TODO: ! or unimplemented!) with real test implementation" /home/marlonsc/mcb/crates/mcb-validate/src/validators/hygiene/violation.rs:134
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/implementation/validator/stubs.rs:19 - TODO: ", "todo"), /home/marlonsc/mcb/crates/mcb-validate/src/validators/implementation/validator/stubs.rs:19
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/implementation/validator/stubs.rs:22 - TODO: ", STUB_PANIC_LABEL), /home/marlonsc/mcb/crates/mcb-validate/src/validators/implementation/validator/stubs.rs:22
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/implementation/violation.rs:79 - TODO: !/unimplemented! /home/marlonsc/mcb/crates/mcb-validate/src/validators/implementation/violation.rs:79
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/mod.rs:17 - TODO: s, formatting) /home/marlonsc/mcb/crates/mcb-validate/src/validators/mod.rs:17
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:9 - FIXME: , PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX, /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:9
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:15 - TODO: _pattern = compile_regex(&format!( /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:15
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:16 - TODO: }|{PENDING_LABEL_FIXME}|{PENDING_LABEL_XXX}|{PENDING_LABEL_HACK}):?\s*(.*)" /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:16
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:37 - TODO: _pattern.captures(line) { /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:37
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:38 - TODO: _type = cap.get(1).map_or("", |m| m.as_str()); /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:38
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:41 - TODO: Comment { /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:41
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:44 - TODO: _type.to_uppercase(), message), /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/comments.rs:44
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/violations.rs:72 - TODO: Comment { /home/marlonsc/mcb/crates/mcb-validate/src/validators/quality/violations.rs:72
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:12 - TODO: ! in trait methods). /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:12
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:20 - TODO: _pattern = required_pattern("SOLID003.panic_macros")?; /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:20
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:28 - TODO: _pattern, /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:28
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:41 - TODO: _pattern: &regex::Regex, /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:41
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:58 - TODO: _pattern, /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:58
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:73 - TODO: _pattern: &'a regex::Regex, /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:73
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:89 - TODO: _pattern.is_match(impl_line) /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/lsp.rs:89
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/validator.rs:70 - TODO: ! in trait methods). /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/validator.rs:70
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/violation.rs:104 - TODO: ) /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/violation.rs:104
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/violation.rs:108 - TODO: !", /home/marlonsc/mcb/crates/mcb-validate/src/validators/solid/violation.rs:108
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:5 - TODO: !()` macros in test fixtures outside intentional stubs /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:5
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:41 - TODO: !() macro in test fixture without proper stub marker /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:41
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:48 - TODO: InTestFixture { /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:48
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:176 - TODO: _in_fixtures( /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:176
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:218 - TODO: ) /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:218
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:237 - TODO: _in_fixtures( /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:237
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:249 - TODO: !") && line.contains('(') { /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:249
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:259 - TODO: InTestFixture { /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:259
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-utils/src/constants/validate.rs:238 - TODO: &str = concat!("TO", "DO"); /home/marlonsc/mcb/crates/mcb-utils/src/constants/validate.rs:238
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-utils/src/constants/validate.rs:241 - FIXME: &str = concat!("FI", "XME"); /home/marlonsc/mcb/crates/mcb-utils/src/constants/validate.rs:241
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-utils/src/constants/validate.rs:244 - XXX: &str = concat!("X", "XX"); /home/marlonsc/mcb/crates/mcb-utils/src/constants/validate.rs:244
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-utils/src/constants/validate.rs:247 - HACK: &str = concat!("HA", "CK"); /home/marlonsc/mcb/crates/mcb-utils/src/constants/validate.rs:247
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-utils/src/constants/validate.rs:702 - TODO: s, formatting). /home/marlonsc/mcb/crates/mcb-utils/src/constants/validate.rs:702

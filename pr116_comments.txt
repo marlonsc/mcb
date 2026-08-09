@@ -1,0 +1,1109 @@
+File: Cargo.toml
+Line: null
+Comment: The PR metadata indicates a v0.3.1 release, but the workspace version is set to 0.3.0. This will produce artifacts tagged as 0.3.0 instead of 0.3.1; bump the workspace version to 0.3.1 (and any crate versions that rely on it, if applicable) to match the release.
+```suggestion
+version = "0.3.1"
+```
+---
+File: crates/mcb-domain/src/protocol/mcp_types.rs
+Line: 26
+Comment: A JSON-RPC request typically requires a `jsonrpc` field (e.g., \"2.0\") alongside `method`, `params`, and `id`. `McpResponse` includes `jsonrpc`, but `McpRequest` does not, which can break strict JSON-RPC clients/servers. Consider adding `pub jsonrpc: String` with a default (similar to `McpResponse`) or otherwise clarifying via type/name/doc that this is a partial/request-body shape.
+---
+File: crates/mcb-domain/src/utils/tests/fs_scan.rs
+Line: 65
+Comment: The filtering logic is path-separator dependent (`\"/tests/\"`), so it can fail on Windows paths (which typically contain `\\`). This can cause test directories to be included unintentionally. Prefer filtering using `Path` components (e.g., iterate `path.components()` and check for `tests` / `test_*`) or normalize separators before applying string contains checks.
+---
+File: crates/mcb-domain/src/utils/tests/fs_scan.rs
+Line: null
+Comment: The doc comment states this helper 'Requires `walkdir`', but the implementation uses `std::fs::read_dir` recursion and does not depend on walkdir. Update the comment to match the current implementation (or switch to walkdir if that was the intent).
+```suggestion
+
+```
+---
+File: crates/mcb-domain/src/utils/tests/collection.rs
+Line: 14
+Comment: The inline unit test for `unique_collection` was removed. Since this helper is used to avoid cross-test interference, keeping a small regression test helps ensure the format/prefix invariant stays stable. Consider re-adding a minimal unit test either in this module under `#[cfg(test)]` or in the existing test suite (`crates/mcb-domain/tests/...`).
+---
+File: crates/mcb-domain/src/macros/registry.rs
+Line: 27
+Comment: <img src="https://www.qodo.ai/wp-content/uploads/2025/12/v2-action-required.svg" height="20" alt="Action required">
+
+1\. <b><i>registry.rs</i></b> allows unsafe_code <code>📘 Rule violation</code> <code>⛨ Security</code>
+
+<pre>
+The domain registry macros introduce <b><i>#[allow(unsafe_code)]</i></b>, which overrides the workspace
+requirement to deny unsafe code and makes unsafe harder to audit. This can allow unsafe code paths
+to slip into the domain layer unnoticed.
+</pre>
+
+
+<details>
+<summary><strong>Agent Prompt</strong></summary>
+
+```
+## Issue description
+`crates/mcb-domain/src/macros/registry.rs` introduces `#[allow(unsafe_code)]`, which conflicts with the requirement that unsafe code be denied.
+
+## Issue Context
+The domain layer should remain highly auditable. If `linkme` requires unsafe internals, avoid broad lint suppression in exported macros; prefer an approach that preserves `unsafe_code = "deny"` without per-item allows (or isolate the minimal exception behind a clearly-audited boundary consistent with the repo policy).
+
+## Fix Focus Areas
+- crates/mcb-domain/src/macros/registry.rs[20-37]
+- crates/mcb-domain/src/macros/registry.rs[146-289]
+```
+
+<code>ⓘ Copy this prompt and use it to remediate the issue with your preferred AI generation tools</code>
+</details>
+---
+File: crates/mcb-server/src/auth.rs
+Line: 52
+Comment: <img src="https://www.qodo.ai/wp-content/uploads/2025/12/v2-action-required.svg" height="20" alt="Action required">
+
+2\. Api key auth full-scan <code>🐞 Bug</code> <code>⛨ Security</code>
+
+<pre>
+Admin API key auth passes the plaintext API key into <b><i>find_users_by_api_key_hash</i></b>; because stored
+hashes are salted, this almost never matches and the adapter returns *all* active API keys, forcing
+expensive hash verification for each key (DoS risk, and a scaling regression if many API keys
+exist).
+</pre>
+
+
+<details>
+<summary><strong>Agent Prompt</strong></summary>
+
+```
+## Issue description
+Admin API key authentication currently passes a plaintext API key into a repository method that is specified as accepting a *hash*, and the SeaORM adapter falls back to loading all active API keys when there is no exact match. This forces expensive password-hash verification over an unbounded set of keys and creates a DoS/scaling risk.
+
+## Issue Context
+- `AuthRepositoryPort::find_users_by_api_key_hash` is documented as taking `key_hash`, but the server passes the extracted plaintext key.
+- The SeaORM adapter loads all non-revoked API keys and only filters when there is an exact string match.
+
+## Fix Focus Areas
+- crates/mcb-server/src/auth.rs[35-63]
+- crates/mcb-domain/src/ports/repositories.rs[404-411]
+- crates/mcb-providers/src/database/seaorm/auth_repository.rs[42-86]
+
+## Suggested direction (one of)
+1) **Deterministic lookup**: add a `key_fingerprint` column (e.g., SHA-256 or HMAC-SHA256 of the plaintext key) stored at creation time; at auth time compute fingerprint and query by it, then verify the salted hash.
+2) **Key id prefix**: change issued API key format to include the API key row id (or short prefix) so auth can query a single row, then verify salted hash.
+
+Also update naming/docs so the API clearly distinguishes plaintext key vs stored hash.
+```
+
+<code>ⓘ Copy this prompt and use it to remediate the issue with your preferred AI generation tools</code>
+</details>
+---
+File: crates/mcb-providers/src/database/seaorm/auth_repository.rs
+Line: 51
+Comment: <img src="https://www.qodo.ai/wp-content/uploads/2025/12/v2-action-required.svg" height="20" alt="Action required">
+
+3\. Expired keys still authenticate <code>🐞 Bug</code> <code>⛨ Security</code>
+
+<pre>
+API keys are documented as optionally expiring via <b><i>expires_at</i></b>, but auth lookups only filter out
+revoked keys; expired keys remain eligible and can still authenticate successfully.
+</pre>
+
+
+<details>
+<summary><strong>Agent Prompt</strong></summary>
+
+```
+## Issue description
+Expired API keys are not filtered out during authentication. The auth repository only excludes revoked keys, which means `expires_at` does not act as an authentication constraint.
+
+## Issue Context
+The domain entity explicitly documents expiration, so callers will reasonably expect expired keys to be rejected.
+
+## Fix Focus Areas
+- crates/mcb-providers/src/database/seaorm/auth_repository.rs[42-55]
+
+## Suggested fix
+- Add an `expires_at` filter to only consider keys where `expires_at` is NULL or `expires_at > now`.
+- Ensure the same rule applies in both `find_users_by_api_key_hash` and `verify_api_key` (if used for auth elsewhere).
+- Use a shared time source/util to get `now` consistently (e.g., an existing time helper or `std::time` + conversion).
+```
+
+<code>ⓘ Copy this prompt and use it to remediate the issue with your preferred AI generation tools</code>
+</details>
+---
+File: config/production.yaml
+Line: 100
+Comment: ![critical](https://www.gstatic.com/codereviewagent/critical.svg)
+
+The JWT secret is hardcoded as an empty string. This is a significant security vulnerability as it could allow forging of JSON Web Tokens. The secret should be loaded from an environment variable, and the application should fail to start if it's not provided in a production environment. A pattern similar to the one used in `config/test.yaml` should be adopted, but without a default value to enforce an explicit setting.
+
+```yaml
+      secret: "{{ get_env(name='JWT_SECRET') }}"
+```
+---
+File: crates/mcb-domain/src/utils/analysis.rs
+Line: 239
+Comment: ![medium](https://www.gstatic.com/codereviewagent/medium-priority.svg)
+
+This block for incrementing the count in the `dead_by_file` HashMap can be made more concise by using the `entry` API. This improves readability and is more idiomatic.
+
+```rust
+            *dead_by_file.entry(file.clone()).or_insert(0) += 1;
+```
+---
+File: .github/setup-ci.sh
+Line: 1
+Comment: <details><summary><h3>File Walkthrough</h3></summary>
+
+<table><thead><tr><th></th><th align="left">Relevant files</th></tr></thead><tbody><tr><td><strong>Tests</strong></td><td><details><summary>6 files</summary><table>
+<tr>
+  <td>
+    <details>
+      <summary><strong>mod.rs</strong><dd><code>Refactor tests to use TestResult and centralized constants</code></dd></summary>
+<hr>
+
+crates/mcb-providers/tests/entity_repo/mod.rs
+
+<ul><li>Refactored test setup functions to use <code>TestResult</code> return type with <code>?</code> <br>operator instead of <code>.expect()</code> calls<br> <li> Replaced hardcoded timestamps with <br><code>mcb_utils::constants::testing::TEST_TIMESTAMP</code> constant<br> <li> Simplified database setup by using <code>execute_unprepared()</code> and <br>centralized migration function<br> <li> Added <code>#[rstest]</code> attribute to all test functions and updated them to <br>return <code>TestResult</code><br> <li> Removed clippy allow directives and simplified imports using wildcard <br>for domain ports</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-f4e199029f6a6b796d37cf957c68249035fbb213d1030683af13c30012448288">+269/-343</a></td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>stdio_transport_integration.rs</strong><dd><code>Migrate stdio transport tests to rmcp client API</code>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </dd></summary>
+<hr>
+
+crates/mcb/tests/integration/stdio_transport_integration.rs
+
+<ul><li>Migrated from manual JSON-RPC protocol handling to <code>rmcp</code> client API <br>with <code>TokioChildProcess</code> transport<br> <li> Replaced low-level stdin/stdout/stderr handling with high-level <br><code>rmcp::ServiceExt</code> methods (<code>list_tools</code>, <code>call_tool</code>, <code>peer_info</code>)<br> <li> Added infrastructure for temporary database cleanup with <code>TEMP_DBS</code> <br>registry and <code>cleanup_temp_dbs()</code> function<br> <li> Converted all tests to async with <code>#[tokio::test]</code> and added <code>#[serial]</code> + <br><code>#[rstest]</code> attributes<br> <li> Added <code>STARTUP_TIMEOUT</code> constant to handle cold CI runs with model <br>downloads<br> <li> Simplified test assertions by leveraging <code>rmcp</code> type-safe responses <br>instead of JSON parsing</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-db0ad4d501702c889a3b34b6ce36f2cdbc8956373743f4995ea10e067ce8d8a9">+301/-408</a></td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>semantic_search_workflow.rs</strong><dd><code>Add rstest attributes to semantic search workflow tests</code>&nbsp; &nbsp; </dd></summary>
+<hr>
+
+crates/mcb-domain/tests/integration/semantic_search_workflow.rs
+
+<ul><li>Added <code>use rstest::rstest;</code> import<br> <li> Added <code>#[rstest]</code> attribute to three test functions: <br><code>test_complete_semantic_search_workflow()</code>, <br><code>test_workflow_error_handling()</code>, and <br><code>test_workflow_performance_characteristics()</code></ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-97d79c3c260aad12b3560abc39c6b1a52d2befaca9861c66d56ba4705c2e03a3">+4/-0</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>test_org_entity_crud.rs</strong><dd><code>Test refactoring with rstest framework and improved imports</code></dd></summary>
+<hr>
+
+crates/mcb-server/tests/e2e/test_org_entity_crud.rs
+
+<ul><li>Updated test imports to use specific test utilities from <br><code>mcb_domain::test_utils</code> instead of wildcard imports<br> <li> Added <code>#[rstest]</code> attribute and <code>TestResult</code> return type to all test <br>functions for better test framework integration<br> <li> Changed string creation from <code>.to_string()</code> to <code>.to_owned()</code> for <br>consistency<br> <li> Updated helper function calls to use new naming convention <br>(<code>create_test_*</code> prefix)<br> <li> Improved error handling with explicit <code>match</code> expressions and <code>expect</code> <br>calls</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-8e8012d4cdfc4b14968646d614835196ff1755e6562a620a82d53fc7a8367f55">+127/-76</a></td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>test_vcs_entity_crud.rs</strong><dd><code>Test refactoring with rstest framework and parameter updates</code></dd></summary>
+<hr>
+
+crates/mcb-server/tests/e2e/test_vcs_entity_crud.rs
+
+<ul><li>Added <code>#[rstest]</code> attribute and <code>TestResult</code> return type to all test <br>functions<br> <li> Updated test imports to use specific utilities from <br><code>mcb_domain::utils::tests</code> instead of wildcard imports<br> <li> Changed string creation from <code>.to_string()</code> to <code>.to_owned()</code> for <br>consistency<br> <li> Enhanced <code>create_branch</code> helper to accept <code>org_id</code> parameter and improved <br>error handling with explicit <code>match</code> expressions<br> <li> Updated <code>map(std::vec::Vec::len)</code> to <code>map_or(0, std::vec::Vec::len)</code> for <br>cleaner code</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-51b7d6d73d67c1d5c6dd50cd941b8f16ab0b666d6e33a1522ee475ed55e70833">+134/-66</a></td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>mod.rs</strong><dd><code>Restructured VCS unit test module organization</code>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </dd></summary>
+<hr>
+
+crates/mcb-providers/tests/unit/vcs/mod.rs
+
+<ul><li>Reorganized module structure by adding new <code>common</code> and <code>git_repo_tests</code> <br>modules<br> <li> Renamed <code>git_tests</code> module to <code>git_operations_tests</code> for clarity<br> <li> Maintained existing <code>submodule_tests</code> module</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-d2719cce7a6bc3c3f6038905e12829a5d1cc9700e85ff8b7b2d1592905ce59fd">+3/-1</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+</table></details></td></tr><tr><td><strong>Configuration changes</strong></td><td><details><summary>2 files</summary><table>
+<tr>
+  <td>
+    <details>
+      <summary><strong>validate.rs</strong><dd><code>Add comprehensive validation constants module</code>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </dd></summary>
+<hr>
+
+crates/mcb-utils/src/constants/validate.rs
+
+<ul><li>New file containing comprehensive validation constants for the <br>mcb-validate module<br> <li> Defines patterns, thresholds, and configuration for code analysis <br>rules (SOLID, architecture, performance, etc.)<br> <li> Includes YAML field names, rule engine types, severity levels, and <br>category definitions<br> <li> Provides regex patterns, file path fragments, and detection thresholds <br>for various validators</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-75da50dc91ee5792c99496520665b564ecdb162f2b507e367a771a77f737c55b">+1173/-0</a></td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>embedded_rules.rs</strong><dd><code>Build-time code generation for embedded validation rules</code>&nbsp; </dd></summary>
+<hr>
+
+crates/mcb-validate/src/embedded_rules.rs
+
+<ul><li>Replaced 60+ hardcoded <code>const</code> declarations with a generated code <br>include from build output<br> <li> Simplified <code>all_yaml()</code> method to return generated <code>EMBEDDED_RULES</code> vector<br> <li> Updated <code>rule_yaml()</code> filter to handle both path formats and exclude <br>templates<br> <li> Reduced file size significantly by moving rule definitions to <br>build-time generation</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-794e22a87b7ab8aab0df537d01336110e1e54c0f05e82e249b07f0b10167aef1">+4/-388</a>&nbsp; </td>
+
+</tr>
+</table></details></td></tr><tr><td><strong>Enhancement</strong></td><td><details><summary>7 files</summary><table>
+<tr>
+  <td>
+    <details>
+      <summary><strong>test_fixtures.rs</strong><dd><code>Migrate test fixtures to pure registry-based DI</code>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </dd></summary>
+<hr>
+
+crates/mcb-server/tests/utils/test_fixtures.rs
+
+<ul><li>Migrated from <code>AppContext</code>-based DI to pure registry-based DI using <br><code>mcb_domain::registry::*</code><br> <li> Introduced <code>SharedTestContext</code> struct wrapping DI-resolved embedding and <br>vector store providers<br> <li> Simplified test infrastructure by delegating entity fixtures to <br><code>mcb_domain::test_utils</code><br> <li> Removed complex ort-panic fallback logic and <br><code>DeterministicEmbeddingProvider</code> in favor of registry resolution<br> <li> Updated <code>create_test_mcp_server()</code> to use <code>ServiceResolutionContext</code> and <br><code>build_mcp_server_bootstrap()</code></ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-d299c722100646e6d7ff1c96ed221f035aa65b30c27272ffda5ed0e25d37d35d">+200/-645</a></td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>provider.rs</strong><dd><code>Add Milvus vector store provider implementation</code>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </dd></summary>
+<hr>
+
+crates/mcb-providers/src/vector_store/milvus/provider.rs
+
+<ul><li>New file implementing <code>VectorStoreProvider</code> trait for Milvus vector <br>database backend<br> <li> Provides collection management (create, delete), vector operations <br>(insert, search, delete, get), and listing<br> <li> Includes retry logic with backoff for resilience and helper functions <br>for schema building and result conversion<br> <li> Integrates with <code>mcb_utils</code> constants for Milvus configuration (index <br>parameters, error messages, delays)</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-8d6d088ff2dde1930f9aaa532095bfdcb959186f7c96c395e53a24f88a85adcc">+175/-0</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>common.rs</strong><dd><code>Add SeaORM repository utilities and CRUD macros</code>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </dd></summary>
+<hr>
+
+crates/mcb-providers/src/database/seaorm/repos/common.rs
+
+<ul><li>New file providing common utilities and macros for SeaORM repository <br>implementations<br> <li> Defines error helper functions <code>db_err()</code> and <code>db_error()</code> for consistent <br>error mapping<br> <li> Implements <code>ensure_org_and_project()</code> helper for idempotent default <br>org/project creation<br> <li> Provides 10+ declarative macros for CRUD operations (<code>sea_repo_insert!</code>, <br><code>sea_repo_get!</code>, <code>sea_repo_list!</code>, etc.)<br> <li> Includes 5 high-level trait implementation macros (<code>sea_impl_crud!</code>, <br><code>sea_impl_crud_scoped!</code>, <code>sea_pub_crud!</code>, etc.) to eliminate boilerplate</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-ef5c09010bf0a35ed76d748cc0e44634c5893ca56b4d65926a5396911274d988">+627/-0</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>services.rs</strong><dd><code>New domain service port interfaces for business operations</code></dd></summary>
+<hr>
+
+crates/mcb-domain/src/ports/services.rs
+
+<ul><li>New comprehensive service port interfaces file defining domain-level <br>contracts for core business operations<br> <li> Includes trait definitions for agent sessions, code chunking, <br>context/search services, indexing, job management, memory operations, <br>and validation<br> <li> Defines supporting data structures like <code>Job</code>, <code>JobStatus</code>, <br><code>IndexingResult</code>, <code>ValidationReport</code>, and <code>ComplexityReport</code><br> <li> Provides error types for browse and highlight operations with detailed <br>documentation</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-8db7018436ecac05c091e438623a42a693e8a6b1f88cd5cae4b285a4814c0810">+853/-0</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>declarative_validator.rs</strong><dd><code>Parallel processing and performance optimization for validators</code></dd></summary>
+<hr>
+
+crates/mcb-validate/src/validators/declarative_validator.rs
+
+<ul><li>Refactored validation logic to use parallel processing with <code>rayon</code> for <br>metrics, AST, regex, and path rules<br> <li> Added <code>with_ctx</code> helper function and <code>CompiledRegexRule</code> struct for <br>managing validation context and compiled patterns<br> <li> Improved rule deduplication using <code>HashSet</code> and added command <br>availability checks for <code>ruff</code> and <code>cargo</code><br> <li> Enhanced logging with detailed timing information and moved imports to <br>use <code>mcb_domain::ports::validation</code> traits<br> <li> Optimized file content reading with caching support and parallel file <br>processing</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-b1d6f2bb57c50b60c6eff48ce6069b1fc3a6bb3deb021998d18cc3ea42360af5">+443/-129</a></td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>http_client.rs</strong><dd><code>Refactored imports and exposed transport security validation</code></dd></summary>
+<hr>
+
+crates/mcb-server/src/transport/http_client.rs
+
+<ul><li>Moved imports from local constants to <code>mcb_utils</code> crate for <br><code>CONTENT_TYPE_JSON</code> and protocol constants<br> <li> Updated <code>require_secure_transport</code> method visibility from private to <br>public with added documentation<br> <li> Reorganized imports to use <code>mcb_utils::constants</code> and <code>mcb_utils::utils</code> <br>modules</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-57d55ed225899483007aa01cd07f5ba66be42f62c7206c9845f5c77c51f9496a">+11/-154</a></td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>search.rs</strong><dd><code>Centralized redaction constant usage in memory search debug</code></dd></summary>
+<hr>
+
+crates/mcb-domain/src/entities/memory/search.rs
+
+<ul><li>Updated debug output to use <code>mcb_utils::constants::REDACTED</code> constant <br>instead of hardcoded string<br> <li> Applied consistent redaction pattern for sensitive session ID fields <br>in debug formatting</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-21991d55b927514039db5dcc1ee9cd95d458fdc1ffc90bd13d41e073addc60a0">+2/-2</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+</table></details></td></tr><tr><td><strong>Refactoring</strong></td><td><details><summary>2 files</summary><table>
+<tr>
+  <td>
+    <details>
+      <summary><strong>router.rs</strong><dd><code>Refactor tool router by extracting context and validation logic</code></dd></summary>
+<hr>
+
+crates/mcb-server/src/tools/router.rs
+
+<ul><li>Removed large code blocks (~570 lines) containing <code>ExecutionFlow</code>, <br><code>RuntimeDefaults</code>, <code>ToolExecutionContext</code> structs and related helper <br>functions, moving them to separate modules<br> <li> Extracted validation logic (<code>validate_execution_context</code>) and hook <br>triggering (<code>trigger_post_tool_use_hook</code>) to <code>crate::tools::validation</code> <br>module<br> <li> Moved <code>ToolExecutionContext</code> to <code>crate::tools::context</code> module<br> <li> Simplified imports by removing unused dependencies and updating to use <br>moved modules<br> <li> Removed extensive test suite that was testing the extracted <br>functionality</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-a0c66582dffc94eba547b041e38da6384f69309ef3a44ef8c880f77966984227">+6/-1090</a></td>
+
+</tr>
+
+<tr>
+  <td>
+    <details>
+      <summary><strong>index.rs</strong><dd><code>Refactor index repository with common utilities</code>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </dd></summary>
+<hr>
+
+crates/mcb-providers/src/database/seaorm/repos/index.rs
+
+<ul><li>Refactored to use new common error helpers and CRUD macros from <br><code>common.rs</code> module<br> <li> Extracted helper methods: <code>db()</code>, <code>file_hash_query()</code>, <code>active_ops_query()</code>, <br><code>find_and_update_op()</code>, <code>fail_active_operations_for_collection()</code><br> <li> Replaced inline error handling with <code>db_error()</code> function calls for <br>consistency<br> <li> Converted <code>model_to_domain()</code> to <code>From<index_operation::Model></code> trait implementation<br> <li> Updated status string constants to use <code>mcb_utils::constants</code> instead of <br>hardcoded strings<br> <li> Simplified query logic using helper methods and <code>count()</code> instead of <br><code>all()</code> where appropriate</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-e7791139b5655b93e45b37bb4bc145125e2a56b9555d8adf020cbfef94bb9a47">+212/-228</a></td>
+
+</tr>
+</table></details></td></tr><tr><td><strong>Dependencies</strong></td><td><details><summary>1 files</summary><table>
+<tr>
+  <td>
+    <details>
+      <summary><strong>counting.rs</strong><dd><code>Update regex utility imports to mcb_utils</code>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; </dd></summary>
+<hr>
+
+crates/mcb-validate/src/validators/kiss/counting.rs
+
+<ul><li>Changed import of <code>compile_regex</code> from local <code>crate::pattern_registry</code> to <br><code>mcb_utils::utils::regex</code><br> <li> Removed unused import of <code>SELF_PARAM_VARIANTS</code> from local constants</ul>
+
+
+</details>
+
+
+  </td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-52a9f8310f5fd318cbefcb217782178cd67f43e5c663ee269639d217ba9b08b0">+1/-39</a>&nbsp; &nbsp; </td>
+
+</tr>
+</table></details></td></tr><tr><td><strong>Additional files</strong></td><td><details><summary>101 files</summary><table>
+<tr>
+  <td><strong>setup-ci.sh</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-ae248d682d070960dc0bf70df58397c65ae891871fc109897e79d4b17e89f8af">+30/-0</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>auto-reviewer.yml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-16710a57370a6309f84c3f100c17903e6ba88c4fea86069c1aee0717af9b9ed0">+0/-67</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>ci.yml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-b803fcb7f17ed9235f1e5cb1fcd2f5d3b2838429d4368ae4c57ce4436577f03f">+342/-289</a></td>
+
+</tr>
+
+<tr>
+  <td><strong>docs-build.yml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-5e741e7d81a58a7180a20b375f74ea941e3c6839eddd7688db425d9db6e1fe42">+145/-0</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>pages.yml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-267452bb53d388a7b14551d9fc53a797edc124dc9085ecc79f5339277a1e53b5">+13/-120</a></td>
+
+</tr>
+
+<tr>
+  <td><strong>release.yml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-87db21a973eed4fef5f32b267aa60fcee5cbdf03c67fafdc2a9b553bb0b15f34">+66/-149</a></td>
+
+</tr>
+
+<tr>
+  <td><strong>.markdownlintignore</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-b5e89e929d119744a043caea30a5e49d7a9ea25e3253755760d5b6ec9bd24ca0">+4/-0</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>.pre-commit-config.yaml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-63a9c44a44acf85fea213a857769990937107cf072831e1a26808cfde9d096b9">+1/-1</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>.tokeignore</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-7e618890cca9023789e3feb572869578c81545aa746435832092fb19bab39efe">+1/-0</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>.yamllint.yml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-30b790babe62563b34027e5e7719d7528664b0465d715c33bfc4a1d9144f0b8d">+23/-0</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>CLAUDE.md</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-6ebdb617a8104a7756d0cf36578ab01103dc9f07e4dc6feb751296b9c402faf7">+0/-1</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>Cargo.toml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-2e9d962a08321605940b5a657135052fbcef87b5e360662bb527c96d9a615542">+8/-4</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>Makefile</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-76ed074a9305c04054cdebb9e9aad2d818052b07091de1f20cad0bbac34ffb52">+1/-2</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>README.md</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-b335630551682c19a781afebcf4d07bf978fb1f8ac04c6bf87428ed5106870f5">+4/-1</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>shared.js</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-e89a159f491bf7a04bd07787831d4192dbe25afcdd6cdfce7b514e5fcc7d0877">+379/-0</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>theme.css</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-88d57b6247554aced74626e399bb2f661a62dd86859f19e50c4a0b0b215ac0a8">+460/-0</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>development.yaml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-1ac4cd1f9ffcef0624f83618d9c1ea877f2a35ec256e7973291d146dc920e746">+16/-33</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mcb-validate-internal.toml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-4d4f85e783921414ff147975e582216e5fc1fa5cb5f100aadcaa7333c753eb63">+6/-8</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mcb-validate.toml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-437af420759c01504fb345cedf79094cc21f0f18e54f7fcb28525c690e2a507e">+2/-1</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>production.yaml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-7cc42f9adc685a9fb017984d573853aa06cadf452e6bc1a58c186757203f1d48">+177/-0</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>test.yaml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-fbe4cef58784da94533515b676a94da2497b2270412d45d5bf6d97b6197d4442">+3/-25</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>tests.toml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-a0192077843e1d19ca14150a74c23c4bf533f60d2c10a75fc857aea65b1819c5">+10/-0</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>Cargo.toml</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-32d9b3eecebed0244fd18ad569e71b623dd98a4ba6caa1e171d3584aefd86ff0">+9/-3</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>domain_schema_inspection.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-188d2e5e20892da0e9a02dd3f8d0f6c1b29c541915cd0b885c347ca64521354a">+12/-4</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>ast.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-15d08fb97d98b15d6289efd6af2dd58299133878ec3901902904bfd29c660aec">+0/-25</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>embedding.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-e6005e26d2ddc1321b7df64cad92ada21ec50158597cc12a92426a01acf97567">+0/-37</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>http.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-a7248dd4d92c1a98bd1105194ce743db0e46e8307bf33aa43716d62a06f6db5d">+0/-7</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>keys.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-37916a569564d44031c42bb658d44bfecc6c56fc84ef04134bc12b89387eba20">+0/-112</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>lang.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-8c55c298d3c191d99fc3412253de4235fdf9601d493b51ed54c40e0dde43d2c5">+0/-35</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mod.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-f421ac4fd858dfaee0d6cc445a221cf13ed49c32f45423ff410129157f9d7006">+0/-22</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>values.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-bf6fa04e45946c341012a96f287a4edfdcf05fc4ce1509b43206a8d5510d3559">+0/-33</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>error_pattern.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-8e0413ed168e68859afcdb5b5af75634d5620e719d668e61a12281624c673caf">+20/-32</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>execution.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-0392f62ed07e33520ff2a49c9ca245729ba81ce3465fe5ce6f61eaf4f992437e">+12/-24</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>origin_context.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-11c7465ee2878e9682f934e9e6a2dcf4fb5153c52fcbdfa022951315e093bea5">+3/-7</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>quality_gate.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-5008f0d3e115304a346413d70b2b03a9d433ce4f37531981fa7fd01c82076a21">+18/-30</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mod.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-8cd2c328ae57d7b1f298752b322ba1658b05c1ad31b1c55f42bd1db5ed11264d">+3/-1</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>observation.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-58c8833267e23f2ccedf18108207ba01012c89c5fd0e231d5b14925d0c6f64f9">+20/-32</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>organization.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-eb5a79ca4683607e160c0239485817ebc3e9a2c3622115009aea06e0078ab962">+10/-23</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>plan.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-e08d8286a3fa7bd6b5785a2dea48e8adcf4a742652e3e3bff2ba9fb46169faad">+24/-52</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>project.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-9b1456f648d878a3f35b6f6b12b48491b79e0f9785b01216f372e2abfb161c58">+54/-104</a></td>
+
+</tr>
+
+<tr>
+  <td><strong>repository.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-39f823a0ba2513500d5fc8f35810a722fad7ed62094c86d46b113fa4c0877389">+14/-37</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>team.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-5e494df27502fd1c0e914fa85b6c62e98a21a0c57b8ccb6468f7eacb72c51ecc">+8/-21</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>user.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-17f6b10993cdfdee901724b97607b6a7ed2f0f4794b5a19060a2693d3a2f5b67">+14/-27</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mod.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-4872105ad331ae7710e42947993085f0150f29b9f8a28ce4397fab07f7051b1a">+0/-1</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>worktree.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-2b9e7ba02226bc5dbb1b865ca4591c1a83734e14282305a2eb845b5e099b67be">+10/-24</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>types.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-965c0409f7efbf9dff45950816f1663c41989e8aab7a8672fe8c8dbff84b1e6b">+50/-0</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>domain_events.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-113f701358c1268add21654fe7d3918cfb21c9d26a17b5db52c0782243712b7f">+38/-0</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>logging.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-a30d1922bee9e6777c1095284c6a94b7ba6e6c626f09d381053577e8576ca8d7">+53/-3</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>lib.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-ab78ab505a3e35385669b0cde894dc681b4dc2d15698d0d9c97679e9f1d43e32">+51/-12</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>entities.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-921c54880d57aaa2ce8944cd98476cffca16c9b15ce093f6aee0655221bd2f89">+96/-10</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>ports.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-674463c8847506f395c35a55f22d2b0b0c55051c6c8f44fe3c3f6b2545a58a9d">+192/-2</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>registry.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-ef52dc54d1b6486824e024ac7517daa9f608e638fed0042d61eb74e28c4bc014">+175/-15</a></td>
+
+</tr>
+
+<tr>
+  <td><strong>admin.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-0feb247dbc76291b118c5c2a55b48db86b3db345a731923f96daf8eb7cbcd0bd">+268/-0</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mod.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-b8226eadf4948ecb1b24031e691d7e40e22360fce78adf2ae1d27ed231ac9a46">+0/-14</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>operations.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-d8a2fb354c2a1f5a732f28e0f64ab7ab89b1d50c5157af540d5b8fdea44664d3">+0/-149</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>providers.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-ff4b398c3d7fb0ab4b3e142859daab8705835426b1db0c480ec7a0bd181ee119">+0/-71</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>infrastructure.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-22db8aede79603cf3ac0adfd55d8907cd4838bd462ec3d46b8432dbe43ea1fe7">+515/-0</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>auth.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-81130eefed6193a42e406ffae4b73f603c56d290769b5af2158ff05255c24362">+0/-20</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>events.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-b2a5df6f129f84408dd71badf9a04706874b2af9662813da0e20209d4bc33895">+0/-99</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>lifecycle.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-934d9b26a38c08f4b0b6b30741cd018caacad097baf88d097ffc9765356ae376">+0/-109</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>logging.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-47af498bac1db0f50dad3d47d3d9e542742b2e164cd583bb1862979f7ae0cf61">+0/-28</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>metrics.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-62ff9e8664b2427868989c0521bcf8f163cb59f03c338b8c4d1ad8ec0b90dc92">+0/-34</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mod.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-b46137806fd5f1ff9900002747b677a0b041e67d2215ad30b0cccdff0d091a6b">+0/-53</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>routing.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-2f7aa43a62576f7a2cc874393168be8b858f90aabe583a969917013aa702463b">+0/-115</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>snapshot.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-16bdba0473cadf0a758de7503388c9b8d00290bcb61698f829fd19c7459b000b">+0/-124</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>state_store.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-e85f7c6cb86b6790fdd5af1c1cd35dfedee264030aa22b5ec3a9a64409fd62f7">+0/-23</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>sync.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-36d1ad0395e2186e15254d45ce7eb668b722a5db469e0e26723d5036fdab67ea">+0/-149</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mod.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-b1860b94510b5397207568777d0fdf08ce9ea6313de611a7051935e258890796">+36/-31</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>providers.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-708b6836581ecd7c2b4092e61520d138eb3e6f6247609cdf431d93e2bd271e7a">+657/-0</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>analysis.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-92afbaa1816a957314665723eda01f108c36a84561ca9dbe3ae87d5570fb5aa9">+0/-72</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>config.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-b78bb17a42fb4435cf02ec4cf88e04bde05a05eaad0afa981fd4279111ed3d80">+0/-64</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mod.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-04c5c6a18e692a74545d39a1f76a4743155f27443a100118bad1716e131d9aa2">+0/-10</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>provider.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-89003241e761f8b8b1242f199a18762b24f9f5cb90143256822f576f87b94182">+0/-22</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>stats.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-3dccbae166b7ac1ce380d5ac4560e0934192713e81a65f9a182f827514cf697e">+0/-32</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>config.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-2c49153737609c820753bbf786d1987cb99abc02e7eda487ea2b6d3af63f0a4f">+0/-85</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>crypto.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-0ab5be7bfcbbd46ccafbb57031b562f45afb529af85a7406aff3467571db5905">+0/-94</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>embedding.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-f2aade0c3296205583ee2daa0d0c55fa5cba93c2ba00ab503af9bf4f6be28fa8">+0/-77</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>http.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-dcf62444cbe3244f266af368dfe5ca9dec477b88826727e03868924a5a8367a6">+0/-62</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>hybrid_search.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-669c684b95bfa224c5f4992751d838c81f7eb97930cbdadd93fd0c8111651576">+0/-72</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>language_chunking.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-4f0b0ef613975ccd9cab190742af05424336541dee14a70384c473cedee1566d">+0/-99</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>metric_defs.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-f47478c15501b048f5dd16df949ac3f69a18fc6f71b813efc63093272b925b59">+0/-26</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mod.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-a88dbe70ffa0765b6f6fc0debfe514c04392ee9bcbb438d1eda8819eb1ff3d7e">+0/-8</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>provider.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-d2382fa35405c65e66be3760d9007252f8badf6ef758aba1a33309a4babc7873">+0/-93</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mod.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-6962f26c7fa99e92b96898b0745154a2878a9d162c9782811874d892c72f8ed6">+0/-8</a>&nbsp; &nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>provider.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-bd0d63f85ef495a2796386ea10ee0d2dabab4dc679e619d0848069d69e5dd0f3">+0/-47</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>types.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-5a9572c85b19b174df665ff0ecd22ee813eef5e256ee43b370ba0af7dd0b857f">+0/-69</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mod.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-4a6ef1dd7049e2f6f5011f850847cbfe3240e11f1bbadf7ef8e67b468697f8fb">+0/-72</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>project_detection.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-f90d6bd2c72640f6fbaebdb4c0ca487a0a4ac010d5a735d9a3d885070be64200">+0/-45</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>validation.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-9553217b4ac7a577c0a207d41badf5e3f5e0065365416e4a60eccc01e742dec4">+0/-148</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>vcs.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-076e345ed6eb0399817cd67393efd97546172484fe447705e4f126c5350adba1">+0/-65</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>admin.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-0855d20ec6bd22c45227f82e6846b1ee0625eb769ef8dda1de01cccb26daf4f8">+0/-22</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>browser.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-fe8c2780fac74350cddd440e921547fd603388839292b2735f5b1f09896b3a61">+0/-25</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>mod.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-6e9ed65a4fd61d84a6e8cacd1c06c1c97e1ccf178dcd90f1b92908058e330cee">+0/-25</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>provider.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-ee7c321108d19f903d446e48f699dbf4af4a03ff954afc9a544133bab9a85a52">+0/-55</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>repositories.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-ad437acb902e129363a9a882ce55e767e4df1d4b058a76bb0b395b3c68e30b98">+552/-0</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>agent.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-165470f836688060954444612cfe5fa5f607456f2cf7c9f6103b99eabe3534a5">+0/-96</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>file_hash.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-f7795ca8d6287ae54626e7f7c446d3198c6e85956c4ec003189c74d2244e4fa7">+0/-52</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>index.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-bb6204aa4a50df3326f09b34ee6d2eaadf66154e7f5cdabb745861e30005327f">+0/-137</a>&nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>issue.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-8b1ffbd39f05a29848b8bfe885d3605863b48baac3aff4e95afd6c8d12a36f5e">+0/-86</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>memory.rs</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-72acb8127c574c6a4102d8d5eaa8ca08ebeeb96f8c6e0ac88a26898721204b30">+0/-53</a>&nbsp; &nbsp; </td>
+
+</tr>
+
+<tr>
+  <td><strong>Additional files not shown</strong></td>
+  <td><a href="https://github.com/marlonsc/mcb/pull/116/files#diff-2f328e4cd8dbe3ad193e49d92bcf045f47a6b72b1e9487d366f6b8288589b4ca"></a></td>
+
+</tr>
+</table></details></td></tr></tbody></table>
+
+</details>
+
+
+---

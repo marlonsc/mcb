@@ -1,0 +1,45 @@
+# Cargo build configuration
+[build]
+# MANDATORY: sccache as the Rust compiler wrapper. Set here so EVERY cargo
+# invocation uses it, even when running `cargo check` / `cargo build` directly
+# without make. sccache eliminates redundant rebuilds across sessions.
+rustc-wrapper = "sccache"
+# Limit to 8 jobs to avoid saturating RAM during parallel compilation.
+# Default -1 uses all 20 cores, which with 62GB RAM + multiple concurrent
+# rust-analyzer instances causes OOM / excessive swap. 8 jobs provides
+# a good throughput/memory trade-off for this machine.
+jobs = 8
+
+# Dev profile (incremental, debuginfo, build-override) is the SSOT in Cargo.toml —
+# not duplicated here (config.toml would silently override it).
+
+# Faster local linking: mold is installed and explicitly selected. Linux x86_64
+# already defaults to LLD on Rust 1.92+, but mold is faster on large workspaces.
+# Verify linkme #[distributed_slice] registrations survive with `make test SCOPE=startup`.
+[target.x86_64-unknown-linux-gnu]
+linker = "clang"
+rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+
+[env]
+# Bound the local sccache disk cache to prevent unbounded growth. The cache is
+# stored in ~/.cache/sccache by default. When the limit is reached, sccache
+# evicts old entries automatically (LRU). This keeps the local disk footprint
+# predictable while preserving cache reuse across builds.
+SCCACHE_CACHE_SIZE = "10G"
+# Disable incremental compilation — incompatible with sccache. sccache caches
+# full compilation units; incremental artifacts split those units and are not
+# cacheable, so they would bloat target/ while yielding 0%% sccache hits.
+CARGO_INCREMENTAL = "0"
+# Limit rayon threads (used by rust-analyzer and other Rust tools) to reduce
+# memory pressure when multiple sessions are active.
+RAYON_NUM_THREADS = "4"
+# Ensure cargo also respects the job limit in sub-processes.
+CARGO_BUILD_JOBS = "8"
+# Reduce rust-analyzer log verbosity to minimize I/O overhead.
+RA_LOG = "error"
+
+[alias]
+# Useful aliases
+b = "build"
+t = "test"
+c = "check"

@@ -9,6 +9,7 @@ def reverse_string(s: str) -> str:
 
     Returns:
         The reversed string
+
     """
     return s[::-1]
 
@@ -21,6 +22,7 @@ def count_words(text: str) -> int:
 
     Returns:
         Number of words
+
     """
     return len(text.split())
 
@@ -33,6 +35,7 @@ def is_palindrome(s: str) -> bool:
 
     Returns:
         True if palindrome, False otherwise
+
     """
     cleaned = "".join(c.lower() for c in s if c.isalnum())
     return cleaned == cleaned[::-1]

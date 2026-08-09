@@ -1,0 +1,926 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "qlty",
+          "informationUri": "https://github.com/qlty/qlty",
+          "semanticVersion": "0.612.0",
+          "version": "0.612.0 linux-x64 (e4b1bad 2026-02-11)",
+          "releaseDateUtc": "2026-02-11",
+          "rules": [
+            {
+              "id": "ripgrep:TODO"
+            },
+            {
+              "id": "ripgrep:NOTE"
+            }
+          ],
+          "notifications": [
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trivy in 65.85s [Sl3lbr]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trivy in 65.85s [Sl3lbr]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.25s [WoiGLx]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.25s [WoiGLx]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ruff in 0.11s [7hHJMH]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ruff in 0.11s [7hHJMH]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.27s [4fUouI]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.27s [4fUouI]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trivy in 77.46s [YhpWYl]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trivy in 77.46s [YhpWYl]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.18s [BoPiHv]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.18s [BoPiHv]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran ripgrep in 0.04s [XliUfU]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran ripgrep in 0.04s [XliUfU]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.27s [Iwm374]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.27s [Iwm374]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran trufflehog in 2.76s [sFOHs6]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran trufflehog in 2.76s [sFOHs6]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.26s [fZv1b2]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.26s [fZv1b2]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.16s [HXIUGf]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.16s [HXIUGf]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.19s [jLKAtR]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.19s [jLKAtR]"
+                }
+              }
+            },
+            {
+              "level": "note",
+              "message": {
+                "text": "Successfully ran clippy in 0.21s [eC7uNB]"
+              },
+              "descriptor": {
+                "id": "qlty:message:invocation.concluded.success",
+                "name": "qlty_check::executor",
+                "shortDescription": {
+                  "text": "Successfully ran clippy in 0.21s [eC7uNB]"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "/// TODO(qlty): Found 16 lines of similar code with `crates/mcb-validate/src/generic_reporter.rs`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-domain/src/ports/services/validation.rs"
+                },
+                "region": {
+                  "startLine": 35,
+                  "startColumn": 5,
+                  "endLine": 35,
+                  "endColumn": 9
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 22 lines of similar code in 2 locations (mass = 54)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-domain/src/value_objects/browse/highlight.rs"
+                },
+                "region": {
+                  "startLine": 10,
+                  "startColumn": 4,
+                  "endLine": 10,
+                  "endColumn": 8
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "//! TODO(qlty): Found 28 lines of similar code with `mcb-server/src/mcp_server.rs`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/di/modules/domain_services.rs"
+                },
+                "region": {
+                  "startLine": 16,
+                  "startColumn": 5,
+                  "endLine": 16,
+                  "endColumn": 9
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "/// TODO(qlty): Found 28 lines of similar code with `mcb-server/src/mcp_server.rs`."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-infrastructure/src/di/modules/domain_services.rs"
+                },
+                "region": {
+                  "startLine": 47,
+                  "startColumn": 5,
+                  "endLine": 47,
+                  "endColumn": 9
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 17 lines of identical code in 2 locations (mass = 105)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/analysis/native.rs"
+                },
+                "region": {
+                  "startLine": 52,
+                  "startColumn": 12,
+                  "endLine": 52,
+                  "endColumn": 16
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 20 lines of similar code in 2 locations (mass = 92)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/analysis/native.rs"
+                },
+                "region": {
+                  "startLine": 78,
+                  "startColumn": 8,
+                  "endLine": 78,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 38 lines of identical code in 2 locations (mass = 266)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/analysis/native.rs"
+                },
+                "region": {
+                  "startLine": 126,
+                  "startColumn": 8,
+                  "endLine": 126,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 91)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/agent_repository.rs"
+                },
+                "region": {
+                  "startLine": 134,
+                  "startColumn": 8,
+                  "endLine": 134,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 18 lines of similar code in 3 locations (mass = 97)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/agent_repository.rs"
+                },
+                "region": {
+                  "startLine": 261,
+                  "startColumn": 8,
+                  "endLine": 261,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 18 lines of similar code in 3 locations (mass = 97)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/agent_repository.rs"
+                },
+                "region": {
+                  "startLine": 274,
+                  "startColumn": 8,
+                  "endLine": 274,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 91)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/agent_repository.rs"
+                },
+                "region": {
+                  "startLine": 421,
+                  "startColumn": 8,
+                  "endLine": 421,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(REF003): Missing test file for crates/mcb-providers/src/database/sqlite/memory_repository.rs."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/memory_repository.rs"
+                },
+                "region": {
+                  "startLine": 5,
+                  "startColumn": 4,
+                  "endLine": 5,
+                  "endColumn": 8
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 16 lines of similar code in 2 locations (mass = 95)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/memory_repository.rs"
+                },
+                "region": {
+                  "startLine": 205,
+                  "startColumn": 8,
+                  "endLine": 205,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 16 lines of similar code in 3 locations (mass = 91)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/memory_repository.rs"
+                },
+                "region": {
+                  "startLine": 217,
+                  "startColumn": 8,
+                  "endLine": 217,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 17 lines of similar code in 2 locations (mass = 95)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/memory_repository.rs"
+                },
+                "region": {
+                  "startLine": 365,
+                  "startColumn": 8,
+                  "endLine": 365,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 31 lines of similar code in 3 locations (mass = 216)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/org_entity_repository.rs"
+                },
+                "region": {
+                  "startLine": 39,
+                  "startColumn": 8,
+                  "endLine": 39,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/org_entity_repository.rs"
+                },
+                "region": {
+                  "startLine": 124,
+                  "startColumn": 8,
+                  "endLine": 124,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 31 lines of similar code in 3 locations (mass = 216)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/plan_entity_repository.rs"
+                },
+                "region": {
+                  "startLine": 22,
+                  "startColumn": 8,
+                  "endLine": 22,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 15 lines of similar code in 2 locations (mass = 91)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/project_repository.rs"
+                },
+                "region": {
+                  "startLine": 59,
+                  "startColumn": 8,
+                  "endLine": 59,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 17 lines of similar code in 3 locations (mass = 97)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/project_repository.rs"
+                },
+                "region": {
+                  "startLine": 111,
+                  "startColumn": 8,
+                  "endLine": 111,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Found 31 lines of similar code in 3 locations (mass = 216)"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/database/sqlite/vcs_entity_repository.rs"
+                },
+                "region": {
+                  "startLine": 25,
+                  "startColumn": 8,
+                  "endLine": 25,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Function with high complexity (count = 19): detect"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/project_detection/go.rs"
+                },
+                "region": {
+                  "startLine": 48,
+                  "startColumn": 8,
+                  "endLine": 48,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:TODO",
+          "level": "note",
+          "message": {
+            "text": "// TODO(qlty): Function with high complexity (count = 33): collect_submodules_sync"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-providers/src/vcs/submodule.rs"
+                },
+                "region": {
+                  "startLine": 69,
+                  "startColumn": 8,
+                  "endLine": 69,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:NOTE",
+          "level": "note",
+          "message": {
+            "text": "// NOTE: Old manual Display included \"in N locations:\" with count."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "crates/mcb-validate/tests/unit/common/display_parity_tests.rs"
+                },
+                "region": {
+                  "startLine": 96,
+                  "startColumn": 8,
+                  "endLine": 96,
+                  "endColumn": 12
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:NOTE",
+          "level": "note",
+          "message": {
+            "text": "r\"superseded|historical|migrated|referenc|deprecat|NOTE|dill|poem|linkme|previous|archived|legacy|renamed|removed\","
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/docs/py/check_outdated.py"
+                },
+                "region": {
+                  "startLine": 53,
+                  "startColumn": 64,
+                  "endLine": 53,
+                  "endColumn": 68
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        },
+        {
+          "ruleId": "ripgrep:NOTE",
+          "level": "note",
+          "message": {
+            "text": "# NOTE: Currently maps to itself as a safety measure - edit before using"
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "scripts/rename-project.sh"
+                },
+                "region": {
+                  "startLine": 27,
+                  "startColumn": 3,
+                  "endLine": 27,
+                  "endColumn": 7
+                }
+              }
+            }
+          ],
+          "taxa": [
+            {
+              "id": "lint",
+              "name": "lint"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

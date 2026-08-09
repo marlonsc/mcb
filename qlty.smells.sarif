@@ -1,0 +1,20 @@
+
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "qlty",
+          "informationUri": "https://github.com/qlty/qlty",
+          "semanticVersion": "0.612.0",
+          "version": "0.612.0 linux-x64 (e4b1bad 2026-02-11)",
+          "releaseDateUtc": "2026-02-11",
+          "rules": []
+        }
+      },
+      "results": []
+    }
+  ]
+}

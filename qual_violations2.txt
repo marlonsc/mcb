@@ -1,0 +1,5 @@
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-domain/src/ports/services.rs:758 - TODO: (qlty): Found 16 lines of similar code with `crates/mcb-validate/src/generic_reporter.rs`. /home/marlonsc/mcb/crates/mcb-domain/src/ports/services.rs:758
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-domain/src/value_objects/browse/highlight.rs:10 - TODO: (qlty): Found 22 lines of similar code in 2 locations (mass = 54) /home/marlonsc/mcb/crates/mcb-domain/src/value_objects/browse/highlight.rs:10
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-providers/src/project_detection/go.rs:47 - TODO: (qlty): Function with high complexity (count = 19): detect /home/marlonsc/mcb/crates/mcb-providers/src/project_detection/go.rs:47
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs:69 - TODO: (qlty): Function with high complexity (count = 33): collect_submodules_sync /home/marlonsc/mcb/crates/mcb-providers/src/vcs/submodule.rs:69
+QUAL005 Pending: /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:41 - TODO: !() macro in test fixture without proper stub marker /home/marlonsc/mcb/crates/mcb-validate/src/validators/test_quality.rs:41

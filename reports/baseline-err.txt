@@ -1,0 +1,25 @@
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.64s
+     Running `target/debug/mcb validate . --format json`
+● Validating workspace: /home/marlonsc/mcb/.
+● Running 19 validator(s)...
+[ INFO] validators: Validation run started (trace_id=validate-run-1780713916608373027 validators=19 files=1424)
+[ INFO] validators: Validator completed (validator=clean_architecture violations=0 elapsed=520.00ns)
+[ INFO] validators: Validator completed (validator=layer_flow violations=0 elapsed=86.74µs)
+[ INFO] validators: Validator completed (validator=visibility violations=0 elapsed=17.29ms)
+[ INFO] validators: Validator completed (validator=error_boundary violations=1 elapsed=141.17ms)
+[ INFO] validators: Validator completed (validator=dependency violations=0 elapsed=470.72ms)
+[ INFO] validators: Validator completed (validator=refactoring violations=4 elapsed=479.46ms)
+[ INFO] validators: Validator completed (validator=port_adapter violations=1 elapsed=675.61ms)
+[ INFO] validators: Validator completed (validator=performance violations=2 elapsed=1.00s)
+[ INFO] validators: Validator completed (validator=documentation violations=5 elapsed=1.01s)
+[ INFO] validators: Validator completed (validator=hygiene violations=45 elapsed=1.21s)
+[ INFO] validators: Validator completed (validator=organization violations=0 elapsed=1.25s)
+[ INFO] validators: Validator completed (validator=async_patterns violations=1 elapsed=1.62s)
+[ INFO] validators: Validator completed (validator=implementation violations=1 elapsed=4.56s)
+[ INFO] validators: Validator completed (validator=declarative_rules violations=19 elapsed=5.09s)
+[ INFO] validators: Validator completed (validator=kiss violations=12 elapsed=7.23s)
+[ INFO] validators: Validator completed (validator=quality violations=0 elapsed=9.58s)
+[ INFO] validators: Validator completed (validator=pattern violations=0 elapsed=10.53s)
+[ INFO] validators: Validator completed (validator=naming violations=3 elapsed=10.65s)
+[ INFO] validators: Validator completed (validator=solid violations=1 elapsed=10.65s)
+● Done in 17.77s

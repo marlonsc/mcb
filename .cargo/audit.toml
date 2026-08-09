@@ -1,0 +1,8 @@
+[advisories]
+ignore = [
+    "RUSTSEC-2023-0071", # rsa: Marvin Attack - dependency of jsonwebtoken, no fixed upgrade available
+    "RUSTSEC-2023-0089", # atomic-polyfill: unmaintained - dependency of edgevec
+    "RUSTSEC-2025-0119", # number_prefix: unmaintained - dependency of fastembed
+    "RUSTSEC-2024-0436", # paste: unmaintained - dependency of fastembed
+    "RUSTSEC-2025-0134", # rustls-pemfile: unmaintained - dependency of tonic
+]
