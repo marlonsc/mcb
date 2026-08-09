@@ -69,6 +69,36 @@ mcb_install_hooks() {
   mcb_ok "pre-commit and pre-push hooks installed at $hooks_dir"
 }
 
+mcb_sync_submodules() {
+  local repo="${1:-$MCB_ROOT}"
+  local materialized
+
+  git -C "$repo" submodule sync --recursive
+  git -C "$repo" submodule update --init --recursive
+
+  while :; do
+    materialized="$(git -C "$repo" submodule foreach --quiet --recursive '
+      present="$(git ls-files -z | while IFS= read -r -d "" path; do
+        if [ -e "$path" ] || [ -L "$path" ]; then
+          printf 1
+          break
+        fi
+      done)"
+      [ -n "$present" ] && exit 0
+      tracked="$(git ls-files | wc -l)"
+      if [ "$tracked" -eq 0 ]; then
+        git read-tree HEAD
+        tracked="$(git ls-files | wc -l)"
+      fi
+      [ "$tracked" -eq 0 ] && exit 0
+      git checkout-index --all
+      printf "%s\n" "$sm_path"
+    ')"
+    [ -z "$materialized" ] && break
+    git -C "$repo" submodule update --init --recursive
+  done
+}
+
 # Binary lookup chain: PATH > target/release > target/debug > cargo run
 mcb_bin() {
   [ -x "$MCB_ROOT/target/debug/mcb" ]   && { echo "$MCB_ROOT/target/debug/mcb";   return 0; }
@@ -100,6 +130,38 @@ mcb_validate() {  # $1 = "quick" | "full"
 
 # FILES word-split safety (ported from cosmos Makefile:80): refuse shell metachars.
 mcb_files_safe() { printf '%s' "${1:-}" | grep -qE '[;|&`$()<>]' && mcb_die "$EX_PREREQ" "FILES contem metacaractere de shell perigoso; liste apenas caminhos"; return 0; }
+
+mcb_check_staged() {
+  local crate_dir deadline=60 manifest package packages=""
+  local staged
+
+  mcb_require_cmd timeout
+  staged="$(git -C "$MCB_ROOT" diff --cached --name-only --diff-filter=ACMR)"
+  [ -n "$staged" ] || { mcb_ok "staged check: no staged paths"; return 0; }
+
+  if printf '%s\n' "$staged" | grep -qE '^Cargo\.(toml|lock)$'; then
+    packages="--workspace"
+  else
+    while IFS= read -r path; do
+      case "$path" in
+        crates/*/src/*.rs)
+          crate_dir="$(printf '%s\n' "$path" | cut -d/ -f1-2)"
+          manifest="$crate_dir/Cargo.toml"
+          [ -f "$MCB_ROOT/$manifest" ] || continue
+          package="$(sed -n '/^\[package\]/,/^\[/s/^name = "\([^"]*\)"/\1/p' "$MCB_ROOT/$manifest" | head -1)"
+          [ -n "$package" ] || mcb_die "$EX_PREREQ" "package name ausente em '$manifest'"
+          case " $packages " in *" -p $package "*) ;; *) packages="$packages -p $package" ;; esac
+          ;;
+      esac
+    done <<< "$staged"
+  fi
+
+  [ -n "$packages" ] || { mcb_ok "staged check: no Rust package affected"; return 0; }
+  mcb_log "staged check: cargo fmt/clippy scope:$packages (deadline ${deadline}s each)"
+  timeout --signal=TERM --kill-after=5s "${deadline}s" cargo fmt $packages -- --check
+  timeout --signal=TERM --kill-after=5s "${deadline}s" cargo clippy $packages --all-targets -- -D warnings
+  mcb_ok "staged check: clean"
+}
 
 # --- banned-pattern guard ----------------------------------------------------
 # Scans first-party crates/ for the constructs AGENTS.md forbids in prod paths.
@@ -158,7 +220,9 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     ignores)        printf '%s\n' "${MCB_AUDIT_IGNORES[*]}" ;;
     git-hooks-dir)  mcb_git_hooks_dir "${2:-$MCB_ROOT}" ;;
     install-hooks)  mcb_install_hooks "${2:-$MCB_ROOT}" ;;
+    sync-submodules) mcb_sync_submodules "${2:-$MCB_ROOT}" ;;
     validate)       mcb_validate "${2:-full}" ;;
+    check-staged)   mcb_check_staged ;;
     guard)          shift; mcb_guard "$@" ;;
     guard-bash)     mcb_guard_bash ;;
     files-safe)     mcb_files_safe "${2:-}" ;;
