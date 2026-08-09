@@ -6,19 +6,16 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from typing import cast
-
-from flext_core import FlextLogger
+from flext_core import FlextUtilitiesLogging
 
 
-class McbLogger(FlextLogger):
+class McbLogger(FlextUtilitiesLogging):
     """Structured logger facade wired to MCB defaults."""
 
     @classmethod
     def fetch_logger(cls, name: str | None = None) -> McbLogger:
         """Fetch the canonical logger for a module as an ``McbLogger``."""
-        base = cast(FlextLogger, super().fetch_logger(name))
-        return cls(name, _bound_logger=base.logger)
+        return cls(name or __name__)
 
 
 def configure_logging(json_format: bool = False) -> None:

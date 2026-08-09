@@ -213,7 +213,10 @@ def analyze(params: QltyParams) -> r[AnalysisReport]:
         logger.info("✅ No issues matched filters")
         return r[AnalysisReport].ok(AnalysisReport(issues=[]))
 
-    report = analyze_issues(filtered)
+    report_result = analyze_issues(filtered)
+    if report_result.failure:
+        return r[AnalysisReport].fail(report_result.error or "issue analysis failed")
+    report = report_result.unwrap()
 
     logger.info("\n" + report.generate_summary())
 

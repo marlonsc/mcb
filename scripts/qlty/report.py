@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 
+from flext_core import p
 from lib.core import r
 
 from qlty.model import SarifIssue, Severity
@@ -20,10 +21,10 @@ class AnalysisReport:
     """Statistical analysis of SARIF issues."""
 
     total_issues: int = 0
-    by_severity: Counter = field(default_factory=Counter)
-    by_rule: Counter = field(default_factory=Counter)
-    by_category: Counter = field(default_factory=Counter)
-    by_file: Counter = field(default_factory=Counter)
+    by_severity: Counter[Severity] = field(default_factory=Counter)
+    by_rule: Counter[str] = field(default_factory=Counter)
+    by_category: Counter[str] = field(default_factory=Counter)
+    by_file: Counter[str] = field(default_factory=Counter)
     top_files: list[tuple[str, int]] = field(default_factory=list)
     top_rules: list[tuple[str, int]] = field(default_factory=list)
     issues: list[SarifIssue] = field(default_factory=list)
@@ -194,7 +195,7 @@ def _populate_file_counts(report: AnalysisReport, issues: list[SarifIssue]) -> N
         report.by_file[issue.file_path] += 1
 
 
-def analyze_issues(issues: list[SarifIssue]) -> r[AnalysisReport]:
+def analyze_issues(issues: list[SarifIssue]) -> p.Result[AnalysisReport]:
     """Generate statistical analysis of issues."""
     report = AnalysisReport()
     report.total_issues = len(issues)

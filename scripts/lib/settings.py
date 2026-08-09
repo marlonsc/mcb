@@ -10,14 +10,14 @@ import os
 from pathlib import Path
 from typing import ClassVar
 
-from flext_core import FlextSettingsBase
+from flext_core import FlextSettings
 from pydantic import Field
 from pydantic_settings import SettingsConfigDict
 
 from .constants import c
 
 
-class BaseMcbSettings(FlextSettingsBase):
+class BaseMcbSettings(FlextSettings):
     """Base settings for MCB scripts with per-class singleton lifecycle.
 
     Environment variables are read with the ``MCB_`` prefix, e.g.
@@ -25,7 +25,7 @@ class BaseMcbSettings(FlextSettingsBase):
     """
 
     model_config: ClassVar[SettingsConfigDict] = (
-        FlextSettingsBase.model_config.copy()
+        FlextSettings.model_config.copy()
     )
     model_config["env_prefix"] = c.ENV_PREFIX
     model_config["extra"] = "ignore"
