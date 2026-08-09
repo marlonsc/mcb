@@ -388,8 +388,7 @@ production = "milvus"       # Use Milvus for production
   Provider creation via factories
 - [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
   Provider crate organization
-- [ADR-029: Hexagonal Architecture](050-manual-composition-root-dill-removal.md) -
-  Historical DI implementation (superseded by ADR-050)
+- [ADR-050: Manual Composition Root — dill Removal](050-manual-composition-root-dill-removal.md) - Manual composition root (supersedes ADR-029)
 
 ## References
 
