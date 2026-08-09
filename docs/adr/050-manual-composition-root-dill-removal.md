@@ -17,7 +17,7 @@ implementation_status: Complete
 
 **Implemented** (v0.2.1)
 
-> Supersedes [ADR 029: Hexagonal Architecture with dill](050-manual-composition-root-dill-removal.md).
+> Supersedes ADR 029: Hexagonal Architecture with dill.
 
 ## Context
 
