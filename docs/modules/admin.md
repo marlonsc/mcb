@@ -1,78 +1,81 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # admin Module
 
 **Source**: `crates/mcb-server/src/admin/`
 **Crate**: `mcb-server`
-**Files**: 8
-**Lines of Code**: ~1,500
+**Files**: 22
+**Lines of Code**: ~6,456
 
 ## Overview
 
-The admin module provides administrative endpoints for health checks, metrics, configuration management, and server control. Part of the mcb-server crate.
+The admin module provides configuration, lifecycle, browse, and web admin surfaces for server operations.
 
-## Key Components
+### Key Components
 
-### Handlers (`handlers.rs`, `config_handlers.rs`)
+### API and Lifecycle
 
-HTTP endpoint handlers:
+- `api.rs` - Admin API entrypoints
+- `handlers.rs` - Core admin handlers
+- `lifecycle_handlers.rs` - Lifecycle actions
+- `auth.rs` - Admin auth integration
 
--   Health check endpoints (readiness, liveness)
--   Metrics retrieval
--   Graceful shutdown
--   Configuration management
+### Configuration and Registry
 
-### Routes (`routes.rs`)
+- `config.rs` - Admin configuration models
+- `config_handlers.rs` - Config endpoints
+- `registry.rs` - Entity/route registry
+- `crud_adapter.rs` - Generic CRUD adapter
 
-Axum router configuration for admin API endpoints.
+### Transport and Streaming
 
-### Models (`models.rs`)
+- `routes.rs` - Route setup
+- `sse.rs` - Server-sent events
+- `propagation.rs` - Change propagation wiring
 
-Request/response types:
+### Web Admin Surface
 
--   `HealthResponse` - Health status response
--   `MetricsResponse` - Performance metrics
--   `ConfigResponse` - Configuration data
-
-### Service (`service.rs`)
-
-Admin service orchestration and business logic.
+- `web/handlers.rs` - HTML route handlers
+- `web/entity_handlers.rs` - Entity pages/actions
+- `web/lov_handlers.rs` - LOV endpoints
+- `web/filter.rs` - Filtering helpers
+- `web/view_model.rs` - UI view models
+- `web/router.rs` - Web admin router
+- `web/templates/` - Shared JS/CSS assets
 
 ## File Structure
 
 ```text
 crates/mcb-server/src/admin/
-├── handlers.rs           # Core endpoint handlers
-├── config_handlers.rs    # Configuration handlers
-├── routes.rs             # Router setup
-├── models.rs             # Data types
-├── service.rs            # Service layer
-└── mod.rs                # Module exports
-```
-
-## API Endpoints
-
-| Endpoint | Method | Purpose |
-|----------|--------|---------|
-| `/health` | GET | Health status |
-| `/health/ready` | GET | Readiness probe |
-| `/health/live` | GET | Liveness probe |
-| `/metrics` | GET | Performance metrics |
-| `/config` | GET | Current configuration |
-| `/shutdown` | POST | Graceful shutdown |
-
-## Key Exports
-
-```rust
-pub use handlers::{health_handler, metrics_handler, shutdown_handler};
-pub use routes::admin_router;
-pub use models::{HealthResponse, MetricsResponse};
+├── api.rs
+├── auth.rs
+├── browse_handlers.rs
+├── config.rs
+├── config_handlers.rs
+├── crud_adapter.rs
+├── handlers.rs
+├── lifecycle_handlers.rs
+├── models.rs
+├── propagation.rs
+├── registry.rs
+├── routes.rs
+├── sse.rs
+├── mod.rs
+└── web/
+    ├── entity_handlers.rs
+    ├── filter.rs
+    ├── handlers.rs
+    ├── helpers.rs
+    ├── lov_handlers.rs
+    ├── router.rs
+    ├── view_model.rs
+    └── templates/
 ```
 
 ## Cross-References
 
--   **Server**: [server.md](./server.md) (parent module)
--   **Metrics**: [metrics.md](./metrics.md) (metrics collection)
--   **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
+- **Server**: [server.md](./server.md)
+- **Architecture**: [ARCHITECTURE.md](../architecture/ARCHITECTURE.md)
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+### Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)

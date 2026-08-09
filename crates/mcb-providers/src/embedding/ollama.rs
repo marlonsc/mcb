@@ -1,110 +1,103 @@
 //! Ollama Embedding Provider
 //!
-//! Implements the EmbeddingProvider port using Ollama's local embedding API.
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md#embedding-providers)
+//!
+//! Implements the `EmbeddingProvider` port using Ollama's local embedding API.
 //! Supports various local embedding models like nomic-embed-text, all-minilm, etc.
 
 use std::time::Duration;
 
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::providers::EmbeddingProvider;
+use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
-use reqwest::Client;
-
-use crate::constants::{
-    CONTENT_TYPE_JSON, EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
+use mcb_utils::constants::embedding::{
+    EMBEDDING_DIMENSION_OLLAMA_ARCTIC, EMBEDDING_DIMENSION_OLLAMA_DEFAULT,
     EMBEDDING_DIMENSION_OLLAMA_MINILM, EMBEDDING_DIMENSION_OLLAMA_MXBAI,
     EMBEDDING_DIMENSION_OLLAMA_NOMIC,
 };
-/// Error message for request timeouts
-use crate::provider_utils::{JsonRequestParams, parse_float_array_lossy, send_json_request};
-use crate::utils::http::RequestErrorKind;
+use reqwest::Client;
 
-/// Ollama embedding provider
-///
-/// Implements the `EmbeddingProvider` domain port using Ollama's local embedding API.
-/// Receives HTTP client via constructor injection.
-///
-/// ## Example
-///
-/// ```rust,no_run
-/// use mcb_providers::embedding::OllamaEmbeddingProvider;
-/// use reqwest::Client;
-/// use std::time::Duration;
-///
-/// fn example() -> Result<(), Box<dyn std::error::Error>> {
-///     let client = Client::builder()
-///         .timeout(Duration::from_secs(30))
-///         .build()?;
-///     let provider = OllamaEmbeddingProvider::new(
-///         "http://localhost:11434".to_string(),
-///         "nomic-embed-text".to_string(),
-///         Duration::from_secs(30),
-///         client,
-///     );
-///     Ok(())
-/// }
-/// ```
-pub struct OllamaEmbeddingProvider {
-    base_url: String,
-    model: String,
-    timeout: Duration,
-    http_client: Client,
-}
+use crate::utils::embedding::{
+    HttpEmbeddingClient, HttpEmbeddingClientConfig, parse_float_array_lossy,
+};
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
+use mcb_utils::constants::embedding::{EMBEDDING_OPERATION_NAME, EMBEDDING_PARAM_MODEL};
+use mcb_utils::constants::http::CONTENT_TYPE_JSON;
+use mcb_utils::constants::http::HTTP_HEADER_CONTENT_TYPE;
+
+define_http_embedding_provider!(
+    /// Ollama embedding provider
+    ///
+    /// Implements the `EmbeddingProvider` domain port using Ollama's local embedding API.
+    /// Receives HTTP client via constructor injection.
+    OllamaEmbeddingProvider
+);
 
 impl OllamaEmbeddingProvider {
     /// Create a new Ollama embedding provider
     ///
     /// # Arguments
-    /// * `base_url` - Ollama server URL (e.g., "http://localhost:11434")
+    /// * `base_url` - Ollama server URL (e.g., "<http://localhost:11434>")
     /// * `model` - Model name (e.g., "nomic-embed-text")
     /// * `timeout` - Request timeout duration
     /// * `http_client` - Reqwest HTTP client for making API requests
+    #[must_use]
     pub fn new(base_url: String, model: String, timeout: Duration, http_client: Client) -> Self {
         Self {
-            base_url,
-            model,
-            timeout,
-            http_client,
+            client: HttpEmbeddingClient::new(HttpEmbeddingClientConfig {
+                api_key: String::new(),
+                base_url: Some(base_url),
+                default_base_url: mcb_utils::constants::embedding::OLLAMA_DEFAULT_BASE_URL
+                    .to_owned(),
+                model,
+                timeout,
+                client: http_client,
+            }),
         }
     }
 
     /// Get the model name for this provider
+    #[must_use]
     pub fn model(&self) -> &str {
-        &self.model
+        &self.client.model
     }
 
     /// Get the maximum tokens supported by this provider
+    #[must_use]
     pub fn max_tokens(&self) -> usize {
-        match self.model.as_str() {
-            "nomic-embed-text" => 8192,
-            "all-minilm" => 512,
-            "mxbai-embed-large" => 512,
-            "snowflake-arctic-embed" => 512,
-            _ => 8192,
+        match self.client.model.as_str() {
+            "all-minilm" | "mxbai-embed-large" | "snowflake-arctic-embed" => {
+                mcb_utils::constants::embedding::OLLAMA_MAX_TOKENS_LIMITED
+            }
+            _ => mcb_utils::constants::embedding::OLLAMA_MAX_TOKENS_DEFAULT,
         }
     }
 
     /// Fetch embedding for a single text
     async fn fetch_single_embedding(&self, text: &str) -> Result<serde_json::Value> {
         let payload = serde_json::json!({
-            "model": self.model,
+            (EMBEDDING_PARAM_MODEL): self.client.model,
             "prompt": text,
             "stream": false
         });
 
-        let headers = vec![("Content-Type", CONTENT_TYPE_JSON.to_string())];
+        let headers = vec![(HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned())];
 
         send_json_request(JsonRequestParams {
-            client: &self.http_client,
+            client: &self.client.client,
             method: reqwest::Method::POST,
-            url: format!("{}/api/embeddings", self.base_url.trim_end_matches('/')),
-            timeout: self.timeout,
+            url: format!(
+                "{}/api/embeddings",
+                self.client.base_url.trim_end_matches('/')
+            ),
+            timeout: self.client.timeout,
             provider: "Ollama",
-            operation: "embeddings",
+            operation: EMBEDDING_OPERATION_NAME,
             kind: RequestErrorKind::Embedding,
             headers: &headers,
             body: Some(&payload),
+            retry: None,
         })
         .await
         .map_err(|e| {
@@ -130,7 +123,7 @@ impl OllamaEmbeddingProvider {
         let dimensions = embedding_vec.len();
         Ok(Embedding {
             vector: embedding_vec,
-            model: self.model.clone(),
+            model: self.client.model.clone(),
             dimensions,
         })
     }
@@ -154,7 +147,7 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
     }
 
     fn dimensions(&self) -> usize {
-        match self.model.as_str() {
+        match self.client.model.as_str() {
             "nomic-embed-text" => EMBEDDING_DIMENSION_OLLAMA_NOMIC,
             "all-minilm" => EMBEDDING_DIMENSION_OLLAMA_MINILM,
             "mxbai-embed-large" => EMBEDDING_DIMENSION_OLLAMA_MXBAI,
@@ -174,25 +167,23 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 
 use std::sync::Arc;
 
-use mcb_domain::ports::providers::EmbeddingProvider as EmbeddingProviderPort;
-use mcb_domain::registry::embedding::{
-    EMBEDDING_PROVIDERS, EmbeddingProviderConfig, EmbeddingProviderEntry,
-};
+use mcb_domain::ports::EmbeddingProvider as EmbeddingProviderPort;
+use mcb_domain::registry::embedding::EmbeddingProviderConfig;
 
 /// Factory function for creating Ollama embedding provider instances.
-fn ollama_factory(
-    config: &EmbeddingProviderConfig,
-) -> std::result::Result<Arc<dyn EmbeddingProviderPort>, String> {
+fn ollama_factory(config: &EmbeddingProviderConfig) -> Result<Arc<dyn EmbeddingProviderPort>> {
     use crate::utils::http::{DEFAULT_HTTP_TIMEOUT, create_default_client};
 
-    let base_url = config
-        .base_url
-        .clone()
-        .unwrap_or_else(|| format!("http://localhost:{}", crate::constants::OLLAMA_DEFAULT_PORT));
+    let base_url = config.base_url.clone().ok_or_else(|| {
+        Error::configuration(format!(
+            "Ollama embedding provider requires `base_url` in configuration (e.g. \"{}\")",
+            mcb_utils::constants::embedding::OLLAMA_DEFAULT_BASE_URL
+        ))
+    })?;
     let model = config
         .model
         .clone()
-        .unwrap_or_else(|| "nomic-embed-text".to_string());
+        .unwrap_or_else(|| mcb_utils::constants::embedding::OLLAMA_DEFAULT_MODEL.to_owned());
     let http_client = create_default_client()?;
 
     Ok(Arc::new(OllamaEmbeddingProvider::new(
@@ -203,9 +194,8 @@ fn ollama_factory(
     )))
 }
 
-#[linkme::distributed_slice(EMBEDDING_PROVIDERS)]
-static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
-    name: "ollama",
-    description: "Ollama local embedding provider (nomic-embed-text, all-minilm, etc.)",
-    factory: ollama_factory,
-};
+mcb_domain::register_embedding_provider!(
+    "ollama",
+    "Ollama local embedding provider (nomic-embed-text, all-minilm, etc.)",
+    ollama_factory
+);

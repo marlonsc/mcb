@@ -1,70 +1,10 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Transport layer types
 //!
-//! Common types used across transport implementations for MCP protocol messages.
+//! Re-exports canonical MCP protocol types from `mcb_domain::protocol`.
+//! All transport code MUST use these types instead of defining new ones.
 
-use serde::{Deserialize, Serialize};
-
-/// MCP request payload (JSON-RPC format)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct McpRequest {
-    /// JSON-RPC method
-    pub method: String,
-    /// Request parameters
-    pub params: Option<serde_json::Value>,
-    /// Request ID
-    pub id: Option<serde_json::Value>,
-}
-
-/// MCP response payload (JSON-RPC format)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct McpResponse {
-    /// JSON-RPC version
-    #[serde(default = "default_jsonrpc")]
-    pub jsonrpc: String,
-    /// Response result (if successful)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub result: Option<serde_json::Value>,
-    /// Error (if failed)
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub error: Option<McpError>,
-    /// Request ID
-    pub id: Option<serde_json::Value>,
-}
-
-fn default_jsonrpc() -> String {
-    "2.0".to_string()
-}
-
-/// MCP error response (JSON-RPC format)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct McpError {
-    /// Error code
-    pub code: i32,
-    /// Error message
-    pub message: String,
-}
-
-impl McpResponse {
-    /// Create a success response
-    pub fn success(id: Option<serde_json::Value>, result: serde_json::Value) -> Self {
-        Self {
-            jsonrpc: "2.0".to_string(),
-            result: Some(result),
-            error: None,
-            id,
-        }
-    }
-
-    /// Create an error response
-    pub fn error(id: Option<serde_json::Value>, code: i32, message: impl Into<String>) -> Self {
-        Self {
-            jsonrpc: "2.0".to_string(),
-            result: None,
-            error: Some(McpError {
-                code,
-                message: message.into(),
-            }),
-            id,
-        }
-    }
-}
+// Crate-internal re-exports of canonical domain protocol types.
+pub(crate) use mcb_domain::protocol::{McpError, McpRequest, McpResponse};

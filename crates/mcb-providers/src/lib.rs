@@ -4,15 +4,18 @@
 //! Clean Architecture principles. Each provider implements a port (trait)
 //! defined in `mcb-domain`.
 //!
+//! **Documentation**: [`docs/modules/providers.md`](../../../docs/modules/providers.md) |
+//! **Strategy**: [`ADR-030`](../../../docs/adr/030-multi-provider-strategy.md),
+//! [`ADR-003`](../../../docs/adr/003-unified-provider-architecture.md)
+//!
 //! ## Provider Categories
 //!
 //! | Category | Port | Implementations |
-//! |----------|------|-----------------|
-//! | Embedding | `EmbeddingProvider` | OpenAI, Ollama, VoyageAI, Gemini, FastEmbed |
-//! | Vector Store | `VectorStoreProvider` | EdgeVec, Encrypted, Milvus, Pinecone, Qdrant |
-//! | Cache | `CacheProvider` | Moka, Redis |
-//! | Events | `EventPublisher` | Tokio, Nats |
-//! | Hybrid Search | `HybridSearchProvider` | HybridSearchEngine |
+//! | ---------- | ------ | ----------------- |
+//! | Embedding | `EmbeddingProvider` | `OpenAI`, Ollama, `VoyageAI`, Gemini, `FastEmbed` |
+//! | Vector Store | `VectorStoreProvider` | `EdgeVec`, Encrypted, Milvus, Pinecone, Qdrant |
+//! | Cache | `CacheProvider` | delegated to Loco cache |
+//! | Hybrid Search | `HybridSearchProvider` | `HybridSearchEngine` |
 //! | Language | `LanguageChunkingProvider` | Rust, Python, Go, Java, etc. |
 //!
 //! ## Feature Flags
@@ -28,27 +31,16 @@
 //!
 //! ```no_run
 //! use mcb_providers::embedding::OllamaEmbeddingProvider;
-//! use mcb_providers::cache::MokaCacheProvider;
 //! use mcb_providers::language::RustProcessor;
 //! ```
+//!
 
-// Allow collapsible_if for complex conditional logic
-
-// Re-export mcb-domain types commonly used with providers
-pub use mcb_domain::error::{Error, Result};
-pub use mcb_domain::ports::providers::CryptoProvider;
-pub use mcb_domain::ports::providers::{
-    CacheProvider, EmbeddingProvider, HybridSearchProvider, LanguageChunkingProvider, VcsProvider,
-    VectorStoreProvider,
-};
-
-/// Provider-specific constants
-pub mod constants;
+/// Centralized macros for provider implementations (embedding, language, vector_store).
+#[macro_use]
+pub mod macros;
 
 /// Shared utilities for provider implementations
 pub mod utils;
-
-pub(crate) mod provider_utils;
 
 /// Embedding provider implementations
 ///
@@ -60,15 +52,8 @@ pub mod embedding;
 /// Implements `VectorStoreProvider` trait for vector storage backends.
 pub mod vector_store;
 
-/// Cache provider implementations
-///
-/// Implements `CacheProvider` trait for caching backends.
-pub mod cache;
-
-/// Event publisher implementations (simple EventPublisher trait)
-///
-/// Implements `EventPublisher` trait for event bus backends.
-pub mod events;
+/// Native PMAT-style analysis provider implementations.
+pub mod analysis;
 
 /// Language chunking provider implementations
 ///
@@ -82,28 +67,22 @@ pub mod language;
 /// Provides BM25 text ranking algorithm and hybrid score fusion.
 pub mod hybrid_search;
 
-// Re-export hybrid search providers
-pub use hybrid_search::HybridSearchEngine;
+// Re-export hybrid search providers (via exports.rs at crate root)
 
-/// Database providers (memory repository backends)
-///
-/// Each backend (SQLite, PostgreSQL, MySQL) has its own submodule and
-/// implements the generic schema DDL in its dialect.
+/// Database providers — `SeaORM` repositories for structured persistence.
+/// Database-agnostic (`SQLite` + `PostgreSQL` via connection string).
 pub mod database;
 
-pub use database::{SqliteMemoryDdlGenerator, SqliteSchemaDdlGenerator};
+// database::migration re-exported at crate root via exports.rs
+
+/// Project type detection providers
+pub mod project_detection;
 
 /// Git-related providers for repository operations
 ///
-/// Provides project type detection (Cargo, npm, Python, Go, Maven) and
-/// submodule discovery with recursive traversal.
-pub mod git;
+/// Provides submodule discovery with recursive traversal.
+pub mod vcs;
 /// Workflow FSM provider for ADR-034
 ///
 /// Implements state machine transitions and session management
 pub mod workflow;
-
-/// Storage provider implementations
-///
-/// Implements repository ports for storage backends (FileHash).
-pub mod storage;

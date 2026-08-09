@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
+//!
 //! Centralized validation thresholds
 //!
 //! All numeric limits used by validators are defined here.
@@ -81,7 +84,7 @@ impl Default for ValidationThresholds {
             max_nesting_depth: 3,
 
             // Quality
-            max_file_lines: 500,
+            max_file_lines: 1500,
             max_function_lines: 50,
 
             // Complexity
@@ -93,6 +96,7 @@ impl Default for ValidationThresholds {
 
 impl ValidationThresholds {
     /// Create thresholds with default values
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }

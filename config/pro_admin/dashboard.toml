@@ -1,0 +1,61 @@
+# MCB Admin Dashboard
+title = "Memory Context Browser"
+subtitle = "AI agent persistent memory, semantic code search, and codebase understanding."
+
+# Info cards
+[[info.card]]
+title = "Observations"
+description = "Cross-session memory stored by AI agents — observations, decisions, error patterns."
+link = ""
+
+[[info.card]]
+title = "Sessions"
+description = "Agent session lifecycle tracking with tool calls, delegations, and summaries."
+link = ""
+
+[[info.card]]
+title = "Indexing"
+description = "Semantic code search indexes — collections, file hashes, and indexing operations."
+link = ""
+
+# Chart: Observations by month
+[[row]]
+gutter = 16
+
+[[row.col]]
+span = 12
+title = "Observations By Month"
+
+[row.col.chart]
+chart = "observations_by_month"
+kind = "line"
+timescale = "month"
+from_date = "2024-01"
+to_date = "2025-12"
+x_axis_title = "Month"
+y_axis_title = "Observations"
+
+# Chart: Agent sessions by day
+[[row.col]]
+span = 12
+title = "Agent Sessions By Day"
+
+[row.col.chart]
+chart = "sessions_by_day"
+kind = "line"
+timescale = "day"
+from_date = "2025-01-01"
+to_date = "2025-12-31"
+x_axis_title = "Date"
+y_axis_title = "Sessions"
+
+# Chart: Tool calls by tool name
+[[row.col]]
+span = 24
+title = "Tool Calls by Tool"
+
+[row.col.chart]
+chart = "tool_calls_by_tool"
+kind = "pie"
+x_axis_title = "Tool"
+y_axis_title = "Count"

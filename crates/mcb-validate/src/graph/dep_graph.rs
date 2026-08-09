@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Dependency graph construction and layer-boundary analysis.
 //!
 //! Builds a `petgraph` directed graph from extracted [`Fact`]s, enabling
@@ -7,7 +10,7 @@ use crate::extractor::{Fact, FactType};
 use petgraph::Direction;
 use petgraph::algo::tarjan_scc;
 use petgraph::graph::{DiGraph, NodeIndex};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 /// Type of edge in the dependency graph.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -27,6 +30,7 @@ pub struct DependencyGraph {
 
 impl DependencyGraph {
     /// Create an empty dependency graph.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             graph: DiGraph::new(),
@@ -41,49 +45,10 @@ impl DependencyGraph {
     /// 2. Adds `Contains` edges (parent → child) and `DependsOn` edges
     ///    (import → target module) using heuristic name matching.
     pub fn build(&mut self, facts: &[Fact]) {
-        // First pass: Add all nodes
+        self.add_nodes(facts);
+        let module_indices = self.module_indices();
         for fact in facts {
-            if !self.node_map.contains_key(&fact.id) {
-                let idx = self.graph.add_node(fact.clone());
-                self.node_map.insert(fact.id.clone(), idx);
-            }
-        }
-
-        // Second pass: Add edges
-        for fact in facts {
-            let source_idx = *self.node_map.get(&fact.id).unwrap();
-
-            // Add "Contains" edges (Parent -> Child)
-            if let Some(parent_id) = &fact.parent_id
-                && let Some(parent_idx) = self.node_map.get(parent_id)
-            {
-                self.graph
-                    .add_edge(*parent_idx, source_idx, EdgeType::Contains);
-            }
-
-            // Add "DependsOn" edges (Import -> Target Module)
-            if fact.fact_type == FactType::Import {
-                let import_path = &fact.name;
-
-                // Simple exact match check first
-                if let Some(target_idx) = self.node_map.get(import_path) {
-                    self.graph
-                        .add_edge(source_idx, *target_idx, EdgeType::DependsOn);
-                }
-
-                // Check for module prefix (e.g. import "mcb_domain::..." depends on module "mcb_domain")
-                for idx in self.node_map.values() {
-                    if self.graph[*idx].fact_type == FactType::Module {
-                        // Normalize names (- vs _)
-                        let mod_name = self.graph[*idx].name.replace('-', "_");
-                        let imp_name = import_path.replace('-', "_");
-
-                        if imp_name.starts_with(&mod_name) {
-                            self.graph.add_edge(source_idx, *idx, EdgeType::DependsOn);
-                        }
-                    }
-                }
-            }
+            self.add_edges_for_fact(fact, &module_indices);
         }
     }
 
@@ -91,6 +56,7 @@ impl DependencyGraph {
     ///
     /// Returns a list of strongly-connected components with more than one
     /// member, plus any self-loops.
+    #[must_use]
     pub fn check_cycles(&self) -> Vec<Vec<String>> {
         let sccs = tarjan_scc(&self.graph);
         let mut cycles = Vec::new();
@@ -99,8 +65,9 @@ impl DependencyGraph {
                 cycles.push(scc.iter().map(|idx| self.graph[*idx].id.clone()).collect());
             } else if scc.len() == 1 {
                 // Check for self-loop
-                let idx = scc[0];
-                if self.graph.contains_edge(idx, idx) {
+                if let Some(idx) = scc.first().copied()
+                    && self.graph.contains_edge(idx, idx)
+                {
                     cycles.push(vec![self.graph[idx].id.clone()]);
                 }
             }
@@ -113,52 +80,141 @@ impl DependencyGraph {
     /// An edge from a node whose name contains `source_pattern` to a node
     /// whose name contains `target_pattern` via the `Contains → DependsOn`
     /// two-hop path is reported as a violation.
+    #[must_use]
     pub fn check_layer_violation(
         &self,
         source_pattern: &str,
         target_pattern: &str,
     ) -> Vec<(String, String)> {
-        let mut violations = Vec::new();
-
-        // Find nodes matching source pattern
         let source_nodes: Vec<NodeIndex> = self
             .graph
             .node_indices()
             .filter(|idx| self.graph[*idx].name.contains(source_pattern))
             .collect();
-
-        // Find nodes matching target pattern
-        let target_nodes: Vec<NodeIndex> = self
+        let target_nodes: HashSet<NodeIndex> = self
             .graph
             .node_indices()
             .filter(|idx| self.graph[*idx].name.contains(target_pattern))
             .collect();
 
-        for s_idx in &source_nodes {
-            // Traverse: s_idx (Module/File) -> Contains -> Child (Import) -> DependsOn -> t_idx (Module)
-            let children = self.graph.neighbors_directed(*s_idx, Direction::Outgoing);
-            for child_idx in children {
-                let edge = self.graph.find_edge(*s_idx, child_idx).unwrap();
-                if self.graph[edge] == EdgeType::Contains {
-                    let dependencies = self
-                        .graph
-                        .neighbors_directed(child_idx, Direction::Outgoing);
-                    for dep_idx in dependencies {
-                        let dep_edge = self.graph.find_edge(child_idx, dep_idx).unwrap();
-                        if self.graph[dep_edge] == EdgeType::DependsOn {
-                            // Check if dep_idx is in target_nodes
-                            if target_nodes.contains(&dep_idx) {
-                                violations.push((
-                                    self.graph[*s_idx].name.clone(),
-                                    self.graph[dep_idx].name.clone(),
-                                ));
-                            }
-                        }
-                    }
-                }
+        source_nodes
+            .iter()
+            .flat_map(|source| self.violations_for_source(*source, &target_nodes))
+            .collect()
+    }
+
+    fn add_nodes(&mut self, facts: &[Fact]) {
+        for fact in facts {
+            if self.node_map.contains_key(&fact.id) {
+                continue;
             }
+
+            let idx = self.graph.add_node(fact.clone());
+            self.node_map.insert(fact.id.clone(), idx);
+        }
+    }
+
+    fn module_indices(&self) -> Vec<NodeIndex> {
+        self.node_map
+            .values()
+            .copied()
+            .filter(|idx| self.graph[*idx].fact_type == FactType::Module)
+            .collect()
+    }
+
+    fn add_edges_for_fact(&mut self, fact: &Fact, module_indices: &[NodeIndex]) {
+        let Some(source_idx) = self.node_map.get(&fact.id).copied() else {
+            return;
+        };
+
+        self.add_contains_edge(source_idx, fact);
+        self.add_import_dep_edges(source_idx, fact, module_indices);
+    }
+
+    fn add_contains_edge(&mut self, source_idx: NodeIndex, fact: &Fact) {
+        let Some(parent_id) = fact.parent_id.as_deref() else {
+            return;
+        };
+        let Some(parent_idx) = self.node_map.get(parent_id).copied() else {
+            return;
+        };
+
+        self.graph
+            .add_edge(parent_idx, source_idx, EdgeType::Contains);
+    }
+
+    fn add_import_dep_edges(
+        &mut self,
+        source_idx: NodeIndex,
+        fact: &Fact,
+        module_indices: &[NodeIndex],
+    ) {
+        if fact.fact_type != FactType::Import {
+            return;
         }
 
-        violations
+        self.add_exact_import_dependency(source_idx, &fact.name);
+        self.add_prefix_import_dependencies(source_idx, &fact.name, module_indices);
+    }
+
+    fn add_exact_import_dependency(&mut self, source_idx: NodeIndex, import_path: &str) {
+        let Some(target_idx) = self.node_map.get(import_path).copied() else {
+            return;
+        };
+
+        self.graph
+            .add_edge(source_idx, target_idx, EdgeType::DependsOn);
+    }
+
+    fn add_prefix_import_dependencies(
+        &mut self,
+        source_idx: NodeIndex,
+        import_path: &str,
+        module_indices: &[NodeIndex],
+    ) {
+        let normalized_import = import_path.replace('-', "_");
+        for idx in module_indices {
+            let normalized_module = self.graph[*idx].name.replace('-', "_");
+            if normalized_import.starts_with(&normalized_module) {
+                self.graph.add_edge(source_idx, *idx, EdgeType::DependsOn);
+            }
+        }
+    }
+
+    fn violations_for_source(
+        &self,
+        source_idx: NodeIndex,
+        target_nodes: &HashSet<NodeIndex>,
+    ) -> Vec<(String, String)> {
+        self.contains_neighbors(source_idx)
+            .flat_map(|child_idx| self.depends_on_neighbors(child_idx))
+            .filter(|dep_idx| target_nodes.contains(dep_idx))
+            .map(|dep_idx| {
+                (
+                    self.graph[source_idx].name.clone(),
+                    self.graph[dep_idx].name.clone(),
+                )
+            })
+            .collect()
+    }
+
+    fn contains_neighbors(&self, source_idx: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
+        self.graph
+            .neighbors_directed(source_idx, Direction::Outgoing)
+            .filter(move |neighbor_idx| {
+                self.graph
+                    .find_edge(source_idx, *neighbor_idx)
+                    .is_some_and(|edge| self.graph[edge] == EdgeType::Contains)
+            })
+    }
+
+    fn depends_on_neighbors(&self, source_idx: NodeIndex) -> impl Iterator<Item = NodeIndex> + '_ {
+        self.graph
+            .neighbors_directed(source_idx, Direction::Outgoing)
+            .filter(move |neighbor_idx| {
+                self.graph
+                    .find_edge(source_idx, *neighbor_idx)
+                    .is_some_and(|edge| self.graph[edge] == EdgeType::DependsOn)
+            })
     }
 }

@@ -1,129 +1,113 @@
-## Project links
-
--   `docs/context/technical-patterns.md` (MCP tool expectations).
--   `docs/context/project-state.md` + `.planning/STATE.md` (Phase 6 progress, Hybrid Search plan).
--   `docs/context/domain-concepts.md`, `docs/context/integrations.md`, and `docs/developer/ROADMAP.md` (v0.2.0 vision).
--   `docs/operations/CHANGELOG.md` for metrics that change when server components are added.
-
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # server Module
 
 **Source**: `crates/mcb-server/src/`
 **Crate**: `mcb-server`
-**Files**: 20+
-**Lines of Code**: ~4,500
+**Lines of Code**: ~15,800+
+
+## ↔ Code ↔ Docs cross-reference
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-server/src/lib.rs`](../../crates/mcb-server/src/lib.rs) links here |
+| Docs → Code | [`crates/mcb-server/src/lib.rs`](../../crates/mcb-server/src/lib.rs) — crate root |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-033`](../adr/033-mcp-handler-consolidation.md) · [`ADR-011`](../adr/011-http-transport-request-response-pattern.md) |
+| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
 
 ## Overview
 
-The server module provides the MCP protocol implementation and HTTP transport layer. It includes tool handlers, admin API, authentication, and server initialization.
+The server module implements MCP handlers, admin/web surfaces, transport, hooks, and session management. Handlers are organized into domain-specific subdirectories following the entity-per-module pattern.
 
-## Key Components
+## Key Areas
 
-### MCP Server (`mcp_server.rs`)
+- `handlers/` - MCP tool handlers (domain-split: entities, memory, session, vcs)
+- `tools/` - Tool registry and routing
+- `transport/` - HTTP/stdio transport and types
+- `admin/` - Admin API + web admin routes
+- `hooks/` - Hook processing
+- `session/` - Session manager/state
+- `templates/` - Embedded templates and metadata
+- `utils/` - JSON/collection utilities
+- `args/` - Consolidated argument types
 
-Core MCP protocol server implementation with JSON-RPC handling.
+## Core Root Files
 
-### Tool Handlers (`handlers/`)
-
-MCP tool implementations:
-
--   `index` - Index operations (start/status/clear)
--   `search` - Unified search (code/memory)
--   `validate` - Validation + complexity analysis
--   `memory` - Memory storage, retrieval, timeline, inject
--   `session` - Session lifecycle + summaries
--   `agent` - Agent activity logging
--   `project` - Project workflow operations
--   `vcs` - Repository operations
-
-### Admin API (`admin/`)
-
-Administrative endpoints:
-
--   `handlers.rs` - Health check, metrics, shutdown handlers
--   `config_handlers.rs` - Configuration management handlers
--   `routes.rs` - Axum router configuration
--   `models.rs` - Request/response types
--   `service.rs` - Admin service orchestration
-
-### Transport (`transport/`)
-
-HTTP transport layer:
-
--   `http.rs` - HTTP server setup
--   `session.rs` - Session management
--   `config.rs` - Transport configuration
--   `versioning.rs` - API versioning
-
-### Authentication (`auth.rs`)
-
-JWT-based authentication and authorization.
-
-### Initialization (`init.rs`)
-
-Server startup and DI container bootstrapping.
+- `auth.rs`, `args.rs`, `builder.rs`, `constants.rs`, `error_mapping.rs`, `formatter.rs`, `init.rs`, `mcp_server.rs`, `lib.rs`
 
 ## File Structure
 
 ```text
 crates/mcb-server/src/
 ├── admin/
-│   ├── handlers.rs           # Admin endpoint handlers
-│   ├── config_handlers.rs    # Config management
-│   ├── routes.rs             # Router setup
-│   ├── models.rs             # Request/response types
-│   ├── service.rs            # Admin service
-│   └── mod.rs
+│   └── web/
+├── args/
+│   └── consolidated.rs
 ├── handlers/
-│   ├── agent.rs
-│   ├── index.rs
-│   ├── memory.rs
-│   ├── project.rs
-│   ├── search.rs
-│   ├── session.rs
-│   ├── validate.rs
-│   ├── vcs.rs
+│   ├── entities/           # Entity CRUD handlers
+│   │   ├── common.rs       -> [crates/mcb-server/src/handlers/entities/common.rs]
+│   │   ├── issue.rs        -> [crates/mcb-server/src/handlers/entities/issue.rs]
+│   │   ├── org.rs          -> [crates/mcb-server/src/handlers/entities/org.rs]
+│   │   ├── plan.rs         -> [crates/mcb-server/src/handlers/entities/plan.rs]
+│   │   ├── vcs.rs          -> [crates/mcb-server/src/handlers/entities/vcs.rs]
+│   │   └── mod.rs
+│   ├── memory/             # Memory tool handlers
+│   │   ├── common.rs       -> [crates/mcb-server/src/handlers/memory/common.rs]
+│   │   ├── execution.rs    -> [crates/mcb-server/src/handlers/memory/execution.rs]
+│   │   ├── handler.rs      -> [crates/mcb-server/src/handlers/memory/handler.rs]
+│   │   ├── inject.rs       -> [crates/mcb-server/src/handlers/memory/inject.rs]
+│   │   ├── list_timeline.rs -> [crates/mcb-server/src/handlers/memory/list_timeline.rs]
+│   │   ├── observation.rs  -> [crates/mcb-server/src/handlers/memory/observation.rs]
+│   │   ├── quality_gate.rs -> [crates/mcb-server/src/handlers/memory/quality_gate.rs]
+│   │   ├── session.rs      -> [crates/mcb-server/src/handlers/memory/session.rs]
+│   │   └── mod.rs
+│   ├── session/            # Session tool handlers
+│   │   ├── common.rs
+│   │   ├── create.rs
+│   │   ├── get.rs
+│   │   ├── handler.rs
+│   │   ├── list.rs
+│   │   ├── summarize.rs
+│   │   ├── update.rs
+│   │   └── mod.rs
+│   ├── vcs/                # VCS tool handlers
+│   │   ├── browse.rs
+│   │   ├── common.rs
+│   │   ├── handler.rs
+│   │   ├── list_branches.rs
+│   │   ├── read_file.rs
+│   │   ├── sync.rs
+│   │   └── mod.rs
 │   └── mod.rs
-├── transport/
-│   ├── http.rs               # HTTP server
-│   ├── session.rs            # Sessions
-│   ├── config.rs             # Transport config
-│   └── versioning.rs         # API versions
+├── hooks/
+├── session/
+├── templates/
 ├── tools/
-│   └── mod.rs                # Tool registry
-├── args.rs                   # CLI arguments
-├── auth.rs                   # Authentication
-├── builder.rs                # Server builder
-├── constants.rs              # Server constants
-├── formatter.rs              # Output formatting
-├── init.rs                   # Initialization
-├── mcp_server.rs             # MCP protocol
-├── main.rs                   # Entry point
-└── lib.rs                    # Crate root
+├── transport/
+├── utils/
+├── auth.rs
+├── builder.rs
+├── constants.rs
+├── error_mapping.rs
+├── formatter.rs
+├── init.rs
+├── mcp_server.rs
+└── lib.rs
 ```
 
-## Key Exports
+## Testing Strategy
 
-```rust
-// Server
-pub use mcp_server::McpServer;
-pub use builder::McpServerBuilder;
-pub use init::run_server;
+- `handlers/` unit tests for each tool
+- Integration tests in `tests/` for full MCP protocol exchange
+- Mocking of application services via traits
 
-// Admin
-pub use admin::{AdminService, HealthResponse};
-```
+## Related Documentation
 
-## Testing
-
-Server tests are located in `crates/mcb-server/tests/`.
-
-## Project Alignment
-
--   **Phase context**: Keep HTTP transport work in lockstep with `docs/context/project-state.md`/`.planning/STATE.md` so Phase 6 Hybrid Search (06-02) and release `release/v0.2.0` remain synchronized.
--   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` describes the layering that this module sits atop, while `docs/context/technical-patterns.md` captures patterns for MCP tooling and provider registration.
--   **Roadmap signals**: Refer to `docs/developer/ROADMAP.md` for the v0.2.0 objectives (git-aware indexing, session memory, advanced browser) and `docs/context/domain-concepts.md` for domain usage.
--   **Operational metrics**: When tools or admin handlers change, reflect the counts in `docs/operations/CHANGELOG.md` and `docs/operations/CI_OPTIMIZATION_VALIDATION.md` so the documentation and tests stay aligned.
+- **MCP Protocol**: [MCP Specification](https://modelcontextprotocol.io)
+- **Tool Specification**: [MCP_TOOLS.md](../MCP_TOOLS.md)
+- **Admin API**: [admin.md](./admin.md)
+- **Transport**: [stdio, http]
+- **Handlers**: Internal mapping to use-case modules in `mcb-infrastructure`
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+### Updated 2026-02-20 - Corrected stale structure; added Source links to handlers; verified against actual `mcb-server` layout (v0.2.1)

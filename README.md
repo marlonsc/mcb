@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.92%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-[![Version](https://img.shields.io/badge/version-0.2.0-green)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
+[![Version](https://img.shields.io/badge/version-0.3.1-green)](https://github.com/marlonsc/mcb/releases)
 
 **Memory Context Browser** (MCB) is a high-performance [MCP](https://modelcontextprotocol.io/) server
 that gives AI coding agents persistent memory, semantic code search, and deep codebase
@@ -13,9 +13,9 @@ understanding — all through the standard Model Context Protocol.
 
 - 🔍 **Semantic Code Search** — Natural language queries over indexed codebases using vector embeddings
 - 🧠 **Persistent Memory** — Cross-session observation storage with timeline, tagging, and context injection
-- 🏗️ **Multi-Provider Architecture** — 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed) and 5 vector stores (Milvus, EdgeVec)
+- 🏗️ **Multi-Provider Architecture** — 6 embedding providers (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic) and 5 vector stores (Milvus, EdgeVec, Qdrant, Pinecone, Encrypted)
 - 🌳 **AST-Aware Analysis** — Tree-sitter parsing for 14 languages (Rust, Python, JS/TS, Go, Java, C/C++/C#, Ruby, PHP, Swift, Kotlin)
-- ✅ **Architecture Validation** — Built-in Clean Architecture rule enforcement (9 rules, 7 phases, 3,143+ tests)
+- ✅ **Architecture Validation** — Built-in Clean Architecture rule enforcement through `mcb-validate`
 - 🔌 **MCP Protocol Native** — Seamless integration with Claude Desktop, Claude Code, and any MCP-compatible client
 - 🔒 **Git-Aware Indexing** — Repository-level context with branch comparison and impact analysis
 
@@ -34,7 +34,7 @@ git clone https://github.com/marlonsc/mcb.git
 cd mcb
 
 # Build release binary
-make build-release
+make build RELEASE=1
 
 # Install as a systemd user service
 make install
@@ -74,18 +74,19 @@ Add to your `claude_desktop_config.json`:
 
 ## MCP Tools
 
-MCB exposes 8 tools through the MCP protocol:
+MCB exposes 24 public tool names through the MCP protocol, grouped into 9 operation families:
 
-| Tool | Description | Status |
-|------|-------------|--------|
-| `mcb_index` | Index codebases for semantic search (start, status, clear) | ✅ Stable |
-| `mcb_search` | Semantic search across code and memory | ✅ Stable |
-| `mcb_memory` | Store, retrieve, and query persistent observations | ✅ Stable |
-| `mcb_validate` | Architecture validation and complexity analysis | ✅ Stable |
-| `mcb_vcs` | Git operations — repo indexing, branch comparison, impact analysis | ✅ Stable |
-| `mcb_session` | Session lifecycle management and summaries | ✅ Stable |
-| `mcb_agent` | Agent activity logging and tracking | ✅ Stable |
-| `mcb_project` | Project workflow management (phases, issues, decisions) | 🚧 Preview |
+| Family | Public tools | Status |
+| ------ | ------------- | -------- |
+| Search | `search_code`, `search_memory` | ✅ Stable |
+| Index | `index_repo`, `index_status`, `clear_index` | ✅ Stable |
+| Validate | `validate_code`, `analyze_code`, `list_rules` | ✅ Stable |
+| Memory | `store_memory`, `get_memories`, `list_memories`, `memory_timeline`, `inject_context` | ✅ Stable |
+| Session | `start_session`, `get_session`, `list_sessions`, `summarize_session` | ✅ Stable |
+| Agent | `log_tool_call`, `log_delegation` | ✅ Stable |
+| VCS | `list_repos`, `compare_branches`, `analyze_impact` | ✅ Stable |
+| Project | `project` | ✅ Stable |
+| Entity | `entity` | ✅ Stable |
 
 See [MCP Tools Documentation](./docs/MCP_TOOLS.md) for full schemas and examples.
 
@@ -101,22 +102,22 @@ MCB follows **Clean Architecture** with strict inward-only dependency flow:
 │              mcb-infrastructure                  │
 │        (DI, config, cache, logging)              │
 ├─────────────────────────────────────────────────┤
-│              mcb-application                     │
-│          (use cases, orchestration)              │
-├─────────────────────────────────────────────────┤
 │                mcb-domain                        │
 │         (entities, ports, errors)                │
+├─────────────────────────────────────────────────┤
+│                mcb-utils                         │
+│      (constants, utilities, helpers)             │
 └─────────────────────────────────────────────────┘
          ▲                        ▲
     mcb-providers            mcb-validate
   (embeddings, stores)    (architecture rules)
 ```
 
-8 workspace crates enforce layer boundaries at compile time via
+7 workspace crates enforce layer boundaries at compile time via
 [linkme](https://crates.io/crates/linkme) provider registration (zero runtime overhead).
 
 See [Architecture Documentation](./docs/architecture/ARCHITECTURE.md) for detailed design
-and [ADR index](./docs/adr/) for all 46 Architecture Decision Records.
+and [ADR index](./docs/adr/) for Architecture Decision Records.
 
 ## Documentation
 
@@ -128,14 +129,14 @@ and [ADR index](./docs/adr/) for all 46 Architecture Decision Records.
 ### Architecture & Design
 
 - [Architecture Overview](./docs/architecture/ARCHITECTURE.md) — Clean Architecture layers, crate map, dependency flow
-- [Architecture Decision Records](./docs/adr/) — 46 ADRs documenting every major design choice
+- [Architecture Decision Records](./docs/adr/) — 52 ADRs documenting every major design choice
 - [MCP Tools Schema](./docs/MCP_TOOLS.md) — Full tool API documentation
 
 ### Developer Guide
 
 - [Contributing](./docs/developer/CONTRIBUTING.md) — Development setup, coding standards, PR process
 - [Roadmap](./docs/developer/ROADMAP.md) — Version plans and feature timeline
-- [Integration Tests](./docs/INTEGRATION_TESTS.md) — Test infrastructure and patterns
+- [Integration Tests](./docs/testing/INTEGRATION_TESTS.md) — Test infrastructure and patterns
 
 ### Operations
 
@@ -146,11 +147,11 @@ and [ADR index](./docs/adr/) for all 46 Architecture Decision Records.
 
 ```bash
 make build          # Debug build
-make build-release  # Optimized release build
-make test           # Run all tests (~2900+)
+make build RELEASE=1  # Optimized release build
+make test           # Run all tests
 make lint           # Clippy + format check
 make validate       # Architecture rule enforcement
-make quality        # Full pipeline: fmt + lint + test + validate
+make check        # Full pipeline: fmt + lint + test + validate
 ```
 
 ### Quality Gates
@@ -164,8 +165,9 @@ All contributions must pass:
 
 ## Planned
 
-- **v0.3.0** — Workflow system: FSM-based task orchestration, context scout, policy enforcement
-- **v0.4.0** — Integrated context: knowledge graph, hybrid search (semantic + BM25), time-travel queries
+- **v0.3.1** — Release stabilization: MCP response consistency, Docker runtime profile, test helper cleanup
+- **v0.4.0** — Workflow system: FSM-based task orchestration, context scout, policy enforcement
+- **v0.5.0** — Integrated context: knowledge graph, hybrid search (semantic + BM25), time-travel queries
 
 See [Roadmap](./docs/developer/ROADMAP.md) for details.
 

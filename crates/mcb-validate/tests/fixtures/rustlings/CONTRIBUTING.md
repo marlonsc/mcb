@@ -6,21 +6,21 @@ First off, thanks for taking the time to contribute! ❤️
 
 I want to …
 
--   *report a bug!* ➡️ [open an issue](#issues)
--   *fix a bug!* ➡️ [open a pull request](#pull-requests)
--   *implement a new feature!* ➡️ [open an issue to discuss it first, then a pull request](#issues)
--   *add an exercise!* ➡️ [read this](#adding-an-exercise)
--   *update an outdated exercise!* ➡️ [open a pull request](#pull-requests)
+- *report a bug!* ➡️ [open an issue](#issues)
+- *fix a bug!* ➡️ [open a pull request](#pull-requests)
+- *implement a new feature!* ➡️ [open an issue to discuss it first, then a pull request](#issues)
+- *add an exercise!* ➡️ [read this](#adding-an-exercise)
+- *update an outdated exercise!* ➡️ [open a pull request](#pull-requests)
 
 ## Issues
 
 You can open an issue [here](https://github.com/rust-lang/rustlings/issues/new).
 If you're reporting a bug, please include the output of the following commands:
 
--   `cargo --version`
--   `rustlings --version`
--   `ls -la`
--   Your OS name and version
+- `cargo --version`
+- `rustlings --version`
+- `ls -la`
+- Your OS name and version
 
 ## Pull Requests
 
@@ -36,13 +36,13 @@ When updating an exercise, check if its solution needs to be updated.
 
 ## Adding An Exercise
 
--   Name the file `exercises/yourTopic/yourTopicN.rs`.
--   Make sure to put in some helpful links, and link to sections of The Book in `exercises/yourTopic/README.md`.
--   In the exercise, add a `// TODO: …` comment where user changes are required.
--   Add a solution at `solutions/yourTopic/yourTopicN.rs` with comments explaining it.
--   Add the [metadata for your exercise](#exercise-metadata) in the `rustlings-macros/info.toml` file.
--   Make sure your exercise runs with `rustlings run yourTopicN`.
--   [Open a pull request](#pull-requests).
+- Name the file `exercises/yourTopic/yourTopicN.rs`.
+- Make sure to put in some helpful links, and link to sections of The Book in `exercises/yourTopic/README.md`.
+- In the exercise, add a `// TODO: …` comment where user changes are required.
+- Add a solution at `solutions/yourTopic/yourTopicN.rs` with comments explaining it.
+- Add the [metadata for your exercise](#exercise-metadata) in the `rustlings-macros/info.toml` file.
+- Make sure your exercise runs with `rustlings run yourTopicN`.
+- [Open a pull request](#pull-requests).
 
 ### Exercise Metadata
 

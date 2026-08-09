@@ -1,39 +1,11 @@
-#!/bin/bash
-# =============================================================================
-# Pre-commit hook - Uses same Makefile verbs as CI
-# =============================================================================
-# Install: make install-hooks
-# Skip: SKIP_PRE_COMMIT=1 git commit ...
-# =============================================================================
-
-set -e
-
-# Allow skipping pre-commit for emergencies
-if [ "${SKIP_PRE_COMMIT:-}" = "1" ]; then
-    echo "⚠️  Pre-commit checks skipped (SKIP_PRE_COMMIT=1)"
-    exit 0
-fi
-
-echo "Running pre-commit checks..."
-
-# =============================================================================
-# Same checks as CI pipeline (fast checks only)
-# =============================================================================
-
-echo "  → Lint (Rust 2024 compliance)..."
-make lint CI_MODE=1
-
-echo "  → Security audit..."
-# Check if cargo-audit is installed, skip if not (CI will catch it)
-if command -v cargo-audit &> /dev/null; then
-    make audit
-else
-    echo "    ⚠️  cargo-audit not installed, skipping (install: cargo install cargo-audit)"
-fi
-
-echo "  → Architecture validation (quick mode)..."
-# Quick validation - skip test discovery for speed
-make validate STRICT=1 QUICK=1 2>/dev/null || make validate STRICT=1
-
-echo ""
-echo "✅ Pre-commit checks passed!"
+#!/usr/bin/env bash
+# Installed by `make setup WHAT=hooks`. Runs the same gates as CI, via the
+# canonical monopoly. No bypass — fix the cause, not the gate (AGENTS.md §3).
+# guard runs in --staged mode so it blocks NEW violations in this commit, not
+# the retroactive baseline; `make guard` (full tree) is the CI/manual scan.
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+echo "→ guard (staged)…";   bash scripts/lib/mcb.sh guard --staged
+echo "→ lint…";             make check WHAT=lint
+echo "→ validate (quick)…"; make check WHAT=validate QUICK=1
+echo "✓ pre-commit passed"

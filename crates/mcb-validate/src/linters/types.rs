@@ -4,12 +4,17 @@
 
 use std::path::PathBuf;
 
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use derive_more::Display;
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
+use mcb_utils::constants::validate::{
+    LINTER_CMD_CARGO, LINTER_CMD_RUFF, SEVERITY_ERROR, SEVERITY_INFO,
+};
 
 /// Unified structure representing a code violation found by any linter.
-#[derive(Debug, Clone, serde::Deserialize, serde::Serialize)]
+#[derive(Debug, Clone, serde::Deserialize, serde::Serialize, Display)]
+#[display("[{rule}] {message}")]
 pub struct LintViolation {
-    /// The rule identifier (e.g., "E501", "clippy::unwrap_used").
+    /// The rule identifier (e.g., "E501", "`clippy::unwrap_used`").
     pub rule: String,
     /// The file path where the violation occurred.
     pub file: String,
@@ -23,7 +28,7 @@ pub struct LintViolation {
     pub severity: String,
     /// The category of the violation (e.g., "style", "correctness").
     pub category: String,
-    /// Cached PathBuf for `Violation::file()` trait method.
+    /// Cached `PathBuf` for `Violation::file()` trait method.
     #[serde(skip)]
     pub file_path_cache: Option<PathBuf>,
 }
@@ -38,39 +43,14 @@ impl LintViolation {
 
     fn parsed_severity(&self) -> Severity {
         match self.severity.to_ascii_lowercase().as_str() {
-            "error" => Severity::Error,
-            "info" => Severity::Info,
+            SEVERITY_ERROR => Severity::Error,
+            SEVERITY_INFO => Severity::Info,
             _ => Severity::Warning,
         }
     }
 
     fn parsed_category(&self) -> ViolationCategory {
-        match self.category.to_ascii_lowercase().as_str() {
-            "architecture" | "clean-architecture" => ViolationCategory::Architecture,
-            "quality" | "duplication" | "metrics" => ViolationCategory::Quality,
-            "organization" => ViolationCategory::Organization,
-            "solid" => ViolationCategory::Solid,
-            "di" => ViolationCategory::DependencyInjection,
-            "configuration" => ViolationCategory::Configuration,
-            "web-framework" => ViolationCategory::WebFramework,
-            "performance" => ViolationCategory::Performance,
-            "async" => ViolationCategory::Async,
-            "documentation" => ViolationCategory::Documentation,
-            "testing" => ViolationCategory::Testing,
-            "naming" => ViolationCategory::Naming,
-            "kiss" => ViolationCategory::Kiss,
-            "refactoring" | "migration" => ViolationCategory::Refactoring,
-            "error_boundary" => ViolationCategory::ErrorBoundary,
-            "implementation" => ViolationCategory::Implementation,
-            "pmat" => ViolationCategory::Pmat,
-            _ => ViolationCategory::Quality,
-        }
-    }
-}
-
-impl std::fmt::Display for LintViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}] {}", self.rule, self.message)
+        self.category.parse().unwrap_or(ViolationCategory::Quality)
     }
 }
 
@@ -111,14 +91,16 @@ pub enum LinterType {
 
 impl LinterType {
     /// Returns the executable command name for the linter.
+    #[must_use]
     pub fn command(&self) -> &'static str {
         match self {
-            LinterType::Ruff => "ruff",
-            LinterType::Clippy => "cargo",
+            LinterType::Ruff => LINTER_CMD_RUFF,
+            LinterType::Clippy => LINTER_CMD_CARGO,
         }
     }
 
     /// Returns the file extension targeted by this linter.
+    #[must_use]
     pub fn supported_extension(&self) -> &'static str {
         match self {
             LinterType::Ruff => "py",
@@ -127,31 +109,36 @@ impl LinterType {
     }
 
     /// Checks if a file extension matches the linter's target type.
+    #[must_use]
     pub fn matches_extension(&self, ext: Option<&str>) -> bool {
         ext == Some(self.supported_extension())
     }
 
     /// Generates the command-line arguments for running the linter on specific files.
+    #[must_use]
     pub fn args(&self, files: &[&std::path::Path]) -> Vec<String> {
         match self {
             LinterType::Ruff => {
-                let mut args = vec!["check".to_string(), "--output-format=json".to_string()];
+                let mut args = vec!["check".to_owned(), "--output-format=json".to_owned()];
                 for file in files {
-                    args.push(file.to_string_lossy().to_string());
+                    if let Some(file_str) = file.to_str() {
+                        args.push(file_str.to_owned());
+                    }
                 }
                 args
             }
             LinterType::Clippy => {
                 vec![
-                    "clippy".to_string(),
-                    "--message-format=json".to_string(),
-                    "--".to_string(),
+                    "clippy".to_owned(),
+                    "--message-format=json".to_owned(),
+                    "--".to_owned(),
                 ]
             }
         }
     }
 
     /// Parses the raw stdout output from the linter into a unified violation list.
+    #[must_use]
     pub fn parse_output(&self, output: &str) -> Vec<LintViolation> {
         match self {
             LinterType::Ruff => crate::linters::parsers::parse_ruff_output(output),
@@ -207,7 +194,7 @@ pub struct ClippyMessageContent {
 /// Code identifier info for a Clippy message.
 #[derive(serde::Deserialize)]
 pub struct ClippyCode {
-    /// The string identifier (e.g., "clippy::unwrap_used").
+    /// The string identifier (e.g., "`clippy::unwrap_used`").
     pub code: String,
     /// Optional explanation of the code.
     pub explanation: Option<String>,

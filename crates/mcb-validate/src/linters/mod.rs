@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Linter Integration Module
 //!
 //! Integrates external linters (Ruff, Clippy) as first-layer validation

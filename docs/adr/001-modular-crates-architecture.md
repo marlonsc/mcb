@@ -1,4 +1,6 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
+<!-- markdownlint-disable MD025 -->
 adr: 1
 title: Modular Crates Architecture
 status: IMPLEMENTED
@@ -10,35 +12,52 @@ superseded_by: []
 implementation_status: Complete
 ---
 
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 ## ADR 001: Modular Crates Architecture
+
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
 
 ## Status
 
 **Implemented** (v0.1.1)
 
-> Fully implemented with Clean Architecture + Shaku DI across 8 crates.
+> Fully implemented with Clean Architecture + linkme + Handle DI across 6 crates.
 
 ## Context
 
-Initially, the Memory Context Browser had a monolithic architecture. As the project grew, the need for better code organization, separation of concerns, and component reusability emerged. We evaluated adopting a modular architecture by dividing the system into multiple Rust crates, each responsible for a specific domain or functionality (e.g., core server crate, context providers crate, inter-module communication crate, etc.). We also considered how to manage the orderly initialization and shutdown of modules in a resilient manner.
+Initially, the Memory Context Browser had a monolithic architecture. As the
+project grew, the need for better code organization, separation of concerns, and
+component reusability emerged. We evaluated adopting a modular architecture by
+dividing the system into multiple Rust crates, each responsible for a specific
+domain or functionality (e.g., core server crate, context providers crate,
+inter-module communication crate, etc.). We also considered how to manage the
+orderly initialization and shutdown of modules in a resilient manner.
 
 ## Decision
 
-We opted for a modular architecture based on crates, where the project is divided into independent sub-modules compiled separately. Each crate encapsulates specific services and logics (e.g., core server crate, providers crate, EventBus crate, etc.), but all operate in an integrated manner. To coordinate the lifecycle of modules, we introduced a central component called ServiceManager responsible for registering, initializing, and maintaining references to all services (from each crate) running. Similarly, we implemented a graceful shutdown mechanism via ShutdownCoordinator, which orchestrates the termination of each service in the correct order when the application is shut down, ensuring resource release (threads, connections) in a safe manner.
+We opted for a modular architecture based on crates, where the project is
+divided into independent sub-modules compiled separately. Each crate
+encapsulates specific services and logics (e.g., core server crate, providers
+crate, EventBus crate, etc.), but all operate in an integrated manner. To
+coordinate the lifecycle of modules, we introduced a central component called
+an AppContext composition root (ADR-050) responsible for composing,
+initializing, and resolving all services across crates. Providers register via
+linkme distributed slices (ADR-023) for compile-time auto-discovery, and
+`init_app()` wires them into the application at startup in mcb-infrastructure.
 
 ## Implementation
 
-### Port Trait Definition (mcb-application)
+### Port Trait Definition (mcb-domain)
 
-Ports are defined as traits extending `shaku::Interface` for DI compatibility:
+Ports are defined as traits in `mcb-domain/src/ports/` with `Send + Sync` bounds:
 
 ```rust
-// crates/mcb-application/src/ports/providers/embedding.rs
-use shaku::Interface;
+// crates/mcb-domain/src/ports/providers/embedding.rs
 use async_trait::async_trait;
 
 #[async_trait]
-pub trait EmbeddingProvider: Interface + Send + Sync {
+pub trait EmbeddingProvider: Send + Sync {
     async fn embed(&self, text: &str) -> Result<Embedding>;
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>>;
     fn dimensions(&self) -> usize;
@@ -48,86 +67,73 @@ pub trait EmbeddingProvider: Interface + Send + Sync {
 
 Important: All port traits must:
 
--   Extend `shaku::Interface` (which implies `'static + Send + Sync` with thread_safe feature)
--   Be object-safe (no generic methods, no `Self` returns)
--   Use `async_trait` for async methods
+- Be `Send + Sync` for multi-threaded async usage
+- Be object-safe (no generic methods, no `Self` returns)
+- Use `async_trait` for async methods
 
 ### Provider Implementation (mcb-providers)
 
-Providers implement ports and are registered as Shaku components:
+Providers implement port traits and register via linkme distributed slices:
 
 ```rust
-// crates/mcb-providers/src/embedding/openai.rs
-use shaku::Component;
+// crates/mcb-providers/src/embedding/ollama.rs
 use mcb_domain::ports::providers::EmbeddingProvider;
 
-#[derive(Component)]
-#[shaku(interface = EmbeddingProvider)]
-pub struct OpenAIEmbeddingProvider {
-    #[shaku(default)]
-    api_key: String,
-    #[shaku(default)]
+pub struct OllamaEmbeddingProvider {
+    api_url: String,
     model: String,
-    #[shaku(default)]
     client: reqwest::Client,
 }
 
 #[async_trait]
-impl EmbeddingProvider for OpenAIEmbeddingProvider {
+impl EmbeddingProvider for OllamaEmbeddingProvider {
     async fn embed(&self, text: &str) -> Result<Embedding> {
-        // OpenAI API call implementation
+        // Ollama API call implementation
     }
 
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
         // Batch embedding implementation
     }
 
-    fn dimensions(&self) -> usize { 1536 }
-    fn provider_name(&self) -> &str { "openai" }
+    fn dimensions(&self) -> usize { self.model_dimensions }
+    fn provider_name(&self) -> &str { "ollama" }
 }
 ```
 
-### Null Provider for Testing
+### Default Provider (FastEmbed)
 
 ```rust
-// crates/mcb-providers/src/embedding/null.rs
-use shaku::Component;
+// crates/mcb-providers/src/embedding/fastembed.rs
 use mcb_domain::ports::providers::EmbeddingProvider;
 
-#[derive(Component)]
-#[shaku(interface = EmbeddingProvider)]
-pub struct NullEmbeddingProvider;
+pub struct FastEmbedProvider { /* ... */ }
 
 #[async_trait]
-impl EmbeddingProvider for NullEmbeddingProvider {
-    async fn embed(&self, _text: &str) -> Result<Embedding> {
-        Ok(Embedding::zeros(128))
+impl EmbeddingProvider for FastEmbedProvider {
+    async fn embed(&self, text: &str) -> Result<Embedding> {
+        // Real embedding via fastembed
     }
 
     async fn embed_batch(&self, texts: &[String]) -> Result<Vec<Embedding>> {
-        Ok(texts.iter().map(|_| Embedding::zeros(128)).collect())
+        // Batch embedding via fastembed
     }
 
-    fn dimensions(&self) -> usize { 128 }
-    fn provider_name(&self) -> &str { "null" }
+    fn dimensions(&self) -> usize { self.model_dimensions }
+    fn provider_name(&self) -> &str { "fastembed" }
 }
 ```
 
-### DI Module Registration (mcb-infrastructure)
+### DI Provider Registration (mcb-providers)
 
-Shaku modules register components for DI:
+Providers register via linkme distributed slices for compile-time auto-discovery:
 
 ```rust
-// crates/mcb-infrastructure/src/di/modules/embedding_module.rs
-use shaku::module;
-use mcb_providers::embedding::NullEmbeddingProvider;
-
-module! {
-    pub EmbeddingModuleImpl {
-        components = [NullEmbeddingProvider],
-        providers = []
-    }
-}
+// crates/mcb-providers/src/embedding/fastembed.rs
+register_embedding_provider!(
+    fastembed_factory, config, FASTEMBED_ENTRY,
+    "fastembed", "Local FastEmbed embedding provider",
+    { Ok(Arc::new(FastEmbedProvider::from_config(config)?)) }
+);
 ```
 
 ### Service Layer with Injected Dependencies (mcb-application)
@@ -152,7 +158,11 @@ impl ContextService {
         Self { embedding_provider, vector_store_provider }
     }
 
-    pub async fn embed_and_store(&self, collection: &str, texts: &[String]) -> Result<()> {
+    pub async fn embed_and_store(
+        &self,
+        collection: &str,
+        texts: &[String],
+    ) -> Result<()> {
         let embeddings = self.embedding_provider.embed_batch(texts).await?;
         self.vector_store_provider.store(collection, &embeddings).await?;
         Ok(())
@@ -164,23 +174,21 @@ impl ContextService {
 
 The system uses a two-layer approach for DI (see [ADR-012](012-di-strategy-two-layer-approach.md)):
 
-**Layer 1: Shaku Modules** - Provide null implementations as defaults for testing:
+**Layer 1: linkme Distributed Slices** - Compile-time auto-discovery of providers:
 
 ```rust
-// Testing with Shaku modules (null providers) — HISTORICAL; DI is now dill (ADR-029)
-let container = DiContainerBuilder::new().build().await?;
-// Uses NullEmbeddingProvider, NullVectorStoreProvider, etc.
+// Providers register via distributed_slice — DI resolves by config
+// (legacy details in ADR-029, superseded by ADR-050)
+let resolver = EmbeddingProviderResolver::new(config);
+let provider = resolver.resolve_from_config()?;
+// Defaults to FastEmbedProvider when no config override
 ```
 
-**Layer 2: Runtime Factories** - Create production providers from configuration:
+**Layer 2: AppContext composition root** - manual composition root composes services from resolved providers:
 
 ```rust
-// Production with factories
-let embedding = EmbeddingProviderFactory::create(&config.embedding, None)?;
-let vector_store = VectorStoreProviderFactory::create(&config.vector_store, crypto)?;
-let services = DomainServicesFactory::create_services(
-    cache, crypto, config, embedding, vector_store, chunker
-).await?;
+// mcb-infrastructure/src/di/bootstrap.rs — AppContext manual composition root (ADR-050)
+let app_context = init_app(config).await?;
 ```
 
 ### Testing Pattern
@@ -190,13 +198,13 @@ let services = DomainServicesFactory::create_services(
 mod tests {
     use super::*;
     use std::sync::Arc;
-    use mcb_providers::embedding::NullEmbeddingProvider;
-    use mcb_providers::vector_store::NullVectorStoreProvider;
+    use mcb_providers::embedding::FastEmbedProvider;
+    use mcb_providers::vector_store::EdgeVecVectorStoreProvider;
 
     #[tokio::test]
-    async fn test_context_service_with_null_providers() {
-        let embedding_provider = Arc::new(NullEmbeddingProvider);
-        let vector_store_provider = Arc::new(NullVectorStoreProvider);
+    async fn test_context_service_with_default_providers() {
+        let embedding_provider = Arc::new(FastEmbedProvider::default());
+        let vector_store_provider = Arc::new(EdgeVecVectorStoreProvider::default());
 
         let service = ContextService::new(embedding_provider, vector_store_provider);
 
@@ -208,24 +216,33 @@ mod tests {
 
 ## Consequences
 
-This change to multiple crates improved code maintainability and scalability. Developers can evolve modules in isolation and even publish reusable crates. The modular architecture also facilitates unit testing and integration testing focused per module. On the other hand, it added complexity in managing versions between internal crates and required an orchestration layer (ServiceManager/ShutdownCoordinator) to coordinate dependencies and initialization order. These additional structures increase robustness at the cost of a small coordination overhead. Overall, the decision aligned with the goal of a pluggable and extensible design, allowing inclusion or removal of functionalities (crates) without significantly impacting the rest of the system.
+This change to multiple crates improved code maintainability and scalability.
+Developers can evolve modules in isolation and even publish reusable crates. The
+modular architecture also facilitates unit testing and integration testing
+focused per module. On the other hand, it added complexity in managing versions
+between internal crates and required an orchestration layer
+(AppContext composition root + linkme registry) to coordinate dependencies and
+initialization order. These additional structures increase robustness at the cost
+of a small coordination overhead. Overall, the decision aligned with the goal of
+a pluggable and extensible design, allowing inclusion or removal of
+functionalities (crates) without significantly impacting the rest of the system.
 
 ## Crate Structure
 
-```
+```text
 crates/
 ├── mcb/                 # Facade crate (re-exports public API)
 ├── mcb-domain/          # Layer 1: Entities, ports (traits), errors
 ├── mcb-application/     # Layer 2: Use cases, services orchestration
 ├── mcb-providers/       # Layer 3: Provider implementations (embedding, vector stores)
-├── mcb-infrastructure/  # Layer 4: DI, config, cache, crypto, health, logging
+├── mcb-infrastructure/  # Layer 4: DI, config, cache, crypto, health, logging <!-- markdownlint-disable-line MD013 -->
 ├── mcb-server/          # Layer 5: MCP protocol, handlers, transport
 └── mcb-validate/        # Dev tooling: architecture validation rules
 ```
 
 **Dependency Direction** (inward only):
 
-```
+```text
 mcb-server → mcb-infrastructure → mcb-application → mcb-domain
                     ↓
               mcb-providers
@@ -233,7 +250,8 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 
 ## Related ADRs
 
--   [ADR-002: Dependency Injection with Shaku](002-dependency-injection-shaku.md)
--   [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md)
--   [ADR-004: Event Bus (Local and Distributed)](004-event-bus-local-distributed.md)
--   [ADR-005: Context Cache Support (Moka and Redis)](005-context-cache-support.md)
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md)
+- [ADR-029: Hexagonal Architecture](archive/superseded-029-hexagonal-architecture-dill.md) (superseded by ADR-050)
+- [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md)
+- [ADR-004: Event Bus (Local and Distributed)](archive/superseded-004-event-bus-local-distributed.md)
+- [ADR-005: Context Cache Support (Moka and Redis)](005-context-cache-support.md)

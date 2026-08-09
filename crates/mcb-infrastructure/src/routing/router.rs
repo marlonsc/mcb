@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/infrastructure.md](../../../../docs/modules/infrastructure.md)
+//!
 //! Provider Router Implementations
 //!
 //! Provides routing logic for selecting providers based on health and context.
@@ -7,9 +10,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::error::{Error, Result};
-use mcb_domain::ports::infrastructure::routing::{
-    ProviderContext, ProviderHealthStatus, ProviderRouter,
-};
+use mcb_domain::ports::{ProviderContext, ProviderHealthStatus, ProviderRouter};
 
 use super::health::HealthMonitor;
 
@@ -42,48 +43,45 @@ impl DefaultProviderRouter {
         }
     }
 
-    /// Select the best provider from a list based on health and preferences
-    fn select_best_provider(
-        &self,
-        providers: &[String],
+    fn filter_available_providers<'a>(
+        providers: &'a [String],
         context: &ProviderContext,
-    ) -> Result<String> {
-        // Filter out excluded providers
-        let available: Vec<_> = providers
+    ) -> Vec<&'a String> {
+        providers
             .iter()
-            .filter(|p| !context.excluded_providers.contains(p))
-            .collect();
+            .filter(|p| !context.excluded_providers.contains(*p))
+            .collect()
+    }
 
-        if available.is_empty() {
-            return Err(Error::infrastructure(
-                "No providers available after exclusions",
-            ));
-        }
-
-        // Try preferred providers first (if healthy)
-        // Note: clone is necessary here as we return an owned String from a reference
+    fn find_preferred_provider<'a>(
+        &self,
+        available: &[&'a String],
+        context: &ProviderContext,
+    ) -> Option<&'a String> {
         for preferred in &context.preferred_providers {
-            if available.contains(&preferred) {
+            if let Some(&p) = available.iter().find(|&&x| x == preferred) {
                 let health = self.health_monitor.get_health(preferred);
                 if health != ProviderHealthStatus::Unhealthy {
-                    return Ok(preferred.to_owned());
+                    return Some(p);
                 }
             }
         }
+        None
+    }
 
-        // Find the healthiest available provider
-        let mut best_provider: Option<&String> = None;
+    fn find_healthiest_provider<'a>(&self, available: &[&'a String]) -> Option<&'a String> {
+        let mut best_provider: Option<&&String> = None;
         let mut best_health = ProviderHealthStatus::Unhealthy;
 
-        for provider in &available {
+        for provider in available {
             let health = self.health_monitor.get_health(provider);
 
-            // Prefer healthy over degraded over unhealthy
             let is_better = match (health, best_health) {
                 (ProviderHealthStatus::Healthy, _) => best_health != ProviderHealthStatus::Healthy,
                 (ProviderHealthStatus::Degraded, ProviderHealthStatus::Unhealthy) => true,
-                (ProviderHealthStatus::Degraded, _) => best_provider.is_none(),
-                (ProviderHealthStatus::Unhealthy, _) => best_provider.is_none(),
+                (ProviderHealthStatus::Degraded | ProviderHealthStatus::Unhealthy, _) => {
+                    best_provider.is_none()
+                }
             };
 
             if is_better {
@@ -92,9 +90,33 @@ impl DefaultProviderRouter {
             }
         }
 
-        best_provider
+        best_provider.copied()
+    }
+
+    /// Select the best provider from a list based on health and preferences
+    fn select_best_provider(
+        &self,
+        providers: &[String],
+        context: &ProviderContext,
+    ) -> Result<String> {
+        let available = Self::filter_available_providers(providers, context);
+
+        if available.is_empty() {
+            return Err(Error::infrastructure(
+                "No providers available after exclusions",
+            ));
+        }
+
+        if let Some(preferred) = self.find_preferred_provider(&available, context) {
+            return Ok(preferred.to_owned());
+        }
+
+        let best = self
+            .find_healthiest_provider(&available)
             .cloned()
-            .ok_or_else(|| Error::infrastructure("No healthy providers available"))
+            .ok_or_else(|| Error::infrastructure("No healthy providers available"))?;
+
+        Ok(best.clone())
     }
 }
 
@@ -128,17 +150,20 @@ impl ProviderRouter for DefaultProviderRouter {
 
     async fn get_stats(&self) -> HashMap<String, serde_json::Value> {
         let mut stats = HashMap::new();
-        stats.insert("provider".to_string(), serde_json::json!("default"));
         stats.insert(
-            "embedding_providers".to_string(),
+            "provider".to_owned(),
+            serde_json::json!(mcb_utils::constants::DEFAULT_NAMESPACE),
+        );
+        stats.insert(
+            "embedding_providers".to_owned(),
             serde_json::json!(self.embedding_providers),
         );
         stats.insert(
-            "vector_store_providers".to_string(),
+            "vector_store_providers".to_owned(),
             serde_json::json!(self.vector_store_providers),
         );
         stats.insert(
-            "health_summary".to_string(),
+            "health_summary".to_owned(),
             serde_json::json!(self.health_monitor.get_all_health()),
         );
         stats

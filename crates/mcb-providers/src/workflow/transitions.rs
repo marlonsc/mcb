@@ -1,131 +1,152 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! FSM transition logic and state validation rules for ADR-034 Workflow.
 //!
 //! Implements the state machine rules that govern valid transitions
 //! and side effects for the 8-state workflow model.
 
 use mcb_domain::entities::{TransitionTrigger, WorkflowSession, WorkflowState};
+use mcb_utils::constants::FALLBACK_UNKNOWN;
 
 type Result<T> = std::result::Result<T, String>;
 
 /// Apply a transition trigger to a workflow session, validating FSM rules.
 ///
 /// Returns the target state if transition is valid, error otherwise.
+///
+/// # Errors
+///
+/// Returns an error string if the transition is not valid from the current state.
 pub fn apply_transition(
     session: &mut WorkflowSession,
-    trigger: TransitionTrigger,
+    trigger: &TransitionTrigger,
 ) -> Result<WorkflowState> {
-    let new_state = match (&session.current_state, &trigger) {
-        // Initializing → Ready (must have context)
+    // Terminal state — no transitions allowed
+    if matches!(session.current_state, WorkflowState::Completed) {
+        return Err("Cannot transition from terminal state Completed".to_owned());
+    }
+
+    // Global error transition: any state → Failed
+    if let TransitionTrigger::Error { message } = trigger {
+        return Ok(WorkflowState::Failed {
+            error: message.clone(),
+            recoverable: true,
+        });
+    }
+
+    resolve_transition(&session.current_state, trigger)
+}
+
+/// Resolve a non-error, non-terminal transition.
+fn resolve_transition(state: &WorkflowState, trigger: &TransitionTrigger) -> Result<WorkflowState> {
+    match (state, trigger) {
+        // Initializing → Ready
         (WorkflowState::Initializing, TransitionTrigger::ContextDiscovered { context_id }) => {
-            WorkflowState::Ready {
+            Ok(WorkflowState::Ready {
                 context_id: context_id.clone(),
-            }
+            })
         }
 
-        // Ready → Planning
-        (WorkflowState::Ready { .. }, TransitionTrigger::StartPlanning { phase_id }) => {
-            WorkflowState::Planning {
-                phase_id: phase_id.clone(),
-            }
-        }
+        // Ready | PhaseComplete → Planning
+        (
+            WorkflowState::Ready { .. } | WorkflowState::PhaseComplete { .. },
+            TransitionTrigger::StartPlanning { phase_id },
+        ) => Ok(WorkflowState::Planning {
+            phase_id: phase_id.clone(),
+        }),
 
-        // Ready → Executing (skip planning)
-        (WorkflowState::Ready { .. }, TransitionTrigger::StartExecution { phase_id }) => {
-            WorkflowState::Executing {
-                phase_id: phase_id.clone(),
-                task_id: None,
-            }
-        }
-
-        // Planning → Executing
-        (WorkflowState::Planning { phase_id }, TransitionTrigger::StartExecution { .. }) => {
-            WorkflowState::Executing {
-                phase_id: phase_id.clone(),
-                task_id: None,
-            }
-        }
-
-        // Executing → Executing (claim task)
-        (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::ClaimTask { task_id }) => {
-            WorkflowState::Executing {
-                phase_id: phase_id.clone(),
-                task_id: Some(task_id.clone()),
-            }
-        }
-
-        // Executing → Executing (complete task, clear task_id)
-        (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::CompleteTask { .. }) => {
-            WorkflowState::Executing {
-                phase_id: phase_id.clone(),
-                task_id: None,
-            }
+        // → Executing (from Ready, Planning, Executing, Verifying)
+        (state, trigger) if is_executing_transition(state, trigger) => {
+            Ok(resolve_executing_state(state, trigger))
         }
 
         // Executing → Verifying
         (WorkflowState::Executing { phase_id, .. }, TransitionTrigger::StartVerification) => {
-            WorkflowState::Verifying {
+            Ok(WorkflowState::Verifying {
                 phase_id: phase_id.clone(),
-            }
+            })
         }
 
-        // Verifying → PhaseComplete (verification passed)
+        _ => resolve_verification_transition(state, trigger),
+    }
+}
+
+/// Resolve verification, completion, and recovery transitions (latter half of the FSM).
+fn resolve_verification_transition(
+    state: &WorkflowState,
+    trigger: &TransitionTrigger,
+) -> Result<WorkflowState> {
+    match (state, trigger) {
+        // Verifying → PhaseComplete
         (WorkflowState::Verifying { phase_id }, TransitionTrigger::VerificationPassed) => {
-            WorkflowState::PhaseComplete {
+            Ok(WorkflowState::PhaseComplete {
                 phase_id: phase_id.clone(),
-            }
+            })
         }
 
-        // Verifying → Executing (verification failed, retry)
-        (WorkflowState::Verifying { phase_id }, TransitionTrigger::VerificationFailed { .. }) => {
-            WorkflowState::Executing {
-                phase_id: phase_id.clone(),
-                task_id: None,
-            }
-        }
-
-        // PhaseComplete → Planning (start next phase)
-        (WorkflowState::PhaseComplete { .. }, TransitionTrigger::StartPlanning { phase_id }) => {
-            WorkflowState::Planning {
-                phase_id: phase_id.clone(),
-            }
-        }
-
-        // PhaseComplete → Completed
-        (WorkflowState::PhaseComplete { .. }, TransitionTrigger::EndSession) => {
-            WorkflowState::Completed
-        }
-
-        // Any state → Failed (error trigger)
-        (_, TransitionTrigger::Error { message }) => WorkflowState::Failed {
-            error: message.clone(),
-            recoverable: true,
-        },
+        // PhaseComplete | Failed → Completed
+        (
+            WorkflowState::PhaseComplete { .. } | WorkflowState::Failed { .. },
+            TransitionTrigger::EndSession,
+        ) => Ok(WorkflowState::Completed),
 
         // Failed → Executing (recovery)
         (WorkflowState::Failed { .. }, TransitionTrigger::Recover) => {
-            // Return to last known good executing state
-            WorkflowState::Executing {
-                phase_id: "unknown".to_string(),
+            Ok(WorkflowState::Executing {
+                phase_id: FALLBACK_UNKNOWN.to_owned(),
                 task_id: None,
-            }
-        }
-
-        // Failed → Completed (give up)
-        (WorkflowState::Failed { .. }, TransitionTrigger::EndSession) => WorkflowState::Completed,
-
-        // Completed → (no transitions allowed)
-        (WorkflowState::Completed, _) => {
-            return Err("Cannot transition from terminal state Completed".to_string());
+            })
         }
 
         // Invalid transition
-        (from, trigger) => {
-            return Err(format!(
-                "Invalid FSM transition: {} + {} not allowed",
-                from, trigger
-            ));
-        }
+        (from, trigger) => Err(format!(
+            "Invalid FSM transition: {from} + {trigger} not allowed"
+        )),
+    }
+}
+
+/// Check if this is a transition that results in `Executing` state.
+fn is_executing_transition(state: &WorkflowState, trigger: &TransitionTrigger) -> bool {
+    matches!(
+        (state, trigger),
+        (
+            WorkflowState::Ready { .. },
+            TransitionTrigger::StartExecution { .. }
+        ) | (
+            WorkflowState::Planning { .. },
+            TransitionTrigger::StartExecution { .. }
+        ) | (
+            WorkflowState::Executing { .. },
+            TransitionTrigger::CompleteTask { .. }
+        ) | (
+            WorkflowState::Executing { .. },
+            TransitionTrigger::ClaimTask { .. }
+        ) | (
+            WorkflowState::Verifying { .. },
+            TransitionTrigger::VerificationFailed { .. }
+        )
+    )
+}
+
+/// Resolve the specific `Executing` variant based on the trigger.
+fn resolve_executing_state(state: &WorkflowState, trigger: &TransitionTrigger) -> WorkflowState {
+    let phase_id = match (state, trigger) {
+        (_, TransitionTrigger::StartExecution { phase_id })
+        | (
+            WorkflowState::Executing { phase_id, .. }
+            | WorkflowState::Planning { phase_id }
+            | WorkflowState::Verifying { phase_id },
+            _,
+        ) => phase_id.clone(),
+        _ => FALLBACK_UNKNOWN.to_owned(),
     };
 
-    Ok(new_state)
+    let task_id = if let TransitionTrigger::ClaimTask { task_id } = trigger {
+        Some(task_id.clone())
+    } else {
+        None
+    };
+
+    WorkflowState::Executing { phase_id, task_id }
 }

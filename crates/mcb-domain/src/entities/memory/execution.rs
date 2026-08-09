@@ -1,46 +1,25 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
 use serde::{Deserialize, Serialize};
+use serde_with::skip_serializing_none;
 
-/// Type of execution or command that was run.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
-pub enum ExecutionType {
-    /// Test execution.
-    Test,
-    /// Linting execution.
-    Lint,
-    /// Build execution.
-    Build,
-    /// Continuous integration execution.
-    CI,
-}
-
-impl ExecutionType {
-    /// Returns the string representation of the execution type.
-    #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Test => "test",
-            Self::Lint => "lint",
-            Self::Build => "build",
-            Self::CI => "ci",
-        }
-    }
-}
-
-impl std::str::FromStr for ExecutionType {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s.to_lowercase().as_str() {
-            "test" => Ok(Self::Test),
-            "lint" => Ok(Self::Lint),
-            "build" => Ok(Self::Build),
-            "ci" => Ok(Self::CI),
-            _ => Err(format!("Unknown execution type: {s}")),
-        }
+crate::define_string_enum! {
+    /// Type of execution or command that was run.
+    pub enum ExecutionType [strum = "lowercase"] {
+        /// Test execution.
+        Test,
+        /// Linting execution.
+        Lint,
+        /// Build execution.
+        Build,
+        /// Continuous integration execution.
+        CI,
     }
 }
 
 /// Metadata about an execution event (test, lint, build, or CI).
+#[skip_serializing_none]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExecutionMetadata {
     /// Unique identifier for the execution event.

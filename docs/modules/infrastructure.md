@@ -1,153 +1,81 @@
-# infrastructure Module
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+# Infrastructure Layer
 
 **Source**: `crates/mcb-infrastructure/src/`
 **Crate**: `mcb-infrastructure`
-**Files**: 40+
-**Lines of Code**: ~6,000
 
-**Project links**: `docs/context/technical-patterns.md` (DI/provider patterns), `docs/context/project-state.md` (phase progress), `docs/context/domain-concepts.md`, `.planning/STATE.md` (Phase 6), and `docs/developer/ROADMAP.md`; every infrastructure change should reference these artifacts so system wiring stays aligned with the Hybrid Search roadmap and validated requirements.
+## ↔ Code ↔ Docs cross-reference
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | [`crates/mcb-infrastructure/src/lib.rs`](../../crates/mcb-infrastructure/src/lib.rs) links here |
+| Docs → Code | [`crates/mcb-infrastructure/src/lib.rs`](../../crates/mcb-infrastructure/src/lib.rs) — crate root |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-050`](../adr/050-manual-composition-root-dill-removal.md) · [`ADR-023`](../adr/023-inventory-to-linkme-migration.md) |
+| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
 
 ## Overview
 
-The infrastructure module provides shared technical services and cross-cutting concerns for the Memory Context Browser system. It implements dill-based dependency injection (ADR-029), Figment configuration, caching, health checks, and null adapters for testing.
+The infrastructure module contains the technical plumbing of the system: DI bootstrap, configuration management, logging, caching, and shared technical services.
 
-## Key Components
+---
 
-### Dependency Injection (`di/`)
+## Dependency Injection
 
-dill IoC Container with handle-based runtime switching (ADR-024 → ADR-029):
+Dependency injection system using a **manual composition root (`AppContext` + `init_app()`)** with linkme registry for provider discovery and handle-based runtime switching.
 
--   `catalog.rs` - dill Catalog configuration and service resolution
--   `bootstrap.rs` - Application initialization and AppContext creation
--   `handles.rs` - RwLock provider handles for runtime switching
--   `admin.rs` - Admin services for provider switching via API
--   `provider_resolvers.rs` - linkme registry access
+### Architecture
 
-### Configuration (`config/`)
+```text
+linkme (compile-time)     AppContext (bootstrap)     Handle-based
+─────────────────────     ──────────────────────      ────────────
+EMBEDDING_PROVIDERS  →    Resolver → init_app() →    Handle (RwLock)
+(list of factories)                                       ↓
+                                                    AdminService
+                                                   (switch via API)
+```
 
-Application configuration management:
+- **Bootstrap** ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/di/bootstrap.rs)): Application initialization.
+- **Handles** ([`handles.rs`](../../crates/mcb-infrastructure/src/di/handles.rs)): RwLock wrappers for runtime switching.
+- **Composition Root** ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/di/bootstrap.rs)): AppContext manual composition root configuration.
 
--   Type-safe configuration with nested structures
--   Environment variable overrides
--   Server, auth, cache, and provider configurations
+---
 
-### Cache (`cache/`)
+## Configuration
 
-Caching infrastructure:
+Type-safe, layered configuration management with environment variable overrides.
 
--   Cache configuration and management
--   Integration with mcb-providers cache implementations
+### Configuration Structure
 
-### Crypto (`crypto/`)
+- **Types** ([`types.rs`](../../crates/mcb-infrastructure/src/config/types.rs)): Hierarchical structures (`AppConfig`, `ServerConfig`, `AuthConfig`).
+- **Loader** ([`loader.rs`](../../crates/mcb-infrastructure/src/config/loader.rs)): Multi-source loading (Environment + `.toml`).
 
-Encryption and hashing utilities:
+👉 **Canonical Env Var Matrix**: [`ENVIRONMENT_VARIABLES.md`](../configuration/ENVIRONMENT_VARIABLES.md)
 
--   AES-GCM encryption support
--   Hash computation utilities
+---
 
-### Health (`health/`)
+## Shared Technical Areas
 
-Health check infrastructure:
-
--   Component health monitoring
--   Readiness and liveness checks
-
-### Logging (`logging/`)
-
-Structured logging configuration:
-
--   Tracing integration
--   Log level management
-
-### Adapters (`adapters/`)
-
-Null implementations for DI testing:
-
--   `infrastructure/` - Null adapters for infrastructure ports
-  -   `NullAuthService`
-  -   `NullEventBus`
-  -   `NullSyncProvider`
-  -   `NullLockProvider`
-  -   `NullSnapshotProvider`
-  -   `NullStateStoreProvider`
-  -   `NullPerformanceMetrics`
-  -   `NullIndexingOperations`
-  -   `NullSystemMetricsCollector`
--   `providers/` - Provider adapter bindings
--   `repository/` - Repository adapters
-  -   `NullChunkRepository`
-  -   `NullSearchRepository`
+- [`cache/`](../../crates/mcb-infrastructure/src/cache/) - Shared caching infrastructure.
+- [`logging/`](../../crates/mcb-infrastructure/src/logging/) - Contextual logging (Tracing/OpenTelemetry).
+- [`crypto/`](../../crates/mcb-infrastructure/src/crypto/) - AES-256 and SHA-256 utilities.
+- [`health.rs`](../../crates/mcb-infrastructure/src/health.rs) - System health check orchestration.
 
 ## File Structure
 
 ```text
 crates/mcb-infrastructure/src/
-├── di/
-│   ├── bootstrap.rs        # DI container setup
-│   ├── modules/
-│   │   ├── infrastructure.rs
-│   │   ├── server.rs
-│   │   ├── providers.rs
-│   │   ├── traits.rs
-│   │   └── mod.rs
-│   └── mod.rs
-├── config/
-│   ├── types.rs            # Configuration types
-│   └── mod.rs
-├── cache/
-│   └── mod.rs
-├── crypto/
-│   └── mod.rs
-├── health/
-│   └── mod.rs
-├── logging/
-│   └── mod.rs
-├── adapters/
-│   ├── infrastructure/     # Null infrastructure adapters
-│   │   ├── auth.rs
-│   │   ├── events.rs
-│   │   ├── metrics.rs
-│   │   ├── snapshot.rs
-│   │   ├── sync.rs
-│   │   ├── admin.rs
-│   │   └── mod.rs
-│   ├── providers/          # Provider bindings
-│   │   └── mod.rs
-│   ├── repository/         # Repository adapters
-│   │   └── mod.rs
-│   └── mod.rs
-├── infrastructure/         # Re-exports
-│   └── mod.rs
-└── lib.rs                  # Crate root
+├── cache/          # Shared caching
+├── config/         # Configuration loading
+├── constants/      # System-wide constants
+├── crypto/         # Cryptography
+├── di/             # Dependency Injection root
+├── logging/        # Tracing/Logging
+├── routing/        # Internal message routing
+├── services/       # Infrastructure services
+├── utils/          # Shared utilities
+└── lib.rs          # Crate entry point
 ```
-
-## Key Exports
-
-```rust
-// DI
-pub use di::{bootstrap, McpModule};
-
-// Configuration
-pub use config::{AppConfig, ServerConfig, AuthConfig};
-
-// Null Adapters (for testing)
-pub use adapters::infrastructure::{
-    NullAuthService, NullEventBus, NullSyncProvider,
-    NullSnapshotProvider, NullPerformanceMetrics,
-};
-```
-
-## Testing
-
-Infrastructure tests are located in `crates/mcb-infrastructure/tests/`.
-
-## Project Alignment
-
--   **Phase context**: Keep infrastructure work tied to `docs/context/project-state.md` and `.planning/STATE.md`, ensuring Phase 6 Hybrid Search (06-02 plan) uses these DI/configuration layers without drifting ahead of the release control branch (`release/v0.2.0`).
--   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the layered wiring and `docs/context/technical-patterns.md` documents linkme/provider registration so every adapter matches compiled routing expectations.
--   **Roadmap signals**: Anchor infrastructure decisions in `docs/developer/ROADMAP.md` and `.planning/PROJECT.md` (validated requirements, debt) so features like provider health checks and session memory inherit the correct dependencies.
--   **Operational metrics**: Sync with `docs/operations/CHANGELOG.md`/`docs/operations/CI_OPTIMIZATION_VALIDATION.md` for metrics when adjusting caches, health, or DI to maintain the declared `0 architecture violations` and `~1805 tests` commitments.
 
 ---
 
-*Updated 2026-01-28 - Reflects dill IoC, Figment config (v0.1.4)*
+### Updated 2026-02-20 - Consolidated di.md and config.md for SSOT adherence

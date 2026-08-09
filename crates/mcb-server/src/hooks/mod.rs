@@ -1,8 +1,11 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Hook processor for automatic memory operations on tool completion and session start.
 //!
 //! This module provides a hook system that automatically:
-//! - Stores tool execution observations after tool completion (PostToolUse)
-//! - Injects context from memory at session start (SessionStart)
+//! - Stores tool execution observations after tool completion (`PostToolUse`)
+//! - Injects context from memory at session start (`SessionStart`)
 //!
 //! Hooks are optional and gracefully degrade if memory service is unavailable.
 

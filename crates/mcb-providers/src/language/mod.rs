@@ -1,5 +1,7 @@
 //! Language Chunking Provider Implementations
 //!
+//! **Documentation**: [`docs/modules/providers.md#language-providers`](../../../../docs/modules/providers.md#language-providers)
+//!
 //! Provides AST-based code parsing for various programming languages.
 //! This is the single source of truth for all language-related
 //! chunking functionality, including processors and the intelligent chunker.
@@ -14,7 +16,7 @@
 //! ## Available Processors
 //!
 //! | Processor | Language | Status |
-//! |-----------|----------|--------|
+//! | ----------- | ---------- | -------- |
 //! | RustProcessor | Rust | Complete |
 //! | PythonProcessor | Python | Complete |
 //! | JavaScriptProcessor | JavaScript/TypeScript | Complete |
@@ -31,14 +33,6 @@
 /// Common utilities and base types for language processors
 pub mod common;
 
-/// Language detection and utility functions
-///
-/// Part of the public API - provides language identification and configuration.
-pub mod detection;
-
-/// Intelligent chunking engine using tree-sitter
-pub mod engine;
-
 // Language-specific processors
 pub mod c;
 pub mod cpp;
@@ -53,17 +47,15 @@ pub mod ruby;
 pub mod rust;
 pub mod swift;
 
-// Re-export processors for convenience
-pub use c::CProcessor;
-pub use common::{BaseProcessor, LanguageConfig, LanguageProcessor, NodeExtractionRule};
-pub use cpp::CppProcessor;
-pub use csharp::CSharpProcessor;
-// Re-export detection functions
-pub use detection::{
+pub use common::detection::{
     get_chunk_size, is_language_supported, language_from_extension, supported_languages,
 };
-// Re-export engine
-pub use engine::{IntelligentChunker, UniversalLanguageChunkingProvider};
+pub use common::engine::{IntelligentChunker, UniversalLanguageChunkingProvider};
+pub use common::{BaseProcessor, LanguageConfig, LanguageProcessor, NodeExtractionRule};
+// Languages
+pub use c::CProcessor;
+pub use cpp::CppProcessor;
+pub use csharp::CSharpProcessor;
 pub use go::GoProcessor;
 pub use java::JavaProcessor;
 pub use javascript::JavaScriptProcessor;

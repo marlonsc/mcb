@@ -1,4 +1,7 @@
 //! Submodule entity representing a VCS submodule within a repository.
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md#core-entities)
+//!
 
 use serde::{Deserialize, Serialize};
 

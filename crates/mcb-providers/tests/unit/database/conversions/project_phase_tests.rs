@@ -1,0 +1,33 @@
+//! Tests for `project_phase` conversion.
+
+use mcb_domain::entities::ProjectPhase;
+use mcb_providers::database::seaorm::entities::project_phase;
+use rstest::rstest;
+
+fn sample_project_phase() -> project_phase::Model {
+    project_phase::Model {
+        id: "project_phase_test_001".into(),
+        project_id: "ref_project_id_001".into(),
+        name: "test_name".into(),
+        description: "test_description".into(),
+        sequence: 2,
+        status: "Planned".into(),
+        started_at: Some(mcb_utils::constants::testing::TEST_TIMESTAMP),
+        completed_at: Some(mcb_utils::constants::testing::TEST_TIMESTAMP),
+        created_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+        updated_at: mcb_utils::constants::testing::TEST_TIMESTAMP,
+    }
+}
+
+#[rstest]
+fn round_trip_project_phase() {
+    let model = sample_project_phase();
+    let model_val = model.id.clone();
+
+    // Model → Domain
+    let domain: ProjectPhase = model.into();
+    assert_eq!(domain.id, model_val);
+
+    // Domain → ActiveModel (should not panic)
+    let _active: project_phase::ActiveModel = domain.into();
+}

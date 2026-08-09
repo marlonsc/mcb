@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#value-objects)
+//!
 use serde::{Deserialize, Serialize};
 
 use crate::value_objects::CollectionId;
@@ -5,6 +8,8 @@ use crate::value_objects::CollectionId;
 /// Information about an indexed collection
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CollectionInfo {
+    /// Human-readable name of the collection.
+    pub name: String,
     /// ID of the collection
     pub id: CollectionId,
     /// Total number of vectors in the collection
@@ -18,16 +23,18 @@ pub struct CollectionInfo {
 }
 
 impl CollectionInfo {
-    /// Create a new CollectionInfo instance
+    /// Create a new `CollectionInfo` instance
     pub fn new(
-        id: impl Into<CollectionId>,
+        name: impl Into<String>,
         vector_count: u64,
         file_count: u64,
         last_indexed: Option<u64>,
         provider: impl Into<String>,
     ) -> Self {
+        let name = name.into();
         Self {
-            id: id.into(),
+            id: CollectionId::from_string(&name),
+            name,
             vector_count,
             file_count,
             last_indexed,

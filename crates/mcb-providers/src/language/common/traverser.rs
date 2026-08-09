@@ -1,6 +1,9 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../../docs/modules/providers.md)
+//!
 //! AST traverser for extracting code chunks based on rules
 //!
-//! This module provides the AstTraverser that walks tree-sitter ASTs
+//! This module provides the `AstTraverser` that walks tree-sitter ASTs
 //! and extracts code chunks according to configurable rules.
 
 use std::collections::HashMap;
@@ -31,6 +34,21 @@ struct ExtractionContext<'a> {
     chunk_index: usize,
 }
 
+/// Source under traversal: the file contents and its name, invariant across recursion.
+#[derive(Clone, Copy)]
+pub struct SourceRef<'a> {
+    content: &'a str,
+    file_name: &'a str,
+}
+
+impl<'a> SourceRef<'a> {
+    /// Bundle file contents and name for traversal.
+    #[must_use]
+    pub fn new(content: &'a str, file_name: &'a str) -> Self {
+        Self { content, file_name }
+    }
+}
+
 /// Generic AST node traverser with configurable rules
 pub struct AstTraverser<'a> {
     rules: &'a [NodeExtractionRule],
@@ -40,15 +58,17 @@ pub struct AstTraverser<'a> {
 
 impl<'a> AstTraverser<'a> {
     /// Create a new AST traverser with extraction rules and language configuration
+    #[must_use]
     pub fn new(rules: &'a [NodeExtractionRule], language: &'a Language) -> Self {
         Self {
             rules,
             language,
-            max_chunks: 100,
+            max_chunks: mcb_utils::constants::INDEXING_CHUNKS_MAX_PER_FILE,
         }
     }
 
     /// Configure the maximum number of chunks to extract
+    #[must_use]
     pub fn with_max_chunks(mut self, max_chunks: usize) -> Self {
         self.max_chunks = max_chunks;
         self
@@ -58,57 +78,88 @@ impl<'a> AstTraverser<'a> {
     pub fn traverse_and_extract(
         &self,
         cursor: &mut tree_sitter::TreeCursor,
-        content: &str,
-        file_name: &str,
+        source: SourceRef<'_>,
         depth: usize,
         chunks: &mut Vec<CodeChunk>,
     ) {
-        // Stop if we've reached the chunk limit
+        self.traverse(cursor, source, depth, chunks);
+    }
+
+    fn traverse(
+        &self,
+        cursor: &mut tree_sitter::TreeCursor,
+        source: SourceRef<'_>,
+        depth: usize,
+        chunks: &mut Vec<CodeChunk>,
+    ) {
         if chunks.len() >= self.max_chunks {
             return;
         }
 
         loop {
             let node = cursor.node();
-            let node_type = node.kind();
-
-            // Check if this node matches any extraction rule
-            for rule in self.rules {
-                if !rule.node_types.contains(&node_type.to_string()) {
-                    continue;
-                }
-                let ctx = ExtractionContext {
-                    content,
-                    file_name,
-                    depth,
-                    rule,
-                    chunk_index: chunks.len(),
-                };
-                if let Some(chunk) = self.try_extract_chunk(node, ctx) {
-                    chunks.push(chunk);
-                    if chunks.len() >= self.max_chunks {
-                        return;
-                    }
-                }
+            if self.extract_matching_rules(node, source, depth, chunks) {
+                return;
             }
-
-            // Recurse into children if within depth limit
-            for rule in self.rules {
-                if depth < rule.max_depth && cursor.goto_first_child() {
-                    self.traverse_and_extract(cursor, content, file_name, depth + 1, chunks);
-
-                    if chunks.len() >= self.max_chunks {
-                        return;
-                    }
-
-                    cursor.goto_parent();
-                }
+            if self.recurse_children(cursor, source, depth, chunks) {
+                return;
             }
-
             if !cursor.goto_next_sibling() {
                 break;
             }
         }
+    }
+
+    /// Extract chunks for every rule matching `node`. Returns `true` when the
+    /// chunk limit was reached and traversal must stop.
+    fn extract_matching_rules(
+        &self,
+        node: tree_sitter::Node,
+        source: SourceRef<'_>,
+        depth: usize,
+        chunks: &mut Vec<CodeChunk>,
+    ) -> bool {
+        let node_type = node.kind();
+        for rule in self.rules {
+            if !rule.node_types.contains(&node_type.to_owned()) {
+                continue;
+            }
+            let ctx = ExtractionContext {
+                content: source.content,
+                file_name: source.file_name,
+                depth,
+                rule,
+                chunk_index: chunks.len(),
+            };
+            if let Some(chunk) = self.try_extract_chunk(node, &ctx) {
+                chunks.push(chunk);
+                if chunks.len() >= self.max_chunks {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    /// Recurse into the current node's children for rules permitting deeper
+    /// traversal. Returns `true` when the chunk limit was reached.
+    fn recurse_children(
+        &self,
+        cursor: &mut tree_sitter::TreeCursor,
+        source: SourceRef<'_>,
+        depth: usize,
+        chunks: &mut Vec<CodeChunk>,
+    ) -> bool {
+        for rule in self.rules {
+            if depth < rule.max_depth && cursor.goto_first_child() {
+                self.traverse(cursor, source, depth + 1, chunks);
+                if chunks.len() >= self.max_chunks {
+                    return true;
+                }
+                cursor.goto_parent();
+            }
+        }
+        false
     }
 
     fn extract_node_content(node: tree_sitter::Node, content: &str) -> Result<String> {
@@ -116,15 +167,15 @@ impl<'a> AstTraverser<'a> {
         let end = node.end_byte();
 
         if start >= content.len() || end > content.len() || start >= end {
-            return Err(Error::internal("Invalid node range".to_string()));
+            return Err(Error::internal("Invalid node range".to_owned()));
         }
 
         let code = content[start..end].trim();
         if code.is_empty() {
-            return Err(Error::internal("Empty node content".to_string()));
+            return Err(Error::internal("Empty node content".to_owned()));
         }
 
-        Ok(code.to_string())
+        Ok(code.to_owned())
     }
 
     fn extract_node_with_context(
@@ -160,7 +211,7 @@ impl<'a> AstTraverser<'a> {
     fn try_extract_chunk(
         &self,
         node: tree_sitter::Node,
-        ctx: ExtractionContext,
+        ctx: &ExtractionContext,
     ) -> Option<CodeChunk> {
         let (code, context) = if ctx.rule.include_context {
             Self::extract_node_with_context(node, ctx.content, 3)
@@ -187,10 +238,7 @@ impl<'a> AstTraverser<'a> {
         if let Some(context_lines) = context
             && let Some(metadata) = chunk.metadata.as_object_mut()
         {
-            metadata.insert(
-                "context_lines".to_string(),
-                serde_json::json!(context_lines),
-            );
+            metadata.insert("context_lines".to_owned(), serde_json::json!(context_lines));
         }
 
         Some(chunk)
@@ -211,16 +259,16 @@ impl<'a> AstTraverser<'a> {
                 params.chunk_index
             ),
             content: params.content,
-            file_path: params.file_name.to_string(),
+            file_path: params.file_name.to_owned(),
             start_line: start_line as u32,
             end_line: end_line as u32,
             language: self.language.clone(),
             metadata: {
                 let mut meta = HashMap::new();
-                meta.insert("file".to_string(), serde_json::json!(params.file_name));
-                meta.insert("node_type".to_string(), serde_json::json!(params.node_type));
-                meta.insert("depth".to_string(), serde_json::json!(params.depth));
-                meta.insert("priority".to_string(), serde_json::json!(params.priority));
+                meta.insert("file".to_owned(), serde_json::json!(params.file_name));
+                meta.insert("node_type".to_owned(), serde_json::json!(params.node_type));
+                meta.insert("depth".to_owned(), serde_json::json!(params.depth));
+                meta.insert("priority".to_owned(), serde_json::json!(params.priority));
                 serde_json::to_value(meta).unwrap_or(serde_json::json!({}))
             },
         }

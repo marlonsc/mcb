@@ -1,82 +1,80 @@
-# application Module
+> **Superseded (v0.3.0)**: The `mcb-application` crate was removed. Use case services moved to
+> `mcb-infrastructure::di::modules::use_cases`. See [infrastructure module](./infrastructure.md).
 
-**Source**: `crates/mcb-application/src/`
-**Crate**: `mcb-application`
-**Files**: 10+
-**Lines of Code**: ~2,000
+---
 
-**Project links**: `docs/context/technical-patterns.md` (provider patterns), `docs/context/domain-concepts.md`, `docs/context/project-state.md`, `.planning/STATE.md` (Phase 6 progress), and `docs/developer/ROADMAP.md` (v0.2.0 plan) so service work aligns with Hybrid Search, git-aware requirements, and current validated goals.
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+# Application Layer (Use Cases)
+
+## Deprecation Status
+
+The `mcb-application` crate no longer exists in v0.3.0.
+
+- Use case services were moved to `crates/mcb-infrastructure/src/di/modules/use_cases/`
+- Historical rationale is documented in `docs/adr/046-integration-adr-034-037-policies.md`
+
+**Source (historical)**: `crates/mcb-application/src/`
+**Current location**: `crates/mcb-infrastructure/src/di/modules/use_cases/`
+
+## ↔ Code ↔ Docs cross-reference
+
+| Direction | Link |
+| --------- | ---- |
+| Code → Docs | Historical `crates/mcb-application/src/lib.rs` (crate removed in v0.3.0) |
+| Docs → Code | Current equivalent: `crates/mcb-infrastructure/src/di/modules/use_cases/` |
+| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) · [`ADR-050`](../adr/050-manual-composition-root-dill-removal.md) |
+| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
 
 ## Overview
 
-The application module implements business logic services following Clean Architecture principles. It contains use cases (service implementations) and domain services (chunking orchestration, search logic).
+The application layer orchestrates the flow of data between the user-facing gateways and the domain layer. It contains the business use cases, ensuring that domain entities and ports are used correctly to fulfill system requirements.
 
-## Key Components
+---
 
-### Use Cases (`use_cases/`)
+## Use Cases
 
-Service implementations that orchestrate domain logic:
+These services implement the business logic defined in the domain ports.
 
--   `context_service.rs` - ContextServiceImpl: Embedding and vector operations
--   `indexing_service.rs` - IndexingServiceImpl: Codebase indexing and processing
--   `search_service.rs` - SearchServiceImpl: Query processing and ranking
+- **IndexingService** (`crates/mcb-infrastructure/src/di/modules/use_cases/indexing_service.rs`): Coordinates codebase analysis, chunking, and storage into vector/lexical indexes.
+- **SearchService** (`crates/mcb-infrastructure/src/di/modules/use_cases/search_service.rs`): Implements semantic, hybrid, and lexical search workflows.
+- **ContextService** (`crates/mcb-infrastructure/src/di/modules/use_cases/context_service.rs`): Aggregates embeddings and vector data for query enrichment.
+- **MemoryService** (`crates/mcb-infrastructure/src/di/modules/use_cases/memory_service.rs`): Manages observation capture and session awareness.
+- **AgentSessionService** (`crates/mcb-infrastructure/src/di/modules/use_cases/agent_session_service.rs`): Orchestrates agent lifecycle, checkpoints, and tool call history.
+- **Validation pipeline**: Validation concerns are now implemented in `mcb-validate` and wired from `mcb-server`/`mcb-infrastructure`.
 
-### Domain Services (`domain_services/`)
+---
 
-Business logic components:
+## Decorators
 
--   `chunking.rs` - ChunkingOrchestrator: Batch file chunking coordination
--   `search.rs` - Search domain logic and Result ranking
+The application layer uses decorators to add cross-cutting concerns (like metrics or logging) to service implementations without bloating the core logic.
 
-### Ports (`ports/`)
+- **InstrumentedEmbedding**: Historical decorator; observability is now handled through the current infrastructure and server telemetry stack.
 
-Service interface definitions:
-
--   `infrastructure/sync.rs` - SyncProvider interface
--   `providers/cache.rs` - CacheProvider interface
-
-## File Structure
-
-```text
-crates/mcb-application/src/
-├── use_cases/
-│   ├── context_service.rs    # ContextServiceImpl
-│   ├── indexing_service.rs   # IndexingServiceImpl
-│   ├── search_service.rs     # SearchServiceImpl
-│   └── mod.rs
-├── domain_services/
-│   ├── chunking.rs           # ChunkingOrchestrator
-│   ├── search.rs             # Search logic
-│   └── mod.rs
-├── ports/
-│   ├── infrastructure/       # Infrastructure port traits
-│   └── providers/            # Provider port traits
-└── lib.rs                    # Crate root
-```
+---
 
 ## Key Exports
 
 ```rust
-// Service implementations
+pub use use_cases::agent_session_service::AgentSessionServiceImpl;
 pub use use_cases::context_service::ContextServiceImpl;
 pub use use_cases::indexing_service::IndexingServiceImpl;
+pub use use_cases::memory_service::MemoryServiceImpl;
 pub use use_cases::search_service::SearchServiceImpl;
-
-// Domain services
-pub use domain_services::chunking::{ChunkingOrchestrator, ChunkingResult};
 ```
 
-## Testing
+## File Structure
 
-Application tests are located in `crates/mcb-application/tests/`.
-
-## Project Alignment
-
--   **Phase context**: Follow `docs/context/project-state.md` and `.planning/STATE.md` while advancing Phase 6 Hybrid Search (06-02 plan) so changes to use cases and chunking services deliver on the roadmap.
--   **Architecture guidance**: `docs/architecture/ARCHITECTURE.md` explains the Clean Architecture layering; `docs/context/technical-patterns.md` documents provider patterns used by this module.
--   **Roadmap signals**: `docs/developer/ROADMAP.md` outlines v0.2.0 goals (git-aware indexing, session memory, advanced browser) that require resilient application services.
--   **Operational metrics**: Coordinate behavior with `docs/operations/CHANGELOG.md`/`docs/operations/CI_OPTIMIZATION_VALIDATION.md` for test and validation metrics whenever you touch service tests.
+```text
+crates/mcb-infrastructure/src/di/modules/use_cases/
+├── agent_session_service.rs  # Agent session orchestration
+├── context_service.rs        # Context orchestration
+├── indexing_service.rs       # Indexing orchestration
+├── instrumented_embedding.rs # Metrics wrapper
+├── memory_service.rs         # Memory orchestration
+├── search_service.rs         # Search orchestration
+└── validation_service.rs     # Validation orchestration
+```
 
 ---
 
-*Updated 2026-01-18 - Reflects modular crate architecture (v0.1.2)*
+### Updated 2026-02-20 - Consolidated services.md into application.md for SSOT

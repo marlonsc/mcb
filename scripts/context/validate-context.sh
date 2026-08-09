@@ -18,7 +18,7 @@ root = sys.argv[1]
 max_lines = int(sys.argv[2])
 stale_days = int(sys.argv[3])
 
-targets = ["context", "docs/context"]
+targets = []
 ref_pattern = re.compile(r"`((?:context|docs/context)/[^`]+\.md)`")
 md_link_pattern = re.compile(r"\[[^\]]*\]\(((?:context|docs/context)/[^)#]+)(?:#[^)]+)?\)")
 

@@ -1,125 +1,52 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../docs/modules/server.md)
+//!
+mod groups;
+
+use mcb_domain::error;
 use mcb_domain::error::Error;
 use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
 
-/// Maps domain errors to sanitized MCP errors suitable for external clients.
-pub fn to_opaque_mcp_error(e: Error) -> McpError {
-    match &e {
-        Error::NotFound { .. } => McpError::invalid_params(e.to_string(), None),
-        Error::InvalidArgument { .. } => McpError::invalid_params(e.to_string(), None),
-        other => {
-            tracing::error!(error = %other, "operation failed");
-            McpError::internal_error("internal server error", None)
-        }
+/// Logs the underlying error server-side and returns a generic internal error.
+///
+/// Use this instead of `McpError::internal_error(e.to_string(), None)` so that
+/// underlying error details are never leaked to MCP clients.
+pub fn safe_internal_error(context: &str, err: &dyn std::fmt::Display) -> McpError {
+    error!(context, "internal operation failed", err);
+    McpError::internal_error("internal server error", None)
+}
+
+/// Maps a domain error to an opaque MCP error.
+///
+/// # Behavior
+/// Returns client-fixable errors for `NotFound` and `InvalidArgument`; all
+/// other variants are converted to a generic internal error.
+///
+/// # Security
+/// Never exposes provider/internal details to external callers.
+#[must_use]
+pub fn to_opaque_mcp_error(e: &Error) -> McpError {
+    error!("McpError", "operation failed", e);
+    if matches!(e, Error::NotFound { .. } | Error::InvalidArgument { .. }) {
+        McpError::invalid_params(e.to_string(), None)
+    } else {
+        McpError::internal_error("internal server error", None)
     }
 }
 
-/// Builds a contextual tool-call error response with category and reason.
+/// Builds a contextual MCP tool error response from a domain error.
 ///
-/// Client-fixable errors (NotFound, InvalidArgument) return specific messages.
-/// Provider errors (Database, VectorDb, Embedding) return category + sanitized reason.
-/// Internal paths and stack traces are never leaked.
+/// # Behavior
+/// Applies categorized mappers (client, provider, config, system, encoding,
+/// IO, generic) and returns the first matching sanitized message.
+///
+/// # Security
+/// Logs internal details server-side and returns safe text only.
 pub fn to_contextual_tool_error(e: impl Into<Error>) -> CallToolResult {
     let error: Error = e.into();
-    let message = match &error {
-        // Client-fixable errors — return the specific message
-        Error::NotFound { resource } => format!("Not found: {resource}"),
-        Error::InvalidArgument { message } => format!("Invalid argument: {message}"),
-        Error::ObservationNotFound { id } => format!("Observation not found: {id}"),
-        Error::DuplicateObservation { content_hash } => {
-            format!("Duplicate observation: {content_hash}")
-        }
-        Error::RepositoryNotFound { path } => format!("Repository not found: {path}"),
-        Error::BranchNotFound { name } => format!("Branch not found: {name}"),
-        Error::InvalidRegex { pattern, message } => {
-            format!("Invalid regex pattern '{pattern}': {message}")
-        }
-
-        // Provider errors — category + sanitized reason
-        Error::Database { message, .. } => {
-            tracing::error!(error = %error, "database operation failed");
-            format!("Database error: {message}")
-        }
-        Error::VectorDb { message } => {
-            tracing::error!(error = %error, "vector database operation failed");
-            format!("Vector database error: {message}")
-        }
-        Error::Embedding { message } => {
-            tracing::error!(error = %error, "embedding operation failed");
-            format!("Embedding error: {message}")
-        }
-        Error::Network { message, .. } => {
-            tracing::error!(error = %error, "network operation failed");
-            format!("Network error: {message}")
-        }
-        Error::ObservationStorage { message, .. } => {
-            tracing::error!(error = %error, "observation storage failed");
-            format!("Memory storage error: {message}")
-        }
-        Error::Vcs { message, .. } => {
-            tracing::error!(error = %error, "VCS operation failed");
-            format!("VCS error: {message}")
-        }
-
-        // Config errors — category + reason
-        Error::Config { message } => format!("Configuration error: {message}"),
-        Error::Configuration { message, .. } => format!("Configuration error: {message}"),
-        Error::ConfigMissing(field) => format!("Missing configuration: {field}"),
-        Error::ConfigInvalid { key, message } => {
-            format!("Invalid configuration for '{key}': {message}")
-        }
-        Error::Authentication { message, .. } => format!("Authentication error: {message}"),
-
-        // Infrastructure/system errors — log full details, return category
-        Error::Cache { message } => {
-            tracing::error!(error = %error, "cache operation failed");
-            format!("Cache error: {message}")
-        }
-        Error::Infrastructure { message, .. } => {
-            tracing::error!(error = %error, "infrastructure error");
-            format!("Infrastructure error: {message}")
-        }
-        Error::Internal { message } => {
-            tracing::error!(error = %error, "internal error");
-            format!("Internal error: {message}")
-        }
-
-        // Serialization/encoding errors — sanitized
-        Error::Json { source } => {
-            tracing::error!(error = %error, "JSON processing failed");
-            format!("JSON error: {source}")
-        }
-        Error::Utf8(_) => {
-            tracing::error!(error = %error, "encoding error");
-            "Encoding error: invalid UTF-8".to_string()
-        }
-        Error::Base64(_) => {
-            tracing::error!(error = %error, "encoding error");
-            "Encoding error: invalid base64".to_string()
-        }
-
-        // I/O errors — sanitized (no file paths leaked)
-        Error::IoSimple { source } => {
-            tracing::error!(error = %error, "I/O operation failed");
-            format!("I/O error: {}", source.kind())
-        }
-        Error::Io { message, .. } => {
-            tracing::error!(error = %error, "I/O operation failed");
-            format!("I/O error: {message}")
-        }
-
-        // Generic / Browse / Highlight — log and sanitize
-        Error::Generic(e) => {
-            tracing::error!(error = %e, "operation failed");
-            format!("Operation failed: {e}")
-        }
-        Error::Browse(e) => {
-            tracing::error!(error = %e, "browse operation failed");
-            format!("Browse error: {e}")
-        }
-        Error::Highlight(e) => {
-            tracing::error!(error = %e, "highlight operation failed");
-            format!("Highlight error: {e}")
-        }
-    };
+    let message = groups::map_error_message(&error).unwrap_or_else(|| {
+        error!("ErrorMapping", "unmapped error variant", &error);
+        "Internal error".to_owned()
+    });
     CallToolResult::error(vec![Content::text(message)])
 }

@@ -1,3 +1,7 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#core-entities)
+//!
+use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// Enumeration of available agent types in the system.
@@ -11,7 +15,18 @@ use serde::{Deserialize, Serialize};
 /// - `Librarian`: External documentation and OSS examples research
 /// - `Metis`: Pre-planning analysis and feasibility checks
 /// - `SisyphusJunior`: Focused task executor (delegated via category)
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+)]
+#[strum(serialize_all = "kebab-case")]
 pub enum AgentType {
     /// Sisyphus agent - primary orchestration agent
     Sisyphus,
@@ -27,40 +42,19 @@ pub enum AgentType {
     Librarian,
     /// Metis agent - pre-planning analysis and feasibility checks
     Metis,
-    /// SisyphusJunior agent - focused task executor
+    /// `SisyphusJunior` agent - focused task executor
     SisyphusJunior,
     /// Hephaestus agent - tooling and infrastructure builder
     Hephaestus,
     /// Atlas agent - codebase mapping and navigation
     Atlas,
-    /// MultimodalLooker agent - visual analysis and media inspection
+    /// `MultimodalLooker` agent - visual analysis and media inspection
     MultimodalLooker,
 }
 
-impl AgentType {
-    /// Converts the agent type to its string representation.
-    ///
-    /// # Returns
-    /// A static string slice representing the agent type in lowercase.
-    #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Sisyphus => "sisyphus",
-            Self::Oracle => "oracle",
-            Self::Explore => "explore",
-            Self::Prometheus => "prometheus",
-            Self::Momus => "momus",
-            Self::Librarian => "librarian",
-            Self::Metis => "metis",
-            Self::SisyphusJunior => "sisyphus-junior",
-            Self::Hephaestus => "hephaestus",
-            Self::Atlas => "atlas",
-            Self::MultimodalLooker => "multimodal-looker",
-        }
-    }
-}
+crate::impl_as_str_from_as_ref!(AgentType);
 
-impl_from_str!(AgentType, "Unknown agent type: {}. Valid types: sisyphus, oracle, explore, prometheus, momus, librarian, metis, sisyphus-junior, hephaestus, atlas, multimodal-looker", {
+impl_from_str!(AgentType, "Unknown agent type: {}. Valid types: sisyphus, oracle, explore, prometheus, momus, librarian, metis, sisyphus-junior (aliases: sisyphus_junior, junior), hephaestus, atlas, multimodal-looker (aliases: multimodal_looker, looker)", {
     "sisyphus" => Self::Sisyphus,
     "oracle" => Self::Oracle,
     "explore" => Self::Explore,
@@ -81,7 +75,18 @@ impl_from_str!(AgentType, "Unknown agent type: {}. Valid types: sisyphus, oracle
 /// Enumeration of possible states for an agent session.
 ///
 /// Represents the lifecycle of an agent session from creation through completion or failure.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+)]
+#[strum(serialize_all = "lowercase")]
 pub enum AgentSessionStatus {
     /// Session is currently active and processing
     Active,
@@ -91,20 +96,7 @@ pub enum AgentSessionStatus {
     Failed,
 }
 
-impl AgentSessionStatus {
-    /// Converts the session status to its string representation.
-    ///
-    /// # Returns
-    /// A static string slice representing the status in lowercase.
-    #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Active => "active",
-            Self::Completed => "completed",
-            Self::Failed => "failed",
-        }
-    }
-}
+crate::impl_as_str_from_as_ref!(AgentSessionStatus);
 
 impl_from_str!(AgentSessionStatus, "Unknown agent session status: {}", {
     "active" => Self::Active,
@@ -115,7 +107,18 @@ impl_from_str!(AgentSessionStatus, "Unknown agent session status: {}", {
 /// Enumeration of checkpoint types for session state persistence.
 ///
 /// Represents different mechanisms for saving and restoring session state during execution.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+    Serialize,
+    Deserialize,
+    JsonSchema,
+    strum_macros::AsRefStr,
+    strum_macros::Display,
+)]
+#[strum(serialize_all = "lowercase")]
 pub enum CheckpointType {
     /// Git-based checkpoint - state saved in version control
     Git,
@@ -125,20 +128,7 @@ pub enum CheckpointType {
     Config,
 }
 
-impl CheckpointType {
-    /// Converts the checkpoint type to its string representation.
-    ///
-    /// # Returns
-    /// A static string slice representing the checkpoint type in lowercase.
-    #[must_use]
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::Git => "git",
-            Self::File => "file",
-            Self::Config => "config",
-        }
-    }
-}
+crate::impl_as_str_from_as_ref!(CheckpointType);
 
 impl_from_str!(CheckpointType, "Unknown checkpoint type: {}", {
     "git" => Self::Git,

@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Validator Engine
 //!
 //! Uses validator and garde crates for field-level validations
@@ -7,6 +10,14 @@ use serde_json::Value;
 use validator::{Validate, ValidationErrors};
 
 use crate::Result;
+use mcb_utils::constants::validate::{
+    CATEGORY_ARCHITECTURE, CATEGORY_CONFIGURATION, CATEGORY_DEPENDENCY_INJECTION,
+    CATEGORY_DOCUMENTATION, CATEGORY_METRICS, CATEGORY_MIGRATION, CATEGORY_ORGANIZATION,
+    CATEGORY_PERFORMANCE, CATEGORY_QUALITY, CATEGORY_SOLID, CATEGORY_TESTING,
+    CATEGORY_WEB_FRAMEWORK_UNDERSCORE, ENGINE_TYPE_EVALEXPR, ENGINE_TYPE_JSON_DSL,
+    ENGINE_TYPE_RETE, ENGINE_TYPE_RUST_RULE, GRL, RUSTY_RULES, SEVERITY_ERROR, SEVERITY_INFO,
+    SEVERITY_WARNING, YAML_FIELD_EXPRESSION,
+};
 
 /// Engine for field validations using validator and garde
 #[derive(Clone)]
@@ -20,11 +31,16 @@ impl Default for ValidatorEngine {
 
 impl ValidatorEngine {
     /// Create a new validator engine instance.
+    #[must_use]
     pub fn new() -> Self {
         Self
     }
 
     /// Validate rule definition structure
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the rule definition structure is invalid.
     pub fn validate_rule_definition(&self, rule_definition: &Value) -> Result<()> {
         // Convert JSON to a validatable structure
         let rule_config: RuleConfigValidation = serde_json::from_value(rule_definition.clone())
@@ -113,18 +129,18 @@ pub struct RuleConfigFields {
 /// Validator functions for custom validations
 fn validate_category(category: &str) -> std::result::Result<(), ValidationErrors> {
     let valid_categories = [
-        "architecture",
-        "configuration",
-        "dependency_injection",
-        "documentation",
-        "metrics",
-        "migration",
-        "organization",
-        "performance",
-        "quality",
-        "solid",
-        "testing",
-        "web_framework",
+        CATEGORY_ARCHITECTURE,
+        CATEGORY_CONFIGURATION,
+        CATEGORY_DEPENDENCY_INJECTION,
+        CATEGORY_DOCUMENTATION,
+        CATEGORY_METRICS,
+        CATEGORY_MIGRATION,
+        CATEGORY_ORGANIZATION,
+        CATEGORY_PERFORMANCE,
+        CATEGORY_QUALITY,
+        CATEGORY_SOLID,
+        CATEGORY_TESTING,
+        CATEGORY_WEB_FRAMEWORK_UNDERSCORE,
     ];
 
     if valid_categories.contains(&category) {
@@ -140,7 +156,7 @@ fn validate_category(category: &str) -> std::result::Result<(), ValidationErrors
 }
 
 fn validate_severity(severity: &str) -> std::result::Result<(), ValidationErrors> {
-    let valid_severities = ["error", "warning", "info"];
+    let valid_severities = [SEVERITY_ERROR, SEVERITY_WARNING, SEVERITY_INFO];
 
     if valid_severities.contains(&severity) {
         Ok(())
@@ -155,7 +171,15 @@ fn validate_severity(severity: &str) -> std::result::Result<(), ValidationErrors
 }
 
 fn validate_engine(engine: &str) -> std::result::Result<(), ValidationErrors> {
-    let valid_engines = ["rust-rule-engine", "rusty-rules"];
+    let valid_engines = [
+        ENGINE_TYPE_RUST_RULE,
+        ENGINE_TYPE_RETE,
+        GRL,
+        RUSTY_RULES,
+        ENGINE_TYPE_JSON_DSL,
+        YAML_FIELD_EXPRESSION,
+        ENGINE_TYPE_EVALEXPR,
+    ];
 
     if valid_engines.contains(&engine) {
         Ok(())

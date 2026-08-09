@@ -8,8 +8,8 @@ enabled: true
 
 config:
   crate_name: "{{crate_name}}"
-  forbidden_prefixes: {{forbidden_prefixes}}
-  allowed_dependencies: {{allowed_dependencies}}
+  forbidden_prefixes: "{{forbidden_prefixes}}"
+  allowed_dependencies: "{{allowed_dependencies}}"
 
 validation:
   fields:

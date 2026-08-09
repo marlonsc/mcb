@@ -1,0 +1,18 @@
+schema: "rule/v2"
+id: ORG023
+name: Scattered Error Handling
+category: organization
+severity: info
+description: Error types should be centralized or placed in a dedicated error/ module.
+rationale: Centralized error types simplify handling and maintainability.
+engine: path
+rule:
+  type: file_location
+filters:
+  file_patterns:
+    - "crates/*/src/*/**/error.rs" # Matches nested error.rs (depth > 2)
+  skip:
+    file_patterns:
+      - "**/error/**"
+      - "**/legacy/error.rs"
+      - "**/tests/**"

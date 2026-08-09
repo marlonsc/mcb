@@ -1,14 +1,69 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../../docs/modules/server.md)
+//!
 use std::sync::Arc;
 
-use mcb_domain::ports::services::MemoryServiceInterface;
+use mcb_domain::entities::memory::OriginContext;
+use mcb_domain::ports::{CreateSessionSummaryInput, MemoryServiceInterface};
 use mcb_domain::value_objects::SessionId;
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::CallToolResult;
+use serde::Deserialize;
 
-use super::helpers::MemoryHelpers;
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::utils::mcp::{OriginContextInput, resolve_origin_context, tool_error};
+
+/// Payload for storing a session summary in memory.
+#[derive(Deserialize, Default)]
+#[serde(default)]
+struct SessionSummaryPayload {
+    session_id: Option<String>,
+    #[serde(default)]
+    topics: Vec<String>,
+    #[serde(default)]
+    decisions: Vec<String>,
+    #[serde(default)]
+    next_steps: Vec<String>,
+    #[serde(default)]
+    key_files: Vec<String>,
+    project_id: Option<String>,
+    parent_session_id: Option<String>,
+    repo_path: Option<String>,
+    worktree_id: Option<String>,
+    operator_id: Option<String>,
+    machine_id: Option<String>,
+    agent_program: Option<String>,
+    model_id: Option<String>,
+    delegated: Option<bool>,
+}
+
+/// Resolve the canonical origin context for a session-summary store.
+fn resolve_session_origin_context(
+    args: &MemoryArgs,
+    payload: &SessionSummaryPayload,
+    session_id: &str,
+) -> Result<OriginContext, McpError> {
+    resolve_origin_context(&OriginContextInput {
+        org_id: args.org_id.as_deref(),
+        project_id_args: args.project_id.as_deref(),
+        project_id_payload: payload.project_id.as_deref(),
+        session_from_args: Some(session_id),
+        parent_session_from_data: payload.parent_session_id.as_deref(),
+        tool_name_args: Some("memory"),
+        repo_id_args: args.repo_id.as_deref(),
+        repo_path_payload: payload.repo_path.as_deref(),
+        worktree_id_payload: payload.worktree_id.as_deref(),
+        operator_id_payload: payload.operator_id.as_deref(),
+        machine_id_payload: payload.machine_id.as_deref(),
+        agent_program_payload: payload.agent_program.as_deref(),
+        model_id_payload: payload.model_id.as_deref(),
+        delegated_payload: payload.delegated,
+        require_project_id: true,
+        ..Default::default()
+    })
+}
 
 /// Stores a session summary in the memory service.
 #[tracing::instrument(skip_all)]
@@ -16,33 +71,42 @@ pub async fn store_session(
     memory_service: &Arc<dyn MemoryServiceInterface>,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
-    let data = match MemoryHelpers::json_map(&args.data) {
-        Some(data) => data,
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing data payload for session summary",
-            )]));
-        }
-    };
-    let session_id = args
+    if args.data.is_none() {
+        return Ok(tool_error("Missing data payload for session summary"));
+    }
+    let payload = serde_json::from_value::<SessionSummaryPayload>(
+        args.data
+            .clone()
+            .ok_or_else(|| McpError::invalid_params("missing required field: data", None))?,
+    )
+    .map_err(|_| McpError::invalid_params("invalid data", None))?;
+    let session_id = match args
         .session_id
-        .clone()
-        .or_else(|| MemoryHelpers::get_str(data, "session_id").map(SessionId::new));
-    let session_id = match session_id {
+        .or_else(|| payload.session_id.as_deref().map(SessionId::from))
+    {
         Some(value) => value,
-        None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing session_id for session summary",
-            )]));
-        }
+        None => return Ok(tool_error("Missing session_id for session summary")),
     };
-    let topics = MemoryHelpers::get_string_list(data, "topics");
-    let decisions = MemoryHelpers::get_string_list(data, "decisions");
-    let next_steps = MemoryHelpers::get_string_list(data, "next_steps");
-    let key_files = MemoryHelpers::get_string_list(data, "key_files");
-    let session_id_str = session_id.as_str().to_string();
+    let session_id_str = session_id.as_str().clone();
+
+    let origin_context = resolve_session_origin_context(args, &payload, session_id_str.as_str())?;
+    let project_id = origin_context.project_id.clone().ok_or_else(|| {
+        McpError::invalid_params("project_id is required for session summary", None)
+    })?;
     match memory_service
-        .create_session_summary(session_id, topics, decisions, next_steps, key_files)
+        .create_session_summary(CreateSessionSummaryInput {
+            project_id,
+            org_id: args
+                .org_id
+                .clone()
+                .unwrap_or(mcb_utils::constants::values::DEFAULT_ORG_ID.to_owned()),
+            session_id,
+            topics: payload.topics,
+            decisions: payload.decisions,
+            next_steps: payload.next_steps,
+            key_files: payload.key_files,
+            origin_context: Some(origin_context),
+        })
         .await
     {
         Ok(summary_id) => ResponseFormatter::json_success(&serde_json::json!({
@@ -62,9 +126,7 @@ pub async fn get_session(
     let session_id = match args.session_id.as_ref() {
         Some(value) => value,
         None => {
-            return Ok(CallToolResult::error(vec![Content::text(
-                "Missing session_id",
-            )]));
+            return Ok(tool_error("Missing session_id"));
         }
     };
     match memory_service.get_session_summary(session_id).await {
@@ -76,9 +138,7 @@ pub async fn get_session(
             "key_files": summary.key_files,
             "created_at": summary.created_at,
         })),
-        Ok(None) => Ok(CallToolResult::error(vec![Content::text(
-            "Session summary not found",
-        )])),
+        Ok(None) => Ok(tool_error("Session summary not found")),
         Err(e) => Ok(to_contextual_tool_error(e)),
     }
 }

@@ -1,32 +1,72 @@
-//! Provides memory domain definitions.
+//! Memory service ports.
+
 use async_trait::async_trait;
 
 use crate::entities::memory::{
     ErrorPattern, MemoryFilter, MemorySearchIndex, MemorySearchResult, Observation,
-    ObservationMetadata, ObservationType, SessionSummary,
+    ObservationMetadata, ObservationType, OriginContext, SessionSummary,
 };
 use crate::error::Result;
 use crate::value_objects::{Embedding, ObservationId, SessionId};
 
-/// Memory Service Interface
-///
-/// Provides observation storage and retrieval with semantic search capabilities.
-/// Supports session-based memory organization and content deduplication.
+/// Input payload for creating or updating a session summary.
+#[derive(Debug, Clone)]
+pub struct CreateSessionSummaryInput {
+    /// Project identifier owning this session summary.
+    pub project_id: String,
+    /// Organization identifier owning this session summary.
+    pub org_id: String,
+    /// Session identifier being summarized.
+    pub session_id: SessionId,
+    /// Main topics covered in the session.
+    pub topics: Vec<String>,
+    /// Concrete decisions taken during the session.
+    pub decisions: Vec<String>,
+    /// Actionable next steps produced by the session.
+    pub next_steps: Vec<String>,
+    /// Important files touched or discussed.
+    pub key_files: Vec<String>,
+    /// Optional origin context metadata.
+    pub origin_context: Option<OriginContext>,
+}
+
+/// Input payload describing an observation to store.
+#[derive(Debug, Clone)]
+pub struct StoreObservationInput {
+    /// Project identifier owning the observation.
+    pub project_id: String,
+    /// Observation content body.
+    pub content: String,
+    /// Observation type/category.
+    pub r#type: ObservationType,
+    /// Tags associated with the observation.
+    pub tags: Vec<String>,
+    /// Observation metadata.
+    pub metadata: ObservationMetadata,
+}
+
+/// Manager for core observations.
 #[async_trait]
-pub trait MemoryServiceInterface: Send + Sync {
+pub trait ObservationManager: Send + Sync {
     /// Store an observation with optional embedding for semantic search.
-    ///
-    /// Returns `(observation_id, deduplicated)`. If duplicate content is detected (same hash),
-    /// returns the existing observation's ID and `deduplicated: true`.
     async fn store_observation(
         &self,
-        project_id: String,
-        content: String,
-        r#type: ObservationType,
-        tags: Vec<String>,
-        metadata: ObservationMetadata,
+        input: StoreObservationInput,
     ) -> Result<(ObservationId, bool)>;
 
+    /// Get an observation by ID.
+    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>>;
+
+    /// Performs the delete observation operation.
+    async fn delete_observation(&self, id: &ObservationId) -> Result<()>;
+
+    /// Get multiple observations by IDs.
+    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>>;
+}
+
+/// Manager for error patterns.
+#[async_trait]
+pub trait ErrorPatternManager: Send + Sync {
     /// Store an error pattern.
     async fn store_error_pattern(&self, pattern: ErrorPattern) -> Result<String>;
 
@@ -37,10 +77,22 @@ pub trait MemoryServiceInterface: Send + Sync {
         project_id: String,
         limit: usize,
     ) -> Result<Vec<ErrorPattern>>;
+}
 
+/// Manager for session summaries.
+#[async_trait]
+pub trait SessionSummaryManager: Send + Sync {
+    /// Get a session summary by session ID.
+    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>>;
+
+    /// Create or update a session summary.
+    async fn create_session_summary(&self, input: CreateSessionSummaryInput) -> Result<String>;
+}
+
+/// Semantic text operations and memory search.
+#[async_trait]
+pub trait MemorySearcher: Send + Sync {
     /// Search memories using semantic similarity.
-    ///
-    /// Returns observations ranked by similarity to the query embedding.
     async fn search_memories(
         &self,
         query: &str,
@@ -48,31 +100,10 @@ pub trait MemoryServiceInterface: Send + Sync {
         limit: usize,
     ) -> Result<Vec<MemorySearchResult>>;
 
-    /// Get a session summary by session ID.
-    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>>;
-
-    /// Create or update a session summary.
-    ///
-    /// Summarizes the key topics, decisions, and next steps from a session.
-    async fn create_session_summary(
-        &self,
-        session_id: SessionId,
-        topics: Vec<String>,
-        decisions: Vec<String>,
-        next_steps: Vec<String>,
-        key_files: Vec<String>,
-    ) -> Result<String>;
-
-    /// Get an observation by ID.
-    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>>;
-
-    /// Performs the delete observation operation.
-    async fn delete_observation(&self, id: &ObservationId) -> Result<()>;
-
     /// Generate embedding for content (for external use).
     async fn embed_content(&self, content: &str) -> Result<Embedding>;
 
-    /// Get observations in timeline order around an anchor (for progressive disclosure).
+    /// Get observations in timeline order around an anchor.
     async fn get_timeline(
         &self,
         anchor_id: &ObservationId,
@@ -81,18 +112,20 @@ pub trait MemoryServiceInterface: Send + Sync {
         filter: Option<MemoryFilter>,
     ) -> Result<Vec<Observation>>;
 
-    /// Get multiple observations by IDs (for progressive disclosure step 3).
-    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>>;
-
     /// Token-efficient memory search - returns index only (no full content).
-    ///
-    /// This is Step 1 of the 3-layer workflow (search -> timeline -> details).
-    /// Returns lightweight index entries with IDs, types, tags, scores, and brief previews.
-    /// Use memory action=get with the returned IDs for full details.
     async fn memory_search(
         &self,
         query: &str,
         filter: Option<MemoryFilter>,
         limit: usize,
     ) -> Result<Vec<MemorySearchIndex>>;
+}
+
+define_aggregate! {
+    /// Memory Service Interface
+    ///
+    /// Provides observation storage and retrieval with semantic search capabilities.
+    /// Supports session-based memory organization and content deduplication.
+    #[async_trait]
+    pub trait MemoryServiceInterface = ObservationManager + ErrorPatternManager + SessionSummaryManager + MemorySearcher;
 }

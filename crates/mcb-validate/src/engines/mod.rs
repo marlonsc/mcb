@@ -1,17 +1,30 @@
-//! Hybrid Rule Engines
 //!
-//! Provides a unified interface for multiple rule engines:
-//! - rust-rule-engine: RETE-UL algorithm with GRL syntax
-//! - rusty-rules: JSON DSL with composition (all/any/not)
-//! - evalexpr: Simple boolean expression evaluation
-//! - validator/garde: Field-level validations
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
 //!
-//! ## Engine Selection
+//! # Validation Rule Engines
 //!
-//! The router automatically selects the appropriate engine based on rule content:
-//! - Rules with "when"/"then" keywords -> RETE engine (GRL syntax)
-//! - Rules with "expression" field -> Expression engine (evalexpr)
-//! - Rules with "condition"/"action" -> Rusty Rules engine (JSON DSL)
+//! Five engines, each serving a distinct purpose:
+//!
+//! | Engine | Purpose | External crate |
+//! | -------- | --------- | ---------------- |
+//! | `ReteEngine` | RETE-UL algorithm with GRL when/then syntax | `rust-rule-engine` |
+//! | `ExpressionEngine` | Simple boolean expressions (`file_count` > 500) | `evalexpr` |
+//! | `RustyRulesEngineWrapper` | JSON DSL with all/any/not composition | `rusty-rules` |
+//! | `ValidatorEngine` | Rule _definition_ validation (field checks) | `validator` |
+//! | `RuleEngineRouter` | Auto-detects engine from rule content, dispatches | — |
+//!
+//! `HybridRuleEngine` is the top-level orchestrator. It owns the router (which
+//! owns the three execution engines) plus `ValidatorEngine` and a compiled-rule
+//! cache. All rule execution flows through the router — no duplicate engine
+//! instances.
+//!
+//! ## Routing logic (in `RuleEngineRouter`)
+//!
+//! 1. Explicit `"engine"` field → use specified engine
+//! 2. Contains "when"/"then" → RETE
+//! 3. Has `"expression"` field → Expression
+//! 4. Has `"condition"`/`"action"` → `RustyRules`
+//! 5. Default → `RustyRules`
 
 pub mod expression_engine;
 pub mod hybrid_engine;

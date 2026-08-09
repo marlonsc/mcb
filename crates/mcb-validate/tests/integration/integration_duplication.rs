@@ -6,22 +6,23 @@
 //! ## Clone Types Tested
 //!
 //! | Type | Description |
-//! |------|-------------|
+//! | ------ | ------------- |
 //! | Type 1 (DUP001) | Exact clones (100% identical) |
 //! | Type 2 (DUP002) | Renamed clones (identifiers changed) |
 //! | Type 3 (DUP003) | Gapped clones (small modifications) |
 
 #[cfg(test)]
 mod duplication_integration_tests {
+    use rstest::rstest;
     use std::fs;
     use std::io::Write;
     use std::path::PathBuf;
 
+    use mcb_domain::ports::validation::Violation;
     use mcb_validate::duplication::{
         DuplicationAnalyzer, DuplicationThresholds, DuplicationType, TokenFingerprinter,
         tokenize_source,
     };
-    use mcb_validate::violation_trait::Violation;
     use tempfile::TempDir;
 
     fn create_temp_file(dir: &TempDir, name: &str, content: &str) -> PathBuf {
@@ -32,9 +33,10 @@ mod duplication_integration_tests {
     }
 
     /// Test that tokenizer correctly extracts tokens from Rust code
+    #[rstest]
     #[test]
     fn test_tokenize_rust_code() {
-        let code = r"fn calculate_sum(numbers: &[i32]) -> i32 {
+        let code = "fn calculate_sum(numbers: &[i32]) -> i32 {
     let mut sum = 0;
     for num in numbers {
         sum += num;
@@ -68,9 +70,10 @@ mod duplication_integration_tests {
     }
 
     /// Test fingerprinting identifies duplicate token sequences
+    #[rstest]
     #[test]
     fn test_fingerprinter_finds_duplicates() {
-        let code1 = r"fn process_data(items: &[i32]) -> i32 {
+        let code1 = "fn process_data(items: &[i32]) -> i32 {
     let mut total = 0;
     for item in items {
         total += item;
@@ -78,7 +81,7 @@ mod duplication_integration_tests {
     total
 }";
 
-        let code2 = r"fn process_data(items: &[i32]) -> i32 {
+        let code2 = "fn process_data(items: &[i32]) -> i32 {
     let mut total = 0;
     for item in items {
         total += item;
@@ -111,12 +114,13 @@ mod duplication_integration_tests {
     }
 
     /// Test `DuplicationAnalyzer` detects exact clones across files
+    #[rstest]
     #[test]
     fn test_analyzer_detects_exact_clones() {
         let dir = TempDir::new().unwrap();
 
         // Create two files with identical function
-        let duplicated_code = r"
+        let duplicated_code = "
 fn calculate_average(numbers: &[f64]) -> f64 {
     if numbers.is_empty() {
         return 0.0;
@@ -167,6 +171,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     }
 
     /// Test that small code snippets below threshold are not flagged
+    #[rstest]
     #[test]
     fn test_respects_minimum_thresholds() {
         let dir = TempDir::new().unwrap();
@@ -196,6 +201,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     }
 
     /// Test analyzer works with different file types
+    #[rstest]
     #[test]
     fn test_analyzer_handles_multiple_languages() {
         let dir = TempDir::new().unwrap();
@@ -215,9 +221,10 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     }
 
     /// Test duplication statistics calculation
+    #[rstest]
     #[test]
     fn test_duplication_stats() {
-        use mcb_validate::violation_trait::Severity;
+        use mcb_domain::ports::validation::Severity;
 
         let violations = vec![
             mcb_validate::duplication::DuplicationViolation {
@@ -264,10 +271,11 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     }
 
     /// Test Violation trait implementation
+    #[rstest]
     #[test]
     fn test_violation_trait_implementation() {
+        use mcb_domain::ports::validation::{Severity, ViolationCategory};
         use mcb_validate::duplication::DuplicationViolation;
-        use mcb_validate::violation_trait::{Severity, ViolationCategory};
 
         let violation = DuplicationViolation {
             file: PathBuf::from("src/utils.rs"),
@@ -298,38 +306,23 @@ fn calculate_average(numbers: &[f64]) -> f64 {
     }
 
     /// Test clone type classification
-    #[test]
-    fn test_clone_type_classification() {
-        // Test DuplicationType rule IDs
-        assert_eq!(
-            DuplicationType::ExactClone.rule_id(),
-            "DUP001",
-            "Exact clone should be DUP001"
-        );
-        assert_eq!(
-            DuplicationType::RenamedClone.rule_id(),
-            "DUP002",
-            "Renamed clone should be DUP002"
-        );
-        assert_eq!(
-            DuplicationType::GappedClone.rule_id(),
-            "DUP003",
-            "Gapped clone should be DUP003"
-        );
-        assert_eq!(
-            DuplicationType::SemanticClone.rule_id(),
-            "DUP004",
-            "Semantic clone should be DUP004"
-        );
+    #[rstest]
+    #[case(DuplicationType::ExactClone, "DUP001")]
+    #[case(DuplicationType::RenamedClone, "DUP002")]
+    #[case(DuplicationType::GappedClone, "DUP003")]
+    #[case(DuplicationType::SemanticClone, "DUP004")]
+    fn clone_type_classification(#[case] clone_type: DuplicationType, #[case] rule_id: &str) {
+        assert_eq!(clone_type.rule_id(), rule_id);
     }
 
     /// Test that exclude patterns affect analysis
+    #[rstest]
     #[test]
     fn test_exclude_patterns_applied() {
         let dir = TempDir::new().unwrap();
 
         // Create duplicate code
-        let code = r"fn duplicated_function(x: i32) -> i32 {
+        let code = "fn duplicated_function(x: i32) -> i32 {
     let mut result = 0;
     for i in 0..x {
         result += i;
@@ -347,7 +340,7 @@ fn calculate_average(numbers: &[f64]) -> f64 {
 
         // Configure to exclude tests directory
         let thresholds = DuplicationThresholds {
-            exclude_patterns: vec!["**/tests/**".to_string()],
+            exclude_patterns: vec!["**/tests/**".to_owned()],
             min_lines: 3,
             min_tokens: 10,
             ..Default::default()
@@ -374,52 +367,41 @@ fn calculate_average(numbers: &[f64]) -> f64 {
         }
     }
 
-    /// Test empty file handling
-    #[test]
-    fn test_empty_files() {
-        let dir = TempDir::new().unwrap();
-
-        let file1 = create_temp_file(&dir, "empty.rs", "");
-        let file2 = create_temp_file(&dir, "also_empty.rs", "// just a comment\n");
-
-        let analyzer = DuplicationAnalyzer::new();
-        let violations = analyzer
-            .analyze_files(&[file1, file2])
-            .expect("Should handle empty files");
-
-        assert!(
-            violations.is_empty(),
-            "Empty files should not produce violations"
-        );
-    }
-
-    /// Test that files with only comments don't cause issues
-    #[test]
-    fn test_comment_only_files() {
-        let dir = TempDir::new().unwrap();
-
-        let comments = r"
+    /// Test files without meaningful code do not produce violations
+    #[rstest]
+    #[case("", "// just a comment\n")]
+    #[case(
+        "
 // This is a file with only comments
 // No actual code here
 /*
  * Multi-line comment
  * Also no code
  */
-";
+",
+        "
+// This is a file with only comments
+// No actual code here
+/*
+ * Multi-line comment
+ * Also no code
+ */
+"
+    )]
+    fn non_code_files(#[case] file1_content: &str, #[case] file2_content: &str) {
+        let dir = TempDir::new().unwrap();
 
-        let file1 = create_temp_file(&dir, "comments1.rs", comments);
-        let file2 = create_temp_file(&dir, "comments2.rs", comments);
+        let file1 = create_temp_file(&dir, "file1.rs", file1_content);
+        let file2 = create_temp_file(&dir, "file2.rs", file2_content);
 
         let analyzer = DuplicationAnalyzer::new();
         let violations = analyzer
             .analyze_files(&[file1, file2])
-            .expect("Should handle comment-only files");
+            .expect("Should handle non-code files");
 
-        // Comment-only files shouldn't produce code duplication violations
-        // (comments are stripped during tokenization)
         assert!(
             violations.is_empty(),
-            "Comment-only files should not produce violations"
+            "Non-code files should not produce violations"
         );
     }
 }

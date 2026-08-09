@@ -9,7 +9,7 @@
 //! ## Violation Types
 //!
 //! | ID | Type | Description |
-//! |----|------|-------------|
+//! | ---- | ------ | ------------- |
 //! | CA001 | DomainContainsImplementation | Domain layer has impl logic |
 //! | CA002 | HandlerCreatesService | Handler creates service directly |
 //! | CA003 | PortMissingComponentDerive | Port impl missing DI registration |
@@ -19,29 +19,29 @@
 
 #[cfg(test)]
 mod architecture_integration_tests {
+    use rstest::rstest;
     use std::fs;
     use std::io::Write;
     use std::path::{Path, PathBuf};
 
-    use mcb_validate::ValidationConfig;
-    use mcb_validate::Validator;
-    use mcb_validate::clean_architecture::{
-        CleanArchitectureValidator, CleanArchitectureViolation,
-    };
+    use crate::utils::run_named_validator;
+    use mcb_domain::ports::validation::ValidationConfig;
+    use mcb_domain::ports::validation::Validator;
+    use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
     use mcb_validate::config::NamingRulesConfig;
-    use mcb_validate::violation_trait::{Severity, Violation, ViolationCategory};
+    use mcb_validate::{CleanArchitectureValidator, CleanArchitectureViolation};
     use tempfile::TempDir;
 
     fn mcb_naming_config() -> NamingRulesConfig {
         NamingRulesConfig {
-            domain_crate: "mcb-domain".to_string(),
-            application_crate: "mcb-application".to_string(),
-            providers_crate: "mcb-providers".to_string(),
-            infrastructure_crate: "mcb-infrastructure".to_string(),
-            server_crate: "mcb-server".to_string(),
-            validate_crate: "mcb-validate".to_string(),
-            language_support_crate: "mcb-language-support".to_string(),
-            ast_utils_crate: "mcb-ast-utils".to_string(),
+            domain_crate: "mcb-domain".to_owned(),
+            application_crate: "mcb-infrastructure".to_owned(),
+            providers_crate: "mcb-providers".to_owned(),
+            infrastructure_crate: "mcb-infrastructure".to_owned(),
+            server_crate: "mcb-server".to_owned(),
+            validate_crate: "mcb-validate".to_owned(),
+            utils_crate: "mcb-utils".to_owned(),
+
             enabled: true,
         }
     }
@@ -50,12 +50,7 @@ mod architecture_integration_tests {
         let root = dir.path().to_path_buf();
 
         // Create crate directories
-        let crates = [
-            "mcb-domain",
-            "mcb-application",
-            "mcb-providers",
-            "mcb-server",
-        ];
+        let crates = ["mcb-domain", "mcb-providers", "mcb-server"];
         for crate_name in &crates {
             let crate_dir = root.join("crates").join(crate_name).join("src");
             fs::create_dir_all(&crate_dir).unwrap();
@@ -75,6 +70,7 @@ mod architecture_integration_tests {
     }
 
     /// Test that validator creates successfully
+    #[rstest]
     #[test]
     fn test_validator_creation() {
         let dir = TempDir::new().unwrap();
@@ -86,13 +82,14 @@ mod architecture_integration_tests {
     }
 
     /// Test that clean code produces no violations
+    #[rstest]
     #[test]
     fn test_clean_code_no_violations() {
         let dir = TempDir::new().unwrap();
         let root = create_workspace_structure(&dir);
 
         // Create clean domain entity with identity
-        let entity_code = r"
+        let entity_code = "
 use uuid::Uuid;
 
 pub struct User {
@@ -114,7 +111,7 @@ impl User {
         write_file(&root, "crates/mcb-domain/src/entities/user.rs", entity_code);
 
         // Create clean value object (immutable)
-        let vo_code = r"
+        let vo_code = "
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Email(String);
 
@@ -138,17 +135,19 @@ impl Email {
             vo_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Clean code should produce no violations
         assert!(
             violations.is_empty(),
-            "Clean code should produce no violations, got: {violations:?}"
+            "Clean code should produce no violations, got {} violations",
+            violations.len()
         );
     }
 
     /// Test detection of handler creating service directly
+    #[rstest]
     #[test]
     fn test_detects_handler_creating_service() {
         let dir = TempDir::new().unwrap();
@@ -156,7 +155,7 @@ impl Email {
 
         // Create handler that creates service directly (violation)
         let handler_code = r#"
-use mcb_application::services::SearchService;
+use mcb_infrastructure::di::modules::use_cases::SearchService;
 
 pub struct SearchHandler;
 
@@ -180,14 +179,11 @@ impl SearchHandler {
             handler_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Should detect CA002 violations
-        let ca002_violations: Vec<_> = violations
-            .iter()
-            .filter(|v| matches!(v, CleanArchitectureViolation::HandlerCreatesService { .. }))
-            .collect();
+        let ca002_violations: Vec<_> = violations.iter().filter(|v| v.id() == "CA002").collect();
 
         // Note: Detection depends on implementation details
         // If no violations found, the validator may need different patterns
@@ -201,13 +197,14 @@ impl SearchHandler {
     }
 
     /// Test detection of entity missing identity field
+    #[rstest]
     #[test]
     fn test_detects_entity_missing_identity() {
         let dir = TempDir::new().unwrap();
         let root = create_workspace_structure(&dir);
 
         // Create entity without id field (violation)
-        let entity_code = r"
+        let entity_code = "
 pub struct Product {
     pub name: String,
     pub price: f64,
@@ -230,14 +227,11 @@ impl Product {
             entity_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Should detect CA004 violations
-        let ca004_violations: Vec<_> = violations
-            .iter()
-            .filter(|v| matches!(v, CleanArchitectureViolation::EntityMissingIdentity { .. }))
-            .collect();
+        let ca004_violations: Vec<_> = violations.iter().filter(|v| v.id() == "CA004").collect();
 
         if !ca004_violations.is_empty() {
             for v in &ca004_violations {
@@ -248,13 +242,14 @@ impl Product {
     }
 
     /// Test detection of mutable value object
+    #[rstest]
     #[test]
     fn test_detects_mutable_value_object() {
         let dir = TempDir::new().unwrap();
         let root = create_workspace_structure(&dir);
 
         // Create value object with mutable method (violation)
-        let vo_code = r"
+        let vo_code = "
 pub struct Money {
     amount: f64,
     currency: String,
@@ -290,14 +285,11 @@ impl Money {
             vo_code,
         );
 
-        let validator = CleanArchitectureValidator::new(&root);
-        let violations = validator.validate_all().unwrap();
+        let violations = run_named_validator(&root, "clean_architecture")
+            .unwrap_or_else(|e| panic!("clean_architecture failed: {e}"));
 
         // Should detect CA005 violations
-        let ca005_violations: Vec<_> = violations
-            .iter()
-            .filter(|v| matches!(v, CleanArchitectureViolation::ValueObjectMutable { .. }))
-            .collect();
+        let ca005_violations: Vec<_> = violations.iter().filter(|v| v.id() == "CA005").collect();
 
         if !ca005_violations.is_empty() {
             for v in &ca005_violations {
@@ -308,13 +300,14 @@ impl Money {
     }
 
     /// Test detection of server importing provider directly
+    #[rstest]
     #[test]
     fn test_detects_server_imports_provider() {
         let dir = TempDir::new().unwrap();
         let root = create_workspace_structure(&dir);
 
         // Create server file importing provider directly (violation)
-        let server_code = r"
+        let server_code = "
 // Wrong: importing directly from providers
 use mcb_providers::embedding::OllamaEmbeddingProvider;
 use mcb_providers::vector_store::MilvusVectorStore;
@@ -363,13 +356,14 @@ impl Server {
     }
 
     /// Test Violation trait implementation
+    #[rstest]
     #[test]
     fn test_violation_trait_implementation() {
         let violation = CleanArchitectureViolation::HandlerCreatesService {
             file: PathBuf::from("src/handlers/search.rs"),
             line: 42,
-            service_name: "SearchService".to_string(),
-            context: "SearchService::new()".to_string(),
+            service_name: "SearchService".to_owned(),
+            context: "SearchService::new()".to_owned(),
             severity: Severity::Warning,
         };
 
@@ -399,63 +393,73 @@ impl Server {
     }
 
     /// Test all violation IDs are correct
-    #[test]
-    fn test_violation_ids() {
-        let violations = [
-            CleanArchitectureViolation::DomainContainsImplementation {
-                file: PathBuf::new(),
-                line: 1,
-                impl_type: "struct".to_string(),
-                severity: Severity::Warning,
-            },
-            CleanArchitectureViolation::HandlerCreatesService {
-                file: PathBuf::new(),
-                line: 1,
-                service_name: "Svc".to_string(),
-                context: String::new(),
-                severity: Severity::Warning,
-            },
-            CleanArchitectureViolation::PortMissingComponentDerive {
-                file: PathBuf::new(),
-                line: 1,
-                struct_name: "Port".to_string(),
-                trait_name: "Trait".to_string(),
-                severity: Severity::Warning,
-            },
-            CleanArchitectureViolation::EntityMissingIdentity {
-                file: PathBuf::new(),
-                line: 1,
-                entity_name: "Entity".to_string(),
-                severity: Severity::Warning,
-            },
-            CleanArchitectureViolation::ValueObjectMutable {
-                file: PathBuf::new(),
-                line: 1,
-                vo_name: "VO".to_string(),
-                method_name: "set".to_string(),
-                severity: Severity::Warning,
-            },
-            CleanArchitectureViolation::ServerImportsProviderDirectly {
-                file: PathBuf::new(),
-                line: 1,
-                import_path: "mcb_providers::x".to_string(),
-                severity: Severity::Warning,
-            },
-        ];
-
-        let expected_ids = ["CA001", "CA002", "CA003", "CA004", "CA005", "CA006"];
-
-        for (violation, expected_id) in violations.iter().zip(expected_ids.iter()) {
-            assert_eq!(violation.id(), *expected_id);
-            assert_eq!(violation.category(), ViolationCategory::Architecture);
-        }
+    #[rstest]
+    #[case(
+        CleanArchitectureViolation::DomainContainsImplementation {
+            file: PathBuf::new(),
+            line: 1,
+            impl_type: "struct".to_owned(),
+            severity: Severity::Warning,
+        },
+        "CA001"
+    )]
+    #[case(
+        CleanArchitectureViolation::HandlerCreatesService {
+            file: PathBuf::new(),
+            line: 1,
+            service_name: "Svc".to_owned(),
+            context: String::new(),
+            severity: Severity::Warning,
+        },
+        "CA002"
+    )]
+    #[case(
+        CleanArchitectureViolation::PortMissingComponentDerive {
+            file: PathBuf::new(),
+            line: 1,
+            struct_name: "Port".to_owned(),
+            trait_name: "Trait".to_owned(),
+            severity: Severity::Warning,
+        },
+        "CA003"
+    )]
+    #[case(
+        CleanArchitectureViolation::EntityMissingIdentity {
+            file: PathBuf::new(),
+            line: 1,
+            entity_name: "Entity".to_owned(),
+            severity: Severity::Warning,
+        },
+        "CA004"
+    )]
+    #[case(
+        CleanArchitectureViolation::ValueObjectMutable {
+            file: PathBuf::new(),
+            line: 1,
+            vo_name: "VO".to_owned(),
+            method_name: "set".to_owned(),
+            severity: Severity::Warning,
+        },
+        "CA005"
+    )]
+    #[case(
+        CleanArchitectureViolation::ServerImportsProviderDirectly {
+            file: PathBuf::new(),
+            line: 1,
+            import_path: "mcb_providers::x".to_owned(),
+            severity: Severity::Warning,
+        },
+        "CA006"
+    )]
+    fn violation_ids(#[case] violation: CleanArchitectureViolation, #[case] expected_id: &str) {
+        assert_eq!(violation.id(), expected_id);
+        assert_eq!(violation.category(), ViolationCategory::Architecture);
     }
 
     /// Test Validator trait integration
+    #[rstest]
     #[test]
     fn test_validator_trait() {
-        use mcb_validate::validator_trait::Validator;
-
         let dir = TempDir::new().unwrap();
         let root = create_workspace_structure(&dir);
         let config = ValidationConfig::new(&root);
@@ -473,10 +477,12 @@ impl Server {
 
         // Should be able to call validate through trait
         let result = validator.validate(&config);
-        assert!(result.is_ok());
+        let report = result.expect("validation should succeed");
+        assert!(report.iter().all(|v| !v.id().is_empty()));
     }
 
     /// Test with real workspace structure (integration with actual codebase)
+    #[rstest]
     #[test]
     fn test_with_workspace_root() {
         // This test uses the actual workspace if available
@@ -493,13 +499,9 @@ impl Server {
         });
 
         if let Some(root) = workspace_root {
-            let validator = CleanArchitectureValidator::new(&root);
-            let result = validator.validate_all();
-
-            // Should not panic, even if violations exist
-            assert!(result.is_ok());
-
-            let violations = result.unwrap();
+            let violations = run_named_validator(&root, "clean_architecture")
+                .expect("validation should succeed");
+            assert!(violations.iter().all(|v| !v.id().is_empty()));
             // Log violations for informational purposes
             if !violations.is_empty() {
                 eprintln!(

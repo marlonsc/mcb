@@ -245,7 +245,7 @@ output_markdown() {
 ## Project Metrics (v$(get_version))
 
 | Metric | Value |
-|--------|-------|
+| -------- | ------- |
 | Version | $(get_version) |
 | Languages | $(get_language_count) ($(get_language_list)) |
 | Embedding Providers | $(get_embedding_count) ($(get_embedding_list)) |

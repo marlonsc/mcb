@@ -31,7 +31,7 @@
 //!
 //! ```no_run
 //! use mcb_providers::hybrid_search::HybridSearchEngine;
-//! use mcb_domain::ports::providers::HybridSearchProvider;
+//! use mcb_domain::ports::HybridSearchProvider;
 //!
 //! // Create engine with default weights (40% BM25, 60% semantic)
 //! let engine = HybridSearchEngine::new();
@@ -49,7 +49,7 @@
 //! ## Providers
 //!
 //! | Provider | Description | Use Case |
-//! |----------|-------------|----------|
+//! | ---------- | ------------- | ---------- |
 //! | `HybridSearchEngine` | Full BM25 + semantic hybrid | Production search |
 //!
 //! ## BM25 Algorithm
@@ -66,6 +66,7 @@
 
 pub mod bm25;
 pub mod engine;
+mod registry;
 
 // Re-export main types
 pub use bm25::{BM25Params, BM25Scorer};

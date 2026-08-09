@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Session Management
 //!
 //! Provides session isolation for MCB server connections.
@@ -6,4 +9,4 @@
 
 mod manager;
 
-pub use manager::{SessionContext, SessionManager, create_session_manager};
+pub use manager::{SessionContext, SessionManager};

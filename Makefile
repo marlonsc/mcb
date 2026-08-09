@@ -1,90 +1,88 @@
 # =============================================================================
-# MCP Context Browser - Makefile v2.0
+# MCB — canonical Make interface. Few verbs, WHAT=/SCOPE= dispatch, mcb.sh monopoly.
 # =============================================================================
-# Modular structure with single-action verbs
-# Each verb does ONE thing. Use prerequisites for composition.
-# Run `make help` for command reference
-# =============================================================================
-
-# =============================================================================
-# Global Parameters (limitations only, not for multi-function)
-# =============================================================================
-export RELEASE ?= 1
-export SCOPE ?= all
-export FIX ?= 0
-export STRICT ?= 0
-export QUICK ?= 0
-export LCOV ?= 0
-export CI_MODE ?= 0
-export BUMP ?=
-export TEST_THREADS ?= 0
-
-# Rust 2024 Edition lints
-export RUST_2024_LINTS := -D unsafe_op_in_unsafe_fn -D rust_2024_compatibility -W static_mut_refs
-
-# =============================================================================
-# Include Modules
-# =============================================================================
-include make/Makefile.core.mk
-include make/Makefile.quality.mk
-include make/Makefile.docs.mk
-include make/Makefile.dev.mk
-include make/Makefile.release.mk
-include make/Makefile.git.mk
-include make/Makefile.help.mk
-
-# Default target
+SHELL := bash
+.SHELLFLAGS := -euo pipefail -c
 .DEFAULT_GOAL := help
 
-# =============================================================================
-# CI (compound targets using prerequisites)
-# =============================================================================
-.PHONY: ci ci-full ci-local
+MCB_SH := scripts/lib/mcb.sh
+MCB_AUDIT_IGNORES := $(shell bash $(MCB_SH) ignores)
 
-ci: ## Complete CI pipeline (lint + test + validate + audit)
-	@echo "Running CI pipeline..."
-	@$(MAKE) lint CI_MODE=1
-	@$(MAKE) test SCOPE=all
-	@$(MAKE) validate QUICK=1
-	@$(MAKE) audit
-	@echo "CI pipeline passed!"
+include makefiles/ui.mk
+include makefiles/dispatch.mk
 
-ci-full: ## Full CI validation matching GitHub Actions (lint + test + startup + validate + audit + docs + coverage)
-	@echo "==================================================================="
-	@echo "Running FULL CI pipeline (matches GitHub Actions exactly)"
-	@echo "==================================================================="
-	@echo ""
-	@echo "Step 1/6: Linting (Rust 2024 compliance)..."
-	@$(MAKE) lint CI_MODE=1
-	@echo ""
-	@echo "Step 2/6: Unit and integration tests (4 threads to prevent timeouts)..."
-	@$(MAKE) test SCOPE=all TEST_THREADS=4
-	@echo ""
-	@echo "Step 3/7: Startup smoke tests (DDL/init failure detection)..."
-	@$(MAKE) test-startup
-	@echo ""
-	@echo "Step 4/7: Architecture validation (strict)..."
-	@$(MAKE) validate STRICT=1
-	@echo ""
-	@echo "Step 5/7: Golden acceptance tests (2 threads for acceptance tests)..."
-	@$(MAKE) test SCOPE=golden TEST_THREADS=2
-	@echo ""
-	@echo "Step 6/7: Security audit..."
-	@$(MAKE) audit
-	@echo ""
-	@echo "Step 7/7: Documentation build..."
-	@$(MAKE) docs
-	@echo ""
-	@echo "==================================================================="
-	@echo "✓ FULL CI pipeline passed!"
-	@echo "==================================================================="
+# --- params (single declaration) ---------------------------------------------
+export RELEASE ?= 1
+export QUICK ?= 0
+export FIX ?= 0
+export THREADS ?= 1
+export SCOPE ?=
+WHAT ?=
+APPLY ?= N
+BUMP ?=
+FILES ?=
+MSG ?=
+REF ?=
+TAG ?=
+BASE ?= main
+BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD 2>/dev/null)
+PR ?=
+RUN ?=
+SUB ?=
+LOG_N ?=
+export RUST_2024_LINTS := -D unsafe_op_in_unsafe_fn -D rust_2024_compatibility -W static_mut_refs
 
-ci-local: ## Local pre-commit validation (lint + validate QUICK, no tests)
-	@echo "Running LOCAL pre-commit validation..."
-	@echo "  → Linting (Rust 2024 compliance)..."
-	@$(MAKE) lint CI_MODE=1
-	@echo "  → Architecture validation (QUICK mode, skipping tests)..."
-	@$(MAKE) validate QUICK=1
-	@echo "✓ Pre-commit validation passed!"
-	@echo ""
-	@echo "Tip: Run 'make ci-full' for complete CI checks including all tests."
+# Destructive-verb gate: dry-run unless APPLY=Y. Usage: $(call gate,<action>)
+gate = [ "$(APPLY)" = "Y" ] || { printf "DRY-RUN: would %s; set APPLY=Y to execute\n" "$(1)" >&2; exit 0; }
+
+# --- WHATS_<verb> phase SSOT (drives sub-help + error arms) -------------------
+WHATS_check   := fmt lint validate audit udeps coverage qlty all
+WHATS_fix     := fmt lint docs all
+WHATS_dev     := run docker-up docker-down docker-logs docker-test
+WHATS_docs    := build serve lint validate sync rust check setup adr adr-new diagrams
+WHATS_codegen := all cli db entities conversions clean
+WHATS_release := package version install install-validate
+WHATS_git     := status diff log show add commit push pull branch checkout tag tags stash stash-pop stash-list merge rebase unstage push-tags
+WHATS_pr      := checks view merge rerun
+WHATS_sub     := status sync diff commit push propagate
+WHATS_setup   := hooks tools adr all
+WHATS_clean   := build codegen all
+
+# --- verb targets ------------------------------------------------------------
+.PHONY: build test check lint-impl fix dev docs codegen release git pr sub setup clean ci guard help
+
+build:     ; $(call DISPATCH_BUILD)
+test:      ; $(call DISPATCH_TEST)
+check:     ; $(call DISPATCH_CHECK)
+lint-impl: ; @cargo fmt --all -- --check && cargo clippy --all-targets -- -D warnings
+fix:       ; $(call DISPATCH_FIX)
+dev:       ; $(call DISPATCH_DEV)
+docs:      ; $(call DISPATCH_DOCS)
+codegen:   ; $(call DISPATCH_CODEGEN)
+release:   ; $(call DISPATCH_RELEASE)
+git:       ; $(call DISPATCH_GIT)
+pr:        ; $(call DISPATCH_PR)
+sub:       ; $(call DISPATCH_SUB)
+setup:     ; $(call DISPATCH_SETUP)
+clean:     ; $(call DISPATCH_CLEAN)
+ci:        ; @$(MAKE) check WHAT=all
+guard:     ; @bash $(MCB_SH) guard
+
+help:
+	@printf "\n$(BOLD)MCB — make <verb> [WHAT=phase] [SCOPE=..] [APPLY=Y]$(RESET)\n\n"
+	@printf "  %-10s %s\n" build   "Build (RELEASE=0|1)"
+	@printf "  %-10s %s\n" test    "Test (SCOPE=unit|doc|golden|startup|integration|e2e|all, THREADS=N)"
+	@printf "  %-10s %s\n" check   "Read-only gate (WHAT=$(WHATS_check))"
+	@printf "  %-10s %s\n" fix     "Auto-fix (WHAT=$(WHATS_fix))"
+	@printf "  %-10s %s\n" dev     "Dev/docker (WHAT=$(WHATS_dev))"
+	@printf "  %-10s %s\n" docs    "Docs (WHAT=$(WHATS_docs))"
+	@printf "  %-10s %s\n" codegen "Codegen [APPLY=Y] (WHAT=$(WHATS_codegen))"
+	@printf "  %-10s %s\n" release "Release (WHAT=$(WHATS_release), BUMP=patch|minor|major)"
+	@printf "  %-10s %s\n" git     "Git (WHAT=$(WHATS_git)) [commit/push/merge/rebase: APPLY=Y]"
+	@printf "  %-10s %s\n" pr      "GitHub PR (WHAT=$(WHATS_pr), PR=, RUN=)"
+	@printf "  %-10s %s\n" sub     "Submodules (WHAT=$(WHATS_sub), SUB=, MSG=)"
+	@printf "  %-10s %s\n" setup   "Setup (WHAT=$(WHATS_setup))"
+	@printf "  %-10s %s\n" clean   "Clean [APPLY=Y] (WHAT=$(WHATS_clean))"
+	@printf "  %-10s %s\n" ci      "CI gate (check WHAT=all)"
+	@printf "  %-10s %s\n" guard   "Banned-pattern scanner"
+	@printf "\n"

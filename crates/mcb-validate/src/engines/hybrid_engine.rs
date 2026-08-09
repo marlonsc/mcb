@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/validate.md](../../../../docs/modules/validate.md)
+//!
 //! Hybrid Rule Engine
 //!
 //! Orchestrates multiple rule engines for maximum flexibility:
@@ -8,18 +11,14 @@
 use std::collections::HashMap;
 
 use async_trait::async_trait;
+use derive_more::Display;
 use serde::{Deserialize, Serialize};
-use tracing::{error, warn};
 
-use super::expression_engine::ExpressionEngine;
-use super::rete_engine::ReteEngine;
-use super::router::RuleEngineRouter;
-
-use super::rusty_rules_engine::RustyRulesEngineWrapper;
+use super::router::{RoutedEngine, RuleEngineRouter};
 use super::validator_engine::ValidatorEngine;
 use crate::Result;
 use crate::ValidationConfig;
-use crate::violation_trait::{Severity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 
 /// Types of rule engines supported
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -36,7 +35,8 @@ pub enum RuleEngineType {
 }
 
 /// Concrete violation structure for rule engines
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Display)]
+#[display("[{id}] {message}")]
 pub struct RuleViolation {
     /// Unique identifier for the violation
     pub id: String,
@@ -79,12 +79,6 @@ impl Violation for RuleViolation {
 
     fn message(&self) -> String {
         self.message.clone()
-    }
-}
-
-impl std::fmt::Display for RuleViolation {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}] {}", self.id, self.message)
     }
 }
 
@@ -163,23 +157,54 @@ pub struct RuleContext {
     pub graph: Arc<DependencyGraph>,
 }
 
-/// Hybrid engine that coordinates multiple rule engines
+/// Hybrid engine that coordinates multiple rule engines.
+///
+/// ## Architecture
+///
+/// The `HybridRuleEngine` is the top-level orchestrator. It delegates all rule
+/// execution to the [`RuleEngineRouter`], which owns the three rule engines
+/// (RETE, Expression, `RustyRules`) and selects the appropriate one per rule.
+///
+/// Additionally, the `ValidatorEngine` handles rule _definition_ validation
+/// (field-level checks on rule JSON structure) — this is a separate concern
+/// from rule _execution_.
+///
+/// ```text
+/// HybridRuleEngine (orchestrator)
+///   ├── RuleEngineRouter (dispatch + execution)
+///   │   ├── ReteEngine        (GRL / when-then)
+///   │   ├── ExpressionEngine   (evalexpr booleans)
+///   │   └── RustyRulesEngineWrapper (JSON DSL)
+///   ├── ValidatorEngine (rule definition validation)
+///   └── cache: HashMap<String, Vec<u8>> (compiled rule cache)
+/// ```
 pub struct HybridRuleEngine {
-    rusty_rules_engine: RustyRulesEngineWrapper,
-    expression_engine: ExpressionEngine,
-    rete_engine: ReteEngine,
     router: RuleEngineRouter,
     validator_engine: ValidatorEngine,
     cache: HashMap<String, Vec<u8>>, // Compiled rule cache
 }
 
+/// Input for lint-based rules executing via `YamlRuleExecutor`.
+pub struct LintRuleInput<'a> {
+    /// Rule ID
+    pub rule_id: &'a str,
+    /// List of linters or linter tags enabled for this rule
+    pub lint_select: &'a [String],
+    /// Rule context
+    pub context: &'a RuleContext,
+    /// Custom violation message
+    pub custom_message: Option<&'a str>,
+    /// Severity level
+    pub severity: Severity,
+    /// Category classification
+    pub category: ViolationCategory,
+}
+
 impl HybridRuleEngine {
     /// Create a new hybrid rule engine
+    #[must_use]
     pub fn new() -> Self {
         Self {
-            rusty_rules_engine: RustyRulesEngineWrapper::new(),
-            expression_engine: ExpressionEngine::new(),
-            rete_engine: ReteEngine::new(),
             router: RuleEngineRouter::new(),
             validator_engine: ValidatorEngine::new(),
             cache: HashMap::new(),
@@ -187,6 +212,10 @@ impl HybridRuleEngine {
     }
 
     /// Execute a rule using the appropriate engine
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the selected engine fails to execute the rule.
     pub async fn execute_rule(
         &self,
         _rule_id: &str,
@@ -198,25 +227,23 @@ impl HybridRuleEngine {
 
         let violations = match engine_type {
             RuleEngineType::RustRuleEngine => {
-                self.rete_engine.execute(rule_definition, context).await?
+                self.router
+                    .execute_with_engine(RoutedEngine::Rete, rule_definition, context)
+                    .await?
             }
             RuleEngineType::RustyRules => {
-                self.rusty_rules_engine
-                    .execute(rule_definition, context)
+                self.router
+                    .execute_with_engine(RoutedEngine::RustyRules, rule_definition, context)
                     .await?
             }
             RuleEngineType::Expression => {
-                self.expression_engine
-                    .execute(rule_definition, context)
+                self.router
+                    .execute_with_engine(RoutedEngine::Expression, rule_definition, context)
                     .await?
             }
-            RuleEngineType::Auto => {
-                // Use router to auto-detect and execute
-                self.router.execute(rule_definition, context).await?
-            }
+            RuleEngineType::Auto => self.router.execute(rule_definition, context).await?,
         };
 
-        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {
@@ -229,6 +256,10 @@ impl HybridRuleEngine {
     ///
     /// Uses the router to analyze the rule definition and select
     /// the most appropriate engine.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if rule routing or execution fails.
     pub async fn execute_auto(
         &self,
         rule_definition: &serde_json::Value,
@@ -238,7 +269,6 @@ impl HybridRuleEngine {
 
         let violations = self.router.execute(rule_definition, context).await?;
 
-        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {
@@ -248,11 +278,16 @@ impl HybridRuleEngine {
     }
 
     /// Get the engine type that would be used for a rule
+    #[must_use]
     pub fn detect_engine(&self, rule_definition: &serde_json::Value) -> String {
-        self.router.get_engine_type(rule_definition)
+        RuleEngineRouter::get_engine_type(rule_definition)
     }
 
     /// Execute multiple rules in parallel
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if batch execution encounters a fatal failure.
     pub async fn execute_rules_batch(
         &self,
         rules: Vec<(String, RuleEngineType, serde_json::Value)>,
@@ -272,18 +307,26 @@ impl HybridRuleEngine {
                 (rule_id_clone, result)
             });
 
-            handles.push(handle);
+            handles.push((rule_id, handle));
         }
 
         let mut results = Vec::new();
-        for handle in handles {
+        for (rule_id, handle) in handles {
             match handle.await {
-                Ok((rule_id, Ok(result))) => results.push((rule_id, result)),
-                Ok((rule_id, Err(e))) => {
-                    warn!(rule_id = %rule_id, error = %e, "Rule execution error");
+                Ok((returned_rule_id, Ok(result))) => results.push((returned_rule_id, result)),
+                Ok((returned_rule_id, Err(e))) => {
+                    mcb_domain::warn!(
+                        "hybrid_engine",
+                        "Rule execution error",
+                        &format!("rule_id={returned_rule_id} error={e}")
+                    );
                 }
                 Err(e) => {
-                    error!(error = %e, "Task join error");
+                    mcb_domain::error!(
+                        "hybrid_engine",
+                        "Task join error",
+                        &format!("rule_id={rule_id} error={e}")
+                    );
                 }
             }
         }
@@ -292,12 +335,17 @@ impl HybridRuleEngine {
     }
 
     /// Validate rule definition using validator/garde
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the rule definition fails validation.
     pub fn validate_rule_definition(&self, rule_definition: &serde_json::Value) -> Result<()> {
         self.validator_engine
             .validate_rule_definition(rule_definition)
     }
 
     /// Get cached compiled rule
+    #[must_use]
     pub fn get_cached_rule(&self, rule_id: &str) -> Option<&Vec<u8>> {
         self.cache.get(rule_id)
     }
@@ -314,40 +362,27 @@ impl HybridRuleEngine {
 
     /// Execute linter-based validation for rules with `lint_select`.
     ///
-    /// Delegates to [`YamlRuleExecutor`] for linter detection and execution,
-    /// then converts [`LintViolation`]s to [`RuleViolation`]s.
-    pub async fn execute_lint_rule(
-        &self,
-        rule_id: &str,
-        lint_select: &[String],
-        context: &RuleContext,
-        custom_message: Option<&str>,
-        severity: Severity,
-        category: ViolationCategory,
-    ) -> Result<RuleResult> {
+    /// Delegates to `YamlRuleExecutor` for linter detection and execution,
+    /// then converts `LintViolation`s to [`RuleViolation`]s.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if linter execution or violation conversion fails.
+    pub async fn execute_lint_rule(&self, input: LintRuleInput<'_>) -> Result<RuleResult> {
         use crate::linters::YamlRuleExecutor;
-        use crate::rules::yaml_loader::ValidatedRule;
+
+        let LintRuleInput {
+            rule_id,
+            lint_select,
+            context,
+            custom_message,
+            severity,
+            category,
+        } = input;
 
         let start_time = std::time::Instant::now();
 
-        let stub_rule = ValidatedRule {
-            id: rule_id.to_string(),
-            name: String::new(),
-            category: String::new(),
-            severity: String::new(),
-            enabled: true,
-            description: String::new(),
-            rationale: String::new(),
-            engine: String::new(),
-            config: serde_json::Value::Null,
-            rule_definition: serde_json::Value::Null,
-            fixes: Vec::new(),
-            lint_select: lint_select.to_vec(),
-            message: custom_message.map(String::from),
-            selectors: Vec::new(),
-            ast_query: None,
-            metrics: None,
-        };
+        let lint_adapter_rule = lint_adapter_rule(rule_id, lint_select, custom_message);
 
         let files: Vec<std::path::PathBuf> = context
             .file_contents
@@ -357,7 +392,8 @@ impl HybridRuleEngine {
         let file_refs: Vec<&std::path::Path> =
             files.iter().map(std::path::PathBuf::as_path).collect();
 
-        let lint_violations = YamlRuleExecutor::execute_rule(&stub_rule, &file_refs).await?;
+        let lint_violations =
+            YamlRuleExecutor::execute_rule(&lint_adapter_rule, &file_refs).await?;
 
         let violations: Vec<RuleViolation> = lint_violations
             .into_iter()
@@ -371,7 +407,6 @@ impl HybridRuleEngine {
             })
             .collect();
 
-        #[allow(clippy::cast_possible_truncation)]
         let execution_time = start_time.elapsed().as_millis() as u64;
 
         Ok(RuleResult {
@@ -381,11 +416,39 @@ impl HybridRuleEngine {
     }
 
     /// Check if a rule uses `lint_select` (linter-based validation)
+    #[must_use]
     pub fn is_lint_rule(rule_definition: &serde_json::Value) -> bool {
         rule_definition
             .get("lint_select")
             .and_then(|v| v.as_array())
             .is_some_and(|arr| !arr.is_empty())
+    }
+}
+
+/// Build a minimal `ValidatedRule` that carries only the lint-selection fields.
+fn lint_adapter_rule(
+    rule_id: &str,
+    lint_select: &[String],
+    custom_message: Option<&str>,
+) -> crate::rules::yaml_loader::ValidatedRule {
+    crate::rules::yaml_loader::ValidatedRule {
+        id: rule_id.to_owned(),
+        name: String::new(),
+        category: String::new(),
+        severity: String::new(),
+        enabled: true,
+        description: String::new(),
+        rationale: String::new(),
+        engine: String::new(),
+        config: serde_json::Value::Null,
+        rule_definition: serde_json::Value::Null,
+        fixes: Vec::new(),
+        lint_select: lint_select.to_vec(),
+        message: custom_message.map(String::from),
+        selectors: Vec::new(),
+        ast_query: None,
+        metrics: None,
+        filters: None,
     }
 }
 
@@ -398,9 +461,6 @@ impl Default for HybridRuleEngine {
 impl Clone for HybridRuleEngine {
     fn clone(&self) -> Self {
         Self {
-            rusty_rules_engine: self.rusty_rules_engine.clone(),
-            expression_engine: self.expression_engine.clone(),
-            rete_engine: self.rete_engine.clone(),
             router: self.router.clone(),
             validator_engine: self.validator_engine.clone(),
             cache: self.cache.clone(),
@@ -408,7 +468,28 @@ impl Clone for HybridRuleEngine {
     }
 }
 
-/// Trait for rule engines
+/// Trait for rule engines.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use async_trait::async_trait;
+/// use mcb_validate::engines::hybrid_engine::{RuleEngine, RuleContext, RuleViolation};
+/// use mcb_validate::Result;
+///
+/// struct MyRuleEngine;
+///
+/// #[async_trait]
+/// impl RuleEngine for MyRuleEngine {
+///     async fn execute(
+///         &self,
+///         rule_definition: &serde_json::Value,
+///         context: &RuleContext,
+///     ) -> Result<Vec<RuleViolation>> {
+///         Ok(vec![])
+///     }
+/// }
+/// ```
 #[async_trait]
 pub trait RuleEngine: Send + Sync {
     /// Execute the rule against the provided context

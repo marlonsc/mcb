@@ -1,3 +1,6 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../docs/modules/domain.md)
+//!
 //! Domain Events
 //!
 //! Domain events represent significant business occurrences that have happened
@@ -7,7 +10,7 @@
 //! ## Domain Events
 //!
 //! | Event | Description |
-//! |-------|-------------|
+//! | ------- | ------------- |
 //! | [`DomainEvent`] | Base trait for all domain events |
 //! | [`EventPublisher`] | Interface for publishing domain events |
 //! | [`ServiceState`] | Service lifecycle states |

@@ -1,31 +1,18 @@
+//!
 //! Infrastructure Services
 //!
-//! Infrastructure service implementations for port traits defined in mcb-application.
-//!
-//! ## ARCHITECTURE RULE
-//!
-//! **CONCRETE TYPES ARE INTERNAL ONLY.**
-//!
-//! All implementations are composed in the DI bootstrap module.
-//! External code SHOULD use `init_app()` to get an `AppContext` with resolved services.
-//! NEVER import concrete types directly from here - use the trait abstractions.
-//!
-//! ## Exception: Admin Types
-//!
-//! `AtomicPerformanceMetrics` and `DefaultIndexingOperations` are exported
-//! because mcb-server needs them for AdminState. These implement traits from
-//! mcb-application but are infrastructure concerns, not external providers.
+//! Infrastructure service implementations for port traits defined in mcb-domain.
+//! Concrete types are composed in the DI bootstrap module or `loco_app.rs`.
 
-// Internal modules - implementations NOT exported
-// pub(crate) mod events;
-pub(crate) mod lifecycle;
+pub mod events;
+pub mod indexing;
 
-// Admin module - partially exported for mcb-server
-pub mod admin;
+/// DI-resolved database migrator (CA pattern via domain registry).
+pub mod migration;
+pub mod validation_ops;
+pub mod validator_job_runner;
 
-// Public data types (NOT implementations) - these are pure DTOs
-// Admin types - exported for mcb-server AdminState
-pub use admin::{AtomicPerformanceMetrics, DefaultIndexingOperations};
-pub use lifecycle::{ServiceInfo, ServiceManager, ServiceManagerError};
-// Event bus - exported for DI bootstrap and testing
-// pub use events::TokioBroadcastEventBus;
+pub use indexing::DefaultIndexingOperations;
+pub use migration::DynamicMigrator;
+pub use validation_ops::DefaultValidationOperations;
+pub use validator_job_runner::DefaultValidatorJobRunner;

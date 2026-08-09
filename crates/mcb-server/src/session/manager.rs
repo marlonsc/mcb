@@ -1,8 +1,10 @@
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
+//!
 //! Session manager implementation.
 
 use std::collections::hash_map::DefaultHasher;
 use std::hash::{Hash, Hasher};
-use std::sync::Arc;
 use std::time::Instant;
 
 use dashmap::DashMap;
@@ -37,7 +39,8 @@ impl SessionContext {
     ///
     /// The collection prefix is generated from a hash of the full session ID,
     /// ensuring unique prefixes even for session IDs that share common prefixes
-    /// (e.g., "claude_uuid1" vs "claude_uuid2").
+    /// (e.g., "`claude_uuid1`" vs "`claude_uuid2`").
+    #[must_use]
     pub fn new(id: &str) -> Self {
         let now = Instant::now();
 
@@ -52,7 +55,7 @@ impl SessionContext {
         let collection_prefix = format!("s_{:012x}", hash & 0xFFFFFFFFFFFF);
 
         Self {
-            id: id.to_string(),
+            id: id.to_owned(),
             collection_prefix,
             created_at: now,
             last_access: now,
@@ -67,6 +70,7 @@ impl SessionContext {
 
 impl SessionManager {
     /// Create a new session manager
+    #[must_use]
     pub fn new() -> Self {
         Self {
             sessions: DashMap::new(),
@@ -74,19 +78,22 @@ impl SessionManager {
     }
 
     /// Get or create a session context for the given session ID
+    #[must_use]
     pub fn get_or_create(&self, session_id: &str) -> SessionContext {
         self.sessions
-            .entry(session_id.to_string())
+            .entry(session_id.to_owned())
             .or_insert_with(|| SessionContext::new(session_id))
             .clone()
     }
 
     /// Get a session context if it exists
+    #[must_use]
     pub fn get(&self, session_id: &str) -> Option<SessionContext> {
         self.sessions.get(session_id).map(|r| r.clone())
     }
 
     /// Remove a session
+    #[must_use]
     pub fn remove(&self, session_id: &str) -> Option<SessionContext> {
         self.sessions.remove(session_id).map(|(_, v)| v)
     }
@@ -94,17 +101,19 @@ impl SessionManager {
     /// Prefix a collection name with the session's collection prefix
     ///
     /// If no session ID is provided, returns the collection name unchanged.
+    #[must_use]
     pub fn prefix_collection(&self, session_id: Option<&str>, collection: &str) -> String {
         match session_id {
             Some(id) => {
                 let ctx = self.get_or_create(id);
                 format!("{}_{}", ctx.collection_prefix, collection)
             }
-            None => collection.to_string(),
+            None => collection.to_owned(),
         }
     }
 
     /// Get the number of active sessions
+    #[must_use]
     pub fn session_count(&self) -> usize {
         self.sessions.len()
     }
@@ -115,9 +124,4 @@ impl SessionManager {
         self.sessions
             .retain(|_, ctx| now.duration_since(ctx.last_access) < max_age);
     }
-}
-
-/// Create a shared session manager
-pub fn create_session_manager() -> Arc<SessionManager> {
-    Arc::new(SessionManager::new())
 }

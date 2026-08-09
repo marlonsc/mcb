@@ -52,6 +52,7 @@ pub struct ValidationSummary {
 
 impl ValidationSummary {
     /// Returns summary rows for table rendering (label, count) in display order.
+    #[must_use]
     pub fn summary_rows(&self) -> Vec<SummaryRow> {
         vec![
             ("Dependency", self.dependency_count),

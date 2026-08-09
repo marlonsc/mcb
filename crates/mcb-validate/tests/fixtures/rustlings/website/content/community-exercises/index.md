@@ -4,8 +4,8 @@ title = "Community Exercises"
 
 ## List of Community Exercises
 
--   🇯🇵 [Japanese Rustlings](https://github.com/sotanengel/rustlings-jp)：A Japanese translation of the Rustlings exercises.
--   🇨🇳 [Simplified Chinese Rustlings](https://github.com/SandmeyerX/rustlings-zh-cn): A simplified Chinese translation of the Rustlings exercises.
+- 🇯🇵 [Japanese Rustlings](https://github.com/sotanengel/rustlings-jp)：A Japanese translation of the Rustlings exercises.
+- 🇨🇳 [Simplified Chinese Rustlings](https://github.com/SandmeyerX/rustlings-zh-cn): A simplified Chinese translation of the Rustlings exercises.
 
 > You can use the same `rustlings` program that you installed with `cargo install rustlings` to run community exercises.
 
@@ -56,8 +56,8 @@ Except of the `bin` list, you can modify the `Cargo.toml` file as you want.
 
 > The `bin` list is automatically updated by running `rustlings dev update`
 
--   You can add dependencies in the `[dependencies]` table.
--   You might want to [configure some lints](https://doc.rust-lang.org/cargo/reference/manifest.html#the-lints-section) for all exercises. You can do so in the `[lints.rust]` and `[lints.clippy]` tables.
+- You can add dependencies in the `[dependencies]` table.
+- You might want to [configure some lints](https://doc.rust-lang.org/cargo/reference/manifest.html#the-lints-section) for all exercises. You can do so in the `[lints.rust]` and `[lints.clippy]` tables.
 
 ### Publishing
 

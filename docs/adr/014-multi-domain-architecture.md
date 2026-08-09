@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 14
 title: Multi-Domain Architecture Strategy
@@ -10,33 +11,37 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR 014: Multi-Domain Architecture Strategy
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 014: Multi-Domain Architecture Strategy
 
 ## Status
+
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
 
 **Superseded** (v0.1.2)
 **Date**: 2026-01-14
 **Version**: v0.1.1 Update
 
 > **Note**: This ADR describes future plans for multi-domain expansion. The v0.1.1 release
-> implemented the [Eight-Crate Clean Architecture](013-clean-architecture-crate-separation.md)
+> implemented the [Six-Crate Clean Architecture](013-clean-architecture-crate-separation.md)
 > which provides the foundation for this multi-domain strategy.
 
 ## Context
 
-MCB v0.1.1 has implemented the eight-crate Clean Architecture foundation. Future versions will integrate:
+MCB v0.1.1 has implemented the six-crate Clean Architecture foundation. Future versions will integrate:
 
--   Code analysis capabilities (complexity, debt, quality)
--   Git integration (repository analysis, commit history)
--   Advanced tools (refactoring, scaffolding, mutation testing)
+- Code analysis capabilities (complexity, debt, quality)
+- Git integration (repository analysis, commit history)
+- Advanced tools (refactoring, scaffolding, mutation testing)
 
 **Challenge**: How to organize multiple domains using the modular crate structure?
 
 ## Decision
 
-Adopt **modular domain architecture** within the eight-crate structure:
+Adopt **modular domain architecture** within the six-crate structure:
 
-```
+```text
 mcb/
 ├── libs/                           # Shared workspace libraries
 │   ├── tree-sitter-analysis/       # AST parsing (shared by all domains)
@@ -75,69 +80,77 @@ mcb/
 
 **v0.1.1** (Current release):
 
--   Eight-crate Clean Architecture implemented
--   Shaku DI with two-layer strategy
--   20+ port traits with shaku::Interface (in mcb-application)
--   mcb-validate enforces layer boundaries
+- Six-crate Clean Architecture implemented
+- linkme + Handle DI with AppContext manual composition root (ADR-050; ADR-029 superseded)
+- 20+ port traits with `Send + Sync` bounds (in mcb-domain)
+- mcb-validate enforces layer boundaries
 
 **v0.3.0** (Analysis domain):
 
--   Implement analysis domain logic
--   Port PMAT's complexity/TDG/SATD algorithms
--   3 new MCP tools
+- Implement analysis domain logic
+- Port PMAT's complexity/TDG/SATD algorithms
+- 3 new MCP tools
 
 **v0.5.0** (Quality + Git domains):
 
--   Implement quality and git domains
--   7 new MCP tools
+- Implement quality and git domains
+- 7 new MCP tools
 
 ## Consequences
 
-**Positive**:
+Positive:
 
--   Clear separation of concerns
--   Incremental feature addition
--   Testable in isolation
--   Future domains easy to add
+- Clear separation of concerns
+- Incremental feature addition
+- Testable in isolation
+- Future domains easy to add
 
-**Negative**:
+Negative:
 
--   More directories (complexity)
--   Potential code duplication without careful planning
+- More directories (complexity)
+- Potential code duplication without careful planning
 
-**Mitigation**:
+Mitigation:
 
--   Use workspace libraries for shared code
--   Enforce port traits for cross-domain communication
--   Document domain boundaries clearly
+- Use workspace libraries for shared code
+- Enforce port traits for cross-domain communication
+- Document domain boundaries clearly
 
 ## Implementation Checklist
 
-**v0.1.1 (Completed)**:
+v0.1.1 (Completed):
 
--   [x] Eight-crate Clean Architecture implemented
--   [x] Shaku DI with two-layer strategy
--   [x] 20+ port traits with shaku::Interface (in mcb-application)
--   [x] mcb-validate enforces layer boundaries
+- [x] Six-crate Clean Architecture implemented
+- [x] linkme + Handle DI with AppContext manual composition root (ADR-050; ADR-029 superseded)
+- [x] 20+ port traits with `Send + Sync` bounds (in mcb-domain)
+- [x] mcb-validate enforces layer boundaries
 
-**v0.3.0 (Planned)**:
+v0.3.0 (Planned):
 
--   [ ] Create `crates/mcb-application/src/ports/analysis/` (analysis domain ports)
--   [ ] Create `crates/mcb-providers/src/analyzers/` (PMAT adapters)
--   [ ] Define `AnalysisInterface` trait
--   [ ] Port PMAT complexity/TDG/SATD algorithms
+- [ ] Create `crates/mcb-domain/src/ports/analysis/` (analysis domain ports; per ADR-050 current DI architecture, ports are in mcb-domain)
+- [ ] Create `crates/mcb-providers/src/analyzers/` (PMAT adapters)
+- [ ] Define `AnalysisInterface` trait
+- [ ] Port PMAT complexity/TDG/SATD algorithms
 
-**v0.5.0 (Planned)**:
+v0.5.0 (Planned):
 
--   [ ] Define `QualityInterface` trait
--   [ ] Define `GitInterface` trait
--   [ ] Implement quality and git domain services
+- [ ] Define `QualityInterface` trait
+- [ ] Define `GitInterface` trait
+- [ ] Implement quality and git domain services
+
+## Canonical References
+
+> **Note**: This ADR is a historical decision record. For current architecture
+> details, consult the normative documents listed below.
+
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
 
 ## Related ADRs
 
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI patterns
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Eight-crate structure
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI patterns
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Seven-crate structure
 
 ---
 
-*Updated 2026-01-17 - Reflects modular crate architecture (v0.1.2)*
+Updated 2026-01-17 - Reflects modular crate architecture (v0.1.2)

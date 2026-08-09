@@ -1,10 +1,7 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Memory Context Browser - Comprehensive Architecture Documentation
 
-[![Version](https://img.shields.io/badge/version-0.2.0-blue)](https://github.com/marlonsc/mcb/releases/tag/v0.2.0)
-[![Rust](https://img.shields.io/badge/rust-1.89%2B-orange)](https://www.rust-lang.org/)
-[![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
-
-**Model Context Protocol Server for Semantic Code Analysis using Vector Embeddings**
+## Model Context Protocol Server for Semantic Code Analysis using Vector Embeddings
 
 ---
 
@@ -31,29 +28,29 @@ Memory Context Browser is a high-performance, extensible Model Context Protocol 
 
 ### Core Capabilities
 
--   **🔍 Semantic Code Search**: Natural language to code search using vector embeddings
--   **📁 Multi-Language Support**: AST-based parsing for Rust, Python, JavaScript, TypeScript, and more
--   **🔌 Provider Architecture**: Pluggable embedding and vector storage providers
--   **⚡ High Performance**: Async processing with Tokio runtime
--   **🛡️ Enterprise Ready**: Comprehensive security, monitoring, and scalability features
--   **📊 Observability**: Full metrics, logging, and distributed tracing
+- **🔍 Semantic Code Search**: Natural language to code search using vector embeddings
+- **📁 Multi-Language Support**: AST-based parsing for Rust, Python, JavaScript, TypeScript, and more
+- **🔌 Provider Architecture**: Pluggable embedding and vector storage providers
+- **⚡ High Performance**: Async processing with Tokio runtime
+- **🛡️ Enterprise Ready**: Comprehensive security, monitoring, and scalability features
+- **📊 Observability**: Full metrics, logging, and distributed tracing
 
 ### Architectural Principles
 
--   **SOLID Design**: Clean separation of concerns with dependency injection
--   **Provider Pattern**: Extensible architecture for AI and storage providers
--   **Async-First**: Built for high concurrency and performance
--   **Security by Design**: Comprehensive security controls and compliance
--   **Observability**: Full monitoring and debugging capabilities
--   **Scalability**: Horizontal scaling with distributed deployment options
+- **SOLID Design**: Clean separation of concerns with dependency injection
+- **Provider Pattern**: Extensible architecture for AI and storage providers
+- **Async-First**: Built for high concurrency and performance
+- **Security by Design**: Comprehensive security controls and compliance
+- **Observability**: Full monitoring and debugging capabilities
+- **Scalability**: Horizontal scaling with distributed deployment options
 
 ### Current Status
 
-**Version**: 0.2.0 (Memory, Session, Agent, VCS + Documentation Overhaul)
-**Architecture Maturity**: ✅ **100% Complete DI Implementation**
-**DI Status**: ✅ 20+ Port Traits, ✅ Provider Registry, ✅ Service Factory, ✅ Full Port/Adapter Wiring
+**Version**: 0.3.1 (SeaQL + Loco.rs baseline, release stabilization)
+**Architecture Maturity**: ✅ **SeaQL + Loco.rs Clean Architecture Baseline**
+**DI Status**: ✅ Linkme provider registry, ✅ AppContext composition root, ✅ Full Port/Adapter Wiring
 **Provider Registration**: ✅ Linkme distributed slices (compile-time), ✅ Inventory removed
-**Validation**: ✅ mcb-validate crate Phases 1–7 verified (750+ tests); 1634+ tests project-wide
+**Validation**: ✅ `mcb-validate` architecture checks; run `make validate` for the current release verdict
 **Port Traits**: `crates/mcb-domain/src/ports/` - Provider traits in domain layer (Clean Architecture compliant)
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
@@ -83,7 +80,7 @@ graph TB
         VDB[(Vector Database<br/>Milvus/Pinecone)]
         EMB[Embedding Service<br/>OpenAI/Ollama]
         CACHE[(Cache<br/>Redis)]
-        STORAGE[(Metadata Store<br/>PostgreSQL)]
+        STORAGE[(Metadata Store<br/>SQLite)]
     end
 
     AI --> MCP
@@ -106,47 +103,47 @@ graph TB
 
 Memory Context Browser serves as a semantic code intelligence layer between AI assistants and codebases, enabling:
 
--   **Natural Language Code Search**: Find code by describing functionality
--   **Intelligent Code Analysis**: Understand code relationships and patterns
--   **Context-Aware Assistance**: Provide relevant code examples and references
--   **Multi-Repository Support**: Index and search across multiple codebases
--   **Real-time Updates**: Incremental indexing with change detection
+- **Natural Language Code Search**: Find code by describing functionality
+- **Intelligent Code Analysis**: Understand code relationships and patterns
+- **Context-Aware Assistance**: Provide relevant code examples and references
+- **Multi-Repository Support**: Index and search across multiple codebases
+- **Real-time Updates**: Incremental indexing with change detection
 
 ### External Interfaces
 
 ### Primary Interfaces
 
 | Interface | Protocol | Purpose | Status |
-|-----------|----------|---------|--------|
-|**MCP Protocol**| JSON-RPC 2.0 over stdio | AI assistant integration | ✅ Implemented |
-|**REST API**| HTTP/JSON | Direct API access | 🚧 Planned |
-|**WebSocket**| Real-time protocol | Live indexing updates | 🚧 Planned |
+| ----------- | ---------- | --------- | -------- |
+| **MCP Protocol** | JSON-RPC 2.0 over stdio | AI assistant integration | ✅ Implemented |
+| **REST API** | HTTP/JSON | Direct API access | 🚧 Planned |
+| **WebSocket** | Real-time protocol | Live indexing updates | 🚧 Planned |
 
 #### Secondary Interfaces
 
 | Interface | Protocol | Purpose | Status |
-|-----------|----------|---------|--------|
-|**Embedding APIs**| REST/gRPC | AI model integration | ⚠️ Framework ready |
-|**Vector Databases**| Native protocols | Vector storage | ⚠️ Framework ready |
-|**Git Integration**| Git protocol | Repository access | 🚧 Planned |
+| ----------- | ---------- | --------- | -------- |
+| **Embedding APIs** | REST/gRPC | AI model integration | ⚠️ Framework ready |
+| **Vector Databases** | Native protocols | Vector storage | ⚠️ Framework ready |
+| **Git Integration** | Git protocol | Repository access | 🚧 Planned |
 
 ### Quality Attributes
 
 #### Functional Requirements
 
--   **Search Accuracy**: >90% relevant results for natural language queries
--   **Indexing Speed**: <5 seconds for 1000 files (<1MB each)
--   **Query Latency**: <500ms average response time
--   **Language Support**: 12 programming languages with AST parsing
--   **Provider Compatibility**: 4+ embedding providers, 3+ vector stores
+- **Search Accuracy**: >90% relevant results for natural language queries
+- **Indexing Speed**: <5 seconds for 1000 files (<1MB each)
+- **Query Latency**: <500ms average response time
+- **Language Support**: 12 programming languages with AST parsing
+- **Provider Compatibility**: 4+ embedding providers, 3+ vector stores
 
 #### Non-Functional Requirements
 
--   **Performance**: 1000 concurrent users, 10k queries/minute
--   **Availability**: 99.9% uptime with automatic failover
--   **Security**: SOC 2 compliant with end-to-end encryption
--   **Scalability**: Horizontal scaling across 100+ nodes
--   **Maintainability**: <24 hours for hotfixes, <1 week for features
+- **Performance**: 1000 concurrent users, 10k queries/minute
+- **Availability**: 99.9% uptime with automatic failover
+- **Security**: SOC 2 compliant with end-to-end encryption
+- **Scalability**: Horizontal scaling across 100+ nodes
+- **Maintainability**: <24 hours for hotfixes, <1 week for features
 
 ---
 
@@ -176,7 +173,7 @@ graph TB
         end
 
         subgraph "Data Layer"
-            METADATA[(Metadata Store<br/>PostgreSQL)]
+            METADATA[(Metadata Store<br/>SQLite)]
             VECTORS[(Vector Database<br/>Milvus)]
             CACHE[(Cache Store<br/>Redis)]
         end
@@ -208,34 +205,34 @@ graph TB
 #### API Containers
 
 | Container | Technology | Responsibility | Interfaces |
-|-----------|------------|----------------|------------|
-|**MCP Server**| Rust/Tokio | Protocol translation, request routing | MCP Protocol (stdio), Internal APIs |
-|**REST API**| Rust/Axum | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
-|**WebSocket**| Rust/Tokio | Real-time notifications, live updates | WebSocket protocol |
+| ----------- | ------------ | ---------------- | ------------ |
+| **MCP Server** | Rust/Tokio | Protocol translation, request routing | MCP Protocol (stdio), Internal APIs |
+| **REST API** | Rust/Poem | HTTP interface, API gateway | HTTP/JSON, OpenAPI |
+| **WebSocket** | Rust/Tokio | Real-time notifications, live updates | WebSocket protocol |
 
 #### Application Containers
 
 | Container | Technology | Responsibility | Interfaces |
-|-----------|------------|----------------|------------|
-|**Core Services**| Rust | Business logic orchestration | Provider interfaces, data access |
-|**Task Scheduler**| Rust/Tokio | Background job processing | Internal queues, provider APIs |
-|**Cache Manager**| Rust/Redis | Caching layer abstraction | Redis protocol, internal APIs |
+| ----------- | ------------ | ---------------- | ------------ |
+| **Core Services** | Rust | Business logic orchestration | Provider interfaces, data access |
+| **Task Scheduler** | Rust/Tokio | Background job processing | Internal queues, provider APIs |
+| **Cache Manager** | Rust/Redis | Caching layer abstraction | Redis protocol, internal APIs |
 
 #### Provider Containers
 
 | Container | Technology | Responsibility | Interfaces |
-|-----------|------------|----------------|------------|
-|**Embedding Providers**| Rust + AI SDKs | Text-to-vector conversion | AI provider APIs, internal interfaces |
-|**Vector Store Providers**| Rust + DB SDKs | Vector storage and retrieval | Database protocols, internal interfaces |
-|**VCS Providers**| Rust/Git2 | Repository access and monitoring | Git/SSH protocols, internal interfaces |
+| ----------- | ------------ | ---------------- | ------------ |
+| **Embedding Providers** | Rust + AI SDKs | Text-to-vector conversion | AI provider APIs, internal interfaces |
+| **Vector Store Providers** | Rust + DB SDKs | Vector storage and retrieval | Database protocols, internal interfaces |
+| **VCS Providers** | Rust/Git2 | Repository access and monitoring | Git/SSH protocols, internal interfaces |
 
 #### Data Containers
 
 | Container | Technology | Responsibility | Interfaces |
-|-----------|------------|----------------|------------|
-|**Metadata Store**| PostgreSQL | Structured data, user management | SQL, connection pooling |
-|**Vector Database**| Milvus/Qdrant | High-dimensional vector storage | gRPC/REST, bulk operations |
-|**Cache Store**| Redis | Fast data caching, sessions | Redis protocol, pub/sub |
+| ----------- | ------------ | ---------------- | ------------ |
+| **Metadata Store** | SQLite | Structured data, session management | SQL |
+| **Vector Database** | Milvus/Qdrant | High-dimensional vector storage | gRPC/REST, bulk operations |
+| **Cache Store** | Redis | Fast data caching, sessions | Redis protocol, pub/sub |
 
 ### Container Interactions
 
@@ -357,14 +354,14 @@ impl ContextService {
 }
 ```
 
-**Responsibilities**:
+### Responsibilities
 
--   Coordinate embedding generation
--   Manage vector storage operations
--   Handle batch processing
--   Collect performance metrics
+- Coordinate embedding generation
+- Manage vector storage operations
+- Handle batch processing
+- Collect performance metrics
 
-##### SearchService
+#### SearchService
 
 **Purpose**: Execute semantic similarity searches across indexed codebases
 
@@ -401,14 +398,14 @@ impl SearchService {
 }
 ```
 
-**Responsibilities**:
+### Responsibilities (1)
 
--   Query processing and embedding generation
--   Vector similarity search execution
--   Result ranking and filtering
--   Response caching and optimization
+- Query processing and embedding generation
+- Vector similarity search execution
+- Result ranking and filtering
+- Response caching and optimization
 
-##### IndexingService
+#### IndexingService
 
 **Purpose**: Process codebases and create searchable vector indexes
 
@@ -452,18 +449,18 @@ impl IndexingService {
 }
 ```
 
-**Responsibilities**:
+### Responsibilities (2)
 
--   Repository scanning and file discovery
--   Language detection and AST parsing
--   Incremental indexing with change detection
--   Chunk generation and metadata extraction
+- Repository scanning and file discovery
+- Language detection and AST parsing
+- Incremental indexing with change detection
+- Chunk generation and metadata extraction
 
 #### Provider Implementations
 
 ##### Embedding Providers
 
-**Interface Definition**:
+### Interface Definition
 
 ```rust
 #[async_trait]
@@ -476,20 +473,20 @@ pub trait EmbeddingProvider: Send + Sync {
 }
 ```
 
-**Supported Providers**:
+#### Supported Providers
 
 | Provider | Technology | Dimensions | Cost Model | Status |
-|----------|------------|------------|------------|--------|
-|**OpenAI**| text-embedding-3-small | 1536 | Pay-per-token | ✅ Production |
-|**Ollama**| nomic-embed-text | 768 | Self-hosted | ✅ Production |
-|**Gemini**| text-embedding-004 | 768 | Pay-per-token | ✅ Production |
-|**VoyageAI**| voyage-3-lite | 512 | Pay-per-token | ✅ Production |
-|**Anthropic**| N/A | N/A | Pay-per-token | 🚧 Planned |
-|**Mock**| Fixed vectors | 128 | Free | ✅ Development |
+| ---------- | ------------ | ------------ | ------------ | -------- |
+| **OpenAI** | text-embedding-3-small | 1536 | Pay-per-token | ✅ Production |
+| **Ollama** | nomic-embed-text | 768 | Self-hosted | ✅ Production |
+| **Gemini** | text-embedding-004 | 768 | Pay-per-token | ✅ Production |
+| **VoyageAI** | voyage-3-lite | 512 | Pay-per-token | ✅ Production |
+| **Anthropic** | voyage-code-3 | 1024 | Pay-per-token | ✅ Production |
+| **FastEmbed** | AllMiniLML6V2 | 384 | Local (free) | ✅ Default |
 
 ##### Vector Store Providers
 
-**Interface Definition**:
+### Interface Definition (1)
 
 ```rust
 #[async_trait]
@@ -502,21 +499,21 @@ pub trait VectorStoreProvider: Send + Sync {
 }
 ```
 
-**Supported Providers**:
+#### Supported Providers
 
 | Provider | Technology | Index Type | Scalability | Status |
-|----------|------------|------------|-------------|--------|
-|**Milvus**| C++ + Go | IVF_FLAT, HNSW | 100M+ vectors | ✅ Production |
-|**Pinecone**| Cloud-native | HNSW | 1B+ vectors | 🚧 Planned |
-|**Qdrant**| Rust | HNSW | 10M+ vectors | 🚧 Planned |
-|**In-Memory**| Rust + DashMap | Brute force | <1M vectors | ✅ Development |
+| ---------- | ------------ | ------------ | ------------- | -------- |
+| **Milvus** | C++ + Go | IVF_FLAT, HNSW | 100M+ vectors | ✅ Production |
+| **Pinecone** | Cloud-native | HNSW | 1B+ vectors | 🚧 Planned |
+| **Qdrant** | Rust | HNSW | 10M+ vectors | 🚧 Planned |
+| **EdgeVec** | Rust + HNSW | HNSW (M=16, EF=100) | <1M vectors | ✅ Development |
 
 ##### Additional Domain Ports
 
 Beyond embedding and vector store providers, the system defines 12 additional port traits for comprehensive DI:
 
 | Port | Purpose | Implementation |
-|------|---------|----------------|
+| ------ | --------- | ---------------- |
 | `HybridSearchProvider` | Combined BM25 + semantic search | `HybridSearchAdapter` |
 | `CodeChunker` | AST-based code chunking | `IntelligentChunker` |
 | `EventPublisher` | Domain event publishing | `EventBus` |
@@ -530,7 +527,7 @@ Beyond embedding and vector store providers, the system defines 12 additional po
 | `IndexingServiceInterface` | Codebase indexing | `IndexingService` |
 | `ChunkingOrchestratorInterface` | Batch chunking coordination | `ChunkingOrchestrator` |
 
-All 20+ port traits are defined in mcb-domain and registered in dill Catalog for DI container integration.
+All 20+ port traits are defined in mcb-domain and wired through the AppContext composition root for DI integration.
 
 ---
 
@@ -543,23 +540,26 @@ Memory Context Browser implements Robert C. Martin's Clean Architecture with str
 1. **Dependency Rule**: Dependencies only point inward (toward the domain)
 2. **Abstraction Rule**: Inner layers define interfaces (ports), outer layers implement (adapters)
 3. **Entity Rule**: Domain entities have no external dependencies
-4. **Use Case Rule**: Application layer orchestrates without implementing infrastructure
+4. **Use Case Rule**: Infrastructure use-case modules orchestrate without embedding provider details
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
 │                      Server Layer                        │
 │                    (mcb-server)                         │
 ├─────────────────────────────────────────────────────────┤
 │                 Infrastructure Layer                     │
 │               (mcb-infrastructure)                       │
-├────────────────────┬────────────────────────────────────┤
-│   Providers Layer  │      Application Layer             │
-│  (mcb-providers)   │     (mcb-application)              │
-├────────────────────┴────────────────────────────────────┤
+├─────────────────────────────────────────────────────────┤
+│                    Providers Layer                       │
+│                   (mcb-providers)                       │
+├─────────────────────────────────────────────────────────┤
 │                      Domain Layer                        │
 │                    (mcb-domain)                          │
+├─────────────────────────────────────────────────────────┤
+│                      Utils Layer                         │
+│                    (mcb-utils)                           │
 └─────────────────────────────────────────────────────────┘
-         Dependencies flow inward (toward domain)
+         Dependency flow: utils → domain → providers → infrastructure → server
 ```
 
 For complete architectural details, see [ADR-013: Clean Architecture Crate Separation](../adr/013-clean-architecture-crate-separation.md).
@@ -571,17 +571,15 @@ The project enforces strict dependency rules to maintain Clean Architecture comp
 #### Forbidden Dependencies
 
 | Crate | MUST NOT depend on | Allowed Dependencies |
-|-------|--------------------|----------------------|
-| mcb-domain | Any internal crate | None (pure domain) |
-| mcb-application | mcb-infrastructure, mcb-server, mcb-providers | mcb-domain only |
-| mcb-providers | mcb-infrastructure, mcb-server | mcb-domain, mcb-application* |
-| mcb-infrastructure | mcb-server | mcb-domain, mcb-application |
+| ------- | -------------------- | ---------------------- |
+| mcb-utils | Any internal crate | None (pure utilities) |
+| mcb-domain | Any internal crate except mcb-utils | mcb-utils only |
+| mcb-providers | mcb-infrastructure, mcb-server | mcb-domain, mcb-utils |
+| mcb-infrastructure | mcb-server | mcb-domain, mcb-providers, mcb-utils |
+| mcb-server | None | mcb-infrastructure, mcb-utils |
 
-**Note**: `mcb-providers` → `mcb-application` dependency is allowed ONLY for:
-
--   Registry auto-registration (`ports::registry`)
--   Admin interfaces (`ports::admin`)
--   Infrastructure ports (`ports::infrastructure`)
+**Note**: Provider implementations import contracts from `mcb-domain` and are wired by
+`mcb-infrastructure`.
 
 Provider trait implementations MUST import from `mcb-domain::ports::providers`.
 
@@ -589,18 +587,18 @@ Provider trait implementations MUST import from `mcb-domain::ports::providers`.
 
 Run `make validate` to check compliance. The mcb-validate crate enforces:
 
--   **Phase 1**: Linter checks (Clippy, Ruff)
--   **Phase 2**: AST pattern queries (Tree-sitter)
--   **Phase 3**: Rule engine validation (evalexpr, RETE)
--   **Phase 4**: Metrics analysis (complexity, function length)
--   **Phase 5**: Duplication detection (Rabin-Karp, clone types 1-4)
+- **Phase 1**: Linter checks (Clippy, Ruff)
+- **Phase 2**: AST pattern queries (Tree-sitter)
+- **Phase 3**: Rule engine validation (evalexpr, RETE)
+- **Phase 4**: Metrics analysis (complexity, function length)
+- **Phase 5**: Duplication detection (Rabin-Karp, clone types 1-4)
 
 #### Provider Port Traits Location
 
 Provider port traits are defined in `mcb-domain/src/ports/providers/`:
 
 | Trait | Purpose |
-|-------|---------|
+| ------- | | --------- |
 | `EmbeddingProvider` | Generate vector embeddings from text |
 | `VectorStoreProvider` | Store and search vector embeddings |
 | `CacheProvider` | Caching abstraction |
@@ -609,7 +607,7 @@ Provider port traits are defined in `mcb-domain/src/ports/providers/`:
 | `CryptoProvider` | Encryption services |
 | `ConfigProvider` | Configuration access |
 
-The `mcb-application` layer re-exports these traits for backward compatibility, but implementations in `mcb-providers` import directly from `mcb-domain`.
+All provider port traits are defined in `mcb-domain/src/ports/providers/` (single source of truth per ADR-029). Implementations in `mcb-providers` import directly from `mcb-domain`.
 
 ### Extensibility - Adding New Providers
 
@@ -634,12 +632,12 @@ pub trait NewServiceProvider: Send + Sync {
 }
 ```
 
-**Guidelines:**
+### Guidelines
 
--   Use domain types only (no external dependencies)
--   Return `Result<T, Error>` from domain layer
--   Mark trait with `Send + Sync` for async safety
--   Include health check method
+- Use domain types only (no external dependencies)
+- Return `Result<T, Error>` from domain layer
+- Mark trait with `Send + Sync` for async safety
+- Include health check method
 
 #### Step 2: Implement in Providers
 
@@ -676,12 +674,12 @@ impl NewServiceProvider for ConcreteNewService {
 }
 ```
 
-**Guidelines:**
+### Guidelines (1)
 
--   Import trait from `mcb_domain::ports::providers`
--   Use `Arc<dyn Trait>` for shared ownership
--   Implement error conversion from external errors
--   Add configuration struct if needed
+- Import trait from `mcb_domain::ports::providers`
+- Use `Arc<dyn Trait>` for shared ownership
+- Implement error conversion from external errors
+- Add configuration struct if needed
 
 #### Step 3: Register via Linkme
 
@@ -704,49 +702,45 @@ pub static CONCRETE_NEW_SERVICE: ProviderRegistration = ProviderRegistration {
 };
 ```
 
-**Guidelines:**
+### Guidelines (2)
 
--   Define registry slice in `mcb-application/src/ports/registry/`
--   Register all implementations in provider module
--   Use async factory for initialization
--   Return `Arc<dyn Trait>` from factory
+- Define registry slice in `mcb-domain/src/ports/registry/` (all ports are in mcb-domain per ADR-029)
+- Register all implementations in provider module
+- Use async factory for initialization
+- Return `Arc<dyn Trait>` from factory
 
 This pattern enables compile-time provider discovery with zero runtime overhead while maintaining Clean Architecture boundaries.
 
-### DI Strategy (ADR-024 → ADR-029)
+### DI Strategy (ADR-024 → ADR-029 → ADR-050)
 
-The dependency injection system uses a **handle-based pattern with dill IoC Container** documented in [ADR-029: Hexagonal Architecture with dill](../adr/029-hexagonal-architecture-dill.md):
+The dependency injection system uses a handle-based pattern with a manual composition root documented in [ADR-050](../adr/050-manual-composition-root-dill-removal.md):
 
-#### dill Catalog (IoC Container)
+#### AppContext (Manual Composition Root)
 
-The dill `Catalog` manages service registration and resolution:
+`init_app()` wires service registration and resolution into `AppContext`:
 
 ```rust
-// Build catalog with all services (mcb-infrastructure/src/di/catalog.rs)
-pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
-    CatalogBuilder::new()
-        .add_value(config)
-        .add_value(embedding_provider)    // From linkme registry
-        .add_value(embedding_handle)      // RwLock wrapper
-        .add_value(embedding_admin)       // Runtime switching
-        .add_value(auth_service)          // Null implementation
-        .add_value(event_bus)             // TokioBroadcast
-        .build()
+// Build AppContext with all services (mcb-infrastructure/src/di/bootstrap.rs)
+pub async fn init_app(config: AppConfig) -> Result<AppContext> {
+    // Resolve providers from linkme registries
+    // Construct handles/admin services
+    // Return AppContext with typed fields
 }
 
-// Service retrieval
-pub fn get_service<T: ?Sized + Send + Sync>(catalog: &Catalog) -> Result<Arc<T>> {
-    catalog.get_one::<T>()
-}
+// Service retrieval via AppContext (bootstrap.rs)
+// AppContext holds all resolved providers as typed fields:
+//   app_context.embedding_handle()    → Arc<EmbeddingProviderHandle>
+//   app_context.vector_store_handle() → Arc<VectorStoreProviderHandle>
+//   app_context.cache_handle()        → Arc<CacheProviderHandle>
 ```
 
 **DI Components** (in `mcb-infrastructure/src/di/`):
 
--   `catalog.rs`: dill Catalog configuration and service resolution
--   `handles.rs`: RwLock wrappers for runtime provider switching
--   `provider_resolvers.rs`: linkme registry access
--   `admin.rs`: Admin services for API-based provider management
--   `bootstrap.rs`: AppContext initialization
+- `bootstrap.rs`: AppContext composition root and service wiring
+- `handles.rs`: RwLock wrappers for runtime provider switching
+- `provider_resolvers.rs`: linkme registry access
+- `admin.rs`: Admin services for API-based provider management
+- `bootstrap.rs`: AppContext initialization
 
 #### Provider Handles (Runtime Switching)
 
@@ -768,13 +762,13 @@ impl EmbeddingProviderHandle {
 }
 ```
 
-**Why This Pattern?**
+### Why This Pattern
 
-| Aspect | dill Catalog | Provider Handles |
-|--------|--------------|------------------|
-| **When** | Runtime | Runtime |
-| **Purpose** | Service resolution | Provider switching |
-| **Configuration** | `add_value()` | Via admin API |
+| Aspect | AppContext composition root | Provider Handles |
+| -------- | -------------- | ------------------ |
+| **When** | Startup/bootstrap | Runtime |
+| **Purpose** | Explicit service wiring | Provider switching |
+| **Configuration** | `init_app()` field assignment | Via admin API |
 | **Async Init** | Fully supported | Via resolvers |
 
 ### Port/Adapter Pattern
@@ -804,15 +798,15 @@ impl EmbeddingProvider for OllamaEmbeddingProvider {
 }
 ```
 
-**Port Categories**:
+### Port Categories
 
 | Category | Location | Examples |
-|----------|----------|----------|
+| ---------- | ---------- | ---------- |
 | Provider Ports | `mcb-domain/src/ports/providers/` | EmbeddingProvider, VectorStoreProvider, CacheProvider |
-| Infrastructure Ports | `mcb-application/src/ports/infrastructure/` | SyncProvider, SnapshotProvider, EventPublisher |
-| Admin Ports | `mcb-application/src/ports/admin.rs` | PerformanceMetrics, IndexingOperations |
+| Infrastructure Ports | `mcb-domain/src/ports/infrastructure/` | SyncProvider, SnapshotProvider, EventPublisher |
+| Admin Ports | `mcb-domain/src/ports/admin/` | PerformanceMetrics, IndexingOperations |
 
-> **Note**: Provider ports are defined in mcb-domain (single source of truth). Application layer re-exports for backward compatibility.
+> **Note**: All port traits are defined in mcb-domain (single source of truth per ADR-029).
 
 ### Testing with DI
 
@@ -828,11 +822,11 @@ async fn test_search_service() {
     // Test without infrastructure dependencies
 }
 
-// Integration testing - null providers via dill Catalog
+// Integration testing - default providers via AppContext composition root
 #[tokio::test]
 async fn test_full_flow() {
-    let catalog = build_catalog(AppConfig::default()).await?;
-    // Uses NullCacheProvider, NullEmbeddingProvider, etc.
+    let app_context = init_app(AppConfig::default()).await?;
+    // Uses MokaCacheProvider, FastEmbedProvider, etc.
     // Safe for CI/CD without external services
 }
 ```
@@ -843,100 +837,110 @@ async fn test_full_flow() {
 
 ### Crate Structure (Clean Architecture Monorepo)
 
-The system follows Clean Architecture principles with 8 crates organized as a Cargo workspace:
+The system follows Clean Architecture principles with 7 crates organized as a Cargo workspace:
 
 #### 📦 Domain Layer (`crates/mcb-domain/`)
 
 **Purpose**: Core business entities, value objects, events, ports, and repository interfaces.
 
-**Key Components**:
+### Key Components
 
--   `entities/`: Domain entities (CodeChunk, Codebase)
--   `events/`: Domain events (DomainEvent, EventPublisher trait)
--   `ports/providers/`: Provider port traits (EmbeddingProvider, VectorStoreProvider, CacheProvider, etc.)
--   `repositories/`: Repository port traits (ChunkRepository, SearchRepository)
--   `value_objects/`: Value objects (Embedding, Config, Search, Types)
--   `constants.rs`: Domain constants
--   `error.rs`: Domain error types
+- `entities/`: Domain entities (CodeChunk, Codebase)
+- `events/`: Domain events (DomainEvent, EventPublisher trait)
+- `ports/providers/`: Provider port traits (EmbeddingProvider, VectorStoreProvider, CacheProvider, etc.)
+- `repositories/`: Repository port traits (ChunkRepository, SearchRepository)
+- `value_objects/`: Value objects (Embedding, Config, Search, Types)
+- `error.rs`: Domain error types
 
-> **Note**: All provider port traits are defined in mcb-domain (single source of truth). Application layer re-exports for backward compatibility.
+#### 📦 Utils Layer (`crates/mcb-utils/`)
 
-#### 🔧 Application Layer (`crates/mcb-application/`)
+**Purpose**: Shared pure utilities, constants, and helpers with zero domain knowledge. Innermost crate (Layer 0).
 
-**Purpose**: Business logic orchestration and use case implementations.
+### Key Components
 
-**Services**:
+- `constants/`: All project-wide constants (SSOT — ast, auth, crypto, display, embedding, events, http, io, keys, lang, limits, protocol, search, time, use_cases, validate, values, vcs, vector_store)
+- `utils/`: Pure utility functions (fs, id, naming, path, sensitivity, time, vcs_context)
+- `error.rs`: Utils-specific error types (UtilsError)
 
--   `use_cases/context_service.rs`: ContextService - embedding generation and vector storage coordination
--   `use_cases/indexing_service.rs`: IndexingService - codebase indexing workflow
--   `use_cases/search_service.rs`: SearchService - semantic search operations
--   `domain_services/chunking.rs`: ChunkingOrchestrator - batch chunking coordination
--   `ports/registry/`: linkme distributed slices for provider auto-registration
--   `ports/providers/`: Re-exports from mcb-domain (backward compatibility)
+> **Note**: mcb-utils has ZERO dependencies on any other mcb-* crate. All constants were consolidated here following SSOT principle (ADR-054, ADR-055).
+
+#### 🔧 Use Case Modules (`crates/mcb-infrastructure/src/di/modules/use_cases/`)
+
+**Purpose**: Service orchestration and use-case wiring through DI modules.
+
+### Services
+
+- `context_service.rs`: Context service wiring for embedding/vector workflows
+- `indexing_service.rs`: Indexing workflow composition
+- `search_service.rs`: Semantic search workflow composition
+- `memory_service.rs`: Memory and observation workflows
+- `agent_session_service.rs`: Agent session lifecycle composition
 
 #### 🔌 Providers Layer (`crates/mcb-providers/`)
 
 **Purpose**: External service integrations implementing domain ports.
 
-**Submodules**:
+### Submodules
 
--   `embedding/`: OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Null (6 providers)
--   `vector_store/`: InMemory, Encrypted, Null (3 providers)
--   `cache/`: Moka, Redis cache providers
--   `language/`: 12 AST-based language processors (Rust, Python, JS, TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
--   `routing/`: Circuit breakers, health monitoring, failover
--   `admin/`: Performance metrics provider
+- `embedding/`: FastEmbed (default), Ollama, OpenAI, VoyageAI, Gemini, Anthropic (7 providers)
+- `vector_store/`: EdgeVec (default), Qdrant, Milvus, Pinecone, Encrypted (5 providers)
+- `cache/`: Moka (default), Redis cache providers
+- `language/`: 12 AST-based language processors (Rust, Python, JS, TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin)
+- `events/`: TokioEventBus (default), NATS event bus providers
+- `database/`: SQLite persistence
+- `vcs/`: Git repository operations
+- `hybrid_search/`: BM25 + semantic search
 
 #### 🏗️ Infrastructure Layer (`crates/mcb-infrastructure/`)
 
 **Purpose**: Shared technical services and cross-cutting concerns.
 
-**Key Components**:
+### Key Components (1)
 
--   `di/`: dill IoC Container with handle-based pattern (ADR-029)
--   `di/catalog.rs`: dill Catalog configuration
--   `di/handles.rs`: RwLock provider handles
--   `di/admin.rs`: Admin services for runtime switching
--   `config/`: Configuration management (Figment)
--   `cache/`: Cache infrastructure
--   `crypto/`: Encryption and hashing utilities
--   `health/`: Health check infrastructure
--   `logging/`: Logging configuration
--   `infrastructure/`: Null adapters for DI testing
+- `di/`: AppContext manual composition root with handle-based pattern (ADR-050)
+- `di/bootstrap.rs`: AppContext composition root configuration
+- `di/handles.rs`: RwLock provider handles
+- `di/admin.rs`: Admin services for runtime switching
+- `config/`: Configuration management (Loco YAML)
+- `cache/`: Cache infrastructure
+- `crypto/`: Encryption and hashing utilities
+- `health/`: Health check infrastructure
+- `logging/`: Logging configuration
+- `infrastructure/`: Admin types (metrics, indexing ops)
 
 #### 🌐 Server Layer (`crates/mcb-server/`)
 
 **Purpose**: MCP protocol implementation and HTTP API.
 
-**Components**:
+### Components
 
--   `handlers/`: MCP tool handlers (index, search, clear, status)
--   `transport/`: Stdio transport implementation
--   `tools/`: Tool registry
--   `admin/`: Admin API handlers
--   `init.rs`: Server initialization
+- `handlers/`: MCP tool handlers (index, search, clear, status)
+- `transport/`: Stdio transport implementation
+- `tools/`: Tool registry
+- `admin/`: Admin API handlers
+- `init.rs`: Server initialization
 
 #### 🔍 Validation Layer (`crates/mcb-validate/`)
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Status**: Phases 1–7 all VERIFIED (v0.2.0) - 750+ tests pass
+**Status**: Active in v0.3.1; run `make validate` for the current architecture verdict.
 
-**Components**:
+### Components (1)
 
--   `linters/`: ✅ mod.rs (12KB) - 17/17 tests pass
--   `ast/`: ✅ query.rs, decoder.rs, languages.rs, mod.rs - 26/26 tests pass
--   `engines/`: ✅ expression_engine.rs, rete_engine.rs, router.rs, hybrid_engine.rs - 30/30 tests pass
--   `rules/`: YAML rule loader, validator, templates
--   `rules/migration/`: 12 migration detection YAML rules created
--   `metrics/`: ✅ mod.rs, analyzer.rs, rca_analyzer.rs, thresholds.rs - 9/9 tests pass
--   `duplication/`: ✅ mod.rs, fingerprint.rs, detector.rs, thresholds.rs - 11/11 tests pass
--   `clean_architecture.rs`: ✅ CleanArchitectureValidator (CA001–CA009) - 11/11 tests pass
--   `tests/`: integration_linters.rs, integration_ast.rs, integration_engines.rs, integration_rca_metrics.rs, integration_duplication.rs, integration_architecture.rs - all passing
+- `linters/`: ✅ mod.rs (12KB) - 17/17 tests pass
+- `ast/`: ✅ query.rs, decoder.rs, languages.rs, mod.rs - 26/26 tests pass
+- `engines/`: ✅ expression_engine.rs, rete_engine.rs, router.rs, hybrid_engine.rs - 30/30 tests pass
+- `rules/`: YAML rule loader, validator, templates
+- `rules/migration/`: 12 migration detection YAML rules created
+- `metrics/`: ✅ mod.rs, analyzer.rs, rca_analyzer.rs, thresholds.rs - 9/9 tests pass
+- `duplication/`: ✅ mod.rs, fingerprint.rs, detector.rs, thresholds.rs - 11/11 tests pass
+- `clean_architecture.rs`: ✅ CleanArchitectureValidator (CA001–CA009) - 11/11 tests pass
+- `tests/`: integration_linters.rs, integration_ast.rs, integration_engines.rs, integration_rca_metrics.rs, integration_duplication.rs, integration_architecture.rs - all passing
 
-**Architecture**:
+### Architecture
 
-```
+```text
 Validation Pipeline (Pure Rust):
 ┌─────────────────────────────────────────────┐
 │ YAML Rules → Rule Loader → Rule Engine     │
@@ -955,19 +959,19 @@ Validation Pipeline (Pure Rust):
 
 **Verification Date**: 2026-01-28 via `make test`. See `docs/developer/IMPLEMENTATION_STATUS.md`.
 
-**Usage**:
+### Usage
 
 ```bash
 make validate  # Run all architecture validation rules
 ```
 
-**Features**:
+### Features
 
--   **Compile-time Safety**: Detects migration patterns (inventory → linkme)
--   **Quality Gates**: Pre-commit validation prevents architecture violations
--   **Multi-Language**: AST parsing for 5 languages via Tree-sitter
--   **Extensible**: YAML-based rules with template inheritance
--   **Fast**: Parallel validation with async processing
+- **Compile-time Safety**: Detects migration patterns (inventory → linkme)
+- **Quality Gates**: Pre-commit validation prevents architecture violations
+- **Multi-Language**: AST parsing for 5 languages via Tree-sitter
+- **Extensible**: YAML-based rules with template inheritance
+- **Fast**: Parallel validation with async processing
 
 #### 📦 Facade Crate (`crates/mcb/`)
 
@@ -977,54 +981,23 @@ make validate  # Run all architecture validation rules
 
 ### Advanced Features
 
-#### 🛡️ Provider Routing System (`crates/mcb-providers/src/routing/`)
+#### 🛡️ Infrastructure Routing (`crates/mcb-infrastructure/src/routing/`)
 
-**Purpose**: Intelligent provider management with resilience and optimization.
+**Purpose**: Request routing and dispatch helpers for provider selection.
 
-**Submodules**:
+### Router Core (`router/`)
 
-**Health Monitoring (`health/`)**:
+- `ProviderRouter`: Main routing orchestration
+- `ProviderContext`: Contextual routing decisions
+- `ProviderSelectionStrategy`: Pluggable selection algorithms
 
--   `HealthMonitor`: Continuous provider health checking
--   `ProviderHealthChecker`: Automated health assessment
--   `HealthCheckResult`: Structured health status reporting
+### Key Features
 
-**Circuit Breaker (`circuit_breaker/`)**:
-
--   `CircuitBreaker`: Failure detection and recovery
--   `CircuitBreakerConfig`: Configurable failure thresholds
--   `CircuitBreakerState`: State management for resilience
-
-**Metrics Collection (`metrics/`)**:
-
--   `ProviderMetricsCollector`: Usage and performance tracking
--   `MetricsSummary`: Aggregated metrics reporting
-
-**Cost Tracking (`cost_tracker/`)**:
-
--   `CostTracker`: API usage and cost monitoring
--   `UsageMetrics`: Detailed usage statistics
--   `CostTrackerConfig`: Cost optimization settings
-
-**Failover Management (`failover/`)**:
-
--   `FailoverManager`: Automatic provider switching
--   `FailoverStrategy`: Priority-based and round-robin strategies
--   `PriorityBasedStrategy`: Cost and performance-aware selection
-
-**Router Core (`router/`)**:
-
--   `ProviderRouter`: Main routing orchestration
--   `ProviderContext`: Contextual routing decisions
--   `ProviderSelectionStrategy`: Pluggable selection algorithms
-
-**Key Features**:
-
--   **Health-Aware Routing**: Automatic failover from unhealthy providers
--   **Cost Optimization**: Intelligent selection based on cost efficiency
--   **Circuit Breaker Protection**: Prevents cascade failures
--   **Performance Balancing**: Load distribution across providers
--   **Metrics-Driven Decisions**: Data-driven provider selection
+- **Health-Aware Routing**: Automatic failover from unhealthy providers
+- **Cost Optimization**: Intelligent selection based on cost efficiency
+- **Circuit Breaker Protection**: Prevents cascade failures
+- **Performance Balancing**: Load distribution across providers
+- **Metrics-Driven Decisions**: Data-driven provider selection
 
 #### 🔍 Hybrid Search Engine (`crates/mcb-providers/src/hybrid_search/`)
 
@@ -1032,18 +1005,18 @@ make validate  # Run all architecture validation rules
 
 **Algorithm**: BM25 (lexical) + Semantic Embeddings (contextual)
 
-**Components**:
+### Components (2)
 
--   `BM25Scorer`: Term frequency-based ranking
--   `BM25Params`: Configurable BM25 parameters (k1=1.2, b=0.75)
--   `HybridSearchEngine`: Combined search orchestration
--   `SearchResult`: Unified Result format
+- `BM25Scorer`: Term frequency-based ranking
+- `BM25Params`: Configurable BM25 parameters (k1=1.2, b=0.75)
+- `HybridSearchEngine`: Combined search orchestration
+- `SearchResult`: Unified Result format
 
-**Benefits**:
+### Benefits
 
--   Better relevance through dual ranking
--   Handles both keyword and semantic queries
--   Configurable weighting between lexical and semantic scores
+- Better relevance through dual ranking
+- Handles both keyword and semantic queries
+- Configurable weighting between lexical and semantic scores
 
 ---
 
@@ -1231,18 +1204,18 @@ impl VectorRecord {
 }
 ```
 
-**Storage Options**:
+### Storage Options
 
 | Database | Use Case | Performance | Scalability |
-|----------|----------|-------------|-------------|
-|**Milvus**| Production, large scale | High (HNSW index) | 100M+ vectors |
-|**Pinecone**| Cloud-native, managed | High (optimized) | 1B+ vectors |
-|**Qdrant**| Self-hosted, Rust-native | High (HNSW) | 10M+ vectors |
-|**In-Memory**| Development, testing | Fast (brute force) | <1M vectors |
+| ---------- | ---------- | ------------- | ------------- |
+| **Milvus** | Production, large scale | High (HNSW index) | 100M+ vectors |
+| **Pinecone** | Cloud-native, managed | High (optimized) | 1B+ vectors |
+| **Qdrant** | Self-hosted, Rust-native | High (HNSW) | 10M+ vectors |
+| **EdgeVec** | Development, testing | Fast (HNSW in-process) | <1M vectors |
 
 #### Metadata Storage
 
-**Primary Storage**: PostgreSQL for structured data and relationships
+**Primary Storage**: SQLite for structured data and relationships
 
 ```sql
 -- Optimized schema for code search metadata
@@ -1270,27 +1243,12 @@ CREATE INDEX idx_chunks_metadata ON code_chunks USING GIN(metadata);
 
 #### Caching Strategy
 
-**Multi-Level Caching**:
+### Multi-Level Caching
 
-1. **Application Cache**: Redis for search results and embeddings
-2. **Provider Cache**: In-memory LRU cache for frequently accessed data
-3. **CDN Cache**: For static assets and documentation
+1. **Default Cache**: Moka in-memory LRU cache (high-performance, single-node)
+2. **Distributed Cache**: Redis (optional, for multi-node deployments)
 
-```rust
-#[derive(Clone)]
-pub struct CacheConfig {
-    pub redis_url: String,
-    pub embedding_ttl: Duration,
-    pub search_ttl: Duration,
-    pub max_memory_mb: usize,
-}
-
-pub struct CacheManager {
-    redis: redis::Client,
-    in_memory: Arc<RwLock<LruCache<String, Vec<u8>>>>,
-    config: CacheConfig,
-}
-```
+Cache provider is resolved via DI (linkme registry → AppContext composition root → `CacheProviderHandle`).
 
 ### Data Lifecycle Management
 
@@ -1319,10 +1277,10 @@ impl Default for RetentionPolicy {
 
 #### Data Archival Strategy
 
--   **Hot Data**: Recent embeddings and frequently accessed chunks (SSD storage)
--   **Warm Data**: Older embeddings with occasional access (HDD storage)
--   **Cold Data**: Archived repositories and historical data (Object storage)
--   **Delete**: Expired data according to retention policies
+- **Hot Data**: Recent embeddings and frequently accessed chunks (SSD storage)
+- **Warm Data**: Older embeddings with occasional access (HDD storage)
+- **Cold Data**: Archived repositories and historical data (Object storage)
+- **Delete**: Expired data according to retention policies
 
 ---
 
@@ -1330,24 +1288,24 @@ impl Default for RetentionPolicy {
 
 ### Security Principles
 
--   **Defense in Depth**: Multiple security layers and controls
--   **Zero Trust**: Verify all access requests regardless of origin
--   **Least Privilege**: Minimal permissions for all operations
--   **Fail-Safe Defaults**: Secure defaults with explicit opt-in for features
--   **Audit Everything**: Comprehensive logging and monitoring
+- **Defense in Depth**: Multiple security layers and controls
+- **Zero Trust**: Verify all access requests regardless of origin
+- **Least Privilege**: Minimal permissions for all operations
+- **Fail-Safe Defaults**: Secure defaults with explicit opt-in for features
+- **Audit Everything**: Comprehensive logging and monitoring
 
 ### Threat Model
 
 #### STRIDE Analysis
 
 | Threat Category | Description | Mitigations |
-|----------------|-------------|-------------|
-|**Spoofing**| Unauthorized access to MCP server | JWT authentication, API key validation |
-|**Tampering**| Modification of code or data in transit | TLS 1.3, message integrity checks |
-|**Repudiation**| Denial of Actions performed | Comprehensive audit logging |
-|**Information Disclosure**| Exposure of sensitive code/data | Encryption at rest, access controls |
-|**Denial of Service**| Resource exhaustion attacks | Rate limiting, resource quotas |
-|**Elevation of Privilege**| Unauthorized privilege escalation | RBAC, input validation |
+| ---------------- | ------------- | ------------- |
+| **Spoofing** | Unauthorized access to MCP server | JWT authentication, API key validation |
+| **Tampering** | Modification of code or data in transit | TLS 1.3, message integrity checks |
+| **Repudiation** | Denial of Actions performed | Comprehensive audit logging |
+| **Information Disclosure** | Exposure of sensitive code/data | Encryption at rest, access controls |
+| **Denial of Service** | Resource exhaustion attacks | Rate limiting, resource quotas |
+| **Elevation of Privilege** | Unauthorized privilege escalation | RBAC, input validation |
 
 ### Authentication & Authorization
 
@@ -1390,7 +1348,7 @@ impl AuthService {
 
 #### Authorization Model
 
-**Role-Based Access Control (RBAC)**:
+### Role-Based Access Control (RBAC)
 
 ```rust
 #[derive(Serialize, Deserialize, PartialEq, Eq, Hash)]
@@ -1465,9 +1423,9 @@ impl DataEncryptor {
 
 #### Encryption in Transit
 
--   **TLS 1.3**: Mandatory for all external communications
--   **mTLS**: Mutual TLS for service-to-service communication
--   **Protocol Encryption**: MCP protocol over encrypted stdio
+- **TLS 1.3**: Mandatory for all external communications
+- **mTLS**: Mutual TLS for service-to-service communication
+- **Protocol Encryption**: MCP protocol over encrypted stdio
 
 ### Security Monitoring
 
@@ -1510,11 +1468,11 @@ impl SecurityMonitor {
 #### Compliance Requirements
 
 | Standard | Requirement | Implementation |
-|----------|-------------|----------------|
-|**GDPR**| Data protection, consent | Data minimization, encryption, audit logs |
-|**SOC 2**| Security controls | Access controls, monitoring, incident response |
-|**ISO 27001**| Information security | Risk assessment, security policies |
-|**HIPAA**| Health data protection | N/A (not applicable) |
+| ---------- | ------------- | ---------------- |
+| **GDPR** | Data protection, consent | Data minimization, encryption, audit logs |
+| **SOC 2** | Security controls | Access controls, monitoring, incident response |
+| **ISO 27001** | Information security | Risk assessment, security policies |
+| **HIPAA** | Health data protection | N/A (not applicable) |
 
 #### Audit & Compliance Logging
 
@@ -1554,19 +1512,19 @@ impl ComplianceLogger {
 #### Latency Requirements
 
 | Operation | Target Latency | Current Status | Measurement |
-|-----------|----------------|----------------|-------------|
-|**Text Embedding**| <200ms | ✅ Achieved | P95 embedding time |
-|**Vector Search**| <100ms | ⚠️ Near target | P95 search time |
-|**MCP Response**| <500ms | ✅ Achieved | End-to-end response time |
-|**Indexing (1000 files)**| <30s | ⚠️ Near target | Total indexing time |
+| ----------- | ---------------- | ---------------- | ------------- |
+| **Text Embedding** | <200ms | ✅ Achieved | P95 embedding time |
+| **Vector Search** | <100ms | ⚠️ Near target | P95 search time |
+| **MCP Response** | <500ms | ✅ Achieved | End-to-end response time |
+| **Indexing (1000 files)** | <30s | ⚠️ Near target | Total indexing time |
 
 #### Throughput Requirements
 
 | Metric | Target | Current Status | Scaling Strategy |
-|--------|--------|----------------|------------------|
-|**Concurrent Users**| 1000 | 🚧 Testing | Horizontal scaling |
-|**Queries/Minute**| 10,000 | ⚠️ In progress | Load balancing |
-|**Indexing Rate**| 100 files/sec | ✅ Achieved | Parallel processing |
+| -------- | -------- | ---------------- | ------------------ |
+| **Concurrent Users** | 1000 | 🚧 Testing | Horizontal scaling |
+| **Queries/Minute** | 10,000 | ⚠️ In progress | Load balancing |
+| **Indexing Rate** | 100 files/sec | ✅ Achieved | Parallel processing |
 
 ### Scalability Architecture
 
@@ -1723,9 +1681,9 @@ spec:
             cpu: "500m"
 ```
 
-### Monitoring & Observability
+## Monitoring & Observability
 
-#### Metrics Collection
+### Metrics Collection
 
 ```rust
 #[derive(Clone)]
@@ -1853,7 +1811,7 @@ integration_tests_required = true
 performance_tests_required = true
 ```
 
-#### Automated Quality Checks
+## Automated Quality Checks
 
 ```rust
 pub struct QualityGateChecker {
@@ -1903,7 +1861,7 @@ impl QualityGateChecker {
 ## Decision
 {What decision was made?}
 
-## Consequences
+### Consequences
 {What are the positive and negative consequences of this decision?}
 
 ## Alternatives Considered
@@ -1926,12 +1884,12 @@ impl QualityGateChecker {
 
 **Decision**: Implement provider pattern with trait-based abstractions for embedding and vector storage providers.
 
-**Consequences**:
+### Consequences
 
--   ✅ High extensibility for adding new providers
--   ✅ Clean separation of concerns
--   ✅ Testability through dependency injection
--   ⚠️ Additional complexity in provider management
+- ✅ High extensibility for adding new providers
+- ✅ Clean separation of concerns
+- ✅ Testability through dependency injection
+- ⚠️ Additional complexity in provider management
 
 #### ADR-002: Async-First Architecture
 
@@ -1941,12 +1899,12 @@ impl QualityGateChecker {
 
 **Decision**: Use Tokio async runtime throughout the system with async traits for all provider interfaces.
 
-**Consequences**:
+### Consequences (1)
 
--   ✅ Excellent performance for concurrent operations
--   ✅ Scalability for high-throughput scenarios
--   ⚠️ Higher complexity for error handling
--   ⚠️ Learning curve for async Rust patterns
+- ✅ Excellent performance for concurrent operations
+- ✅ Scalability for high-throughput scenarios
+- ⚠️ Higher complexity for error handling
+- ⚠️ Learning curve for async Rust patterns
 
 #### ADR-003: C4 Model Documentation
 
@@ -1956,12 +1914,12 @@ impl QualityGateChecker {
 
 **Decision**: Adopt C4 model (Context, Containers, Components, Code) with PlantUML diagrams and structured documentation.
 
-**Consequences**:
+### Consequences (2)
 
--   ✅ Clear, hierarchical documentation structure
--   ✅ Multiple levels of detail for different audiences
--   ✅ Tooling support for diagram generation
--   ⚠️ Learning curve for C4 model concepts
+- ✅ Clear, hierarchical documentation structure
+- ✅ Multiple levels of detail for different audiences
+- ✅ Tooling support for diagram generation
+- ⚠️ Learning curve for C4 model concepts
 
 #### ADR-004: Multi-Provider Strategy
 
@@ -1971,29 +1929,29 @@ impl QualityGateChecker {
 
 **Decision**: Support multiple embedding and vector storage providers with automatic failover and load balancing.
 
-**Consequences**:
+### Consequences (3)
 
--   ✅ High availability and fault tolerance
--   ✅ Cost optimization through provider selection
--   ⚠️ Configuration complexity
--   ⚠️ Testing complexity across providers
+- ✅ High availability and fault tolerance
+- ✅ Cost optimization through provider selection
+- ⚠️ Configuration complexity
+- ⚠️ Testing complexity across providers
 
-#### ADR-024 → ADR-029: Hexagonal Architecture with dill
+#### ADR-024 → ADR-029 → ADR-050: DI evolution
 
-**Status**: Accepted (ADR-024 superseded by ADR-029)
+**Status**: Accepted (ADR-024 superseded by ADR-029; ADR-029 superseded by ADR-050)
 
-**Context**: Handle-based DI pattern needed IoC container for proper service lifecycle management and architectural enforcement.
+**Context**: Handle-based DI pattern needed explicit composition root wiring for service lifecycle management and architectural enforcement.
 
-**Decision**: Use dill Catalog as IoC Container with handle-based pattern for runtime provider switching. Ports defined in mcb-domain.
+**Decision**: Use `init_app()` + `AppContext` as manual composition root with handle-based pattern for runtime provider switching. Ports remain defined in mcb-domain.
 
-**Consequences**:
+### Consequences (4)
 
--   ✅ Clear layer separation (hexagonal architecture)
--   ✅ dill Catalog manages service lifecycle
--   ✅ Runtime switching via admin API
--   ✅ Architecture enforced via mcb-validate (CA007–CA009)
+- ✅ Clear layer separation (hexagonal architecture)
+- ✅ AppContext composition root manages service lifecycle
+- ✅ Runtime switching via admin API
+- ✅ Architecture enforced via mcb-validate (CA007–CA009)
 
-See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
+See [ADR-050](../adr/050-manual-composition-root-dill-removal.md) for full details.
 
 #### ADR-013: Clean Architecture Crate Separation
 
@@ -2003,40 +1961,45 @@ See [ADR-029](../adr/029-hexagonal-architecture-dill.md) for full details.
 
 **Decision**: Organize into eight Cargo workspace crates (including facade) following Clean Architecture principles with strict layer separation.
 
-**Consequences**:
+### Consequences (5)
 
--   ✅ Clear boundaries and responsibilities per crate
--   ✅ Testability without infrastructure dependencies
--   ✅ Parallel compilation, incremental builds
--   ⚠️ Eight crates require coordination
--   ⚠️ Learning curve for Clean Architecture concepts
+- ✅ Clear boundaries and responsibilities per crate
+- ✅ Testability without infrastructure dependencies
+- ✅ Parallel compilation, incremental builds
+- ⚠️ Seven crates require coordination
+- ⚠️ Learning curve for Clean Architecture concepts
 
 See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full details.
 
 #### Additional ADR References
 
--   [ADR-005](../adr/005-context-cache-support.md) Context Cache
--   [ADR-006](../adr/006-code-audit-and-improvements.md) Code Audit
--   [ADR-007](../adr/007-integrated-web-administration-interface.md) Admin UI
--   [ADR-010](../adr/010-hooks-subsystem-agent-backed.md) Hooks
--   [ADR-011](../adr/011-http-transport-request-response-pattern.md) HTTP Transport
--   [ADR-012](../adr/012-di-strategy-two-layer-approach.md) Two-Layer DI
--   [ADR-014](../adr/014-multi-domain-architecture.md) Multi-Domain
--   [ADR-015](../adr/015-workspace-shared-libraries.md) Workspace Libraries
--   [ADR-016](../adr/016-integration-points-adapter-pattern.md) Integration Points
--   [ADR-017](../adr/017-phased-feature-integration.md) Phased Integration
--   [ADR-018](../adr/018-hybrid-caching-strategy.md) Caching
--   [ADR-019](../adr/019-error-handling-strategy.md) Error Handling
--   [ADR-020](../adr/020-testing-strategy-integration.md) Testing
--   [ADR-021](../adr/021-dependency-management.md) Dependency Mgmt
--   [ADR-022](../adr/022-ci-integration-strategy.md) CI
--   [ADR-023](../adr/023-inventory-to-linkme-migration.md) Linkme
--   [ADR-025](../adr/025-figment-configuration.md) Figment
--   [ADR-026](../adr/026-routing-refactor-rocket-poem.md) Routing
--   [ADR-027](../adr/027-architecture-evolution-v013.md) Arch Evolution
--   [ADR-028](../adr/028-advanced-code-browser-v020.md) Code Browser
--   [ADR-030](../adr/030-multi-provider-strategy.md) Multi-Provider
--   [ADR-031](../adr/031-documentation-excellence.md) Documentation Excellence
+- [ADR-005](../adr/005-context-cache-support.md) Context Cache
+- [ADR-006](../adr/006-code-audit-and-improvements.md) Code Audit
+- [ADR-007](../adr/archive/superseded-007-web-admin-interface.md) Admin UI (archived)
+- [ADR-010](../adr/010-hooks-subsystem-agent-backed.md) Hooks
+- [ADR-011](../adr/011-http-transport-request-response-pattern.md) HTTP Transport
+- [ADR-012](../adr/012-di-strategy-two-layer-approach.md) Two-Layer DI
+- [ADR-014](../adr/014-multi-domain-architecture.md) Multi-Domain
+- [ADR-015](../adr/015-workspace-shared-libraries.md) Workspace Libraries
+- [ADR-016](../adr/016-integration-points-adapter-pattern.md) Integration Points
+- [ADR-017](../adr/017-phased-feature-integration.md) Phased Integration
+- [ADR-018](../adr/018-hybrid-caching-strategy.md) Caching
+- [ADR-019](../adr/019-error-handling-strategy.md) Error Handling
+- [ADR-020](../adr/020-testing-strategy-integration.md) Testing
+- [ADR-021](../adr/021-dependency-management.md) Dependency Mgmt
+- [ADR-022](../adr/022-ci-integration-strategy.md) CI
+- [ADR-023](../adr/023-inventory-to-linkme-migration.md) Linkme
+- [ADR-025](../adr/archive/superseded-025-figment-configuration.md) Figment (archived, see ADR-051)
+- [ADR-026](../adr/archive/superseded-026-routing-refactor-rocket-poem.md) Routing (archived, see ADR-049)
+- [ADR-027](../adr/027-architecture-evolution-v013.md) Arch Evolution
+- [ADR-028](../adr/028-advanced-code-browser-v020.md) Code Browser
+- [ADR-030](../adr/030-multi-provider-strategy.md) Multi-Provider
+- [ADR-031](../adr/031-documentation-excellence.md) Documentation Excellence
+- [ADR-032](../adr/032-agent-quality-domain-extension.md) Agent Quality Domain
+- [ADR-033](../adr/033-mcp-handler-consolidation.md) MCP Handler Consolidation
+- [ADR-038](../adr/038-multi-tier-execution-model.md) Multi-Tier Execution Model
+- [ADR-039](../adr/039-context-persistence-boundary.md) Context Persistence Boundary
+- [ADR-040](../adr/040-unified-tool-execution-gate.md) Unified Tool Execution Gate
 
 See [ADR index](../adr/README.md) for the full list.
 
@@ -2070,8 +2033,8 @@ services:
     environment:
 -   RUST_LOG=debug
 -   MCP_MODE=development
--   EMBEDDING_PROVIDER=mock
--   VECTOR_STORE=memory
+-   EMBEDDING_PROVIDER=fastembed
+-   VECTOR_STORE=edgevec
     volumes:
 -   .:/app
 -   cargo-cache:/usr/local/cargo/registry
@@ -2082,7 +2045,7 @@ services:
 -   "6379:6379"
 ```
 
-#### Production Deployment
+## Production Deployment
 
 ```yaml
 
@@ -2127,9 +2090,9 @@ spec:
           value: "minio:9000"
 ```
 
-### Configuration Management
+## Configuration Management
 
-#### Configuration Hierarchy
+### Configuration Hierarchy
 
 1. **Default Configuration**: Compiled-in defaults
 2. **Environment Variables**: Runtime overrides
@@ -2236,9 +2199,9 @@ groups:
           summary: "Provider {{ $labels.provider }} is down"
 ```
 
-### Backup & Recovery
+## Backup & Recovery
 
-#### Data Backup Strategy
+### Data Backup Strategy
 
 ```rust
 pub struct BackupManager {
@@ -2289,53 +2252,58 @@ impl BackupManager {
 
 ### Phase 1: Core Foundation (Completed ✅)
 
-**Delivered**:
+#### Delivered
 
--   Clean Rust architecture with SOLID principles
--   Provider pattern with mock implementations
--   MCP protocol framework (stdio transport)
--   In-memory vector storage with cosine similarity
--   Core data structures and comprehensive error handling
+- Clean Rust architecture with SOLID principles
+- Provider pattern with mock implementations
+- MCP protocol framework (stdio transport)
+- In-memory vector storage with cosine similarity
+- Core data structures and comprehensive error handling
 
 ### Phase 2: Provider Ecosystem (Completed ✅)
 
-**Delivered**:
+#### Delivered
 
--   ✅ Real embedding provider integrations (OpenAI, Ollama, Gemini, VoyageAI)
--   ✅ Production vector database integration (Milvus, In-Memory, Filesystem)
--   ✅ Enhanced file processing with AST parsing
--   ✅ Performance optimization and caching
--   ✅ Complete DI system with provider registry and routing
+- ✅ Real embedding provider integrations (OpenAI, Ollama, Gemini, VoyageAI)
+- ✅ Production vector database integration (Milvus, EdgeVec, Qdrant, Pinecone)
+- ✅ Enhanced file processing with AST parsing
+- ✅ Performance optimization and caching
+- ✅ Complete DI system with provider registry and routing
 
-**Upcoming Milestones**:
+### Upcoming Milestones
 
--   ✅**v0.1.0**: First stable release - drop-in replacement for Claude-context
--   🚧**v0.2.0**: Git-aware indexing + persistent session memory ([ADR-008](../adr/008-git-aware-semantic-indexing-v0.2.0.md), [ADR-009](../adr/009-persistent-session-memory-v0.2.0.md))
--   Repository-aware indexing with git2
--   Multi-branch and commit history search
--   Cross-session memory with SQLite storage
--   Hybrid search for observations and decisions
--   📋**v0.3.0**: Advanced code intelligence + Workflow FSM (Phase 8)
--   Symbol extraction and cross-referencing
--   Call graph analysis
--   Dependency impact mapping
--   Workflow state machines (ADR-034)
--   Freshness tracking and policies (ADR-035, ADR-036)
--   Compensation and orchestration (ADR-037)
--   🚧**v0.4.0**: Integrated Context System (Phase 9, Feb 17 - Mar 16, 2026)
--   Knowledge graph with code relationships (ADR-042)
--   Hybrid search engine with RRF fusion (ADR-043)
--   Context snapshots and time-travel queries (ADR-045)
--   Policy-driven context discovery (ADR-046)
--   70+ tests, complete documentation
+- ✅**v0.1.0**: First stable release - drop-in replacement for Claude-context
+- 🚧**v0.2.0**: Git-aware indexing + persistent session memory ([ADR-008](../adr/008-git-aware-semantic-indexing-v0.2.0.md), [ADR-009](../adr/009-persistent-session-memory-v0.2.0.md))
+- Repository-aware indexing with git2
+- Multi-branch and commit history search
+- Cross-session memory with SQLite storage
+- Hybrid search for observations and decisions
+- ✅ **v0.3.0**: SeaQL + Loco.rs Platform Rebuild (ADR-051)
+- SeaORM persistence replacing raw SQLite
+- Loco.rs framework with Axum native server
+- Entity CRUD (vcs/plan/issue/org resources)
+- Figment→Loco YAML config migration
+- 📋**v0.4.0**: Workflow FSM + Advanced Code Intelligence (Phase 8)
+- Workflow state machines (ADR-034)
+- Freshness tracking and policies (ADR-035, ADR-036)
+- Compensation and orchestration (ADR-037)
+- Symbol extraction and cross-referencing
+- 📋**v0.5.0**: Integrated Context System (Phase 9)
+- Knowledge graph with code relationships (ADR-042)
+- Hybrid search engine with RRF fusion (ADR-043)
+- Context snapshots and time-travel queries (ADR-045)
+- Policy-driven context discovery (ADR-046)
+- 70+ tests, complete documentation
 
-### v0.4.0: Integrated Context System Architecture
+### v0.5.0: Integrated Context System Architecture
 
-**Overview**: v0.4.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
+**Overview**: v0.5.0 introduces a 5-layer integrated context system enabling freshness-aware search, time-travel queries, and policy-driven context discovery.
 
-**5-Layer Architecture**:
+> **v0.3.x Migration Note:** This architecture is v0.4.0-v0.5.0 future work. The current v0.3.1 line uses 4 runtime layers (domain → providers → infrastructure → server) plus `mcb-utils`, `mcb-validate`, and the `mcb` CLI facade.
 
-```
+### 5-Layer Architecture
+
+```text
 ┌─────────────────────────────────────────────────────┐
 │ Layer 5: Integration & Policies                     │
 │ (Policy enforcement, compensation triggers)         │
@@ -2362,55 +2330,55 @@ impl BackupManager {
 └─────────────────────────────────────────────────────┘
 ```
 
-**Key Components**:
+#### Key Components
 
--   **CodeGraph** (petgraph): Nodes (code entities), Edges (relationships), Metadata (freshness)
--   **HybridSearchEngine**: Semantic (embeddings) + Keyword (BM25) with RRF ranking
--   **ContextSnapshot**: Immutable captures at commits/tags for temporal queries
--   **PolicyEngine**: Freshness gates, validation policies, compensation triggers
+- **CodeGraph** (petgraph): Nodes (code entities), Edges (relationships), Metadata (freshness)
+- **HybridSearchEngine**: Semantic (embeddings) + Keyword (BM25) with RRF ranking
+- **ContextSnapshot**: Immutable captures at commits/tags for temporal queries
+- **PolicyEngine**: Freshness gates, validation policies, compensation triggers
 
-**New Capabilities**:
+### New Capabilities
 
 | Capability | Example | Benefit |
-|------------|---------|---------|
+| ------------ | --------- | --------- |
 | Freshness-Aware Search | `search --freshness-max-age 7` | Find current, relevant patterns |
 | Time-Travel Queries | `search --snapshot v0.2.0` | Understand code evolution |
 | Knowledge Graph | Graph relationships (calls, imports) | Understand code structure |
 | Hybrid Search | RRF fusion of semantic + keyword | Better relevance |
 | Policy-Driven Discovery | Apply freshness/validation policies | Enforce context quality |
 
-**Related ADRs**:
+### Related ADRs
 
--   [ADR-041: Context Architecture](../adr/phase-9/README.md#adr-041-context-architecture)
--   [ADR-042: Knowledge Graph](../adr/phase-9/README.md#adr-042-knowledge-graph)
--   [ADR-043: Hybrid Search Engine](../adr/phase-9/README.md#adr-043-hybrid-search-engine)
--   [ADR-044: Model Selection](../adr/phase-9/README.md#adr-044-model-selection)
--   [ADR-045: Context Versioning](../adr/phase-9/README.md#adr-045-context-versioning)
--   [ADR-046: Integration Patterns](../adr/phase-9/README.md#adr-046-integration-patterns)
--   [ADR-047: Project Architecture](../adr/047-project-architecture.md)
+- [ADR-041: Context Architecture](../adr/phase-9/README.md#adr-041-context-architecture)
+- [ADR-042: Knowledge Graph](../adr/phase-9/README.md#adr-042-knowledge-graph)
+- [ADR-043: Hybrid Search Engine](../adr/phase-9/README.md#adr-043-hybrid-search-engine)
+- [ADR-044: Model Selection](../adr/phase-9/README.md#adr-044-model-selection)
+- [ADR-045: Context Versioning](../adr/phase-9/README.md#adr-045-context-versioning)
+- [ADR-046: Integration Patterns](../adr/phase-9/README.md#adr-046-integration-patterns)
+- [ADR-047: Project Architecture](../adr/047-project-architecture.md)
 
-**See Also**:
+### See Also
 
--   [`docs/guides/features/INTEGRATED_CONTEXT.md`](../guides/features/INTEGRATED_CONTEXT.md) – Feature overview
--   [`docs/migration/v0.3-to-v0.4.md`](../migration/v0.3-to-v0.4.md) – Migration guide
--   [`docs/implementation/phase-9-roadmap.md`](../implementation/phase-9-roadmap.md) – 4-week execution plan
+- [`docs/guides/features/INTEGRATED_CONTEXT.md`](../guides/features/INTEGRATED_CONTEXT.md) – Feature overview
+- [`docs/migration/v0.3-to-v0.4.md`](../migration/v0.3-to-v0.4.md) – Migration guide
+- [`docs/implementation/phase-9-roadmap.md`](../implementation/phase-9-roadmap.md) – 4-week execution plan
 
 ### Phase 3: Enterprise Features (Planned 📋)
 
-**Target Features**:
+### Target Features
 
--   Multi-user support with authentication
--   REST API alongside MCP protocol
--   Advanced monitoring and alerting
--   Automated scaling and high availability
--   Enterprise security and compliance
+- Multi-user support with authentication
+- REST API alongside MCP protocol
+- Advanced monitoring and alerting
+- Automated scaling and high availability
+- Enterprise security and compliance
 
-**Long-term Vision**:
+### Long-term Vision
 
--   Distributed deployment across multiple regions
--   Edge computing support for low-latency access
--   Advanced AI features (code generation, refactoring suggestions)
--   Integration with popular IDEs and development tools
+- Distributed deployment across multiple regions
+- Edge computing support for low-latency access
+- Advanced AI features (code generation, refactoring suggestions)
+- Integration with popular IDEs and development tools
 
 ### Technical Debt & Improvements
 
@@ -2432,17 +2400,17 @@ impl BackupManager {
 
 #### Technical Metrics
 
--   **Performance**: <500ms average query response time
--   **Scalability**: Support 1000+ concurrent users
--   **Reliability**: 99.9% uptime with <1% error rate
--   **Efficiency**: <100ms embedding generation, <50ms vector search
+- **Performance**: <500ms average query response time
+- **Scalability**: Support 1000+ concurrent users
+- **Reliability**: 99.9% uptime with <1% error rate
+- **Efficiency**: <100ms embedding generation, <50ms vector search
 
 #### Business Metrics
 
--   **Adoption**: 100+ active repositories indexed
--   **User Satisfaction**: >4.5/5 user satisfaction score
--   **Cost Efficiency**: <$0.01 per 1000 search queries
--   **Time Savings**: 50% reduction in code search time
+- **Adoption**: 100+ active repositories indexed
+- **User Satisfaction**: >4.5/5 user satisfaction score
+- **Cost Efficiency**: <$0.01 per 1000 search queries
+- **Time Savings**: 50% reduction in code search time
 
 ---
 

@@ -6,19 +6,11 @@
 //! - `LintViolation` structs are properly populated
 //! - `lint_select` codes are correctly categorized
 
+use rstest::rstest;
 use std::path::PathBuf;
 
 use mcb_validate::linters::{LintViolation, LinterEngine, LinterType, YamlRuleExecutor};
 use mcb_validate::{ValidatedRule, YamlRuleLoader};
-
-fn get_workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .to_path_buf()
-}
 
 /// Check if an external tool is available on the system
 fn is_tool_available(tool: &str) -> bool {
@@ -45,62 +37,60 @@ fn get_default_substitution_variables() -> serde_yaml::Value {
     let json = serde_json::json!({
         "project_prefix": "mcb",
         "domain_crate": "mcb-domain",
-        "application_crate": "mcb-application",
+        "application_crate": "mcb-infrastructure",
         "infrastructure_crate": "mcb-infrastructure",
         "server_crate": "mcb-server",
         "providers_crate": "mcb-providers",
         "domain_module": "mcb_domain",
-        "application_module": "mcb_application",
+        "application_module": "mcb_infrastructure",
         "infrastructure_module": "mcb_infrastructure",
         "server_module": "mcb_server",
         "providers_module": "mcb_providers",
         "validate_crate": "mcb-validate",
         "validate_module": "mcb_validate",
-        "language_support_crate": "mcb-language-support",
-        "language_support_module": "mcb_language_support",
-        "ast_utils_crate": "mcb-ast-utils",
-        "ast_utils_module": "mcb_ast_utils"
+        "utils_crate": "mcb-utils",
+        "utils_module": "mcb_utils"
     });
-    serde_yaml::to_value(json).unwrap()
+    match serde_yaml::to_value(json) {
+        Ok(value) => value,
+        Err(_) => serde_yaml::Value::Mapping(serde_yaml::Mapping::new()),
+    }
 }
 
 // ==================== Unit Tests for Linter Types ====================
 
-#[test]
+#[rstest]
 fn test_linter_engine_creation() {
     let _engine = LinterEngine::new();
     // Engine should be created with default linters
     // Engine was created successfully (no panic)
 }
 
-#[test]
-fn test_linter_engine_with_specific_linters() {
-    let _engine = LinterEngine::with_linters(vec![LinterType::Ruff]);
-    // Engine was created with Ruff only (no panic)
-
-    let _engine = LinterEngine::with_linters(vec![LinterType::Clippy]);
-    // Engine was created with Clippy only (no panic)
-
-    let _engine = LinterEngine::with_linters(vec![LinterType::Ruff, LinterType::Clippy]);
-    // Engine was created with both linters (no panic)
+#[rstest]
+#[case(vec![LinterType::Ruff])]
+#[case(vec![LinterType::Clippy])]
+#[case(vec![LinterType::Ruff, LinterType::Clippy])]
+fn linter_engine_with_specific_linters(#[case] linters: Vec<LinterType>) {
+    let _engine = LinterEngine::with_linters(linters);
 }
 
-#[test]
+#[rstest]
 fn test_linter_type_equality() {
     assert_eq!(LinterType::Ruff, LinterType::Ruff);
     assert_eq!(LinterType::Clippy, LinterType::Clippy);
     assert_ne!(LinterType::Ruff, LinterType::Clippy);
 }
 
-#[test]
-fn test_linter_type_commands() {
-    assert_eq!(LinterType::Ruff.command(), "ruff");
-    assert_eq!(LinterType::Clippy.command(), "cargo");
+#[rstest]
+#[case(LinterType::Ruff, "ruff")]
+#[case(LinterType::Clippy, "cargo")]
+fn linter_type_commands(#[case] linter: LinterType, #[case] command: &str) {
+    assert_eq!(linter.command(), command);
 }
 
 // ==================== JSON Parsing Tests ====================
 
-#[test]
+#[rstest]
 fn test_ruff_json_array_parsing() {
     // Ruff outputs JSON in array format
     let json_output = r#"[
@@ -136,22 +126,18 @@ fn test_ruff_json_array_parsing() {
     assert_eq!(violations[1].line, 10);
 }
 
-#[test]
-fn test_ruff_empty_output() {
-    let violations = LinterType::Ruff.parse_output("[]");
+#[rstest]
+#[case("[]")]
+#[case("")]
+fn ruff_empty_output(#[case] output: &str) {
+    let violations = LinterType::Ruff.parse_output(output);
     assert!(
         violations.is_empty(),
-        "Empty array should yield no violations"
-    );
-
-    let violations = LinterType::Ruff.parse_output("");
-    assert!(
-        violations.is_empty(),
-        "Empty string should yield no violations"
+        "Empty output should yield no violations"
     );
 }
 
-#[test]
+#[rstest]
 fn test_clippy_json_parsing() {
     // Clippy outputs JSON lines with "reason" field
     let json_output = r#"{"reason":"compiler-message","message":{"message":"used `unwrap()` on an `Option` value","code":{"code":"clippy::unwrap_used","explanation":null},"level":"warning","spans":[{"file_name":"src/lib.rs","line_start":42,"column_start":5,"is_primary":true}]}}
@@ -172,7 +158,7 @@ fn test_clippy_json_parsing() {
     assert_eq!(violations[0].category, "quality");
 }
 
-#[test]
+#[rstest]
 fn test_clippy_filters_non_compiler_messages() {
     // Should ignore compiler-artifact and build-finished
     let json_output = r#"{"reason":"compiler-artifact","target":{"name":"test"}}
@@ -182,7 +168,7 @@ fn test_clippy_filters_non_compiler_messages() {
     assert!(violations.is_empty(), "Should ignore non-message lines");
 }
 
-#[test]
+#[rstest]
 fn test_clippy_requires_primary_span() {
     // Message without primary span should be skipped
     let json_output = r#"{"reason":"compiler-message","message":{"message":"help message","code":{"code":"clippy::help","explanation":null},"level":"help","spans":[{"file_name":"src/lib.rs","line_start":1,"column_start":1,"is_primary":false}]}}"#;
@@ -196,31 +182,22 @@ fn test_clippy_requires_primary_span() {
 
 // ==================== Severity Mapping Tests ====================
 
-#[test]
-fn test_ruff_severity_mapping() {
-    // F-codes are errors (Pyflakes)
-    let json = r#"[{"code": "F401", "message": "unused", "filename": "t.py", "location": {"row": 1, "column": 1}}]"#;
-    let violations = LinterType::Ruff.parse_output(json);
-    assert_eq!(violations[0].severity, "error");
-
-    // E-codes are errors (pycodestyle)
-    let json = r#"[{"code": "E501", "message": "line too long", "filename": "t.py", "location": {"row": 1, "column": 1}}]"#;
-    let violations = LinterType::Ruff.parse_output(json);
-    assert_eq!(violations[0].severity, "error");
-
-    // W-codes are warnings
-    let json = r#"[{"code": "W291", "message": "trailing whitespace", "filename": "t.py", "location": {"row": 1, "column": 1}}]"#;
-    let violations = LinterType::Ruff.parse_output(json);
-    assert_eq!(violations[0].severity, "warning");
-
-    // I-codes are info (isort)
-    let json = r#"[{"code": "I001", "message": "unsorted imports", "filename": "t.py", "location": {"row": 1, "column": 1}}]"#;
-    let violations = LinterType::Ruff.parse_output(json);
-    assert_eq!(violations[0].severity, "info");
+#[rstest]
+#[case("F401", "error")]
+#[case("E501", "error")]
+#[case("W291", "warning")]
+#[case("I001", "info")]
+fn ruff_severity_mapping(#[case] code: &str, #[case] expected_severity: &str) {
+    let json = format!(
+        "[{{\"code\": \"{code}\", \"message\": \"msg\", \"filename\": \"t.py\", \"location\": {{\"row\": 1, \"column\": 1}}}}]"
+    );
+    let violations = LinterType::Ruff.parse_output(&json);
+    assert_eq!(violations[0].severity, expected_severity);
 }
 
 // ==================== Async Execution Tests ====================
 
+#[rstest]
 #[tokio::test]
 async fn test_linter_engine_empty_files() {
     let engine = LinterEngine::new();
@@ -233,6 +210,7 @@ async fn test_linter_engine_empty_files() {
     );
 }
 
+#[rstest]
 #[tokio::test]
 async fn test_linter_execution_with_nonexistent_files() {
     let engine = LinterEngine::with_linters(vec![LinterType::Ruff]);
@@ -249,6 +227,7 @@ async fn test_linter_execution_with_nonexistent_files() {
 
 // ==================== Integration with Real Workspace ====================
 
+#[rstest]
 #[tokio::test]
 async fn test_linter_mapping() {
     let engine = LinterEngine::new();
@@ -268,16 +247,16 @@ async fn test_linter_mapping() {
 
 // ==================== LintViolation Structure Tests ====================
 
-#[test]
+#[rstest]
 fn test_lint_violation_structure() {
     let violation = LintViolation {
-        rule: "F401".to_string(),
-        file: "test.py".to_string(),
+        rule: "F401".to_owned(),
+        file: "test.py".to_owned(),
         line: 10,
         column: 5,
-        message: "Unused import".to_string(),
-        severity: "error".to_string(),
-        category: "quality".to_string(),
+        message: "Unused import".to_owned(),
+        severity: "error".to_owned(),
+        category: "quality".to_owned(),
         file_path_cache: None,
     };
 
@@ -292,18 +271,18 @@ fn test_lint_violation_structure() {
 
 // ==================== Hybrid Engine Lint Integration Tests ====================
 
-#[test]
+#[rstest]
 fn test_lint_code_categorization() {
     // This tests the internal categorization logic
     // Ruff codes: F401, E501, W291, I001, etc.
     // Clippy codes: clippy::unwrap_used, clippy::expect_used, etc.
 
     let codes = vec![
-        "F401".to_string(),
-        "E501".to_string(),
-        "clippy::unwrap_used".to_string(),
-        "clippy::expect_used".to_string(),
-        "W291".to_string(),
+        "F401".to_owned(),
+        "E501".to_owned(),
+        "clippy::unwrap_used".to_owned(),
+        "clippy::expect_used".to_owned(),
+        "W291".to_owned(),
     ];
 
     let mut ruff_count = 0;
@@ -324,7 +303,7 @@ fn test_lint_code_categorization() {
 // ==================== Documentation Verification ====================
 
 /// Verify that public types have expected documentation
-#[test]
+#[rstest]
 fn test_public_api_accessible() {
     // These should all be publicly accessible via the linters module
     // Using _ prefix to suppress unused warnings while still testing compilation
@@ -344,7 +323,7 @@ fn test_public_api_accessible() {
 // Run with: cargo test --package mcb-validate -- --ignored
 
 /// Test real ruff execution against Python files
-#[test]
+#[rstest]
 fn test_ruff_real_execution() {
     use std::process::Command;
 
@@ -355,7 +334,7 @@ fn test_ruff_real_execution() {
     let test_file = temp_dir.path().join("test_file.py");
     std::fs::write(
         &test_file,
-        r"import os  # F401: unused import
+        "import os  # F401: unused import
 import sys  # F401: unused import
 
 def example():
@@ -410,7 +389,7 @@ def example():
 }
 
 /// Test real clippy execution against Rust code
-#[test]
+#[rstest]
 fn test_clippy_real_execution() {
     use std::process::Command;
 
@@ -429,7 +408,7 @@ fn test_clippy_real_execution() {
             "-W",
             "clippy::all",
         ])
-        .current_dir(get_workspace_root())
+        .current_dir(mcb_domain::utils::tests::utils::workspace_root().unwrap())
         .output()
         .expect("Failed to execute cargo clippy");
 
@@ -463,6 +442,7 @@ fn test_clippy_real_execution() {
 }
 
 /// Test `LinterEngine` can execute linters and aggregate results
+#[rstest]
 #[tokio::test]
 async fn test_linter_engine_real_execution() {
     require_tool!("ruff", "pip install ruff");
@@ -472,7 +452,7 @@ async fn test_linter_engine_real_execution() {
     let test_file = temp_dir.path().join("violations.py");
     std::fs::write(
         &test_file,
-        r"import os  # unused
+        "import os  # unused
 import sys  # unused
 
 def foo():
@@ -522,14 +502,14 @@ fn create_test_rule(
     enabled: bool,
 ) -> ValidatedRule {
     ValidatedRule {
-        id: id.to_string(),
+        id: id.to_owned(),
         name: format!("Test rule {id}"),
-        category: category.to_string(),
-        severity: "warning".to_string(),
+        category: category.to_owned(),
+        severity: "warning".to_owned(),
         enabled,
-        description: "Test rule for integration testing".to_string(),
-        rationale: "Testing YAML rule executor".to_string(),
-        engine: "none".to_string(),
+        description: "Test rule for integration testing".to_owned(),
+        rationale: "Testing YAML rule executor".to_owned(),
+        engine: "none".to_owned(),
         config: serde_json::Value::Object(serde_json::Map::new()),
         rule_definition: serde_json::Value::Object(serde_json::Map::new()),
         fixes: Vec::new(),
@@ -538,10 +518,12 @@ fn create_test_rule(
         selectors: Vec::new(),
         ast_query: None,
         metrics: None,
+        filters: None,
     }
 }
 
 /// Test that `YamlRuleExecutor` correctly routes Ruff codes to Ruff linter
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_ruff_integration() {
     require_tool!("ruff", "pip install ruff");
@@ -551,7 +533,7 @@ async fn test_yaml_rule_executor_ruff_integration() {
     let test_file = temp_dir.path().join("unused_imports.py");
     std::fs::write(
         &test_file,
-        r"import os  # F401: unused import
+        "import os  # F401: unused import
 import sys  # F401: unused import
 
 def example():
@@ -561,7 +543,7 @@ def example():
     .expect("Failed to write test file");
 
     // Create rule with F401 lint_select (Ruff unused import code)
-    let rule = create_test_rule("TEST001", vec!["F401".to_string()], "quality", true);
+    let rule = create_test_rule("TEST001", vec!["F401".to_owned()], "quality", true);
 
     // Execute via YamlRuleExecutor
     let violations = YamlRuleExecutor::execute_rule(&rule, &[test_file.as_path()])
@@ -588,11 +570,12 @@ def example():
 }
 
 /// Test that disabled rules return no violations
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_disabled_rule() {
     let rule = create_test_rule(
         "DISABLED001",
-        vec!["F401".to_string()],
+        vec!["F401".to_owned()],
         "quality",
         false, // disabled
     );
@@ -610,6 +593,7 @@ async fn test_yaml_rule_executor_disabled_rule() {
 }
 
 /// Test that rules with empty `lint_select` return no violations
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_empty_lint_select() {
     let rule = create_test_rule(
@@ -631,6 +615,7 @@ async fn test_yaml_rule_executor_empty_lint_select() {
 }
 
 /// Test that Clippy codes are correctly detected and routed
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_clippy_code_detection() {
     // This tests the code detection logic, not actual Clippy execution
@@ -638,7 +623,7 @@ async fn test_yaml_rule_executor_clippy_code_detection() {
 
     let rule = create_test_rule(
         "CLIPPY001",
-        vec!["clippy::unwrap_used".to_string()],
+        vec!["clippy::unwrap_used".to_owned()],
         "quality",
         true,
     );
@@ -658,6 +643,7 @@ async fn test_yaml_rule_executor_clippy_code_detection() {
 }
 
 /// Test filtering: only `lint_select` codes should appear in results
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_filters_to_lint_select() {
     require_tool!("ruff", "pip install ruff");
@@ -667,7 +653,7 @@ async fn test_yaml_rule_executor_filters_to_lint_select() {
     let test_file = temp_dir.path().join("multi_violations.py");
     std::fs::write(
         &test_file,
-        r"import os  # F401: unused
+        "import os  # F401: unused
 import sys  # F401: unused
 
 x=1  # E225: missing whitespace
@@ -680,7 +666,7 @@ def f():
     .expect("Failed to write test file");
 
     // Rule only selects F401, not E225
-    let rule = create_test_rule("FILTER001", vec!["F401".to_string()], "quality", true);
+    let rule = create_test_rule("FILTER001", vec!["F401".to_owned()], "quality", true);
 
     let violations = YamlRuleExecutor::execute_rule(&rule, &[test_file.as_path()])
         .await
@@ -702,6 +688,7 @@ def f():
 }
 
 /// Test custom message from rule is applied to violations
+#[rstest]
 #[tokio::test]
 async fn test_yaml_rule_executor_custom_message() {
     require_tool!("ruff", "pip install ruff");
@@ -710,8 +697,8 @@ async fn test_yaml_rule_executor_custom_message() {
     let test_file = temp_dir.path().join("custom_msg.py");
     std::fs::write(&test_file, "import os  # unused\n").expect("Failed to write test file");
 
-    let mut rule = create_test_rule("MSG001", vec!["F401".to_string()], "quality", true);
-    rule.message = Some("Custom: Remove this unused import".to_string());
+    let mut rule = create_test_rule("MSG001", vec!["F401".to_owned()], "quality", true);
+    rule.message = Some("Custom: Remove this unused import".to_owned());
 
     let violations = YamlRuleExecutor::execute_rule(&rule, &[test_file.as_path()])
         .await
@@ -745,6 +732,7 @@ fn get_rules_dir() -> PathBuf {
 ///
 /// This is the Phase 1 deliverable: "Integration test: YAML rule → linter → violations"
 /// Tests the COMPLETE pipeline from actual YAML file to violations.
+#[rstest]
 #[tokio::test]
 async fn test_e2e_yaml_file_to_linter_violations() {
     require_tool!("ruff", "pip install ruff");
@@ -781,7 +769,7 @@ async fn test_e2e_yaml_file_to_linter_violations() {
         "QUAL005 should have lint_select codes"
     );
     assert!(
-        ruff_rule.lint_select.contains(&"F401".to_string()),
+        ruff_rule.lint_select.contains(&"F401".to_owned()),
         "QUAL005 should select F401 (unused imports)"
     );
 
@@ -833,6 +821,7 @@ if __name__ == "__main__":
 ///
 /// This verifies that Clippy-based rules load correctly from YAML.
 /// Note: Actually running Clippy requires a Cargo project context.
+#[rstest]
 #[tokio::test]
 async fn test_e2e_yaml_clippy_rule_loads() {
     let rules_dir = get_rules_dir();
@@ -864,7 +853,7 @@ async fn test_e2e_yaml_clippy_rule_loads() {
     assert!(
         unwrap_rule
             .lint_select
-            .contains(&"clippy::unwrap_used".to_string()),
+            .contains(&"clippy::unwrap_used".to_owned()),
         "QUAL001 should select clippy::unwrap_used, got {:?}",
         unwrap_rule.lint_select
     );
@@ -876,6 +865,7 @@ async fn test_e2e_yaml_clippy_rule_loads() {
 }
 
 /// Verify all YAML rules with `lint_select` load correctly
+#[rstest]
 #[tokio::test]
 async fn test_all_yaml_rules_with_lint_select_load() {
     let rules_dir = get_rules_dir();
@@ -912,6 +902,7 @@ async fn test_all_yaml_rules_with_lint_select_load() {
 /// 2. Create a temporary Cargo project with .`unwrap()` calls
 /// 3. Execute `YamlRuleExecutor` (which runs cargo clippy)
 /// 4. Verify `clippy::unwrap_used` violations are returned
+#[rstest]
 #[tokio::test]
 async fn test_e2e_yaml_clippy_rule_execution() {
     require_tool!("cargo", "rustup component add clippy");
@@ -938,7 +929,7 @@ async fn test_e2e_yaml_clippy_rule_execution() {
     assert!(
         unwrap_rule
             .lint_select
-            .contains(&"clippy::unwrap_used".to_string()),
+            .contains(&"clippy::unwrap_used".to_owned()),
         "QUAL001 should select clippy::unwrap_used"
     );
 

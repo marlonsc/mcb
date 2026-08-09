@@ -1,10 +1,14 @@
+//!
+//! **Documentation**: [docs/modules/providers.md](../../../../docs/modules/providers.md)
+//!
 //! Provider Utilities
 //!
 //! Shared utilities used by provider implementations.
 
-pub(crate) mod http;
+/// Shared embedding provider utilities (HTTP client, batch processing, parsing).
+pub mod embedding;
+/// HTTP request utilities for provider implementations.
+pub mod http;
 pub(crate) mod http_response;
-mod json;
-
-pub(crate) use http::parse_embedding_vector;
-pub use json::JsonExt;
+/// Vector store shared utilities.
+pub mod vector_store;

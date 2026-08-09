@@ -1,3 +1,8 @@
+//!
+//! **Documentation**: [docs/modules/domain.md](../../../../../docs/modules/domain.md#value-objects)
+//!
+//! Code highlighting value objects and types.
+
 use serde::{Deserialize, Serialize};
 
 /// Highlight category for code tokens
@@ -65,11 +70,48 @@ impl HighlightedCode {
     /// # Returns
     ///
     /// A new `HighlightedCode` instance with the provided values.
+    #[must_use]
     pub fn new(original: String, spans: Vec<HighlightSpan>, language: String) -> Self {
         Self {
             original,
             spans,
             language,
         }
+    }
+}
+
+/// Tree-sitter highlight capture names (order must match `HighlightConfiguration`)
+pub const HIGHLIGHT_NAMES: [&str; 13] = [
+    "keyword",
+    "function",
+    "string",
+    "comment",
+    "type",
+    "variable",
+    "constant",
+    "operator",
+    "attribute",
+    "number",
+    "punctuation",
+    "property",
+    "tag",
+];
+
+/// Maps tree-sitter highlight token names to domain highlight categories.
+#[must_use]
+pub fn map_highlight_to_category(name: &str) -> HighlightCategory {
+    match name {
+        "keyword" => HighlightCategory::Keyword,
+        "string" => HighlightCategory::String,
+        "comment" => HighlightCategory::Comment,
+        "function" => HighlightCategory::Function,
+        "variable" | "constant" | "attribute" | "property" | "tag" => HighlightCategory::Variable,
+        "type" => HighlightCategory::Type,
+        "number" => HighlightCategory::Number,
+        "operator" => HighlightCategory::Operator,
+        "punctuation" | "punctuation.bracket" | "punctuation.delimiter" | "punctuation.special" => {
+            HighlightCategory::Punctuation
+        }
+        _ => HighlightCategory::Other,
     }
 }

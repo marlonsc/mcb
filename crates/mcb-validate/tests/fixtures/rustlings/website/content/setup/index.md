@@ -27,9 +27,9 @@ cargo install rustlings
 
 {% details(summary="If the installation fails…") %}
 
--   Make sure you have the latest Rust version by running `rustup update`
--   Try adding the `--locked` flag: `cargo install rustlings --locked`
--   Otherwise, please [report the issue](https://github.com/rust-lang/rustlings/issues/new)
+- Make sure you have the latest Rust version by running `rustup update`
+- Try adding the `--locked` flag: `cargo install rustlings --locked`
+- Otherwise, please [report the issue](https://github.com/rust-lang/rustlings/issues/new)
 
 {% end %}
 
@@ -48,8 +48,8 @@ You are probably using Linux and installed Rust using your package manager.
 Cargo installs binaries to the directory `~/.cargo/bin`.
 Sadly, package managers often don't add `~/.cargo/bin` to your `PATH` environment variable.
 
--   Either add `~/.cargo/bin` manually to `PATH`
--   Or uninstall Rust from the package manager and [install it using the official way with `rustup`](https://www.rust-lang.org/tools/install)
+- Either add `~/.cargo/bin` manually to `PATH`
+- Or uninstall Rust from the package manager and [install it using the official way with `rustup`](https://www.rust-lang.org/tools/install)
 
 {% end %}
 

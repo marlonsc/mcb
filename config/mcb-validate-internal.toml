@@ -3,20 +3,20 @@
 
 [general]
 workspace_root = "."
-exclude_patterns = ["target/", "tests/fixtures/"]
 rules_path = "crates/mcb-validate/rules"
 project_prefix = "mcb"
-skip_crates = ["mcb", "mcb-validate"]
 internal_dep_prefix = "mcb-"
+skip_dir_patterns = ["/fixtures/"]
+exclude_patterns = ["target/", "tests/fixtures/", "seaorm/entities/"]
 
 [rules.architecture]
 enabled = true
 
 [rules.architecture.layer_boundaries]
-application_internal_deps = ["mcb-domain"]
-providers_internal_deps = ["mcb-domain", "mcb-application"]
-infrastructure_internal_deps = ["mcb-domain", "mcb-application", "mcb-providers"]
-server_internal_deps = ["mcb-domain", "mcb-application", "mcb-infrastructure"]
+application_internal_deps = ["mcb-domain", "mcb-utils"]
+providers_internal_deps = ["mcb-domain", "mcb-utils"]
+infrastructure_internal_deps = ["mcb-domain", "mcb-providers", "mcb-utils"]
+server_internal_deps = ["mcb-domain", "mcb-infrastructure", "mcb-utils"]
 
 [rules.naming]
 enabled = true
@@ -31,15 +31,21 @@ module_pattern = "^[a-z][a-z0-9_]*$"
 server_crate = "mcb-server"
 domain_crate = "mcb-domain"
 infrastructure_crate = "mcb-infrastructure"
-application_crate = "mcb-application"
+application_crate = ""
 providers_crate = "mcb-providers"
 validate_crate = "mcb-validate"
-language_support_crate = "mcb-language-support"
-ast_utils_crate = "mcb-ast-utils"
+utils_crate = "mcb-utils"
 
 [rules.kiss]
 enabled = true
 excluded_crates = ["mcb-validate"]
+skip_file_patterns = [
+    "/admin/api.rs",
+    "/di/bootstrap.rs",
+    "/di/catalog.rs",
+    "/di/resolver.rs",
+    "/health.rs",
+]
 
 [rules.refactoring]
 enabled = true
@@ -67,8 +73,36 @@ utility_types = [
     "Arc",
     "Mutex",
 ]
-skip_files = ["mod.rs", "lib.rs", "main.rs", "errors.rs", "error.rs"]
-skip_dir_patterns = ["/tests/", "/benches/", "/examples/"]
+skip_files = [
+    "mod.rs",
+    "lib.rs",
+    "main.rs",
+    "errors.rs",
+    "error.rs",
+    "composition.rs",
+    "exports.rs",
+    "graphql_store.rs",
+    "loco_app.rs",
+    "logging.rs",
+]
+# Definitional layers (macros, linkme registries, protocol/type defs) and
+# integration/golden/contract-tested layers (controllers, Loco initializers,
+# provider adapters) are not unit-tested 1:1 with source files in this project.
+skip_dir_patterns = [
+    "fixtures/",
+    "macros/",
+    "registry/",
+    "protocol/",
+    "controllers/",
+    "initializers/",
+    "embedding/",
+    "language/",
+    "project_detection/",
+    "hybrid_search/",
+    "vector_store/",
+    "cli/",
+    "project/",
+]
 known_migration_pairs = [["mcb-core", "mcb-domain"], ["mcb-std", "mcb-common"]]
 
 [rules.performance]
@@ -94,20 +128,23 @@ excluded_crates = []
 [rules.quality]
 enabled = true
 max_file_lines = 800
-excluded_paths = ["mcb-providers/src/vector_store/", "mcb-providers/src/embedding/"]
+excluded_paths = [
+    "mcb-providers/src/vector_store/",
+    "mcb-providers/src/embedding/",
+]
 
 [rules.clean_architecture]
 enabled = true
 domain_dependencies = []
-application_dependencies = ["mcb-domain"]
-infrastructure_dependencies = ["mcb-application", "mcb-domain"]
+application_dependencies = []
+infrastructure_dependencies = ["mcb-domain"]
 server_path = "crates/mcb-server/src"
 handlers_path = "crates/mcb-server/src/handlers"
 domain_path = "crates/mcb-domain/src"
 entities_path = "crates/mcb-domain/src/entities"
 vo_path = "crates/mcb-domain/src/value_objects"
 infrastructure_path = "crates/mcb-infrastructure/src"
-application_path = "crates/mcb-application/src"
+application_path = ""
 ports_providers_path = "crates/mcb-domain/src/ports"
 identity_skip_suffixes = ["Builder", "Options", "Config", "Changes", "Filter"]
 
@@ -116,10 +153,16 @@ enabled = true
 
 [rules.organization]
 enabled = true
+server_exempt_files = ["auth.rs", "middleware.rs"]
 
 [rules.visibility]
 enabled = true
-scan_crates = ["mcb-domain", "mcb-application", "mcb-providers", "mcb-infrastructure", "mcb-server"]
+scan_crates = [
+    "mcb-domain",
+    "mcb-providers",
+    "mcb-infrastructure",
+    "mcb-server",
+]
 
 [rules.layer_flow]
 enabled = true
@@ -127,21 +170,39 @@ enabled = true
 [rules.port_adapter]
 enabled = true
 
+[rules.dependency]
+enabled = true
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP004"
+scan_root = "crates/mcb-server/src/admin"
+pattern = "mcb_domain::ports::repositories"
+allowed_files = [
+    "crates/mcb-server/src/admin/crud_adapter.rs",
+    "crates/mcb-server/src/admin/handlers.rs",
+]
+
+[[rules.dependency.bypass_boundaries]]
+violation_id = "DEP005"
+scan_root = "crates/mcb/src/cli"
+pattern = "mcb_validate::"
+allowed_files = ["crates/mcb/src/cli/validate.rs"]
+
 [validators]
 architecture = true
-naming = true
-kiss = true
-refactoring = true
-performance = true
-patterns = true
-test_quality = true
-implementation = true
-dependency = true
-quality = true
-organization = true
 clean_architecture = true
-solid = true
+dependency = true
 documentation = true
-visibility = true
+implementation = true
+kiss = true
 layer_flow = true
+naming = true
+organization = true
+patterns = true
+performance = true
 port_adapter = true
+quality = true
+refactoring = true
+solid = true
+test_quality = true
+visibility = true

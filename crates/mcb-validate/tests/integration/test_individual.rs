@@ -1,22 +1,13 @@
-use mcb_validate::{ValidationConfig, ValidatorRegistry};
-use std::path::PathBuf;
+use mcb_domain::ports::validation::ValidationConfig;
+use rstest::rstest;
 
-fn get_workspace_root() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .parent()
-        .unwrap()
-        .parent()
-        .unwrap()
-        .to_path_buf()
-}
-
-#[test]
+#[rstest]
 fn test_just_dependency() {
     println!("Testing ONLY dependency validator...");
-    let workspace_root = get_workspace_root();
+    let workspace_root = mcb_domain::utils::tests::utils::workspace_root().unwrap();
     let config = ValidationConfig::new(&workspace_root);
-    let registry = ValidatorRegistry::standard_for(&workspace_root);
-    let result = registry.validate_named(&config, &["dependency"]);
-    println!("Result: {:?}", result.as_ref().map(|v| v.len()));
-    assert!(result.is_ok());
+    let result = mcb_validate::validators::validate_named(&config, &["dependency"]);
+    println!("Result: {:?}", result.as_ref().map(Vec::len));
+    let violations = result.expect("dependency validator should run");
+    assert!(violations.iter().all(|v| !v.id().is_empty()));
 }

@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 ---
 adr: 20
 title: Testing Strategy for Integrated Code
@@ -10,9 +11,13 @@ superseded_by: []
 implementation_status: Complete
 ---
 
-## ADR 020: Testing Strategy for Integrated Code
+<!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
+# ADR 020: Testing Strategy for Integrated Code
 
 ## Status
+
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
 
 **Accepted** (v0.2.0 - Structure, v0.3.0 - Migration)
 **Date**: 2026-01-14
@@ -23,25 +28,24 @@ PMAT has 4600+ tests. MCB has 308+ tests. Integration must preserve both.
 
 ## Decision
 
-**Three-tier testing strategy**:
+Three-tier testing strategy:
 
 ### Tier 1: Unit Tests
 
 **Location**: `crates/<crate>/tests/` or `libs/<lib>/tests/`
 
-**Pattern**:
+Pattern:
 
 ```rust
-// crates/mcb-application/tests/search_service_test.rs — HISTORICAL; DI is now dill (ADR-029)
+// crates/mcb-application/tests/search_service_test.rs — uses AppContext composition root (ADR-050)
 
 #[tokio::test]
 async fn test_search_returns_relevant_results() {
-    // Use null providers from mcb-infrastructure
-    let container = DiContainerBuilder::new().build().await.unwrap();
-    let service = SearchService::new(
-        container.resolve::<Arc<dyn EmbeddingProvider>>(),
-        container.resolve::<Arc<dyn VectorStoreProvider>>(),
-    );
+    // Use default providers via init_app()/AppContext
+    let app_context = init_app(config).await.unwrap();
+    let embedding: Arc<dyn EmbeddingProvider> = app_context.embedding_handle().get();
+    let vector_store: Arc<dyn VectorStoreProvider> = app_context.vector_store_handle().get();
+    let service = SearchService::new(embedding, vector_store);
 
     // Test with mock data
     let results = service.search("query").await.unwrap();
@@ -53,7 +57,7 @@ async fn test_search_returns_relevant_results() {
 
 **Location**: `crates/mcb-server/tests/integration/`
 
-**Pattern**:
+Pattern:
 
 ```rust
 // crates/mcb-server/tests/integration/full_flow_test.rs
@@ -75,7 +79,7 @@ async fn test_index_and_search_flow() {
 
 **Location**: `libs/code-metrics/tests/` (ported from PMAT)
 
-**Pattern**:
+Pattern:
 
 ```rust
 // libs/code-metrics/tests/complexity_properties.rs
@@ -92,9 +96,9 @@ proptest! {
 
 ## v0.1.1 Test Organization
 
-Current test structure in eight-crate workspace:
+Current test structure in six-crate workspace:
 
-```
+```text
 crates/
 ├── mcb-domain/tests/           # Domain logic tests
 ├── mcb-application/tests/      # Service tests
@@ -103,7 +107,7 @@ crates/
 ├── mcb-server/tests/           # Server and integration tests
 │   ├── admin/                  # Admin API tests
 │   ├── handlers/               # MCP handler tests
-│   └── test_utils/             # Test fixtures
+│   └── utils/             # Test fixtures
 └── mcb-validate/tests/         # Validator tests
 ```
 
@@ -113,50 +117,50 @@ crates/
 
 ### v0.2.0 (Structure)
 
--   Define test directory structure for libs/
--   Create test utilities for PMAT code
--   Port infrastructure tests
+- Define test directory structure for libs/
+- Create test utilities for PMAT code
+- Port infrastructure tests
 
 ### v0.3.0 (Migration)
 
--   Port 1000+ PMAT tests for complexity, TDG, SATD
--   Update tests to use MCB types
--   Target: 1500+ total tests
+- Port 1000+ PMAT tests for complexity, TDG, SATD
+- Update tests to use MCB types
+- Target: 1500+ total tests
 
 ### v0.4.0 (Extended)
 
--   Port 1500+ additional PMAT tests
--   Target: 3000+ total tests
+- Port 1500+ additional PMAT tests
+- Target: 3000+ total tests
 
 ### v1.0.0 (Complete)
 
--   5390+ total tests
--   Full coverage of all features
+- 5390+ total tests
+- Full coverage of all features
 
 ## Consequences
 
-**Positive**:
+Positive:
 
--   Preserved test coverage
--   Clear test organization
--   Property-based testing for edge cases
+- Preserved test coverage
+- Clear test organization
+- Property-based testing for edge cases
 
-**Negative**:
+Negative:
 
--   CI time increase (~5 min → ~15 min)
+- CI time increase (~5 min → ~15 min)
 
-**Mitigation**:
+Mitigation:
 
--   Parallel test execution
--   Test categorization (quick/full)
--   CI caching
+- Parallel test execution
+- Test categorization (quick/full)
+- CI caching
 
 ## Related ADRs
 
--   [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Test container setup
--   [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Test location per crate
--   [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Test migration timeline
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - Test container setup
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Test location per crate
+- [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Test migration timeline
 
 ---
 
-*Updated 2026-01-17 - Reflects v0.1.2 test structure*
+Updated 2026-01-17 - Reflects v0.1.2 test structure

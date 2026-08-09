@@ -1,144 +1,69 @@
-//! Observability Metrics Provider Port
-//!
-//! Port for observability metrics collection providers. Implementations integrate
-//! with monitoring systems like Prometheus, OpenTelemetry, or custom backends.
-//!
-//! This port is distinct from [`MetricsAnalysisProvider`](crate::ports::providers::metrics_analysis::MetricsAnalysisProvider)
-//! which analyzes code complexity. This port collects runtime observability metrics.
-//!
-//! ## Metric Types
-//!
-//! | Type | Description | Example |
-//! |------|-------------|---------|
-//! | Counter | Monotonically increasing value | `requests_total` |
-//! | Gauge | Value that can go up or down | `active_connections` |
-//! | Histogram | Distribution of values | `request_duration_seconds` |
-//!
-//! ## Domain-Specific Metrics
-//!
-//! The trait includes convenience methods for common MCB operations:
-//! - `record_index_time` - Time to index a codebase
-//! - `record_search_latency` - Time to perform a search
-//! - `record_embedding_latency` - Time to generate embeddings
-//! - `increment_indexed_files` - Count of indexed files
-//! - `increment_search_requests` - Count of search requests
+//! Metrics provider ports.
 
 use std::collections::HashMap;
 use std::time::Duration;
 
 use async_trait::async_trait;
 
-// ============================================================================
-// Core Types
-// ============================================================================
-
-/// Labels/tags for a metric (key-value pairs)
+/// Key-value pairs for metric categorization.
 pub type MetricLabels = HashMap<String, String>;
-
-/// Result type for metrics operations
+/// Specialized result for metrics operations.
 pub type MetricsResult<T> = crate::Result<T>;
 
-/// Errors that can occur during metrics operations
+/// Errors occurring during metrics collection or submission.
 #[derive(Debug, Clone, thiserror::Error)]
 pub enum MetricsError {
-    /// Metric not found
+    /// The specified metric name does not exist.
     #[error("Metric not found: {name}")]
     NotFound {
         /// Name of the missing metric.
         name: String,
     },
-
-    /// Invalid metric name or labels
+    /// The metric configuration or value is invalid.
     #[error("Invalid metric: {message}")]
     Invalid {
-        /// Details about why the metric is invalid.
+        /// Human-readable error message.
         message: String,
     },
-
-    /// Backend error
+    /// The underlying metrics collection system failed.
     #[error("Metrics backend error: {message}")]
     Backend {
-        /// Backend error details.
+        /// Human-readable error message.
         message: String,
     },
 }
 
-// ============================================================================
-// MetricsProvider Trait
-// ============================================================================
+pub(crate) fn labels_from<const N: usize>(pairs: [(&str, &str); N]) -> MetricLabels {
+    pairs
+        .into_iter()
+        .map(|(k, v)| (k.to_owned(), v.to_owned()))
+        .collect()
+}
 
-/// Port for observability metrics collection
-///
-/// Implementations should be thread-safe and efficient, as metrics may be
-/// recorded from multiple concurrent tasks.
-///
-/// ## Implementation Notes
-///
-/// - All methods are async to support remote metrics backends
-/// - Labels should be used sparingly to avoid cardinality explosion
-/// - Implementations should handle errors gracefully (logging but not failing)
-///
-/// ## Example
-///
-/// ```no_run
-/// # use mcb_domain::ports::providers::MetricsProvider;
-/// # use std::time::Duration;
-/// # use std::collections::HashMap;
-/// # type MetricLabels = HashMap<String, String>;
-/// # // Mock labels macro
-/// # macro_rules! labels { ($($t:tt)*) => { std::collections::HashMap::new() } }
-/// # async fn example(metrics: &dyn MetricsProvider) -> Result<(), Box<dyn std::error::Error>> {
-/// // Record a counter increment
-/// metrics.increment("search_requests_total", &labels!("collection" => "my-project")).await?;
-///
-/// // Record a gauge value
-/// metrics.gauge("active_indexing_jobs", 5.0, &labels!()).await?;
-///
-/// // Record a histogram observation
-/// metrics.histogram("search_duration_seconds", 0.123, &labels!()).await?;
-///
-/// // Use domain-specific convenience methods
-/// metrics.record_search_latency(Duration::from_millis(123), "my-collection").await?;
-/// # Ok(())
-/// # }
-/// ```
+/// Common interface for recording system metrics.
 #[async_trait]
 pub trait MetricsProvider: Send + Sync {
-    /// Provider name for identification
+    /// Get the name of this metrics provider implementation.
     fn name(&self) -> &str;
-
-    // ========================================================================
-    // Core Primitives (Prometheus-compatible)
-    // ========================================================================
-
-    /// Increment a counter by 1
-    ///
-    /// Counters are monotonically increasing values (e.g., total requests).
+    /// Increment a counter metric by 1.
     async fn increment(&self, name: &str, labels: &MetricLabels) -> MetricsResult<()>;
-
-    /// Increment a counter by a specific amount
+    /// Increment a counter metric by a specific amount.
     async fn increment_by(
         &self,
         name: &str,
         value: f64,
         labels: &MetricLabels,
     ) -> MetricsResult<()>;
-
-    /// Set a gauge value
-    ///
-    /// Gauges represent a single value that can go up or down (e.g., temperature).
+    /// Set the current value of a gauge metric.
     async fn gauge(&self, name: &str, value: f64, labels: &MetricLabels) -> MetricsResult<()>;
-
-    /// Record a histogram observation
-    ///
-    /// Histograms track the distribution of values (e.g., request latencies).
+    /// Record a value in a histogram distribution.
     async fn histogram(&self, name: &str, value: f64, labels: &MetricLabels) -> MetricsResult<()>;
+}
 
-    // ========================================================================
-    // Domain-Specific Convenience Methods
-    // ========================================================================
-
-    /// Record time to index a codebase
+/// Extension trait providing common metrics operations.
+#[async_trait]
+pub trait MetricsProviderExt: MetricsProvider + Send + Sync {
+    /// Record the duration of an indexing operation.
     async fn record_index_time(&self, duration: Duration, collection: &str) -> MetricsResult<()> {
         let labels = labels_from([("collection", collection)]);
         self.histogram(
@@ -149,7 +74,7 @@ pub trait MetricsProvider: Send + Sync {
         .await
     }
 
-    /// Record search latency
+    /// Record the latency of a search operation.
     async fn record_search_latency(
         &self,
         duration: Duration,
@@ -164,7 +89,7 @@ pub trait MetricsProvider: Send + Sync {
         .await
     }
 
-    /// Record embedding generation latency
+    /// Record the latency of an embedding operation.
     async fn record_embedding_latency(
         &self,
         duration: Duration,
@@ -179,33 +104,37 @@ pub trait MetricsProvider: Send + Sync {
         .await
     }
 
-    /// Increment indexed files counter
+    /// Increment the count of indexed files in a collection.
     async fn increment_indexed_files(&self, collection: &str, count: u64) -> MetricsResult<()> {
         let labels = labels_from([("collection", collection)]);
         self.increment_by("mcb_indexed_files_total", count as f64, &labels)
             .await
     }
 
-    /// Increment search requests counter
+    /// Increment the search request counter for a collection.
     async fn increment_search_requests(&self, collection: &str) -> MetricsResult<()> {
         let labels = labels_from([("collection", collection)]);
         self.increment("mcb_search_requests_total", &labels).await
     }
 
-    /// Set current active indexing jobs gauge
+    /// Set the number of concurrent active indexing jobs.
     async fn set_active_indexing_jobs(&self, count: u64) -> MetricsResult<()> {
-        self.gauge("mcb_active_indexing_jobs", count as f64, &HashMap::new())
-            .await
+        self.gauge(
+            "mcb_active_indexing_jobs",
+            count as f64,
+            &std::collections::HashMap::new(),
+        )
+        .await
     }
 
-    /// Record vector store size
+    /// Set the current size (vector count) of a collection.
     async fn set_vector_store_size(&self, collection: &str, vectors: u64) -> MetricsResult<()> {
         let labels = labels_from([("collection", collection)]);
         self.gauge("mcb_vector_store_size", vectors as f64, &labels)
             .await
     }
 
-    /// Record cache hit/miss
+    /// Record a cache hit or miss for a specific cache type.
     async fn record_cache_access(&self, hit: bool, cache_type: &str) -> MetricsResult<()> {
         let labels = labels_from([
             ("cache_type", cache_type),
@@ -215,27 +144,5 @@ pub trait MetricsProvider: Send + Sync {
     }
 }
 
-// ============================================================================
-// Helper Functions
-// ============================================================================
-
-/// Create labels from a slice of key-value pairs
-fn labels_from<const N: usize>(pairs: [(&str, &str); N]) -> MetricLabels {
-    pairs
-        .into_iter()
-        .map(|(k, v)| (k.to_string(), v.to_string()))
-        .collect()
-}
-
-/// Macro for creating labels inline
-#[macro_export]
-macro_rules! labels {
-    () => {
-        std::collections::HashMap::new()
-    };
-    ($($key:expr => $value:expr),+ $(,)?) => {{
-        let mut map = std::collections::HashMap::new();
-        $(map.insert($key.to_string(), $value.to_string());)+
-        map
-    }};
-}
+// Implement extension trait for any type that implements MetricsProvider
+impl<T: ?Sized + MetricsProvider> MetricsProviderExt for T {}

@@ -1,3 +1,6 @@
+//! Tool call routing and handler dispatch.
+//!
+//! **Documentation**: [docs/modules/server.md](../../../../docs/modules/server.md)
 //!
 //! Routes incoming tool call requests to the appropriate handlers.
 //! This module provides a centralized dispatch mechanism for MCP tool calls.
@@ -5,21 +8,17 @@
 use std::sync::Arc;
 
 use rmcp::ErrorData as McpError;
-use rmcp::handler::server::wrapper::Parameters;
 use rmcp::model::{CallToolRequestParams, CallToolResult};
-use tracing::warn;
 
-use crate::args::{
-    AgentArgs, IndexArgs, IssueEntityArgs, MemoryArgs, OrgEntityArgs, PlanEntityArgs, ProjectArgs,
-    SearchArgs, SessionArgs, ValidateArgs, VcsArgs, VcsEntityArgs,
-};
 use crate::handlers::{
-    AgentHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
+    AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
     PlanEntityHandler, ProjectHandler, SearchHandler, SessionHandler, ValidateHandler,
     VcsEntityHandler, VcsHandler,
 };
-use crate::hooks::{HookProcessor, PostToolUseContext};
-
+use crate::hooks::HookProcessor;
+use crate::tools::context::ToolExecutionContext;
+use crate::tools::dispatch_tool_call;
+use crate::tools::validation::{trigger_post_tool_use_hook, validate_execution_context};
 /// Handler references for tool routing
 #[derive(Clone)]
 pub struct ToolHandlers {
@@ -47,6 +46,8 @@ pub struct ToolHandlers {
     pub issue_entity: Arc<IssueEntityHandler>,
     /// Handler for org entity CRUD.
     pub org_entity: Arc<OrgEntityHandler>,
+    /// Handler for unified entity CRUD.
+    pub entity: Arc<EntityHandler>,
     /// Processor for tool execution hooks.
     pub hook_processor: Arc<HookProcessor>,
 }
@@ -54,93 +55,29 @@ pub struct ToolHandlers {
 /// Route a tool call request to the appropriate handler
 ///
 /// Parses the request arguments and delegates to the matching handler.
-/// After tool execution, automatically triggers PostToolUse hook for memory operations.
+/// After tool execution, automatically triggers `PostToolUse` hook for memory operations.
+///
+/// # Errors
+/// Returns an error when execution context validation or tool dispatch fails.
 pub async fn route_tool_call(
     request: CallToolRequestParams,
     handlers: &ToolHandlers,
+    execution_context: ToolExecutionContext,
 ) -> Result<CallToolResult, McpError> {
-    let tool_name = request.name.clone();
+    validate_execution_context(request.name.as_ref(), &execution_context)?;
 
-    let result = match request.name.as_ref() {
-        "index" => {
-            let args = parse_args::<IndexArgs>(&request)?;
-            handlers.index.handle(Parameters(args)).await
-        }
-        "search" => {
-            let args = parse_args::<SearchArgs>(&request)?;
-            handlers.search.handle(Parameters(args)).await
-        }
-        "validate" => {
-            let args = parse_args::<ValidateArgs>(&request)?;
-            handlers.validate.handle(Parameters(args)).await
-        }
-        "memory" => {
-            let args = parse_args::<MemoryArgs>(&request)?;
-            handlers.memory.handle(Parameters(args)).await
-        }
-        "session" => {
-            let args = parse_args::<SessionArgs>(&request)?;
-            handlers.session.handle(Parameters(args)).await
-        }
-        "agent" => {
-            let args = parse_args::<AgentArgs>(&request)?;
-            handlers.agent.handle(Parameters(args)).await
-        }
-        "project" => {
-            let args = parse_args::<ProjectArgs>(&request)?;
-            handlers.project.handle(Parameters(args)).await
-        }
-        "vcs" => {
-            let args = parse_args::<VcsArgs>(&request)?;
-            handlers.vcs.handle(Parameters(args)).await
-        }
-        "vcs_entity" => {
-            let args = parse_args::<VcsEntityArgs>(&request)?;
-            handlers.vcs_entity.handle(Parameters(args)).await
-        }
-        "plan_entity" => {
-            let args = parse_args::<PlanEntityArgs>(&request)?;
-            handlers.plan_entity.handle(Parameters(args)).await
-        }
-        "issue_entity" => {
-            let args = parse_args::<IssueEntityArgs>(&request)?;
-            handlers.issue_entity.handle(Parameters(args)).await
-        }
-        "org_entity" => {
-            let args = parse_args::<OrgEntityArgs>(&request)?;
-            handlers.org_entity.handle(Parameters(args)).await
-        }
-        _ => Err(McpError::invalid_params(
-            format!("Unknown tool: {}", request.name),
-            None,
-        )),
-    }?;
+    let result = dispatch_tool_call(&request, handlers).await?;
 
-    if let Err(e) = trigger_post_tool_use_hook(&tool_name, &result, &handlers.hook_processor).await
+    if let Err(e) = trigger_post_tool_use_hook(
+        request.name.as_ref(),
+        &result,
+        &handlers.hook_processor,
+        &execution_context,
+    )
+    .await
     {
-        warn!("PostToolUse hook failed (non-fatal): {}", e);
+        mcb_domain::warn!("ToolRouter", "PostToolUse hook failed (non-fatal)", &e);
     }
 
     Ok(result)
-}
-
-async fn trigger_post_tool_use_hook(
-    tool_name: &str,
-    result: &CallToolResult,
-    hook_processor: &HookProcessor,
-) -> Result<(), String> {
-    let context = PostToolUseContext::new(tool_name.to_string(), result.clone());
-    hook_processor
-        .process_post_tool_use(context)
-        .await
-        .map_err(|e| e.to_string())
-}
-
-/// Parse request arguments into the expected type
-fn parse_args<T: serde::de::DeserializeOwned>(
-    request: &CallToolRequestParams,
-) -> Result<T, McpError> {
-    let args_value = serde_json::Value::Object(request.arguments.clone().unwrap_or_default());
-    serde_json::from_value(args_value)
-        .map_err(|e| McpError::invalid_params(format!("Failed to parse arguments: {e}"), None))
 }

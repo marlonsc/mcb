@@ -1,0 +1,136 @@
+use std::path::{Path, PathBuf};
+
+use tree_sitter::{Language, Query, QueryCursor, StreamingIterator};
+
+use crate::rules::yaml_loader::ValidatedRule;
+use crate::{Callback, LANG, ParserTrait, ValidationError, action, guess_language};
+
+/// A single match produced by the tree-sitter query executor.
+#[derive(Debug, Clone)]
+pub struct TreeSitterQueryMatch {
+    /// Path to the file where the match occurred.
+    pub file_path: PathBuf,
+    /// One-based line number of the match.
+    pub line: usize,
+    /// Kind of the matched AST node (e.g. `function_definition`, `identifier`).
+    pub node_kind: String,
+    /// Capture name from the query that produced this match.
+    pub capture_name: String,
+}
+
+#[derive(Debug)]
+struct QueryExecutionCfg {
+    query: String,
+}
+
+struct QueryExecutionCallback;
+
+impl Callback for QueryExecutionCallback {
+    type Res = crate::Result<Vec<TreeSitterQueryMatch>>;
+    type Cfg = QueryExecutionCfg;
+
+    fn call<T: ParserTrait>(cfg: <Self as Callback>::Cfg, parser: &T) -> <Self as Callback>::Res {
+        let language = map_language(parser.get_language()).ok_or_else(|| {
+            ValidationError::Config(format!(
+                "Unsupported language for tree-sitter query execution: {:?}",
+                parser.get_language()
+            ))
+        })?;
+
+        let query = Query::new(&language, &cfg.query).map_err(|e| {
+            ValidationError::Config(format!("Invalid tree-sitter query '{}': {e}", cfg.query))
+        })?;
+
+        let mut cursor = QueryCursor::new();
+        let mut matches = Vec::new();
+        let root = parser.get_root();
+        let capture_names = query.capture_names();
+
+        let mut query_matches = cursor.matches(&query, root.0, parser.get_code());
+        while let Some(query_match) = query_matches.next() {
+            for capture in query_match.captures {
+                let start = capture.node.start_position();
+                let capture_name = capture_names
+                    .get(capture.index as usize)
+                    .cloned()
+                    .unwrap_or(mcb_utils::constants::FALLBACK_UNKNOWN)
+                    .to_owned();
+
+                matches.push(TreeSitterQueryMatch {
+                    file_path: PathBuf::new(),
+                    line: start.row + 1,
+                    node_kind: capture.node.kind().to_owned(),
+                    capture_name,
+                });
+            }
+        }
+
+        Ok(matches)
+    }
+}
+
+/// Executes tree-sitter queries from validated rules against source files.
+pub struct TreeSitterQueryExecutor;
+
+impl TreeSitterQueryExecutor {
+    /// Runs the rule's `ast_query` (if present) against `file` and returns all matches.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the file cannot be read or the tree-sitter query fails.
+    pub fn execute(rule: &ValidatedRule, file: &Path) -> crate::Result<Vec<TreeSitterQueryMatch>> {
+        if rule.ast_query.is_none() {
+            return Ok(Vec::new());
+        }
+
+        let source = match crate::run_context::ValidationRunContext::active()
+            .and_then(|ctx| ctx.read_cached(file).ok())
+        {
+            Some(cached) => cached.as_bytes().to_vec(),
+            None => std::fs::read(file).map_err(ValidationError::Io)?,
+        };
+        Self::execute_on_source(rule, file, &source)
+    }
+
+    pub(crate) fn execute_on_source(
+        rule: &ValidatedRule,
+        file: &Path,
+        source: &[u8],
+    ) -> crate::Result<Vec<TreeSitterQueryMatch>> {
+        let Some(query) = &rule.ast_query else {
+            return Ok(Vec::new());
+        };
+        let (lang, _) = guess_language(source, file);
+        let Some(lang) = lang else {
+            return Ok(Vec::new());
+        };
+
+        let mut matches = action::<QueryExecutionCallback>(
+            &lang,
+            source.to_vec(),
+            file,
+            None,
+            QueryExecutionCfg {
+                query: query.clone(),
+            },
+        )?;
+
+        for item in &mut matches {
+            item.file_path = file.to_path_buf();
+        }
+
+        Ok(matches)
+    }
+}
+
+fn map_language(lang: LANG) -> Option<Language> {
+    match lang {
+        LANG::Rust => Some(tree_sitter_rust::LANGUAGE.into()),
+        LANG::Python => Some(tree_sitter_python::LANGUAGE.into()),
+        LANG::Javascript | LANG::Mozjs => Some(tree_sitter_javascript::LANGUAGE.into()),
+        LANG::Typescript | LANG::Tsx => Some(tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()),
+        LANG::Java => Some(tree_sitter_java::LANGUAGE.into()),
+        LANG::Cpp => Some(tree_sitter_cpp::LANGUAGE.into()),
+        LANG::Kotlin | LANG::Ccomment | LANG::Preproc => None,
+    }
+}
