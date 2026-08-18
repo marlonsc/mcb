@@ -57,7 +57,6 @@ vetor = "vetor"
 ratatui = "ratatui"
 LOV = "LOV"
 lov = "lov"
-flext = "flext"  # FLEXT monorepo name (referenced in AGENTS.md)
 WHATs = "WHATs"
 # regex prefixes in scripts/docs/py/check_outdated.py
 referenc = "referenc"

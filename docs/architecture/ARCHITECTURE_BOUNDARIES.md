@@ -540,13 +540,14 @@ Architecture validation: 0 violations
 # Fails if any violations detected
 ```
 
-## Pre-Commit Hook
-
 ```bash
 
-# .git/hooks/pre-commit
-make check WHAT=validate QUICK=1  # Fast validation
-```
+# Installed git hooks are managed by beads:
+#   bd hooks install
+
+# The pre-commit shim delegates to `bd hooks run pre-commit`, which runs
+# the project's registered validation (lint/validate/guard). No pre-commit
+# framework, .pre-commit-config.yaml, or copied script is used.
 
 ## Quality Gate
 

@@ -236,7 +236,6 @@ legado/
 .tools/
 __pycache__/
 base.mk
-!.pre-commit-config.yaml
 
 # Derived build and tool artifacts
 __pyrefly_virtual__/
@@ -335,3 +334,12 @@ tests/mcb.[0-9]*
 tmp_*.txt
 .beads.gate.lock
 /context/
+
+# Gas Town (added by gt)
+.runtime/
+.claude/
+.opencode/
+.logs/
+state.json
+CLAUDE.md
+GEMINI.md
