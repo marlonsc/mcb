@@ -40,6 +40,42 @@ pub enum MemoryResource {
 }
 }
 
+/// Timeline window options for memory timeline queries.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema, Validate)]
+pub struct MemoryTimelineDepthArgs {
+    /// Timeline depth before the anchor (default: 5).
+    #[schemars(
+        description = "Timeline depth before the anchor (default: 5)",
+        with = "usize"
+    )]
+    pub depth_before: Option<usize>,
+
+    /// Timeline depth after the anchor (default: 5).
+    #[schemars(
+        description = "Timeline depth after the anchor (default: 5)",
+        with = "usize"
+    )]
+    pub depth_after: Option<usize>,
+}
+
+/// Context injection options for the memory tool.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, JsonSchema, Validate)]
+pub struct MemoryInjectArgs {
+    /// Observation types to include (inject action).
+    #[schemars(
+        description = "Observation types to include (inject action)",
+        with = "Vec<String>"
+    )]
+    pub observation_types: Option<Vec<String>>,
+
+    /// Maximum token budget for injected context.
+    #[schemars(
+        description = "Maximum token budget for injected context",
+        with = "usize"
+    )]
+    pub max_tokens: Option<usize>,
+}
+
 tool_schema! {
 /// Arguments for the memory tool.
 pub struct MemoryArgs {
@@ -99,19 +135,10 @@ pub struct MemoryArgs {
     )]
     pub anchor_id: Option<String>,
 
-    /// Timeline depth before the anchor (default: 5).
-    #[schemars(
-        description = "Timeline depth before the anchor (default: 5)",
-        with = "usize"
-    )]
-    pub depth_before: Option<usize>,
-
-    /// Timeline depth after the anchor (default: 5).
-    #[schemars(
-        description = "Timeline depth after the anchor (default: 5)",
-        with = "usize"
-    )]
-    pub depth_after: Option<usize>,
+    /// Timeline depth options.
+    #[serde(flatten)]
+    #[schemars(flatten)]
+    pub timeline_depth: MemoryTimelineDepthArgs,
 
     /// Time window in seconds (for timeline action).
     #[schemars(
@@ -120,19 +147,10 @@ pub struct MemoryArgs {
     )]
     pub window_secs: Option<i64>,
 
-    /// Observation types to include (inject action).
-    #[schemars(
-        description = "Observation types to include (inject action)",
-        with = "Vec<String>"
-    )]
-    pub observation_types: Option<Vec<String>>,
-
-    /// Maximum token budget for injected context.
-    #[schemars(
-        description = "Maximum token budget for injected context",
-        with = "usize"
-    )]
-    pub max_tokens: Option<usize>,
+    /// Context injection options.
+    #[serde(flatten)]
+    #[schemars(flatten)]
+    pub inject: MemoryInjectArgs,
 
     /// Maximum results.
     #[schemars(description = "Maximum results", with = "u32")]
@@ -160,8 +178,8 @@ tool_action! {
         convert |a| {
             action: MemoryAction::Store, resource: MemoryResource::Observation,
             data: a.data, ids: None, tags: a.tags, query: None,
-            anchor_id: None, depth_before: None, depth_after: None,
-            window_secs: None, observation_types: None, max_tokens: None, limit: None,
+            anchor_id: None, timeline_depth: MemoryTimelineDepthArgs::default(),
+            window_secs: None, inject: MemoryInjectArgs::default(), limit: None,
         }
     }
 }
@@ -180,8 +198,8 @@ tool_action! {
         convert |a| {
             action: MemoryAction::Get, resource: MemoryResource::Observation,
             data: None, ids: a.ids, tags: None, query: None,
-            anchor_id: None, depth_before: None, depth_after: None,
-            window_secs: None, observation_types: None, max_tokens: None, limit: None,
+            anchor_id: None, timeline_depth: MemoryTimelineDepthArgs::default(),
+            window_secs: None, inject: MemoryInjectArgs::default(), limit: None,
         }
     }
 }
@@ -206,8 +224,8 @@ tool_action! {
         convert |a| {
             action: MemoryAction::List, resource: MemoryResource::Observation,
             data: None, ids: None, tags: a.tags, query: a.query,
-            anchor_id: None, depth_before: None, depth_after: None,
-            window_secs: a.window_secs, observation_types: None, max_tokens: None, limit: a.limit,
+            anchor_id: None, timeline_depth: MemoryTimelineDepthArgs::default(),
+            window_secs: a.window_secs, inject: MemoryInjectArgs::default(), limit: a.limit,
         }
     }
 }
@@ -230,8 +248,12 @@ tool_action! {
         convert |a| {
             action: MemoryAction::Timeline, resource: MemoryResource::Observation,
             data: None, ids: None, tags: None, query: None,
-            anchor_id: Some(a.anchor_id), depth_before: a.depth_before, depth_after: a.depth_after,
-            window_secs: None, observation_types: None, max_tokens: None, limit: None,
+            anchor_id: Some(a.anchor_id),
+            timeline_depth: MemoryTimelineDepthArgs {
+                depth_before: a.depth_before,
+                depth_after: a.depth_after,
+            },
+            window_secs: None, inject: MemoryInjectArgs::default(), limit: None,
         }
     }
 }
@@ -252,8 +274,13 @@ tool_action! {
         convert |a| {
             action: MemoryAction::Inject, resource: MemoryResource::Observation,
             data: None, ids: None, tags: None, query: None,
-            anchor_id: None, depth_before: None, depth_after: None,
-            window_secs: None, observation_types: a.observation_types, max_tokens: a.max_tokens, limit: None,
+            anchor_id: None, timeline_depth: MemoryTimelineDepthArgs::default(),
+            window_secs: None,
+            inject: MemoryInjectArgs {
+                observation_types: a.observation_types,
+                max_tokens: a.max_tokens,
+            },
+            limit: None,
         }
     }
 }

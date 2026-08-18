@@ -38,14 +38,22 @@ fn create_git_repo_fixture() -> Result<(tempfile::TempDir, String), std::io::Err
     let init = Command::new("git")
         .args(["init", "-q"])
         .current_dir(&repo_path)
-        .status()?;
-    assert!(init.success(), "git init should succeed");
+        .output()?;
+    assert!(
+        init.status.success(),
+        "git init should succeed: {}",
+        String::from_utf8_lossy(&init.stderr)
+    );
 
     let add = Command::new("git")
         .args(["add", "README.md"])
         .current_dir(&repo_path)
-        .status()?;
-    assert!(add.success(), "git add should succeed");
+        .output()?;
+    assert!(
+        add.status.success(),
+        "git add should succeed: {}",
+        String::from_utf8_lossy(&add.stderr)
+    );
 
     let commit = Command::new("git")
         .args([
@@ -58,8 +66,12 @@ fn create_git_repo_fixture() -> Result<(tempfile::TempDir, String), std::io::Err
             "init",
         ])
         .current_dir(&repo_path)
-        .status()?;
-    assert!(commit.success(), "git commit should succeed");
+        .output()?;
+    assert!(
+        commit.status.success(),
+        "git commit should succeed: {}",
+        String::from_utf8_lossy(&commit.stderr)
+    );
 
     Ok((repo_dir, repo_path.to_string_lossy().to_string()))
 }

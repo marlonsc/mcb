@@ -2,12 +2,12 @@ use std::any::Any;
 use std::sync::Arc;
 
 use crate::error::{Error, Result};
-use crate::ports::services::agent::AgentSessionServiceInterface;
-use crate::ports::services::browse::HighlightServiceInterface;
-use crate::ports::services::context::ContextServiceInterface;
-use crate::ports::services::indexing::IndexingServiceInterface;
-use crate::ports::services::memory::MemoryServiceInterface;
-use crate::ports::services::search::SearchServiceInterface;
+use crate::ports::services::agent_service::AgentSessionServiceInterface;
+use crate::ports::services::browse_service::HighlightServiceInterface;
+use crate::ports::services::context_service::ContextServiceInterface;
+use crate::ports::services::indexing_service::IndexingServiceInterface;
+use crate::ports::services::memory_service::MemoryServiceInterface;
+use crate::ports::services::search_service::SearchServiceInterface;
 use crate::ports::services::validation_service::ValidationServiceInterface;
 
 /// Typed factory enum for building domain services from a resolution context.

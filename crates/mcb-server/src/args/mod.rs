@@ -37,8 +37,8 @@ pub use entity::{
 };
 pub use index::{ClearIndexArgs, IndexAction, IndexArgs, IndexRepoArgs, IndexStatusArgs};
 pub use memory::{
-    GetMemoriesArgs, InjectContextArgs, ListMemoriesArgs, MemoryAction, MemoryArgs, MemoryResource,
-    MemoryTimelineArgs, StoreMemoryArgs,
+    GetMemoriesArgs, InjectContextArgs, ListMemoriesArgs, MemoryAction, MemoryArgs,
+    MemoryInjectArgs, MemoryResource, MemoryTimelineArgs, MemoryTimelineDepthArgs, StoreMemoryArgs,
 };
 pub use project::{ProjectAction, ProjectArgs, ProjectResource};
 pub use search::{SearchArgs, SearchCodeArgs, SearchMemoryArgs, SearchResource};

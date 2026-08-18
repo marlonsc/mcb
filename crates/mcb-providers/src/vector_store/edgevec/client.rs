@@ -1,6 +1,7 @@
 //! `EdgeVec` vector store client types and implementation.
 
 use std::collections::HashMap;
+use std::thread;
 
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, Embedding, FileInfo, SearchResult};
@@ -91,6 +92,11 @@ pub(super) type CollectionMetadata = HashMap<String, serde_json::Value>;
 pub struct EdgeVecVectorStoreProvider {
     pub(super) sender: mpsc::Sender<EdgeVecMessage>,
     pub(super) _collection: CollectionId,
+    /// Handle of the dedicated actor OS thread.
+    ///
+    /// Held so teardown can close the channel and join the thread instead of
+    /// leaving it blocked in `blocking_recv` past runtime shutdown.
+    actor_thread: Option<thread::JoinHandle<()>>,
 }
 
 impl EdgeVecVectorStoreProvider {
@@ -131,20 +137,8 @@ impl EdgeVecVectorStoreProvider {
     ///
     /// Returns an error if the `EdgeVec` actor fails to initialize.
     pub fn new(config: &EdgeVecConfig) -> Result<Self> {
-        let (tx, rx) = mpsc::channel(mcb_utils::constants::vector_store::EDGEVEC_CHANNEL_CAPACITY);
-        let config_clone = config.clone();
-
-        let actor = actor::EdgeVecActor::new(rx, config_clone)?;
-        tokio::spawn(async move {
-            actor.run().await;
-        });
-
         let generated_collection = CollectionId::from_name(&format!("edgevec-{}", id::generate()));
-
-        Ok(Self {
-            sender: tx,
-            _collection: generated_collection,
-        })
+        Self::launch(config, generated_collection)
     }
 
     /// Create a new `EdgeVec` provider with custom collection
@@ -153,17 +147,39 @@ impl EdgeVecVectorStoreProvider {
     ///
     /// Returns an error if the `EdgeVec` actor fails to initialize.
     pub fn with_collection(config: &EdgeVecConfig, collection: CollectionId) -> Result<Self> {
-        let (tx, rx) = mpsc::channel(mcb_utils::constants::vector_store::EDGEVEC_CHANNEL_CAPACITY);
-        let config_clone = config.clone();
+        Self::launch(config, collection)
+    }
 
-        let actor = actor::EdgeVecActor::new(rx, config_clone)?;
-        tokio::spawn(async move {
-            actor.run().await;
-        });
+    fn launch(config: &EdgeVecConfig, collection: CollectionId) -> Result<Self> {
+        let (tx, rx) = mpsc::channel(mcb_utils::constants::vector_store::EDGEVEC_CHANNEL_CAPACITY);
+        let actor = actor::EdgeVecActor::new(rx, config.clone())?;
+        let actor_thread = thread::Builder::new()
+            .name("mcb-edgevec-actor".to_owned())
+            .spawn(move || actor.run())
+            .map_err(|error| {
+                Error::vector_db(format!("Failed to spawn EdgeVec actor thread: {error}"))
+            })?;
 
         Ok(Self {
             sender: tx,
             _collection: collection,
+            actor_thread: Some(actor_thread),
         })
+    }
+}
+
+impl Drop for EdgeVecVectorStoreProvider {
+    /// Shut the actor down deterministically.
+    ///
+    /// Dropping the sender closes the channel, so the actor's `blocking_recv`
+    /// returns `None` and `run` exits; joining then guarantees the thread has
+    /// finished before the provider goes away, instead of outliving the Tokio
+    /// runtime blocked on a receive.
+    fn drop(&mut self) {
+        if let Some(handle) = self.actor_thread.take() {
+            let (closed, _) = mpsc::channel(1);
+            drop(std::mem::replace(&mut self.sender, closed));
+            drop(handle.join());
+        }
     }
 }

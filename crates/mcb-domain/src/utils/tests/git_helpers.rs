@@ -14,7 +14,22 @@ use tempfile::TempDir;
 ///
 /// Returns an error if the git command fails.
 pub fn run_git(dir: &Path, args: &[&str]) -> TestResult<()> {
-    let output = Command::new("git")
+    let mut command = Command::new("git");
+    for key in [
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_CONFIG",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_COMMON_DIR",
+    ] {
+        command.env_remove(key);
+    }
+    let output = command
+        .env("GIT_CONFIG_NOSYSTEM", "1")
+        .env("GIT_CONFIG_GLOBAL", "/dev/null")
+        .arg("-c")
+        .arg("core.hooksPath=/dev/null")
         .args(args)
         .current_dir(dir)
         .stdout(Stdio::null())

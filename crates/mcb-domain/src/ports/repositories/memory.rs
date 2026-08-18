@@ -15,31 +15,58 @@ pub struct FtsSearchResult {
     pub rank: f64,
 }
 
+/// Query parameters for retrieving observations around an anchor.
+pub struct TimelineQuery<'a> {
+    /// Tenant/org scope.
+    pub org_id: &'a str,
+    /// Anchor observation id.
+    pub anchor_id: &'a ObservationId,
+    /// Number of observations before the anchor.
+    pub before: usize,
+    /// Number of observations after the anchor.
+    pub after: usize,
+    /// Optional memory filter.
+    pub filter: Option<MemoryFilter>,
+}
+
 /// Port for observation storage (CRUD, FTS, timeline).
 #[async_trait]
 pub trait MemoryRepository: Send + Sync {
     /// Store an observation.
     async fn store_observation(&self, observation: &Observation) -> Result<()>;
-    /// Get an observation by ID.
-    async fn get_observation(&self, id: &ObservationId) -> Result<Option<Observation>>;
-    /// Find an observation by content hash.
-    async fn find_by_hash(&self, content_hash: &str) -> Result<Option<Observation>>;
-    /// Full-text search returning IDs with BM25 rank scores.
-    async fn search(&self, query: &str, limit: usize) -> Result<Vec<FtsSearchResult>>;
-    /// Delete an observation by ID.
-    async fn delete_observation(&self, id: &ObservationId) -> Result<()>;
-    /// Get multiple observations by IDs (batch fetch).
-    async fn get_observations_by_ids(&self, ids: &[ObservationId]) -> Result<Vec<Observation>>;
-    /// Get observations in timeline order around an anchor.
-    async fn get_timeline(
+    /// Gets an observation by ID, scoped to `org_id` for tenant isolation.
+    async fn get_observation(
         &self,
-        anchor_id: &ObservationId,
-        before: usize,
-        after: usize,
-        filter: Option<MemoryFilter>,
+        org_id: &str,
+        id: &ObservationId,
+    ) -> Result<Option<Observation>>;
+    /// Finds an observation by content hash, scoped to `org_id` for tenant isolation.
+    async fn find_by_hash(&self, org_id: &str, content_hash: &str) -> Result<Option<Observation>>;
+
+    /// Full-text search returning IDs with BM25 rank scores for hybrid fusion,
+    /// scoped to `org_id` so results never cross organizations.
+    async fn search(&self, org_id: &str, query: &str, limit: usize)
+    -> Result<Vec<FtsSearchResult>>;
+
+    /// Performs the delete observation operation.
+    async fn delete_observation(&self, id: &ObservationId) -> Result<()>;
+
+    /// Get multiple observations by IDs (batch fetch for hybrid search),
+    /// scoped to `org_id` for tenant isolation.
+    async fn get_observations_by_ids(
+        &self,
+        org_id: &str,
+        ids: &[ObservationId],
     ) -> Result<Vec<Observation>>;
+
+    /// Get observations in timeline order around an anchor, scoped to `org_id`.
+    async fn get_timeline(&self, query: TimelineQuery<'_>) -> Result<Vec<Observation>>;
     /// Store a session summary.
     async fn store_session_summary(&self, summary: &SessionSummary) -> Result<()>;
-    /// Get a session summary by session ID.
-    async fn get_session_summary(&self, session_id: &SessionId) -> Result<Option<SessionSummary>>;
+    /// Gets the latest session summary, scoped to `org_id` for tenant isolation.
+    async fn get_session_summary(
+        &self,
+        org_id: &str,
+        session_id: &SessionId,
+    ) -> Result<Option<SessionSummary>>;
 }

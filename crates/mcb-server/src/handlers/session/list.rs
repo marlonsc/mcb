@@ -11,6 +11,7 @@ use rmcp::model::CallToolResult;
 use crate::args::SessionArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::utils::args::resolve_limit;
 use mcb_utils::constants::keys::{FIELD_COUNT, FIELD_SESSIONS};
 use mcb_utils::constants::limits::DEFAULT_SESSION_LIST_LIMIT;
 
@@ -36,7 +37,7 @@ pub async fn list_sessions(
             .map_err(|_| McpError::invalid_params("Invalid status", None))?,
         project_id: args.project_id.clone(),
         worktree_id: args.worktree_id.clone(),
-        limit: Some(args.limit.unwrap_or(DEFAULT_SESSION_LIST_LIMIT as u32) as usize),
+        limit: Some(resolve_limit(args.limit, DEFAULT_SESSION_LIST_LIMIT as u32)),
     };
     match agent_service.list_sessions(query).await {
         Ok(sessions) => {

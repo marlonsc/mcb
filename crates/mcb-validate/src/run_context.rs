@@ -253,7 +253,23 @@ fn enumerate_with_git(
     ignore_patterns: &[String],
     detector: &LanguageDetector,
 ) -> std::io::Result<Option<Vec<InventoryEntry>>> {
-    let output = Command::new("git")
+    // `git` resolves GIT_DIR, GIT_WORK_TREE, GIT_INDEX_FILE and GIT_COMMON_DIR
+    // ahead of `-C`, so when validation runs from inside a git operation (a
+    // pre-commit hook, a rebase, a merge) the inherited environment would make
+    // this list files from the surrounding repository instead of
+    // `workspace_root`. Clear them so the inventory always describes the
+    // workspace it was asked about.
+    let mut command = Command::new("git");
+    for key in [
+        "GIT_DIR",
+        "GIT_WORK_TREE",
+        "GIT_INDEX_FILE",
+        "GIT_OBJECT_DIRECTORY",
+        "GIT_COMMON_DIR",
+    ] {
+        command.env_remove(key);
+    }
+    let output = command
         .arg("-C")
         .arg(workspace_root)
         .arg("ls-files")

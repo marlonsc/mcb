@@ -20,9 +20,7 @@ taplo = "0.10.0"
 ast-grep = "0.45.0"
 gitleaks = "8.30.1"
 tokei = "14.0.0"
-# mise resolves go: backend selectors through a dependency graph, so the Go
-# runtime must be a declared tool; without it mise looks for go on PATH and
-# every runner without an ambient toolchain fails to install beads.
+# Go runtime for the Go projects in this workspace.
 go = "1.26.5"
-"go:github.com/steveyegge/beads/cmd/bd" = "423afdcb2813e36b2bc4c96b07e0fc3516a34495"
+"github:marlon-costa-dc/beads" = "1.1.2-dc1"
 # End SECTION: tools

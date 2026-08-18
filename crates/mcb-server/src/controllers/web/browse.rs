@@ -2,31 +2,54 @@
 
 use super::{html_escape, html_page};
 use crate::state::McbState;
-use axum::extract::Extension;
+use crate::utils::collections::normalize_collection_name;
+use axum::extract::{Extension, Query};
 use loco_rs::prelude::*;
 use mcb_domain::value_objects::CollectionId;
+use serde::Deserialize;
+
+/// Optional browse page filters.
+#[derive(Debug, Deserialize)]
+pub struct BrowseQuery {
+    /// Restrict rendered chunks to one vector-store collection.
+    pub collection: Option<String>,
+}
 
 /// Browse page handler.
 ///
 /// # Errors
 ///
 /// Fails when collection data cannot be loaded.
-pub async fn browse_page(Extension(state): Extension<McbState>) -> Result<Response> {
-    let collections = state
-        .vector_store
-        .list_collections()
-        .await
-        .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
-
+pub async fn browse_page(
+    Extension(state): Extension<McbState>,
+    Query(query): Query<BrowseQuery>,
+) -> Result<Response> {
     let mut chunks: Vec<mcb_domain::value_objects::SearchResult> = Vec::new();
-    for col in &collections {
-        let id = CollectionId::from_string(&col.name);
+    if let Some(collection) = query.collection {
+        let id = normalize_collection_name(&collection)
+            .map_err(|reason| loco_rs::Error::string(&reason))?;
         let vecs = state
             .vector_store
             .list_vectors(&id, mcb_utils::constants::DEFAULT_BROWSE_LIMIT)
             .await
             .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
         chunks.extend(vecs);
+    } else {
+        let collections = state
+            .vector_store
+            .list_collections()
+            .await
+            .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+
+        for col in &collections {
+            let id = CollectionId::from_string(&col.name);
+            let vecs = state
+                .vector_store
+                .list_vectors(&id, mcb_utils::constants::DEFAULT_BROWSE_LIMIT)
+                .await
+                .map_err(|e| loco_rs::Error::string(&e.to_string()))?;
+            chunks.extend(vecs);
+        }
     }
 
     let grid = if chunks.is_empty() {

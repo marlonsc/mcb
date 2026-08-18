@@ -307,6 +307,7 @@ config = "0.13"
 | Cyclomatic complexity | >15 | <10 | Cargo +nightly rustc -- -Zunpretty=hir |
 | Memory usage | Baseline | <10% increase | Valgrind massif |
 | Error handling coverage | Partial | Complete | Manual review |
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 &nbsp;
 

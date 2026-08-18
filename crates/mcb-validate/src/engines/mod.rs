@@ -31,6 +31,8 @@ pub mod hybrid_engine;
 pub mod rete_engine;
 pub mod router;
 
+pub mod rule_violation;
+mod rusty_cargo_deps;
 pub mod rusty_rules_engine;
 pub mod validator_engine;
 

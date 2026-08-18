@@ -14,7 +14,7 @@ This will also install *Cargo*, Rust's package/project manager.
 >
 > Debian: `sudo apt install gcc`\
 > Fedora: `sudo dnf install gcc`
-
+>
 > 🍎 If you are on **MacOS**, make sure you have *Xcode and its developer tools* installed: `xcode-select --install`
 
 ## Installing Rustlings

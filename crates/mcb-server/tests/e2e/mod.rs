@@ -23,11 +23,11 @@ use mcb_providers::database::seaorm::migration::Migrator as _; // linkme force-l
 #[path = "../utils/mod.rs"]
 pub mod utils;
 
-mod gap_fixes;
+mod gap_fixes_e2e;
 mod golden_e2e_complete;
-mod golden_highlight_service;
-mod golden_memory_project;
-mod golden_tools;
+mod golden_highlight_service_e2e;
+mod golden_memory_project_e2e;
+mod golden_tools_e2e;
 mod test_api_key_lifecycle;
 mod test_issue_entity_crud;
 mod test_org_data_isolation;
@@ -37,4 +37,4 @@ mod test_project_operations;
 mod test_session_lifecycle;
 mod test_validate_operations;
 mod test_vcs_entity_crud;
-mod validation_fixes;
+mod validation_fixes_e2e;

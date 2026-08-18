@@ -1,0 +1,92 @@
+# Project-owned managed-artifact additions consumed by
+# `flext_infra.deps.phases.ensure_ruff` (`_project_per_file_ignores`).
+#
+# Why this file exists: conform owns `[tool.ruff.lint.per-file-ignores]` in
+# pyproject.toml and deletes every pattern absent from the composed canonical
+# set, so an entry written straight into pyproject.toml is removed on the next
+# `make gen`. This is the sanctioned extension surface; the generator unions
+# these rules with global policy.
+#
+# Why `scripts/**`: this tree holds repository-local automation helpers, not
+# shipped library code. Its CLI entrypoints print to stdout, drive subprocesses,
+# and use `os.path`; the `sys.path` bootstrap they need forces module-level
+# imports to follow executable code.
+ManagedArtifacts:
+  Ruff:
+    per_file_ignores:
+      "scripts/**":
+        - ANN401
+        - ARG001
+        - D101
+        - D102
+        - D103
+        - D107
+        - D200
+        - D202
+        - D205
+        - D212
+        - EM101
+        - EM102
+        - EXE001
+        - FBT001
+        - FBT002
+        - FURB101
+        - FURB103
+        - FURB110
+        - FURB113
+        - G003
+        - N806
+        - N999
+        - PERF401
+        - PERF402
+        - PIE810
+        - PLC0207
+        - PLC2701
+        - PLR2004
+        - PLR6201
+        - PLW1514
+        - PTH100
+        - PTH110
+        - PTH118
+        - PTH120
+        - PTH123
+        - PTH201
+        - Q003
+        - RUF022
+        - RUF052
+        - RUF100
+        - RUF105
+        - S404
+        - S603
+        - S607
+        - T201
+        - TC006
+        - TID251
+        - TID252
+        - TRY400
+        - TRY401
+      # The `# /// cosmos-command` header is a DATA contract consumed by the
+      # command registry, not disabled code.
+      "scripts/check/gitops.py":
+        - ERA001
+      "src/mcb_scripts/qlty/runner.py":
+        # Runs the qlty CLI with a fixed argv; the executable is resolved to an
+        # absolute path first, so PATH order cannot select a different binary.
+        - S404
+        - S603
+      "src/mcb_scripts/gitops.py":
+        # Renders manifests through helm/kustomize, both resolved absolutely.
+        - S404
+        - S603
+      "src/mcb_scripts/agent_pointers.py":
+        - TRY003
+      # Tests drive the real CLIs and shell entrypoints on purpose: asserting
+      # observable behaviour is the contract, and a mocked subprocess would
+      # assert the mock instead of the program.
+      "tests/python/**":
+        - S404
+        - S603
+        - S607
+        - TRY003
+      "scripts/codegen-conversions.py":
+        - TRY003

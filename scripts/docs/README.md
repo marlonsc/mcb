@@ -27,8 +27,8 @@ Commands:
 
 | Script | Function | Called by |
 | -------- | -------- | ------------- |
-| `generate-mdbook.sh` | mdbook interactive platform management | `make docs WHAT=build`, `make docs WHAT=serve` |
-| `generate-diagrams.sh` | PlantUML diagrams generation | `make docs WHAT=diagrams` |
+| `generate-mdbook.sh` | mdbook interactive platform management | `make build WHAT=docs ACT=build`, `make build WHAT=docs ACT=serve` |
+| `generate-diagrams.sh` | PlantUML diagrams generation | `make build WHAT=docs ACT=diagrams` |
 
 ---
 
@@ -37,23 +37,23 @@ Commands:
 ### 🎯 **Main Commands**
 
 ```bash
-make docs          # Generate complete documentation (metrics, Rust API, mdBook)
-make docs WHAT=validate # Validate quality, structure, ADR compliance, and quality gates
-make docs WHAT=setup    # Configure documentation tools
+make build WHAT=docs              # Generate complete documentation (metrics, Rust API, mdBook)
+make build WHAT=docs ACT=validate # Validate quality, structure, ADR compliance, and quality gates
+make build WHAT=docs ACT=setup    # Configure documentation tools
 ```
 
 ### 📖 **Docs commands**
 
 ```bash
-make docs WHAT=build    # Build interactive documentation
-make docs WHAT=serve    # Development server
+make build WHAT=docs ACT=build    # Build interactive documentation
+make build WHAT=docs ACT=serve    # Development server
 ```
 
 ### 📋 **ADR Management**
 
 ```bash
-make adr           # List ADRs, generate ADR docs, show lifecycle status
-make adr-new       # Create new ADR
+make build WHAT=docs ACT=adr      # List ADRs, generate ADR docs, show lifecycle status
+make build WHAT=docs ACT=adr-new  # Create new ADR
 ```
 
 ---
@@ -129,28 +129,28 @@ Obsolete scripts moved to `archive/`:
 ### 1️⃣ **Initial Configuration**
 
 ```bash
-make docs WHAT=setup  # Install all tools
+make build WHAT=docs ACT=setup  # Install all tools
 ```
 
 ### 2️⃣ **Development**
 
 ```bash
-make docs           # Generate documentation
-make docs WHAT=serve     # Preview interactively
+make build WHAT=docs              # Generate documentation
+make build WHAT=docs ACT=serve   # Preview interactively
 ```
 
 ### 3️⃣ **Quality Assurance**
 
 ```bash
-make docs WHAT=validate  # Check quality
-make docs WHAT=validate  # Validate architecture
-make docs WHAT=validate  # Complete validation
+make build WHAT=docs ACT=validate  # Check quality
+make build WHAT=docs ACT=validate  # Validate architecture
+make build WHAT=docs ACT=validate  # Complete validation
 ```
 
 ### 4️⃣ **Production**
 
 ```bash
-make docs           # Full production build
+make build WHAT=docs              # Full production build
 ```
 
 ---

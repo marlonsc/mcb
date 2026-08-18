@@ -93,50 +93,89 @@ impl PatternViolation {
                 concrete_type,
                 suggestion,
                 ..
-            } => format!(
-                "Concrete type in DI: {}:{line} - {concrete_type} (use {suggestion})",
-                file.display(),
-            ),
+            } => concrete_type_message(file, *line, concrete_type, suggestion),
             Self::MissingSendSync {
                 file,
                 line,
                 trait_name,
                 missing_bound,
                 ..
-            } => format!(
-                "Missing bound: {}:{line} - trait {trait_name} needs {missing_bound}",
-                file.display(),
-            ),
+            } => missing_send_sync_message(file, *line, trait_name, missing_bound),
             Self::MissingAsyncTrait {
                 file,
                 line,
                 trait_name,
                 ..
-            } => format!(
-                "Missing #[async_trait]: {}:{line} - trait {trait_name}",
-                file.display(),
-            ),
+            } => missing_async_trait_message(file, *line, trait_name),
             Self::RawResultType {
                 file,
                 line,
                 context,
                 suggestion,
                 ..
-            } => format!(
-                "Raw Result type: {}:{line} - {context} (use {suggestion})",
-                file.display(),
-            ),
+            } => raw_result_message(file, *line, context, suggestion),
             Self::MissingInterfaceBound {
                 file,
                 line,
                 trait_name,
                 ..
-            } => format!(
-                "Missing Interface bound: {}:{line} - trait {trait_name} needs : Interface",
-                file.display(),
-            ),
+            } => missing_interface_bound_message(file, *line, trait_name),
         }
     }
+}
+
+fn concrete_type_message(
+    file: &std::path::Path,
+    line: usize,
+    concrete_type: &str,
+    suggestion: &str,
+) -> String {
+    format!(
+        "Concrete type in DI: {}:{line} - {concrete_type} (use {suggestion})",
+        file.display(),
+    )
+}
+
+fn missing_send_sync_message(
+    file: &std::path::Path,
+    line: usize,
+    trait_name: &str,
+    missing_bound: &str,
+) -> String {
+    format!(
+        "Missing bound: {}:{line} - trait {trait_name} needs {missing_bound}",
+        file.display(),
+    )
+}
+
+fn missing_async_trait_message(file: &std::path::Path, line: usize, trait_name: &str) -> String {
+    format!(
+        "Missing #[async_trait]: {}:{line} - trait {trait_name}",
+        file.display(),
+    )
+}
+
+fn raw_result_message(
+    file: &std::path::Path,
+    line: usize,
+    context: &str,
+    suggestion: &str,
+) -> String {
+    format!(
+        "Raw Result type: {}:{line} - {context} (use {suggestion})",
+        file.display(),
+    )
+}
+
+fn missing_interface_bound_message(
+    file: &std::path::Path,
+    line: usize,
+    trait_name: &str,
+) -> String {
+    format!(
+        "Missing Interface bound: {}:{line} - trait {trait_name} needs : Interface",
+        file.display(),
+    )
 }
 
 impl std::fmt::Display for PatternViolation {

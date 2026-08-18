@@ -16,10 +16,19 @@ use super::common::{
 use crate::args::MemoryArgs;
 use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
+use crate::utils::mcp::resolve_org_id;
 use mcb_utils::utils::id as domain_id;
 
 use mcb_utils::constants::keys::{FIELD_MESSAGE, FIELD_OBSERVATION_ID};
 use mcb_utils::constants::values::TAG_QUALITY_GATE;
+
+struct QualityGateObservationStore {
+    org_id: String,
+    project_id: String,
+    content: String,
+    tags: Vec<String>,
+    metadata: mcb_domain::entities::memory::ObservationMetadata,
+}
 
 /// Build a [`QualityGateResult`] from validated fields plus optional payload extras.
 fn build_quality_gate(
@@ -39,6 +48,38 @@ fn build_quality_gate(
         timestamp,
         execution_id: opt_str(data, "execution_id"),
     }
+}
+
+fn build_quality_gate_observation(
+    args: &MemoryArgs,
+    data: &serde_json::Map<String, serde_json::Value>,
+    quality_gate: QualityGateResult,
+    content: String,
+    tags: Vec<String>,
+) -> Result<QualityGateObservationStore, McpError> {
+    let origin = resolve_memory_origin_context(
+        args,
+        data,
+        &MemoryOriginOptions {
+            execution_from_args: quality_gate.execution_id.as_deref(),
+            execution_from_data: quality_gate.execution_id.as_deref(),
+            file_path_payload: None,
+            timestamp: Some(quality_gate.timestamp),
+        },
+    )?;
+    let observation_metadata = build_observation_metadata(
+        origin.canonical_session_id,
+        origin.origin_context,
+        None,
+        Some(quality_gate),
+    );
+    Ok(QualityGateObservationStore {
+        org_id: resolve_org_id(args.org_id.as_deref()),
+        project_id: origin.project_id,
+        content,
+        tags,
+        metadata: observation_metadata,
+    })
 }
 
 /// Stores a quality gate result as a semantic observation.
@@ -63,49 +104,23 @@ pub async fn store_quality_gate(
         TAG_QUALITY_GATE.to_owned(),
         quality_gate.status.as_str().to_owned(),
     ];
-    let origin = resolve_memory_origin_context(
-        args,
-        data,
-        &MemoryOriginOptions {
-            execution_from_args: quality_gate.execution_id.as_deref(),
-            execution_from_data: quality_gate.execution_id.as_deref(),
-            file_path_payload: None,
-            timestamp: Some(quality_gate.timestamp),
-        },
-    )?;
-
-    let obs_metadata = build_observation_metadata(
-        origin.canonical_session_id,
-        origin.origin_context,
-        None,
-        Some(quality_gate),
-    );
-
-    persist_quality_gate_observation(
-        memory_service,
-        origin.project_id,
-        content,
-        tags,
-        obs_metadata,
-    )
-    .await
+    let observation = build_quality_gate_observation(args, data, quality_gate, content, tags)?;
+    persist_quality_gate_observation(memory_service, observation).await
 }
 
 /// Store the quality gate observation and format the MCP response.
 async fn persist_quality_gate_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
-    project_id: String,
-    content: String,
-    tags: Vec<String>,
-    obs_metadata: mcb_domain::entities::memory::ObservationMetadata,
+    observation: QualityGateObservationStore,
 ) -> Result<CallToolResult, McpError> {
     match memory_service
         .store_observation(StoreObservationInput {
-            project_id,
-            content,
+            project_id: observation.project_id,
+            org_id: observation.org_id,
+            content: observation.content,
             r#type: ObservationType::QualityGate,
-            tags,
-            metadata: obs_metadata,
+            tags: observation.tags,
+            metadata: observation.metadata,
         })
         .await
     {

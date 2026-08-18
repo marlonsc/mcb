@@ -13,6 +13,62 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2026-06-28
+
+### Summary
+
+Release v0.4.0 closes the MCP server and Admin UI surface as stable and green.
+All 24 public MCP tools, 9 handler families, Admin UI pages, and Admin API
+endpoints are implemented, tested, and passing gates. The codebase now enforces
+the agreed SOLID/YAGNI/SSOT/DI/THIN baseline with zero architecture validation
+violations.
+
+### Added
+
+- **Admin UI page coverage** — Dashboard, Jobs, Health, Config, Browse, and 404
+  pages wired through production Axum routes with auth middleware.
+- **Admin API coverage** — `/health`, `/jobs`, `/collections`, `/admin/config`,
+  `/admin/dashboard` endpoints return real provider/operation data.
+- **MCP contract snapshots** — 28 contract tests covering happy and invalid
+  argument paths for all 9 handler families.
+- **Org-scoped entity golden tests** — cross-tenant negative isolation tests for
+  org, user, team, and API-key resources.
+
+### Changed
+
+- **Workspace version** bumped to `0.4.0` across all first-party crates.
+- **MCP Tools docs** (`docs/MCP_TOOLS.md`) updated to version `0.4.0`.
+
+### Metrics
+
+- Rust tests (`mcb-server`): 578 passing (251 unit, 154 integration, 145 e2e,
+  28 contract) / 0 failures.
+- `cargo clippy -p mcb-server --all-targets -- -D warnings`: clean.
+- `make check WHAT=validate`: 0 violations.
+- `make check WHAT=guard`: clean (no production `unwrap`/`expect`/`panic`/`todo`).
+- Workspace crates: 7 (6 first-party + `mcb` CLI binary).
+- MCP tools: 24 public names / 9 handler families.
+
+---
+
+## [0.3.2] - 2026-06-07
+
+### Added
+
+- Tiered CI/release gate tracking through beads for the v0.3.2 release lane.
+- Release workflow recovery via `workflow_dispatch(tag)` and fail-soft artifact publishing.
+
+### Changed
+
+- CI uses nextest, typos, isolated rust-cache keys, and extended cross-platform coverage/test timeouts for cold cache runs.
+- Project task-status docs now point to `bd` instead of carrying duplicate roadmap or TODO queues.
+
+### Fixed
+
+- ADR/docs validation tracking now resolves through bead-backed evidence instead of duplicate release checklists.
+
+---
+
 ## [0.3.1] - 2026-06-06
 
 ### Added

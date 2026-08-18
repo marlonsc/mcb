@@ -70,6 +70,13 @@ The v0.3.0 release is a full platform rebuild on SeaQL (SeaORM, SeaQuery, SeaSch
 - [ADR 052: Schema Resolution with SeaORM 2.x](052-schema-resolution-seaorm.md) — Domain-driven DDL generation — **Accepted**
 - [ADR 053: Shared Provider Resolution](053-shared-provider-resolution.md) — Extends ADR-050, shared provider lifecycle — **Accepted**
 
+### Governance and SSOT
+
+- [ADR 054: mcb-utils Innermost Crate](054-mcb-utils-innermost-crate.md) — Utility crate boundary — **Accepted**
+- [ADR 055: Constants SSOT Enforcement](055-constants-ssot-enforcement.md) — Shared constants and validation — **Accepted**
+- [ADR 056: Multi-Tenant Isolation and OIDC Boundary](056-multitenant-isolation-and-oidc-boundary.md) — Tenant identity and vector-store boundary — **Proposed**
+- [ADR 057: Multi-Agent Coordination and SSOT Consolidation](057-multi-agent-coordination-ssot-consolidation.md) — Generated pointers and rule ownership — **Accepted**
+
 ### Workflow FSM & Policies (v0.4.0, previously v0.3.0)
 
 - [ADR 034: Workflow Core FSM](034-workflow-core-fsm.md) — Finite state machine and persistence
@@ -85,7 +92,7 @@ The v0.3.0 release is a full platform rebuild on SeaQL (SeaORM, SeaQuery, SeaSch
 - [ADR 043: Hybrid Search Engine](phase-9/README.md#adr-043-hybrid-search-engine) — RRF fusion algorithm
 - [ADR 044: Model Selection](phase-9/README.md#adr-044-model-selection) — Embedding and search model choices
 - [ADR 045: Context Versioning](phase-9/README.md#adr-045-context-versioning) — Snapshot and temporal queries
-- [ADR 046: Integration Patterns](phase-9/README.md#adr-046-integration-patterns) — MCP tool integration
+- [ADR 046: Integration Patterns](046-integration-adr-034-037-policies.md) — MCP tool integration
 - [ADR 047: Project Architecture](047-project-architecture.md) — Central Hub and Multi-Dimensional Coordination
 
 ## Archived (Superseded)
@@ -103,7 +110,11 @@ These ADRs have been superseded by newer decisions and moved to [`archive/`](arc
 | 029 — Hexagonal Architecture (dill) | [ADR 050](050-manual-composition-root-dill-removal.md) | Replaced by linkme + Handle pattern |
 | 032 — Agent Quality Domain | [ADR 034](034-workflow-core-fsm.md) | Replaced by Workflow Core FSM |
 
-## Version Roadmap (ADR alignment)
+## Historical Version Alignment
+
+This table explains how ADRs map to release themes. It is not a live roadmap or
+task board. Use `bd ready --json` and bead-specific `bd show <id> --json`
+commands for current work state.
 
 | Version | Theme | Key ADRs |
 |---|---|---|
@@ -113,10 +124,14 @@ These ADRs have been superseded by newer decisions and moved to [`archive/`](arc
 | v0.2.1 | Handler consolidation, context boundaries | 033, 039–040 |
 | v0.2.2 | Observability (OpenTelemetry) | 048 |
 | **v0.3.0** | **SeaQL + Loco.rs platform rebuild** | **049–052** |
-| v0.4.0 | Workflow FSM & enforcement policies | 034–038 |
-| v0.5.0 | Integrated context system, knowledge graph | 041–047 |
+| v0.4.0 | Workflow FSM & enforcement policies | 034–038; current backlog tracked in `mcb-6pjx` |
+| v0.5.0 | Integrated context system, knowledge graph | 041–047; create beads before implementation |
 
 ## ADR Status Legend
+
+ADR `status` records the decision lifecycle. Any `implementation_status` value
+inside an ADR is a historical snapshot unless that ADR explicitly names a bead;
+live implementation state is tracked in `bd`.
 
 | Status | Meaning |
 |---|---|
@@ -128,10 +143,10 @@ These ADRs have been superseded by newer decisions and moved to [`archive/`](arc
 
 ## ADR Count
 
-**Total ADRs**: 53 (ADR-001 through ADR-053)
+**Total ADRs**: 57 (ADR-001 through ADR-057)
 
-- **Active**: 48 ADRs in this directory
-- **Archived**: 8 superseded ADRs in [`archive/`](archive/)
+- **Active numbered files**: 52 ADRs in this directory
+- **Archived copies**: 3 superseded ADR files in [`archive/`](archive/)
 - **Core Architecture**: ADR-001–006 (5 active)
 - **v0.2.0 Features**: ADR-008–010 (3 ADRs)
 - **Infrastructure**: ADR-011–022 (12 ADRs)
@@ -139,6 +154,7 @@ These ADRs have been superseded by newer decisions and moved to [`archive/`](arc
 - **v0.2.1 Additions**: ADR-032–033, 039–040 (4 ADRs)
 - **v0.2.2 Observability**: ADR-048 (1 ADR)
 - **v0.3.0 Platform Rebuild**: ADR-049–053 (5 ADRs)
+- **v0.3.2+ Governance/SSOT**: ADR-054–057 (4 ADRs)
 - **v0.4.0 Workflow**: ADR-034–038 (5 ADRs)
 - **v0.5.0 Context System**: ADR-041–047 (7 ADRs)
 

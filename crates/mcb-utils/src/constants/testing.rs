@@ -58,13 +58,6 @@ pub const TEST_TIMESTAMP_SMALL: i64 = 1000;
 /// Default embedding dimensions for tests (`FastEmbed` MiniLM-L6-v2).
 pub const TEST_EMBEDDING_DIMENSIONS: usize = 384;
 
-// ============================================================================
-// Collection / Resource Names
-// ============================================================================
-
-/// Default golden-test collection name.
-pub const GOLDEN_COLLECTION: &str = "mcb_golden_test";
-
 /// Expected files in `sample_codebase` for search assertions.
 pub const SAMPLE_CODEBASE_FILES: &[&str] = &[
     "embedding.rs",
@@ -87,7 +80,11 @@ pub const TEST_TIMEOUT_SECS: u64 = 30;
 pub const TEST_STARTUP_TIMEOUT_SECS: u64 = 120;
 
 /// Operation timeout for MCP command tests (seconds).
-pub const TEST_OP_TIMEOUT_SECS: u64 = 10;
+///
+/// MCP command integration tests exercise real stdio transport, indexing, and
+/// semantic search under the full `nextest` workload, so individual tool calls
+/// use the same bound as the broader integration timeout.
+pub const TEST_OP_TIMEOUT_SECS: u64 = TEST_TIMEOUT_SECS;
 
 // ============================================================================
 // Test Model / Provider Names

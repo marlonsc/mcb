@@ -12,3 +12,6 @@ tests/fixtures/
 tests/node_modules
 context/
 book/
+docs/superpowers/
+.serena/memories/
+crates/mcb-validate/tests/fixtures/rustlings/

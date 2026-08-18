@@ -156,21 +156,21 @@ name = "migration"
 path = "tests/migration/mod.rs"
 
 [[test]]
-name = "observation_repo"
-path = "tests/observation_repo.rs"
+name = "observation_repo_integration"
+path = "tests/integration/observation_repo_integration.rs"
 
 [[test]]
-name = "agent_repo"
-path = "tests/agent_repo.rs"
+name = "agent_repo_integration"
+path = "tests/integration/agent_repo_integration.rs"
 
 [[test]]
-name = "project_repo"
-path = "tests/project_repo.rs"
+name = "project_repo_integration"
+path = "tests/integration/project_repo_integration.rs"
 
 [[test]]
 name = "entity_repo"
 path = "tests/entity_repo/mod.rs"
 
 [[test]]
-name = "index_repo"
-path = "tests/index_repo.rs"
+name = "index_repo_integration"
+path = "tests/integration/index_repo_integration.rs"

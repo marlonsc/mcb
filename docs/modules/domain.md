@@ -86,12 +86,12 @@ Events published through the `EventPublisher` interface:
 | Port | Operations | Implementations |
 | ------ | ----------- | ---------------- |
 | [`EmbeddingProvider`](../../crates/mcb-domain/src/ports/providers/embedding.rs) | `embed`, `embed_batch`, `dimensions` | OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic |
-| [`VectorStoreProvider`](../../crates/mcb-domain/src/ports/providers/vector_store/provider.rs) | `create_collection`, `insert`, `search` | EdgeVec, Milvus, Qdrant, Pinecone, Encrypted |
+| [`VectorStoreProvider`](../../crates/mcb-domain/src/ports/providers/vector_store.rs) | `create_collection`, `insert`, `search` | EdgeVec, Milvus, Qdrant, Pinecone, Encrypted |
 | [`HybridSearchProvider`](../../crates/mcb-domain/src/ports/providers/hybrid_search.rs) | BM25 lexical + semantic search | Composite implementation |
 | [`LanguageChunkingProvider`](../../crates/mcb-domain/src/ports/providers/language_chunking.rs) | Language-specific AST parsing | 13 tree-sitter processors |
 | [`VcsProvider`](../../crates/mcb-domain/src/ports/providers/vcs.rs) | `clone`, `fetch`, `branches`, `commits` | git2 v0.20 |
 | [`CryptoProvider`](../../crates/mcb-domain/src/ports/providers/crypto.rs) | Encryption/decryption | AES-256-GCM, Argon2 |
-| [`CacheProvider`](../../crates/mcb-domain/src/ports/providers/cache/provider.rs) | Distributed caching with TTL | Moka, Redis |
+| [`CacheProvider`](../../crates/mcb-domain/src/`CacheProvider` (removed)) | Distributed caching with TTL | Moka, Redis |
 | [`ProjectDetectionProvider`](../../crates/mcb-domain/src/ports/providers/project_detection.rs) | Detect project type from manifests | Cargo, npm, Python, Go, Maven |
 
 <a name="repository-ports"></a>
@@ -100,30 +100,30 @@ Events published through the `EventPublisher` interface:
 | Port | Purpose | Implementation Location |
 | ------ | --------- | ------------------------ |
 | `ChunkRepository` | Persistence of AST-parsed code chunks and search statistics | [`mcb-providers`](../../crates/mcb-providers/src/lib.rs) |
-| `MemoryRepository` | Multi-tenant observation storage with FTS5 lexical search capabilities | [`memory_repository.rs`](../../crates/mcb-providers/src/database/sqlite/memory_repository.rs) |
-| `AgentRepository` | Composite management of **Agent Sessions**, **Delegations**, **Tool Calls**, and **Checkpoints** | [`agent_repository.rs`](../../crates/mcb-providers/src/database/sqlite/agent_repository.rs) |
-| `ProjectRepository` | Persistence of **Project** root entities (multi-tenant boundary) | [`project_repository.rs`](../../crates/mcb-providers/src/database/sqlite/project_repository.rs) |
-| `VcsEntityRepository` | Composite management of **Repositories**, **Branches**, **Worktrees**, and **Agent-Worktree Assignments** | [`vcs_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/vcs_entity_repository.rs) |
-| `PlanEntityRepository` | Persistence for **Plans**, **Versions**, and **Reviews** (Execution planning) | [`plan_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/plan_entity_repository.rs) |
-| `IssueEntityRepository` | Composite management of **Issues**, **Comments**, **Labels**, and **Label Assignments** | [`issue_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/issue_entity_repository.rs) |
-| `OrgEntityRepository` | Composite management of **Organizations**, **Users**, **Teams**, and **API Keys** | [`org_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/org_entity_repository.rs) |
+| `MemoryRepository` | Multi-tenant observation storage with FTS5 lexical search capabilities | [`memory_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/observation.rs) |
+| `AgentRepository` | Composite management of **Agent Sessions**, **Delegations**, **Tool Calls**, and **Checkpoints** | [`agent_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/agent.rs) |
+| `ProjectRepository` | Persistence of **Project** root entities (multi-tenant boundary) | [`project_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/project.rs) |
+| `VcsEntityRepository` | Composite management of **Repositories**, **Branches**, **Worktrees**, and **Agent-Worktree Assignments** | [`vcs_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/entity_repository.rs) |
+| `PlanEntityRepository` | Persistence for **Plans**, **Versions**, and **Reviews** (Execution planning) | [`plan_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/plans.rs) |
+| `IssueEntityRepository` | Composite management of **Issues**, **Comments**, **Labels**, and **Label Assignments** | [`issue_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/issues.rs) |
+| `OrgEntityRepository` | Composite management of **Organizations**, **Users**, **Teams**, and **API Keys** | [`org_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/org.rs) |
 
 <a name="service-ports"></a>
 ### Service Ports
 
 | Port | Purpose |
 | ------ | --------- |
-| [`IndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing.rs) | Codebase indexing orchestration |
-| [`BatchIndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing.rs) | Batch indexing orchestration |
-| [`SearchServiceInterface`](../../crates/mcb-domain/src/ports/services/search.rs) | Semantic search with filters |
-| [`ContextServiceInterface`](../../crates/mcb-domain/src/ports/services/context.rs) | Context aggregation |
-| [`ValidationServiceInterface`](../../crates/mcb-domain/src/ports/services/validation.rs) | Code quality validation (12 rules) |
-| [`MemoryServiceInterface`](../../crates/mcb-domain/src/ports/services/memory.rs) | Observation management |
-| [`AgentSessionServiceInterface`](../../crates/mcb-domain/src/ports/services/agent.rs) | Agent lifecycle management |
-| [`ProjectDetectorService`](../../crates/mcb-domain/src/ports/services/project.rs) | Project type detection orchestration |
-| [`FileHashService`](../../crates/mcb-domain/src/ports/services/hash.rs) | File hashing service boundary |
-| [`ChunkingOrchestratorInterface`](../../crates/mcb-domain/src/ports/services/chunking.rs) | Chunking orchestration boundary |
-| [`CodeChunker`](../../crates/mcb-domain/src/ports/services/chunking.rs) | Language chunking service boundary |
+| [`IndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing_service.rs) | Codebase indexing orchestration |
+| [`BatchIndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing_service.rs) | Batch indexing orchestration |
+| [`SearchServiceInterface`](../../crates/mcb-domain/src/ports/services/search_service.rs) | Semantic search with filters |
+| [`ContextServiceInterface`](../../crates/mcb-domain/src/ports/services/context_service.rs) | Context aggregation |
+| [`ValidationServiceInterface`](../../crates/mcb-domain/src/ports/services/validation_service.rs) | Code quality validation (12 rules) |
+| [`MemoryServiceInterface`](../../crates/mcb-domain/src/ports/services/memory_service.rs) | Observation management |
+| [`AgentSessionServiceInterface`](../../crates/mcb-domain/src/ports/services/agent_service.rs) | Agent lifecycle management |
+| [`ProjectDetectorService`](../../crates/mcb-domain/src/ports/services/project_service.rs) | Project type detection orchestration |
+| [`FileHashService`](../../crates/mcb-domain/src/ports/services/hash_service.rs) | File hashing service boundary |
+| [`ChunkingOrchestratorInterface`](../../crates/mcb-domain/src/ports/services/chunking_service.rs) | Chunking orchestration boundary |
+| [`CodeChunker`](../../crates/mcb-domain/src/ports/services/chunking_service.rs) | Language chunking service boundary |
 
 ## Key Enums & State Machines
 
@@ -255,7 +255,7 @@ crates/mcb-domain/src/
 
 | Utility | File | Purpose |
 | ------- | ---- | ------- |
-| **Test Utils** | [`test_utils.rs`](../../crates/mcb-domain/src/test_utils.rs) | Shared domain specimen creation (Projects, Phases, Agents) |
+| **Test Utils** | [`test_utils.rs`](../../crates/mcb-domain/src/utils/tests/) | Shared domain specimen creation (Projects, Phases, Agents) |
 
 ---
 

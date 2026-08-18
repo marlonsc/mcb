@@ -39,11 +39,9 @@ async fn list_observation_count(
         tags: None,
         query: Some(query.to_owned()),
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: Some(100),
     };
 
@@ -84,11 +82,9 @@ async fn test_real_memory_store_observation_persists() -> TestResult {
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     };
 
@@ -120,11 +116,9 @@ async fn test_real_memory_store_observation_persists() -> TestResult {
         tags: None,
         query: Some("JWT".to_owned()),
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: Some(10),
     };
 
@@ -170,11 +164,9 @@ async fn test_real_memory_store_multiple_observations_counted() -> TestResult {
             tags: None,
             query: None,
             anchor_id: None,
-            depth_before: None,
-            depth_after: None,
+            timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
             window_secs: None,
-            observation_types: None,
-            max_tokens: None,
+            inject: mcb_server::args::MemoryInjectArgs::default(),
             limit: None,
         };
 
@@ -198,11 +190,9 @@ async fn test_real_memory_store_multiple_observations_counted() -> TestResult {
         tags: None,
         query: Some("Observation".to_owned()),
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: Some(50),
     };
 
@@ -247,11 +237,9 @@ async fn test_real_memory_store_missing_data_returns_contextual_error() -> TestR
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     };
 
@@ -310,11 +298,9 @@ async fn test_real_session_summary_store_and_retrieve() -> TestResult {
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     };
 
@@ -347,11 +333,9 @@ async fn test_real_session_summary_store_and_retrieve() -> TestResult {
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     };
 
@@ -482,11 +466,9 @@ async fn test_real_search_memory_enriches_origin_context_fields() -> TestResult 
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     };
 
@@ -580,11 +562,9 @@ async fn test_real_agent_session_create_and_retrieve() -> TestResult {
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     };
     let summary_result = memory_h.handle(Parameters(summary_args)).await;
@@ -930,11 +910,9 @@ async fn test_real_memory_store_conflicting_ids_rejected_without_side_effect(
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     };
 

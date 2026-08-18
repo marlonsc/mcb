@@ -62,10 +62,10 @@ pub trait VectorStoreProvider: Send + Sync {
 
 | Provider | Source | Protocol | Auth | Algorithm | Use Case |
 | ---------- | ------ | ---------- | ------ | ----------- | ---------- |
-| EdgeVec | [`edgevec.rs`](../../crates/mcb-providers/src/vector_store/edgevec.rs) | In-process | None | HNSW (M=16, EF=100) | Dev/test, single-instance |
-| Milvus | [`milvus.rs`](../../crates/mcb-providers/src/vector_store/milvus.rs) | gRPC | Optional | IVF_FLAT (NLIST=128) | Production cloud |
-| Qdrant | [`qdrant.rs`](../../crates/mcb-providers/src/vector_store/qdrant.rs) | HTTP REST | API key | HNSW configurable | Production cloud |
-| Pinecone | [`pinecone.rs`](../../crates/mcb-providers/src/vector_store/pinecone.rs) | HTTP REST | API key | Pre-created index | Managed cloud |
+| EdgeVec | [`edgevec.rs`](../../crates/mcb-providers/src/vector_store/edgevec/) | In-process | None | HNSW (M=16, EF=100) | Dev/test, single-instance |
+| Milvus | [`milvus.rs`](../../crates/mcb-providers/src/vector_store/milvus/) | gRPC | Optional | IVF_FLAT (NLIST=128) | Production cloud |
+| Qdrant | [`qdrant.rs`](../../crates/mcb-providers/src/vector_store/qdrant/) | HTTP REST | API key | HNSW configurable | Production cloud |
+| Pinecone | [`pinecone.rs`](../../crates/mcb-providers/src/vector_store/pinecone/) | HTTP REST | API key | Pre-created index | Managed cloud |
 | Encrypted | [`encrypted.rs`](../../crates/mcb-providers/src/vector_store/encrypted.rs) | Wraps any | N/A | AES-256-GCM decorator | Security-sensitive |
 
 ## Database
@@ -79,13 +79,13 @@ pub trait VectorStoreProvider: Send + Sync {
 
 | Repository | Source | Domain Port | Purpose |
 | ----------- | ------ | ------------- | --------- |
-| MemoryRepo | [`memory_repository.rs`](../../crates/mcb-providers/src/database/sqlite/memory_repository.rs) | `MemoryRepository` | Observation storage + FTS search |
-| AgentRepo | [`agent_repository.rs`](../../crates/mcb-providers/src/database/sqlite/agent_repository.rs) | `AgentRepository` | Agent session persistence + query |
-| OrgRepo | [`org_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/org_entity_repository.rs) | `OrgEntityRepository` | Multi-tenant org data |
-| VcsRepo | [`vcs_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/vcs_entity_repository.rs) | `VcsEntityRepository` | Repository/branch persistence |
-| PlanRepo | [`plan_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/plan_entity_repository.rs) | `PlanEntityRepository` | Plan version/review persistence |
-| IssueRepo | [`issue_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/issue_entity_repository.rs) | `IssueEntityRepository` | Issue tracking persistence |
-| ProjectRepo | [`project_repository.rs`](../../crates/mcb-providers/src/database/sqlite/project_repository.rs) | `ProjectRepository` | Project CRUD |
+| MemoryRepo | [`memory_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/observation.rs) | `MemoryRepository` | Observation storage + FTS search |
+| AgentRepo | [`agent_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/agent.rs) | `AgentRepository` | Agent session persistence + query |
+| OrgRepo | [`org_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/org.rs) | `OrgEntityRepository` | Multi-tenant org data |
+| VcsRepo | [`vcs_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/entity_repository.rs) | `VcsEntityRepository` | Repository/branch persistence |
+| PlanRepo | [`plan_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/plans.rs) | `PlanEntityRepository` | Plan version/review persistence |
+| IssueRepo | [`issue_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/issues.rs) | `IssueEntityRepository` | Issue tracking persistence |
+| ProjectRepo | [`project_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/project.rs) | `ProjectRepository` | Project CRUD |
 
 ## Hybrid Search
 

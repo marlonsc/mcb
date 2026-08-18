@@ -10,6 +10,10 @@ See also [CONFIGURATION.md](../CONFIGURATION.md) for Loco YAML-based config ([AD
 
 > **Note (v0.3.0):** The `MCP__` env prefix pattern (via Figment) was removed. Configuration is now
 > loaded from `config/{env}.yaml` files. Provider-specific env vars (e.g. `OPENAI_API_KEY`) still work.
+>
+> **This document is legacy/transitionary.** For new work, prefer `config/development.yaml`,
+> `config/test.yaml`, and `config/production.yaml` as the SSOT. See [CONFIGURATION.md](../CONFIGURATION.md)
+> and [ADR-051](../adr/051-seaql-loco-platform-rebuild.md).
 
 ---
 
@@ -387,7 +391,7 @@ export MCP_PROVIDERS__VECTOR_STORE__DIMENSIONS=768
 
 ## Admin Defaults
 
-See [admin helpers](../../crates/mcb-server/src/admin/web/helpers.rs) for operational defaults and helper constants.
+See [admin helpers](../../crates/mcb-server/src/utils/mcp/helpers.rs) for operational defaults and helper constants.
 
 | Variable | Default | Description |
 | ---------- | --------- | ------------- |
@@ -592,5 +596,5 @@ redis-cli ping  # Should respond with PONG
 ## See Also
 
 - [Configuration Types](../../crates/mcb-infrastructure/src/config/) - Source code
-- [Admin Helpers](../../crates/mcb-server/src/admin/web/helpers.rs) - Operational settings
+- [Admin Helpers](../../crates/mcb-server/src/utils/mcp/helpers.rs) - Operational settings
 - [CONFIGURATION.md](../CONFIGURATION.md) - General configuration guide

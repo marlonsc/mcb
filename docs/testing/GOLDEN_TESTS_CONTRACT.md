@@ -1,18 +1,21 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 # Golden Tests Contract
 
-**Total test count: 118 tests across 14 sections**
+The authoritative test count is the output of `make test WHAT=golden`; this
+document records the behaviour contract, not a frozen count.
 
-Golden tests validate**real** MCP tool behaviour: indexing, search, status, and
-clear. They run with the real DI stack (FastEmbedProvider + EdgeVecVectorStoreProvider) and
-assert on handler responses and content.
+Golden tests validate **real** MCP tool behaviour: indexing, search, status,
+clear, project management, and entity workflows. They run with the real DI stack
+(FastEmbedProvider + EdgeVecVectorStoreProvider) and assert on handler responses
+and content.
 
-**Locations:** `crates/mcb-server/tests/integration/`
+**Locations:** `crates/mcb-server/tests/e2e/`
 (`golden_e2e_complete.rs`, `golden_tools_e2e.rs`,
-`golden_acceptance_integration.rs`) and `tests/golden/` for fixture data only
+`test_project_operations.rs`), `crates/mcb-server/tests/integration/`
+(`golden_acceptance_integration.rs`), and `tests/golden/` for fixture data only
 (non-executable).
 
-**Run:** `cargo test -p mcb-server golden` or `make test SCOPE=golden`
+**Run:** `make test WHAT=golden`
 
 **Fixtures:** `sample_codebase/` (Rust files), `golden_queries.json`
 (queries + expected_files for E2E via handlers)
@@ -22,9 +25,10 @@ assert on handler responses and content.
 ## 1. E2E workflow
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract (what must hold) |
 | ------ | --------------------------- |
-| `golden_e2e_complete_workflow` | (1) index (action=clear)(collection) succeeds and response contains "clear"/"Clear"/"cleared". (2) index (action=status)(collection) succeeds, not error, text contains "Indexing Status" or "Idle" or "indexing". (3) index (action=start)(path, collection) succeeds, not error, text contains "chunks"/"file"/"Index"/"Files processed"/"Indexing Started". (4) index (action=status) again succeeds. (5) search (resource=code)(collection, query) succeeds, not error, text contains "Search"/"Results"/"Result". (6) index (action=clear) again succeeds. (7) index (action=status) again succeeds. |
+| `golden_e2e_complete_workflow` | (1) index (action=clear)(collection) succeeds and response contains "clear"/"Clear"/"cleared". (2) index (action=status)(collection) succeeds, not error, text contains "Indexing Status" or "Idle" or "indexing". (3) index (action=start)(path, collection) succeeds, not error, text contains "chunks"/"file"/"Index"/"Files processed"/"Indexing Started". (4) index (action=status) again succeeds. (5) search (resource=code)(collection, query) succeeds, not error, text contains search result text and at least one sample-codebase file. (6) index (action=clear) again succeeds. (7) index (action=status) again succeeds. |
 | `golden_e2e_handles_concurrent_operations` | Two concurrent index (action=status)(collection) calls both succeed. |
 | `golden_e2e_respects_collection_isolation` | index (action=clear)(collection_a) and index (action=clear)(collection_b) both succeed; operations on one collection do not break the other. |
 | `golden_e2e_handles_reindex_correctly` | index (action=start)(path, collection) twice (reindex) both succeed; no panic, response indicates indexing (sync or async). |
@@ -35,6 +39,7 @@ assert on handler responses and content.
 ## 2. Index
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_index_test_repository` | index (action=start)(sample_codebase_path, collection) succeeds, not error, response content non-empty and contains "chunk"/"file"/"Index"/"Files processed"/"Indexing Started"/"Source directory"/"Path:". |
@@ -46,6 +51,7 @@ assert on handler responses and content.
 ## 3. MCP response schema (content shape)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_mcp_index (action=start)_schema` | index (action=start) response: Ok, content non-empty, not is_error. |
@@ -59,10 +65,11 @@ assert on handler responses and content.
 ## 4. Search validation
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
-| `golden_search_returns_relevant_results` | After indexing sample_codebase into collection, search (resource=code)(collection, "embedding vector") succeeds, not error. (With FastEmbed, results may vary; at least the handler must succeed.) |
-| `golden_search_ranking_is_correct` | search (resource=code)(collection, query) succeeds. |
+| `golden_search_returns_relevant_results` | After indexing sample_codebase into collection, search (resource=code)(collection, "handle MCP search request") succeeds, is not an error, and returns at least one sample-codebase file such as `handlers.rs`. |
+| `golden_search_ranking_is_correct` | After indexing sample_codebase into collection, search (resource=code)(collection, "handle MCP index codebase request") succeeds, returns `handlers.rs`, and includes the "Semantic Code Search Results" heading. |
 | `golden_search_handles_empty_query` | search (resource=code) with query "" or whitespace-only yields Err. |
 | `golden_search_respects_limit_parameter` | search (resource=code) with limit=2 succeeds; response should reflect limit (e.g. "Results found: N" with N ≤ 2, or "Showing top 2 results"). |
 | `golden_search_filters_by_extension` | search (resource=code) with extensions=Some(["rs"]) succeeds. |
@@ -72,11 +79,12 @@ assert on handler responses and content.
 ## 5. Golden queries E2E (split to avoid timeout)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_e2e_golden_queries_setup` | index (action=clear), index (action=start), then poll index (action=status) until Idle/processed (bounded wait: 20 × 50ms). |
 | `golden_e2e_golden_queries_one_query` | After clear + index, one search (resource=code) call succeeds and response is not error. |
-| `golden_e2e_golden_queries_all_handlers_succeed` | After clear + index, run all queries from golden_queries.JSON; every search (resource=code) must succeed (no error). Result counts may vary by embedding provider. |
+| `golden_e2e_golden_queries_all_handlers_succeed` | After clear + index, run all queries from golden_queries.JSON; every search (resource=code) must succeed and return at least the query-specific minimum result count and one expected sample-codebase file. |
 
 ---
 
@@ -96,6 +104,7 @@ assert on handler responses and content.
 ## 6. Org Entity CRUD (19 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_org_create_and_get` | org_entity (action=create, resource=org) with data succeeds; org_entity (action=get, resource=org) with id succeeds; response contains id and name. |
@@ -123,6 +132,7 @@ assert on handler responses and content.
 ## 7. Data Isolation (6 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_isolation_users_scoped_to_org` | Users created in org-A do not appear in org-B user list. |
@@ -137,6 +147,7 @@ assert on handler responses and content.
 ## 8. API Key Lifecycle (9 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_api_key_create_and_get` | org_entity (action=create, resource=api_key) with data succeeds; get returns key with id, user_id, org_id, name, key_hash. |
@@ -154,6 +165,7 @@ assert on handler responses and content.
 ## 9. Session Lifecycle (6 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_session_create_and_get` | session (action=create) with data succeeds; get returns session with id, status=active, agent_type, model, started_at. |
@@ -168,6 +180,7 @@ assert on handler responses and content.
 ## 10. VCS Entity CRUD (10 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_vcs_repo_create_and_get` | vcs_entity (action=create, resource=repository) with data succeeds; get returns repo with id, name, url. |
@@ -186,6 +199,7 @@ assert on handler responses and content.
 ## 11. Plan Entity CRUD (12 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_plan_create_and_get` | plan_entity (action=create, resource=plan) with data succeeds; get returns plan with id, title, project_id. |
@@ -206,6 +220,7 @@ assert on handler responses and content.
 ## 12. Issue Entity CRUD (13 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_issue_create_and_get` | issue_entity (action=create, resource=issue) with data succeeds; get returns issue with id, title, project_id. |
@@ -227,6 +242,7 @@ assert on handler responses and content.
 ## 13. Validate Operations (4 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_validate_analyze` | validate (action=analyze, scope=file) with valid file path succeeds; response is not error. |
@@ -236,12 +252,14 @@ assert on handler responses and content.
 
 ---
 
-## 14. Project Operations (4 tests)
+## 14. Project Operations (5 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
-| `golden_project_create_phase` | project (action=create, resource=phase) returns unsupported error (not yet implemented). |
-| `golden_project_list_phases` | project (action=list, resource=phase) returns unsupported error (not yet implemented). |
-| `golden_project_create_decision` | project (action=create, resource=decision) returns unsupported error (not yet implemented). |
+| `golden_project_create_get_update_delete` | project create/get/update/list/delete succeeds and list contains the created project before deletion. |
+| `golden_project_phase_lifecycle` | project phase create/get/update/list/delete succeeds and list reflects the updated phase status. |
+| `golden_project_decision_lifecycle` | project decision create/get/update/list/delete succeeds and list reflects the updated decision title. |
+| `golden_project_dependency_lifecycle` | issue setup plus dependency create/list/delete succeeds; dependency list contains the created relation. |
 | `golden_project_missing_project_id` | project (action=get, resource=project) without project_id returns error mentioning project_id is required. |

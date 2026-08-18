@@ -15,7 +15,7 @@ use mcb_domain::error::{Error, Result};
 use mcb_domain::ports::{EmbeddingProvider, VectorStoreProvider};
 use mcb_utils::constants::testing::TEST_EMBEDDING_DIMENSIONS;
 
-use super::test_fixtures::try_shared_app_context;
+use super::test_fixtures::shared_app_context;
 
 /// Get the real `EdgeVec` vector store provider from the shared context.
 ///
@@ -23,11 +23,8 @@ use super::test_fixtures::try_shared_app_context;
 ///
 /// Returns an error if the shared context is unavailable.
 pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> {
-    let Some(ctx) = try_shared_app_context() else {
-        return Err(Error::embedding(
-            "Shared AppContext unavailable — FastEmbed model may be missing",
-        ));
-    };
+    let ctx = shared_app_context()
+        .map_err(|e| Error::embedding(format!("Shared AppContext unavailable: {e}")))?;
     Ok(ctx.vector_store_provider())
 }
 
@@ -39,11 +36,8 @@ pub async fn create_real_vector_store() -> Result<Arc<dyn VectorStoreProvider>> 
 ///
 /// Returns an error if the shared context is unavailable.
 pub async fn create_real_embedding_provider() -> Result<Arc<dyn EmbeddingProvider>> {
-    let Some(ctx) = try_shared_app_context() else {
-        return Err(Error::embedding(
-            "Shared AppContext unavailable — FastEmbed model may be missing",
-        ));
-    };
+    let ctx = shared_app_context()
+        .map_err(|e| Error::embedding(format!("Shared AppContext unavailable: {e}")))?;
     Ok(ctx.embedding_provider())
 }
 

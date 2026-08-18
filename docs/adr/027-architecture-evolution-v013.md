@@ -8,7 +8,7 @@ updated: 2026-02-05
 related: [8, 13, 24]
 supersedes: []
 superseded_by: []
-implementation_status: Incomplete
+implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -45,6 +45,7 @@ Analysis of the [kamu-cli](https://github.com/kamu-data/kamu-cli) production
 codebase revealed opportunities to evolve MCB without rewriting:
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Aspect | MCB Current | kamu-cli Pattern | Opportunity |
 | -------- | ------------- | ------------------ | ------------- |
 | Module Organization | By layer (entities/, ports/, services/) | By bounded context (workspace/, indexing/, search/) | Feature-centric navigation |

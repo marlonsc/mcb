@@ -146,11 +146,11 @@ and [ADR index](./docs/adr/) for Architecture Decision Records.
 ## Development
 
 ```bash
-make build          # Debug build
+make build RELEASE=0  # Debug build
 make build RELEASE=1  # Optimized release build
 make test           # Run all tests
-make lint           # Clippy + format check
-make validate       # Architecture rule enforcement
+make check WHAT=lint       # Clippy + format check
+make check WHAT=validate   # Architecture rule enforcement
 make check        # Full pipeline: fmt + lint + test + validate
 ```
 
@@ -158,9 +158,9 @@ make check        # Full pipeline: fmt + lint + test + validate
 
 All contributions must pass:
 
-- `make lint` — Zero Clippy warnings, consistent formatting
+- `make check WHAT=lint` — Zero Clippy warnings, consistent formatting
 - `make test` — All tests green
-- `make validate` — Zero architecture violations
+- `make check WHAT=validate` — Zero architecture violations
 - No `unwrap()`/`expect()` in production code paths
 
 ## Planned

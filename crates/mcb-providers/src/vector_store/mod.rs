@@ -13,6 +13,7 @@
 //! | MilvusVectorStoreProvider | Cloud | Production-scale cloud vector database |
 //! | PineconeVectorStoreProvider | Cloud | Pinecone cloud vector database |
 //! | QdrantVectorStoreProvider | Cloud | Qdrant vector search engine |
+//! | WeaviateVectorStoreProvider | Cloud | Weaviate REST + GraphQL vector database |
 //!
 //! ## Provider Selection Guide
 //!
@@ -26,6 +27,7 @@ pub mod milvus;
 pub mod pinecone;
 /// Qdrant vector search engine provider.
 pub mod qdrant;
+pub mod weaviate;
 
 // Re-export for convenience
 pub use edgevec::{
@@ -35,3 +37,4 @@ pub use encrypted::EncryptedVectorStoreProvider;
 pub use milvus::MilvusVectorStoreProvider;
 pub use pinecone::PineconeVectorStoreProvider;
 pub use qdrant::QdrantVectorStoreProvider;
+pub use weaviate::WeaviateVectorStoreProvider;

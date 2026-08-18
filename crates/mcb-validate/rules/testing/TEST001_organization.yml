@@ -11,13 +11,13 @@ rationale: "Well-organized tests improve maintainability and catch more bugs"
 
 patterns:
   # Test module patterns
-  cfg_test: '#\[cfg\(test\)\]'
-  mod_tests: 'mod\s+tests\s*\{'
+  cfg_test: '^\s*#\[cfg\(test\)\]\s*$'
+  mod_tests: '^\s*mod\s+tests\s*\{\s*$'
 
   # Test attribute patterns
-  test_attr: '#\[test\]'
-  tokio_test_attr: '#\[tokio::test\]'
-  any_test_attr: '#\[(?:tokio::)?test\]'
+  test_attr: '^\s*#\[test\]\s*$'
+  tokio_test_attr: '^\s*#\[tokio::test\]\s*$'
+  any_test_attr: '^\s*#\[(?:tokio::)?test\]\s*$'
 
   # Function patterns
   fn_decl: '(?:async\s+)?fn\s+([a-z_][a-z0-9_]*)\s*\('

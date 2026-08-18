@@ -63,7 +63,7 @@ make test
 make check
 
 # Run architecture validation
-make validate
+make check WHAT=validate
 ```
 
 ## Test Structure

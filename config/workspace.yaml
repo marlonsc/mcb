@@ -1,0 +1,104 @@
+# Handwritten topology SSOT consumed by `flext-infra codegen conform`.
+# conform never overwrites this input. Declare members/exclusions here, then
+# run `make gen WHAT=apply APPLY=Y`.
+version: 3
+name: mcb-scripts
+# Why (mro-5j8p): short issue-prefix (bd max 20 chars) + Dolt-safe ledger_id.
+ledger_prefix: mcb
+ledger_id: mcb
+repository:
+  name: mcb-scripts
+  distribution: mcb-scripts
+  provider: datacosmos-br
+  url: https://github.com/datacosmos-br/mcb.git
+  path: .
+  role: standalone
+  state: active
+  checkout: independent
+  codegen: conform
+  # The shared Python library lives at src/mcb_scripts/, so this repository IS
+  # a package. (This flag does not feed analyzer-root ordering.)
+  package: true
+  # The test suite and the scripts/ command tree import mcb_scripts.*, so the
+  # package must be installed into the runtime venv, not merely present on disk.
+  editable: true
+  read_only: false
+  # mcb owns two Python roots: the library at src/mcb_scripts/ and the command
+  # tree at scripts/<verb>/<what>, executed by scripts/dispatch.py. Declaring
+  # the dispatch seam is what makes the generated Makefile append
+  # $(PROJECT_ROOT)/scripts to RUFF_PATHS/MYPY_PATHS, so the official ruff and
+  # mypy gates reach the command tree instead of only the library.
+  script_dispatch:
+    dispatcher: scripts/dispatch.py
+    roots:
+      - scripts
+project:
+  package_name: "mcb_scripts"
+  class_stem: "McbScripts"
+  namespace: "McbScripts"
+  constant_name: "mcb"
+  namespace_attribute: "mcb_scripts"
+  alias: "mcb_scripts"
+  environment_prefix: "MCB_"
+  description: "Repository-local automation helpers for MCB"
+  version: "0.4.0"
+  license: "MIT"
+  author_name: "Marlon Costa"
+  author_email: "marlonsc@gmail.com"
+  upstream: "flext_cli"
+  homepage: "https://github.com/marlonsc/mcb"
+  documentation: "https://github.com/marlonsc/mcb"
+  workspace_root_rel: "."
+  year: 2026
+members: []
+exclusions: []
+integration:
+  provider: datacosmos-br
+  branch: develop
+repository_policy_overlays:
+  - project: mcb-scripts
+    beads_enabled: true
+    ci_enabled: true
+    # mro-jnm1.3 seam: project-local ignore rules belong here, never in the
+    # generated .gitignore. PR #178 merged 619 files of machine config and
+    # session residue into develop as if it were source; PR #201 removed them
+    # and added these rules as the barrier against a repeat. Declared at the
+    # generator input so `make gen` reproduces them instead of stripping them.
+    extra_ignored_patterns:
+      # Recovery archive written by the archive-not-delete rule. It preserves
+      # superseded files so a removal stays reversible; it is never source, and
+      # versioning it would resurrect exactly what the removal took out.
+      - "/.archive/"
+      # Machine-local build/editor configuration. These encode one workstation
+      # (linker, job counts, cache sizes, editor state) and break every other
+      # environment when versioned. The leading slash anchors each rule to the
+      # repository root, so test fixtures that legitimately ship their own
+      # .cargo/ or editor files stay tracked.
+      - "/.cargo/"
+      - "/.vscode/"
+      - "/.waza.yaml"
+      - "/opencode.jsonc"
+      # Tool output. A report is produced by a gate, never authored; regenerate
+      # it with the owning make verb instead of committing a snapshot.
+      - "*.sarif"
+      - "*violations*.txt"
+      - "build_err.txt"
+      - "clippy_output.txt"
+      - "validate_output.txt"
+      - "test_003_warnings.txt"
+      - "staged_files.txt"
+      - "pr[0-9]*_comments.txt"
+      - "coverage/"
+      # Compiled and captured test artifacts.
+      - "*.rlib"
+      - "/data/vectors/"
+      - "/crates/mcb-providers/src/database/sqlite/test_file.txt"
+      # Captured runtime logs. tests/mcb.<date> is server stdout, not a test.
+      - "tests/mcb.[0-9]*"
+      # Agent and session scratch.
+      - "tmp_*.txt"
+      - ".beads.gate.lock"
+      # Parallel documentation tree. docs/ is the single documentation owner;
+      # context/ duplicated it and described dill and figment, both removed by
+      # ADR-050 and ADR-051.
+      - "/context/"

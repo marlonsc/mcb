@@ -50,7 +50,7 @@ Memory Context Browser is a high-performance, extensible Model Context Protocol 
 **Architecture Maturity**: ✅ **SeaQL + Loco.rs Clean Architecture Baseline**
 **DI Status**: ✅ Linkme provider registry, ✅ AppContext composition root, ✅ Full Port/Adapter Wiring
 **Provider Registration**: ✅ Linkme distributed slices (compile-time), ✅ Inventory removed
-**Validation**: ✅ `mcb-validate` architecture checks; run `make validate` for the current release verdict
+**Validation**: ✅ `mcb-validate` architecture checks; run `make check WHAT=validate` for the current release verdict
 **Port Traits**: `crates/mcb-domain/src/ports/` - Provider traits in domain layer (Clean Architecture compliant)
 **Deployment Options**: Local development, Docker, Kubernetes, hybrid cloud-edge
 
@@ -585,7 +585,7 @@ Provider trait implementations MUST import from `mcb-domain::ports::providers`.
 
 #### Automatic Enforcement
 
-Run `make validate` to check compliance. The mcb-validate crate enforces:
+Run `make check WHAT=validate` to check compliance. The mcb-validate crate enforces:
 
 - **Phase 1**: Linter checks (Clippy, Ruff)
 - **Phase 2**: AST pattern queries (Tree-sitter)
@@ -598,7 +598,7 @@ Run `make validate` to check compliance. The mcb-validate crate enforces:
 Provider port traits are defined in `mcb-domain/src/ports/providers/`:
 
 | Trait | Purpose |
-| ------- | | --------- |
+| ------- |  |
 | `EmbeddingProvider` | Generate vector embeddings from text |
 | `VectorStoreProvider` | Store and search vector embeddings |
 | `CacheProvider` | Caching abstraction |
@@ -924,7 +924,7 @@ The system follows Clean Architecture principles with 7 crates organized as a Ca
 
 **Purpose**: Architecture enforcement and code quality validation.
 
-**Status**: Active in v0.3.1; run `make validate` for the current architecture verdict.
+**Status**: Active in v0.3.1; run `make check WHAT=validate` for the current architecture verdict.
 
 ### Components (1)
 
@@ -962,7 +962,7 @@ Validation Pipeline (Pure Rust):
 ### Usage
 
 ```bash
-make validate  # Run all architecture validation rules
+make check WHAT=validate  # Run all architecture validation rules
 ```
 
 ### Features
@@ -1975,7 +1975,7 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 
 - [ADR-005](../adr/005-context-cache-support.md) Context Cache
 - [ADR-006](../adr/006-code-audit-and-improvements.md) Code Audit
-- [ADR-007](../adr/archive/superseded-007-web-admin-interface.md) Admin UI (archived)
+- [ADR-007](../adr/051-seaql-loco-platform-rebuild.md) Admin UI (archived)
 - [ADR-010](../adr/010-hooks-subsystem-agent-backed.md) Hooks
 - [ADR-011](../adr/011-http-transport-request-response-pattern.md) HTTP Transport
 - [ADR-012](../adr/012-di-strategy-two-layer-approach.md) Two-Layer DI
@@ -1989,8 +1989,8 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 - [ADR-021](../adr/021-dependency-management.md) Dependency Mgmt
 - [ADR-022](../adr/022-ci-integration-strategy.md) CI
 - [ADR-023](../adr/023-inventory-to-linkme-migration.md) Linkme
-- [ADR-025](../adr/archive/superseded-025-figment-configuration.md) Figment (archived, see ADR-051)
-- [ADR-026](../adr/archive/superseded-026-routing-refactor-rocket-poem.md) Routing (archived, see ADR-049)
+- [ADR-025](../adr/051-seaql-loco-platform-rebuild.md) Figment (archived, see ADR-051)
+- [ADR-026](../adr/049-axum-return-rmcp-tower-compatibility.md) Routing (archived, see ADR-049)
 - [ADR-027](../adr/027-architecture-evolution-v013.md) Arch Evolution
 - [ADR-028](../adr/028-advanced-code-browser-v020.md) Code Browser
 - [ADR-030](../adr/030-multi-provider-strategy.md) Multi-Provider
@@ -2000,6 +2000,11 @@ See [ADR-013](../adr/013-clean-architecture-crate-separation.md) for full detail
 - [ADR-038](../adr/038-multi-tier-execution-model.md) Multi-Tier Execution Model
 - [ADR-039](../adr/039-context-persistence-boundary.md) Context Persistence Boundary
 - [ADR-040](../adr/040-unified-tool-execution-gate.md) Unified Tool Execution Gate
+- [ADR-048](../adr/048-observability-strategy.md) Observability Strategy
+- [ADR-052](../adr/052-schema-resolution-seaorm.md) Schema Resolution
+- [ADR-053](../adr/053-shared-provider-resolution.md) Shared Provider Resolution
+- [ADR-056](../adr/056-multitenant-isolation-and-oidc-boundary.md) Multi-Tenant Isolation and OIDC Boundary
+- [ADR-057](../adr/057-multi-agent-coordination-ssot-consolidation.md) Multi-Agent Coordination and SSOT Consolidation
 
 See [ADR index](../adr/README.md) for the full list.
 
@@ -2354,7 +2359,7 @@ impl BackupManager {
 - [ADR-043: Hybrid Search Engine](../adr/phase-9/README.md#adr-043-hybrid-search-engine)
 - [ADR-044: Model Selection](../adr/phase-9/README.md#adr-044-model-selection)
 - [ADR-045: Context Versioning](../adr/phase-9/README.md#adr-045-context-versioning)
-- [ADR-046: Integration Patterns](../adr/phase-9/README.md#adr-046-integration-patterns)
+- [ADR-046: Integration Patterns](../adr/046-integration-adr-034-037-policies.md)
 - [ADR-047: Project Architecture](../adr/047-project-architecture.md)
 
 ### See Also

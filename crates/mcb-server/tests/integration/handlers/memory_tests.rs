@@ -44,11 +44,9 @@ fn get_missing_ids_args() -> MemoryArgs {
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     }
 }
@@ -112,11 +110,12 @@ async fn test_memory_inject_with_filters() {
         tags: Some(vec!["important".to_owned()]),
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: Some(1500),
+        inject: mcb_server::args::MemoryInjectArgs {
+            observation_types: None,
+            max_tokens: Some(1500),
+        },
         limit: Some(15),
     };
 
@@ -145,11 +144,9 @@ async fn test_get_observations_missing_ids_returns_invalid_params() {
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     };
 
@@ -179,11 +176,9 @@ async fn test_store_session_missing_data_returns_invalid_params() {
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     };
 
@@ -213,11 +208,9 @@ async fn test_get_observations_empty_ids_returns_error() {
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     };
 
@@ -279,11 +272,9 @@ async fn test_get_observations_with_valid_ids_happy_path() {
         tags: None,
         query: None,
         anchor_id: None,
-        depth_before: None,
-        depth_after: None,
+        timeline_depth: mcb_server::args::MemoryTimelineDepthArgs::default(),
         window_secs: None,
-        observation_types: None,
-        max_tokens: None,
+        inject: mcb_server::args::MemoryInjectArgs::default(),
         limit: None,
     };
 

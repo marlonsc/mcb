@@ -16,4 +16,5 @@ The canonical source of the public API is the re-exports in the root crate:
 - [`crates/mcb/src/lib.rs`](../crates/mcb/src/lib.rs)
 
 ---
+
 *Updated 2026-02-20 - Consolidated duplicate documentation.*

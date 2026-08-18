@@ -8,7 +8,7 @@ use super::*;
 
 /// Single-threaded owner of the `EdgeVec` index, storage, and metadata.
 ///
-/// Runs in its own task and serializes all vector-store operations by
+/// Runs on its own thread and serializes all vector-store operations by
 /// processing [`EdgeVecMessage`] values received on `receiver`.
 pub struct EdgeVecActor {
     receiver: mpsc::Receiver<EdgeVecMessage>,
@@ -322,8 +322,8 @@ impl EdgeVecActor {
 }
 
 impl EdgeVecActor {
-    pub async fn run(mut self) {
-        while let Some(msg) = self.receiver.recv().await {
+    pub fn run(mut self) {
+        while let Some(msg) = self.receiver.blocking_recv() {
             match msg {
                 EdgeVecMessage::Core(core) => self.handle_core_message(core),
                 EdgeVecMessage::Query(query) => self.handle_query_message(query),

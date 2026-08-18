@@ -13,6 +13,9 @@ pub struct Model {
     /// Reference to the project this observation belongs to.
     #[sea_orm(column_type = "Text")]
     pub project_id: String,
+    /// Organization that owns this observation (tenant isolation, ADR-056).
+    #[sea_orm(column_type = "Text")]
+    pub org_id: String,
     /// Content of the observation.
     #[sea_orm(column_type = "Text")]
     pub content: String,

@@ -103,7 +103,7 @@ async fn test_validate_detects_inline_tests_in_src_via_registry_path()
     )?;
     fs::write(
         workspace.join("crates/foo/src/lib.rs"),
-        "#[cfg(test)]\nmod tests {\n    #[test]\n    fn smoke() {\n        assert_eq!(1, 1);\n    }\n}\n",
+        "#[cfg(test)]\nmod tests {\n    #[test]\n    fn smoke() {\n        assert_eq!(2 + 2, 4);\n    }\n}\n",
     )?;
 
     let service = validation_service()?;

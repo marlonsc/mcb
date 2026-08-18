@@ -13,11 +13,13 @@ pub mod utils;
 pub mod handlers;
 
 mod error_recovery_integration;
-mod error_shape_tests;
-mod form_deserialization_test;
+mod error_shape_tests_integration;
+mod form_deserialization_test_integration;
 mod full_stack_integration;
 mod golden_acceptance_integration;
 mod hooks_integration;
 
-mod admin_api_tests;
-mod auto_context_tests;
+mod admin_api_tests_integration;
+mod admin_http_tests_integration;
+mod auto_context_tests_integration;
+mod http_mcp_tests_integration;

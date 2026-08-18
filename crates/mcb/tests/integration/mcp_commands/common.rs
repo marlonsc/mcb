@@ -123,7 +123,12 @@ pub async fn create_client() -> Result<McpTestClient, Box<dyn std::error::Error>
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
     let client = timeout(STARTUP_TIMEOUT, ().serve(transport))
         .await
-        .map_err(|_| "Timeout: mcb server failed to start within 120s (fastembed model may be downloading on first run)")?
+        .map_err(|_| {
+            format!(
+                "Timeout: mcb server failed to start within {}s (fastembed model may be downloading on first run)",
+                STARTUP_TIMEOUT.as_secs()
+            )
+        })?
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
     Ok(McpTestClient {
         client,
@@ -164,7 +169,12 @@ pub async fn call_tool(
     params.arguments = json_args(arguments);
     let result = timeout(OP_TIMEOUT, client.call_tool(params))
         .await
-        .map_err(|_| format!("Timeout: tool '{tool_name}' did not respond within 10s"))?
+        .map_err(|_| {
+            format!(
+                "Timeout: tool '{tool_name}' did not respond within {}s",
+                OP_TIMEOUT.as_secs()
+            )
+        })?
         .map_err(|e| Box::new(e) as Box<dyn std::error::Error>)?;
     Ok(result)
 }

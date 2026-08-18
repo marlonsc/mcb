@@ -4,12 +4,11 @@ use mcb_domain::utils::tests::mcp_assertions::{
 };
 use mcb_domain::utils::tests::utils::{create_temp_codebase, create_test_indexing_result};
 use mcb_domain::utils::text::extract_text_from;
-use mcb_utils::constants::testing::{GOLDEN_COLLECTION, SAMPLE_CODEBASE_FILES};
+use mcb_utils::constants::testing::SAMPLE_CODEBASE_FILES;
 use rstest::rstest;
 
 #[rstest]
 fn test_fixtures_referenced() {
-    assert!(!GOLDEN_COLLECTION.is_empty());
     assert!(!SAMPLE_CODEBASE_FILES.is_empty());
     assert!(
         sample_codebase_path()
