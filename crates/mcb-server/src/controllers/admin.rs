@@ -125,14 +125,6 @@ fn map_auth_error(err: crate::auth::AuthError) -> loco_rs::errors::Error {
 /// Returns admin config as JSON for routes guarded by external middleware.
 ///
 /// Auth is enforced by the calling route's middleware; no per-request
-/// Map auth-domain errors back to Loco HTTP errors at the controller boundary.
-fn map_auth_error(err: crate::auth::AuthError) -> loco_rs::errors::Error {
-    match err {
-        crate::auth::AuthError::Unauthorized(msg) => loco_rs::errors::Error::Unauthorized(msg),
-        crate::auth::AuthError::Internal => loco_rs::errors::Error::InternalServerError,
-    }
-}
-
 /// re-authentication is needed here.
 ///
 /// # Errors
