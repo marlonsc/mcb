@@ -5,9 +5,9 @@ x-mcb-config: &mcb-config |
     level: info
     format: compact
   server:
-    port: 8080
+    port: 8187
     binding: 0.0.0.0
-    host: http://127.0.0.1:8080
+    host: http://127.0.0.1:8187
     middlewares:
       static:
         enable: false
@@ -27,7 +27,7 @@ x-mcb-config: &mcb-config |
   settings:
     mode:
       type: standalone
-      server_url: http://127.0.0.1:8080
+      server_url: http://127.0.0.1:8187
       session_prefix: ""
       timeout_secs: 30
       auto_reconnect: true
@@ -166,7 +166,7 @@ services:
     environment:
       MCB_CONFIG_INLINE: *mcb-config
     ports:
-      - "28080:8080"
+      - "28187:8187"
     depends_on:
       milvus-standalone:
         condition: service_healthy
