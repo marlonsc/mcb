@@ -192,8 +192,12 @@ def test_git_hooks_have_exactly_one_owner() -> None:
 def test_generated_hook_entries_are_executable_argv() -> None:
     """Installed git hooks must delegate to the single canonical runner.
 
-    Why (gastown): the flext pre-commit config was removed; the only hook
-    owner is beads. Each installed shim must invoke `bd hooks run <stage>`.
+    Why (gastown): flext_infra codegen conform unconditionally regenerates
+    .pre-commit-config.yaml as a managed file (SSOT: flext_infra
+    _constants/check.py PRE_COMMIT_CONFIG) whose first hook already routes
+    through `bd hooks run pre-commit` — pre-commit is the dispatch framework,
+    not a competing owner. The installed git hook shims are the actual commit
+    gate and must delegate to `bd hooks run <stage>`.
     """
     hooks_dir = subprocess.run(
         ["git", "rev-parse", "--git-path", "hooks"],
@@ -212,8 +216,13 @@ def test_generated_hook_entries_are_executable_argv() -> None:
             f"{stage} shim does not delegate to bd hooks:\n{head}"
         )
 
-    assert not (ROOT / ".pre-commit-config.yaml").exists(), (
-        ".pre-commit-config.yaml must stay deleted under the Gas Town cutover"
+    pre_commit_config = ROOT / ".pre-commit-config.yaml"
+    assert pre_commit_config.exists(), (
+        ".pre-commit-config.yaml is a flext_infra-managed file; "
+        "run `make gen WHAT=apply APPLY=Y` to regenerate it"
+    )
+    assert "bd hooks run pre-commit" in pre_commit_config.read_text(), (
+        ".pre-commit-config.yaml must route its first hook through bd"
     )
 
 

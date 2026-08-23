@@ -610,6 +610,7 @@ dev = [
   "code-review-graph[all]>=2.3.7",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
   "mypy>=2.3.0",
+  "pre-commit>=4.6.1",
   "pyrefly>=1.1.1",
   "pyright>=1.1.411",
   "pytest>=9.0.3",
