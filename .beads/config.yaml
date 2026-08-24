@@ -11,13 +11,14 @@
 # initializes and verifies it against the pinned binary.
 issue-prefix: "mcb"
 
-# Dolt shared-server connection (machine-wide shared server on :3308).
+# Dolt server connection (Gas Town town server on :3307).
 # The `mcb` database lives there; a repository-local server is never used.
 dolt:
   mode: server
-  shared-server: true
+  shared-server: false
   host: 127.0.0.1
-  port: 3308
+  port: 3307
   user: root
   database: mcb
   auto-commit: "on"
+prefix: "mcb"
