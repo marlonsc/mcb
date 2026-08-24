@@ -8,34 +8,38 @@
 FROM alpine:3.21
 
 # === SECTION: base packages (managed) ===
-# Source: template (distro-specific package list)
+# Source: template (distro-specific seed contract)
+# The seed is the whole host contract: curl fetches mise, git is what uv shells
+# out to for the flext-infra git+https requirement (uv embeds no git of its
+# own), and make invokes the verbs. bash is for the project scripts.
+# libstdc++ is musl-specific: node and bun link against libstdc++.so.6 at
+# runtime, so on Alpine they install cleanly and then fail with "Error loading
+# shared library". Glibc images ship it in the base system.
 RUN apk add --no-cache \
-      bash ca-certificates curl git make build-base icu-dev icu-libs
+      bash ca-certificates curl git make libstdc++
 # End SECTION: base packages
 
-# === SECTION: managed tool bootstrap (managed) ===
-# Source: config:python_version, template (installer URLs)
-# mise installs the supported Python 3.13 family.
-# uv is supplied by the managed environment without a project patch pin.
-RUN curl -fsSL https://mise.run | sh
-# uv is intentionally supplied by the caller environment; install it explicitly
-# in clean-machine images so the project bootstrap can resolve dependencies.
-RUN curl -fsSL https://astral.sh/uv/install.sh | sh
-# tokei (and any future cargo-backed mise tool) needs a Rust toolchain.
-RUN curl -fsSL https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
-# go is required for mise-managed beads (go:github.com/steveyegge/beads/cmd/bd).
-RUN curl -fsSL https://go.dev/dl/go1.23.4.linux-amd64.tar.gz | tar -C /usr/local -xzf - \
-    && ln -sf /usr/local/go/bin/go /usr/local/bin/go
-ENV PATH="/usr/local/go/bin:/root/.local/bin:/root/.cargo/bin:/root/.local/share/mise/shims:${PATH}"
-# End SECTION: managed tool bootstrap
-
 WORKDIR /workspace
+# init-setup.sh is the single declarative bootstrap: it downloads one throwaway
+# mise, projects the managed registry from the typed SSOT (config/tools.yaml),
+# installs everything mise manages (mise, uv, go, node, gh, docker...) including
+# itself, then hands control to the managed copy and deletes the throwaway.
+# The GITHUB_TOKEN build-arg authenticates GitHub API reads during provisioning.
+ARG GITHUB_TOKEN
+ENV MISE_GITHUB_TOKEN=${GITHUB_TOKEN}
 COPY . .
 
-# === SECTION: mise install (managed) ===
-# Source: computed (reads .mise.toml from copied workspace)
-RUN mise trust .mise.toml && mise install --yes
-# End SECTION: mise install
+# === SECTION: managed tool bootstrap (managed) ===
+# Source: template (init-setup.sh, the project's own bootstrap entrypoint)
+# Everything else — mise itself, uv, go, node, bun, gh, docker, kubectl, helm,
+# tmux — is provisioned by init-setup.sh through mise. The previous revision
+# curl-installed mise, uv, rustup and a hardcoded Go 1.23.4 here, which meant
+# the "clean machine proof" was really proving a hand-assembled toolchain that
+# no operator would reproduce. Pinning Go in a Dockerfile also silently
+# overrode the version the project declares.
+RUN sh ./init-setup.sh
+ENV PATH="/root/.local/share/mise/shims:${PATH}"
+# End SECTION: managed tool bootstrap
 
 # === SECTION: bootstrap proof (managed) ===
 # Source: template (clean-machine bootstrap through the canonical verb)

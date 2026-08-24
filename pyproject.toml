@@ -111,6 +111,7 @@ namespace_packages = true
 no_implicit_reexport = true
 plugins = ["pydantic.mypy"]
 python_version = "3.13"
+show_traceback = true
 strict_equality = true
 warn_redundant_casts = true
 warn_return_any = true
@@ -371,6 +372,7 @@ filterwarnings = [
   "error",
   "module::flext_core._constants.enforcement.FlextMroViolation",
 ]
+flext_slow_timeout_seconds = "60"
 markers = [
   "docker: tests requiring Docker",
   "e2e: end-to-end integration tests",
@@ -389,7 +391,7 @@ minversion = "8.0"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 pythonpath = ["src"]
-testpaths = [".", "docs", "examples", "scripts", "src", "tests"]
+testpaths = ["tests"]
 
 # [MANAGED] ruff
 [tool.ruff]
@@ -493,8 +495,6 @@ known-first-party = [
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"**/.vulture_whitelist.py" = ["ALL"]
-"**/*_pb2*.py" = ["ALL"]
 "scripts/cmd/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
 "**/examples/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
 "**/tests/**" = [
@@ -588,6 +588,13 @@ sort_first = ["build-system", "dependency-groups", "project", "tool"]
 exclude-newer = "7 days"
 link-mode = "copy"
 package = true
+
+[tool.uv.exclude-newer-package]
+cryptography = false
+django-stubs = "2026-08-13T00:00:00Z"
+mkdocstrings-python = "2026-08-18T00:00:00Z"
+mypy = "2026-08-15T03:04:00Z"
+types-setuptools = "2026-08-13T00:00:00Z"
 
 [tool.vulture]
 exclude = ["*/_protocols/*"]

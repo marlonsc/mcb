@@ -18,7 +18,8 @@
 
 MCB implements an AI-native issue tracking and project coordination system (internally known as **Beads**). This module
 documents MCB's internal project/issue domain and historical storage contracts. The repository's active agent
-coordination uses the external `bd` CLI (`bd` 1.0.5) with Dolt shared-server mode; `.beads/issues.jsonl` is an
+coordination uses the external `bd` CLI (`bd` 1.0.5) connected to the Gas Town town Dolt server (127.0.0.1:3307,
+`shared-server: false`); `.beads/issues.jsonl` is an
 export/import artifact, not the live source of truth. Use `AGENTS.md` for the operational `bd` protocol.
 
 ---
@@ -440,12 +441,12 @@ CREATE VIEW blocked_issues AS
 
 dolt:
   mode: server
-  shared-server: true
+  shared-server: false
   host: 127.0.0.1
-  port: 3308
+  port: 3307
   user: root
   database: mcb
-  auto-commit: off
+  auto-commit: "on"
 
 # no-auto-import: false
 
@@ -479,7 +480,7 @@ dolt:
 ```json
 {
   "backend": "dolt",
-  "mode": "shared-server",
+  "mode": "server",
   "database": "mcb"
 }
 ```
@@ -983,7 +984,7 @@ ORDER BY due_at ASC;
 
 ### Database locked
 
-- Confirm the repo is using shared-server with `bd dolt show`.
+- Confirm the repo is using the town Dolt server (127.0.0.1:3307) with `bd dolt show`.
 - Check the active database and issue count with `bd context --json` and `bd status --json`.
 - Freeze writers, preserve `.beads/`, and recover with `bd backup restore` or `bd bootstrap` after a dry run.
 

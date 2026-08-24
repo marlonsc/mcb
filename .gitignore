@@ -213,15 +213,14 @@ secrets.yml
 .beads/.*
 !.beads/config.yaml
 .beads/proxieddb/
+.beads.gate.lock
 .dolt/
 *.db
 .beads-credential-key
 .worktrees/
 legado/
-.beads.gate.lock
-*.gate.lock*
 
-# Beads ledger identity (all Beads-participating profiles; see mro-9wv8, mro-cdzxf)
+# Beads ledger identity (workspace-root and standalone; see mro-9wv8)
 !.beads/metadata.json
 
 # codegen module-standardizer reject artifacts (ADR-005 §9)

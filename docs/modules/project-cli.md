@@ -120,12 +120,12 @@ One JSON object per line:
 
 dolt:
   mode: server
-  shared-server: true
+  shared-server: false
   host: 127.0.0.1
-  port: 3308
+  port: 3307
   user: root
   database: mcb
-  auto-commit: off
+  auto-commit: "on"
 ```
 
 ## Git Integration
@@ -133,7 +133,7 @@ dolt:
 1. **Dolt remote sync**: `bd dolt push` / `bd dolt pull` when a remote is configured
 2. **Full backup**: `bd backup init <path-or-url>` + `bd backup sync`
 3. **JSONL**: `bd export` / `bd import` only for migration/interchange, not normal sync
-4. **Multi-agent**: shared-server mode serializes concurrent writers through one Dolt SQL server
+4. **Multi-agent**: `bd` connects to the Gas Town town Dolt server at `127.0.0.1:3307`, which serializes concurrent writers
 
 ## Performance
 
@@ -187,7 +187,7 @@ CREATE INDEX idx_labels_label ON labels(label);
 
 - **Daemon mode** (default): Background RPC server via Unix socket
 - **No-daemon mode**: Direct database access
-- **Legacy no-db mode**: historical only; do not use for current shared-server coordination
+- **Legacy no-db mode**: historical only; do not use for current town-server coordination
 - **Files**: daemon.pid, daemon.lock, daemon.log, bd.sock
 
 ## Advanced Features

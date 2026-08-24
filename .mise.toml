@@ -9,18 +9,27 @@
 # === SECTION: tools (managed) ===
 # Source: config:python_version, config:codegen.scaffold.project.dev native toolchain floors
 #         (kubectl_version, helm_version, kind_version, taplo_version, ast_grep_version,
-#          gitleaks_version, tokei_version, beads.selector, beads.version)
+#          gitleaks_version, tokei_version, qlty_version, beads.selector, beads.version)
 [tools]
 python = "3.13"
+# uv is deliberately absent: codegen.yaml declares it "supplied by the caller
+# environment and deliberately not pinned", and no `uv_version` exists on the
+# toolchain SSOT to render. Emitting one made every conform run fail with
+# "'uv_version' is undefined". The minimum version is enforced where it is
+# actually observable instead — tool_bootstrap_recipe.j2 compares the running
+# `uv --version` against its floor during `make setup`.
 # Native toolchain (single source: Infra.codegen.toolchain in codegen.yaml).
-kubectl = "1.32.0"
-helm = "3.19.4"
-kind = "0.31.0"
-taplo = "0.10.0"
-ast-grep = "0.45.0"
-gitleaks = "8.30.1"
-tokei = "14.0.0"
+kubectl = "1.32"
+helm = "3.19"
+kind = "0.31"
+taplo = "0.10"
+ast-grep = "0.45"
+gitleaks = "8.30"
+tokei = "14.0"
+# qlty ships no mise registry alias; the github backend selector is the only
+# resolvable form (bare 'qlty' fails mise install: 'not found in registry').
+"github:qltysh/qlty" = "0.642"
 # Go runtime for the Go projects in this workspace.
-go = "1.26.5"
-"github:marlon-costa-dc/beads" = "1.1.2-dc1"
+go = "1.26"
+"go:github.com/marlon-costa-dc/beads/cmd/bd" = "latest"
 # End SECTION: tools
