@@ -9,8 +9,8 @@
 |---------|----|
 |Entity (Project)|[`crates/mcb-domain/src/entities/project.rs`](../../crates/mcb-domain/src/entities/project.rs)|
 |Entity (Issue)|[`crates/mcb-domain/src/entities/issue.rs`](../../crates/mcb-domain/src/entities/issue.rs)|
-|Repository (Project)|[`crates/mcb-providers/src/database/sqlite/project_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/project.rs)|
-|Repository (Issue)|[`crates/mcb-providers/src/database/sqlite/issue_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/issues.rs)|
+|Repository (Project)|[`crates/mcb-providers/src/database/sqlite/project_repository.rs`](../../crates/mcb-providers/src/database/sqlite/project_repository.rs)|
+|Repository (Issue)|[`crates/mcb-providers/src/database/sqlite/issue_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/issue_entity_repository.rs)|
 |ADR|[`ADR-047`](../adr/047-project-architecture.md)|
 |CLI Guide|[`project-cli.md`](./project-cli.md)|
 

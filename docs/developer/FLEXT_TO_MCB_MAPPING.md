@@ -6,7 +6,7 @@
 
 **Sources:**
 
-- FLEXT: the published `flext-sh` repositories on branch `0.12.0-dev` (`flext-core`, `flext-cli`, `flext-tests`), consumed as pinned git dependencies — never a local checkout
+- FLEXT: `/home/marlonsc/flext/AGENTS.md`, `flext-core/README.md`, `flext-cli/README.md`, `flext-tests/README.md`, `.agents/skills/flext-*`
 - MCB: `AGENTS.md`, `Makefile`, `Cargo.toml`, `docs/architecture/PATTERNS.md`
 
 ## High-level analogy
@@ -254,4 +254,4 @@ static OPENAI: EmbeddingProviderEntry = EmbeddingProviderEntry {
 - `.agents/skills/mcb-patterns/SKILL.md` — central MCB index
 - `docs/architecture/PATTERNS.md` — detailed MCB patterns
 - `docs/developer/CONTRIBUTING.md` — MCB contribution guide
-- <https://github.com/flext-sh/flext-core/tree/0.12.0-dev> — FLEXT canonical law on the published branch
+- `/home/marlonsc/flext/AGENTS.md` — FLEXT canonical law

@@ -92,7 +92,7 @@ The v0.3.0 release is a full platform rebuild on SeaQL (SeaORM, SeaQuery, SeaSch
 - [ADR 043: Hybrid Search Engine](phase-9/README.md#adr-043-hybrid-search-engine) — RRF fusion algorithm
 - [ADR 044: Model Selection](phase-9/README.md#adr-044-model-selection) — Embedding and search model choices
 - [ADR 045: Context Versioning](phase-9/README.md#adr-045-context-versioning) — Snapshot and temporal queries
-- [ADR 046: Integration Patterns](046-integration-adr-034-037-policies.md) — MCP tool integration
+- [ADR 046: Integration Patterns](phase-9/README.md#adr-046-integration-patterns) — MCP tool integration
 - [ADR 047: Project Architecture](047-project-architecture.md) — Central Hub and Multi-Dimensional Coordination
 
 ## Archived (Superseded)

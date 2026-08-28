@@ -7,6 +7,12 @@ updates:
       interval: weekly
     open-pull-requests-limit: 5
     labels: [dependencies, github-actions]
+  - package-ecosystem: devcontainers
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    labels: [dependencies, devcontainers]
 
   - package-ecosystem: pip
     directory: /

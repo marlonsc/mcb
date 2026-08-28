@@ -7,11 +7,11 @@ terminated with a semicolon, suitable for piping into sqlite3.
 
 import re
 import sys
-import pathlib
 
 
 def extract_sql(migration_file: str) -> list[str]:
-    content = pathlib.Path(migration_file).read_text()
+    with open(migration_file) as f:
+        content = f.read()
 
     pattern = r'execute_unprepared\(\s*"((?:[^"\\]|\\.)*)"'
     return re.findall(pattern, content, re.DOTALL)

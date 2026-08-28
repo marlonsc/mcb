@@ -7,8 +7,8 @@
 # ledger_prefix is an optional distinct issue-prefix override.
 # Source: dolt server block = flext-infra config/codegen.yaml
 # toolchain.beads.server (machine-wide shared Dolt server facts).
-# Owned ledger config: the workspace root owns this tracker; conform
-# initializes and verifies it against the pinned binary.
+# Routing-only client config: this attached standalone owns no tracker state;
+# bd commands route to the shared ledger below. Local data is never written.
 issue-prefix: "mcb"
 
 # Dolt shared-server connection (machine-wide shared server on :3308).

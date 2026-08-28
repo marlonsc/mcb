@@ -2,32 +2,26 @@
 
 # MCB Project Skills Index
 
-Project-specific ECC skills for the MCB Rust workspace. Load the relevant skill
-before editing code.
-
-The skill files live under `.claude/skills/<name>/SKILL.md`. That tree is
-workstation-local: `.gitignore` excludes `.claude/*`, so the skills are loaded by
-the agent runtime rather than versioned here, and this index names them instead
-of linking to repository paths that do not exist.
+Project-specific ECC skills for the MCB Rust workspace. Load the relevant skill before editing code.
 
 ## Central index
 
-- **`mcb-patterns`** — Central quick reference and skill router.
+- **[mcb-patterns](../../.agents/skills/mcb-patterns/SKILL.md)** — Central quick reference and skill router.
 
 ## Domain skills
 
 | Skill | Use when |
 |-------|----------|
-| `mcb-make-verbs` | Running build, test, lint, validate, ship, or bootstrap commands |
-| `mcb-architecture-layers` | Adding modules, reviewing crate boundaries, or moving responsibilities |
-| `mcb-error-handling` | Writing fallible code paths, choosing `?` vs `.context()` vs `Error::*` |
-| `mcb-import-rules` | Adding imports, resolving cycles, reviewing visibility |
-| `mcb-testing-patterns` | Writing or reviewing tests, fixtures, and test helpers |
-| `mcb-quality-gates` | Validating changes before commit or debugging gate failures |
+| [mcb-make-verbs](../../.agents/skills/mcb-make-verbs/SKILL.md) | Running build, test, lint, validate, ship, or bootstrap commands |
+| [mcb-architecture-layers](../../.agents/skills/mcb-architecture-layers/SKILL.md) | Adding modules, reviewing crate boundaries, or moving responsibilities |
+| [mcb-error-handling](../../.agents/skills/mcb-error-handling/SKILL.md) | Writing fallible code paths, choosing `?` vs `.context()` vs `Error::*` |
+| [mcb-import-rules](../../.agents/skills/mcb-import-rules/SKILL.md) | Adding imports, resolving cycles, reviewing visibility |
+| [mcb-testing-patterns](../../.agents/skills/mcb-testing-patterns/SKILL.md) | Writing or reviewing tests, fixtures, and test helpers |
+| [mcb-quality-gates](../../.agents/skills/mcb-quality-gates/SKILL.md) | Validating changes before commit or debugging gate failures |
 
 ## Coordination skill
 
-- **`orchestrate`** — Multi-step coordinator↔executor loop with beads.
+- **[orchestrate](../../.agents/skills/orchestrate/SKILL.md)** — Multi-step coordinator↔executor loop with beads.
 
 ## Usage
 

@@ -280,6 +280,44 @@ skill-create-output/
 .mcp.json
 CLAUDE.local.md
 
+# BLOCK: machine-local build/editor configuration.
+# These encode one workstation (linker, job counts, cache sizes, editor state)
+# and break every other environment when versioned. Keep them on disk, out of git.
+# Leading slash anchors each rule to the repository root, so test fixtures that
+# legitimately ship their own .cargo/ or editor files stay tracked.
+/.cargo/
+/.vscode/
+/.waza.yaml
+/opencode.jsonc
+
+# BLOCK: tool output. Reports are produced by a gate, never authored.
+# Regenerate with the owning make verb instead of committing a snapshot.
+*.sarif
+*violations*.txt
+build_err.txt
+clippy_output.txt
+validate_output.txt
+test_003_warnings.txt
+staged_files.txt
+pr[0-9]*_comments.txt
+coverage/
+
+# BLOCK: compiled and captured test artifacts
+*.rlib
+/data/vectors/
+/crates/mcb-providers/src/database/sqlite/test_file.txt
+
+# BLOCK: captured runtime logs. tests/mcb.<date> is server stdout, not a test.
+tests/mcb.[0-9]*
+
+# BLOCK: agent/session scratch
+tmp_*.txt
+.beads.gate.lock
+
+# BLOCK: parallel documentation tree. docs/ is the single documentation owner
+# (Law 4). context/ duplicated it and described dill/figment, removed by ADR-050/051.
+/context/
+
 # Tracked managed artifacts
 !.github/ci-template/
 !.github/ci-template/ci.yml
@@ -305,33 +343,9 @@ CLAUDE.local.md
 !.github/workflows/ci-matrix.yml
 !.github/workflows/ci.yml
 !.github/workflows/docs.yml
-!.github/workflows/release.yml
+!.github/workflows/release-binaries.yml
 !sgconfig.yml
-!.vscode/settings.json
 !LICENSE
 !config/
 !config/workspace.yaml
 !custom.mk
-
-# Project-local exceptions (config/workspace.yaml overlay)
-/.archive/
-/.cargo/
-/.vscode/
-/.waza.yaml
-/opencode.jsonc
-*.sarif
-*violations*.txt
-build_err.txt
-clippy_output.txt
-validate_output.txt
-test_003_warnings.txt
-staged_files.txt
-pr[0-9]*_comments.txt
-coverage/
-*.rlib
-/data/vectors/
-/crates/mcb-providers/src/database/sqlite/test_file.txt
-tests/mcb.[0-9]*
-tmp_*.txt
-.beads.gate.lock
-/context/

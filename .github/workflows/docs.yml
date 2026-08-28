@@ -88,7 +88,7 @@ jobs:
           }
 
       # mro-o6h5 (agent: kimi) — include-hidden-files: .reports/ is a dot-dir and
-      # upload-artifact skips hidden paths by default (artifact silently empty).
+      # upload-artifact v4 skips hidden paths by default (artifact silently empty).
       - name: Upload docs reports on failure
         if: failure()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1

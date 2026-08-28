@@ -16,14 +16,18 @@ SPDX-License-Identifier: MIT
 # ///
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
+SCRIPTS = Path(__file__).resolve().parents[1]
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 
-from flext_cli import cli
-from mcb_scripts.core import BaseCommandSettings, get_logger, r
-from mcb_scripts.gitops import summarize
-from mcb_scripts.settings import McbSettings
-from pydantic import Field
+from lib.cli import create_app_with_common_params, register_result_command  # ruff: ignore[module-import-not-at-top-of-file]
+from lib.core import BaseCommandSettings, get_logger, r  # ruff: ignore[module-import-not-at-top-of-file]
+from lib.gitops import GitOpsSummary, summarize  # ruff: ignore[module-import-not-at-top-of-file]
+from lib.settings import McbSettings  # ruff: ignore[module-import-not-at-top-of-file]
+from pydantic import Field  # ruff: ignore[module-import-not-at-top-of-file]
 
 logger = get_logger(__name__)
 
@@ -42,25 +46,13 @@ class GitopsSettings(BaseCommandSettings):
     )
 
 
-# `from __future__ import annotations` defers every annotation to a string, and
-# the CLI facade resolves the model in ITS namespace, where names like Path are
-# absent. Rebuilding here binds them in the module that actually declares them.
-GitopsSettings.model_rebuild()
-
-
-def run(settings: GitopsSettings) -> r[str]:
-    """Discover and validate GitOps manifests.
-
-    Returns the status string rather than the whole summary: the CLI facade
-    serializes a successful result as a JSON value, and GitOpsSummary carries
-    Path and nested report objects that are not JSON values. The summary is
-    still reported in full through the logger below.
-    """
+def run(settings: GitopsSettings) -> r[GitOpsSummary]:
+    """Discover and validate GitOps manifests."""
     k8s_root = settings.root / str(McbSettings().k8s_dir)
     summary_result = summarize(k8s_root)
     if summary_result.failure:
         logger.error(summary_result.error or "gitops discovery failed")
-        return r[str].fail(summary_result.error or "gitops discovery failed")
+        return summary_result
     summary = summary_result.unwrap()
     logger.info(f"GITOPS {summary.status}: {summary.message}")
     if summary.report.total_issues:
@@ -68,26 +60,23 @@ def run(settings: GitopsSettings) -> r[str]:
     for target in summary.targets:
         logger.info(f"{target.kind}\t{target.path}")
     if summary.status not in {"OK", "SKIP"}:
-        return r[str].fail(summary.message)
-    return r[str].ok(summary.status)
+        return r[GitOpsSummary].fail(summary.message)
+    return r[GitOpsSummary].ok(summary)
 
 
 def main() -> None:
     """Entrypoint used by the cosmos-command dispatcher and direct CLI runs."""
-    app = cli.create_app_with_common_params(
+    app = create_app_with_common_params(
         name="check-gitops", help_text="Run MCB GitOps validation discovery."
     )
-    cli.register_result_command(
+    register_result_command(
         app,
         name="run",
         help_text="Discover and validate GitOps manifests.",
         model_cls=GitopsSettings,
         handler=run,
     )
-    result = cli.execute_app(app, prog_name="check-gitops")
-    if result.failure:
-        logger.error(result.error or "cli execution failed")
-        raise SystemExit(1)
+    app()
 
 
 if __name__ == "__main__":

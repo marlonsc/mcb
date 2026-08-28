@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# Installed by `make run WHAT=mcb-hooks`. Tier-2 full gate before push, then
+# delegates to beads (bd) pre-push when present. No bypass (AGENTS.md §3).
+set -euo pipefail
+cd "$(git rev-parse --show-toplevel)"
+make run WHAT=mcb-hook-pre-push
+if command -v bd >/dev/null 2>&1; then
+  exec bd hooks run pre-push "$@"
+fi

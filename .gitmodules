@@ -1,0 +1,2 @@
+# third-party/ submodules were removed; SeaQL/Loco forks are now pinned git
+# dependencies in Cargo.toml. This file is intentionally empty.

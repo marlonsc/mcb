@@ -1,8 +1,8 @@
-"""String utility functions for testing semantic search across languages."""
+"""String utility functions for testing semantic search across languages"""
 
 
 def reverse_string(s: str) -> str:
-    """Reverse a string.
+    """Reverses a string
 
     Args:
         s: The string to reverse
@@ -15,7 +15,7 @@ def reverse_string(s: str) -> str:
 
 
 def count_words(text: str) -> int:
-    """Count the number of words in a text.
+    """Counts the number of words in a text
 
     Args:
         text: The text to analyze
@@ -28,7 +28,7 @@ def count_words(text: str) -> int:
 
 
 def is_palindrome(s: str) -> bool:
-    """Check if a string is a palindrome.
+    """Checks if a string is a palindrome
 
     Args:
         s: The string to check

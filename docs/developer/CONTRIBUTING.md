@@ -258,6 +258,7 @@ make build WHAT=docs ACT=validate QUICK=1
 - [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — System overview
 - [PATTERNS.md](../architecture/PATTERNS.md) — Implementation patterns
 - [FLEXT_TO_MCB_MAPPING.md](./FLEXT_TO_MCB_MAPPING.md) — FLEXT pattern translation for MCB
-- [SKILL_INDEX.md](./SKILL_INDEX.md) — Project ECC skills index
+- [SKILL_INDEX.md](./SKILL_INDEX.md) — Project ECC skills (under `.agents/skills/`) index
 - [ROADMAP.md](./ROADMAP.md) — Project state and roadmap
+- [IMPLEMENTATION_STATUS.md](./IMPLEMENTATION_STATUS.md) — Current state
 - [DEPLOYMENT.md](../operations/DEPLOYMENT.md) — Deployment guide

@@ -8,15 +8,19 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
+import sys
 from pathlib import Path
 
+SCRIPTS = Path(__file__).resolve().parents[2]
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 
-from flext_cli import cli
-from mcb_scripts.core import BaseMcbSettings, get_logger, r
-from mcb_scripts.settings import McbSettings
-from pydantic import Field
+from lib.cli import create_app_with_common_params, register_result_command  # ruff: ignore[module-import-not-at-top-of-file]
+from lib.core import BaseMcbSettings, get_logger, r  # ruff: ignore[module-import-not-at-top-of-file]
+from lib.settings import McbSettings  # ruff: ignore[module-import-not-at-top-of-file]
+from pydantic import Field  # ruff: ignore[module-import-not-at-top-of-file]
 
-from mcb_scripts.docs import utils
+from docs.py import utils  # ruff: ignore[module-import-not-at-top-of-file]
 
 logger = get_logger(__name__)
 
@@ -24,17 +28,11 @@ logger = get_logger(__name__)
 class CheckLinksSettings(BaseMcbSettings):
     """Settings for the broken-link documentation check."""
 
-    root: Path = Field(default=Path(), description="Project root directory")
-
-
-# `from __future__ import annotations` defers every annotation to a string, and
-# the CLI facade resolves the model in ITS namespace, where names like Path are
-# absent. Rebuilding here binds them in the module that actually declares them.
-CheckLinksSettings.model_rebuild()
+    root: Path = Field(default=Path("."), description="Project root directory")
 
 
 def _process_links(
-    links: list[tuple[str, str]], filepath: str, rel_filepath: str, project_root: Path
+    links: list[tuple[str, str]], filepath: str, rel_filepath: str, project_root: str
 ) -> tuple[list[tuple[str, str, str, str]], int]:
     broken_in_file: list[tuple[str, str, str, str]] = []
     checked_in_file = 0
@@ -47,9 +45,9 @@ def _process_links(
         if link.startswith("/"):
             target = os.path.join(project_root, link.lstrip("/"))
         else:
-            target = os.path.normpath(os.path.join(Path(filepath).parent, link))
+            target = os.path.normpath(os.path.join(os.path.dirname(filepath), link))
 
-        if not Path(target).exists():
+        if not os.path.exists(target):
             broken_in_file.append((
                 rel_filepath,
                 text,
@@ -61,7 +59,7 @@ def _process_links(
 
 
 def _check_files(
-    docs_dir: str, project_root: Path
+    docs_dir: str, project_root: str
 ) -> tuple[list[tuple[str, str, str, str]], int, int]:
     broken: list[tuple[str, str, str, str]] = []
     checked_files = 0
@@ -74,7 +72,8 @@ def _check_files(
         checked_files += 1
 
         try:
-            content = Path(filepath).read_text(encoding="utf-8")
+            with open(filepath, encoding="utf-8") as fh:
+                content = fh.read()
         except Exception as e:  # noqa: BLE001
             logger.error(f"Error reading {rel_filepath}: {e}")
             continue
@@ -92,13 +91,13 @@ def _check_files(
 
 def run(settings: CheckLinksSettings) -> r[int]:
     """Check broken internal links in documentation."""
-    project_root = Path(settings.root).resolve()
-    if settings.root == Path():
+    project_root = os.path.abspath(settings.root)
+    if settings.root == Path("."):
         project_root = utils.get_project_root()
 
     docs_dir = os.path.join(project_root, str(McbSettings().docs_dir))
 
-    if not Path(docs_dir).exists():
+    if not os.path.exists(docs_dir):
         return r[int].fail(f"docs directory not found at {docs_dir}")
 
     broken, checked_files, checked_links = _check_files(docs_dir, project_root)
@@ -116,19 +115,17 @@ def run(settings: CheckLinksSettings) -> r[int]:
 
 
 def main() -> None:
-    app = cli.create_app_with_common_params(
+    app = create_app_with_common_params(
         name="check-links", help_text="Check broken internal links in docs."
     )
-    cli.register_result_command(
+    register_result_command(
         app,
         name="run",
         help_text="Check broken internal links in documentation.",
         model_cls=CheckLinksSettings,
         handler=run,
     )
-    result = cli.execute_app(app, prog_name="check-links")
-    if result.failure:
-        raise SystemExit(1)
+    app()
 
 
 if __name__ == "__main__":

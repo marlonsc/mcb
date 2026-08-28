@@ -598,7 +598,7 @@ Run `make check WHAT=validate` to check compliance. The mcb-validate crate enfor
 Provider port traits are defined in `mcb-domain/src/ports/providers/`:
 
 | Trait | Purpose |
-| ------- |  |
+| ------- | | --------- |
 | `EmbeddingProvider` | Generate vector embeddings from text |
 | `VectorStoreProvider` | Store and search vector embeddings |
 | `CacheProvider` | Caching abstraction |
@@ -2359,7 +2359,7 @@ impl BackupManager {
 - [ADR-043: Hybrid Search Engine](../adr/phase-9/README.md#adr-043-hybrid-search-engine)
 - [ADR-044: Model Selection](../adr/phase-9/README.md#adr-044-model-selection)
 - [ADR-045: Context Versioning](../adr/phase-9/README.md#adr-045-context-versioning)
-- [ADR-046: Integration Patterns](../adr/046-integration-adr-034-037-policies.md)
+- [ADR-046: Integration Patterns](../adr/phase-9/README.md#adr-046-integration-patterns)
 - [ADR-047: Project Architecture](../adr/047-project-architecture.md)
 
 ### See Also

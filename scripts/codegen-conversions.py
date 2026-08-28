@@ -482,27 +482,26 @@ def gen_conversion_file(name: str, entity: EntityConfig) -> str:
     convert = entity.get("convert", {})
 
     lines = [GENERATED_HEADER, ""]
-    lines.extend((
-        "use sea_orm::ActiveValue;",
-        "",
-        f"use crate::database::seaorm::entities::{entity_module};",
-        f"use {main_import};",
-    ))
+    lines.append("use sea_orm::ActiveValue;")
+
+    lines.append("")
+    lines.append(f"use crate::database::seaorm::entities::{entity_module};")
+    lines.append(f"use {main_import};")
     lines.extend(f"use {imp};" for imp in extra_imports)
 
     from_model_fields = [
         gen_from_model_field(f, convert) for f in all_fields_ordered(entity)
     ]
 
-    lines.extend((
-        "",
-        f"impl From<{entity_module}::Model> for {domain_type} {{",
-        f"    fn from(m: {entity_module}::Model) -> Self {{",
-        "        Self {",
-    ))
+    lines.append("")
+    lines.append(f"impl From<{entity_module}::Model> for {domain_type} {{")
+    lines.append(f"    fn from(m: {entity_module}::Model) -> Self {{")
+    lines.append("        Self {")
     for fline in from_model_fields:
         lines.append(fline)
-    lines.extend(("        }", "    }", "}"))
+    lines.append("        }")
+    lines.append("    }")
+    lines.append("}")
 
     to_active_fields = []
     for f in all_fields_ordered(entity):
@@ -513,15 +512,15 @@ def gen_conversion_file(name: str, entity: EntityConfig) -> str:
         f"            {ns_field}: ActiveValue::NotSet," for ns_field in not_set
     )
 
-    lines.extend((
-        "",
-        f"impl From<{domain_type}> for {entity_module}::ActiveModel {{",
-        f"    fn from(e: {domain_type}) -> Self {{",
-        "        Self {",
-    ))
+    lines.append("")
+    lines.append(f"impl From<{domain_type}> for {entity_module}::ActiveModel {{")
+    lines.append(f"    fn from(e: {domain_type}) -> Self {{")
+    lines.append("        Self {")
     for fline in to_active_fields:
         lines.append(fline)
-    lines.extend(("        }", "    }", "}"))
+    lines.append("        }")
+    lines.append("    }")
+    lines.append("}")
 
     test_block = gen_test_block(name, entity)
     if test_block:
@@ -537,7 +536,7 @@ def gen_mod_rs(names: list[str]) -> str:
 
 
 def main() -> None:
-    with Path(CONFIG_PATH).open("rb") as f:
+    with open(CONFIG_PATH, "rb") as f:
         config = TypeAdapter(dict[str, EntityConfig]).validate_python(
             tomllib.load(f), experimental_allow_partial=True
         )
