@@ -254,4 +254,4 @@ static OPENAI: EmbeddingProviderEntry = EmbeddingProviderEntry {
 - `.agents/skills/mcb-patterns/SKILL.md` — central MCB index
 - `docs/architecture/PATTERNS.md` — detailed MCB patterns
 - `docs/developer/CONTRIBUTING.md` — MCB contribution guide
-- `/home/marlonsc/flext/AGENTS.md` — FLEXT canonical law
+- `https://github.com/flext-sh/flext-infra/blob/0.12.0-dev/AGENTS.md` — FLEXT canonical law

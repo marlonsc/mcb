@@ -57,14 +57,14 @@ READ_ONLY_CASES = (
 # APPLY=N on the make command line.
 BLOCKED_CASES = (
     SurfaceCase(
-        "run mcb-hooks blocked",
-        ("run", "WHAT=mcb-hooks"),
+        "gen agent-pointers blocked",
+        ("gen", "WHAT=agent-pointers"),
         expected_rc=2,
         must_contain=("requires APPLY=Y",),
     ),
     SurfaceCase(
-        "gen agent-pointers blocked",
-        ("gen", "WHAT=agent-pointers"),
+        "gen apply blocked",
+        ("gen", "WHAT=apply"),
         expected_rc=2,
         must_contain=("requires APPLY=Y",),
     ),

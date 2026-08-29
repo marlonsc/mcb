@@ -35,7 +35,7 @@ EMBEDDING_PROVIDERS  →    Resolver → init_app() →    Handle (RwLock)
 ```
 
 - **Bootstrap** ([`app.rs`](../../crates/mcb-infrastructure/src/config/app.rs)): Application initialization.
-- **Handles** ([`mod.rs`](../../crates/mcb-infrastructure/src/services/mod.rs)): RwLock wrappers for runtime switching.
+- **Use-case services** ([`mod.rs`](../../crates/mcb-infrastructure/src/services/mod.rs)): `AgentSessionServiceImpl`, `ContextServiceImpl`, `IndexingServiceImpl`, `MemoryServiceImpl`, `SearchServiceImpl` — constructor-injected via linkme registries.
 - **Composition Root** ([`app.rs`](../../crates/mcb-infrastructure/src/config/app.rs)): AppContext manual composition root configuration.
 
 ---

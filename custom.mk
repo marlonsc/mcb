@@ -87,7 +87,6 @@ _custom_gen_agent-pointers:
 
 # Git hooks: Tier-1 pre-commit and Tier-2 pre-push gates.
 _custom_run_mcb-hooks:
-	$(call _require_apply)
 	@$(SELF_MAKE) check WHAT=all
 
 _custom_check_surface:

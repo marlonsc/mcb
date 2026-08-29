@@ -17,7 +17,7 @@ repository:
   checkout: independent
   codegen: conform
   package: true
-  editable: false
+  editable: true
   read_only: false
 project:
   package_name: "mcb_scripts"

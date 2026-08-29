@@ -19,7 +19,7 @@
 - Most restrictive type that compiles
 - No `Any`, bare `object`, or unchecked casts
 - No Rust suppression attributes (`#[allow(...)]` for denied lints) or Python suppression
-  directives (`# type: ignore`, blank `# noqa`) in production code
+  directives (`# type: ignore`, blanket `# noqa`) in production code
 
 ## Code Style
 
