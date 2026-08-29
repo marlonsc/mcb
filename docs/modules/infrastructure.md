@@ -34,9 +34,9 @@ EMBEDDING_PROVIDERS  →    Resolver → init_app() →    Handle (RwLock)
                                                    (switch via API)
 ```
 
-- **Bootstrap** ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/di/bootstrap.rs)): Application initialization.
-- **Handles** ([`handles.rs`](../../crates/mcb-infrastructure/src/di/handles.rs)): RwLock wrappers for runtime switching.
-- **Composition Root** ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/di/bootstrap.rs)): AppContext manual composition root configuration.
+- **Bootstrap** ([`app.rs`](../../crates/mcb-infrastructure/src/config/app.rs)): Application initialization.
+- **Handles** ([`mod.rs`](../../crates/mcb-infrastructure/src/services/mod.rs)): RwLock wrappers for runtime switching.
+- **Composition Root** ([`app.rs`](../../crates/mcb-infrastructure/src/config/app.rs)): AppContext manual composition root configuration.
 
 ---
 
@@ -46,7 +46,7 @@ Type-safe, layered configuration management with environment variable overrides.
 
 ### Configuration Structure
 
-- **Types** ([`types.rs`](../../crates/mcb-infrastructure/src/config/types.rs)): Hierarchical structures (`AppConfig`, `ServerConfig`, `AuthConfig`).
+- **Types** ([`infrastructure.rs`](../../crates/mcb-infrastructure/src/config/infrastructure.rs)): Hierarchical structures (`AppConfig`, `ServerConfig`, `AuthConfig`).
 - **Loader** ([`loader.rs`](../../crates/mcb-infrastructure/src/config/loader.rs)): Multi-source loading (Environment + `.toml`).
 
 👉 **Canonical Env Var Matrix**: [`ENVIRONMENT_VARIABLES.md`](../configuration/ENVIRONMENT_VARIABLES.md)
@@ -55,10 +55,9 @@ Type-safe, layered configuration management with environment variable overrides.
 
 ## Shared Technical Areas
 
-- [`cache/`](../../crates/mcb-infrastructure/src/cache/) - Shared caching infrastructure.
-- [`logging/`](../../crates/mcb-infrastructure/src/logging/) - Contextual logging (Tracing/OpenTelemetry).
+- [`logging.rs`](../../crates/mcb-infrastructure/src/logging.rs) - Contextual logging (Tracing/OpenTelemetry).
 - [`crypto/`](../../crates/mcb-infrastructure/src/crypto/) - AES-256 and SHA-256 utilities.
-- [`health.rs`](../../crates/mcb-infrastructure/src/health.rs) - System health check orchestration.
+- [`health.rs`](../../crates/mcb-infrastructure/src/routing/health.rs) - System health check orchestration.
 
 ## File Structure
 

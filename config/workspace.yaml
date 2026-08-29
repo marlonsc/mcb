@@ -16,7 +16,7 @@ repository:
   state: active
   checkout: independent
   codegen: conform
-  package: false
+  package: true
   editable: false
   read_only: false
 project:

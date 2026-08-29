@@ -3,4 +3,4 @@
 # handler in custom.mk. No bypass — fix the cause (AGENTS.md §3).
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
-exec make run WHAT=mcb-hook-pre-commit
+exec make run WHAT=mcb-hooks

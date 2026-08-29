@@ -74,12 +74,21 @@ _custom_check_guard:
 	@bash scripts/lib/mcb.sh guard
 
 _custom_check_gitops:
-	@$(UV_RUN) python scripts/check/gitops.py run
+	@$(UV_RUN) python scripts/check/gitops.py
 
 
 _custom_check_audit:
 	@bash scripts/lib/mcb.sh run cargo audit
 
+
 _custom_gen_agent-pointers:
 	@if [ "$(CHECK)" != "1" ] && [ "$(APPLY)" != "Y" ]; then printf 'ERROR: this action requires APPLY=Y\n' >&2; exit 2; fi
 	@$(UV_RUN) python scripts/lib/agent_pointers.py $(if $(filter 1,$(CHECK)),--check,)
+
+# Git hooks: Tier-1 pre-commit and Tier-2 pre-push gates.
+_custom_run_mcb-hooks:
+	$(call _require_apply)
+	@$(SELF_MAKE) check WHAT=all
+
+_custom_check_surface:
+	@$(UV_RUN) python scripts/check/surface.py

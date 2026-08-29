@@ -91,7 +91,7 @@ Events published through the `EventPublisher` interface:
 | [`LanguageChunkingProvider`](../../crates/mcb-domain/src/ports/providers/language_chunking.rs) | Language-specific AST parsing | 13 tree-sitter processors |
 | [`VcsProvider`](../../crates/mcb-domain/src/ports/providers/vcs.rs) | `clone`, `fetch`, `branches`, `commits` | git2 v0.20 |
 | [`CryptoProvider`](../../crates/mcb-domain/src/ports/providers/crypto.rs) | Encryption/decryption | AES-256-GCM, Argon2 |
-| [`CacheProvider`](../../crates/mcb-domain/src/ports/providers/cache.rs) | Distributed caching with TTL | Moka, Redis |
+| [`CacheProvider`](../../crates/mcb-domain/src/utils/mod.rs) | Cache configuration and resolution | Moka, Redis |
 | [`ProjectDetectionProvider`](../../crates/mcb-domain/src/ports/providers/project_detection.rs) | Detect project type from manifests | Cargo, npm, Python, Go, Maven |
 
 <a name="repository-ports"></a>
@@ -100,13 +100,13 @@ Events published through the `EventPublisher` interface:
 | Port | Purpose | Implementation Location |
 | ------ | --------- | ------------------------ |
 | `ChunkRepository` | Persistence of AST-parsed code chunks and search statistics | [`mcb-providers`](../../crates/mcb-providers/src/lib.rs) |
-| `MemoryRepository` | Multi-tenant observation storage with FTS5 lexical search capabilities | [`memory_repository.rs`](../../crates/mcb-providers/src/database/sqlite/memory_repository.rs) |
-| `AgentRepository` | Composite management of **Agent Sessions**, **Delegations**, **Tool Calls**, and **Checkpoints** | [`agent_repository.rs`](../../crates/mcb-providers/src/database/sqlite/agent_repository.rs) |
-| `ProjectRepository` | Persistence of **Project** root entities (multi-tenant boundary) | [`project_repository.rs`](../../crates/mcb-providers/src/database/sqlite/project_repository.rs) |
-| `VcsEntityRepository` | Composite management of **Repositories**, **Branches**, **Worktrees**, and **Agent-Worktree Assignments** | [`vcs_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/vcs_entity_repository.rs) |
-| `PlanEntityRepository` | Persistence for **Plans**, **Versions**, and **Reviews** (Execution planning) | [`plan_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/plan_entity_repository.rs) |
-| `IssueEntityRepository` | Composite management of **Issues**, **Comments**, **Labels**, and **Label Assignments** | [`issue_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/issue_entity_repository.rs) |
-| `OrgEntityRepository` | Composite management of **Organizations**, **Users**, **Teams**, and **API Keys** | [`org_entity_repository.rs`](../../crates/mcb-providers/src/database/sqlite/org_entity_repository.rs) |
+| `MemoryRepository` | Multi-tenant observation storage with FTS5 lexical search capabilities | [`memory.rs`](../../crates/mcb-domain/src/ports/repositories/memory.rs) |
+| `AgentRepository` | Composite management of **Agent Sessions**, **Delegations**, **Tool Calls**, and **Checkpoints** | [`agent.rs`](../../crates/mcb-providers/src/database/seaorm/repos/agent.rs) |
+| `ProjectRepository` | Persistence of **Project** root entities (multi-tenant boundary) | [`project.rs`](../../crates/mcb-providers/src/database/seaorm/repos/project.rs) |
+| `VcsEntityRepository` | Composite management of **Repositories**, **Branches**, **Worktrees**, and **Agent-Worktree Assignments** | [`vcs.rs`](../../crates/mcb-providers/src/database/seaorm/repos/vcs.rs) |
+| `PlanEntityRepository` | Persistence for **Plans**, **Versions**, and **Reviews** (Execution planning) | [`plans.rs`](../../crates/mcb-providers/src/database/seaorm/repos/plans.rs) |
+| `IssueEntityRepository` | Composite management of **Issues**, **Comments**, **Labels**, and **Label Assignments** | [`issues.rs`](../../crates/mcb-providers/src/database/seaorm/repos/issues.rs) |
+| `OrgEntityRepository` | Composite management of **Organizations**, **Users**, **Teams**, and **API Keys** | [`org.rs`](../../crates/mcb-providers/src/database/seaorm/repos/org.rs) |
 
 <a name="service-ports"></a>
 ### Service Ports
@@ -255,7 +255,7 @@ crates/mcb-domain/src/
 
 | Utility | File | Purpose |
 | ------- | ---- | ------- |
-| **Test Utils** | [`test_utils.rs`](../../crates/mcb-domain/src/test_utils.rs) | Shared domain specimen creation (Projects, Phases, Agents) |
+| **Test Utils** | [`utils/tests/mod.rs`](../../crates/mcb-domain/src/utils/tests/mod.rs) | Shared domain specimen creation (Projects, Phases, Agents) |
 
 ---
 

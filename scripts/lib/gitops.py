@@ -269,8 +269,10 @@ def _render_target(target: GitOpsTarget) -> str | None:
         result = subprocess.run(
             cmd, capture_output=True, text=True, check=False, timeout=60
         )
-    except FileNotFoundError:
-        logger.warning(f"{target.kind} CLI not installed; skipping {target.path}")
+    except (FileNotFoundError, PermissionError):
+        logger.warning(
+            f"{target.kind} CLI not available or not executable; skipping {target.path}"
+        )
         return None
     except subprocess.TimeoutExpired:
         logger.warning(f"{target.kind} render timed out for {target.path}")

@@ -6,14 +6,20 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import sys
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
+from pathlib import Path
 
-from flext_core import p
-from lib.core import r
+SCRIPTS = Path(__file__).resolve().parents[1]
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
 
-from qlty.model import SarifIssue, Severity
-from qlty.strategies import get_strategy
+from flext_core import p  # noqa: E402
+from lib.core import r  # noqa: E402
+
+from qlty.model import SarifIssue, Severity  # noqa: E402
+from qlty.strategies import get_strategy  # noqa: E402
 
 
 @dataclass

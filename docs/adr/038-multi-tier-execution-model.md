@@ -461,7 +461,7 @@ OR at any point:
 - Executing → Verifying: Agents completed (or timeout)
 - Verifying → AwaitingMerge: All policy checks pass (tests, reviews, security scans)
 - AwaitingMerge → Merged: (can be skipped if auto-merge enabled)
-- - → Failed: At any point if error or operator rejection
+- → Failed: At any point if error or operator rejection
 
 #### 2.3 OperatorState (Decision Loop)
 

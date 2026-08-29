@@ -2,7 +2,7 @@
 
 ## Identity
 - **Name**: Memory Context Browser (MCB)
-- **Version**: 0.3.2
+- **Version**: 0.4.0
 - **Repository**: https://github.com/marlonsc/mcb
 - **License**: MIT
 - **Author**: Marlon Costa <marlonsc@gmail.com>

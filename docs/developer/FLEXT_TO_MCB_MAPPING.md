@@ -6,7 +6,7 @@
 
 **Sources:**
 
-- FLEXT: `/home/marlonsc/flext/AGENTS.md`, `flext-core/README.md`, `flext-cli/README.md`, `flext-tests/README.md`, `.agents/skills/flext-*`
+- FLEXT: [`AGENTS.md`](https://github.com/marlonsc/flext/blob/main/AGENTS.md), `flext-core/README.md`, `flext-cli/README.md`, `flext-tests/README.md`, `.agents/skills/flext-*`
 - MCB: `AGENTS.md`, `Makefile`, `Cargo.toml`, `docs/architecture/PATTERNS.md`
 
 ## High-level analogy

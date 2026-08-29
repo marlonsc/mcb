@@ -15,7 +15,8 @@
 ## Type Safety
 - Most restrictive type that compiles
 - No `Any`, bare `object`, or unchecked casts
-- No suppression directives (`# type: ignore`, blanket `# noqa`)
+- No Rust suppression attributes (`#[allow(...)]` for denied lints) or Python suppression
+  directives (`# type: ignore`, blank `# noqa`) in production code
 
 ## Code Style
 - Source files should stay under ~200 lines; split modules before growing
@@ -31,9 +32,9 @@
 - No exceptions without explicit ADR
 
 ## Testing
-- Unit tests: `make test SCOPE=unit`
-- Integration tests: `make test SCOPE=integration`
-- Doctests: `make test SCOPE=doc`
+- Unit tests: `make test WHAT=unit`
+- Integration tests: `make test WHAT=integration`
+- Doctests: `make test WHAT=doc`
 - Use `mockall` for mocking, `rstest` for parameterized tests
 
 ## Documentation

@@ -6,15 +6,23 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 from typing import NamedTuple
 
-import typer
 from flext_core import FlextResult, p
 from pydantic import BaseModel
 
-from lib.cli import create_app_with_common_params, register_result_command
-from lib.logger import get_logger
+SCRIPTS = Path(__file__).resolve().parents[1]
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+from lib.cli import (  # noqa: E402
+    create_app_with_common_params,
+    register_result_command,
+    run_app,
+)
+from lib.logger import get_logger  # noqa: E402
 
 logger = get_logger(__name__)
 
@@ -100,7 +108,7 @@ def render_all() -> dict[str, str]:
 def sync(root: Path, *, check: bool) -> SyncResult:
     agents = root / "AGENTS.md"
     if not agents.is_file():
-        raise FileNotFoundError(f"missing SSOT: {agents}")
+        raise FileNotFoundError(f"missing SSOT: {agents}")  # noqa: TRY003
 
     changed_paths: list[str] = []
     for relative_path, expected in render_all().items():
@@ -142,7 +150,7 @@ def main() -> None:
         model_cls=AgentPointerParams,
         handler=generate,
     )
-    typer.main.get_command(app)()
+    run_app(app)
 
 
 if __name__ == "__main__":

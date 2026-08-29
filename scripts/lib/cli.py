@@ -39,12 +39,14 @@ def register_result_command[P: BaseModel, T](
         if getattr(field_info, "exclude", None) is True:
             continue
         annotation = field_info.annotation or str
-        default = (
-            ...
-            if field_info.is_required()
-            else field_info.get_default(call_default_factory=True)
-        )
-        option = typer.Option(default, help=field_info.description)
+        if field_info.is_required():
+            option = typer.Option(..., help=field_info.description)
+        elif field_info.default_factory is not None:
+            option = typer.Option(
+                default_factory=field_info.default_factory, help=field_info.description
+            )
+        else:
+            option = typer.Option(field_info.default, help=field_info.description)
         parameters.append(
             inspect.Parameter(
                 field_name,
@@ -59,7 +61,6 @@ def register_result_command[P: BaseModel, T](
         params = model_cls.model_validate(kwargs)
         result = handler(params)
         if result.failure:
-        if result.failure:
             typer.echo(f"Error: {result.error}", err=True)
             raise typer.Exit(code=1)
         if success_message is not None:
@@ -70,4 +71,15 @@ def register_result_command[P: BaseModel, T](
     app.command(name=name, help=help_text)(command)
 
 
-__all__ = ["create_app_with_common_params", "register_result_command"]
+def run_app(app: typer.Typer) -> None:
+    """Invoke a Typer app via the shared dispatcher.
+
+    Uses ``typer.main.get_command`` so that single-command apps retain their
+    command-group structure (avoiding Typer's flattening behaviour that would
+    reject the subcommand name as an unexpected positional argument).  This
+    keeps entrypoint scripts free of a direct ``import typer``.
+    """
+    typer.main.get_command(app)()
+
+
+__all__ = ["create_app_with_common_params", "register_result_command", "run_app"]

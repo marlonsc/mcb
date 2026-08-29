@@ -7,19 +7,28 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import fnmatch
+import sys
 from pathlib import Path
 
-import typer
 from flext_core import p
-from lib.cli import create_app_with_common_params, register_result_command
-from lib.core import get_logger, r
-from lib.settings import McbSettings
 from pydantic import BaseModel, Field
 
-from qlty.model import SarifIssue, Severity
-from qlty.parser import parse_sarif_file
-from qlty.report import AnalysisReport, analyze_issues
-from qlty.runner import run_qlty_check, run_qlty_smells
+SCRIPTS = Path(__file__).resolve().parents[1]
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+
+from lib.cli import (  # noqa: E402
+    create_app_with_common_params,
+    register_result_command,
+    run_app,
+)
+from lib.core import get_logger, r  # noqa: E402
+from lib.settings import McbSettings  # noqa: E402
+
+from qlty.model import SarifIssue, Severity  # noqa: E402
+from qlty.parser import parse_sarif_file  # noqa: E402
+from qlty.report import AnalysisReport, analyze_issues  # noqa: E402
+from qlty.runner import run_qlty_check, run_qlty_smells  # noqa: E402
 
 logger = get_logger(__name__)
 
@@ -264,7 +273,7 @@ def main() -> None:
         model_cls=QltyParams,
         handler=analyze,
     )
-    typer.main.get_command(app)()
+    run_app(app)
 
 
 if __name__ == "__main__":

@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[3]
 MODULE_PATH = ROOT / "scripts" / "lib" / "agent_pointers.py"
 SPEC = importlib.util.spec_from_file_location("mcb_agent_pointers", MODULE_PATH)
 if SPEC is None or SPEC.loader is None:
-    raise RuntimeError(f"failed to load module spec for {MODULE_PATH}")
+    raise RuntimeError(f"failed to load module spec for {MODULE_PATH}")  # noqa: TRY003
 agent_pointers = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(agent_pointers)
 

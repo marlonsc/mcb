@@ -51,8 +51,8 @@ Enforces layer boundaries and dependency direction.
 | Rule ID | Name | Description | Source |
 | ------- | ---- | ----------- | ------ |
 | `CA001` | Domain Independence | Domain crate must not depend on any internal crates | [`CA001_domain-independence.yml`](../../crates/mcb-validate/rules/clean-architecture/CA001_domain-independence.yml) |
-| `CA003` | Domain Traits Only | Domain ports must be traits, not concrete implementations | [`CA003_domain-traits-only.yml`](../../crates/mcb-validate/src/rules/clean-architecture/CA003_domain-traits-only.yml) |
-| `CA009` | Infra NO Application | Infrastructure cannot depend on Application services | [`CA009_infrastructure-no-application.yml`](../../crates/mcb-validate/src/rules/clean-architecture/CA009_infrastructure-no-application.yml) |
+| `CA003` | Domain Traits Only | Domain ports must be traits, not concrete implementations | [`CA003_domain-traits-only.yml`](../../crates/mcb-validate/rules/clean-architecture/CA003_domain-traits-only.yml) |
+| `CA009` | Infra NO Application | Infrastructure cannot depend on Application services | [`CA009_infrastructure-no-application.yml`](../../crates/mcb-validate/rules/clean-architecture/CA009_infrastructure-no-application.yml) |
 
 ### 📁 Organization (ORG)
 Validates file placement, module structure, and domain purity.
@@ -262,7 +262,7 @@ crates/mcb-validate/src/
 
 - [Architecture Overview](../architecture/ARCHITECTURE.md#validation-layer) - Validation layer details
 - [ADR-013](../adr/013-clean-architecture-crate-separation.md) - Clean Architecture separation
-- [SSOT Principles](./README.md#documentation-principles) - Single Source of Truth
+- [SSOT Principles](./README.md#ssot-verification) - Single Source of Truth
 - [Validators Implementation](./validate.md#rules--validators) - List of active validators
 
 ---
