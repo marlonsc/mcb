@@ -16,6 +16,8 @@ use mcb_domain::value_objects::ids::OperationId;
 /// # Errors
 ///
 /// Fails when job data cannot be loaded.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn jobs_page(Extension(state): Extension<McbState>) -> Result<Response> {
     let idx_ops = state.indexing_ops.get_operations();
     let val_ops = state.validation_ops.get_operations();
