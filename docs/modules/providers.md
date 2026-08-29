@@ -79,13 +79,13 @@ pub trait VectorStoreProvider: Send + Sync {
 
 | Repository | Source | Domain Port | Purpose |
 | ----------- | ------ | ------------- | --------- |
-| MemoryRepo | [`memory_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/observation.rs) | `MemoryRepository` | Observation storage + FTS search |
-| AgentRepo | [`agent_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/agent.rs) | `AgentRepository` | Agent session persistence + query |
-| OrgRepo | [`org_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/org.rs) | `OrgEntityRepository` | Multi-tenant org data |
-| VcsRepo | [`vcs_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/entity_repository.rs) | `VcsEntityRepository` | Repository/branch persistence |
-| PlanRepo | [`plan_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/plans.rs) | `PlanEntityRepository` | Plan version/review persistence |
-| IssueRepo | [`issue_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/issues.rs) | `IssueEntityRepository` | Issue tracking persistence |
-| ProjectRepo | [`project_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/project.rs) | `ProjectRepository` | Project CRUD |
+| MemoryRepo | [`observation.rs`](../../crates/mcb-providers/src/database/seaorm/repos/observation.rs) | `MemoryRepository` | Observation storage + FTS search |
+| AgentRepo | [`agent.rs`](../../crates/mcb-providers/src/database/seaorm/repos/agent.rs) | `AgentRepository` | Agent session persistence + query |
+| OrgRepo | [`org.rs`](../../crates/mcb-providers/src/database/seaorm/repos/org.rs) | `OrgEntityRepository` | Multi-tenant org data |
+| VcsRepo | [`entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/entity_repository.rs) | `VcsEntityRepository` | Repository/branch persistence |
+| PlanRepo | [`plans.rs`](../../crates/mcb-providers/src/database/seaorm/repos/plans.rs) | `PlanEntityRepository` | Plan version/review persistence |
+| IssueRepo | [`issues.rs`](../../crates/mcb-providers/src/database/seaorm/repos/issues.rs) | `IssueEntityRepository` | Issue tracking persistence |
+| ProjectRepo | [`project.rs`](../../crates/mcb-providers/src/database/seaorm/repos/project.rs) | `ProjectRepository` | Project CRUD |
 
 ## Hybrid Search
 

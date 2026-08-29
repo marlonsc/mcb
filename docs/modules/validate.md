@@ -59,8 +59,8 @@ Validates file placement, module structure, and domain purity.
 
 | Rule ID | Name | Description | Source |
 | ------- | ---- | ----------- | ------ |
-| `ORG015` | Adapter Location | Adapters must reside in `crates/mcb-providers/src/` | [`ORG015_adapter-location.yml`](../../crates/mcb-validate/src/rules/organization/ORG015_adapter-location.yml) |
-| `ORG018` | Port Location | Traits/Ports must reside in `crates/mcb-domain/src/ports/` | [`ORG018_port-location.yml`](../../crates/mcb-validate/src/rules/organization/ORG018_port-location.yml) |
+| `ORG015` | Adapter Location | Adapters must reside in `crates/mcb-providers/src/` | [`ORG015_adapter-location.yml`](../../crates/mcb-validate/rules/organization/ORG015_adapter-location.yml) |
+| `ORG018` | Port Location | Traits/Ports must reside in `crates/mcb-domain/src/ports/` | [`ORG018_port-location.yml`](../../crates/mcb-validate/rules/organization/ORG018_port-location.yml) |
 | `ORG020` | Domain Purity | Domain logic cannot leak into infrastructure adapters | [`domain_purity.rs`](../../crates/mcb-validate/src/validators/organization/domain_purity.rs) |
 
 ### ♻️ Refactoring (REF)
