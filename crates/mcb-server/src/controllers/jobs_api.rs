@@ -19,6 +19,8 @@ use mcb_domain::value_objects::ids::OperationId;
 /// # Errors
 ///
 /// Fails when operations cannot be serialized.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn jobs(Extension(state): Extension<McbState>) -> Result<Response> {
     let indexing_ops = state.indexing_ops.get_operations();
     let validation_ops = state.validation_ops.get_operations();

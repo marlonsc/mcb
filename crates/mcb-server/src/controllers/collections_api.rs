@@ -23,6 +23,8 @@ pub struct ChunkQuery {
 /// # Errors
 ///
 /// Returns an empty list if the provider is unavailable (graceful degradation).
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn collections(Extension(state): Extension<McbState>) -> Result<Response> {
     let collections = state
         .vector_store
@@ -41,6 +43,8 @@ pub async fn collections(Extension(state): Extension<McbState>) -> Result<Respon
 /// # Errors
 ///
 /// Returns an empty list if the provider is unavailable (graceful degradation).
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn chunks(
     Extension(state): Extension<McbState>,
     Query(query): Query<ChunkQuery>,

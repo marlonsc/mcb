@@ -13,6 +13,8 @@ use loco_rs::prelude::*;
 /// # Errors
 ///
 /// Returns JSON with degraded status if any health check fails.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn health(Extension(state): Extension<McbState>) -> Result<Response> {
     let embedding_healthy = state.embedding_provider.health_check().await.is_ok();
     let vector_store_healthy = state.vector_store.health_check().await.is_ok();
@@ -41,6 +43,8 @@ pub async fn health(Extension(state): Extension<McbState>) -> Result<Response> {
 /// # Errors
 ///
 /// Returns an error if JSON response serialization fails.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn alive() -> Result<Response> {
     format::json(serde_json::json!({
         "status": "alive",
@@ -52,6 +56,8 @@ pub async fn alive() -> Result<Response> {
 /// # Errors
 ///
 /// Returns an error if JSON response serialization fails.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn ready(Extension(state): Extension<McbState>) -> Result<Response> {
     let ready = state.embedding_provider.health_check().await.is_ok()
         && state.vector_store.health_check().await.is_ok();
@@ -73,6 +79,8 @@ pub async fn ready(Extension(state): Extension<McbState>) -> Result<Response> {
 /// # Errors
 ///
 /// Returns an error if JSON response serialization fails.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn metrics() -> Result<Response> {
     // Prometheus exposition is a future enhancement; the stub returns an empty JSON object.
     format::json(serde_json::json!({}))
