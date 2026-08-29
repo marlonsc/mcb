@@ -17,7 +17,7 @@ from datetime import date, datetime, time
 from pathlib import Path
 from typing import NoReturn
 
-import toml
+import tomllib
 
 from lib.workspace import (
     LOCAL_PYTHON,
@@ -404,8 +404,8 @@ def header_data(path: Path) -> TomlTable:
         msg = f"{path}: sem header workspace-command"
         raise RegistryError(msg)
     try:
-        return normalize_toml_table(toml.loads("\n".join(payload)), path)
-    except toml.TomlDecodeError as exc:
+        return normalize_toml_table(tomllib.loads("\n".join(payload)), path)
+    except tomllib.TOMLDecodeError as exc:
         msg = f"{path}: header TOML invalido: {exc}"
         raise RegistryError(msg) from exc
 
