@@ -209,11 +209,11 @@ wheels = [
 
 [[package]]
 name = "cachetools"
-version = "7.1.7"
+version = "6.2.6"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/70/d2/47e8bc06fe2a06d3f5bdf20f1126ab66c4e99dc48d940e7ba873f7ac7131/cachetools-7.1.7.tar.gz", hash = "sha256:a3e2a00b14d8f8a6b70c1dae7b4685e7ad3bc965c5b42124a2d6ce895da6cf50", size = 40680, upload-time = "2026-08-01T21:20:40.434Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/39/91/d9ae9a66b01102a18cd16db0cf4cd54187ffe10f0865cc80071a4104fbb3/cachetools-6.2.6.tar.gz", hash = "sha256:16c33e1f276b9a9c0b49ab5782d901e3ad3de0dd6da9bf9bcd29ac5672f2f9e6", size = 32363, upload-time = "2026-01-27T20:32:59.956Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e4/d8/767faeda872075724b95dd675466a645f1b92aadcdcf2d1429dcfd76c176/cachetools-7.1.7-py3-none-any.whl", hash = "sha256:ef98ef375ad188819ef2f9b3645e3987f4b8c5b7550e436ad998c2de78296df0", size = 16830, upload-time = "2026-08-01T21:20:38.977Z" },
+    { url = "https://files.pythonhosted.org/packages/90/45/f458fa2c388e79dd9d8b9b0c99f1d31b568f27388f2fdba7bb66bbc0c6ed/cachetools-6.2.6-py3-none-any.whl", hash = "sha256:8c9717235b3c651603fff0076db52d6acbfd1b338b8ed50256092f7ce9c85bda", size = 11668, upload-time = "2026-01-27T20:32:58.527Z" },
 ]
 
 [[package]]
@@ -767,7 +767,7 @@ wheels = [
 [[package]]
 name = "flext-cli"
 version = "0.12.0rc0"
-source = { git = "https://github.com/flext-sh/flext-cli.git?rev=0.12.0-dev#f56a29dd86d749a03e07e831b19b2c8b4f2466c0" }
+source = { git = "https://github.com/flext-sh/flext-cli.git?rev=0.12.0-dev#5abec9f38d3bbcbb4cff5abe079898af677faae7" }
 dependencies = [
     { name = "cachetools" },
     { name = "click" },
@@ -793,8 +793,8 @@ dependencies = [
 
 [[package]]
 name = "flext-core"
-version = "0.12.0rc1"
-source = { git = "https://github.com/flext-sh/flext-core.git?rev=0.12.0-dev#8748e2df021017d017d84efcb20fdada6f92d9e8" }
+version = "0.12.0rc0"
+source = { git = "https://github.com/flext-sh/flext-core.git?rev=0.12.0-dev#3eb567b59fb392e77d28a9f40e02ea6e70f31223" }
 dependencies = [
     { name = "beartype" },
     { name = "cachetools" },
@@ -820,7 +820,7 @@ dependencies = [
 [[package]]
 name = "flext-infra"
 version = "0.12.0rc0"
-source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#532eab82aff8ef68843f4ee2a8c4465979bcd569" }
+source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#4736493059705cca743dec59da112e46bdf51df9" }
 dependencies = [
     { name = "defusedxml" },
     { name = "filelock" },
@@ -842,7 +842,7 @@ dependencies = [
 [[package]]
 name = "flext-tests"
 version = "0.12.0rc0"
-source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#29f4c49313c1fbc73e6a42e1c6f329b30a90d603" }
+source = { git = "https://github.com/flext-sh/flext-tests.git?rev=0.12.0-dev#5c4e6f942d68b0d95475127b978aea7706225e21" }
 dependencies = [
     { name = "docker" },
     { name = "factory-boy" },
