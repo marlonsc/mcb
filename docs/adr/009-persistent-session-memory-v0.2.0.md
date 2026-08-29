@@ -1401,7 +1401,7 @@ Memory search uses hybrid retrieval (BM25 + vector) with Reciprocal Rank Fusion 
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 | Layer | Responsibility | Implementation |
-| ------- | | ---------------- | ---------------- |
+| ------- | ---------------- | ---------------- |
 | Domain | `MemoryRepository` port with `search(query_embedding, filter, limit)` | No engine-specific logic |
 | Application | `MemorySearchService` orchestrates FTS + vector retrieval, performs RRF fusion | Pure business logic |
 | Infrastructure | `SqliteMemoryRepository` implements FTS5 queries + calls VectorStoreProvider | Database-specific |

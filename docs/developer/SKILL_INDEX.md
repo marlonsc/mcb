@@ -6,7 +6,7 @@ Project-specific ECC skills for the MCB Rust workspace. Load the relevant skill 
 
 ## Central index
 
-- **[mcb-patterns](../../.agents/skills/mcb-patterns/SKILL.md)** — Central quick reference and skill router.
+- **`mcb-patterns`** — Central quick reference and skill router.
 
 ## Domain skills
 

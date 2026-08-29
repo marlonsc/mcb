@@ -59,6 +59,8 @@ def register_result_command[P: BaseModel, T](
         params = model_cls.model_validate(kwargs)
         result = handler(params)
         if result.failure:
+        if result.failure:
+            typer.echo(f"Error: {result.error}", err=True)
             raise typer.Exit(code=1)
         if success_message is not None:
             typer.echo(success_message)

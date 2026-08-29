@@ -10,7 +10,7 @@
 | Topic | Document |
 | --- | --- |
 | Layer definitions (Domain → Server) | [ARCHITECTURE.md § Layers](./ARCHITECTURE.md#the-clean-architecture-layers) |
-| Dependency direction & crate graph | [ARCHITECTURE.md § Dependency Rules](./ARCHITECTURE.md#dependency-rules) |
+| Dependency direction & crate graph | [ARCHITECTURE.md § Dependency Rules](./ARCHITECTURE.md#dependency-validation-rules) |
 | Port categories & trait locations | [ARCHITECTURE.md § Port Categories](./ARCHITECTURE.md#port-categories) |
 | Extension patterns (new providers) | [ARCHITECTURE.md § Extensibility](./ARCHITECTURE.md#extensibility---adding-new-providers) |
 | Two-layer DI (linkme → Handle) | [PATTERNS.md § Two-Layer DI](./PATTERNS.md#two-layer-di-linkme--handle-adr-050) |

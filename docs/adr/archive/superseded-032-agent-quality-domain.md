@@ -118,7 +118,7 @@ project_log_decision    → Log decision
 ## Implementation Plan
 
 | Phase | Goal | LOC | Tools |
-| ------- | | ------ | --- | ------- |-- |
+| --- | --- | --- | --- |
 | 1 | Agent Sessions | ~700 | 7 `agent_*` |
 | 2 | Executions | ~400 | 2 `memory_*` |
 | 3 | Quality Gates | ~500 | 3 `quality_*` |

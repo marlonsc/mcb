@@ -91,4 +91,4 @@ class McbSettings(BaseMcbSettings):
     )
 
 
-__all__ = ["BaseMcbSettings", "BaseCommandSettings", "McbSettings"]
+__all__ = ["BaseCommandSettings", "BaseMcbSettings", "McbSettings"]

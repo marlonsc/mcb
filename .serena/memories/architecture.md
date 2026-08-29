@@ -4,7 +4,7 @@
 
 Dependency flow is strictly inward:
 ```
-server → infrastructure → providers → domain → utils
+server → infrastructure → domain → utils (mcb-providers and mcb-validate branch off mcb-domain)
 ```
 
 ### Layer Rules

@@ -11,10 +11,10 @@ make build RELEASE=1    # Release build
 
 ### Test
 ```bash
-make test SCOPE=unit           # Unit tests only
-make test SCOPE=integration    # Integration tests
-make test SCOPE=doc            # Doctests
-make test SCOPE=all            # Full suite
+make test WHAT=unit          # Unit tests only
+make test WHAT=integration   # Integration tests
+make test WHAT=doc           # Doctests
+make test WHAT=all           # Full suite
 ```
 
 ### Quality Gates
@@ -35,7 +35,7 @@ make fix WHAT=all          # All auto-fixes
 
 ### Validation
 ```bash
-make validate              # Run mcb-validate architecture checks
+make check WHAT=validate    # Run mcb-validate architecture checks
 ```
 
 ### Single Test Debugging
@@ -53,11 +53,11 @@ Installed via `make setup WHAT=hooks`:
 
 ## CI Gate
 ```bash
-make ci    # Equivalent to `check WHAT=all`
+make check WHAT=all   # All checks (CI gate)
 ```
 
 ## Architecture Validation
 The `mcb-validate` crate enforces Clean Architecture compliance:
 ```bash
-cargo run -p mcb-validate -- validate
+make check WHAT=validate
 ```

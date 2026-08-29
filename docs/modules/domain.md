@@ -91,7 +91,7 @@ Events published through the `EventPublisher` interface:
 | [`LanguageChunkingProvider`](../../crates/mcb-domain/src/ports/providers/language_chunking.rs) | Language-specific AST parsing | 13 tree-sitter processors |
 | [`VcsProvider`](../../crates/mcb-domain/src/ports/providers/vcs.rs) | `clone`, `fetch`, `branches`, `commits` | git2 v0.20 |
 | [`CryptoProvider`](../../crates/mcb-domain/src/ports/providers/crypto.rs) | Encryption/decryption | AES-256-GCM, Argon2 |
-| [`CacheProvider`](../../crates/mcb-domain/src/ports/providers/cache/provider.rs) | Distributed caching with TTL | Moka, Redis |
+| [`CacheProvider`](../../crates/mcb-domain/src/ports/providers/cache.rs) | Distributed caching with TTL | Moka, Redis |
 | [`ProjectDetectionProvider`](../../crates/mcb-domain/src/ports/providers/project_detection.rs) | Detect project type from manifests | Cargo, npm, Python, Go, Maven |
 
 <a name="repository-ports"></a>

@@ -598,7 +598,7 @@ Run `make check WHAT=validate` to check compliance. The mcb-validate crate enfor
 Provider port traits are defined in `mcb-domain/src/ports/providers/`:
 
 | Trait | Purpose |
-| ------- | | --------- |
+| ------- | --------- |
 | `EmbeddingProvider` | Generate vector embeddings from text |
 | `VectorStoreProvider` | Store and search vector embeddings |
 | `CacheProvider` | Caching abstraction |

@@ -263,7 +263,7 @@ crates/mcb-validate/src/
 - [Architecture Overview](../architecture/ARCHITECTURE.md#validation-layer) - Validation layer details
 - [ADR-013](../adr/013-clean-architecture-crate-separation.md) - Clean Architecture separation
 - [SSOT Principles](./README.md#documentation-principles) - Single Source of Truth
-- [Validators Implementation](./validate.md#validators-validators) - List of active validators
+- [Validators Implementation](./validate.md#rules--validators) - List of active validators
 
 ---
 

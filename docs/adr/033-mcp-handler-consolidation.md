@@ -124,7 +124,7 @@ struct ProjectArgs {
 ### Tool Count Reduction
 
 | Category | Before | After | Reduction |
-| ---------- | -------- | ------- | | ----------- |
+| ---------- | -------- | ------- | ------------ |
 | Index | 4 | 1 | -3 |
 | Search | 3 | 1 | -2 |
 | Validation | 5 | 1 | -4 |
