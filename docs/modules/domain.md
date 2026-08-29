@@ -86,7 +86,7 @@ Events published through the `EventPublisher` interface:
 | Port | Operations | Implementations |
 | ------ | ----------- | ---------------- |
 | [`EmbeddingProvider`](../../crates/mcb-domain/src/ports/providers/embedding.rs) | `embed`, `embed_batch`, `dimensions` | OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic |
-| [`VectorStoreProvider`](../../crates/mcb-domain/src/ports/providers/vector_store/provider.rs) | `create_collection`, `insert`, `search` | EdgeVec, Milvus, Qdrant, Pinecone, Encrypted |
+| [`VectorStoreProvider`](../../crates/mcb-domain/src/ports/providers/vector_store.rs) | `create_collection`, `insert`, `search` | EdgeVec, Milvus, Qdrant, Pinecone, Encrypted |
 | [`HybridSearchProvider`](../../crates/mcb-domain/src/ports/providers/hybrid_search.rs) | BM25 lexical + semantic search | Composite implementation |
 | [`LanguageChunkingProvider`](../../crates/mcb-domain/src/ports/providers/language_chunking.rs) | Language-specific AST parsing | 13 tree-sitter processors |
 | [`VcsProvider`](../../crates/mcb-domain/src/ports/providers/vcs.rs) | `clone`, `fetch`, `branches`, `commits` | git2 v0.20 |
