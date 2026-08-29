@@ -391,7 +391,7 @@ export MCP_PROVIDERS__VECTOR_STORE__DIMENSIONS=768
 
 ## Admin Defaults
 
-See [admin helpers](../../crates/mcb-server/src/admin/web/helpers.rs) for operational defaults and helper constants.
+See the admin helpers (`crates/mcb-server/src/admin/web/helpers.rs`) for operational defaults and helper constants.
 
 | Variable | Default | Description |
 | ---------- | --------- | ------------- |
@@ -596,5 +596,5 @@ redis-cli ping  # Should respond with PONG
 ## See Also
 
 - [Configuration Types](../../crates/mcb-infrastructure/src/config/) - Source code
-- [Admin Helpers](../../crates/mcb-server/src/admin/web/helpers.rs) - Operational settings
+- Admin Helpers (`crates/mcb-server/src/admin/web/helpers.rs`) - Operational settings
 - [CONFIGURATION.md](../CONFIGURATION.md) - General configuration guide

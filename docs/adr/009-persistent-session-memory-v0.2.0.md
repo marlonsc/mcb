@@ -85,6 +85,7 @@ Implement persistent session memory in mcb v0.2.0 by porting Claude-mem's core a
 All memory-related MCP tools use the `memory_` prefix to avoid namespace collisions:
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | ADR Original Name | Canonical Name (v1.0.0) | Rationale |
 | ------------------- | ------------------------- | ----------- |
 | `search` | `memory (action=list, resource=observation)` | Avoids collision with `search (resource=code)` |
@@ -1400,6 +1401,7 @@ Memory search uses hybrid retrieval (BM25 + vector) with Reciprocal Rank Fusion 
 ### Layer Separation (Clean Architecture)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Layer | Responsibility | Implementation |
 | ------- | ---------------- | ---------------- |
 | Domain | `MemoryRepository` port with `search(query_embedding, filter, limit)` | No engine-specific logic |

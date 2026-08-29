@@ -25,12 +25,6 @@ name: CI
     types: [opened, synchronize, reopened, ready_for_review]
 # End SECTION: triggers
 
-# === SECTION: permissions (managed) ===
-# Source: template (minimal read-only permissions)
-permissions:
-  contents: read
-# End SECTION: permissions
-
 # Why: one active run per workflow and branch prevents obsolete CI from consuming runners.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -41,11 +35,17 @@ jobs:
   # Source: template + config:github_actions.*
   ci:
     name: ci
+    # Only the checkout job needs repository contents.
+    permissions:
+      contents: read
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     env:
       CI: Y
+      # The credential helper installed below reads the token from the
+      # environment of every later step, so it is a job-level value.
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -53,14 +53,16 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      - name: Install mise toolchain
-        uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654  # v4.2.4
+      # Codegen refreshes the declared provider baseline before comparison.
+      # actions/checkout deliberately does not persist credentials, so install
+      # the runner's scoped token through the GitHub CLI's Git credential owner.
+      - name: Configure GitHub authentication
+        run: gh auth setup-git
 
-      - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
+      - name: Install mise toolchain
+        uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518  # v4.2.5
         with:
-          enable-cache: true
-          prune-cache: false
+          version: 2026.8.14
       - name: Restore testmon cache
         id: testmon-restore
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
@@ -72,27 +74,37 @@ jobs:
             testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-${{ hashFiles('uv.lock', '**/uv.lock') }}-
             testmon-v1-${{ runner.os }}-${{ runner.arch }}-py3.13-
 
-
-
       - name: setup (blocking)
-        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
 
       - name: gen (blocking)
-        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make gen WHAT=apply APPLY=Y
 
       - name: fmt (blocking)
-        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make fmt WHAT=apply APPLY=Y
 
       - name: fix (blocking)
-        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make fix WHAT=apply APPLY=Y
 
       - name: check (blocking)
-        # Why (mro-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make check
+
+      # Why (aihub-v01jg): CI=Y runs ONE HALF of the gate set
+      # (lint pyright security markdown smells); the complement
+      # (pyrefly mypy) is owned by
+      # CI=N and, without this step, ran on developer
+      # machines only. That split let real defects reach main twice: five
+      # missing-attribute errors and an inconsistent-inheritance error, each
+      # green in CI and red locally. The two contexts are strict complements by
+      # construction, so running both here costs one extra pass and closes the
+      # hole rather than trusting everyone to run the other half by hand.
+      - name: check complement (blocking)
+        run: CI=N make check
 
       - name: Dump reports on failure
         if: ${{ failure() }}
@@ -100,18 +112,24 @@ jobs:
           set -eu
           # Structured reports only — same allowlist as Upload reports (no raw
           # pytest/tool logs: those may carry connection strings / env secrets).
-          while IFS= read -r -d '' f; do
-            echo "::group::$f"
-            tail -n 200 "$f"
-            echo "::endgroup::"
-          done < <(
-            find .reports apps \
+          report_roots=()
+          for candidate in .reports apps; do
+            if [ -e "$candidate" ]; then report_roots+=("$candidate"); fi
+          done
+          if [ "${#report_roots[@]}" -gt 0 ]; then
+            report_list="$(mktemp "${RUNNER_TEMP:?}/flext-ci-reports.XXXXXX")"
+            find "${report_roots[@]}" \
               \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' \) \
-              -type f -print0 2>/dev/null || true
-          )
+              -type f -print0 >"$report_list"
+            while IFS= read -r -d '' f; do
+              echo "::group::$f"
+              tail -n 200 "$f"
+              echo "::endgroup::"
+            done <"$report_list"
+          fi
       - name: Upload reports on failure
         if: ${{ failure() }}
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: flext-ci-reports-${{ github.run_id }}
           # Structured reports only — omit raw pytest/tool logs that may carry
@@ -125,4 +143,39 @@ jobs:
             apps/*/.reports/**/coverage.json
           if-no-files-found: ignore
           retention-days: 7
-    # End SECTION: ci job
+  # End SECTION: ci job
+
+  # === SECTION: merge-guard job (managed) ===
+  merge-guard:
+    name: merge-guard
+    # Always run on PRs so a WIP/DRAFT source cannot slip past the skipped CI job.
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Block WIP/DRAFT merges into protected integration branches
+        env:
+          BASE_REF: ${{ github.base_ref }}
+          HEAD_REF: ${{ github.head_ref }}
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+        run: |
+          set -eu
+          case "$BASE_REF" in
+            dev|develop|0.12.0-dev)
+              ;;
+            *)
+              echo "Merge guard passed for $HEAD_REF -> $BASE_REF"
+              exit 0
+              ;;
+          esac
+          if [ "$IS_DRAFT" = "true" ]; then
+            echo "DRAFT PR cannot merge into ${BASE_REF}"
+            exit 1
+          fi
+          for pattern in '^wip/' 'WIP'; do
+            if [[ "$HEAD_REF" =~ $pattern ]]; then
+              echo "WIP branch ${HEAD_REF} cannot merge into ${BASE_REF}"
+              exit 1
+            fi
+          done
+          echo "Merge guard passed for $HEAD_REF -> $BASE_REF"
+  # End SECTION: merge-guard job

@@ -59,7 +59,7 @@ To achieve "gap-free" visibility, we instrument the **Edges** and the **Core**:
 
 1. **HTTP Edge (`http.rs`)**:
     - **Mechanism**: `TracingFairing`.
-    - **Role**:  Extracts W3C Trace Context from HTTP headers. Ensures web requests are part of distributed traces.
+    - **Role**: Extracts W3C Trace Context from HTTP headers. Ensures web requests are part of distributed traces.
 
 2. **Stdio Edge / Core (`mcp_server.rs`)**:
     - **Mechanism**: `#[instrument]` on `call_tool`. manual context extraction from `meta`.

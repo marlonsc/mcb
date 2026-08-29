@@ -6,8 +6,10 @@ Bead: mcb-c1kn
 ## Tasks
 
 ### Task 1: CI gate + commit nextest changes + push
+
 Status: IN_PROGRESS
 Base commit: dee9dc581
 
 ### Task 2: Close bead mcb-c1kn
+
 Status: PENDING

@@ -22,7 +22,6 @@ import sys
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import cast
 
 SCRIPTS = Path(__file__).resolve().parents[1]
 if str(SCRIPTS) not in sys.path:
@@ -187,13 +186,13 @@ def run(_settings: SurfaceSettings) -> McbResult[int]:
         logger.info("SURFACE FAIL")
         for failure in failures:
             logger.info(f"\n--- {failure}")
-        return cast("McbResult[int]", McbResult[int].fail("surface validation failed"))
+        return McbResult[int].fail("surface validation failed")
 
     logger.info(f"SURFACE OK: {len(cases)} command cases validated")
     logger.info(
         "External/long-running operations are represented by APPLY-gated dry-runs."
     )
-    return cast("McbResult[int]", McbResult[int].ok(len(cases)))
+    return McbResult[int].ok(len(cases))
 
 
 def main() -> int:

@@ -117,16 +117,15 @@ project_log_decision    → Log decision
 
 ## Implementation Plan
 
-| Phase | Goal | LOC | Tools |
-| --- | --- | --- | --- |
-| 1 | Agent Sessions | ~700 | 7 `agent_*` |
-| 2 | Executions | ~400 | 2 `memory_*` |
-| 3 | Quality Gates | ~500 | 3 `quality_*` |
-| 4 | Error Patterns | ~400 | 2 `memory_*` |
-| 5 | Project State | ~800 | 9 `project_*` |
-| 6 | Context Assembly | ~400 | 1 `memory_*` |
-
-Total: ~3200 LOC | 14 plans | 24 tools | 9 tables
+| Phase            | Goal             | LOC      | Tools         |
+| ---------------- | ---------------- | -------- | ------------- |
+| 1                | Agent Sessions   | ~700     | 7 `agent_*`   |
+| 2                | Executions       | ~400     | 2 `memory_*`  |
+| 3                | Quality Gates    | ~500     | 3 `quality_*` |
+| 4                | Error Patterns   | ~400     | 2 `memory_*`  |
+| 5                | Project State    | ~800     | 9 `project_*` |
+| 6                | Context Assembly | ~400     | 1 `memory_*`  |
+| Total: ~3200 LOC | 14 plans         | 24 tools | 9 tables      |
 
 ## Alternatives Considered
 
@@ -182,5 +181,5 @@ Rejected because:
 
 - [ADR-009: Persistent Session Memory](../009-persistent-session-memory-v0.2.0.md)
 - [ADR-013: Clean Architecture](../013-clean-architecture-crate-separation.md)
-- [ADR-029: Hexagonal Architecture](../029-hexagonal-architecture-dill.md)
-- [Planning Documents](../../design/workflow-management/SCHEMA.md)
+- ADR-029: Hexagonal Architecture
+- Planning Documents

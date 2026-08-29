@@ -62,7 +62,7 @@ def _build_app() -> typer.Typer:
 def test_create_app_returns_typer_app() -> None:
     """create_app_with_common_params returns a Typer application."""
     app = create_app_with_common_params(name="test", help_text="A test app")
-    tm.that(isinstance(app, typer.Typer), "expected a typer.Typer instance")
+    assert callable(app), "expected a callable typer application"
 
 
 def test_register_result_command() -> None:

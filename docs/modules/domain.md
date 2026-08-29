@@ -113,17 +113,17 @@ Events published through the `EventPublisher` interface:
 
 | Port | Purpose |
 | ------ | --------- |
-| [`IndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing.rs) | Codebase indexing orchestration |
-| [`BatchIndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing.rs) | Batch indexing orchestration |
-| [`SearchServiceInterface`](../../crates/mcb-domain/src/ports/services/search.rs) | Semantic search with filters |
-| [`ContextServiceInterface`](../../crates/mcb-domain/src/ports/services/context.rs) | Context aggregation |
-| [`ValidationServiceInterface`](../../crates/mcb-domain/src/ports/services/validation.rs) | Code quality validation (12 rules) |
-| [`MemoryServiceInterface`](../../crates/mcb-domain/src/ports/services/memory.rs) | Observation management |
-| [`AgentSessionServiceInterface`](../../crates/mcb-domain/src/ports/services/agent.rs) | Agent lifecycle management |
-| [`ProjectDetectorService`](../../crates/mcb-domain/src/ports/services/project.rs) | Project type detection orchestration |
-| [`FileHashService`](../../crates/mcb-domain/src/ports/services/hash.rs) | File hashing service boundary |
-| [`ChunkingOrchestratorInterface`](../../crates/mcb-domain/src/ports/services/chunking.rs) | Chunking orchestration boundary |
-| [`CodeChunker`](../../crates/mcb-domain/src/ports/services/chunking.rs) | Language chunking service boundary |
+| [`IndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing_service.rs) | Codebase indexing orchestration |
+| [`BatchIndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing_service.rs) | Batch indexing orchestration |
+| [`SearchServiceInterface`](../../crates/mcb-domain/src/ports/services/search_service.rs) | Semantic search with filters |
+| [`ContextServiceInterface`](../../crates/mcb-domain/src/ports/services/context_service.rs) | Context aggregation |
+| [`ValidationServiceInterface`](../../crates/mcb-domain/src/ports/services/validation_service.rs) | Code quality validation (12 rules) |
+| [`MemoryServiceInterface`](../../crates/mcb-domain/src/ports/services/memory_service.rs) | Observation management |
+| [`AgentSessionServiceInterface`](../../crates/mcb-domain/src/ports/services/agent_service.rs) | Agent lifecycle management |
+| [`ProjectDetectorService`](../../crates/mcb-domain/src/ports/services/project_service.rs) | Project type detection orchestration |
+| [`FileHashService`](../../crates/mcb-domain/src/ports/services/hash_service.rs) | File hashing service boundary |
+| [`ChunkingOrchestratorInterface`](../../crates/mcb-domain/src/ports/services/chunking_service.rs) | Chunking orchestration boundary |
+| [`CodeChunker`](../../crates/mcb-domain/src/ports/services/chunking_service.rs) | Language chunking service boundary |
 
 ## Key Enums & State Machines
 

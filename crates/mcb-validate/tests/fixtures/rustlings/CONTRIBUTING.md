@@ -1,3 +1,4 @@
+<!-- markdownlint-disable-file MD059 MD028 -->
 # Contributing to Rustlings
 
 First off, thanks for taking the time to contribute! ❤️

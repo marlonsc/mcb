@@ -1629,5 +1629,5 @@ WHERE i.status = 'open'
   persistence layer (dependency)
 - [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md)
   — DI pattern (superseded by ADR-050)
-- [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md)
+- docs/design/workflow-management/SCHEMA.md
   — Schema reference

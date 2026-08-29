@@ -28,6 +28,7 @@ parameterization.
 ### Current Tool Inventory (38 tools)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Category | Tools | Count |
 | ---------- | ------- | ------- |
 | Index/Search | index (action=start), search (resource=code), index (action=status), index (action=clear) | 4 |
@@ -45,6 +46,7 @@ Consolidate to**8 tools** using resource-action parameterization pattern:
 ### New Tool Architecture
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Tool | Replaces | Pattern |
 | ------ | ---------- | --------- |
 | `index` | index (action=start), index (action=status), index (action=clear) | action: start, status, clear |

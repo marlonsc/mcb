@@ -4,8 +4,10 @@ name: Docs
 "on":
   push:
     branches:
-      - main
+      - dev
       - develop
+      - 0.12.0-dev
+      - main
     paths:
       - "docs/**"
       - "mkdocs.yml"
@@ -14,10 +16,7 @@ name: Docs
       - ".github/workflows/docs.yml"
   workflow_dispatch:
 
-permissions:
-  contents: read
-  pages: write
-  id-token: write
+permissions: {}
 
 concurrency:
   group: pages
@@ -28,6 +27,8 @@ jobs:
     name: docs-quality
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -35,63 +36,78 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      - name: Install mise toolchain
+        uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518  # v4.2.5
         with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
-        with:
-          enable-cache: true
+          version: 2026.8.14
 
       - name: Sync workspace toolchain
         run: make setup
 
-      # mro-o6h5 (agent: kimi) — failure diagnostics: per-project logs live under
+      # flext-o6h5 (agent: kimi) — failure diagnostics: per-project logs live under
       # .reports/workspace/docs/*.log and were invisible in CI ("0 errors" FAILs);
       # dump them inline + per-project audit-report.md for non-zero issue counts +
       # upload as artifact so the real error is always reachable.
       - name: Docs audit (blocking)
         run: |
-          .venv/bin/python -m flext_infra docs audit --workspace . --output-dir .reports/docs || {
-            while IFS= read -r -d '' f; do
-              echo "::group::$f"
-              tail -n 80 "$f"
-              echo "::endgroup::"
-            done < <(
-              find .reports apps \
+          set -euo pipefail
+          if .venv/bin/python -m flext_infra docs audit --workspace . --output-dir .reports/docs; then
+            :
+          else
+            command_status="$?"
+            report_roots=()
+            for candidate in .reports apps; do
+              if [ -e "$candidate" ]; then report_roots+=("$candidate"); fi
+            done
+            if [ "${#report_roots[@]}" -gt 0 ]; then
+              report_list="$(mktemp "${RUNNER_TEMP:?}/flext-docs-audit.XXXXXX")"
+              find "${report_roots[@]}" \
                 \( -path '*/audit-summary.json' -o -path '*/audit-report.md' \
                    -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
-                -type f -print0 2>/dev/null || true
-            )
-            exit 1
-          }
+                -type f -print0 >"$report_list"
+              while IFS= read -r -d '' f; do
+                echo "::group::$f"
+                tail -n 80 "$f"
+                echo "::endgroup::"
+              done <"$report_list"
+            fi
+            exit "$command_status"
+          fi
 
       - name: Docs generate (materialize contract artifacts)
         run: .venv/bin/python -m flext_infra docs generate --workspace . --output-dir .reports/docs --apply
 
       - name: Docs validate (blocking)
         run: |
-          .venv/bin/python -m flext_infra docs validate --workspace . --output-dir .reports/docs || {
-            while IFS= read -r -d '' f; do
-              echo "::group::$f"
-              tail -n 80 "$f"
-              echo "::endgroup::"
-            done < <(
-              find .reports apps \
+          set -euo pipefail
+          if .venv/bin/python -m flext_infra docs validate --workspace . --output-dir .reports/docs; then
+            :
+          else
+            command_status="$?"
+            report_roots=()
+            for candidate in .reports apps; do
+              if [ -e "$candidate" ]; then report_roots+=("$candidate"); fi
+            done
+            if [ "${#report_roots[@]}" -gt 0 ]; then
+              report_list="$(mktemp "${RUNNER_TEMP:?}/flext-docs-validate.XXXXXX")"
+              find "${report_roots[@]}" \
                 \( -path '*/validate-summary.json' -o -path '*/validate-report.md' \
                    -o -path '*/audit-summary.json' -o -path '*/audit-report.md' \) \
-                -type f -print0 2>/dev/null || true
-            )
-            exit 1
-          }
+                -type f -print0 >"$report_list"
+              while IFS= read -r -d '' f; do
+                echo "::group::$f"
+                tail -n 80 "$f"
+                echo "::endgroup::"
+              done <"$report_list"
+            fi
+            exit "$command_status"
+          fi
 
-      # mro-o6h5 (agent: kimi) — include-hidden-files: .reports/ is a dot-dir and
-      # upload-artifact v4 skips hidden paths by default (artifact silently empty).
+      # flext-o6h5 (agent: kimi) — include-hidden-files: .reports/ is a dot-dir and
+      # upload-artifact skips hidden paths by default (artifact silently empty).
       - name: Upload docs reports on failure
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: docs-reports
           # Structured docs reports only — omit raw docs log trees that may carry
@@ -113,6 +129,8 @@ jobs:
     needs: docs-quality
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
@@ -120,15 +138,10 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      - name: Install mise toolchain
+        uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518  # v4.2.5
         with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
-        with:
-          enable-cache: true
+          version: 2026.8.14
 
       - name: Sync workspace toolchain
         run: make setup
@@ -158,6 +171,9 @@ jobs:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: ${{ 'github-pages' }}
       url: ${{ steps.deployment.outputs.page_url }}

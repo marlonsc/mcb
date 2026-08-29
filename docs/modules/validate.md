@@ -97,7 +97,6 @@ The system extracts facts from the AST for rule evaluation:
 - `hybrid_engine.rs` — Combined engine approach (Static + Dynamic)
 - `rete_engine.rs` — RETE algorithm for high-performance pattern matching
 - `expression_engine.rs` — `evalexpr`-based logic evaluation
-
 - `analyzer.rs` — Duplication analysis orchestration
 - `detector.rs` — Clone detection logic
 - `fingerprint.rs` — Token fingerprinting
@@ -260,7 +259,7 @@ crates/mcb-validate/src/
 
 ## Related Documentation
 
-- [Architecture Overview](../architecture/ARCHITECTURE.md#validation-layer) - Validation layer details
+- [Architecture Overview](../architecture/ARCHITECTURE.md) - Validation layer details
 - [ADR-013](../adr/013-clean-architecture-crate-separation.md) - Clean Architecture separation
 - [SSOT Principles](./README.md#ssot-verification) - Single Source of Truth
 - [Validators Implementation](./validate.md#rules--validators) - List of active validators

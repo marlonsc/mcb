@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import cast
 
 from flext_core import FlextResult, p
-from kubernetes_validate import (
+from kubernetes_validate import (  # pyright: ignore[reportMissingImports]  # pyrefly: ignore[missing-import]
     InvalidSchemaError,
     SchemaNotFoundError,
     ValidationError,

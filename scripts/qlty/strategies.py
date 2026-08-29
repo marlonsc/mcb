@@ -6,26 +6,18 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-import abc
 
+class FixStrategy:
+    """Base for smell-fix strategies.
 
-class FixStrategy(abc.ABC):
-    """Base for smell-fix strategies."""
+    Subclasses carry these as plain class attributes; annotation-only
+    declarations keep the contract type-checkable without the
+    property-vs-attribute override mismatch pyright rejects.
+    """
 
-    @property
-    @abc.abstractmethod
-    def rule(self) -> str:
-        """Short rule name."""
-
-    @property
-    @abc.abstractmethod
-    def title(self) -> str:
-        """Human-readable title."""
-
-    @property
-    @abc.abstractmethod
-    def instructions(self) -> str:
-        """English fix instructions."""
+    rule: str
+    title: str
+    instructions: str
 
 
 class IdenticalCodeStrategy(FixStrategy):

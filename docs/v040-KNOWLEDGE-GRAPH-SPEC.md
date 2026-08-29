@@ -14,6 +14,7 @@ network of entities, enabling high-fidelity code reasoning and hybrid search.
 Nodes represent semantic entities extracted from the source code.
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Node Type | Description | Attributes |
 | ----------- | ------------- | ------------ |
 | `Module` | A file or logical grouping of code | `path`, `is_external` |

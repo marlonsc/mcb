@@ -1,3 +1,4 @@
+<!-- markdownlint-disable-file MD057 -->
 # AGENTS.md — mcb
 
 > **Parent workspace law** lives in [`../AGENTS.md`](../AGENTS.md) — read it first.

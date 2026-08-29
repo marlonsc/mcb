@@ -84,7 +84,7 @@ Graph Operations:
 
 **Related**: ADR-041, ADR-035 (Freshness Tracking)
 
-**See**: [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md) for usage examples
+**See**: `docs/guides/features/INTEGRATED_CONTEXT.md` for usage examples
 
 ---
 
@@ -204,7 +204,7 @@ Retention Policies:
 
 **Related**: ADR-041, ADR-042 (Knowledge Graph)
 
-**See**: [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md) for time-travel examples
+**See**: `docs/guides/features/INTEGRATED_CONTEXT.md` for time-travel examples
 
 ---
 
@@ -301,7 +301,7 @@ bd list --status open,in_progress,deferred --label scope:v0.4 --json
 
 ## Feature Guides
 
-- [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md) – Feature overview and workflows
+- `docs/guides/features/INTEGRATED_CONTEXT.md` – Feature overview and workflows
 - [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) – Migration guide from v0.3
 - [`docs/architecture/CLEAN_ARCHITECTURE.md`](../../architecture/CLEAN_ARCHITECTURE.md) – Architecture patterns
 

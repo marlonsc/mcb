@@ -165,8 +165,11 @@ class AnalysisReport:
         for issue in sev_issues:
             by_rule[issue.rule_id].append(issue)
 
+        def by_issue_count(item: tuple[str, list[SarifIssue]]) -> int:
+            return len(item[1])
+
         for rule, rule_issues in sorted(
-            by_rule.items(), key=lambda x: len(x[1]), reverse=True
+            by_rule.items(), key=by_issue_count, reverse=True
         ):
             self._generate_rule_section(lines, rule, rule_issues)
 

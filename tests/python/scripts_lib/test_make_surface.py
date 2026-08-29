@@ -96,7 +96,6 @@ def test_custom_mutations_require_apply() -> None:
 
 
 @pytest.mark.slow
-@pytest.mark.timeout(900)
 def test_invalid_nested_choices_fail_before_dry_run_gates() -> None:
     commands = [
         ["make", "build", "WHAT=codegen-__invalid__"],

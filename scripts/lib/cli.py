@@ -42,8 +42,11 @@ def register_result_command[P: BaseModel, T](
         if field_info.is_required():
             option = typer.Option(..., help=field_info.description)
         elif field_info.default_factory is not None:
-            option = typer.Option(
-                default_factory=field_info.default_factory, help=field_info.description
+            # Why: typer accepts default_factory at runtime (Option param),
+            # but its distribution stubs expose no matching overload.
+            option = typer.Option(  # pyrefly: ignore[no-matching-overload]
+                default_factory=field_info.default_factory,
+                help=field_info.description,
             )
         else:
             option = typer.Option(field_info.default, help=field_info.description)
@@ -66,7 +69,7 @@ def register_result_command[P: BaseModel, T](
         if success_message is not None:
             typer.echo(success_message)
 
-    command.__signature__ = inspect.Signature(parameters)
+    command.__signature__ = inspect.Signature(parameters)  # pyright: ignore[reportFunctionMemberAccess]  # pyrefly: ignore[missing-attribute]
     command.__annotations__ = annotations
     app.command(name=name, help=help_text)(command)
 

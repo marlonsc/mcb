@@ -2354,19 +2354,19 @@ impl BackupManager {
 
 ### Related ADRs
 
-- [ADR-041: Context Architecture](../adr/phase-9/README.md#adr-041-context-architecture)
-- [ADR-042: Knowledge Graph](../adr/phase-9/README.md#adr-042-knowledge-graph)
-- [ADR-043: Hybrid Search Engine](../adr/phase-9/README.md#adr-043-hybrid-search-engine)
-- [ADR-044: Model Selection](../adr/phase-9/README.md#adr-044-model-selection)
-- [ADR-045: Context Versioning](../adr/phase-9/README.md#adr-045-context-versioning)
-- [ADR-046: Integration Patterns](../adr/phase-9/README.md#adr-046-integration-patterns)
+- ADR-041: Context Architecture
+- ADR-042: Knowledge Graph
+- ADR-043: Hybrid Search Engine
+- ADR-044: Model Selection
+- ADR-045: Context Versioning
+- ADR-046: Integration Patterns
 - [ADR-047: Project Architecture](../adr/047-project-architecture.md)
 
 ### See Also
 
-- [`docs/guides/features/INTEGRATED_CONTEXT.md`](../guides/features/INTEGRATED_CONTEXT.md) – Feature overview
+- `docs/guides/features/INTEGRATED_CONTEXT.md` – Feature overview
 - [`docs/migration/v0.3-to-v0.4.md`](../migration/v0.3-to-v0.4.md) – Migration guide
-- [`docs/implementation/phase-9-roadmap.md`](../implementation/phase-9-roadmap.md) – 4-week execution plan
+- `docs/implementation/phase-9-roadmap.md` – 4-week execution plan
 
 ### Phase 3: Enterprise Features (Planned 📋)
 

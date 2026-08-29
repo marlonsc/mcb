@@ -25,6 +25,7 @@ and content.
 ## 1. E2E workflow
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract (what must hold) |
 | ------ | --------------------------- |
 | `golden_e2e_complete_workflow` | (1) index (action=clear)(collection) succeeds and response contains "clear"/"Clear"/"cleared". (2) index (action=status)(collection) succeeds, not error, text contains "Indexing Status" or "Idle" or "indexing". (3) index (action=start)(path, collection) succeeds, not error, text contains "chunks"/"file"/"Index"/"Files processed"/"Indexing Started". (4) index (action=status) again succeeds. (5) search (resource=code)(collection, query) succeeds, not error, text contains search result text and at least one sample-codebase file. (6) index (action=clear) again succeeds. (7) index (action=status) again succeeds. |
@@ -38,6 +39,7 @@ and content.
 ## 2. Index
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_index_test_repository` | index (action=start)(sample_codebase_path, collection) succeeds, not error, response content non-empty and contains "chunk"/"file"/"Index"/"Files processed"/"Indexing Started"/"Source directory"/"Path:". |
@@ -49,6 +51,7 @@ and content.
 ## 3. MCP response schema (content shape)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_mcp_index (action=start)_schema` | index (action=start) response: Ok, content non-empty, not is_error. |
@@ -62,6 +65,7 @@ and content.
 ## 4. Search validation
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_search_returns_relevant_results` | After indexing sample_codebase into collection, search (resource=code)(collection, "handle MCP search request") succeeds, is not an error, and returns at least one sample-codebase file such as `handlers.rs`. |
@@ -75,6 +79,7 @@ and content.
 ## 5. Golden queries E2E (split to avoid timeout)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_e2e_golden_queries_setup` | index (action=clear), index (action=start), then poll index (action=status) until Idle/processed (bounded wait: 20 × 50ms). |
@@ -99,6 +104,7 @@ and content.
 ## 6. Org Entity CRUD (19 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_org_create_and_get` | org_entity (action=create, resource=org) with data succeeds; org_entity (action=get, resource=org) with id succeeds; response contains id and name. |
@@ -126,6 +132,7 @@ and content.
 ## 7. Data Isolation (6 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_isolation_users_scoped_to_org` | Users created in org-A do not appear in org-B user list. |
@@ -140,6 +147,7 @@ and content.
 ## 8. API Key Lifecycle (9 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_api_key_create_and_get` | org_entity (action=create, resource=api_key) with data succeeds; get returns key with id, user_id, org_id, name, key_hash. |
@@ -157,6 +165,7 @@ and content.
 ## 9. Session Lifecycle (6 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_session_create_and_get` | session (action=create) with data succeeds; get returns session with id, status=active, agent_type, model, started_at. |
@@ -171,6 +180,7 @@ and content.
 ## 10. VCS Entity CRUD (10 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_vcs_repo_create_and_get` | vcs_entity (action=create, resource=repository) with data succeeds; get returns repo with id, name, url. |
@@ -189,6 +199,7 @@ and content.
 ## 11. Plan Entity CRUD (12 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_plan_create_and_get` | plan_entity (action=create, resource=plan) with data succeeds; get returns plan with id, title, project_id. |
@@ -209,6 +220,7 @@ and content.
 ## 12. Issue Entity CRUD (13 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_issue_create_and_get` | issue_entity (action=create, resource=issue) with data succeeds; get returns issue with id, title, project_id. |
@@ -230,6 +242,7 @@ and content.
 ## 13. Validate Operations (4 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_validate_analyze` | validate (action=analyze, scope=file) with valid file path succeeds; response is not error. |
@@ -242,6 +255,7 @@ and content.
 ## 14. Project Operations (5 tests)
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 | Test | Contract |
 | ------ | ---------- |
 | `golden_project_create_get_update_delete` | project create/get/update/list/delete succeeds and list contains the created project before deletion. |

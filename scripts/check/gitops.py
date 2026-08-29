@@ -56,7 +56,7 @@ def run(settings: GitopsSettings) -> r[GitOpsSummary]:
     summary_result = summarize(k8s_root)
     if summary_result.failure:
         logger.error(summary_result.error or "gitops discovery failed")
-        return summary_result
+        return r.fail(summary_result.error or "gitops discovery failed")
     summary = summary_result.unwrap()
     logger.info(f"GITOPS {summary.status}: {summary.message}")
     if summary.report.total_issues:

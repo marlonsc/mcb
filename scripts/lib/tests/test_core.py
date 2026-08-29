@@ -136,8 +136,11 @@ class TestResult:
     def test_map_or(self) -> None:
         assert r[int].ok(42).map_or(0) == 42
         assert r[int].fail("boom").map_or(0) == 0
-        assert r[int].ok(21).map_or(0, lambda x: x * 2) == 42
-        assert r[int].fail("boom").map_or(0, lambda x: x * 2) == 0
+        def double(x: int) -> int:
+            return x * 2
+
+        assert r[int].ok(21).map_or(0, double) == 42
+        assert r[int].fail("boom").map_or(0, double) == 0
 
     def test_fail_op(self) -> None:
         result = r[int].fail_op("load")

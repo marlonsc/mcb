@@ -1483,5 +1483,5 @@ impl SqliteWorkflowEngine {
   — Auto-registration
 - [ADR-032: Agent & Quality Domain Extension](./032-agent-quality-domain-extension.md)
   — Superseded
-- [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md)
+- docs/design/workflow-management/SCHEMA.md
   — Schema reference

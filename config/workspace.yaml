@@ -46,3 +46,6 @@ repository_policy_overlays:
   - project: mcb-scripts
     beads_enabled: true
     ci_enabled: true
+    extra_ignored_patterns:
+      - ".beads.gate.lock"
+      - ".reports/"

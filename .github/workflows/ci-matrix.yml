@@ -6,17 +6,14 @@
 # Multi-environment CI base: proves the project bootstrap and canonical Make
 # verbs work identically across distros, macOS, and Windows. The CI invokes
 # the project's own Make surface; it never reimplements bootstrap.
-# Projected only for workspace-root/standalone. Auto-run is opt-in via
-# repository_policy_overlays.ci_matrix_auto_run (default false = workflow_dispatch
-# only). When enabled, also push to main. Workspace members are covered by the
-# root matrix; conform/make gen WHAT=apply APPLY=Y prunes orphan member copies.
+# Projected identically for workspace and standalone repositories. Workspace
+# projects are covered by the root matrix.
 # Never bind triggers to the integration-line variable.
 ---
 name: ci-matrix
 
 # === SECTION: triggers (managed) ===
-# Source: overlay ci_matrix_auto_run (default dispatch-only; no pull_request;
-# no integration-line binding)
+# Source: static dispatch-only policy; no pull_request or integration-line binding.
 "on":
   workflow_dispatch: {}
 # End SECTION: triggers
@@ -44,6 +41,8 @@ jobs:
     # full project bootstrap at image-build time), then smoke the verb surface
     # inside the built container.
     runs-on: ubuntu-latest
+    env:
+      CI: Y
     strategy:
       fail-fast: false
       matrix:
@@ -71,7 +70,7 @@ jobs:
   # End SECTION: distro-matrix
 
   # === SECTION: macos (managed) ===
-  # Source: template + config:github_actions.checkout/setup-python/mise/setup-uv
+  # Source: template + config:github_actions.checkout/mise
   macos:
     runs-on: macos-latest
     env:
@@ -83,16 +82,10 @@ jobs:
           # No step needs authenticated git after checkout; persisting the
           # token into .git/config would expose it to every later command.
           persist-credentials: false
-      - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
-        with:
-          python-version-file: .python-version
       - name: Install mise toolchain
-        uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654  # v4.2.4
-      - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
+        uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518  # v4.2.5
         with:
-          enable-cache: true
+          version: 2026.8.14
       - name: Bootstrap
         run: CI=Y make setup
       - name: Verb surface
@@ -105,7 +98,7 @@ jobs:
   # End SECTION: macos
 
   # === SECTION: windows (managed) ===
-  # Source: template + config:github_actions.checkout/setup-python/mise/setup-uv
+  # Source: template + config:github_actions.checkout/mise
   windows:
     runs-on: windows-latest
     env:
@@ -117,16 +110,10 @@ jobs:
           # No step needs authenticated git after checkout; persisting the
           # token into .git/config would expose it to every later command.
           persist-credentials: false
-      - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
-        with:
-          python-version-file: .python-version
       - name: Install mise toolchain
-        uses: jdx/mise-action@7e36c90d9ab29c415a2384db3006f3ec8a8cc654  # v4.2.4
-      - name: Install uv
-        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9  # v9.0.0
+        uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518  # v4.2.5
         with:
-          enable-cache: true
+          version: 2026.8.14
       - name: Bootstrap
         shell: bash
         run: CI=Y make setup
