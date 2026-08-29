@@ -11,6 +11,8 @@ use mcb_domain::ports::{IndexingOperationStatus, ValidationStatus};
 /// # Errors
 ///
 /// Fails when dashboard data cannot be loaded.
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 pub async fn dashboard(Extension(state): Extension<McbState>) -> Result<Response> {
     let stats = state.dashboard.get_agent_session_stats().await.ok();
     let tool_calls = state

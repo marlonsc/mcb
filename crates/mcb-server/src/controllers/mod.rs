@@ -1,11 +1,4 @@
 //! HTTP controllers for the MCB admin panel and API endpoints.
-//!
-//! All controller handlers return `loco_rs::Error` as the `Err` variant of
-//! `axum::response::Result`. The `loco_rs::Error` type wraps the full
-//! `loco_rs::Error` struct (>128 bytes), which trips clippy's
-//! `result_large_err` lint. This is an inherent property of the Loco
-//! framework's error type and is not actionable at the call site.
-#![allow(clippy::result_large_err)]
 
 /// Admin API (config, dashboard).
 pub mod admin;
