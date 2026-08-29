@@ -201,7 +201,7 @@ schemars = "1.2"
 validator = { version = "0.20", features = ["derive"] }
 
 # MCP SDK
-rmcp = { version = "1.4", features = [
+rmcp = { version = "3.0", features = [
     "server",
     "client",
     "macros",
