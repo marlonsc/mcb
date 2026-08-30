@@ -9,8 +9,8 @@ ledger_id: mcb
 repository:
   name: mcb-scripts
   distribution: mcb-scripts
-  provider: datacosmos-br
-  url: https://github.com/datacosmos-br/mcb.git
+  provider: marlonsc
+  url: https://github.com/marlonsc/mcb.git
   path: .
   role: standalone
   state: active
@@ -53,7 +53,7 @@ project:
 members: []
 exclusions: []
 integration:
-  provider: datacosmos-br
+  provider: marlonsc
   branch: develop
 repository_policy_overlays:
   - project: mcb-scripts
