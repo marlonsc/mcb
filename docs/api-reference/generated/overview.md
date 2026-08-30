@@ -9,7 +9,7 @@
 - Package: `mcb_scripts`
 - Version: `0.4.0`
 - Description: Repository-local automation helpers for MCB
-- Doc summary: Lib   Init  .
+- Doc summary: Repository-local automation helpers for MCB.
 - Classifiers: _none_
 - Project class: `domain`
 - Keywords: _none_
