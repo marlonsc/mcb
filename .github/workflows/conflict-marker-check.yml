@@ -16,11 +16,10 @@ jobs:
           submodules: true
       - name: Check for merge conflict markers
         run: |
-          markers=$(git grep -l '<<<<<<< HEAD\|=======$' -- \
-            $(git ls-files | grep -vE '\.venv/|target/|dist/|\.cache/|_vendor/' | tr '\n' ' ') 2>/dev/null || true)
-          if [ -n "$markers" ]; then
-            echo "::error::Merge conflict markers found in tracked files:"
-            echo "$markers"
+          if git grep -nE '^(<<<<<<< |>>>>>>> )' -- . \
+            ':(exclude).venv' ':(exclude)target' ':(exclude)dist' \
+            ':(exclude).cache' ':(exclude)_vendor'; then
+            echo "::error::Merge conflict markers found in tracked files"
             exit 1
           fi
           echo "No conflict markers found."
