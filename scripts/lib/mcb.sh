@@ -109,11 +109,20 @@ mcb_sync_submodules() {
   done
 }
 
-# Binary lookup chain: workspace target > PATH > cargo run
+# Binary lookup chain: newest workspace target > PATH > cargo run.
+# Why: preferring debug unconditionally let a stale artifact from an older
+# build shadow a freshly built release binary, so `make check WHAT=validate`
+# could run obsolete rules and pass or fail against code that no longer
+# exists. Whichever target binary was built last is the current one.
 mcb_bin() {
-  [ -x "$MCB_ROOT/target/debug/mcb" ]   && { echo "$MCB_ROOT/target/debug/mcb";   return 0; }
-  [ -x "$MCB_ROOT/target/release/mcb" ] && { echo "$MCB_ROOT/target/release/mcb"; return 0; }
-  command -v mcb 2>/dev/null && return 0
+  local debug="$MCB_ROOT/target/debug/mcb" release="$MCB_ROOT/target/release/mcb"
+  local newest=""
+  [ -x "$debug" ] && newest="$debug"
+  if [ -x "$release" ]; then
+    if [ -z "$newest" ] || [ "$release" -nt "$newest" ]; then newest="$release"; fi
+  fi
+  [ -n "$newest" ] && { echo "$newest"; return 0; }
+  command -v mcb && return 0
   echo "cargo run --package mcb --"
 }
 
@@ -201,7 +210,12 @@ mcb_check_staged() {
 mcb_conflict_markers() {
   local grep_args=(-nE '^(<<<<<<<|=======|>>>>>>>)') hits
   [ "${1:-}" = "--staged" ] && grep_args=(--cached "${grep_args[@]}")
-  hits=$(git -C "$MCB_ROOT" grep "${grep_args[@]}" -- . 2>/dev/null || true)
+  # git grep exits 1 for "no matches" and >1 for a real failure. Collapsing
+  # both into an empty result made the guard pass silently whenever git
+  # itself errored, which is the opposite of what a guard is for.
+  local status=0
+  hits=$(git -C "$MCB_ROOT" grep "${grep_args[@]}" -- .) || status=$?
+  [ "$status" -gt 1 ] && mcb_die "$EX_INFRA" "git grep failed with exit status $status"
   [ -z "$hits" ] && return 0
   mcb_warn "merge conflict markers:"
   printf '%s\n' "$hits" >&2
