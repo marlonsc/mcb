@@ -1,0 +1,25 @@
+name: conflict-marker-check
+
+on:
+  pull_request:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  conflict-markers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Check for merge conflict markers
+        run: |
+          if git grep -nE '^(<<<<<<< |>>>>>>> )' -- . \
+            ':(exclude).venv' ':(exclude)target' ':(exclude)dist' \
+            ':(exclude).cache' ':(exclude)_vendor'; then
+            echo "::error::Merge conflict markers found in tracked files"
+            exit 1
+          fi
+          echo "No conflict markers found."

@@ -25,7 +25,7 @@ Loco YAML under `config/`, with MCB-specific fields under `settings:`.
 | ------- | ---- | ---- | ----------- | ----------------- |
 | Development | `config/development.yaml` | `3000` | SQLite | Ollama embeddings, Milvus vector store |
 | Test | `config/test.yaml` | dynamic `0` | SQLite test DB | FastEmbed embeddings, EdgeVec vector store |
-| Production | `config/production.yaml` | `8080` | SQLite | Ollama embeddings, Milvus vector store |
+| Production | `config/production.yaml` | `8187` | SQLite | Ollama embeddings, Milvus vector store |
 
 The public configuration index is `docs/CONFIGURATION.md`; detailed profile and
 environment guidance lives under `docs/configuration/`.

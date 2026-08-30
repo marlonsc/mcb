@@ -90,6 +90,5 @@ make check WHAT=guard
 - [AGENTS.md](../../AGENTS.md) — project agent law
 - [CONTRIBUTING.md](./CONTRIBUTING.md) — full contribution guide
 - [PATTERNS.md](../architecture/PATTERNS.md) — architecture patterns
-- [FLEXT_TO_MCB_MAPPING.md](./FLEXT_TO_MCB_MAPPING.md) — FLEXT translation
 - [SKILL_INDEX.md](./SKILL_INDEX.md) — project skills
 - [MCP_TOOLS.md](../MCP_TOOLS.md) — public MCP API

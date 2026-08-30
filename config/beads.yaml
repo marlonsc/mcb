@@ -1,0 +1,7 @@
+# Repository-owned Beads identity (owner: flext-infra BeadsProjectSpec).
+# The Gas City rigs this workspace as `mcb`; the live Dolt database and
+# issue prefix already carry the same name.
+version: 1
+workspace: mcb
+database: mcb
+issue_prefix: mcb

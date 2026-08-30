@@ -141,8 +141,8 @@ Fixes #<issue-id>
 
 ```bash
 ./scripts/commit_analyze.sh             # Analyze staged changes
-make check WHAT=lint && make check WHAT=validate QUICK=1   # Pre-commit validation
-git commit                              # Commit (pre-commit hook runs checks)
+make check WHAT=lint && make check WHAT=validate QUICK=1   # Pre-push validation
+git commit                              # Commit (bd hooks run checks)
 git push                                # Push
 ```
 
@@ -257,7 +257,6 @@ make build WHAT=docs ACT=validate QUICK=1
 
 - [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — System overview
 - [PATTERNS.md](../architecture/PATTERNS.md) — Implementation patterns
-- [FLEXT_TO_MCB_MAPPING.md](./FLEXT_TO_MCB_MAPPING.md) — FLEXT pattern translation for MCB
 - [SKILL_INDEX.md](./SKILL_INDEX.md) — Project ECC skills index
 - [ROADMAP.md](./ROADMAP.md) — Project state and roadmap
 - [DEPLOYMENT.md](../operations/DEPLOYMENT.md) — Deployment guide

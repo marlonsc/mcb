@@ -218,10 +218,8 @@ secrets.yml
 .beads-credential-key
 .worktrees/
 legado/
-.beads.gate.lock
-*.gate.lock*
 
-# Beads ledger identity (all Beads-participating profiles; see mro-9wv8, mro-cdzxf)
+# Beads ledger identity (workspace and standalone; see mro-9wv8)
 !.beads/metadata.json
 
 # codegen module-standardizer reject artifacts (ADR-005 §9)
@@ -312,26 +310,3 @@ CLAUDE.local.md
 !config/
 !config/workspace.yaml
 !custom.mk
-
-# Project-local exceptions (config/workspace.yaml overlay)
-/.archive/
-/.cargo/
-/.vscode/
-/.waza.yaml
-/opencode.jsonc
-*.sarif
-*violations*.txt
-build_err.txt
-clippy_output.txt
-validate_output.txt
-test_003_warnings.txt
-staged_files.txt
-pr[0-9]*_comments.txt
-coverage/
-*.rlib
-/data/vectors/
-/crates/mcb-providers/src/database/sqlite/test_file.txt
-tests/mcb.[0-9]*
-tmp_*.txt
-.beads.gate.lock
-/context/

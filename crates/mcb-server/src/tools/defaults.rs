@@ -244,18 +244,24 @@ fn extract_org_and_project_from_git_remote(workspace_root: &str) -> Option<(Stri
 ///
 /// Supports formats:
 /// - `git@github.com:owner/repo.git`
+/// - SSH-alias remotes like `github-neptor:owner/repo.git`
 /// - `https://github.com/owner/repo.git`
 /// - `https://github.com/owner/repo`
-fn parse_org_and_project_from_remote_url(url: &str) -> Option<(String, String)> {
+#[must_use]
+pub fn parse_org_and_project_from_remote_url(url: &str) -> Option<(String, String)> {
     let url = url.trim();
     parse_ssh_remote(url).or_else(|| parse_https_remote(url))
 }
 
-/// Parse `git@host:owner/repo.git` style SSH remotes.
+/// Parse `git@host:owner/repo.git` and generic SSH-alias `host:owner/repo.git` remotes.
+///
+/// Why: remotes declared as SSH config aliases (e.g. `github-neptor:owner/repo.git`)
+/// are the same SCP-style syntax as `git@host:...` and must resolve identically.
 fn parse_ssh_remote(url: &str) -> Option<(String, String)> {
-    let path = url
-        .strip_prefix("git@")
-        .and_then(|s| s.split_once(':').map(|(_, p)| p))?;
+    let (host, path) = url.split_once(':')?;
+    if host.trim().is_empty() || url.starts_with(':') {
+        return None;
+    }
     let (org, project) = path.trim_end_matches(".git").split_once('/')?;
     if org.is_empty() || project.is_empty() {
         return None;
