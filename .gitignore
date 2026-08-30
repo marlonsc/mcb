@@ -341,5 +341,4 @@ tmp_*.txt
 .opencode/
 .logs/
 state.json
-CLAUDE.md
 GEMINI.md

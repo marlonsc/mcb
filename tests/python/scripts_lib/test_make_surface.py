@@ -47,7 +47,12 @@ def test_help_lists_flext_public_verbs() -> None:
     assert result.returncode == 0, combined
     # Why (gastown): the `work` lane-lifecycle verb was removed; lanes are
     # owned by Gas Town (gt sling / gt done), not make.
-    assert "work" not in result.stdout
+    verbs = [
+        line.split()[0] for line in result.stdout.splitlines() if line.split()
+    ]
+    assert "work" not in verbs, (
+        f"`work` is still a public verb:\n{result.stdout}"
+    )
 
     assert "golden" in result.stdout
 
@@ -156,13 +161,15 @@ def test_generated_gitignore_keeps_declared_project_exceptions() -> None:
     )
 
 
-def test_git_hooks_have_exactly_one_owner() -> None:
-    """Only beads (bd hooks) may own the installed hook shims.
+BEADS_HOOK_STAGES = ("pre-commit", "pre-push")
 
-    Gas Town owns the lane lifecycle and Beads owns the git hooks; the
-    installed shims must delegate to `bd hooks run`, never to a foreign
-    runner (pre-commit or a copied script), so commit gating is identical in
-    every checkout.
+
+def _hook_shims() -> dict[str, Path]:
+    """Return the installed shim path for every Beads-managed stage.
+
+    Both hook tests read the same shims the same way; keeping one reader stops
+    them drifting apart, which is how one came to tolerate a missing shim while
+    the other asserted it.
     """
     hooks_dir = subprocess.run(
         ["git", "rev-parse", "--git-path", "hooks"],
@@ -172,10 +179,19 @@ def test_git_hooks_have_exactly_one_owner() -> None:
         text=True,
     ).stdout.strip()
     hooks_path = (ROOT / hooks_dir).resolve()
+    return {stage: hooks_path / stage for stage in BEADS_HOOK_STAGES}
 
+
+def test_git_hooks_have_exactly_one_owner() -> None:
+    """Only beads (bd hooks) may own the installed hook shims.
+
+    Gas Town owns the lane lifecycle and Beads owns the git hooks; the
+    installed shims must delegate to `bd hooks run`, never to a foreign
+    runner (pre-commit or a copied script), so commit gating is identical in
+    every checkout.
+    """
     foreign: list[str] = []
-    for stage in ("pre-commit", "pre-push"):
-        shim = hooks_path / stage
+    for stage, shim in _hook_shims().items():
         if not shim.exists():
             foreign.append(f"{stage}: missing (run `bd hooks install`)")
             continue
@@ -199,21 +215,16 @@ def test_generated_hook_entries_are_executable_argv() -> None:
     not a competing owner. The installed git hook shims are the actual commit
     gate and must delegate to `bd hooks run <stage>`.
     """
-    hooks_dir = subprocess.run(
-        ["git", "rev-parse", "--git-path", "hooks"],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    hooks_path = (ROOT / hooks_dir).resolve()
-
-    for stage in ("pre-commit", "pre-push"):
-        shim = hooks_path / stage
-        assert shim.exists(), f"{stage} shim missing; run `bd hooks install`"
+    for stage, shim in _hook_shims().items():
+        assert shim.is_file(), f"{stage} shim missing; run `bd hooks install`"
+        assert os.access(shim, os.X_OK), (
+            f"{stage} shim is not executable: {shim}"
+        )
         head = shim.read_text(errors="replace")[:400]
-        assert "bd hooks run" in head, (
-            f"{stage} shim does not delegate to bd hooks:\n{head}"
+        # A generic `bd hooks run` accepts a shim wired to the wrong stage;
+        # require the stage this file is installed as.
+        assert f"bd hooks run {stage}" in head, (
+            f"{stage} shim does not delegate to `bd hooks run {stage}`:\n{head}"
         )
 
     pre_commit_config = ROOT / ".pre-commit-config.yaml"
