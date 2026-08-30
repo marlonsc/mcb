@@ -33,7 +33,6 @@ docs/context/
 docs/contexts/
 .claude/
 .planning/
-.beads/
 .oc-memory/
 .sisyphus/
 .agent/
@@ -274,8 +273,6 @@ archive/
 # TRACK: Beads team config; keep Dolt data, runtime state, and JSONL exports local.
 !.beads/
 .beads/*
-!.beads/config.yaml
-!.beads/metadata.json
 
 # Python configuration
 !pyproject.toml
@@ -459,7 +456,6 @@ secrets.yml
 legado/
 .beads.gate.lock
 *.gate.lock*
-!.beads/metadata.json
 # codegen module-standardizer reject artifacts (ADR-005 §9)
 *.tpl.rej
 # --- codegen conform: generated runtime ignores ---
@@ -539,3 +535,6 @@ pr[0-9]*_comments.txt
 /crates/mcb-providers/src/database/sqlite/test_file.txt
 tests/mcb.[0-9]*
 tmp_*.txt
+
+# Gas City
+!.beads/identity.toml

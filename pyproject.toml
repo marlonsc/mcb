@@ -14,7 +14,7 @@ dependencies = [
   "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "pydantic>=2.13.4",
-  "pydantic-settings>=2.14.2",
+  "pydantic-settings>=2.15.0",
   "structlog>=26.1.0",
 ]
 description = "Repository-local automation helpers for MCB"
@@ -298,6 +298,24 @@ reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 
 [[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportArgumentType = "none"
+reportAssignmentType = "none"
+reportAttributeAccessIssue = "none"
+reportGeneralTypeIssues = "none"
+reportInvalidTypeForm = "none"
+reportPrivateImportUsage = "none"
+reportPrivateUsage = "none"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
+root = "scripts"
+
+[[tool.pyright.executionEnvironments]]
 extraPaths = ["src"]
 reportAssignmentType = "none"
 reportAttributeAccessIssue = "none"
@@ -331,24 +349,6 @@ reportUnknownParameterType = "none"
 reportUnknownVariableType = "none"
 reportUnusedImport = "none"
 root = "tests"
-
-[[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportArgumentType = "none"
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
-reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
-root = "scripts"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
@@ -604,17 +604,17 @@ whitelines = 1
 [dependency-groups]
 dev = [
   "actionlint-py>=1.7.12.24",
-  "bandit>=1.8",
-  "code-review-graph[all]>=2.3.7",
+  "bandit>=1.9.4",
+  "code-review-graph[all]>=2.3.8",
   "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
-  "mypy>=2.3.0",
-  "pre-commit>=4.6.1",
+  "mypy>=2.3.1",
+  "pre-commit>=4.6.2",
   "pyrefly>=1.2.0",
   "pyright>=1.1.411",
-  "pytest>=9.0.3",
+  "pytest>=9.1.1",
   "pytest-testmon>=2.2.0",
-  "ruff>=0.15.12",
-  "rumdl>=0.2.45",
+  "ruff>=0.16.4",
+  "rumdl>=0.2.60",
   "vulture>=2.16",
   "yamlfix>=1.19.1",
 ]
