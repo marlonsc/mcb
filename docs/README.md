@@ -28,8 +28,6 @@ Documentation for developers contributing to the project.
 - **[Contributing](developer/CONTRIBUTING.md)** - Development setup and
   contribution guidelines
 - **[Quick Reference](developer/QUICK_REFERENCE.md)** - One-pager for daily MCB work
-- **[FLEXT to MCB Mapping](developer/FLEXT_TO_MCB_MAPPING.md)** - Pattern translation
-  from the FLEXT workspace
 - **[Skill Index](developer/SKILL_INDEX.md)** - Project ECC skills
 - **[Roadmap](developer/ROADMAP.md)** - Development roadmap and milestones
 

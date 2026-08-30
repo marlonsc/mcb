@@ -57,8 +57,13 @@ vetor = "vetor"
 ratatui = "ratatui"
 LOV = "LOV"
 lov = "lov"
-flext = "flext"  # FLEXT monorepo name (referenced in AGENTS.md)
 WHATs = "WHATs"
+# typos splits WHATs into WHA + Ts, so the fragment needs its own entry
+WHA = "WHA"
+# flext-* is the upstream Python platform this repo consumes by name
+flext = "flext"
+Flext = "Flext"
+FLEXT = "FLEXT"
 # regex prefixes in scripts/docs/py/check_outdated.py
 referenc = "referenc"
 deprecat = "deprecat"

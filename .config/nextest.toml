@@ -31,7 +31,7 @@ test-group = 'serial-shared-context'
 retries = 2
 
 # Quality-validator unit tests scan the live workspace and exceed the default
-# slow-timeout on large trees (pre-commit unit gate).
+# slow-timeout on large trees (unit-test gate).
 [[profile.default.overrides]]
 filter = 'test(/test_validate_(with_specific_validator|mcb_workspace_quality)/)'
 slow-timeout = { period = "120s", terminate-after = 3 }

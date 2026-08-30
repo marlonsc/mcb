@@ -149,7 +149,7 @@ adapters from the Loco `AppContext` so handlers never import providers directly.
 | Auto-fix formatting | `make check WHAT=fix ACT=fmt` |
 | Docs lint | `make build WHAT=docs ACT=lint` |
 | Banned-pattern scan | `make check WHAT=guard` |
-| Pre-commit hook | `make boot WHAT=hook ACT=pre-commit` |
+| Git hooks owner | `bd hooks install` (Beads owns the installed hooks; Gas Town owns the workflow; the generated `.pre-commit-config.yaml` stays untracked and is never installed) |
 
 ## Where to Look
 
