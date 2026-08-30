@@ -149,8 +149,8 @@ adapters from the Loco `AppContext` so handlers never import providers directly.
 | Auto-fix formatting | `make check WHAT=fix ACT=fmt` |
 | Docs lint | `make build WHAT=docs ACT=lint` |
 | Banned-pattern scan | `make check WHAT=guard` |
-| Banned-pattern scan | `make check WHAT=guard` |
 | Git hooks owner | `bd hooks install` (Gas Town owns hooks; no pre-commit) |
+
 ## Where to Look
 
 | I want to... | Look at... |

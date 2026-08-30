@@ -217,12 +217,8 @@ def test_generated_hook_entries_are_executable_argv() -> None:
         )
 
     pre_commit_config = ROOT / ".pre-commit-config.yaml"
-    assert pre_commit_config.exists(), (
-        ".pre-commit-config.yaml is a flext_infra-managed file; "
-        "run `make gen WHAT=apply APPLY=Y` to regenerate it"
-    )
-    assert "bd hooks run pre-commit" in pre_commit_config.read_text(), (
-        ".pre-commit-config.yaml must route its first hook through bd"
+    assert not pre_commit_config.exists(), (
+        ".pre-commit-config.yaml should not exist; hooks are owned by beads (bd hooks)"
     )
 
 

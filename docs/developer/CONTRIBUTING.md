@@ -145,8 +145,6 @@ make check WHAT=lint && make check WHAT=validate QUICK=1   # Pre-push validation
 git commit                              # Commit (bd hooks run checks)
 git push                                # Push
 ```
-git push                                # Push
-```
 
 ## 🧪 Testing
 
