@@ -18,6 +18,8 @@ use seaography::async_graphql;
 
 use crate::state::McbState;
 
+// Loco handlers must return the large loco_rs::Error; suppress here.
+#[allow(clippy::result_large_err)]
 async fn graphql_playground() -> Result<Response> {
     let config = GraphQLPlaygroundConfig::new("/api/graphql").with_header("X-API-Key", "AUTO_KEY");
 
