@@ -102,7 +102,7 @@ jobs:
       # construction, so running both here costs one extra pass and closes the
       # hole rather than trusting everyone to run the other half by hand.
       - name: check complement (blocking)
-        run: CI=N make check
+        run: CI=N CHECK_GATES=pyrefly,mypy make check
 
       - name: Dump reports on failure
         if: ${{ failure() }}

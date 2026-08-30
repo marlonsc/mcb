@@ -18,7 +18,7 @@
 
 MCB implements an AI-native issue tracking and project coordination system (internally known as **Beads**). This module
 documents MCB's internal project/issue domain and historical storage contracts. The repository's active agent
-coordination uses the external `bd` CLI (`bd` 1.0.5) connected to the Gas Town town Dolt server (127.0.0.1:3307,
+coordination uses the external `bd` CLI (`bd` 1.0.5) connected to the Gas Town Dolt server (127.0.0.1:3307,
 `shared-server: false`); `.beads/issues.jsonl` is an
 export/import artifact, not the live source of truth. Use `AGENTS.md` for the operational `bd` protocol.
 
