@@ -35,7 +35,6 @@ EMBEDDING_PROVIDERS  →    Resolver → init_app() →    Handle (RwLock)
 ```
 
 - **Bootstrap** ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/infrastructure/mod.rs)): Application initialization.
-- **Handles** ([`handles.rs`](../../crates/mcb-infrastructure/src/infrastructure/mod.rs)): RwLock wrappers for runtime switching.
 - **Composition Root** ([`bootstrap.rs`](../../crates/mcb-infrastructure/src/infrastructure/mod.rs)): AppContext manual composition root configuration.
 
 ---

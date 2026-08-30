@@ -9,15 +9,17 @@
 - Package: `mcb_scripts`
 - Version: `0.4.0`
 - Description: Repository-local automation helpers for MCB
-- Doc summary: Repository-local automation helpers for MCB.
+- Doc summary: Mcb Scripts package.
 - Classifiers: _none_
 - Project class: `domain`
 - Keywords: _none_
-- Main facades: _none_
-- Alias exports: _none_
-- Public symbol exports: _none_
-- Exported module shortcuts: _none_
-- Generated module pages: `0`
+- Main facades: `McbScriptsService`
+- Alias exports: `c`, `r`, `s`
+- Public symbol exports: `BaseCommandSettings`, `BaseMcbSettings`,
+  `McbConstants`, `McbResult`, `McbScriptsService`, `McbService`, `McbSettings`,
+  `configure_logging`, `get_logger`
+- Exported module shortcuts: `docs`, `qlty`
+- Generated module pages: `8`
 
 ## Next Pages
 
