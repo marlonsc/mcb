@@ -1,0 +1,23 @@
+{
+  "overrides": [
+    {
+      "files": "AGENTS.md",
+      "config": {
+        "MD057": false
+      }
+    },
+    {
+      "files": ".github/prompts/*.md",
+      "config": {
+        "MD057": false
+      }
+    },
+    {
+      "files": "crates/mcb-validate/tests/fixtures/**",
+      "config": {
+        "MD028": false,
+        "MD057": false
+      }
+    }
+  ]
+}

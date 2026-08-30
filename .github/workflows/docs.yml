@@ -4,8 +4,10 @@ name: Docs
 "on":
   push:
     branches:
-      - main
+      - dev
       - develop
+      - 0.12.0-dev
+      - main
     paths:
       - "docs/**"
       - "mkdocs.yml"
@@ -34,63 +36,47 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      - name: Install mise toolchain
+        uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518  # v4.2.5
         with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
-        with:
-          enable-cache: true
+          version: 2026.8.14
 
       - name: Sync workspace toolchain
         run: make setup
 
-      # mro-o6h5 (agent: kimi) — failure diagnostics: per-project logs live under
-      # .reports/workspace/docs/*.log and were invisible in CI ("0 errors" FAILs);
-      # dump them inline + per-project audit-report.md for non-zero issue counts +
-      # upload as artifact so the real error is always reachable.
-      - name: Docs audit (blocking)
-        run: |
-          .venv/bin/python -m flext_infra docs audit --workspace . --output-dir .reports/docs || {
-            while IFS= read -r -d '' f; do
-              echo "::group::$f"
-              tail -n 80 "$f"
-              echo "::endgroup::"
-            done < <(
-              find .reports apps \
-                \( -path '*/audit-summary.json' -o -path '*/audit-report.md' \
-                   -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
-                -type f -print0 2>/dev/null || true
-            )
-            exit 1
-          }
+      - name: Generation drift (blocking)
+        run: make gen WHAT=check
 
-      - name: Docs generate (materialize contract artifacts)
-        run: .venv/bin/python -m flext_infra docs generate --workspace . --output-dir .reports/docs --apply
+      - name: Docs audit (blocking)
+        run: make docs WHAT=audit
 
       - name: Docs validate (blocking)
-        run: |
-          .venv/bin/python -m flext_infra docs validate --workspace . --output-dir .reports/docs || {
-            while IFS= read -r -d '' f; do
-              echo "::group::$f"
-              tail -n 80 "$f"
-              echo "::endgroup::"
-            done < <(
-              find .reports apps \
-                \( -path '*/validate-summary.json' -o -path '*/validate-report.md' \
-                   -o -path '*/audit-summary.json' -o -path '*/audit-report.md' \) \
-                -type f -print0 2>/dev/null || true
-            )
-            exit 1
-          }
+        run: make docs WHAT=validate
 
-      # mro-o6h5 (agent: kimi) — include-hidden-files: .reports/ is a dot-dir and
-      # upload-artifact skips hidden paths by default (artifact silently empty).
+      # Failure diagnostics execute only after the original Make step has
+      # already propagated its exact status to Actions.
+      - name: Dump docs reports on failure
+        if: failure()
+        run: |
+          set -eu
+          for report_root in .reports apps; do
+            if [ -d "$report_root" ]; then
+              find "$report_root" \
+                \( -path '*/audit-summary.json' -o -path '*/audit-report.md' \
+                   -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
+                -type f -exec sh -eu -c '
+                  for report_file do
+                    printf "::group::%s\n" "$report_file"
+                    tail -n 80 "$report_file"
+                    printf "::endgroup::\n"
+                  done
+                ' sh {} +
+            fi
+          done
+
       - name: Upload docs reports on failure
         if: failure()
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: docs-reports
           # Structured docs reports only — omit raw docs log trees that may carry
@@ -121,24 +107,21 @@ jobs:
           submodules: false
           fetch-depth: 0
 
-      - name: Setup Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
+      - name: Install mise toolchain
+        uses: jdx/mise-action@3c2e0cf82a5b2e5249f0d3635a4d83d0ae861518  # v4.2.5
         with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d  # v10.0.1
-        with:
-          enable-cache: true
+          version: 2026.8.14
 
       - name: Sync workspace toolchain
         run: make setup
 
-      - name: Generate docs
-        run: .venv/bin/python -m flext_infra docs generate --workspace . --output-dir .reports/docs --apply
-
       - name: Build site
-        run: .venv/bin/python -m flext_infra docs build --workspace . --output-dir .reports/docs
+        run: make docs WHAT=build
+
+      - name: Verify byte-identical repository
+        run: |
+          git diff --exit-code -- .
+          git diff --cached --exit-code -- .
 
       # Pages configure/upload exist only to feed deploy on main. Running them on
       # every integration push fails closed when Pages is unset and is wasted

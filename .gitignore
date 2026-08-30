@@ -4,6 +4,14 @@
 !.beads/config.yaml
 !.beads/metadata.json
 
+# Python configuration
+!pyproject.toml
+!uv.lock
+!.taplo.toml
+!pyrefly.toml
+!poetry.lock
+!ruff-shared.toml
+
 # BLOCK: AI/Agent Local Data (NEVER track these)
 .claude/*
 
@@ -204,24 +212,20 @@ secrets.yml
 .devcontainer/.env
 .github/*.rej
 
-# --- codegen conform: tracked owner inputs ---
-!base.mk
-
 # FINAL BEADS TRACKING POLICY
 !.beads/
 .beads/*
 .beads/.*
 !.beads/config.yaml
 .beads/proxieddb/
+.beads.gate.lock
 .dolt/
 *.db
 .beads-credential-key
 .worktrees/
 legado/
-.beads.gate.lock
-*.gate.lock*
 
-# Beads ledger identity (all Beads-participating profiles; see mro-9wv8, mro-cdzxf)
+# Beads ledger identity (workspace and standalone)
 !.beads/metadata.json
 
 # codegen module-standardizer reject artifacts (ADR-005 §9)
@@ -235,7 +239,6 @@ legado/
 .bin/
 .tools/
 __pycache__/
-base.mk
 !.pre-commit-config.yaml
 
 # Derived build and tool artifacts
@@ -251,6 +254,7 @@ __pyrefly_virtual__/
 .omo/
 .pylance_cache/
 .pytest_cache/
+.test-tmp/
 .testmondata
 .testmondata-wal
 .testmondata-shm
@@ -289,10 +293,7 @@ CLAUDE.local.md
 !.github/prompts/flext-aggressive-scale-refactor.prompt.md
 !.github/prompts/flext-strict-jsonvalue-session-continuation.prompt.md
 !.github/scripts/
-!.github/scripts/check-beads-policy.sh
 !.github/scripts/check-cqrs-compliance.sh
-!.github/scripts/flext-law-loop.sh
-!.github/scripts/install-git-hooks.sh
 !tests/fixtures/
 !tests/fixtures/ci/
 !tests/fixtures/ci/docker/
@@ -306,32 +307,9 @@ CLAUDE.local.md
 !.github/workflows/ci.yml
 !.github/workflows/docs.yml
 !.github/workflows/release.yml
+!config/
+!config/beads.yaml
 !sgconfig.yml
 !.vscode/settings.json
 !LICENSE
-!config/
-!config/workspace.yaml
 !custom.mk
-
-# Project-local exceptions (config/workspace.yaml overlay)
-/.archive/
-/.cargo/
-/.vscode/
-/.waza.yaml
-/opencode.jsonc
-*.sarif
-*violations*.txt
-build_err.txt
-clippy_output.txt
-validate_output.txt
-test_003_warnings.txt
-staged_files.txt
-pr[0-9]*_comments.txt
-coverage/
-*.rlib
-/data/vectors/
-/crates/mcb-providers/src/database/sqlite/test_file.txt
-tests/mcb.[0-9]*
-tmp_*.txt
-.beads.gate.lock
-/context/

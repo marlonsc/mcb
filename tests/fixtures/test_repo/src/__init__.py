@@ -1,5 +1,5 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Tests.python.scripts Lib. Fixtures package."""
+"""Tests.fixtures.test Repo.src package."""
 
 from __future__ import annotations
 
@@ -11,14 +11,19 @@ from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tm, tv, u, x
+
+    from .string_utils import count_words, is_palindrome, reverse_string
 __all__: tuple[str, ...] = (
     "c",
+    "count_words",
     "d",
     "e",
     "h",
+    "is_palindrome",
     "m",
     "p",
     "r",
+    "reverse_string",
     "s",
     "t",
     "td",
@@ -33,6 +38,7 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
+            ".string_utils": ("count_words", "is_palindrome", "reverse_string"),
             "flext_tests": (
                 "c",
                 "d",
@@ -50,7 +56,7 @@ _LAZY_IMPORTS = MappingProxyType(
                 "tv",
                 "u",
                 "x",
-            )
+            ),
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,

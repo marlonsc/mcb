@@ -1,0 +1,103 @@
+# AUTO-GENERATED — DO NOT EDIT MANUALLY
+site_name: mcb-scripts Documentation
+site_description: Generated documentation for mcb-scripts
+site_url: https://github.com/flext-sh/flext
+repo_name: flext-sh/flext
+repo_url: https://github.com/flext-sh/flext
+edit_uri: edit/main/mcb-scripts/
+docs_dir: docs
+site_dir: .reports/docs/site
+
+exclude_docs: |
+  /README.md
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - toc.integrate
+    - content.code.copy
+    - content.tabs.link
+    - search.highlight
+    - search.share
+    - search.suggest
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+
+plugins:
+  - search
+  - autorefs
+  - section-index
+  - mkdocstrings:
+      handlers:
+        python:
+          paths:
+            - src
+          docstring_style: auto
+          docstring_options:
+            warnings: false
+            warn_unknown_params: false
+            warn_missing_types: false
+          options:
+            show_root_heading: true
+            show_root_full_path: false
+            show_source: false
+            show_signature_annotations: true
+            separate_signature: true
+            merge_init_into_class: true
+            docstring_section_style: spacy
+  - git-revision-date-localized:
+      # Why: enable_creation_date resolves via 'git log --diff-filter=Ar', which returns
+      # EMPTY for pages whose only add-commit is a merge commit. The plugin then falls back
+      # to time.time() (build clock), making first_revision > last_revision always true,
+      # which logs a warning that mkdocs --strict turns into a build failure. Revision date
+      # from the last commit touching the page is the intended and robust behavior.
+      # enable_git_follow is off for the same reason: following renames re-reads
+      # history per page and reintroduces the same empty-result fallback.
+      enable_creation_date: false
+      enable_git_follow: false
+      type: date
+      exclude:
+        - api-reference/generated/**
+  - mermaid2
+  - redirects
+  - minify:
+      minify_html: true
+
+markdown_extensions:
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+
+nav:
+  - Home: index.md
+  - Guides: guides/README.md
+  - API Reference: api-reference/README.md
+
+not_in_nav: |
+  api-reference/generated/**
+validation:
+  omitted_files: ignore
+  absolute_links: warn
+  unrecognized_links: warn
