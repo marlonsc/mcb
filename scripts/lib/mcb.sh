@@ -79,16 +79,6 @@ mcb_git_hooks_dir() {
   printf '%s/hooks\n' "$common_dir"
 }
 
-mcb_install_hooks() {
-  local repo="${1:-$MCB_ROOT}"
-  local hooks_dir
-  hooks_dir="$(mcb_git_hooks_dir "$repo")"
-  mkdir -p "$hooks_dir"
-  cp "$MCB_ROOT/scripts/hooks/pre-commit" "$MCB_ROOT/scripts/hooks/pre-push" "$hooks_dir/"
-  chmod +x "$hooks_dir/pre-commit" "$hooks_dir/pre-push"
-  mcb_ok "pre-commit and pre-push hooks installed at $hooks_dir"
-}
-
 mcb_sync_submodules() {
   local repo="${1:-$MCB_ROOT}"
   local materialized
@@ -295,7 +285,6 @@ if [ "${BASH_SOURCE[0]}" = "${0}" ]; then
     bin)            mcb_bin ;;
     ignores)        printf '%s\n' "${MCB_AUDIT_IGNORES[*]}" ;;
     git-hooks-dir)  mcb_git_hooks_dir "${2:-$MCB_ROOT}" ;;
-    install-hooks)  mcb_install_hooks "${2:-$MCB_ROOT}" ;;
     sync-submodules) mcb_sync_submodules "${2:-$MCB_ROOT}" ;;
     validate)       mcb_validate "${2:-full}" ;;
     check-staged)   mcb_check_staged ;;
