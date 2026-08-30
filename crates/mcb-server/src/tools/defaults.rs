@@ -258,10 +258,7 @@ pub fn parse_org_and_project_from_remote_url(url: &str) -> Option<(String, Strin
 /// Why: remotes declared as SSH config aliases (e.g. `github-neptor:owner/repo.git`)
 /// are the same SCP-style syntax as `git@host:...` and must resolve identically.
 fn parse_ssh_remote(url: &str) -> Option<(String, String)> {
-    let path = url.strip_prefix("git@").map_or_else(
-        || url.split_once(':').map(|(_, p)| p),
-        |s| s.split_once(':').map(|(_, p)| p),
-    )?;
+    let path = url.split_once(':').map(|(_, p)| p)?;
     let (org, project) = path.trim_end_matches(".git").split_once('/')?;
     if org.is_empty() || project.is_empty() {
         return None;
