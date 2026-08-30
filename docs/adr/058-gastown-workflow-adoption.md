@@ -28,7 +28,10 @@ user-facing requirements:
   to `bd hooks install` (pre-commit, post-merge, pre-push, post-checkout,
   prepare-commit-msg).
 - The `work` Make verb is removed from the public verb allowlist.
-- `.pre-commit-config.yaml` is deleted from the repo.
+- `.pre-commit-config.yaml` stops being a hook owner. flext_infra codegen
+  conform regenerates it unconditionally, so it is kept untracked and never
+  installed rather than deleted; `bd hooks install` is the only thing that
+  places a hook.
 - Docs, CONTRIBUTING, ONBOARDING, ARCHITECTURE_BOUNDARIES, and ADR-036 are
   updated to reference Gas Town / beads hooks.
 - `FLEXT-INFRA-FIX-REQUEST.md` is deleted (obsolete flext defect doc).

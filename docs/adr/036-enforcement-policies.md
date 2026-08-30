@@ -606,7 +606,7 @@ fn configurable_guard_factory(
 - Unit tests: `AllPolicies` (fail-fast and collect-all modes), `AnyPolicy` combinator
 - Unit tests: Deny-wins semantics, ERROR vs WARNING enforcement
 - Integration tests: `ConfigurablePolicyGuard` with real config, all 11 policies enabled/disabled
-- Integration tests: Lifecycle points (compile-time, pre-push, pre-transition, CI-time, post-merge)
+- Integration tests: Lifecycle points (compile-time, pre-commit, pre-push, pre-transition, CI-time, post-merge)
 - Estimated: **~80+ tests** (11 policies × 2 + integration + composition + semantics)
 
 ### Performance Targets

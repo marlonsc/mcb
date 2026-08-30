@@ -546,8 +546,10 @@ Architecture validation: 0 violations
 #   bd hooks install
 
 # The pre-commit shim delegates to `bd hooks run pre-commit`, which runs
-# the project's registered validation (lint/validate/guard). No pre-commit
-# framework, .pre-commit-config.yaml, or copied script is used.
+# the project's registered validation (lint/validate/guard). flext_infra
+# codegen conform still generates .pre-commit-config.yaml and its hooks call
+# make verbs directly, so the file is kept generated, untracked and never
+# installed. No copied script is used.
 ```
 
 ## Quality Gate
