@@ -30,6 +30,7 @@ slow-timeout = { period = "120s", terminate-after = 2 }
 
 # Quality-validator unit tests scan the live workspace; on a large tree they
 # exceed the default 180s slow-timeout during unit-test runs.
+[[profile.default.overrides]]
 filter = 'test(/test_validate_(with_specific_validator|mcb_workspace_quality)/)'
 slow-timeout = { period = "120s", terminate-after = 3 }
 

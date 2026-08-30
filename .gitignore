@@ -340,6 +340,6 @@ tmp_*.txt
 .claude/
 .opencode/
 .logs/
-state.json
-CLAUDE.md
-GEMINI.md
+/state.json
+/CLAUDE.md
+/GEMINI.md
