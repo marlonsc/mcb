@@ -80,7 +80,12 @@ jobs:
 
       - name: gen (blocking)
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
-        run: CI=Y make gen WHAT=apply APPLY=Y
+        # Why (mcb-pin): the bootstrap falls back to the moving 0.12.0-dev
+        # branch; a mid-run tip advance re-rendered the projections under the
+        # PR twice. This commit's projections were rendered by the generator
+        # at 4736493059705cca743dec59da112e46bdf51df9 — pin the bootstrap to
+        # that OID so the conformance comparison is deterministic.
+        run: CI=Y make gen WHAT=apply APPLY=Y FLEXT_INFRA_BOOTSTRAP_REF=4736493059705cca743dec59da112e46bdf51df9
 
       - name: fmt (blocking)
         # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).

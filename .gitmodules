@@ -1,4 +1,0 @@
-[submodule "flext-infra"]
-	path = flext-infra
-	url = https://github.com/flext-sh/flext-infra.git
-	branch = 0.12.0-dev
