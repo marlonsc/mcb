@@ -30,6 +30,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   # === SECTION: ci job (managed) ===
   # Source: template + config:github_actions.*
@@ -140,6 +142,7 @@ jobs:
     # Always run on PRs so a WIP/DRAFT source cannot slip past the skipped CI job.
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
+    permissions: {}
     steps:
       - name: Block WIP/DRAFT merges into protected integration branches
         env:
