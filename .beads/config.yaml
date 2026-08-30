@@ -15,9 +15,9 @@ issue-prefix: "mcb"
 # The `mcb` database lives there; a repository-local server is never used.
 dolt:
   mode: server
-  shared-server: false
+  shared-server: true
   host: 127.0.0.1
-  port: 3307
+  port: 3308
   user: root
-  database: flext
+  database: mcb
   auto-commit: "on"

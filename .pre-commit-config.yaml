@@ -22,7 +22,7 @@ repos:
       # WHAT/MAKEFLAGS/APPLY are cleared in the same prefix so caller selectors
       # and write intent cannot leak into an independently declared hook step.
       # A step declaring gates_skip (mro-ucxgl) narrows CHECK_GATES for the hook
-      # context only: local `make check` keeps the full set.
+      # context only: local `make check` and the `docs` verb keep the full set.
 
       - id: flext-pre-commit-setup
         name: make setup
