@@ -64,9 +64,9 @@ chmod +x "$BIN/make"
 
 (cd "$PRIMARY" && PATH="$BIN:$PATH" "$EXPECTED_HOOKS/pre-commit")
 (cd "$LINKED" && PATH="$BIN:$PATH" "$EXPECTED_HOOKS/pre-commit")
-test "$(grep -c 'check WHAT=lint' "$MAKE_LOG")" -eq 2
+test "$(grep -c 'check WHAT=staged' "$MAKE_LOG")" -eq 2
 test "$(grep -c 'check WHAT=validate QUICK=1' "$MAKE_LOG")" -eq 2
-grep -q "^$PRIMARY|check WHAT=lint$" "$MAKE_LOG"
-grep -q "^$LINKED|check WHAT=lint$" "$MAKE_LOG"
+grep -q "^$PRIMARY|check WHAT=staged$" "$MAKE_LOG"
+grep -q "^$LINKED|check WHAT=staged$" "$MAKE_LOG"
 
 printf 'hook fixtures: primary and linked worktree install and commit gates passed via %s\n' "$EXPECTED_HOOKS"
