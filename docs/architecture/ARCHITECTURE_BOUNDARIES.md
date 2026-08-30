@@ -548,6 +548,7 @@ Architecture validation: 0 violations
 # The pre-commit shim delegates to `bd hooks run pre-commit`, which runs
 # the project's registered validation (lint/validate/guard). No pre-commit
 # framework, .pre-commit-config.yaml, or copied script is used.
+```
 
 ## Quality Gate
 
