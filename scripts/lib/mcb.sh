@@ -98,7 +98,7 @@ mcb_sync_submodules() {
 
   while :; do
     materialized="$(git -C "$repo" submodule foreach --quiet --recursive '
-      present="$(git ls-files -z | while IFS= read -r -d "" path; do
+      present="$(git ls-files | while IFS= read -r path; do
         if [ -e "$path" ] || [ -L "$path" ]; then
           printf 1
           break
@@ -183,23 +183,28 @@ mcb_check_staged() {
     packages="--workspace"
   else
     while IFS= read -r path; do
-      case "$path" in
-        crates/*/src/*.rs)
-          crate_dir="$(printf '%s\n' "$path" | cut -d/ -f1-2)"
-          manifest="$crate_dir/Cargo.toml"
-          [ -f "$MCB_ROOT/$manifest" ] || continue
-          package="$(sed -n '/^\[package\]/,/^\[/s/^name = "\([^"]*\)"/\1/p' "$MCB_ROOT/$manifest" | head -1)"
-          [ -n "$package" ] || mcb_die "$EX_PREREQ" "package name ausente em '$manifest'"
-          case " $packages " in *" -p $package "*) ;; *) packages="$packages -p $package" ;; esac
-          ;;
-      esac
+      if [[ "$path" =~ ^crates/[^/]+/src/.*\.rs$ ]]; then
+        crate_dir="$(printf '%s\n' "$path" | cut -d/ -f1-2)"
+        manifest="$crate_dir/Cargo.toml"
+        [ -f "$MCB_ROOT/$manifest" ] || continue
+        package="$(sed -n '/^\[package\]/,/^\[/s/^name = "\([^"]*\)"/\1/p' "$MCB_ROOT/$manifest" | head -1)"
+        [ -n "$package" ] || mcb_die "$EX_PREREQ" "package name ausente em '$manifest'"
+        case " $packages " in *" -p $package "*) ;; *) packages="$packages -p $package" ;; esac
+      fi
     done <<< "$staged"
   fi
 
   [ -n "$packages" ] || { mcb_ok "staged check: no Rust package affected"; return 0; }
   mcb_log "staged check: cargo fmt/clippy scope:$packages (deadline ${deadline}s each)"
-  timeout --signal=TERM --kill-after=5s "${deadline}s" cargo fmt $packages -- --check
-  timeout --signal=TERM --kill-after=5s "${deadline}s" cargo clippy $packages --all-targets -- -D warnings
+  if [ "$packages" = "--workspace" ]; then
+    timeout --signal=TERM --kill-after=5s "${deadline}s" cargo fmt --all -- --check
+    timeout --signal=TERM --kill-after=5s "${deadline}s" cargo clippy --workspace --all-targets -- -D warnings
+  else
+    # shellcheck disable=SC2086
+    timeout --signal=TERM --kill-after=5s "${deadline}s" cargo fmt $packages -- --check
+    # shellcheck disable=SC2086
+    timeout --signal=TERM --kill-after=5s "${deadline}s" cargo clippy $packages --all-targets -- -D warnings
+  fi
   mcb_ok "staged check: clean"
 }
 
