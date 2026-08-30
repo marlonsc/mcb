@@ -71,10 +71,52 @@ mcb_retry() { local n="$1" s="$2"; shift 2; local t=1; while ! "$@"; do [ "$t" -
 # --- SSOT readers ------------------------------------------------------------
 mcb_version() { grep -m1 '^version =' "$MCB_ROOT/Cargo.toml" | sed 's/.*"\([^"]*\)".*/\1/'; }
 
-# Binary lookup chain: workspace target > PATH > cargo run
+mcb_git_hooks_dir() {
+  local repo="${1:-$MCB_ROOT}"
+  local common_dir
+  common_dir="$(git -C "$repo" rev-parse --path-format=absolute --git-common-dir)" \
+    || mcb_die "$EX_PREREQ" "nao foi possivel resolver o diretorio Git comum de '$repo'"
+  printf '%s/hooks\n' "$common_dir"
+}
+
+mcb_sync_submodules() {
+  local repo="${1:-$MCB_ROOT}"
+  local materialized
+
+  git -C "$repo" submodule sync --recursive
+  git -C "$repo" submodule update --init --recursive
+
+  while :; do
+    materialized="$(git -C "$repo" submodule foreach --quiet --recursive '
+      present="$(git ls-files | while IFS= read -r path; do
+        if [ -e "$path" ] || [ -L "$path" ]; then
+          printf 1
+          break
+        fi
+      done)"
+      [ -n "$present" ] && exit 0
+      tracked="$(git ls-files | wc -l)"
+      if [ "$tracked" -eq 0 ]; then
+        git read-tree HEAD
+        tracked="$(git ls-files | wc -l)"
+      fi
+      [ "$tracked" -eq 0 ] && exit 0
+      git checkout-index --all
+      printf "%s\n" "$sm_path"
+    ')"
+    [ -z "$materialized" ] && break
+    git -C "$repo" submodule update --init --recursive
+  done
+}
+
 mcb_bin() {
-  [ -x "$MCB_ROOT/target/debug/mcb" ]   && { echo "$MCB_ROOT/target/debug/mcb";   return 0; }
-  [ -x "$MCB_ROOT/target/release/mcb" ] && { echo "$MCB_ROOT/target/release/mcb"; return 0; }
+  local debug="$MCB_ROOT/target/debug/mcb" release="$MCB_ROOT/target/release/mcb"
+  local newest=""
+  [ -x "$debug" ] && newest="$debug"
+  if [ -x "$release" ]; then
+    if [ -z "$newest" ] || [ "$release" -nt "$newest" ]; then newest="$release"; fi
+  fi
+  [ -n "$newest" ] && { echo "$newest"; return 0; }
   command -v mcb 2>/dev/null && return 0
   echo "cargo run --package mcb --"
 }

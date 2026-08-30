@@ -124,7 +124,11 @@ fn resolve_app_config(
 
     let app_config = *app_config_any
         .downcast::<mcb_infrastructure::config::app::AppConfig>()
-        .map_err(|_| loco_rs::Error::string("ConfigProvider returned unexpected type"))?;
+        .map_err(|_| {
+            Box::new(loco_rs::Error::string(
+                "ConfigProvider returned unexpected type",
+            ))
+        })?;
 
     Ok(app_config)
 }

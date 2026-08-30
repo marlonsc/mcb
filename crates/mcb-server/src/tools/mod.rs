@@ -17,7 +17,7 @@ pub mod router;
 pub mod validation;
 
 pub use context::ToolExecutionContext;
-pub use defaults::{ExecutionFlow, RuntimeDefaults};
+pub use defaults::{ExecutionFlow, RuntimeDefaults, parse_org_and_project_from_remote_url};
 pub use registry::{create_tool_list, dispatch_tool_call, tool_by_name};
 pub use router::{ToolHandlers, route_tool_call};
 pub use validation::validate_execution_context;
