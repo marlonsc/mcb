@@ -9,7 +9,7 @@ Accepted
 The MCB project was previously bound to the FLEXT workflow infrastructure
 (`flext-infra` codegen, `make work`, pre-commit hook gating, `flext-cli` /
 `flext-core` Python packages). That coupling created duplicate machinery with
-Gas Town (`gt sling` / `gt done`, Refinery, `bd hooks`) and prevented the repo
+Gas Town (`gc sling` / `gt done`, Refinery, `bd hooks`) and prevented the repo
 from landing cleanly on GitHub under the operator's standard flow.
 
 The operator required a complete cutover: disable flext pre-commit / pre-push /
@@ -23,7 +23,7 @@ Adopt Gas Town as the sole workflow owner and remove the flext-layer
 user-facing requirements:
 
 - Lane lifecycle moves from `make work WHAT=start|status|land|finish` to
-  `gt sling` / `gt done` inside the Refinery lane.
+  `gc sling` / `gt done` inside the Refinery lane.
 - Git hook ownership moves from `.pre-commit-config.yaml` / `pre-commit install`
   to `bd hooks install` (pre-commit, post-merge, pre-push, post-checkout,
   prepare-commit-msg).
