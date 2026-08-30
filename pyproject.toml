@@ -382,7 +382,7 @@ minversion = "8.0"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 pythonpath = ["src"]
-testpaths = ["tests"]
+testpaths = [".", "docs", "examples", "scripts", "src", "tests"]
 
 # [MANAGED] ruff
 [tool.ruff]

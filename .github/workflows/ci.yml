@@ -136,7 +136,9 @@ jobs:
 
   # === SECTION: merge-guard job (managed) ===
   merge-guard:
+    permissions: {}
     name: merge-guard
+    permissions: {}
     # Always run on PRs so a WIP/DRAFT source cannot slip past the skipped CI job.
     if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
