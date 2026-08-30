@@ -284,7 +284,7 @@ cargo_metadata = "0.23"
 
 # Manifest parsers for project detection (Phase 3: Git Advanced)
 cargo_toml = "0.22"
-quick-xml = "0.39"
+quick-xml = "0.41"
 
 # SQLite for file hash storage (Phase 3: Incremental indexing)
 sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
@@ -392,8 +392,8 @@ seaography               = { git = "https://github.com/marlon-costa-dc/seaograph
 seaography-macros        = { git = "https://github.com/marlon-costa-dc/seaography.git", rev = "6efb529fa6d702b6c3903acf4b82b74187ca9b56" }
 
 # --- loco fork ---
-loco-rs                  = { git = "https://github.com/marlon-costa-dc/loco.git", rev = "24f77de77f240677030defdf2940a48ca9b5e55c" }
-loco-gen                 = { git = "https://github.com/marlon-costa-dc/loco.git", rev = "24f77de77f240677030defdf2940a48ca9b5e55c" }
+loco-rs                  = { git = "https://github.com/marlon-costa-dc/loco.git", rev = "aee90dbb3eff9ffa54c623fa9d85a58102eea495" }
+loco-gen                 = { git = "https://github.com/marlon-costa-dc/loco.git", rev = "aee90dbb3eff9ffa54c623fa9d85a58102eea495" }
 
 # --- sea-orm-pro fork ---
 sea-orm-pro              = { git = "https://github.com/marlon-costa-dc/sea-orm-pro.git", rev = "0d280ecb5c06c1dbedbe550e8bbe03caab6b200e" }

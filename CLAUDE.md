@@ -20,6 +20,9 @@ the strict prelude selected by `config.AiHub.governance.law_surface`, followed
 by the project overlay. Generated universal-core bodies are retired. **Do not
 duplicate rules here** — keep only project-specific notes below.
 
+<!-- AIHUB-POINTER-AUTHORITY-BEGIN -->
+<!-- AIHUB-POINTER-AUTHORITY-END -->
+
 - **Task tracking:** `bd` (beads). Run `bd prime`.
 - **Validation:** prefer `make` targets (`make lint` / `make typecheck` /
   `make test`).

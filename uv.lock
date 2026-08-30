@@ -820,7 +820,7 @@ dependencies = [
 [[package]]
 name = "flext-infra"
 version = "0.12.0rc0"
-source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#532eab82aff8ef68843f4ee2a8c4465979bcd569" }
+source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#9468941ca52b19e75388decf886958caf0bca26c" }
 dependencies = [
     { name = "defusedxml" },
     { name = "filelock" },

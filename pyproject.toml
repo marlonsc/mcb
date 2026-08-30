@@ -306,24 +306,6 @@ reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportArgumentType = "none"
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
-reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
-root = "scripts"
-
-[[tool.pyright.executionEnvironments]]
 extraPaths = ["src"]
 reportAssignmentType = "none"
 reportAttributeAccessIssue = "none"
@@ -357,6 +339,24 @@ reportUnknownParameterType = "none"
 reportUnknownVariableType = "none"
 reportUnusedImport = "none"
 root = "tests"
+
+[[tool.pyright.executionEnvironments]]
+extraPaths = [".", "src"]
+reportArgumentType = "none"
+reportAssignmentType = "none"
+reportAttributeAccessIssue = "none"
+reportGeneralTypeIssues = "none"
+reportInvalidTypeForm = "none"
+reportPrivateImportUsage = "none"
+reportPrivateUsage = "none"
+reportReturnType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownLambdaType = "none"
+reportUnknownMemberType = "none"
+reportUnknownParameterType = "none"
+reportUnknownVariableType = "none"
+reportUnusedImport = "none"
+root = "scripts"
 
 # [MANAGED] pytest
 [tool.pytest.ini_options]
@@ -505,20 +505,7 @@ split-on-trailing-comma = false
   "undocumented-public-function",
   "undocumented-public-method",
 ]
-"**/__init__.py" = [
-  "any-type",
-  "builtin-import-shadowing",
-  "implicit-namespace-package",
-  "import-private-name",
-  "invalid-module-name",
-  "non-empty-init-module",
-  "runtime-import-in-type-checking-block",
-  "undefined-export",
-  "undefined-local-with-import-star",
-  "undefined-local-with-import-star-usage",
-  "undocumented-public-init",
-  "unused-import",
-]
+"**/__init__.py" = ["ALL"]
 "scripts/**" = [
   "ANN401",
   "ARG001",
