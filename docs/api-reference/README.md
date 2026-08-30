@@ -26,6 +26,6 @@ This section is generated from public exports and real docstrings.
 ## Surface Summary
 
 - Primary facades: `McbScriptsService`
-- Generated module pages: `8`
+- Generated module pages: `0` (no public modules discovered for this snapshot)
 
 Back to [project docs](../index.md).

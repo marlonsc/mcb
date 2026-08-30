@@ -12,7 +12,7 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
-**Version**: `0.4.0` | **Python**: 3.13+ | **Project class**: `domain`
+**Version**: `0.4.0` | **Python**: 3.13 (>=3.13,<3.14) | **Project class**: `domain`
 
 > **Alpha (0.12.0).** This package is alpha quality. Every package in the
 > workspace must be re-checked and re-validated at 0.12.0 before any promotion
