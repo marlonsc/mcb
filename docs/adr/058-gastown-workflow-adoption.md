@@ -2,7 +2,13 @@
 
 ## Status
 
-Accepted
+Accepted — **Emenda 2026-09-02: Gas Town foi aposentado** (teardown `~/gt` em
+2026-08-24). O runtime nativo agora é **Gas City** (`gc`, city em `~/gc`): onde
+este ADR diz `gt sling`/`gt done`/Refinery/polecat, leia `gc sling`, fecho
+bead+PR (gates nativos → PR → merge na lane de integração), formula/order e
+pool/session. Glossário oficial: `docs/plano-cutover-workflow-gascity.md`
+(ai-hub) e `~/gascity/docs/reference/gastown-command-map`. O texto original
+abaixo permanece como registro histórico da decisão.
 
 ## Context
 

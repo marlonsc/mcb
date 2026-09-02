@@ -959,7 +959,7 @@ ORDER BY due_at ASC;
 
 ### 18.3 Molecules
 
-- Swarms: Multi-polecat coordination
+- Swarms: Multi-agent (pool/session) coordination
 - Patrols: Recurring operations
 - Work: Standard work items
 
