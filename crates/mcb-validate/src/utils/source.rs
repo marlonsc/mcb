@@ -10,6 +10,7 @@ use std::path::PathBuf;
 
 use regex::Regex;
 
+use crate::run_context::InventoryEntry;
 use crate::ValidationConfigExt;
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
@@ -51,6 +52,31 @@ where
             let content = std::fs::read_to_string(path)?;
             let lines: Vec<&str> = content.lines().collect();
             visitor(path.clone(), lines)
+        })?;
+    }
+    Ok(())
+}
+
+/// Generic helper: iterate over all Rust files in `tests/` directories.
+///
+/// Shared by hygiene validators that scan test files (naming, quality,
+/// function_naming) to avoid repeating the `tests_dir` + `for_each_file_under_root`
+/// boilerplate.
+///
+/// # Errors
+///
+/// Returns an error if directory enumeration or file scanning fails.
+pub fn for_each_test_file<F>(config: &ValidationConfig, mut visitor: F) -> Result<()>
+where
+    F: FnMut(&InventoryEntry) -> Result<()>,
+{
+    for crate_dir in config.get_source_dirs()? {
+        let tests_dir = crate_dir.join("tests");
+        if !tests_dir.exists() {
+            continue;
+        }
+        for_each_file_under_root(config, &tests_dir, Some(LanguageId::Rust), |entry| {
+            visitor(entry)
         })?;
     }
     Ok(())

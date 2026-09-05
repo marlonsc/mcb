@@ -2,7 +2,7 @@
 # AI Hub Inviolable Law — Strict Prelude
 
 1. Truth: never claim done/green/resolved without command, exit code, decisive output.
-2. Root cause: no bypass, fallback, shim, suppression, stub, hardcode, or old+new coexistence.
+2. Root cause: no bypass, compatibility fallback, shim, suppression, stub, hardcode, or old+new coexistence. Runtime routing failover is required when owned by the product; it must be dynamic, typed, and free of hardcoded model identities.
 3. Beads first: claim/update bead before file write, shell, or multi-step work; update after every repo-state change.
 4. Research first: inspect code, docs, canonical sources before acting; never invent APIs, flags, facts, or behavior.
 5. Owner first: use the project's declared facades/primitives; do not reimplement them locally.

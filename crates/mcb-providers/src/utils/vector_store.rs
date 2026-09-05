@@ -9,7 +9,7 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use mcb_domain::error::Error;
+use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::{FileInfo, SearchResult};
 use serde_json::Value;
 
@@ -97,4 +97,19 @@ pub fn build_file_info_from_results(results: Vec<SearchResult>) -> Vec<FileInfo>
         .into_iter()
         .map(|(path, (chunk_count, language))| FileInfo::new(path, chunk_count, language, None))
         .collect()
+}
+
+/// Shared `list_file_paths` helper for vector store providers whose
+/// implementation follows the standard pattern: call `list_vectors`, then
+/// aggregate results via `build_file_info_from_results`.
+///
+/// Providers with custom logic (Milvus, EdgeVec, Encrypted) should implement
+/// `list_file_paths` directly instead of delegating to this function.
+pub async fn standard_list_file_paths(
+    provider: &impl mcb_domain::ports::VectorStoreProvider,
+    collection: &mcb_domain::value_objects::CollectionId,
+    limit: usize,
+) -> Result<Vec<FileInfo>> {
+    let results = provider.list_vectors(collection, limit).await?;
+    Ok(build_file_info_from_results(results))
 }
