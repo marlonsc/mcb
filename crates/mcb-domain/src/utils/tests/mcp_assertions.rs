@@ -29,7 +29,9 @@ pub fn extract_text(result: &CallToolResult) -> String {
     result
         .content
         .iter()
-        .filter_map(|c| c.raw.as_text())
+        // rmcp 3.0.0: `ContentBlock` is a plain enum with `.as_text()` directly;
+        // the `.raw` wrapper field from older rmcp versions no longer exists.
+        .filter_map(rmcp::model::ContentBlock::as_text)
         .map(|t| t.text.as_str())
         .collect::<Vec<_>>()
         .join("\n")
