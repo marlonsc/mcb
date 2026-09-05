@@ -24,10 +24,7 @@ use mcb_utils::constants::validate::MAX_UNRELATED_STRUCTS_PER_FILE;
 ///
 /// # Errors
 /// Returns an error if directory enumeration or file reading fails.
-fn scan_source_with_ast<F>(
-    config: &ValidationConfig,
-    mut visitor: F,
-) -> Result<()>
+fn scan_source_with_ast<F>(config: &ValidationConfig, mut visitor: F) -> Result<()>
 where
     F: FnMut(&std::path::Path, &rust_code_analysis::FuncSpace, &str) -> Result<()>,
 {
@@ -68,7 +65,7 @@ pub fn validate_srp(
     mcb_domain::debug!("solid_srp", "Checking impl block sizes (SRP)");
 
     scan_source_with_ast(config, |file, root, content| {
-        scan_srp_file(&file, root, content, max_struct_lines, &mut violations);
+        scan_srp_file(file, root, content, max_struct_lines, &mut violations);
         Ok(())
     })?;
 
@@ -127,7 +124,7 @@ pub fn validate_impl_method_count(
     mcb_domain::debug!("solid_srp", "Checking impl method counts");
 
     scan_source_with_ast(config, |file, root, content| {
-        scan_impl_method_counts(&file, root, content, max_impl_methods, &mut violations);
+        scan_impl_method_counts(file, root, content, max_impl_methods, &mut violations);
         Ok(())
     })?;
 

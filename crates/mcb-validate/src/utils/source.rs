@@ -10,10 +10,10 @@ use std::path::PathBuf;
 
 use regex::Regex;
 
-use crate::run_context::InventoryEntry;
 use crate::ValidationConfigExt;
 use crate::filters::LanguageId;
 use crate::pattern_registry::required_pattern;
+use crate::run_context::InventoryEntry;
 use crate::scan::for_each_file_under_root;
 use crate::{Result, ValidationConfig};
 use mcb_utils::constants::validate::{CFG_TEST_MARKER, COMMENT_PREFIX, FN_PREFIXES};
@@ -60,7 +60,7 @@ where
 /// Generic helper: iterate over all Rust files in `tests/` directories.
 ///
 /// Shared by hygiene validators that scan test files (naming, quality,
-/// function_naming) to avoid repeating the `tests_dir` + `for_each_file_under_root`
+/// `function_naming`) to avoid repeating the `tests_dir` + `for_each_file_under_root`
 /// boilerplate.
 ///
 /// # Errors

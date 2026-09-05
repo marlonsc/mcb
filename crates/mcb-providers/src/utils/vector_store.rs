@@ -103,8 +103,12 @@ pub fn build_file_info_from_results(results: Vec<SearchResult>) -> Vec<FileInfo>
 /// implementation follows the standard pattern: call `list_vectors`, then
 /// aggregate results via `build_file_info_from_results`.
 ///
-/// Providers with custom logic (Milvus, EdgeVec, Encrypted) should implement
+/// Providers with custom logic (Milvus, `EdgeVec`, Encrypted) should implement
 /// `list_file_paths` directly instead of delegating to this function.
+///
+/// # Errors
+///
+/// Returns an error if the underlying `list_vectors` call fails.
 pub async fn standard_list_file_paths(
     provider: &impl mcb_domain::ports::VectorStoreProvider,
     collection: &mcb_domain::value_objects::CollectionId,
