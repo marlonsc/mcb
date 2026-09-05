@@ -99,7 +99,6 @@ def test_custom_mutations_require_apply() -> None:
 
 
 @pytest.mark.slow
-@pytest.mark.timeout(900)
 def test_invalid_nested_choices_fail_before_dry_run_gates() -> None:
     commands = [
         ["make", "build", "WHAT=codegen-__invalid__"],
@@ -125,24 +124,28 @@ def test_invalid_nested_choices_fail_before_dry_run_gates() -> None:
 def test_generated_gitignore_keeps_declared_project_exceptions() -> None:
     """Regeneration must not drop the project's own ignore rules.
 
-    `.gitignore` is a generated projection, so the project's rules live in the
-    `extra_ignored_patterns` overlay of config/workspace.yaml (the mro-jnm1.3
-    seam). Both sides are read from their real files here: if the overlay ever
-    stops reaching the rendered artifact, the barrier that keeps machine
-    config and tool output out of version control silently disappears.
+    `.gitignore` is a generated projection, so the project's rules live in
+    `ManagedArtifacts.Gitignore.patterns` of config/managed-artifacts.yaml, the
+    generator's project-owned extension surface. Both sides are read from their
+    real files here: if the declared patterns ever stop reaching the rendered
+    artifact, the barrier that keeps machine config and tool output out of
+    version control silently disappears.
     """
-    loaded = cli.read_yaml_file(ROOT / "config" / "workspace.yaml").unwrap()
-    assert isinstance(loaded, dict), "workspace.yaml must parse to a mapping"
+    loaded = cli.read_yaml_file(ROOT / "config" / "managed-artifacts.yaml").unwrap()
+    assert isinstance(loaded, dict), "managed-artifacts.yaml must parse to a mapping"
     manifest: dict[str, flext_t.JsonValue] = loaded
     declared: list[str] = [
         str(pattern)
-        for overlay in _json_list(manifest.get("repository_policy_overlays"))
-        for pattern in _json_list(_json_dict(overlay).get("extra_ignored_patterns"))
+        for pattern in _json_list(
+            _json_dict(_json_dict(manifest.get("ManagedArtifacts")).get("Gitignore")).get(
+                "patterns"
+            )
+        )
     ]
 
     assert bool(declared), (
-        "config/workspace.yaml declares no extra_ignored_patterns, so the "
-        "project's ignore rules are not owned by the generator input"
+        "config/managed-artifacts.yaml declares no ManagedArtifacts.Gitignore."
+        "patterns, so the project's ignore rules are not owned by the generator input"
     )
 
     rendered = {
