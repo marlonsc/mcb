@@ -11,8 +11,8 @@
 # Rust toolchain, which the FLEXT surface does not cover.
 
 post-setup:
-	@# Hook installation is owned by beads (`bd hooks install`); Gas Town
-	@# installs the same shims, so no recipe here may write .git/hooks.
+	@# Hook installation is owned by beads (`bd hooks install`); Gas City
+	@# (gc) owns the workflow, so no recipe here may write .git/hooks.
 	@# Why (mcb-o96i.19): CI runners need sccache installed before any cargo
 	@# invocation because .cargo/config.toml sets rustc-wrapper = "sccache".
 	@# The setup-ci.sh script installs sccache when not present. On local

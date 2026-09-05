@@ -46,7 +46,7 @@ def test_help_lists_flext_public_verbs() -> None:
 
     assert result.returncode == 0, combined
     # Why (gastown): the `work` lane-lifecycle verb was removed; lanes are
-    # owned by Gas Town (gt sling / gt done), not make.
+    # owned by Gas City (gc sling / bead+PR closure), not make.
     verbs = [line.split()[0] for line in result.stdout.splitlines() if line.split()]
     assert "work" not in verbs, f"`work` is still a public verb:\n{result.stdout}"
 
@@ -181,7 +181,7 @@ def _hook_shims() -> dict[str, Path]:
 def test_git_hooks_have_exactly_one_owner() -> None:
     """Only beads (bd hooks) may own the installed hook shims.
 
-    Gas Town owns the lane lifecycle and Beads owns the git hooks; the
+    Gas City (gc) owns the lane lifecycle and Beads owns the git hooks; the
     installed shims must delegate to `bd hooks run`, never to a foreign
     runner (pre-commit or a copied script), so commit gating is identical in
     every checkout.
