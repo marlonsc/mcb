@@ -2,7 +2,13 @@
 
 ## Status
 
-Accepted
+Accepted — **Amendment 2026-09-02: Gas Town has been retired** (teardown of `~/gt` on
+2026-08-24). The native runtime is now **Gas City** (`gc`, in `~/gc`). Where
+this ADR says `gt sling`/`gt done`/Refinery/polecat, read `gc sling`, beads + PR
+closure (native gates → PR → merge to the integration lane), formula/order, and
+pool/session.
+Official reference: `~/gascity/docs/reference/gastown-command-map`.
+The original text below remains as a historical record of the decision.
 
 ## Context
 
