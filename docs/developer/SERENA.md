@@ -193,7 +193,7 @@ For widely-used symbols, results can exceed 10,000 characters. **Always set `max
 find_referencing_symbols(
     name_path="EmbeddingProvider",
     relative_path="...",
-    max_answer_chars=3000  # Limit output
+    max_answer_chars=3000,  # Limit output
 )
 ```
 
@@ -207,10 +207,7 @@ Uses `name_path_pattern` (not `name_path`):
 
 ```python
 # ✅ CORRECT
-safe_delete_symbol(
-    relative_path="...",
-    name_path_pattern="function_name"
-)
+safe_delete_symbol(relative_path="...", name_path_pattern="function_name")
 ```
 
 ### `get_symbols_overview` — LSP Warmup
