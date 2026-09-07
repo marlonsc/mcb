@@ -137,9 +137,9 @@ def test_generated_gitignore_keeps_declared_project_exceptions() -> None:
     declared: list[str] = [
         str(pattern)
         for pattern in _json_list(
-            _json_dict(_json_dict(manifest.get("ManagedArtifacts")).get("Gitignore")).get(
-                "patterns"
-            )
+            _json_dict(
+                _json_dict(manifest.get("ManagedArtifacts")).get("Gitignore")
+            ).get("patterns")
         )
     ]
 
