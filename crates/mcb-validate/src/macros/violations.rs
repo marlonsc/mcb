@@ -231,7 +231,7 @@ macro_rules! define_violations {
     };
 
     (@impl_violation
-        dynamic_severity,
+        $severity_mode:tt,
         $category:expr,
         $name:ident {
             $(
@@ -256,9 +256,7 @@ macro_rules! define_violations {
             }
 
             fn severity(&self) -> $crate::Severity {
-                match self {
-                    $( Self::$variant { severity, .. } => *severity ),*
-                }
+                define_violations!(@severity $severity_mode, self, $( $severity => $variant ),*)
             }
 
             fn file(&self) -> Option<&std::path::PathBuf> {
@@ -282,56 +280,21 @@ macro_rules! define_violations {
 
     };
 
-    (@impl_violation
-        static_severity,
-        $category:expr,
-        $name:ident {
+    // Severity match generator: dynamic variants store `severity` as a field;
+    // static variants use a compile-time `Severity::$severity` enum variant.
+    (@severity dynamic_severity, $self:expr, $( $severity:ident => $variant:ident ),*) => {
+        match $self {
             $(
-                #[violation(
-                    id = $id:literal,
-                    severity = $severity:ident
-                    $(, suggestion = $suggestion:literal)?
-                )]
-                $variant:ident { $( $field:ident : $field_ty:ty ),* }
-            ),* $(,)?
+                Self::$variant { severity, .. } => *severity
+            ),*
         }
-    ) => {
-        impl $crate::Violation for $name {
-            fn id(&self) -> &str {
-                match self {
-                    $( Self::$variant { .. } => $id ),*
-                }
-            }
-
-            fn category(&self) -> $crate::ViolationCategory {
-                $category
-            }
-
-            fn severity(&self) -> $crate::Severity {
-                match self {
-                    $( Self::$variant { .. } => $crate::Severity::$severity ),*
-                }
-            }
-
-            fn file(&self) -> Option<&std::path::PathBuf> {
-                match self {
-                    $( Self::$variant { .. } => define_violations!(@select_file_arm self, $variant, $( $field : $field_ty ),*) ),*
-                }
-            }
-
-            fn line(&self) -> Option<usize> {
-                match self {
-                    $( Self::$variant { .. } => define_violations!(@select_line_arm self, $variant, $( $field : $field_ty ),*) ),*
-                }
-            }
-
-            fn suggestion(&self) -> Option<String> {
-                match self {
-                    $( Self::$variant { .. } => define_violations!(@select_suggestion_arm self, $variant, $($suggestion,)? $( $field : $field_ty ),*) ),*
-                }
-            }
+    };
+    (@severity static_severity, $self:expr, $( $severity:ident => $variant:ident ),*) => {
+        match $self {
+            $(
+                Self::$variant { .. } => $crate::Severity::$severity
+            ),*
         }
-
     };
 
     // Format helper - with message template

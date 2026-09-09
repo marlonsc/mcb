@@ -41,8 +41,5 @@ fn remote_url_parsing_accepts_canonical_and_alias_forms(
 ) {
     use mcb_server::tools::defaults::parse_org_and_project_from_remote_url;
     let parsed = parse_org_and_project_from_remote_url(url);
-    assert_eq!(
-        parsed,
-        expected.map(|(o, p)| (o.to_owned(), p.to_owned()))
-    );
+    assert_eq!(parsed, expected.map(|(o, p)| (o.to_owned(), p.to_owned())));
 }
