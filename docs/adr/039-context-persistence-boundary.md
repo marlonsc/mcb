@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 39
-title: Context Persistence Boundary
-status: PROPOSED
-created: 2026-02-12
-updated: 2026-02-12
-related: [34, 35, 41]
-supersedes: []
-superseded_by: []
+
+adr: 39 title: Context Persistence Boundary status: PROPOSED created: 2026-02-12
+updated: 2026-02-12 related: [34, 35, 41] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
 ---
 
@@ -21,7 +17,9 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Context
 
-The platform now persists context in multiple domains (memory, sessions, code indexing, and VCS entities). Without an explicit boundary, new write paths can diverge in scoping and provenance behavior.
+The platform now persists context in multiple domains (memory, sessions, code indexing,
+and VCS entities). Without an explicit boundary, new write paths can diverge in scoping
+and provenance behavior.
 
 ## Decision
 

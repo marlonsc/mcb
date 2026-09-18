@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 8
-title: Git-Aware Semantic Indexing v0.2.0
-status: PROPOSED
-created:
-updated: 2026-02-05
-related: [1, 2, 3, 9, 12, 13]
-supersedes: []
-superseded_by: []
+
+adr: 8 title: Git-Aware Semantic Indexing v0.2.0 status: PROPOSED created: updated:
+2026-02-05 related: [1, 2, 3, 9, 12, 13] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
 ---
 
@@ -17,7 +13,8 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
 **Proposed**(Planned for v0.2.0)
 
@@ -31,18 +28,20 @@ implementation_status: "Historical snapshot; see bd for live work"
 > **Target crate structure (v0.2.0)**:
 >
 > - `crates/mcb-domain/src/git.rs` - Git domain types
-> - `crates/mcb-domain/src/ports/providers/vcs.rs` - VCS port trait (see ADR-029, superseded by ADR-050)
+> - `crates/mcb-domain/src/ports/providers/vcs.rs` - VCS port trait (see ADR-029,
+>   superseded by ADR-050)
 > - `crates/mcb-providers/src/git/` - git2 implementation
 > - `crates/mcb-application/src/use_cases/git_indexing.rs` - Git-aware indexing service
 >
 > **⚠ Architecture note (2026-02-20)**: Code paths referencing
-> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029 (superseded by ADR-050),
-> all port traits are defined in `mcb-domain/src/ports/providers/`. When
-> implementing, use the corrected locations.
+> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029
+> (superseded by ADR-050), all port traits are defined in
+> `mcb-domain/src/ports/providers/`. When implementing, use the corrected locations.
 
 ## Context
 
-Memory Context Browser v0.1.0 provides efficient semantic code search but lacks version control system awareness. This limits its usefulness in real-world scenarios:
+Memory Context Browser v0.1.0 provides efficient semantic code search but lacks version
+control system awareness. This limits its usefulness in real-world scenarios:
 
 Current problems:
 
@@ -64,12 +63,10 @@ User demand:
 
 Implement full git integration in mcb v0.2.0 with:
 
-1.**Repository identification by root commit**(portable)
-2.**Multi-branch indexing**(main + HEAD + current by default)
-3.**Commit history**(last 50 by default)
-4.**Submodule detection**with recursive indexing
-5.**Project detection**in monorepos
-6.**Impact analysis**between commits/branches
+1.**Repository identification by root commit**(portable) 2.**Multi-branch
+indexing**(main + HEAD + current by default) 3.**Commit history**(last 50 by
+default) 4.**Submodule detection**with recursive indexing 5.**Project detection**in
+monorepos 6.**Impact analysis**between commits/branches
 
 **Library chosen**: git2 (libgit2 bindings)
 
@@ -206,7 +203,8 @@ pub struct GitChunkMetadata {
 
 ### Phase 2: Git Provider Port/Adapter
 
-**Create/Use**: `crates/mcb-domain/src/ports/providers/vcs.rs` (canonical provider port location)
+**Create/Use**: `crates/mcb-domain/src/ports/providers/vcs.rs` (canonical provider port
+location)
 
 ```rust
 use async_trait::async_trait;
@@ -406,10 +404,10 @@ Extended metadata JSON structure:
 
 Collection naming strategy:
 
-| Pattern | Purpose |
-| --------- | --------- |
-| `{repo_id}_{branch}` | Branch-specific search |
-| `{repo_id}_all` | Cross-branch search |
+| Pattern                    | Purpose                           |
+| -------------------------- | --------------------------------- |
+| `{repo_id}_{branch}`       | Branch-specific search            |
+| `{repo_id}_all`            | Cross-branch search               |
 | `{repo_id}_{commit_short}` | Point-in-time snapshot (optional) |
 
 ### Phase 6: Git Indexing Service
@@ -541,13 +539,13 @@ impl ImpactAnalyzer {
 
 **Create**: `crates/mcb-server/src/handlers/git_tools.rs`
 
-| Tool | Description | Parameters |
-| ------ | ------------- | ------------ |
-| `index_git_repository` | Index repository with branch awareness | path, branches?, include_submodules?, include_history? |
-| `vcs (action=search_branch)` | Search within specific branch | query, repository?, branch?, limit? |
-| `vcs (action=compare_branches)` | Compare code between branches | path, from_branch, to_branch |
-| `vcs (action=analyze_impact)` | Analyze change impact | path, from_ref, to_ref |
-| `vcs (action=list_repositories)` | List indexed repositories | - |
+| Tool                             | Description                            | Parameters                                             |
+| -------------------------------- | -------------------------------------- | ------------------------------------------------------ |
+| `index_git_repository`           | Index repository with branch awareness | path, branches?, include_submodules?, include_history? |
+| `vcs (action=search_branch)`     | Search within specific branch          | query, repository?, branch?, limit?                    |
+| `vcs (action=compare_branches)`  | Compare code between branches          | path, from_branch, to_branch                           |
+| `vcs (action=analyze_impact)`    | Analyze change impact                  | path, from_ref, to_ref                                 |
+| `vcs (action=list_repositories)` | List indexed repositories              | -                                                      |
 
 ### Phase 10: Configuration
 
@@ -598,74 +596,83 @@ git2 = "0.20"
 
 ## Files to Create
 
-| File | Purpose |
-| ------ | --------- |
-| `crates/mcb-domain/src/git.rs` | Git domain types |
-| `crates/mcb-domain/src/ports/providers/vcs.rs` | VcsProvider trait (canonical) |
-| `crates/mcb-providers/src/git/mod.rs` | Git module |
-| `crates/mcb-providers/src/git/git2_provider.rs` | git2 implementation |
-| `crates/mcb-application/src/use_cases/repository.rs` | Repository manager |
-| `crates/mcb-application/src/use_cases/git_indexing.rs` | Git-aware indexing |
-| `crates/mcb-application/src/use_cases/impact.rs` | Impact analysis |
-| `crates/mcb-infrastructure/src/snapshot/git_snapshot.rs` | Git-based change detection |
-| `crates/mcb-server/src/handlers/git_tools.rs` | MCP git tools |
-| `crates/mcb-infrastructure/src/config/git.rs` | Git configuration |
+| File                                                     | Purpose                       |
+| -------------------------------------------------------- | ----------------------------- |
+| `crates/mcb-domain/src/git.rs`                           | Git domain types              |
+| `crates/mcb-domain/src/ports/providers/vcs.rs`           | VcsProvider trait (canonical) |
+| `crates/mcb-providers/src/git/mod.rs`                    | Git module                    |
+| `crates/mcb-providers/src/git/git2_provider.rs`          | git2 implementation           |
+| `crates/mcb-application/src/use_cases/repository.rs`     | Repository manager            |
+| `crates/mcb-application/src/use_cases/git_indexing.rs`   | Git-aware indexing            |
+| `crates/mcb-application/src/use_cases/impact.rs`         | Impact analysis               |
+| `crates/mcb-infrastructure/src/snapshot/git_snapshot.rs` | Git-based change detection    |
+| `crates/mcb-server/src/handlers/git_tools.rs`            | MCP git tools                 |
+| `crates/mcb-infrastructure/src/config/git.rs`            | Git configuration             |
 
 ## Files to Modify
 
-| File | Change |
-| ------ | -------- |
-| `crates/mcb-providers/Cargo.toml` | Add `git2 = "0.20"` dependency |
-| `crates/mcb-domain/src/entities/code_chunk.rs` | Add `git_metadata` field to CodeChunk |
-| `crates/mcb-domain/src/ports/providers/mod.rs` | Export VcsProvider |
-| `crates/mcb-domain/src/mod.rs` | Export git module |
-| `crates/mcb-providers/src/lib.rs` | Export git provider |
-| `crates/mcb-application/src/use_cases/mod.rs` | Export repository, git_indexing, impact |
-| `crates/mcb-application/src/use_cases/indexing.rs` | Integrate with GitIndexingService |
-| `crates/mcb-infrastructure/src/snapshot/mod.rs` | Export git_snapshot |
-| `crates/mcb-server/src/mcp_server.rs` | Register new tools |
-| `crates/mcb-infrastructure/src/config/mod.rs` | Export git config |
+| File                                               | Change                                  |
+| -------------------------------------------------- | --------------------------------------- |
+| `crates/mcb-providers/Cargo.toml`                  | Add `git2 = "0.20"` dependency          |
+| `crates/mcb-domain/src/entities/code_chunk.rs`     | Add `git_metadata` field to CodeChunk   |
+| `crates/mcb-domain/src/ports/providers/mod.rs`     | Export VcsProvider                      |
+| `crates/mcb-domain/src/mod.rs`                     | Export git module                       |
+| `crates/mcb-providers/src/lib.rs`                  | Export git provider                     |
+| `crates/mcb-application/src/use_cases/mod.rs`      | Export repository, git_indexing, impact |
+| `crates/mcb-application/src/use_cases/indexing.rs` | Integrate with GitIndexingService       |
+| `crates/mcb-infrastructure/src/snapshot/mod.rs`    | Export git_snapshot                     |
+| `crates/mcb-server/src/mcp_server.rs`              | Register new tools                      |
+| `crates/mcb-infrastructure/src/config/mod.rs`      | Export git config                       |
 
 ## Success Metrics
 
-| Metric | Before | Target v0.2.0 |
-| -------- | -------- | --------------- |
-| Portability | Filesystem path | Root commit ID |
-| Multi-branch | No | Yes |
-| Submodules | No | Yes |
-| History | No | 50 commits |
-| Impact | No | Yes |
+| Metric       | Before          | Target v0.2.0  |
+| ------------ | --------------- | -------------- |
+| Portability  | Filesystem path | Root commit ID |
+| Multi-branch | No              | Yes            |
+| Submodules   | No              | Yes            |
+| History      | No              | 50 commits     |
+| Impact       | No              | Yes            |
 
 ## Configuration Defaults
 
-| Setting | Default | Override |
-| --------- | --------- | ---------- |
-| Branches | main, HEAD, current | Per-repo |
-| History depth | 50 commits | Per-repo |
-| Submodules | Recursive indexing | Per-repo |
+| Setting       | Default             | Override |
+| ------------- | ------------------- | -------- |
+| Branches      | main, HEAD, current | Per-repo |
+| History depth | 50 commits          | Per-repo |
+| Submodules    | Recursive indexing  | Per-repo |
 
 ## Canonical References
 
-> **Note**: This ADR is a historical decision record. For current architecture
-> details, consult the normative documents below. Code paths referencing
-> `mcb-application/src/ports/providers/` are outdated; per ADR-029 (superseded by ADR-050), all port
-> traits now reside in `mcb-domain/src/ports/providers/`.
+> **Note**: This ADR is a historical decision record. For current architecture details,
+> consult the normative documents below. Code paths referencing
+> `mcb-application/src/ports/providers/` are outdated; per ADR-029 (superseded by
+> ADR-050), all port traits now reside in `mcb-domain/src/ports/providers/`.
 
-- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules
+  and module ownership (normative)
 - [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
-- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Full system architecture (normative)
+- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Full system architecture
+  (normative)
 
 ## Related ADRs
 
-- [ADR-001: Provider Pattern Architecture](001-modular-crates-architecture.md) - Provider patterns for GitProvider
-- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async git operations
-- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider routing
-- [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - Git-tagged memory entries
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for git providers
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
+- [ADR-001: Provider Pattern Architecture](001-modular-crates-architecture.md) -
+  Provider patterns for GitProvider
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async git
+  operations
+- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) -
+  Provider routing
+- [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) -
+  Git-tagged memory entries
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for git
+  providers
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Crate organization
 
 ## References
 
 - [git2 crate](https://docs.rs/git2/)
 - [libgit2](https://libgit2.org/)
-- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI; see ADR-050)
+- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI;
+  see ADR-050)

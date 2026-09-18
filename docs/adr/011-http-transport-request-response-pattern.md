@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 11
-title: HTTP Transport - Request-Response Pattern Over SSE Streaming
-status: IMPLEMENTED
-created:
-updated: 2026-02-05
-related: [1, 2, 7, 12, 13]
-supersedes: []
-superseded_by: []
-implementation_status: Complete
+
+adr: 11 title: HTTP Transport - Request-Response Pattern Over SSE Streaming status:
+IMPLEMENTED created: updated: 2026-02-05 related: [1, 2, 7, 12, 13] supersedes: []
+superseded_by: [] implementation_status: Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -33,7 +29,8 @@ The MCP (Model Context Protocol) specification defines a Streamable HTTP transpo
 - **POST /MCP**: Client sends requests, receives responses (request-response pattern)
 - **GET /MCP**: Server streams updates to client via Server-Sent Events (SSE)
 
-The current v0.1.0 implementation needed to decide whether to implement both patterns immediately or defer SSE streaming to a future release.
+The current v0.1.0 implementation needed to decide whether to implement both patterns
+immediately or defer SSE streaming to a future release.
 
 ## Decision
 
@@ -49,7 +46,8 @@ Implement request-response pattern only in v0.1.0
 
 - Clients are explicitly informed SSE is not yet supported
 - Better than 200 OK with empty response (which would be misleading)
-- Infrastructure for SSE already in place (session handling, event IDs, message buffering)
+- Infrastructure for SSE already in place (session handling, event IDs, message
+  buffering)
 
 ### Rationale
 
@@ -276,26 +274,33 @@ async fn handle_mcp_get(
 
 ## Recommendations
 
-1.**Document clearly**in all client libraries and examples that GET /MCP is not yet implemented
-2.**Monitor feedback**from users about SSE needs
-3.**Plan v0.2.0**SSE implementation if users need real-time streaming
-4.**Consider alternative patterns**if WebSocket demand grows (v0.3.0+)
-5.**Update MCP compliance matrix**to note SSE as deferred feature
+1.**Document clearly**in all client libraries and examples that GET /MCP is not yet
+implemented 2.**Monitor feedback**from users about SSE needs 3.**Plan v0.2.0**SSE
+implementation if users need real-time streaming 4.**Consider alternative patterns**if
+WebSocket demand grows (v0.3.0+) 5.**Update MCP compliance matrix**to note SSE as
+deferred feature
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider pattern for HTTP clients
-- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async HTTP handling with Tokio
-- [ADR-051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md) - Unified port architecture
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for transport services
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - mcb-server crate organization
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider
+  pattern for HTTP clients
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async HTTP
+  handling with Tokio
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md) -
+  Unified port architecture
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for
+  transport services
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  mcb-server crate organization
 
 ## References
 
 - **MCP Specification**: [Model Context Protocol](https://modelcontextprotocol.io/)
-- **Transport Layer**: `crates/mcb-server/src/transport/http.rs`, `crates/mcb-server/src/transport/session.rs`
+- **Transport Layer**: `crates/mcb-server/src/transport/http.rs`,
+  `crates/mcb-server/src/transport/session.rs`
 - **Related Issues**: See GitHub issues tagged with "sse" or "streaming"
-- [linkme Documentation](https://docs.rs/linkme) - Compile-time provider discovery (see ADR-050)
+- [linkme Documentation](https://docs.rs/linkme) - Compile-time provider discovery (see
+  ADR-050)
 
 ## Reviewers
 

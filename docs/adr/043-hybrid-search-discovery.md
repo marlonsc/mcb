@@ -1,31 +1,27 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 43
-title: Hybrid Search & Discovery for Context
-status: PROPOSED
-created:
-updated: 2026-02-05
-related: []
-supersedes: []
-superseded_by: []
-implementation_status: "Historical snapshot; see bd for live work"
+
+adr: 43 title: Hybrid Search & Discovery for Context status: PROPOSED created: updated:
+2026-02-05 related: [] supersedes: [] superseded_by: [] implementation_status:
+"Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
 # ADR-043: Hybrid Search & Discovery for Context
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
-**Status**: Proposed
-**Date**: 2026-02-05
-**Deciders**: MCB Architecture Team
+**Status**: Proposed **Date**: 2026-02-05 **Deciders**: MCB Architecture Team
 **Related**: ADR-041 (Context), ADR-042 (Knowledge Graph), ADR-046 (Policy gating)
 **Predecessor**: ADR-042 (uses graph)
 
 ## Context
 
-ADR-042 builds a knowledge graph of code relationships. ADR-043 specifies the**search engine** that queries this graph alongside:
+ADR-042 builds a knowledge graph of code relationships. ADR-043 specifies the**search
+engine** that queries this graph alongside:
 
 - Full-text search (tantivy BM25 on code content)
 - Vector embeddings (semantic similarity via existing MCB vector stores)
@@ -304,7 +300,8 @@ impl UnifiedSearchEngine {
 
 **Issue**: HybridSearchEngine was incorrectly shown as a provider trait.
 
-**Fix**: Renamed to `ContextSearchService` and clarified as an**application-layer concrete service** (not a trait) that:
+**Fix**: Renamed to `ContextSearchService` and clarified as an**application-layer
+concrete service** (not a trait) that:
 
 - Lives in `mcb-application/src/use_cases/context_search.rs`
 - **COMPOSES** three port traits from `mcb-domain`:
@@ -313,11 +310,13 @@ impl UnifiedSearchEngine {
 - `ContextGraphTraversal` (graph-based discovery)
 - Implements the RRF fusion algorithm to combine signals
 
-**Rationale**: Application services orchestrate port traits; they are not themselves ports. This maintains Clean Architecture's dependency inversion principle.
+**Rationale**: Application services orchestrate port traits; they are not themselves
+ports. This maintains Clean Architecture's dependency inversion principle.
 
 ### Correction 4 (mcb-jq3): Missing Port Trait Definition
 
-**Issue**: `FullTextSearchProvider` port trait was referenced but not defined in the ADR.
+**Issue**: `FullTextSearchProvider` port trait was referenced but not defined in the
+ADR.
 
 **Fix**: Added complete port trait definition in section 3.1:
 
@@ -326,11 +325,13 @@ impl UnifiedSearchEngine {
 - `async fn search(&self, query: &str, options: FtsOptions) -> FtsResult<Vec<FtsResult>>`
 - `async fn index(&self, id: &str, content: &str) -> FtsResult<()>`
 - `async fn clear(&self) -> FtsResult<()>`
-- **Registration**: Uses `#[linkme::distributed_slice(FULL_TEXT_SEARCH_PROVIDERS)]` for compile-time provider discovery
+- **Registration**: Uses `#[linkme::distributed_slice(FULL_TEXT_SEARCH_PROVIDERS)]` for
+  compile-time provider discovery
 - **Default Implementation**: tantivy (BM25) in `mcb-providers`
 - **Error Handling**: Custom `FtsError` enum with `thiserror`
 
-**Rationale**: Port traits must be explicitly defined in the domain layer. Linkme registration enables zero-runtime-overhead provider discovery.
+**Rationale**: Port traits must be explicitly defined in the domain layer. Linkme
+registration enables zero-runtime-overhead provider discovery.
 
 ## Testing
 
@@ -353,5 +354,5 @@ impl UnifiedSearchEngine {
 
 ---
 
-**Depends on**: ADR-041 (context), ADR-042 (graph)
-**Feeds**: ADR-041 (search service), ADR-046 (policy gating)
+**Depends on**: ADR-041 (context), ADR-042 (graph) **Feeds**: ADR-041 (search service),
+ADR-046 (policy gating)

@@ -1,7 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 MD024 -->
+
 # MCB Minimal FSM Specification (v0.3.0)
 
-This document defines the minimal viable Finite State Machine (FSM) for MCB workflow sessions. It simplifies the complex 12-state production model from ADR-034 into a focused 4-state core for initial implementation.
+This document defines the minimal viable Finite State Machine (FSM) for MCB workflow
+sessions. It simplifies the complex 12-state production model from ADR-034 into a
+focused 4-state core for initial implementation.
 
 ## 1. State Diagram
 
@@ -26,27 +29,28 @@ This document defines the minimal viable Finite State Machine (FSM) for MCB work
 
 ## 2. State Definitions
 
-| State | Description |
-| ------- | ------------- |
-| **Idle** | Initial state. Session created, no active work performing. |
-| **Active** | Primary execution state. Operations are being performed. |
-| **Paused** | Temporarily suspended. State is preserved but no work occurs. |
-| **Complete** | Terminal success state. All goals reached. |
+| State        | Description                                                   |
+| ------------ | ------------------------------------------------------------- |
+| **Idle**     | Initial state. Session created, no active work performing.    |
+| **Active**   | Primary execution state. Operations are being performed.      |
+| **Paused**   | Temporarily suspended. State is preserved but no work occurs. |
+| **Complete** | Terminal success state. All goals reached.                    |
 
 ## 3. Transition Rules & Guards
 
 Transitions are triggered by `WorkflowEvent` and must pass associated `Policy` guards.
 
-| From | Trigger | To | Guards / Policies |
-| ------ | --------- | ---- | ------------------- |
-| Idle | `Start` | Active | **FreshnessPolicy**: Context must be < 5s old. |
-| Active | `Suspend` | Paused | None (always allowed). |
-| Paused | `Resume` | Active | **FreshnessPolicy**: Re-validate context. |
-| Active | `Finish` | Complete | **ValidationPolicy**: All tasks must be closed. |
+| From   | Trigger   | To       | Guards / Policies                               |
+| ------ | --------- | -------- | ----------------------------------------------- |
+| Idle   | `Start`   | Active   | **FreshnessPolicy**: Context must be < 5s old.  |
+| Active | `Suspend` | Paused   | None (always allowed).                          |
+| Paused | `Resume`  | Active   | **FreshnessPolicy**: Re-validate context.       |
+| Active | `Finish`  | Complete | **ValidationPolicy**: All tasks must be closed. |
 
 ## 4. Policy Definitions
 
-Policies are implemented as traits that evaluate the current `ProjectContext` against a transition.
+Policies are implemented as traits that evaluate the current `ProjectContext` against a
+transition.
 
 ### Freshness Policy
 

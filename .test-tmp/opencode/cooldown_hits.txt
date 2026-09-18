@@ -1,0 +1,2 @@
+/home/marlonsc/flext/pyproject.toml:683:exclude-newer = "0 days"
+/home/marlonsc/flext/AGENTS.md:431:**Pinned toolchain**: versions declared in `config/codegen.yaml` scaffold.project.dev (ruff, mypy, pyright, pyrefly, pytest, etc.). Python strictly `>=3.13,<3.14`. The `.default-python-packages` file was removed; tool versions resolve through the cooldown-constrained SSOT.

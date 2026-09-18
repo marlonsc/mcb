@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 29
-title: Hexagonal Architecture with dill IoC
-status: IMPLEMENTED
-created:
-updated: 2026-02-05
-related: []
-supersedes: []
-superseded_by: []
-implementation_status: Complete
+
+adr: 29 title: Hexagonal Architecture with dill IoC status: IMPLEMENTED created:
+updated: 2026-02-05 related: [] supersedes: [] superseded_by: [] implementation_status:
+Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -20,25 +16,24 @@ implementation_status: Complete
 **Implemented** (v0.1.2)
 
 > Evolution of [ADR 024: Simplified Dependency Injection]
-> (024-simplified-dependency-injection.md), adding dill Catalog as IoC
-> container while maintaining the handle-based pattern.
+> (024-simplified-dependency-injection.md), adding dill Catalog as IoC container while
+> maintaining the handle-based pattern.
 
 ## Context
 
-The previous architecture (ADR-024) used a handle-based DI pattern with linkme
-registry for compile-time provider discovery. While effective, this approach had
-coupling issues:
+The previous architecture (ADR-024) used a handle-based DI pattern with linkme registry
+for compile-time provider discovery. While effective, this approach had coupling issues:
 
 1. **Infrastructure imported concrete types from Application**
-    - `domain_services.rs` imported `ContextServiceImpl`, `SearchServiceImpl`
+   - `domain_services.rs` imported `ContextServiceImpl`, `SearchServiceImpl`
 
 2. **Application ports were duplicated**
-    - `mcb-domain/src/ports/providers/` (correct location)
-    - `mcb-application/src/ports/providers/` (duplication)
+   - `mcb-domain/src/ports/providers/` (correct location)
+   - `mcb-application/src/ports/providers/` (duplication)
 
 3. **No IoC container for service lifecycle management**
-    - Manual wiring in bootstrap.rs
-    - No dependency graph validation
+   - Manual wiring in bootstrap.rs
+   - No dependency graph validation
 
 ## Decision
 
@@ -62,7 +57,8 @@ pub trait VectorStoreProvider: Send + Sync {
 ```
 
 Application layer does not own provider ports. Import provider traits directly from
-`mcb-domain/src/ports/providers/` to avoid duplicate declarations and compatibility shims.
+`mcb-domain/src/ports/providers/` to avoid duplicate declarations and compatibility
+shims.
 
 ### 2. dill Catalog as IoC Container
 
@@ -148,10 +144,10 @@ pub async fn build_catalog(config: AppConfig) -> Result<Catalog> {
 
 New mcb-validate rules enforce the architecture:
 
-| Rule ID | Description |
-| --------- | ------------- |
-| CA007 | Infrastructure cannot import concrete types from Application |
-| CA008 | Application must import ports from mcb-domain |
+| Rule ID | Description                                                  |
+| ------- | ------------------------------------------------------------ |
+| CA007   | Infrastructure cannot import concrete types from Application |
+| CA008   | Application must import ports from mcb-domain                |
 
 ## Consequences
 
@@ -176,19 +172,21 @@ New mcb-validate rules enforce the architecture:
 
 ## Canonical References
 
-> **Note**: This ADR is a historical decision record. For current architecture
-> details, consult the normative documents below. The code paths in this ADR
-> reflect the state at the time of writing; the current single source of truth
-> for port trait locations is `mcb-domain/src/ports/providers/` (not
-> `mcb-application/src/ports/providers/`, which was removed as duplicated).
+> **Note**: This ADR is a historical decision record. For current architecture details,
+> consult the normative documents below. The code paths in this ADR reflect the state at
+> the time of writing; the current single source of truth for port trait locations is
+> `mcb-domain/src/ports/providers/` (not `mcb-application/src/ports/providers/`, which
+> was removed as duplicated).
 
-- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules
+  and module ownership (normative)
 - [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
-- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Full system architecture (normative)
+- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Full system architecture
+  (normative)
 
 ## References
 
 - [dill-rs Documentation](https://docs.rs/dill/latest/dill/)
 - [ADR 023: Inventory to linkme Migration](023-inventory-to-linkme-migration.md)
 - [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md)
-- [Clean Architecture](<https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html>)
+- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)

@@ -8,22 +8,22 @@ One-pager for daily MCB development.
 
 ## Make verbs (90% of daily use)
 
-| Task | Command |
-|------|---------|
-| Build | `make build` / `make build RELEASE=1` |
-| Test all | `make test` |
-| Unit tests | `make test SCOPE=unit` |
-| Lint | `make check WHAT=lint` |
-| Auto-format | `make check WHAT=fix ACT=fmt APPLY=Y` |
-| Architecture check | `make check WHAT=validate QUICK=1` |
-| Banned-pattern scan | `make check WHAT=guard` |
-| Full CI gate | `make check WHAT=ci` |
-| Lint docs | `make build WHAT=docs ACT=lint` |
-| Validate docs | `make build WHAT=docs ACT=validate QUICK=1` |
-| Git status | `make ship WHAT=status` |
-| Commit | `make ship WHAT=commit MSG='...' APPLY=Y` |
-| Push | `make ship WHAT=push APPLY=Y` |
-| Bootstrap | `make boot` |
+| Task                | Command                                     |
+| ------------------- | ------------------------------------------- |
+| Build               | `make build` / `make build RELEASE=1`       |
+| Test all            | `make test`                                 |
+| Unit tests          | `make test SCOPE=unit`                      |
+| Lint                | `make check WHAT=lint`                      |
+| Auto-format         | `make check WHAT=fix ACT=fmt APPLY=Y`       |
+| Architecture check  | `make check WHAT=validate QUICK=1`          |
+| Banned-pattern scan | `make check WHAT=guard`                     |
+| Full CI gate        | `make check WHAT=ci`                        |
+| Lint docs           | `make build WHAT=docs ACT=lint`             |
+| Validate docs       | `make build WHAT=docs ACT=validate QUICK=1` |
+| Git status          | `make ship WHAT=status`                     |
+| Commit              | `make ship WHAT=commit MSG='...' APPLY=Y`   |
+| Push                | `make ship WHAT=push APPLY=Y`               |
+| Bootstrap           | `make boot`                                 |
 
 > Destructive verbs require `APPLY=Y`.
 
@@ -42,30 +42,31 @@ mcb-validate (developer tooling)
 
 ## Good / bad in 10s
 
-| ✅ Do this | ❌ Never this |
-|-----------|--------------|
-| `Result<T>` + `?` propagation | `unwrap()`/`expect()`/`panic!()` in prod |
-| `Error::embedding("...")` | Raw `Error::ProviderError { ... }` |
-| `tracing::info!(...)` | `println!()`/`eprintln!()` in prod |
-| Domain ports in handlers | Concrete providers in handlers |
-| `define_id!(SessionId)` | Raw `String`/`Uuid` as domain IDs |
-| Tests in `tests/` directory | Inline `#[cfg(test)]` for integration tests |
-| `make check WHAT=guard` before commit | `TODO`/`FIXME`/`todo!()` in committed code |
+| ✅ Do this                            | ❌ Never this                               |
+| ------------------------------------- | ------------------------------------------- |
+| `Result<T>` + `?` propagation         | `unwrap()`/`expect()`/`panic!()` in prod    |
+| `Error::embedding("...")`             | Raw `Error::ProviderError { ... }`          |
+| `tracing::info!(...)`                 | `println!()`/`eprintln!()` in prod          |
+| Domain ports in handlers              | Concrete providers in handlers              |
+| `define_id!(SessionId)`               | Raw `String`/`Uuid` as domain IDs           |
+| Tests in `tests/` directory           | Inline `#[cfg(test)]` for integration tests |
+| `make check WHAT=guard` before commit | `TODO`/`FIXME`/`todo!()` in committed code  |
 
 ## Beads workflow
 
 ```bash
 bd prime
 bd ready
-bd update <id> --claim
+bd update < id > --claim
 # edit
 make check WHAT=lint && make test SCOPE=unit
-bd close <id> --reason "lint + unit tests passed"
+bd close "lint + unit tests passed" < id > --reason
 ```
 
 ## Project skills
 
-Load `/skill:mcb-patterns` (or `/skill:<name>`) as the central index, or the domain skill directly:
+Load `/skill:mcb-patterns` (or `/skill:<name>`) as the central index, or the domain
+skill directly:
 
 - `/skill:mcb-make-verbs`
 - `/skill:mcb-architecture-layers`

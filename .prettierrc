@@ -1,0 +1,22 @@
+{
+  "plugins": [
+    "@prettier/plugin-python",
+    "prettier-plugin-java",
+    "prettier-plugin-toml",
+    "@prettier/plugin-ruby",
+    "prettier-plugin-sh",
+    "prettier-plugin-organize-imports"
+  ],
+  "tabWidth": 4,
+  "printWidth": 88,
+  "proseWrap": "always",
+  "overrides": [
+    {
+      "files": ["*.md", "*.yaml", "*.yml", "*.json"],
+      "options": {
+        "tabWidth": 2
+      }
+    }
+  ]
+}
+

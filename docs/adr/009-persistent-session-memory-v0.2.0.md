@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 9
-title: Persistent Session Memory v0.2.0
-status: PROPOSED
-created:
-updated: 2026-02-05
-related: [1, 2, 3, 7, 8, 10, 12, 13]
-supersedes: []
-superseded_by: []
+
+adr: 9 title: Persistent Session Memory v0.2.0 status: PROPOSED created: updated:
+2026-02-05 related: [1, 2, 3, 7, 8, 10, 12, 13] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
 ---
 
@@ -17,35 +13,36 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
 **Proposed** (Planned for v0.2.0)
 
-> **Amendment 2026-02-02**: Tool naming convention updated to use `memory_`
-> prefix for all memory-related MCP tools to avoid namespace collisions with code
-> search tools and ensure stable API surface for v1.0.0.
-> Not yet implemented. Target crate structure for v0.2.0:
+> **Amendment 2026-02-02**: Tool naming convention updated to use `memory_` prefix for
+> all memory-related MCP tools to avoid namespace collisions with code search tools and
+> ensure stable API surface for v1.0.0. Not yet implemented. Target crate structure for
+> v0.2.0:
 >
 > - `crates/mcb-domain/src/memory.rs` - Memory domain types
-> - `crates/mcb-domain/src/ports/providers/memory.rs` - MemoryProvider port trait (see ADR-029, superseded by ADR-050)
+> - `crates/mcb-domain/src/ports/providers/memory.rs` - MemoryProvider port trait (see
+>   ADR-029, superseded by ADR-050)
 > - `crates/mcb-application/src/use_cases/session.rs` - Session manager service
-> - `crates/mcb-application/src/use_cases/memory_search.rs` - Memory search
->   service
-> - `crates/mcb-application/src/use_cases/context_injection.rs` - Context
->   injection
+> - `crates/mcb-application/src/use_cases/memory_search.rs` - Memory search service
+> - `crates/mcb-application/src/use_cases/context_injection.rs` - Context injection
 > - `crates/mcb-providers/src/memory/` - Memory provider implementations
 > - `crates/mcb-server/src/handlers/memory_tools.rs` - MCP tool handlers
 > - `crates/mcb-infrastructure/src/config/memory.rs` - Memory configuration
 > - Requires ADR-008 git integration for git-tagged observations
 >
 > **⚠ Architecture note (2026-02-20)**: Code paths referencing
-> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029 (superseded by ADR-050),
-> all port traits are defined in `mcb-domain/src/ports/providers/`. When
-> implementing, use the corrected locations.
+> `mcb-application/src/ports/providers/` in this ADR are outdated. Per ADR-029
+> (superseded by ADR-050), all port traits are defined in
+> `mcb-domain/src/ports/providers/`. When implementing, use the corrected locations.
 
 ## Context
 
-Memory Context Browser v0.1.0 provides semantic code search but lacks session-level memory persistence. Each Claude Code session starts fresh, losing valuable context:
+Memory Context Browser v0.1.0 provides semantic code search but lacks session-level
+memory persistence. Each Claude Code session starts fresh, losing valuable context:
 
 Current problems:
 
@@ -64,21 +61,22 @@ User demand:
 - Need progressive disclosure (index → context → details)
 - Need token-efficient context injection
 
-**Reference implementation**: Claude-mem v8.5.2 demonstrates these features work well in practice with TypeScript + SQLite + Chroma architecture.
+**Reference implementation**: Claude-mem v8.5.2 demonstrates these features work well in
+practice with TypeScript + SQLite + Chroma architecture.
 
 ## Decision
 
-Implement persistent session memory in mcb v0.2.0 by porting Claude-mem's core architecture to Rust:
+Implement persistent session memory in mcb v0.2.0 by porting Claude-mem's core
+architecture to Rust:
 
-1.**Observation storage**via existing vector store infrastructure
-2.**Session management**with lifecycle tracking
-3.**Memory compression**via configurable summarization
-4.**Hybrid search**combining existing vector search with BM25
-5.**3-layer workflow**(search → timeline → get_observations)
-6.**Context injection**for SessionStart hook integration
-7.**Progressive disclosure**with token cost visibility
+1.**Observation storage**via existing vector store infrastructure 2.**Session
+management**with lifecycle tracking 3.**Memory compression**via configurable
+summarization 4.**Hybrid search**combining existing vector search with BM25 5.**3-layer
+workflow**(search → timeline → get_observations) 6.**Context injection**for SessionStart
+hook integration 7.**Progressive disclosure**with token cost visibility
 
-**Key design choice**: Leverage existing mcb infrastructure (provider pattern, vector stores, hybrid search) rather than duplicating Claude-mem's SQLite + Chroma approach.
+**Key design choice**: Leverage existing mcb infrastructure (provider pattern, vector
+stores, hybrid search) rather than duplicating Claude-mem's SQLite + Chroma approach.
 
 ### Tool Naming Convention (Amendment 2026-02-02)
 
@@ -86,18 +84,20 @@ All memory-related MCP tools use the `memory_` prefix to avoid namespace collisi
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
-| ADR Original Name | Canonical Name (v1.0.0) | Rationale |
-| ------------------- | ------------------------- | ----------- |
-| `search` | `memory (action=list, resource=observation)` | Avoids collision with `search (resource=code)` |
-| `timeline` | `memory (action=timeline, resource=observation)` | Explicit memory domain |
-| `get_observations` | `memory (action=get, resource=observation)` | Consistent namespace |
-| `memory (action=store, resource=observation)` | `memory (action=store, resource=observation)` | Matches tool |
-| `inject_context` | `memory (action=inject, resource=observation)` | Avoids future collisions |
+| ADR Original Name                             | Canonical Name (v1.0.0)                          | Rationale                                      |
+| --------------------------------------------- | ------------------------------------------------ | ---------------------------------------------- |
+| `search`                                      | `memory (action=list, resource=observation)`     | Avoids collision with `search (resource=code)` |
+| `timeline`                                    | `memory (action=timeline, resource=observation)` | Explicit memory domain                         |
+| `get_observations`                            | `memory (action=get, resource=observation)`      | Consistent namespace                           |
+| `memory (action=store, resource=observation)` | `memory (action=store, resource=observation)`    | Matches tool                                   |
+| `inject_context`                              | `memory (action=inject, resource=observation)`   | Avoids future collisions                       |
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 **Existing tools retained** (already namespaced):
 
-- `memory (action=store, resource=observation)` → alias for `memory (action=store, resource=observation)`
+- `memory (action=store, resource=observation)` → alias for
+  `memory (action=store, resource=observation)`
 - `search (resource=memory)` → alias for `memory (action=list, resource=observation)`
 - `session (action=summarize)` → unchanged (session domain)
 - `session (action=summarize)` → unchanged (session domain)
@@ -340,7 +340,8 @@ pub struct TimelineContext {
 
 ### Phase 2: Memory Provider Port
 
-**Create/Use**: `crates/mcb-domain/src/ports/providers/` (canonical provider port location)
+**Create/Use**: `crates/mcb-domain/src/ports/providers/` (canonical provider port
+location)
 
 ```rust
 use async_trait::async_trait;
@@ -1311,7 +1312,7 @@ fn default_max_tokens() -> usize { 8000 }
 
   <div class="search-panel">
     <h3>Search Memory</h3>
-    <input type="text" id="memory-search" placeholder="Search observations...">
+    <input type="text" id="memory-search" placeholder="Search observations..." />
     <div id="search-results"></div>
   </div>
 </div>
@@ -1327,32 +1328,32 @@ sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
 
 ## Files to Create
 
-| File | Purpose |
-| ------ | --------- |
-| `crates/mcb-domain/src/memory.rs` | Memory domain types |
-| `crates/mcb-domain/src/ports/providers/` | Memory-related provider port (canonical location) |
-| `crates/mcb-providers/src/memory/mod.rs` | Memory providers module |
-| `crates/mcb-providers/src/memory/sqlite_memory.rs` | SQLite implementation |
-| `crates/mcb-application/src/use_cases/session.rs` | Session manager service |
-| `crates/mcb-application/src/use_cases/memory_search.rs` | Memory search service |
-| `crates/mcb-application/src/use_cases/context_injection.rs` | Context generation |
-| `crates/mcb-server/src/handlers/memory_tools.rs` | MCP tool handlers |
-| `crates/mcb-infrastructure/src/config/memory.rs` | Memory configuration |
-| `crates/mcb-server/src/admin/web/templates/memory.html` | Admin dashboard |
+| File                                                        | Purpose                                           |
+| ----------------------------------------------------------- | ------------------------------------------------- |
+| `crates/mcb-domain/src/memory.rs`                           | Memory domain types                               |
+| `crates/mcb-domain/src/ports/providers/`                    | Memory-related provider port (canonical location) |
+| `crates/mcb-providers/src/memory/mod.rs`                    | Memory providers module                           |
+| `crates/mcb-providers/src/memory/sqlite_memory.rs`          | SQLite implementation                             |
+| `crates/mcb-application/src/use_cases/session.rs`           | Session manager service                           |
+| `crates/mcb-application/src/use_cases/memory_search.rs`     | Memory search service                             |
+| `crates/mcb-application/src/use_cases/context_injection.rs` | Context generation                                |
+| `crates/mcb-server/src/handlers/memory_tools.rs`            | MCP tool handlers                                 |
+| `crates/mcb-infrastructure/src/config/memory.rs`            | Memory configuration                              |
+| `crates/mcb-server/src/admin/web/templates/memory.html`     | Admin dashboard                                   |
 
 ## Files to Modify
 
-| File | Change |
-| ------ | -------- |
-| `crates/mcb-providers/Cargo.toml` | Add `sqlx` dependency |
-| `crates/mcb-domain/src/mod.rs` | Export memory module |
-| `crates/mcb-domain/src/ports/providers/mod.rs` | Export provider ports from canonical domain module |
-| `crates/mcb-providers/src/lib.rs` | Export memory providers |
-| `crates/mcb-application/src/use_cases/mod.rs` | Export session, memory_search, context_injection |
-| `crates/mcb-server/src/mcp_server.rs` | Register memory tools |
-| `crates/mcb-infrastructure/src/config/mod.rs` | Export memory config |
-| `crates/mcb-infrastructure/src/di/modules/mod.rs` | Wire memory services |
-| `crates/mcb-server/src/admin/routes.rs` | Add memory dashboard route |
+| File                                              | Change                                             |
+| ------------------------------------------------- | -------------------------------------------------- |
+| `crates/mcb-providers/Cargo.toml`                 | Add `sqlx` dependency                              |
+| `crates/mcb-domain/src/mod.rs`                    | Export memory module                               |
+| `crates/mcb-domain/src/ports/providers/mod.rs`    | Export provider ports from canonical domain module |
+| `crates/mcb-providers/src/lib.rs`                 | Export memory providers                            |
+| `crates/mcb-application/src/use_cases/mod.rs`     | Export session, memory_search, context_injection   |
+| `crates/mcb-server/src/mcp_server.rs`             | Register memory tools                              |
+| `crates/mcb-infrastructure/src/config/mod.rs`     | Export memory config                               |
+| `crates/mcb-infrastructure/src/di/modules/mod.rs` | Wire memory services                               |
+| `crates/mcb-server/src/admin/routes.rs`           | Add memory dashboard route                         |
 
 ## Integration with ADR-008 (Git)
 
@@ -1375,24 +1376,24 @@ let git_metadata = if let Some(git_provider) = &self.git_provider {
 
 ## Success Metrics
 
-| Metric | Before | Target v0.2.0 |
-| -------- | -------- | --------------- |
-| Cross-session memory | No | Yes |
-| Observation storage | No | Yes |
-| Session summaries | No | Yes |
-| Semantic search | Code only | Code + Memory |
-| Context injection | No | Yes |
-| Token efficiency | N/A | 10x via 3-layer |
+| Metric               | Before    | Target v0.2.0   |
+| -------------------- | --------- | --------------- |
+| Cross-session memory | No        | Yes             |
+| Observation storage  | No        | Yes             |
+| Session summaries    | No        | Yes             |
+| Semantic search      | Code only | Code + Memory   |
+| Context injection    | No        | Yes             |
+| Token efficiency     | N/A       | 10x via 3-layer |
 
 ## Configuration Defaults
 
-| Setting | Default | Override |
-| --------- | --------- | ---------- |
-| Database | ~/.mcb/memory.db | Per-instance |
-| Observation types | decision, bugfix, feature | Per-project |
-| Observation limit | 20 | Per-request |
-| Date range | 30 days | Per-request |
-| SDK compression | Disabled | Opt-in |
+| Setting           | Default                   | Override     |
+| ----------------- | ------------------------- | ------------ |
+| Database          | ~/.mcb/memory.db          | Per-instance |
+| Observation types | decision, bugfix, feature | Per-project  |
+| Observation limit | 20                        | Per-request  |
+| Date range        | 30 days                   | Per-request  |
+| SDK compression   | Disabled                  | Opt-in       |
 
 ## Hybrid Search Architecture (Amendment 2026-02-02)
 
@@ -1402,11 +1403,12 @@ Memory search uses hybrid retrieval (BM25 + vector) with Reciprocal Rank Fusion 
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
-| Layer | Responsibility | Implementation |
-| ------- |  | ---------------- |
-| Domain | `MemoryRepository` port with `search(query_embedding, filter, limit)` | No engine-specific logic |
-| Application | `MemorySearchService` orchestrates FTS + vector retrieval, performs RRF fusion | Pure business logic |
-| Infrastructure | `SqliteMemoryRepository` implements FTS5 queries + calls VectorStoreProvider | Database-specific |
+| Layer | Responsibility | Implementation | | ------- | | ---------------- | | Domain |
+`MemoryRepository` port with `search(query_embedding, filter, limit)` | No
+engine-specific logic | | Application | `MemorySearchService` orchestrates FTS + vector
+retrieval, performs RRF fusion | Pure business logic | | Infrastructure |
+`SqliteMemoryRepository` implements FTS5 queries + calls VectorStoreProvider |
+Database-specific |
 
 ### Fusion Algorithm (RRF)
 
@@ -1438,25 +1440,30 @@ fn reciprocal_rank_fusion(
 ### Search Flow
 
 1. **FTS retrieval**: `observations_fts MATCH ?` → ranked by BM25
-2. **Vector retrieval**: `VectorStoreProvider::search_similar("memories", query_embedding, limit)`
+2. **Vector retrieval**:
+   `VectorStoreProvider::search_similar("memories", query_embedding, limit)`
 3. **Fusion**: RRF merge with k=60
 4. **Return**: `ObservationIndex` with fused scores
 
 ## Canonical References
 
-> **Note**: This ADR is a historical decision record. For current architecture
-> details, consult the normative documents below. Code paths referencing
-> `mcb-application/src/ports/providers/` are outdated; per ADR-029 (superseded by ADR-050), all port
-> traits now reside in `mcb-domain/src/ports/providers/`.
+> **Note**: This ADR is a historical decision record. For current architecture details,
+> consult the normative documents below. Code paths referencing
+> `mcb-application/src/ports/providers/` are outdated; per ADR-029 (superseded by
+> ADR-050), all port traits now reside in `mcb-domain/src/ports/providers/`.
 
-- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules
+  and module ownership (normative)
 - [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
-- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Full system architecture (normative)
+- [ARCHITECTURE.md](../architecture/ARCHITECTURE.md) — Full system architecture
+  (normative)
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture][adr-001] - MemoryProvider follows trait-based DI
-- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async storage operations
+- [ADR-001: Modular Crates Architecture][adr-001] - MemoryProvider follows trait-based
+  DI
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async storage
+  operations
 - [ADR-003: Unified Provider Architecture & Routing][adr-003] - Memory provider routing
 - [ADR-051: SeaQL + Loco.rs Platform Rebuild][adr-051] - Memory dashboard UI
 - [ADR-008: Git-Aware Semantic Indexing][adr-008] - Git-tagged observations
@@ -1474,5 +1481,7 @@ fn reciprocal_rank_fusion(
 
 ## References
 
-- [Claude-mem v8.5.2](https://github.com/thedotmack/claude-mem) - Reference implementation
-- [linkme Documentation](https://docs.rs/linkme) - Compile-time provider discovery (see ADR-050)
+- [Claude-mem v8.5.2](https://github.com/thedotmack/claude-mem) - Reference
+  implementation
+- [linkme Documentation](https://docs.rs/linkme) - Compile-time provider discovery (see
+  ADR-050)

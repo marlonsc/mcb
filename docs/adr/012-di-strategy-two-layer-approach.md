@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 12
-title: Two-Layer Dependency Injection Strategy
-status: SUPERSEDED
-created:
-updated: 2026-02-05
-related: [1, 2, 3, 6, 7, 8, 9, 10, 13, 24]
-supersedes: []
-superseded_by: [29]
-implementation_status: "Historical snapshot; see bd for live work"
+
+adr: 12 title: Two-Layer Dependency Injection Strategy status: SUPERSEDED created:
+updated: 2026-02-05 related: [1, 2, 3, 6, 7, 8, 9, 10, 13, 24] supersedes: []
+superseded_by: [29] implementation_status: "Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,17 +13,25 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Status
 
-**Superseded** by [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md) (v0.2.0)
+**Superseded** by
+[ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md)
+(v0.2.0)
 
-> **DEPRECATED**: This two-layer approach (Shaku + runtime factories) will be simplified to direct constructor injection. The complex Shaku infrastructure will be removed in favor of simpler service composition patterns.
+> **DEPRECATED**: This two-layer approach (Shaku + runtime factories) will be simplified
+> to direct constructor injection. The complex Shaku infrastructure will be removed in
+> favor of simpler service composition patterns.
 >
-> **Code examples** below use `DiContainerBuilder` (removed). Current DI: AppContext composition root (`init_app()`), handles, linkme — see [ADR-050](050-manual-composition-root-dill-removal.md) (ADR-029 superseded).
+> **Code examples** below use `DiContainerBuilder` (removed). Current DI: AppContext
+> composition root (`init_app()`), handles, linkme — see
+> [ADR-050](050-manual-composition-root-dill-removal.md) (ADR-029 superseded).
 
 **Originally Accepted** (v0.1.2)
 
 ## Context
 
-The Memory Context Browser uses Shaku as its dependency injection framework. During the Clean Architecture refactoring (January 2026), we discovered that a pure compile-time DI approach via Shaku modules doesn't fit all our service creation needs.
+The Memory Context Browser uses Shaku as its dependency injection framework. During the
+Clean Architecture refactoring (January 2026), we discovered that a pure compile-time DI
+approach via Shaku modules doesn't fit all our service creation needs.
 
 ### The Challenge
 
@@ -55,7 +59,8 @@ Shaku's `module!` macro and `#[derive(Component)]` work well when:
 - No async initialization is needed
 - Construction is uniform across environments
 
-However, production providers like `OllamaEmbeddingProvider` or `MilvusVectorStoreProvider` require:
+However, production providers like `OllamaEmbeddingProvider` or
+`MilvusVectorStoreProvider` require:
 
 - Configuration values (URLs, API keys)
 - Async connection establishment
@@ -156,13 +161,13 @@ let services = DomainServicesFactory::create_services(
 
 ### Where to Put What
 
-| Category | Layer | Location |
-| ---------- | ------- | ---------- |
-| Null providers | Shaku | `mcb-infrastructure/src/infrastructure/` |
-| Production providers | Factory | `mcb-providers/src/` |
-| Port traits | Neither | `mcb-domain/src/ports/` |
-| Domain services | Factory | Created via `DomainServicesFactory` |
-| Configuration | Runtime | `mcb-infrastructure/src/config/` |
+| Category             | Layer   | Location                                 |
+| -------------------- | ------- | ---------------------------------------- |
+| Null providers       | Shaku   | `mcb-infrastructure/src/infrastructure/` |
+| Production providers | Factory | `mcb-providers/src/`                     |
+| Port traits          | Neither | `mcb-domain/src/ports/`                  |
+| Domain services      | Factory | Created via `DomainServicesFactory`      |
+| Configuration        | Runtime | `mcb-infrastructure/src/config/`         |
 
 ### Testing Pattern
 
@@ -198,7 +203,8 @@ pub async fn run_server(config_path: Option<&Path>) -> Result<()> {
 
 ## Migration Notes
 
-**As of v0.2.0, this ADR is being superseded** by [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md).
+**As of v0.2.0, this ADR is being superseded** by
+[ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md).
 
 ### Migration Impact
 
@@ -209,23 +215,35 @@ pub async fn run_server(config_path: Option<&Path>) -> Result<()> {
 
 ### Backward Compatibility
 
-The public service interfaces will remain stable. Only the internal composition mechanism will change from complex DI containers to direct dependency passing.
+The public service interfaces will remain stable. Only the internal composition
+mechanism will change from complex DI containers to direct dependency passing.
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Trait-based provider DI
-- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - **SUPERSEDED** by [ADR 024](024-simplified-dependency-injection.md)
-- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - Provider factory selection
-- [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - DI pattern enforcement
-- [ADR-051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md) - AdminService DI
-- [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - GitProvider factory (v0.2.0)
-- [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) - MemoryProvider DI (v0.2.0)
-- [ADR-010: Hooks Subsystem](010-hooks-subsystem-agent-backed.md) - HookProcessor DI (v0.2.0)
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization for DI
-- [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md) - **SUPERSEDES THIS ADR**
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) -
+  Trait-based provider DI
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - **SUPERSEDED**
+  by [ADR 024](024-simplified-dependency-injection.md)
+- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) -
+  Provider factory selection
+- [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - DI
+  pattern enforcement
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md) -
+  AdminService DI
+- [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) -
+  GitProvider factory (v0.2.0)
+- [ADR-009: Persistent Session Memory](009-persistent-session-memory-v0.2.0.md) -
+  MemoryProvider DI (v0.2.0)
+- [ADR-010: Hooks Subsystem](010-hooks-subsystem-agent-backed.md) - HookProcessor DI
+  (v0.2.0)
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Crate organization for DI
+- [ADR 024: Simplified Dependency Injection](024-simplified-dependency-injection.md) -
+  **SUPERSEDES THIS ADR**
 
 ## References
 
-- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI; see ADR-050)
+- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI;
+  see ADR-050)
 - [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 - Workspace-next refactoring plan (January 2026)

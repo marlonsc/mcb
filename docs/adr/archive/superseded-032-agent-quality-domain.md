@@ -1,11 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # ADR-032: Agent & Quality Domain Extension (MCB-Only)
 
-**Status:** Proposed
-**Date:** 2026-02-03
-**Deciders:** Architecture Team
-**Supersedes:** None
-**Related:** ADR-009 (Memory), ADR-013 (Clean Architecture), ADR-029 (Hexagonal/dill)
+**Status:** Proposed **Date:** 2026-02-03 **Deciders:** Architecture Team
+**Supersedes:** None **Related:** ADR-009 (Memory), ADR-013 (Clean Architecture),
+ADR-029 (Hexagonal/dill)
 
 ## Context
 
@@ -26,7 +25,8 @@ Pain points:
 
 ## Decision
 
-**Extend MCB domain to be the SINGLE SOURCE OF TRUTH for workflow management.** No support for legacy file formats (.planning/, .beads/).
+**Extend MCB domain to be the SINGLE SOURCE OF TRUTH for workflow management.** No
+support for legacy file formats (.planning/, .beads/).
 
 ### Key Decisions
 
@@ -57,12 +57,12 @@ Pain points:
 
 #### 2. Tool Naming (per ADR-009)
 
-| Prefix | Domain | Count |
-| -------- | -------- | ------- |
-| `agent_` | Session/delegation tracking | 7 |
-| `quality_` | Quality gate enforcement | 3 |
-| `memory_` | Executions, errors, context | 5 |
-| `project_` | Project/phase/issue CRUD | 9 |
+| Prefix     | Domain                      | Count |
+| ---------- | --------------------------- | ----- |
+| `agent_`   | Session/delegation tracking | 7     |
+| `quality_` | Quality gate enforcement    | 3     |
+| `memory_`  | Executions, errors, context | 5     |
+| `project_` | Project/phase/issue CRUD    | 9     |
 
 Total: 24 MCP tools
 
@@ -84,13 +84,13 @@ project_log_decision    → Log decision
 
 #### 4. No Legacy Support
 
-| What | Decision |
-| ------ | ---------- |
-| .planning/ import | NOT SUPPORTED |
-| .beads/ import | NOT SUPPORTED |
+| What                 | Decision      |
+| -------------------- | ------------- |
+| .planning/ import    | NOT SUPPORTED |
+| .beads/ import       | NOT SUPPORTED |
 | bd CLI compatibility | NOT SUPPORTED |
-| Markdown export | NOT SUPPORTED |
-| Bidirectional sync | NOT SUPPORTED |
+| Markdown export      | NOT SUPPORTED |
+| Bidirectional sync   | NOT SUPPORTED |
 
 **Rationale:** Simpler architecture, no sync conflicts, no parser code.
 
@@ -170,12 +170,12 @@ Rejected because:
 
 ### Performance
 
-| Tool | Target |
-| ------ | -------- |
-| `agent_start_session` | < 10ms |
-| `quality_check_gate` | < 50ms |
-| `project_get_ready_work` | < 50ms |
-| `memory_get_context` | < 100ms |
+| Tool                     | Target  |
+| ------------------------ | ------- |
+| `agent_start_session`    | < 10ms  |
+| `quality_check_gate`     | < 50ms  |
+| `project_get_ready_work` | < 50ms  |
+| `memory_get_context`     | < 100ms |
 
 ## References
 

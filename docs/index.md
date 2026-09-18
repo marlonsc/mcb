@@ -1,11 +1,13 @@
 # mcb-scripts Documentation
 
 <!-- TOC START -->
+
 - [Start Here](#start-here)
 - [Public Surface Summary](#public-surface-summary)
 - [Collection Rules](#collection-rules)
 - [Quality Gates](#quality-gates)
 - [Governance Pointer](#governance-pointer)
+
 <!-- TOC END -->
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
@@ -15,8 +17,8 @@
 - Package: `mcb_scripts`
 - Description: Repository-local automation helpers for MCB
 
-This project portal is generated from `pyproject.toml`, package exports, and
-real docstrings.
+This project portal is generated from `pyproject.toml`, package exports, and real
+docstrings.
 
 ## Start Here
 
@@ -27,25 +29,19 @@ real docstrings.
 
 ## Public Surface Summary
 
-::: mcb_scripts
-    options:
-      members: false
-      show_root_heading: false
-      show_root_toc_entry: false
-      show_source: false
+::: mcb_scripts options: members: false show_root_heading: false show_root_toc_entry:
+false show_source: false
 
 ## Collection Rules
 
-Read
-[`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
-§9 — Agent Execution Pre-requisites — for the canonical pre-change checklist
-(parent FLEXT chain, Scope bootstrap, skill loading, zero-debt baseline,
-slot registry verification).
+Read [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
+§9 — Agent Execution Pre-requisites — for the canonical pre-change checklist (parent
+FLEXT chain, Scope bootstrap, skill loading, zero-debt baseline, slot registry
+verification).
 
 ## Quality Gates
 
-Canonical `make` verbs (`check`, `test`, `fmt WHAT=apply APPLY=Y`, `val`,
-`docs`) — see
+Canonical `make` verbs (`check`, `test`, `fmt WHAT=apply APPLY=Y`, `val`, `docs`) — see
 [`/flext/AGENTS.md`](https://github.com/flext-sh/flext/blob/0.12.0-dev/AGENTS.md)
 `Build & Test` and `Required Python quality gates`; selector routing is owned
 universally by `config.AiHub.paths.agents_home`/`skills/make-check/SKILL.md`.

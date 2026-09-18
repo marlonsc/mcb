@@ -1,7 +1,9 @@
 # mcb-scripts API Overview
 
 <!-- TOC START -->
+
 - [Next Pages](#next-pages)
+
 <!-- TOC END -->
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
@@ -15,9 +17,9 @@
 - Keywords: _none_
 - Main facades: `McbScriptsService`
 - Alias exports: `c`, `r`, `s`
-- Public symbol exports: `BaseCommandSettings`, `BaseMcbSettings`,
-  `McbConstants`, `McbResult`, `McbScriptsService`, `McbService`, `McbSettings`,
-  `configure_logging`, `get_logger`
+- Public symbol exports: `BaseCommandSettings`, `BaseMcbSettings`, `McbConstants`,
+  `McbResult`, `McbScriptsService`, `McbService`, `McbSettings`, `configure_logging`,
+  `get_logger`
 - Exported module shortcuts: `docs`, `qlty`
 - Generated module pages: `8`
 

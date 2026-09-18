@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # ADR {number}: {title}
 
 ## Status
@@ -7,8 +8,8 @@
 
 ## Context
 
-{What is the problem we are trying to solve? What is the current situation that
-requires a decision?}
+{What is the problem we are trying to solve? What is the current situation that requires
+a decision?}
 
 {Describe the background, constraints, and requirements that led to this decision.}
 
@@ -32,8 +33,7 @@ technologies, patterns, or approaches chosen.}
 - Deployment complexity
 - Operational overhead
 - Security implications
-- Cost implications
-}
+- Cost implications }
 
 ### Positive Consequences
 
@@ -75,8 +75,7 @@ technologies, patterns, or approaches chosen.}
 - Testing strategy
 - Rollback plan
 - Performance considerations
-- Security considerations
-}
+- Security considerations }
 
 ## References
 

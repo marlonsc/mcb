@@ -1,33 +1,29 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 45
-title: Context Versioning & Freshness Tracking
-status: PROPOSED
-created:
-updated: 2026-02-05
-related: []
-supersedes: []
-superseded_by: []
-implementation_status: "Historical snapshot; see bd for live work"
+
+adr: 45 title: Context Versioning & Freshness Tracking status: PROPOSED created:
+updated: 2026-02-05 related: [] supersedes: [] superseded_by: [] implementation_status:
+"Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
 # ADR-045: Context Versioning & Freshness Tracking
 
-**Status**: Proposed
-**Date**: 2026-02-05
-**Deciders**: MCB Architecture Team
-**Related**: ADR-041 (Context System), ADR-035 (Context Scout)
-**Predecessor**: ADR-035 defines ContextFreshness enum
+**Status**: Proposed **Date**: 2026-02-05 **Deciders**: MCB Architecture Team
+**Related**: ADR-041 (Context System), ADR-035 (Context Scout) **Predecessor**: ADR-035
+defines ContextFreshness enum
 
 ## Context
 
-ADR-035 defines freshness as explicit metadata: Fresh / Acceptable / Stale / StaleWithRisk.
+ADR-035 defines freshness as explicit metadata: Fresh / Acceptable / Stale /
+StaleWithRisk.
 
 But questions remain:
 
-1. **How to capture context at a point in time?** Code changes, git state changes, but we need "context as it was at 14:30:00"
+1. **How to capture context at a point in time?** Code changes, git state changes, but
+   we need "context as it was at 14:30:00"
 2. **How to track changes?** When code is modified, which context becomes stale?
 3. **How to version?** Store snapshots or compute on-demand?
 4. **How to scale?** 1000+ snapshots in a day = memory pressure
@@ -56,7 +52,8 @@ pub struct ContextSnapshot {
 
 Rationale:
 
-- **im::Vector**: Provides copy-on-write semantics. New snapshots don't copy old history.
+- **im::Vector**: Provides copy-on-write semantics. New snapshots don't copy old
+  history.
 - **TTL policy**: Automatic cleanup prevents unbounded growth (keep 24h, archive older)
 - **Immutable**: No mutation, prevents consistency bugs
 - **DashMap**: Lock-free staleness tracking (high throughput)
@@ -225,7 +222,9 @@ Policies (ADR-036):
 
 ## ADR-035 Contract Assumptions
 
-This section documents the contract between ADR-045 (Context Versioning) and ADR-035 (Context Scout), ensuring v0.4.0 freshness tracking extends (not replaces) ADR-035's design.
+This section documents the contract between ADR-045 (Context Versioning) and ADR-035
+(Context Scout), ensuring v0.4.0 freshness tracking extends (not replaces) ADR-035's
+design.
 
 ### ContextFreshness Entity (from ADR-035)
 
@@ -241,21 +240,24 @@ pub enum ContextFreshness {
 }
 ```
 
-**ADR-045 Dependency**: Every `ContextSnapshot` embeds a `ContextFreshness` value. This enum is**not redefined**in ADR-045; it is**reused directly** from ADR-035.
+**ADR-045 Dependency**: Every `ContextSnapshot` embeds a `ContextFreshness` value. This
+enum is**not redefined**in ADR-045; it is**reused directly** from ADR-035.
 
 ### CachedContextScout TTL & Invalidation (from ADR-035)
 
 ADR-035 specifies the `CachedContextScout` provider with:
 
 - **Default TTL**: 30 seconds (configurable)
-- **Invalidation strategy**: Time-based (TTL expiry) + signal-based (git hooks, manual edits)
+- **Invalidation strategy**: Time-based (TTL expiry) + signal-based (git hooks, manual
+  edits)
 - **Cache layers**: Separate caches for git status, tracker state, and full context
 
 ADR-045 Extension:
 
 - Snapshots are stored immutably with timestamps
 - TTL policy determines which snapshots are kept in-memory vs archived to disk
-- Staleness signals (from ADR-035) trigger context re-validation during snapshot creation
+- Staleness signals (from ADR-035) trigger context re-validation during snapshot
+  creation
 
 ### v0.4.0 Freshness Tracking EXTENDS ADR-035
 
@@ -273,7 +275,9 @@ What ADR-045 adds:
 - TTL-based garbage collection (keep 24h, archive older)
 - Historical policy compliance queries
 
-**Explicit Dependency**: v0.4.0 ContextVersioning**depends on** ADR-035 ContextFreshness. The freshness enum is embedded in every snapshot and used to gate search Result ranking and policy evaluation.
+**Explicit Dependency**: v0.4.0 ContextVersioning**depends on** ADR-035
+ContextFreshness. The freshness enum is embedded in every snapshot and used to gate
+search Result ranking and policy evaluation.
 
 ### Snapshot Lifecycle with Freshness
 
@@ -318,7 +322,8 @@ let snapshot = ContextSnapshot {
 
 ### Correction 1: ADR-035 Contract Documentation (2026-02-06)
 
-**Issue**: ADR-045 referenced ADR-035 ContextFreshness but did not document the contract or dependency relationship.
+**Issue**: ADR-045 referenced ADR-035 ContextFreshness but did not document the contract
+or dependency relationship.
 
 Resolution:
 
@@ -329,9 +334,11 @@ Resolution:
 - Explicit dependency: v0.4.0 ContextVersioning depends on ADR-035 ContextFreshness
 - Snapshot lifecycle showing freshness integration
 
-**Rationale**: Clear documentation of cross-ADR dependencies prevents implementation bugs and ensures ADR-035 (ACCEPTED/locked) is not accidentally modified during Phase 9 implementation.
+**Rationale**: Clear documentation of cross-ADR dependencies prevents implementation
+bugs and ensures ADR-035 (ACCEPTED/locked) is not accidentally modified during Phase 9
+implementation.
 
 ---
 
-**Depends on**: ADR-041 (context), ADR-035 (freshness enum)
-**Feeds**: ADR-046 (compensation + rollback uses snapshots)
+**Depends on**: ADR-041 (context), ADR-035 (freshness enum) **Feeds**: ADR-046
+(compensation + rollback uses snapshots)

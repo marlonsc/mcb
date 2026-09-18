@@ -1,24 +1,29 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Validation Module
 
-**Source**: `crates/mcb-validate/src/`
-**Crate**: `mcb-validate`
-**Lines of Code**: ~8,000+
+**Source**: `crates/mcb-validate/src/` **Crate**: `mcb-validate` **Lines of Code**:
+~8,000+
 
 ## ↔ Code ↔ Docs cross-reference
 
-| Direction | Link |
-| --------- | ---- |
-| Code → Docs | [`crates/mcb-validate/src/lib.rs`](../../crates/mcb-validate/src/lib.rs) links here |
-| Docs → Code | [`crates/mcb-validate/src/lib.rs`](../../crates/mcb-validate/src/lib.rs) — crate root |
+| Direction    | Link                                                                                                                                                                            |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code → Docs  | [`crates/mcb-validate/src/lib.rs`](../../crates/mcb-validate/src/lib.rs) links here                                                                                             |
+| Docs → Code  | [`crates/mcb-validate/src/lib.rs`](../../crates/mcb-validate/src/lib.rs) — crate root                                                                                           |
 | Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) · [`ADR-020`](../adr/020-testing-strategy-integration.md) |
-| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
+| Roadmap      | [`ROADMAP.md`](../developer/ROADMAP.md)                                                                                                                                         |
 
 ## Overview
 
-The validation module provides comprehensive architecture enforcement and code quality validation for the Memory Context Browser project. It implements a multi-phase validation pipeline that ensures Clean Architecture compliance, code quality standards, and architectural decision record (ADR) adherence.
+The validation module provides comprehensive architecture enforcement and code quality
+validation for the Memory Context Browser project. It implements a multi-phase
+validation pipeline that ensures Clean Architecture compliance, code quality standards,
+and architectural decision record (ADR) adherence.
 
-The module uses a **trait-based validator system** (`traits/`) with **macro-based violation definitions** (`macros.rs`) and a **declarative validator pattern** for concise rule implementations.
+The module uses a **trait-based validator system** (`traits/`) with **macro-based
+violation definitions** (`macros.rs`) and a **declarative validator pattern** for
+concise rule implementations.
 
 ## Architecture
 
@@ -43,57 +48,66 @@ Validation Pipeline (Pure Rust):
 
 ## Rules & Validators
 
-The validation system implements over 100 rules categorized by their architectural intent. Below are the core rule sets.
+The validation system implements over 100 rules categorized by their architectural
+intent. Below are the core rule sets.
 
 ### 🏗️ Clean Architecture (CA)
+
 Enforces layer boundaries and dependency direction.
 
-| Rule ID | Name | Description | Source |
-| ------- | ---- | ----------- | ------ |
-| `CA001` | Domain Independence | Domain crate must not depend on any internal crates | [`CA001_domain-independence.yml`](../../crates/mcb-validate/rules/clean-architecture/CA001_domain-independence.yml) |
-| `CA003` | Domain Traits Only | Domain ports must be traits, not concrete implementations | [`CA003_domain-traits-only.yml`](../../crates/mcb-validate/rules/clean-architecture/CA003_domain-traits-only.yml) |
-| `CA009` | Infra NO Application | Infrastructure cannot depend on Application services | [`CA009_infrastructure-no-application.yml`](../../crates/mcb-validate/rules/clean-architecture/CA009_infrastructure-no-application.yml) |
+| Rule ID | Name                 | Description                                               | Source                                                                                                                                  |
+| ------- | -------------------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| `CA001` | Domain Independence  | Domain crate must not depend on any internal crates       | [`CA001_domain-independence.yml`](../../crates/mcb-validate/rules/clean-architecture/CA001_domain-independence.yml)                     |
+| `CA003` | Domain Traits Only   | Domain ports must be traits, not concrete implementations | [`CA003_domain-traits-only.yml`](../../crates/mcb-validate/rules/clean-architecture/CA003_domain-traits-only.yml)                       |
+| `CA009` | Infra NO Application | Infrastructure cannot depend on Application services      | [`CA009_infrastructure-no-application.yml`](../../crates/mcb-validate/rules/clean-architecture/CA009_infrastructure-no-application.yml) |
 
 ### 📁 Organization (ORG)
+
 Validates file placement, module structure, and domain purity.
 
-| Rule ID | Name | Description | Source |
-| ------- | ---- | ----------- | ------ |
-| `ORG015` | Adapter Location | Adapters must reside in `crates/mcb-providers/src/` | [`ORG015_adapter-location.yml`](../../crates/mcb-validate/rules/organization/ORG015_adapter-location.yml) |
-| `ORG018` | Port Location | Traits/Ports must reside in `crates/mcb-domain/src/ports/` | [`ORG018_port-location.yml`](../../crates/mcb-validate/rules/organization/ORG018_port-location.yml) |
-| `ORG020` | Domain Purity | Domain logic cannot leak into infrastructure adapters | [`domain_purity.rs`](../../crates/mcb-validate/src/validators/organization/domain_purity.rs) |
+| Rule ID  | Name             | Description                                                | Source                                                                                                    |
+| -------- | ---------------- | ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `ORG015` | Adapter Location | Adapters must reside in `crates/mcb-providers/src/`        | [`ORG015_adapter-location.yml`](../../crates/mcb-validate/rules/organization/ORG015_adapter-location.yml) |
+| `ORG018` | Port Location    | Traits/Ports must reside in `crates/mcb-domain/src/ports/` | [`ORG018_port-location.yml`](../../crates/mcb-validate/rules/organization/ORG018_port-location.yml)       |
+| `ORG020` | Domain Purity    | Domain logic cannot leak into infrastructure adapters      | [`domain_purity.rs`](../../crates/mcb-validate/src/validators/organization/domain_purity.rs)              |
 
 ### ♻️ Refactoring (REF)
+
 Detects technical debt and refactoring opportunities.
 
-| Rule ID | Name | Description | Source |
-| ------- | ---- | ----------- | ------ |
+| Rule ID  | Name             | Description                                          | Source                                                                          |
+| -------- | ---------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `REF001` | Module Integrity | Detects `mod` declarations referencing deleted files | [`modules.rs`](../../crates/mcb-validate/src/validators/refactoring/modules.rs) |
-| `REF002` | Large Method | Detects methods exceeding 50 lines (RCA-based) | [`metrics/`](../../crates/mcb-validate/src/metrics/) |
+| `REF002` | Large Method     | Detects methods exceeding 50 lines (RCA-based)       | [`metrics/`](../../crates/mcb-validate/src/metrics/)                            |
 
 ### 💎 Quality (QUAL)
+
 Enforces safety and performance standards.
 
-| Rule ID | Name | Description |
-| ------- | ---- | ----------- |
-| `QUAL001` | No Unwrap | Bans `unwrap()` in production code (use `Result`) |
-| `QUAL002` | No Expect | Bans `expect()` in production code |
-| `ASYNC001`| Async Patterns | Detects blocking calls in async contexts |
+| Rule ID    | Name           | Description                                       |
+| ---------- | -------------- | ------------------------------------------------- |
+| `QUAL001`  | No Unwrap      | Bans `unwrap()` in production code (use `Result`) |
+| `QUAL002`  | No Expect      | Bans `expect()` in production code                |
+| `ASYNC001` | Async Patterns | Detects blocking calls in async contexts          |
 
 ---
 
 ## Technical Details
 
 ### Registry & Orchestration
+
 - `traits/validator.rs` — `Validator` trait definition and registry
 - `traits/violation.rs` — `Violation` trait and violation types
 
 ### Fact Extraction (`extractor/`)
+
 The system extracts facts from the AST for rule evaluation:
+
 - `fact.rs` — Fact data model
 - `rust_extractor.rs` — Rust-specific fact extraction
 
 ### Rule Engines (`engines/`)
+
 - `hybrid_engine.rs` — Combined engine approach (Static + Dynamic)
 - `rete_engine.rs` — RETE algorithm for high-performance pattern matching
 - `expression_engine.rs` — `evalexpr`-based logic evaluation
@@ -127,7 +141,6 @@ YAML-based rule definitions:
 ### Command Line
 
 ```bash
-
 # Run all validation rules
 make check WHAT=validate
 
@@ -141,11 +154,16 @@ make check WHAT=validate
 ## Single Source of Truth (SSOT)
 
 The validation module enforces SSOT through the following mechanisms:
-1. **Bidirectional Links**: Code headers must link to documentation files, and documentation must reference the relevant code items.
-2. **Automated Audits**: `make build WHAT=docs ACT=validate` checks for broken links and missing documentation headers.
-3. **Traceability**: All architectural rules in `mcb-validate` are mapped to ADRs or core design principles documented in `docs/architecture/`.
+
+1. **Bidirectional Links**: Code headers must link to documentation files, and
+   documentation must reference the relevant code items.
+2. **Automated Audits**: `make build WHAT=docs ACT=validate` checks for broken links and
+   missing documentation headers.
+3. **Traceability**: All architectural rules in `mcb-validate` are mapped to ADRs or
+   core design principles documented in `docs/architecture/`.
 
 ### SSOT Rules
+
 - `SSOT01` - Every `mod.rs` and `lib.rs` must have a documentation header.
 - `SSOT02` - Documentation links must be valid and resolve to existing sections.
 - `SSOT03` - Architecture decisions must be backed by an ADR.
@@ -260,9 +278,11 @@ crates/mcb-validate/src/
 ## Related Documentation
 
 - [Architecture Overview](../architecture/ARCHITECTURE.md) - Validation layer details
-- [ADR-013](../adr/013-clean-architecture-crate-separation.md) - Clean Architecture separation
+- [ADR-013](../adr/013-clean-architecture-crate-separation.md) - Clean Architecture
+  separation
 - [SSOT Principles](./README.md) - Single Source of Truth
-- [Validators Implementation](./validate.md#rules--validators) - List of active validators
+- [Validators Implementation](./validate.md#rules--validators) - List of active
+  validators
 
 ---
 
