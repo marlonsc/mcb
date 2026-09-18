@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 7
-title: Integrated Web Administration Interface
-status: IMPLEMENTED
-created:
-updated: 2026-02-05
-related: [1, 2, 6, 8, 12, 13]
-supersedes: []
-superseded_by: []
+
+adr: 7 title: Integrated Web Administration Interface status: IMPLEMENTED created:
+updated: 2026-02-05 related: [1, 2, 6, 8, 12, 13] supersedes: [] superseded_by: []
 implementation_status: Complete
 ---
 
@@ -34,7 +30,10 @@ implementation_status: Complete
 
 ## Context
 
-Memory Context Browser provides comprehensive system monitoring and metrics through HTTP endpoints on a unified port, but lacks a user-friendly web interface for administration, configuration, and visualization. Users currently need to interact with the system through:
+Memory Context Browser provides comprehensive system monitoring and metrics through HTTP
+endpoints on a unified port, but lacks a user-friendly web interface for administration,
+configuration, and visualization. Users currently need to interact with the system
+through:
 
 1. Environment variables for configuration
 2. MCP protocol tools for basic operations
@@ -58,7 +57,8 @@ The existing infrastructure already includes:
 
 ## Decision
 
-We will implement an integrated web administration interface that runs on the same port as the metrics server (3000), providing a modern, responsive web UI for:
+We will implement an integrated web administration interface that runs on the same port
+as the metrics server (3000), providing a modern, responsive web UI for:
 
 1. **System Dashboard**: Real-time metrics visualization with interactive charts
 2. **Configuration Management**: Dynamic provider and system configuration
@@ -79,7 +79,8 @@ The interface will be implemented using:
 
 ### Positive Consequences
 
-- **Improved User Experience**: Non-technical users can manage the system through a web interface
+- **Improved User Experience**: Non-technical users can manage the system through a web
+  interface
 - **Real-time Monitoring**: Live dashboards with interactive charts and alerts
 - **Operational Efficiency**: Faster troubleshooting and configuration changes
 - **Security Enhancement**: Authentication and authorization for administrative access
@@ -91,7 +92,8 @@ The interface will be implemented using:
 
 - **Increased Complexity**: Additional code and maintenance overhead
 - **Security Surface**: Web interface introduces new attack vectors
-- **Resource Usage**: Additional memory/CPU for serving static assets and WebSocket connections
+- **Resource Usage**: Additional memory/CPU for serving static assets and WebSocket
+  connections
 - **Deployment Complexity**: Web assets need to be bundled and served
 - **Browser Dependencies**: Interface requires modern browsers with JavaScript enabled
 
@@ -99,24 +101,28 @@ The interface will be implemented using:
 
 ### Alternative 1: Separate Administration Service
 
-- **Description**: Create a standalone web service on a different port for administration
+- **Description**: Create a standalone web service on a different port for
+  administration
 - **Pros**: Clean separation, independent scaling, dedicated resources
 - **Cons**: Additional port management, deployment complexity, CORS issues
-- **Rejection Reason**: Increases operational complexity and goes against the requirement to run on the same port
+- **Rejection Reason**: Increases operational complexity and goes against the
+  requirement to run on the same port
 
 ### Alternative 2: Terminal-based Administration Only
 
 - **Description**: Enhance CLI tools and keep all administration terminal-based
 - **Pros**: Lower resource usage, simpler architecture, no web dependencies
 - **Cons**: Poor user experience, limited visualization, accessibility issues
-- **Rejection Reason**: Doesn't address the need for web-based administration and visualization
+- **Rejection Reason**: Doesn't address the need for web-based administration and
+  visualization
 
 ### Alternative 3: Third-party Admin Interface
 
 - **Description**: Use existing tools like Grafana or custom dashboards
 - **Pros**: Leverage existing ecosystems, faster implementation
 - **Cons**: External dependencies, integration complexity, customization limitations
-- **Rejection Reason**: Doesn't provide integrated experience and requires additional setup
+- **Rejection Reason**: Doesn't provide integrated experience and requires additional
+  setup
 
 ### Alternative 4: Desktop Application
 
@@ -129,7 +135,8 @@ The interface will be implemented using:
 
 ### Architecture Integration
 
-The web interface will extend the existing `MetricsApiServer` in `crates/mcb-infrastructure/src/metrics/http_server.rs`:
+The web interface will extend the existing `MetricsApiServer` in
+`crates/mcb-infrastructure/src/metrics/http_server.rs`:
 
 ```rust
 pub struct AdminApiServer {
@@ -155,7 +162,8 @@ New REST endpoints under `/admin/` prefix:
 
 ### Frontend Structure
 
-Templates are**embedded at compile time** using `include_str!` macro, making the binary self-contained:
+Templates are**embedded at compile time** using `include_str!` macro, making the binary
+self-contained:
 
 ```text
 crates/mcb-server/src/admin/web/templates/
@@ -178,7 +186,9 @@ crates/mcb-server/src/admin/web/templates/
     └── config_diff.html
 ```
 
-**Key implementation detail**: All templates are loaded via `include_str!` in `crates/mcb-server/src/admin/web.rs` and added to Tera at compile time, eliminating runtime filesystem access.
+**Key implementation detail**: All templates are loaded via `include_str!` in
+`crates/mcb-server/src/admin/web.rs` and added to Tera at compile time, eliminating
+runtime filesystem access.
 
 ### Security Implementation
 
@@ -226,7 +236,7 @@ All HTTP services run on a single unified port (default: 3000).
 Configure via environment variable:
 
 ```bash
-export MCP__SERVER__NETWORK__PORT=3000  # Default unified port for Admin + Metrics + MCP
+export MCP__SERVER__NETWORK__PORT=3000 # Default unified port for Admin + Metrics + MCP
 ```
 
 ### URL Structure
@@ -250,7 +260,8 @@ Port 3000 (Unified: Admin + Metrics + MCP HTTP)
 └── /mcp*/          - MCP protocol HTTP transport
 ```
 
-**Note**: The root path `/` serves the admin dashboard directly, making it the default landing page.
+**Note**: The root path `/` serves the admin dashboard directly, making it the default
+landing page.
 
 ### Implementation
 
@@ -424,12 +435,17 @@ templates/
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider pattern for admin services
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider
+  pattern for admin services
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async handlers
-- [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Code quality standards
-- [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) - Git integration for admin UI
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for admin services
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
+- [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Code
+  quality standards
+- [ADR-008: Git-Aware Semantic Indexing](008-git-aware-semantic-indexing-v0.2.0.md) -
+  Git integration for admin UI
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI for admin
+  services
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Crate organization
 
 ## References
 

@@ -1,9 +1,13 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Integrated Context System (v0.4.0)
 
 ## Overview
 
-The Integrated Context System in v0.4.0 introduces a knowledge graph-based approach to code understanding, enabling freshness tracking, time-travel queries, and policy-driven context discovery. This system builds on the workflow FSM foundation (Phase 8) to provide intelligent, adaptive code search and analysis.
+The Integrated Context System in v0.4.0 introduces a knowledge graph-based approach to
+code understanding, enabling freshness tracking, time-travel queries, and policy-driven
+context discovery. This system builds on the workflow FSM foundation (Phase 8) to
+provide intelligent, adaptive code search and analysis.
 
 ## Core Concepts
 
@@ -13,7 +17,8 @@ Code context degrades over time as repositories evolve. The freshness system tra
 
 - **Temporal Metadata**: Last modified timestamps, commit history, branch information
 - **Staleness Signals**: Deprecated APIs, outdated patterns, version mismatches
-- **Freshness Policies**: Rules for acceptable staleness by context type (e.g., "API docs must be < 7 days old")
+- **Freshness Policies**: Rules for acceptable staleness by context type (e.g., "API
+  docs must be < 7 days old")
 
 #### Example Workflow
 
@@ -236,7 +241,6 @@ frequency = 10
 ### Example 1: Search with Freshness
 
 ```bash
-
 # Search for authentication patterns, only fresh results
 mcb search --query "authenticate user" --freshness-max-age 7
 
@@ -252,7 +256,6 @@ mcb search --query "authenticate user" --freshness-max-age 7
 ## Example 2: Time-Travel Query
 
 ```bash
-
 # Show authentication patterns from v0.2.0
 mcb search --query "authenticate" --snapshot v0.2.0
 
@@ -271,7 +274,6 @@ mcb search --query "authenticate" --snapshot v0.2.0 --compare-current
 ## Example 3: Policy-Driven Search
 
 ```bash
-
 # Apply "API docs must be fresh" policy
 mcb search --query "API reference" --policy api_docs
 
@@ -297,5 +299,8 @@ mcb search --query "API reference" --policy api_docs
 
 1. Review ADR-034-037 for workflow and policy foundations
 2. Review ADR-041-046 for context system implementation
-3. See [`docs/implementation/phase-9-roadmap.md`](../../implementation/phase-9-roadmap.md) for 4-week execution plan
-4. Check [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) for upgrade guide
+3. See
+   [`docs/implementation/phase-9-roadmap.md`](../../implementation/phase-9-roadmap.md)
+   for 4-week execution plan
+4. Check [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) for upgrade
+   guide

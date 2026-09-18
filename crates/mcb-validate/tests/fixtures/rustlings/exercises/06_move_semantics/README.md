@@ -1,6 +1,8 @@
 # Move Semantics
 
-These exercises are adapted from [pnkfelix](https://github.com/pnkfelix)'s [Rust Tutorial](https://pnkfelix.github.io/rust-examples-icfp2014/) -- Thank you Felix!!!
+These exercises are adapted from [pnkfelix](https://github.com/pnkfelix)'s
+[Rust Tutorial](https://pnkfelix.github.io/rust-examples-icfp2014/) -- Thank you
+Felix!!!
 
 ## Further information
 

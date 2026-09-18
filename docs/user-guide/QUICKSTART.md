@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Quickstart Guide
 
 Get Memory Context Browser v0.2.1 running in 5 minutes.
@@ -8,7 +9,6 @@ Get Memory Context Browser v0.2.1 running in 5 minutes.
 ### Pre-built Binary (Recommended)
 
 ```bash
-
 # Linux x86_64
 curl -LO https://github.com/marlonsc/mcb/releases/latest/download/mcb-linux-x86_64.tar.gz
 tar xzf mcb-linux-x86_64.tar.gz
@@ -37,7 +37,6 @@ export OPENAI_API_KEY=sk-your-key-here
 ### Option B: Ollama (Local, Free)
 
 ```bash
-
 # Start Ollama
 ollama serve &
 ollama pull nomic-embed-text
@@ -92,30 +91,30 @@ Claude will use `search (resource=code)` to find relevant code.
 
 ## Available MCP Tools
 
-| Tool | What it does |
-| ------ | -------------- |
-| `index (action=start)` | Index a directory for semantic search |
+| Tool                     | What it does                              |
+| ------------------------ | ----------------------------------------- |
+| `index (action=start)`   | Index a directory for semantic search     |
 | `search (resource=code)` | Search indexed code with natural language |
-| `index (action=status)` | Check indexing progress |
-| `index (action=clear)` | Remove indexed data |
+| `index (action=status)`  | Check indexing progress                   |
+| `index (action=clear)`   | Remove indexed data                       |
 
 ## Supported Languages (13)
 
-Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin (13 languages via 12 tree-sitter parsers; JavaScript handles both JS and TS)
+Rust, Python, JavaScript, TypeScript, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin (13
+languages via 12 tree-sitter parsers; JavaScript handles both JS and TS)
 
 ## Vector Store Options
 
-| Provider | Best for | Setup |
-| ---------- | ---------- | ------- |
-| `edgevec` | Development, testing (default) | None |
-| `milvus` | Production, large scale | Docker/Kubernetes |
-| `qdrant` | Self-hosted, Rust-native | Docker |
-| `pinecone` | Managed cloud | API key |
+| Provider   | Best for                       | Setup             |
+| ---------- | ------------------------------ | ----------------- |
+| `edgevec`  | Development, testing (default) | None              |
+| `milvus`   | Production, large scale        | Docker/Kubernetes |
+| `qdrant`   | Self-hosted, Rust-native       | Docker            |
+| `pinecone` | Managed cloud                  | API key           |
 
 ### Using Milvus
 
 ```bash
-
 # Start Milvus with Docker
 docker run -d --name milvus -p 19530:19530 milvusdb/milvus:latest
 
@@ -142,8 +141,8 @@ export VOYAGE_API_KEY=...
 Check if Ollama/Milvus is running:
 
 ```bash
-curl http://localhost:11434/api/version  # Ollama
-curl http://localhost:19530/v1/vector/health  # Milvus
+curl http://localhost:11434/api/version      # Ollama
+curl http://localhost:19530/v1/vector/health # Milvus
 ```
 
 ### Claude doesn't see the tools
@@ -158,5 +157,5 @@ curl http://localhost:19530/v1/vector/health  # Milvus
 - [Architecture](../architecture/ARCHITECTURE.md) - Understanding the system
 - [ADR Index](../adr/README.md) - Architectural decisions
 - [Version History](../operations/CHANGELOG.md) - Complete version history
-- [Roadmap](../developer/ROADMAP.md) - Upcoming features including v0.2.0
-  Git-Aware Indexing
+- [Roadmap](../developer/ROADMAP.md) - Upcoming features including v0.2.0 Git-Aware
+  Indexing

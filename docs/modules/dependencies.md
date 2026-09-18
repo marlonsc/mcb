@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Module Dependencies
 
 This document shows the crate dependencies of the Memory Context Browser.
@@ -64,14 +65,14 @@ digraph {
 
 ## Crate Descriptions
 
-| Crate | Purpose | Dependencies |
-| ------- | --------- | -------------- |
-| `mcb` | Unified facade, public API | All crates |
-| `mcb-domain` | Core types, ports, entities | None (innermost) |
+| Crate                | Purpose                            | Dependencies      |
+| -------------------- | ---------------------------------- | ----------------- |
+| `mcb`                | Unified facade, public API         | All crates        |
+| `mcb-domain`         | Core types, ports, entities        | None (innermost)  |
 | `mcb-infrastructure` | DI, config, cross-cutting services | domain, providers |
-| `mcb-providers` | External integrations | domain |
-| `mcb-server` | MCP protocol, HTTP transport | infrastructure |
-| `mcb-validate` | Architecture validation | domain |
+| `mcb-providers`      | External integrations              | domain            |
+| `mcb-server`         | MCP protocol, HTTP transport       | infrastructure    |
+| `mcb-validate`       | Architecture validation            | domain            |
 
 ## Key Dependency Patterns
 
@@ -84,15 +85,15 @@ digraph {
 
 Major external crates:
 
-| Category | Crate | Purpose |
-| ---------- | ------- | --------- |
-| Async | `tokio` | Async runtime |
-| HTTP | `poem` | HTTP server (ADR-026) |
-| DI | `linkme` | Compile-time provider discovery + manual composition root with handles (ADR-050) |
-| Serialization | `serde` | JSON/TOML serialization |
-| Error handling | `thiserror`, `anyhow` | Error types |
-| Parsing | `tree-sitter-*` | AST parsing |
-| AI | `reqwest` | HTTP client for AI APIs |
+| Category       | Crate                 | Purpose                                                                          |
+| -------------- | --------------------- | -------------------------------------------------------------------------------- |
+| Async          | `tokio`               | Async runtime                                                                    |
+| HTTP           | `poem`                | HTTP server (ADR-026)                                                            |
+| DI             | `linkme`              | Compile-time provider discovery + manual composition root with handles (ADR-050) |
+| Serialization  | `serde`               | JSON/TOML serialization                                                          |
+| Error handling | `thiserror`, `anyhow` | Error types                                                                      |
+| Parsing        | `tree-sitter-*`       | AST parsing                                                                      |
+| AI             | `reqwest`             | HTTP client for AI APIs                                                          |
 
 ---
 

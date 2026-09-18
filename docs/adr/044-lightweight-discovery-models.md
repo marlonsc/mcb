@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 44
-title: Lightweight Discovery Models for Context Routing
-status: PROPOSED
-created:
-updated: 2026-02-05
-related: []
-supersedes: []
-superseded_by: []
+
+adr: 44 title: Lightweight Discovery Models for Context Routing status: PROPOSED
+created: updated: 2026-02-05 related: [] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
 ---
 
@@ -15,15 +11,14 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 # ADR-044: Lightweight Discovery Models for Context Routing
 
-**Status**: Proposed
-**Date**: 2026-02-05
-**Deciders**: MCB Architecture Team
-**Related**: ADR-041 (Context), ADR-043 (Search)
-**Context**: v0.4.0 MVP scope
+**Status**: Proposed **Date**: 2026-02-05 **Deciders**: MCB Architecture Team
+**Related**: ADR-041 (Context), ADR-043 (Search) **Context**: v0.4.0 MVP scope
 
 ## Context
 
-ADR-043 hybrid search ranks results by BM25 + semantics + graph. But ranking is**global**: the same code is ranked the same regardless of**who's asking**or**what they're trying to do**.
+ADR-043 hybrid search ranks results by BM25 + semantics + graph. But ranking
+is**global**: the same code is ranked the same regardless of**who's asking**or**what
+they're trying to do**.
 
 Example:
 
@@ -153,8 +148,8 @@ impl AstBasedRouter {
 }
 ```
 
-**Cost**: <5ms per query (AST walk + scoring)
-**Coverage**: 85% of real tasks (feature, bug, refactor, security, documentation)
+**Cost**: <5ms per query (AST walk + scoring) **Coverage**: 85% of real tasks (feature,
+bug, refactor, security, documentation)
 
 ### 3. Stage 2: Rule-Based Routing (rhai DSL)
 
@@ -201,9 +196,9 @@ impl RuleBasedRouter {
 }
 ```
 
-**Cost**: 5-20ms per query (rhai script execution)
-**Coverage**: 90% of real tasks (custom per organization)
-**Maintainability**: Non-engineers can write rules (no Rust needed)
+**Cost**: 5-20ms per query (rhai script execution) **Coverage**: 90% of real tasks
+(custom per organization) **Maintainability**: Non-engineers can write rules (no Rust
+needed)
 
 ### 4. Stage 3: ML-Based Routing (Deferred to v0.5.0)
 
@@ -227,22 +222,21 @@ impl MlBasedRouter {
 }
 ```
 
-**Cost**: 10-50ms per query (inference)
-**Coverage**: 95%+ (learns from feedback)
+**Cost**: 10-50ms per query (inference) **Coverage**: 95%+ (learns from feedback)
 **Trade-off**: Requires training data + serving infrastructure (post-MVP)
 
 ## Configuration
 
 ```toml
 
-# config/default.toml
 
 > **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
 
+# config/default.toml
 [routing]
 
 # Which router to use: "ast" | "rules" | "ml"
-enabled = ["ast", "rules"]  # Pipeline: AST first, fallback to rules
+enabled = ["ast", "rules"] # Pipeline: AST first, fallback to rules
 
 [routing.ast]
 
@@ -308,6 +302,5 @@ ADR-046 (Policies):
 
 ---
 
-**Depends on**: ADR-041 (context), ADR-043 (hybrid search)
-**Feeds**: ADR-046 (policy gating)
-**Future**: ML models in v0.5.0 (Candle + ONNX)
+**Depends on**: ADR-041 (context), ADR-043 (hybrid search) **Feeds**: ADR-046 (policy
+gating) **Future**: ML models in v0.5.0 (Candle + ONNX)

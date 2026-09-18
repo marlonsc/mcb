@@ -1,11 +1,11 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Architecture Boundaries - Layer Rules and Module Ownership
 
-**Version**: v0.2.1
-**Status**: Baseline Documentation
-**Last Updated**: 2026-02-14
+**Version**: v0.2.1 **Status**: Baseline Documentation **Last Updated**: 2026-02-14
 
-This document defines the strict architectural boundaries for the MCB (Memory Context Browser) project following Clean Architecture principles with 7 workspace crates.
+This document defines the strict architectural boundaries for the MCB (Memory Context
+Browser) project following Clean Architecture principles with 7 workspace crates.
 
 ---
 
@@ -39,8 +39,10 @@ This release applies architecture optimization only (no net-new features).
 
 - IDs: `mcb-domain/src/value_objects/ids.rs` via `define_id!`.
 - Port traits: `mcb-domain/src/ports/**` only.
-- Domain entities/value objects: `mcb-domain/src/entities/**`, `mcb-domain/src/value_objects/**`.
-- DTO-to-domain mapping: boundary layers only (`mcb-server`, provider adapters), never in domain.
+- Domain entities/value objects: `mcb-domain/src/entities/**`,
+  `mcb-domain/src/value_objects/**`.
+- DTO-to-domain mapping: boundary layers only (`mcb-server`, provider adapters), never
+  in domain.
 
 ### Fast-Fail Rules
 
@@ -73,7 +75,8 @@ crates/
 mcb-server → mcb-infrastructure → mcb-providers → mcb-domain → mcb-utils
 ```
 
-**Critical Rule**: Dependencies ALWAYS point inward. Outer layers depend on inner layers, never the reverse.
+**Critical Rule**: Dependencies ALWAYS point inward. Outer layers depend on inner
+layers, never the reverse.
 
 ---
 
@@ -95,7 +98,9 @@ mcb-server → mcb-infrastructure → mcb-providers → mcb-domain → mcb-utils
 
 #### Exports
 
-- `constants/`: All project-wide constants (SSOT — ast, auth, crypto, display, embedding, events, http, io, keys, lang, limits, protocol, search, time, use_cases, validate, values, vcs, vector_store)
+- `constants/`: All project-wide constants (SSOT — ast, auth, crypto, display,
+  embedding, events, http, io, keys, lang, limits, protocol, search, time, use_cases,
+  validate, values, vcs, vector_store)
 - Utils: fs, id, naming, path, sensitivity, time, vcs_context
 - Errors: `UtilsError`
 
@@ -141,7 +146,8 @@ mcb-utils/src/
 
 - Entities: `CodeChunk`, `Embedding`, `SearchResult`, `ChunkMetadata`
 - Value objects: `Vector`, `Distance`, `Score`
-- Port traits: `EmbeddingProvider`, `VectorStoreProvider`, `CacheProvider`, `LanguageChunkingProvider`
+- Port traits: `EmbeddingProvider`, `VectorStoreProvider`, `CacheProvider`,
+  `LanguageChunkingProvider`
 - Domain errors: `DomainError`, `ValidationError`
 
 #### Module Structure
@@ -175,8 +181,12 @@ mcb-domain/src/
 
 #### Exports
 
-- Embedding providers: `FastEmbedProvider` (default), `OllamaEmbeddingProvider`, `OpenAIEmbeddingProvider`, `VoyageAIEmbeddingProvider`, `GeminiEmbeddingProvider`, `AnthropicEmbeddingProvider`
-- Vector store providers: `EdgeVecVectorStoreProvider` (default), `QdrantVectorStoreProvider`, `MilvusVectorStoreProvider`, `PineconeVectorStoreProvider`, `EncryptedVectorStoreProvider`
+- Embedding providers: `FastEmbedProvider` (default), `OllamaEmbeddingProvider`,
+  `OpenAIEmbeddingProvider`, `VoyageAIEmbeddingProvider`, `GeminiEmbeddingProvider`,
+  `AnthropicEmbeddingProvider`
+- Vector store providers: `EdgeVecVectorStoreProvider` (default),
+  `QdrantVectorStoreProvider`, `MilvusVectorStoreProvider`,
+  `PineconeVectorStoreProvider`, `EncryptedVectorStoreProvider`
 - Cache providers: `MokaCacheProvider` (default), `RedisCacheProvider`
 - Event bus providers: `TokioEventBusProvider` (default), `NatsEventBusProvider`
 - Language parsers: 12 AST-based language processors
@@ -219,7 +229,8 @@ mcb-providers/src/
 - `mcb-domain` (port traits for DI)
 - `mcb-providers` (concrete implementations for DI)
 - `mcb-utils` (shared constants and utilities)
-- manual composition root via `AppContext` + `init_app()` with `linkme` discovery (ADR-050)
+- manual composition root via `AppContext` + `init_app()` with `linkme` discovery
+  (ADR-050)
 - `figment` for configuration (ADR-025)
 - Infrastructure libraries (tracing, metrics, etc.)
 
@@ -291,7 +302,8 @@ pub async fn init_app(config: AppConfig) -> Result<AppContext> {
 
 - MCP server: `MCPServer`
 - Transport: `HttpTransport`, `StdioTransport`
-- Handlers: `index (action=start)`, `search (resource=code)`, `index (action=status)`, `index (action=clear)`
+- Handlers: `index (action=start)`, `search (resource=code)`, `index (action=status)`,
+  `index (action=clear)`
 
 #### Module Structure
 
@@ -407,15 +419,15 @@ impl ContextService {
 
 ### Ownership Map
 
-| Concept | Owner | Importers |
-|---------|-------|-----------|
-| Port traits | `mcb-domain` | `mcb-providers`, `mcb-infrastructure` |
-| Domain entities | `mcb-domain` | All layers |
-| Services | `mcb-infrastructure` | `mcb-server` |
-| Providers | `mcb-providers` | `mcb-infrastructure` (via DI) |
-| AppContext composition root | `mcb-infrastructure` | `mcb-server` |
-| Config types | `mcb-infrastructure` | `mcb-server` |
-| MCP handlers | `mcb-server` | None (entry point) |
+| Concept                     | Owner                | Importers                             |
+| --------------------------- | -------------------- | ------------------------------------- |
+| Port traits                 | `mcb-domain`         | `mcb-providers`, `mcb-infrastructure` |
+| Domain entities             | `mcb-domain`         | All layers                            |
+| Services                    | `mcb-infrastructure` | `mcb-server`                          |
+| Providers                   | `mcb-providers`      | `mcb-infrastructure` (via DI)         |
+| AppContext composition root | `mcb-infrastructure` | `mcb-server`                          |
+| Config types                | `mcb-infrastructure` | `mcb-server`                          |
+| MCP handlers                | `mcb-server`         | None (entry point)                    |
 
 ---
 
@@ -475,7 +487,6 @@ impl ContextService {
 ### Automated Checks (mcb-validate)
 
 ```bash
-
 # Run architecture validation
 make check WHAT=validate
 
@@ -541,7 +552,6 @@ Architecture validation: 0 violations
 ```
 
 ```bash
-
 # Installed git hooks are managed by beads:
 #   bd hooks install
 
@@ -564,7 +574,8 @@ Architecture validation: 0 violations
 - **ADR-002**: Async-First Architecture
 - **ADR-013**: Clean Architecture Crate Separation
 - **ADR-023**: Inventory to Linkme Migration
-- **ADR-024**: Handle-Based Dependency Injection (deprecated → ADR-029, superseded by ADR-050)
+- **ADR-024**: Handle-Based Dependency Injection (deprecated → ADR-029, superseded by
+  ADR-050)
 - **ADR-025**: Figment Configuration Loading (archived, superseded by ADR-051 Loco YAML)
 - **ADR-027**: Architecture Evolution v0.1.3
 - **ADR-029**: Hexagonal Architecture (superseded by ADR-050)
@@ -573,13 +584,12 @@ Architecture validation: 0 violations
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| v0.2.0 | 2026-01-28 | Baseline documentation for architecture boundaries |
-| v0.2.1 | 2026-02-15 | Fixed crate count to 6, removed non-existent mcb-ast-utils and mcb-language-support |
+| Version | Date       | Changes                                                                             |
+| ------- | ---------- | ----------------------------------------------------------------------------------- |
+| v0.2.0  | 2026-01-28 | Baseline documentation for architecture boundaries                                  |
+| v0.2.1  | 2026-02-15 | Fixed crate count to 6, removed non-existent mcb-ast-utils and mcb-language-support |
 
 ---
 
-**Maintained by**: Architecture Team
-**Review Cycle**: Each major version release
+**Maintained by**: Architecture Team **Review Cycle**: Each major version release
 **Validation Tool**: `mcb-validate` crate

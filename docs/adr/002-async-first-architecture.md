@@ -1,29 +1,26 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
+
 <!-- markdownlint-disable MD025 -->
-adr: 2
-title: Async-First Architecture
-status: IMPLEMENTED
-created:
-updated: 2026-02-05
-related: [1, 3, 12, 13]
-supersedes: []
-superseded_by: []
-implementation_status: Complete
+
+adr: 2 title: Async-First Architecture status: IMPLEMENTED created: updated: 2026-02-05
+related: [1, 3, 12, 13] supersedes: [] superseded_by: [] implementation_status: Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
 ## ADR 002: Async-First Architecture
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
 ## Status
 
 Accepted
 
-> Fully implemented with Tokio async runtime across 6 crates in the Clean
-> Architecture workspace.
+> Fully implemented with Tokio async runtime across 6 crates in the Clean Architecture
+> workspace.
 >
 > **Async Distribution by Crate**:
 >
@@ -34,17 +31,16 @@ Accepted
 > - `mcb-infrastructure` - DI bootstrap (AppContext + linkme), factories, event bus
 > - `mcb-server` - MCP protocol handlers, admin API
 >
-> All provider ports use `async_trait` with `Send + Sync` bounds.
-> DI via AppContext composition root + linkme distributed slices (ADR-050; ADR-029 superseded).
-> Structured concurrency with `tokio::spawn` and async channels.
+> All provider ports use `async_trait` with `Send + Sync` bounds. DI via AppContext
+> composition root + linkme distributed slices (ADR-050; ADR-029 superseded). Structured
+> concurrency with `tokio::spawn` and async channels.
 
 ## Context
 
-The Memory Context Browser handles AI operations (embedding generation, vector
-searches) and large codebase processing that require high performance and
-concurrency. The system needs to handle multiple concurrent users, process large
-codebases efficiently, and integrate with external APIs that may have high
-latency.
+The Memory Context Browser handles AI operations (embedding generation, vector searches)
+and large codebase processing that require high performance and concurrency. The system
+needs to handle multiple concurrent users, process large codebases efficiently, and
+integrate with external APIs that may have high latency.
 
 Key performance requirements:
 
@@ -59,9 +55,9 @@ utilization for these I/O-bound operations.
 
 ## Decision
 
-Adopt an async-first architecture using Tokio as the async runtime throughout
-the entire system. All provider interfaces use async traits, and the application
-is designed for high concurrency from the ground up.
+Adopt an async-first architecture using Tokio as the async runtime throughout the entire
+system. All provider interfaces use async traits, and the application is designed for
+high concurrency from the ground up.
 
 Key architectural decisions:
 
@@ -74,8 +70,8 @@ Key architectural decisions:
 
 ### Consequences
 
-Async-first architecture provides excellent performance and concurrency but
-requires careful error handling and increases code complexity.
+Async-first architecture provides excellent performance and concurrency but requires
+careful error handling and increases code complexity.
 
 ### Positive Consequences
 
@@ -100,24 +96,23 @@ requires careful error handling and increases code complexity.
 - **Description**: Traditional blocking I/O with thread pools for concurrency
 - **Pros**: Simpler code, easier debugging, familiar patterns
 - **Cons**: Poor performance for I/O operations, limited concurrency
-- **Rejection Reason**: Cannot meet performance requirements for AI operations
-  and concurrent users
+- **Rejection Reason**: Cannot meet performance requirements for AI operations and
+  concurrent users
 
 ### Alternative 2: Mixed Sync/Async
 
 - **Description**: Sync core with async wrappers for external operations
 - **Pros**: Gradual adoption, less complexity
 - **Cons**: Inconsistent patterns, performance bottlenecks at boundaries
-- **Rejection Reason**: Creates architectural inconsistency and performance
-  issues
+- **Rejection Reason**: Creates architectural inconsistency and performance issues
 
 ### Alternative 3: Actor Model (Actix)
 
 - **Description**: Use Actix for actor-based concurrency instead of Tokio
 - **Pros**: High-level abstractions, built-in supervision
 - **Cons**: Additional complexity, less ecosystem support
-- **Rejection Reason**: Tokio has better ecosystem support and performance for
-  our use case
+- **Rejection Reason**: Tokio has better ecosystem support and performance for our use
+  case
 
 ## Implementation Notes
 
@@ -346,23 +341,21 @@ async-first design has been extended to support hybrid parallelization:
 
 ### Updated Strategy
 
-- **Tokio**: I/O-bound operations (file reads, network calls, database queries,
-  vector search)
-- **Rayon**: CPU-bound operations (AST parsing, complexity calculation, graph
-  analysis)
-- **Pattern**: Wrap Rayon in `tokio::task::spawn_blocking` to bridge sync CPU
-  work with async I/O
+- **Tokio**: I/O-bound operations (file reads, network calls, database queries, vector
+  search)
+- **Rayon**: CPU-bound operations (AST parsing, complexity calculation, graph analysis)
+- **Pattern**: Wrap Rayon in `tokio::task::spawn_blocking` to bridge sync CPU work with
+  async I/O
 
 #### Rationale
 
-1. **Tokio for I/O**: Tokio's event-driven architecture is optimal for I/O-bound
-   work
-2. **Rayon for Compute**: Rayon's work-stealing scheduler is proven for
-   CPU-bound parallelism
-3. **PMAT Integration**: Upcoming PMAT analysis code uses Rayon extensively
-   with proven performance
-4. **No Conflicts**: Tokio and Rayon are complementary and don't interfere with
-   each other
+1. **Tokio for I/O**: Tokio's event-driven architecture is optimal for I/O-bound work
+2. **Rayon for Compute**: Rayon's work-stealing scheduler is proven for CPU-bound
+   parallelism
+3. **PMAT Integration**: Upcoming PMAT analysis code uses Rayon extensively with proven
+   performance
+4. **No Conflicts**: Tokio and Rayon are complementary and don't interfere with each
+   other
 
 ### Implementation Pattern
 
@@ -415,26 +408,25 @@ fn compute_complexity(content: &str) -> Result<ComplexityReport> {
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture]
-(001-modular-crates-architecture.md) -
-  Provider interfaces with async traits
+- [ADR-001: Modular Crates Architecture] (001-modular-crates-architecture.md) - Provider
+  interfaces with async traits
 - [ADR-003: Unified Provider Architecture & Routing]
-(003-unified-provider-architecture.md) -
-  Async provider selection and failover
-- [ADR-012: Two-Layer DI Strategy]
-(012-di-strategy-two-layer-approach.md) -
-  Async initialization in factories
+  (003-unified-provider-architecture.md) - Async provider selection and failover
+- [ADR-012: Two-Layer DI Strategy] (012-di-strategy-two-layer-approach.md) - Async
+  initialization in factories
 - [ADR-013: Clean Architecture Crate Separation]
-(013-clean-architecture-crate-separation.md) -
-  Crate organization
+  (013-clean-architecture-crate-separation.md) - Crate organization
 
 ## References
 
 - [Tokio Documentation](https://tokio.rs/)
 - [Async Programming in Rust](https://rust-lang.github.io/async-book/)
 - [Structured Concurrency]
-(<https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/>) <!-- markdownlint-disable-line MD013 -->
+  (<https://vorpus.org/blog/notes-on-structured-concurrency-or-go-statement-considered-harmful/>)
+  <!-- markdownlint-disable-line MD013 -->
 - [Rayon: Data Parallelism](https://docs.rs/rayon/latest/rayon/)
 - [Tokio spawn_blocking]
-(<https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html>) <!-- markdownlint-disable-line MD013 -->
-- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI; see ADR-050)
+  (<https://docs.rs/tokio/latest/tokio/task/fn.spawn_blocking.html>)
+  <!-- markdownlint-disable-line MD013 -->
+- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI;
+  see ADR-050)

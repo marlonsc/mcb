@@ -1,37 +1,35 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 46
-title: Integration with ADR-034-037 & Policies
-status: PROPOSED
-created:
-updated: 2026-02-05
-related: []
-supersedes: []
-superseded_by: []
-implementation_status: Complete
+
+adr: 46 title: Integration with ADR-034-037 & Policies status: PROPOSED created:
+updated: 2026-02-05 related: [] supersedes: [] superseded_by: [] implementation_status:
+Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
 # ADR-046: Integration with ADR-034-037 & Policies
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
-**Status**: Proposed
-**Date**: 2026-02-05
-**Deciders**: MCB Architecture Team
-**Related**: ADR-034-037 (Workflow series), ADR-041-045 (Context system)
-**Series Finale**: Completes ADR-041-046 (v0.4.0 architecture)
+**Status**: Proposed **Date**: 2026-02-05 **Deciders**: MCB Architecture Team
+**Related**: ADR-034-037 (Workflow series), ADR-041-045 (Context system) **Series
+Finale**: Completes ADR-041-046 (v0.4.0 architecture)
 
 ## Context
 
-ADR-041-045 define the integrated context system layers. ADR-046**bridges**this to ADR-034-037 (workflow FSM, policies, compensation) and specifies**how they interact**.
+ADR-041-045 define the integrated context system layers. ADR-046**bridges**this to
+ADR-034-037 (workflow FSM, policies, compensation) and specifies**how they interact**.
 
 Key integration points:
 
-1. **FSM gates context freshness requirements** (state determines what freshness is acceptable)
+1. **FSM gates context freshness requirements** (state determines what freshness is
+   acceptable)
 2. **Policies define context boundaries** (scope isolation, access control)
-3. **Compensation triggers context re-validation** (if operation fails, re-check context)
+3. **Compensation triggers context re-validation** (if operation fails, re-check
+   context)
 4. **Context snapshots enable rollback** (time-travel to pre-operation state)
 
 ## Decision
@@ -206,7 +204,10 @@ impl PolicyGuard for SecurityScanPolicy {
 
 ### 3. Compensation ↔ Context: Rollback via Snapshots
 
-**Architecture Correction 8**: `CompensationHandler` is an**infrastructure concern**(rollback, retry, logging), not business logic. It belongs in `mcb-infrastructure/src/compensation/handler.rs`. The**application layer**defines a `CompensationPolicy` port trait;**infrastructure** implements it.
+**Architecture Correction 8**: `CompensationHandler` is an**infrastructure
+concern**(rollback, retry, logging), not business logic. It belongs in
+`mcb-infrastructure/src/compensation/handler.rs`. The**application layer**defines a
+`CompensationPolicy` port trait;**infrastructure** implements it.
 
 ```rust
 // mcb-domain/src/ports/compensation.rs (PORT TRAIT - APPLICATION LAYER)
@@ -285,7 +286,9 @@ impl CompensationPolicy for CompensationHandler {
 
 ### 4. Event-Driven Orchestration
 
-**Architecture Correction 2**: Reuse existing `EventBusProvider` port trait from mcb-domain instead of creating a new `WorkflowEventBus` type. Define `WorkflowEvent` as a variant that can be published through the existing event bus infrastructure.
+**Architecture Correction 2**: Reuse existing `EventBusProvider` port trait from
+mcb-domain instead of creating a new `WorkflowEventBus` type. Define `WorkflowEvent` as
+a variant that can be published through the existing event bus infrastructure.
 
 ```rust
 // mcb-domain/src/ports/event_bus.rs (EXISTING PORT TRAIT)
@@ -359,7 +362,9 @@ impl EventHandler for CompensationSubscriber {
 
 ### 5. MCP Tools: Unified Interface
 
-**Architecture Correction 9**: Context tools registration follows**ADR-033 pattern** . Handlers are in `mcb-server/src/handlers/context_handlers.rs`, registered via `router.rs` tool_definitions() like existing handlers.
+**Architecture Correction 9**: Context tools registration follows**ADR-033 pattern** .
+Handlers are in `mcb-server/src/handlers/context_handlers.rs`, registered via
+`router.rs` tool_definitions() like existing handlers.
 
 ```rust
 // mcb-domain/src/ports/mcp_handler.rs (PORT TRAIT - ADR-033)
@@ -523,20 +528,23 @@ Applied Corrections (v0.4.0 Alignment):
 1. **Correction 2 (mcb-z1f)**: WorkflowEventBus → Reuse EventBusProvider
 
 - ✅ Removed duplicate `WorkflowEventBus` type
-- ✅ Defined `WorkflowEvent` as variant publishable through existing `EventBusProvider` port
+- ✅ Defined `WorkflowEvent` as variant publishable through existing `EventBusProvider`
+  port
 - ✅ Subscribers implement `EventHandler` trait (existing pattern)
 - **Impact**: Single event bus infrastructure, no duplication
 
 1. **Correction 7 (mcb-d26)**: BeadsTask contract clarification
 
 - ✅ Documented BeadsTask as EXTERNAL DTO from beads issue tracker
-- ✅ Added mapping: external BeadsTask → internal WorkflowTask at infrastructure boundary
+- ✅ Added mapping: external BeadsTask → internal WorkflowTask at infrastructure
+  boundary
 - ✅ Task routing: external DTO → adapter → internal entity → orchestrator
 - **Impact**: Clear contract, proper separation of concerns
 
 1. **Correction 8 (mcb-ehk)**: CompensationHandler layer placement
 
-- ✅ Moved from application to infrastructure: `mcb-infrastructure/src/compensation/handler.rs`
+- ✅ Moved from application to infrastructure:
+  `mcb-infrastructure/src/compensation/handler.rs`
 - ✅ Application layer defines `CompensationPolicy` port trait
 - ✅ Infrastructure implements `CompensationPolicy` with rollback, retry, logging
 - **Impact**: Proper layer separation, infrastructure concerns isolated
@@ -583,19 +591,21 @@ Applied Corrections (v0.4.0 Alignment):
 
 ADR-041-046 form a complete system:
 
-| ADR | Component | Status |
-| ----- | ----------- | -------- |
-| **041** | 5-layer architecture | ✅ Proposed |
-| **042** | Knowledge graph | ✅ Proposed |
-| **043** | Hybrid search | ✅ Proposed |
-| **044** | Lightweight routing | ✅ Proposed |
-| **045** | Versioning & freshness | ✅ Proposed |
-| **046** | Policy integration | ✅ Proposed (THIS) |
+| ADR     | Component              | Status             |
+| ------- | ---------------------- | ------------------ |
+| **041** | 5-layer architecture   | ✅ Proposed        |
+| **042** | Knowledge graph        | ✅ Proposed        |
+| **043** | Hybrid search          | ✅ Proposed        |
+| **044** | Lightweight routing    | ✅ Proposed        |
+| **045** | Versioning & freshness | ✅ Proposed        |
+| **046** | Policy integration     | ✅ Proposed (THIS) |
 
-> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
+> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current
+> v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
 
 All layers connected. Ready for implementation (Phase 9).
 
 ---
 
-**Series Complete**: ADR-041-046 provides production-grade integrated context system for MCB v0.4.0.
+**Series Complete**: ADR-041-046 provides production-grade integrated context system for
+MCB v0.4.0.

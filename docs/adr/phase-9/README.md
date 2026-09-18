@@ -1,27 +1,28 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Phase 9: Integrated Context System (ADR-041-046)
 
 ## Overview
 
-Phase 9 implements the**Integrated Context System** for v0.4.0, building on Phase 8's workflow FSM and policy framework. This phase introduces knowledge graphs, freshness tracking, time-travel queries, and hybrid search capabilities.
+Phase 9 implements the**Integrated Context System** for v0.4.0, building on Phase 8's
+workflow FSM and policy framework. This phase introduces knowledge graphs, freshness
+tracking, time-travel queries, and hybrid search capabilities.
 
-**Timeline**: Feb 17 - Mar 16, 2026 (4 weeks)
-**ADRs**: ADR-041 through ADR-046 (6 decisions)
-**Tests**: 70+ (unit, integration, end-to-end)
-**Deliverables**: Context architecture, graph implementation, hybrid search, versioning, MCP integration
+**Timeline**: Feb 17 - Mar 16, 2026 (4 weeks) **ADRs**: ADR-041 through ADR-046 (6
+decisions) **Tests**: 70+ (unit, integration, end-to-end) **Deliverables**: Context
+architecture, graph implementation, hybrid search, versioning, MCP integration
 
 ## ADRs
 
 ### ADR-041: Context Architecture
 
-**Status**: Proposed
-**Date**: Feb 2026
-**Scope**: System design for integrated context system
+**Status**: Proposed **Date**: Feb 2026 **Scope**: System design for integrated context
+system
 
-**Summary**:
-Defines the 5-layer context system architecture:
+**Summary**: Defines the 5-layer context system architecture:
 
-> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
+> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current
+> v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
 
 1. Code Indexing & Embeddings (AST parsing, vector embeddings)
 2. Knowledge Graph (code relationships, freshness metadata)
@@ -39,18 +40,17 @@ Key Decisions:
 
 **Related**: ADR-042, ADR-043, ADR-044, ADR-045, ADR-046
 
-**See**: [`docs/architecture/ARCHITECTURE.md`](../../architecture/ARCHITECTURE.md) for detailed architecture
+**See**: [`docs/architecture/ARCHITECTURE.md`](../../architecture/ARCHITECTURE.md) for
+detailed architecture
 
 ---
 
 ### ADR-042: Knowledge Graph
 
-**Status**: Proposed
-**Date**: Feb 2026
-**Scope**: Graph structure and relationship modeling
+**Status**: Proposed **Date**: Feb 2026 **Scope**: Graph structure and relationship
+modeling
 
-**Summary**:
-Defines the knowledge graph structure for representing code relationships:
+**Summary**: Defines the knowledge graph structure for representing code relationships:
 
 Graph Components:
 
@@ -84,18 +84,18 @@ Graph Operations:
 
 **Related**: ADR-041, ADR-035 (Freshness Tracking)
 
-**See**: [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md) for usage examples
+**See**:
+[`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md)
+for usage examples
 
 ---
 
 ### ADR-043: Hybrid Search Engine
 
-**Status**: Proposed
-**Date**: Feb 2026
-**Scope**: Search algorithm design and implementation
+**Status**: Proposed **Date**: Feb 2026 **Scope**: Search algorithm design and
+implementation
 
-**Summary**:
-Defines the hybrid search engine combining semantic and keyword search:
+**Summary**: Defines the hybrid search engine combining semantic and keyword search:
 
 Search Modes:
 
@@ -125,18 +125,16 @@ Result Ranking:
 
 **Related**: ADR-041, ADR-044 (Model Selection)
 
-**See**: [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) for usage examples
+**See**: [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) for usage
+examples
 
 ---
 
 ### ADR-044: Model Selection
 
-**Status**: Proposed
-**Date**: Feb 2026
-**Scope**: Embedding and search model choices
+**Status**: Proposed **Date**: Feb 2026 **Scope**: Embedding and search model choices
 
-**Summary**:
-Evaluates and selects embedding and search models for v0.4.0:
+**Summary**: Evaluates and selects embedding and search models for v0.4.0:
 
 Embedding Models:
 
@@ -170,12 +168,9 @@ Recommendations:
 
 ### ADR-045: Context Versioning
 
-**Status**: Proposed
-**Date**: Feb 2026
-**Scope**: Snapshot and temporal query design
+**Status**: Proposed **Date**: Feb 2026 **Scope**: Snapshot and temporal query design
 
-**Summary**:
-Defines snapshot-based versioning for time-travel queries:
+**Summary**: Defines snapshot-based versioning for time-travel queries:
 
 Snapshot Structure:
 
@@ -204,18 +199,19 @@ Retention Policies:
 
 **Related**: ADR-041, ADR-042 (Knowledge Graph)
 
-**See**: [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md) for time-travel examples
+**See**:
+[`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md)
+for time-travel examples
 
 ---
 
 ### ADR-046: Integration with ADR-034-037 & Policies
 
-**Status**: Proposed
-**Date**: Feb 2026
-**Scope**: MCP tool integration and policy enforcement
+**Status**: Proposed **Date**: Feb 2026 **Scope**: MCP tool integration and policy
+enforcement
 
-**Summary**:
-Defines integration patterns for context system with MCP tools and workflow FSM:
+**Summary**: Defines integration patterns for context system with MCP tools and workflow
+FSM:
 
 MCP Tools:
 
@@ -289,9 +285,9 @@ Phase 9 builds on Phase 8's workflow system:
 
 ## Historical Planning Snapshot
 
-The original Phase 9 execution notes are historical design context, not the
-current work queue. Current v0.4 workflow/context work is tracked in beads under
-`mcb-6pjx` and its children.
+The original Phase 9 execution notes are historical design context, not the current work
+queue. Current v0.4 workflow/context work is tracked in beads under `mcb-6pjx` and its
+children.
 
 Use this command for current state:
 
@@ -301,11 +297,14 @@ bd list --status open,in_progress,deferred --label scope:v0.4 --json
 
 ## Feature Guides
 
-- [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md) – Feature overview and workflows
-- [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) – Migration guide from v0.3
-- [`docs/architecture/CLEAN_ARCHITECTURE.md`](../../architecture/CLEAN_ARCHITECTURE.md) – Architecture patterns
+- [`docs/guides/features/INTEGRATED_CONTEXT.md`](../../guides/features/INTEGRATED_CONTEXT.md)
+  – Feature overview and workflows
+- [`docs/migration/v0.3-to-v0.4.md`](../../migration/v0.3-to-v0.4.md) – Migration guide
+  from v0.3
+- [`docs/architecture/CLEAN_ARCHITECTURE.md`](../../architecture/CLEAN_ARCHITECTURE.md)
+  – Architecture patterns
 
 ## Tracking And Validation
 
-Testing targets and success criteria belong in the relevant beads' acceptance
-criteria. Do not use this ADR index as a live checklist.
+Testing targets and success criteria belong in the relevant beads' acceptance criteria.
+Do not use this ADR index as a live checklist.

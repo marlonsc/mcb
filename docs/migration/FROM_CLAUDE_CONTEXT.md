@@ -1,27 +1,28 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Migration Guide: From Claude-context to mcb
 
-This guide helps you migrate from [zilliztech/Claude-context](https://github.com/zilliztech/claude-context) to mcb.
+This guide helps you migrate from
+[zilliztech/Claude-context](https://github.com/zilliztech/claude-context) to mcb.
 
 ## Why Migrate
 
-| Feature | Claude-context | mcb |
-| --------- | ---------------- | --------------------- |
-| **Runtime** | Node.js 20-23 | Native Rust binary |
-| **MCP Tools** | 4 tools | 4 tools (same interface) |
-| **Hybrid Search** | BM25 + vector | BM25 + vector |
-| **Embedding Providers** | 4 | 6 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic) |
-| **Vector Stores** | 2 (Milvus/Zilliz) | 5 (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted) |
-| **Languages** | 13+ | 13 (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin) |
-| **Performance** | Node.js interpreter | Native compiled |
-| **Dependencies** | npm packages | Single binary |
+| Feature                 | Claude-context      | mcb                                                                      |
+| ----------------------- | ------------------- | ------------------------------------------------------------------------ |
+| **Runtime**             | Node.js 20-23       | Native Rust binary                                                       |
+| **MCP Tools**           | 4 tools             | 4 tools (same interface)                                                 |
+| **Hybrid Search**       | BM25 + vector       | BM25 + vector                                                            |
+| **Embedding Providers** | 4                   | 6 (OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic)               |
+| **Vector Stores**       | 2 (Milvus/Zilliz)   | 5 (EdgeVec, Milvus, Qdrant, Pinecone, Encrypted)                         |
+| **Languages**           | 13+                 | 13 (Rust, Python, JS/TS, Go, Java, C, C++, C#, Ruby, PHP, Swift, Kotlin) |
+| **Performance**         | Node.js interpreter | Native compiled                                                          |
+| **Dependencies**        | npm packages        | Single binary                                                            |
 
 ## Quick Migration
 
 ### Step 1: Install mcb
 
 ```bash
-
 # Download the latest release
 curl -LO https://github.com/marlonsc/mcb/releases/latest/download/mcb-linux-x86_64.tar.gz
 tar xzf mcb-linux-x86_64.tar.gz
@@ -32,14 +33,14 @@ sudo mv mcb /usr/local/bin/
 
 mcb is fully compatible with Claude-context environment variables:
 
-| Claude-context | mcb | Status |
-| ---------------- | --------------------- | -------- |
-| `OPENAI_API_KEY` | `OPENAI_API_KEY` | Direct support |
-| `VOYAGE_API_KEY` | `VOYAGE_API_KEY` | Direct support |
+| Claude-context    | mcb               | Status         |
+| ----------------- | ----------------- | -------------- |
+| `OPENAI_API_KEY`  | `OPENAI_API_KEY`  | Direct support |
+| `VOYAGE_API_KEY`  | `VOYAGE_API_KEY`  | Direct support |
 | `OLLAMA_BASE_URL` | `OLLAMA_BASE_URL` | Direct support |
-| `GEMINI_API_KEY` | `GEMINI_API_KEY` | Direct support |
-| `MILVUS_TOKEN` | `MILVUS_TOKEN` | Direct support |
-| `MILVUS_ADDRESS` | `MILVUS_ADDRESS` | Direct support |
+| `GEMINI_API_KEY`  | `GEMINI_API_KEY`  | Direct support |
+| `MILVUS_TOKEN`    | `MILVUS_TOKEN`    | Direct support |
+| `MILVUS_ADDRESS`  | `MILVUS_ADDRESS`  | Direct support |
 
 ### No changes required to your existing environment variables
 
@@ -84,7 +85,6 @@ Replace the Claude-context entry in your `claude_desktop_config.json`:
 ### Step 4: Verify Installation
 
 ```bash
-
 # Check version
 mcb --version
 
@@ -97,12 +97,12 @@ mcb --version
 
 Both tools provide the same 4 MCP tools with identical interfaces:
 
-| Tool | Description | Compatibility |
-| ------ | ------------- | --------------- |
-| `index (action=start)` | Index a directory with AST-aware chunking | 100% compatible |
-| `search (resource=code)` | Semantic + BM25 hybrid search | 100% compatible |
-| `index (action=status)` | Check indexing progress | 100% compatible |
-| `index (action=clear)` | Remove indexed data | 100% compatible |
+| Tool                     | Description                               | Compatibility   |
+| ------------------------ | ----------------------------------------- | --------------- |
+| `index (action=start)`   | Index a directory with AST-aware chunking | 100% compatible |
+| `search (resource=code)` | Semantic + BM25 hybrid search             | 100% compatible |
+| `index (action=status)`  | Check indexing progress                   | 100% compatible |
+| `index (action=clear)`   | Remove indexed data                       | 100% compatible |
 
 ## Provider Selection
 
@@ -111,7 +111,6 @@ Both tools provide the same 4 MCP tools with identical interfaces:
 Set `EMBEDDING_PROVIDER` environment variable:
 
 ```bash
-
 # OpenAI (default)
 EMBEDDING_PROVIDER=openai
 OPENAI_API_KEY=sk-...
@@ -137,14 +136,13 @@ EMBEDDING_PROVIDER=fastembed
 Set `VECTOR_STORE_PROVIDER` environment variable:
 
 ```bash
-
 # EdgeVec (default — in-process HNSW, no external deps)
 VECTOR_STORE_PROVIDER=edgevec
 
 # Milvus (production, large scale)
 VECTOR_STORE_PROVIDER=milvus
 MILVUS_ADDRESS=http://localhost:19530
-MILVUS_TOKEN=...  # optional
+MILVUS_TOKEN=... # optional
 
 # Qdrant (self-hosted, Rust-native)
 VECTOR_STORE_PROVIDER=qdrant
@@ -170,20 +168,19 @@ Both tools support the same core languages. mcb v0.1.0 now includes:
 
 ### Improvements in mcb
 
-1.**No Node.js required**- Single binary, no npm/npx
-2.**Faster startup**- Native compilation vs interpreter
-3.**Lower memory**- Rust memory efficiency
-4.**More providers**- FastEmbed (local), EdgeVec, Filesystem stores
-5.**Enterprise features**- JWT auth, rate limiting, encryption at rest
+1.**No Node.js required**- Single binary, no npm/npx 2.**Faster startup**- Native
+compilation vs interpreter 3.**Lower memory**- Rust memory efficiency 4.**More
+providers**- FastEmbed (local), EdgeVec, Filesystem stores 5.**Enterprise features**-
+JWT auth, rate limiting, encryption at rest
 
 ### Behavioral Differences
 
-| Aspect | Claude-context | mcb |
-| -------- | ---------------- | --------------------- |
-| Config format | convict.js schema | TOML config |
-| Config location | `~/.context/config.json` | `~/.context/config.toml` |
-| Default model (OpenAI) | text-embedding-3-small | text-embedding-3-small |
-| Default model (VoyageAI) | voyage-code-3 | voyage-code-3 |
+| Aspect                   | Claude-context           | mcb                      |
+| ------------------------ | ------------------------ | ------------------------ |
+| Config format            | convict.js schema        | TOML config              |
+| Config location          | `~/.context/config.json` | `~/.context/config.toml` |
+| Default model (OpenAI)   | text-embedding-3-small   | text-embedding-3-small   |
+| Default model (VoyageAI) | voyage-code-3            | voyage-code-3            |
 
 ## Troubleshooting
 

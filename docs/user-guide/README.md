@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Memory Context Browser
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -6,8 +7,8 @@
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue)](https://github.com/marlonsc/mcb/releases)
 
-**Model Context Protocol Server** - Provides semantic code search and
-analysis capabilities to AI assistants through a standardized MCP interface.
+**Model Context Protocol Server** - Provides semantic code search and analysis
+capabilities to AI assistants through a standardized MCP interface.
 
 ## 🎯 Current Capabilities (v0.2.1)
 
@@ -21,18 +22,19 @@ analysis capabilities to AI assistants through a standardized MCP interface.
 
 ### Architecture
 
-- **🏗️ Modular Design**: Clean separation with core, providers, services,
-  and server layers
+- **🏗️ Modular Design**: Clean separation with core, providers, services, and server
+  layers
 - **🔌 Provider Pattern**: Extensible system for embeddings and vector storage
 - **⚡ Async Processing**: Tokio-based asynchronous operations
 - **🛡️ Error Handling**: Comprehensive error types with detailed diagnostics
 
 ## 📋 Documentation
 
-- [**ARCHITECTURE.md**](../architecture/ARCHITECTURE.md) - Technical
-  architecture and design
+- [**ARCHITECTURE.md**](../architecture/ARCHITECTURE.md) - Technical architecture and
+  design
 - [**ROADMAP.md**](../developer/ROADMAP.md) - Development roadmap and milestones
-- [**DEPLOYMENT.md**](../operations/DEPLOYMENT.md) - Deployment guides and configurations
+- [**DEPLOYMENT.md**](../operations/DEPLOYMENT.md) - Deployment guides and
+  configurations
 - [**CONTRIBUTING.md**](../developer/CONTRIBUTING.md) - Contribution guidelines
 
 ## 📦 Quick Start
@@ -40,7 +42,6 @@ analysis capabilities to AI assistants through a standardized MCP interface.
 See the [**QUICKSTART.md**](./QUICKSTART.md) guide for detailed setup instructions.
 
 ```bash
-
 # Install Rust 1.92+ and clone
 git clone https://github.com/marlonsc/mcb.git
 cd mcb
@@ -55,7 +56,6 @@ make test
 The project has 3,143+ tests with comprehensive coverage:
 
 ```bash
-
 # Run all tests
 make test
 
@@ -87,10 +87,10 @@ GitHub Actions automatically runs:
 
 ## 🤝 Contributing
 
-See [**CONTRIBUTING.md**](../developer/CONTRIBUTING.md) for detailed
-contribution guidelines.
+See [**CONTRIBUTING.md**](../developer/CONTRIBUTING.md) for detailed contribution
+guidelines.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](../../LICENSE)
-file for details.
+This project is licensed under the MIT License - see the [LICENSE](../../LICENSE) file
+for details.

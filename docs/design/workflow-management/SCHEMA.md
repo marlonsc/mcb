@@ -1,9 +1,11 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Agent & Quality Domain Extension - Schema Additions
 
 ## Overview
 
-**Adições incrementais** ao schema MCB existente para suportar agent tracking e quality enforcement. Segue os padrões de nomenclatura dos ADRs existentes (ADR-009, ADR-013).
+**Adições incrementais** ao schema MCB existente para suportar agent tracking e quality
+enforcement. Segue os padrões de nomenclatura dos ADRs existentes (ADR-009, ADR-013).
 
 ## Design Principles
 
@@ -332,30 +334,30 @@ LIMIT 100;
 
 ### New Tables (9 total)
 
-| Category | Tables |
-| ---------- | -------- |
-| Agent (4) | `agent_sessions`, `delegations`, `tool_calls`, `checkpoints` |
-| Project (4) | `phases`, `issues`, `issue_dependencies`, `decisions` |
-| Quality (1) | `quality_gate_configs` |
+| Category    | Tables                                                       |
+| ----------- | ------------------------------------------------------------ |
+| Agent (4)   | `agent_sessions`, `delegations`, `tool_calls`, `checkpoints` |
+| Project (4) | `phases`, `issues`, `issue_dependencies`, `decisions`        |
+| Quality (1) | `quality_gate_configs`                                       |
 
 ### Entity Extensions
 
-| Entity | Extension |
-| -------- | ----------- |
-| `ObservationType` | Add `Execution` variant |
+| Entity                | Extension                                     |
+| --------------------- | --------------------------------------------- |
+| `ObservationType`     | Add `Execution` variant                       |
 | `Observation` (Error) | Add `fix_pattern`, `fix_verified` to metadata |
 
 ### Size Estimates
 
-| Table | Est. Rows/year | Est. Size |
-| ------- | ---------------- | ----------- |
-| agent_sessions | ~10K | ~2 MB |
-| delegations | ~50K | ~5 MB |
-| tool_calls | ~500K | ~50 MB |
-| checkpoints | ~5K | ~10 MB |
-| phases | ~500 | ~100 KB |
-| issues | ~5K | ~1 MB |
-| decisions | ~2K | ~500 KB |
+| Table          | Est. Rows/year | Est. Size |
+| -------------- | -------------- | --------- |
+| agent_sessions | ~10K           | ~2 MB     |
+| delegations    | ~50K           | ~5 MB     |
+| tool_calls     | ~500K          | ~50 MB    |
+| checkpoints    | ~5K            | ~10 MB    |
+| phases         | ~500           | ~100 KB   |
+| issues         | ~5K            | ~1 MB     |
+| decisions      | ~2K            | ~500 KB   |
 
 **Total**: ~70 MB/year
 

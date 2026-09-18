@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 13
-title: Clean Architecture Crate Separation
-status: IMPLEMENTED
-created:
-updated: 2026-02-05
-related: [1, 2, 3, 6, 7, 11, 12, 27, 31]
-supersedes: []
-superseded_by: []
+
+adr: 13 title: Clean Architecture Crate Separation status: IMPLEMENTED created: updated:
+2026-02-05 related: [1, 2, 3, 6, 7, 11, 12, 27, 31] supersedes: [] superseded_by: []
 implementation_status: Complete
 ---
 
@@ -17,14 +13,16 @@ implementation_status: Complete
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
-Implemented (v0.1.1) - Six crates
-Updated (v0.1.2) - Added mcb-validate as 7th crate
+Implemented (v0.1.1) - Six crates Updated (v0.1.2) - Added mcb-validate as 7th crate
 
 ## Context
 
-As Memory Context Browser evolved from a monolithic architecture to a production-ready system, the codebase grew to include multiple providers, complex DI patterns, validation systems, and protocol handlers. A monolithic structure created several challenges:
+As Memory Context Browser evolved from a monolithic architecture to a production-ready
+system, the codebase grew to include multiple providers, complex DI patterns, validation
+systems, and protocol handlers. A monolithic structure created several challenges:
 
 1. **Coupling**: Changes to infrastructure affected domain logic
 2. **Testability**: Testing required loading entire application context
@@ -32,15 +30,19 @@ As Memory Context Browser evolved from a monolithic architecture to a production
 4. **Clarity**: No clear boundaries for where code belongs
 5. **Dependency Direction**: Violations of dependency inversion were easy to introduce
 
-The Clean Architecture pattern, as described by Robert C. Martin, addresses these concerns through strict layer separation with dependencies pointing inward toward the domain.
+The Clean Architecture pattern, as described by Robert C. Martin, addresses these
+concerns through strict layer separation with dependencies pointing inward toward the
+domain.
 
 ## Decision
 
-We organize the codebase into **seven Cargo workspace crates** following Clean Architecture principles:
+We organize the codebase into **seven Cargo workspace crates** following Clean
+Architecture principles:
 
 ### Layer 1: Domain (`mcb-domain`)
 
-**Purpose**: Core business entities, port traits (interfaces), and domain validation rules.
+**Purpose**: Core business entities, port traits (interfaces), and domain validation
+rules.
 
 Characteristics:
 
@@ -101,7 +103,8 @@ Characteristics:
 
 - Depends on `mcb-domain` (implements port traits)
 - Feature-flagged providers for optional dependencies
-- Contains real implementations: OpenAI, Ollama, etc. (7 embedding, 4 vector store, 12 language)
+- Contains real implementations: OpenAI, Ollama, etc. (7 embedding, 4 vector store, 12
+  language)
 - Organized by provider category
 
 Key Directories:
@@ -143,7 +146,8 @@ mcb-providers/src/
 Characteristics:
 
 - Depends on `mcb-domain`, `mcb-application`, `mcb-providers`
-- Contains the linkme + Handle DI system with AppContext composition root (ADR-050; ADR-029 superseded)
+- Contains the linkme + Handle DI system with AppContext composition root (ADR-050;
+  ADR-029 superseded)
 - Contains configuration management (Figment)
 - Contains cross-cutting services (metrics, events)
 - Provides factories for production provider creation
@@ -262,7 +266,8 @@ Arrow direction: depends on
 ## Clean Architecture Rules Enforced
 
 1. **Dependency Rule**: Dependencies only point inward (toward domain)
-2. **Abstraction Rule**: Inner layers define interfaces (ports), outer layers implement (adapters)
+2. **Abstraction Rule**: Inner layers define interfaces (ports), outer layers implement
+   (adapters)
 3. **Entity Rule**: Domain entities have no external dependencies
 4. **Use Case Rule**: Application layer orchestrates, doesn't implement infrastructure
 
@@ -271,7 +276,6 @@ Arrow direction: depends on
 The `mcb-validate` crate enforces these architectural rules:
 
 ```bash
-
 # Run architecture validation
 cargo run -p mcb-validate
 
@@ -314,7 +318,8 @@ cargo run -p mcb-validate
 
 ### Adding a New Use Case
 
-1. Define service interface in `mcb-domain/src/ports/` (port traits are in domain per ADR-029, superseded by ADR-050)
+1. Define service interface in `mcb-domain/src/ports/` (port traits are in domain per
+   ADR-029, superseded by ADR-050)
 2. Implement service in `mcb-application/src/services/`
 3. Inject port dependencies via constructor
 4. Wire in `mcb-infrastructure/src/di/` if needed
@@ -342,27 +347,40 @@ async fn test_full_indexing_flow() {
 
 ## Canonical References
 
-> **Note**: This ADR is a historical decision record. For current architecture
-> details, consult the normative documents listed below.
+> **Note**: This ADR is a historical decision record. For current architecture details,
+> consult the normative documents listed below.
 
-- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules
+  and module ownership (normative)
 - [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider trait patterns
-- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async patterns per layer
-- [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) - Provider interface
-- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) - mcb-providers organization
-- [ADR-031: Documentation Excellence](031-documentation-excellence.md) - Documentation per crate
-- [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Quality standards per layer
-- [ADR-051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md) - mcb-server admin module
-- [ADR-011: HTTP Transport](011-http-transport-request-response-pattern.md) - mcb-server transport layer
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI in mcb-infrastructure
-- **Extended by**: [ADR-027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) - Introduces bounded contexts within layers
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Provider
+  trait patterns
+- [ADR-002: Async-First Architecture](002-async-first-architecture.md) - Async patterns
+  per layer
+- [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) -
+  Provider interface
+- [ADR-003: Unified Provider Architecture & Routing](003-unified-provider-architecture.md) -
+  mcb-providers organization
+- [ADR-031: Documentation Excellence](031-documentation-excellence.md) - Documentation
+  per crate
+- [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Quality
+  standards per layer
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md) -
+  mcb-server admin module
+- [ADR-011: HTTP Transport](011-http-transport-request-response-pattern.md) - mcb-server
+  transport layer
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI in
+  mcb-infrastructure
+- **Extended by**:
+  [ADR-027: Architecture Evolution v0.1.3](027-architecture-evolution-v013.md) -
+  Introduces bounded contexts within layers
 
 ## References
 
 - [Clean Architecture by Robert C. Martin](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
-- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI; see ADR-050)
+- [linkme Documentation](https://docs.rs/linkme) (compile-time discovery in current DI;
+  see ADR-050)
 - Workspace-next refactoring plan (January 2026)

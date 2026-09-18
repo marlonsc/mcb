@@ -1,19 +1,22 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Environment Variables Reference
 
 Complete reference for all environment variables supported by Memory Context Browser.
 
-**Version**: 0.2.1
-**Last Updated**: 2026-02-14
+**Version**: 0.2.1 **Last Updated**: 2026-02-14
 
-See also [CONFIGURATION.md](../CONFIGURATION.md) for Loco YAML-based config ([ADR-051](../adr/051-seaql-loco-platform-rebuild.md)).
+See also [CONFIGURATION.md](../CONFIGURATION.md) for Loco YAML-based config
+([ADR-051](../adr/051-seaql-loco-platform-rebuild.md)).
 
-> **Note (v0.3.0):** The `MCP__` env prefix pattern (via Figment) was removed. Configuration is now
-> loaded from `config/{env}.yaml` files. Provider-specific env vars (e.g. `OPENAI_API_KEY`) still work.
+> **Note (v0.3.0):** The `MCP__` env prefix pattern (via Figment) was removed.
+> Configuration is now loaded from `config/{env}.yaml` files. Provider-specific env vars
+> (e.g. `OPENAI_API_KEY`) still work.
 >
-> **This document is legacy/transitionary.** For new work, prefer `config/development.yaml`,
-> `config/test.yaml`, and `config/production.yaml` as the SSOT. See [CONFIGURATION.md](../CONFIGURATION.md)
-> and [ADR-051](../adr/051-seaql-loco-platform-rebuild.md).
+> **This document is legacy/transitionary.** For new work, prefer
+> `config/development.yaml`, `config/test.yaml`, and `config/production.yaml` as the
+> SSOT. See [CONFIGURATION.md](../CONFIGURATION.md) and
+> [ADR-051](../adr/051-seaql-loco-platform-rebuild.md).
 
 ---
 
@@ -21,9 +24,10 @@ See also [CONFIGURATION.md](../CONFIGURATION.md) for Loco YAML-based config ([AD
 
 Memory Context Browser uses a hierarchical configuration system:
 
-1.**Configuration Files**: Environment-based Loco YAML (`config/{env}.yaml`)
-2.**Environment Variables**: Provider-specific env vars (e.g. `OPENAI_API_KEY`, `OLLAMA_BASE_URL`)
-3.**Defaults**: Canonical defaults in `config/development.yaml` under `settings:`
+1.**Configuration Files**: Environment-based Loco YAML
+(`config/{env}.yaml`) 2.**Environment Variables**: Provider-specific env vars (e.g.
+`OPENAI_API_KEY`, `OLLAMA_BASE_URL`) 3.**Defaults**: Canonical defaults in
+`config/development.yaml` under `settings:`
 
 All environment variables use the pattern:
 
@@ -43,10 +47,10 @@ MCP_CACHE__NAMESPACES__EMBEDDINGS__TTL_SECONDS=7200
 
 ### Host and Port
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `MCP__SERVER__NETWORK__HOST` | `0.0.0.0` | String | Unified server bind address |
-| `MCP__SERVER__NETWORK__PORT` | `3000` | Integer | Unified HTTP port (MCP + Admin + Metrics) |
+| Variable                     | Default   | Type    | Description                               |
+| ---------------------------- | --------- | ------- | ----------------------------------------- |
+| `MCP__SERVER__NETWORK__HOST` | `0.0.0.0` | String  | Unified server bind address               |
+| `MCP__SERVER__NETWORK__PORT` | `3000`    | Integer | Unified HTTP port (MCP + Admin + Metrics) |
 
 ### Usage
 
@@ -61,20 +65,19 @@ export MCP__SERVER__NETWORK__PORT=9000
 
 ### Global Cache Settings
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `MCP_CACHE__ENABLED` | `true` | Boolean | Enable/disable caching system |
-| `MCP_CACHE__REDIS_URL` | `` (empty) | String | Redis connection URL; empty = local Moka mode |
-| `MCP_CACHE__DEFAULT_TTL_SECONDS` | `3600` | Integer | Default TTL in seconds (1 hour) |
-| `MCP_CACHE__MAX_SIZE` | `10000` | Integer | Max cache entries (for local Moka mode) |
+| Variable                         | Default    | Type    | Description                                   |
+| -------------------------------- | ---------- | ------- | --------------------------------------------- |
+| `MCP_CACHE__ENABLED`             | `true`     | Boolean | Enable/disable caching system                 |
+| `MCP_CACHE__REDIS_URL`           | `` (empty) | String  | Redis connection URL; empty = local Moka mode |
+| `MCP_CACHE__DEFAULT_TTL_SECONDS` | `3600`     | Integer | Default TTL in seconds (1 hour)               |
+| `MCP_CACHE__MAX_SIZE`            | `10000`    | Integer | Max cache entries (for local Moka mode)       |
 
 ### Current Architecture Note
 
 - If `REDIS_URL` is**empty**→ Uses Moka (local in-memory cache)
 - If `REDIS_URL` is**non-empty**→ Uses Redis (distributed cache)
 
-**Migration Path**(Phase 2):
-This will be replaced with:
+**Migration Path**(Phase 2): This will be replaced with:
 
 ```text
 MCP_CACHE__BACKEND=local|redis
@@ -129,7 +132,6 @@ MCP_CACHE__NAMESPACES__SYNC_BATCHES__COMPRESSION=false
 ### Usage Example
 
 ```bash
-
 # Use Redis instead of local Moka
 export MCP_CACHE__REDIS_URL=redis://localhost:6379
 
@@ -143,23 +145,22 @@ export MCP_CACHE__NAMESPACES__EMBEDDINGS__TTL_SECONDS=14400
 
 ### Event Bus Backend Selection
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `MCP_EVENT_BUS_TYPE` | `tokio` | String | Backend: `tokio` or `nats` |
-| `MCP_EVENT_BUS_CAPACITY` | `100` | Integer | Tokio channel capacity |
+| Variable                 | Default | Type    | Description                |
+| ------------------------ | ------- | ------- | -------------------------- |
+| `MCP_EVENT_BUS_TYPE`     | `tokio` | String  | Backend: `tokio` or `nats` |
+| `MCP_EVENT_BUS_CAPACITY` | `100`   | Integer | Tokio channel capacity     |
 
 ### NATS Configuration (when `MCP_EVENT_BUS_TYPE=nats`)
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `MCP_NATS_URL` | `nats://localhost:4222` | String | NATS server URL |
-| `MCP_NATS_RETENTION_HOURS` | `1` | Integer | Event retention in hours |
-| `MCP_NATS_MAX_MSGS` | `10000` | Integer | Max messages per subject |
+| Variable                   | Default                 | Type    | Description              |
+| -------------------------- | ----------------------- | ------- | ------------------------ |
+| `MCP_NATS_URL`             | `nats://localhost:4222` | String  | NATS server URL          |
+| `MCP_NATS_RETENTION_HOURS` | `1`                     | Integer | Event retention in hours |
+| `MCP_NATS_MAX_MSGS`        | `10000`                 | Integer | Max messages per subject |
 
 ### Usage
 
 ```bash
-
 # Use Tokio (default, single-node)
 export MCP_EVENT_BUS_TYPE=tokio
 export MCP_EVENT_BUS_CAPACITY=200
@@ -176,11 +177,11 @@ export MCP_NATS_RETENTION_HOURS=24
 
 ### JWT and Auth Settings
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `JWT_SECRET` | `` (empty) | String | JWT signing secret (min 32 chars, required if auth enabled) |
-| `JWT_EXPIRATION` | `86400` | Integer | JWT expiration in seconds (24 hours) |
-| `ADMIN_PASSWORD` | `` (empty) | String | Admin account password (min 8 chars) |
+| Variable         | Default    | Type    | Description                                                 |
+| ---------------- | ---------- | ------- | ----------------------------------------------------------- |
+| `JWT_SECRET`     | `` (empty) | String  | JWT signing secret (min 32 chars, required if auth enabled) |
+| `JWT_EXPIRATION` | `86400`    | Integer | JWT expiration in seconds (24 hours)                        |
+| `ADMIN_PASSWORD` | `` (empty) | String  | Admin account password (min 8 chars)                        |
 
 ### Security Model
 
@@ -192,7 +193,7 @@ export MCP_NATS_RETENTION_HOURS=24
 ```bash
 export JWT_SECRET="your-32-character-secret-key-here-minimum"
 export ADMIN_PASSWORD="your-secure-admin-password"
-export JWT_EXPIRATION="3600"  # 1 hour
+export JWT_EXPIRATION="3600" # 1 hour
 ```
 
 ---
@@ -201,14 +202,15 @@ export JWT_EXPIRATION="3600"  # 1 hour
 
 ### Admin API Settings
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `ADMIN_USERNAME` | `` (empty) | String | Admin username (required if admin enabled) |
-| `ADMIN_PASSWORD` | `` (empty) | String | Admin account password |
-| `JWT_SECRET` | `` (empty) | String | JWT signing secret (shared with auth system) |
-| `JWT_EXPIRATION` | `3600` | Integer | JWT token expiration in seconds |
+| Variable         | Default    | Type    | Description                                  |
+| ---------------- | ---------- | ------- | -------------------------------------------- |
+| `ADMIN_USERNAME` | `` (empty) | String  | Admin username (required if admin enabled)   |
+| `ADMIN_PASSWORD` | `` (empty) | String  | Admin account password                       |
+| `JWT_SECRET`     | `` (empty) | String  | JWT signing secret (shared with auth system) |
+| `JWT_EXPIRATION` | `3600`     | Integer | JWT token expiration in seconds              |
 
-**Note**: Admin interface is**optional**. It's only created if `ADMIN_USERNAME` and `ADMIN_PASSWORD` are provided.
+**Note**: Admin interface is**optional**. It's only created if `ADMIN_USERNAME` and
+`ADMIN_PASSWORD` are provided.
 
 ---
 
@@ -216,14 +218,14 @@ export JWT_EXPIRATION="3600"  # 1 hour
 
 ### SQLite Connection
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `DATABASE_URL` | `` (empty) | String | SQLite database path; empty = disabled |
-| `DATABASE_MAX_CONNECTIONS` | `20` | Integer | Connection pool size |
-| `DATABASE_MIN_IDLE` | `5` | Integer | Minimum idle connections |
-| `DATABASE_MAX_LIFETIME_SECS` | `1800` | Integer | Max connection lifetime (30 min) |
-| `DATABASE_IDLE_TIMEOUT_SECS` | `600` | Integer | Idle timeout (10 min) |
-| `DATABASE_CONNECTION_TIMEOUT_SECS` | `30` | Integer | Connection establishment timeout |
+| Variable                           | Default    | Type    | Description                            |
+| ---------------------------------- | ---------- | ------- | -------------------------------------- |
+| `DATABASE_URL`                     | `` (empty) | String  | SQLite database path; empty = disabled |
+| `DATABASE_MAX_CONNECTIONS`         | `20`       | Integer | Connection pool size                   |
+| `DATABASE_MIN_IDLE`                | `5`        | Integer | Minimum idle connections               |
+| `DATABASE_MAX_LIFETIME_SECS`       | `1800`     | Integer | Max connection lifetime (30 min)       |
+| `DATABASE_IDLE_TIMEOUT_SECS`       | `600`      | Integer | Idle timeout (10 min)                  |
+| `DATABASE_CONNECTION_TIMEOUT_SECS` | `30`       | Integer | Connection establishment timeout       |
 
 ### Security Model
 
@@ -244,10 +246,10 @@ export DATABASE_MIN_IDLE=10
 
 ### Metrics API Settings
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `MCP_METRICS_ENABLED` | `true` | Boolean | Enable/disable metrics collection |
-| `MCP__SERVER__NETWORK__PORT` | `3000` | Integer | Unified HTTP port (shared by metrics endpoint) |
+| Variable                     | Default | Type    | Description                                    |
+| ---------------------------- | ------- | ------- | ---------------------------------------------- |
+| `MCP_METRICS_ENABLED`        | `true`  | Boolean | Enable/disable metrics collection              |
+| `MCP__SERVER__NETWORK__PORT` | `3000`  | Integer | Unified HTTP port (shared by metrics endpoint) |
 
 ### Rate Limiting for Metrics
 
@@ -259,15 +261,15 @@ See**Rate Limiting**section below.
 
 ### Rate Limit Backend and Settings
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `MCP_RATE_LIMIT__BACKEND__TYPE` | `memory` | String | Backend: `memory` or `redis` |
-| `MCP_RATE_LIMIT__ENABLED` | `true` | Boolean | Enable/disable rate limiting |
-| `MCP_RATE_LIMIT__WINDOW_SECONDS` | `60` | Integer | Sliding window duration |
-| `MCP_RATE_LIMIT__MAX_REQUESTS_PER_WINDOW` | `100` | Integer | Max requests per window |
-| `MCP_RATE_LIMIT__BURST_ALLOWANCE` | `10` | Integer | Extra requests beyond limit |
-| `MCP_RATE_LIMIT__REDIS_TIMEOUT_SECONDS` | `5` | Integer | Redis operation timeout |
-| `MCP_RATE_LIMIT__CACHE_TTL_SECONDS` | `1` | Integer | Rate limit cache TTL |
+| Variable                                  | Default  | Type    | Description                  |
+| ----------------------------------------- | -------- | ------- | ---------------------------- |
+| `MCP_RATE_LIMIT__BACKEND__TYPE`           | `memory` | String  | Backend: `memory` or `redis` |
+| `MCP_RATE_LIMIT__ENABLED`                 | `true`   | Boolean | Enable/disable rate limiting |
+| `MCP_RATE_LIMIT__WINDOW_SECONDS`          | `60`     | Integer | Sliding window duration      |
+| `MCP_RATE_LIMIT__MAX_REQUESTS_PER_WINDOW` | `100`    | Integer | Max requests per window      |
+| `MCP_RATE_LIMIT__BURST_ALLOWANCE`         | `10`     | Integer | Extra requests beyond limit  |
+| `MCP_RATE_LIMIT__REDIS_TIMEOUT_SECONDS`   | `5`      | Integer | Redis operation timeout      |
+| `MCP_RATE_LIMIT__CACHE_TTL_SECONDS`       | `1`      | Integer | Rate limit cache TTL         |
 
 ### Memory Backend (Single-Node)
 
@@ -289,36 +291,36 @@ MCP_RATE_LIMIT__BACKEND__URL=redis://localhost:6379
 
 ### Memory Limits
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `MCP_RESOURCE_LIMITS__MEMORY__MAX_USAGE_PERCENT` | `85.0` | Float | Max memory usage (%) |
+| Variable                                         | Default     | Type    | Description                     |
+| ------------------------------------------------ | ----------- | ------- | ------------------------------- |
+| `MCP_RESOURCE_LIMITS__MEMORY__MAX_USAGE_PERCENT` | `85.0`      | Float   | Max memory usage (%)            |
 | `MCP_RESOURCE_LIMITS__MEMORY__MAX_PER_OPERATION` | `536870912` | Integer | Max bytes per operation (512MB) |
-| `MCP_RESOURCE_LIMITS__MEMORY__WARNING_THRESHOLD` | `75.0` | Float | Warning threshold (%) |
+| `MCP_RESOURCE_LIMITS__MEMORY__WARNING_THRESHOLD` | `75.0`      | Float   | Warning threshold (%)           |
 
 ### CPU Limits
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `MCP_RESOURCE_LIMITS__CPU__MAX_USAGE_PERCENT` | `80.0` | Float | Max CPU usage (%) |
-| `MCP_RESOURCE_LIMITS__CPU__MAX_TIME_PER_OPERATION` | `300` | Integer | Max operation time (seconds) |
-| `MCP_RESOURCE_LIMITS__CPU__WARNING_THRESHOLD` | `70.0` | Float | Warning threshold (%) |
+| Variable                                           | Default | Type    | Description                  |
+| -------------------------------------------------- | ------- | ------- | ---------------------------- |
+| `MCP_RESOURCE_LIMITS__CPU__MAX_USAGE_PERCENT`      | `80.0`  | Float   | Max CPU usage (%)            |
+| `MCP_RESOURCE_LIMITS__CPU__MAX_TIME_PER_OPERATION` | `300`   | Integer | Max operation time (seconds) |
+| `MCP_RESOURCE_LIMITS__CPU__WARNING_THRESHOLD`      | `70.0`  | Float   | Warning threshold (%)        |
 
 ### Disk Limits
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `MCP_RESOURCE_LIMITS__DISK__MAX_USAGE_PERCENT` | `90.0` | Float | Max disk usage (%) |
-| `MCP_RESOURCE_LIMITS__DISK__MIN_FREE_SPACE` | `1073741824` | Integer | Min free space required (1GB) |
-| `MCP_RESOURCE_LIMITS__DISK__WARNING_THRESHOLD` | `80.0` | Float | Warning threshold (%) |
+| Variable                                       | Default      | Type    | Description                   |
+| ---------------------------------------------- | ------------ | ------- | ----------------------------- |
+| `MCP_RESOURCE_LIMITS__DISK__MAX_USAGE_PERCENT` | `90.0`       | Float   | Max disk usage (%)            |
+| `MCP_RESOURCE_LIMITS__DISK__MIN_FREE_SPACE`    | `1073741824` | Integer | Min free space required (1GB) |
+| `MCP_RESOURCE_LIMITS__DISK__WARNING_THRESHOLD` | `80.0`       | Float   | Warning threshold (%)         |
 
 ### Operation Limits
 
-| Variable | Default | Type | Description |
-| ---------- | --------- | ------ | ------------- |
-| `MCP_RESOURCE_LIMITS__OPERATIONS__MAX_CONCURRENT_INDEXING` | `3` | Integer | Concurrent indexing ops |
-| `MCP_RESOURCE_LIMITS__OPERATIONS__MAX_CONCURRENT_SEARCH` | `10` | Integer | Concurrent search ops |
-| `MCP_RESOURCE_LIMITS__OPERATIONS__MAX_CONCURRENT_EMBEDDING` | `5` | Integer | Concurrent embedding ops |
-| `MCP_RESOURCE_LIMITS__OPERATIONS__MAX_QUEUE_SIZE` | `100` | Integer | Operation queue size |
+| Variable                                                    | Default | Type    | Description              |
+| ----------------------------------------------------------- | ------- | ------- | ------------------------ |
+| `MCP_RESOURCE_LIMITS__OPERATIONS__MAX_CONCURRENT_INDEXING`  | `3`     | Integer | Concurrent indexing ops  |
+| `MCP_RESOURCE_LIMITS__OPERATIONS__MAX_CONCURRENT_SEARCH`    | `10`    | Integer | Concurrent search ops    |
+| `MCP_RESOURCE_LIMITS__OPERATIONS__MAX_CONCURRENT_EMBEDDING` | `5`     | Integer | Concurrent embedding ops |
+| `MCP_RESOURCE_LIMITS__OPERATIONS__MAX_QUEUE_SIZE`           | `100`   | Integer | Operation queue size     |
 
 ---
 
@@ -391,34 +393,35 @@ export MCP_PROVIDERS__VECTOR_STORE__DIMENSIONS=768
 
 ## Admin Defaults
 
-See [admin helpers](../../crates/mcb-server/src/utils/mcp/helpers.rs) for operational defaults and helper constants.
+See [admin helpers](../../crates/mcb-server/src/utils/mcp/helpers.rs) for operational
+defaults and helper constants.
 
-| Variable | Default | Description |
-| ---------- | --------- | ------------- |
-| `ADMIN_MAX_ACTIVITIES` | `100` | Max activities in memory |
-| `ADMIN_ACTIVITY_RETENTION_DAYS` | `30` | Activity history retention |
-| `ADMIN_ACTIVITY_BUFFER_SIZE` | `1000` | Activity buffer capacity |
-| `ADMIN_MAX_HISTORY_ENTRIES` | `1000` | Config history max entries |
-| `ADMIN_HISTORY_RETENTION_DAYS` | `90` | Config history retention |
-| `ADMIN_CONFIG_QUERY_LIMIT` | `100` | History query limit |
-| `ADMIN_LOG_BUFFER_SIZE` | `1000` | Log buffer capacity |
-| `ADMIN_LOG_RETENTION_DAYS` | `7` | Log retention |
-| `ADMIN_LOG_QUERY_LIMIT` | `100` | Log query limit |
-| `ADMIN_BACKUP_RETENTION_DAYS` | `30` | Backup retention |
-| `ADMIN_BACKUP_COMPRESSION_LEVEL` | `6` | Gzip compression (1-9) |
-| `ADMIN_MAX_BACKUPS` | `10` | Max backup files |
-| `ADMIN_ROUTE_RATE_LIMIT_HEALTH` | `100` | Health endpoint rate (req/min) |
-| `ADMIN_ROUTE_RATE_LIMIT_ADMIN` | `100` | Admin endpoint rate (req/min) |
-| `ADMIN_ROUTE_RATE_LIMIT_INDEXING` | `10` | Indexing rate (req/min) |
-| `ADMIN_ROUTE_RATE_LIMIT_SEARCH` | `10` | Search rate (req/min) |
-| `ADMIN_ROUTE_RATE_LIMIT_SHUTDOWN` | `60` | Shutdown cooldown (seconds) |
-| `ADMIN_ROUTE_RATE_LIMIT_RELOAD` | `30` | Reload cooldown (seconds) |
-| `ADMIN_ROUTE_RATE_LIMIT_BACKUP` | `60` | Backup cooldown (seconds) |
-| `ADMIN_ROUTE_RATE_LIMIT_RESTORE` | `10` | Restore rate (req/min) |
-| `ADMIN_CLEANUP_BATCH_SIZE` | `100` | Cleanup batch size |
-| `ADMIN_CLEANUP_RETENTION_DAYS` | `30` | Cleanup retention days |
-| `ADMIN_INDEX_REBUILD_TIMEOUT_SECS` | `3600` | Rebuild timeout (1 hour) |
-| `ADMIN_CACHE_CLEAR_TIMEOUT_SECS` | `300` | Cache clear timeout (5 min) |
+| Variable                           | Default | Description                    |
+| ---------------------------------- | ------- | ------------------------------ |
+| `ADMIN_MAX_ACTIVITIES`             | `100`   | Max activities in memory       |
+| `ADMIN_ACTIVITY_RETENTION_DAYS`    | `30`    | Activity history retention     |
+| `ADMIN_ACTIVITY_BUFFER_SIZE`       | `1000`  | Activity buffer capacity       |
+| `ADMIN_MAX_HISTORY_ENTRIES`        | `1000`  | Config history max entries     |
+| `ADMIN_HISTORY_RETENTION_DAYS`     | `90`    | Config history retention       |
+| `ADMIN_CONFIG_QUERY_LIMIT`         | `100`   | History query limit            |
+| `ADMIN_LOG_BUFFER_SIZE`            | `1000`  | Log buffer capacity            |
+| `ADMIN_LOG_RETENTION_DAYS`         | `7`     | Log retention                  |
+| `ADMIN_LOG_QUERY_LIMIT`            | `100`   | Log query limit                |
+| `ADMIN_BACKUP_RETENTION_DAYS`      | `30`    | Backup retention               |
+| `ADMIN_BACKUP_COMPRESSION_LEVEL`   | `6`     | Gzip compression (1-9)         |
+| `ADMIN_MAX_BACKUPS`                | `10`    | Max backup files               |
+| `ADMIN_ROUTE_RATE_LIMIT_HEALTH`    | `100`   | Health endpoint rate (req/min) |
+| `ADMIN_ROUTE_RATE_LIMIT_ADMIN`     | `100`   | Admin endpoint rate (req/min)  |
+| `ADMIN_ROUTE_RATE_LIMIT_INDEXING`  | `10`    | Indexing rate (req/min)        |
+| `ADMIN_ROUTE_RATE_LIMIT_SEARCH`    | `10`    | Search rate (req/min)          |
+| `ADMIN_ROUTE_RATE_LIMIT_SHUTDOWN`  | `60`    | Shutdown cooldown (seconds)    |
+| `ADMIN_ROUTE_RATE_LIMIT_RELOAD`    | `30`    | Reload cooldown (seconds)      |
+| `ADMIN_ROUTE_RATE_LIMIT_BACKUP`    | `60`    | Backup cooldown (seconds)      |
+| `ADMIN_ROUTE_RATE_LIMIT_RESTORE`   | `10`    | Restore rate (req/min)         |
+| `ADMIN_CLEANUP_BATCH_SIZE`         | `100`   | Cleanup batch size             |
+| `ADMIN_CLEANUP_RETENTION_DAYS`     | `30`    | Cleanup retention days         |
+| `ADMIN_INDEX_REBUILD_TIMEOUT_SECS` | `3600`  | Rebuild timeout (1 hour)       |
+| `ADMIN_CACHE_CLEAR_TIMEOUT_SECS`   | `300`   | Cache clear timeout (5 min)    |
 
 ---
 
@@ -426,14 +429,14 @@ See [admin helpers](../../crates/mcb-server/src/utils/mcp/helpers.rs) for operat
 
 Settings are loaded in this order (highest priority first):
 
-1.**Environment Variables**: Provider-specific (e.g. `OPENAI_API_KEY`, `OLLAMA_BASE_URL`)
-2.**Loco Config File**: `config/{env}.yaml` (environment-based)
-3.**Defaults**: Built-in defaults in Loco config structs
+1.**Environment Variables**: Provider-specific (e.g. `OPENAI_API_KEY`,
+`OLLAMA_BASE_URL`) 2.**Loco Config File**: `config/{env}.yaml`
+(environment-based) 3.**Defaults**: Built-in defaults in Loco config structs
 
 Example: To override default port:
 
 ```bash
-export MCP__SERVER__NETWORK__PORT=8080  # Environment takes precedence
+export MCP__SERVER__NETWORK__PORT=8080 # Environment takes precedence
 ```
 
 ---
@@ -443,7 +446,6 @@ export MCP__SERVER__NETWORK__PORT=8080  # Environment takes precedence
 ### Development Environment
 
 ```bash
-
 # Enable all optional systems for local testing
 export MCP_EVENT_BUS_TYPE=tokio
 export MCP_CACHE__ENABLED=true
@@ -468,7 +470,6 @@ export JWT_SECRET=<secure-32-char-key>
 ## Clustered Production
 
 ```bash
-
 # Distributed cache and events
 export MCP_CACHE__REDIS_URL=redis://redis-cluster:6379
 export MCP_EVENT_BUS_TYPE=nats
@@ -481,7 +482,6 @@ export MCP_RATE_LIMIT__BACKEND__URL=redis://redis-cluster:6379
 ## Minimal Setup (No Optional Systems)
 
 ```bash
-
 # Bare minimum for MCP protocol operation
 
 # - No database
@@ -566,15 +566,14 @@ This will replace:
 
 ### Configuration Not Being Applied
 
-1.**Check environment variable format**: Use `MCP__` prefix and `__` for nesting
-2.**Verify spacing**: No spaces around `=` in exports
-3.**Check precedence**: Environment variables override config files
-4.**Enable debug logging**: `RUST_LOG=debug` to see config loading
+1.**Check environment variable format**: Use `MCP__` prefix and `__` for
+nesting 2.**Verify spacing**: No spaces around `=` in exports 3.**Check precedence**:
+Environment variables override config files 4.**Enable debug logging**: `RUST_LOG=debug`
+to see config loading
 
 ### Port Already in Use
 
 ```bash
-
 # Server port conflict
 export MCP__SERVER__NETWORK__PORT=9000
 ```
@@ -582,13 +581,12 @@ export MCP__SERVER__NETWORK__PORT=9000
 ## Cache Not Working
 
 ```bash
-
 # Verify cache enabled
 export MCP_CACHE__ENABLED=true
 
 # If using Redis, verify URL
 export MCP_CACHE__REDIS_URL=redis://localhost:6379
-redis-cli ping  # Should respond with PONG
+redis-cli ping # Should respond with PONG
 ```
 
 ---
@@ -596,5 +594,6 @@ redis-cli ping  # Should respond with PONG
 ## See Also
 
 - [Configuration Types](../../crates/mcb-infrastructure/src/config/) - Source code
-- [Admin Helpers](../../crates/mcb-server/src/utils/mcp/helpers.rs) - Operational settings
+- [Admin Helpers](../../crates/mcb-server/src/utils/mcp/helpers.rs) - Operational
+  settings
 - [CONFIGURATION.md](../CONFIGURATION.md) - General configuration guide

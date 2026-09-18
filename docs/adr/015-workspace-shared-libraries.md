@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 15
-title: Workspace Structure for Shared Libraries
-status: ACCEPTED
-created:
-updated: 2026-02-05
-related: [13, 14]
-supersedes: []
-superseded_by: []
+
+adr: 15 title: Workspace Structure for Shared Libraries status: ACCEPTED created:
+updated: 2026-02-05 related: [13, 14] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
 ---
 
@@ -17,10 +13,10 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
-**Accepted** (v0.1.1 - Foundation, v0.3.0 - Full Implementation)
-**Date**: 2026-01-14
+**Accepted** (v0.1.1 - Foundation, v0.3.0 - Full Implementation) **Date**: 2026-01-14
 **Version**: v0.1.1 Update
 
 ## Context
@@ -40,21 +36,21 @@ Extend the Cargo workspace with shared library crates alongside the six core cra
 ```toml
 [workspace]
 members = [
-    "crates/mcb",                     # Facade crate
-    "crates/mcb-domain",              # Domain layer
-    "crates/mcb-application",         # Application layer
-    "crates/mcb-providers",           # Provider implementations
-    "crates/mcb-infrastructure",      # Cross-cutting concerns
-    "crates/mcb-server",              # MCP protocol server
-    "crates/mcb-validate",            # Architecture validation
-    "libs/tree-sitter-analysis",      # AST parsing (v0.3.0)
-    "libs/code-metrics",              # Metrics (v0.3.0)
-    "libs/analysis-core",             # Orchestration (v0.3.0)
+  "crates/mcb",                # Facade crate
+  "crates/mcb-domain",         # Domain layer
+  "crates/mcb-application",    # Application layer
+  "crates/mcb-providers",      # Provider implementations
+  "crates/mcb-infrastructure", # Cross-cutting concerns
+  "crates/mcb-server",         # MCP protocol server
+  "crates/mcb-validate",       # Architecture validation
+  "libs/tree-sitter-analysis", # AST parsing (v0.3.0)
+  "libs/code-metrics",         # Metrics (v0.3.0)
+  "libs/analysis-core",        # Orchestration (v0.3.0)
 ]
 
 [workspace.dependencies]
 tokio = { version = "1.49", features = ["full"] }
-rayon = "1.8"  # CPU-bound parallelism
+rayon = "1.8"                                     # CPU-bound parallelism
 tree-sitter = "0.26"
 
 # ... shared version definitions
@@ -143,8 +139,10 @@ Mitigation:
 
 ## Related ADRs
 
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Six-crate foundation
-- [ADR-014: Multi-Domain Architecture](014-multi-domain-architecture.md) - Domain organization
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Six-crate foundation
+- [ADR-014: Multi-Domain Architecture](014-multi-domain-architecture.md) - Domain
+  organization
 
 ---
 

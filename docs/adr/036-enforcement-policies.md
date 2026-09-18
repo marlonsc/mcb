@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 36
-title: Enforcement Layer — Policies and Guards
-status: ACCEPTED
-created:
-updated: 2026-02-06
-related: [23, 25, 29]
-supersedes: []
-superseded_by: []
+
+adr: 36 title: Enforcement Layer — Policies and Guards status: ACCEPTED created:
+updated: 2026-02-06 related: [23, 25, 29] supersedes: [] superseded_by: []
 implementation_status: Complete
 ---
 
@@ -17,37 +13,49 @@ implementation_status: Complete
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
 **Accepted** — 2026-02-06
 
 - **Deciders:** Project team
-- **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM), [ADR-035](./035-context-scout.md) (Context Scout)
-- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-051](./051-seaql-loco-platform-rebuild.md) (Figment)
-- **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) →**ADR-036** → [ADR-037](./037-workflow-orchestrator.md)
+- **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow Core FSM),
+  [ADR-035](./035-context-scout.md) (Context Scout)
+- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI,
+  superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme),
+  [ADR-051](./051-seaql-loco-platform-rebuild.md) (Figment)
+- **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md)
+  →**ADR-036** → [ADR-037](./037-workflow-orchestrator.md)
 
 ## Context
 
-ADR-034 defines the workflow FSM with state transitions. ADR-035 provides typed `ProjectContext` snapshots. Before a transition is executed, the system must validate that project conditions are met — this is the role of**policy guards**.
+ADR-034 defines the workflow FSM with state transitions. ADR-035 provides typed
+`ProjectContext` snapshots. Before a transition is executed, the system must validate
+that project conditions are met — this is the role of**policy guards**.
 
 Today, enforcement is either absent or ad-hoc:
 
-| Scenario | Current Behavior | Desired Behavior |
-| ---------- | ----------------- | ------------------ |
-| Commit with dirty worktree | Allowed (no check) | Block or warn depending on transition |
-| Start execution with 5 tasks already in-progress | Allowed | Block: WIP limit exceeded |
-| Branch name doesn't follow convention | No validation | Warn: `feature/...` or `fix/...` expected |
-| Deploy without passing tests | Depends on CI (external) | Guard: test suite must pass before verification |
+| Scenario                                         | Current Behavior         | Desired Behavior                                |
+| ------------------------------------------------ | ------------------------ | ----------------------------------------------- |
+| Commit with dirty worktree                       | Allowed (no check)       | Block or warn depending on transition           |
+| Start execution with 5 tasks already in-progress | Allowed                  | Block: WIP limit exceeded                       |
+| Branch name doesn't follow convention            | No validation            | Warn: `feature/...` or `fix/...` expected       |
+| Deploy without passing tests                     | Depends on CI (external) | Guard: test suite must pass before verification |
 
-**This ADR** defines a composable policy system where individual policies implement a shared trait, can be combined (AND/OR), and are configured via `mcb.toml`. Policies receive a `ProjectContext` (ADR-035) and a `TransitionTrigger` (ADR-034), returning a `PolicyResult` with typed violations.
+**This ADR** defines a composable policy system where individual policies implement a
+shared trait, can be combined (AND/OR), and are configured via `mcb.toml`. Policies
+receive a `ProjectContext` (ADR-035) and a `TransitionTrigger` (ADR-034), returning a
+`PolicyResult` with typed violations.
 
 ### Requirements
 
 - Individual policies implement a common trait
 - Policies composable via AND/OR combinators
 - Configurable per-project via `mcb.toml` (enable/disable, thresholds)
-- Two evaluation modes: fail-fast (stop on first error) and collect-all (gather all violations)
-- Severity levels: Error (blocks transition), Warning (logged but allowed), Info (informational)
+- Two evaluation modes: fail-fast (stop on first error) and collect-all (gather all
+  violations)
+- Severity levels: Error (blocks transition), Warning (logged but allowed), Info
+  (informational)
 - Extensible: new policies can be added without modifying existing code
 
 ## Decision
@@ -349,22 +357,29 @@ impl Policy for AnyPolicy {
 
 ### 5. Governance SSOT Boundary
 
-This ADR defines the policy guard architecture: domain ports, composition, and provider boundaries. It does not own live operational rules.
+This ADR defines the policy guard architecture: domain ports, composition, and provider
+boundaries. It does not own live operational rules.
 
 Live enforcement policy is maintained in executable SSOTs:
 
 - `AGENTS.md` for agent and operator coordination rules.
-- `Makefile`, `makefiles/*.mk`, and `scripts/lib/mcb.sh` for local gates and command contracts.
+- `Makefile`, `makefiles/*.mk`, and `scripts/lib/mcb.sh` for local gates and command
+  contracts.
 - `.github/workflows/ci.yml` for CI wiring.
 - `config/mcb-validate*.toml` for architecture validation rules.
 
 The SSOT ownership decision is recorded in
-`docs/adr/057-multi-agent-coordination-ssot-consolidation.md`; that ADR records
-the boundary, but executable behavior remains in the sources above.
+`docs/adr/057-multi-agent-coordination-ssot-consolidation.md`; that ADR records the
+boundary, but executable behavior remains in the sources above.
 
-Policy lifecycle surfaces remain compile-time checks, local hooks, pre-transition workflow guards, CI gates, pre-merge checks, runtime guard evaluation, and post-merge monitoring. Their exact command lines, trigger order, and remediation text are read from the executable sources above, not restated here.
+Policy lifecycle surfaces remain compile-time checks, local hooks, pre-transition
+workflow guards, CI gates, pre-merge checks, runtime guard evaluation, and post-merge
+monitoring. Their exact command lines, trigger order, and remediation text are read from
+the executable sources above, not restated here.
 
-When a process rule changes, update its SSOT first and cite it from this ADR if architecture context is still useful. Do not add policy snippets, hook pseudo-code, GitHub Actions fragments, or remediation recipes to ADRs.
+When a process rule changes, update its SSOT first and cite it from this ADR if
+architecture context is still useful. Do not add policy snippets, hook pseudo-code,
+GitHub Actions fragments, or remediation recipes to ADRs.
 
 ## 6. Guard Provider Implementation
 
@@ -523,68 +538,84 @@ fn configurable_guard_factory(
 
 ### 8. Module Locations
 
-| Crate | Path | Content |
-| ------- | ------ | --------- |
-| `mcb-domain` | `src/entities/policy.rs` | `Severity`, `Violation`, `PolicyResult`, `PolicyConfig` |
-| `mcb-domain` | `src/ports/providers/policy_guard.rs` | `PolicyGuardProvider` trait |
-| `mcb-domain` | `src/ports/providers/policy.rs` | `Policy` trait (individual policies) |
-| `mcb-application` | `src/registry/guard.rs` | `GUARD_PROVIDERS` slice |
-| `mcb-providers` | `src/guard/mod.rs` | Module root + linkme registration |
-| `mcb-providers` | `src/guard/provider.rs` | `ConfigurablePolicyGuard` (all 11 policies) |
-| `mcb-providers` | `src/guard/composition.rs` | `AllPolicies`, `AnyPolicy` combinators |
-| `mcb-providers` | `src/guard/policies/wip_limit.rs` | `WipLimitPolicy` (policy #1) |
-| `mcb-providers` | `src/guard/policies/clean_worktree.rs` | `CleanWorktreePolicy` (policy #2) |
-| `mcb-providers` | `src/guard/policies/branch_naming.rs` | `BranchNamingPolicy` (policy #3) |
-| `mcb-providers` | `src/guard/policies/commit_message_format.rs` | `CommitMessageFormatPolicy` (policy #6) |
-| `mcb-providers` | `src/guard/policies/require_tests.rs` | `RequireTestsPolicy` (policy #4) |
-| `mcb-providers` | `src/guard/policies/code_coverage.rs` | `CodeCoveragePolicy` (policy #8) |
-| `mcb-providers` | `src/guard/policies/security_scan.rs` | `SecurityScanPolicy` (policy #9) |
-| `mcb-providers` | `src/guard/policies/code_review_gate.rs` | `CodeReviewGatePolicy` (policy #7) |
-| `mcb-providers` | `src/guard/policies/changelog_check.rs` | `ChangelogCheckPolicy` (policy #5) |
-| `mcb-providers` | `src/guard/policies/version_bump.rs` | `VersionBumpPolicy` (policy #10) |
-| `mcb-providers` | `src/guard/policies/documentation_update.rs` | `DocumentationUpdatePolicy` (policy #11) |
-| `mcb-infrastructure` | `src/config/policies.rs` | `PoliciesConfig` + 11 policy settings structs |
+| Crate                | Path                                          | Content                                                 |
+| -------------------- | --------------------------------------------- | ------------------------------------------------------- |
+| `mcb-domain`         | `src/entities/policy.rs`                      | `Severity`, `Violation`, `PolicyResult`, `PolicyConfig` |
+| `mcb-domain`         | `src/ports/providers/policy_guard.rs`         | `PolicyGuardProvider` trait                             |
+| `mcb-domain`         | `src/ports/providers/policy.rs`               | `Policy` trait (individual policies)                    |
+| `mcb-application`    | `src/registry/guard.rs`                       | `GUARD_PROVIDERS` slice                                 |
+| `mcb-providers`      | `src/guard/mod.rs`                            | Module root + linkme registration                       |
+| `mcb-providers`      | `src/guard/provider.rs`                       | `ConfigurablePolicyGuard` (all 11 policies)             |
+| `mcb-providers`      | `src/guard/composition.rs`                    | `AllPolicies`, `AnyPolicy` combinators                  |
+| `mcb-providers`      | `src/guard/policies/wip_limit.rs`             | `WipLimitPolicy` (policy #1)                            |
+| `mcb-providers`      | `src/guard/policies/clean_worktree.rs`        | `CleanWorktreePolicy` (policy #2)                       |
+| `mcb-providers`      | `src/guard/policies/branch_naming.rs`         | `BranchNamingPolicy` (policy #3)                        |
+| `mcb-providers`      | `src/guard/policies/commit_message_format.rs` | `CommitMessageFormatPolicy` (policy #6)                 |
+| `mcb-providers`      | `src/guard/policies/require_tests.rs`         | `RequireTestsPolicy` (policy #4)                        |
+| `mcb-providers`      | `src/guard/policies/code_coverage.rs`         | `CodeCoveragePolicy` (policy #8)                        |
+| `mcb-providers`      | `src/guard/policies/security_scan.rs`         | `SecurityScanPolicy` (policy #9)                        |
+| `mcb-providers`      | `src/guard/policies/code_review_gate.rs`      | `CodeReviewGatePolicy` (policy #7)                      |
+| `mcb-providers`      | `src/guard/policies/changelog_check.rs`       | `ChangelogCheckPolicy` (policy #5)                      |
+| `mcb-providers`      | `src/guard/policies/version_bump.rs`          | `VersionBumpPolicy` (policy #10)                        |
+| `mcb-providers`      | `src/guard/policies/documentation_update.rs`  | `DocumentationUpdatePolicy` (policy #11)                |
+| `mcb-infrastructure` | `src/config/policies.rs`                      | `PoliciesConfig` + 11 policy settings structs           |
 
 ## Consequences
 
 ### Positive
 
 - **Composable**: Policies combined via AND/OR without modifying each other.
-- **Configurable**: Per-project settings via `mcb.toml`. Enable/disable and adjust thresholds without code changes.
+- **Configurable**: Per-project settings via `mcb.toml`. Enable/disable and adjust
+  thresholds without code changes.
 - **Severity levels**: Errors block, warnings log. Teams choose enforcement strictness.
-- **Extensible**: New policies implement `Policy` trait and register via linkme. No existing code modified.
+- **Extensible**: New policies implement `Policy` trait and register via linkme. No
+  existing code modified.
 - **Dry-run**: Policies can be tested without blocking transitions.
-- **Context-aware**: Policies receive full `ProjectContext` (ADR-035), enabling rich conditions.
+- **Context-aware**: Policies receive full `ProjectContext` (ADR-035), enabling rich
+  conditions.
 
 ### Negative
 
-- **Runtime evaluation cost**: Each transition evaluates all applicable policies. Mitigated by `applies_to()` filter and fail-fast mode.
-- **Test command execution**: `RequireTestsPolicy` spawns a subprocess (e.g., `cargo test`). This is slow (seconds-to-minutes). Only triggered on `StartVerification`.
-- **Config complexity**: 11 policies with individual settings adds config surface area. Mitigated by sensible defaults and disabled-by-default for non-essential policies (e.g., `version_bump`, `documentation_update`).
-- **No runtime policy addition**: Policies are built at startup from config. Adding a new policy requires restart. Runtime dynamic policies deferred.
+- **Runtime evaluation cost**: Each transition evaluates all applicable policies.
+  Mitigated by `applies_to()` filter and fail-fast mode.
+- **Test command execution**: `RequireTestsPolicy` spawns a subprocess (e.g.,
+  `cargo test`). This is slow (seconds-to-minutes). Only triggered on
+  `StartVerification`.
+- **Config complexity**: 11 policies with individual settings adds config surface area.
+  Mitigated by sensible defaults and disabled-by-default for non-essential policies
+  (e.g., `version_bump`, `documentation_update`).
+- **No runtime policy addition**: Policies are built at startup from config. Adding a
+  new policy requires restart. Runtime dynamic policies deferred.
 
 ## Alternatives Considered
 
 ### Alternative 1: Tower-Style Middleware
 
-- **Description:** Model policies as Tower `Layer`/`Service` middleware wrapping the FSM transition.
+- **Description:** Model policies as Tower `Layer`/`Service` middleware wrapping the FSM
+  transition.
 - **Pros:** Established pattern. Rich ecosystem (tower-HTTP, tower-retry).
-- **Cons:** Tower is designed for request/response pipelines, not FSM transitions. Adaptation is awkward. Requires tower dependency.
-- **Rejection reason:** Unnecessary complexity. The `Policy` trait with AND/OR composition is simpler and purpose-built.
+- **Cons:** Tower is designed for request/response pipelines, not FSM transitions.
+  Adaptation is awkward. Requires tower dependency.
+- **Rejection reason:** Unnecessary complexity. The `Policy` trait with AND/OR
+  composition is simpler and purpose-built.
 
 ### Alternative 2: Database-Driven Policies
 
 - **Description:** Store policy configurations in SQLite and evaluate dynamically.
 - **Pros:** Runtime reconfiguration without restart. Policy versioning.
-- **Cons:** Adds query overhead per evaluation. Config is already in `mcb.toml` (Figment standard).
-- **Rejection reason:** Over-engineering for 11 built-in policies. File-based config is sufficient and matches ADR-025 convention.
+- **Cons:** Adds query overhead per evaluation. Config is already in `mcb.toml` (Figment
+  standard).
+- **Rejection reason:** Over-engineering for 11 built-in policies. File-based config is
+  sufficient and matches ADR-025 convention.
 
 ### Alternative 3: Hard-Coded Checks (No Policy Framework)
 
 - **Description:** Embed checks directly in the WorkflowService transition logic.
 - **Pros:** Simplest implementation. No trait, no composition.
-- **Cons:** Not extensible. Every new check requires modifying WorkflowService. No per-project configuration.
-- **Rejection reason:** Violates open/closed principle. Policy framework pays for itself after the second policy.
+- **Cons:** Not extensible. Every new check requires modifying WorkflowService. No
+  per-project configuration.
+- **Rejection reason:** Violates open/closed principle. Policy framework pays for itself
+  after the second policy.
 
 ## Implementation Notes
 
@@ -593,48 +624,59 @@ fn configurable_guard_factory(
 1. Add `policy.rs` entities to `mcb-domain/src/entities/`
 2. Add `policy_guard.rs` and `policy.rs` ports to `mcb-domain/src/ports/providers/`
 3. Add `GUARD_PROVIDERS` slice to `mcb-application/src/registry/`
-4. Add `guard/` module to `mcb-providers/src/` with provider, composition, and**11 built-in policies**
+4. Add `guard/` module to `mcb-providers/src/` with provider, composition, and**11
+   built-in policies**
 5. Add `PoliciesConfig` and 11 settings structs to `mcb-infrastructure/src/config/`
-6. Add `[policies]` section to `config/default.toml` with configurations for all 11 policies
+6. Add `[policies]` section to `config/default.toml` with configurations for all 11
+   policies
 
-> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`,
+> `config/test.yaml`), not Figment TOML (`config/default.toml`).
 
 ### Testing
 
-- Unit tests: Each of the 11 policies with pass/fail cases (minimum 2 tests per policy = 22 tests)
+- Unit tests: Each of the 11 policies with pass/fail cases (minimum 2 tests per policy =
+  22 tests)
 - Unit tests: `PolicyResult::merge()`, `format_violations()`, severity handling
 - Unit tests: `AllPolicies` (fail-fast and collect-all modes), `AnyPolicy` combinator
 - Unit tests: Deny-wins semantics, ERROR vs WARNING enforcement
-- Integration tests: `ConfigurablePolicyGuard` with real config, all 11 policies enabled/disabled
-- Integration tests: Lifecycle points (compile-time, pre-commit, pre-push, pre-transition, CI-time, post-merge)
+- Integration tests: `ConfigurablePolicyGuard` with real config, all 11 policies
+  enabled/disabled
+- Integration tests: Lifecycle points (compile-time, pre-commit, pre-push,
+  pre-transition, CI-time, post-merge)
 - Estimated: **~80+ tests** (11 policies × 2 + integration + composition + semantics)
 
 ### Performance Targets
 
-| Operation | Target |
-| ----------- | -------- |
-| `WipLimitPolicy.check()` | < 1ms (reads from `TrackerContext`, no I/O) |
-| `CleanWorktreePolicy.check()` | < 1ms (reads from `GitContext`, no I/O) |
-| `BranchNamingPolicy.check()` | < 1ms (regex match) |
-| `CommitMessageFormatPolicy.check()` | < 1ms (regex match) |
-| `CodeCoveragePolicy.check()` | < 1ms (reads from coverage report cache) |
-| `SecurityScanPolicy.check()` | < test suite time (subprocess: `cargo audit`, `cargo deny`) |
-| `RequireTestsPolicy.check()` | < test suite time (subprocess: runs full test suite) |
-| `CodeReviewGatePolicy.check()` | < 100ms (GitHub API call) |
-| `ChangelogCheckPolicy.check()` | < 1ms (file read + text check) |
-| `VersionBumpPolicy.check()` | < 1ms (file read + version parse) |
-| `DocumentationUpdatePolicy.check()` | < 1ms (file pattern matching) |
-| **Full `evaluate()` (all fast policies)** | **< 20ms** (11 policies, excluding subprocess) |
-| **Full `evaluate()` (with CI checks)** | **< test suite time + 100ms** (depends on test execution) |
+| Operation                                 | Target                                                      |
+| ----------------------------------------- | ----------------------------------------------------------- |
+| `WipLimitPolicy.check()`                  | < 1ms (reads from `TrackerContext`, no I/O)                 |
+| `CleanWorktreePolicy.check()`             | < 1ms (reads from `GitContext`, no I/O)                     |
+| `BranchNamingPolicy.check()`              | < 1ms (regex match)                                         |
+| `CommitMessageFormatPolicy.check()`       | < 1ms (regex match)                                         |
+| `CodeCoveragePolicy.check()`              | < 1ms (reads from coverage report cache)                    |
+| `SecurityScanPolicy.check()`              | < test suite time (subprocess: `cargo audit`, `cargo deny`) |
+| `RequireTestsPolicy.check()`              | < test suite time (subprocess: runs full test suite)        |
+| `CodeReviewGatePolicy.check()`            | < 100ms (GitHub API call)                                   |
+| `ChangelogCheckPolicy.check()`            | < 1ms (file read + text check)                              |
+| `VersionBumpPolicy.check()`               | < 1ms (file read + version parse)                           |
+| `DocumentationUpdatePolicy.check()`       | < 1ms (file pattern matching)                               |
+| **Full `evaluate()` (all fast policies)** | **< 20ms** (11 policies, excluding subprocess)              |
+| **Full `evaluate()` (with CI checks)**    | **< test suite time + 100ms** (depends on test execution)   |
 
 ### Security
 
-- `RequireTestsPolicy` executes a shell command from `mcb.toml`. The config file must be trusted (same as any TOML config). No user-supplied input reaches the command.
+- `RequireTestsPolicy` executes a shell command from `mcb.toml`. The config file must be
+  trusted (same as any TOML config). No user-supplied input reaches the command.
 
 ## References
 
-- [gatehouse](https://docs.rs/gatehouse/latest/gatehouse/) — Policy composition patterns (evaluated)
-- [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — `TransitionTrigger` consumed by guards
+- [gatehouse](https://docs.rs/gatehouse/latest/gatehouse/) — Policy composition patterns
+  (evaluated)
+- [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — `TransitionTrigger`
+  consumed by guards
 - [ADR-035: Context Scout](./035-context-scout.md) — `ProjectContext` consumed by guards
-- [ADR-051: SeaQL + Loco.rs Platform Rebuild](./051-seaql-loco-platform-rebuild.md) — Config pattern
-- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) — DI pattern (superseded by ADR-050)
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild](./051-seaql-loco-platform-rebuild.md) —
+  Config pattern
+- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) — DI
+  pattern (superseded by ADR-050)

@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 21
-title: Dependency Management Strategy
-status: ACCEPTED
-created:
-updated: 2026-02-05
-related: [13, 15, 17]
-supersedes: []
-superseded_by: []
-implementation_status: "Historical snapshot; see bd for live work"
+
+adr: 21 title: Dependency Management Strategy status: ACCEPTED created: updated:
+2026-02-05 related: [13, 15, 17] supersedes: [] superseded_by: [] implementation_status:
+"Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,10 +13,10 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
-**Accepted** (v0.2.0 - Implementation)
-**Date**: 2026-01-14
+**Accepted** (v0.2.0 - Implementation) **Date**: 2026-01-14
 
 ## Context
 
@@ -32,31 +28,28 @@ Integrating PMAT adds new dependencies:
 - `git2` - Git integration
 - `cargo_metadata` - Mutation testing
 
-**Current MCB deps**: ~120
-**PMAT unique deps**: ~20
-**Combined**: ~140 (15% increase)
+**Current MCB deps**: ~120 **PMAT unique deps**: ~20 **Combined**: ~140 (15% increase)
 
 ## Decision
 
 Workspace-level dependency management:
 
 ```toml
-
 # Cargo.toml (workspace root)
 
 [workspace]
 members = [
-    "crates/mcb",
-    "crates/mcb-domain",
-    "crates/mcb-application",
-    "crates/mcb-providers",
-    "crates/mcb-infrastructure",
-    "crates/mcb-server",
-    "crates/mcb-validate",
-    # Future
-    # "libs/tree-sitter-analysis"
-    # "libs/code-metrics"
-    # "libs/analysis-core"
+  "crates/mcb",
+  "crates/mcb-domain",
+  "crates/mcb-application",
+  "crates/mcb-providers",
+  "crates/mcb-infrastructure",
+  "crates/mcb-server",
+  "crates/mcb-validate",
+  # Future
+  # "libs/tree-sitter-analysis"
+  # "libs/code-metrics"
+  # "libs/analysis-core"
 ]
 
 [workspace.dependencies]
@@ -71,11 +64,11 @@ linkme = "0.3"
 # ... existing deps
 
 # === NEW FROM PMAT (added incrementally) ===
-rayon = "1.8"                # v0.2.0: Infrastructure
-petgraph = "0.6"             # v0.4.0: DAG analysis
-statistical = "1.0"          # v0.3.0: Metrics
-git2 = "0.19"                # v0.5.0: Git integration
-cargo_metadata = "0.20"      # v0.6.0: Mutation testing
+rayon = "1.8"           # v0.2.0: Infrastructure
+petgraph = "0.6"        # v0.4.0: DAG analysis
+statistical = "1.0"     # v0.3.0: Metrics
+git2 = "0.19"           # v0.5.0: Git integration
+cargo_metadata = "0.20" # v0.6.0: Mutation testing
 ```
 
 ## Dependency Addition Schedule
@@ -113,21 +106,20 @@ cargo_metadata = "0.20"      # v0.6.0: Mutation testing
 ## Feature Flags
 
 ```toml
-
 # crates/mcb/Cargo.toml
 
 [features]
 default = ["search"]
 
 # Core features
-search = []                    # v0.1.0: Existing search tools
-analysis = []                  # v0.3.0+: Analysis tools
-quality = []                   # v0.5.0+: Quality tools
-git = []                       # v0.5.0+: Git tools
+search = []   # v0.1.0: Existing search tools
+analysis = [] # v0.3.0+: Analysis tools
+quality = []  # v0.5.0+: Quality tools
+git = []      # v0.5.0+: Git tools
 
 # Optional features
-tui-dashboard = ["ratatui"]   # v0.6.0+: TUI
-mutation-testing = ["cargo_metadata"]  # v0.6.0+: Mutation
+tui-dashboard = ["ratatui"]           # v0.6.0+: TUI
+mutation-testing = ["cargo_metadata"] # v0.6.0+: Mutation
 
 # Convenience bundles
 full = ["search", "analysis", "quality", "git"]
@@ -179,9 +171,12 @@ Mitigation:
 
 ## Related ADRs
 
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
-- [ADR-015: Workspace Shared Libraries](015-workspace-shared-libraries.md) - libs/ dependencies
-- [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Feature timeline
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Crate organization
+- [ADR-015: Workspace Shared Libraries](015-workspace-shared-libraries.md) - libs/
+  dependencies
+- [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Feature
+  timeline
 
 ---
 
