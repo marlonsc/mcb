@@ -130,9 +130,13 @@ pub fn build_mcp_service(
     mcp_server: Arc<McpServer>,
 ) -> StreamableHttpService<McpServer, LocalSessionManager> {
     let ct = CancellationToken::new();
-    // rmcp 1.x marks StreamableHttpServerConfig #[non_exhaustive]; build via Default.
+    // StreamableHttpServerConfig is #[non_exhaustive]; build via Default. rmcp
+    // 3.x replaced `stateful_mode` with `legacy_session_mode`, which only
+    // affects pre-2026-07-28 protocol versions (SEP-2567 removed sessions from
+    // newer ones, which are always served statelessly). false keeps legacy
+    // peers stateless, matching the previous `stateful_mode = false`.
     let mut config = StreamableHttpServerConfig::default();
-    config.stateful_mode = false;
+    config.legacy_session_mode = false;
     config.cancellation_token = ct.child_token();
     StreamableHttpService::new(
         move || {

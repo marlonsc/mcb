@@ -14,7 +14,7 @@ use mcb_domain::ports::{IndexingResult, IndexingStatus, ValidationReport};
 use mcb_domain::value_objects::SearchResult;
 use mcb_domain::{error, info};
 use rmcp::ErrorData as McpError;
-use rmcp::model::{CallToolResult, Content};
+use rmcp::model::{CallToolResult, ContentBlock};
 use serde::Serialize;
 
 use crate::error_mapping::safe_internal_error;
@@ -43,7 +43,7 @@ impl ResponseFormatter {
                 duration
             )
         );
-        Ok(CallToolResult::success(vec![Content::text(message)]))
+        Ok(CallToolResult::success(vec![ContentBlock::text(message)]))
     }
 
     /// Format indexing success response.
@@ -59,7 +59,7 @@ impl ResponseFormatter {
             "indexing completed",
             &format!("chunks={} duration={:?}", result.chunks_created, duration)
         );
-        CallToolResult::success(vec![Content::text(message)])
+        CallToolResult::success(vec![ContentBlock::text(message)])
     }
 
     /// Format indexing error response.
@@ -68,14 +68,14 @@ impl ResponseFormatter {
         let message = indexing::build_indexing_error_message(error, path);
         let detail = format!("path={} error={error}", path.display());
         error!("ResponseFormatter", "indexing failed", &detail);
-        CallToolResult::error(vec![Content::text(message)])
+        CallToolResult::error(vec![ContentBlock::text(message)])
     }
 
     /// Format indexing status response.
     #[must_use]
     pub fn format_indexing_status(status: &IndexingStatus) -> CallToolResult {
         let message = indexing::build_indexing_status_message(status);
-        CallToolResult::success(vec![Content::text(message)])
+        CallToolResult::success(vec![ContentBlock::text(message)])
     }
 
     /// Serializes a value into pretty JSON and wraps it in a successful MCP tool result.
@@ -85,7 +85,7 @@ impl ResponseFormatter {
     pub fn json_success<T: Serialize>(value: &T) -> Result<CallToolResult, McpError> {
         let json = serde_json::to_string_pretty(value)
             .map_err(|e| safe_internal_error("json serialization", &e))?;
-        Ok(CallToolResult::success(vec![Content::text(json)]))
+        Ok(CallToolResult::success(vec![ContentBlock::text(json)]))
     }
 
     /// Format clear index response.
@@ -96,7 +96,7 @@ impl ResponseFormatter {
              Collection `{collection}` has been cleared.\n\
              Run `index_repo` to rebuild the index."
         );
-        CallToolResult::success(vec![Content::text(message)])
+        CallToolResult::success(vec![ContentBlock::text(message)])
     }
 
     /// Format validation success response.
@@ -116,9 +116,9 @@ impl ResponseFormatter {
             )
         );
         if report.passed {
-            CallToolResult::success(vec![Content::text(message)])
+            CallToolResult::success(vec![ContentBlock::text(message)])
         } else {
-            CallToolResult::error(vec![Content::text(message)])
+            CallToolResult::error(vec![ContentBlock::text(message)])
         }
     }
 
@@ -128,6 +128,6 @@ impl ResponseFormatter {
         let message = validation::build_validation_error_message(error, path);
         let detail = format!("path={} error={error}", path.display());
         error!("ResponseFormatter", "validation failed", &detail);
-        CallToolResult::error(vec![Content::text(message)])
+        CallToolResult::error(vec![ContentBlock::text(message)])
     }
 }
