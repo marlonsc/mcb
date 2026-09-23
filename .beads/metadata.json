@@ -1,7 +1,6 @@
 {
-  "backend": "dolt",
   "database": "dolt",
-  "dolt_database": "mcb",
+  "backend": "dolt",
   "dolt_mode": "server",
-  "project_id": "89c62fb6-071e-448b-9c54-8639e59bcca7"
+  "dolt_database": "mcb"
 }

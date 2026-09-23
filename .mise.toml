@@ -32,7 +32,7 @@ tokei = "14.0"
 kubeconform = "0.8"
 # qlty ships no mise registry alias; the github backend selector is the only
 # resolvable form (bare 'qlty' fails mise install: 'not found in registry').
-"github:qltysh/qlty" = "0.642"
+"github:qltysh/qlty" = "0.642.0"
 # Go runtime for the Go projects in this workspace.
 go = "1.26"
 [tools."github:gastownhall/beads"]

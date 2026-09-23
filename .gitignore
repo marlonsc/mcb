@@ -310,5 +310,3 @@ CLAUDE.local.md
 !config/
 !config/workspace.yaml
 !custom.mk
-
-.test-tmp/
