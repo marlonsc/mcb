@@ -83,7 +83,7 @@ provenance = "github-attestations"
 [[tools."github:qltysh/qlty"]]
 version = "0.642.0"
 backend = "github:qltysh/qlty"
-specifiers = ["0.642.0"]
+specifiers = ["0.642"]
 
 [tools."github:qltysh/qlty"."platforms.linux-arm64"]
 checksum = "sha256:700a86c930d64860baba2cb168a2a9778e4dc8e38dc941faf9d4d8b88d57da1d"
