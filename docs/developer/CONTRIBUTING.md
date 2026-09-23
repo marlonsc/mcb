@@ -1,7 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Contributing to Memory Context Browser
 
-Thank you for your interest in contributing! This guide covers everything you need for MCB development.
+Thank you for your interest in contributing! This guide covers everything you need for
+MCB development.
 
 **Last updated:** 2026-06-28 | **Version:** v0.4.0
 
@@ -17,10 +19,10 @@ Thank you for your interest in contributing! This guide covers everything you ne
 ```bash
 git clone https://github.com/marlonsc/mcb.git
 cd mcb
-make boot       # install hooks + tools
+make boot # install hooks + tools
 make build
-make test       # full workspace tests
-make check      # full quality pipeline
+make test  # full workspace tests
+make check # full quality pipeline
 ```
 
 ## 🔄 Development Workflow
@@ -33,17 +35,17 @@ make check      # full quality pipeline
 
 ## 📝 Naming Conventions
 
-| Element | Convention | Example |
-| --------- | ----------- | --------- |
-| Crates | kebab-case, `mcb-` prefix | `mcb-domain`, `mcb-server` |
-| Library names | snake_case | `mcb_domain`, `mcb_server` |
-| Functions | snake_case | `embed_batch()`, `search_similar()` |
-| Types/Traits | PascalCase | `CodeChunk`, `EmbeddingProvider` |
-| Enum variants | PascalCase | `AgentType::Sisyphus` |
-| Constants | SCREAMING_SNAKE_CASE | `MAX_BATCH_SIZE` |
-| Modules | snake_case | `entities/agent/`, `config/types/` |
-| Test files | `*_tests.rs` | `config_tests.rs`, `cache_tests.rs` |
-| Constructors | `new()` or `with_*()` | `Config::new().with_ttl(300)` |
+| Element       | Convention                | Example                             |
+| ------------- | ------------------------- | ----------------------------------- |
+| Crates        | kebab-case, `mcb-` prefix | `mcb-domain`, `mcb-server`          |
+| Library names | snake_case                | `mcb_domain`, `mcb_server`          |
+| Functions     | snake_case                | `embed_batch()`, `search_similar()` |
+| Types/Traits  | PascalCase                | `CodeChunk`, `EmbeddingProvider`    |
+| Enum variants | PascalCase                | `AgentType::Sisyphus`               |
+| Constants     | SCREAMING_SNAKE_CASE      | `MAX_BATCH_SIZE`                    |
+| Modules       | snake_case                | `entities/agent/`, `config/types/`  |
+| Test files    | `*_tests.rs`              | `config_tests.rs`, `cache_tests.rs` |
+| Constructors  | `new()` or `with_*()`     | `Config::new().with_ttl(300)`       |
 
 ## 📁 File Organization
 
@@ -112,12 +114,14 @@ unused_imports = "deny"
 ## ⚠️ Error Handling
 
 - Single `Error` enum with `#[derive(thiserror::Error)]`
-- Factory methods: `Error::io("msg")`, `Error::embedding("msg")` — never construct variants directly
+- Factory methods: `Error::io("msg")`, `Error::embedding("msg")` — never construct
+  variants directly
 - `Result<T>` type alias everywhere
 - No `unwrap()`/`expect()` outside tests — use `?` propagation
 - `ErrorContext<T>` trait for `.context("msg")` enrichment
 
-See [ADR-019](../adr/019-error-handling-strategy.md) for the full error handling strategy.
+See [ADR-019](../adr/019-error-handling-strategy.md) for the full error handling
+strategy.
 
 ## 📝 Commit Messages
 
@@ -140,10 +144,10 @@ Fixes #<issue-id>
 ### Commit Workflow
 
 ```bash
-./scripts/commit_analyze.sh             # Analyze staged changes
-make check WHAT=lint && make check WHAT=validate QUICK=1   # Pre-push validation
-git commit                              # Commit (bd hooks run checks)
-git push                                # Push
+./scripts/commit_analyze.sh                              # Analyze staged changes
+make check WHAT=lint && make check WHAT=validate QUICK=1 # Pre-push validation
+git commit                                               # Commit (bd hooks run checks)
+git push                                                 # Push
 ```
 
 ## 🧪 Testing
@@ -151,20 +155,22 @@ git push                                # Push
 ### Running Tests
 
 ```bash
-make test                               # Full workspace test suite
-make test SCOPE=unit                    # Unit tests only
-make test SCOPE=integration             # Integration tests
-make test SCOPE=doc                     # Doctests
-cargo test -p mcb-server --test unit -- test_name --nocapture  # Specific test
+make test                                                     # Full workspace test suite
+make test SCOPE=unit                                          # Unit tests only
+make test SCOPE=integration                                   # Integration tests
+make test SCOPE=doc                                           # Doctests
+cargo test -p mcb-server --test unit -- test_name --nocapture # Specific test
 ```
 
-`cargo-nextest` is used automatically when installed; otherwise falls back to `cargo test`.
+`cargo-nextest` is used automatically when installed; otherwise falls back to
+`cargo test`.
 
 ### Test Patterns
 
 - **Integration tests** in `tests/` directory (not inline `#[cfg(test)]`)
 - **Test files**: `tests/unit/*_tests.rs`, `tests/integration/*_tests.rs`
-- **Test helpers**: `rstest` (params), `mockall` (mocks), `insta` (snapshots), `tempfile`
+- **Test helpers**: `rstest` (params), `mockall` (mocks), `insta` (snapshots),
+  `tempfile`
 - **Real providers**: `extern crate mcb_providers` forces linkme registration
 - **Mocks**: `Arc<Mutex<Vec<T>>>` state tracking in `utils/mock_services/`
 
@@ -172,22 +178,23 @@ cargo test -p mcb-server --test unit -- test_name --nocapture  # Specific test
 
 Never call `cargo`/`git` directly. Use `make <verb> [WHAT=phase] [ACT=sub] [APPLY=Y]`.
 
-| Command | Purpose |
-| --------- | --------- |
-| `make build` | Build all crates (debug) |
-| `make build RELEASE=1` | Release build |
-| `make check WHAT=fix ACT=fmt` | Auto-format code |
-| `make check WHAT=lint` | Format check + clippy (`-D warnings`) |
-| `make test` | All unit + integration tests |
-| `make test SCOPE=unit` | Unit tests only |
-| `make check WHAT=validate QUICK=1` | Architecture rule enforcement (quick) |
-| `make check WHAT=guard` | Banned-pattern scanner (prod unwrap/panic/TODO/allow) |
-| `make check WHAT=ci` | Full CI pipeline |
-| `make check WHAT=audit` | Security advisory scan |
-| `make build WHAT=docs ACT=lint` | Lint markdown |
-| `make build WHAT=docs ACT=validate QUICK=1` | Validate docs and links |
+| Command                                     | Purpose                                               |
+| ------------------------------------------- | ----------------------------------------------------- |
+| `make build`                                | Build all crates (debug)                              |
+| `make build RELEASE=1`                      | Release build                                         |
+| `make check WHAT=fix ACT=fmt`               | Auto-format code                                      |
+| `make check WHAT=lint`                      | Format check + clippy (`-D warnings`)                 |
+| `make test`                                 | All unit + integration tests                          |
+| `make test SCOPE=unit`                      | Unit tests only                                       |
+| `make check WHAT=validate QUICK=1`          | Architecture rule enforcement (quick)                 |
+| `make check WHAT=guard`                     | Banned-pattern scanner (prod unwrap/panic/TODO/allow) |
+| `make check WHAT=ci`                        | Full CI pipeline                                      |
+| `make check WHAT=audit`                     | Security advisory scan                                |
+| `make build WHAT=docs ACT=lint`             | Lint markdown                                         |
+| `make build WHAT=docs ACT=validate QUICK=1` | Validate docs and links                               |
 
-> Destructive verbs (`commit`, `push`, `clean`, `codegen`, `release`) are DRY-RUN unless `APPLY=Y`.
+> Destructive verbs (`commit`, `push`, `clean`, `codegen`, `release`) are DRY-RUN unless
+> `APPLY=Y`.
 
 ## 📦 Dependency Management
 
@@ -198,16 +205,16 @@ Never call `cargo`/`git` directly. Use `make <verb> [WHAT=phase] [ACT=sub] [APPL
 
 ## ✅ Enforcement
 
-| Convention | Tool | Level |
-| ----------- | ------ | ------- |
-| Formatting | rustfmt + CI | Required |
-| Lints | Cargo workspace lints | Deny/Warn |
-| Import order | rustfmt | Required |
-| No unwrap | Lint + review | Deny |
-| Doc comments | `missing_docs` | Warn |
-| Commit style | Convention | Convention |
-| Security | deny.toml + cargo-audit | CI |
-| Architecture | mcb-validate | CI |
+| Convention   | Tool                    | Level      |
+| ------------ | ----------------------- | ---------- |
+| Formatting   | rustfmt + CI            | Required   |
+| Lints        | Cargo workspace lints   | Deny/Warn  |
+| Import order | rustfmt                 | Required   |
+| No unwrap    | Lint + review           | Deny       |
+| Doc comments | `missing_docs`          | Warn       |
+| Commit style | Convention              | Convention |
+| Security     | deny.toml + cargo-audit | CI         |
+| Architecture | mcb-validate            | CI         |
 
 ## 📋 Pull Request Guidelines
 
@@ -225,9 +232,11 @@ Include: what changed, why, how to test, any breaking changes.
 
 ## 🐛 Reporting Issues
 
-**Bug Reports**: steps to reproduce, expected vs actual behavior, environment details, error messages.
+**Bug Reports**: steps to reproduce, expected vs actual behavior, environment details,
+error messages.
 
-**Feature Requests**: problem description, proposed solution, use cases, alternatives considered.
+**Feature Requests**: problem description, proposed solution, use cases, alternatives
+considered.
 
 ## 🔧 Troubleshooting
 
@@ -246,9 +255,14 @@ make build WHAT=docs ACT=validate QUICK=1
 
 ## 🚀 Code References
 
-- **Config**: `mcb_infrastructure::config::ConfigLoader` — See [CONFIGURATION.md](../CONFIGURATION.md), [ADR-051](../adr/051-seaql-loco-platform-rebuild.md) (supersedes [ADR-025](../adr/051-seaql-loco-platform-rebuild.md))
-- **DI**: `mcb_infrastructure::di::bootstrap::init_app(config)` — See [ADR-050](../adr/050-manual-composition-root-dill-removal.md) (ADR-029 superseded)
-- **Patterns**: See [PATTERNS.md](../architecture/PATTERNS.md) for implementation patterns
+- **Config**: `mcb_infrastructure::config::ConfigLoader` — See
+  [CONFIGURATION.md](../CONFIGURATION.md),
+  [ADR-051](../adr/051-seaql-loco-platform-rebuild.md) (supersedes
+  [ADR-025](../adr/051-seaql-loco-platform-rebuild.md))
+- **DI**: `mcb_infrastructure::di::bootstrap::init_app(config)` — See
+  [ADR-050](../adr/050-manual-composition-root-dill-removal.md) (ADR-029 superseded)
+- **Patterns**: See [PATTERNS.md](../architecture/PATTERNS.md) for implementation
+  patterns
 - **Run server**: `make build` then run `./target/debug/mcb` or `./target/release/mcb`
 
 ---

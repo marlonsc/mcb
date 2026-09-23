@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 27
-title: Architecture Evolution v0.1.3 - Onion/Clean Enhancement
-status: ACCEPTED
-created:
-updated: 2026-02-05
-related: [8, 13, 24]
-supersedes: []
-superseded_by: []
+
+adr: 27 title: Architecture Evolution v0.1.3 - Onion/Clean Enhancement status: ACCEPTED
+created: updated: 2026-02-05 related: [8, 13, 24] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
 ---
 
@@ -17,49 +13,48 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
 Proposed
 
 > Inspired by kamu-cli's production Onion/Clean Architecture patterns. Extends
-> [ADR 013](013-clean-architecture-crate-separation.md) (Clean Architecture
-> Crate Separation) and
-> [ADR 024](024-simplified-dependency-injection.md) (Simplified Dependency
-> Injection) without breaking backward compatibility.
+> [ADR 013](013-clean-architecture-crate-separation.md) (Clean Architecture Crate
+> Separation) and [ADR 024](024-simplified-dependency-injection.md) (Simplified
+> Dependency Injection) without breaking backward compatibility.
 
 ## Context
 
 MCB v0.1.2 established a SOLID Clean Architecture foundation with:
 
-- 8-crate separation (mcb-domain, mcb-application, mcb-providers,
-  mcb-infrastructure, mcb-server, mcb, mcb-validate)
-- 20+ port traits in mcb-application (EmbeddingProvider, VectorStoreProvider,
-  etc.)
+- 8-crate separation (mcb-domain, mcb-application, mcb-providers, mcb-infrastructure,
+  mcb-server, mcb, mcb-validate)
+- 20+ port traits in mcb-application (EmbeddingProvider, VectorStoreProvider, etc.)
 - Linkme-based provider auto-registration (15+ providers)
 - Handle-based DI with runtime provider switching (ADR 024)
 - 790+ tests with architectural validation via mcb-validate
 
 ### Analysis of kamu-cli's Onion/Clean Architecture
 
-Analysis of the [kamu-cli](https://github.com/kamu-data/kamu-cli) production
-codebase revealed opportunities to evolve MCB without rewriting:
+Analysis of the [kamu-cli](https://github.com/kamu-data/kamu-cli) production codebase
+revealed opportunities to evolve MCB without rewriting:
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
-| Aspect | MCB Current | kamu-cli Pattern | Opportunity |
-| -------- | ------------- | ------------------ | ------------- |
+| Aspect              | MCB Current                             | kamu-cli Pattern                                    | Opportunity                |
+| ------------------- | --------------------------------------- | --------------------------------------------------- | -------------------------- |
 | Module Organization | By layer (entities/, ports/, services/) | By bounded context (workspace/, indexing/, search/) | Feature-centric navigation |
-| Engine Contracts | Implicit via providers | Explicit engine traits | Plugin ecosystem |
-| Indexing | Full re-index | Incremental with checkpoints | 90%+ time reduction |
-| Operability | Binary only | Node mode with Helm | Kubernetes deployment |
-| Quality | Unit tests only | Relevance tests | Search quality gates |
+| Engine Contracts    | Implicit via providers                  | Explicit engine traits                              | Plugin ecosystem           |
+| Indexing            | Full re-index                           | Incremental with checkpoints                        | 90%+ time reduction        |
+| Operability         | Binary only                             | Node mode with Helm                                 | Kubernetes deployment      |
+| Quality             | Unit tests only                         | Relevance tests                                     | Search quality gates       |
 
 ### Problems Addressed
 
-1. **Layer-centric organization**: Finding code by feature requires knowing
-   which layer it belongs to
-2. **Implicit engine contracts**: Providers are loosely coupled without formal
-   engine semantics
+1. **Layer-centric organization**: Finding code by feature requires knowing which layer
+   it belongs to
+2. **Implicit engine contracts**: Providers are loosely coupled without formal engine
+   semantics
 3. **Full re-indexing**: Unchanged files are re-processed unnecessarily
 4. **Limited operability**: No standard deployment patterns for production
 5. **No quality metrics**: Search relevance changes go undetected
@@ -72,8 +67,7 @@ maintaining backward compatibility:
 ### Phase 0: Baseline & Acceptance Criteria
 
 - Document layer boundaries in ARCHITECTURE_BOUNDARIES.md
-- Define golden acceptance tests (index repo, run queries, validate
-  latency <200ms)
+- Define golden acceptance tests (index repo, run queries, validate latency <200ms)
 - No MCP API changes
 
 ### Phase 1: Bounded Contexts Within Layers
@@ -157,10 +151,9 @@ pub trait Ranker: Send + Sync {
 
 Engine Implementations:
 
-- `IndexStateStore`: SQLite (default), In-Memory (testing), RocksDB
+- `IndexStateStore`: SQLite (default), In-Memory (testing), RocksDB (feature-gated)
+- `Ranker`: CosineRanker, HybridRanker (BM25 + semantic), MMRRanker, LLMReranker
   (feature-gated)
-- `Ranker`: CosineRanker, HybridRanker (BM25 + semantic), MMRRanker,
-  LLMReranker (feature-gated)
 
 Unified Config:
 
@@ -226,14 +219,15 @@ Enable production deployment patterns:
 CLI Subcommands:
 
 ```bash
-mcb serve              # MCP server (existing behavior)
-mcb index --watch      # Watch filesystem and update index
-mcb doctor             # Environment checks
+mcb serve         # MCP server (existing behavior)
+mcb index --watch # Watch filesystem and update index
+mcb doctor        # Environment checks
 ```
 
 Health Endpoints:
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 ```rust
 #[get("/healthz")]
 pub fn health() -> Status { Status::Ok }
@@ -259,18 +253,18 @@ Add search quality gates to CI:
 
 ```yaml
 # examples/queries.yaml
--   query: "how does authentication work"
-    collection: "rust-repo"
-    expected_files:
-      -   "src/auth.rs"
-      -   "src/middleware/auth.rs"
-    min_recall_at_5: 0.8
+- query: "how does authentication work"
+  collection: "rust-repo"
+  expected_files:
+    - "src/auth.rs"
+    - "src/middleware/auth.rs"
+  min_recall_at_5: 0.8
 
--   query: "database connection handling"
-    collection: "rust-repo"
-    expected_files:
-      -   "src/db/pool.rs"
-    min_recall_at_5: 0.6
+- query: "database connection handling"
+  collection: "rust-repo"
+  expected_files:
+    - "src/db/pool.rs"
+  min_recall_at_5: 0.6
 ```
 
 CI Integration:
@@ -296,8 +290,7 @@ CI Integration:
 - **More files**: Bounded context modules add directory structure
 - **Learning curve**: Team must understand bounded context organization
 - **CI time**: Relevance tests add ~2-3 minutes to pipeline
-- **Rust boilerplate**: New engine traits require implementations across
-  providers
+- **Rust boilerplate**: New engine traits require implementations across providers
 
 ### Neutral
 
@@ -322,13 +315,12 @@ Estimated Scope:
 ## Related ADRs
 
 - [ADR 013: Clean Architecture Crate Separation]
-(013-clean-architecture-crate-separation.md) - **Extended** by this ADR (adds
-  bounded contexts within layers)
-- [ADR 024: Simplified Dependency Injection]
-(024-simplified-dependency-injection.md) - **Extended** by this ADR (formalizes
-  engine contracts using handle pattern)
+  (013-clean-architecture-crate-separation.md) - **Extended** by this ADR (adds bounded
+  contexts within layers)
+- [ADR 024: Simplified Dependency Injection] (024-simplified-dependency-injection.md) -
+  **Extended** by this ADR (formalizes engine contracts using handle pattern)
 - [ADR 008: Git-Aware Semantic Indexing v0.2.0]
-(008-git-aware-semantic-indexing-v0.2.0.md) - **Prepared for** by this ADR
+  (008-git-aware-semantic-indexing-v0.2.0.md) - **Prepared for** by this ADR
   (incremental indexing foundation)
 
 ## References
@@ -336,7 +328,7 @@ Estimated Scope:
 - [kamu-cli](https://github.com/kamu-data/kamu-cli) - Production Onion/Clean
   Architecture reference
 - [Clean Architecture by Robert C. Martin]
-(<https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html>)
+  (<https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html>)
 - [Onion Architecture by Jeffrey Palermo]
-(<https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/>)
+  (<https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/>)
 - [Domain-Driven Design by Eric Evans](https://domainlanguage.com/ddd/)

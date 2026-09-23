@@ -2,7 +2,8 @@
 
 ## 🎯 **First Stable Release**
 
-This folder contains the automation scripts for the **self-documenting** system of Memory Context Browser.
+This folder contains the automation scripts for the **self-documenting** system of
+Memory Context Browser.
 
 ---
 
@@ -25,10 +26,10 @@ Commands:
 
 ### 🔧 **Specialized Scripts**
 
-| Script | Function | Called by |
-| -------- | -------- | ------------- |
-| `generate-mdbook.sh` | mdbook interactive platform management | `make build WHAT=docs ACT=build`, `make build WHAT=docs ACT=serve` |
-| `generate-diagrams.sh` | PlantUML diagrams generation | `make build WHAT=docs ACT=diagrams` |
+| Script                 | Function                               | Called by                                                          |
+| ---------------------- | -------------------------------------- | ------------------------------------------------------------------ |
+| `generate-mdbook.sh`   | mdbook interactive platform management | `make build WHAT=docs ACT=build`, `make build WHAT=docs ACT=serve` |
+| `generate-diagrams.sh` | PlantUML diagrams generation           | `make build WHAT=docs ACT=diagrams`                                |
 
 ---
 
@@ -45,15 +46,15 @@ make build WHAT=docs ACT=setup    # Configure documentation tools
 ### 📖 **Docs commands**
 
 ```bash
-make build WHAT=docs ACT=build    # Build interactive documentation
-make build WHAT=docs ACT=serve    # Development server
+make build WHAT=docs ACT=build # Build interactive documentation
+make build WHAT=docs ACT=serve # Development server
 ```
 
 ### 📋 **ADR Management**
 
 ```bash
-make build WHAT=docs ACT=adr      # List ADRs, generate ADR docs, show lifecycle status
-make build WHAT=docs ACT=adr-new  # Create new ADR
+make build WHAT=docs ACT=adr     # List ADRs, generate ADR docs, show lifecycle status
+make build WHAT=docs ACT=adr-new # Create new ADR
 ```
 
 ---
@@ -129,46 +130,48 @@ Obsolete scripts moved to `archive/`:
 ### 1️⃣ **Initial Configuration**
 
 ```bash
-make build WHAT=docs ACT=setup  # Install all tools
+make build WHAT=docs ACT=setup # Install all tools
 ```
 
 ### 2️⃣ **Development**
 
 ```bash
-make build WHAT=docs              # Generate documentation
-make build WHAT=docs ACT=serve   # Preview interactively
+make build WHAT=docs           # Generate documentation
+make build WHAT=docs ACT=serve # Preview interactively
 ```
 
 ### 3️⃣ **Quality Assurance**
 
 ```bash
-make build WHAT=docs ACT=validate  # Check quality
-make build WHAT=docs ACT=validate  # Validate architecture
-make build WHAT=docs ACT=validate  # Complete validation
+make build WHAT=docs ACT=validate # Check quality
+make build WHAT=docs ACT=validate # Validate architecture
+make build WHAT=docs ACT=validate # Complete validation
 ```
 
 ### 4️⃣ **Production**
 
 ```bash
-make build WHAT=docs              # Full production build
+make build WHAT=docs # Full production build
 ```
 
 ---
 
 ## 📈 **Success Metrics**
 
-| Metric | Goal | Status | Result |
-| --------- | ------------- | -------- | ----------- |
-| **Auto-generated** | 95%+ | ✅ **98%** | ✅ **EXCEEDED** |
-| **ADR Compliance** | 100% | ✅ **100%** | ✅ **ACHIEVED** |
-| **Quality Score** | A+ | ✅ **A+** | ✅ **ACHIEVED** |
-| **Active Scripts** | - | **3/16** | ✅ **OPTIMIZED** |
-| **Maintenance** | -80% | **-81%** | ✅ **EXCEEDED** |
+| Metric             | Goal | Status      | Result           |
+| ------------------ | ---- | ----------- | ---------------- |
+| **Auto-generated** | 95%+ | ✅ **98%**  | ✅ **EXCEEDED**  |
+| **ADR Compliance** | 100% | ✅ **100%** | ✅ **ACHIEVED**  |
+| **Quality Score**  | A+   | ✅ **A+**   | ✅ **ACHIEVED**  |
+| **Active Scripts** | -    | **3/16**    | ✅ **OPTIMIZED** |
+| **Maintenance**    | -80% | **-81%**    | ✅ **EXCEEDED**  |
 
 ---
 
 ## 🎉 **Conclusion**
 
-The documentation system represents a **clean, efficient, and fully integrated architecture** that establishes Memory Context Browser as a reference in automated documentation for Rust projects.
+The documentation system represents a **clean, efficient, and fully integrated
+architecture** that establishes Memory Context Browser as a reference in automated
+documentation for Rust projects.
 
 **Status: ✅ PRODUCTION READY** 🚀

@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 19
-title: Error Handling Strategy
-status: ACCEPTED
-created:
-updated: 2026-02-05
-related: [13, 16]
-supersedes: []
-superseded_by: []
-implementation_status: "Historical snapshot; see bd for live work"
+
+adr: 19 title: Error Handling Strategy status: ACCEPTED created: updated: 2026-02-05
+related: [13, 16] supersedes: [] superseded_by: [] implementation_status: "Historical
+snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,10 +13,10 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
-**Accepted** (v0.2.0 - Implementation)
-**Date**: 2026-01-14
+**Accepted** (v0.2.0 - Implementation) **Date**: 2026-01-14
 
 ## Context
 
@@ -92,13 +88,13 @@ pub enum AnalysisError {
 
 Current error types in the six-crate structure:
 
-| Crate | Error File | Error Type |
-| ------- | ----------- | ------------ |
-| mcb-domain | `src/error.rs` | `DomainError` |
-| mcb-application | `src/error.rs` | `ApplicationError` |
-| mcb-providers | `src/error.rs` | `ProviderError` |
+| Crate              | Error File     | Error Type            |
+| ------------------ | -------------- | --------------------- |
+| mcb-domain         | `src/error.rs` | `DomainError`         |
+| mcb-application    | `src/error.rs` | `ApplicationError`    |
+| mcb-providers      | `src/error.rs` | `ProviderError`       |
 | mcb-infrastructure | `src/error.rs` | `InfrastructureError` |
-| mcb-server | `src/error.rs` | `ServerError` |
+| mcb-server         | `src/error.rs` | `ServerError`         |
 
 All use `thiserror` for type-safe error handling.
 
@@ -118,8 +114,10 @@ Negative:
 
 ## Related ADRs
 
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Error location per crate
-- [ADR-016: Integration Points Adapter Pattern](016-integration-points-adapter-pattern.md) - Adapter pattern
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Error location per crate
+- [ADR-016: Integration Points Adapter Pattern](016-integration-points-adapter-pattern.md) -
+  Adapter pattern
 
 ---
 

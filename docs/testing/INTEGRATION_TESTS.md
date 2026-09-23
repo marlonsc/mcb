@@ -1,29 +1,28 @@
 # Integration Tests
 
-This guide documents the current external-service test path. When this guide
-disagrees with code, trust `config/tests.toml`,
-`crates/mcb-domain/src/utils/tests/`, `crates/mcb-domain/src/macros/testing.rs`,
-`tests/docker-compose.yml`, and `makefiles/dispatch.mk`.
+This guide documents the current external-service test path. When this guide disagrees
+with code, trust `config/tests.toml`, `crates/mcb-domain/src/utils/tests/`,
+`crates/mcb-domain/src/macros/testing.rs`, `tests/docker-compose.yml`, and
+`makefiles/dispatch.mk`.
 
 ## Canonical Sources
 
-| Concern | Source |
-| ------- | ------ |
-| Service URLs | `config/tests.toml` under `[test_services]` |
+| Concern                 | Source                                                   |
+| ----------------------- | -------------------------------------------------------- |
+| Service URLs            | `config/tests.toml` under `[test_services]`              |
 | TCP availability checks | `crates/mcb-domain/src/utils/tests/service_detection.rs` |
-| Skip macros | `crates/mcb-domain/src/macros/testing.rs` |
-| Docker test services | `tests/docker-compose.yml` |
-| Make verbs | `makefiles/dispatch.mk` |
-| CI gate | `.github/workflows/ci.yml` |
+| Skip macros             | `crates/mcb-domain/src/macros/testing.rs`                |
+| Docker test services    | `tests/docker-compose.yml`                               |
+| Make verbs              | `makefiles/dispatch.mk`                                  |
+| CI gate                 | `.github/workflows/ci.yml`                               |
 
-The old `docs/operations/INTEGRATION_TEST_SKIPPING.md` page was archived
-because it pointed at removed helper paths and mixed current test policy with
-historical backlog notes.
+The old `docs/operations/INTEGRATION_TEST_SKIPPING.md` page was archived because it
+pointed at removed helper paths and mixed current test policy with historical backlog
+notes.
 
 ## Service Detection
 
-External service tests use `config/tests.toml` and the shared helpers in
-`mcb-domain`:
+External service tests use `config/tests.toml` and the shared helpers in `mcb-domain`:
 
 ```rust
 use mcb_domain::utils::tests::service_detection::{
@@ -45,8 +44,8 @@ Available helpers:
 - `should_run_docker_integration_tests()`
 
 The `MCB_RUN_DOCKER_INTEGRATION_TESTS` environment variable controls whether
-Docker-backed integration tests run. CI sets it to `0`, so those tests skip
-unless explicitly enabled.
+Docker-backed integration tests run. CI sets it to `0`, so those tests skip unless
+explicitly enabled.
 
 ## Skip Macros
 
@@ -70,8 +69,8 @@ skip_if_any_service_unavailable_result!(
 );
 ```
 
-Use `require_service!("milvus")` when the test should skip if the service is
-not configured in `config/tests.toml`, before making any network call.
+Use `require_service!("milvus")` when the test should skip if the service is not
+configured in `config/tests.toml`, before making any network call.
 
 ## Run Tests
 
@@ -98,15 +97,14 @@ make check WHAT=dev ACT=docker-test
 
 ## Item-by-item Classification Of Archived Future Notes
 
-The archived operations page listed four future improvements. Current
-classification:
+The archived operations page listed four future improvements. Current classification:
 
-| Item | Current state | Evidence |
-| ---- | ------------- | -------- |
-| Service availability reporting | Tracked in bead `mcb-efxg` | Use `bd show mcb-efxg --json` |
-| Conditional test groups | Tracked in bead `mcb-efxg` | Use `bd show mcb-efxg --json` |
-| Docker Compose for local E2E | Completed | `tests/docker-compose.yml` and `make check WHAT=dev ACT=docker-up` / `make check WHAT=dev ACT=docker-test` exist |
-| Coverage integration | Superseded by current gate | `make check WHAT=coverage` excludes integration/admin test files and CI runs a dedicated coverage job |
+| Item                           | Current state              | Evidence                                                                                                         |
+| ------------------------------ | -------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| Service availability reporting | Tracked in bead `mcb-efxg` | Use `bd show mcb-efxg --json`                                                                                    |
+| Conditional test groups        | Tracked in bead `mcb-efxg` | Use `bd show mcb-efxg --json`                                                                                    |
+| Docker Compose for local E2E   | Completed                  | `tests/docker-compose.yml` and `make check WHAT=dev ACT=docker-up` / `make check WHAT=dev ACT=docker-test` exist |
+| Coverage integration           | Superseded by current gate | `make check WHAT=coverage` excludes integration/admin test files and CI runs a dedicated coverage job            |
 
 Future follow-up work must live in beads, not as loose notes in this document.
 
@@ -119,5 +117,5 @@ If a test skips unexpectedly:
 3. Confirm the service is listening on the configured host and port.
 4. Put the skip macro before async setup or provider initialization.
 
-If a test times out before skipping, move the service check to the start of the
-test or switch to the `_result` macro for `Result`-returning tests.
+If a test times out before skipping, move the service check to the start of the test or
+switch to the `_result` macro for `Result`-returning tests.

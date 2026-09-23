@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 14
-title: Multi-Domain Architecture Strategy
-status: ACCEPTED
-created:
-updated: 2026-02-05
-related: [12, 13]
-supersedes: []
-superseded_by: []
-implementation_status: Complete
+
+adr: 14 title: Multi-Domain Architecture Strategy status: ACCEPTED created: updated:
+2026-02-05 related: [12, 13] supersedes: [] superseded_by: [] implementation_status:
+Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,19 +13,20 @@ implementation_status: Complete
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
-**Superseded** (v0.1.2)
-**Date**: 2026-01-14
-**Version**: v0.1.1 Update
+**Superseded** (v0.1.2) **Date**: 2026-01-14 **Version**: v0.1.1 Update
 
-> **Note**: This ADR describes future plans for multi-domain expansion. The v0.1.1 release
-> implemented the [Six-Crate Clean Architecture](013-clean-architecture-crate-separation.md)
-> which provides the foundation for this multi-domain strategy.
+> **Note**: This ADR describes future plans for multi-domain expansion. The v0.1.1
+> release implemented the
+> [Six-Crate Clean Architecture](013-clean-architecture-crate-separation.md) which
+> provides the foundation for this multi-domain strategy.
 
 ## Context
 
-MCB v0.1.1 has implemented the six-crate Clean Architecture foundation. Future versions will integrate:
+MCB v0.1.1 has implemented the six-crate Clean Architecture foundation. Future versions
+will integrate:
 
 - Code analysis capabilities (complexity, debt, quality)
 - Git integration (repository analysis, commit history)
@@ -81,7 +78,8 @@ mcb/
 **v0.1.1** (Current release):
 
 - Six-crate Clean Architecture implemented
-- linkme + Handle DI with AppContext manual composition root (ADR-050; ADR-029 superseded)
+- linkme + Handle DI with AppContext manual composition root (ADR-050; ADR-029
+  superseded)
 - 20+ port traits with `Send + Sync` bounds (in mcb-domain)
 - mcb-validate enforces layer boundaries
 
@@ -118,19 +116,21 @@ Mitigation:
 
 ## Historical Implementation Notes
 
-The lists below preserve the original phased design context. They are not a
-current task board; current work is tracked in beads.
+The lists below preserve the original phased design context. They are not a current task
+board; current work is tracked in beads.
 
 v0.1.1 (Completed):
 
 - [x] Six-crate Clean Architecture implemented
-- [x] linkme + Handle DI with AppContext manual composition root (ADR-050; ADR-029 superseded)
+- [x] linkme + Handle DI with AppContext manual composition root (ADR-050; ADR-029
+      superseded)
 - [x] 20+ port traits with `Send + Sync` bounds (in mcb-domain)
 - [x] mcb-validate enforces layer boundaries
 
 v0.3.0 (Historical target):
 
-- Create `crates/mcb-domain/src/ports/analysis/` (analysis domain ports; per ADR-050 current DI architecture, ports are in mcb-domain)
+- Create `crates/mcb-domain/src/ports/analysis/` (analysis domain ports; per ADR-050
+  current DI architecture, ports are in mcb-domain)
 - Create `crates/mcb-providers/src/analyzers/` (PMAT adapters)
 - Define `AnalysisInterface` trait
 - Port PMAT complexity/TDG/SATD algorithms
@@ -143,16 +143,18 @@ v0.5.0 (Historical target):
 
 ## Canonical References
 
-> **Note**: This ADR is a historical decision record. For current architecture
-> details, consult the normative documents listed below.
+> **Note**: This ADR is a historical decision record. For current architecture details,
+> consult the normative documents listed below.
 
-- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules and module ownership (normative)
+- [ARCHITECTURE_BOUNDARIES.md](../architecture/ARCHITECTURE_BOUNDARIES.md) — Layer rules
+  and module ownership (normative)
 - [PATTERNS.md](../architecture/PATTERNS.md) — Technical patterns reference (normative)
 
 ## Related ADRs
 
 - [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI patterns
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Seven-crate structure
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Seven-crate structure
 
 ---
 

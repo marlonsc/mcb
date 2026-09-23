@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 42
-title: Knowledge Graph for Code Context and Relationships
-status: PROPOSED
-created:
-updated: 2026-02-05
-related: []
-supersedes: []
-superseded_by: []
+
+adr: 42 title: Knowledge Graph for Code Context and Relationships status: PROPOSED
+created: updated: 2026-02-05 related: [] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
 ---
 
@@ -15,17 +11,17 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 # ADR-042: Knowledge Graph for Code Context and Relationships
 
-**Status**: Proposed
-**Date**: 2026-02-05
-**Deciders**: MCB Architecture Team
-**Related**: ADR-041 (Context System), ADR-043 (Search)
-**Successor**: ADR-043 (Hybrid Search uses this graph)
+**Status**: Proposed **Date**: 2026-02-05 **Deciders**: MCB Architecture Team
+**Related**: ADR-041 (Context System), ADR-043 (Search) **Successor**: ADR-043 (Hybrid
+Search uses this graph)
 
 ## Context
 
-ADR-041 defines a 5-layer context system. Layer 3 is the**Knowledge Graph** that models code structure, relationships, and dependencies. This ADR specifies:
+ADR-041 defines a 5-layer context system. Layer 3 is the**Knowledge Graph** that models
+code structure, relationships, and dependencies. This ADR specifies:
 
-> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
+> **v0.3.0 Migration Note:** This ADR describes v0.4.0-v0.5.0 future work. The current
+> v0.3.0 architecture uses 4 layers (domain → providers → infrastructure → server).
 
 1. What relationships to represent
 2. How to extract them efficiently (tree-sitter-graph)
@@ -120,14 +116,16 @@ impl SemanticExtractor for TreeSitterGraphExtractor {
 
 Rationale:
 
-- **tree-sitter-graph** is a DSL for extracting semantic relationships (maintained by GitHub)
+- **tree-sitter-graph** is a DSL for extracting semantic relationships (maintained by
+  GitHub)
 - **Caching** by file hash avoids re-extraction on identical files
 - **Incremental updates** on file change: re-extract changed file + 1-hop neighbors
 - **No expensive ML**: Pure AST analysis at <1ms per file
 
 ### 2.5. SemanticExtractorProvider Port Trait
 
-The semantic extraction capability is exposed as a**port trait** for provider abstraction:
+The semantic extraction capability is exposed as a**port trait** for provider
+abstraction:
 
 ```rust
 // mcb-domain/src/ports/providers/semantic_extractor.rs
@@ -176,7 +174,8 @@ pub trait SemanticExtractorProvider: Send + Sync {
 pub static SEMANTIC_EXTRACTOR_PROVIDERS: [&'static dyn SemanticExtractorProvider] = [..];
 ```
 
-**Implementation**: Tree-sitter-based implementation in `mcb-providers/src/context/tree_sitter_semantic_extractor.rs`:
+**Implementation**: Tree-sitter-based implementation in
+`mcb-providers/src/context/tree_sitter_semantic_extractor.rs`:
 
 ```rust
 // mcb-providers/src/context/tree_sitter_semantic_extractor.rs
@@ -220,7 +219,8 @@ static TREE_SITTER_EXTRACTOR: &dyn SemanticExtractorProvider = &TreeSitterSemant
 
 Rationale:
 
-- **Port abstraction**: Enables multiple extraction backends (tree-sitter, custom rules, ML-based in v0.5.0)
+- **Port abstraction**: Enables multiple extraction backends (tree-sitter, custom rules,
+  ML-based in v0.5.0)
 - **Linkme registration**: Compile-time provider discovery, zero runtime overhead
 - **Async-first**: Aligns with MCB's async architecture (ADR-002)
 - **Clean Architecture**: Port trait in domain, implementation in providers (ADR-013)
@@ -273,7 +273,8 @@ impl GraphPersistence for SqliteGraphStore {
 
 Rationale:
 
-- **petgraph**: Mature, well-tested graph library with algorithms (DFS, shortest path, etc.)
+- **petgraph**: Mature, well-tested graph library with algorithms (DFS, shortest path,
+  etc.)
 - **slotmap**: Generational indices prevent use-after-free bugs
 - **JSON serialization**: Human-readable, easy debugging, Serde integration
 - **SQLite storage**: Persistent, queryable, no external service
@@ -350,7 +351,8 @@ ADR-044 (Lightweight Discovery Models):
 
 - AST-based routing (Stage 1) uses CodeGraph node types and structure
 - Graph metrics (cyclomatic complexity, line count) inform task-specific scoring
-- Example: Bug fix routing prioritizes error handling nodes extracted by SemanticExtractorProvider
+- Example: Bug fix routing prioritizes error handling nodes extracted by
+  SemanticExtractorProvider
 
 ## Incremental Updates (Optimization)
 
@@ -405,18 +407,23 @@ impl IncrementalGraphBuilder {
 
 ### Correction 1: SemanticExtractorProvider Port Trait (2026-02-06)
 
-**Issue**: ADR-042 discussed semantic extraction but did not define the port trait interface.
+**Issue**: ADR-042 discussed semantic extraction but did not define the port trait
+interface.
 
 Resolution:
 
-- **Added**: `SemanticExtractorProvider` trait in `mcb-domain/src/ports/providers/semantic_extractor.rs`
-- **Methods**: `extract_symbols()` and `extract_relationships()` for AST-based extraction
+- **Added**: `SemanticExtractorProvider` trait in
+  `mcb-domain/src/ports/providers/semantic_extractor.rs`
+- **Methods**: `extract_symbols()` and `extract_relationships()` for AST-based
+  extraction
 - **Registration**: Linkme distributed slice for compile-time provider discovery
-- **Implementation**: Tree-sitter-based extractor in `mcb-providers/src/context/tree_sitter_semantic_extractor.rs`
+- **Implementation**: Tree-sitter-based extractor in
+  `mcb-providers/src/context/tree_sitter_semantic_extractor.rs`
 
-**Rationale**: Port traits enable provider abstraction (ADR-013). Multiple extraction backends can be swapped without changing consumer code.
+**Rationale**: Port traits enable provider abstraction (ADR-013). Multiple extraction
+backends can be swapped without changing consumer code.
 
 ---
 
-**Depends on**: ADR-041 (context architecture)
-**Feeds**: ADR-043 (hybrid search uses graph)
+**Depends on**: ADR-041 (context architecture) **Feeds**: ADR-043 (hybrid search uses
+graph)

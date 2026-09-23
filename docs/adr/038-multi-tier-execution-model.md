@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 38
-title: Multi-Tier Execution Model — Integration of ADR-034–037
-status: ACCEPTED
-created:
-updated: 2026-02-06
-related: [13, 23, 25, 29, 33]
-supersedes: []
-superseded_by: []
-implementation_status: Complete
+
+adr: 38 title: Multi-Tier Execution Model — Integration of ADR-034–037 status: ACCEPTED
+created: updated: 2026-02-06 related: [13, 23, 25, 29, 33] supersedes: [] superseded_by:
+[] implementation_status: Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,26 +13,42 @@ implementation_status: Complete
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
 **Proposed** — 2026-02-05
 
 - **Deciders:** Project team
-- **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow FSM), [ADR-035](./035-context-scout.md) (Context Scout), [ADR-036](./036-enforcement-policies.md) (Enforcement Policies), [ADR-037](./037-workflow-orchestrator.md) (Orchestrator)
-- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI, superseded by ADR-050), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-051](./051-seaql-loco-platform-rebuild.md) (Figment), [ADR-033](./033-mcp-handler-consolidation.md) (MCP Handlers)
+- **Depends on:** [ADR-034](./034-workflow-core-fsm.md) (Workflow FSM),
+  [ADR-035](./035-context-scout.md) (Context Scout),
+  [ADR-036](./036-enforcement-policies.md) (Enforcement Policies),
+  [ADR-037](./037-workflow-orchestrator.md) (Orchestrator)
+- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI,
+  superseded by ADR-050), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean
+  Architecture), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme),
+  [ADR-051](./051-seaql-loco-platform-rebuild.md) (Figment),
+  [ADR-033](./033-mcp-handler-consolidation.md) (MCP Handlers)
 - **Supersedes:** None (integrating series)
-- **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) → [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md) →**ADR-038**
+- **Series:**[ADR-034](./034-workflow-core-fsm.md) → [ADR-035](./035-context-scout.md) →
+  [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
+  →**ADR-038**
 
 ## Context
 
 ADR-034 through ADR-037 define four sequential architectural concerns:
 
-- **ADR-034**: Workflow FSM with SQLite persistence (state machine, transitions, audit log)
+- **ADR-034**: Workflow FSM with SQLite persistence (state machine, transitions, audit
+  log)
 - **ADR-035**: Context Scout — project state discovery (git, tracker, phases)
-- **ADR-036**: Enforcement Policies — rules that guard transitions (WIP limits, test requirements, approval gates)
-- **ADR-037**: Workflow Orchestrator — MCP integration, agent coordination, operator decisions
+- **ADR-036**: Enforcement Policies — rules that guard transitions (WIP limits, test
+  requirements, approval gates)
+- **ADR-037**: Workflow Orchestrator — MCP integration, agent coordination, operator
+  decisions
 
-Each ADR defines a provider trait and entities, consumed by the next layer. However, **the relationships between entities, concurrency model, and Git integration are scattered across four documents**. This makes it difficult for implementers to understand:
+Each ADR defines a provider trait and entities, consumed by the next layer. However,
+**the relationships between entities, concurrency model, and Git integration are
+scattered across four documents**. This makes it difficult for implementers to
+understand:
 
 1. How do `Project`, `Plan`, `Task`, `Session`, `Agent`, and `Operator` entities relate?
 2. What is the concurrency model? Can tasks run in parallel? Sessions?
@@ -47,7 +59,8 @@ Each ADR defines a provider trait and entities, consumed by the next layer. Howe
 
 - Defining all entity relationships (entity-relationship model)
 - Documenting both state machines (Task state, Session state, Operator state)
-- Clarifying concurrency boundaries (project, plan, task, session, agent, operator levels)
+- Clarifying concurrency boundaries (project, plan, task, session, agent, operator
+  levels)
 - Detailing Git integration and worktree lifecycle
 - Explaining operator workflow and compensation strategies
 
@@ -96,14 +109,16 @@ All five entities work together to form a complete execution hierarchy:
 
 #### Project Entity
 
-**Purpose**: Top-level scope for all workflow activity. Coordinates configuration and multi-tenant isolation.
+**Purpose**: Top-level scope for all workflow activity. Coordinates configuration and
+multi-tenant isolation.
 
 Fields:
 
 - `id: String` — Unique project identifier
 - `name: String` — Display name
 - `root_path: PathBuf` — Filesystem root (git repository)
-- `config: ProjectConfig` — From Figment (ADR-025): embedding provider, vector store, VCS settings, policy overrides
+- `config: ProjectConfig` — From Figment (ADR-025): embedding provider, vector store,
+  VCS settings, policy overrides
 - `created_at: DateTime<Utc>`
 - `archived_at: Option<DateTime<Utc>>`
 
@@ -119,11 +134,13 @@ Lifecycle:
 2. **Active**: Plans and sessions execute within project scope
 3. **Archived**: No new sessions created; read-only for historical queries
 
-**Concurrency**: Unlimited projects can run independently. No lock required at project level.
+**Concurrency**: Unlimited projects can run independently. No lock required at project
+level.
 
 #### Plan Entity
 
-**Purpose**: From Beads — logical grouping of tasks by phase (e.g., "Phase 1: Architecture Cleanup", "Phase 2: Git Foundation").
+**Purpose**: From Beads — logical grouping of tasks by phase (e.g., "Phase 1:
+Architecture Cleanup", "Phase 2: Git Foundation").
 
 Fields:
 
@@ -152,11 +169,13 @@ Integration with Workflow:
 - When task transitioned to InProgress, plan automatically transitions to InProgress
 - When last task in plan completed, plan is marked closed
 
-**Concurrency**: Unlimited plans per project. Plans are independent unless tasks have explicit dependencies (rare).
+**Concurrency**: Unlimited plans per project. Plans are independent unless tasks have
+explicit dependencies (rare).
 
 #### Task Entity
 
-**Purpose**: From Beads — atomic unit of work. Entirely managed by Beads; workflow engine only**consumes** task metadata.
+**Purpose**: From Beads — atomic unit of work. Entirely managed by Beads; workflow
+engine only**consumes** task metadata.
 
 **Fields** (from Beads schema):
 
@@ -164,7 +183,8 @@ Integration with Workflow:
 - `plan_id: String` — Belongs to phase
 - `title: String` — Work description
 - `blockers: Vec<String>` — Task IDs that must complete first
-- `status: TaskStatus` — Open | InProgress | PendingReview | Approved | Merged | Completed
+- `status: TaskStatus` — Open | InProgress | PendingReview | Approved | Merged |
+  Completed
 - `created_at, closed_at: DateTime<Utc>`
 
 Responsibility:
@@ -196,24 +216,29 @@ Constraints:
 - Task state is single source of truth (stored in Beads)
 - Workflow reads task state; may trigger Beads status update via orchestrator
 
-**Concurrency**: Limited by WIP (Work-in-Progress) policy (ADR-036). Default: max 3 concurrent sessions per plan.
+**Concurrency**: Limited by WIP (Work-in-Progress) policy (ADR-036). Default: max 3
+concurrent sessions per plan.
 
 #### Session Entity
 
-**Purpose**: Execution context for a single task by one operator. Encapsulates the entire workflow from start (code changes) to finish (code merged).
+**Purpose**: Execution context for a single task by one operator. Encapsulates the
+entire workflow from start (code changes) to finish (code merged).
 
 Fields:
 
 - `id: String` — UUID, unique session identifier
-- `task_id: String` — Foreign key (1:1 mapping to task, but session can outlive task in error recovery scenarios)
+- `task_id: String` — Foreign key (1:1 mapping to task, but session can outlive task in
+  error recovery scenarios)
 - `operator_id: String` — Operator making decisions
 - `project_id: String` — Project context
-- `state: WorkflowState` — FSM enum from ADR-034 (Initializing | Ready | Planning | Executing | Verifying | PhaseComplete | Completed | Failed)
+- `state: WorkflowState` — FSM enum from ADR-034 (Initializing | Ready | Planning |
+  Executing | Verifying | PhaseComplete | Completed | Failed)
 - `state_data: serde_json::Value` — Serialized state context (phase_id, task_id, etc.)
 - `branch_name: String` — Git feature branch (derived from task_id and session_id)
 - `worktree_path: PathBuf` — `.worktrees/{session_id}`
 - `agent_ids: Vec<String>` — Agents active in this session
-- `compensation_plan: CompensationStrategy` — AutoRevert | ManualReview | ApproveAndMerge (from ADR-034)
+- `compensation_plan: CompensationStrategy` — AutoRevert | ManualReview |
+  ApproveAndMerge (from ADR-034)
 - `created_at, started_at, completed_at: DateTime<Utc>`
 
 Responsibility:
@@ -250,23 +275,25 @@ OR at any point:
 
 **State Transitions** (from ADR-034):
 
-| From | To | Trigger | Policy Checks | Compensation |
-| ------ | ---- | --------- | ---- | --- |
-| Created | Initializing | auto | — | — |
-| Initializing | Ready | context_discovered | — | — |
-| Ready | Planning | operator_ready | WIP limit, phase open | — |
-| Planning | Executing | plan_complete | phase_not_blocked | — |
-| Executing | Verifying | work_complete | — | — |
-| Verifying | AwaitingMerge | operator_approved | tests pass, reviews OK | — |
-| AwaitingMerge | Merged | code_merged_to_main | — | — |
-| Merged | Completed | cleanup_done | — | — |
-| * | Failed | error / operator_reject | — | ManualReview / ApproveAndMerge |
+| From          | To            | Trigger                 | Policy Checks          | Compensation                   |
+| ------------- | ------------- | ----------------------- | ---------------------- | ------------------------------ |
+| Created       | Initializing  | auto                    | —                      | —                              |
+| Initializing  | Ready         | context_discovered      | —                      | —                              |
+| Ready         | Planning      | operator_ready          | WIP limit, phase open  | —                              |
+| Planning      | Executing     | plan_complete           | phase_not_blocked      | —                              |
+| Executing     | Verifying     | work_complete           | —                      | —                              |
+| Verifying     | AwaitingMerge | operator_approved       | tests pass, reviews OK | —                              |
+| AwaitingMerge | Merged        | code_merged_to_main     | —                      | —                              |
+| Merged        | Completed     | cleanup_done            | —                      | —                              |
+| *             | Failed        | error / operator_reject | —                      | ManualReview / ApproveAndMerge |
 
-**Concurrency**: Only 1 session per task. Multiple sessions can run in parallel across different tasks (bounded by WIP limit).
+**Concurrency**: Only 1 session per task. Multiple sessions can run in parallel across
+different tasks (bounded by WIP limit).
 
 #### Operator Entity
 
-**Purpose**: Human decision-maker. Approves code changes, overrides policies, manages session lifecycle.
+**Purpose**: Human decision-maker. Approves code changes, overrides policies, manages
+session lifecycle.
 
 Fields:
 
@@ -287,9 +314,12 @@ Responsibility:
 
 Constraints:
 
-- **Single decision at a time**: Operator can have multiple assigned sessions, but only processes ONE decision concurrently (implicit bottleneck)
-- **Can't double-approve**: Once a decision is recorded, subsequent calls are idempotent (return same decision)
-- **Can override**: Can approve despite policy failures (requires explicit `override_reason`)
+- **Single decision at a time**: Operator can have multiple assigned sessions, but only
+  processes ONE decision concurrently (implicit bottleneck)
+- **Can't double-approve**: Once a decision is recorded, subsequent calls are idempotent
+  (return same decision)
+- **Can override**: Can approve despite policy failures (requires explicit
+  `override_reason`)
 
 Lifecycle:
 
@@ -309,7 +339,8 @@ Rejecting → back to Assigned/Idle
 
 #### Agent Entity
 
-**Purpose**: AI agents executing work within a session (e.g., code changes, test execution, documentation).
+**Purpose**: AI agents executing work within a session (e.g., code changes, test
+execution, documentation).
 
 Fields:
 
@@ -330,7 +361,8 @@ Constraints:
 
 - **Multiple agents per session**: Up to 8 concurrent (configurable)
 - **Shared worktree**: All agents modify same worktree; changes are cumulative
-- **No blocking between agents**: Agents run in parallel; operator or session FSM enforces synchronization points
+- **No blocking between agents**: Agents run in parallel; operator or session FSM
+  enforces synchronization points
 
 Lifecycle:
 
@@ -509,11 +541,13 @@ Constraints:
 
 - **Atomic decisions**: Operator can't split a decision (approve partial code)
 - **Idempotent**: Same decision can be submitted twice without side effects
-- **Timeout**: If operator doesn't decide for 72 hours, session auto-fails (configurable, triggers ManualReview compensation)
+- **Timeout**: If operator doesn't decide for 72 hours, session auto-fails
+  (configurable, triggers ManualReview compensation)
 
 ### 3. Concurrency Model
 
-The execution model supports parallel execution at multiple levels, with explicit boundaries:
+The execution model supports parallel execution at multiple levels, with explicit
+boundaries:
 
 #### 3.1 Project Level: **UNLIMITED**
 
@@ -530,9 +564,11 @@ Project A                Project B                Project C
 
 #### 3.2 Plan Level: **UNLIMITED (with ordering constraint)**
 
-Multiple plans per project can run in parallel. However, if explicit phase ordering is enforced, plans must respect it.
+Multiple plans per project can run in parallel. However, if explicit phase ordering is
+enforced, plans must respect it.
 
-**Default**: Assume plans are independent (no ordering). If phase dependencies exist, they are enforced by task dependencies (Beads).
+**Default**: Assume plans are independent (no ordering). If phase dependencies exist,
+they are enforced by task dependencies (Beads).
 
 ```text
 Project A
@@ -567,11 +603,13 @@ if in_progress_count >= config.wip_limit {
 }
 ```
 
-If WIP limit reached, next `Ready` → `Planning` transition is blocked until another task completes.
+If WIP limit reached, next `Ready` → `Planning` transition is blocked until another task
+completes.
 
 #### 3.4 Session Level: **EXCLUSIVE (1 per task)**
 
-Only 1 session can be active per task. If a session fails/crashes, a new session can be created for the same task (recovery scenario).
+Only 1 session can be active per task. If a session fails/crashes, a new session can be
+created for the same task (recovery scenario).
 
 **Enforcement** (in WorkflowEngine):
 
@@ -584,7 +622,8 @@ if existing.state != WorkflowState::Completed && existing.state != WorkflowState
 
 #### 3.5 Agent Level: **MULTIPLE (up to 8 per session)**
 
-Multiple agents can run in parallel within the same session. All modifications are to the same worktree; changes accumulate.
+Multiple agents can run in parallel within the same session. All modifications are to
+the same worktree; changes accumulate.
 
 Bounded by:
 
@@ -616,24 +655,27 @@ Synchronization:
 
 Operator processes decisions one at a time (implicit bottleneck).
 
-**Constraint**: While operator is reviewing session A, other sessions waiting for operator decision must wait.
+**Constraint**: While operator is reviewing session A, other sessions waiting for
+operator decision must wait.
 
-**Mitigation**: Operator can have multiple sessions assigned; can batch decisions (e.g., review A, review B, then approve both).
+**Mitigation**: Operator can have multiple sessions assigned; can batch decisions (e.g.,
+review A, review B, then approve both).
 
 Concurrency Model Summary:
 
-| Level | Max Concurrent | Bounded By | Lock Required |
-| ------- | --- | --- | --- |
-| Project | ∞ | System resources | No |
-| Plan | ∞ | Task dependencies | No |
-| Task | 1 (exclusive) | Design | Per-task Mutex |
-| Session | Limited by WIP | Policy (default 3 per plan) | Per-session Mutex |
-| Agent | 8 | Agent pool size | Per-session (coordinated) |
-| Operator | 1 decision at a time | Human speed | Implicit (sequential processing) |
+| Level    | Max Concurrent       | Bounded By                  | Lock Required                    |
+| -------- | -------------------- | --------------------------- | -------------------------------- |
+| Project  | ∞                    | System resources            | No                               |
+| Plan     | ∞                    | Task dependencies           | No                               |
+| Task     | 1 (exclusive)        | Design                      | Per-task Mutex                   |
+| Session  | Limited by WIP       | Policy (default 3 per plan) | Per-session Mutex                |
+| Agent    | 8                    | Agent pool size             | Per-session (coordinated)        |
+| Operator | 1 decision at a time | Human speed                 | Implicit (sequential processing) |
 
 ### 4. Git Integration & Worktree Management
 
-Each session gets**exclusive ownership** of a Git worktree, enabling true isolation and parallel execution.
+Each session gets**exclusive ownership** of a Git worktree, enabling true isolation and
+parallel execution.
 
 #### 4.1 Worktree Lifecycle
 
@@ -715,7 +757,8 @@ Actions:
 
 #### 4.3 Safety Properties
 
-**Isolation**: Each worktree is independent. No git conflicts between concurrent sessions.
+**Isolation**: Each worktree is independent. No git conflicts between concurrent
+sessions.
 
 ```text
 Session A: feature/beads-123/sess-aaaa
@@ -738,11 +781,12 @@ Merge Conflict Avoidance:
 
 - If main has moved ahead, rebase worktree branch before merge:
 
-    ```text
-    git rebase origin/main
-    ```
+  ```text
+  git rebase origin/main
+  ```
 
-- If conflicts, operator decides: resolve manually (RequestChanges) or reject (AutoRevert).
+- If conflicts, operator decides: resolve manually (RequestChanges) or reject
+  (AutoRevert).
 
 #### 4.4 Operator Testing
 
@@ -759,7 +803,8 @@ Results inform operator decision (Approve/Reject).
 
 ### 5. Operator Workflow & Compensation
 
-The operator is the bottleneck and decision-maker. The workflow accommodates three operator failure modes:
+The operator is the bottleneck and decision-maker. The workflow accommodates three
+operator failure modes:
 
 #### 5.1 Compensation Strategies (from ADR-034)
 
@@ -776,9 +821,9 @@ Strategy 2: ManualReview
 - Human operator decides next step
 - Operator reviews error, code, logs
 - Three options:
-    1. **Retry**: Re-run agents from Executing
-    2. **Fix**: Modify code manually, resubmit
-    3. **Abort**: Reject and rollback
+  1. **Retry**: Re-run agents from Executing
+  2. **Fix**: Modify code manually, resubmit
+  3. **Abort**: Reject and rollback
 - Used for policy failures, merge conflicts, unclear errors
 - Operator overhead: ~10-30 minutes per incident
 
@@ -902,55 +947,80 @@ Configurable timeouts:
 
 ### Positive Consequences
 
-- ✅ **Clear entity relationships**: Five entities with defined responsibilities and lifecycle, which makes implementation straightforward
-- ✅ **Type-safe states**: Rust enums + FSM ensure invalid transitions caught at compile time
-- ✅ **Audit trail**: Event log (ADR-037) captures all decisions for compliance and debugging
-- ✅ **Parallel execution**: Tasks, agents, and projects run independently; WIP policy prevents resource exhaustion
-- ✅ **Git isolation**: Worktrees enable safe concurrent development with zero merge conflicts
-- ✅ **Operator control**: Compensation strategies accommodate all failure modes without requiring code changes
-- ✅ **Testability**: Each layer (FSM, policies, context discovery, orchestration) can be tested independently
-- ✅ **Clean Architecture**: Entities are in `mcb-domain`; providers are in `mcb-providers`; use cases in `mcb-application`
-- ✅ **Scalability**: No global locks; concurrency bounded by WIP, operator speed, and system resources
+- ✅ **Clear entity relationships**: Five entities with defined responsibilities and
+  lifecycle, which makes implementation straightforward
+- ✅ **Type-safe states**: Rust enums + FSM ensure invalid transitions caught at compile
+  time
+- ✅ **Audit trail**: Event log (ADR-037) captures all decisions for compliance and
+  debugging
+- ✅ **Parallel execution**: Tasks, agents, and projects run independently; WIP policy
+  prevents resource exhaustion
+- ✅ **Git isolation**: Worktrees enable safe concurrent development with zero merge
+  conflicts
+- ✅ **Operator control**: Compensation strategies accommodate all failure modes without
+  requiring code changes
+- ✅ **Testability**: Each layer (FSM, policies, context discovery, orchestration) can
+  be tested independently
+- ✅ **Clean Architecture**: Entities are in `mcb-domain`; providers are in
+  `mcb-providers`; use cases in `mcb-application`
+- ✅ **Scalability**: No global locks; concurrency bounded by WIP, operator speed, and
+  system resources
 
 ### Negative Consequences
 
-- ❌ **Complexity**: 5 entity types × 2 state machines × 3 concurrency levels = significant cognitive load for implementers
-- ❌ **Git overhead**: Worktree per session consumes disk space (~500MB per worktree for large repos). ~10 concurrent sessions → 5GB disk overhead. Needs monitoring.
-- ❌ **Policy composition**: Designing policies is hard (AND vs OR vs sequential checks). Needs clear guidelines and templates.
-- ❌ **Event broadcasting**: 3 channels to manage (transitions, decisions, errors). Risk of inconsistent state if not carefully coordinated.
-- ❌ **Operator bottleneck**: Decision-making is sequential; backlog can accumulate if operator is slow or unavailable
-- ❌ **Database transactions**: SQLite concurrency (multiple writers) requires careful transaction design; easy to introduce race conditions
-- ❌ **Testing complexity**: Integration tests must cover FSM transitions × policy combinations × compensation strategies. ~200+ test cases needed.
+- ❌ **Complexity**: 5 entity types × 2 state machines × 3 concurrency levels =
+  significant cognitive load for implementers
+- ❌ **Git overhead**: Worktree per session consumes disk space (~500MB per worktree for
+  large repos). ~10 concurrent sessions → 5GB disk overhead. Needs monitoring.
+- ❌ **Policy composition**: Designing policies is hard (AND vs OR vs sequential
+  checks). Needs clear guidelines and templates.
+- ❌ **Event broadcasting**: 3 channels to manage (transitions, decisions, errors). Risk
+  of inconsistent state if not carefully coordinated.
+- ❌ **Operator bottleneck**: Decision-making is sequential; backlog can accumulate if
+  operator is slow or unavailable
+- ❌ **Database transactions**: SQLite concurrency (multiple writers) requires careful
+  transaction design; easy to introduce race conditions
+- ❌ **Testing complexity**: Integration tests must cover FSM transitions × policy
+  combinations × compensation strategies. ~200+ test cases needed.
 
 ## Alternatives Considered
 
 ### Alternative 1: Stateless Workflow (No SQLite Persistence)
 
-- **Description**: Keep all state in memory; rely on process restart for recovery (traditional shell script approach)
+- **Description**: Keep all state in memory; rely on process restart for recovery
+  (traditional shell script approach)
 - **Pros**: Simpler implementation, no database schema, no concurrency concerns
-- **Cons**: Lost state on crash, no audit trail, no time-travel debugging, impossible to resume long-running tasks
-- **Rejection Reason**: Violates core requirement (session continuity). Chosen in-memory state only for testing/development.
+- **Cons**: Lost state on crash, no audit trail, no time-travel debugging, impossible to
+  resume long-running tasks
+- **Rejection Reason**: Violates core requirement (session continuity). Chosen in-memory
+  state only for testing/development.
 
 ### Alternative 2: Single-Session-Per-Project
 
 - **Description**: Only one session allowed per project at a time (sequential execution)
-- **Pros**: Eliminates concurrency complexity, no WIP policy needed, simpler Git (no worktrees)
-- **Cons**: Severely limits throughput, projects with multiple independent tasks serialize unnecessarily, operator can't parallelize work
+- **Pros**: Eliminates concurrency complexity, no WIP policy needed, simpler Git (no
+  worktrees)
+- **Cons**: Severely limits throughput, projects with multiple independent tasks
+  serialize unnecessarily, operator can't parallelize work
 - **Rejection Reason**: Poor throughput. Chosen WIP-limited concurrency instead.
 
 ### Alternative 3: Operator as Central Bottleneck
 
-- **Description**: All decisions go through a central decision queue (similar to code review tools like Gerrit)
+- **Description**: All decisions go through a central decision queue (similar to code
+  review tools like Gerrit)
 - **Pros**: Clear audit trail, uniform approval process
-- **Cons**: Single point of failure (if operator unavailable, all sessions block), hard to distribute decisions across teams
+- **Cons**: Single point of failure (if operator unavailable, all sessions block), hard
+  to distribute decisions across teams
 - **Rejection Reason**: Chosen distributed decisions with operator notification instead.
 
 ### Alternative 4: Automatic Merge (No Operator Review)
 
 - **Description**: Skip operator review; merge code immediately after tests pass
 - **Pros**: Eliminates operator bottleneck, fastest deployment
-- **Cons**: No human judgment, risky for production code, violates compliance requirements (audit)
-- **Rejection Reason**: Chosen hybrid: policies can auto-merge (ApproveAndMerge compensation), but require audit override.
+- **Cons**: No human judgment, risky for production code, violates compliance
+  requirements (audit)
+- **Rejection Reason**: Chosen hybrid: policies can auto-merge (ApproveAndMerge
+  compensation), but require audit override.
 
 ## Implementation Notes
 
@@ -1038,8 +1108,8 @@ CREATE TABLE session_agents (
 
 ### Historical Implementation Sketch
 
-This section preserves original sizing context. It is not a live task board;
-current execution work is tracked in beads.
+This section preserves original sizing context. It is not a live task board; current
+execution work is tracked in beads.
 
 Phase 1: Core Entities & FSM (Weeks 1-2, 40 hours)
 
@@ -1067,27 +1137,37 @@ Total: ~150–200 hours (5 engineers × 4 weeks)
 ### Testing Strategy
 
 - **Unit tests** (80+): FSM transitions, entity validation, policy evaluation
-- **Integration tests** (60+): Full workflows (task → session → merged), compensation scenarios
+- **Integration tests** (60+): Full workflows (task → session → merged), compensation
+  scenarios
 - **E2E tests** (60+): Real git repository, operator decisions, worktree isolation
 - **Concurrency tests** (20+): Race conditions, deadlocks, stale state
 
-**Target coverage**: >85% code coverage for mcb-domain, mcb-application, mcb-infrastructure
+**Target coverage**: >85% code coverage for mcb-domain, mcb-application,
+mcb-infrastructure
 
 ### Rollback Plan
 
-If implementation reveals critical issues (e.g., SQLite concurrency problems, policy conflicts):
+If implementation reveals critical issues (e.g., SQLite concurrency problems, policy
+conflicts):
 
-1. **Disable at MCP level**: Remove workflow tools from MCP handler, revert to shell scripts
+1. **Disable at MCP level**: Remove workflow tools from MCP handler, revert to shell
+   scripts
 2. **Keep database**: Leave SQLite data for analysis and migration
 3. **Document lessons learned**: ADR update with failure analysis
-4. **Reassess**: Decide on redesign (alternative: async actor model like Tokio with state machines)
+4. **Reassess**: Decide on redesign (alternative: async actor model like Tokio with
+   state machines)
 
 ## References
 
 - [ADR-034: Workflow Core FSM](./034-workflow-core-fsm.md) — State machine design
 - [ADR-035: Context Scout](./035-context-scout.md) — Project state discovery
-- [ADR-036: Enforcement Policies](./036-enforcement-policies.md) — Policy evaluation and guards
-- [ADR-037: Workflow Orchestrator](./037-workflow-orchestrator.md) — MCP integration and orchestration
-- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) — DI container history (superseded by ADR-050)
-- [ADR-013: Clean Architecture Crate Separation](./013-clean-architecture-crate-separation.md) — Crate boundaries
-- [ADR-051: SeaQL + Loco.rs Platform Rebuild](./051-seaql-loco-platform-rebuild.md) — Configuration loading
+- [ADR-036: Enforcement Policies](./036-enforcement-policies.md) — Policy evaluation and
+  guards
+- [ADR-037: Workflow Orchestrator](./037-workflow-orchestrator.md) — MCP integration and
+  orchestration
+- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) — DI
+  container history (superseded by ADR-050)
+- [ADR-013: Clean Architecture Crate Separation](./013-clean-architecture-crate-separation.md)
+  — Crate boundaries
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild](./051-seaql-loco-platform-rebuild.md) —
+  Configuration loading
