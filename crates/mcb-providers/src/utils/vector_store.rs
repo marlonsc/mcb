@@ -15,8 +15,7 @@ use serde_json::Value;
 
 use super::http::{RequestErrorKind, handle_request_error_with_kind};
 use mcb_utils::constants::vector_store::{
-    VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_LINE_NUMBER,
-    VECTOR_FIELD_START_LINE,
+    VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_START_LINE,
 };
 
 /// Handle HTTP request errors for vector store operations
@@ -58,11 +57,6 @@ pub fn search_result_from_json_metadata(id: String, metadata: &Value, score: f64
         start_line: metadata
             .get(VECTOR_FIELD_START_LINE)
             .and_then(Value::as_u64)
-            .or_else(|| {
-                metadata
-                    .get(VECTOR_FIELD_LINE_NUMBER)
-                    .and_then(Value::as_u64)
-            })
             .unwrap_or(0) as u32,
         content: metadata
             .get(VECTOR_FIELD_CONTENT)

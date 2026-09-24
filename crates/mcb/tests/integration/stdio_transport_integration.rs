@@ -291,9 +291,13 @@ async fn test_stdio_roundtrip_initialize() -> TestResult {
             "protocolVersion has Debug format leak"
         );
 
-        // Verify serverInfo
+        // Verify serverInfo (rmcp 3.x: `server_info` is Option<Implementation>)
+        let server_info = peer_info
+            .server_info
+            .as_ref()
+            .ok_or("peer_info should carry server_info")?;
         assert!(
-            !peer_info.server_info.name.is_empty(),
+            !server_info.name.is_empty(),
             "Should have server name"
         );
 
