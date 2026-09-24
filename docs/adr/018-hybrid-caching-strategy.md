@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 18
-title: Hybrid Caching Strategy
-status: ACCEPTED
-created:
-updated: 2026-02-05
-related: [1, 13]
-supersedes: []
-superseded_by: []
-implementation_status: "Historical snapshot; see bd for live work"
+
+adr: 18 title: Hybrid Caching Strategy status: ACCEPTED created: updated: 2026-02-05
+related: [1, 13] supersedes: [] superseded_by: [] implementation_status: "Historical
+snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,9 +13,8 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Status
 
-**Accepted** (v0.2.0 - Define, v0.3.0 - Implement)
-**Date**: 2026-01-14
-**Version**: v0.2.0 (Define), v0.3.0 (Implement)
+**Accepted** (v0.2.0 - Define, v0.3.0 - Implement) **Date**: 2026-01-14 **Version**:
+v0.2.0 (Define), v0.3.0 (Implement)
 
 ## Context
 
@@ -79,11 +74,11 @@ impl HybridAnalysisCache {
 
 ## Cache Layers
 
-| Layer | Purpose | Invalidation | TTL |
-| ------- | --------- | -------------- | ----- |
-| **Memory (Moka)** | Fast lookups | SHA256 mismatch | 1 hour |
-| **SHA256 Tracker** | Change detection | File modification | Persistent |
-| **Disk** (future) | Long-term storage | LRU eviction | 7 days |
+| Layer              | Purpose           | Invalidation      | TTL        |
+| ------------------ | ----------------- | ----------------- | ---------- |
+| **Memory (Moka)**  | Fast lookups      | SHA256 mismatch   | 1 hour     |
+| **SHA256 Tracker** | Change detection  | File modification | Persistent |
+| **Disk** (future)  | Long-term storage | LRU eviction      | 7 days     |
 
 ## v0.1.1 Status
 
@@ -127,8 +122,10 @@ Mitigation:
 
 ## Related ADRs
 
-- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Cache provider trait
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Cache location in mcb-providers
+- [ADR-001: Modular Crates Architecture](001-modular-crates-architecture.md) - Cache
+  provider trait
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Cache location in mcb-providers
 
 ---
 

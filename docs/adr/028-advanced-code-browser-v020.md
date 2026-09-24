@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 28
-title: Advanced Code Browser UI v0.2.0
-status: IMPLEMENTED
-created:
-updated: 2026-02-05
-related: [7, 8, 26]
-supersedes: []
-superseded_by: []
-implementation_status: "Historical snapshot; see bd for live work"
+
+adr: 28 title: Advanced Code Browser UI v0.2.0 status: IMPLEMENTED created: updated:
+2026-02-05 related: [7, 8, 26] supersedes: [] superseded_by: [] implementation_status:
+"Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -35,8 +31,8 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Context
 
-v0.1.2 provides basic code browsing with file listing and chunk display. Users
-need IDE-like capabilities for deep code exploration.
+v0.1.2 provides basic code browsing with file listing and chunk display. Users need
+IDE-like capabilities for deep code exploration.
 
 Current v0.1.2 capabilities:
 
@@ -234,34 +230,34 @@ Events:
 
 ## Files to Create (v0.2.0)
 
-| File | Purpose |
-| ------ | --------- |
-| `crates/mcb-server/src/admin/web/templates/browse_tree.html` | Tree view component |
-| `crates/mcb-server/src/admin/web/templates/browse_code.html` | Enhanced code view |
-| `crates/mcb-server/src/admin/web/templates/browse_search.html` | Search results page |
-| `crates/mcb-server/src/admin/browse_sse.rs` | SSE events for browse |
-| `crates/mcb-server/src/admin/web/assets/tree-view.js` | Tree view JS component |
-| `crates/mcb-server/src/admin/web/assets/keyboard-nav.js` | Keyboard navigation |
+| File                                                           | Purpose                |
+| -------------------------------------------------------------- | ---------------------- |
+| `crates/mcb-server/src/admin/web/templates/browse_tree.html`   | Tree view component    |
+| `crates/mcb-server/src/admin/web/templates/browse_code.html`   | Enhanced code view     |
+| `crates/mcb-server/src/admin/web/templates/browse_search.html` | Search results page    |
+| `crates/mcb-server/src/admin/browse_sse.rs`                    | SSE events for browse  |
+| `crates/mcb-server/src/admin/web/assets/tree-view.js`          | Tree view JS component |
+| `crates/mcb-server/src/admin/web/assets/keyboard-nav.js`       | Keyboard navigation    |
 
 ## Files to Modify (v0.2.0)
 
-| File | Change |
-| ------ | -------- |
-| `crates/mcb-server/src/admin/browse_handlers.rs` | Add tree and search endpoints |
-| `crates/mcb-server/src/admin/routes.rs` | Mount new routes |
-| `crates/mcb-server/src/admin/web/handlers.rs` | Add page handlers |
-| `crates/mcb-server/src/admin/web/router.rs` | Mount UI routes |
+| File                                                    | Change                          |
+| ------------------------------------------------------- | ------------------------------- |
+| `crates/mcb-server/src/admin/browse_handlers.rs`        | Add tree and search endpoints   |
+| `crates/mcb-server/src/admin/routes.rs`                 | Mount new routes                |
+| `crates/mcb-server/src/admin/web/handlers.rs`           | Add page handlers               |
+| `crates/mcb-server/src/admin/web/router.rs`             | Mount UI routes                 |
 | `crates/mcb-domain/src/ports/providers/vector_store.rs` | Extend VectorStoreBrowser trait |
 
 ## Success Metrics
 
-| Metric | v0.1.2 | Target v0.2.0 |
-| -------- | -------- | --------------- |
-| File navigation | List view | Tree view |
-| Code display | Basic Prism.js | Tree-sitter + chunks |
-| Search integration | None | Inline highlighting |
-| Keyboard nav | None | Full vim-like |
-| Real-time updates | None | SSE events |
+| Metric             | v0.1.2         | Target v0.2.0        |
+| ------------------ | -------------- | -------------------- |
+| File navigation    | List view      | Tree view            |
+| Code display       | Basic Prism.js | Tree-sitter + chunks |
+| Search integration | None           | Inline highlighting  |
+| Keyboard nav       | None           | Full vim-like        |
+| Real-time updates  | None           | SSE events           |
 
 ### Dependencies
 
@@ -293,12 +289,12 @@ Rust Crates (existing):
 
 ## Related ADRs
 
-- [ADR-051: SeaQL + Loco.rs Platform Rebuild]
-(051-seaql-loco-platform-rebuild.md) - Base admin UI
-- [ADR-008: Git-Aware Semantic Indexing]
-(008-git-aware-semantic-indexing-v0.2.0.md) - Git metadata for diff view
-- [ADR-026: Routing Refactor Rocket]
-(049-axum-return-rmcp-tower-compatibility.md) - Rocket web framework
+- [ADR-051: SeaQL + Loco.rs Platform Rebuild] (051-seaql-loco-platform-rebuild.md) -
+  Base admin UI
+- [ADR-008: Git-Aware Semantic Indexing] (008-git-aware-semantic-indexing-v0.2.0.md) -
+  Git metadata for diff view
+- [ADR-026: Routing Refactor Rocket] (049-axum-return-rmcp-tower-compatibility.md) -
+  Rocket web framework
 
 ## References
 

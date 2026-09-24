@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 34
-title: Workflow Core — Finite State Machine and Persistence
-status: ACCEPTED
-created:
-updated: 2026-02-06
-related: [13, 19, 23, 25, 29]
-supersedes: [32]
-superseded_by: []
-implementation_status: Complete
+
+adr: 34 title: Workflow Core — Finite State Machine and Persistence status: ACCEPTED
+created: updated: 2026-02-06 related: [13, 19, 23, 25, 29] supersedes: [32]
+superseded_by: [] implementation_status: Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -19,39 +15,49 @@ implementation_status: Complete
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
 **Accepted** — 2026-02-06
 
 - **Deciders:** Project team
-- **Supersedes:** [ADR-032](./032-agent-quality-domain-extension.md) (Agent & Quality Domain Extension)
-- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI, superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme), [ADR-051](./051-seaql-loco-platform-rebuild.md) (Figment), [ADR-019](./019-error-handling-strategy.md) (error handling), [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
+- **Supersedes:** [ADR-032](./032-agent-quality-domain-extension.md) (Agent & Quality
+  Domain Extension)
+- **Related:** [ADR-029](./050-manual-composition-root-dill-removal.md) (Hexagonal DI,
+  superseded by ADR-050), [ADR-023](./023-inventory-to-linkme-migration.md) (linkme),
+  [ADR-051](./051-seaql-loco-platform-rebuild.md) (Figment),
+  [ADR-019](./019-error-handling-strategy.md) (error handling),
+  [ADR-013](./013-clean-architecture-crate-separation.md) (Clean Architecture)
 - **Series:** ADR-034 → [ADR-035](./035-context-scout.md) →
-  [ADR-036](./036-enforcement-policies.md) →
-  [ADR-037](./037-workflow-orchestrator.md)
-- **Resolution note:** Compensation/rollback follows the hybrid strategy defined
-  in "Refinement 2: Compensation and Rollback Logic".
+  [ADR-036](./036-enforcement-policies.md) → [ADR-037](./037-workflow-orchestrator.md)
+- **Resolution note:** Compensation/rollback follows the hybrid strategy defined in
+  "Refinement 2: Compensation and Rollback Logic".
 
 ## Context
 
-MCB currently provides semantic code search (indexing, embedding, vector store).
-The `oh-my-opencode` workflow layer depends on external shell scripts, markdown
-skill files, and disconnected tools (Beads CLI, GSD `legacy-planning/` files)
-that have no shared state, no type safety, and no persistence across sessions.
+MCB currently provides semantic code search (indexing, embedding, vector store). The
+`oh-my-opencode` workflow layer depends on external shell scripts, markdown skill files,
+and disconnected tools (Beads CLI, GSD `legacy-planning/` files) that have no shared
+state, no type safety, and no persistence across sessions.
 
-ADR-032 proposed extending MCB's domain with 24 MCP tools and 9 SQLite tables
-for agent/quality/project tracking. This ADR supersedes that proposal with a
-narrower, layered approach: four sequential ADRs (034–037) that each define one
-architectural concern and expose traits consumed by the next layer.
+ADR-032 proposed extending MCB's domain with 24 MCP tools and 9 SQLite tables for
+agent/quality/project tracking. This ADR supersedes that proposal with a narrower,
+layered approach: four sequential ADRs (034–037) that each define one architectural
+concern and expose traits consumed by the next layer.
 
-**This ADR** defines the foundational layer: a finite state machine (FSM) for workflow sessions with SQLite-backed persistence and transition history.
+**This ADR** defines the foundational layer: a finite state machine (FSM) for workflow
+sessions with SQLite-backed persistence and transition history.
 
 ### Problem Statement
 
-1. **No session continuity** — Workflow state is lost between OpenCode sessions. A resumed session cannot know where the previous session stopped.
-2. **No transition audit** — There is no record of what state transitions occurred, who triggered them, or why they failed.
-3. **No state validation** — Invalid transitions (e.g., executing before planning) are not enforced at the type level.
-4. **No time travel** — Impossible to reconstruct what the workflow state was at a specific point in time.
+1. **No session continuity** — Workflow state is lost between OpenCode sessions. A
+   resumed session cannot know where the previous session stopped.
+2. **No transition audit** — There is no record of what state transitions occurred, who
+   triggered them, or why they failed.
+3. **No state validation** — Invalid transitions (e.g., executing before planning) are
+   not enforced at the type level.
+4. **No time travel** — Impossible to reconstruct what the workflow state was at a
+   specific point in time.
 
 ### Requirements
 
@@ -65,9 +71,13 @@ architectural concern and expose traits consumed by the next layer.
 
 ### 1. Enum-Based Manual FSM (Runtime)
 
-Use a hand-written `#[derive(Serialize, Deserialize)]` enum for workflow states with `match`-based transition logic. No external FSM crate.
+Use a hand-written `#[derive(Serialize, Deserialize)]` enum for workflow states with
+`match`-based transition logic. No external FSM crate.
 
-**Rationale:** Evaluated `statig` (no serde support), `smlang-rs` (macro-generated code less transparent), `sm` (no async, no serde). The enum-based approach provides native serde for SQLite persistence, full `async` compatibility, transparent code for `mcb-validate` architecture rules, and direct compatibility with `Arc<dyn Trait>`.
+**Rationale:** Evaluated `statig` (no serde support), `smlang-rs` (macro-generated code
+less transparent), `sm` (no async, no serde). The enum-based approach provides native
+serde for SQLite persistence, full `async` compatibility, transparent code for
+`mcb-validate` architecture rules, and direct compatibility with `Arc<dyn Trait>`.
 
 ### 2. Domain Entities
 
@@ -207,9 +217,14 @@ pub struct WorkflowSession {
 
 ### 2.1 Database Provider Abstraction
 
-Rather than coupling directly to SQLite, the workflow engine depends on an abstract `DatabaseProvider` trait that enables multiple backend implementations (SQLite MVP → PostgreSQL Phase 2 → other backends).
+Rather than coupling directly to SQLite, the workflow engine depends on an abstract
+`DatabaseProvider` trait that enables multiple backend implementations (SQLite MVP →
+PostgreSQL Phase 2 → other backends).
 
-**Rationale:** Database independence allows migration between backends without refactoring the workflow domain. Using a provider trait aligns with ADR-050 (manual composition root, ADR-029 superseded) and ADR-023 (linkme provider registration), enabling compile-time discovery of database implementations.
+**Rationale:** Database independence allows migration between backends without
+refactoring the workflow domain. Using a provider trait aligns with ADR-050 (manual
+composition root, ADR-029 superseded) and ADR-023 (linkme provider registration),
+enabling compile-time discovery of database implementations.
 
 Port Trait Definition:
 
@@ -330,14 +345,19 @@ pub static DATABASE_PROVIDERS: [DatabaseProviderEntry] = [..];
 
 References:
 
-- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) — Handle-based DI pattern (superseded by ADR-050)
-- [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) — Compile-time plugin discovery
+- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) —
+  Handle-based DI pattern (superseded by ADR-050)
+- [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) —
+  Compile-time plugin discovery
 
 ---
 
 ### 2.2 Operator Ownership & Compensation Model
 
-MCB workflows are not autonomous agents — they operate under human supervision. Each workflow session is owned by an operator (human or bot), associated with a Beads task, and embedded within a project context. The compensation model is hybrid: automatic rollback for safe operations, manual review for high-risk changes.
+MCB workflows are not autonomous agents — they operate under human supervision. Each
+workflow session is owned by an operator (human or bot), associated with a Beads task,
+and embedded within a project context. The compensation model is hybrid: automatic
+rollback for safe operations, manual review for high-risk changes.
 
 Extended WorkflowSession Entity:
 
@@ -423,26 +443,34 @@ pub struct WorkflowSession {
 
 Compensation Semantics:
 
-- **AutoRevert**: Session uses a feature branch. On error, `git reset --hard` to safe commit. Fast, reversible. Best for exploratory work.
-- **ManualReview**: Session pauses on error. Operator logs in, reviews git diff, decides: amend, revert, or fix manually. Slow but safest.
-- **ApproveAndMerge**: Session attempts to merge PR if CI passes. If CI fails, escalate to ManualReview. Best for auto-commit PRs.
+- **AutoRevert**: Session uses a feature branch. On error, `git reset --hard` to safe
+  commit. Fast, reversible. Best for exploratory work.
+- **ManualReview**: Session pauses on error. Operator logs in, reviews git diff,
+  decides: amend, revert, or fix manually. Slow but safest.
+- **ApproveAndMerge**: Session attempts to merge PR if CI passes. If CI fails, escalate
+  to ManualReview. Best for auto-commit PRs.
 
-**Location:** `mcb-domain/src/entities/workflow.rs` (extended), `mcb-domain/src/entities/compensation.rs` (new module)
+**Location:** `mcb-domain/src/entities/workflow.rs` (extended),
+`mcb-domain/src/entities/compensation.rs` (new module)
 
 ---
 
 ### 2.3 Hybrid Transaction Model
 
-The workflow engine uses**two complementary persistence layers**: per-operation ACID transactions (SQLite) + append-only event log (immutable audit trail). This hybrid approach provides both ACID compliance and unbounded temporal history.
+The workflow engine uses**two complementary persistence layers**: per-operation ACID
+transactions (SQLite) + append-only event log (immutable audit trail). This hybrid
+approach provides both ACID compliance and unbounded temporal history.
 
 Hybrid Transaction Pattern:
 
-1. **Per-Operation Transactions**: Every `transition()` call wraps read + validate + write in a SQLite transaction (10-20ms per operation).
+1. **Per-Operation Transactions**: Every `transition()` call wraps read + validate +
+   write in a SQLite transaction (10-20ms per operation).
 
 - Ensures no lost updates if multiple sessions compete for the same resource.
 - Provides rollback on validation failure.
 
-1. **Append-Only Event Log**: After every transition, write immutable event to `workflow_events` table.
+1. **Append-Only Event Log**: After every transition, write immutable event to
+   `workflow_events` table.
 
 - Never updated or deleted — only INSERT.
 - Enables time-travel queries without replaying mutations.
@@ -507,14 +535,14 @@ CREATE INDEX idx_workflow_compensations_session
 
 Rationale for Hybrid Model:
 
-| Concern | Per-Operation TX | Append-Only Log | Coverage |
-| --------- | ------------------ | ----------------- | ---------- |
-| **Consistency** | ✅ ACID per-operation | Immutable writes only | Complete |
-| **Durability** | ✅ WAL mode | ✅ INSERT-only, no rewrites | Complete |
-| **Isolation** | ✅ SQLite serialization | N/A (read-only) | Complete |
-| **Auditability** | Limited (no history) | ✅ Full history | Complete |
-| **Time-Travel** | ❌ Lost on update | ✅ Replay events | Complete |
-| **Compliance** | ✅ Current state | ✅ Immutable trail | Complete |
+| Concern          | Per-Operation TX        | Append-Only Log             | Coverage |
+| ---------------- | ----------------------- | --------------------------- | -------- |
+| **Consistency**  | ✅ ACID per-operation   | Immutable writes only       | Complete |
+| **Durability**   | ✅ WAL mode             | ✅ INSERT-only, no rewrites | Complete |
+| **Isolation**    | ✅ SQLite serialization | N/A (read-only)             | Complete |
+| **Auditability** | Limited (no history)    | ✅ Full history             | Complete |
+| **Time-Travel**  | ❌ Lost on update       | ✅ Replay events            | Complete |
+| **Compliance**   | ✅ Current state        | ✅ Immutable trail          | Complete |
 
 Time-Travel Implementation:
 
@@ -572,7 +600,8 @@ impl WorkflowEngine for SqliteWorkflowEngine {
 }
 ```
 
-**Location:** `mcb-domain/src/ports/database_provider.rs` (schema + trait definitions), `mcb-providers/src/workflow/sqlite_workflow.rs` (implementation)
+**Location:** `mcb-domain/src/ports/database_provider.rs` (schema + trait definitions),
+`mcb-providers/src/workflow/sqlite_workflow.rs` (implementation)
 
 ---
 
@@ -582,6 +611,7 @@ Valid transitions are enforced at runtime. Invalid transitions return
 `WorkflowError::InvalidTransition`.
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
+
 ```text
 From \ Trigger         │ CtxDisc │ StartPlan │ StartExec │ ClaimTask │ ComplTask │ StartVer │ VerPass │ VerFail │ CompPhase │ EndSess │ Error │ Suspend │ Resume │ TimeoutDet │ Cancel │ MarkAband
 ───────────────────────┼─────────┼───────────┼───────────┼───────────┼───────────┼──────────┼─────────┼─────────┼───────────┼─────────┼───────┼─────────┼────────┼────────────┼────────┼───────────
@@ -738,9 +768,9 @@ impl WorkflowSession {
                  state,
                  WorkflowState::Completed | WorkflowState::Failed { .. }
              ) => {
-                WorkflowState::Failed { 
-                    error: message.clone(), 
-                    recoverable: true 
+                WorkflowState::Failed {
+                    error: message.clone(),
+                    recoverable: true
                 }
             }
 
@@ -1091,22 +1121,25 @@ fn sqlite_workflow_factory(
 
 ### 10. Module Locations
 
-| Crate | Path | Content |
-| ------- | ------ | --------- |
-| `mcb-domain` | `src/entities/workflow.rs` | `WorkflowState`, `TransitionTrigger`, `Transition`, `WorkflowSession` |
-| `mcb-domain` | `src/ports/providers/workflow.rs` | `WorkflowEngine` trait |
-| `mcb-domain` | `src/errors/workflow.rs` | `WorkflowError` enum |
-| `mcb-application` | `src/registry/workflow.rs` | `WORKFLOW_PROVIDERS` slice, `WorkflowProviderEntry` |
-| `mcb-providers` | `src/workflow/mod.rs` | Module root |
-| `mcb-providers` | `src/workflow/sqlite_workflow.rs` | `SqliteWorkflowEngine` + linkme registration |
-| `mcb-providers` | `src/workflow/transitions.rs` | `try_transition()` logic |
-| `mcb-infrastructure` | `src/config/workflow.rs` | `WorkflowConfig` (Figment) |
+| Crate                | Path                              | Content                                                               |
+| -------------------- | --------------------------------- | --------------------------------------------------------------------- |
+| `mcb-domain`         | `src/entities/workflow.rs`        | `WorkflowState`, `TransitionTrigger`, `Transition`, `WorkflowSession` |
+| `mcb-domain`         | `src/ports/providers/workflow.rs` | `WorkflowEngine` trait                                                |
+| `mcb-domain`         | `src/errors/workflow.rs`          | `WorkflowError` enum                                                  |
+| `mcb-application`    | `src/registry/workflow.rs`        | `WORKFLOW_PROVIDERS` slice, `WorkflowProviderEntry`                   |
+| `mcb-providers`      | `src/workflow/mod.rs`             | Module root                                                           |
+| `mcb-providers`      | `src/workflow/sqlite_workflow.rs` | `SqliteWorkflowEngine` + linkme registration                          |
+| `mcb-providers`      | `src/workflow/transitions.rs`     | `try_transition()` logic                                              |
+| `mcb-infrastructure` | `src/config/workflow.rs`          | `WorkflowConfig` (Figment)                                            |
 
 ## Refinements (ADR-034 Phase 2)
 
 ### Refinement 1: Database Provider Pattern
 
-**Rationale**: Workflow state persistence requires abstraction to support multiple backends (SQLite for development, PostgreSQL for production). This refinement introduces a `DatabaseProvider` port following the established provider pattern (ADR-050, ADR-023; ADR-029 superseded).
+**Rationale**: Workflow state persistence requires abstraction to support multiple
+backends (SQLite for development, PostgreSQL for production). This refinement introduces
+a `DatabaseProvider` port following the established provider pattern (ADR-050, ADR-023;
+ADR-029 superseded).
 
 **Port Definition** (`mcb-domain/src/ports/providers/database.rs`):
 
@@ -1161,18 +1194,22 @@ async fn sqlite_db_factory(config: &Figment) -> Result<Arc<dyn DatabaseProvider>
 }
 ```
 
-**Registration**: Providers auto-register via linkme into `mcb-application/src/registry/database.rs::DATABASE_PROVIDERS`.
+**Registration**: Providers auto-register via linkme into
+`mcb-application/src/registry/database.rs::DATABASE_PROVIDERS`.
 
 ---
 
 ### Refinement 2: Compensation and Rollback Logic
 
-**Problem**: When a workflow transitions fail during execution (e.g., task fails verification → rollback to Executing), there must be a clear strategy for compensating side effects.
+**Problem**: When a workflow transitions fail during execution (e.g., task fails
+verification → rollback to Executing), there must be a clear strategy for compensating
+side effects.
 
 ### Classification**: MCB workflows operate under human supervision — not autonomous agents. Compensation is**hybrid
 
 - **Automatic**: Safe operations (in-memory state, git revert)
-- **Manual**: High-risk operations (external API calls, database mutations) → prompt operator for approval
+- **Manual**: High-risk operations (external API calls, database mutations) → prompt
+  operator for approval
 
 **Compensation Entity** (`mcb-domain/src/entities/workflow.rs`):
 
@@ -1288,20 +1325,22 @@ CREATE INDEX idx_effects_by_session ON workflow_effects(session_id);
 
 ### Refinement 3: Transaction Isolation and Concurrency Control
 
-**Problem (from Critical Analysis)**: SQLite concurrent access not properly
-specified. Two concurrent `transition()` calls on the same session could violate
-FSM invariants (race condition on state update).
+**Problem (from Critical Analysis)**: SQLite concurrent access not properly specified.
+Two concurrent `transition()` calls on the same session could violate FSM invariants
+(race condition on state update).
 
 **Solution**: Define explicit concurrency model with transaction isolation levels.
 
 Concurrency Model:
 
-1. **Per-session mutual exclusion**: Only one thread may call `transition()` per session concurrently.
+1. **Per-session mutual exclusion**: Only one thread may call `transition()` per session
+   concurrently.
 
 - Enforced via RwLock in `SqliteWorkflowEngine`
 - **Implementation**: `Arc<RwLock<WorkflowSession>>`
 
-1. **SQLite transaction isolation**: Use SERIALIZABLE isolation for `workflow_sessions` updates.
+1. **SQLite transaction isolation**: Use SERIALIZABLE isolation for `workflow_sessions`
+   updates.
 
 - **Schema change**: Add `version` column for optimistic concurrency detection.
 
@@ -1314,7 +1353,8 @@ UPDATE workflow_sessions
   WHERE id = ? AND version = ?;  -- Detects concurrent writes
 ```
 
-1. **Multi-session parallelism**: Different sessions may transition in parallel (no global lock).
+1. **Multi-session parallelism**: Different sessions may transition in parallel (no
+   global lock).
 
 - SQLite WAL mode enables concurrent reads from one writer.
 - Use connection pool to service multiple sessions simultaneously.
@@ -1377,7 +1417,8 @@ impl SqliteWorkflowEngine {
 }
 ```
 
-**Testing**: Verify that concurrent transitions on the same session are serialized; concurrent transitions on different sessions run in parallel.
+**Testing**: Verify that concurrent transitions on the same session are serialized;
+concurrent transitions on different sessions run in parallel.
 
 ---
 
@@ -1386,43 +1427,62 @@ impl SqliteWorkflowEngine {
 ### Positive
 
 - **Session continuity**: Workflow state survives process restarts via SQLite.
-- **Full audit trail**: Every transition is recorded with trigger, timestamps, and guard results.
-- **Time travel**: State at any point in time can be reconstructed from the transition log.
-- **Type-safe state**: `WorkflowState` enum prevents invalid state representations at compile time.
-- **Clean Architecture**: Port trait in `mcb-domain`, implementation in `mcb-providers` — zero architectural violations.
+- **Full audit trail**: Every transition is recorded with trigger, timestamps, and guard
+  results.
+- **Time travel**: State at any point in time can be reconstructed from the transition
+  log.
+- **Type-safe state**: `WorkflowState` enum prevents invalid state representations at
+  compile time.
+- **Clean Architecture**: Port trait in `mcb-domain`, implementation in `mcb-providers`
+  — zero architectural violations.
 - **Zero new crates**: Distributed across existing crate hierarchy.
-- **Foundation for ADR-035/036/037**: `WorkflowEngine` trait is consumed by
-  context scout (035), policy guard (036), and orchestrator (037).
+- **Foundation for ADR-035/036/037**: `WorkflowEngine` trait is consumed by context
+  scout (035), policy guard (036), and orchestrator (037).
 
 ### Negative
 
-- **Boilerplate**: Enum-based FSM requires manual `match` logic (~150 lines for transition matrix). Declarative crates like `smlang-rs` would reduce this.
-- **Runtime-only validation**: Invalid transitions detected at runtime, not compile time. Mitigated by comprehensive test coverage.
-- **SQLite dependency**: `sqlx` async SQLite driver adds ~50KB to binary and requires `libsqlite3`.
-- **Single-writer constraint**: SQLite WAL mode supports one writer at a time. Concurrent sessions on the same database require careful transaction management.
+- **Boilerplate**: Enum-based FSM requires manual `match` logic (~150 lines for
+  transition matrix). Declarative crates like `smlang-rs` would reduce this.
+- **Runtime-only validation**: Invalid transitions detected at runtime, not compile
+  time. Mitigated by comprehensive test coverage.
+- **SQLite dependency**: `sqlx` async SQLite driver adds ~50KB to binary and requires
+  `libsqlite3`.
+- **Single-writer constraint**: SQLite WAL mode supports one writer at a time.
+  Concurrent sessions on the same database require careful transaction management.
 
 ## Alternatives Considered
 
 ### Alternative 1: statig (Hierarchical State Machine Crate)
 
-- **Description:** Proc-macro based FSM with hierarchical states, entry/exit Actions, and async support. 3M+ downloads.
-- **Pros:** Hierarchical states reduce duplication. Compile-time state machine generation. Entry/exit hooks.
-- **Cons:** No built-in serde support — must manually serialize states. Macro-generated code harder for `mcb-validate` to analyze.
-- **Rejection reason:** Lack of native serialization makes SQLite persistence painful. The transparency loss from macros conflicts with architecture validation.
+- **Description:** Proc-macro based FSM with hierarchical states, entry/exit Actions,
+  and async support. 3M+ downloads.
+- **Pros:** Hierarchical states reduce duplication. Compile-time state machine
+  generation. Entry/exit hooks.
+- **Cons:** No built-in serde support — must manually serialize states. Macro-generated
+  code harder for `mcb-validate` to analyze.
+- **Rejection reason:** Lack of native serialization makes SQLite persistence painful.
+  The transparency loss from macros conflicts with architecture validation.
 
 ### Alternative 2: smlang-rs (Declarative DSL)
 
-- **Description:** `statemachine!{}` macro with declarative transition table syntax, built-in serde via `states_attr`, and first-class guard support.
-- **Pros:** Clean declarative syntax. Built-in serde. Explicit guard expressions. Good async support.
-- **Cons:** No hierarchical states. 526K downloads (less ecosystem validation). Macro generates less transparent code.
-- **Rejection reason:** Viable alternative. Rejected for transparency — enum-based approach is fully visible to `mcb-validate` and requires no macro understanding for contributors.
+- **Description:** `statemachine!{}` macro with declarative transition table syntax,
+  built-in serde via `states_attr`, and first-class guard support.
+- **Pros:** Clean declarative syntax. Built-in serde. Explicit guard expressions. Good
+  async support.
+- **Cons:** No hierarchical states. 526K downloads (less ecosystem validation). Macro
+  generates less transparent code.
+- **Rejection reason:** Viable alternative. Rejected for transparency — enum-based
+  approach is fully visible to `mcb-validate` and requires no macro understanding for
+  contributors.
 
 ### Alternative 3: sm (Typestate Pattern)
 
-- **Description:** Compile-time typestate FSM using generic types. Invalid transitions caught at compile time.
+- **Description:** Compile-time typestate FSM using generic types. Invalid transitions
+  caught at compile time.
 - **Pros:** Strongest compile-time guarantees. Zero runtime overhead.
 - **Cons:** No async support. No serialization. Lower maintenance activity.
-- **Rejection reason:** Incompatible with async-first requirement and SQLite persistence.
+- **Rejection reason:** Incompatible with async-first requirement and SQLite
+  persistence.
 
 ### Alternative 4: In-Memory Only (No SQLite)
 
@@ -1443,16 +1503,19 @@ impl SqliteWorkflowEngine {
 6. Add `WorkflowConfig` to `mcb-infrastructure/src/config/`
 7. Add `[workflow]` section to `config/default.toml`
 
-> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`, `config/test.yaml`), not Figment TOML (`config/default.toml`).
+> **v0.3.0 Migration Note:** Configuration is now Loco YAML (`config/development.yaml`,
+> `config/test.yaml`), not Figment TOML (`config/default.toml`).
 
 ### Migration
 
-- New tables only (`workflow_sessions`, `workflow_transitions`). No existing tables modified.
+- New tables only (`workflow_sessions`, `workflow_transitions`). No existing tables
+  modified.
 - Migration SQL embedded in provider initialization with `CREATE TABLE IF NOT EXISTS`.
 
 ### Testing
 
-- Unit tests: Transition matrix (every valid transition + every invalid transition rejected).
+- Unit tests: Transition matrix (every valid transition + every invalid transition
+  rejected).
 - Unit tests: Serde round-trip for every `WorkflowState` variant.
 - Integration tests: SQLite persistence (create → transition → reload → verify state).
 - Integration tests: Time travel (create → N transitions → reconstruct at T).
@@ -1468,20 +1531,21 @@ impl SqliteWorkflowEngine {
 ### Security
 
 - No user-facing credentials in workflow state.
-- `state_data` JSON may contain project paths — ensure no secrets leak into transition logs.
+- `state_data` JSON may contain project paths — ensure no secrets leak into transition
+  logs.
 
 ## References
 
 - [statig crate](https://docs.rs/statig/latest/statig/) — Hierarchical state machine
   (evaluated, not selected)
-- [smlang-rs](https://docs.rs/smlang/latest/smlang/) — Declarative FSM macro
-  (evaluated, not selected)
+- [smlang-rs](https://docs.rs/smlang/latest/smlang/) — Declarative FSM macro (evaluated,
+  not selected)
 - [sqlx](https://docs.rs/sqlx/latest/sqlx/) — Async SQLite driver
-- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) (superseded by ADR-050)
-  — DI pattern
-- [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md)
-  — Auto-registration
-- [ADR-032: Agent & Quality Domain Extension](./032-agent-quality-domain-extension.md)
-  — Superseded
-- [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md)
-  — Schema reference
+- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md)
+  (superseded by ADR-050) — DI pattern
+- [ADR-023: Provider Registration with linkme](./023-inventory-to-linkme-migration.md) —
+  Auto-registration
+- [ADR-032: Agent & Quality Domain Extension](./032-agent-quality-domain-extension.md) —
+  Superseded
+- [docs/design/workflow-management/SCHEMA.md](../design/workflow-management/SCHEMA.md) —
+  Schema reference

@@ -53,7 +53,7 @@ impl Callback for QueryExecutionCallback {
                 let capture_name = capture_names
                     .get(capture.index as usize)
                     .cloned()
-                    .unwrap_or(mcb_utils::constants::FALLBACK_UNKNOWN)
+                    .unwrap_or(crate::sentinels::UNKNOWN_PROVENANCE)
                     .to_owned();
 
                 matches.push(TreeSitterQueryMatch {

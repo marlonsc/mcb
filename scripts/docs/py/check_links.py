@@ -62,10 +62,11 @@ def _process_links(
 
 def _check_files(
     docs_dir: str, project_root: Path
-) -> tuple[list[tuple[str, str, str, str]], int, int]:
+) -> tuple[list[tuple[str, str, str, str]], int, int, list[str]]:
     broken: list[tuple[str, str, str, str]] = []
     checked_files = 0
     checked_links = 0
+    unreadable: list[str] = []
 
     md_files = utils.find_md_files(docs_dir)
 
@@ -75,8 +76,9 @@ def _check_files(
 
         try:
             content = Path(filepath).read_text(encoding="utf-8")
-        except Exception as e:  # noqa: BLE001
-            logger.error(f"Error reading {rel_filepath}: {e}")
+        except OSError as e:
+            # An unreadable doc must fail the check, never vanish from it.
+            unreadable.append(f"{rel_filepath}: {e}")
             continue
 
         links = utils.extract_links(content)
@@ -87,7 +89,7 @@ def _check_files(
         broken.extend(file_broken)
         checked_links += file_links
 
-    return broken, checked_files, checked_links
+    return broken, checked_files, checked_links, unreadable
 
 
 def run(settings: CheckLinksSettings) -> r[int]:
@@ -101,9 +103,16 @@ def run(settings: CheckLinksSettings) -> r[int]:
     if not Path(docs_dir).exists():
         return r[int].fail(f"docs directory not found at {docs_dir}")
 
-    broken, checked_files, checked_links = _check_files(docs_dir, project_root)
+    broken, checked_files, checked_links, unreadable = _check_files(
+        docs_dir, project_root
+    )
 
     logger.info(f"Checked {checked_files} files, {checked_links} internal links.")
+
+    if unreadable:
+        for entry in sorted(unreadable):
+            logger.error(f"Unreadable documentation file: {entry}")
+        return r[int].fail(f"{len(unreadable)} unreadable documentation file(s)")
 
     if broken:
         logger.info(f"Found {len(broken)} broken internal links:")

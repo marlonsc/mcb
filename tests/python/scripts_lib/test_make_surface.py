@@ -99,7 +99,6 @@ def test_custom_mutations_require_apply() -> None:
 
 
 @pytest.mark.slow
-@pytest.mark.timeout(900)
 def test_invalid_nested_choices_fail_before_dry_run_gates() -> None:
     commands = [
         ["make", "build", "WHAT=codegen-__invalid__"],
@@ -125,24 +124,28 @@ def test_invalid_nested_choices_fail_before_dry_run_gates() -> None:
 def test_generated_gitignore_keeps_declared_project_exceptions() -> None:
     """Regeneration must not drop the project's own ignore rules.
 
-    `.gitignore` is a generated projection, so the project's rules live in the
-    `extra_ignored_patterns` overlay of config/workspace.yaml (the mro-jnm1.3
-    seam). Both sides are read from their real files here: if the overlay ever
-    stops reaching the rendered artifact, the barrier that keeps machine
-    config and tool output out of version control silently disappears.
+    `.gitignore` is a generated projection, so the project's rules live in
+    `ManagedArtifacts.Gitignore.patterns` of config/managed-artifacts.yaml, the
+    generator's project-owned extension surface. Both sides are read from their
+    real files here: if the declared patterns ever stop reaching the rendered
+    artifact, the barrier that keeps machine config and tool output out of
+    version control silently disappears.
     """
-    loaded = cli.read_yaml_file(ROOT / "config" / "workspace.yaml").unwrap()
-    assert isinstance(loaded, dict), "workspace.yaml must parse to a mapping"
+    loaded = cli.read_yaml_file(ROOT / "config" / "managed-artifacts.yaml").unwrap()
+    assert isinstance(loaded, dict), "managed-artifacts.yaml must parse to a mapping"
     manifest: dict[str, flext_t.JsonValue] = loaded
     declared: list[str] = [
         str(pattern)
-        for overlay in _json_list(manifest.get("repository_policy_overlays"))
-        for pattern in _json_list(_json_dict(overlay).get("extra_ignored_patterns"))
+        for pattern in _json_list(
+            _json_dict(
+                _json_dict(manifest.get("ManagedArtifacts")).get("Gitignore")
+            ).get("patterns")
+        )
     ]
 
     assert bool(declared), (
-        "config/workspace.yaml declares no extra_ignored_patterns, so the "
-        "project's ignore rules are not owned by the generator input"
+        "config/managed-artifacts.yaml declares no ManagedArtifacts.Gitignore."
+        "patterns, so the project's ignore rules are not owned by the generator input"
     )
 
     rendered = {
@@ -160,25 +163,37 @@ def test_generated_gitignore_keeps_declared_project_exceptions() -> None:
 BEADS_HOOK_STAGES = ("pre-commit", "pre-push")
 
 
-def _hook_shims() -> dict[str, Path]:
+def _hook_shims(tmp_path: Path) -> dict[str, Path]:
     """Return the installed shim path for every Beads-managed stage.
 
     Both hook tests read the same shims the same way; keeping one reader stops
     them drifting apart, which is how one came to tolerate a missing shim while
     the other asserted it.
+
+    The lookup honours only this repository's own git configuration: the
+    operator's global and system config are replaced by an empty file under
+    `tmp_path`, so a host-wide `core.hooksPath` (which git resolves before the
+    repository's hooks directory) cannot turn a checkout-level contract into a
+    statement about one workstation.
     """
+    global_config = tmp_path / "gitconfig"
+    global_config.write_text("", encoding="utf-8")
+    env = os.environ.copy()
+    env["GIT_CONFIG_GLOBAL"] = str(global_config)
+    env["GIT_CONFIG_NOSYSTEM"] = "1"
     hooks_dir = subprocess.run(
         ["git", "rev-parse", "--git-path", "hooks"],
         cwd=ROOT,
         check=True,
         capture_output=True,
         text=True,
+        env=env,
     ).stdout.strip()
     hooks_path = (ROOT / hooks_dir).resolve()
     return {stage: hooks_path / stage for stage in BEADS_HOOK_STAGES}
 
 
-def test_git_hooks_have_exactly_one_owner() -> None:
+def test_git_hooks_have_exactly_one_owner(tmp_path: Path) -> None:
     """Only beads (bd hooks) may own the installed hook shims.
 
     Gas City (gc) owns the lane lifecycle and Beads owns the git hooks; the
@@ -187,7 +202,7 @@ def test_git_hooks_have_exactly_one_owner() -> None:
     every checkout.
     """
     foreign: list[str] = []
-    for stage, shim in _hook_shims().items():
+    for stage, shim in _hook_shims(tmp_path).items():
         if not shim.exists():
             foreign.append(f"{stage}: missing (run `bd hooks install`)")
             continue
@@ -201,7 +216,7 @@ def test_git_hooks_have_exactly_one_owner() -> None:
     )
 
 
-def test_generated_hook_entries_are_executable_argv() -> None:
+def test_generated_hook_entries_are_executable_argv(tmp_path: Path) -> None:
     """Installed git hooks must delegate to the single canonical runner.
 
     Why (gastown): beads owns the installed git hook shims, and they are the
@@ -214,7 +229,7 @@ def test_generated_hook_entries_are_executable_argv() -> None:
     deleted, because the generator would recreate it on the next `make gen`,
     and never an owner, because nothing installs it.
     """
-    for stage, shim in _hook_shims().items():
+    for stage, shim in _hook_shims(tmp_path).items():
         assert shim.is_file(), f"{stage} shim missing; run `bd hooks install`"
         assert os.access(shim, os.X_OK), f"{stage} shim is not executable: {shim}"
         head = shim.read_text(errors="replace")[:400]

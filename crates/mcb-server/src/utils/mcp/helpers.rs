@@ -2,7 +2,7 @@
 
 use mcb_domain::error::Error;
 use mcb_domain::value_objects::OrgContext;
-use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
+use rmcp::model::{CallToolResult, ContentBlock, ErrorData as McpError};
 use serde::de::DeserializeOwned;
 
 use crate::utils::json::json_map;
@@ -21,12 +21,12 @@ pub fn require_id(id: &Option<String>) -> Result<String, McpError> {
 /// # Errors
 /// Returns an error when MCP content encoding fails.
 pub fn ok_text(msg: &str) -> Result<CallToolResult, McpError> {
-    Ok(CallToolResult::success(vec![Content::text(msg)]))
+    Ok(CallToolResult::success(vec![ContentBlock::text(msg)]))
 }
 
 /// Builds a tool error result with a contextual message.
 pub fn tool_error(msg: impl Into<String>) -> CallToolResult {
-    CallToolResult::error(vec![Content::text(msg)])
+    CallToolResult::error(vec![ContentBlock::text(msg)])
 }
 
 /// Resolves the organization id, preferring explicit input over the current context default.

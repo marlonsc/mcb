@@ -24,11 +24,10 @@ slow-timeout = { period = "60s", terminate-after = 3 }
 [[profile.default.overrides]]
 filter = 'package(mcb-server) and kind(test)'
 test-group = 'serial-shared-context'
-# Defense-in-depth: the CI warm-up step (`make test SCOPE=warmup`) populates the
-# hf-hub cache in-job so these load the model offline. retries absorbs a residual
-# transient HF 429 on a genuine cold-cache run — visible in nextest output, not a
-# silent fallback. Primary fix is the warm-up; this is the safety net.
-retries = 2
+# No retries: the CI warm-up step (`make test SCOPE=warmup`) populates the
+# hf-hub cache in-job so these load the model offline; a residual transient
+# HF 429 on a genuine cold-cache run must surface as a visible failure, and
+# rerunning is the operator's decision (repository law: no retry machinery).
 
 # Quality-validator unit tests scan the live workspace and exceed the default
 # slow-timeout on large trees (unit-test gate).
@@ -37,10 +36,9 @@ filter = 'test(/test_validate_(with_specific_validator|mcb_workspace_quality)/)'
 slow-timeout = { period = "120s", terminate-after = 3 }
 
 [profile.ci]
-# CI: keep going to see the full picture, retry once for transient failures.
+# CI: keep going to see the full picture; failures stay visible, no retries.
 test-threads = "num-cpus"
 fail-fast = false
-retries = 1
 slow-timeout = { period = "60s", terminate-after = 3 }
 
 [[profile.ci.overrides]]

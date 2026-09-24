@@ -165,9 +165,6 @@ pub const VECTOR_FIELD_FILE_PATH: &str = "file_path";
 /// Vector store field: start line number.
 pub const VECTOR_FIELD_START_LINE: &str = "start_line";
 
-/// Vector store field: line number (legacy/fallback field name).
-pub const VECTOR_FIELD_LINE_NUMBER: &str = "line_number";
-
 /// Vector store field: content text.
 pub const VECTOR_FIELD_CONTENT: &str = "content";
 

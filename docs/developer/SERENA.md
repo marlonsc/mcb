@@ -1,10 +1,15 @@
 # Serena Configuration for MCB
 
-This document describes the Serena setup for the Memory Context Browser (MCB) project, including configuration, available tools, validated usage patterns, and real-world test results.
+This document describes the Serena setup for the Memory Context Browser (MCB) project,
+including configuration, available tools, validated usage patterns, and real-world test
+results.
 
 ## What is Serena?
 
-[Serena](https://github.com/oraios/serena) is a semantic code retrieval and editing toolkit that provides AI assistants with deep code understanding capabilities through Language Server Protocol (LSP) integration. It enables precise symbol navigation, reference finding, and code manipulation.
+[Serena](https://github.com/oraios/serena) is a semantic code retrieval and editing
+toolkit that provides AI assistants with deep code understanding capabilities through
+Language Server Protocol (LSP) integration. It enables precise symbol navigation,
+reference finding, and code manipulation.
 
 ## Current Configuration
 
@@ -17,14 +22,14 @@ This document describes the Serena setup for the Memory Context Browser (MCB) pr
 
 The MCB-specific configuration lives in `.serena/project.yml`:
 
-| Setting | Value | Rationale |
-| ------- | ----- | --------- |
-| `project_name` | `mcb` | Project identifier |
-| `languages` | `rust` | Primary language |
-| `tool_timeout` | `60` | Large Rust projects need more time |
-| `symbol_info_budget` | `15.0` | rust-analyzer docstring resolution |
-| `line_ending` | `lf` | Unix convention |
-| `ignore_all_files_in_gitignore` | `true` | Respect .gitignore |
+| Setting                         | Value  | Rationale                          |
+| ------------------------------- | ------ | ---------------------------------- |
+| `project_name`                  | `mcb`  | Project identifier                 |
+| `languages`                     | `rust` | Primary language                   |
+| `tool_timeout`                  | `60`   | Large Rust projects need more time |
+| `symbol_info_budget`            | `15.0` | rust-analyzer docstring resolution |
+| `line_ending`                   | `lf`   | Unix convention                    |
+| `ignore_all_files_in_gitignore` | `true` | Respect .gitignore                 |
 
 ### Indexed Files
 
@@ -34,57 +39,60 @@ The MCB-specific configuration lives in `.serena/project.yml`:
 
 ## Available MCP Tools (20 total) — All Tested ✅
 
-The following tools are exposed through the MCP interface to AI assistants. **All 20 tools have been tested and confirmed working** on the MCB codebase.
+The following tools are exposed through the MCP interface to AI assistants. **All 20
+tools have been tested and confirmed working** on the MCB codebase.
 
 ### Navigation & Discovery (5)
 
-| Tool | Status | Avg Time | Description |
-| ---- | ------ | -------- | ----------- |
-| **`get_symbols_overview`** | ✅ | ~2s* | High-level symbol map of a file |
-| **`find_symbol`** | ✅ | ~2s | Global/local symbol search by name path pattern |
-| **`find_declaration`** | ✅ | ~2s | Jump to symbol declaration/definition |
-| **`find_implementations`** | ✅ | ~0.2s | Find symbols implementing a trait/interface |
-| **`find_referencing_symbols`** | ✅ | ~0.2s | Find all references to a symbol |
+| Tool                           | Status | Avg Time | Description                                     |
+| ------------------------------ | ------ | -------- | ----------------------------------------------- |
+| **`get_symbols_overview`**     | ✅     | ~2s*     | High-level symbol map of a file                 |
+| **`find_symbol`**              | ✅     | ~2s      | Global/local symbol search by name path pattern |
+| **`find_declaration`**         | ✅     | ~2s      | Jump to symbol declaration/definition           |
+| **`find_implementations`**     | ✅     | ~0.2s    | Find symbols implementing a trait/interface     |
+| **`find_referencing_symbols`** | ✅     | ~0.2s    | Find all references to a symbol                 |
 
-\* First call after server start takes ~24s due to rust-analyzer initialization. Subsequent calls are fast.
+\* First call after server start takes ~24s due to rust-analyzer initialization.
+Subsequent calls are fast.
 
 ### Code Analysis (1)
 
-| Tool | Status | Avg Time | Description |
-| ---- | ------ | -------- | ----------- |
-| **`get_diagnostics_for_file`** | ✅ | ~2.5s | LSP diagnostics (errors, warnings) for a file |
+| Tool                           | Status | Avg Time | Description                                   |
+| ------------------------------ | ------ | -------- | --------------------------------------------- |
+| **`get_diagnostics_for_file`** | ✅     | ~2.5s    | LSP diagnostics (errors, warnings) for a file |
 
 ### Code Editing (6)
 
-| Tool | Status | Avg Time | Description |
-| ---- | ------ | -------- | ----------- |
-| **`replace_content`** | ✅ | ~0.1s | Replace text patterns in a file (regex supported) |
-| **`replace_symbol_body`** | ✅ | ~0.3s | Replace full symbol definition via LSP |
-| **`insert_after_symbol`** | ✅ | ~0.3s | Insert code after a symbol definition |
-| **`insert_before_symbol`** | ✅ | ~0.3s | Insert code before a symbol definition |
-| **`rename_symbol`** | ✅ | ~21s | LSP-powered rename refactoring across codebase |
-| **`safe_delete_symbol`** | ✅ | ~2.5s | Safe symbol deletion with reference checking |
+| Tool                       | Status | Avg Time | Description                                       |
+| -------------------------- | ------ | -------- | ------------------------------------------------- |
+| **`replace_content`**      | ✅     | ~0.1s    | Replace text patterns in a file (regex supported) |
+| **`replace_symbol_body`**  | ✅     | ~0.3s    | Replace full symbol definition via LSP            |
+| **`insert_after_symbol`**  | ✅     | ~0.3s    | Insert code after a symbol definition             |
+| **`insert_before_symbol`** | ✅     | ~0.3s    | Insert code before a symbol definition            |
+| **`rename_symbol`**        | ✅     | ~21s     | LSP-powered rename refactoring across codebase    |
+| **`safe_delete_symbol`**   | ✅     | ~2.5s    | Safe symbol deletion with reference checking      |
 
 ### Memory System (5)
 
-| Tool | Status | Avg Time | Description |
-| ---- | ------ | -------- | ----------- |
-| **`write_memory`** | ✅ | ~0.1s | Write persistent project knowledge |
-| **`read_memory`** | ✅ | ~0.1s | Read a memory file |
-| **`list_memories`** | ✅ | ~0.1s | List all available memories |
-| **`edit_memory`** | ✅ | ~0.1s | Edit memory content via regex |
-| **`delete_memory`** | ✅ | ~0.1s | Delete a memory file |
+| Tool                | Status | Avg Time | Description                        |
+| ------------------- | ------ | -------- | ---------------------------------- |
+| **`write_memory`**  | ✅     | ~0.1s    | Write persistent project knowledge |
+| **`read_memory`**   | ✅     | ~0.1s    | Read a memory file                 |
+| **`list_memories`** | ✅     | ~0.1s    | List all available memories        |
+| **`edit_memory`**   | ✅     | ~0.1s    | Edit memory content via regex      |
+| **`delete_memory`** | ✅     | ~0.1s    | Delete a memory file               |
 
 ### Project Onboarding (2)
 
-| Tool | Status | Avg Time | Description |
-| ---- | ------ | -------- | ----------- |
-| **`onboarding`** | ✅ | ~0.1s | Project structure discovery |
-| **`initial_instructions`** | ✅ | ~0.1s | Serena usage instructions |
+| Tool                       | Status | Avg Time | Description                 |
+| -------------------------- | ------ | -------- | --------------------------- |
+| **`onboarding`**           | ✅     | ~0.1s    | Project structure discovery |
+| **`initial_instructions`** | ✅     | ~0.1s    | Serena usage instructions   |
 
 ### ⚠️ Tools Removed from MCP Interface
 
-The following tools exist in the Serena CLI but **are NOT available** through the MCP interface in v1.5.3:
+The following tools exist in the Serena CLI but **are NOT available** through the MCP
+interface in v1.5.3:
 
 - `list_dir` — use `Read`/`Glob`/`Grep` tools instead
 - `read_file` — use `Read` tool instead
@@ -187,7 +195,8 @@ find_declaration(relative_path="...", regex=r"(EmbeddingProvider)")
 
 ### `find_referencing_symbols` — Large Results
 
-For widely-used symbols, results can exceed 10,000 characters. **Always set `max_answer_chars`**:
+For widely-used symbols, results can exceed 10,000 characters. **Always set
+`max_answer_chars`**:
 
 ```python
 find_referencing_symbols(
@@ -199,7 +208,8 @@ find_referencing_symbols(
 
 ### `rename_symbol` — Requires Indexed File
 
-`rename_symbol` only works on files already indexed by rust-analyzer. It will fail on newly created files. Run `serena project index` after creating new files.
+`rename_symbol` only works on files already indexed by rust-analyzer. It will fail on
+newly created files. Run `serena project index` after creating new files.
 
 ### `safe_delete_symbol` — Parameter Name
 
@@ -212,11 +222,13 @@ safe_delete_symbol(relative_path="...", name_path_pattern="function_name")
 
 ### `get_symbols_overview` — LSP Warmup
 
-The first call after server start takes ~24s because rust-analyzer initializes. Subsequent calls are fast (~2s). Keep the server alive for multiple operations.
+The first call after server start takes ~24s because rust-analyzer initializes.
+Subsequent calls are fast (~2s). Keep the server alive for multiple operations.
 
 ### Memory Tools — Instant
 
-All memory operations (`list_memories`, `read_memory`, `write_memory`, `edit_memory`, `delete_memory`) complete in **under 0.1s**. Use them liberally for context.
+All memory operations (`list_memories`, `read_memory`, `write_memory`, `edit_memory`,
+`delete_memory`) complete in **under 0.1s**. Use them liberally for context.
 
 ## Health Check
 
@@ -316,35 +328,40 @@ Tools permitted in `.claude/settings.local.json` (20 tools):
 
 Project memories are stored in `.serena/memories/`:
 
-| Memory | Purpose |
-| ------ | ------- |
+| Memory                | Purpose                                 |
+| --------------------- | --------------------------------------- |
 | `project_overview.md` | Project identity, tech stack, structure |
-| `architecture.md` | Clean Architecture rules, DI pattern |
-| `coding_standards.md` | Rust conventions, lint policy |
-| `build_test_guide.md` | Make commands, quality gates |
+| `architecture.md`     | Clean Architecture rules, DI pattern    |
+| `coding_standards.md` | Rust conventions, lint policy           |
+| `build_test_guide.md` | Make commands, quality gates            |
 
 ## Multi-Session Optimization
 
-> ⚠️ **Warning**: Running multiple agent sessions simultaneously on this machine (62GB RAM, 20 cores) can exhaust available memory. Each session spawns its own `rust-analyzer` instance (~4–8GB RAM) and may trigger parallel cargo builds.
+> ⚠️ **Warning**: Running multiple agent sessions simultaneously on this machine (62GB
+> RAM, 20 cores) can exhaust available memory. Each session spawns its own
+> `rust-analyzer` instance (~4–8GB RAM) and may trigger parallel cargo builds.
 
 ### Problem
 
-Each `serena start-mcp-server` instance launches an independent `rust-analyzer` via LSP. The MCB workspace contains 7 first-party crates plus pinned git-dependency forks (sea-orm, sea-query, loco, etc.) that rust-analyzer also analyzes. With 2+ concurrent sessions, RAM usage quickly exceeds 50GB + swap.
+Each `serena start-mcp-server` instance launches an independent `rust-analyzer` via LSP.
+The MCB workspace contains 7 first-party crates plus pinned git-dependency forks
+(sea-orm, sea-query, loco, etc.) that rust-analyzer also analyzes. With 2+ concurrent
+sessions, RAM usage quickly exceeds 50GB + swap.
 
 ### Optimizations Applied
 
 The following project-level optimizations are already configured:
 
-| File | Optimization | Effect |
-| ---- | ------------ | ------ |
-| `.cargo/config.toml` | `jobs = 8` (was `-1`) | Limits cargo parallelism to 8 cores |
-| `.cargo/config.toml` | `[env]` `RAYON_NUM_THREADS=4` | Limits rust-analyzer internal threads |
-| `Cargo.toml` | `split-debuginfo = "packed"` | Reduces linker memory usage |
-| `Cargo.toml` | `build-override.opt-level = 1` (was `3`) | Lower memory for proc-macro/build-script compilation |
-| `.vscode/settings.json` | `cachePriming.enable = false` | Disables rust-analyzer warm-up cache |
-| `.vscode/settings.json` | `procMacro.enable = false` | Disables proc-macro expansion (large RAM save) |
-| `.vscode/settings.json` | `checkOnSave = false` | Disables background `cargo check` |
-| `.vscode/settings.json` | `diagnostics.enable = false` | Disables continuous diagnostic analysis |
+| File                    | Optimization                             | Effect                                               |
+| ----------------------- | ---------------------------------------- | ---------------------------------------------------- |
+| `.cargo/config.toml`    | `jobs = 8` (was `-1`)                    | Limits cargo parallelism to 8 cores                  |
+| `.cargo/config.toml`    | `[env]` `RAYON_NUM_THREADS=4`            | Limits rust-analyzer internal threads                |
+| `Cargo.toml`            | `split-debuginfo = "packed"`             | Reduces linker memory usage                          |
+| `Cargo.toml`            | `build-override.opt-level = 1` (was `3`) | Lower memory for proc-macro/build-script compilation |
+| `.vscode/settings.json` | `cachePriming.enable = false`            | Disables rust-analyzer warm-up cache                 |
+| `.vscode/settings.json` | `procMacro.enable = false`               | Disables proc-macro expansion (large RAM save)       |
+| `.vscode/settings.json` | `checkOnSave = false`                    | Disables background `cargo check`                    |
+| `.vscode/settings.json` | `diagnostics.enable = false`             | Disables continuous diagnostic analysis              |
 
 ### Cleanup Script
 
@@ -370,16 +387,17 @@ This script:
 1. **Before starting a new session**, run `make check WHAT=optimize APPLY=Y`
 2. **Limit concurrent sessions** to 2–3 maximum on this machine
 3. **Keep one "primary" session** alive for continuity; kill idle ones
-4. **Run builds sequentially** when possible — avoid `cargo check` in 2+ sessions simultaneously
+4. **Run builds sequentially** when possible — avoid `cargo check` in 2+ sessions
+   simultaneously
 
 ### Environment Variables
 
 These are set automatically via `.cargo/config.toml [env]`:
 
 ```bash
-export CARGO_BUILD_JOBS=8      # cargo parallelism
-export RAYON_NUM_THREADS=4     # rust-analyzer / rayon threads
-export RA_LOG=error            # rust-analyzer log level
+export CARGO_BUILD_JOBS=8  # cargo parallelism
+export RAYON_NUM_THREADS=4 # rust-analyzer / rayon threads
+export RA_LOG=error        # rust-analyzer log level
 ```
 
 ### sccache (Mandatory Compilation Cache)
@@ -387,10 +405,14 @@ export RA_LOG=error            # rust-analyzer log level
 sccache is **mandatory** for all builds (local and CI). It is configured automatically:
 
 - **Local**: `Makefile` sets `RUSTC_WRAPPER=sccache` unconditionally
-- **Local bound**: `.cargo/config.toml` sets `SCCACHE_CACHE_SIZE=10G` so the disk cache cannot grow without limit
-- **CI**: `.github/workflows/ci.yml` configures `SCCACHE_GHA_ENABLED=true` and `SCCACHE_CACHE_SIZE=10G`
+- **Local bound**: `.cargo/config.toml` sets `SCCACHE_CACHE_SIZE=10G` so the disk cache
+  cannot grow without limit
+- **CI**: `.github/workflows/ci.yml` configures `SCCACHE_GHA_ENABLED=true` and
+  `SCCACHE_CACHE_SIZE=10G`
 
-sccache eliminates redundant rebuilds across sessions and CI runs. It is mutually exclusive with Cargo incremental compilation (`CARGO_INCREMENTAL=0`), so incremental compilation is disabled everywhere to keep cache hits high.
+sccache eliminates redundant rebuilds across sessions and CI runs. It is mutually
+exclusive with Cargo incremental compilation (`CARGO_INCREMENTAL=0`), so incremental
+compilation is disabled everywhere to keep cache hits high.
 
 To check sccache status:
 
@@ -402,7 +424,7 @@ To safely prune local build caches (dry-run by default):
 
 ```bash
 make check WHAT=optimize ACT=cache
-make check WHAT=optimize ACT=cache APPLY=Y   # actually prune
+make check WHAT=optimize ACT=cache APPLY=Y # actually prune
 ```
 
 To reset local cache:
@@ -419,11 +441,13 @@ Increase `symbol_info_budget` in `.serena/project.yml` (default: 15s).
 
 ### First call is very slow (~24s)
 
-Normal behavior — rust-analyzer initializes on first LSP request. Subsequent calls are fast. Keep the MCP server alive for batch operations.
+Normal behavior — rust-analyzer initializes on first LSP request. Subsequent calls are
+fast. Keep the MCP server alive for batch operations.
 
 ### `rename_symbol` fails on new files
 
-New files must be indexed first. Run `serena project index` before using `rename_symbol` on recently created files.
+New files must be indexed first. Run `serena project index` before using `rename_symbol`
+on recently created files.
 
 ### Large search results from `find_referencing_symbols`
 
@@ -435,11 +459,14 @@ Delete `.serena/cache/rust/` and reindex with `serena project index`.
 
 ### rust-analyzer warnings
 
-Warnings about "overly long loop turn" during indexing are normal for large workspaces and do not affect functionality.
+Warnings about "overly long loop turn" during indexing are normal for large workspaces
+and do not affect functionality.
 
 ### Context deprecated warning
 
-If you see `Context name 'ide-assistant' is deprecated and has been renamed to 'claude-code'`, update all client configurations to use `--context claude-code`.
+If you see
+`Context name 'ide-assistant' is deprecated and has been renamed to 'claude-code'`,
+update all client configurations to use `--context claude-code`.
 
 ## Global Configuration
 

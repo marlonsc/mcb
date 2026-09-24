@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 16
-title: Integration Points and Adapter Pattern
-status: ACCEPTED
-created:
-updated: 2026-02-05
-related: [13, 15, 19]
-supersedes: []
-superseded_by: []
-implementation_status: "Historical snapshot; see bd for live work"
+
+adr: 16 title: Integration Points and Adapter Pattern status: ACCEPTED created: updated:
+2026-02-05 related: [13, 15, 19] supersedes: [] superseded_by: [] implementation_status:
+"Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,15 +13,16 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
-**Accepted** (v0.2.0 - Preparation)
-**Date**: 2026-01-14
-**Version**: v0.2.0 (Preparation)
+**Accepted** (v0.2.0 - Preparation) **Date**: 2026-01-14 **Version**: v0.2.0
+(Preparation)
 
 ## Context
 
-Integrating PMAT code (proven algorithms, extensive tests) while maintaining MCB's clean architecture.
+Integrating PMAT code (proven algorithms, extensive tests) while maintaining MCB's clean
+architecture.
 
 **Challenge**: PMAT and MCB have different type systems, error handling, and patterns.
 
@@ -175,8 +172,8 @@ Mitigation:
 
 ## Historical Implementation Notes (v0.2.0)
 
-These notes preserve the original design intent and are not a live task board.
-Current implementation work is tracked in beads.
+These notes preserve the original design intent and are not a live task board. Current
+implementation work is tracked in beads.
 
 - Create `crates/mcb-providers/src/analyzers/` directory
 - Define `AnalysisAdapter` trait
@@ -185,9 +182,12 @@ Current implementation work is tracked in beads.
 
 ## Related ADRs
 
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate organization
-- [ADR-015: Workspace Shared Libraries](015-workspace-shared-libraries.md) - PMAT code location
-- [ADR-019: Error Handling Strategy](019-error-handling-strategy.md) - Error conversion patterns
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Crate organization
+- [ADR-015: Workspace Shared Libraries](015-workspace-shared-libraries.md) - PMAT code
+  location
+- [ADR-019: Error Handling Strategy](019-error-handling-strategy.md) - Error conversion
+  patterns
 
 ---
 

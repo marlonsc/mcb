@@ -39,9 +39,12 @@ class BaseMcbSettings(FlextSettings):
         custom_env_file = os.environ.get(c.ENV_FILE_ENV_VAR)
         if custom_env_file:
             custom_path = Path(custom_env_file)
-            if custom_path.exists():
-                return str(custom_path.resolve())
-            return custom_env_file
+            if not custom_path.is_file():
+                # An explicitly configured env file that does not exist is a
+                # configuration error, never silently ignored.
+                msg = f"{c.ENV_FILE_ENV_VAR} points to a missing file: {custom_env_file}"
+                raise ValueError(msg)
+            return str(custom_path.resolve())
         if namespace:
             scoped = Path.cwd() / f".env.mcb-{namespace}"
             if scoped.exists():

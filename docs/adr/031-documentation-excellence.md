@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 31
-title: Documentation Excellence
-status: IMPLEMENTED
-created:
-updated: 2026-02-05
-related: [3, 6, 12, 13]
-supersedes: []
-superseded_by: []
-implementation_status: "Historical snapshot; see bd for live work"
+
+adr: 31 title: Documentation Excellence status: IMPLEMENTED created: updated: 2026-02-05
+related: [3, 6, 12, 13] supersedes: [] superseded_by: [] implementation_status:
+"Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -28,37 +24,33 @@ Accepted
 
 ## Context
 
-The Memory Context Browser project has established a SOLID technical foundation
-with production-ready reliability features, comprehensive observability, and
-enterprise-grade architecture. However, the documentation remains manually
-maintained with custom bash scripts, creating a maintenance burden and limiting
-the project's ability to serve as a reference implementation for documentation
-excellence in the Rust ecosystem.
+The Memory Context Browser project has established a SOLID technical foundation with
+production-ready reliability features, comprehensive observability, and enterprise-grade
+architecture. However, the documentation remains manually maintained with custom bash
+scripts, creating a maintenance burden and limiting the project's ability to serve as a
+reference implementation for documentation excellence in the Rust ecosystem.
 
 Current documentation challenges:
 
 - **Manual Maintenance Burden**: 4-6 hours/week spent on documentation updates
-- **Inconsistent Quality**: Custom scripts lead to formatting and link
-  validation issues
-- **Limited Automation**: Only 30% of documentation is auto-generated from
-  source code
-- **ADR Compliance Gaps**: No automated validation that architectural decisions
-  match implementation
-- **Poor Developer Experience**: Documentation updates lag days behind code
-  changes
-- **Missing Interactive Features**: Static documentation doesn't provide modern
-  search and navigation
+- **Inconsistent Quality**: Custom scripts lead to formatting and link validation issues
+- **Limited Automation**: Only 30% of documentation is auto-generated from source code
+- **ADR Compliance Gaps**: No automated validation that architectural decisions match
+  implementation
+- **Poor Developer Experience**: Documentation updates lag days behind code changes
+- **Missing Interactive Features**: Static documentation doesn't provide modern search
+  and navigation
 
-The project needs to evolve from a technically excellent codebase to a
-**documentation excellence reference** that demonstrates industry-leading
-practices for automated, self-documenting systems.
+The project needs to evolve from a technically excellent codebase to a **documentation
+excellence reference** that demonstrates industry-leading practices for automated,
+self-documenting systems.
 
 ## Decision
 
-Implement "Documentation Excellence" as a focused initiative establishing the
-project as a reference implementation for automated documentation in Rust
-projects. Replace all custom documentation scripts with established open-source
-tools and implement ADR-driven development with automated compliance validation.
+Implement "Documentation Excellence" as a focused initiative establishing the project as
+a reference implementation for automated documentation in Rust projects. Replace all
+custom documentation scripts with established open-source tools and implement ADR-driven
+development with automated compliance validation.
 
 Key architectural decisions:
 
@@ -68,40 +60,35 @@ Key architectural decisions:
   `cargo-modules` and `rust-code-analysis`
 - **Interactive Documentation Platform**: Implement `mdbook`-based professional
   documentation with search and cross-references
-- **ADR Compliance Validation**: Build automated framework ensuring
-  architectural decisions match implementation
-- **Quality Assurance Gates**: Establish automated validation preventing
-  documentation drift using `cargo-spellcheck` and `cargo-deadlinks`
+- **ADR Compliance Validation**: Build automated framework ensuring architectural
+  decisions match implementation
+- **Quality Assurance Gates**: Establish automated validation preventing documentation
+  drift using `cargo-spellcheck` and `cargo-deadlinks`
 - **CI/CD Integration**: Quality gates blocking merges with documentation issues
 
 ### Consequences
 
-Documentation excellence creates a self-sustaining, high-quality project but
-requires significant upfront investment in automation tooling.
+Documentation excellence creates a self-sustaining, high-quality project but requires
+significant upfront investment in automation tooling.
 
 ### Positive Consequences
 
-- **80% Reduction in Manual Work**: Documentation maintenance burden drops from
-  4-6 hours/week to <30 min/week
-- **Industry Leadership**: Establishes project as reference for documentation
-  excellence in Rust
-- **Improved Developer Experience**: Instant documentation updates and
-  professional interactive platform
-- **Quality Assurance**: Automated validation prevents technical debt
-  accumulation
-- **Attracts Contributors**: High-quality documentation lowers contribution
-  barriers
-- **Self-Sustaining**: Documentation automatically stays synchronized with code
-  changes
-- **Reference Implementation**: Serves as learning resource for documentation
-  best practices
+- **80% Reduction in Manual Work**: Documentation maintenance burden drops from 4-6
+  hours/week to <30 min/week
+- **Industry Leadership**: Establishes project as reference for documentation excellence
+  in Rust
+- **Improved Developer Experience**: Instant documentation updates and professional
+  interactive platform
+- **Quality Assurance**: Automated validation prevents technical debt accumulation
+- **Attracts Contributors**: High-quality documentation lowers contribution barriers
+- **Self-Sustaining**: Documentation automatically stays synchronized with code changes
+- **Reference Implementation**: Serves as learning resource for documentation best
+  practices
 
 ### Negative Consequences
 
-- **Initial Development Overhead**: 2-3 weeks focused on documentation
-  infrastructure
-- **Tool Ecosystem Complexity**: Multiple tools requiring integration and
-  maintenance
+- **Initial Development Overhead**: 2-3 weeks focused on documentation infrastructure
+- **Tool Ecosystem Complexity**: Multiple tools requiring integration and maintenance
 - **Learning Curve**: Team adaptation to new documentation workflows
 - **Dependency Management**: Additional tooling dependencies to maintain
 - **Quality Standards Pressure**: Higher expectations for documentation quality
@@ -113,34 +100,33 @@ requires significant upfront investment in automation tooling.
 - **Description**: Continue with current documentation approach, making gradual
   improvements
 - **Pros**: Lower immediate effort, maintains current momentum
-- **Cons**: Misses opportunity to establish industry leadership, continues
-  manual maintenance burden
+- **Cons**: Misses opportunity to establish industry leadership, continues manual
+  maintenance burden
 - **Rejection Reason**: Doesn't address fundamental issues and limits project's
   potential as reference implementation
 
 ### Alternative 2: Documentation as Separate Project
 
-- **Description**: Create documentation tooling as standalone project or fork
-  existing tools
+- **Description**: Create documentation tooling as standalone project or fork existing
+  tools
 - **Pros**: Could benefit broader ecosystem, separate maintenance concerns
-- **Cons**: Scattered focus, delays core project improvements, harder to
-  integrate tightly
-- **Rejection Reason**: Documentation excellence should be demonstrated through
-  the project itself
+- **Cons**: Scattered focus, delays core project improvements, harder to integrate
+  tightly
+- **Rejection Reason**: Documentation excellence should be demonstrated through the
+  project itself
 
 ### Alternative 3: Minimal Automation Only
 
-- **Description**: Focus only on basic auto-generation without comprehensive
-  tooling ecosystem
+- **Description**: Focus only on basic auto-generation without comprehensive tooling
+  ecosystem
 - **Pros**: Simpler implementation, less complexity
 - **Cons**: Misses interactive features and quality assurance opportunities
-- **Rejection Reason**: Doesn't achieve the "excellence" standard needed for
-  industry reference
+- **Rejection Reason**: Doesn't achieve the "excellence" standard needed for industry
+  reference
 
 ### Alternative 4: Commercial Documentation Tools
 
-- **Description**: Adopt commercial documentation platforms (README, Stoplight,
-  etc.)
+- **Description**: Adopt commercial documentation platforms (README, Stoplight, etc.)
 - **Pros**: Professional features, support, and maintenance handled externally
 - **Cons**: Vendor lock-in, ongoing costs, less control over automation
 - **Rejection Reason**: Open-source project should demonstrate excellence using
@@ -241,10 +227,14 @@ pub struct DocumentationMetrics {
 
 ## Related ADRs
 
-- [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) - Architecture context
-- [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Code quality standards
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI documentation patterns
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate documentation
+- [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md) -
+  Architecture context
+- [ADR-006: Code Audit and Improvements](006-code-audit-and-improvements.md) - Code
+  quality standards
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI
+  documentation patterns
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Crate documentation
 
 ## References
 

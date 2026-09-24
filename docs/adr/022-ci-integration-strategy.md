@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 22
-title: Continuous Integration Strategy
-status: ACCEPTED
-created:
-updated: 2026-02-05
-related: [13, 17, 20]
-supersedes: []
-superseded_by: []
-implementation_status: "Historical snapshot; see bd for live work"
+
+adr: 22 title: Continuous Integration Strategy status: ACCEPTED created: updated:
+2026-02-05 related: [13, 17, 20] supersedes: [] superseded_by: [] implementation_status:
+"Historical snapshot; see bd for live work"
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -17,8 +13,7 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Status
 
-**Accepted** (v0.2.0 - Implementation)
-**Date**: 2026-01-14
+**Accepted** (v0.2.0 - Implementation) **Date**: 2026-01-14
 
 ## Context
 
@@ -31,7 +26,6 @@ Multi-release integration requires robust CI to catch regressions.
 ### Test Matrix
 
 ```yaml
-
 # .github/workflows/ci.yml
 
 strategy:
@@ -39,10 +33,10 @@ strategy:
     rust: [stable, beta]
     os: [ubuntu-latest, macos-latest, windows-latest]
     features:
-      -   default
-      -   full
-      -   search
-      -   analysis  # v0.3.0+
+      - default
+      - full
+      - search
+      - analysis # v0.3.0+
 ```
 
 ## Quality Gates
@@ -100,12 +94,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      -   uses: actions/checkout@v4
-      -   uses: dtolnay/rust-toolchain@stable
-      -   run: cargo fmt --check
-      -   run: cargo clippy -- -D warnings
-      -   run: cargo test --all-features
-      -   run: cargo run -p mcb-validate
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - run: cargo fmt --check
+      - run: cargo clippy -- -D warnings
+      - run: cargo test --all-features
+      - run: cargo run -p mcb-validate
 ```
 
 Key checks:
@@ -149,9 +143,12 @@ Mitigation:
 
 ## Related ADRs
 
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - What to validate
-- [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Feature timeline
-- [ADR-020: Testing Strategy Integration](020-testing-strategy-integration.md) - Test organization
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  What to validate
+- [ADR-017: Phased Feature Integration](017-phased-feature-integration.md) - Feature
+  timeline
+- [ADR-020: Testing Strategy Integration](020-testing-strategy-integration.md) - Test
+  organization
 
 ---
 

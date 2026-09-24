@@ -1,18 +1,20 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # API Surface Analysis
 
-This document provides an overview of the public API surface of the Memory Context Browser.
+This document provides an overview of the public API surface of the Memory Context
+Browser.
 
 ## ↔ Code ↔ Docs cross-reference
 
-| Direction | Link |
-| --------- | ---- |
-| Facade crate | [`crates/mcb/src/lib.rs`](../../crates/mcb/src/lib.rs) — top-level re-exports |
-| Domain | [`crates/mcb-domain/src/lib.rs`](../../crates/mcb-domain/src/lib.rs) · [domain.md](./domain.md) |
-| Server | [`crates/mcb-server/src/lib.rs`](../../crates/mcb-server/src/lib.rs) · [server.md](./server.md) |
+| Direction      | Link                                                                                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Facade crate   | [`crates/mcb/src/lib.rs`](../../crates/mcb/src/lib.rs) — top-level re-exports                                                   |
+| Domain         | [`crates/mcb-domain/src/lib.rs`](../../crates/mcb-domain/src/lib.rs) · [domain.md](./domain.md)                                 |
+| Server         | [`crates/mcb-server/src/lib.rs`](../../crates/mcb-server/src/lib.rs) · [server.md](./server.md)                                 |
 | Infrastructure | [`crates/mcb-infrastructure/src/lib.rs`](../../crates/mcb-infrastructure/src/lib.rs) · [infrastructure.md](./infrastructure.md) |
-| Providers | [`crates/mcb-providers/src/lib.rs`](../../crates/mcb-providers/src/lib.rs) · [providers.md](./providers.md) |
-| Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) |
+| Providers      | [`crates/mcb-providers/src/lib.rs`](../../crates/mcb-providers/src/lib.rs) · [providers.md](./providers.md)                     |
+| Architecture   | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md)           |
 
 ## Crate Public APIs
 
@@ -40,12 +42,14 @@ pub use server::{McpServer, McpServerBuilder};
 
 Core types and port traits (source of truth for all domain contracts):
 
-- **Entities**: `CodeChunk`, `Codebase`, `Project`, `Organization`, `AgentSession`, `Observation`, `Repository`
+- **Entities**: `CodeChunk`, `Codebase`, `Project`, `Organization`, `AgentSession`,
+  `Observation`, `Repository`
 - **Value objects**: `Embedding`, `SearchResult`, `Language`
 - **Errors**: `Error`, `Result<T>`
-- **Port traits**: `EmbeddingProvider`, `VectorStoreProvider`, `CacheProvider`, `HybridSearchProvider`,
-  `LanguageChunkingProvider`, `VcsProvider`, `CryptoProvider`
-- **Repository ports**: `MemoryRepository`, `AgentRepository`, `VcsEntityRepository`, `ProjectRepository`, ...
+- **Port traits**: `EmbeddingProvider`, `VectorStoreProvider`, `CacheProvider`,
+  `HybridSearchProvider`, `LanguageChunkingProvider`, `VcsProvider`, `CryptoProvider`
+- **Repository ports**: `MemoryRepository`, `AgentRepository`, `VcsEntityRepository`,
+  `ProjectRepository`, ...
 
 ### mcb-server
 
@@ -60,8 +64,10 @@ MCP protocol server (source: `crates/mcb-server/src/`):
 
 External integrations (source: `crates/mcb-providers/src/`):
 
-- **Embedding**: `OpenAI`, `Ollama`, `VoyageAI`, `Gemini`, `FastEmbed`, `Anthropic` (6 providers)
-- **Vector Store**: `EdgeVec`, `Milvus`, `Qdrant`, `Pinecone`, encrypted decorator (5 backends)
+- **Embedding**: `OpenAI`, `Ollama`, `VoyageAI`, `Gemini`, `FastEmbed`, `Anthropic` (6
+  providers)
+- **Vector Store**: `EdgeVec`, `Milvus`, `Qdrant`, `Pinecone`, encrypted decorator (5
+  backends)
 - **Cache**: `Moka`, `Redis` (2 backends)
 - **Events**: Tokio broadcast, NATS (2 backends)
 - **Language**: 13 languages via tree-sitter v0.26
@@ -72,7 +78,8 @@ External integrations (source: `crates/mcb-providers/src/`):
 Configuration and DI (source: `crates/mcb-infrastructure/src/`):
 
 - `config::AppConfig`, `ServerConfig`, `InfrastructureConfig` — typed TOML config
-- `di::` — AppContext manual composition root in `bootstrap.rs` ([ADR-050](../adr/050-manual-composition-root-dill-removal.md))
+- `di::` — AppContext manual composition root in `bootstrap.rs`
+  ([ADR-050](../adr/050-manual-composition-root-dill-removal.md))
 - `routing::` — provider routing and selection
 - `crypto::` — AES-GCM encryption
 - `cache::` — Moka/Redis infrastructure

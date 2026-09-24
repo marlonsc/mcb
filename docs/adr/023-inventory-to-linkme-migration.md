@@ -1,14 +1,10 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 23
-title: Inventory to Linkme Migration
-status: ACCEPTED
-created:
-updated: 2026-02-05
-related: [2, 3, 13]
-supersedes: []
-superseded_by: []
-implementation_status: Complete
+
+adr: 23 title: Inventory to Linkme Migration status: ACCEPTED created: updated:
+2026-02-05 related: [2, 3, 13] supersedes: [] superseded_by: [] implementation_status:
+Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -19,32 +15,41 @@ implementation_status: Complete
 
 **Accepted** (v0.1.2)
 
-> Completed in v0.1.2. All 15 providers migrated to linkme.
-> Supersedes inventory-based registration.
+> Completed in v0.1.2. All 15 providers migrated to linkme. Supersedes inventory-based
+> registration.
 
 ## Context
 
-The current codebase uses the `inventory` crate for plugin registration, which provides compile-time collection of static items through procedural macros (`inventory::submit!` and `inventory::collect!`). While functional, this approach has several drawbacks:
+The current codebase uses the `inventory` crate for plugin registration, which provides
+compile-time collection of static items through procedural macros (`inventory::submit!`
+and `inventory::collect!`). While functional, this approach has several drawbacks:
 
 1. **Heavy infrastructure**: Generates significant boilerplate code for registration
 2. **Limited platform support**: May not work well with WebAssembly (WASM) targets
 3. **Complex macros**: Requires understanding of inventory's macro system
 4. **Maintenance overhead**: Additional dependency that could be simplified
 
-The `linkme` crate offers an alternative approach using distributed slices, which are aggregated by the linker at compile time. This approach:
+The `linkme` crate offers an alternative approach using distributed slices, which are
+aggregated by the linker at compile time. This approach:
 
-1. **Eliminates boilerplate**: Uses simple attribute macros instead of complex registration calls
+1. **Eliminates boilerplate**: Uses simple attribute macros instead of complex
+   registration calls
 2. **Broader platform support**: Works with WASM and other constrained environments
-3. **Simpler API**: Just add `#[linkme::distributed_slice]` and static items are automatically collected
-4. **Better performance**: Linker-based collection is more efficient than runtime iteration
+3. **Simpler API**: Just add `#[linkme::distributed_slice]` and static items are
+   automatically collected
+4. **Better performance**: Linker-based collection is more efficient than runtime
+   iteration
 
 ## Decision
 
-We will migrate from `inventory` to `linkme` for all plugin registration across the codebase. The migration will:
+We will migrate from `inventory` to `linkme` for all plugin registration across the
+codebase. The migration will:
 
 1. Replace `inventory::collect!` declarations with `linkme::distributed_slice!`
-2. Replace `inventory::submit!` calls with simple static item declarations using `#[linkme::distributed_slice(MY_SLICE)]`
-3. Update all provider registration code (embedding, vector store, cache, language providers)
+2. Replace `inventory::submit!` calls with simple static item declarations using
+   `#[linkme::distributed_slice(MY_SLICE)]`
+3. Update all provider registration code (embedding, vector store, cache, language
+   providers)
 4. Maintain the same runtime API for provider discovery and resolution
 5. Remove the `inventory` dependency and add `linkme`
 
@@ -114,7 +119,8 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 ## Implementation Status
 
-- [x] All embedding providers (6): FastEmbed, OpenAI, VoyageAI, Ollama, Gemini, Anthropic
+- [x] All embedding providers (6): FastEmbed, OpenAI, VoyageAI, Ollama, Gemini,
+      Anthropic
 - [x] All cache providers (2): Moka, Redis
 - [x] All vector store providers (5): EdgeVec, Milvus, Qdrant, Pinecone, Encrypted
 - [x] All language providers (1): universal
@@ -124,8 +130,8 @@ static OLLAMA_PROVIDER: EmbeddingProviderEntry = EmbeddingProviderEntry {
 
 ## Validation Criteria
 
-The unchecked items below are historical compatibility observations, not active
-project tasks. Current work is tracked in beads.
+The unchecked items below are historical compatibility observations, not active project
+tasks. Current work is tracked in beads.
 
 - [x] All providers are correctly registered and discoverable
 - [x] Build succeeds on all supported platforms (Linux, macOS, Windows)
@@ -136,6 +142,9 @@ project tasks. Current work is tracked in beads.
 
 ## Related ADRs
 
-- [ADR 029: Hexagonal Architecture](050-manual-composition-root-dill-removal.md) - Historical DI strategy (superseded by ADR-050)
-- [ADR 003: Unified Provider Architecture](003-unified-provider-architecture.md) - Provider registration system
-- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Multi-crate organization
+- [ADR 029: Hexagonal Architecture](050-manual-composition-root-dill-removal.md) -
+  Historical DI strategy (superseded by ADR-050)
+- [ADR 003: Unified Provider Architecture](003-unified-provider-architecture.md) -
+  Provider registration system
+- [ADR 013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Multi-crate organization

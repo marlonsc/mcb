@@ -11,7 +11,6 @@ use serde_json::Value;
 
 use mcb_utils::constants::http::{
     CONTENT_TYPE_JSON, HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE,
-    PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT,
 };
 use mcb_utils::constants::vector_store::{
     VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_START_LINE,
@@ -100,8 +99,6 @@ impl WeaviateVectorStoreProvider {
             operation: path,
             headers: &headers,
             body: body.as_ref(),
-            retry_attempts: PROVIDER_RETRY_COUNT,
-            retry_backoff_ms: PROVIDER_RETRY_BACKOFF_MS,
         })
         .await
     }

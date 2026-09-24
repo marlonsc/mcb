@@ -4,12 +4,10 @@ use async_trait::async_trait;
 use mcb_domain::error::Error;
 use mcb_domain::ports::VectorStoreProvider;
 use mcb_domain::value_objects::{CollectionId, Embedding, SearchResult};
-use mcb_utils::constants::http::{PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT};
 use mcb_utils::constants::vector_store::{
     MILVUS_ERROR_COLLECTION_NOT_EXISTS, MILVUS_IVFFLAT_NLIST, MILVUS_PARAM_NLIST,
     MILVUS_VECTOR_INDEX_NAME, VECTOR_FIELD_VECTOR,
 };
-use mcb_utils::utils::retry::{RetryConfig, retry_with_backoff};
 
 use super::*;
 use helpers::{build_insert_columns, parse_milvus_ids, prepare_insert_data, validate_insert_input};
@@ -20,34 +18,23 @@ impl MilvusVectorStoreProvider {
         use milvus::index::{IndexParams, IndexType, MetricType};
         let name_str = to_milvus_name(name);
 
-        let index_result: std::result::Result<(), milvus::error::Error> = retry_with_backoff(
-            RetryConfig::new(
-                PROVIDER_RETRY_COUNT,
-                std::time::Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
-            ),
-            |_| async {
-                let nlist_params: HashMap<String, String> = HashMap::from([(
-                    MILVUS_PARAM_NLIST.to_owned(),
-                    MILVUS_IVFFLAT_NLIST.to_string(),
-                )]);
-                let index_params = IndexParams::new(
-                    MILVUS_VECTOR_INDEX_NAME.to_owned(),
-                    IndexType::IvfFlat,
-                    MetricType::L2,
-                    nlist_params,
-                );
-                self.client
-                    .create_index(&name_str, VECTOR_FIELD_VECTOR, index_params)
-                    .await
-            },
-            |e| {
-                let err_str = e.to_string();
-                err_str.contains(MILVUS_ERROR_COLLECTION_NOT_EXISTS)
-                    || err_str.contains(
-                        mcb_utils::constants::vector_store::MILVUS_ERROR_COLLECTION_NOT_FOUND,
-                    )
-            },
-        )
+        // Single attempt: failures surface as errors for the caller to handle;
+        // no retry machinery masks them.
+        let index_result = async {
+            let nlist_params: HashMap<String, String> = HashMap::from([(
+                MILVUS_PARAM_NLIST.to_owned(),
+                MILVUS_IVFFLAT_NLIST.to_string(),
+            )]);
+            let index_params = IndexParams::new(
+                MILVUS_VECTOR_INDEX_NAME.to_owned(),
+                IndexType::IvfFlat,
+                MetricType::L2,
+                nlist_params,
+            );
+            self.client
+                .create_index(&name_str, VECTOR_FIELD_VECTOR, index_params)
+                .await
+        }
         .await;
 
         if let Err(e) = index_result {
@@ -56,9 +43,7 @@ impl MilvusVectorStoreProvider {
                 || err_str
                     .contains(mcb_utils::constants::vector_store::MILVUS_ERROR_COLLECTION_NOT_FOUND)
             {
-                return Err(Error::vector_db(format!(
-                    "Failed to create index after retries: {e}"
-                )));
+                return Err(Error::vector_db(format!("Failed to create index: {e}")));
             }
             return Err(Error::vector_db(format!("Failed to create index: {e}")));
         }

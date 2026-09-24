@@ -5,7 +5,7 @@ mod groups;
 
 use mcb_domain::error;
 use mcb_domain::error::Error;
-use rmcp::model::{CallToolResult, Content, ErrorData as McpError};
+use rmcp::model::{CallToolResult, ContentBlock, ErrorData as McpError};
 
 /// Logs the underlying error server-side and returns a generic internal error.
 ///
@@ -48,5 +48,5 @@ pub fn to_contextual_tool_error(e: impl Into<Error>) -> CallToolResult {
         error!("ErrorMapping", "unmapped error variant", &error);
         "Internal error".to_owned()
     });
-    CallToolResult::error(vec![Content::text(message)])
+    CallToolResult::error(vec![ContentBlock::text(message)])
 }

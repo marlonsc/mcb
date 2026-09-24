@@ -1,22 +1,23 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # server Module
 
-**Source**: `crates/mcb-server/src/`
-**Crate**: `mcb-server`
-**Lines of Code**: ~15,800+
+**Source**: `crates/mcb-server/src/` **Crate**: `mcb-server` **Lines of Code**: ~15,800+
 
 ## ↔ Code ↔ Docs cross-reference
 
-| Direction | Link |
-| --------- | ---- |
-| Code → Docs | [`crates/mcb-server/src/lib.rs`](../../crates/mcb-server/src/lib.rs) links here |
-| Docs → Code | [`crates/mcb-server/src/lib.rs`](../../crates/mcb-server/src/lib.rs) — crate root |
+| Direction    | Link                                                                                                                                                                             |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Code → Docs  | [`crates/mcb-server/src/lib.rs`](../../crates/mcb-server/src/lib.rs) links here                                                                                                  |
+| Docs → Code  | [`crates/mcb-server/src/lib.rs`](../../crates/mcb-server/src/lib.rs) — crate root                                                                                                |
 | Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-033`](../adr/033-mcp-handler-consolidation.md) · [`ADR-011`](../adr/011-http-transport-request-response-pattern.md) |
-| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
+| Roadmap      | [`ROADMAP.md`](../developer/ROADMAP.md)                                                                                                                                          |
 
 ## Overview
 
-The server module implements MCP handlers, admin/web surfaces, transport, hooks, and session management. Handlers are organized into domain-specific subdirectories following the entity-per-module pattern.
+The server module implements MCP handlers, admin/web surfaces, transport, hooks, and
+session management. Handlers are organized into domain-specific subdirectories following
+the entity-per-module pattern.
 
 ## Key Areas
 
@@ -32,7 +33,8 @@ The server module implements MCP handlers, admin/web surfaces, transport, hooks,
 
 ## Core Root Files
 
-- `auth.rs`, `args.rs`, `builder.rs`, `constants.rs`, `error_mapping.rs`, `formatter.rs`, `init.rs`, `mcp_server.rs`, `lib.rs`
+- `auth.rs`, `args.rs`, `builder.rs`, `constants.rs`, `error_mapping.rs`,
+  `formatter.rs`, `init.rs`, `mcp_server.rs`, `lib.rs`
 
 ## File Structure
 

@@ -21,13 +21,13 @@ This repository contains sample code in multiple languages to test:
 
 The following queries should return relevant results:
 
-| Query | Expected File |
-| ------- | --------------- |
-| "function that adds numbers" | calculator.rs |
-| "reverse a String" | String_utils.py |
-| "format a date" | utils.js |
-| "check if palindrome" | String_utils.py |
-| "debounce function" | utils.js |
+| Query                        | Expected File   |
+| ---------------------------- | --------------- |
+| "function that adds numbers" | calculator.rs   |
+| "reverse a String"           | String_utils.py |
+| "format a date"              | utils.js        |
+| "check if palindrome"        | String_utils.py |
+| "debounce function"          | utils.js        |
 
 ## Usage in Golden Tests
 

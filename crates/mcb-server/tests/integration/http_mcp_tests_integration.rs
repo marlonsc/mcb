@@ -101,7 +101,10 @@ async fn mcp_tools_call_list_rules() -> Result<()> {
         "tools/call",
         Some(serde_json::json!({
             "name": "list_rules",
-            "arguments": {}
+            "arguments": {},
+            // Auto-session creation rejects calls without a model id (the
+            // FALLBACK_UNKNOWN default is gone); declare it explicitly.
+            "_meta": {"model_id": "test-model"}
         })),
         2,
     );

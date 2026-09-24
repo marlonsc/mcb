@@ -69,8 +69,10 @@ if command -v protoc &>/dev/null; then
 fi
 
 # Install ONNX Runtime (required by fastembed/ort for semantic embedding).
-# ort-sys 2.0.0-rc.11 uses ORT_API_VERSION=23 which requires ONNX Runtime >= 1.23.x.
-ORT_VERSION="1.23.2"
+# fastembed 5.17.4 depends on ort 2.0.0-rc.13 with api-24, which requires
+# ONNX Runtime >= 1.24.x; 1.24.4 is the latest patch of that line. The 1.24
+# line ships osx-arm64 only — upstream dropped the universal2 builds.
+ORT_VERSION="1.24.4"
 
 verify_ort_checksum() {
 	local file="$1" expected="$2"
@@ -96,7 +98,7 @@ Linux)
 	if ! ldconfig -p 2>/dev/null | grep -q 'libonnxruntime\.so'; then
 		ORT_ARCHIVE="onnxruntime-linux-x64-${ORT_VERSION}.tgz"
 		ORT_URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ORT_ARCHIVE}"
-		ORT_SHA256="${ORT_SHA256:-1fa4dcaef22f6f7d5cd81b28c2800414350c10116f5fdd46a2160082551c5f9b}"
+		ORT_SHA256="${ORT_SHA256:-3a211fbea252c1e66290658f1b735b772056149f28321e71c308942cdb54b747}"
 		ORT_TMP="/tmp/${ORT_ARCHIVE}"
 		echo "Installing ONNX Runtime ${ORT_VERSION} (Linux x64)..." >&2
 		curl -sSfL "$ORT_URL" -o "$ORT_TMP"
@@ -111,15 +113,15 @@ Linux)
 	;;
 Darwin)
 	if ! find /usr/local/lib /opt/homebrew/lib -name 'libonnxruntime*.dylib' 2>/dev/null | grep -q .; then
-		ORT_ARCHIVE="onnxruntime-osx-universal2-${ORT_VERSION}.tgz"
+		ORT_ARCHIVE="onnxruntime-osx-arm64-${ORT_VERSION}.tgz"
 		ORT_URL="https://github.com/microsoft/onnxruntime/releases/download/v${ORT_VERSION}/${ORT_ARCHIVE}"
-		ORT_SHA256="${ORT_SHA256_MACOS:-49ae8e3a66ccb18d98ad3fe7f5906b6d7887df8a5edd40f49eb2b14e20885809}"
+		ORT_SHA256="${ORT_SHA256_MACOS:-93787795f47e1eee369182e43ed51b9e5da0878ab0346aecf4258979b8bba989}"
 		ORT_TMP="/tmp/${ORT_ARCHIVE}"
-		echo "Installing ONNX Runtime ${ORT_VERSION} (macOS universal2)..." >&2
+		echo "Installing ONNX Runtime ${ORT_VERSION} (macOS arm64)..." >&2
 		curl -sSfL "$ORT_URL" -o "$ORT_TMP"
 		verify_ort_checksum "$ORT_TMP" "$ORT_SHA256"
 		tar -xzf "$ORT_TMP" -C /tmp
-		ORT_DIR="/tmp/onnxruntime-osx-universal2-${ORT_VERSION}"
+		ORT_DIR="/tmp/onnxruntime-osx-arm64-${ORT_VERSION}"
 		sudo mkdir -p /usr/local/lib
 		sudo cp "${ORT_DIR}/lib/libonnxruntime.${ORT_VERSION}.dylib" /usr/local/lib/
 		sudo ln -sf "/usr/local/lib/libonnxruntime.${ORT_VERSION}.dylib" /usr/local/lib/libonnxruntime.dylib
