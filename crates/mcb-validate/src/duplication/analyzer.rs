@@ -118,7 +118,7 @@ impl DuplicationAnalyzer {
             "rb" => "ruby",
             "php" => "php",
             "swift" => "swift",
-            _ => mcb_utils::constants::FALLBACK_UNKNOWN,
+            _ => crate::constants::UNKNOWN_PROVENANCE,
         }
     }
 
