@@ -41,7 +41,7 @@
 pub mod thresholds;
 
 /// Crate-local provenance sentinels for report fields.
-pub mod constants;
+pub mod sentinels;
 
 /// Violation runtime types (field formatting, file path extraction).
 pub mod macros;
