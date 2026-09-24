@@ -247,8 +247,14 @@ validate_external_links() {
 			if check_executable curl; then
 				local status
 				status=$(curl -s -o /dev/null -w "%{http_code}" --max-time 5 "$link" 2>/dev/null || echo "000")
-				if [[ "$status" =~ ^[45][0-9][0-9]$ ]]; then
-					log_warning "External link may be broken: $link (status: $status)"
+				if [[ "$status" == "000" ]]; then
+					# 000 = curl failed (missing feature/timeout/network): the
+					# link's health is UNKNOWN, which is a failure, not a pass.
+					log_error "External link could not be checked: $link (status: $status)"
+					inc_errors
+				elif [[ "$status" =~ ^[45][0-9][0-9]$ ]]; then
+					log_error "External link is broken: $link (status: $status)"
+					inc_errors
 				fi
 			fi
 		done
@@ -378,7 +384,9 @@ run_link_validation() {
 	elif check_executable curl; then
 		validate_external_links
 	else
-		log_warning "curl not available - skipping external link validation"
+		# Law 14: a missing tool is RED, never a silent skip.
+		log_error "curl not available - external link validation cannot run"
+		inc_errors
 	fi
 
 	print_summary "Link Validation"

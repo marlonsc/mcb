@@ -61,6 +61,23 @@ impl Default for LanguageDetector {
     }
 }
 
+/// Load the detection source for a file: explicit content when provided,
+/// otherwise the file's bytes. A read failure yields `None` — detection never
+/// runs on fabricated empty input (`UTILITIES_POLICY`: no `unwrap_or_default`
+/// for detection data); callers already model "unknown" as `None`.
+fn read_source(path: &Path, content: Option<&str>) -> Option<Vec<u8>> {
+    content.map_or_else(
+        || match std::fs::read(path) {
+            Ok(bytes) => Some(bytes),
+            Err(err) => {
+                mcb_domain::error!("language_detector", "unreadable file", &err);
+                None
+            }
+        },
+        |c| Some(c.as_bytes().to_vec()),
+    )
+}
+
 impl LanguageDetector {
     /// Create a new language detector instance.
     #[must_use]
@@ -82,10 +99,7 @@ impl LanguageDetector {
             return Some(lang);
         }
 
-        let source = content.map_or_else(
-            || std::fs::read(path).unwrap_or_default(),
-            |c| c.as_bytes().to_vec(),
-        );
+        let source = read_source(path, content)?;
         let (rca_lang, _) = guess_language(&source, path);
         if let Some(lang) = rca_lang.and_then(language_from_rca) {
             return Some(lang);
@@ -115,10 +129,7 @@ impl LanguageDetector {
             return Some(language_to_rca(lang));
         }
 
-        let source = content.map_or_else(
-            || std::fs::read(path).unwrap_or_default(),
-            |c| c.as_bytes().to_vec(),
-        );
+        let source = read_source(path, content)?;
         let (rca_lang, _) = guess_language(&source, path);
         rca_lang.and_then(|lang| language_from_rca(lang).map(|_| lang))
     }
