@@ -23,6 +23,13 @@ post-setup:
 
 pre-check:
 	@bash scripts/lib/mcb.sh conflict-markers
+	@# Rust gate (mcb-hau9): the generated check surface owns the Python
+	@# gates only, so workspace fmt/clippy health enters here — every
+	@# `make check` (local, CI=Y and the CI=N complement) fails fast on
+	@# formatting drift or clippy warnings. CI runners get sccache via
+	@# post-setup; local runs rely on the machine toolchain.
+	@bash scripts/lib/mcb.sh run cargo fmt --all -- --check
+	@bash scripts/lib/mcb.sh run cargo clippy --all-targets -- -D warnings
 
 # Why: the generated `build` builtin owns the Python wheel (uv build); the
 # Rust workspace binary is this project's artifact, so it builds here as a
