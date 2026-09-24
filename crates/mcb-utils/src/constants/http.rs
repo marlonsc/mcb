@@ -53,9 +53,3 @@ pub const ERROR_MSG_REQUEST_TIMEOUT: &str = "Request timed out after {:?}";
 
 /// Default CORS origin (allow all).
 pub const DEFAULT_CORS_ORIGIN: &str = "*";
-
-/// Default retry count for all provider API requests.
-pub const PROVIDER_RETRY_COUNT: usize = 3;
-
-/// Default retry backoff for all provider API requests (milliseconds).
-pub const PROVIDER_RETRY_BACKOFF_MS: u64 = 500;

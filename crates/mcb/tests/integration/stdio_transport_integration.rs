@@ -296,10 +296,7 @@ async fn test_stdio_roundtrip_initialize() -> TestResult {
             .server_info
             .as_ref()
             .ok_or("peer_info should carry server_info")?;
-        assert!(
-            !server_info.name.is_empty(),
-            "Should have server name"
-        );
+        assert!(!server_info.name.is_empty(), "Should have server name");
 
         let _ = client.cancel().await;
         cleanup_temp_dbs();

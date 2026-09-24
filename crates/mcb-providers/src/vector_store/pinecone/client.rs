@@ -13,10 +13,7 @@ use serde_json::Value;
 
 use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
 use crate::utils::vector_store::search_result_from_json_metadata;
-use mcb_utils::constants::http::{
-    HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER, PROVIDER_RETRY_BACKOFF_MS,
-    PROVIDER_RETRY_COUNT,
-};
+use mcb_utils::constants::http::{HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER};
 
 /// Pinecone vector store provider
 ///
@@ -87,8 +84,6 @@ impl PineconeVectorStoreProvider {
             operation: path,
             headers: &headers,
             body: body.as_ref(),
-            retry_attempts: PROVIDER_RETRY_COUNT,
-            retry_backoff_ms: PROVIDER_RETRY_BACKOFF_MS,
         })
         .await
     }
