@@ -60,12 +60,14 @@ fn cleanup_temp_dbs() {
 ///
 /// Panics if the binary cannot be found in any expected location.
 fn get_mcb_path() -> PathBuf {
-    // cargo test sets this environment variable when the binary is part of the workspace
+    // Why: CARGO_BIN_EXE_mcb is cargo's canonical binary path; the target-dir
+    // sweep below is declared test-support resolution for direct
+    // `cargo test -p mcb --test ...` invocations where the env var is unset.
+    // All three sources are checked in order and absence fails loudly.
     if let Ok(path) = std::env::var("CARGO_BIN_EXE_mcb") {
         return PathBuf::from(path);
     }
 
-    // Fallback: look in target directory relative to manifest
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
     let bin = format!("mcb{}", std::env::consts::EXE_SUFFIX);
     let debug_path = PathBuf::from(manifest_dir).join(format!("../../target/debug/{bin}"));

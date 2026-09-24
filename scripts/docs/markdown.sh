@@ -110,43 +110,19 @@ lint_mode() {
     log_info "MCP Context Browser - Markdown Linting"
     log_info "======================================"
 
-    if check_executable markdownlint; then
-        log_info "Using markdownlint-cli for comprehensive linting..."
-        if _run_markdownlint; then
-            log_success "Markdown linting passed"
-        else
-            log_error "Markdown linting failed"
-            exit 1
-        fi
+    # Law 14: a missing linter is RED, never a degraded ad-hoc pass.
+    check_executable markdownlint || {
+        log_error "markdownlint-cli not found - markdown linting cannot run. Install: npm install -g markdownlint-cli"
+        exit 1
+    }
+
+    log_info "Using markdownlint-cli for comprehensive linting..."
+    if _run_markdownlint; then
+        log_success "Markdown linting passed"
     else
-        log_warning "markdownlint-cli not found, using fallback linting"
-        lint_fallback
+        log_error "Markdown linting failed"
+        exit 1
     fi
-}
-
-lint_fallback() {
-    local files
-    files=$(find_markdown_files "$DOCS_DIR")
-
-    for file in $files; do
-        local filename
-        filename=$(basename "$file")
-
-        check_trailing_whitespace "$file" && { log_error "Trailing whitespace in $filename"; inc_errors; }
-        check_multiple_blanks "$file" && { log_warning "Multiple blank lines in $filename"; inc_warnings; }
-        check_mixed_lists "$file" && { log_warning "Mixed list markers in $filename"; inc_warnings; }
-        # MD040 disabled in .markdownlint.json - code blocks without language tags allowed
-        # check_unlabeled_codeblocks "$file" && { log_warning "Code blocks without language in $filename"; inc_warnings; }
-    done
-
-    echo
-    log_info "Linting Summary (Fallback Mode):"
-    echo "  Errors: $(get_errors)"
-    echo "  Warnings: $(get_warnings)"
-
-    [[ $(get_errors) -gt 0 ]] && { log_error "Found issues. Run './markdown.sh fix' to auto-fix."; exit 1; }
-    [[ $(get_warnings) -gt 0 ]] && log_warning "Found warnings. Consider running './markdown.sh fix'."
-    log_success "No critical issues found."
 }
 
 # =============================================================================
