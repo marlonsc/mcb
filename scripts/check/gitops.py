@@ -57,6 +57,11 @@ def run(settings: GitopsSettings) -> r[str]:
     still reported in full through the logger below.
     """
     k8s_root = settings.root / str(McbSettings().k8s_dir)
+    if not k8s_root.is_dir():
+        # A missing root is a configuration error, not a legitimate skip:
+        # a wrong k8s_dir must fail the gate, never pass it vacuously.
+        logger.error(f"GitOps root does not exist: {k8s_root}")
+        return r[str].fail(f"GitOps root does not exist: {k8s_root}")
     summary_result = summarize(k8s_root)
     if summary_result.failure:
         logger.error(summary_result.error or "gitops discovery failed")

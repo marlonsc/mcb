@@ -377,11 +377,9 @@ async fn post_mcp_request(
         builder = builder.header(HEADER_OPERATOR_ID, user);
     }
 
-    if let Some(machine_id) = hostname::get()
-        .ok()
-        .and_then(|h| h.into_string().ok())
-        .or_else(|| std::env::var("HOSTNAME").ok())
-    {
+    // Single identity source: gethostname. No env-var fallback silently
+    // substituting a second answer for the machine's identity.
+    if let Some(machine_id) = hostname::get().ok().and_then(|h| h.into_string().ok()) {
         builder = builder.header(HEADER_MACHINE_ID, machine_id);
     }
 

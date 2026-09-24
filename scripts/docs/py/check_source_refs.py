@@ -36,9 +36,10 @@ CheckSourceRefsSettings.model_rebuild()
 
 def _check_files(
     docs_dir: str, project_root: Path
-) -> tuple[list[tuple[str, str]], int]:
+) -> tuple[list[tuple[str, str]], int, list[str]]:
     issues: list[tuple[str, str]] = []
     checked = 0
+    unreadable: list[str] = []
 
     md_files = utils.find_md_files(docs_dir)
 
@@ -48,8 +49,9 @@ def _check_files(
 
         try:
             content = Path(filepath).read_text(encoding="utf-8")
-        except Exception as e:  # noqa: BLE001
-            logger.error(f"Error reading {rel_filepath}: {e}")
+        except OSError as e:
+            # An unreadable doc must fail the check, never vanish from it.
+            unreadable.append(f"{rel_filepath}: {e}")
             continue
 
         content = re.sub(r"<!--.*?-->", "", content, flags=re.DOTALL)
@@ -63,7 +65,7 @@ def _check_files(
             if not Path(target).exists() and not Path(target + ".rs").exists():
                 issues.append((rel_filepath, ref))
 
-    return issues, checked
+    return issues, checked, unreadable
 
 
 def run(settings: CheckSourceRefsSettings) -> r[int]:
@@ -77,9 +79,14 @@ def run(settings: CheckSourceRefsSettings) -> r[int]:
     if not Path(docs_dir).exists():
         return r[int].fail(f"docs directory not found at {docs_dir}")
 
-    issues, checked = _check_files(docs_dir, project_root)
+    issues, checked, unreadable = _check_files(docs_dir, project_root)
 
     logger.info(f"Checked source refs in {checked} docs")
+
+    if unreadable:
+        for entry in sorted(unreadable):
+            logger.error(f"Unreadable documentation file: {entry}")
+        return r[int].fail(f"{len(unreadable)} unreadable documentation file(s)")
 
     if issues:
         logger.info(f"Found {len(issues)} broken source references:")

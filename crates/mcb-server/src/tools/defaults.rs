@@ -9,7 +9,6 @@ use std::str::FromStr;
 use uuid::Uuid;
 
 use mcb_domain::ports::VcsProvider;
-use mcb_utils::constants::FALLBACK_UNKNOWN;
 use mcb_utils::constants::ide::{
     IDE_CLAUDE_CODE, IDE_CURSOR, IDE_MCB_STDIO, IDE_OPENCODE, IDE_VSCODE,
 };
@@ -154,7 +153,10 @@ impl RuntimeDefaults {
             session_id: Some(Uuid::new_v4().to_string()),
             agent_program: Some(agent_program),
             client_session_id,
-            model_id: Some(FALLBACK_UNKNOWN.to_owned()),
+            // No fabricated default: an absent model id stays absent so the
+            // missing-field validation sees it (docs/MCP_TOOLS.md: no UNKNOWN
+            // placeholders).
+            model_id: None,
             execution_flow,
             org_id,
             project_id: auto_project_id,

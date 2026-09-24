@@ -6,7 +6,8 @@ const DEFAULT_PRO_ADMIN_CONFIG_DIR: &str = "config/pro_admin";
 /// Loads admin config from sea-orm-pro and returns it as JSON.
 ///
 /// The config directory is read from the `MCB_PRO_ADMIN_CONFIG_DIR` environment
-/// variable, falling back to `config/pro_admin` for backward compatibility.
+/// variable; when unset, the declared default location `config/pro_admin` is
+/// used.
 ///
 /// # Errors
 ///
