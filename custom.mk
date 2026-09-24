@@ -78,7 +78,3 @@ _custom_check_gitops:
 
 _custom_check_audit:
 	@bash scripts/lib/mcb.sh run cargo audit
-
-_custom_gen_agent-pointers:
-	@if [ "$(CHECK)" != "1" ] && [ "$(APPLY)" != "Y" ]; then printf 'ERROR: this action requires APPLY=Y\n' >&2; exit 2; fi
-	@$(UV_RUN) python scripts/lib/agent_pointers.py $(if $(filter 1,$(CHECK)),--check,)
