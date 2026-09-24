@@ -7,9 +7,14 @@
 //! and side effects for the 8-state workflow model.
 
 use mcb_domain::entities::{TransitionTrigger, WorkflowSession, WorkflowState};
-use mcb_utils::constants::FALLBACK_UNKNOWN;
 
 type Result<T> = std::result::Result<T, String>;
+
+/// Sentinel phase id for a state the FSM enters without a declared phase
+/// (session recovery). A real fix models `WorkflowState` phase ids as
+/// `Option<String>` across the domain entity — tracked for the workflow
+/// domain redesign, not piggybacked here.
+const RECOVERY_PHASE_ID: &str = "unknown";
 
 /// Apply a transition trigger to a workflow session, validating FSM rules.
 ///
@@ -94,7 +99,7 @@ fn resolve_verification_transition(
         // Failed → Executing (recovery)
         (WorkflowState::Failed { .. }, TransitionTrigger::Recover) => {
             Ok(WorkflowState::Executing {
-                phase_id: FALLBACK_UNKNOWN.to_owned(),
+                phase_id: RECOVERY_PHASE_ID.to_owned(),
                 task_id: None,
             })
         }
@@ -139,7 +144,7 @@ fn resolve_executing_state(state: &WorkflowState, trigger: &TransitionTrigger) -
             | WorkflowState::Verifying { phase_id },
             _,
         ) => phase_id.clone(),
-        _ => FALLBACK_UNKNOWN.to_owned(),
+        _ => RECOVERY_PHASE_ID.to_owned(),
     };
 
     let task_id = if let TransitionTrigger::ClaimTask { task_id } = trigger {
