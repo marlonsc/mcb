@@ -25,7 +25,7 @@ Complete schema reference for `.mcp-context.toml` git-aware indexing configurati
 - Submodule support
 - Branch-specific configuration
 
-If the file doesn't exist, MCB uses sensible defaults for backward compatibility.
+If the file doesn't exist, MCB runs with its declared built-in defaults.
 
 ---
 
