@@ -74,9 +74,10 @@ def _process_lines(
 
 def _check_files(
     docs_dir: str, project_root: Path
-) -> tuple[list[tuple[str, int, str, str]], int]:
+) -> tuple[list[tuple[str, int, str, str]], int, list[str]]:
     issues: list[tuple[str, int, str, str]] = []
     checked = 0
+    unreadable: list[str] = []
 
     md_files = utils.find_md_files(
         docs_dir, exclude_dirs={".git", "fixtures", "archive"}
@@ -89,14 +90,15 @@ def _check_files(
         try:
             with Path(filepath).open(encoding="utf-8") as fh:
                 lines = fh.readlines()
-        except Exception as e:  # noqa: BLE001
-            logger.error(f"Error reading {rel_filepath}: {e}")
+        except OSError as e:
+            # An unreadable doc must fail the check, never vanish from it.
+            unreadable.append(f"{rel_filepath}: {e}")
             continue
 
         file_issues = _process_lines(lines, rel_filepath, OUTDATED_PATTERNS)
         issues.extend(file_issues)
 
-    return issues, checked
+    return issues, checked, unreadable
 
 
 def run(settings: CheckOutdatedSettings) -> r[int]:
@@ -110,9 +112,14 @@ def run(settings: CheckOutdatedSettings) -> r[int]:
     if not Path(docs_dir).exists():
         return r[int].fail(f"docs directory not found at {docs_dir}")
 
-    issues, checked = _check_files(docs_dir, project_root)
+    issues, checked, unreadable = _check_files(docs_dir, project_root)
 
     logger.info(f"Checked {checked} files for outdated content.")
+
+    if unreadable:
+        for entry in sorted(unreadable):
+            logger.error(f"Unreadable documentation file: {entry}")
+        return r[int].fail(f"{len(unreadable)} unreadable documentation file(s)")
 
     if issues:
         logger.info(f"Found {len(issues)} potential outdated references:")
