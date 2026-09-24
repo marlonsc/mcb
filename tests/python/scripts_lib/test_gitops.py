@@ -16,6 +16,7 @@ from mcb_scripts.gitops import (
     GitOpsTarget,
     cached_render,
     render_cache_key,
+    rendered_issues,
     analyze,
     discover_targets,
     summarize,
@@ -199,9 +200,80 @@ def test_cached_render_writes_and_reuses_cache(
     first = cached_render(target)
     second = cached_render(target)
 
-    assert first == rendered
-    assert second == rendered
+    assert first.output == rendered
+    assert first.issue is None
+    assert second.output == rendered
     assert len(calls) == 1, "cache should prevent a second render"
+
+
+def _helm_target(temp_dir: Path) -> GitOpsTarget:
+    _write_k8s_file(temp_dir, "k8s/chart/Chart.yaml", "apiVersion: v2\nname: sample\n")
+    return GitOpsTarget(kind="helm", path=temp_dir / "k8s" / "chart")
+
+
+def test_missing_renderer_cli_is_a_red_issue(
+    temp_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _helm_target(temp_dir)
+
+    def fake_which(_tool: str) -> str | None:
+        return None
+
+    monkeypatch.setattr("mcb_scripts.gitops.shutil.which", fake_which, raising=True)
+
+    issues = rendered_issues(temp_dir / "k8s")
+
+    assert len(issues) == 1
+    assert issues[0].rule_id == "gitops:tool-missing"
+
+
+def test_render_timeout_is_a_red_issue(
+    temp_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _helm_target(temp_dir)
+
+    def fake_which(tool: str) -> str | None:
+        return f"/usr/bin/{tool}"
+
+    monkeypatch.setattr("mcb_scripts.gitops.shutil.which", fake_which, raising=True)
+
+    def fake_run(
+        cmd: list[str], **_subprocess_kwargs: object
+    ) -> subprocess.CompletedProcess[str]:
+        raise subprocess.TimeoutExpired(cmd=cmd, timeout=60)
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    issues = rendered_issues(temp_dir / "k8s")
+
+    assert len(issues) == 1
+    assert issues[0].rule_id == "gitops:render-timeout"
+
+
+def test_failed_render_is_a_red_issue(
+    temp_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _helm_target(temp_dir)
+
+    def fake_which(tool: str) -> str | None:
+        return f"/usr/bin/{tool}"
+
+    monkeypatch.setattr("mcb_scripts.gitops.shutil.which", fake_which, raising=True)
+
+    def fake_run(
+        cmd: list[str], **_subprocess_kwargs: object
+    ) -> subprocess.CompletedProcess[str]:
+        return subprocess.CompletedProcess(
+            args=cmd, returncode=1, stdout="", stderr="chart not found"
+        )
+
+    monkeypatch.setattr(subprocess, "run", fake_run)
+
+    issues = rendered_issues(temp_dir / "k8s")
+
+    assert len(issues) == 1
+    assert issues[0].rule_id == "gitops:render-failed"
+    assert "chart not found" in issues[0].message
 
 
 if __name__ == "__main__":
