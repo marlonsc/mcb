@@ -85,7 +85,7 @@ impl PatternRegistry {
         let rule_id = yaml
             .get(YAML_FIELD_ID)
             .and_then(|v| v.as_str())
-            .unwrap_or(crate::constants::UNKNOWN_PROVENANCE)
+            .unwrap_or(crate::sentinels::UNKNOWN_PROVENANCE)
             .to_owned();
 
         self.register_yaml_patterns(&yaml, &rule_id)?;

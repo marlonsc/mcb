@@ -5,7 +5,7 @@
 //!            issue, comment, label, `label_assignment`, org, user, team,
 //!            `team_member`, `api_key`
 
-use super::common::{call_tool, cleanup_temp_dbs, create_client, shutdown_client};
+use super::common::{call_tool, call_tool_raw, cleanup_temp_dbs, create_client, shutdown_client};
 use mcb_domain::utils::tests::mcp_assertions::{assert_tool_error, extract_text, is_error};
 use mcb_domain::utils::tests::utils::TestResult;
 use rstest::rstest;
@@ -96,6 +96,24 @@ async fn test_entity_invalid_resource() -> TestResult {
     )
     .await;
     assert_tool_error(result, &["unknown variant", "expected one of"]);
+    shutdown_client(client).await;
+    cleanup_temp_dbs();
+    Ok(())
+}
+
+/// Locks the no-fabricated-default contract: without a model id in the call
+/// `_meta`, auto-session creation must fail instead of inventing an identity.
+#[rstest]
+#[tokio::test]
+async fn test_entity_without_model_id_rejects_auto_session() -> TestResult {
+    let client = create_client().await?;
+    let result = call_tool_raw(
+        &client,
+        "entity",
+        serde_json::json!({"action": "list", "resource": "org"}),
+    )
+    .await;
+    assert_tool_error(result, &["model_id is required to auto-create session"]);
     shutdown_client(client).await;
     cleanup_temp_dbs();
     Ok(())

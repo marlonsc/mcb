@@ -38,7 +38,7 @@ runs:
       if: runner.os == 'Windows'
       shell: pwsh
       env:
-        ORT_VERSION: "1.23.2"
+        ORT_VERSION: "1.24.4"
       run: |
         $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
         $zip = "$env:TEMP\onnxruntime.zip"

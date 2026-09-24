@@ -118,7 +118,7 @@ impl DuplicationAnalyzer {
             "rb" => "ruby",
             "php" => "php",
             "swift" => "swift",
-            _ => crate::constants::UNKNOWN_PROVENANCE,
+            _ => crate::sentinels::UNKNOWN_PROVENANCE,
         }
     }
 

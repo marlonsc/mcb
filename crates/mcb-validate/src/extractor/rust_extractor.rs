@@ -49,7 +49,7 @@ impl RustExtractor {
         let module_name = path
             .file_stem()
             .and_then(|s| s.to_str())
-            .unwrap_or(crate::constants::UNKNOWN_PROVENANCE)
+            .unwrap_or(crate::sentinels::UNKNOWN_PROVENANCE)
             .to_owned();
 
         let module_id = format!("module::{module_name}");

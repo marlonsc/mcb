@@ -10,7 +10,7 @@ use std::ops::Deref;
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex, OnceLock};
 
-use rmcp::model::{CallToolRequestParams, CallToolResult};
+use rmcp::model::{CallToolRequestParams, CallToolResult, RequestMetaObject};
 use rmcp::service::RunningService;
 use rmcp::transport::child_process::TokioChildProcess;
 use rmcp::{RoleClient, ServiceExt};
@@ -149,6 +149,20 @@ pub async fn shutdown_client(client: McpTestClient) {
 
 // --- Tool call helpers ---
 
+/// Explicit model identity the harness declares on every tool call.
+///
+/// Since the `FALLBACK_UNKNOWN` masking default was removed, the server keeps
+/// no fabricated model id and tools that auto-create an agent session reject
+/// calls whose `_meta` carries none (the server resolves it from the request
+/// `_meta`, not from tool arguments).
+pub const TEST_MODEL_ID: &str = "test-model";
+
+fn test_model_meta() -> Result<RequestMetaObject, Box<dyn std::error::Error>> {
+    Ok(serde_json::from_value(serde_json::json!({
+        "model_id": TEST_MODEL_ID,
+    }))?)
+}
+
 fn json_args(value: Value) -> Option<serde_json::Map<String, Value>> {
     if let Value::Object(map) = value {
         Some(map)
@@ -157,9 +171,10 @@ fn json_args(value: Value) -> Option<serde_json::Map<String, Value>> {
     }
 }
 
-/// Call an MCP tool by name with JSON arguments.
+/// Call an MCP tool by name with JSON arguments and the test model identity.
 ///
 /// Includes a timeout to prevent hanging on unresponsive tool calls.
+/// Tests that exercise the model-id-absent contract must use [`call_tool_raw`].
 pub async fn call_tool(
     client: &RunningService<RoleClient, ()>,
     tool_name: &str,
@@ -167,6 +182,26 @@ pub async fn call_tool(
 ) -> Result<CallToolResult, Box<dyn std::error::Error>> {
     let mut params = CallToolRequestParams::new(tool_name.to_owned());
     params.arguments = json_args(arguments);
+    params.meta = Some(test_model_meta()?);
+    call_tool_params(client, tool_name, params).await
+}
+
+/// [`call_tool`] without the test model identity in the request `_meta`.
+pub async fn call_tool_raw(
+    client: &RunningService<RoleClient, ()>,
+    tool_name: &str,
+    arguments: Value,
+) -> Result<CallToolResult, Box<dyn std::error::Error>> {
+    let mut params = CallToolRequestParams::new(tool_name.to_owned());
+    params.arguments = json_args(arguments);
+    call_tool_params(client, tool_name, params).await
+}
+
+async fn call_tool_params(
+    client: &RunningService<RoleClient, ()>,
+    tool_name: &str,
+    params: CallToolRequestParams,
+) -> Result<CallToolResult, Box<dyn std::error::Error>> {
     let result = timeout(OP_TIMEOUT, client.call_tool(params))
         .await
         .map_err(|_| {
