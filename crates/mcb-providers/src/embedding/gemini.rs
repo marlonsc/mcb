@@ -14,13 +14,11 @@ use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 use mcb_domain::error::Result;
 use mcb_domain::ports::EmbeddingProvider;
 use mcb_domain::value_objects::Embedding;
-use mcb_utils::constants::http::{
-    HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT,
-};
+use mcb_utils::constants::http::HTTP_HEADER_CONTENT_TYPE;
 use reqwest::Client;
 
 use crate::utils::embedding::{HttpEmbeddingClient, parse_float_array_lossy};
-use crate::utils::http::{JsonRequestParams, RequestErrorKind, RetryConfig, send_json_request};
+use crate::utils::http::{JsonRequestParams, RequestErrorKind, send_json_request};
 
 define_http_embedding_provider!(
     /// Gemini embedding provider
@@ -84,10 +82,6 @@ impl GeminiEmbeddingProvider {
             kind: RequestErrorKind::Embedding,
             headers: &headers,
             body: Some(&payload),
-            retry: Some(RetryConfig::new(
-                PROVIDER_RETRY_COUNT,
-                std::time::Duration::from_millis(PROVIDER_RETRY_BACKOFF_MS),
-            )),
         })
         .await
     }

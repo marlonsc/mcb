@@ -27,7 +27,7 @@ use mcb_domain::ports::{
 use rmcp::ErrorData as McpError;
 use rmcp::ServerHandler;
 use rmcp::model::{
-    CallToolResult, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
+    CallToolResponse, Implementation, ListToolsResult, PaginatedRequestParams, ProtocolVersion,
     ServerCapabilities, ServerInfo,
 };
 
@@ -238,11 +238,7 @@ tools:
         _context: rmcp::service::RequestContext<rmcp::RoleServer>,
     ) -> Result<ListToolsResult, McpError> {
         let tools = create_tool_list()?;
-        Ok(ListToolsResult {
-            tools,
-            meta: Default::default(),
-            next_cursor: None,
-        })
+        Ok(ListToolsResult::with_all_items(tools))
     }
 
     /// Call a tool
@@ -250,10 +246,10 @@ tools:
         &self,
         mut request: rmcp::model::CallToolRequestParams,
         context: rmcp::service::RequestContext<rmcp::RoleServer>,
-    ) -> Result<CallToolResult, McpError> {
+    ) -> Result<CallToolResponse, McpError> {
         let mut overrides = std::collections::HashMap::new();
         merge_meta_overrides(Some(&context.meta), &mut overrides);
-        merge_meta_overrides(request.meta.as_ref(), &mut overrides);
+        merge_meta_overrides(request.meta.as_ref().map(|meta| &meta.0), &mut overrides);
 
         // HTTP transport injects the raw request parts as an extension; use any
         // execution-flow header sent by HTTP clients as an override so the
@@ -292,7 +288,9 @@ tools:
         )
         .await?;
 
-        route_tool_call(request, &self.handlers, execution_context).await
+        route_tool_call(request, &self.handlers, execution_context)
+            .await
+            .map(CallToolResponse::Complete)
     }
 }
 
@@ -351,7 +349,7 @@ fn meta_value_to_string(value: &serde_json::Value) -> Option<String> {
 
 /// Merge string/bool/number entries from a meta map into the overrides map.
 fn merge_meta_overrides(
-    meta: Option<&rmcp::model::Meta>,
+    meta: Option<&rmcp::model::MetaObject>,
     map: &mut std::collections::HashMap<String, String>,
 ) {
     let Some(meta) = meta else {

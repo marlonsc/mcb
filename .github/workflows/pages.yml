@@ -2,10 +2,10 @@
 # =============================================================================
 # GitHub Pages Deployment
 # =============================================================================
-# Manual workflow: triggered via workflow_dispatch only
-# Superseded by release.yml for tag-triggered deployment.
-# This workflow is kept as a manual emergency fallback only.
-# Uses the shared docs-build.yml reusable workflow.
+# Manual workflow: triggered via workflow_dispatch only.
+# The declared manual deploy surface for the Pages site; tag-triggered
+# deployment is owned by release.yml. Uses the shared docs-build.yml
+# reusable workflow.
 # =============================================================================
 
 name: Pages

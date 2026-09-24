@@ -1,69 +1,72 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # domain Module
 
-**Source**: `crates/mcb-domain/src/`
-**Crate**: `mcb-domain`
-**Files**: 25+
-**Lines of Code**: ~2,500
-**Traits**: 41 (13 provider ports + 8 repository ports + 9 service ports + 8 infrastructure ports + 3 top-level ports)
-**Structs**: 20+
-**Enums**: 8
+**Source**: `crates/mcb-domain/src/` **Crate**: `mcb-domain` **Files**: 25+ **Lines of
+Code**: ~2,500 **Traits**: 41 (13 provider ports + 8 repository ports + 9 service
+ports + 8 infrastructure ports + 3 top-level ports) **Structs**: 20+ **Enums**: 8
 
 ## ↔ Code ↔ Docs cross-reference
 
-| Direction | Link |
-| --------- | ---- |
-| Code → Docs | [`crates/mcb-domain/src/lib.rs`](../../crates/mcb-domain/src/lib.rs) links here |
-| Docs → Code | [`crates/mcb-domain/src/lib.rs`](../../crates/mcb-domain/src/lib.rs) — crate root |
+| Direction    | Link                                                                                                                                                                           |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Code → Docs  | [`crates/mcb-domain/src/lib.rs`](../../crates/mcb-domain/src/lib.rs) links here                                                                                                |
+| Docs → Code  | [`crates/mcb-domain/src/lib.rs`](../../crates/mcb-domain/src/lib.rs) — crate root                                                                                              |
 | Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-001`](../adr/001-modular-crates-architecture.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) |
-| Roadmap | [`ROADMAP.md`](../developer/ROADMAP.md) |
+| Roadmap      | [`ROADMAP.md`](../developer/ROADMAP.md)                                                                                                                                        |
 
 ## Overview
 
-The domain module defines the core business entities, value objects, and repository interfaces following Clean Architecture principles. All domain logic is technology-agnostic, with external concerns abstracted behind port traits. Multi-tenant by design — every entity carries `org_id` for row-level isolation.
+The domain module defines the core business entities, value objects, and repository
+interfaces following Clean Architecture principles. All domain logic is
+technology-agnostic, with external concerns abstracted behind port traits. Multi-tenant
+by design — every entity carries `org_id` for row-level isolation.
 
-MCB delivers semantic code search by combining vector embeddings, git context, agent session tracking, and MCP tooling. Organization is the root tenant boundary.
+MCB delivers semantic code search by combining vector embeddings, git context, agent
+session tracking, and MCP tooling. Organization is the root tenant boundary.
 
-> **Note**: Port traits (EmbeddingProvider, VectorStoreProvider, etc.) are defined in `mcb-domain/src/ports/`. The domain layer includes entities, value objects, and all port trait boundaries.
+> **Note**: Port traits (EmbeddingProvider, VectorStoreProvider, etc.) are defined in
+> `mcb-domain/src/ports/`. The domain layer includes entities, value objects, and all
+> port trait boundaries.
 
 ## Core Entities
 
-| Entity | File | Purpose |
-| -------- | ------ | --------- |
-| **CodeChunk** | [`code_chunk.rs`](../../crates/mcb-domain/src/entities/code_chunk.rs) | Atomic unit of semantic indexing — AST-parsed code segment with metadata |
-| **Codebase** | [`codebase.rs`](../../crates/mcb-domain/src/entities/codebase.rs) | Repository metadata container |
-| **Project** | [`project.rs`](../../crates/mcb-domain/src/entities/project.rs) | Root aggregate — registered codebase with type detection |
-| **Organization** | [`organization.rs`](../../crates/mcb-domain/src/entities/organization.rs) | Tenant root — multi-tenant isolation boundary, carries `org_id` |
-| **Repository** | [`repository.rs`](../../crates/mcb-domain/src/entities/repository.rs) | VCS repository with branch tracking |
-| **Plan** | [`plan.rs`](../../crates/mcb-domain/src/entities/plan.rs) | Versioned execution plan (Draft → Active → Executing → Completed) |
-| **AgentSession** | [`agent/session.rs`](../../crates/mcb-domain/src/entities/agent/session.rs) | Agent execution lifecycle with timing and metrics |
-| **Observation** | [`observation.rs`](../../crates/mcb-domain/src/entities/observation.rs) | Memory record (Code, Decision, Context, Error, etc.) |
-| **Workflow** | [`workflow.rs`](../../crates/mcb-domain/src/entities/workflow.rs) | Workflow FSM for session state management |
-| **Worktree** | [`worktree.rs`](../../crates/mcb-domain/src/entities/worktree.rs) | Git worktree with agent-worktree assignments |
-| **User** | [`user.rs`](../../crates/mcb-domain/src/entities/user.rs) | Identity entity |
-| **Team** | [`team.rs`](../../crates/mcb-domain/src/entities/team.rs) | Team membership entity |
-| **Issue** | [`issue.rs`](../../crates/mcb-domain/src/entities/issue.rs) | Issue tracking with comments, labels |
-| **ApiKey** | [`api_key.rs`](../../crates/mcb-domain/src/entities/api_key.rs) | Authentication key entity |
-| **Submodule** | [`submodule.rs`](../../crates/mcb-domain/src/entities/submodule.rs) | Git submodule metadata |
+| Entity           | File                                                                        | Purpose                                                                  |
+| ---------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **CodeChunk**    | [`code_chunk.rs`](../../crates/mcb-domain/src/entities/code_chunk.rs)       | Atomic unit of semantic indexing — AST-parsed code segment with metadata |
+| **Codebase**     | [`codebase.rs`](../../crates/mcb-domain/src/entities/codebase.rs)           | Repository metadata container                                            |
+| **Project**      | [`project.rs`](../../crates/mcb-domain/src/entities/project.rs)             | Root aggregate — registered codebase with type detection                 |
+| **Organization** | [`organization.rs`](../../crates/mcb-domain/src/entities/organization.rs)   | Tenant root — multi-tenant isolation boundary, carries `org_id`          |
+| **Repository**   | [`repository.rs`](../../crates/mcb-domain/src/entities/repository.rs)       | VCS repository with branch tracking                                      |
+| **Plan**         | [`plan.rs`](../../crates/mcb-domain/src/entities/plan.rs)                   | Versioned execution plan (Draft → Active → Executing → Completed)        |
+| **AgentSession** | [`agent/session.rs`](../../crates/mcb-domain/src/entities/agent/session.rs) | Agent execution lifecycle with timing and metrics                        |
+| **Observation**  | [`observation.rs`](../../crates/mcb-domain/src/entities/observation.rs)     | Memory record (Code, Decision, Context, Error, etc.)                     |
+| **Workflow**     | [`workflow.rs`](../../crates/mcb-domain/src/entities/workflow.rs)           | Workflow FSM for session state management                                |
+| **Worktree**     | [`worktree.rs`](../../crates/mcb-domain/src/entities/worktree.rs)           | Git worktree with agent-worktree assignments                             |
+| **User**         | [`user.rs`](../../crates/mcb-domain/src/entities/user.rs)                   | Identity entity                                                          |
+| **Team**         | [`team.rs`](../../crates/mcb-domain/src/entities/team.rs)                   | Team membership entity                                                   |
+| **Issue**        | [`issue.rs`](../../crates/mcb-domain/src/entities/issue.rs)                 | Issue tracking with comments, labels                                     |
+| **ApiKey**       | [`api_key.rs`](../../crates/mcb-domain/src/entities/api_key.rs)             | Authentication key entity                                                |
+| **Submodule**    | [`submodule.rs`](../../crates/mcb-domain/src/entities/submodule.rs)         | Git submodule metadata                                                   |
 
 ## Value Objects
 
-| Value Object | File | Purpose |
-| ------------- | ------ | --------- |
-| **Embedding** | `embedding.rs` | Semantic vector (`Vec<f32>`) with model name and dimensions |
-| **SearchResult** | `search.rs` | Ranked result with score (0.0–1.0), file path, content snippet |
-| **Strong-Typed IDs** | `ids.rs` | `CollectionId`, `ChunkId`, `SessionId`, `OrgId`, etc. |
-| **ProjectContext** | `project_context.rs` | Enriched project context for search queries |
-| **OrgContext** | `org_context.rs` | Organization-scoped context |
-| **Browse types** | `browse/` | `FileInfo`, `FileTreeNode`, `CollectionInfo`, `HighlightedCode` |
-| **Config** | `config.rs` | Configuration value objects |
-| **Types** | `types.rs` | Shared primitive type aliases |
+| Value Object         | File                 | Purpose                                                         |
+| -------------------- | -------------------- | --------------------------------------------------------------- |
+| **Embedding**        | `embedding.rs`       | Semantic vector (`Vec<f32>`) with model name and dimensions     |
+| **SearchResult**     | `search.rs`          | Ranked result with score (0.0–1.0), file path, content snippet  |
+| **Strong-Typed IDs** | `ids.rs`             | `CollectionId`, `ChunkId`, `SessionId`, `OrgId`, etc.           |
+| **ProjectContext**   | `project_context.rs` | Enriched project context for search queries                     |
+| **OrgContext**       | `org_context.rs`     | Organization-scoped context                                     |
+| **Browse types**     | `browse/`            | `FileInfo`, `FileTreeNode`, `CollectionInfo`, `HighlightedCode` |
+| **Config**           | `config.rs`          | Configuration value objects                                     |
+| **Types**            | `types.rs`           | Shared primitive type aliases                                   |
 
 ## Repository Interfaces
 
-| Port | File | Purpose |
-| ------ | ------ | --------- |
-| `ChunkRepository` | `chunk_repository.rs` | Code chunk CRUD (`Send + Sync`; wired via AppContext composition root, ADR-050) |
+| Port               | File                   | Purpose                                                                           |
+| ------------------ | ---------------------- | --------------------------------------------------------------------------------- |
+| `ChunkRepository`  | `chunk_repository.rs`  | Code chunk CRUD (`Send + Sync`; wired via AppContext composition root, ADR-050)   |
 | `SearchRepository` | `search_repository.rs` | Search operations (`Send + Sync`; wired via AppContext composition root, ADR-050) |
 
 ## Domain Events (`events/domain_events.rs`)
@@ -81,66 +84,70 @@ Events published through the `EventPublisher` interface:
 ## Port Interfaces (Domain Boundaries)
 
 <a name="provider-ports"></a>
+
 ### Provider Ports
 
-| Port | Operations | Implementations |
-| ------ | ----------- | ---------------- |
-| [`EmbeddingProvider`](../../crates/mcb-domain/src/ports/providers/embedding.rs) | `embed`, `embed_batch`, `dimensions` | OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic |
-| [`VectorStoreProvider`](../../crates/mcb-domain/src/ports/providers/vector_store.rs) | `create_collection`, `insert`, `search` | EdgeVec, Milvus, Qdrant, Pinecone, Encrypted |
-| [`HybridSearchProvider`](../../crates/mcb-domain/src/ports/providers/hybrid_search.rs) | BM25 lexical + semantic search | Composite implementation |
-| [`LanguageChunkingProvider`](../../crates/mcb-domain/src/ports/providers/language_chunking.rs) | Language-specific AST parsing | 13 tree-sitter processors |
-| [`VcsProvider`](../../crates/mcb-domain/src/ports/providers/vcs.rs) | `clone`, `fetch`, `branches`, `commits` | git2 v0.20 |
-| [`CryptoProvider`](../../crates/mcb-domain/src/ports/providers/crypto.rs) | Encryption/decryption | AES-256-GCM, Argon2 |
-| [`CacheProvider`](../../crates/mcb-domain/src/`CacheProvider` (removed)) | Distributed caching with TTL | Moka, Redis |
-| [`ProjectDetectionProvider`](../../crates/mcb-domain/src/ports/providers/project_detection.rs) | Detect project type from manifests | Cargo, npm, Python, Go, Maven |
+| Port                                                                                           | Operations                              | Implementations                                        |
+| ---------------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------ |
+| [`EmbeddingProvider`](../../crates/mcb-domain/src/ports/providers/embedding.rs)                | `embed`, `embed_batch`, `dimensions`    | OpenAI, VoyageAI, Ollama, Gemini, FastEmbed, Anthropic |
+| [`VectorStoreProvider`](../../crates/mcb-domain/src/ports/providers/vector_store.rs)           | `create_collection`, `insert`, `search` | EdgeVec, Milvus, Qdrant, Pinecone, Encrypted           |
+| [`HybridSearchProvider`](../../crates/mcb-domain/src/ports/providers/hybrid_search.rs)         | BM25 lexical + semantic search          | Composite implementation                               |
+| [`LanguageChunkingProvider`](../../crates/mcb-domain/src/ports/providers/language_chunking.rs) | Language-specific AST parsing           | 13 tree-sitter processors                              |
+| [`VcsProvider`](../../crates/mcb-domain/src/ports/providers/vcs.rs)                            | `clone`, `fetch`, `branches`, `commits` | git2 v0.20                                             |
+| [`CryptoProvider`](../../crates/mcb-domain/src/ports/providers/crypto.rs)                      | Encryption/decryption                   | AES-256-GCM, Argon2                                    |
+| [`CacheProvider`](../../crates/mcb-providers/src/lib.rs)                                       | Distributed caching with TTL            | Delegated to Loco cache (Moka, Redis)                  |
+| [`ProjectDetectionProvider`](../../crates/mcb-domain/src/ports/providers/project_detection.rs) | Detect project type from manifests      | Cargo, npm, Python, Go, Maven                          |
 
 <a name="repository-ports"></a>
+
 ### Repository Ports
 
-| Port | Purpose | Implementation Location |
-| ------ | --------- | ------------------------ |
-| `ChunkRepository` | Persistence of AST-parsed code chunks and search statistics | [`mcb-providers`](../../crates/mcb-providers/src/lib.rs) |
-| `MemoryRepository` | Multi-tenant observation storage with FTS5 lexical search capabilities | [`memory_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/observation.rs) |
-| `AgentRepository` | Composite management of **Agent Sessions**, **Delegations**, **Tool Calls**, and **Checkpoints** | [`agent_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/agent.rs) |
-| `ProjectRepository` | Persistence of **Project** root entities (multi-tenant boundary) | [`project_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/project.rs) |
-| `VcsEntityRepository` | Composite management of **Repositories**, **Branches**, **Worktrees**, and **Agent-Worktree Assignments** | [`vcs_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/entity_repository.rs) |
-| `PlanEntityRepository` | Persistence for **Plans**, **Versions**, and **Reviews** (Execution planning) | [`plan_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/plans.rs) |
-| `IssueEntityRepository` | Composite management of **Issues**, **Comments**, **Labels**, and **Label Assignments** | [`issue_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/issues.rs) |
-| `OrgEntityRepository` | Composite management of **Organizations**, **Users**, **Teams**, and **API Keys** | [`org_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/org.rs) |
+| Port                    | Purpose                                                                                                   | Implementation Location                                                                                 |
+| ----------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `ChunkRepository`       | Persistence of AST-parsed code chunks and search statistics                                               | [`mcb-providers`](../../crates/mcb-providers/src/lib.rs)                                                |
+| `MemoryRepository`      | Multi-tenant observation storage with FTS5 lexical search capabilities                                    | [`memory_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/observation.rs)           |
+| `AgentRepository`       | Composite management of **Agent Sessions**, **Delegations**, **Tool Calls**, and **Checkpoints**          | [`agent_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/agent.rs)                  |
+| `ProjectRepository`     | Persistence of **Project** root entities (multi-tenant boundary)                                          | [`project_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/project.rs)              |
+| `VcsEntityRepository`   | Composite management of **Repositories**, **Branches**, **Worktrees**, and **Agent-Worktree Assignments** | [`vcs_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/entity_repository.rs) |
+| `PlanEntityRepository`  | Persistence for **Plans**, **Versions**, and **Reviews** (Execution planning)                             | [`plan_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/plans.rs)            |
+| `IssueEntityRepository` | Composite management of **Issues**, **Comments**, **Labels**, and **Label Assignments**                   | [`issue_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/issues.rs)          |
+| `OrgEntityRepository`   | Composite management of **Organizations**, **Users**, **Teams**, and **API Keys**                         | [`org_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/org.rs)               |
 
 <a name="service-ports"></a>
+
 ### Service Ports
 
-| Port | Purpose |
-| ------ | --------- |
-| [`IndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing_service.rs) | Codebase indexing orchestration |
-| [`BatchIndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing_service.rs) | Batch indexing orchestration |
-| [`SearchServiceInterface`](../../crates/mcb-domain/src/ports/services/search_service.rs) | Semantic search with filters |
-| [`ContextServiceInterface`](../../crates/mcb-domain/src/ports/services/context_service.rs) | Context aggregation |
-| [`ValidationServiceInterface`](../../crates/mcb-domain/src/ports/services/validation_service.rs) | Code quality validation (12 rules) |
-| [`MemoryServiceInterface`](../../crates/mcb-domain/src/ports/services/memory_service.rs) | Observation management |
-| [`AgentSessionServiceInterface`](../../crates/mcb-domain/src/ports/services/agent_service.rs) | Agent lifecycle management |
-| [`ProjectDetectorService`](../../crates/mcb-domain/src/ports/services/project_service.rs) | Project type detection orchestration |
-| [`FileHashService`](../../crates/mcb-domain/src/ports/services/hash_service.rs) | File hashing service boundary |
-| [`ChunkingOrchestratorInterface`](../../crates/mcb-domain/src/ports/services/chunking_service.rs) | Chunking orchestration boundary |
-| [`CodeChunker`](../../crates/mcb-domain/src/ports/services/chunking_service.rs) | Language chunking service boundary |
+| Port                                                                                              | Purpose                              |
+| ------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| [`IndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing_service.rs)      | Codebase indexing orchestration      |
+| [`BatchIndexingServiceInterface`](../../crates/mcb-domain/src/ports/services/indexing_service.rs) | Batch indexing orchestration         |
+| [`SearchServiceInterface`](../../crates/mcb-domain/src/ports/services/search_service.rs)          | Semantic search with filters         |
+| [`ContextServiceInterface`](../../crates/mcb-domain/src/ports/services/context_service.rs)        | Context aggregation                  |
+| [`ValidationServiceInterface`](../../crates/mcb-domain/src/ports/services/validation_service.rs)  | Code quality validation (12 rules)   |
+| [`MemoryServiceInterface`](../../crates/mcb-domain/src/ports/services/memory_service.rs)          | Observation management               |
+| [`AgentSessionServiceInterface`](../../crates/mcb-domain/src/ports/services/agent_service.rs)     | Agent lifecycle management           |
+| [`ProjectDetectorService`](../../crates/mcb-domain/src/ports/services/project_service.rs)         | Project type detection orchestration |
+| [`FileHashService`](../../crates/mcb-domain/src/ports/services/hash_service.rs)                   | File hashing service boundary        |
+| [`ChunkingOrchestratorInterface`](../../crates/mcb-domain/src/ports/services/chunking_service.rs) | Chunking orchestration boundary      |
+| [`CodeChunker`](../../crates/mcb-domain/src/ports/services/chunking_service.rs)                   | Language chunking service boundary   |
 
 ## Key Enums & State Machines
 
-| Enum | Values |
-| ------ | -------- |
-| `ProjectType` | Cargo, Npm, Python, Go, Maven |
-| `VcsType` | Git, Mercurial, Svn |
-| `ObservationType` | Code, Decision, Context, Error, Summary, Execution, QualityGate |
-| `PlanStatus` | Draft → Active → Executing → Completed → Archived |
-| `OrgStatus` | Active, Suspended, Archived |
-| `AgentSessionStatus` | Running, Completed, Failed |
-| `WorkflowState` | FSM states for session management |
-| `WorktreeStatus` | Available, Assigned, Archived |
+| Enum                 | Values                                                          |
+| -------------------- | --------------------------------------------------------------- |
+| `ProjectType`        | Cargo, Npm, Python, Go, Maven                                   |
+| `VcsType`            | Git, Mercurial, Svn                                             |
+| `ObservationType`    | Code, Decision, Context, Error, Summary, Execution, QualityGate |
+| `PlanStatus`         | Draft → Active → Executing → Completed → Archived               |
+| `OrgStatus`          | Active, Suspended, Archived                                     |
+| `AgentSessionStatus` | Running, Completed, Failed                                      |
+| `WorkflowState`      | FSM states for session management                               |
+| `WorktreeStatus`     | Available, Assigned, Archived                                   |
 
 ## Domain Invariants
 
-1. **Multi-tenant isolation**: All entities carry `org_id`; Organization is the root boundary
+1. **Multi-tenant isolation**: All entities carry `org_id`; Organization is the root
+   boundary
 2. **Indexing pipeline**: Project → Repository → CodeChunk → Embedding → VectorStore
 3. **Search architecture**: Semantic (embedding + vector) + Hybrid (BM25 + semantic)
 4. **Memory model**: Observations → FTS-indexed → searchable session context
@@ -246,15 +253,15 @@ crates/mcb-domain/src/
 
 ## Domain Utilities
 
-| Utility | File | Purpose |
-| ------- | ---- | ------- |
+| Utility      | File                                                           | Purpose                                                     |
+| ------------ | -------------------------------------------------------------- | ----------------------------------------------------------- |
 | **Analysis** | [`analysis.rs`](../../crates/mcb-domain/src/utils/analysis.rs) | Domain-specific analysis helpers (Regex, string processing) |
-| **Common** | [`common.rs`](../../crates/mcb-domain/src/utils/mod.rs) | Shared domain utilities |
+| **Common**   | [`common.rs`](../../crates/mcb-domain/src/utils/mod.rs)        | Shared domain utilities                                     |
 
 ## Testing Utilities
 
-| Utility | File | Purpose |
-| ------- | ---- | ------- |
+| Utility        | File                                                        | Purpose                                                    |
+| -------------- | ----------------------------------------------------------- | ---------------------------------------------------------- |
 | **Test Utils** | [`test_utils.rs`](../../crates/mcb-domain/src/utils/tests/) | Shared domain specimen creation (Projects, Phases, Agents) |
 
 ---

@@ -15,7 +15,11 @@ use mcb_domain::utils::text::extract_text_from;
 use mcb_server::formatter::ResponseFormatter;
 use rstest::rstest;
 
-fn assert_response(content: &[rmcp::model::Content], is_error: bool, expected_fragments: &[&str]) {
+fn assert_response(
+    content: &[rmcp::model::ContentBlock],
+    is_error: bool,
+    expected_fragments: &[&str],
+) {
     let text = extract_text_from(content);
     for fragment in expected_fragments {
         assert!(

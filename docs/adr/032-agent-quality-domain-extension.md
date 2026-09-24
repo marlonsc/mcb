@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 32
-title: Agent & Quality Domain Extension (MCB-Only)
-status: SUPERSEDED
-created: '2026-02-03'
-updated: 2026-02-05
-related: [9, 13, 29]
-supersedes: []
-superseded_by: [34]
+
+adr: 32 title: Agent & Quality Domain Extension (MCB-Only) status: SUPERSEDED created:
+'2026-02-03' updated: 2026-02-05 related: [9, 13, 29] supersedes: [] superseded_by: [34]
 implementation_status: "Historical snapshot; see bd for live work"
 ---
 
@@ -15,11 +11,9 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 # ADR-032: Agent & Quality Domain Extension (MCB-Only)
 
-**Status:** Superseded by [ADR-034](034-workflow-core-fsm.md)
-**Date:** 2026-02-03
-**Deciders:** Architecture Team
-**Supersedes:** None
-**Related:** ADR-009 (Memory), ADR-013 (Clean Architecture), ADR-029 (Hexagonal, superseded by ADR-050)
+**Status:** Superseded by [ADR-034](034-workflow-core-fsm.md) **Date:** 2026-02-03
+**Deciders:** Architecture Team **Supersedes:** None **Related:** ADR-009 (Memory),
+ADR-013 (Clean Architecture), ADR-029 (Hexagonal, superseded by ADR-050)
 
 ## Context
 
@@ -40,12 +34,13 @@ Pain points:
 
 ## Decision
 
-**This ADR proposed extending MCB domain as the SINGLE SOURCE OF TRUTH for workflow management.**
-That target is superseded by ADR-034 and is not the current operational coordination rule.
+**This ADR proposed extending MCB domain as the SINGLE SOURCE OF TRUTH for workflow
+management.** That target is superseded by ADR-034 and is not the current operational
+coordination rule.
 
-> Operational note: this ADR records the target MCB-owned workflow architecture.
-> Until that replacement is implemented, project task coordination remains in
-> the Beads graph governed by `AGENTS.md`; changes still go through the `bd` CLI.
+> Operational note: this ADR records the target MCB-owned workflow architecture. Until
+> that replacement is implemented, project task coordination remains in the Beads graph
+> governed by `AGENTS.md`; changes still go through the `bd` CLI.
 
 ### Key Decisions
 
@@ -74,18 +69,19 @@ That target is superseded by ADR-034 and is not the current operational coordina
 
 #### 2. Tool Naming (per ADR-009)
 
-| Prefix | Domain | Count |
-| -------- | -------- | ------- |
-| `agent_` | Session/delegation tracking | 7 |
-| `quality_` | Quality gate enforcement | 3 |
-| `memory_` | Executions, errors, context | 5 |
-| `project_` | Project/phase/issue CRUD | 9 |
+| Prefix     | Domain                      | Count |
+| ---------- | --------------------------- | ----- |
+| `agent_`   | Session/delegation tracking | 7     |
+| `quality_` | Quality gate enforcement    | 3     |
+| `memory_`  | Executions, errors, context | 5     |
+| `project_` | Project/phase/issue CRUD    | 9     |
 
 Total: 24 MCP tools
 
 #### 3. Full CRUD for Project State
 
-The superseded target was to replace external project-state surfaces with complete CRUD operations:
+The superseded target was to replace external project-state surfaces with complete CRUD
+operations:
 
 ```ascii
 project_create          → Create project
@@ -101,13 +97,13 @@ project_log_decision    → Log decision
 
 #### 4. Superseded No-Legacy Target
 
-| What | Historical target |
-| ------ | ---------- |
-| legacy-planning/ import | Not part of this historical target |
-| Beads import | Not part of this historical target |
-| bd CLI compatibility | Superseded; current coordination uses bd per `AGENTS.md` |
-| Markdown export | Not part of this historical target |
-| Bidirectional sync | Not part of this historical target |
+| What                    | Historical target                                        |
+| ----------------------- | -------------------------------------------------------- |
+| legacy-planning/ import | Not part of this historical target                       |
+| Beads import            | Not part of this historical target                       |
+| bd CLI compatibility    | Superseded; current coordination uses bd per `AGENTS.md` |
+| Markdown export         | Not part of this historical target                       |
+| Bidirectional sync      | Not part of this historical target                       |
 
 **Rationale:** Simpler architecture, no sync conflicts, no parser code.
 
@@ -187,16 +183,17 @@ Rejected because:
 
 ### Performance
 
-| Tool | Target |
-| ------ | -------- |
-| `agent_start_session` | < 10ms |
-| `quality_check_gate` | < 50ms |
-| `project_get_ready_work` | < 50ms |
-| `memory_get_context` | < 100ms |
+| Tool                     | Target  |
+| ------------------------ | ------- |
+| `agent_start_session`    | < 10ms  |
+| `quality_check_gate`     | < 50ms  |
+| `project_get_ready_work` | < 50ms  |
+| `memory_get_context`     | < 100ms |
 
 ## References
 
 - [ADR-009: Persistent Session Memory](./009-persistent-session-memory-v0.2.0.md)
 - [ADR-013: Clean Architecture](./013-clean-architecture-crate-separation.md)
-- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md) (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](./050-manual-composition-root-dill-removal.md)
+  (superseded by ADR-050)
 - Beads task graph (`bd`) for current planning state

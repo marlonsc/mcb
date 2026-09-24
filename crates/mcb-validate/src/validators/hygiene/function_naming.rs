@@ -1,14 +1,12 @@
 //!
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
-use crate::filters::LanguageId;
-use crate::scan::for_each_file_under_root;
+use crate::utils::source::for_each_test_file;
 use crate::{Result, Severity, ValidationConfig};
 use mcb_utils::constants::validate::COMMENT_PREFIX;
 use mcb_utils::utils::regex::compile_regex;
 
 use super::violation::HygieneViolation;
-use crate::ValidationConfigExt;
 
 const SMOKE_TEST_PATTERNS: [&str; 5] = [
     "_trait_object",
@@ -44,28 +42,21 @@ pub fn validate_test_function_naming(config: &ValidationConfig) -> Result<Vec<Hy
         assert_pattern: &assert_pattern,
     };
 
-    for crate_dir in config.get_source_dirs()? {
-        let tests_dir = crate_dir.join("tests");
-        if !tests_dir.exists() {
-            continue;
+    for_each_test_file(config, |entry| {
+        let path = &entry.absolute_path;
+        if path.to_str().is_some_and(|s| s.contains("/fixtures/")) {
+            return Ok(());
         }
+        let content = std::fs::read_to_string(path)?;
+        let lines: Vec<&str> = content.lines().collect();
 
-        for_each_file_under_root(config, &tests_dir, Some(LanguageId::Rust), |entry| {
-            let path = &entry.absolute_path;
-            if path.to_str().is_some_and(|s| s.contains("/fixtures/")) {
-                return Ok(());
-            }
-            let content = std::fs::read_to_string(path)?;
-            let lines: Vec<&str> = content.lines().collect();
-
-            violations.extend(collect_naming_violations_for_file(
-                path,
-                &lines,
-                &scan_input,
-            ));
-            Ok(())
-        })?;
-    }
+        violations.extend(collect_naming_violations_for_file(
+            path,
+            &lines,
+            &scan_input,
+        ));
+        Ok(())
+    })?;
 
     Ok(violations)
 }

@@ -1,23 +1,36 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # ADR 024: Shaku to dill DI Migration
 
 ## Status
 
-**Superseded by [ADR 029: Hexagonal Architecture with dill](../029-hexagonal-architecture-dill.md)** (v0.1.2)
+**Superseded by
+[ADR 029: Hexagonal Architecture with dill](../029-hexagonal-architecture-dill.md)**
+(v0.1.2)
 
-> Original replacement for ADR 012: Two-Layer DI Strategy (Shaku) using a handle-based DI pattern with linkme registry.
+> Original replacement for ADR 012: Two-Layer DI Strategy (Shaku) using a handle-based
+> DI pattern with linkme registry.
 >
-> **Update (2026-01-20)**: dill Catalog is now implemented as IoC container with `add_value()` pattern. See [ADR 029](../029-hexagonal-architecture-dill.md) for current architecture.
+> **Update (2026-01-20)**: dill Catalog is now implemented as IoC container with
+> `add_value()` pattern. See [ADR 029](../029-hexagonal-architecture-dill.md) for
+> current architecture.
 >
-> **Implementation Note (2026-01-19)**: The dill `#[component]` macro is incompatible with our domain error types and manual constructors. We use a handle-based pattern instead: Provider Handles (RwLock wrappers), Resolvers (linkme registry), and Admin Services (runtime switching via API).
+> **Implementation Note (2026-01-19)**: The dill `#[component]` macro is incompatible
+> with our domain error types and manual constructors. We use a handle-based pattern
+> instead: Provider Handles (RwLock wrappers), Resolvers (linkme registry), and Admin
+> Services (runtime switching via API).
 
 ## Context
 
-The current dependency injection system uses Shaku (version 0.6), a compile-time DI container that provides trait-based dependency resolution. While effective, this approach introduces substantial complexity that impacts development velocity and maintainability.
+The current dependency injection system uses Shaku (version 0.6), a compile-time DI
+container that provides trait-based dependency resolution. While effective, this
+approach introduces substantial complexity that impacts development velocity and
+maintainability.
 
 ### Problems with Shaku
 
-1. **Macro complexity**: `#[derive(Component)]`, `#[shaku(interface = ...)]`, `#[shaku(inject)]` everywhere
+1. **Macro complexity**: `#[derive(Component)]`, `#[shaku(interface = ...)]`,
+   `#[shaku(inject)]` everywhere
 2. **Build time impact**: Extensive macro expansion slows compilation
 3. **Module sync**: Manual maintenance of module definitions as services change
 4. **Over-engineering**: DI container complexity exceeds project needs
@@ -26,16 +39,18 @@ The current dependency injection system uses Shaku (version 0.6), a compile-time
 
 We evaluated modern Rust DI alternatives:
 
-| Library | Type | Cross-Crate | Async | Verdict |
-| --------- | ------ | ------------- | ------- | --------- |
-| **Shaku** (current) | Compile-time | Yes | No | High boilerplate |
-| **nject** | Compile-time | **NO** | No | Rejected (cross-crate limitation) |
-| **dill** | Runtime | Yes | Tokio | Partial use |
-| Manual injection | N/A | N/A | N/A | **SELECTED** (with patterns) |
+| Library             | Type         | Cross-Crate | Async | Verdict                           |
+| ------------------- | ------------ | ----------- | ----- | --------------------------------- |
+| **Shaku** (current) | Compile-time | Yes         | No    | High boilerplate                  |
+| **nject**           | Compile-time | **NO**      | No    | Rejected (cross-crate limitation) |
+| **dill**            | Runtime      | Yes         | Tokio | Partial use                       |
+| Manual injection    | N/A          | N/A         | N/A   | **SELECTED** (with patterns)      |
 
 ### Why Handle-Based Pattern
 
-After implementing the dill catalog approach, we discovered that `dill::Catalog::get_one()` doesn't work well with `add_value` for interface resolution. Instead, we adopted a handle-based pattern that provides:
+After implementing the dill catalog approach, we discovered that
+`dill::Catalog::get_one()` doesn't work well with `add_value` for interface resolution.
+Instead, we adopted a handle-based pattern that provides:
 
 1. **Runtime provider switching** via RwLock handles
 2. **Compile-time discovery** via linkme distributed slices
@@ -234,15 +249,15 @@ let embedding = context.embedding_handle().get();  // Now OpenAI
 
 ## Implementation Summary (2026-01-19)
 
-| Component | Pattern | Status |
-| ----------- | --------- | -------- |
-| EmbeddingProvider | Handle + Resolver + AdminService | Implemented |
-| VectorStoreProvider | Handle + Resolver + AdminService | Implemented |
-| CacheProvider | Handle + Resolver + AdminService | Implemented |
+| Component                | Pattern                          | Status      |
+| ------------------------ | -------------------------------- | ----------- |
+| EmbeddingProvider        | Handle + Resolver + AdminService | Implemented |
+| VectorStoreProvider      | Handle + Resolver + AdminService | Implemented |
+| CacheProvider            | Handle + Resolver + AdminService | Implemented |
 | LanguageChunkingProvider | Handle + Resolver + AdminService | Implemented |
-| Infrastructure services | Direct storage in AppContext | Implemented |
-| Shaku removal | All macros removed | Completed |
-| linkme registry | Function pointers (not closures) | Implemented |
+| Infrastructure services  | Direct storage in AppContext     | Implemented |
+| Shaku removal            | All macros removed               | Completed   |
+| linkme registry          | Function pointers (not closures) | Implemented |
 
 ### File Structure
 
@@ -261,11 +276,17 @@ crates/mcb-infrastructure/src/di/
 ## Related ADRs
 
 - ADR 012: Two-Layer DI Strategy (Shaku) - **SUPERSEDED** by this ADR
-- [ADR 012: Two-Layer DI Strategy](../012-di-strategy-two-layer-approach.md) - **SUPERSEDED**
-- [ADR 013: Clean Architecture Crate Separation](../013-clean-architecture-crate-separation.md) - Multi-crate organization
-- **Extended by**: [ADR 027: Architecture Evolution v0.1.3](../027-architecture-evolution-v013.md) - Formalizes engine contracts using handle pattern
+- [ADR 012: Two-Layer DI Strategy](../012-di-strategy-two-layer-approach.md) -
+  **SUPERSEDED**
+- [ADR 013: Clean Architecture Crate Separation](../013-clean-architecture-crate-separation.md) -
+  Multi-crate organization
+- **Extended by**:
+  [ADR 027: Architecture Evolution v0.1.3](../027-architecture-evolution-v013.md) -
+  Formalizes engine contracts using handle pattern
 
 ## References
 
-- [linkme crate](https://docs.rs/linkme) - Compile-time distributed slices for provider registration
-- [dill-rs GitHub](https://github.com/sergiimk/dill-rs) - Evaluated but `add_value` pattern insufficient
+- [linkme crate](https://docs.rs/linkme) - Compile-time distributed slices for provider
+  registration
+- [dill-rs GitHub](https://github.com/sergiimk/dill-rs) - Evaluated but `add_value`
+  pattern insufficient

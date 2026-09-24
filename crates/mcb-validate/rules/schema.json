@@ -156,108 +156,16 @@
       "description": "Metrics thresholds for schema v3 rules",
       "properties": {
         "cognitive_complexity": {
-          "type": "object",
-          "properties": {
-            "max": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "severity": {
-              "type": "string",
-              "enum": [
-                "error",
-                "warning",
-                "info"
-              ]
-            },
-            "languages": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "required": [
-            "max"
-          ]
+          "$ref": "#/$defs/metric_threshold"
         },
         "cyclomatic_complexity": {
-          "type": "object",
-          "properties": {
-            "max": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "severity": {
-              "type": "string",
-              "enum": [
-                "error",
-                "warning",
-                "info"
-              ]
-            },
-            "languages": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "required": [
-            "max"
-          ]
+          "$ref": "#/$defs/metric_threshold"
         },
         "function_length": {
-          "type": "object",
-          "properties": {
-            "max": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "severity": {
-              "type": "string",
-              "enum": [
-                "error",
-                "warning",
-                "info"
-              ]
-            },
-            "languages": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "required": [
-            "max"
-          ]
+          "$ref": "#/$defs/metric_threshold"
         },
         "nesting_depth": {
-          "type": "object",
-          "properties": {
-            "max": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "severity": {
-              "type": "string",
-              "enum": [
-                "error",
-                "warning",
-                "info"
-              ]
-            },
-            "languages": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          "required": [
-            "max"
-          ]
+          "$ref": "#/$defs/metric_threshold"
         }
       }
     },
@@ -483,6 +391,34 @@
           }
         ]
       }
+    }
+  },
+  "$defs": {
+    "metric_threshold": {
+      "type": "object",
+      "properties": {
+        "max": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warning",
+            "info"
+          ]
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "max"
+      ]
     }
   }
 }

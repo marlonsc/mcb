@@ -9,14 +9,13 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use mcb_domain::error::Error;
+use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::{FileInfo, SearchResult};
 use serde_json::Value;
 
 use super::http::{RequestErrorKind, handle_request_error_with_kind};
 use mcb_utils::constants::vector_store::{
-    VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_LINE_NUMBER,
-    VECTOR_FIELD_START_LINE,
+    VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_START_LINE,
 };
 
 /// Handle HTTP request errors for vector store operations
@@ -58,11 +57,6 @@ pub fn search_result_from_json_metadata(id: String, metadata: &Value, score: f64
         start_line: metadata
             .get(VECTOR_FIELD_START_LINE)
             .and_then(Value::as_u64)
-            .or_else(|| {
-                metadata
-                    .get(VECTOR_FIELD_LINE_NUMBER)
-                    .and_then(Value::as_u64)
-            })
             .unwrap_or(0) as u32,
         content: metadata
             .get(VECTOR_FIELD_CONTENT)
@@ -97,4 +91,23 @@ pub fn build_file_info_from_results(results: Vec<SearchResult>) -> Vec<FileInfo>
         .into_iter()
         .map(|(path, (chunk_count, language))| FileInfo::new(path, chunk_count, language, None))
         .collect()
+}
+
+/// Shared `list_file_paths` helper for vector store providers whose
+/// implementation follows the standard pattern: call `list_vectors`, then
+/// aggregate results via `build_file_info_from_results`.
+///
+/// Providers with custom logic (Milvus, `EdgeVec`, Encrypted) should implement
+/// `list_file_paths` directly instead of delegating to this function.
+///
+/// # Errors
+///
+/// Returns an error if the underlying `list_vectors` call fails.
+pub async fn standard_list_file_paths(
+    provider: &impl mcb_domain::ports::VectorStoreProvider,
+    collection: &mcb_domain::value_objects::CollectionId,
+    limit: usize,
+) -> Result<Vec<FileInfo>> {
+    let results = provider.list_vectors(collection, limit).await?;
+    Ok(build_file_info_from_results(results))
 }

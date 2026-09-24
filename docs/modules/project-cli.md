@@ -1,4 +1,5 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Beads Data Model - Quick Reference
 
 ## Directory Structure
@@ -21,7 +22,8 @@
 - **description, design, acceptance_criteria, notes**: Content fields
 - **status**: open, in_progress, blocked, deferred, closed, tombstone
 - **priority**: 0-4 (0=critical, 4=backlog)
-- **issue_type**: task, bug, feature, epic, chore, merge-request, molecule, gate, agent, role, rig, convoy, event
+- **issue_type**: task, bug, feature, epic, chore, merge-request, molecule, gate, agent,
+  role, rig, convoy, event
 - **assignee, owner, created_by**: People fields
 - **created_at, updated_at, closed_at**: Timestamps
 - **close_reason**: Reason for closure
@@ -39,7 +41,8 @@
 
 - **issue_id** (FK): The dependent issue
 - **depends_on_id** (FK): What it depends on
-- **type**: blocks, discovered-from, parent-child, relates-to, duplicate-of, superseded-by, waits-for
+- **type**: blocks, discovered-from, parent-child, relates-to, duplicate-of,
+  superseded-by, waits-for
 - **created_at, created_by**: Audit trail
 
 ### comments (Discussion)
@@ -98,20 +101,20 @@ One JSON object per line:
 
 ## CLI Commands Summary
 
-| Command | Purpose |
-| --------- | --------- |
-| `bd create "title"` | Create issue |
-| `bd list [--status open]` | List issues |
-| `bd show <id>` | Show issue details |
-| `bd update <id> --status in_progress` | Update issue |
-| `bd close <id> --reason "..."` | Close issue |
-| `bd dep add <id> <depends-on>` | Add dependency |
-| `bd dep list <id>` | List dependencies |
-| `bd dolt push` | Push Dolt commits when a remote is configured |
-| `bd dolt pull` | Pull Dolt commits when a remote is configured |
-| `bd backup sync` | Push a full Dolt backup to the configured destination |
-| `bd ready` | Show ready issues |
-| `bd blocked` | Show blocked issues |
+| Command                               | Purpose                                               |
+| ------------------------------------- | ----------------------------------------------------- |
+| `bd create "title"`                   | Create issue                                          |
+| `bd list [--status open]`             | List issues                                           |
+| `bd show <id>`                        | Show issue details                                    |
+| `bd update <id> --status in_progress` | Update issue                                          |
+| `bd close <id> --reason "..."`        | Close issue                                           |
+| `bd dep add <id> <depends-on>`        | Add dependency                                        |
+| `bd dep list <id>`                    | List dependencies                                     |
+| `bd dolt push`                        | Push Dolt commits when a remote is configured         |
+| `bd dolt pull`                        | Pull Dolt commits when a remote is configured         |
+| `bd backup sync`                      | Push a full Dolt backup to the configured destination |
+| `bd ready`                            | Show ready issues                                     |
+| `bd blocked`                          | Show blocked issues                                   |
 
 ## Configuration (config.yaml)
 
@@ -133,7 +136,8 @@ dolt:
 1. **Dolt remote sync**: `bd dolt push` / `bd dolt pull` when a remote is configured
 2. **Full backup**: `bd backup init <path-or-url>` + `bd backup sync`
 3. **JSONL**: `bd export` / `bd import` only for migration/interchange, not normal sync
-4. **Multi-agent**: shared-server mode serializes concurrent writers through one Dolt SQL server
+4. **Multi-agent**: shared-server mode serializes concurrent writers through one Dolt
+   SQL server
 
 ## Performance
 
@@ -187,7 +191,8 @@ CREATE INDEX idx_labels_label ON labels(label);
 
 - **Daemon mode** (default): Background RPC server via Unix socket
 - **No-daemon mode**: Direct database access
-- **Legacy no-db mode**: historical only; do not use for current shared-server coordination
+- **Legacy no-db mode**: historical only; do not use for current shared-server
+  coordination
 - **Files**: daemon.pid, daemon.lock, daemon.log, bd.sock
 
 ## Advanced Features
@@ -201,15 +206,16 @@ CREATE INDEX idx_labels_label ON labels(label);
 ## Troubleshooting
 
 ```bash
-bd doctor              # Check health
-bd info               # Show database info
-bd status             # Show statistics
-bd repair             # Fix corrupted database
-bd resolve-conflicts  # Resolve git conflicts
+bd doctor            # Check health
+bd info              # Show database info
+bd status            # Show statistics
+bd repair            # Fix corrupted database
+bd resolve-conflicts # Resolve git conflicts
 ```
 
 ## References
 
 - **Repository**: [GitHub.com/steveyegge/beads](https://github.com/steveyegge/beads)
-- **Docs**: [GitHub.com/steveyegge/beads/tree/main/docs](https://github.com/steveyegge/beads/tree/main/docs)
+- **Docs**:
+  [GitHub.com/steveyegge/beads/tree/main/docs](https://github.com/steveyegge/beads/tree/main/docs)
 - **Help**: `bd <command> --help`

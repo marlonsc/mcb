@@ -1,8 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 # Metrics Module
 
-**Source**: `crates/mcb-infrastructure/src/infrastructure/admin.rs` and `crates/mcb-server/src/admin/`
-**Crates**: `mcb-infrastructure`, `mcb-server`
+**Source**: `crates/mcb-infrastructure/src/infrastructure/admin.rs` and
+`crates/mcb-server/src/admin/` **Crates**: `mcb-infrastructure`, `mcb-server`
 
 System monitoring, performance tracking, and HTTP metrics API.
 
@@ -10,7 +11,8 @@ System monitoring, performance tracking, and HTTP metrics API.
 
 The metrics functionality is distributed across crates in v0.2.1:
 
-- **mcb-infrastructure**: `AtomicPerformanceMetrics`, `DefaultIndexingOperations` - Performance tracking
+- **mcb-infrastructure**: `AtomicPerformanceMetrics`, `DefaultIndexingOperations` -
+  Performance tracking
 - **mcb-server**: Admin endpoints for metrics exposure
 
 ### Components
@@ -30,12 +32,12 @@ HTTP API for metrics access via admin router.
 
 ### Endpoints
 
-| Endpoint | Method | Purpose |
-| ---------- | -------- | --------- |
-| `/health` | GET | Health check |
-| `/health/ready` | GET | Readiness probe |
-| `/health/live` | GET | Liveness probe |
-| `/metrics` | GET | Performance metrics JSON |
+| Endpoint        | Method | Purpose                  |
+| --------------- | ------ | ------------------------ |
+| `/health`       | GET    | Health check             |
+| `/health/ready` | GET    | Readiness probe          |
+| `/health/live`  | GET    | Liveness probe           |
+| `/metrics`      | GET    | Performance metrics JSON |
 
 ## File Structure
 

@@ -154,28 +154,20 @@ jobs:
 
       - name: Generate changelog
         env:
-          RELEASE_TAG: ${{ steps.extract_version.outputs.tag }}
+          RELEASE_TAG: ${{ steps.extract_version.outputs.version }}
         run: |
           VERSION="${{ steps.extract_version.outputs.version }}"
 
-          # Extract version section from CHANGELOG.md (preferred)
+          # Release notes come from the curated CHANGELOG section only; a
+          # missing or empty section fails the workflow instead of degrading
+          # to a git log dump.
           if [ -f "docs/operations/CHANGELOG.md" ]; then
             sed -n "/^## \\[$VERSION\\]/,/^## \\[/p" docs/operations/CHANGELOG.md | sed '$d' > RELEASE_NOTES.md
           fi
 
-          # Fallback to git log if CHANGELOG section not found or empty
           if [ ! -s RELEASE_NOTES.md ]; then
-            PREV_TAG=$(
-              git tag --list 'v*' --sort=-version:refname |
-              grep -v "^${RELEASE_TAG}$" |
-              head -1
-            )
-            if [ -z "$PREV_TAG" ]; then
-              git log --oneline --reverse "$RELEASE_TAG" > RELEASE_NOTES.md
-            else
-              git log "$PREV_TAG..$RELEASE_TAG" --oneline > RELEASE_NOTES.md
-            fi
-            sed -i '1s/^/## Changes\n\n/' RELEASE_NOTES.md
+            echo "No CHANGELOG.md section found for version [$VERSION] - add the release section before tagging." >&2
+            exit 1
           fi
 
       - name: Create Release

@@ -1,22 +1,20 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
+
 <!-- markdownlint-disable MD025 -->
-adr: 1
-title: Modular Crates Architecture
-status: IMPLEMENTED
-created:
-updated: 2026-02-05
-related: [2, 3, 4, 5]
-supersedes: []
-superseded_by: []
-implementation_status: Complete
+
+adr: 1 title: Modular Crates Architecture status: IMPLEMENTED created: updated:
+2026-02-05 related: [2, 3, 4, 5] supersedes: [] superseded_by: [] implementation_status:
+Complete
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
 
 ## ADR 001: Modular Crates Architecture
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
 ## Status
 
@@ -26,24 +24,23 @@ implementation_status: Complete
 
 ## Context
 
-Initially, the Memory Context Browser had a monolithic architecture. As the
-project grew, the need for better code organization, separation of concerns, and
-component reusability emerged. We evaluated adopting a modular architecture by
-dividing the system into multiple Rust crates, each responsible for a specific
-domain or functionality (e.g., core server crate, context providers crate,
-inter-module communication crate, etc.). We also considered how to manage the
-orderly initialization and shutdown of modules in a resilient manner.
+Initially, the Memory Context Browser had a monolithic architecture. As the project
+grew, the need for better code organization, separation of concerns, and component
+reusability emerged. We evaluated adopting a modular architecture by dividing the system
+into multiple Rust crates, each responsible for a specific domain or functionality
+(e.g., core server crate, context providers crate, inter-module communication crate,
+etc.). We also considered how to manage the orderly initialization and shutdown of
+modules in a resilient manner.
 
 ## Decision
 
-We opted for a modular architecture based on crates, where the project is
-divided into independent sub-modules compiled separately. Each crate
-encapsulates specific services and logics (e.g., core server crate, providers
-crate, EventBus crate, etc.), but all operate in an integrated manner. To
-coordinate the lifecycle of modules, we introduced a central component called
-an AppContext composition root (ADR-050) responsible for composing,
-initializing, and resolving all services across crates. Providers register via
-linkme distributed slices (ADR-023) for compile-time auto-discovery, and
+We opted for a modular architecture based on crates, where the project is divided into
+independent sub-modules compiled separately. Each crate encapsulates specific services
+and logics (e.g., core server crate, providers crate, EventBus crate, etc.), but all
+operate in an integrated manner. To coordinate the lifecycle of modules, we introduced a
+central component called an AppContext composition root (ADR-050) responsible for
+composing, initializing, and resolving all services across crates. Providers register
+via linkme distributed slices (ADR-023) for compile-time auto-discovery, and
 `init_app()` wires them into the application at startup in mcb-infrastructure.
 
 ## Implementation
@@ -172,7 +169,8 @@ impl ContextService {
 
 ### Two-Layer DI Strategy
 
-The system uses a two-layer approach for DI (see [ADR-012](012-di-strategy-two-layer-approach.md)):
+The system uses a two-layer approach for DI (see
+[ADR-012](012-di-strategy-two-layer-approach.md)):
 
 **Layer 1: linkme Distributed Slices** - Compile-time auto-discovery of providers:
 
@@ -184,7 +182,8 @@ let provider = resolver.resolve_from_config()?;
 // Defaults to FastEmbedProvider when no config override
 ```
 
-**Layer 2: AppContext composition root** - manual composition root composes services from resolved providers:
+**Layer 2: AppContext composition root** - manual composition root composes services
+from resolved providers:
 
 ```rust
 // mcb-infrastructure/src/di/bootstrap.rs — AppContext manual composition root (ADR-050)
@@ -216,15 +215,14 @@ mod tests {
 
 ## Consequences
 
-This change to multiple crates improved code maintainability and scalability.
-Developers can evolve modules in isolation and even publish reusable crates. The
-modular architecture also facilitates unit testing and integration testing
-focused per module. On the other hand, it added complexity in managing versions
-between internal crates and required an orchestration layer
-(AppContext composition root + linkme registry) to coordinate dependencies and
-initialization order. These additional structures increase robustness at the cost
-of a small coordination overhead. Overall, the decision aligned with the goal of
-a pluggable and extensible design, allowing inclusion or removal of
+This change to multiple crates improved code maintainability and scalability. Developers
+can evolve modules in isolation and even publish reusable crates. The modular
+architecture also facilitates unit testing and integration testing focused per module.
+On the other hand, it added complexity in managing versions between internal crates and
+required an orchestration layer (AppContext composition root + linkme registry) to
+coordinate dependencies and initialization order. These additional structures increase
+robustness at the cost of a small coordination overhead. Overall, the decision aligned
+with the goal of a pluggable and extensible design, allowing inclusion or removal of
 functionalities (crates) without significantly impacting the rest of the system.
 
 ## Crate Structure
@@ -251,7 +249,8 @@ mcb-server → mcb-infrastructure → mcb-application → mcb-domain
 ## Related ADRs
 
 - [ADR-002: Async-First Architecture](002-async-first-architecture.md)
-- [ADR-029: Hexagonal Architecture](050-manual-composition-root-dill-removal.md) (superseded by ADR-050)
+- [ADR-029: Hexagonal Architecture](050-manual-composition-root-dill-removal.md)
+  (superseded by ADR-050)
 - [ADR-003: Unified Provider Architecture](003-unified-provider-architecture.md)
 - [ADR-051: SeaQL + Loco.rs Platform Rebuild](051-seaql-loco-platform-rebuild.md)
 - [ADR-005: Context Cache Support (Moka and Redis)](005-context-cache-support.md)

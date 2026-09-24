@@ -178,11 +178,34 @@ def rendered_issues(root: Path, threads: int = 4) -> list[SarifIssue]:
     return issues
 
 
+@dataclass(frozen=True, slots=True)
+class RenderOutcome:
+    """One render attempt: rendered text, or the blocking failure issue.
+
+    Law 14: a missing tool, a timeout, or a failed render is a RED gate, never
+    a silent skip — the failure always carries a SARIF issue.
+    """
+
+    output: str | None
+    issue: SarifIssue | None
+
+
 def _render_and_validate(target: GitOpsTarget) -> list[SarifIssue]:
     """Render a single target and run schema validation on the output."""
-    rendered = cached_render(target)
+    outcome = cached_render(target)
+    if outcome.issue is not None:
+        return [outcome.issue]
+    rendered = outcome.output
     if rendered is None:
-        return []
+        # Unreachable: every no-output outcome carries its failure issue.
+        return [
+            _issue(
+                "gitops:render-failed",
+                "Render produced no output",
+                target.path,
+                1,
+            )
+        ]
     issues: list[SarifIssue] = []
     parser = YAML(typ="safe")
     try:
@@ -222,19 +245,22 @@ def _render_and_validate(target: GitOpsTarget) -> list[SarifIssue]:
     return issues
 
 
-def cached_render(target: GitOpsTarget) -> str | None:
-    """Render a target, caching the result by input content hash."""
+def cached_render(target: GitOpsTarget) -> RenderOutcome:
+    """Render a target, caching successful output by input content hash.
+
+    Failures are never cached: the next run re-attempts the render.
+    """
     cache_key = render_cache_key(target)
     cache_path = CACHE_DIR / f"{cache_key}.yaml"
     if cache_path.exists():
-        return cache_path.read_text(encoding="utf-8")
+        return RenderOutcome(cache_path.read_text(encoding="utf-8"), None)
 
-    rendered = _render_target(target)
-    if rendered is None:
-        return None
+    outcome = _render_target(target)
+    if outcome.output is None:
+        return outcome
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
-    cache_path.write_text(rendered, encoding="utf-8")
-    return rendered
+    cache_path.write_text(outcome.output, encoding="utf-8")
+    return outcome
 
 
 def render_cache_key(target: GitOpsTarget) -> str:
@@ -248,22 +274,37 @@ def render_cache_key(target: GitOpsTarget) -> str:
     return hasher.hexdigest()
 
 
-def _render_target(target: GitOpsTarget) -> str | None:
+def _render_target(target: GitOpsTarget) -> RenderOutcome:
     """Run helm template or kustomize build for a target."""
     if target.kind == "helm":
         tool, args = "helm", ["template", str(target.path)]
     elif target.kind == "kustomize":
         tool, args = "kustomize", ["build", str(target.path)]
     else:
-        return None
+        return RenderOutcome(
+            None,
+            _issue(
+                "gitops:render-failed",
+                f"Unknown render kind: {target.kind}",
+                target.path,
+                1,
+            ),
+        )
 
     # Resolve the renderer to an absolute path: a bare name lets PATH order pick
     # the binary, and a shadowed helm/kustomize would silently render different
     # manifests than the ones this gate is meant to validate.
     executable = shutil.which(tool)
     if executable is None:
-        logger.warning(f"{target.kind} CLI not installed; skipping {target.path}")
-        return None
+        return RenderOutcome(
+            None,
+            _issue(
+                "gitops:tool-missing",
+                f"{target.kind} CLI not installed; target cannot be validated",
+                target.path,
+                1,
+            ),
+        )
     cmd = [executable, *args]
 
     try:
@@ -271,18 +312,37 @@ def _render_target(target: GitOpsTarget) -> str | None:
             cmd, capture_output=True, text=True, check=False, timeout=60
         )
     except FileNotFoundError:
-        logger.warning(f"{target.kind} CLI not installed; skipping {target.path}")
-        return None
+        return RenderOutcome(
+            None,
+            _issue(
+                "gitops:tool-missing",
+                f"{target.kind} CLI not installed; target cannot be validated",
+                target.path,
+                1,
+            ),
+        )
     except subprocess.TimeoutExpired:
-        logger.warning(f"{target.kind} render timed out for {target.path}")
-        return None
+        return RenderOutcome(
+            None,
+            _issue(
+                "gitops:render-timeout",
+                f"{target.kind} render timed out after 60s",
+                target.path,
+                1,
+            ),
+        )
 
     if result.returncode != 0:
-        logger.warning(
-            f"{target.kind} render failed for {target.path}: {result.stderr.strip()}"
+        return RenderOutcome(
+            None,
+            _issue(
+                "gitops:render-failed",
+                f"{target.kind} render failed: {result.stderr.strip()}",
+                target.path,
+                1,
+            ),
         )
-        return None
-    return result.stdout
+    return RenderOutcome(result.stdout, None)
 
 
 def _yaml_files(root: Path) -> list[Path]:

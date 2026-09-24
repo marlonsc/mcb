@@ -19,7 +19,8 @@ fn test_fixtures_referenced() {
     assert_eq!(golden_count_result_entries("📁 foo\n📁 bar"), 2);
 
     let _ = extract_result_text as fn(&rmcp::model::CallToolResult) -> String;
-    let _ = extract_text_from::<rmcp::model::Content> as fn(&[rmcp::model::Content]) -> String;
+    let _ = extract_text_from::<rmcp::model::ContentBlock>
+        as fn(&[rmcp::model::ContentBlock]) -> String;
 
     let (_temp, path) = create_temp_codebase();
     assert!(path.exists());

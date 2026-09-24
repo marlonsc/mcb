@@ -1,13 +1,9 @@
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
+
 ---
-adr: 17
-title: Phased Feature Integration Roadmap
-status: ACCEPTED
-created:
-updated: 2026-02-05
-related: [12, 13, 16, 20]
-supersedes: []
-superseded_by: []
+
+adr: 17 title: Phased Feature Integration Roadmap status: ACCEPTED created: updated:
+2026-02-05 related: [12, 13, 16, 20] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
 ---
 
@@ -17,15 +13,15 @@ implementation_status: "Historical snapshot; see bd for live work"
 
 ## Status
 
-> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to `mcb-infrastructure::di::modules::use_cases`.
+> **v0.3.0 Note**: `mcb-application` crate was removed. Use cases moved to
+> `mcb-infrastructure::di::modules::use_cases`.
 
-**Accepted** (v0.1.1+)
-**Date**: 2026-01-14
-**Version**: v0.1.1 Update
+**Accepted** (v0.1.1+) **Date**: 2026-01-14 **Version**: v0.1.1 Update
 
 ## Context
 
-MCB and PMAT have distinct feature sets. Integration must be incremental to maintain stability.
+MCB and PMAT have distinct feature sets. Integration must be incremental to maintain
+stability.
 
 **MCB v0.1.1** (Semantic Search - RELEASED):
 
@@ -44,8 +40,8 @@ MCB and PMAT have distinct feature sets. Integration must be incremental to main
 
 ## Decision
 
-Historical 6-phase integration plan with backward compatibility. This ADR is
-not the current implementation queue; use beads for active work.
+Historical 6-phase integration plan with backward compatibility. This ADR is not the
+current implementation queue; use beads for active work.
 
 ### Phase 1: v0.1.1 - Foundation (RELEASED)
 
@@ -61,8 +57,7 @@ Deliverables:
 - [x] mcb-validate: Architecture enforcement
 - [x] mcb: Facade crate with re-exports
 
-**Tools**: 4 (index, search, clear, status)
-**Tests**: 308+
+**Tools**: 4 (index, search, clear, status) **Tests**: 308+
 
 ### Phase 2: v0.2.0 - Infrastructure (historical target)
 
@@ -75,8 +70,7 @@ Deliverables:
 - Hybrid search (BM25 + vector)
 - Rayon integration for parallelism
 
-**Tools**: 6 (+git_index, +session_recall)
-**Tests**: 500+ (target)
+**Tools**: 6 (+git_index, +session_recall) **Tests**: 500+ (target)
 
 ### Phase 3: v0.3.0 - Analysis Core
 
@@ -89,8 +83,8 @@ Deliverables:
 - Port SATD detector
 - Analysis adapters in mcb-providers
 
-**Tools**: 9 (+validate (action=analyze), +tdg_score, +satd_detect)
-**Tests**: 1500+ (includes PMAT tests)
+**Tools**: 9 (+validate (action=analyze), +tdg_score, +satd_detect) **Tests**: 1500+
+(includes PMAT tests)
 
 ### Phase 4: v0.4.0 - Extended Analysis
 
@@ -117,8 +111,8 @@ Deliverables:
 - Commit history analysis
 - Impact analysis
 
-**Tools**: 21 (+quality_score, +maintainability, +commit_analysis, +impact_analysis, +blame_analysis, +diff_analysis, +branch_compare)
-**Tests**: 4500+
+**Tools**: 21 (+quality_score, +maintainability, +commit_analysis, +impact_analysis,
++blame_analysis, +diff_analysis, +branch_compare) **Tests**: 4500+
 
 ### Phase 6: v0.6.0+ - Advanced Features
 
@@ -131,8 +125,7 @@ Deliverables:
 - TUI dashboard
 - Codebase scaffolding
 
-**Tools**: 25+
-**Tests**: 5390+
+**Tools**: 25+ **Tests**: 5390+
 
 ## Migration Principles
 
@@ -163,10 +156,14 @@ Mitigation:
 
 ## Related ADRs
 
-- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI foundation
-- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) - Crate structure
-- [ADR-016: Integration Points Adapter Pattern](016-integration-points-adapter-pattern.md) - PMAT integration
-- [ADR-020: Testing Strategy Integration](020-testing-strategy-integration.md) - Test migration
+- [ADR-012: Two-Layer DI Strategy](012-di-strategy-two-layer-approach.md) - DI
+  foundation
+- [ADR-013: Clean Architecture Crate Separation](013-clean-architecture-crate-separation.md) -
+  Crate structure
+- [ADR-016: Integration Points Adapter Pattern](016-integration-points-adapter-pattern.md) -
+  PMAT integration
+- [ADR-020: Testing Strategy Integration](020-testing-strategy-integration.md) - Test
+  migration
 
 ---
 
