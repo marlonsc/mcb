@@ -1,7 +1,6 @@
 use mcb_server::transport::http_client::HttpClientTransport;
 
 use mcb_domain::utils::tests::timeouts::TEST_TIMEOUT;
-use mcb_utils::constants::FALLBACK_UNKNOWN;
 
 #[rstest]
 fn test_http_client_creation() {
@@ -132,27 +131,12 @@ fn secure_transport_rejects_unknown_scheme() {
 }
 
 #[rstest]
-fn machine_id_detected_from_gethostname_without_env() {
-    let expected_hostname = hostname::get()
+fn machine_id_resolves_from_gethostname() {
+    // gethostname is the single identity source; no env fallback masks it.
+    let machine_id = hostname::get()
         .ok()
         .and_then(|h| h.into_string().ok())
-        .unwrap_or_else(|| FALLBACK_UNKNOWN.to_owned());
+        .expect("gethostname should resolve on the test host");
 
-    assert!(
-        !expected_hostname.is_empty(),
-        "hostname should not be empty"
-    );
-}
-
-#[rstest]
-fn machine_id_prefers_gethostname_over_env() {
-    let gethostname_result = hostname::get()
-        .ok()
-        .and_then(|h| h.into_string().ok())
-        .unwrap_or_else(|| FALLBACK_UNKNOWN.to_owned());
-
-    assert!(
-        !gethostname_result.is_empty(),
-        "gethostname should return a value"
-    );
+    assert!(!machine_id.is_empty(), "hostname should not be empty");
 }
