@@ -17,9 +17,7 @@ use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
 use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
 use crate::utils::vector_store::search_result_from_json_metadata;
-use mcb_utils::constants::http::{
-    HTTP_HEADER_CONTENT_TYPE, PROVIDER_RETRY_BACKOFF_MS, PROVIDER_RETRY_COUNT,
-};
+use mcb_utils::constants::http::HTTP_HEADER_CONTENT_TYPE;
 
 /// Qdrant vector search engine client.
 pub struct QdrantVectorStoreProvider {
@@ -165,8 +163,6 @@ impl QdrantVectorStoreProvider {
             operation: path,
             headers: &headers,
             body: body.as_ref(),
-            retry_attempts: PROVIDER_RETRY_COUNT,
-            retry_backoff_ms: PROVIDER_RETRY_BACKOFF_MS,
         })
         .await
     }
