@@ -7,7 +7,7 @@ pub mod orchestrator;
 pub mod transitions;
 
 pub use orchestrator::{
-    InMemoryTransitionRepository, InMemoryWorkflowSessionRepository, WorkflowEvent,
-    WorkflowEventPublisher, WorkflowOrchestrator,
+    InMemoryTransitionRepository, InMemoryWorkflowSessionRepository, WorkflowEventPublisher,
+    WorkflowOrchestrator,
 };
 pub use transitions::apply_transition;
