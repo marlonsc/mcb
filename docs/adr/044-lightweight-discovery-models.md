@@ -1,3 +1,20 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Context](#context)
+- [Decision](#decision)
+  - [1. Multi-Tier Routing: AST → Rules → (Optional: ML)](#1-multi-tier-routing-ast-rules-optional-ml)
+  - [2. Stage 1: AST-Based Routing (Zero ML)](#2-stage-1-ast-based-routing-zero-ml)
+  - [3. Stage 2: Rule-Based Routing (rhai DSL)](#3-stage-2-rule-based-routing-rhai-dsl)
+  - [4. Stage 3: ML-Based Routing (Deferred to v0.5.0)](#4-stage-3-ml-based-routing-deferred-to-v050)
+- [Configuration](#configuration)
+- [Integration with ADR-041-046](#integration-with-adr-041-046)
+- [Testing](#testing)
+  - [Success Criteria](#success-criteria)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +22,7 @@
 adr: 44 title: Lightweight Discovery Models for Context Routing status: PROPOSED
 created: updated: 2026-02-05 related: [] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

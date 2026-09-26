@@ -2,6 +2,26 @@
 
 # Golden Tests Contract
 
+<!-- TOC START -->
+
+- [1. E2E workflow](#1-e2e-workflow)
+- [2. Index](#2-index)
+- [3. MCP response schema (content shape)](#3-mcp-response-schema-content-shape)
+- [4. Search validation](#4-search-validation)
+- [5. Golden queries E2E (split to avoid timeout)](#5-golden-queries-e2e-split-to-avoid-timeout)
+- [Implementation notes](#implementation-notes)
+- [6. Org Entity CRUD (19 tests)](#6-org-entity-crud-19-tests)
+- [7. Data Isolation (6 tests)](#7-data-isolation-6-tests)
+- [8. API Key Lifecycle (9 tests)](#8-api-key-lifecycle-9-tests)
+- [9. Session Lifecycle (6 tests)](#9-session-lifecycle-6-tests)
+- [10. VCS Entity CRUD (10 tests)](#10-vcs-entity-crud-10-tests)
+- [11. Plan Entity CRUD (12 tests)](#11-plan-entity-crud-12-tests)
+- [12. Issue Entity CRUD (13 tests)](#12-issue-entity-crud-13-tests)
+- [13. Validate Operations (4 tests)](#13-validate-operations-4-tests)
+- [14. Project Operations (5 tests)](#14-project-operations-5-tests)
+
+<!-- TOC END -->
+
 The authoritative test count is the output of `make test WHAT=golden`; this document
 records the behaviour contract, not a frozen count.
 

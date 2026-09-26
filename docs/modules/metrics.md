@@ -2,6 +2,21 @@
 
 # Metrics Module
 
+<!-- TOC START -->
+
+- [Overview](#overview)
+  - [Components](#components)
+  - [AtomicPerformanceMetrics (mcb-infrastructure)](#atomicperformancemetrics-mcb-infrastructure)
+  - [Metrics Endpoints (mcb-server)](#metrics-endpoints-mcb-server)
+  - [Endpoints](#endpoints)
+- [File Structure](#file-structure)
+- [Key Exports](#key-exports)
+- [Configuration](#configuration)
+- [Cross-References](#cross-references)
+  - [Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)](#updated-2026-02-12-reflects-modular-crate-architecture-v021)
+
+<!-- TOC END -->
+
 **Source**: `crates/mcb-infrastructure/src/infrastructure/admin.rs` and
 `crates/mcb-server/src/admin/` **Crates**: `mcb-infrastructure`, `mcb-server`
 

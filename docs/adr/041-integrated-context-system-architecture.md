@@ -1,3 +1,26 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Context](#context)
+- [Decision](#decision)
+  - [1. Five-Layer Architecture](#1-five-layer-architecture)
+  - [2. Core Data Model](#2-core-data-model)
+  - [3. Port Interfaces (mcb-domain/ports/)](#3-port-interfaces-mcb-domainports)
+  - [4. Integration with ADR-034-037](#4-integration-with-adr-034-037)
+- [Implementation](#implementation)
+  - [Layer Breakdown](#layer-breakdown)
+  - [Crate Structure](#crate-structure)
+- [Alternatives Considered](#alternatives-considered)
+- [Testing Strategy](#testing-strategy)
+- [Risks & Mitigations](#risks-mitigations)
+  - [Success Criteria](#success-criteria)
+- [Architecture Corrections](#architecture-corrections)
+  - [Correction 1: ContextService Layer Placement (2026-02-06)](#correction-1-contextservice-layer-placement-2026-02-06)
+  - [Correction 2: ADR-035 Dependency Acknowledgment (2026-02-06)](#correction-2-adr-035-dependency-acknowledgment-2026-02-06)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +28,7 @@
 adr: 41 title: Integrated Context System Architecture v0.4.0 status: PROPOSED created:
 updated: 2026-02-05 related: [] supersedes: [] superseded_by: [] implementation_status:
 "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

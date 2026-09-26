@@ -1,3 +1,18 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Deprecation Status](#deprecation-status)
+- [↔ Code ↔ Docs cross-reference](#code-docs-cross-reference)
+- [Overview](#overview)
+- [Use Cases](#use-cases)
+- [Decorators](#decorators)
+- [Key Exports](#key-exports)
+- [File Structure](#file-structure)
+  - [Updated 2026-02-20 - Consolidated services.md into application.md for SSOT](#updated-2026-02-20-consolidated-servicesmd-into-applicationmd-for-ssot)
+
+<!-- TOC END -->
+
 > **Superseded (v0.3.0)**: The `mcb-application` crate was removed. Use case services
 > moved to `mcb-infrastructure::di::modules::use_cases`. See
 > [infrastructure module](./infrastructure.md).

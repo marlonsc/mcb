@@ -2,6 +2,31 @@
 
 # .MCP-context.toml Schema Documentation
 
+<!-- TOC START -->
+
+- [Table of Contents](#table-of-contents)
+- [Overview](#overview)
+- [File Location](#file-location)
+- [Schema Reference](#schema-reference)
+  - [\[git\] Section](#git-section)
+- [Examples](#examples)
+  - [Minimal Configuration](#minimal-configuration)
+  - [Typical Rust Project](#typical-rust-project)
+  - [JavaScript/Node Project](#javascriptnode-project)
+  - [Python Project](#python-project)
+- [Pattern Syntax](#pattern-syntax)
+  - [Glob Patterns](#glob-patterns)
+  - [Matching Behavior](#matching-behavior)
+- [Environment Variables](#environment-variables)
+- [Validation](#validation)
+  - [Valid Configuration](#valid-configuration)
+  - [Invalid Configuration](#invalid-configuration)
+  - [Defaults Used When Missing](#defaults-used-when-missing)
+- [Complete Example](#complete-example)
+- [Migration from v0.1.x](#migration-from-v01x)
+
+<!-- TOC END -->
+
 Complete schema reference for `.mcp-context.toml` git-aware indexing configuration.
 
 ## Table of Contents

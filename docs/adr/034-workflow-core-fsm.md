@@ -1,3 +1,48 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [Problem Statement](#problem-statement)
+  - [Requirements](#requirements)
+- [Decision](#decision)
+  - [1. Enum-Based Manual FSM (Runtime)](#1-enum-based-manual-fsm-runtime)
+  - [2. Domain Entities](#2-domain-entities)
+  - [2.1 Database Provider Abstraction](#21-database-provider-abstraction)
+  - [2.2 Operator Ownership & Compensation Model](#22-operator-ownership-compensation-model)
+  - [2.3 Hybrid Transaction Model](#23-hybrid-transaction-model)
+  - [3. Transition Matrix](#3-transition-matrix)
+  - [4. Transition Implementation](#4-transition-implementation)
+  - [5. Port Trait](#5-port-trait)
+  - [6. Error Types](#6-error-types)
+  - [7. SQLite Persistence Schema](#7-sqlite-persistence-schema)
+  - [8. SQLite Provider Implementation (Skeleton)](#8-sqlite-provider-implementation-skeleton)
+  - [9. Provider Registration (linkme)](#9-provider-registration-linkme)
+  - [10. Module Locations](#10-module-locations)
+- [Refinements (ADR-034 Phase 2)](#refinements-adr-034-phase-2)
+  - [Refinement 1: Database Provider Pattern](#refinement-1-database-provider-pattern)
+  - [Refinement 2: Compensation and Rollback Logic](#refinement-2-compensation-and-rollback-logic)
+  - [Classification: MCB workflows operate under human supervision — not autonomous agents. Compensation ishybrid](#classification-mcb-workflows-operate-under-human-supervision-not-autonomous-agents-compensation-ishybrid)
+  - [Refinement 3: Transaction Isolation and Concurrency Control](#refinement-3-transaction-isolation-and-concurrency-control)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: statig (Hierarchical State Machine Crate)](#alternative-1-statig-hierarchical-state-machine-crate)
+  - [Alternative 2: smlang-rs (Declarative DSL)](#alternative-2-smlang-rs-declarative-dsl)
+  - [Alternative 3: sm (Typestate Pattern)](#alternative-3-sm-typestate-pattern)
+  - [Alternative 4: In-Memory Only (No SQLite)](#alternative-4-in-memory-only-no-sqlite)
+- [Implementation Notes](#implementation-notes)
+  - [Code Changes](#code-changes)
+  - [Migration](#migration)
+  - [Testing](#testing)
+  - [Performance Targets](#performance-targets)
+  - [Security](#security)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +50,7 @@
 adr: 34 title: Workflow Core — Finite State Machine and Persistence status: ACCEPTED
 created: updated: 2026-02-06 related: [13, 19, 23, 25, 29] supersedes: [32]
 superseded_by: [] implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

@@ -1,3 +1,48 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [ADR 007: Integrated Web Administration Interface](#adr-007-integrated-web-administration-interface)
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Separate Administration Service](#alternative-1-separate-administration-service)
+  - [Alternative 2: Terminal-based Administration Only](#alternative-2-terminal-based-administration-only)
+  - [Alternative 3: Third-party Admin Interface](#alternative-3-third-party-admin-interface)
+  - [Alternative 4: Desktop Application](#alternative-4-desktop-application)
+- [Implementation Notes](#implementation-notes)
+  - [Architecture Integration](#architecture-integration)
+  - [API Endpoints](#api-endpoints)
+  - [Frontend Structure](#frontend-structure)
+  - [Security Implementation](#security-implementation)
+  - [Testing Strategy](#testing-strategy)
+  - [Migration Path](#migration-path)
+  - [Performance Considerations](#performance-considerations)
+  - [Rollback Plan](#rollback-plan)
+- [Unified Port Architecture (v0.2.0)](#unified-port-architecture-v020)
+  - [Port Configuration](#port-configuration)
+  - [URL Structure](#url-structure)
+  - [Implementation](#implementation)
+  - [Benefits](#benefits)
+- [Subsystem Control Protocol (v0.2.0)](#subsystem-control-protocol-v020)
+  - [New SystemEvent Variants](#new-systemevent-variants)
+  - [New AdminService Methods](#new-adminservice-methods)
+  - [Subsystem Types](#subsystem-types)
+  - [Event Flow Example](#event-flow-example)
+- [Configuration Management (v0.2.0)](#configuration-management-v020)
+  - [Runtime vs Persisted Configuration](#runtime-vs-persisted-configuration)
+  - [API Flow](#api-flow)
+  - [Implementation Pattern](#implementation-pattern)
+- [Template Organization](#template-organization)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +50,7 @@
 adr: 7 title: Integrated Web Administration Interface status: IMPLEMENTED created:
 updated: 2026-02-05 related: [1, 2, 6, 8, 12, 13] supersedes: [] superseded_by: []
 implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

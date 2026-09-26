@@ -1,3 +1,28 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [Analysis of kamu-cli's Onion/Clean Architecture](#analysis-of-kamu-clis-onionclean-architecture)
+  - [Problems Addressed](#problems-addressed)
+- [Decision](#decision)
+  - [Phase 0: Baseline & Acceptance Criteria](#phase-0-baseline-acceptance-criteria)
+  - [Phase 1: Bounded Contexts Within Layers](#phase-1-bounded-contexts-within-layers)
+  - [Phase 2: Explicit Engine Contracts](#phase-2-explicit-engine-contracts)
+  - [Phase 3: Incremental Indexing Pipeline](#phase-3-incremental-indexing-pipeline)
+  - [Phase 4: Node Mode Operability](#phase-4-node-mode-operability)
+  - [Phase 5: Relevance Testing](#phase-5-relevance-testing)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Implementation Notes](#implementation-notes)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +30,7 @@
 adr: 27 title: Architecture Evolution v0.1.3 - Onion/Clean Enhancement status: ACCEPTED
 created: updated: 2026-02-05 related: [8, 13, 24] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

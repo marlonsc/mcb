@@ -2,6 +2,33 @@
 
 # Validation Module
 
+<!-- TOC START -->
+
+- [↔ Code ↔ Docs cross-reference](#code-docs-cross-reference)
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Rules & Validators](#rules-validators)
+  - [🏗️ Clean Architecture (CA)](#clean-architecture-ca)
+  - [📁 Organization (ORG)](#organization-org)
+  - [♻️ Refactoring (REF)](#refactoring-ref)
+  - [💎 Quality (QUAL)](#quality-qual)
+- [Technical Details](#technical-details)
+  - [Registry & Orchestration](#registry-orchestration)
+  - [Fact Extraction (extractor/)](#fact-extraction-extractor)
+  - [Rule Engines (engines/)](#rule-engines-engines)
+  - [Root Modules](#root-modules)
+  - [Rules (rules/)](#rules-rules)
+- [Usage](#usage)
+  - [Command Line](#command-line)
+- [Single Source of Truth (SSOT)](#single-source-of-truth-ssot)
+  - [SSOT Rules](#ssot-rules)
+- [Programmatic API](#programmatic-api)
+- [Validation Status](#validation-status)
+- [File Structure](#file-structure)
+- [Related Documentation](#related-documentation)
+
+<!-- TOC END -->
+
 **Source**: `crates/mcb-validate/src/` **Crate**: `mcb-validate` **Lines of Code**:
 ~8,000+
 

@@ -3,7 +3,7 @@
 
 1. Truth: never claim done/green/resolved without command, exit code, decisive output.
 2. Root cause: exterminate bypass, fallback, shim, suppression, stub, hardcode, catch-based normalization, retry, compatibility, partial execution, keyring, or old+new coexistence.
-3. Tracker first: use the canonical tracker only when selected and available. If its runtime is explicitly suspended, create no substitute tracker or ledger; preserve evidence in separately authorized Git/PR/CI and do not declare the phase DONE.
+3. Tracker boundary: without repository `.beads/`, invoke neither `bd` nor `gc` and create no substitute. Otherwise use only the selected, available canonical tracker. If explicitly suspended, preserve authorized Git/PR/CI evidence and never declare DONE.
 4. Research first: inspect code, docs, canonical sources before acting; never invent APIs, flags, facts, or behavior.
 5. Owner first: use the project's declared facades/primitives; do not reimplement them locally.
 6. Gate persistence: a failure stops only that invocation. Correct its owner,
@@ -36,11 +36,15 @@
     raw traceback escape unchanged.
 <!-- /AIHUB-INVIOLABLE-LAW-PRELUDE -->
 
-## AGENTS.md — mcb
+# AGENTS.md — mcb
 
 > Packaged governance `agents-governance` `0.5.0` owns the capability indexes: 66 agents, 96 rules, 137 skills. Consume them through `GovernanceBundle`; do not copy their bodies here.
 
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-BEGIN -->
+## AGENTS.md — mcb
+
+> Packaged governance `agents-governance` `0.5.0` owns the capability indexes: 66 agents, 96 rules, 137 skills. Consume them through `GovernanceBundle`; do not copy their bodies here.
+
 ## AGENTS.md — mcb
 
 > Packaged governance `agents-governance` `0.3.0` owns the capability indexes: 62
@@ -86,4 +90,34 @@ architecture, commands, beads workflow, validation, and Git policy.
 
 Do not duplicate those rules here. Update `AGENTS.md`, then run
 `make gen-agent-pointers`.
+
+<!-- migrated from .cursorrules -->
+@AGENTS.md
+
+<!-- migrated from .github/copilot-instructions.md -->
+@../AGENTS.md
+
+<!-- migrated from .windsurfrules -->
+@AGENTS.md
+
+<!-- migrated from CLAUDE.md -->
+@AGENTS.md
+
+<!-- migrated from CODEBUDDY.md -->
+@AGENTS.md
+
+<!-- migrated from GEMINI.md -->
+@AGENTS.md
+
+<!-- migrated from QODER.md -->
+@AGENTS.md
+
+<!-- migrated from opencode.jsonc -->
+@AGENTS.md
+
+<!-- migrated from CODEBUDDY.md -->
+@AGENTS.md
+
+<!-- migrated from QODER.md -->
+@AGENTS.md
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-END -->

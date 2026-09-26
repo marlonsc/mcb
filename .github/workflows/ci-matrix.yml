@@ -19,7 +19,6 @@ name: ci-matrix
 # End SECTION: triggers
 
 
-
 # === SECTION: permissions (managed) ===
 # Source: template (minimal read-only permissions)
 permissions:
@@ -43,12 +42,13 @@ jobs:
     runs-on: ubuntu-latest
     env:
       CI: Y
+      GITHUB_TOKEN: ${{ github.token }}
     strategy:
       fail-fast: false
       matrix:
         distro: [ubuntu, debian, fedora, alpine, arch]
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7
         with:
           submodules: false
           # No step needs authenticated git after checkout; persisting the
@@ -58,34 +58,32 @@ jobs:
         run: >-
           docker build
           -f tests/fixtures/ci/docker/${{ matrix.distro }}.Dockerfile
+          --secret id=github_token,env=GITHUB_TOKEN
           -t ci-matrix-${{ matrix.distro }}
           .
       - name: Bootstrap + verb smoke (${{ matrix.distro }})
         env:
           CI: Y
         run: |
-          docker run --rm -e CI=Y ci-matrix-${{ matrix.distro }} make help
-          docker run --rm -e CI=Y ci-matrix-${{ matrix.distro }} make check
+          docker run --rm -e CI=Y -e GITHUB_TOKEN ci-matrix-${{ matrix.distro }} make help
+          docker run --rm -e CI=Y -e GITHUB_TOKEN ci-matrix-${{ matrix.distro }} make check
           # ci-matrix proves bootstrap + check across distros; it never runs make test.
   # End SECTION: distro-matrix
 
   # === SECTION: macos (managed) ===
-  # Source: template + config:github_actions.checkout/mise
+  # Source: template + config:github_actions.checkout + generated Make setup
   macos:
     runs-on: macos-latest
     env:
       CI: Y
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7
         with:
           submodules: false
           # No step needs authenticated git after checkout; persisting the
           # token into .git/config would expose it to every later command.
           persist-credentials: false
-      - name: Install mise toolchain
-        uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14  # v4.2.3
-        with:
-          version: 2026.8.14
       - name: Bootstrap
         run: CI=Y make setup
       - name: Verb surface
@@ -98,22 +96,19 @@ jobs:
   # End SECTION: macos
 
   # === SECTION: windows (managed) ===
-  # Source: template + config:github_actions.checkout/mise
+  # Source: template + config:github_actions.checkout + generated Make setup
   windows:
     runs-on: windows-latest
     env:
       CI: Y
+      GITHUB_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      - uses: actions/checkout@v7
         with:
           submodules: false
           # No step needs authenticated git after checkout; persisting the
           # token into .git/config would expose it to every later command.
           persist-credentials: false
-      - name: Install mise toolchain
-        uses: jdx/mise-action@9e7f7633ff6f6d6048a9418a68d48f288f50eb14  # v4.2.3
-        with:
-          version: 2026.8.14
       - name: Bootstrap
         shell: bash
         run: CI=Y make setup
@@ -126,4 +121,4 @@ jobs:
       - name: Canonical check
         shell: bash
         run: CI=Y make check
-  # End SECTION: windows
+# End SECTION: windows

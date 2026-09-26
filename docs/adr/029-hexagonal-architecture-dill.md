@@ -1,3 +1,23 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [1. Ports in mcb-domain (Single Source of Truth)](#1-ports-in-mcb-domain-single-source-of-truth)
+  - [2. dill Catalog as IoC Container](#2-dill-catalog-as-ioc-container)
+  - [3. Architecture Layers](#3-architecture-layers)
+  - [4. Validation Rules](#4-validation-rules)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Canonical References](#canonical-references)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +25,7 @@
 adr: 29 title: Hexagonal Architecture with dill IoC status: IMPLEMENTED created:
 updated: 2026-02-05 related: [] supersedes: [] superseded_by: [] implementation_status:
 Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -25,9 +46,11 @@ The previous architecture (ADR-024) used a handle-based DI pattern with linkme r
 for compile-time provider discovery. While effective, this approach had coupling issues:
 
 1. **Infrastructure imported concrete types from Application**
+
    - `domain_services.rs` imported `ContextServiceImpl`, `SearchServiceImpl`
 
 2. **Application ports were duplicated**
+
    - `mcb-domain/src/ports/providers/` (correct location)
    - `mcb-application/src/ports/providers/` (duplication)
 

@@ -1,5 +1,112 @@
 # Project & Issue Management Module
 
+<!-- TOC START -->
+
+- [↔ Code ↔ Docs cross-reference](#code-docs-cross-reference)
+- [Overview](#overview)
+- [Directory Structure (.mcp-project/)](#directory-structure-mcp-project)
+  - [Git Tracking](#git-tracking)
+- [2. Issue Data Model](#2-issue-data-model)
+  - [2.1 Core Issue Fields (SQLite issues Table)](#21-core-issue-fields-sqlite-issues-table)
+  - [2.2 Status Values](#22-status-values)
+  - [2.3 Issue Types](#23-issue-types)
+  - [2.4 Priority Levels](#24-priority-levels)
+- [3. Related Tables](#3-related-tables)
+  - [3.1 Labels Table](#31-labels-table)
+  - [3.2 Dependencies Table](#32-dependencies-table)
+  - [Dependency Types](#dependency-types)
+  - [Example](#example)
+  - [3.3 Comments Table](#33-comments-table)
+  - [3.4 Events Table](#34-events-table)
+  - [3.5 Configuration Table](#35-configuration-table)
+  - [3.6 Metadata Table](#36-metadata-table)
+  - [3.7 Dirty Issues Table](#37-dirty-issues-table)
+  - [3.8 Export Hashes Table](#38-export-hashes-table)
+  - [3.9 Issue Snapshots Table](#39-issue-snapshots-table)
+  - [3.10 Compaction Snapshots Table](#310-compaction-snapshots-table)
+  - [3.11 Repository MTimes Table](#311-repository-mtimes-table)
+- [4. Views](#4-views)
+  - [4.1 ready_issues View](#41-ready_issues-view)
+  - [4.2 blocked_issues View](#42-blocked_issues-view)
+- [5. JSONL Export Format](#5-jsonl-export-format)
+  - [5.1 File Structure](#51-file-structure)
+  - [5.2 JSONL Issue Record Example](#52-jsonl-issue-record-example)
+  - [5.3 JSONL Fields](#53-jsonl-fields)
+- [6. Configuration File (config.yaml)](#6-configuration-file-configyaml)
+- [7. Metadata Files](#7-metadata-files)
+  - [7.1 metadata.JSON](#71-metadatajson)
+  - [7.2 backup-state.JSON](#72-backup-statejson)
+- [8. Git Integration](#8-git-integration)
+  - [8.1 Sync Workflow](#81-sync-workflow)
+  - [8.2 Worktrees](#82-worktrees)
+  - [8.3 Hooks](#83-hooks)
+- [9. CLI Commands and Data Requirements](#9-cli-commands-and-data-requirements)
+  - [9.1 Create Issue](#91-create-issue)
+  - [Data Requirements](#data-requirements)
+  - [9.2 Update Issue](#92-update-issue)
+  - [Data Requirements (1)](#data-requirements-1)
+  - [9.3 List Issues](#93-list-issues)
+  - [Filter Options](#filter-options)
+  - [Output Options](#output-options)
+  - [9.4 Show Issue](#94-show-issue)
+  - [Options](#options)
+  - [9.5 Dependency Management](#95-dependency-management)
+  - [Data Requirements (2)](#data-requirements-2)
+  - [9.6 Close Issue](#96-close-issue)
+  - [Data Requirements (3)](#data-requirements-3)
+  - [9.7 Sync and Backup](#97-sync-and-backup)
+- [10. Indexes](#10-indexes)
+- [11. Storage Architecture](#11-storage-architecture)
+  - [11.1 Hybrid Storage Model](#111-hybrid-storage-model)
+  - [Dolt Shared-Server (Primary)](#dolt-shared-server-primary)
+  - [Backup / JSONL (Recovery And Interchange)](#backup-jsonl-recovery-and-interchange)
+  - [11.2 Sync Flow](#112-sync-flow)
+  - [11.3 Import Flow](#113-import-flow)
+- [12. Key Constraints and Rules](#12-key-constraints-and-rules)
+  - [12.1 Issue ID Format](#121-issue-id-format)
+  - [12.2 Status Transitions](#122-status-transitions)
+  - [12.3 Dependency Constraints](#123-dependency-constraints)
+  - [12.4 Closed Issue Constraint](#124-closed-issue-constraint)
+- [13. Migration Considerations for Relational Database](#13-migration-considerations-for-relational-database)
+  - [13.1 Key Tables to Create](#131-key-tables-to-create)
+  - [13.2 Relationships](#132-relationships)
+  - [13.3 Data Types](#133-data-types)
+  - [13.4 Indexes to Maintain](#134-indexes-to-maintain)
+- [14. Example Queries](#14-example-queries)
+  - [14.1 Find Ready Issues](#141-find-ready-issues)
+  - [14.2 Find Blocked Issues](#142-find-blocked-issues)
+  - [14.3 Find Issues by Label](#143-find-issues-by-label)
+  - [14.4 Find Dependency Chain](#144-find-dependency-chain)
+  - [14.5 Find Overdue Issues](#145-find-overdue-issues)
+- [15. Performance Characteristics](#15-performance-characteristics)
+  - [15.1 Typical Query Times](#151-typical-query-times)
+  - [15.2 Database Size](#152-database-size)
+  - [15.3 Sync Performance](#153-sync-performance)
+- [16. Security Considerations](#16-security-considerations)
+  - [16.1 File Permissions](#161-file-permissions)
+  - [16.2 Sensitive Data](#162-sensitive-data)
+  - [16.3 Access Control](#163-access-control)
+- [17. Daemon Architecture](#17-daemon-architecture)
+  - [17.1 Daemon Files](#171-daemon-files)
+  - [17.2 Daemon Functions](#172-daemon-functions)
+  - [17.3 Dolt Modes](#173-dolt-modes)
+- [18. Advanced Features](#18-advanced-features)
+  - [18.1 Compaction](#181-compaction)
+  - [18.2 Federation](#182-federation)
+  - [18.3 Molecules](#183-molecules)
+  - [18.4 Gates](#184-gates)
+  - [18.5 Templates](#185-templates)
+- [19. Troubleshooting](#19-troubleshooting)
+  - [19.1 Common Issues](#191-common-issues)
+  - [Database locked](#database-locked)
+  - [Sync conflicts](#sync-conflicts)
+  - [Stale data](#stale-data)
+  - [Corrupted database](#corrupted-database)
+  - [19.2 Diagnostic Commands](#192-diagnostic-commands)
+- [20. References](#20-references)
+
+<!-- TOC END -->
+
 **Source**: `crates/mcb-domain/src/entities/project.rs` and
 `crates/mcb-domain/src/entities/issue.rs` **Crate**: `mcb-domain` / `mcb-server`
 
@@ -398,7 +505,8 @@ CREATE VIEW blocked_issues AS
 ```json
 {
   "id": "mcb-7xi",
-  "title": "MEM-04a: Implement memory (action=list, resource=observation) tool (token-efficient index)",
+  "title": "MEM-04a: Implement memory (action=list, resource=observation) tool
+  (token-efficient index)",
   "status": "closed",
   "priority": 2,
   "issue_type": "task",
@@ -449,7 +557,6 @@ dolt:
   user: root
   database: mcb
   auto-commit: off
-
 # no-auto-import: false
 
 # Enable JSON output by default

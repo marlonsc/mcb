@@ -11,13 +11,13 @@ import os
 import re
 from pathlib import Path
 
-
 from flext_cli import cli
-from mcb_scripts.core import BaseMcbSettings, get_logger, r
-from mcb_scripts.settings import McbSettings
 from pydantic import Field
 
+from flext_core import p
+from mcb_scripts.core import BaseMcbSettings, get_logger, r
 from mcb_scripts.docs import utils
+from mcb_scripts.settings import McbSettings
 
 logger = get_logger(__name__)
 
@@ -101,7 +101,7 @@ def _check_files(
     return issues, checked, unreadable
 
 
-def run(settings: CheckOutdatedSettings) -> r[int]:
+def run(settings: CheckOutdatedSettings) -> p.Result[int]:
     """Check outdated content in documentation."""
     project_root = Path(settings.root).resolve()
     if settings.root == Path():

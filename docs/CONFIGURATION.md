@@ -2,6 +2,14 @@
 
 # Configuration Index
 
+<!-- TOC START -->
+
+- [Primary References](#primary-references)
+- [Notes](#notes)
+  - [Updated 2026-02-12 - consolidated from duplicate configuration docs](#updated-2026-02-12-consolidated-from-duplicate-configuration-docs)
+
+<!-- TOC END -->
+
 Canonical configuration docs now live under `docs/configuration/`.
 
 ## Primary References

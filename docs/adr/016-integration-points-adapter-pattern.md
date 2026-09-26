@@ -1,3 +1,19 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Example: Complexity Analyzer](#example-complexity-analyzer)
+  - [Adapter Responsibilities](#adapter-responsibilities)
+  - [Integration Point Definition](#integration-point-definition)
+- [Consequences](#consequences)
+- [Historical Implementation Notes (v0.2.0)](#historical-implementation-notes-v020)
+- [Related ADRs](#related-adrs)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +21,7 @@
 adr: 16 title: Integration Points and Adapter Pattern status: ACCEPTED created: updated:
 2026-02-05 related: [13, 15, 19] supersedes: [] superseded_by: [] implementation_status:
 "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

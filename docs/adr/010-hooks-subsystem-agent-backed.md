@@ -1,3 +1,42 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Component Reuse Strategy](#component-reuse-strategy)
+  - [Architecture Overview](#architecture-overview)
+  - [Key Design Principles](#key-design-principles)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Standalone hooks service](#alternative-1-standalone-hooks-service)
+  - [Alternative 2: Simple MCP tools only (no agent)](#alternative-2-simple-mcp-tools-only-no-agent)
+- [Implementation Notes](#implementation-notes)
+  - [Phase 1: Extend Domain Error](#phase-1-extend-domain-error)
+  - [Phase 2: Extend SystemEvent](#phase-2-extend-systemevent)
+  - [Phase 3: Hook Domain Types](#phase-3-hook-domain-types)
+  - [Phase 4: Hook Provider Port](#phase-4-hook-provider-port)
+  - [Phase 5: Hook Provider Registry](#phase-5-hook-provider-registry)
+  - [Phase 6: Policy Engine Adapter](#phase-6-policy-engine-adapter)
+  - [Phase 7: Claude Agent Processor](#phase-7-claude-agent-processor)
+  - [Phase 8: Hook Service](#phase-8-hook-service)
+  - [Phase 9: MCP Tool Handlers](#phase-9-mcp-tool-handlers)
+  - [Phase 10: Configuration](#phase-10-configuration)
+- [Files Summary](#files-summary)
+  - [New Files (minimal)](#new-files-minimal)
+  - [Modified Files](#modified-files)
+- [Integration Points](#integration-points)
+  - [With ADR 008 (Git)](#with-adr-008-git)
+  - [With ADR 009 (Memory)](#with-adr-009-memory)
+- [Canonical References](#canonical-references)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +44,7 @@
 adr: 10 title: Hooks Subsystem with Agent-Backed Processing status: PROPOSED created:
 updated: 2026-02-05 related: [1, 2, 7, 8, 9, 12, 13] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

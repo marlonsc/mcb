@@ -2,6 +2,21 @@
 
 # MCB Minimal FSM Specification (v0.3.0)
 
+<!-- TOC START -->
+
+- [1. State Diagram](#1-state-diagram)
+- [2. State Definitions](#2-state-definitions)
+- [3. Transition Rules & Guards](#3-transition-rules-guards)
+- [4. Policy Definitions](#4-policy-definitions)
+  - [Freshness Policy](#freshness-policy)
+  - [Validation Policy (Minimal)](#validation-policy-minimal)
+- [5. Rust Code Examples](#5-rust-code-examples)
+  - [Workflow Entities](#workflow-entities)
+  - [Workflow FSM](#workflow-fsm)
+  - [Policy Trait](#policy-trait)
+
+<!-- TOC END -->
+
 This document defines the minimal viable Finite State Machine (FSM) for MCB workflow
 sessions. It simplifies the complex 12-state production model from ADR-034 into a
 focused 4-state core for initial implementation.

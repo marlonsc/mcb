@@ -1,3 +1,41 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [1. Navigation Features](#1-navigation-features)
+  - [2. Code Display](#2-code-display)
+  - [3. Search Integration](#3-search-integration)
+  - [4. Metadata Panel](#4-metadata-panel)
+  - [5. Advanced Features](#5-advanced-features)
+  - [6. Performance](#6-performance)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Monaco Editor Integration](#alternative-1-monaco-editor-integration)
+  - [Alternative 2: CodeMirror 6](#alternative-2-codemirror-6)
+  - [Alternative 3: Keep Basic Browse](#alternative-3-keep-basic-browse)
+- [Implementation Notes](#implementation-notes)
+  - [Phase 1: Tree View (Essential)](#phase-1-tree-view-essential)
+  - [Phase 2: Enhanced Code Display](#phase-2-enhanced-code-display)
+  - [Phase 3: Search Integration](#phase-3-search-integration)
+  - [Phase 4: Advanced UX](#phase-4-advanced-ux)
+  - [Phase 5: Real-time Features](#phase-5-real-time-features)
+- [Files to Create (v0.2.0)](#files-to-create-v020)
+- [Files to Modify (v0.2.0)](#files-to-modify-v020)
+- [Success Metrics](#success-metrics)
+  - [Dependencies](#dependencies)
+- [Technical Approach](#technical-approach)
+  - [Frontend](#frontend)
+  - [Backend](#backend)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +43,7 @@
 adr: 28 title: Advanced Code Browser UI v0.2.0 status: IMPLEMENTED created: updated:
 2026-02-05 related: [7, 8, 26] supersedes: [] superseded_by: [] implementation_status:
 "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

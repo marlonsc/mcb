@@ -1,5 +1,16 @@
 # ADR 058: Gas Town Workflow Adoption
 
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+
+<!-- TOC END -->
+
 ## Status
 
 Accepted — **Amendment 2026-09-02: Gas Town has been retired** (teardown of `~/gt` on

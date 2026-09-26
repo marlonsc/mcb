@@ -2,6 +2,38 @@
 
 # Integrated Context System (v0.4.0)
 
+<!-- TOC START -->
+
+- [Overview](#overview)
+- [Core Concepts](#core-concepts)
+  - [1. Freshness Tracking](#1-freshness-tracking)
+  - [2. Time-Travel Queries](#2-time-travel-queries)
+  - [Example](#example)
+  - [3. Compensation & Rollback](#3-compensation-rollback)
+- [Architecture](#architecture)
+  - [5-Layer Context System](#5-layer-context-system)
+  - [HybridSearchEngine](#hybridsearchengine)
+  - [ContextSnapshot](#contextsnapshot)
+- [Workflows](#workflows)
+  - [Workflow 1: Freshness-Aware Search](#workflow-1-freshness-aware-search)
+  - [Workflow 2: Time-Travel Query](#workflow-2-time-travel-query)
+  - [Workflow 3: Policy-Driven Context Discovery](#workflow-3-policy-driven-context-discovery)
+  - [Workflow 4: Compensation & Rollback](#workflow-4-compensation-rollback)
+- [Integration Points](#integration-points)
+  - [With Workflow FSM (Phase 8)](#with-workflow-fsm-phase-8)
+  - [With MCP Tools](#with-mcp-tools)
+- [Configuration](#configuration)
+  - [Freshness Policies](#freshness-policies)
+- [Snapshot Retention](#snapshot-retention)
+- [Examples](#examples)
+  - [Example 1: Search with Freshness](#example-1-search-with-freshness)
+- [Example 2: Time-Travel Query](#example-2-time-travel-query)
+- [Example 3: Policy-Driven Search](#example-3-policy-driven-search)
+- [Related Documentation](#related-documentation)
+- [Next Steps](#next-steps)
+
+<!-- TOC END -->
+
 ## Overview
 
 The Integrated Context System in v0.4.0 introduces a knowledge graph-based approach to

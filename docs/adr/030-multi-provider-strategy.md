@@ -1,9 +1,41 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Single Provider Architecture](#alternative-1-single-provider-architecture)
+  - [Alternative 2: Provider Abstraction Only](#alternative-2-provider-abstraction-only)
+  - [Alternative 3: Provider Mesh with Manual Failover](#alternative-3-provider-mesh-with-manual-failover)
+- [Implementation Notes](#implementation-notes)
+  - [Provider Selection Strategy (mcb-providers)](#provider-selection-strategy-mcb-providers)
+  - [Provider Factory (mcb-infrastructure)](#provider-factory-mcb-infrastructure)
+  - [Health Monitoring and Failover](#health-monitoring-and-failover)
+  - [Cost Tracking and Optimization](#cost-tracking-and-optimization)
+  - [Configuration Management](#configuration-management)
+- [Circuit Breaker Pattern](#circuit-breaker-pattern)
+- [Update for v0.3.0: Generalized Provider Architecture](#update-for-v030-generalized-provider-architecture)
+  - [Extended Provider Types](#extended-provider-types)
+  - [Generalized Provider Trait](#generalized-provider-trait)
+  - [Routing Extension](#routing-extension)
+  - [Benefits](#benefits)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
 
 adr: 30 title: Multi-Provider Strategy status: SUPERSEDED created: updated: 2026-02-05
 related: [1, 2, 12, 13] supersedes: [] superseded_by: [] implementation_status: N/A
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

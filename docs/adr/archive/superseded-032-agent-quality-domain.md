@@ -2,6 +2,27 @@
 
 # ADR-032: Agent & Quality Domain Extension (MCB-Only)
 
+<!-- TOC START -->
+
+- [Context](#context)
+- [Decision](#decision)
+  - [Key Decisions](#key-decisions)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Implementation Plan](#implementation-plan)
+- [Alternatives Considered](#alternatives-considered)
+  - [1. Keep Bidirectional Sync](#1-keep-bidirectional-sync)
+  - [2. Import-Only (No Export)](#2-import-only-no-export)
+  - [3. Extend Beads](#3-extend-beads)
+- [Validation](#validation)
+  - [Architecture Rules](#architecture-rules)
+  - [Performance](#performance)
+- [References](#references)
+
+<!-- TOC END -->
+
 **Status:** Proposed **Date:** 2026-02-03 **Deciders:** Architecture Team
 **Supersedes:** None **Related:** ADR-009 (Memory), ADR-013 (Clean Architecture),
 ADR-029 (Hexagonal/dill)

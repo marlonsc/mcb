@@ -8,12 +8,9 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import ClassVar
+from typing import ClassVar, override
 
-from flext_core import FlextSettings
-from pydantic import Field
-from pydantic_settings import SettingsConfigDict
-
+from flext_core import FlextSettings, m
 from mcb_scripts.constants import c
 
 
@@ -24,13 +21,14 @@ class BaseMcbSettings(FlextSettings):
     ``MCB_LOG_LEVEL`` maps to ``log_level``.
     """
 
-    model_config: ClassVar[SettingsConfigDict] = FlextSettings.model_config.copy()
+    model_config = FlextSettings.model_config.copy()
     model_config["env_prefix"] = c.ENV_PREFIX
     model_config["extra"] = "ignore"
     model_config["validate_assignment"] = True
 
-    @classmethod
-    def resolve_env_file(cls, namespace: str | None = None) -> str:
+    @override
+    @staticmethod
+    def resolve_env_file(namespace: str | None = None) -> str:
         """Centralised ``.env`` discovery for MCB.
 
         Honours ``MCB_ENV_FILE``; otherwise prefers ``.env.mcb-{namespace}``
@@ -42,7 +40,9 @@ class BaseMcbSettings(FlextSettings):
             if not custom_path.is_file():
                 # An explicitly configured env file that does not exist is a
                 # configuration error, never silently ignored.
-                msg = f"{c.ENV_FILE_ENV_VAR} points to a missing file: {custom_env_file}"
+                msg = (
+                    f"{c.ENV_FILE_ENV_VAR} points to a missing file: {custom_env_file}"
+                )
                 raise ValueError(msg)
             return str(custom_path.resolve())
         if namespace:
@@ -63,8 +63,10 @@ class BaseCommandSettings(BaseMcbSettings):
     ``MCB_`` prefix while keeping the rest of the FLEXT settings lifecycle.
     """
 
-    model_config: ClassVar[SettingsConfigDict] = BaseMcbSettings.model_config.copy()
-    model_config["env_prefix"] = ""
+    model_config: ClassVar[m.SettingsConfigDict] = {
+        **BaseMcbSettings.model_config,
+        "env_prefix": "",
+    }
 
 
 class McbSettings(BaseMcbSettings):
@@ -75,20 +77,22 @@ class McbSettings(BaseMcbSettings):
     inputs/outputs without editing source.
     """
 
-    project_root: Path = Field(default=Path(), description="Project root directory")
-    k8s_dir: Path = Field(
+    project_root: Path = m.Field(default=Path(), description="Project root directory")
+    k8s_dir: Path = m.Field(
         default=Path("k8s"), description="Kubernetes manifests directory"
     )
-    docs_dir: Path = Field(default=Path("docs"), description="Documentation directory")
-    qlty_check_sarif: Path = Field(
+    docs_dir: Path = m.Field(
+        default=Path("docs"), description="Documentation directory"
+    )
+    qlty_check_sarif: Path = m.Field(
         default=Path("qlty.check.current.sarif"),
         description="SARIF output path for qlty check",
     )
-    qlty_smells_sarif: Path = Field(
+    qlty_smells_sarif: Path = m.Field(
         default=Path("qlty.smells.sarif"),
         description="SARIF output path for qlty smells",
     )
-    qlty_report_md: Path = Field(
+    qlty_report_md: Path = m.Field(
         default=Path("QUALITY_REPORT.md"),
         description="Markdown quality report output path",
     )

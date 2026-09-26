@@ -3,58 +3,20 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from flext_tests import c, d, e, h, m, p, r, s, t, td, tf, tk, tv, u, x
-
     from .matchers import TestMatchers, tm
-__all__: tuple[str, ...] = (
-    "TestMatchers",
-    "c",
-    "d",
-    "e",
-    "h",
-    "m",
-    "p",
-    "r",
-    "s",
-    "t",
-    "td",
-    "tf",
-    "tk",
-    "tm",
-    "tv",
-    "u",
-    "x",
-)
+
+
+__all__: tuple[str, ...] = ("TestMatchers", "tm")
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
-        MappingProxyType({
-            ".matchers": ("TestMatchers", "tm"),
-            "flext_tests": (
-                "c",
-                "d",
-                "e",
-                "h",
-                "m",
-                "p",
-                "r",
-                "s",
-                "t",
-                "td",
-                "tf",
-                "tk",
-                "tv",
-                "u",
-                "x",
-            ),
-        }),
+        MappingProxyType({".matchers": ("TestMatchers", "tm")}),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
     )

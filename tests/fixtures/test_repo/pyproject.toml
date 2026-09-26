@@ -1,0 +1,10 @@
+# Minimal distribution identity for the sample codebase fixture. The
+# canonical-alias check gate walks every directory that owns a src/ tree and
+# requires a [project] table; this fixture is a deliberate sample repository,
+# so it carries the smallest contract-conforming metadata instead of being
+# special-cased out of the scan.
+[project]
+name = "test-repo-fixture"
+version = "0.0.0"
+description = "Minimal sample codebase used by validator integration tests."
+requires-python = ">=3.13"

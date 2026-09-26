@@ -37,16 +37,17 @@ runs:
     - name: Install ONNX Runtime (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
-      env:
-        ORT_VERSION: "1.24.4"
       run: |
-        $url = "https://github.com/microsoft/onnxruntime/releases/download/v${env:ORT_VERSION}/onnxruntime-win-x64-${env:ORT_VERSION}.zip"
+        # SSOT: the release pin lives in .github/ort-version, shared with
+        # setup-ci.sh (Unix branch). One source, both platforms.
+        $ortVersion = (Get-Content "$env:GITHUB_WORKSPACE\.github\ort-version" -Raw).Trim()
+        $url = "https://github.com/microsoft/onnxruntime/releases/download/v$ortVersion/onnxruntime-win-x64-$ortVersion.zip"
         $zip = "$env:TEMP\onnxruntime.zip"
         $dest = "$env:TEMP\onnxruntime"
-        Write-Host "Installing ONNX Runtime ${env:ORT_VERSION} (Windows x64)..."
+        Write-Host "Installing ONNX Runtime $ortVersion (Windows x64)..."
         Invoke-WebRequest -Uri $url -OutFile $zip -ErrorAction Stop
         Expand-Archive $zip -DestinationPath $dest -Force
-        $ortDir = "$dest\onnxruntime-win-x64-${env:ORT_VERSION}"
+        $ortDir = "$dest\onnxruntime-win-x64-$ortVersion"
         $ortLib = "$ortDir\lib"
         Add-Content -Path $env:GITHUB_PATH -Value $ortLib
         Add-Content -Path $env:GITHUB_ENV -Value "ORT_DYLIB_PATH=$ortLib\onnxruntime.dll"

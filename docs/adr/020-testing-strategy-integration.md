@@ -1,3 +1,24 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Tier 1: Unit Tests](#tier-1-unit-tests)
+  - [Tier 2: Integration Tests](#tier-2-integration-tests)
+  - [Tier 3: Property-Based Tests](#tier-3-property-based-tests)
+- [v0.1.1 Test Organization](#v011-test-organization)
+- [Test Migration Plan](#test-migration-plan)
+  - [v0.2.0 (Structure)](#v020-structure)
+  - [v0.3.0 (Migration)](#v030-migration)
+  - [v0.4.0 (Extended)](#v040-extended)
+  - [v1.0.0 (Complete)](#v100-complete)
+- [Consequences](#consequences)
+- [Related ADRs](#related-adrs)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +26,7 @@
 adr: 20 title: Testing Strategy for Integrated Code status: ACCEPTED created: updated:
 2026-02-05 related: [12, 13, 17] supersedes: [] superseded_by: [] implementation_status:
 Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

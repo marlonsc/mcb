@@ -2,6 +2,22 @@
 
 # Documentation Templates
 
+<!-- TOC START -->
+
+- [📋 Available Templates](#available-templates)
+  - [ADR Template](#adr-template)
+  - [Document Standards](#document-standards)
+  - [Code Examples](#code-examples)
+- [🛠️ Template Usage](#template-usage)
+  - [Creating New Documents](#creating-new-documents)
+- [📊 Quality Standards](#quality-standards)
+  - [Content Quality](#content-quality)
+  - [Format Quality](#format-quality)
+  - [Maintenance Quality](#maintenance-quality)
+- [🔧 Automation](#automation)
+
+<!-- TOC END -->
+
 This directory contains templates and standards for Memory Context Browser
 documentation.
 

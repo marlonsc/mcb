@@ -26,7 +26,8 @@ This will start the _watch mode_ which walks you through the exercises in a pred
 order (what we think is best for newcomers). It will rerun the current exercise
 automatically every time you change the exercise's file in the `exercises/` directory.
 
-{% details(summary="If detecting file changes in the <code>exercises/</code> directory fails…") %}
+{% details(summary="If detecting file changes in the `exercises/` directory
+  fails…") %}
 
 You can add the **`--manual-run`** flag (`rustlings --manual-run`) to manually rerun the
 current exercise by entering `r` in the watch mode.

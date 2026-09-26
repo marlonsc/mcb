@@ -2,6 +2,28 @@
 
 # Technical Patterns Reference
 
+<!-- TOC START -->
+
+- [Architecture: Clean Architecture + Hexagonal](#architecture-clean-architecture-hexagonal)
+- [Two-Layer DI: linkme → Handle (ADR-050)](#two-layer-di-linkme-handle-adr-050)
+- [Provider Registration](#provider-registration)
+  - [Adding a new provider](#adding-a-new-provider)
+- [Trait Patterns](#trait-patterns)
+- [Error Handling](#error-handling)
+- [Macros (mcb-domain/src/macros.rs)](#macros-mcb-domainsrcmacrosrs)
+- [Module Organization](#module-organization)
+- [Configuration](#configuration)
+- [Testing Patterns](#testing-patterns)
+- [v0.2.1 No-Feature Standardization Contract](#v021-no-feature-standardization-contract)
+  - [Allowed Changes](#allowed-changes)
+  - [Disallowed Changes](#disallowed-changes)
+  - [Banned Patterns (fast-fail)](#banned-patterns-fast-fail)
+- [Key Patterns Summary](#key-patterns-summary)
+- [Related Documentation](#related-documentation)
+  - [Updated 2026-02-12 — Reflects v0.2.1 crate architecture](#updated-2026-02-12-reflects-v021-crate-architecture)
+
+<!-- TOC END -->
+
 **Last updated:** 2026-06-28 **Source:** Codebase analysis across 7 crates (v0.4.0)
 
 This document captures the recurring implementation patterns used throughout MCB. For

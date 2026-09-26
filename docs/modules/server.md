@@ -2,6 +2,19 @@
 
 # server Module
 
+<!-- TOC START -->
+
+- [↔ Code ↔ Docs cross-reference](#code-docs-cross-reference)
+- [Overview](#overview)
+- [Key Areas](#key-areas)
+- [Core Root Files](#core-root-files)
+- [File Structure](#file-structure)
+- [Testing Strategy](#testing-strategy)
+- [Related Documentation](#related-documentation)
+  - [Updated 2026-02-20 - Corrected stale structure; added Source links to handlers; verified against actual mcb-server layout (v0.2.1)](#updated-2026-02-20-corrected-stale-structure-added-source-links-to-handlers-verified-against-actual-mcb-server-layout-v021)
+
+<!-- TOC END -->
+
 **Source**: `crates/mcb-server/src/` **Crate**: `mcb-server` **Lines of Code**: ~15,800+
 
 ## ↔ Code ↔ Docs cross-reference

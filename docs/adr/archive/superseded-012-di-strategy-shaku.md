@@ -2,6 +2,32 @@
 
 # ADR 012: Two-Layer Dependency Injection Strategy
 
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [The Challenge](#the-challenge)
+  - [Why Not Pure Shaku](#why-not-pure-shaku)
+- [Decision](#decision)
+  - [Layer 1: Shaku Modules (Infrastructure Defaults)](#layer-1-shaku-modules-infrastructure-defaults)
+  - [Layer 2: Runtime Factories (Production Providers)](#layer-2-runtime-factories-production-providers)
+  - [Why This Works](#why-this-works)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Implementation Notes](#implementation-notes)
+  - [Where to Put What](#where-to-put-what)
+  - [Testing Pattern](#testing-pattern)
+  - [Production Pattern](#production-pattern)
+- [Migration Notes](#migration-notes)
+  - [Migration Impact](#migration-impact)
+  - [Backward Compatibility](#backward-compatibility)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 ## Status
 
 **Superseded** by

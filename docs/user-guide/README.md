@@ -2,6 +2,21 @@
 
 # Memory Context Browser
 
+<!-- TOC START -->
+
+- [🎯 Current Capabilities (v0.2.1)](#current-capabilities-v021)
+  - [Core Features](#core-features)
+  - [Architecture](#architecture)
+- [📋 Documentation](#documentation)
+- [📦 Quick Start](#quick-start)
+- [🧪 Testing](#testing)
+- [Test Structure](#test-structure)
+  - [CI/CD](#cicd)
+- [🤝 Contributing](#contributing)
+- [📄 License](#license)
+
+<!-- TOC END -->
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Rust](https://img.shields.io/badge/rust-1.92%2B-orange)](https://www.rust-lang.org/)
 [![MCP](https://img.shields.io/badge/MCP-2024--11--05-blue)](https://modelcontextprotocol.io/)

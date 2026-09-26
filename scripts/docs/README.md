@@ -38,8 +38,10 @@ Commands:
 ### 🎯 **Main Commands**
 
 ```bash
-make build WHAT=docs              # Generate complete documentation (metrics, Rust API, mdBook)
-make build WHAT=docs ACT=validate # Validate quality, structure, ADR compliance, and quality gates
+make build WHAT=docs              # Generate complete documentation (metrics, Rust API,
+  mdBook)
+make build WHAT=docs ACT=validate # Validate quality, structure, ADR compliance, and
+  quality gates
 make build WHAT=docs ACT=setup    # Configure documentation tools
 ```
 

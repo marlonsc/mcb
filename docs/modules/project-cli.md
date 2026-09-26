@@ -2,6 +2,36 @@
 
 # Beads Data Model - Quick Reference
 
+<!-- TOC START -->
+
+- [Directory Structure](#directory-structure)
+- [Core Tables](#core-tables)
+  - [issues (Main Table)](#issues-main-table)
+  - [labels (Many-to-Many)](#labels-many-to-many)
+  - [dependencies (Relationships)](#dependencies-relationships)
+  - [comments (Discussion)](#comments-discussion)
+  - [events (Audit Trail)](#events-audit-trail)
+- [Views](#views)
+  - [ready_issues](#ready_issues)
+  - [blocked_issues](#blocked_issues)
+- [JSONL Format](#jsonl-format)
+- [Key Constraints](#key-constraints)
+- [CLI Commands Summary](#cli-commands-summary)
+- [Configuration (config.yaml)](#configuration-configyaml)
+- [Git Integration](#git-integration)
+- [Performance](#performance)
+- [Migration to Relational DB](#migration-to-relational-db)
+  - [Tables to Create](#tables-to-create)
+  - [Key Relationships](#key-relationships)
+  - [Data Type Mapping](#data-type-mapping)
+- [Important Indexes](#important-indexes)
+- [Daemon Architecture](#daemon-architecture)
+- [Advanced Features](#advanced-features)
+- [Troubleshooting](#troubleshooting)
+- [References](#references)
+
+<!-- TOC END -->
+
 ## Directory Structure
 
 ```text

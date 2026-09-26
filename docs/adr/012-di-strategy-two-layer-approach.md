@@ -1,3 +1,31 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [The Challenge](#the-challenge)
+  - [Why Not Pure Shaku](#why-not-pure-shaku)
+- [Decision](#decision)
+  - [Layer 1: Shaku Modules (Infrastructure Defaults)](#layer-1-shaku-modules-infrastructure-defaults)
+  - [Layer 2: Runtime Factories (Production Providers)](#layer-2-runtime-factories-production-providers)
+  - [Why This Works](#why-this-works)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Implementation Notes](#implementation-notes)
+  - [Where to Put What](#where-to-put-what)
+  - [Testing Pattern](#testing-pattern)
+  - [Production Pattern](#production-pattern)
+- [Migration Notes](#migration-notes)
+  - [Migration Impact](#migration-impact)
+  - [Backward Compatibility](#backward-compatibility)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +33,7 @@
 adr: 12 title: Two-Layer Dependency Injection Strategy status: SUPERSEDED created:
 updated: 2026-02-05 related: [1, 2, 3, 6, 7, 8, 9, 10, 13, 24] supersedes: []
 superseded_by: [29] implementation_status: "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

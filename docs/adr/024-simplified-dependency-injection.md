@@ -1,3 +1,27 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [Problems with Shaku](#problems-with-shaku)
+  - [DI Library Research](#di-library-research)
+  - [Why Handle-Based Pattern](#why-handle-based-pattern)
+- [Decision](#decision)
+  - [Architecture Overview](#architecture-overview)
+  - [Implementation Pattern](#implementation-pattern)
+  - [Usage Example](#usage-example)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Validation Criteria](#validation-criteria)
+- [Implementation Summary (2026-01-19)](#implementation-summary-2026-01-19)
+  - [File Structure](#file-structure)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +29,7 @@
 adr: 24 title: Shaku to Manual Composition Root DI Migration status: SUPERSEDED created:
 updated: 2026-02-05 related: [2, 12, 13, 27] supersedes: [] superseded_by: [29]
 implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

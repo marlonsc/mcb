@@ -1,3 +1,14 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Consequences](#consequences)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +16,7 @@
 adr: 5 title: Context Cache Support (Moka and Redis) status: IMPLEMENTED created:
 updated: 2026-02-05 related: [] supersedes: [] superseded_by: [] implementation_status:
 Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

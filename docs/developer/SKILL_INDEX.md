@@ -2,6 +2,16 @@
 
 # MCB Project Skills Index
 
+<!-- TOC START -->
+
+- [Central index](#central-index)
+- [Domain skills](#domain-skills)
+- [Coordination skill](#coordination-skill)
+- [Usage](#usage)
+- [Maintenance](#maintenance)
+
+<!-- TOC END -->
+
 Project-specific ECC skills for the MCB Rust workspace. Load the relevant skill before
 editing code.
 

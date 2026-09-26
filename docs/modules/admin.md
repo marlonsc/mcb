@@ -2,6 +2,20 @@
 
 # admin Module
 
+<!-- TOC START -->
+
+- [Overview](#overview)
+  - [Key Components](#key-components)
+  - [API and Lifecycle](#api-and-lifecycle)
+  - [Configuration and Registry](#configuration-and-registry)
+  - [Transport and Streaming](#transport-and-streaming)
+  - [Web Admin Surface](#web-admin-surface)
+- [File Structure](#file-structure)
+- [Cross-References](#cross-references)
+  - [Updated 2026-02-12 - Reflects modular crate architecture (v0.2.1)](#updated-2026-02-12-reflects-modular-crate-architecture-v021)
+
+<!-- TOC END -->
+
 **Source**: `crates/mcb-server/src/admin/` **Crate**: `mcb-server` **Files**: 22 **Lines
 of Code**: ~6,456
 

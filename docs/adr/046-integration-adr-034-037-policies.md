@@ -1,3 +1,22 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Context](#context)
+- [Decision](#decision)
+  - [1. FSM ↔ Context: State-Based Freshness Requirements](#1-fsm-context-state-based-freshness-requirements)
+  - [2. Policies ↔ Context: Scope Isolation & Access Control](#2-policies-context-scope-isolation-access-control)
+  - [3. Compensation ↔ Context: Rollback via Snapshots](#3-compensation-context-rollback-via-snapshots)
+  - [4. Event-Driven Orchestration](#4-event-driven-orchestration)
+  - [5. MCP Tools: Unified Interface](#5-mcp-tools-unified-interface)
+- [Architecture Corrections](#architecture-corrections)
+- [Integration Checklist](#integration-checklist)
+- [Testing](#testing)
+  - [Success Criteria](#success-criteria)
+- [Architecture Completeness](#architecture-completeness)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +24,7 @@
 adr: 46 title: Integration with ADR-034-037 & Policies status: PROPOSED created:
 updated: 2026-02-05 related: [] supersedes: [] superseded_by: [] implementation_status:
 Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

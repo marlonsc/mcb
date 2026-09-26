@@ -2,6 +2,22 @@
 
 # ADR {number}: {title}
 
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1:](#alternative-1)
+  - [Alternative 2:](#alternative-2)
+- [Implementation Notes](#implementation-notes)
+- [References](#references)
+
+<!-- TOC END -->
+
 ## Status
 
 {Proposed | Accepted | Rejected | Deprecated | Superseded by ADR-xxx}

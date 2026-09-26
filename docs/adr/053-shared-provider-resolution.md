@@ -1,3 +1,29 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Design Choices](#design-choices)
+  - [Resolution Flow](#resolution-flow)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Loco SharedStore at infrastructure layer](#alternative-1-loco-sharedstore-at-infrastructure-layer)
+  - [Alternative 2: New ExecutionContainer type](#alternative-2-new-executioncontainer-type)
+  - [Alternative 3: OnceLock / lazy resolution](#alternative-3-oncelock-lazy-resolution)
+  - [Alternative 4: Generic typemap container](#alternative-4-generic-typemap-container)
+- [Implementation Notes](#implementation-notes)
+  - [Changes](#changes)
+  - [Migration Impact](#migration-impact)
+- [Canonical References](#canonical-references)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +31,7 @@
 adr: 53 title: Shared Provider Resolution via ServiceResolutionContext status: ACCEPTED
 created: 2026-03-01 updated: 2026-03-01 related: [50, 23, 24] extends: [50] supersedes:
 [] superseded_by: [] implementation_status: Complete
+
 ---
 
 # ADR 053: Shared Provider Resolution via ServiceResolutionContext

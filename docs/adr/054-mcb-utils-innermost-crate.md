@@ -1,3 +1,24 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [New Layer Structure](#new-layer-structure)
+  - [mcb-utils Responsibilities](#mcb-utils-responsibilities)
+  - [Error Handling Boundary](#error-handling-boundary)
+  - [Workspace Structure](#workspace-structure)
+  - [Dependencies](#dependencies)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Architecture Validation Updates](#architecture-validation-updates)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +26,7 @@
 adr: 54 title: mcb-utils as Innermost Layer 0 Crate status: ACCEPTED created: 2026-03-02
 updated: 2026-03-02 related: [13, 23, 50] supersedes: [] superseded_by: []
 implementation_status: Accepted
+
 ---
 
 # ADR 054: mcb-utils as Innermost Layer 0 Crate

@@ -1,3 +1,29 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Layer 1: linkme — Compile-Time Provider Discovery](#layer-1-linkme-compile-time-provider-discovery)
+  - [Layer 2: AppContext — Manual Composition Root](#layer-2-appcontext-manual-composition-root)
+  - [Runtime Provider Switching via Handle\<T>](#runtime-provider-switching-via-handlet)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Keep dill, switch CI to nightly](#alternative-1-keep-dill-switch-ci-to-nightly)
+  - [Alternative 2: Replace dill with shaku](#alternative-2-replace-dill-with-shaku)
+  - [Alternative 3: Wait for dill stable support](#alternative-3-wait-for-dill-stable-support)
+- [Implementation Notes](#implementation-notes)
+  - [Changes Made](#changes-made)
+  - [Migration Impact](#migration-impact)
+- [Canonical References](#canonical-references)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +31,7 @@
 adr: 50 title: Manual Composition Root — dill Removal status: IMPLEMENTED created:
 2026-02-22 updated: 2026-02-22 related: [23, 24, 29] supersedes: [29] superseded_by: []
 implementation_status: Complete
+
 ---
 
 # ADR 050: Manual Composition Root — dill Removal

@@ -10,7 +10,6 @@ from pathlib import Path
 
 import pytest
 
-
 from mcb_scripts import agent_pointers
 
 ROOT = Path(__file__).resolve().parents[3]

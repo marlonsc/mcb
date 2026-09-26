@@ -2,6 +2,41 @@
 
 # Contributing to Memory Context Browser
 
+<!-- TOC START -->
+
+- [🚀 Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Setup Development Environment](#setup-development-environment)
+- [🔄 Development Workflow](#development-workflow)
+- [📝 Naming Conventions](#naming-conventions)
+- [📁 File Organization](#file-organization)
+  - [Code Structure (v0.4.0 Clean Architecture)](#code-structure-v040-clean-architecture)
+  - [Import Order (enforced by rustfmt)](#import-order-enforced-by-rustfmt)
+- [🔧 Formatting & Lints](#formatting-lints)
+  - [Formatting (rustfmt.toml)](#formatting-rustfmttoml)
+  - [Workspace Lints (Cargo.toml)](#workspace-lints-cargotoml)
+  - [Visibility Rules](#visibility-rules)
+- [⚠️ Error Handling](#error-handling)
+- [📝 Commit Messages](#commit-messages)
+  - [Commit Workflow](#commit-workflow)
+- [🧪 Testing](#testing)
+  - [Running Tests](#running-tests)
+  - [Test Patterns](#test-patterns)
+- [🔨 Make-First Workflow](#make-first-workflow)
+- [📦 Dependency Management](#dependency-management)
+- [✅ Enforcement](#enforcement)
+- [📋 Pull Request Guidelines](#pull-request-guidelines)
+  - [Before Submitting](#before-submitting)
+  - [PR Description](#pr-description)
+- [🐛 Reporting Issues](#reporting-issues)
+- [🔧 Troubleshooting](#troubleshooting)
+  - [make check or make build fails with linker errors](#make-check-or-make-build-fails-with-linker-errors)
+  - [Docs-only validation (no Rust build)](#docs-only-validation-no-rust-build)
+- [🚀 Code References](#code-references)
+- [Cross-References](#cross-references)
+
+<!-- TOC END -->
+
 Thank you for your interest in contributing! This guide covers everything you need for
 MCB development.
 

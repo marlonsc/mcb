@@ -14,11 +14,11 @@ import pytest
 
 from mcb_scripts.gitops import (
     GitOpsTarget,
+    analyze,
     cached_render,
+    discover_targets,
     render_cache_key,
     rendered_issues,
-    analyze,
-    discover_targets,
     summarize,
 )
 

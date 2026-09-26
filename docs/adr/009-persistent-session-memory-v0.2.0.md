@@ -1,3 +1,46 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Tool Naming Convention (Amendment 2026-02-02)](#tool-naming-convention-amendment-2026-02-02)
+  - [Architecture Overview](#architecture-overview)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Use Claude-mem directly as plugin](#alternative-1-use-claude-mem-directly-as-plugin)
+  - [Alternative 2: SQLite-only storage (like Claude-mem)](#alternative-2-sqlite-only-storage-like-claude-mem)
+  - [Alternative 3: Defer to v0.3.0](#alternative-3-defer-to-v030)
+- [Implementation Notes](#implementation-notes)
+  - [Phase 1: Domain Model](#phase-1-domain-model)
+  - [Phase 2: Memory Provider Port](#phase-2-memory-provider-port)
+  - [Phase 3: Memory Storage Adapter](#phase-3-memory-storage-adapter)
+  - [Phase 4: Session Manager Service](#phase-4-session-manager-service)
+  - [Phase 5: Memory Search Service](#phase-5-memory-search-service)
+  - [Phase 6: Context Injection Service](#phase-6-context-injection-service)
+  - [Phase 7: MCP Tools](#phase-7-mcp-tools)
+  - [Phase 8: MCP Tool Registration](#phase-8-mcp-tool-registration)
+  - [Phase 9: Configuration](#phase-9-configuration)
+  - [Phase 10: Admin UI Integration](#phase-10-admin-ui-integration)
+- [Dependencies](#dependencies)
+- [Files to Create](#files-to-create)
+- [Files to Modify](#files-to-modify)
+- [Integration with ADR-008 (Git)](#integration-with-adr-008-git)
+- [Success Metrics](#success-metrics)
+- [Configuration Defaults](#configuration-defaults)
+- [Hybrid Search Architecture (Amendment 2026-02-02)](#hybrid-search-architecture-amendment-2026-02-02)
+  - [Layer Separation (Clean Architecture)](#layer-separation-clean-architecture)
+  - [Fusion Algorithm (RRF)](#fusion-algorithm-rrf)
+  - [Search Flow](#search-flow)
+- [Canonical References](#canonical-references)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +48,7 @@
 adr: 9 title: Persistent Session Memory v0.2.0 status: PROPOSED created: updated:
 2026-02-05 related: [1, 2, 3, 7, 8, 10, 12, 13] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

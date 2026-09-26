@@ -1,3 +1,18 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+- [Consolidation Audit](#consolidation-audit)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -6,6 +21,7 @@ adr: 57 title: Multi-Agent Coordination and SSOT Consolidation status: ACCEPTED 
 2026-06-27 updated: 2026-06-27 related: [34, 35, 36, 37, 47, 56] supersedes: []
 superseded_by: [] implementation_status: "Implemented by generated agent pointers and
 ADR cleanup"
+
 ---
 
 # ADR 057: Multi-Agent Coordination and SSOT Consolidation

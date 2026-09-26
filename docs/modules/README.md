@@ -2,6 +2,16 @@
 
 # Module Documentation Index
 
+<!-- TOC START -->
+
+- [🏗️ Core Layers (The Pillars)](#core-layers-the-pillars)
+- [🛠️ Specialized Modules](#specialized-modules)
+- [📖 How to navigate this documentation](#how-to-navigate-this-documentation)
+  - [SSOT Verification](#ssot-verification)
+  - [Updated 2026-02-20 - Consolidated 7+ redundant files into the 4 Core Pillar documents](#updated-2026-02-20-consolidated-7-redundant-files-into-the-4-core-pillar-documents)
+
+<!-- TOC END -->
+
 MCB uses a 4-layer architecture. Each layer is documented in its core module file.
 
 ## 🏗️ Core Layers (The Pillars)

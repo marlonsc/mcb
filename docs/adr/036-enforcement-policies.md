@@ -1,3 +1,35 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [Requirements](#requirements)
+- [Decision](#decision)
+  - [1. Policy Trait Design](#1-policy-trait-design)
+  - [2. Individual Policy Trait](#2-individual-policy-trait)
+  - [3. Domain Entities](#3-domain-entities)
+  - [4. Policy Composition](#4-policy-composition)
+  - [5. Governance SSOT Boundary](#5-governance-ssot-boundary)
+- [6. Guard Provider Implementation](#6-guard-provider-implementation)
+  - [7. Provider Registration (linkme)](#7-provider-registration-linkme)
+  - [8. Module Locations](#8-module-locations)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Tower-Style Middleware](#alternative-1-tower-style-middleware)
+  - [Alternative 2: Database-Driven Policies](#alternative-2-database-driven-policies)
+  - [Alternative 3: Hard-Coded Checks (No Policy Framework)](#alternative-3-hard-coded-checks-no-policy-framework)
+- [Implementation Notes](#implementation-notes)
+  - [Code Changes](#code-changes)
+  - [Testing](#testing)
+  - [Performance Targets](#performance-targets)
+  - [Security](#security)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +37,7 @@
 adr: 36 title: Enforcement Layer — Policies and Guards status: ACCEPTED created:
 updated: 2026-02-06 related: [23, 25, 29] supersedes: [] superseded_by: []
 implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

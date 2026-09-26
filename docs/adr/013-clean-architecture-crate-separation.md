@@ -1,3 +1,34 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Layer 1: Domain (mcb-domain)](#layer-1-domain-mcb-domain)
+  - [Layer 2: Application (mcb-application)](#layer-2-application-mcb-application)
+  - [Layer 3: Providers (mcb-providers)](#layer-3-providers-mcb-providers)
+  - [Layer 4: Infrastructure (mcb-infrastructure)](#layer-4-infrastructure-mcb-infrastructure)
+  - [Layer 5: Server (mcb-server)](#layer-5-server-mcb-server)
+  - [Layer 6: Validate (mcb-validate)](#layer-6-validate-mcb-validate)
+  - [Layer 7: Facade (mcb)](#layer-7-facade-mcb)
+- [Dependency Graph](#dependency-graph)
+- [Clean Architecture Rules Enforced](#clean-architecture-rules-enforced)
+- [Validation](#validation)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Implementation Notes](#implementation-notes)
+  - [Adding a New Provider](#adding-a-new-provider)
+  - [Adding a New Use Case](#adding-a-new-use-case)
+  - [Testing Patterns](#testing-patterns)
+- [Canonical References](#canonical-references)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +36,7 @@
 adr: 13 title: Clean Architecture Crate Separation status: IMPLEMENTED created: updated:
 2026-02-05 related: [1, 2, 3, 6, 7, 11, 12, 27, 31] supersedes: [] superseded_by: []
 implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

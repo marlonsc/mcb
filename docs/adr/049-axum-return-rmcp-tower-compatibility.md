@@ -1,3 +1,33 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [The rmcp Integration Challenge](#the-rmcp-integration-challenge)
+  - [Tower Compatibility Requirement](#tower-compatibility-requirement)
+  - [Rocket Limitations](#rocket-limitations)
+  - [Axum-Tower Ecosystem Compatibility](#axum-tower-ecosystem-compatibility)
+- [Decision](#decision)
+  - [Selection Criteria](#selection-criteria)
+  - [Technical Rationale](#technical-rationale)
+  - [What We Lose from Rocket](#what-we-lose-from-rocket)
+  - [What We Gain from Tower Compatibility](#what-we-gain-from-tower-compatibility)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Migration Strategy](#migration-strategy)
+  - [Phase 1: Axum Reintroduction](#phase-1-axum-reintroduction)
+  - [Phase 2: Route Migration](#phase-2-route-migration)
+  - [Phase 3: MCP Integration](#phase-3-mcp-integration)
+  - [Phase 4: Middleware Restoration](#phase-4-middleware-restoration)
+- [Comparison: Rocket vs Tower/rmcp Benefits](#comparison-rocket-vs-towerrmcp-benefits)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +35,7 @@
 adr: 49 title: Axum Return for rmcp Tower Compatibility status: ACCEPTED created:
 2026-02-21 updated: 2026-02-21 related: [26, 33] supersedes: [26] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

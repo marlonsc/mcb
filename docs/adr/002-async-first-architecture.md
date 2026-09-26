@@ -1,3 +1,35 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [ADR 002: Async-First Architecture](#adr-002-async-first-architecture)
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Synchronous Architecture](#alternative-1-synchronous-architecture)
+  - [Alternative 2: Mixed Sync/Async](#alternative-2-mixed-syncasync)
+  - [Alternative 3: Actor Model (Actix)](#alternative-3-actor-model-actix)
+- [Implementation Notes](#implementation-notes)
+  - [Async Runtime Configuration (mcb-server)](#async-runtime-configuration-mcb-server)
+  - [Async Port Traits (mcb-domain)](#async-port-traits-mcb-domain)
+  - [Async Provider Implementations (mcb-providers)](#async-provider-implementations-mcb-providers)
+  - [Structured Concurrency (mcb-application)](#structured-concurrency-mcb-application)
+  - [Error Handling in Async Code (mcb-server)](#error-handling-in-async-code-mcb-server)
+  - [Testing Async Code](#testing-async-code)
+- [Update for v0.3.0: Hybrid Parallelization with Rayon](#update-for-v030-hybrid-parallelization-with-rayon)
+  - [Updated Strategy](#updated-strategy)
+  - [Implementation Pattern](#implementation-pattern)
+  - [Benefits](#benefits)
+  - [Performance Implications](#performance-implications)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -6,6 +38,7 @@
 
 adr: 2 title: Async-First Architecture status: IMPLEMENTED created: updated: 2026-02-05
 related: [1, 3, 12, 13] supersedes: [] superseded_by: [] implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

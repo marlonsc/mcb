@@ -1,3 +1,22 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Migration Pattern](#migration-pattern)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Risks](#risks)
+- [Implementation Plan](#implementation-plan)
+- [Implementation Status](#implementation-status)
+- [Validation Criteria](#validation-criteria)
+- [Related ADRs](#related-adrs)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +24,7 @@
 adr: 23 title: Inventory to Linkme Migration status: ACCEPTED created: updated:
 2026-02-05 related: [2, 3, 13] supersedes: [] superseded_by: [] implementation_status:
 Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

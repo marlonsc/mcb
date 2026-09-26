@@ -9,26 +9,25 @@ from __future__ import annotations
 import fnmatch
 from pathlib import Path
 
-from flext_core import p
 from flext_cli import cli
-from mcb_scripts.core import get_logger, r
-from mcb_scripts.settings import McbSettings
-from pydantic import BaseModel, Field
 
+from flext_core import m, p
+from mcb_scripts.core import get_logger, r
 from mcb_scripts.qlty.model import SarifIssue, Severity
 from mcb_scripts.qlty.parser import parse_sarif_file
 from mcb_scripts.qlty.report import analyze_issues
 from mcb_scripts.qlty.runner import run_qlty_check, run_qlty_smells
+from mcb_scripts.settings import McbSettings
 
 logger = get_logger(__name__)
 
 
-class QltyParams(BaseModel):
+class QltyParams(m.BaseModel):
     """Command parameters for the qlty analysis verb."""
 
     scan: bool = False
     checks_file: Path | None = None
-    smells_file: Path = Field(default_factory=lambda: McbSettings().qlty_smells_sarif)
+    smells_file: Path = m.Field(default_factory=lambda: McbSettings().qlty_smells_sarif)
     type: str = "both"
     check: bool = False
     smells: bool = False
@@ -36,11 +35,11 @@ class QltyParams(BaseModel):
     rule: str | None = None
     category: str | None = None
     file: str | None = None
-    exclude_rule: list[str] = Field(default_factory=list)
-    exclude_category: list[str] = Field(default_factory=list)
-    exclude_file: list[str] = Field(default_factory=list)
+    exclude_rule: list[str] = m.Field(default_factory=list)
+    exclude_category: list[str] = m.Field(default_factory=list)
+    exclude_file: list[str] = m.Field(default_factory=list)
     summary_only: bool = False
-    report_file: Path = Field(default_factory=lambda: McbSettings().qlty_report_md)
+    report_file: Path = m.Field(default_factory=lambda: McbSettings().qlty_report_md)
 
 
 # `from __future__ import annotations` defers every annotation to a string, and
@@ -49,13 +48,15 @@ class QltyParams(BaseModel):
 QltyParams.model_rebuild()
 
 
-def _load_checks_from_file(checks_file: Path, all_issues: list[SarifIssue]) -> r[None]:
+def _load_checks_from_file(
+    checks_file: Path, all_issues: list[SarifIssue]
+) -> p.Result[None]:
     if not checks_file.exists():
         return r[None].ok(None)
     logger.info(f"📖 Reading checks from {checks_file}")
     checks_result = parse_sarif_file(checks_file)
     if checks_result.failure:
-        return r[None].fail(checks_result.error or "failed to parse checks file")
+        return r[None].from_failure(checks_result)
     checks = checks_result.unwrap()
     for check in checks:
         check.category = "check"
@@ -64,12 +65,14 @@ def _load_checks_from_file(checks_file: Path, all_issues: list[SarifIssue]) -> r
     return r[None].ok(None)
 
 
-def _collect_smells_issues(params: QltyParams, all_issues: list[SarifIssue]) -> r[None]:
+def _collect_smells_issues(
+    params: QltyParams, all_issues: list[SarifIssue]
+) -> p.Result[None]:
     if params.smells_file.exists() and not params.scan:
         logger.info(f"📖 Reading smells from {params.smells_file}")
         smells_result = parse_sarif_file(params.smells_file)
         if smells_result.failure:
-            return r[None].fail(smells_result.error or "failed to parse smells file")
+            return r[None].from_failure(smells_result)
         smells = smells_result.unwrap()
         for smell in smells:
             smell.category = "smell"
@@ -80,7 +83,7 @@ def _collect_smells_issues(params: QltyParams, all_issues: list[SarifIssue]) -> 
             params.smells_file or McbSettings().qlty_smells_sarif
         )
         if smells_result.failure:
-            return r[None].fail(smells_result.error or "qlty smells failed")
+            return r[None].from_failure(smells_result)
         smells = smells_result.unwrap()
         all_issues.extend(smells)
     else:
@@ -88,12 +91,14 @@ def _collect_smells_issues(params: QltyParams, all_issues: list[SarifIssue]) -> 
     return r[None].ok(None)
 
 
-def _collect_checks_issues(params: QltyParams, all_issues: list[SarifIssue]) -> r[None]:
+def _collect_checks_issues(
+    params: QltyParams, all_issues: list[SarifIssue]
+) -> p.Result[None]:
     if params.scan:
         outfile = params.checks_file or McbSettings().qlty_check_sarif
         checks_result = run_qlty_check(output_file=outfile)
         if checks_result.failure:
-            return r[None].fail(checks_result.error or "qlty check failed")
+            return r[None].from_failure(checks_result)
         checks = checks_result.unwrap()
         for check in checks:
             check.category = "check"
@@ -131,23 +136,19 @@ def _resolve_issue_types(params: QltyParams) -> tuple[bool, bool]:
     return do_checks, do_smells
 
 
-def _collect_all_issues(params: QltyParams) -> r[list[SarifIssue]]:
+def _collect_all_issues(params: QltyParams) -> p.Result[list[SarifIssue]]:
     all_issues: list[SarifIssue] = []
     do_checks, do_smells = _resolve_issue_types(params)
 
     if do_checks:
         checks_result = _collect_checks_issues(params, all_issues)
         if checks_result.failure:
-            return r[list[SarifIssue]].fail(
-                checks_result.error or "checks collection failed"
-            )
+            return r[list[SarifIssue]].from_failure(checks_result)
 
     if do_smells:
         smells_result = _collect_smells_issues(params, all_issues)
         if smells_result.failure:
-            return r[list[SarifIssue]].fail(
-                smells_result.error or "smells collection failed"
-            )
+            return r[list[SarifIssue]].from_failure(smells_result)
 
     return r[list[SarifIssue]].ok(all_issues)
 
@@ -229,7 +230,7 @@ def analyze(params: QltyParams) -> p.Result[str]:
     """
     issues_result = _collect_all_issues(params)
     if issues_result.failure:
-        return r[str].fail(issues_result.error or "issue collection failed")
+        return r[str].from_failure(issues_result)
 
     all_issues = issues_result.unwrap()
 
@@ -252,7 +253,7 @@ def analyze(params: QltyParams) -> p.Result[str]:
 
     report_result = analyze_issues(filtered)
     if report_result.failure:
-        return r[str].fail(report_result.error or "analysis failed")
+        return r[str].from_failure(report_result)
     report = report_result.unwrap()
 
     logger.info(f"\n{report.generate_summary()}")

@@ -1,3 +1,23 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Context](#context)
+- [Decision](#decision)
+  - [1. Graph Structure: Multi-Graph with Multiple Edge Types](#1-graph-structure-multi-graph-with-multiple-edge-types)
+  - [2. Extraction Strategy: tree-sitter-graph + Manual Walks](#2-extraction-strategy-tree-sitter-graph-manual-walks)
+  - [2.5. SemanticExtractorProvider Port Trait](#25-semanticextractorprovider-port-trait)
+  - [3. Storage: petgraph DAG + slotmap Arena](#3-storage-petgraph-dag-slotmap-arena)
+  - [4. Traversal API: Graph-Aware Context Reasoning](#4-traversal-api-graph-aware-context-reasoning)
+- [Integration with ADR-041, ADR-043, & ADR-044](#integration-with-adr-041-adr-043-adr-044)
+- [Incremental Updates (Optimization)](#incremental-updates-optimization)
+- [Testing](#testing)
+  - [Success Criteria](#success-criteria)
+- [Architecture Corrections](#architecture-corrections)
+  - [Correction 1: SemanticExtractorProvider Port Trait (2026-02-06)](#correction-1-semanticextractorprovider-port-trait-2026-02-06)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +25,7 @@
 adr: 42 title: Knowledge Graph for Code Context and Relationships status: PROPOSED
 created: updated: 2026-02-05 related: [] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

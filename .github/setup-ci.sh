@@ -70,9 +70,11 @@ fi
 
 # Install ONNX Runtime (required by fastembed/ort for semantic embedding).
 # fastembed 5.17.4 depends on ort 2.0.0-rc.13 with api-24, which requires
-# ONNX Runtime >= 1.24.x; 1.24.4 is the latest patch of that line. The 1.24
-# line ships osx-arm64 only — upstream dropped the universal2 builds.
-ORT_VERSION="1.24.4"
+# ONNX Runtime >= 1.24.x. The 1.24 line ships osx-arm64 only — upstream
+# dropped the universal2 builds.
+# SSOT: the release pin lives in .github/ort-version (single source shared
+# with the native-deps Windows action); this script resolves from it.
+ORT_VERSION="$(cat "$(dirname "${BASH_SOURCE[0]}")/ort-version")"
 
 verify_ort_checksum() {
 	local file="$1" expected="$2"

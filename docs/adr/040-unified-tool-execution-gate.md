@@ -1,3 +1,18 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+- [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Per-interface policy duplication](#alternative-1-per-interface-policy-duplication)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +20,7 @@
 adr: 40 title: Unified Tool Execution Gate status: PROPOSED created: 2026-02-12 updated:
 2026-02-12 related: [33, 34, 38] supersedes: [] superseded_by: [] implementation_status:
 "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

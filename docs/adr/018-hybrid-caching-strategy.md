@@ -1,3 +1,18 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+- [Cache Layers](#cache-layers)
+- [v0.1.1 Status](#v011-status)
+- [Implementation Plan](#implementation-plan)
+  - [Consequences](#consequences)
+- [Related ADRs](#related-adrs)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +20,7 @@
 adr: 18 title: Hybrid Caching Strategy status: ACCEPTED created: updated: 2026-02-05
 related: [1, 13] supersedes: [] superseded_by: [] implementation_status: "Historical
 snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

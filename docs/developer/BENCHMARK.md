@@ -1,5 +1,22 @@
 # Benchmark Report: Build Optimization Validation
 
+<!-- TOC START -->
+
+- [Executive Summary](#executive-summary)
+- [Local Benchmarks](#local-benchmarks)
+  - [Environment](#environment)
+  - [sccache Impact](#sccache-impact)
+  - [jobs=8 vs jobs=20 Impact](#jobs8-vs-jobs20-impact)
+  - [sccache Cache Efficiency](#sccache-cache-efficiency)
+  - [Multi-Session Cleanup Impact](#multi-session-cleanup-impact)
+- [CI Analysis](#ci-analysis)
+  - [Current CI Workflow Times (Run #27107872763)](#current-ci-workflow-times-run-27107872763)
+  - [Projected CI Improvements](#projected-ci-improvements)
+- [Files Modified](#files-modified)
+- [Recommendations](#recommendations)
+
+<!-- TOC END -->
+
 ## Executive Summary
 
 All optimizations were validated with objective measurements. **sccache delivers 38%
@@ -32,7 +49,9 @@ significantly less RAM.
 | jobs=8 + sccache warm  | **101s** | ~28GB available   |
 | jobs=20 + sccache warm | **97s**  | Higher contention |
 
-#### Result: jobs=8 is only 4% slower than jobs=20 (4s difference) while maintaining stable RAM usage
+#### Result: jobs=8 is only 4% slower than jobs=20 (4s difference) while maintaining
+
+stable RAM usage
 
 ### sccache Cache Efficiency
 
@@ -80,10 +99,12 @@ With the new configuration:
 
 1. **release-build**: Previously had zero caching. Now has `rust-cache` +
    `sccache-action`.
+
    - **Projected saving: 50-70% on warm runs** (from 12-23 min → 4-7 min)
 
 2. **cache-on-failure=true on ALL jobs**: Even failed runs now save their compilation
    cache.
+
    - **Impact: Next run after failure reuses 50-90% of previous compilation work**
 
 3. **sccache on ALL jobs**: Shared compilation cache across all CI jobs.

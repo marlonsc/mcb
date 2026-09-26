@@ -9,8 +9,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from flext_core import p
 from mcb_scripts.core import get_logger, r
-
 from mcb_scripts.qlty.model import SarifIssue, SarifResult, SarifRun, Severity
 
 logger = get_logger(__name__)
@@ -44,7 +44,7 @@ def _result_to_issue(result: SarifResult) -> SarifIssue | None:
     )
 
 
-def parse_sarif_file(path: Path) -> r[list[SarifIssue]]:
+def parse_sarif_file(path: Path) -> p.Result[list[SarifIssue]]:
     """Parse SARIF JSON and extract all issues."""
     try:
         with path.open("r", encoding="utf-8") as f:

@@ -1,3 +1,37 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [Current State Crisis](#current-state-crisis)
+  - [Infrastructure Debt Analysis](#infrastructure-debt-analysis)
+  - [Product Reality](#product-reality)
+- [Decision](#decision)
+  - [Platform Migration](#platform-migration)
+  - [Version Bumping](#version-bumping)
+  - [Architecture Decisions](#architecture-decisions)
+  - [What Stays Unchanged](#what-stays-unchanged)
+  - [What Gets Deleted](#what-gets-deleted)
+- [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+  - [Neutral Consequences](#neutral-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Fix Existing Infrastructure](#alternative-1-fix-existing-infrastructure)
+  - [Alternative 2: Use Diesel Instead of SeaORM](#alternative-2-use-diesel-instead-of-seaorm)
+  - [Alternative 3: Use Axum Directly Instead of Loco.rs](#alternative-3-use-axum-directly-instead-of-locors)
+  - [Alternative 4: Keep NATS, Drop Tokio Broadcast](#alternative-4-keep-nats-drop-tokio-broadcast)
+  - [Alternative 5: Exclude SeaORM Pro (Build Custom Admin)](#alternative-5-exclude-seaorm-pro-build-custom-admin)
+- [Implementation Notes](#implementation-notes)
+  - [Critical Path](#critical-path)
+  - [Risk Mitigation](#risk-mitigation)
+  - [Migration Strategy](#migration-strategy)
+- [Canonical References](#canonical-references)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -7,6 +41,7 @@
 adr: 51 title: SeaQL + Loco.rs Platform Rebuild status: ACCEPTED created: 2026-02-22
 updated: 2026-02-23 related: [52, 50, 3, 8, 9, 10] supersedes: [4, 7, 25, 26]
 superseded_by: [] implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

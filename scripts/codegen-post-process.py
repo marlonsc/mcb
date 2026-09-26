@@ -6,9 +6,11 @@ Existing code uses singular names. This script appends `pub use X as Y;`
 aliases so both forms resolve.
 """
 
+from __future__ import annotations
+
+import pathlib
 import re
 import sys
-import pathlib
 
 IRREGULAR_PLURALS = {
     "branches": "branch",
