@@ -42,12 +42,6 @@ class QltyParams(m.BaseModel):
     report_file: Path = m.Field(default_factory=lambda: McbSettings().qlty_report_md)
 
 
-# `from __future__ import annotations` defers every annotation to a string, and
-# the CLI facade resolves the model in ITS namespace, where names like Path are
-# absent. Rebuilding here binds them in the module that actually declares them.
-QltyParams.model_rebuild()
-
-
 def _load_checks_from_file(
     checks_file: Path, all_issues: list[SarifIssue]
 ) -> p.Result[None]:
