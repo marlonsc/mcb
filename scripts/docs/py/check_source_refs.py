@@ -34,7 +34,10 @@ def _check_files(
     checked = 0
     unreadable: list[str] = []
 
-    md_files = utils.find_md_files(docs_dir)
+    # docs/adr is an immutable decision record: its source refs describe the
+    # architecture as it was WHEN the ADR was written — history, not living
+    # docs to validate against the current tree.
+    md_files = utils.find_md_files(docs_dir, exclude_dirs={"adr"})
 
     for filepath in md_files:
         rel_filepath = os.path.relpath(filepath, project_root)
@@ -102,9 +105,7 @@ def main() -> None:
         model_cls=CheckSourceRefsSettings,
         handler=run,
     )
-    result = cli.execute_app(app, prog_name="check-source-refs")
-    if result.failure:
-        raise SystemExit(1)
+    cli.finalize_result(cli.execute_app(app, prog_name="check-source-refs"))
 
 
 if __name__ == "__main__":
