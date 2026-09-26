@@ -216,9 +216,9 @@ battle-tested libraries. All 9 MCP tools fully operational on the new stack.
 ### Removed
 
 - Rocket dependency and manual JSON-RPC handling (271 lines)
-- Custom sqlx persistence layer (`crates/mcb-providers/src/database/sqlite/`, ~3,827
+- Custom sqlx persistence layer (`crates/mcb-providers/src/database/seaorm/`, ~3,827
   LOC)
-- Custom admin UI module (`crates/mcb-server/src/admin/`, ~5,062 LOC)
+- Custom admin UI module (`crates/mcb-server/src/controllers/`, ~5,062 LOC)
 - Legacy TOML config files (replaced by YAML)
 - 5 superseded ADRs archived (004, 007, 025, 026, 029)
 

@@ -17,8 +17,8 @@
 
 <!-- TOC END -->
 
-**Source**: `crates/mcb-infrastructure/src/infrastructure/admin.rs` and
-`crates/mcb-server/src/admin/` **Crates**: `mcb-infrastructure`, `mcb-server`
+**Source**: `crates/mcb-infrastructure/src/infrastructure/` and
+`crates/mcb-server/src/controllers/` **Crates**: `mcb-infrastructure`, `mcb-server`
 
 System monitoring, performance tracking, and HTTP metrics API.
 
@@ -60,7 +60,7 @@ HTTP API for metrics access via admin router.
 crates/mcb-infrastructure/src/infrastructure/
 └── admin.rs                 # AtomicPerformanceMetrics, DefaultIndexingOperations
 
-crates/mcb-server/src/admin/
+crates/mcb-server/src/controllers/
 ├── handlers.rs              # Metrics endpoint handlers
 └── models.rs                # MetricsResponse types
 ```

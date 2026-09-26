@@ -136,9 +136,7 @@ def main() -> None:
         model_cls=CheckOutdatedSettings,
         handler=run,
     )
-    result = cli.execute_app(app, prog_name="check-outdated")
-    if result.failure:
-        raise SystemExit(1)
+    cli.finalize_result(cli.execute_app(app, prog_name="check-outdated"))
 
 
 if __name__ == "__main__":

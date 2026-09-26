@@ -16,7 +16,7 @@
 
 <!-- TOC END -->
 
-**Source**: `crates/mcb-server/src/admin/` **Crate**: `mcb-server` **Files**: 22 **Lines
+**Source**: `crates/mcb-server/src/controllers/` **Crate**: `mcb-server` **Files**: 22 **Lines
 of Code**: ~6,456
 
 ## Overview
@@ -59,7 +59,7 @@ server operations.
 ## File Structure
 
 ```text
-crates/mcb-server/src/admin/
+crates/mcb-server/src/controllers/
 ├── api.rs
 ├── auth.rs
 ├── browse_handlers.rs
