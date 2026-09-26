@@ -38,8 +38,8 @@ The `mcb-application` crate no longer exists in v0.3.0.
 
 | Direction    | Link                                                                                                                                                                                    |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Code → Docs  | Historical `crates/mcb-infrastructure/src/services/` (crate removed in v0.3.0)                                                                                                                |
-| Docs → Code  | Current equivalent: `crates/mcb-infrastructure/src/services/`                                                                                                               |
+| Code → Docs  | Historical `crates/mcb-infrastructure/src/services/` (crate removed in v0.3.0)                                                                                                          |
+| Docs → Code  | Current equivalent: `crates/mcb-infrastructure/src/services/`                                                                                                                           |
 | Architecture | [`ARCHITECTURE.md`](../architecture/ARCHITECTURE.md) · [`ADR-013`](../adr/013-clean-architecture-crate-separation.md) · [`ADR-050`](../adr/050-manual-composition-root-dill-removal.md) |
 | Roadmap      | [`ROADMAP.md`](../developer/ROADMAP.md)                                                                                                                                                 |
 
@@ -55,21 +55,17 @@ ports are used correctly to fulfill system requirements.
 
 These services implement the business logic defined in the domain ports.
 
-- **IndexingService**
-  (`crates/mcb-infrastructure/src/services/indexing_service/`):
+- **IndexingService** (`crates/mcb-infrastructure/src/services/indexing_service/`):
   Coordinates codebase analysis, chunking, and storage into vector/lexical indexes.
-- **SearchService**
-  (`crates/mcb-infrastructure/src/services/search_service.rs`): Implements
-  semantic, hybrid, and lexical search workflows.
-- **ContextService**
-  (`crates/mcb-infrastructure/src/services/context_service.rs`): Aggregates
-  embeddings and vector data for query enrichment.
-- **MemoryService**
-  (`crates/mcb-infrastructure/src/services/memory_service/`): Manages
+- **SearchService** (`crates/mcb-infrastructure/src/services/search_service.rs`):
+  Implements semantic, hybrid, and lexical search workflows.
+- **ContextService** (`crates/mcb-infrastructure/src/services/context_service.rs`):
+  Aggregates embeddings and vector data for query enrichment.
+- **MemoryService** (`crates/mcb-infrastructure/src/services/memory_service/`): Manages
   observation capture and session awareness.
 - **AgentSessionService**
-  (`crates/mcb-infrastructure/src/services/agent_session_service.rs`):
-  Orchestrates agent lifecycle, checkpoints, and tool call history.
+  (`crates/mcb-infrastructure/src/services/agent_session_service.rs`): Orchestrates
+  agent lifecycle, checkpoints, and tool call history.
 - **Validation pipeline**: Validation concerns are now implemented in `mcb-validate` and
   wired from `mcb-server`/`mcb-infrastructure`.
 

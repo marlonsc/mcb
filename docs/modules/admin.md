@@ -16,8 +16,8 @@
 
 <!-- TOC END -->
 
-**Source**: `crates/mcb-server/src/controllers/` **Crate**: `mcb-server` **Files**: 22 **Lines
-of Code**: ~6,456
+**Source**: `crates/mcb-server/src/controllers/` **Crate**: `mcb-server` **Files**: 22
+**Lines of Code**: ~6,456
 
 ## Overview
 
