@@ -23,7 +23,7 @@ dependencies = [
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "pydantic>=2.13.5",
   "pydantic-settings>=2.14.2,<2.15",
-  "structlog>=25.5.0,<26",
+  "structlog>=25.5.0,<27",
 ]
 description = "Repository-local automation helpers for MCB"
 keywords = ["clean-architecture", "flext", "integration", "typed"]
