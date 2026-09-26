@@ -15,7 +15,7 @@ import tomllib
 from pathlib import Path
 from typing import NotRequired, Required, TypedDict
 
-from pydantic import TypeAdapter
+from flext_core import t
 
 
 class ConverterConfig(TypedDict, total=False):
@@ -540,7 +540,7 @@ def gen_mod_rs(names: list[str]) -> str:
 
 def main() -> None:
     with Path(CONFIG_PATH).open("rb") as f:
-        config = TypeAdapter(dict[str, EntityConfig]).validate_python(
+        config = t.TypeAdapter(dict[str, EntityConfig]).validate_python(
             tomllib.load(f), experimental_allow_partial=True
         )
 
