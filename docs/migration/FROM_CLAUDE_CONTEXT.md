@@ -2,6 +2,36 @@
 
 # Migration Guide: From Claude-context to mcb
 
+<!-- TOC START -->
+
+- [Why Migrate](#why-migrate)
+- [Quick Migration](#quick-migration)
+  - [Step 1: Install mcb](#step-1-install-mcb)
+- [Step 2: Keep Your Environment Variables](#step-2-keep-your-environment-variables)
+  - [No changes required to your existing environment variables](#no-changes-required-to-your-existing-environment-variables)
+  - [Step 3: Update Claude Desktop Configuration](#step-3-update-claude-desktop-configuration)
+  - [Before (Claude-context)](#before-claude-context)
+  - [After (mcb)](#after-mcb)
+  - [Step 4: Verify Installation](#step-4-verify-installation)
+- [MCP Tools Comparison](#mcp-tools-comparison)
+- [Provider Selection](#provider-selection)
+  - [Embedding Providers](#embedding-providers)
+- [Vector Store Providers](#vector-store-providers)
+- [Language Support](#language-support)
+  - [Original (matching Claude-context)](#original-matching-claude-context)
+  - [Added in v0.1.0](#added-in-v010)
+- [Differences](#differences)
+  - [Improvements in mcb](#improvements-in-mcb)
+  - [Behavioral Differences](#behavioral-differences)
+- [Troubleshooting](#troubleshooting)
+  - ["API key required" errors](#api-key-required-errors)
+- [Connection to Milvus fails](#connection-to-milvus-fails)
+  - [Index not found after migration](#index-not-found-after-migration)
+- [Getting Help](#getting-help)
+  - [Rollback](#rollback)
+
+<!-- TOC END -->
+
 This guide helps you migrate from
 [zilliztech/Claude-context](https://github.com/zilliztech/claude-context) to mcb.
 

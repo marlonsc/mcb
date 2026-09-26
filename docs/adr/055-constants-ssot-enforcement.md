@@ -1,3 +1,27 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [Before: Scattered Constants](#before-scattered-constants)
+  - [Problems Identified](#problems-identified)
+- [Decision](#decision)
+  - [New Constants Structure](#new-constants-structure)
+  - [Canonical Import Pattern](#canonical-import-pattern)
+  - [Enforcement Rules (3 New CA Rules)](#enforcement-rules-3-new-ca-rules)
+  - [Migration Summary](#migration-summary)
+  - [Extended Modules](#extended-modules)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Architecture Validation Updates](#architecture-validation-updates)
+  - [Validation Output](#validation-output)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +29,7 @@
 adr: 55 title: Constants SSOT Enforcement + Cross-Import Elimination status: ACCEPTED
 created: 2026-03-02 updated: 2026-03-02 related: [13, 23, 54] supersedes: []
 superseded_by: [] implementation_status: Implemented
+
 ---
 
 # ADR 055: Constants SSOT Enforcement + Cross-Import Elimination

@@ -2,6 +2,26 @@
 
 # MCP Tools Schema Documentation
 
+<!-- TOC START -->
+
+- [1. Index Tool Family](#1-index-tool-family)
+- [2. Search Tool Family](#2-search-tool-family)
+- [3. Validate Tool Family](#3-validate-tool-family)
+- [4. Memory Tool Family](#4-memory-tool-family)
+- [5. Session Tool Family](#5-session-tool-family)
+- [6. Agent Tool Family](#6-agent-tool-family)
+- [7. project Tool](#7-project-tool)
+- [8. VCS Tool Family](#8-vcs-tool-family)
+- [9. entity Tool](#9-entity-tool)
+- [Provenance Requirements](#provenance-requirements)
+  - [Plugin-based workspace discovery](#plugin-based-workspace-discovery)
+  - [Explicit override](#explicit-override)
+- [Operation Family Mode Matrix](#operation-family-mode-matrix)
+- [Error Response Format](#error-response-format)
+- [Configuration](#configuration)
+
+<!-- TOC END -->
+
 **Version**: 0.4.0 **Last Updated**: 2026-06-28
 
 MCB exposes 24 public tool names through the MCP protocol. `tools/list` returns the

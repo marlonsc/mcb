@@ -1,3 +1,31 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Rationale](#rationale)
+  - [Why Request-Response is Sufficient for v0.1.0](#why-request-response-is-sufficient-for-v010)
+  - [Why Defer to v0.2.0](#why-defer-to-v020)
+- [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Full SSE Implementation in v0.1.0](#alternative-1-full-sse-implementation-in-v010)
+  - [Alternative 2: Return 200 OK with Empty Stream](#alternative-2-return-200-ok-with-empty-stream)
+  - [Alternative 3: WebSocket Transport](#alternative-3-websocket-transport)
+- [Implementation Notes](#implementation-notes)
+  - [Current State (v0.1.0)](#current-state-v010)
+  - [Ready for v0.2.0 Implementation](#ready-for-v020-implementation)
+  - [Migration Path to v0.2.0](#migration-path-to-v020)
+- [Recommendations](#recommendations)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+- [Reviewers](#reviewers)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +33,7 @@
 adr: 11 title: HTTP Transport - Request-Response Pattern Over SSE Streaming status:
 IMPLEMENTED created: updated: 2026-02-05 related: [1, 2, 7, 12, 13] supersedes: []
 superseded_by: [] implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -42,7 +71,7 @@ Implement request-response pattern only in v0.1.0
 - Supports session management, message buffering, and resumption
 - Works for all core functionality (search, index, etc.)
 
-2.**GET /MCP**: Return 501 Not Implemented with clear messaging
+  2.**GET /MCP**: Return 501 Not Implemented with clear messaging
 
 - Clients are explicitly informed SSE is not yet supported
 - Better than 200 OK with empty response (which would be misleading)
@@ -59,7 +88,7 @@ Implement request-response pattern only in v0.1.0
 - Real-world usage patterns show POST is primary mechanism
 - Clients can implement polling for continuous updates if needed
 
-2.**Reduced Complexity**
+  2.**Reduced Complexity**
 
 - SSE streaming adds significant complexity:
 - Connection state management
@@ -68,14 +97,14 @@ Implement request-response pattern only in v0.1.0
 - Browser/HTTP proxy compatibility issues
 - Request-response is simpler, more reliable, and easier to debug
 
-3.**Sufficient Infrastructure**
+  3.**Sufficient Infrastructure**
 
 - Session management already implemented
 - Message buffering for resumption ready
 - Event ID tracking (prepared for SSE)
 - No architectural changes needed for future SSE support
 
-4.**Clear Communication**
+  4.**Clear Communication**
 
 - Returning 501 with explanation is honest and helpful
 - Clients won't waste time trying to use non-existent feature
@@ -89,13 +118,13 @@ Implement request-response pattern only in v0.1.0
 - Session/buffering infrastructure is SSE-ready
 - No breaking changes needed when SSE is added
 
-2.**Lower Risk**
+  2.**Lower Risk**
 
 - Shipping v0.1.0 without SSE reduces complexity and bugs
 - Focus on core functionality quality
 - SSE can be added in incremental v0.2.0 release
 
-3.**Alternative Patterns Available**
+  3.**Alternative Patterns Available**
 
 - Clients can use polling with request-response
 - Pub/Sub via event bus for async notifications
@@ -111,19 +140,19 @@ Implement request-response pattern only in v0.1.0
 - Core functionality is stable and well-tested
 - Clear versioning and feature roadmap
 
-2.**Better User Experience**
+  2.**Better User Experience**
 
 - Explicit 501 response is better than misleading 200
 - Clients know exactly what's supported
 - No confusion about SSE vs polling
 
-3.**Maintainability**
+  3.**Maintainability**
 
 - Simpler codebase easier to understand and modify
 - Request-response pattern is easier to test
 - Fewer edge cases to handle
 
-4.**Architecture Flexibility**
+  4.**Architecture Flexibility**
 
 - Infrastructure in place for future SSE implementation
 - No need for breaking changes in v0.2.0
@@ -137,13 +166,13 @@ Implement request-response pattern only in v0.1.0
 - Not ideal for high-frequency update scenarios
 - SSE would be more efficient for server-pushed updates
 
-2.**Incomplete Spec Compliance**
+  2.**Incomplete Spec Compliance**
 
 - MCP specification defines streaming as optional feature
 - Current implementation doesn't fully support spec
 - May limit interoperability with certain MCP clients
 
-3.**Feature Parity Gap**
+  3.**Feature Parity Gap**
 
 - Some MCP implementations may have SSE streaming
 - Users expecting full streaming support may be disappointed
@@ -238,13 +267,13 @@ The following infrastructure is already in place:
 - Activity timestamps
 - Message buffering
 
-2.**Message Buffering**(in POST handler)
+  2.**Message Buffering**(in POST handler)
 
 - Event ID generation
 - Message history per session
 - Resumption support
 
-3.**Error Handling**
+  3.**Error Handling**
 
 - McpError enum with NotImplemented variant
 - Response serialization infrastructure

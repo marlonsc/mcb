@@ -9,10 +9,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import NamedTuple
 
-from flext_core import FlextResult, p
-from pydantic import BaseModel
-
 from flext_cli import cli
+
+from flext_core import FlextResult, m, p
 from mcb_scripts.logger import get_logger
 
 logger = get_logger(__name__)
@@ -26,7 +25,7 @@ class SyncResult(NamedTuple):
     changed_paths: list[str]
 
 
-class AgentPointerParams(BaseModel):
+class AgentPointerParams(m.BaseModel):
     """Command parameters for the agent-pointer verb."""
 
     check: bool = False

@@ -1,3 +1,39 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: gitoxide (pure Rust)](#alternative-1-gitoxide-pure-rust)
+  - [Alternative 2: Shell commands (git CLI)](#alternative-2-shell-commands-git-cli)
+  - [Alternative 3: Keep without git](#alternative-3-keep-without-git)
+- [Implementation Notes](#implementation-notes)
+  - [Phase 1: Domain Model Extension](#phase-1-domain-model-extension)
+  - [Phase 2: Git Provider Port/Adapter](#phase-2-git-provider-portadapter)
+  - [Phase 3: Repository Manager Service](#phase-3-repository-manager-service)
+  - [Phase 4: Git-Aware Snapshot Manager](#phase-4-git-aware-snapshot-manager)
+  - [Phase 5: Schema Extensions](#phase-5-schema-extensions)
+  - [Phase 6: Git Indexing Service](#phase-6-git-indexing-service)
+  - [Phase 7: History Indexing](#phase-7-history-indexing)
+  - [Phase 8: Impact Analysis](#phase-8-impact-analysis)
+  - [Phase 9: MCP Tools](#phase-9-mcp-tools)
+  - [Phase 10: Configuration](#phase-10-configuration)
+- [Dependencies](#dependencies)
+- [Files to Create](#files-to-create)
+- [Files to Modify](#files-to-modify)
+- [Success Metrics](#success-metrics)
+- [Configuration Defaults](#configuration-defaults)
+- [Canonical References](#canonical-references)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +41,7 @@
 adr: 8 title: Git-Aware Semantic Indexing v0.2.0 status: PROPOSED created: updated:
 2026-02-05 related: [1, 2, 3, 9, 12, 13] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

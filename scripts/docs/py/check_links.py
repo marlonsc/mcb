@@ -10,13 +10,13 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-
 from flext_cli import cli
-from mcb_scripts.core import BaseMcbSettings, get_logger, r
-from mcb_scripts.settings import McbSettings
 from pydantic import Field
 
+from flext_core import p
+from mcb_scripts.core import BaseMcbSettings, get_logger, r
 from mcb_scripts.docs import utils
+from mcb_scripts.settings import McbSettings
 
 logger = get_logger(__name__)
 
@@ -92,7 +92,7 @@ def _check_files(
     return broken, checked_files, checked_links, unreadable
 
 
-def run(settings: CheckLinksSettings) -> r[int]:
+def run(settings: CheckLinksSettings) -> p.Result[int]:
     """Check broken internal links in documentation."""
     project_root = Path(settings.root).resolve()
     if settings.root == Path():

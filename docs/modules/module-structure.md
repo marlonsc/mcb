@@ -2,6 +2,15 @@
 
 # Module Structure
 
+<!-- TOC START -->
+
+- [Crate Structure](#crate-structure)
+- [Architecture Layers](#architecture-layers)
+- [Feature Flags](#feature-flags)
+  - [Updated: 2026-02-12 - Reflects modular crate architecture (v0.2.1)](#updated-2026-02-12-reflects-modular-crate-architecture-v021)
+
+<!-- TOC END -->
+
 This document shows the current module hierarchy for the Memory Context Browser
 workspace.
 

@@ -1,28 +1,54 @@
-# @flext-managed: continuous
-# @flext-regenerate: make deps WHAT=upgrade APPLY=Y
-# @flext-ssot: flext-infra/src/flext_infra/_constants/deps.py
-# @flext-ssot-dependencies: flext-infra/config/codegen.yaml (project_defaults.dev, dependency_profiles)
-# @flext-maintenance: do not edit managed sections; edit the SSOT
-# [MANAGED] FLEXT pyproject standardization
-# Sections with [MANAGED] are enforced by flext_infra.deps.modernizer.
-# Sections with [CUSTOM] are project-specific extension points.
+# @flext-generated: continuous
+# @flext-owner: flext-infra/config/codegen.yaml + flext-infra/src/flext_infra/templates/project/base/pyproject.toml.j2
+# @flext-adjust: MANAGED=conflict_sections + overwrite_project_keys. CUSTOM=preserve_project_keys and [tool.*] outside conflict_sections. Never edit this projection.
+# @flext-regenerate: make gen
 
-# [CUSTOM] project metadata
+[build-system]
+build-backend = "hatchling.build"
+requires = ["hatchling"]
+
 [project]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Software Development :: Libraries :: Python Modules",
+  "Typing :: Typed",
+]
 dependencies = [
   "flext-cli @ git+https://github.com/flext-sh/flext-cli.git@0.12.0-dev",
   "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
-  "pydantic>=2.13.4",
-  "pydantic-settings>=2.15.0",
-  "structlog>=26.1.0",
+  "pydantic>=2.13.5",
+  "pydantic-settings>=2.14.2,<2.15",
+  "structlog>=25.5.0,<26",
 ]
 description = "Repository-local automation helpers for MCB"
+keywords = ["clean-architecture", "flext", "integration", "typed"]
+license = "MIT"
 name = "mcb-scripts"
+readme = "README.md"
 requires-python = ">=3.13,<3.14"
 version = "0.4.0"
 
-# [MANAGED] consolidated development dependencies
+[[project.authors]]
+email = "marlonsc@gmail.com"
+name = "Marlon Costa"
+
+[[project.maintainers]]
+email = "marlonsc@gmail.com"
+name = "Marlon Costa"
+
+[project.scripts]
+mcb-scripts = "mcb_scripts.cli:main"
+
+[project.urls]
+Documentation = "https://github.com/marlonsc/mcb"
+Homepage = "https://github.com/marlonsc/mcb"
+Repository = "https://github.com/marlonsc/mcb"
+
 [project.optional-dependencies]
 gitops = [
   "hvac>=2.4.0",
@@ -32,105 +58,158 @@ gitops = [
   "ruamel.yaml",
 ]
 
-# [MANAGED] build system
-[build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling"]
+[dependency-groups]
+codegen = [
+  "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
+]
+dev = [
+  "actionlint-py>=1.7.12.24",
+  "bandit>=1.9.4",
+  "code-review-graph[all]>=2.3.8",
+  "deptry",
+  "editables>=0.6",
+  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
+  "hypothesis",
+  "mkdocs",
+  "mkdocs-autorefs",
+  "mkdocs-exclude>=1.0.2",
+  "mkdocs-git-revision-date-localized-plugin>=1.5.4",
+  "mkdocs-material>=9.7.7",
+  "mkdocs-mermaid2-plugin>=1.2.3",
+  "mkdocs-minify-plugin>=0.8.0",
+  "mkdocs-redirects>=1.2.3",
+  "mkdocs-section-index>=0.3.12",
+  "mkdocstrings>=1.0.6",
+  "mkdocstrings-python>=2.0.8",
+  "mypy>=2.3.1",
+  "pre-commit>=4.6.2",
+  "pymdown-extensions",
+  "pyrefly>=1.2.0",
+  "pyright>=1.1.411",
+  "pytest>=9.1.1",
+  "pytest-asyncio",
+  "pytest-benchmark",
+  "pytest-cov",
+  "pytest-markdown-docs",
+  "pytest-randomly>=4.1.0",
+  "pytest-reportlog",
+  "pytest-testmon>=2.2.0",
+  "pytest-timeout",
+  "pytest-xdist",
+  "ruff>=0.16.5",
+  "rumdl>=0.2.62",
+  "types-cachetools>=7.0.0.20260713",
+  "types-cffi>=2.1.0.20260827",
+  "types-click>=7.1.8",
+  "types-defusedxml>=0.7.0.20260504",
+  "types-docker>=7.2.0.20260827",
+  "types-flask>=1.1.6",
+  "types-jsonschema>=4.26.0.20260518",
+  "types-ldap3>=2.9.13.20260827",
+  "types-openpyxl>=3.1.5.20260827",
+  "types-paramiko>=5.0.0.20260724",
+  "types-protobuf>=7.35.1.20260827",
+  "types-psutil>=7.2.2.20260827",
+  "types-psycopg2>=2.9.21.20260724",
+  "types-pyasn1>=0.6.0.20260724",
+  "types-pyopenssl>=24.1.0.20240722",
+  "types-python-dateutil>=2.9.0.20260807",
+  "types-pyyaml>=6.0.12.20260815",
+  "types-redis>=4.6.0.20241004",
+  "types-requests>=2.33.0.20260712",
+  "types-setuptools>=84.0.0.20260812",
+  "types-tabulate>=0.10.0.20260508",
+  "types-toml>=0.10.8.20260518",
+  "vulture>=2.16",
+  "yamlfix>=1.19.1",
+]
 
-# [MANAGED] codespell
 [tool.codespell]
 check-filenames = true
 ignore-words-list = "crate,nd"
 
-# [MANAGED] coverage
 [tool.coverage.report]
 exclude_also = [
-  "if TYPE_CHECKING:",
   "if _t.TYPE_CHECKING:",
+  "if TYPE_CHECKING:",
   "if typing.TYPE_CHECKING:",
 ]
-fail_under = 45
 precision = 2
 show_missing = true
 skip_covered = false
 
 [tool.coverage.run]
+source = ["src"]
 omit = [
-  "*/_protocols/*",
   "*/dependency_injector/providers.pyx",
   "*/protocols.py",
+  "*/_protocols/*",
 ]
-source = ["src"]
 
-# [MANAGED] deptry
 [tool.deptry]
-known_first_party = [
-  "flext_cli",
-  "flext_core",
-  "flext_infra",
-  "flext_tests",
-  "mcb_scripts",
-]
+known_first_party = ["flext_core", "mcb_scripts"]
 pep621_dev_dependency_groups = ["dev"]
 
-[tool.hatch.build.targets.wheel]
-packages = ["src/mcb_scripts"]
+[tool.flext.docs]
+package_name = "mcb_scripts"
 
 [tool.hatch.metadata]
 allow-direct-references = true
 
-# [MANAGED] mypy
+[tool.hatch.build.targets.wheel]
+packages = ["src/mcb_scripts"]
+
+[tool.hatch.build.targets.wheel.force-include]
+config = "mcb_scripts/config"
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src/mcb_scripts", "config"]
+
 [tool.mypy]
-# FLEXT mypy suppression rationale (validated at the facade-FLEXT boundary):
-# FLEXT mypy[assignment]: Dependency-injector descriptors lose their FLEXT-bound type only in Mypy.
-# FLEXT mypy[attr-defined]: PEP 562 facade members installed by FLEXT composition are invisible to Mypy.
-# FLEXT mypy[call-arg]: Pydantic v2 init signatures behind facade FLEXT are incomplete in Mypy.
-# FLEXT mypy[misc]: Valid PEP 695 nested facade aliases are rejected under Mypy's misc bucket.
-# FLEXT mypy[name-defined]: Generated PEP 562 exports are installed at runtime but absent to Mypy.
-# FLEXT mypy[prop-decorator]: Mypy loses Pydantic computed-field descriptors across composed FLEXT.
-# FLEXT mypy[valid-type]: Mypy rejects facade namespaces used as owners in valid PEP 695 aliases.
-check_untyped_defs = true
 disable_error_code = [
+  "arg-type",
   "assignment",
   "attr-defined",
   "call-arg",
   "misc",
   "name-defined",
+  "no-any-return",
+  "no-redef",
   "prop-decorator",
+  "type-var",
+  "unreachable",
   "valid-type",
 ]
-disallow_untyped_defs = true
-explicit_package_bases = true
-extra_checks = true
-files = ["scripts/check", "src"]
-follow_imports = "normal"
-ignore_missing_imports = true
-local_partial_types = true
-mypy_path = ["src", ".", "scripts"]
-namespace_packages = true
-no_implicit_reexport = true
+exclude = "^legado(?:/|$)"
+mypy_path = ["src"]
 plugins = ["pydantic.mypy"]
 python_version = "3.13"
+allow_redefinition = true
+check_untyped_defs = true
+explicit_package_bases = true
+extra_checks = true
+follow_untyped_imports = true
+local_partial_types = true
+namespace_packages = true
+no_implicit_reexport = true
 show_traceback = true
 strict_equality = true
 warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
-warn_unused_configs = true
 warn_unused_ignores = true
+follow_imports = "normal"
 
 [[tool.mypy.overrides]]
-disable_error_code = ["unreachable"]
-module = ["dcdoc._utilities._charts._matplotlib_renderer._renders_spec"]
+module = ["rope.*"]
+disable_error_code = []
+follow_untyped_imports = true
 
-# [MANAGED] pydantic-mypy
 [tool.pydantic-mypy]
 init_forbid_extra = true
 init_typed = true
 warn_required_dynamic_aliases = true
-warn_untyped_fields = true
 
-# [MANAGED] pyrefly
 [tool.pyrefly]
 disable-project-excludes-heuristics = true
 project-excludes = [
@@ -150,7 +229,7 @@ project-excludes = [
 ]
 project-includes = ["scripts/**/*.py*", "src/**/*.py*", "tests/**/*.py*"]
 python-version = "3.13"
-search-path = ["src", ".", "scripts"]
+search-path = ["src", "."]
 use-ignore-files = false
 
 [tool.pyrefly.errors]
@@ -235,11 +314,7 @@ unused-coroutine = "error"
 unused-ignore = "error"
 variance-mismatch = "error"
 
-# [MANAGED] pyright
 [tool.pyright]
-# FLEXT Pyright suppression rationale (validated at the facade-FLEXT boundary):
-# FLEXT pyright[reportAssignmentType]: Pyright rejects the canonical class-alias rebind after FLEXT facade composition although runtime and the other analyzers resolve it.
-# FLEXT pyright[reportGeneralTypeIssues]: Pyright groups the same valid FLEXT facade alias rebind under its broad general diagnostic in every execution environment.
 exclude = [
   "**/.*",
   "**/.mypy_cache",
@@ -263,8 +338,8 @@ exclude = [
   ".venv",
   "vendor",
 ]
+include = ["src", "tests"]
 extraPaths = ["src", "."]
-include = ["scripts", "src", "tests"]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
 reportArgumentType = "none"
@@ -298,6 +373,7 @@ reportUnusedVariable = "error"
 typeCheckingMode = "strict"
 
 [[tool.pyright.executionEnvironments]]
+root = "src"
 extraPaths = ["src"]
 reportAssignmentType = "none"
 reportAttributeAccessIssue = "none"
@@ -312,27 +388,9 @@ reportUnknownMemberType = "none"
 reportUnknownParameterType = "none"
 reportUnknownVariableType = "none"
 reportUnusedImport = "none"
-root = "src"
 
 [[tool.pyright.executionEnvironments]]
-extraPaths = [".", "src"]
-reportArgumentType = "none"
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
-reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
 root = "tests"
-
-[[tool.pyright.executionEnvironments]]
 extraPaths = [".", "src"]
 reportArgumentType = "none"
 reportAssignmentType = "none"
@@ -348,50 +406,62 @@ reportUnknownMemberType = "none"
 reportUnknownParameterType = "none"
 reportUnknownVariableType = "none"
 reportUnusedImport = "none"
-root = "scripts"
 
-# [MANAGED] pytest
 [tool.pytest.ini_options]
 addopts = [
   "--benchmark-disable",
-  "--durations=10",
-  "--markdown-docs",
   "--strict-markers",
+  "--markdown-docs",
+  "--durations=10",
   "--timeout=10",
 ]
+flext_slow_timeout_seconds = "60"
+asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
   "error",
-  "module::flext_core._constants.enforcement.FlextSmellViolation",
+  "module::flext_core._constants.enforcement.FlextMroViolation",
 ]
-flext_slow_timeout_seconds = "60"
 markers = [
+  "smoke: public-interface smoke tests",
+  "unit: unit tests",
+  "integration: integration tests",
+  "functional: functional behavior tests",
+  "performance: performance and benchmark tests",
+  "slow: slow-running tests",
   "docker: tests requiring Docker",
+  "oracle: tests requiring the shared Oracle database",
+  "remote: tests requiring remote/external network services",
   "e2e: end-to-end integration tests",
   "edge_cases: edge case tests",
-  "integration: integration tests",
-  "performance: performance and benchmark tests",
-  "remote: tests requiring remote/external network services",
-  "resilience: resilience tests",
-  "slow: slow-running tests",
-  "smoke: public-interface smoke tests",
   "stress: stress tests",
-  "timeout: per-test timeout override (pytest-timeout)",
-  "unit: unit tests",
+  "resilience: resilience tests",
+  "discovery: catalog and stream discovery tests",
+  "singer: Singer protocol contract tests",
 ]
 minversion = "8.0"
 python_classes = ["Test*"]
 python_files = ["*_test.py", "*_tests.py", "test_*.py"]
-pythonpath = ["src"]
 testpaths = ["tests"]
 
-# [MANAGED] ruff
 [tool.ruff]
 exclude = [
   "**/.archive/**",
   "**/__pyrefly_virtual__/**",
+  ".agents/aihub-hooks",
+  ".agents/aihub-hooks/**",
   ".archive",
   ".archive/**",
+  ".claude/aihub-hooks",
+  ".claude/aihub-hooks/**",
+  ".codex/aihub-hooks",
+  ".codex/aihub-hooks/**",
+  ".cursor/aihub-hooks",
+  ".cursor/aihub-hooks/**",
+  ".gemini/aihub-hooks",
+  ".gemini/aihub-hooks/**",
   ".git",
+  ".github/hooks",
+  ".github/hooks/**",
   ".mypy_cache",
   ".pytest_cache",
   ".ruff_cache",
@@ -409,7 +479,7 @@ exclude = [
 ]
 fix = false
 line-length = 88
-namespace-packages = ["examples", "scripts", "tests"]
+namespace-packages = ["tests", "examples", "scripts"]
 preview = true
 respect-gitignore = true
 show-fixes = true
@@ -424,9 +494,6 @@ quote-style = "double"
 skip-magic-trailing-comma = true
 
 [tool.ruff.lint]
-# FLEXT Ruff suppression rationale (validated against semantic facet order):
-# FLEXT ruff[import-outside-top-level]: Public facade models are imported lazily only at validation and construction sites to preserve the c-t-p-m-u graph and prevent runtime cycles.
-# FLEXT ruff[unsorted-imports]: Ruff sorts TYPE_CHECKING imports lexically and reverses the mandatory semantic c-t-p-m-u dependency order in FLEXT facades.
 ignore = [
   "ambiguous-unicode-character-comment",
   "ambiguous-unicode-character-docstring",
@@ -446,6 +513,8 @@ ignore = [
   "multi-line-summary-second-line",
   "no-self-use",
   "non-imperative-mood",
+  "pytest-fixture-autouse",
+  "relative-imports",
   "too-many-arguments",
   "too-many-branches",
   "too-many-locals",
@@ -457,7 +526,6 @@ ignore = [
   "typing-only-first-party-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
-  "unsorted-imports",
 ]
 select = ["ALL"]
 
@@ -476,26 +544,10 @@ msg = "Use cli.create_app_with_common_params / cli.register_command from flext_c
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-single-line = false
-known-first-party = [
-  "flext_cli",
-  "flext_core",
-  "flext_infra",
-  "flext_tests",
-  "mcb_scripts",
-]
+known-first-party = ["flext_core", "mcb_scripts"]
 split-on-trailing-comma = false
 
 [tool.ruff.lint.per-file-ignores]
-"scripts/cmd/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
-"**/examples/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
-"**/tests/**" = [
-  "assert",
-  "compare-to-empty-string",
-  "magic-value-comparison",
-  "undocumented-public-class",
-  "undocumented-public-function",
-  "undocumented-public-method",
-]
 "**/__init__.py" = [
   "any-type",
   "builtin-import-shadowing",
@@ -509,6 +561,15 @@ split-on-trailing-comma = false
   "undefined-local-with-import-star-usage",
   "undocumented-public-init",
   "unused-import",
+]
+"**/examples/**/*.py" = ["invalid-module-name", "shebang-not-executable"]
+"**/tests/**" = [
+  "assert",
+  "compare-to-empty-string",
+  "magic-value-comparison",
+  "undocumented-public-class",
+  "undocumented-public-function",
+  "undocumented-public-method",
 ]
 "scripts/**" = [
   "ANN401",
@@ -565,23 +626,14 @@ split-on-trailing-comma = false
 "scripts/check/gitops.py" = ["ERA001"]
 "scripts/codegen-conversions.py" = ["TRY003"]
 "src/mcb_scripts/agent_pointers.py" = ["TRY003"]
-"src/mcb_scripts/qlty/runner.py" = ["S404", "S603"]
 "src/mcb_scripts/gitops.py" = ["S404", "S603"]
+"src/mcb_scripts/qlty/runner.py" = ["S404", "S603"]
 "tests/python/**" = ["S404", "S603", "S607", "TRY003"]
 
-# [MANAGED] tomlsort
 [tool.tomlsort]
 all = true
 in_place = true
-sort_first = ["build-system", "dependency-groups", "project", "tool"]
-
-[tool.uv]
-exclude-newer = "7 days"
-link-mode = "copy"
-package = true
-
-[tool.uv.exclude-newer-package]
-cryptography = false
+sort_first = ["project", "build-system", "tool", "dependency-groups"]
 
 [tool.vulture]
 exclude = ["*/_protocols/*"]
@@ -589,7 +641,6 @@ min_confidence = 100
 paths = ["src"]
 verbose = false
 
-# [MANAGED] yamlfix
 [tool.yamlfix]
 explicit_start = false
 line_length = 88
@@ -597,20 +648,7 @@ preserve_quotes = true
 section_whitelines = 1
 whitelines = 1
 
-[dependency-groups]
-dev = [
-  "actionlint-py>=1.7.12.24",
-  "bandit>=1.8",
-  "code-review-graph[all]>=2.3.8",
-  "flext-tests @ git+https://github.com/flext-sh/flext-tests.git@0.12.0-dev",
-  "mypy>=2.3.0",
-  "pre-commit>=4.6.2",
-  "pyrefly>=1.1.1",
-  "pyright>=1.1.411",
-  "pytest>=9.0.3",
-  "pytest-testmon>=2.2.0",
-  "ruff>=0.15.12",
-  "rumdl>=0.2.45",
-  "vulture>=2.16",
-  "yamlfix>=1.19.1",
-]
+[tool.uv]
+link-mode = "copy"
+constraint-dependencies = ["structlog<26"]
+environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]

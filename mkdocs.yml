@@ -1,15 +1,15 @@
 # AUTO-GENERATED — DO NOT EDIT MANUALLY
-site_name: mcb-scripts Documentation
-site_description: Generated documentation for mcb-scripts
-site_url: https://github.com/flext-sh/flext
-repo_name: flext-sh/flext
-repo_url: https://github.com/flext-sh/flext
-edit_uri: edit/main/mcb-scripts/
+site_name: mcb-scripts
+site_description: Workspace documentation generated from code and curated root docs
+site_url: https://github.com/marlonsc/mcb
+repo_name: marlonsc/mcb
+repo_url: https://github.com/marlonsc/mcb
 docs_dir: docs
 site_dir: .reports/docs/site
 
 exclude_docs: |
   /README.md
+  /API/**
 
 theme:
   name: material
@@ -48,10 +48,6 @@ plugins:
           paths:
             - src
           docstring_style: auto
-          docstring_options:
-            warnings: false
-            warn_unknown_params: false
-            warn_missing_types: false
           options:
             show_root_heading: true
             show_root_full_path: false
@@ -90,14 +86,11 @@ markdown_extensions:
   - pymdownx.tasklist:
       custom_checkbox: true
 
-nav:
-  - Home: index.md
-  - Guides: guides/README.md
-  - API Reference: api-reference/README.md
-
+# MkDocs discovers the complete documentation tree, including maintained pages.
+# A fixed three-page nav silently omitted guides, standards, and decisions.
 not_in_nav: |
   api-reference/generated/**
 validation:
-  omitted_files: ignore
+  omitted_files: warn
   absolute_links: warn
   unrecognized_links: warn

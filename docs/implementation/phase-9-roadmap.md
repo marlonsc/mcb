@@ -2,6 +2,44 @@
 
 # Phase 9 Roadmap: Integrated Context System (v0.4.0)
 
+<!-- TOC START -->
+
+- [Overview](#overview)
+- [Timeline](#timeline)
+- [Week 1: Context Architecture & Graph (Feb 17-23)](#week-1-context-architecture-graph-feb-17-23)
+  - [Goals](#goals)
+  - [ADR-041: Context Architecture](#adr-041-context-architecture)
+  - [ADR-042: Knowledge Graph](#adr-042-knowledge-graph)
+  - [Beads Issues](#beads-issues)
+- [Week 2: Hybrid Search & Versioning (Feb 24-Mar 2)](#week-2-hybrid-search-versioning-feb-24-mar-2)
+  - [Goals](#goals_1)
+  - [ADR-043: Hybrid Search](#adr-043-hybrid-search)
+  - [ADR-044: Model Selection](#adr-044-model-selection)
+  - [Beads Issues](#beads-issues_1)
+- [Week 3: Integration & Policies (Mar 3-9)](#week-3-integration-policies-mar-3-9)
+  - [Goals](#goals_2)
+  - [ADR-045: Context Versioning](#adr-045-context-versioning)
+  - [ADR-046: Integration Patterns](#adr-046-integration-patterns)
+  - [Beads Issues](#beads-issues_2)
+- [Week 4: Testing & Documentation (Mar 10-16)](#week-4-testing-documentation-mar-10-16)
+  - [Goals](#goals_3)
+  - [Testing](#testing)
+  - [Documentation](#documentation)
+  - [Release](#release)
+  - [Beads Issues](#beads-issues_3)
+- [Test Coverage](#test-coverage)
+  - [Unit Tests (50+)](#unit-tests-50)
+  - [Integration Tests (15+)](#integration-tests-15)
+  - [MCP Tools](#mcp-tools)
+  - [FSM Integration](#fsm-integration)
+  - [End-to-End Tests (5+)](#end-to-end-tests-5)
+  - [Workflows](#workflows)
+- [Success Criteria](#success-criteria)
+- [Related Documentation](#related-documentation)
+- [Next Steps](#next-steps)
+
+<!-- TOC END -->
+
 ## Overview
 
 **Phase 9** implements the Integrated Context System with knowledge graphs, freshness

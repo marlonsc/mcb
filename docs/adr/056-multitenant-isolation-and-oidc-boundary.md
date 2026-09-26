@@ -1,3 +1,16 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+- [Consequences](#consequences)
+- [Alternatives considered](#alternatives-considered)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -6,6 +19,7 @@ adr: 56 title: Multi-Tenant Isolation, Weaviate Vector Store, OIDC Identity, and
 Integration Boundary (v0.4.0) status: PROPOSED created: 2026-06-13 updated: 2026-06-13
 related: [3, 34, 35, 36, 37, 38, 47, 48, 55] supersedes: [] superseded_by: []
 implementation_status: Proposed
+
 ---
 
 # ADR 056: Multi-Tenant Isolation, Weaviate Vector Store, OIDC Identity, and Integration Boundary (v0.4.0)

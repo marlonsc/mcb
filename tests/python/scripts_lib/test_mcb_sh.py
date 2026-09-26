@@ -14,7 +14,6 @@ from pathlib import Path
 
 import pytest
 
-
 ROOT = Path(__file__).resolve().parents[3]
 MCB_SH = ROOT / "scripts" / "lib" / "mcb.sh"
 

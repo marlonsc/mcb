@@ -2,6 +2,29 @@
 
 # Architecture Decision Records
 
+<!-- TOC START -->
+
+- [Current ADRs](#current-adrs)
+  - [Core Architecture (v0.1.x+)](#core-architecture-v01x)
+  - [v0.2.0 Features](#v020-features)
+  - [Infrastructure (v0.1.2)](#infrastructure-v012)
+  - [Multi-Domain & Integration (v0.2.0+)](#multi-domain-integration-v020)
+  - [v0.1.2 Refactoring & Simplification](#v012-refactoring-simplification)
+  - [v0.1.3 / v0.2.0 Architecture Evolution](#v013-v020-architecture-evolution)
+  - [v0.2.1 Additions](#v021-additions)
+  - [v0.2.2 Observability](#v022-observability)
+  - [v0.3.0 — SeaQL + Loco Platform Rebuild (CURRENT)](#v030-seaql-loco-platform-rebuild-current)
+  - [Governance and SSOT](#governance-and-ssot)
+  - [Workflow FSM & Policies (v0.4.0, previously v0.3.0)](#workflow-fsm-policies-v040-previously-v030)
+  - [Integrated Context System (v0.5.0, previously v0.4.0)](#integrated-context-system-v050-previously-v040)
+- [Archived (Superseded)](#archived-superseded)
+- [Historical Version Alignment](#historical-version-alignment)
+- [ADR Status Legend](#adr-status-legend)
+- [ADR Count](#adr-count)
+- [Creating New ADRs](#creating-new-adrs)
+
+<!-- TOC END -->
+
 This directory contains all Architecture Decision Records (ADRs) for the Memory Context
 Browser project.
 

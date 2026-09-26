@@ -1,3 +1,17 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Example](#example)
+- [v0.1.1 Error Organization](#v011-error-organization)
+  - [Consequences](#consequences)
+- [Related ADRs](#related-adrs)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +19,7 @@
 adr: 19 title: Error Handling Strategy status: ACCEPTED created: updated: 2026-02-05
 related: [13, 16] supersedes: [] superseded_by: [] implementation_status: "Historical
 snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

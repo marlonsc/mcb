@@ -1,3 +1,22 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Phase 1: v0.1.1 - Foundation (RELEASED)](#phase-1-v011-foundation-released)
+  - [Phase 2: v0.2.0 - Infrastructure (historical target)](#phase-2-v020-infrastructure-historical-target)
+  - [Phase 3: v0.3.0 - Analysis Core](#phase-3-v030-analysis-core)
+  - [Phase 4: v0.4.0 - Extended Analysis](#phase-4-v040-extended-analysis)
+  - [Phase 5: v0.5.0 - Quality + Git](#phase-5-v050-quality-git)
+  - [Phase 6: v0.6.0+ - Advanced Features](#phase-6-v060-advanced-features)
+- [Migration Principles](#migration-principles)
+  - [Consequences](#consequences)
+- [Related ADRs](#related-adrs)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +24,7 @@
 adr: 17 title: Phased Feature Integration Roadmap status: ACCEPTED created: updated:
 2026-02-05 related: [12, 13, 16, 20] supersedes: [] superseded_by: []
 implementation_status: "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

@@ -1,21 +1,27 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Scripts.check package."""
+"""Scripts package."""
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from .gitops import GitopsSettings, main, run
-__all__: tuple[str, ...] = ("GitopsSettings", "main", "run")
+    from mcb_scripts import s
+
+    from . import docs
+
+
+__all__: tuple[str, ...] = ("docs", "s")
 
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
-        MappingProxyType({".gitops": ("GitopsSettings", "main", "run")}),
+        MappingProxyType({
+            ".docs": ("docs",),
+            "mcb_scripts": ("s",),
+        }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
     )

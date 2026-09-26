@@ -2,6 +2,45 @@
 
 # Architecture Boundaries - Layer Rules and Module Ownership
 
+<!-- TOC START -->
+
+- [Table of Contents](#table-of-contents)
+- [v0.2.1 Standardization Contract](#v021-standardization-contract)
+  - [Scope Guardrails](#scope-guardrails)
+  - [Canonical Ownership](#canonical-ownership)
+  - [Fast-Fail Rules](#fast-fail-rules)
+- [Crate Structure](#crate-structure)
+  - [Dependency Direction (Inward Only)](#dependency-direction-inward-only)
+  - [Layer 0: mcb-utils (Utilities)](#layer-0-mcb-utils-utilities)
+- [Layer Dependency Rules](#layer-dependency-rules)
+  - [Layer 1: mcb-domain (Core)](#layer-1-mcb-domain-core)
+  - [Layer 2: mcb-providers (Adapters)](#layer-2-mcb-providers-adapters)
+  - [Registration Pattern](#registration-pattern)
+  - [Layer 3: mcb-infrastructure (Infrastructure)](#layer-3-mcb-infrastructure-infrastructure)
+  - [Layer 4: mcb-server (Server/Transport)](#layer-4-mcb-server-servertransport)
+  - [Facade: mcb (Public API)](#facade-mcb-public-api)
+  - [Tooling: mcb-validate (Development)](#tooling-mcb-validate-development)
+  - [Prohibited in Production](#prohibited-in-production)
+- [Port/Adapter Pattern](#portadapter-pattern)
+  - [Port Definition (mcb-domain)](#port-definition-mcb-domain)
+  - [Adapter Implementation (mcb-providers)](#adapter-implementation-mcb-providers)
+  - [Usage via DI (mcb-infrastructure)](#usage-via-di-mcb-infrastructure)
+- [Module Ownership](#module-ownership)
+  - [Ownership Rules](#ownership-rules)
+  - [Ownership Map](#ownership-map)
+- [Boundary Violations](#boundary-violations)
+  - [Common Violations Detected by mcb-validate](#common-violations-detected-by-mcb-validate)
+- [Validation Rules](#validation-rules)
+  - [Automated Checks (mcb-validate)](#automated-checks-mcb-validate)
+- [Phase-Based Validation](#phase-based-validation)
+- [Enforcement](#enforcement)
+  - [CI/CD Pipeline](#cicd-pipeline)
+- [Quality Gate](#quality-gate)
+- [References](#references)
+- [Version History](#version-history)
+
+<!-- TOC END -->
+
 **Version**: v0.2.1 **Status**: Baseline Documentation **Last Updated**: 2026-02-14
 
 This document defines the strict architectural boundaries for the MCB (Memory Context
@@ -93,7 +132,7 @@ layers, never the reverse.
 
 #### Prohibited Dependencies
 
-- NO dependencies on ANY mcb-* crate (enforced by CA015)
+- NO dependencies on ANY mcb-\* crate (enforced by CA015)
 - NO domain knowledge (entities, ports, value objects)
 
 #### Exports

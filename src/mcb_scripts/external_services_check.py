@@ -28,10 +28,9 @@ def parse_url(url: str) -> tuple[str, int] | None:
     if ":" not in host_port:
         return None
     host, port_str = host_port.rsplit(":", 1)
-    try:
-        return host, int(port_str)
-    except ValueError:
+    if not port_str.isdigit():
         return None
+    return host, int(port_str)
 
 
 def is_reachable(host: str, port: int, timeout: float = 0.3) -> bool:

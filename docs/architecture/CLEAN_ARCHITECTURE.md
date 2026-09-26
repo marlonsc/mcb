@@ -2,6 +2,12 @@
 
 # Clean Architecture in MCB
 
+<!-- TOC START -->
+
+- [Quick Reference](#quick-reference)
+
+<!-- TOC END -->
+
 > **SSOT**: The full architecture specification lives in
 > [ARCHITECTURE.md](./ARCHITECTURE.md). Implementation patterns are in
 > [PATTERNS.md](./PATTERNS.md). This file exists as a stable link target only.

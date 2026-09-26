@@ -2,6 +2,18 @@
 
 # MCB Quick Reference
 
+<!-- TOC START -->
+
+- [Make verbs (90% of daily use)](#make-verbs-90-of-daily-use)
+- [Architecture](#architecture)
+- [Good / bad in 10s](#good-bad-in-10s)
+- [Beads workflow](#beads-workflow)
+- [Project skills](#project-skills)
+- [Pre-commit validation](#pre-commit-validation)
+- [Key links](#key-links)
+
+<!-- TOC END -->
+
 One-pager for daily MCB development.
 
 **Version:** `0.4.0` | **Rust:** `1.92+` | **Edition:** `2024`

@@ -1,5 +1,16 @@
 # Integration Tests
 
+<!-- TOC START -->
+
+- [Canonical Sources](#canonical-sources)
+- [Service Detection](#service-detection)
+- [Skip Macros](#skip-macros)
+- [Run Tests](#run-tests)
+- [Item-by-item Classification Of Archived Future Notes](#item-by-item-classification-of-archived-future-notes)
+- [Troubleshooting](#troubleshooting)
+
+<!-- TOC END -->
+
 This guide documents the current external-service test path. When this guide disagrees
 with code, trust `config/tests.toml`, `crates/mcb-domain/src/utils/tests/`,
 `crates/mcb-domain/src/macros/testing.rs`, `tests/docker-compose.yml`, and

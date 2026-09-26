@@ -2,6 +2,25 @@
 
 # Development Roadmap
 
+<!-- TOC START -->
+
+- [Current State](#current-state)
+  - [Project Metrics](#project-metrics)
+  - [Technical Debt](#technical-debt)
+  - [v0.4.0 — Released](#v040-released)
+  - [v0.4.1 — AuthZ Hardening + AgentSession Schema + Webhook / OTEL](#v041-authz-hardening-agentsession-schema-webhook-otel)
+  - [v0.3.2 — CI/CD Gates And Release Reliability (Historical)](#v032-cicd-gates-and-release-reliability-historical)
+  - [v0.3.1 — Released](#v031-released)
+  - [v0.2.1 — Historical Release (Admin UI + Modernization)](#v021-historical-release-admin-ui-modernization)
+  - [v0.3.0 — SeaQL + Loco.rs Platform Rebuild](#v030-seaql-locors-platform-rebuild)
+  - [v0.4.0 — Workflow System](#v040-workflow-system)
+  - [v0.5.0 — Integrated Context System](#v050-integrated-context-system)
+  - [v1.0.0 — Production Enterprise](#v100-production-enterprise)
+- [Development Principles](#development-principles)
+- [Cross-References](#cross-references)
+
+<!-- TOC END -->
+
 **Last updated:** 2026-06-28
 
 Development roadmap for **Memory Context Browser (MCB)** — a high-performance MCP server

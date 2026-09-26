@@ -2,6 +2,22 @@
 
 # ADR 052: Schema Resolution with SeaORM 2.x
 
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+- [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+  - [Neutral Consequences](#neutral-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Replace domain schema with SeaORM entities](#alternative-1-replace-domain-schema-with-seaorm-entities)
+  - [Alternative 2: Keep both as co-equal sources of truth](#alternative-2-keep-both-as-co-equal-sources-of-truth)
+- [References](#references)
+
+<!-- TOC END -->
+
 ## Status
 
 Accepted

@@ -1,3 +1,25 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [ADR 001: Modular Crates Architecture](#adr-001-modular-crates-architecture)
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+- [Implementation](#implementation)
+  - [Port Trait Definition (mcb-domain)](#port-trait-definition-mcb-domain)
+  - [Provider Implementation (mcb-providers)](#provider-implementation-mcb-providers)
+  - [Default Provider (FastEmbed)](#default-provider-fastembed)
+  - [DI Provider Registration (mcb-providers)](#di-provider-registration-mcb-providers)
+  - [Service Layer with Injected Dependencies (mcb-application)](#service-layer-with-injected-dependencies-mcb-application)
+  - [Two-Layer DI Strategy](#two-layer-di-strategy)
+  - [Testing Pattern](#testing-pattern)
+- [Consequences](#consequences)
+- [Crate Structure](#crate-structure)
+- [Related ADRs](#related-adrs)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -7,6 +29,7 @@
 adr: 1 title: Modular Crates Architecture status: IMPLEMENTED created: updated:
 2026-02-05 related: [2, 3, 4, 5] supersedes: [] superseded_by: [] implementation_status:
 Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

@@ -2,6 +2,20 @@
 
 # Testing - HTTP, MCP, And UI E2E
 
+<!-- TOC START -->
+
+- [Overview](#overview)
+- [Current Coverage](#current-coverage)
+- [Authentication](#authentication)
+- [Running Tests](#running-tests)
+- [Browse Workflow Contract](#browse-workflow-contract)
+- [Route Contract](#route-contract)
+- [Maintenance](#maintenance)
+- [Troubleshooting](#troubleshooting)
+- [Related Documentation](#related-documentation)
+
+<!-- TOC END -->
+
 ## Overview
 
 MCB validates real user and agent workflows across three current layers:

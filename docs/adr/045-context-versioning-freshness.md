@@ -1,3 +1,26 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Context](#context)
+- [Decision](#decision)
+  - [1. ContextSnapshot Entity Spec](#1-contextsnapshot-entity-spec)
+  - [2. Immutable Snapshots with TTL](#2-immutable-snapshots-with-ttl)
+  - [2. Staleness Computation](#2-staleness-computation)
+  - [3. Time-Travel API: Get Context at Specific Timestamp](#3-time-travel-api-get-context-at-specific-timestamp)
+  - [4. Integration with ADR-034-037](#4-integration-with-adr-034-037)
+- [ADR-035 Contract Assumptions](#adr-035-contract-assumptions)
+  - [ContextFreshness Entity (from ADR-035)](#contextfreshness-entity-from-adr-035)
+  - [CachedContextScout TTL & Invalidation (from ADR-035)](#cachedcontextscout-ttl-invalidation-from-adr-035)
+  - [v0.4.0 Freshness Tracking EXTENDS ADR-035](#v040-freshness-tracking-extends-adr-035)
+  - [Snapshot Lifecycle with Freshness](#snapshot-lifecycle-with-freshness)
+- [Testing](#testing)
+  - [Success Criteria](#success-criteria)
+- [Architecture Corrections](#architecture-corrections)
+  - [Correction 1: ADR-035 Contract Documentation (2026-02-06)](#correction-1-adr-035-contract-documentation-2026-02-06)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +28,7 @@
 adr: 45 title: Context Versioning & Freshness Tracking status: PROPOSED created:
 updated: 2026-02-05 related: [] supersedes: [] superseded_by: [] implementation_status:
 "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

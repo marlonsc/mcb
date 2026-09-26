@@ -1,3 +1,40 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [Requirements](#requirements)
+- [Decision](#decision)
+  - [1. Multi-Tier Execution Model](#1-multi-tier-execution-model)
+  - [2. Event Broadcasting (3 Channels)](#2-event-broadcasting-3-channels)
+  - [3. Beads Integration](#3-beads-integration)
+  - [4. Session Manager & Compensation Handler](#4-session-manager-compensation-handler)
+  - [5. WorkflowService (Application Layer)](#5-workflowservice-application-layer)
+  - [6. MCP Tool Handler (ADR-033 Pattern)](#6-mcp-tool-handler-adr-033-pattern)
+  - [7. MCP Tool Schema (JSON)](#7-mcp-tool-schema-json)
+  - [8. DI Integration (AppContext Manual Composition Root)](#8-di-integration-appcontext-manual-composition-root)
+  - [9. AppContext Extension](#9-appcontext-extension)
+  - [10. Session Management](#10-session-management)
+  - [11. Configuration](#11-configuration)
+- [12. Module Locations](#12-module-locations)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Tokio Actor Model (actix-style)](#alternative-1-tokio-actor-model-actix-style)
+  - [Alternative 2: Multiple MCP Tools](#alternative-2-multiple-mcp-tools)
+  - [Alternative 3: Direct Provider Access (No Service Layer)](#alternative-3-direct-provider-access-no-service-layer)
+- [Implementation Notes](#implementation-notes)
+  - [Code Changes](#code-changes)
+  - [Migration](#migration)
+  - [Testing](#testing)
+  - [Performance Targets](#performance-targets)
+  - [Security](#security)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +42,7 @@
 adr: 37 title: Workflow Orchestrator — Coordination and MCP Integration status: ACCEPTED
 created: updated: 2026-02-06 related: [23, 25, 29, 33] supersedes: [] superseded_by: []
 implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

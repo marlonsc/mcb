@@ -11,7 +11,6 @@ from dataclasses import dataclass, field
 
 from flext_core import p
 from mcb_scripts.core import r
-
 from mcb_scripts.qlty.model import SarifIssue, Severity
 from mcb_scripts.qlty.strategies import get_strategy
 

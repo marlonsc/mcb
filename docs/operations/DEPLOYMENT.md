@@ -1,5 +1,17 @@
 # Deployment Guide
 
+<!-- TOC START -->
+
+- [Supported Runtime Modes](#supported-runtime-modes)
+- [Configuration Profiles](#configuration-profiles)
+- [Build And Validate](#build-and-validate)
+- [MCP Client Configuration](#mcp-client-configuration)
+- [Operational Checks](#operational-checks)
+- [Kubernetes And GitOps](#kubernetes-and-gitops)
+- [References](#references)
+
+<!-- TOC END -->
+
 This guide covers the current MCB deployment paths. When this document disagrees with
 executable source, trust `Cargo.toml`, `Makefile`, `makefiles/dispatch.mk`,
 `scripts/lib/mcb.sh`, `config/*.yaml`, and `AGENTS.md`, then update this guide in the

@@ -1,3 +1,26 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Context](#context)
+- [Decision](#decision)
+  - [Key Decisions](#key-decisions)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Implementation Plan](#implementation-plan)
+- [Alternatives Considered](#alternatives-considered)
+  - [1. Keep Bidirectional Sync](#1-keep-bidirectional-sync)
+  - [2. Import-Only (No Export)](#2-import-only-no-export)
+  - [3. Extend Beads](#3-extend-beads)
+- [Validation](#validation)
+  - [Architecture Rules](#architecture-rules)
+  - [Performance](#performance)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +28,7 @@
 adr: 32 title: Agent & Quality Domain Extension (MCB-Only) status: SUPERSEDED created:
 '2026-02-03' updated: 2026-02-05 related: [9, 13, 29] supersedes: [] superseded_by: [34]
 implementation_status: "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

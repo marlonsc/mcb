@@ -2,6 +2,28 @@
 
 # ADR 024: Shaku to dill DI Migration
 
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [Problems with Shaku](#problems-with-shaku)
+  - [DI Library Research](#di-library-research)
+  - [Why Handle-Based Pattern](#why-handle-based-pattern)
+- [Decision](#decision)
+  - [Architecture Overview](#architecture-overview)
+  - [Implementation Pattern](#implementation-pattern)
+  - [Usage Example](#usage-example)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Validation Criteria](#validation-criteria)
+- [Implementation Summary (2026-01-19)](#implementation-summary-2026-01-19)
+  - [File Structure](#file-structure)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 ## Status
 
 **Superseded by

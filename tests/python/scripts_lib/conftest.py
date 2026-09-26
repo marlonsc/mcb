@@ -16,7 +16,6 @@ from structlog.testing import capture_logs
 
 from mcb_scripts.core import BaseMcbSettings
 
-
 SettingsFactory = Callable[..., BaseMcbSettings]
 """Factory that builds a fresh settings subclass instance per test."""
 

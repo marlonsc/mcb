@@ -7,8 +7,8 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import os
-import re
 import pathlib
+import re
 
 
 def get_project_root() -> pathlib.Path:

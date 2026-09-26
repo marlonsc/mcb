@@ -2,6 +2,23 @@
 
 # API Surface Analysis
 
+<!-- TOC START -->
+
+- [↔ Code ↔ Docs cross-reference](#code-docs-cross-reference)
+- [Crate Public APIs](#crate-public-apis)
+  - [mcb (Facade Crate)](#mcb-facade-crate)
+  - [mcb-domain](#mcb-domain)
+  - [mcb-server](#mcb-server)
+  - [mcb-providers](#mcb-providers)
+  - [mcb-infrastructure](#mcb-infrastructure)
+  - [mcb-validate](#mcb-validate)
+- [API Stability](#api-stability)
+  - [Current Status](#current-status)
+  - [Breaking Change Policy](#breaking-change-policy)
+  - [Updated 2026-02-20 — Corrected stale API names (run_server→run, removed ChunkingOrchestrator); added bidirectional code↔docs cross-reference block; verified against actual crate exports (v0.2.1)](#updated-2026-02-20-corrected-stale-api-names-run_serverrun-removed-chunkingorchestrator-added-bidirectional-codedocs-cross-reference-block-verified-against-actual-crate-exports-v021)
+
+<!-- TOC END -->
+
 This document provides an overview of the public API surface of the Memory Context
 Browser.
 

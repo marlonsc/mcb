@@ -1,3 +1,33 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [1. Entity Model](#1-entity-model)
+  - [2. State Machines](#2-state-machines)
+  - [3. Concurrency Model](#3-concurrency-model)
+  - [4. Git Integration & Worktree Management](#4-git-integration-worktree-management)
+  - [5. Operator Workflow & Compensation](#5-operator-workflow-compensation)
+- [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Stateless Workflow (No SQLite Persistence)](#alternative-1-stateless-workflow-no-sqlite-persistence)
+  - [Alternative 2: Single-Session-Per-Project](#alternative-2-single-session-per-project)
+  - [Alternative 3: Operator as Central Bottleneck](#alternative-3-operator-as-central-bottleneck)
+  - [Alternative 4: Automatic Merge (No Operator Review)](#alternative-4-automatic-merge-no-operator-review)
+- [Implementation Notes](#implementation-notes)
+  - [Dependency Map](#dependency-map)
+  - [Database Schema (SQLite)](#database-schema-sqlite)
+  - [Historical Implementation Sketch](#historical-implementation-sketch)
+  - [Testing Strategy](#testing-strategy)
+  - [Rollback Plan](#rollback-plan)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +35,7 @@
 adr: 38 title: Multi-Tier Execution Model — Integration of ADR-034–037 status: ACCEPTED
 created: updated: 2026-02-06 related: [13, 23, 25, 29, 33] supersedes: [] superseded_by:
 [] implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -285,7 +316,7 @@ OR at any point:
 | Verifying     | AwaitingMerge | operator_approved       | tests pass, reviews OK | —                              |
 | AwaitingMerge | Merged        | code_merged_to_main     | —                      | —                              |
 | Merged        | Completed     | cleanup_done            | —                      | —                              |
-| *             | Failed        | error / operator_reject | —                      | ManualReview / ApproveAndMerge |
+| \*            | Failed        | error / operator_reject | —                      | ManualReview / ApproveAndMerge |
 
 **Concurrency**: Only 1 session per task. Multiple sessions can run in parallel across
 different tasks (bounded by WIP limit).

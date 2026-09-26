@@ -2,6 +2,26 @@
 
 # Memory Context Browser - Documentation
 
+<!-- TOC START -->
+
+- [Comprehensive documentation for the Memory Context Browser project](#comprehensive-documentation-for-the-memory-context-browser-project)
+- [📚 Documentation Structure](#documentation-structure)
+  - [📖 User Guide](#user-guide)
+  - [🛠️ Developer Guide](#developer-guide)
+  - [🏗️ Architecture](#architecture)
+  - [📦 Modules (v0.2.1 Crate Structure)](#modules-v021-crate-structure)
+  - [🚀 Operations](#operations)
+  - [📋 Templates](#templates)
+  - [📚 Additional References](#additional-references)
+- [🔧 Documentation Automation](#documentation-automation)
+- [📊 Documentation Quality](#documentation-quality)
+- [🎯 Documentation Principles](#documentation-principles)
+- [📈 Documentation Metrics](#documentation-metrics)
+- [🤝 Contributing to Documentation](#contributing-to-documentation)
+- [🔍 Finding Information](#finding-information)
+
+<!-- TOC END -->
+
 [![Documentation Status](https://img.shields.io/badge/docs-automated-green)](https://github.com/marlonsc/mcb/actions)
 [![Version](https://img.shields.io/badge/version-0.4.0-blue)](https://github.com/marlonsc/mcb/releases)
 [![Architecture](https://img.shields.io/badge/architecture-C4--model-blue)](architecture/ARCHITECTURE.md)

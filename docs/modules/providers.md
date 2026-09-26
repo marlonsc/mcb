@@ -2,6 +2,28 @@
 
 # Providers Module
 
+<!-- TOC START -->
+
+- [↔ Code ↔ Docs cross-reference](#code-docs-cross-reference)
+- [Overview](#overview)
+- [Embedding Providers](#embedding-providers)
+- [Vector Store Providers](#vector-store-providers)
+- [Database](#database)
+- [Hybrid Search](#hybrid-search)
+- [Cache Providers](#cache-providers)
+- [Events (events/)](#events-events)
+- [Git Provider (git/)](#git-provider-git)
+- [Language Processors](#language-processors)
+- [Analysis](#analysis)
+- [Workflow (workflow/)](#workflow-workflow)
+- [Configuration](#configuration)
+- [Integration Summary](#integration-summary)
+- [File Structure (Actual)](#file-structure-actual)
+- [Testing](#testing)
+  - [Updated 2026-02-14 — Added analysis/, workflow/ (FSM transitions), language/common/ (config, constants, processor, traverser) + detection.rs + engine.rs; removed stale routing/, storage/, admin/ references (v0.2.1)](#updated-2026-02-14-added-analysis-workflow-fsm-transitions-languagecommon-config-constants-processor-traverser-detectionrs-enginers-removed-stale-routing-storage-admin-references-v021)
+
+<!-- TOC END -->
+
 **Source**: `crates/mcb-providers/src/` **Crate**: `mcb-providers`
 
 ## ↔ Code ↔ Docs cross-reference

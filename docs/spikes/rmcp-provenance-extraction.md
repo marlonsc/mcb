@@ -1,5 +1,21 @@
 # Spike: rmcp HTTP provenance extraction via Extensions
 
+<!-- TOC START -->
+
+- [Goal](#goal)
+- [Decision](#decision)
+- [Evidence](#evidence)
+  - [1) rmcp transport docs explicitly describe request-part injection](#1-rmcp-transport-docs-explicitly-describe-request-part-injection)
+  - [2) rmcp source confirms insertion of Parts](#2-rmcp-source-confirms-insertion-of-parts)
+  - [3) rmcp source confirms handler-side extraction from request context](#3-rmcp-source-confirms-handler-side-extraction-from-request-context)
+- [Minimal working example](#minimal-working-example)
+  - [A) HTTP request with custom provenance headers](#a-http-request-with-custom-provenance-headers)
+  - [B) rmcp handler access via Extensions](#b-rmcp-handler-access-via-extensions)
+  - [C) Applying this to MCB build_execution_context()](#c-applying-this-to-mcb-build_execution_context)
+- [Notes and caveats](#notes-and-caveats)
+
+<!-- TOC END -->
+
 ## Goal
 
 Validate whether `rmcp::transport::http::StreamableHttpService` can expose incoming HTTP
@@ -77,7 +93,8 @@ X-Operator-Id: alice
 use http::request::Parts;
 use rmcp::service::{RequestContext, RoleServer};
 
-fn provenance_from_context(ctx: &RequestContext<RoleServer>) -> (Option<String>, Option<String>) {
+fn provenance_from_context(ctx: &RequestContext<RoleServer>) -> (Option<String>,
+  Option<String>) {
     let Some(parts) = ctx.extensions.get::<Parts>() else {
         return (None, None);
     };

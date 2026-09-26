@@ -1,3 +1,22 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Context](#context)
+- [Decision](#decision)
+  - [1. Hybrid Search Architecture: Compose Multiple Signals](#1-hybrid-search-architecture-compose-multiple-signals)
+  - [2. Search Query & Result Models](#2-search-query-result-models)
+  - [3. Implementation: RRF Fusion Algorithm](#3-implementation-rrf-fusion-algorithm)
+  - [3.1 Port Traits (mcb-domain)](#31-port-traits-mcb-domain)
+  - [4. Integration with Memory System](#4-integration-with-memory-system)
+- [Architecture Corrections](#architecture-corrections)
+  - [Correction 3 (mcb-ulf): Service Layer Placement](#correction-3-mcb-ulf-service-layer-placement)
+  - [Correction 4 (mcb-jq3): Missing Port Trait Definition](#correction-4-mcb-jq3-missing-port-trait-definition)
+- [Testing](#testing)
+  - [Success Criteria](#success-criteria)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +24,7 @@
 adr: 43 title: Hybrid Search & Discovery for Context status: PROPOSED created: updated:
 2026-02-05 related: [] supersedes: [] superseded_by: [] implementation_status:
 "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

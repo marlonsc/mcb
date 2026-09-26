@@ -13,6 +13,12 @@
 [test-groups]
 serial-shared-context = { max-threads = 1 }
 
+# Junit persistence (SSOT for run results): every run leaves a machine-readable
+# record, so a failed or timed-out test is always nameable after the fact —
+# "red without a name" is treated as a defect.
+[profile.default.junit]
+path = "../../.reports/nextest/junit.xml"
+
 [profile.default]
 # Use all available CPUs by default; Makefile still passes --test-threads=$T to
 # allow explicit overrides (e.g. THREADS=1 for debugging).

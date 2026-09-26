@@ -2,6 +2,24 @@
 
 # ADR 048: Gap-Free Observability Strategy
 
+<!-- TOC START -->
+
+- [Status](#status)
+- [Target Version](#target-version)
+- [Detailed Plan](#detailed-plan)
+- [Context](#context)
+- [Decision](#decision)
+  - [1. Component Architecture](#1-component-architecture)
+  - [2. Configuration Strategy (mcb.toml)](#2-configuration-strategy-mcbtoml)
+  - [3. Critical Instrumentation Points](#3-critical-instrumentation-points)
+  - [4. Technical Specifications](#4-technical-specifications)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Compliance](#compliance)
+
+<!-- TOC END -->
+
 ## Status
 
 Accepted
@@ -62,11 +80,13 @@ protocol = "grpc"
 To achieve "gap-free" visibility, we instrument the **Edges** and the **Core**:
 
 1. **HTTP Edge (`http.rs`)**:
+
    - **Mechanism**: `TracingFairing`.
    - **Role**: Extracts W3C Trace Context from HTTP headers. Ensures web requests are
      part of distributed traces.
 
 2. **Stdio Edge / Core (`mcp_server.rs`)**:
+
    - **Mechanism**: `#[instrument]` on `call_tool`. manual context extraction from
      `meta`.
    - **Role**: The "Root Span" for CLI/IDE interactions. It bridges the air-gap of Stdio

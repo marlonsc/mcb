@@ -2,6 +2,25 @@
 
 # Phase 9: Integrated Context System (ADR-041-046)
 
+<!-- TOC START -->
+
+- [Overview](#overview)
+- [ADRs](#adrs)
+  - [ADR-041: Context Architecture](#adr-041-context-architecture)
+  - [ADR-042: Knowledge Graph](#adr-042-knowledge-graph)
+  - [ADR-043: Hybrid Search Engine](#adr-043-hybrid-search-engine)
+  - [ADR-044: Model Selection](#adr-044-model-selection)
+  - [ADR-045: Context Versioning](#adr-045-context-versioning)
+  - [ADR-046: Integration with ADR-034-037 & Policies](#adr-046-integration-with-adr-034-037-policies)
+- [Cross-References](#cross-references)
+  - [Phase 8 Foundation (ADR-034-037)](#phase-8-foundation-adr-034-037)
+  - [Related ADRs](#related-adrs)
+- [Historical Planning Snapshot](#historical-planning-snapshot)
+- [Feature Guides](#feature-guides)
+- [Tracking And Validation](#tracking-and-validation)
+
+<!-- TOC END -->
+
 ## Overview
 
 Phase 9 implements the**Integrated Context System** for v0.4.0, building on Phase 8's

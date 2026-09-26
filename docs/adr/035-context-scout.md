@@ -1,3 +1,39 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [Requirements](#requirements)
+- [Decision](#decision)
+  - [1. VCS Provider Abstraction (Trait-Based Design)](#1-vcs-provider-abstraction-trait-based-design)
+  - [2. Worktree Lifecycle](#2-worktree-lifecycle)
+  - [3. Domain Entities](#3-domain-entities)
+  - [4. Port Trait (ContextScoutProvider - Legacy Section)](#4-port-trait-contextscoutprovider-legacy-section)
+  - [5. Git Discovery Implementation](#5-git-discovery-implementation)
+  - [6. Tracker Discovery Implementation](#6-tracker-discovery-implementation)
+  - [7. Caching Strategy](#7-caching-strategy)
+  - [8. Configuration](#8-configuration)
+- [9. Provider Registration (linkme)](#9-provider-registration-linkme)
+  - [10. Issue/Phase SQLite Tables](#10-issuephase-sqlite-tables)
+  - [11. Module Locations](#11-module-locations)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: gix (gitoxide)](#alternative-1-gix-gitoxide)
+  - [Alternative 2: Shell-Based Discovery](#alternative-2-shell-based-discovery)
+  - [Alternative 3: No Caching](#alternative-3-no-caching)
+- [Implementation Notes](#implementation-notes)
+  - [Code Changes](#code-changes)
+  - [Migration](#migration)
+  - [Testing](#testing)
+  - [Performance Targets](#performance-targets)
+  - [Security](#security)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +41,7 @@
 adr: 35 title: Context Scout — Project State Discovery status: ACCEPTED created:
 updated: 2026-02-06 related: [23, 25, 29] supersedes: [] superseded_by: []
 implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

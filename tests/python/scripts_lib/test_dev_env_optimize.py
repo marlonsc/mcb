@@ -7,7 +7,6 @@ import stat
 import subprocess
 from pathlib import Path
 
-
 ROOT = Path(__file__).resolve().parents[3]
 OPTIMIZER = ROOT / "scripts" / "dev-env-optimize.sh"
 

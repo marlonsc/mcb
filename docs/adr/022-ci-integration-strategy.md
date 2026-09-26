@@ -1,3 +1,21 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Test Matrix](#test-matrix)
+- [Quality Gates](#quality-gates)
+  - [Benchmark Tracking](#benchmark-tracking)
+  - [Version-Specific Gates](#version-specific-gates)
+- [v0.1.1 CI Status](#v011-ci-status)
+- [Implementation](#implementation)
+  - [Consequences](#consequences)
+- [Related ADRs](#related-adrs)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +23,7 @@
 adr: 22 title: Continuous Integration Strategy status: ACCEPTED created: updated:
 2026-02-05 related: [13, 17, 20] supersedes: [] superseded_by: [] implementation_status:
 "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

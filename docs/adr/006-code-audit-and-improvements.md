@@ -1,3 +1,34 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Incremental Refactoring](#alternative-1-incremental-refactoring)
+  - [Alternative 2: Complete Rewrite](#alternative-2-complete-rewrite)
+  - [Alternative 3: Minimal Fixes Only](#alternative-3-minimal-fixes-only)
+- [Implementation Notes](#implementation-notes)
+  - [Phase 1: Foundation (Weeks 1-2)](#phase-1-foundation-weeks-1-2)
+  - [Phase 2: Design Patterns (Weeks 3-4)](#phase-2-design-patterns-weeks-3-4)
+  - [Phase 3: Quality Assurance (Weeks 5-6)](#phase-3-quality-assurance-weeks-5-6)
+  - [Phase 4: Validation and Release (Weeks 7-8)](#phase-4-validation-and-release-weeks-7-8)
+  - [Dependencies to Add](#dependencies-to-add)
+- [Success Metrics](#success-metrics)
+- [Update for v0.3.0: Multi-Domain Architecture Preparation](#update-for-v030-multi-domain-architecture-preparation)
+  - [New Domains (to be implemented)](#new-domains-to-be-implemented)
+  - [Organizational Changes (v0.3.0)](#organizational-changes-v030)
+  - [Quality Implications](#quality-implications)
+  - [No Functional Changes](#no-functional-changes)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +36,7 @@
 adr: 6 title: Code Audit and Architecture Improvements status: IMPLEMENTED created:
 updated: 2026-02-05 related: [1, 2, 3, 12, 13] supersedes: [] superseded_by: []
 implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

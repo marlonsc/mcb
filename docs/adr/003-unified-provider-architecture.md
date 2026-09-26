@@ -1,3 +1,31 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [ADR 003: Unified Provider Architecture & Routing](#adr-003-unified-provider-architecture-routing)
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Key Architectural Elements](#key-architectural-elements)
+- [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Implementation Notes](#implementation-notes)
+  - [Provider Selection Strategy (mcb-providers)](#provider-selection-strategy-mcb-providers)
+  - [Routing Components (mcb-infrastructure/src/routing/)](#routing-components-mcb-infrastructuresrcrouting)
+  - [Health Monitoring and Failover](#health-monitoring-and-failover)
+  - [Circuit Breaker Pattern](#circuit-breaker-pattern)
+  - [Cost Tracking and Optimization](#cost-tracking-and-optimization)
+  - [Configuration Management](#configuration-management)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Single Provider Architecture](#alternative-1-single-provider-architecture)
+  - [Alternative 2: Provider Abstraction Only](#alternative-2-provider-abstraction-only)
+  - [Alternative 3: Provider Mesh with Manual Failover](#alternative-3-provider-mesh-with-manual-failover)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +33,7 @@
 adr: 3 title: Unified Provider Architecture & Routing status: IMPLEMENTED created:
 updated: 2026-02-05 related: [1, 2, 4, 12, 13, 29] supersedes: [] superseded_by: []
 implementation_status: Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

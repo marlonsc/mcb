@@ -1,3 +1,30 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Incremental Documentation Improvements](#alternative-1-incremental-documentation-improvements)
+  - [Alternative 2: Documentation as Separate Project](#alternative-2-documentation-as-separate-project)
+  - [Alternative 3: Minimal Automation Only](#alternative-3-minimal-automation-only)
+  - [Alternative 4: Commercial Documentation Tools](#alternative-4-commercial-documentation-tools)
+- [Implementation Notes](#implementation-notes)
+  - [Tool Ecosystem Architecture](#tool-ecosystem-architecture)
+  - [Documentation Generation Pipeline](#documentation-generation-pipeline)
+  - [Quality Gates Integration](#quality-gates-integration)
+- [Success Metrics Tracking](#success-metrics-tracking)
+  - [Migration Strategy](#migration-strategy)
+  - [Risk Mitigation](#risk-mitigation)
+- [Related ADRs](#related-adrs)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +32,7 @@
 adr: 31 title: Documentation Excellence status: IMPLEMENTED created: updated: 2026-02-05
 related: [3, 6, 12, 13] supersedes: [] superseded_by: [] implementation_status:
 "Historical snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

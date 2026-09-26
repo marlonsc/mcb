@@ -1,7 +1,37 @@
 {
-  "default": true,
-  "MD013": false,
-  "MD024": false,
-  "MD033": false,
-  "MD041": false
+  "MD001": false,
+  "MD013": {
+    "code_block_line_length": 88,
+    "heading_line_length": 200,
+    "line_length": 88,
+    "tables": false
+  },
+  "MD022": false,
+  "MD023": false,
+  "MD024": {
+    "siblings_only": true
+  },
+  "MD025": false,
+  "MD031": false,
+  "MD033": {
+    "allowed_elements": [
+      "br",
+      "details",
+      "summary",
+      "kbd"
+    ]
+  },
+  "MD036": false,
+  "MD040": false,
+  "MD041": false,
+  "MD042": false,
+  "MD046": false,
+  "MD050": {
+    "style": "consistent"
+  },
+  "MD051": false,
+  "MD057": false,
+  "MD060": false,
+  "MD076": false,
+  "default": true
 }

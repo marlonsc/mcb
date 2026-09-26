@@ -1,3 +1,23 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+  - [Current Tool Inventory (38 tools)](#current-tool-inventory-38-tools)
+- [Decision](#decision)
+  - [New Tool Architecture](#new-tool-architecture)
+  - [Tool Schemas](#tool-schemas)
+  - [Migration Path](#migration-path)
+  - [Tool Count Reduction](#tool-count-reduction)
+- [Consequences](#consequences)
+  - [Positive](#positive)
+  - [Negative](#negative)
+  - [Neutral](#neutral)
+- [Implementation](#implementation)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +25,7 @@
 adr: 33 title: MCP Handler Consolidation status: ACCEPTED created: updated: 2026-02-05
 related: [] supersedes: [] superseded_by: [] implementation_status: "Historical
 snapshot; see bd for live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
@@ -31,7 +52,7 @@ maintenance burden. Many tools follow CRUD patterns that can be using parameteri
 | Memory (Legacy)  | memory (action=store, resource=observation), search (resource=memory), session (action=summarize), session (action=summarize)                                                                                                                                                                                                                                                                                                                                 | 4      |
 | Memory (New)     | memory (action=timeline, resource=observation), memory (action=get, resource=observation), memory (action=inject, resource=observation), memory (action=list, resource=observation), memory (action=store, resource=execution), memory (action=get, resource=execution), memory (action=store, resource=quality_gate), memory (action=get, resource=quality_gate), memory (action=store, resource=error_pattern), memory (action=get, resource=error_pattern) | 10     |
 | Agent Sessions   | session (action=create), session (action=get), session (action=update), session (action=list), agent (action=log_tool), agent (action=log_delegation)                                                                                                                                                                                                                                                                                                         | 6      |
-| Project Workflow | project_* (9 tools)                                                                                                                                                                                                                                                                                                                                                                                                                                           | 9      |
+| Project Workflow | project\_\* (9 tools)                                                                                                                                                                                                                                                                                                                                                                                                                                         | 9      |
 | **Total**        |                                                                                                                                                                                                                                                                                                                                                                                                                                                               | **38** |
 
 ## Decision
@@ -50,8 +71,8 @@ Consolidate to**8 tools** using resource-action parameterization pattern:
 | `memory`   | memory (action=store, resource=observation), memory (action=timeline, resource=observation), memory (action=get, resource=observation), memory (action=inject, resource=observation), memory (action=store, resource=execution), memory (action=get, resource=execution), memory (action=store, resource=quality_gate), memory (action=get, resource=quality_gate), memory (action=store, resource=error_pattern), memory (action=get, resource=error_pattern) | action: store, get, timeline, inject; resource: observation, execution, quality_gate, error_pattern |
 | `session`  | session (action=summarize), session (action=summarize), session (action=create), session (action=get), session (action=update), session (action=list)                                                                                                                                                                                                                                                                                                          | action: create, get, update, list, summarize                                                        |
 | `agent`    | agent (action=log_tool), agent (action=log_delegation)                                                                                                                                                                                                                                                                                                                                                                                                         | action: log_tool, log_delegation                                                                    |
-| `project`  | project_* (9 tools)                                                                                                                                                                                                                                                                                                                                                                                                                                            | action: create, update, list; resource: phase, issue, dependency, decision                          |
-| `vcs`      | vcs_* (5 tools)                                                                                                                                                                                                                                                                                                                                                                                                                                                | action: list_repositories, index_repository, compare_branches, search_branch, analyze_impact        |
+| `project`  | project\_\* (9 tools)                                                                                                                                                                                                                                                                                                                                                                                                                                          | action: create, update, list; resource: phase, issue, dependency, decision                          |
+| `vcs`      | vcs\_\* (5 tools)                                                                                                                                                                                                                                                                                                                                                                                                                                              | action: list_repositories, index_repository, compare_branches, search_branch, analyze_impact        |
 
 ### Tool Schemas
 

@@ -2,6 +2,25 @@
 
 # MCB v0.4.0 Knowledge Graph Specification
 
+<!-- TOC START -->
+
+- [Overview](#overview)
+- [1. Knowledge Graph Schema](#1-knowledge-graph-schema)
+  - [Node Types](#node-types)
+  - [Edge Types](#edge-types)
+  - [Rust Entity Design](#rust-entity-design)
+- [2. TreeSitter Semantic Extraction](#2-treesitter-semantic-extraction)
+  - [Extraction Approach](#extraction-approach)
+  - [Extraction Port](#extraction-port)
+- [3. RRF Hybrid Search Algorithm](#3-rrf-hybrid-search-algorithm)
+  - [Reciprocal Rank Fusion (RRF)](#reciprocal-rank-fusion-rrf)
+  - [Search Composition](#search-composition)
+- [4. Context Snapshot Design](#4-context-snapshot-design)
+  - [Snapshot Structure](#snapshot-structure)
+  - [Snapshotting Policy](#snapshotting-policy)
+
+<!-- TOC END -->
+
 ## Overview
 
 The Knowledge Graph is the core semantic layer of the MCB Integrated Context System. It

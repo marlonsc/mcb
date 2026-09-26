@@ -2,6 +2,13 @@
 
 # API Reference
 
+<!-- TOC START -->
+
+- [Redirects](#redirects)
+- [Source Code Reference](#source-code-reference)
+
+<!-- TOC END -->
+
 This document has been consolidated into the module documentation to adhere to the
 **Single Source of Truth (SSOT)** principle.
 

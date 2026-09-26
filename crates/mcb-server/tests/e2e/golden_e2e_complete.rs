@@ -125,7 +125,7 @@ async fn wait_for_indexing_completion(
             return Ok(());
         }
         last_text = text;
-        tokio::task::yield_now().await;
+        tokio::time::sleep(std::time::Duration::from_millis(250)).await;
     }
     panic!("indexing did not reach terminal state: {last_text}");
 }

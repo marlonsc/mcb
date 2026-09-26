@@ -2,6 +2,29 @@
 
 # Quickstart Guide
 
+<!-- TOC START -->
+
+- [1. Download](#1-download)
+  - [Pre-built Binary (Recommended)](#pre-built-binary-recommended)
+- [From Source](#from-source)
+- [2. Configure](#2-configure)
+  - [Option A: OpenAI (Cloud)](#option-a-openai-cloud)
+  - [Option B: Ollama (Local, Free)](#option-b-ollama-local-free)
+- [Option C: FastEmbed (Local, No Setup)](#option-c-fastembed-local-no-setup)
+- [3. Connect to Claude Desktop](#3-connect-to-claude-desktop)
+- [4. Use in Claude](#4-use-in-claude)
+- [Available MCP Tools](#available-mcp-tools)
+- [Supported Languages (13)](#supported-languages-13)
+- [Vector Store Options](#vector-store-options)
+  - [Using Milvus](#using-milvus)
+- [Troubleshooting](#troubleshooting)
+  - ["API key required"](#api-key-required)
+- ["Connection refused"](#connection-refused)
+  - [Claude doesn't see the tools](#claude-doesnt-see-the-tools)
+- [Next Steps](#next-steps)
+
+<!-- TOC END -->
+
 Get Memory Context Browser v0.2.1 running in 5 minutes.
 
 ## 1. Download

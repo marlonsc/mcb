@@ -1,4 +1,5 @@
 @echo off
+rem Canonical packaged bootstrap seed; codegen publishes fresh runtime launchers.
 rem Delayed expansion stays OFF for the whole script. With it on, cmd runs a second expansion pass
 rem over every already-substituted line, so a `!` anywhere in a path -- the project directory this
 rem sits in, MISE_INSTALL_PATH, TEMP -- is silently eaten and the script reads and writes a
@@ -20,18 +21,19 @@ rem delete something it never created.
 set "download_path="
 set "sums="
 
-set "pinned_version=2026.8.14"
-set "sum_x64=e16cd48db29107388d60558a2389bf246c6c77ea1a78e9af48a5f4994d706659"
-set "sum_arm64=48c7e0ca372e51393dc518698cfd4c53791f6f7a42be1fb179179a17489bc237"
-
-rem MISE_VERSION itself is never written to. Everything here runs inside `setlocal`, so assigning
-rem a fallback to it would hand the launched mise an env var the bash branch does not set.
-rem
-rem The name has to differ from MISE_VERSION by more than case: cmd variable names are
-rem case-insensitive, so a local called `mise_version` *is* MISE_VERSION and would overwrite the
-rem caller's value before this line could read it.
-set "resolved_version=%pinned_version%"
+rem The generated Makefile exports MISE_VERSION from the committed pin file
+rem that only `make upg` writes. Without it (`upg` itself), resolve the latest
+rem tag through the releases/latest redirect and fail loud when impossible.
+set "resolved_version="
 if defined MISE_VERSION set "resolved_version=%MISE_VERSION%"
+if not defined resolved_version (
+  for /f "usebackq delims=" %%u in (`curl -fsSI -o NUL -w "%%{redirect_url}" https://github.com/jdx/mise/releases/latest`) do set "resolved_version=%%u"
+)
+if not defined resolved_version (
+  echo mise bootstrap: could not resolve the latest mise release; set MISE_VERSION to pin one 1>&2
+  exit /b 1
+)
+set "resolved_version=%resolved_version:*/tag/=%"
 if "%resolved_version:~0,1%"=="v" set "resolved_version=%resolved_version:~1%"
 
 set "arch=x64"
@@ -51,13 +53,10 @@ if not defined MISE_INSTALL_PATH (
 if exist "%MISE_INSTALL_PATH%" goto :run
 
 set "release=https://github.com/jdx/mise/releases/download/v%resolved_version%"
-if "%arch%"=="arm64" (set "expected=%sum_arm64%") else (set "expected=%sum_x64%")
-if not "%resolved_version%"=="%pinned_version%" set "expected="
 
 rem A label rather than `if not defined expected (...)`: `sums` is assigned and then read in the
 rem same block, which is the one thing plain expansion cannot do. Delayed expansion is the usual
 rem answer and is exactly what this script must not turn on -- see the top.
-if defined expected goto :have_checksum
 set "sums=%TEMP%\mise-shasums-%RANDOM%%RANDOM%.txt"
 curl -fsSL -o "%sums%" "%release%/SHASUMS256.txt" || goto :fail_download
 for /f "tokens=1" %%s in ('findstr /c:"mise-v%resolved_version%-windows-%arch%.exe" "%sums%"') do set "expected=%%s"

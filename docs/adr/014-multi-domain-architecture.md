@@ -1,3 +1,19 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [Domain Principles](#domain-principles)
+  - [Integration Strategy](#integration-strategy)
+- [Consequences](#consequences)
+- [Historical Implementation Notes](#historical-implementation-notes)
+- [Canonical References](#canonical-references)
+- [Related ADRs](#related-adrs)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -5,6 +21,7 @@
 adr: 14 title: Multi-Domain Architecture Strategy status: ACCEPTED created: updated:
 2026-02-05 related: [12, 13] supersedes: [] superseded_by: [] implementation_status:
 Complete
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->

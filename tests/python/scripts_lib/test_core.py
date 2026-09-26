@@ -11,21 +11,23 @@ from typing import Any, cast
 import pytest
 from pydantic import BaseModel
 
+from flext_core import p
 from mcb_scripts.core import McbResult, McbService, configure_logging, get_logger, r, s
+
 from ._utilities.matchers import tm
 from .conftest import SettingsFactory
 
 
 class TestResult:
     def test_ok_is_ok(self) -> None:
-        result: McbResult[int] = r[int].ok(42)
+        result: p.Result[int] = r[int].ok(42)
         tm.ok(result, 42)
         assert result.value == 42
         assert bool(result)
         assert repr(result) == "r[T].ok(42)"
 
     def test_err_is_err(self) -> None:
-        result: McbResult[int] = r[int].fail("boom", error_code="E001")
+        result: p.Result[int] = r[int].fail("boom", error_code="E001")
         tm.fail(result)
         assert not bool(result)
         assert result.error == "boom"
@@ -33,7 +35,7 @@ class TestResult:
         assert repr(result) == "r[T].fail('boom')"
 
     def test_unwrap_raises_runtime_error(self) -> None:
-        result: McbResult[int] = r[int].fail("boom")
+        result: p.Result[int] = r[int].fail("boom")
         with pytest.raises(RuntimeError, match="boom"):
             result.unwrap()
 
@@ -46,8 +48,9 @@ class TestResult:
             tm.ok(value, 42)
 
     def test_unwrap_or(self) -> None:
-        assert r[int].ok(42).unwrap_or(0) == 42
-        assert r[int].fail("boom").unwrap_or(0) == 0
+        fallback = 0
+        assert r[int].ok(42).unwrap_or(fallback) == 42
+        assert r[int].fail("boom").unwrap_or(fallback) == fallback
 
     def test_unwrap_or_else(self) -> None:
         assert r[int].ok(42).unwrap_or_else(lambda: 0) == 42
@@ -59,7 +62,7 @@ class TestResult:
         tm.fail(mapped)
 
     def test_flat_map(self) -> None:
-        def double(x: int) -> McbResult[int]:
+        def double(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
         assert r[int].ok(21).flat_map(double).unwrap() == 42
@@ -70,9 +73,13 @@ class TestResult:
         tm.fail(failed)
 
     def test_map_catches_exceptions_as_failure(self) -> None:
-        result = r[int].ok(21).map(lambda _: 1 / 0)
+        def _boom(_: int) -> int:
+            msg = "map must catch"
+            raise ZeroDivisionError(msg)
+
+        result = r[int].ok(21).map(_boom)
         tm.fail(result)
-        assert result.error == "division by zero"
+        assert result.error == "map must catch"
 
     def test_fold(self) -> None:
         ok_result = r[int].ok(21)
@@ -97,13 +104,13 @@ class TestResult:
         assert r[int].fail("boom").filter(lambda x: x > 10).failure
 
     def test_flow_through(self) -> None:
-        def add_one(x: int) -> McbResult[int]:
+        def add_one(x: int) -> p.Result[int]:
             return r[int].ok(x + 1)
 
         result = r[int].ok(1).flow_through(add_one, add_one, add_one)
         tm.ok(result, 4)
 
-        def fail(_x: int) -> McbResult[int]:
+        def fail(_x: int) -> p.Result[int]:
             return r[int].fail("stop")
 
         halted = r[int].ok(1).flow_through(add_one, fail, add_one)

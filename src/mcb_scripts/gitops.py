@@ -8,26 +8,26 @@ from __future__ import annotations
 
 import hashlib
 import shutil
-import subprocess
+import subprocess  # nosec B404 -- tool runner: executes the declared gitops CLI
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from flext_core import FlextResult, p
 from kubernetes_validate import (
     InvalidSchemaError,
     SchemaNotFoundError,
     ValidationError,
     validate_resource,
 )
-from mcb_scripts.qlty.model import SarifIssue, Severity
-from mcb_scripts.qlty.report import AnalysisReport, analyze_issues
 from ruamel.yaml import YAML
 from ruamel.yaml.comments import CommentedMap, CommentedSeq
 from ruamel.yaml.error import YAMLError
 
+from flext_core import FlextResult, p
 from mcb_scripts.core import get_logger
+from mcb_scripts.qlty.model import SarifIssue, Severity
+from mcb_scripts.qlty.report import AnalysisReport, analyze_issues
 
 logger = get_logger(__name__)
 
@@ -199,12 +199,7 @@ def _render_and_validate(target: GitOpsTarget) -> list[SarifIssue]:
     if rendered is None:
         # Unreachable: every no-output outcome carries its failure issue.
         return [
-            _issue(
-                "gitops:render-failed",
-                "Render produced no output",
-                target.path,
-                1,
-            )
+            _issue("gitops:render-failed", "Render produced no output", target.path, 1)
         ]
     issues: list[SarifIssue] = []
     parser = YAML(typ="safe")
@@ -309,7 +304,11 @@ def _render_target(target: GitOpsTarget) -> RenderOutcome:
 
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, check=False, timeout=60
+            cmd,  # nosec B603 -- cmd is built from the repository's own declared targets
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=60,
         )
     except FileNotFoundError:
         return RenderOutcome(

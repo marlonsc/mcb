@@ -18,12 +18,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 from flext_cli import cli
+from pydantic import Field
+
+from flext_core import p
 from mcb_scripts.core import BaseCommandSettings, get_logger, r
 from mcb_scripts.gitops import summarize
 from mcb_scripts.settings import McbSettings
-from pydantic import Field
 
 logger = get_logger(__name__)
 
@@ -48,7 +49,7 @@ class GitopsSettings(BaseCommandSettings):
 GitopsSettings.model_rebuild()
 
 
-def run(settings: GitopsSettings) -> r[str]:
+def run(settings: GitopsSettings) -> p.Result[str]:
     """Discover and validate GitOps manifests.
 
     Returns the status string rather than the whole summary: the CLI facade
@@ -65,7 +66,7 @@ def run(settings: GitopsSettings) -> r[str]:
     summary_result = summarize(k8s_root)
     if summary_result.failure:
         logger.error(summary_result.error or "gitops discovery failed")
-        return r[str].fail(summary_result.error or "gitops discovery failed")
+        return r[str].from_failure(summary_result)
     summary = summary_result.unwrap()
     logger.info(f"GITOPS {summary.status}: {summary.message}")
     if summary.report.total_issues:

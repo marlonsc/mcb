@@ -44,7 +44,7 @@ directory:
 rustlings init
 ```
 
-{% details(summary="If the command <code>rustlings</code> can't be found…") %}
+{% details(summary="If the command `rustlings` can't be found…") %}
 
 You are probably using Linux and installed Rust using your package manager.
 

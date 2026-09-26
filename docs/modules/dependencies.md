@@ -2,6 +2,17 @@
 
 # Module Dependencies
 
+<!-- TOC START -->
+
+- [Crate Dependency Graph](#crate-dependency-graph)
+- [Dependency Layers](#dependency-layers)
+- [Crate Descriptions](#crate-descriptions)
+- [Key Dependency Patterns](#key-dependency-patterns)
+- [External Dependencies](#external-dependencies)
+  - [Updated 2026-02-22 - linkme + AppContext manual composition root, v0.2.1](#updated-2026-02-22-linkme-appcontext-manual-composition-root-v021)
+
+<!-- TOC END -->
+
 This document shows the crate dependencies of the Memory Context Browser.
 
 ## Crate Dependency Graph

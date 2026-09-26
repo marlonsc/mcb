@@ -1,5 +1,58 @@
 # Serena Configuration for MCB
 
+<!-- TOC START -->
+
+- [What is Serena?](#what-is-serena)
+- [Current Configuration](#current-configuration)
+  - [Version](#version)
+  - [Project Configuration](#project-configuration)
+  - [Indexed Files](#indexed-files)
+- [Available MCP Tools (20 total) — All Tested ✅](#available-mcp-tools-20-total-all-tested)
+  - [Navigation & Discovery (5)](#navigation-discovery-5)
+  - [Code Analysis (1)](#code-analysis-1)
+  - [Code Editing (6)](#code-editing-6)
+  - [Memory System (5)](#memory-system-5)
+  - [Project Onboarding (2)](#project-onboarding-2)
+  - [⚠️ Tools Removed from MCP Interface](#tools-removed-from-mcp-interface)
+- [Validated Usage Patterns](#validated-usage-patterns)
+  - [Pattern 1: Starting Any Task (Fastest — 0.2s)](#pattern-1-starting-any-task-fastest-02s)
+  - [Pattern 2: Understanding a New File (~7s after LSP warmup)](#pattern-2-understanding-a-new-file-7s-after-lsp-warmup)
+  - [Pattern 3: Before Editing](#pattern-3-before-editing)
+  - [Pattern 4: Making Edits](#pattern-4-making-edits)
+- [Important Tool Behaviors & Limitations](#important-tool-behaviors-limitations)
+  - [find_declaration — Regex Capture Group Required](#find_declaration-regex-capture-group-required)
+  - [find_referencing_symbols — Large Results](#find_referencing_symbols-large-results)
+  - [rename_symbol — Requires Indexed File](#rename_symbol-requires-indexed-file)
+  - [safe_delete_symbol — Parameter Name](#safe_delete_symbol-parameter-name)
+  - [get_symbols_overview — LSP Warmup](#get_symbols_overview-lsp-warmup)
+  - [Memory Tools — Instant](#memory-tools-instant)
+- [Health Check](#health-check)
+- [Reindexing](#reindexing)
+- [Client Configuration](#client-configuration)
+  - [VS Code](#vs-code)
+  - [Cursor](#cursor)
+  - [OpenCode](#opencode)
+  - [Kimi Code / Claude](#kimi-code-claude)
+- [Memories](#memories)
+- [Multi-Session Optimization](#multi-session-optimization)
+  - [Problem](#problem)
+  - [Optimizations Applied](#optimizations-applied)
+  - [Cleanup Script](#cleanup-script)
+  - [Recommended Workflow](#recommended-workflow)
+  - [Environment Variables](#environment-variables)
+  - [sccache (Mandatory Compilation Cache)](#sccache-mandatory-compilation-cache)
+- [Troubleshooting](#troubleshooting)
+  - [Language server timeout](#language-server-timeout)
+  - [First call is very slow (~24s)](#first-call-is-very-slow-24s)
+  - [rename_symbol fails on new files](#rename_symbol-fails-on-new-files)
+  - [Large search results from find_referencing_symbols](#large-search-results-from-find_referencing_symbols)
+  - [Cache issues](#cache-issues)
+  - [rust-analyzer warnings](#rust-analyzer-warnings)
+  - [Context deprecated warning](#context-deprecated-warning)
+- [Global Configuration](#global-configuration)
+
+<!-- TOC END -->
+
 This document describes the Serena setup for the Memory Context Browser (MCB) project,
 including configuration, available tools, validated usage patterns, and real-world test
 results.
@@ -46,7 +99,7 @@ tools have been tested and confirmed working** on the MCB codebase.
 
 | Tool                           | Status | Avg Time | Description                                     |
 | ------------------------------ | ------ | -------- | ----------------------------------------------- |
-| **`get_symbols_overview`**     | ✅     | ~2s*     | High-level symbol map of a file                 |
+| **`get_symbols_overview`**     | ✅     | ~2s\*    | High-level symbol map of a file                 |
 | **`find_symbol`**              | ✅     | ~2s      | Global/local symbol search by name path pattern |
 | **`find_declaration`**         | ✅     | ~2s      | Jump to symbol declaration/definition           |
 | **`find_implementations`**     | ✅     | ~0.2s    | Find symbols implementing a trait/interface     |

@@ -1,5 +1,7 @@
 """String utility functions for testing semantic search across languages."""
 
+from __future__ import annotations
+
 
 def reverse_string(s: str) -> str:
     """Reverse a string.

@@ -2,6 +2,27 @@
 
 # domain Module
 
+<!-- TOC START -->
+
+- [↔ Code ↔ Docs cross-reference](#code-docs-cross-reference)
+- [Overview](#overview)
+- [Core Entities](#core-entities)
+- [Value Objects](#value-objects)
+- [Repository Interfaces](#repository-interfaces)
+- [Domain Events (events/domain_events.rs)](#domain-events-eventsdomain_eventsrs)
+- [Port Interfaces (Domain Boundaries)](#port-interfaces-domain-boundaries)
+  - [Provider Ports](#provider-ports)
+  - [Repository Ports](#repository-ports)
+  - [Service Ports](#service-ports)
+- [Key Enums & State Machines](#key-enums-state-machines)
+- [Domain Invariants](#domain-invariants)
+- [File Structure (Actual)](#file-structure-actual)
+- [Domain Utilities](#domain-utilities)
+- [Testing Utilities](#testing-utilities)
+  - [Updated 2026-02-20 — Consolidated SSOT and traceability (v0.2.1)](#updated-2026-02-20-consolidated-ssot-and-traceability-v021)
+
+<!-- TOC END -->
+
 **Source**: `crates/mcb-domain/src/` **Crate**: `mcb-domain` **Files**: 25+ **Lines of
 Code**: ~2,500 **Traits**: 41 (13 provider ports + 8 repository ports + 9 service
 ports + 8 infrastructure ports + 3 top-level ports) **Structs**: 20+ **Enums**: 8
@@ -83,8 +104,6 @@ Events published through the `EventPublisher` interface:
 
 ## Port Interfaces (Domain Boundaries)
 
-<a name="provider-ports"></a>
-
 ### Provider Ports
 
 | Port                                                                                           | Operations                              | Implementations                                        |
@@ -98,8 +117,6 @@ Events published through the `EventPublisher` interface:
 | [`CacheProvider`](../../crates/mcb-providers/src/lib.rs)                                       | Distributed caching with TTL            | Delegated to Loco cache (Moka, Redis)                  |
 | [`ProjectDetectionProvider`](../../crates/mcb-domain/src/ports/providers/project_detection.rs) | Detect project type from manifests      | Cargo, npm, Python, Go, Maven                          |
 
-<a name="repository-ports"></a>
-
 ### Repository Ports
 
 | Port                    | Purpose                                                                                                   | Implementation Location                                                                                 |
@@ -112,8 +129,6 @@ Events published through the `EventPublisher` interface:
 | `PlanEntityRepository`  | Persistence for **Plans**, **Versions**, and **Reviews** (Execution planning)                             | [`plan_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/plans.rs)            |
 | `IssueEntityRepository` | Composite management of **Issues**, **Comments**, **Labels**, and **Label Assignments**                   | [`issue_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/issues.rs)          |
 | `OrgEntityRepository`   | Composite management of **Organizations**, **Users**, **Teams**, and **API Keys**                         | [`org_entity_repository.rs`](../../crates/mcb-providers/src/database/seaorm/repos/org.rs)               |
-
-<a name="service-ports"></a>
 
 ### Service Ports
 

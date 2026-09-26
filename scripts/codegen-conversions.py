@@ -8,6 +8,8 @@ Reads the TOML config and generates one Rust file per entity with:
 Usage: python3 scripts/codegen-conversions.py
 """
 
+from __future__ import annotations
+
 import re
 import tomllib
 from pathlib import Path
@@ -100,7 +102,7 @@ def _test_value_for_field(
     not_set: list[str],
 ) -> str:
     """Generate a realistic test value for a Model field."""
-    conv = convert.get(field_name, {})
+    conv = convert.get(field_name) or {"type": ""}
     ctype = conv.get("type", "")
 
     # not_set fields: use None (they're always Option)

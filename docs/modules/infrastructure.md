@@ -2,6 +2,20 @@
 
 # Infrastructure Layer
 
+<!-- TOC START -->
+
+- [↔ Code ↔ Docs cross-reference](#code-docs-cross-reference)
+- [Overview](#overview)
+- [Dependency Injection](#dependency-injection)
+  - [Architecture](#architecture)
+- [Configuration](#configuration)
+  - [Configuration Structure](#configuration-structure)
+- [Shared Technical Areas](#shared-technical-areas)
+- [File Structure](#file-structure)
+  - [Updated 2026-02-20 - Consolidated di.md and config.md for SSOT adherence](#updated-2026-02-20-consolidated-dimd-and-configmd-for-ssot-adherence)
+
+<!-- TOC END -->
+
 **Source**: `crates/mcb-infrastructure/src/` **Crate**: `mcb-infrastructure`
 
 ## ↔ Code ↔ Docs cross-reference

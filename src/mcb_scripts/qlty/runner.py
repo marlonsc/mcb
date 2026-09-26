@@ -7,14 +7,14 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import shutil
-import subprocess
+import subprocess  # nosec B404 -- qlty runner: executes the pinned qlty CLI
 from pathlib import Path
 
+from flext_core import p
 from mcb_scripts.core import get_logger, r
-from mcb_scripts.settings import McbSettings
-
 from mcb_scripts.qlty.model import SarifIssue
 from mcb_scripts.qlty.parser import parse_sarif_file
+from mcb_scripts.settings import McbSettings
 
 logger = get_logger(__name__)
 
@@ -29,7 +29,7 @@ def _resolve_qlty() -> str | None:
     return shutil.which("qlty")
 
 
-def run_qlty_check(output_file: Path | None = None) -> r[list[SarifIssue]]:
+def run_qlty_check(output_file: Path | None = None) -> p.Result[list[SarifIssue]]:
     """Run qlty check --all --sarif, save to file, and parse SARIF output."""
     output_file = output_file or McbSettings().qlty_check_sarif
     logger.info("Running qlty check --all --sarif...")
@@ -40,7 +40,7 @@ def run_qlty_check(output_file: Path | None = None) -> r[list[SarifIssue]]:
 
     try:
         result = subprocess.run(
-            [executable, "check", "--all", "--sarif"],
+            [executable, "check", "--all", "--sarif"],  # nosec B603 -- executable is the mise-pinned qlty binary
             capture_output=True,
             text=True,
             timeout=300,
@@ -49,11 +49,14 @@ def run_qlty_check(output_file: Path | None = None) -> r[list[SarifIssue]]:
     except subprocess.TimeoutExpired:
         return r[list[SarifIssue]].fail("qlty check timed out after 300s")
     except (OSError, subprocess.SubprocessError) as exc:
-        return r[list[SarifIssue]].fail(f"error running qlty check: {exc}")
+        return r[list[SarifIssue]].fail(
+            f"error running qlty check: {exc}", exception=exc
+        )
 
     if not result.stdout.strip():
         logger.info("No issues found (clean)")
-        return r[list[SarifIssue]].ok([])
+        issues: list[SarifIssue] = []
+        return r[list[SarifIssue]].ok(issues)
 
     output_file.write_text(result.stdout, encoding="utf-8")
     logger.info(f"Saved SARIF to {output_file}")
@@ -66,7 +69,7 @@ def run_qlty_check(output_file: Path | None = None) -> r[list[SarifIssue]]:
     return r[list[SarifIssue]].ok(issues)
 
 
-def run_qlty_smells(output_file: Path | None = None) -> r[list[SarifIssue]]:
+def run_qlty_smells(output_file: Path | None = None) -> p.Result[list[SarifIssue]]:
     """Run qlty smells --all --sarif, save to file, and parse SARIF output."""
     output_file = output_file or McbSettings().qlty_smells_sarif
     logger.info("Running qlty smells --all --sarif...")
@@ -77,7 +80,7 @@ def run_qlty_smells(output_file: Path | None = None) -> r[list[SarifIssue]]:
 
     try:
         result = subprocess.run(
-            [executable, "smells", "--all", "--sarif"],
+            [executable, "smells", "--all", "--sarif"],  # nosec B603 -- executable is the mise-pinned qlty binary
             capture_output=True,
             text=True,
             timeout=300,
@@ -86,11 +89,14 @@ def run_qlty_smells(output_file: Path | None = None) -> r[list[SarifIssue]]:
     except subprocess.TimeoutExpired:
         return r[list[SarifIssue]].fail("qlty smells timed out after 300s")
     except (OSError, subprocess.SubprocessError) as exc:
-        return r[list[SarifIssue]].fail(f"error running qlty smells: {exc}")
+        return r[list[SarifIssue]].fail(
+            f"error running qlty smells: {exc}", exception=exc
+        )
 
     if not result.stdout.strip():
         logger.info("No smells found (clean)")
-        return r[list[SarifIssue]].ok([])
+        issues: list[SarifIssue] = []
+        return r[list[SarifIssue]].ok(issues)
 
     output_file.write_text(result.stdout, encoding="utf-8")
     logger.info(f"Saved SARIF to {output_file}")

@@ -13,37 +13,32 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Source: template (distro-specific seed contract)
 # The seed is the whole host contract: curl fetches mise, git is what uv shells
 # out to for the flext-infra git+https requirement, make invokes the verbs.
-# libicu-dev is pulled in because tokei (cargo-backed) needs a Rust toolchain,
-# which in turn needs it — mise provisions Rust, so the native
-# ICU headers must be present at the system layer.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-       bash ca-certificates curl git make libicu-dev \
+       bash ca-certificates curl git make \
     && rm -rf /var/lib/apt/lists/* \
     && useradd --create-home --shell /bin/bash runner
 # End SECTION: base packages
 
 # === SECTION: managed tool bootstrap (managed) ===
-# Source: generated bin/mise + .mise.toml + mise.lock
-# The official launcher and locked tools are installed by the same unprivileged
-# user that executes project verbs, so trust and XDG state have one owner.
-ENV HOME=/home/runner \
-    XDG_DATA_HOME=/home/runner/.local/share \
-    XDG_CACHE_HOME=/home/runner/.cache \
-    XDG_STATE_HOME=/home/runner/.local/state \
-    MISE_DATA_DIR=/home/runner/.local/share/mise \
-    MISE_CACHE_DIR=/home/runner/.cache/mise \
-    MISE_STATE_DIR=/home/runner/.local/state/mise \
-    MISE_TRUSTED_CONFIG_PATHS=/workspace
+# Source: generated bin/mise + .mise.toml
+# The canonical make setup verb below owns the committed Mise bootstrap
+# and the frozen installation of every tool the committed mise.lock pins, as
+# the same unprivileged runtime user.
+# The setup RUN receives GitHub's credential only through a BuildKit secret.
+# Never persist build credentials in ARG, ENV, layers, or image configuration.
+ARG RUNNER_USER=runner
+ENV HOME=/home/${RUNNER_USER}
+ENV XDG_DATA_HOME=${HOME}/.local/share \
+    XDG_CACHE_HOME=${HOME}/.cache \
+    XDG_STATE_HOME=${HOME}/.local/state \
+    MISE_DATA_DIR=${HOME}/.local/share/mise
 WORKDIR /workspace
 RUN --mount=type=bind,source=.,target=/source,ro \
     cp -R /source/. /workspace/ \
     && chown -R runner:runner /workspace
 USER runner
-RUN mkdir -p /workspace/.test-tmp \
-    && ./bin/mise trust .mise.toml \
-    && ./bin/mise install --locked --yes
-ENV PATH="/home/runner/.local/share/mise/shims:${PATH}"
+ENV PATH="$MISE_DATA_DIR/shims:${PATH}"
 # End SECTION: managed tool bootstrap
 
 # === SECTION: bootstrap proof (managed) ===
@@ -55,7 +50,8 @@ ENV PATH="/home/runner/.local/share/mise/shims:${PATH}"
 # mentioned uv.lock/flext-core, which turned the proof into a bypass -- a
 # broken bootstrap still produced a green image.
 ENV CI=Y
-RUN make setup
+RUN --mount=type=secret,id=github_token,env=GITHUB_TOKEN,required=true \
+    make setup
 # End SECTION: bootstrap proof
 
 ENTRYPOINT []

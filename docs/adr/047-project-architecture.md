@@ -1,3 +1,24 @@
+# Documentation
+
+<!-- TOC START -->
+
+- [Status](#status)
+- [Context](#context)
+- [Decision](#decision)
+  - [1. Project Entity Model](#1-project-entity-model)
+  - [2. Project-Scoped Handlers (GAP-H1)](#2-project-scoped-handlers-gap-h1)
+  - [3. Worktree-Isolated Indexing](#3-worktree-isolated-indexing)
+  - [4. Multi-Agent Coordination](#4-multi-agent-coordination)
+- [Consequences](#consequences)
+  - [Positive Consequences](#positive-consequences)
+  - [Negative Consequences](#negative-consequences)
+- [Alternatives Considered](#alternatives-considered)
+  - [Alternative 1: Single Index for all Worktrees](#alternative-1-single-index-for-all-worktrees)
+- [Implementation Notes](#implementation-notes)
+- [References](#references)
+
+<!-- TOC END -->
+
 <!-- markdownlint-disable MD013 MD024 MD025 MD030 MD040 MD003 MD022 MD031 MD032 MD036 MD041 MD060 -->
 
 ---
@@ -6,6 +27,7 @@ adr: 47 title: Project Architecture - Central Hub and Multi-Dimensional Coordina
 status: PROPOSED created: 2026-02-08 updated: 2026-06-27 related: [14, 34, 41, 57]
 supersedes: [] superseded_by: [] implementation_status: "Historical snapshot; see bd for
 live work"
+
 ---
 
 <!-- markdownlint-disable MD013 MD024 MD025 MD060 -->
