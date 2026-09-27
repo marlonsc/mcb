@@ -19,12 +19,22 @@ use seaography::async_graphql;
 use crate::state::McbState;
 
 // Loco handlers must return the large loco_rs::Error; suppress here.
+
+/// Sentinel the playground embeds so its client script can swap the real key
+/// from `localStorage` at render time. It is a placeholder token, not a
+/// credential: the server authorizes every request against the stored API
+/// keys, so the literal value grants nothing. Both occurrences MUST stay
+/// byte-identical for the render-time replacement to match.
+const PLAYGROUND_API_KEY_SENTINEL: &str = "AUTO_KEY";
+
+// Loco handlers must return the large loco_rs::Error; suppress here.
 #[allow(clippy::result_large_err)]
 async fn graphql_playground() -> Result<Response> {
-    let config = GraphQLPlaygroundConfig::new("/api/graphql").with_header("X-API-Key", "AUTO_KEY");
+    let config = GraphQLPlaygroundConfig::new("/api/graphql")
+        .with_header("X-API-Key", PLAYGROUND_API_KEY_SENTINEL);
 
     let res = playground_source(config).replace(
-        r#""X-API-Key":"AUTO_KEY""#,
+        format!(r#""X-API-Key":"{PLAYGROUND_API_KEY_SENTINEL}""#).as_str(),
         r#""X-API-Key":`${localStorage.getItem('api_key') || ''}`"#,
     );
 
