@@ -15,6 +15,7 @@
   - [v0.2.2 Observability](#v022-observability)
   - [v0.3.0 — SeaQL + Loco Platform Rebuild (CURRENT)](#v030-seaql-loco-platform-rebuild-current)
   - [Governance and SSOT](#governance-and-ssot)
+  - [Security Advisory Triage](#security-advisory-triage)
   - [Workflow FSM & Policies (v0.4.0, previously v0.3.0)](#workflow-fsm-policies-v040-previously-v030)
   - [Integrated Context System (v0.5.0, previously v0.4.0)](#integrated-context-system-v050-previously-v040)
 - [Archived (Superseded)](#archived-superseded)
@@ -141,6 +142,14 @@ master plan.
   — Tenant identity and vector-store boundary — **Proposed**
 - [ADR 057: Multi-Agent Coordination and SSOT Consolidation](057-multi-agent-coordination-ssot-consolidation.md)
   — Generated pointers and rule ownership — **Accepted**
+- [ADR 058: Gas Town Workflow Adoption](058-gastown-workflow-adoption.md) — Beads +
+  PR closure workflow (Gas City runtime) — **Accepted**
+
+### Security Advisory Triage
+
+- [ADR 059: Mimosa Static Advisory Triage and Disposition Policy](059-mimosa-advisory-triage-policy.md)
+  — Trust boundaries, sink containment, fixture isolation, disposition ledger —
+  **Accepted**
 
 ### Workflow FSM & Policies (v0.4.0, previously v0.3.0)
 
@@ -219,9 +228,9 @@ implementation state is tracked in `bd`.
 
 ## ADR Count
 
-**Total ADRs**: 57 (ADR-001 through ADR-057)
+**Total ADRs**: 59 (ADR-001 through ADR-059)
 
-- **Active numbered files**: 52 ADRs in this directory
+- **Active numbered files**: 54 ADRs in this directory
 - **Archived copies**: 3 superseded ADR files in [`archive/`](archive/)
 - **Core Architecture**: ADR-001–006 (5 active)
 - **v0.2.0 Features**: ADR-008–010 (3 ADRs)
@@ -231,8 +240,10 @@ implementation state is tracked in `bd`.
 - **v0.2.2 Observability**: ADR-048 (1 ADR)
 - **v0.3.0 Platform Rebuild**: ADR-049–053 (5 ADRs)
 - **v0.3.2+ Governance/SSOT**: ADR-054–057 (4 ADRs)
+- **Workflow / Gas Town**: ADR-058 (1 ADR)
 - **v0.4.0 Workflow**: ADR-034–038 (5 ADRs)
 - **v0.5.0 Context System**: ADR-041–047 (7 ADRs)
+- **Security Advisory Triage**: ADR-059 (1 ADR)
 
 ## Creating New ADRs
 
