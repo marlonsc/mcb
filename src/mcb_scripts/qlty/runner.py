@@ -12,7 +12,7 @@ from pathlib import Path
 
 from flext_core import p
 from mcb_scripts.core import get_logger, r
-from mcb_scripts.qlty.model import SarifIssue
+from mcb_scripts.qlty.model import QltyCategory, SarifIssue
 from mcb_scripts.qlty.parser import parse_sarif_file
 from mcb_scripts.settings import McbSettings
 
@@ -108,7 +108,7 @@ def run_qlty_smells(output_file: Path | None = None) -> p.Result[list[SarifIssue
     # Mark issues as 'smell' category if not present
     for issue in issues:
         if not issue.category:
-            issue.category = "smell"
+            issue.category = QltyCategory.SMELL
 
     logger.info(f"Found {len(issues)} smells")
     return r[list[SarifIssue]].ok(issues)
