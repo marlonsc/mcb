@@ -401,3 +401,4 @@ tests/mcb.[0-9]*
 tmp_*.txt
 .beads.gate.lock
 /context/
+/.zcode/

@@ -85,13 +85,12 @@ def test_default_check_runs_conflict_marker_guard() -> None:
 
 @pytest.mark.slow
 def test_tree_is_at_generator_fixed_point() -> None:
-    # The fixed-point contract is verified in CHECK mode: `audit` runs
-    # codegen conform --mode check (plus dependency health), failing when any
-    # managed projection drifted from its canonical render. Running the full
-    # apply inside a test paid the whole generation cost (60s+) for a
-    # property the check mode proves in seconds — slowness is a defect, not
-    # a budget problem.
-    result = _run_make("audit", "WHAT=all")
+    # The fixed-point contract: `gen WHAT=check` runs codegen conform in
+    # check mode, failing when any managed projection drifts from the
+    # canonical render. Running the full apply inside a test paid the whole
+    # generation cost (60s+) for a property the check mode proves in
+    # seconds — slowness is a defect, not a budget problem.
+    result = _run_make("gen", "WHAT=check")
     combined = result.stdout + result.stderr
     assert result.returncode == 0, combined[-2000:]
 
