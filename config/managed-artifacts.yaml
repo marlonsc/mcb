@@ -57,6 +57,7 @@ ManagedArtifacts:
       # context/ duplicated it and described dill and figment, both removed by
       # ADR-050 and ADR-051.
       - "/context/"
+      - "/.zcode/"
   Ruff:
     per_file_ignores:
       "scripts/**":
