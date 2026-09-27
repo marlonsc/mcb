@@ -12,9 +12,8 @@ import re
 from pathlib import Path
 
 from flext_cli import cli
-from pydantic import Field
 
-from flext_core import p
+from flext_core import m, p
 from mcb_scripts.core import BaseMcbSettings, get_logger, r
 from mcb_scripts.docs import utils
 from mcb_scripts.settings import McbSettings
@@ -43,13 +42,7 @@ SUPPRESS_RE = re.compile(
 class CheckOutdatedSettings(BaseMcbSettings):
     """Settings for the outdated-content documentation check."""
 
-    root: Path = Field(default=Path(), description="Project root directory")
-
-
-# `from __future__ import annotations` defers every annotation to a string, and
-# the CLI facade resolves the model in ITS namespace, where names like Path are
-# absent. Rebuilding here binds them in the module that actually declares them.
-CheckOutdatedSettings.model_rebuild()
+    root: Path = m.Field(default=Path(), description="Project root directory")
 
 
 def _is_suppressed(line: str) -> bool:
@@ -143,9 +136,7 @@ def main() -> None:
         model_cls=CheckOutdatedSettings,
         handler=run,
     )
-    result = cli.execute_app(app, prog_name="check-outdated")
-    if result.failure:
-        raise SystemExit(1)
+    cli.finalize_result(cli.execute_app(app, prog_name="check-outdated"))
 
 
 if __name__ == "__main__":

@@ -120,4 +120,10 @@ Do not duplicate those rules here. Update `AGENTS.md`, then run
 
 <!-- migrated from QODER.md -->
 @AGENTS.md
+
+<!-- migrated from CODEBUDDY.md -->
+@AGENTS.md
+
+<!-- migrated from QODER.md -->
+@AGENTS.md
 <!-- AIHUB-AGENTS-SCOPE-LOCAL-END -->

@@ -1006,7 +1006,7 @@ Innermost crate (Layer 0).
 > **Note**: mcb-utils has ZERO dependencies on any other mcb-\* crate. All constants
 > were consolidated here following SSOT principle (ADR-054, ADR-055).
 
-#### 🔧 Use Case Modules (`crates/mcb-infrastructure/src/di/modules/use_cases/`)
+#### 🔧 Use Case Modules (`crates/mcb-infrastructure/src/services/`)
 
 **Purpose**: Service orchestration and use-case wiring through DI modules.
 

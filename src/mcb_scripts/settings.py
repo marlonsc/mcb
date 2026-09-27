@@ -49,7 +49,7 @@ class BaseMcbSettings(FlextSettings):
             scoped = Path.cwd() / f".env.mcb-{namespace}"
             if scoped.exists():
                 return str(scoped.resolve())
-        default_path = Path.cwd() / ".env"
+        default_path = Path.cwd() / c.ENV_FILE_DEFAULT
         if default_path.exists():
             return str(default_path.resolve())
         return c.ENV_FILE_DEFAULT

@@ -19,9 +19,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from flext_cli import cli
-from pydantic import Field
 
-from flext_core import p
+from flext_core import m, p
 from mcb_scripts.core import BaseCommandSettings, get_logger, r
 from mcb_scripts.gitops import summarize
 from mcb_scripts.settings import McbSettings
@@ -37,16 +36,10 @@ class GitopsSettings(BaseCommandSettings):
     ``root`` option is also exposed as ``--root`` for direct CLI usage.
     """
 
-    root: Path = Field(
+    root: Path = m.Field(
         default=Path(__file__).resolve().parents[2],
         description="Project root directory",
     )
-
-
-# `from __future__ import annotations` defers every annotation to a string, and
-# the CLI facade resolves the model in ITS namespace, where names like Path are
-# absent. Rebuilding here binds them in the module that actually declares them.
-GitopsSettings.model_rebuild()
 
 
 def run(settings: GitopsSettings) -> p.Result[str]:

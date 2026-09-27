@@ -6,9 +6,22 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import IntEnum
+from enum import IntEnum, StrEnum
 
 from flext_core import c, m, t
+
+
+class QltyCategory(StrEnum):
+    """Quality-report categories (SSOT for the closed vocabulary).
+
+    ``check`` and ``smell`` come from the qlty runners; ``security``,
+    ``format`` and the rest name the remaining report buckets.
+    """
+
+    CHECK = "check"
+    SMELL = "smell"
+    SECURITY = "security"
+    FORMAT = "format"
 
 
 class Severity(IntEnum):
@@ -115,7 +128,10 @@ class SarifIssue(m.BaseModel):
     file_path: str
     start_line: int
     end_line: int | None = None
-    category: str = ""  # check, smell, security, format, etc.
+    # Open vocabulary: external tools name their own categories (gitops,
+    # rustfmt, zizmor, ...). QltyCategory is the SSOT only for the values OUR
+    # runners assign (check/smell); never turn this field into a closed enum.
+    category: str = ""
     help_uri: str = ""
     metadata: dict[str, t.JsonValue] = m.Field(default_factory=dict)
     fingerprints: dict[str, str] = m.Field(default_factory=dict)

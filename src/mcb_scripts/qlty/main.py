@@ -13,7 +13,7 @@ from flext_cli import cli
 
 from flext_core import m, p
 from mcb_scripts.core import get_logger, r
-from mcb_scripts.qlty.model import SarifIssue, Severity
+from mcb_scripts.qlty.model import QltyCategory, SarifIssue, Severity
 from mcb_scripts.qlty.parser import parse_sarif_file
 from mcb_scripts.qlty.report import analyze_issues
 from mcb_scripts.qlty.runner import run_qlty_check, run_qlty_smells
@@ -42,12 +42,6 @@ class QltyParams(m.BaseModel):
     report_file: Path = m.Field(default_factory=lambda: McbSettings().qlty_report_md)
 
 
-# `from __future__ import annotations` defers every annotation to a string, and
-# the CLI facade resolves the model in ITS namespace, where names like Path are
-# absent. Rebuilding here binds them in the module that actually declares them.
-QltyParams.model_rebuild()
-
-
 def _load_checks_from_file(
     checks_file: Path, all_issues: list[SarifIssue]
 ) -> p.Result[None]:
@@ -59,7 +53,7 @@ def _load_checks_from_file(
         return r[None].from_failure(checks_result)
     checks = checks_result.unwrap()
     for check in checks:
-        check.category = "check"
+        check.category = QltyCategory.CHECK
     all_issues.extend(checks)
     logger.info(f"   Found {len(checks)} check issues")
     return r[None].ok(None)
@@ -75,7 +69,7 @@ def _collect_smells_issues(
             return r[None].from_failure(smells_result)
         smells = smells_result.unwrap()
         for smell in smells:
-            smell.category = "smell"
+            smell.category = QltyCategory.SMELL
         all_issues.extend(smells)
         logger.info(f"   Found {len(smells)} code smells")
     elif params.scan:
@@ -101,7 +95,7 @@ def _collect_checks_issues(
             return r[None].from_failure(checks_result)
         checks = checks_result.unwrap()
         for check in checks:
-            check.category = "check"
+            check.category = QltyCategory.CHECK
         all_issues.extend(checks)
         return r[None].ok(None)
 

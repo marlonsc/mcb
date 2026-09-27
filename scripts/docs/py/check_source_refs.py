@@ -12,9 +12,8 @@ import re
 from pathlib import Path
 
 from flext_cli import cli
-from pydantic import Field
 
-from flext_core import p
+from flext_core import m, p
 from mcb_scripts.core import BaseMcbSettings, get_logger, r
 from mcb_scripts.docs import utils
 from mcb_scripts.settings import McbSettings
@@ -25,13 +24,7 @@ logger = get_logger(__name__)
 class CheckSourceRefsSettings(BaseMcbSettings):
     """Settings for the broken source-reference documentation check."""
 
-    root: Path = Field(default=Path(), description="Project root directory")
-
-
-# `from __future__ import annotations` defers every annotation to a string, and
-# the CLI facade resolves the model in ITS namespace, where names like Path are
-# absent. Rebuilding here binds them in the module that actually declares them.
-CheckSourceRefsSettings.model_rebuild()
+    root: Path = m.Field(default=Path(), description="Project root directory")
 
 
 def _check_files(
@@ -41,7 +34,10 @@ def _check_files(
     checked = 0
     unreadable: list[str] = []
 
-    md_files = utils.find_md_files(docs_dir)
+    # docs/adr is an immutable decision record: its source refs describe the
+    # architecture as it was WHEN the ADR was written — history, not living
+    # docs to validate against the current tree.
+    md_files = utils.find_md_files(docs_dir, exclude_dirs={"adr"})
 
     for filepath in md_files:
         rel_filepath = os.path.relpath(filepath, project_root)
@@ -109,9 +105,7 @@ def main() -> None:
         model_cls=CheckSourceRefsSettings,
         handler=run,
     )
-    result = cli.execute_app(app, prog_name="check-source-refs")
-    if result.failure:
-        raise SystemExit(1)
+    cli.finalize_result(cli.execute_app(app, prog_name="check-source-refs"))
 
 
 if __name__ == "__main__":
