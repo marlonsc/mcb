@@ -1,288 +1,51 @@
-#!/bin/bash
-# =============================================================================
-# MCP Context Browser - Unified Markdown Operations
-# =============================================================================
-# Comprehensive lint and fix operations for markdown files
-# Usage: ./markdown.sh [lint|fix|autofix|check] [--dry-run]
-# =============================================================================
+#!/usr/bin/env bash
+# Documentation Markdown checks and repairs use the provisioned formatter.
 
-set -e
+set -euo pipefail
 
-# Source shared library
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck disable=SC1091
+# shellcheck source=lib/common.sh
 source "$SCRIPT_DIR/lib/common.sh"
 
-# Fix counter
-FIXED=0
-DRY_RUN=false
-
-# =============================================================================
-# Comprehensive Markdown Fixing (Autofix Mode)
-# =============================================================================
-
-# Comprehensive fix_markdown_file with aggressive corrections
-fix_markdown_file_comprehensive() {
-    local file="$1"
-    local tmp="${file}.tmp"
-
-    if is_dry_run; then
-        echo "[DRY-RUN] Would fix: $(basename "$file")"
-        return
-    fi
-
-    # 1. Remove trailing whitespace
-    sed -i 's/[[:space:]]*$//' "$file"
-
-    # 2. Fix list marker spacing (convert to 3 spaces after dash)
-    sed -i 's/^\(\s*\)[-*+][[:space:]]\+/\1-   /g' "$file"
-
-    # 3. Remove multiple consecutive blank lines (reduce to 1)
-    cat "$file" | cat -s > "$tmp" && mv "$tmp" "$file"
-
-    # 4. Add blank lines around headings (before)
-    awk '
-    /^#{1,6} / && NR > 1 && prev != "" {
-        print ""
-        print $0
-        prev = $0
-        next
-    }
-    {
-        print
-        prev = $0
-    }
-    ' "$file" > "$tmp" && mv "$tmp" "$file"
-
-    # 5. Ensure trailing newline
-    if [[ -s "$file" ]] && [[ $(tail -c 1 "$file" | wc -l) -eq 0 ]]; then
-        echo '' >> "$file"
-    fi
-}
-
-# =============================================================================
-# Shared Markdown Checks
-# =============================================================================
-
-# Check for trailing whitespace
-check_trailing_whitespace() {
-    local file="$1"
-    has_trailing_whitespace "$file"
-}
-
-# Check for multiple consecutive blank lines
-check_multiple_blanks() {
-    local file="$1"
-    grep -qP '\n\n\n' "$file" 2>/dev/null
-}
-
-# Check for mixed list markers
-check_mixed_lists() {
-    local file="$1"
-    grep -q '^[[:space:]]*\*[[:space:]]' "$file" && grep -q '^[[:space:]]*-[[:space:]]' "$file"
-}
-
-# Check for code blocks without language
-check_unlabeled_codeblocks() {
-    local file="$1"
-    grep -q '^```$' "$file"
-}
-
-# =============================================================================
-# Lint Mode
-# =============================================================================
-
-_run_markdownlint() {
-    local do_fix="${1:-}"
+main() {
+    local action="${1:-lint}"
+    local dry_run="${2:-}"
     local config_file="$PROJECT_ROOT/.markdownlint.json"
     local ignore_file="$PROJECT_ROOT/.markdownlintignore"
     local args=("$DOCS_DIR/")
-    [[ -f "$config_file" ]] && args+=(--config "$config_file")
-    [[ -f "$ignore_file" ]] && args+=(--ignore-path "$ignore_file")
-    if [[ "$do_fix" == "1" ]] || [[ "$do_fix" == "-f" ]]; then
-        markdownlint -f "${args[@]}"
-    else
-        markdownlint "${args[@]}"
+
+    if [[ -f "$config_file" ]]; then
+        args+=(--config "$config_file")
     fi
-}
-
-lint_mode() {
-    log_info "MCP Context Browser - Markdown Linting"
-    log_info "======================================"
-
-    # Law 14: a missing linter is RED, never a degraded ad-hoc pass.
-    check_executable markdownlint || {
-        log_error "markdownlint-cli not found - markdown linting cannot run. Install: npm install -g markdownlint-cli"
-        exit 1
-    }
-
-    log_info "Using markdownlint-cli for comprehensive linting..."
-    if _run_markdownlint; then
-        log_success "Markdown linting passed"
-    else
-        log_error "Markdown linting failed"
-        exit 1
-    fi
-}
-
-# =============================================================================
-# Fix Mode
-# =============================================================================
-
-fix_mode() {
-    log_info "MCP Context Browser - Markdown Auto-Fix"
-    log_info "======================================="
-
-    is_dry_run && log_info "Running in dry-run mode (no changes will be made)"
-
-    if check_executable markdownlint && ! is_dry_run; then
-        log_info "Using markdownlint-cli -f for auto-fix..."
-        if _run_markdownlint 1; then
-            FIXED=1
-            log_success "Auto-fix completed. Run './markdown.sh lint' to verify."
-        else
-            log_warning "markdownlint -f reported issues. Run './markdown.sh lint' to inspect."
-        fi
-        return
+    if [[ -f "$ignore_file" ]]; then
+        args+=(--ignore-path "$ignore_file")
     fi
 
-    local files
-    files=$(find_markdown_files "$DOCS_DIR")
-
-    for file in $files; do
-        local filename
-        filename=$(basename "$file")
-
-        if check_trailing_whitespace "$file"; then
-            log_info "Fixing trailing whitespace in: $filename"
-            run_or_echo sed -i 's/[[:space:]]*$//' "$file"
-            ((FIXED++)) || true
-        fi
-
-        if check_multiple_blanks "$file"; then
-            log_info "Fixing multiple blank lines in: $filename"
-            if ! is_dry_run; then
-                awk 'BEGIN{RS=""} {gsub(/\n\n+/,"\n\n"); print $0 "\n"}' "$file" > "${file}.tmp" && mv "${file}.tmp" "$file"
-            else
-                echo "[DRY-RUN] Would fix multiple blank lines in: $filename"
-            fi
-            ((FIXED++)) || true
-        fi
-
-        if grep -q '^[[:space:]]*\*[[:space:]]' "$file"; then
-            log_info "Converting asterisks to dashes in: $filename"
-            run_or_echo sed -i 's/^[[:space:]]*\*[[:space:]]/  - /g' "$file"
-            ((FIXED++)) || true
-        fi
-    done
-
-    echo
-    log_info "Auto-fix Summary:"
-    echo "  Issues fixed: $FIXED"
-
-    [[ $FIXED -gt 0 ]] && log_success "Auto-fix completed. Run './markdown.sh lint' to verify."
-    [[ $FIXED -eq 0 ]] && log_success "No auto-fixable issues found."
-}
-
-# =============================================================================
-# Comprehensive Autofix Mode
-# =============================================================================
-
-autofix_mode() {
-    log_info "MCP Context Browser - Comprehensive Markdown Auto-Fix"
-    log_info "====================================================="
-
-    is_dry_run && log_warning "Running in DRY-RUN mode (no changes will be made)"
-
-    local files
-    files=$(find_markdown_files "$DOCS_DIR")
-
-    if [[ -z "$files" ]]; then
-        log_warning "No markdown files found in $DOCS_DIR"
-        return 0
-    fi
-
-    local file_count=0
-    for file in $files; do
-        fix_markdown_file_comprehensive "$file"
-        ((file_count++)) || true
-        ((FIXED++)) || true
-    done
-
-    echo
-    log_info "Comprehensive Auto-fix Summary:"
-    echo "  Files processed: $file_count"
-    echo "  Fixes applied: $FIXED"
-
-    if is_dry_run; then
-        log_warning "DRY-RUN: No changes were made"
-    elif [[ $FIXED -gt 0 ]]; then
-        log_success "Comprehensive auto-fix completed!"
-    else
-        log_success "All files checked"
-    fi
-}
-
-# =============================================================================
-# Main
-# =============================================================================
-
-show_usage() {
-    cat << EOF
-MCP Context Browser - Unified Markdown Tool
-
-USAGE:
-    $0 lint                 # Check markdown files for issues
-    $0 fix                  # Auto-fix markdown issues
-    $0 autofix              # Comprehensive markdown auto-fix (all issues)
-    $0 autofix --dry-run    # Preview comprehensive fixes
-    $0 fix --dry-run        # Show what would be fixed
-    $0 check                # Alias for lint
-
-MODES:
-    lint                    Uses markdownlint-cli for standards compliance
-    fix                     Fixes basic issues (trailing whitespace, blank lines, list markers)
-    autofix                 Comprehensive fixes (list spacing, heading blanks, trailing newlines)
-    check                   Alias for lint
-
-EXAMPLES:
-    $0 lint                 # Run linting
-    $0 fix --dry-run        # Preview basic fixes
-    $0 fix                  # Apply basic fixes
-    $0 autofix --dry-run    # Preview comprehensive fixes
-    $0 autofix              # Apply comprehensive fixes
-
-EOF
-}
-
-main() {
-    local command="${1:-lint}"
-
-    # Handle --dry-run flag (exported for use in fix/lint functions)
-    if [[ "$command" == "--dry-run" ]]; then
-        export DRY_RUN=true
-        command="${2:-lint}"
-    elif [[ "${2:-}" == "--dry-run" ]]; then
-        export DRY_RUN=true
-    fi
-
-    case "$command" in
+    require_executable markdownlint
+    case "$action" in
         lint|check)
-            lint_mode
+            [[ -z "$dry_run" ]] || {
+                log_error "Unexpected argument: $dry_run"
+                return 2
+            }
+            markdownlint "${args[@]}"
             ;;
-        fix)
-            fix_mode
-            ;;
-        autofix)
-            autofix_mode
+        fix|autofix)
+            if [[ -z "$dry_run" ]]; then
+                markdownlint --fix "${args[@]}"
+            elif [[ "$dry_run" == "--dry-run" ]]; then
+                markdownlint "${args[@]}"
+            else
+                log_error "Unexpected argument: $dry_run"
+                return 2
+            fi
             ;;
         help|--help|-h)
-            show_usage
+            printf '%s\n' 'Usage: markdown.sh {lint|check|fix|autofix} [--dry-run]'
             ;;
         *)
-            log_error "Unknown command: $command"
-            show_usage
-            exit 1
+            log_error "Unknown action: $action"
+            return 2
             ;;
     esac
 }
