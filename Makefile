@@ -406,12 +406,16 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 			$${mise_runtime_path:+"MISE_INSTALL_PATH=$$mise_runtime_path"} \
 			"$$@"; \
 	}; \
+	mise_offline() { \
+		mise_offline_mode="$$1"; shift; \
+		mise_exec "$$mise_offline_mode" env 'MISE_OFFLINE=true' "$$@"; \
+	}; \
 	mise_runtime="$$mise_storage_root/bootstrap/mise-$${caller_mise_version#v}"; \
 	if [ "$(OS)" = "Windows_NT" ]; then mise_runtime="$$mise_runtime.exe"; fi; \
 	if [ ! -x "$$mise_runtime" ]; then \
 		printf 'ERROR: missing pinned Mise runtime %s; run make setup\n' "$$mise_runtime" >&2; exit 2; \
 	fi; \
-	if mise_exec project env MISE_OFFLINE=true "$$mise_runtime" -C "$$project_root" bin-paths >"$$scratch/paths" 2>"$$scratch/stderr"; then \
+	if mise_offline project "$$mise_runtime" -C "$$project_root" bin-paths >"$$scratch/paths" 2>"$$scratch/stderr"; then \
 		cat "$$scratch/stderr" >&2; \
 	else \
 		mise_status=$$?; cat "$$scratch/stderr" >&2; cat "$$scratch/paths" >&2; exit "$$mise_status"; \
@@ -630,6 +634,10 @@ $${mise_config_argument:+"$$mise_config_argument"} \
 			$${mise_runtime_path:+"MISE_INSTALL_PATH=$$mise_runtime_path"} \
 			"$$@"; \
 	}; \
+	mise_offline() { \
+		mise_offline_mode="$$1"; shift; \
+		mise_exec "$$mise_offline_mode" env 'MISE_OFFLINE=true' "$$@"; \
+	}; \
 if [ -z "$$caller_github_token" ] && command -v gh >/dev/null 2>&1; then \
 		caller_github_token="$$(gh auth token)" \
 			|| { printf 'ERROR: the selected GitHub credential source failed: %s\n' 'gh auth token' >&2; exit 2; }; \
@@ -659,7 +667,7 @@ mise_checked() { \
 	}; \
 	mise_receipt() { \
 		mise_receipt_log="$$scratch/$$1"; shift; \
-		mise_checked_stdout "$$mise_receipt_log.stdout" "$$mise_receipt_log.stderr" mise_exec no-config "$$1" --version; \
+		mise_checked_stdout "$$mise_receipt_log.stdout" "$$mise_receipt_log.stderr" mise_offline no-config "$$1" --version; \
 		receipt_output=$$(cat "$$mise_receipt_log.stdout"); \
 		receipt_release=$$(printf '%s\n' "$$receipt_output" | grep -E '^(mise )?[0-9]+\.[0-9]+\.[0-9]+$$' | tail -1 | sed 's/^mise //'); \
 		if [ -z "$$receipt_release" ]; then \
@@ -696,14 +704,27 @@ mise_checked() { \
 	printf 'mise setup receipt=%s storage=%s\n' "$$runtime_release" "$$mise_storage_root"; \
 	# Only ``upg`` locks, once per manifest it provisions from. Lock every \
 	# configured tool in one pass so removed selectors cannot survive beside \
-	# their replacement in mise.lock. \
-	if [ "$(TOOL_BOOTSTRAP_LOCK)" = "1" ]; then \
+	# their replacement in mise.lock. The relock half of ``upg`` (lock without \
+	# resolve) skips the lock when the .mise.toml ``gen`` rendered is \
+	# byte-identical to the manifest the resolve pass of the same run locked: \
+	# the lock is a function of manifest, Mise release and platforms, all \
+	# unchanged, so a second resolution would only repeat ~70 GitHub requests. \
+	bootstrap_lock="$(TOOL_BOOTSTRAP_LOCK)"; \
+	if [ "$$bootstrap_lock" = "1" ] && [ "$(TOOL_BOOTSTRAP_RESOLVE)" != "1" ] \
+		&& [ -n "$${UPG_LOCKED_MISE_MANIFEST:-}" ] \
+		&& cmp -s "$$UPG_LOCKED_MISE_MANIFEST" "$$project_root/.mise.toml"; then \
+		printf 'upg relock: .mise.toml is byte-identical to the manifest this upg locked; installing from the published mise.lock\n'; \
+		bootstrap_lock=; \
+	fi; \
+	locked_manifest=; \
+	if [ "$$bootstrap_lock" = "1" ]; then \
 		# Stage on the destination filesystem: the bumped lock is resolved and \
 		# installed from a private stage, and published by one rename only after \
 		# both succeed. A failed or killed run leaves mise.lock untouched; no \
 		# backup copy exists. \
 		lock_stage="$$(mktemp -d "$$project_parent/.$${project_root##*/}.mise-lock-stage.XXXXXX")"; \
 		cp "$$project_root/.mise.toml" "$$lock_stage/.mise.toml"; \
+		cp "$$project_root/.mise.toml" "$$scratch/locked-manifest.toml"; \
 		# The resolver (TOOL_BOOTSTRAP_RESOLVE, the first half of upg) locks \
 		# from the declared manifest alone; every other lock pass bumps the \
 		# committed lock and its sidecars. \
@@ -721,7 +742,7 @@ mise_checked() { \
 			exit 2; \
 		fi; \
 		mise_checked "$$scratch/install.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" install --yes; \
-		mise_checked "$$scratch/staged-python.log" mise_exec project "$$pinned_mise" -C "$$lock_stage" which python; \
+		mise_checked "$$scratch/staged-python.log" mise_offline project "$$pinned_mise" -C "$$lock_stage" which python; \
 		staged_python=$$(cat "$$scratch/staged-python.log"); \
 		if [ ! -x "$$staged_python" ]; then printf 'ERROR: staged Mise Python is not executable: %s\n' "$$staged_python" >&2; exit 2; fi; \
 		printf '%s\n' "$$staged_python" > "$$lock_stage/python-path"; \
@@ -741,33 +762,29 @@ mise_receipt launcher-version "$$lock_stage/artifacts/bin/mise"; \
 		fi; \
 		mise_checked "$$scratch/publish-lock.log" "$$staged_python" "$$project_root/bin/mise-lock-transaction.py" publish "$$project_root" "$$lock_stage"; \
 		mise_trusted_config_paths="$$project_root"; \
+		if [ "$(TOOL_BOOTSTRAP_RESOLVE)" = "1" ]; then locked_manifest="$$scratch/locked-manifest.toml"; fi; \
 	else \
 		# ``locked`` mode converges every tool on exactly the version the \
-		# committed mise.lock pins. Resilience (operator 2026-10-02): a dirty \
-		# tree (mixed-generation merge, interrupted ``upg``, or a mise.lock \
-		# written by a different Mise release) recovers HERE through the \
-		# generated reconcile subcommand — staged retain relock, stage proof, \
-		# atomic publish — never by hand and never as inline recipe shell \
-		# (Makefile simplicity law). \
-		if mise_exec project "$$pinned_mise" -C "$$project_root" install --dry-run >"$$scratch/install-probe.log" 2>&1; then \
+		# committed mise.lock pins. Setup never locks (operator 2026-10-02): \
+		# an offline dry-run proves the lock satisfies the manifest, and a lock \
+		# that does not (mixed-generation merge, interrupted ``upg``, a lock \
+		# written by another Mise release) fails loud; ``make upg`` is its only \
+		# writer. Only ``install --yes`` may reach the network, for a tool \
+		# missing from the persistent cache. \
+		if mise_offline project "$$pinned_mise" -C "$$project_root" install --dry-run >"$$scratch/install-probe.log" 2>&1; then \
 			:; \
 		else \
-			probe_status=$$?; \
 			cat "$$scratch/install-probe.log" >&2; \
-			printf 'setup reconcile: committed mise.lock does not satisfy .mise.toml under pinned Mise %s (probe exit %s); running the generated bin reconcile\n' "$$runtime_release" "$$probe_status" >&2; \
-			reconcile_python=$$(command -v python3 || true); \
-			if [ -z "$$reconcile_python" ]; then \
-				printf 'ERROR: reconcile needs a host python3 (stdlib only); provision one and retry\n' >&2; exit 2; \
-			fi; \
-			mise_checked "$$scratch/reconcile.log" "$$reconcile_python" "$$project_root/bin/mise-lock-transaction.py" reconcile "$$project_root" "$$runtime_release"; \
+			printf 'ERROR: mise.lock does not satisfy .mise.toml under Mise %s; run make upg\n' "$$runtime_release" >&2; \
+			exit 2; \
 		fi; \
 		mise_checked "$$scratch/install.log" mise_exec project "$$pinned_mise" -C "$$project_root" install --yes; \
 	fi; \
-	mise_checked_stdout "$$scratch/ast-grep-version.stdout" "$$scratch/ast-grep-version.stderr" mise_exec project "$$pinned_mise" -C "$$project_root" exec -- ast-grep --version; \
+	mise_checked_stdout "$$scratch/ast-grep-version.stdout" "$$scratch/ast-grep-version.stderr" mise_offline project "$$pinned_mise" -C "$$project_root" exec -- ast-grep --version; \
 	if [ -s "$$scratch/ast-grep-version.stderr" ]; then \
 		printf 'ERROR: ast-grep emitted diagnostics after installation\n' >&2; exit 2; \
 	fi; \
-	mise_checked "$$scratch/uv-version.log" mise_exec project "$$pinned_mise" -C "$$project_root" exec -- uv --version; \
+	mise_checked "$$scratch/uv-version.log" mise_offline project "$$pinned_mise" -C "$$project_root" exec -- uv --version; \
 	uv_output=$$(cat "$$scratch/uv-version.log"); \
 	case "$$uv_output" in \
 		'uv '*) uv_actual=$${uv_output#uv }; uv_actual=$${uv_actual%% *} ;; \
@@ -781,12 +798,12 @@ mise_receipt launcher-version "$$lock_stage/artifacts/bin/mise"; \
 		printf 'ERROR: uv --version returned an invalid release: %s\n' "$$uv_actual" >&2; exit 2; \
 	fi; \
 	printf 'uv setup selector=%s receipt=%s\n' "$$uv_selector" "$$uv_actual"; \
-	mise_checked "$$scratch/direnv-path.log" mise_exec project "$$pinned_mise" -C "$$project_root" which direnv; \
+	mise_checked "$$scratch/direnv-path.log" mise_offline project "$$pinned_mise" -C "$$project_root" which direnv; \
 	direnv_executable=$$(cat "$$scratch/direnv-path.log"); \
 	if [ ! -x "$$direnv_executable" ]; then \
 		printf 'ERROR: Mise resolved a non-executable direnv path: %s\n' "$$direnv_executable" >&2; exit 2; \
 	fi; \
-	mise_checked "$$scratch/python-path.log" mise_exec project "$$pinned_mise" -C "$$project_root" which python; \
+	mise_checked "$$scratch/python-path.log" mise_offline project "$$pinned_mise" -C "$$project_root" which python; \
 	python_executable=$$(cat "$$scratch/python-path.log"); \
 	# CI receives only the shim farm: a project bin/ on PATH would bind every \
 	# shim to that repository launcher (mise resolves shims through PATH). \
@@ -809,6 +826,7 @@ fi; \
 		"MISE_VERSION=$$runtime_release" \
 		"MISE_INSTALL_PATH=$$mise_runtime_path" \
 		$(PROJECT_TOOL_EXEC) env \
+		$${locked_manifest:+"UPG_LOCKED_MISE_MANIFEST=$$locked_manifest"} \
 		"SETUP_DIRENV=$$direnv_executable" \
 		"SETUP_PYTHON=$$python_executable" \
 		"SETUP_DIRENV_XDG_DATA_HOME=$$caller_xdg_data_home" \
@@ -833,11 +851,7 @@ SETUP_ENVIRONMENT_RECIPE = set -eu; \
 			$(UV) venv --clear --python "$$desired_python" "$(RUNTIME_VENV)"; \
 		fi; \
 	fi; \
-	if ! $(UV) sync --project "$(UV_PROJECT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; then \
-		printf 'setup reconcile: uv sync --locked rejected the committed uv.lock; running the flext-infra library relock\n' >&2; \
-		$(PROJECT_TOOL_EXEC) "$(RUNTIME_PYTHON)" $(if $(FLEXT_INFRA_BOOTSTRAP),"$(FLEXT_INFRA_BOOTSTRAP)",-m flext_infra.bootstrap) relock "$(PROJECT_ROOT)"; \
-		$(UV) sync --project "$(UV_PROJECT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
-	fi; \
+	$(UV) sync --project "$(UV_PROJECT)" $(UV_SYNC_FLAGS) --link-mode "$(UV_LINK_MODE)"; \
 	XDG_DATA_HOME="$${SETUP_DIRENV_XDG_DATA_HOME:?missing persistent direnv data home}" \
 		"$${SETUP_DIRENV:?missing Mise-resolved direnv executable}" allow "$(PROJECT_ROOT)"; \
 	for member in $(WORKSPACE_SUBPROJECTS); do \
@@ -873,7 +887,6 @@ UV_RUN := env -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u PROJECT_ROOT PYTHONPAT
 # the submodule (standalone member) keeps its own installed copy.
 FLEXT_INFRA_SUBMODULE_SRC := $(RUNTIME_ROOT)/flext-infra/src
 override PROJECT_INFRA_PYTHONPATH := $(if $(wildcard $(FLEXT_INFRA_SUBMODULE_SRC)/flext_infra/.),$(FLEXT_INFRA_SUBMODULE_SRC),$(MAKEFILE_ROOT)/src)
-FLEXT_INFRA_BOOTSTRAP := $(if $(wildcard $(FLEXT_INFRA_SUBMODULE_SRC)/flext_infra/bootstrap.py),$(FLEXT_INFRA_SUBMODULE_SRC)/flext_infra/bootstrap.py,)
 PROJECT_INFRA_RUN = if [ ! -x "$(FLEXT_INFRA_PYTHON)" ]; then printf 'ERROR: FLEXT_INFRA_PYTHON must name an executable managed Python\n' >&2; exit 2; fi; $(PROJECT_TOOL_EXEC) env -u PYTHONPATH -u MYPYPATH -u VIRTUAL_ENV -u UV_PROJECT -u UV_PROJECT_ENVIRONMENT PYTHONPATH="$(PROJECT_INFRA_PYTHONPATH)" $(FLEXT_INFRA_PYTHON)
 PROJECT_FLEXT_INFRA := $(PROJECT_INFRA_RUN) -m flext_infra
 # Scaffold dev tools live in the validated optional dev
@@ -1344,7 +1357,9 @@ setup: _bootstrap_setup_tools
 # rewrites it. Its first half therefore resolves the toolchain afresh, in a
 # private stage that never reads the committed lock. `_upg_relock` then bumps
 # that lock against the .mise.toml `gen` just rendered, so toolchain policy
-# changes (for example the fleet cooldown) still reach every consumer.
+# changes (for example the fleet cooldown) still reach every consumer; when
+# that manifest is byte-identical to the one the first half locked, the lock
+# already satisfies it and the relock installs from it without resolving again.
 upg: TOOL_BOOTSTRAP_LIFECYCLE := _upg_lifecycle
 upg: TOOL_BOOTSTRAP_RESOLVE := 1
 upg: TOOL_BOOTSTRAP_LOCK := 1
@@ -1705,7 +1720,8 @@ _upg_lifecycle: _builtin_setup_submodules
 # The second half belongs to the Makefile `gen` just rendered, so it runs as a
 # fresh make invocation rather than as lines of the recipe already expanded
 # above. It locks mise.lock from the rendered .mise.toml (never from the
-# manifest the generator was provisioned with), installs exactly that lock,
+# manifest the generator was provisioned with) unless that manifest is the one
+# the first half already locked, installs exactly that lock,
 # re-resolves uv.lock against the raised floors and reprovisions frozen from
 # both: the committed locks must match the committed manifests, or `setup`
 # (the CI path, `--locked`) rejects them. The Mise release is not resolved
