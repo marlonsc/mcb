@@ -22,8 +22,8 @@ dependencies = [
   "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "pydantic>=2.13.5",
-  "pydantic-settings>=2.14.2,<2.15",
-  "structlog>=25.5.0,<26",
+  "pydantic-settings>=2.15,<3",
+  "structlog>=26.1.0,<27",
 ]
 description = "Repository-local automation helpers for MCB"
 keywords = ["clean-architecture", "flext", "integration", "typed"]
@@ -650,5 +650,5 @@ whitelines = 1
 
 [tool.uv]
 link-mode = "copy"
-constraint-dependencies = ["structlog<26"]
+constraint-dependencies = ["structlog>=26.1.0,<27"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]
