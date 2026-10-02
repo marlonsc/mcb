@@ -7,7 +7,7 @@
 name: CI
 
 # === SECTION: triggers (managed) ===
-# Source: operator CI policy — integration push/PR = blocking CI only;
+# Source: CI policy — integration push/PR = blocking CI only;
 # main push/PR (non-draft) = blocking CI; draft and other branches = none;
 # workflow_call changes no direct-run behavior and declares the optional
 # cross-repo dependency-credential secret contract in workflow scope.
@@ -50,7 +50,9 @@ jobs:
   # Source: template + config:github_actions.*
   ci:
     name: ci
-    # Only the checkout job needs repository contents.
+    # Only the checkout job needs repository contents; packages: read is
+    # granted solely to distributions declared in codegen
+    # ci_package_registry_read, whose gates resolve GitHub Packages.
     permissions:
       contents: read
     if: ${{ github.event_name != 'pull_request' || github.event.pull_request.draft == false }}
@@ -76,7 +78,7 @@ jobs:
       # repository has not declared the credential requirement; a repository
       # that declares the CI_DEPENDENCIES_REQUIRED repo variable fails the
       # job non-zero with a typed message and without exposing any secret
-      # value (cosmos-1yzig: absence normalized as success is a defect).
+      # value (absence normalized as success is a defect).
       - name: Mint cross-repo dependency credential
         env:
           CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
@@ -130,13 +132,53 @@ jobs:
       # once, before any gate runs.
       - name: Normalize checkout modes
         run: chmod -R go-w .
+
+      # Why: every fresh runner paid a cold full-dependency Mypy,
+      # Pyrefly and Ruff analysis. The caches below are content-addressed by the
+      # committed dependency locks, so a warm cache is always valid for the same
+      # lock and can never hide a finding; it only removes the cold recompute.
+      # Why: the same pair keeps the locked Mise tool storage, so
+      # a cold runner never re-downloads the pinned tarballs, where a network
+      # blip failed setup.
+      - name: Restore tool caches
+        id: tool-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-3.13-tools-
+
       # make setup is the frozen installer. It bootstraps the committed Mise
       # release and installs the fleet toolchain from the committed
       # mise.lock and the dependencies frozen from the committed uv.lock,
       # publishes that environment through GITHUB_PATH, and prepares the
       # project runtime. CI never runs `make upg`: it never re-resolves.
+      # Why: make test always selects through the persistent testmon database
+      # (make.testmon_cache), which lives outside the checkout under the
+      # declared project name. A runner without it starts from an empty history
+      # and selects the whole suite. Restore the newest database of any earlier
+      # run: testmon revalidates every recorded file by checksum, so a restored
+      # database never hides a changed dependency of a selected test.
+      - name: Restore testmon database
+        uses: actions/cache/restore@v6
+        with:
+          path: ~/.cache/flext/infra/testmon
+          key: ${{ runner.os }}-3.13-flext-testmon-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            ${{ runner.os }}-3.13-flext-testmon-
+
       - name: setup (blocking)
-        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        # Why: explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make setup
       - name: gen fixed point (blocking)
         # Why (docs-gen private sources): the docs generation resolves the
@@ -145,9 +187,11 @@ jobs:
         # source state is absent or unauthenticated". The job token
         # authenticates those reads without changing the toolchain contract.
         run: |
+          set -eu
           CI=Y make gen
           git status --short
-          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
+          candidate_status="$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
+          test -z "$candidate_status"
 
       # Setup installs frozen from the committed uv.lock (`uv sync --locked`)
       # and never rewrites it; the deps audit proves that locked graph.
@@ -155,22 +199,90 @@ jobs:
         run: CI=Y make audit
 
       - name: check (blocking)
-        # Why (flext-v4p5): explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        # Why: explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
         run: CI=Y make check
+        # Fast partition only, derived from the gate registry kind:
+        # lint security markdown duplication.
+        # Type checkers and flext-infra validators block locally and at
+        # pre-push (CI=N runs pyrefly mypy pyright loc-cap runtime-census fresh-import index-declarations codemod layout direnv).
 
-      # Both blocking steps derive from the same active default universe.
-      # CI=Y runs lint pyright silent-failure deferred-self-reference security markdown loc-cap tier-whitelist index-declarations smells layout canonical-alias direnv.
-      # CI=N runs pyrefly mypy.
-      # The partitions are disjoint and together execute every active gate.
-      - name: check complement (blocking)
-        run: CI=N make check
+      - name: test (blocking)
+        # Why: explicit CI=Y on every make invocation (job env is not enough for matrix/docker parity).
+        run: CI=Y make test
 
       # Mutating gates and tests must validate the committed candidate.
       # Repairs left in the runner checkout require a new commit and CI run.
       - name: Candidate cleanliness (blocking)
         run: |
+          set -eu
           git status --short
-          test -z "$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
+          candidate_status="$(git status --porcelain --untracked-files=all --ignore-submodules=none)"
+          test -z "$candidate_status"
+
+      - name: Dump reports on failure
+        if: ${{ failure() }}
+        run: |
+          set -eu
+          # Structured reports only — same allowlist as Upload reports (no raw
+          # pytest/tool logs: those may carry connection strings / env secrets).
+          for report_root in .reports apps; do
+            if [ -d "$report_root" ]; then
+              find "$report_root" \
+                \( -path '*/junit.xml' -o -path '*/coverage.xml' -o -path '*/coverage.json' \) \
+                -type f -exec sh -eu -c '
+                  for report_file do
+                    printf "::group::%s\n" "$report_file"
+                    tail -n 200 "$report_file"
+                    printf "::endgroup::\n"
+                  done
+                ' sh {} +
+            fi
+          done
+      - name: Upload reports on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: flext-ci-reports-${{ github.run_id }}
+          # Structured reports only — omit raw pytest/tool logs that may carry
+          # connection strings or env-derived secrets from integration fixtures.
+          path: |
+            .reports/**/junit.xml
+            .reports/**/coverage.xml
+            .reports/**/coverage.json
+            apps/*/.reports/**/junit.xml
+            apps/*/.reports/**/coverage.xml
+            apps/*/.reports/**/coverage.json
+          if-no-files-found: ignore
+          retention-days: 7
+      # Why: save on every outcome, a failing or budget-stopped make test
+      # included, under a key unique to this run, so every run hands the
+      # results it recorded to the next selection.
+      - name: Save testmon database
+        if: ${{ always() }}
+        uses: actions/cache/save@v6
+        with:
+          path: ~/.cache/flext/infra/testmon
+          key: ${{ runner.os }}-3.13-flext-testmon-${{ github.run_id }}-${{ github.run_attempt }}
+
+
+      # Why: save on every outcome — including a failing gate — so
+      # the next run starts warm. Only written when the restore missed.
+      - name: Save tool caches
+        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+
   # End SECTION: ci job
 
   # === SECTION: release-plan job (managed) ===
@@ -205,7 +317,7 @@ jobs:
       # repository has not declared the credential requirement; a repository
       # that declares the CI_DEPENDENCIES_REQUIRED repo variable fails the
       # job non-zero with a typed message and without exposing any secret
-      # value (cosmos-1yzig: absence normalized as success is a defect).
+      # value (absence normalized as success is a defect).
       - name: Mint cross-repo dependency credential
         env:
           CI_DEPS_APP_ID: ${{ secrets.CI_DEPENDENCIES_APP_ID }}
@@ -266,7 +378,7 @@ jobs:
     permissions:
       contents: read
     # Draft is the typed WIP state: no repository Action is selected until the
-    # operator promotes the same PR to Review with a non-WIP head.
+    # same PR is promoted to Review with a non-WIP head.
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.draft == false }}
     runs-on: ubuntu-latest
     steps:

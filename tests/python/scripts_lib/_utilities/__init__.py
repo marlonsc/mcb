@@ -1,5 +1,9 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Tests.python.scripts Lib. Utilities package."""
+"""Tests.python.scripts Lib. Utilities package.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,7 +13,7 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from .matchers import TestMatchers, tm
+    from tests.python.scripts_lib._utilities.matchers import TestMatchers, tm
 
 
 __all__: tuple[str, ...] = ("TestMatchers", "tm")
@@ -19,7 +23,7 @@ _LAZY_IMPORTS = MappingProxyType(
         MappingProxyType({".matchers": ("TestMatchers", "tm")}),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
-    )
+    ),
 )
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)

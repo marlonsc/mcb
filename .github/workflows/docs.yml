@@ -36,7 +36,6 @@ jobs:
     # governed sibling repos. The job token authenticates both, as in CI.
     env:
       GITHUB_TOKEN: ${{ github.token }}
-      MISE_GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -44,17 +43,63 @@ jobs:
           submodules: false
           fetch-depth: 0
 
+      # Why: a cold runner re-downloaded every locked Mise tool
+      # (go included) on every Docs run, and a network blip failed setup. The
+      # cache is content-addressed by the committed locks, so a warm cache is
+      # always valid for the same lock and can never hide a finding; it only
+      # removes the cold download of the pinned tarballs.
+      - name: Restore tool caches
+        id: tool-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-3.13-tools-
+
+
       - name: Sync workspace toolchain
         run: make setup
+
+      # Why: save on every outcome — including a failing gate — so the next run
+      # starts warm. Only written when the restore missed.
+      - name: Save tool caches
+        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+
 
       - name: Generation drift (blocking)
         run: |
           make gen
-          git status --short
-          test -z "$(git status --porcelain --untracked-files=all)"
+          make verify-clean
 
       - name: Docs lifecycle (blocking)
         run: make docs
+
+      # The preceding generation check cannot see changes made by make docs.
+      - name: Verify docs byte-identical repository
+        run: make verify-clean
 
       # Failure diagnostics execute only after the original Make step has
       # already propagated its exact status to Actions.
@@ -65,8 +110,7 @@ jobs:
           for report_root in .reports apps; do
             if [ -d "$report_root" ]; then
               find "$report_root" \
-                \( -path '*/audit-summary.json' -o -path '*/audit-report.md' \
-                   -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
+                \( -path '*/audit-summary.json' -o -path '*/audit-report.md' -o -path '*/validate-summary.json' -o -path '*/validate-report.md' \) \
                 -type f -exec sh -eu -c '
                   for report_file do
                     printf "::group::%s\n" "$report_file"
@@ -94,6 +138,9 @@ jobs:
             apps/*/.reports/**/validate-summary.json
             apps/*/.reports/**/validate-report.md
           if-no-files-found: error
+          # The allowlisted reports live under hidden .reports directories.
+          # upload-artifact excludes hidden paths unless this is explicit.
+          include-hidden-files: true
           retention-days: 7
 
   build:
@@ -106,7 +153,6 @@ jobs:
     # Why: same authenticated toolchain and docs-source resolution as docs-quality.
     env:
       GITHUB_TOKEN: ${{ github.token }}
-      MISE_GITHUB_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -114,16 +160,50 @@ jobs:
           submodules: false
           fetch-depth: 0
 
+      # Why: same cold-download protection as the docs-quality job.
+      - name: Restore tool caches
+        id: tool-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-3.13-tools-
+
+
       - name: Sync workspace toolchain
         run: make setup
+      - name: Save tool caches
+        if: ${{ always() && steps.tool-cache.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@v6
+        with:
+          path: |
+            __pycache__
+            .mypy_cache
+            .pytest_cache
+            .ruff_cache
+            .pyrefly_cache
+            .benchmarks
+            .hypothesis
+            ~/.cache/uv
+            ~/.local/share/mise
+          key: ${{ runner.os }}-3.13-tools-${{ hashFiles('uv.lock', 'mise.lock', 'pyproject.toml') }}
+
 
       - name: Build site
         run: make docs
 
       - name: Verify byte-identical repository
-        run: |
-          git diff --exit-code -- .
-          git diff --cached --exit-code -- .
+        run: make verify-clean
 
       # Pages configure/upload exist only to feed deploy on main. Running them on
       # every integration push fails closed when Pages is unset and is wasted
