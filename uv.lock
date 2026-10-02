@@ -10,9 +10,6 @@ supported-markers = [
     "sys_platform == 'darwin'",
 ]
 
-[manifest]
-constraints = [{ name = "structlog", specifier = ">=26.1.0,<27" }]
-
 [[package]]
 name = "actionlint-py"
 version = "1.7.12.25"
@@ -858,7 +855,7 @@ dependencies = [
 [[package]]
 name = "flext-infra"
 version = "0.12.0"
-source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#6ca674aeb96f1085e53fa7563e212efdff4e7987" }
+source = { git = "https://github.com/flext-sh/flext-infra.git?rev=0.12.0-dev#ec273895af5481966dc7855f7a8609c325072c8b" }
 dependencies = [
     { name = "annotated-types" },
     { name = "beartype" },
@@ -1693,6 +1690,7 @@ dev = [
     { name = "mkdocstrings" },
     { name = "mkdocstrings-python" },
     { name = "mypy" },
+    { name = "platformdirs" },
     { name = "pre-commit" },
     { name = "pymdown-extensions" },
     { name = "pyrefly" },
@@ -1744,7 +1742,7 @@ requires-dist = [
     { name = "kubernetes", marker = "extra == 'gitops'", specifier = ">=36.0.3" },
     { name = "kubernetes-validate", marker = "extra == 'gitops'", specifier = ">=1.36.0" },
     { name = "pydantic", specifier = ">=2.13.5" },
-    { name = "pydantic-settings", specifier = ">=2.15,<3" },
+    { name = "pydantic-settings", specifier = ">=2.15.0" },
     { name = "requests", marker = "extra == 'gitops'", specifier = ">=2.34.2" },
     { name = "ruamel-yaml", marker = "extra == 'gitops'" },
     { name = "structlog", specifier = ">=26.1.0,<27" },
@@ -1773,6 +1771,7 @@ dev = [
     { name = "mkdocstrings", specifier = ">=1.0.6" },
     { name = "mkdocstrings-python", specifier = ">=2.0.8" },
     { name = "mypy", specifier = ">=2.3.1" },
+    { name = "platformdirs", specifier = ">=4.12.0" },
     { name = "pre-commit", specifier = ">=4.6.2" },
     { name = "pymdown-extensions" },
     { name = "pyrefly", specifier = ">=1.2.0" },
