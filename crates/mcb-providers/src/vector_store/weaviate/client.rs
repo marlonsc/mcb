@@ -1,36 +1,26 @@
 //! Weaviate vector store client implementation.
 
-use std::sync::Arc;
 use std::time::Duration;
 
-use dashmap::DashMap;
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
 use reqwest::Client;
 use serde_json::Value;
 
-use mcb_utils::constants::http::{
-    CONTENT_TYPE_JSON, HTTP_HEADER_AUTHORIZATION, HTTP_HEADER_CONTENT_TYPE,
-};
+use mcb_utils::constants::http::HTTP_HEADER_AUTHORIZATION;
 use mcb_utils::constants::vector_store::{
     VECTOR_FIELD_CONTENT, VECTOR_FIELD_FILE_PATH, VECTOR_FIELD_LANGUAGE, VECTOR_FIELD_START_LINE,
     WEAVIATE_AUTH_SCHEME, WEAVIATE_CLASS_PREFIX,
 };
 
-use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
-use crate::utils::vector_store::search_result_from_json_metadata;
+use crate::utils::vector_store::{HttpVectorStoreCore, search_result_from_json_metadata};
 
 /// Weaviate vector store provider.
 ///
 /// Implements the vector store domain ports using Weaviate's REST + GraphQL API.
 /// Collections map to Weaviate classes; vectors are app-supplied (`vectorizer: none`).
 pub struct WeaviateVectorStoreProvider {
-    pub(super) base_url: String,
-    pub(super) api_key: Option<String>,
-    pub(super) timeout: Duration,
-    pub(super) http_client: Client,
-    /// Track known collections locally with their dimensions.
-    pub(super) collections: Arc<DashMap<String, usize>>,
+    pub(super) core: HttpVectorStoreCore,
 }
 
 impl WeaviateVectorStoreProvider {
@@ -49,11 +39,7 @@ impl WeaviateVectorStoreProvider {
         http_client: Client,
     ) -> Self {
         Self {
-            base_url: base_url.trim_end_matches('/').to_owned(),
-            api_key: api_key.map(|k| k.trim().to_owned()),
-            timeout,
-            http_client,
-            collections: Arc::new(DashMap::new()),
+            core: HttpVectorStoreCore::new(base_url, api_key, timeout, http_client),
         }
     }
 
@@ -70,11 +56,6 @@ impl WeaviateVectorStoreProvider {
         format!("{WEAVIATE_CLASS_PREFIX}{sanitized}")
     }
 
-    /// Build a full URL for a Weaviate API path.
-    fn api_url(&self, path: &str) -> String {
-        format!("{}{}", self.base_url, path)
-    }
-
     /// Make an authenticated request to Weaviate.
     pub(super) async fn request(
         &self,
@@ -82,25 +63,16 @@ impl WeaviateVectorStoreProvider {
         path: &str,
         body: Option<Value>,
     ) -> Result<Value> {
-        let mut headers = vec![(HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned())];
-        if let Some(api_key) = &self.api_key {
-            headers.push((
+        let mut auth_headers = Vec::new();
+        if let Some(api_key) = &self.core.api_key {
+            auth_headers.push((
                 HTTP_HEADER_AUTHORIZATION,
                 format!("{WEAVIATE_AUTH_SCHEME} {api_key}"),
             ));
         }
-
-        send_vector_db_request(VectorDbRequestParams {
-            client: &self.http_client,
-            method,
-            url: self.api_url(path),
-            timeout: self.timeout,
-            provider: "Weaviate",
-            operation: path,
-            headers: &headers,
-            body: body.as_ref(),
-        })
-        .await
+        self.core
+            .request(method, path, body.as_ref(), "Weaviate", auth_headers)
+            .await
     }
 
     /// GraphQL field selection shared by all `Get` queries.

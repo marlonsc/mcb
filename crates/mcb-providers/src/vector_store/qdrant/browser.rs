@@ -7,6 +7,7 @@ use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, FileInfo, SearchResult};
 
 use super::QdrantVectorStoreProvider;
+use crate::utils::vector_store::sort_by_start_line;
 
 #[async_trait]
 impl VectorStoreBrowser for QdrantVectorStoreProvider {
@@ -76,7 +77,7 @@ impl VectorStoreBrowser for QdrantVectorStoreProvider {
             "search_result.payload",
         )?;
 
-        results.sort_by_key(|r| r.start_line);
+        sort_by_start_line(&mut results);
         Ok(results)
     }
 }
