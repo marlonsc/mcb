@@ -303,7 +303,7 @@ validate_doc_structure() {
 validate_permissions() {
 	log_info "Validating file permissions..."
 
-	local scripts=("generate-diagrams.sh" "validate.sh" "create-adr.sh" "mdbook-sync.sh" "markdown.sh" "extract-metrics.sh" "inject-metrics.sh" "generate-module-docs.sh")
+	local scripts=("generate-diagrams.sh" "validate.sh" "mdbook-sync.sh" "markdown.sh" "generate-module-docs.sh")
 
 	for script in "${scripts[@]}"; do
 		local script_path="$SCRIPT_DIR/$script"
@@ -436,9 +436,8 @@ EXAMPLES:
     $0 adrs              # Quick ADR check
     $0 structure links   # Multiple specific checks
 
-MAKE TARGETS:
-    make build WHAT=docs ACT=check      # Runs this script with 'all'
-    make build WHAT=docs ACT=validate   # Runs this script with 'adrs'
+CANONICAL LIFECYCLE:
+    make docs                         # Generate, format, validate, and audit docs
 
 EOF
 }

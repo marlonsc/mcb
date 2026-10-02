@@ -11,6 +11,6 @@
     }
   ],
   "printWidth": 88,
-  "proseWrap": "always",
+  "proseWrap": "preserve",
   "tabWidth": 4
 }

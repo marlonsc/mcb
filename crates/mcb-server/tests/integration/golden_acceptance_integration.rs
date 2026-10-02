@@ -28,6 +28,7 @@ use serde_json::json;
 
 use crate::utils::test_fixtures::shared_app_context;
 use mcb_domain::utils::tests::collection::unique_collection;
+use mcb_domain::utils::tests::fixtures::golden_queries_path;
 
 /// Test query structure matching the JSON fixture format
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -65,8 +66,7 @@ pub struct QueryConfig {
 ///
 /// Returns an error if the fixture file cannot be read or parsed.
 fn load_golden_queries() -> Result<GoldenQueriesConfig, Box<dyn std::error::Error>> {
-    let fixture_path =
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/golden_queries.json");
+    let fixture_path = golden_queries_path();
 
     let content = std::fs::read_to_string(&fixture_path)?;
 

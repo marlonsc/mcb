@@ -4,42 +4,34 @@
 //! for Qdrant, supporting collection management, vector operations, and semantic search.
 
 use std::fmt;
-use std::sync::Arc;
 use std::time::Duration;
 
-use dashmap::DashMap;
 use reqwest::Client;
 use serde_json::Value;
 
 use mcb_domain::error::{Error, Result};
 use mcb_domain::value_objects::{CollectionId, SearchResult};
-use mcb_utils::constants::http::CONTENT_TYPE_JSON;
 
-use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
-use crate::utils::vector_store::search_result_from_json_metadata;
-use mcb_utils::constants::http::HTTP_HEADER_CONTENT_TYPE;
+use crate::utils::vector_store::{HttpVectorStoreCore, search_result_from_json_metadata};
 
 /// Qdrant vector search engine client.
 pub struct QdrantVectorStoreProvider {
-    pub(super) base_url: String,
-    pub(super) api_key: Option<String>,
-    pub(super) timeout: Duration,
-    pub(super) http_client: Client,
-    pub(super) collections: Arc<DashMap<String, usize>>,
+    pub(super) core: HttpVectorStoreCore,
 }
 
 impl fmt::Debug for QdrantVectorStoreProvider {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("QdrantVectorStoreProvider")
-            .field("base_url", &self.base_url)
+            .field("base_url", &self.core.base_url)
             .field(
                 "api_key",
                 &self
+                    .core
                     .api_key
                     .as_ref()
                     .map(|_| mcb_utils::constants::REDACTED),
             )
-            .field("timeout", &self.timeout)
+            .field("timeout", &self.core.timeout)
             .finish()
     }
 }
@@ -54,16 +46,8 @@ impl QdrantVectorStoreProvider {
         http_client: Client,
     ) -> Self {
         Self {
-            base_url: base_url.trim_end_matches('/').to_owned(),
-            api_key: api_key.map(|k| k.trim().to_owned()),
-            timeout,
-            http_client,
-            collections: Arc::new(DashMap::new()),
+            core: HttpVectorStoreCore::new(base_url, api_key, timeout, http_client),
         }
-    }
-
-    pub(super) fn api_url(&self, path: &str) -> String {
-        format!("{}{}", self.base_url, path)
     }
 
     pub(super) fn collection_path(collection: &CollectionId) -> String {
@@ -148,23 +132,13 @@ impl QdrantVectorStoreProvider {
         path: &str,
         body: Option<Value>,
     ) -> Result<Value> {
-        let mut headers = vec![(HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned())];
-
-        if let Some(ref key) = self.api_key {
-            headers.push(("api-key", key.clone()));
+        let mut auth_headers = Vec::new();
+        if let Some(ref key) = self.core.api_key {
+            auth_headers.push(("api-key", key.clone()));
         }
-
-        send_vector_db_request(VectorDbRequestParams {
-            client: &self.http_client,
-            method,
-            url: self.api_url(path),
-            timeout: self.timeout,
-            provider: "Qdrant",
-            operation: path,
-            headers: &headers,
-            body: body.as_ref(),
-        })
-        .await
+        self.core
+            .request(method, path, body.as_ref(), "Qdrant", auth_headers)
+            .await
     }
 
     pub(super) fn point_to_search_result(item: &Value, score: f64) -> SearchResult {

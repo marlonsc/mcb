@@ -15,6 +15,7 @@
 //! - **Complexity Metrics**: Calculating cyclomatic and cognitive complexity scores.
 
 use std::path::Path;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use mcb_domain::error::Result;
@@ -256,9 +257,17 @@ fn analyze_file_complexity(file_path: &Path, include_functions: bool) -> Result<
 // Linkme Registration
 // ---------------------------------------------------------------------------
 
+/// Build the validation service from the linkme service registry.
+///
+/// Sole construction site for [`InfraValidationService`], keeping DI
+/// composition inside the registry (composition mechanism).
+fn build_validation_service_from_registry(
+    _context: &dyn std::any::Any,
+) -> mcb_domain::Result<Arc<dyn ValidationServiceInterface>> {
+    Ok(Arc::new(InfraValidationService::new()))
+}
+
 mcb_domain::register_service!(
     mcb_utils::constants::SERVICE_NAME_VALIDATION,
-    mcb_domain::registry::services::ServiceBuilder::Validation(|_context| {
-        Ok(std::sync::Arc::new(InfraValidationService::new()))
-    }),
+    mcb_domain::registry::services::ServiceBuilder::Validation(build_validation_service_from_registry),
 );

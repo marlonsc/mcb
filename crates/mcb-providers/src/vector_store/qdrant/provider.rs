@@ -27,7 +27,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         )
         .await?;
 
-        self.collections.insert(name.to_string(), dimensions);
+        self.core.collections.insert(name.to_string(), dimensions);
         Ok(())
     }
 
@@ -35,7 +35,7 @@ impl VectorStoreProvider for QdrantVectorStoreProvider {
         self.request_collection(reqwest::Method::DELETE, name, None)
             .await?;
 
-        self.collections.remove(&name.to_string());
+        self.core.collections.remove(&name.to_string());
         Ok(())
     }
 

@@ -121,33 +121,18 @@ Documentation templates and standards.
 
 ## 🔧 Documentation Automation
 
-This documentation is fully automated and validated. Use these commands:
+The repository Make lifecycle generates metrics and validates documentation:
 
 ```bash
-# Generate all documentation (metrics, Rust API docs, mdbook)
-make build WHAT=docs
-
-# Validate documentation (ADRs, structure, links). QUICK=1 skips external link checks
-make build WHAT=docs ACT=validate
-make build WHAT=docs ACT=validate QUICK=1
-
-# Lint markdown. FIX=1 runs markdownlint -f to auto-fix
-make build WHAT=docs ACT=lint
-make build WHAT=docs ACT=lint FIX=1
-
-# Fix markdown (metrics + markdownlint -f). Run before commit
-make build WHAT=docs ACT=lint FIX=1
-
-# Generate architecture diagrams (PlantUML)
-make build WHAT=docs ACT=diagrams
-
-# List ADRs / create new ADR
-make build WHAT=docs ACT=adr
-make build WHAT=docs ACT=adr-new
+make setup
+make docs
+mcb-scripts adr --title "New Decision" --status Proposed
 ```
 
-`make build WHAT=docs ACT=lint` and `make build WHAT=docs ACT=validate` do not require a
-Rust build (useful when `target/` is broken or for docs-only CI).
+`make docs` derives [current metrics](generated/METRICS.md) from Rust and documentation
+sources, then runs the generated documentation checks. Historical documents are never
+rewritten with current metrics. The ADR CLI renders the
+[ADR template](templates/adr-template.md) with validated title and status.
 
 ## 📊 Documentation Quality
 
@@ -180,7 +165,7 @@ When contributing to documentation:
 
 1. **Use Templates**- Follow established templates for consistency
 2. **Automate Updates**- Ensure documentation updates are automated
-3. **Validate Changes** - Run `make build WHAT=docs ACT=validate` before committing
+3. **Validate Changes** - Run `make docs` before committing
 4. **Update References**- Keep cross-references current
 5. **Follow Standards**- Adhere to established formatting and structure
 

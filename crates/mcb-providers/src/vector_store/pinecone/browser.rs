@@ -5,9 +5,8 @@ use mcb_domain::error::Result;
 use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, FileInfo, SearchResult};
 
-use mcb_utils::constants::vector_store::VECTOR_FIELD_FILE_PATH;
-
 use super::PineconeVectorStoreProvider;
+use crate::utils::vector_store::{file_path_eq_filter, sort_by_start_line};
 
 #[async_trait]
 impl VectorStoreBrowser for PineconeVectorStoreProvider {
@@ -58,10 +57,6 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
         collection: &CollectionId,
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
-        let filter = serde_json::json!({
-            (VECTOR_FIELD_FILE_PATH): { "$eq": file_path }
-        });
-
         let collection_str = collection.to_string();
         let dimensions = self.collection_dimensions(&collection_str)?;
 
@@ -73,11 +68,11 @@ impl VectorStoreBrowser for PineconeVectorStoreProvider {
                 "topK": mcb_utils::constants::BROWSE_MAX_CHUNKS_PER_FILE,
                 "namespace": collection_str,
                 "includeMetadata": true,
-                "filter": filter
+                "filter": file_path_eq_filter(file_path)
             }))
             .await?;
 
-        results.sort_by_key(|r| r.start_line);
+        sort_by_start_line(&mut results);
         Ok(results)
     }
 }

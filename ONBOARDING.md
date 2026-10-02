@@ -159,7 +159,7 @@ adapters from the Loco `AppContext` so handlers never import providers directly.
 | Add an embedding or vector provider | `crates/mcb-domain/src/ports/providers/` + `crates/mcb-providers/src/`                                              |
 | Change architecture rules           | `config/mcb-validate.toml` + `crates/mcb-validate/src/`                                                             |
 | Change runtime config               | `config/development.yaml`, `config/test.yaml`, `config/production.yaml` + `crates/mcb-infrastructure/src/config.rs` |
-| Add a test                          | Matching crate `tests/` directory or `tests/golden/` for end-to-end MCP scenarios                                   |
+| Add a test                          | Matching crate `tests/` directory for end-to-end MCP scenarios                                                      |
 | Update docs                         | `docs/` and `book/src/`; run `make build WHAT=docs ACT=lint`                                                        |
 
 ## Next Steps
