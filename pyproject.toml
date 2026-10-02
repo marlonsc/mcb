@@ -512,6 +512,11 @@ split-on-trailing-comma = false
   "verbose-raise",
   "write-whole-file",
 ]
+"scripts/**/*.py" = [
+  "commented-out-code",
+  "line-too-long",
+  "typing-only-first-party-import",
+]
 "tests/**/*.py" = ["assert"]
 
 [tool.ruff.lint.pydocstyle]
