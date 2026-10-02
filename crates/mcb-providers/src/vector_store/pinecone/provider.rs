@@ -37,13 +37,13 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
 
     async fn create_collection(&self, name: &CollectionId, dimensions: usize) -> Result<()> {
         let name_str = name.to_string();
-        if self.collections.contains_key(&name_str) {
+        if self.core.collections.contains_key(&name_str) {
             return Err(Error::vector_db(format!(
                 "Collection '{name}' already exists"
             )));
         }
         // Pinecone uses namespaces within an index; creation is implicit on first upsert
-        self.collections.insert(name_str, dimensions);
+        self.core.collections.insert(name_str, dimensions);
         Ok(())
     }
 
@@ -56,7 +56,7 @@ impl VectorStoreProvider for PineconeVectorStoreProvider {
         )
         .await?;
 
-        self.collections.remove(&name_str);
+        self.core.collections.remove(&name_str);
         Ok(())
     }
 

@@ -1,31 +1,23 @@
 //! Pinecone vector store client implementation.
 
-use std::sync::Arc;
 use std::time::Duration;
 
-use dashmap::DashMap;
 use mcb_domain::error::{Error, Result};
-use mcb_utils::constants::http::CONTENT_TYPE_JSON;
+use mcb_utils::constants::http::PINECONE_API_KEY_HEADER;
 
 use mcb_domain::value_objects::SearchResult;
 use reqwest::Client;
 use serde_json::Value;
 
-use crate::utils::http::{VectorDbRequestParams, send_vector_db_request};
-use crate::utils::vector_store::search_result_from_json_metadata;
-use mcb_utils::constants::http::{HTTP_HEADER_CONTENT_TYPE, PINECONE_API_KEY_HEADER};
+use crate::utils::vector_store::{HttpVectorStoreCore, search_result_from_json_metadata};
 
 /// Pinecone vector store provider
 ///
 /// Implements the vector store domain ports using Pinecone's cloud REST API.
 /// Supports index management, vector upsert, search, and metadata filtering.
 pub struct PineconeVectorStoreProvider {
+    pub(super) core: HttpVectorStoreCore,
     pub(super) api_key: String,
-    pub(super) host: String,
-    pub(super) timeout: Duration,
-    pub(super) http_client: Client,
-    /// Track collections (namespaces) locally with their dimensions
-    pub(super) collections: Arc<DashMap<String, usize>>,
     /// Default dimensions sourced from provider config (embedding model).
     /// Used when a collection's dimensions are unknown locally.
     pub(super) default_dimensions: Option<usize>,
@@ -49,18 +41,10 @@ impl PineconeVectorStoreProvider {
         default_dimensions: Option<usize>,
     ) -> Self {
         Self {
+            core: HttpVectorStoreCore::new(host, None, timeout, http_client),
             api_key: api_key.trim().to_owned(),
-            host: host.trim_end_matches('/').to_owned(),
-            timeout,
-            http_client,
-            collections: Arc::new(DashMap::new()),
             default_dimensions,
         }
-    }
-
-    /// Build a URL for the Pinecone API
-    pub(crate) fn api_url(&self, path: &str) -> String {
-        format!("{}{}", self.host, path)
     }
 
     /// Make an authenticated request to Pinecone
@@ -70,22 +54,15 @@ impl PineconeVectorStoreProvider {
         path: &str,
         body: Option<Value>,
     ) -> Result<Value> {
-        let headers = vec![
-            (PINECONE_API_KEY_HEADER, self.api_key.clone()),
-            (HTTP_HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON.to_owned()),
-        ];
-
-        send_vector_db_request(VectorDbRequestParams {
-            client: &self.http_client,
-            method,
-            url: self.api_url(path),
-            timeout: self.timeout,
-            provider: "Pinecone",
-            operation: path,
-            headers: &headers,
-            body: body.as_ref(),
-        })
-        .await
+        self.core
+            .request(
+                method,
+                path,
+                body.as_ref(),
+                "Pinecone",
+                vec![(PINECONE_API_KEY_HEADER, self.api_key.clone())],
+            )
+            .await
     }
 
     pub(crate) fn extract_json_field<'a, T, F>(
@@ -122,7 +99,7 @@ impl PineconeVectorStoreProvider {
     }
 
     pub(crate) fn collection_dimensions(&self, collection: &str) -> Result<usize> {
-        if let Some(d) = self.collections.get(collection) {
+        if let Some(d) = self.core.collections.get(collection) {
             return Ok(*d.value());
         }
         self.default_dimensions.ok_or_else(|| {

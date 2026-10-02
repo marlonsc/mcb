@@ -6,9 +6,10 @@ use mcb_domain::ports::{VectorStoreAdmin, VectorStoreBrowser};
 use mcb_domain::value_objects::{CollectionId, CollectionInfo, FileInfo, SearchResult};
 use serde_json::Value;
 
-use mcb_utils::constants::vector_store::{VECTOR_FIELD_FILE_PATH, WEAVIATE_BATCH_SIZE};
+use mcb_utils::constants::vector_store::WEAVIATE_BATCH_SIZE;
 
 use super::WeaviateVectorStoreProvider;
+use crate::utils::vector_store::{file_path_eq_filter, sort_by_start_line};
 
 #[async_trait]
 impl VectorStoreBrowser for WeaviateVectorStoreProvider {
@@ -44,12 +45,12 @@ impl VectorStoreBrowser for WeaviateVectorStoreProvider {
         file_path: &str,
     ) -> Result<Vec<SearchResult>> {
         let class = Self::class_name(collection);
-        let filter = serde_json::json!({ (VECTOR_FIELD_FILE_PATH): { "$eq": file_path } });
+        let filter = file_path_eq_filter(file_path);
         let where_clause = Self::where_clause(&filter.to_string())?;
         let query = Self::build_get_query(&class, None, WEAVIATE_BATCH_SIZE, Some(&where_clause))?;
 
         let mut results = self.run_get_query(&class, query).await?;
-        results.sort_by_key(|r| r.start_line);
+        sort_by_start_line(&mut results);
         Ok(results)
     }
 }
