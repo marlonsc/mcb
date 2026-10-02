@@ -2,12 +2,12 @@
 # conform never overwrites this input. Declare members/exclusions here, then
 # run `make gen WHAT=apply APPLY=Y`.
 version: 3
-name: mcb-scripts
+name: mcb
 # Why (mro-5j8p): short issue-prefix (bd max 20 chars) + Dolt-safe ledger_id.
 ledger_prefix: mcb
 ledger_id: mcb
 repository:
-  name: mcb-scripts
+  name: mcb
   distribution: mcb-scripts
   provider: marlonsc
   url: https://github.com/marlonsc/mcb.git
