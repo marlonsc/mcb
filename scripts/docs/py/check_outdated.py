@@ -50,7 +50,7 @@ def _is_suppressed(line: str) -> bool:
 
 
 def _process_lines(
-    lines: list[str], rel_filepath: str, outdated_patterns: list[tuple[str, str]]
+    lines: list[str], rel_filepath: str, outdated_patterns: list[tuple[str, str]],
 ) -> list[tuple[str, int, str, str]]:
     issues_in_file: list[tuple[str, int, str, str]] = []
     for i, line in enumerate(lines, 1):
@@ -66,14 +66,14 @@ def _process_lines(
 
 
 def _check_files(
-    docs_dir: str, project_root: Path
+    docs_dir: str, project_root: Path,
 ) -> tuple[list[tuple[str, int, str, str]], int, list[str]]:
     issues: list[tuple[str, int, str, str]] = []
     checked = 0
     unreadable: list[str] = []
 
     md_files = utils.find_md_files(
-        docs_dir, exclude_dirs={".git", "fixtures", "archive"}
+        docs_dir, exclude_dirs={".git", "fixtures", "archive"},
     )
 
     for filepath in md_files:
@@ -95,7 +95,11 @@ def _check_files(
 
 
 def run(settings: CheckOutdatedSettings) -> p.Result[int]:
-    """Check outdated content in documentation."""
+    """Check outdated content in documentation.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+    """
     project_root = Path(settings.root).resolve()
     if settings.root == Path():
         project_root = utils.get_project_root()
@@ -107,17 +111,17 @@ def run(settings: CheckOutdatedSettings) -> p.Result[int]:
 
     issues, checked, unreadable = _check_files(docs_dir, project_root)
 
-    logger.info(f"Checked {checked} files for outdated content.")
+    logger.info("Checked %s files for outdated content.", checked)
 
     if unreadable:
         for entry in sorted(unreadable):
-            logger.error(f"Unreadable documentation file: {entry}")
+            logger.error("Unreadable documentation file: %s", entry)
         return r[int].fail(f"{len(unreadable)} unreadable documentation file(s)")
 
     if issues:
         logger.info(f"Found {len(issues)} potential outdated references:")
         for fp, lineno, desc, content in sorted(issues):
-            logger.info(f"  {fp}:{lineno} [{desc}] {content}")
+            logger.info("  %s:%s [%s] %s", fp, lineno, desc, content)
         # Return 0 for now as these are often false positives or acceptable history
         return r[int].ok(len(issues))
 
@@ -127,7 +131,7 @@ def run(settings: CheckOutdatedSettings) -> p.Result[int]:
 
 def main() -> None:
     app = cli.create_app_with_common_params(
-        name="check-outdated", help_text="Check outdated content in docs."
+        name="check-outdated", help_text="Check outdated content in docs.",
     )
     cli.register_result_command(
         app,

@@ -33,6 +33,12 @@ class BaseMcbSettings(FlextSettings):
 
         Honours ``MCB_ENV_FILE``; otherwise prefers ``.env.mcb-{namespace}``
         when ``namespace`` is given and the file exists, falling back to ``.env``.
+
+        Returns:
+            The resulting ``str``.
+
+        Raises:
+            ValueError: If ``not custom_path.is_file()``.
         """
         custom_env_file = os.environ.get(c.ENV_FILE_ENV_VAR)
         if custom_env_file:
@@ -79,10 +85,10 @@ class McbSettings(BaseMcbSettings):
 
     project_root: Path = m.Field(default=Path(), description="Project root directory")
     k8s_dir: Path = m.Field(
-        default=Path("k8s"), description="Kubernetes manifests directory"
+        default=Path("k8s"), description="Kubernetes manifests directory",
     )
     docs_dir: Path = m.Field(
-        default=Path("docs"), description="Documentation directory"
+        default=Path("docs"), description="Documentation directory",
     )
     qlty_check_sarif: Path = m.Field(
         default=Path("qlty.check.current.sarif"),

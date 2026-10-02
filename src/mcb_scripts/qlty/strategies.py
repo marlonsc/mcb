@@ -196,7 +196,11 @@ STRATEGIES = {
 
 
 def get_strategy(rule_id: str) -> FixStrategy | None:
-    """Get the appropriate fix strategy for a given rule ID."""
+    """Get the appropriate fix strategy for a given rule ID.
+
+    Returns:
+        The resulting ``FixStrategy | None``.
+    """
     # Rule ID might be "qlty:similar-code" or just "similar-code"
     short = rule_id.rsplit(":", maxsplit=1)[-1]
     return STRATEGIES.get(short)

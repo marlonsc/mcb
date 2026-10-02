@@ -1,4 +1,8 @@
-"""Generated metrics follow source changes and reach a stable second run."""
+"""Generated metrics follow source changes and reach a stable second run.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -33,7 +37,7 @@ def test_generate_metrics_tracks_declared_sources_and_is_idempotent(
         directory = tmp_path / category["root"]
         directory.mkdir(parents=True)
         (directory / "sample.rs").write_text(
-            "#[test]\nfn sample() {}\n", encoding="utf-8"
+            "#[test]\nfn sample() {}\n", encoding="utf-8",
         )
     (tmp_path / config["adr_dir"]).mkdir()
     (tmp_path / config["module_docs_dir"]).mkdir()

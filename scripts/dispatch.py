@@ -11,6 +11,9 @@ resolvable selector.
 Dispatch invariants: verb and selector are allowlisted to `[a-z0-9_-]+`, the
 resolved handler must live inside the declared script roots, and the child
 process runs argv-listed without a shell.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

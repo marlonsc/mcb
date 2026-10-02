@@ -6,6 +6,9 @@ Reads the TOML config and generates one Rust file per entity with:
 - From<DomainType> for entity::ActiveModel
 
 Usage: python3 scripts/codegen-conversions.py
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -59,6 +62,9 @@ def parse_entity_model_fields(entity_module: str) -> dict[str, str]:
     """Parse the SeaORM entity .rs file to extract Model field names and types.
 
     Returns a dict mapping field_name -> rust_type (e.g. 'String', 'Option<String>', 'i64').
+
+    Returns:
+        The resulting ``dict[str, str]``.
     """
     # Entity files use plural names; the mod.rs re-exports as singular.
     # Read mod.rs to find the mapping: `pub use {plural} as {singular};`
@@ -101,7 +107,11 @@ def _test_value_for_field(
     convert: dict[str, ConverterConfig],
     not_set: list[str],
 ) -> str:
-    """Generate a realistic test value for a Model field."""
+    """Generate a realistic test value for a Model field.
+
+    Returns:
+        The resulting ``str``.
+    """
     conv = convert.get(field_name) or {"type": ""}
     ctype = conv.get("type", "")
 
@@ -397,7 +407,11 @@ def needs_serde_json(convert: dict[str, ConverterConfig]) -> bool:
 
 
 def gen_test_block(name: str, entity: EntityConfig) -> str:
-    """Generate #[cfg(test)] mod tests block for round-trip conversion test."""
+    """Generate #[cfg(test)] mod tests block for round-trip conversion test.
+
+    Returns:
+        The resulting ``str``.
+    """
     domain_type = entity["domain"]
     entity_module = entity["entity"]
     fields = entity.get("fields", [])
@@ -541,7 +555,7 @@ def gen_mod_rs(names: list[str]) -> str:
 def main() -> None:
     with Path(CONFIG_PATH).open("rb") as f:
         config = t.TypeAdapter(dict[str, EntityConfig]).validate_python(
-            tomllib.load(f), experimental_allow_partial=True
+            tomllib.load(f), experimental_allow_partial=True,
         )
 
     entity_names = []

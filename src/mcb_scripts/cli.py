@@ -1,14 +1,17 @@
-"""Repository automation CLI exposed by the generated package entry point."""
+"""Repository automation CLI exposed by the generated package entry point.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
 from flext_cli import cli
 
 from flext_core import m, p, r
-
-from .docs.adr import create_adr
-from .docs.metrics import generate_metrics
-from .docs.utils import get_project_root
+from mcb_scripts.docs.adr import create_adr
+from mcb_scripts.docs.metrics import generate_metrics
+from mcb_scripts.docs.utils import get_project_root
 
 
 class AdrInput(m.Value):
@@ -25,7 +28,7 @@ class MetricsInput(m.Value):
 
 def _create_adr(request: AdrInput) -> p.Result[str]:
     destination = create_adr(
-        get_project_root(), request.title, request.status, dry_run=request.dry_run
+        get_project_root(), request.title, request.status, dry_run=request.dry_run,
     )
     verb = "Would create" if request.dry_run else "Created"
     return r[str].ok(f"{verb} {destination}")
@@ -38,9 +41,13 @@ def _generate_metrics(_request: MetricsInput) -> p.Result[str]:
 
 
 def main() -> int:
-    """Register typed commands and execute the public CLI."""
+    """Register typed commands and execute the public CLI.
+
+    Returns:
+        The resulting ``int``.
+    """
     app = cli.create_app_with_common_params(
-        name="mcb-scripts", help_text="MCB repository automation"
+        name="mcb-scripts", help_text="MCB repository automation",
     )
     cli.register_result_command(
         app,

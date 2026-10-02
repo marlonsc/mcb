@@ -21,7 +21,11 @@ logger = get_logger(__name__)
 
 
 def parse_url(url: str) -> tuple[str, int] | None:
-    """Extract host and port from a URL-ish string."""
+    """Extract host and port from a URL-ish string.
+
+    Returns:
+        The resulting ``tuple[str, int] | None``.
+    """
     rest = url.rsplit("://", 1)[-1]
     rest = rest.rsplit("@", 1)[-1]
     host_port = rest.split("/", 1)[0]
@@ -43,7 +47,11 @@ def is_reachable(host: str, port: int, timeout: float = 0.3) -> bool:
 
 
 def load_services() -> dict[str, str]:
-    """Load configured services from config/tests.toml."""
+    """Load configured services from config/tests.toml.
+
+    Returns:
+        The resulting ``dict[str, str]``.
+    """
     if not CONFIG_PATH.is_file():
         return {}
     data = tomllib.loads(CONFIG_PATH.read_text(encoding="utf-8"))
@@ -51,12 +59,16 @@ def load_services() -> dict[str, str]:
 
 
 def main() -> int:
-    """Print availability summary and exit 0 only if all configured services are up."""
+    """Print availability summary and exit 0 only if all configured services are up.
+
+    Returns:
+        The resulting ``int``.
+    """
     services = load_services()
     if not services:
         logger.info(
             "No external test services configured in config/tests.toml; "
-            "skipping external test group."
+            "skipping external test group.",
         )
         return 1
 
@@ -66,7 +78,7 @@ def main() -> int:
         parsed = parse_url(url)
         available = parsed is not None and is_reachable(*parsed)
         marker = "✓" if available else "✗"
-        logger.info(f"  {marker} {key}: {url}")
+        logger.info("  %s %s: %s", marker, key, url)
         if not available:
             all_available = False
 
@@ -75,7 +87,7 @@ def main() -> int:
         return 0
 
     logger.info(
-        "One or more external services are unavailable; skipping external test group."
+        "One or more external services are unavailable; skipping external test group.",
     )
     return 1
 

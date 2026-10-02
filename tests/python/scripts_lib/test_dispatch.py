@@ -5,6 +5,9 @@ The dispatcher is the project-owned executor behind every script verb
 Its rejection contract is exercised directly — no make bootstrap — because
 a single make invocation pays the direnv/mise/uv harness cost and cannot fit
 the configured item budgets.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations
@@ -34,6 +37,7 @@ def _run(verb: str, what: str | None) -> subprocess.CompletedProcess[str]:
 
 
 def test_unknown_selector_is_rejected_with_marker() -> None:
+    """Test unknown selector is rejected with marker."""
     result = _run("rust", "__invalid__")
     combined = result.stdout + result.stderr
     assert result.returncode != 0, combined
@@ -41,6 +45,7 @@ def test_unknown_selector_is_rejected_with_marker() -> None:
 
 
 def test_unknown_selector_on_gitops_is_rejected() -> None:
+    """Test unknown selector on gitops is rejected."""
     result = _run("gitops", "__invalid__")
     combined = result.stdout + result.stderr
     assert result.returncode != 0, combined
@@ -48,6 +53,7 @@ def test_unknown_selector_on_gitops_is_rejected() -> None:
 
 
 def test_bare_verb_prints_handler_menu() -> None:
+    """Test bare verb prints handler menu."""
     result = _run("rust", None)
     combined = result.stdout + result.stderr
     assert result.returncode == 0, combined
@@ -56,6 +62,7 @@ def test_bare_verb_prints_handler_menu() -> None:
 
 
 def test_invalid_characters_are_rejected_before_resolution() -> None:
+    """Test invalid characters are rejected before resolution."""
     result = _run("rust", "bad;rm")
     combined = result.stdout + result.stderr
     assert result.returncode != 0, combined
@@ -63,6 +70,7 @@ def test_invalid_characters_are_rejected_before_resolution() -> None:
 
 
 def test_gitops_all_selector_runs_the_registered_handler() -> None:
+    """Test gitops all selector runs the registered handler."""
     result = _run("gitops", "all")
     combined = result.stdout + result.stderr
     assert result.returncode == 0, combined

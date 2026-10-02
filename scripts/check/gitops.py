@@ -49,12 +49,15 @@ def run(settings: GitopsSettings) -> p.Result[str]:
     serializes a successful result as a JSON value, and GitOpsSummary carries
     Path and nested report objects that are not JSON values. The summary is
     still reported in full through the logger below.
+
+    Returns:
+        The resulting ``p.Result[str]``.
     """
     k8s_root = settings.root / str(McbSettings().k8s_dir)
     if not k8s_root.is_dir():
         # A missing root is a configuration error, not a legitimate skip:
         # a wrong k8s_dir must fail the gate, never pass it vacuously.
-        logger.error(f"GitOps root does not exist: {k8s_root}")
+        logger.error("GitOps root does not exist: %s", k8s_root)
         return r[str].fail(f"GitOps root does not exist: {k8s_root}")
     summary_result = summarize(k8s_root)
     if summary_result.failure:
@@ -72,9 +75,13 @@ def run(settings: GitopsSettings) -> p.Result[str]:
 
 
 def main() -> None:
-    """Entrypoint used by the cosmos-command dispatcher and direct CLI runs."""
+    """Entrypoint used by the cosmos-command dispatcher and direct CLI runs.
+
+    Raises:
+        SystemExit: If ``result.failure``.
+    """
     app = cli.create_app_with_common_params(
-        name="check-gitops", help_text="Run MCB GitOps validation discovery."
+        name="check-gitops", help_text="Run MCB GitOps validation discovery.",
     )
     cli.register_result_command(
         app,

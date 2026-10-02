@@ -1,4 +1,8 @@
-"""Public ADR creation behavior against the repository template."""
+"""Public ADR creation behavior against the repository template.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 

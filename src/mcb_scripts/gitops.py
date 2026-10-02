@@ -71,7 +71,11 @@ YamlNode = CommentedMap | CommentedSeq | str | int | float | bool | None
 
 
 def discover_targets(root: Path) -> list[GitOpsTarget]:
-    """Discover Helm and Kustomize render targets below ``root``."""
+    """Discover Helm and Kustomize render targets below ``root``.
+
+    Returns:
+        The resulting ``list[GitOpsTarget]``.
+    """
     if not root.exists():
         return []
 
@@ -102,7 +106,7 @@ def summarize(root: Path) -> p.Result[GitOpsSummary]:
     report_result = analyze(root)
     if report_result.failure:
         return FlextResult[GitOpsSummary].fail(
-            report_result.error or "gitops analysis failed"
+            report_result.error or "gitops analysis failed",
         )
     report = report_result.unwrap()
 
@@ -113,7 +117,7 @@ def summarize(root: Path) -> p.Result[GitOpsSummary]:
                 message=f"{root}: {report.total_issues} GitOps policy issue(s)",
                 targets=targets,
                 report=report,
-            )
+            ),
         )
     if not targets:
         return FlextResult[GitOpsSummary].ok(
@@ -122,7 +126,7 @@ def summarize(root: Path) -> p.Result[GitOpsSummary]:
                 message=f"{root}: no Helm or Kustomize targets found",
                 targets=[],
                 report=report,
-            )
+            ),
         )
     return FlextResult[GitOpsSummary].ok(
         GitOpsSummary(
@@ -130,12 +134,16 @@ def summarize(root: Path) -> p.Result[GitOpsSummary]:
             message=f"{root}: discovered {len(targets)} GitOps target(s)",
             targets=targets,
             report=report,
-        )
+        ),
     )
 
 
 def analyze(root: Path) -> p.Result[AnalysisReport]:
-    """Analyze GitOps source manifests through the existing qlty report model."""
+    """Analyze GitOps source manifests through the existing qlty report model.
+
+    Returns:
+        The resulting ``p.Result[AnalysisReport]``.
+    """
     issues = policy_issues(root) + rendered_issues(root)
     return analyze_issues(issues)
 
@@ -148,7 +156,7 @@ def policy_issues(root: Path) -> list[SarifIssue]:
             documents = _load_yaml_documents(path)
         except YAMLError as exc:
             issues.append(
-                _issue("gitops:yaml-parse", f"YAML parse error: {exc}", path, 1)
+                _issue("gitops:yaml-parse", f"YAML parse error: {exc}", path, 1),
             )
             continue
         for document in documents:
@@ -166,7 +174,11 @@ def policy_issues(root: Path) -> list[SarifIssue]:
 
 
 def rendered_issues(root: Path, threads: int = 4) -> list[SarifIssue]:
-    """Render Helm/Kustomize targets and validate emitted manifests."""
+    """Render Helm/Kustomize targets and validate emitted manifests.
+
+    Returns:
+        The resulting ``list[SarifIssue]``.
+    """
     targets = discover_targets(root)
     if not targets:
         return []
@@ -191,7 +203,11 @@ class RenderOutcome:
 
 
 def _render_and_validate(target: GitOpsTarget) -> list[SarifIssue]:
-    """Render a single target and run schema validation on the output."""
+    """Render a single target and run schema validation on the output.
+
+    Returns:
+        The resulting ``list[SarifIssue]``.
+    """
     outcome = cached_render(target)
     if outcome.issue is not None:
         return [outcome.issue]
@@ -199,7 +215,7 @@ def _render_and_validate(target: GitOpsTarget) -> list[SarifIssue]:
     if rendered is None:
         # Unreachable: every no-output outcome carries its failure issue.
         return [
-            _issue("gitops:render-failed", "Render produced no output", target.path, 1)
+            _issue("gitops:render-failed", "Render produced no output", target.path, 1),
         ]
     issues: list[SarifIssue] = []
     parser = YAML(typ="safe")
@@ -212,7 +228,7 @@ def _render_and_validate(target: GitOpsTarget) -> list[SarifIssue]:
                 f"Rendered YAML parse error: {exc}",
                 target.path,
                 1,
-            )
+            ),
         ]
 
     for idx, document in enumerate(documents):
@@ -235,7 +251,7 @@ def _render_and_validate(target: GitOpsTarget) -> list[SarifIssue]:
                     f"Schema validation failed: {exc}",
                     target.path,
                     line,
-                )
+                ),
             )
     return issues
 
@@ -244,6 +260,9 @@ def cached_render(target: GitOpsTarget) -> RenderOutcome:
     """Render a target, caching successful output by input content hash.
 
     Failures are never cached: the next run re-attempts the render.
+
+    Returns:
+        The resulting ``RenderOutcome``.
     """
     cache_key = render_cache_key(target)
     cache_path = CACHE_DIR / f"{cache_key}.yaml"
@@ -270,7 +289,11 @@ def render_cache_key(target: GitOpsTarget) -> str:
 
 
 def _render_target(target: GitOpsTarget) -> RenderOutcome:
-    """Run helm template or kustomize build for a target."""
+    """Run helm template or kustomize build for a target.
+
+    Returns:
+        The resulting ``RenderOutcome``.
+    """
     if target.kind == "helm":
         tool, args = "helm", ["template", str(target.path)]
     elif target.kind == "kustomize":
@@ -365,7 +388,7 @@ def _image_references(node: YamlNode) -> list[ImageReference]:
         image = node.get("image")
         if isinstance(image, str):
             references.append(
-                ImageReference(value=image, line=_line_for_key(node, "image"))
+                ImageReference(value=image, line=_line_for_key(node, "image")),
             )
         for child in node.values():
             references.extend(_image_references(cast("YamlNode", child)))

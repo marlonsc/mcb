@@ -108,7 +108,8 @@ pub async fn store_quality_gate(
         TAG_QUALITY_GATE.to_owned(),
         quality_gate.status.as_str().to_owned(),
     ];
-    let observation = build_quality_gate_observation(args, data, quality_gate, content, tags, vcs_context)?;
+    let observation =
+        build_quality_gate_observation(args, data, quality_gate, content, tags, vcs_context)?;
     persist_quality_gate_observation(memory_service, observation).await
 }
 

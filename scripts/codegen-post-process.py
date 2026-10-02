@@ -4,6 +4,9 @@
 sea-orm-cli generates plural module names (matching table names).
 Existing code uses singular names. This script appends `pub use X as Y;`
 aliases so both forms resolve.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
 """
 
 from __future__ import annotations

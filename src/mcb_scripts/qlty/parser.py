@@ -17,7 +17,11 @@ logger = get_logger(__name__)
 
 
 def _result_to_issue(result: SarifResult) -> SarifIssue | None:
-    """Convert a single SARIF result into a normalized issue."""
+    """Convert a single SARIF result into a normalized issue.
+
+    Returns:
+        The resulting ``SarifIssue | None``.
+    """
     locations = result.locations
     if not locations:
         return None
@@ -45,7 +49,11 @@ def _result_to_issue(result: SarifResult) -> SarifIssue | None:
 
 
 def parse_sarif_file(path: Path) -> p.Result[list[SarifIssue]]:
-    """Parse SARIF JSON and extract all issues."""
+    """Parse SARIF JSON and extract all issues.
+
+    Returns:
+        The resulting ``p.Result[list[SarifIssue]]``.
+    """
     try:
         with path.open("r", encoding="utf-8") as f:
             data = json.load(f)

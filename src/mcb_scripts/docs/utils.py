@@ -20,7 +20,11 @@ def get_project_root() -> pathlib.Path:
 
 
 def find_md_files(root_dir: str, exclude_dirs: set[str] | None = None) -> list[str]:
-    """Recursively finds all .md files in root_dir, skipping excluded directories."""
+    """Recursively finds all .md files in root_dir, skipping excluded directories.
+
+    Returns:
+        The resulting ``list[str]``.
+    """
     if exclude_dirs is None:
         exclude_dirs = {".git", "fixtures", "node_modules", "target", "generated"}
 
@@ -44,6 +48,9 @@ def extract_links(content: str) -> list[tuple[str, str]]:
     """Extract links from markdown content.
 
     Returns a list of (text, url) tuples.
+
+    Returns:
+        The resulting ``list[tuple[str, str]]``.
     """
     # Strip HTML comments to avoid false positives in templates
     content = re.sub(r"<!--.*?-->", "", content, flags=re.DOTALL)

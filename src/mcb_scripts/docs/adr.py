@@ -1,4 +1,8 @@
-"""Render architecture decision records from the repository-owned template."""
+"""Render architecture decision records from the repository-owned template.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,7 +13,7 @@ from pathlib import Path
 
 _ADR_NAME = re.compile(r"^(?P<number>[0-9]{3})-[a-z0-9-]+\.md$")
 _STATUS = re.compile(
-    r"^(?:Proposed|Accepted|Rejected|Deprecated|Superseded by ADR-[0-9]{3})$"
+    r"^(?:Proposed|Accepted|Rejected|Deprecated|Superseded by ADR-[0-9]{3})$",
 )
 _SLOTS = (
     "{number}",
@@ -19,7 +23,17 @@ _SLOTS = (
 
 
 def create_adr(root: Path, title: str, status: str, *, dry_run: bool = False) -> Path:
-    """Render and publish one ADR without replacing an existing record."""
+    """Render and publish one ADR without replacing an existing record.
+
+    Returns:
+        The resulting ``Path``.
+
+    Raises:
+        FileExistsError: If ``destination.exists()``.
+        ValueError: If ADR title must be nonempty and contain one line; or if Invalid
+            ADR status; or if ADR template must contain each declared slot once; or if
+            ADR title must contain an ASCII letter or digit.
+    """
     if not title.strip() or "\n" in title or "\r" in title:
         msg = "ADR title must be nonempty and contain one line"
         raise ValueError(msg)
@@ -55,7 +69,7 @@ def create_adr(root: Path, title: str, status: str, *, dry_run: bool = False) ->
         return destination
 
     with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=directory, prefix=".adr-stage-", delete=True
+        mode="w", encoding="utf-8", dir=directory, prefix=".adr-stage-", delete=True,
     ) as staged:
         staged.write(rendered)
         staged.flush()

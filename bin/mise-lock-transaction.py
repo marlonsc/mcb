@@ -466,16 +466,24 @@ class MiseLockTransaction:
 
     @classmethod
     def recover(cls, project: Path, stage: Path) -> None:
-        """Finish or undo a prior interrupted publication by its lock commit point."""
+        """Finish or undo a prior interrupted publication by its lock commit point.
+
+        A live lock equal to the new one rolls forward. When ``upg`` resolves
+        another Mise release but the bumped lock is byte-identical to the
+        committed one, old and new coincide and the lock rename commits
+        nothing; the journaled pin and launchers are then the publication's
+        only change, fully staged and digest-verified before the journal was
+        written, so they still move forward instead of being discarded.
+        """
         journal, old, new, old_refs, new_refs = cls._recovery_state(project, stage)
         live = cls._bytes(project / cls.LOCK)
-        if live == old:
-            for relative, expected in new_refs.items():
-                cls._undo_sidecar(project, stage, relative, expected, old_refs)
-        elif live == new:
+        if live == new:
             cls._finish_sidecars(project, stage, old_refs, new_refs)
             if "new_artifacts" in journal:
                 cls._recover_artifacts(project, stage, journal)
+        elif live == old:
+            for relative, expected in new_refs.items():
+                cls._undo_sidecar(project, stage, relative, expected, old_refs)
         else:
             raise ValueError(f"Mise lock changed outside transaction: {project / cls.LOCK}")
         cls._retire_stage(stage)

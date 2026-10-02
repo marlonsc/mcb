@@ -19,6 +19,7 @@ MCB_SH = ROOT / "scripts" / "lib" / "mcb.sh"
 
 
 def test_mcb_bin_prefers_workspace_binary_over_path_binary(temp_dir: Path) -> None:
+    """Test mcb bin prefers workspace binary over path binary."""
     workspace = temp_dir / "workspace"
     script_dir = workspace / "scripts" / "lib"
     target_bin = workspace / "target" / "debug" / "mcb"
@@ -51,6 +52,7 @@ def test_mcb_bin_prefers_workspace_binary_over_path_binary(temp_dir: Path) -> No
 
 
 def test_guard_scans_mcb_validate_production_source(temp_dir: Path) -> None:
+    """Test guard scans mcb validate production source."""
     workspace = temp_dir / "workspace"
     script_dir = workspace / "scripts" / "lib"
     validator_src = workspace / "crates" / "mcb-validate" / "src"
@@ -73,6 +75,7 @@ def test_guard_scans_mcb_validate_production_source(temp_dir: Path) -> None:
 
 
 def test_guard_fails_when_ast_grep_is_unavailable(temp_dir: Path) -> None:
+    """Test guard fails when ast grep is unavailable."""
     workspace = temp_dir / "workspace"
     script_dir = workspace / "scripts" / "lib"
     source_dir = workspace / "crates" / "sample" / "src"
@@ -100,6 +103,7 @@ def test_guard_fails_when_ast_grep_is_unavailable(temp_dir: Path) -> None:
 
 
 def test_guard_fails_when_ast_grep_invocation_breaks(temp_dir: Path) -> None:
+    """Test guard fails when ast grep invocation breaks."""
     workspace = temp_dir / "workspace"
     script_dir = workspace / "scripts" / "lib"
     source_dir = workspace / "crates" / "sample" / "src"
@@ -111,7 +115,7 @@ def test_guard_fails_when_ast_grep_invocation_breaks(temp_dir: Path) -> None:
     (source_dir / "lib.rs").write_text("pub fn clean() {}\n", encoding="utf-8")
     ast_grep = bin_dir / "ast-grep"
     ast_grep.write_text(
-        '#!/bin/sh\n[ "$1" = "--version" ] && exit 0\nexit 1\n', encoding="utf-8"
+        '#!/bin/sh\n[ "$1" = "--version" ] && exit 0\nexit 1\n', encoding="utf-8",
     )
     ast_grep.chmod(ast_grep.stat().st_mode | stat.S_IXUSR)
     env = os.environ.copy()
@@ -131,6 +135,7 @@ def test_guard_fails_when_ast_grep_invocation_breaks(temp_dir: Path) -> None:
 
 
 def test_guard_accepts_successful_ast_grep_with_zero_matches(temp_dir: Path) -> None:
+    """Test guard accepts successful ast grep with zero matches."""
     workspace = temp_dir / "workspace"
     script_dir = workspace / "scripts" / "lib"
     source_dir = workspace / "crates" / "sample" / "src"
@@ -163,6 +168,7 @@ def test_guard_accepts_successful_ast_grep_with_zero_matches(temp_dir: Path) -> 
 
 
 def test_conflict_marker_guard_rejects_tracked_markers(temp_dir: Path) -> None:
+    """Test conflict marker guard rejects tracked markers."""
     workspace = temp_dir / "workspace"
     script_dir = workspace / "scripts" / "lib"
     script_dir.mkdir(parents=True)

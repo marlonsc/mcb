@@ -28,7 +28,7 @@ class CheckSourceRefsSettings(BaseMcbSettings):
 
 
 def _check_files(
-    docs_dir: str, project_root: Path
+    docs_dir: str, project_root: Path,
 ) -> tuple[list[tuple[str, str]], int, list[str]]:
     issues: list[tuple[str, str]] = []
     checked = 0
@@ -65,7 +65,11 @@ def _check_files(
 
 
 def run(settings: CheckSourceRefsSettings) -> p.Result[int]:
-    """Check broken source references in documentation."""
+    """Check broken source references in documentation.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+    """
     project_root = Path(settings.root).resolve()
     if settings.root == Path():
         project_root = utils.get_project_root()
@@ -77,17 +81,17 @@ def run(settings: CheckSourceRefsSettings) -> p.Result[int]:
 
     issues, checked, unreadable = _check_files(docs_dir, project_root)
 
-    logger.info(f"Checked source refs in {checked} docs")
+    logger.info("Checked source refs in %s docs", checked)
 
     if unreadable:
         for entry in sorted(unreadable):
-            logger.error(f"Unreadable documentation file: {entry}")
+            logger.error("Unreadable documentation file: %s", entry)
         return r[int].fail(f"{len(unreadable)} unreadable documentation file(s)")
 
     if issues:
         logger.info(f"Found {len(issues)} broken source references:")
         for fp, ref in sorted(set(issues)):
-            logger.info(f"  {fp}: `{ref}` -> Not found")
+            logger.info("  %s: `%s` -> Not found", fp, ref)
         return r[int].fail(f"{len(issues)} broken source reference(s) found")
 
     logger.info("No broken source references found.")
@@ -96,7 +100,7 @@ def run(settings: CheckSourceRefsSettings) -> p.Result[int]:
 
 def main() -> None:
     app = cli.create_app_with_common_params(
-        name="check-source-refs", help_text="Check broken source references in docs."
+        name="check-source-refs", help_text="Check broken source references in docs.",
     )
     cli.register_result_command(
         app,

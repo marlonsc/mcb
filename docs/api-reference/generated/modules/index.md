@@ -10,6 +10,7 @@
 
 These pages are generated from public modules and their docstrings.
 
+- [mcb_scripts.cli](cli.md)
 - [mcb_scripts.constants](constants.md)
 - [mcb_scripts.core](core.md)
 - [mcb_scripts.external_services_check](external_services_check.md)

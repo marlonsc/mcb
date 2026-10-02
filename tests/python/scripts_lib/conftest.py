@@ -45,7 +45,11 @@ def settings_factory() -> SettingsFactory:
 
 @pytest.fixture
 def temp_dir(tmp_path: Path) -> Path:
-    """Provide a temporary directory for the current test."""
+    """Provide a temporary directory for the current test.
+
+    Returns:
+        The resulting ``Path``.
+    """
     return tmp_path
 
 
@@ -64,6 +68,10 @@ def temp_file(temp_dir: Path) -> Callable[[str, str], Path]:
 
 @pytest.fixture
 def capture_logs_fixture() -> Generator[list[MutableMapping[str, Any]]]:
-    """Capture structlog emissions during a test."""
+    """Capture structlog emissions during a test.
+
+    Yields:
+        Each ``list[MutableMapping[str, Any]]``.
+    """
     with capture_logs() as logs:
         yield logs

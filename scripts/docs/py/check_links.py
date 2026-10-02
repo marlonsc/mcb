@@ -27,7 +27,7 @@ class CheckLinksSettings(BaseMcbSettings):
 
 
 def _process_links(
-    links: list[tuple[str, str]], filepath: str, rel_filepath: str, project_root: Path
+    links: list[tuple[str, str]], filepath: str, rel_filepath: str, project_root: Path,
 ) -> tuple[list[tuple[str, str, str, str]], int]:
     broken_in_file: list[tuple[str, str, str, str]] = []
     checked_in_file = 0
@@ -54,7 +54,7 @@ def _process_links(
 
 
 def _check_files(
-    docs_dir: str, project_root: Path
+    docs_dir: str, project_root: Path,
 ) -> tuple[list[tuple[str, str, str, str]], int, int, list[str]]:
     broken: list[tuple[str, str, str, str]] = []
     checked_files = 0
@@ -76,7 +76,7 @@ def _check_files(
 
         links = utils.extract_links(content)
         file_broken, file_links = _process_links(
-            links, filepath, rel_filepath, project_root
+            links, filepath, rel_filepath, project_root,
         )
 
         broken.extend(file_broken)
@@ -86,7 +86,11 @@ def _check_files(
 
 
 def run(settings: CheckLinksSettings) -> p.Result[int]:
-    """Check broken internal links in documentation."""
+    """Check broken internal links in documentation.
+
+    Returns:
+        The resulting ``p.Result[int]``.
+    """
     project_root = Path(settings.root).resolve()
     if settings.root == Path():
         project_root = utils.get_project_root()
@@ -97,20 +101,20 @@ def run(settings: CheckLinksSettings) -> p.Result[int]:
         return r[int].fail(f"docs directory not found at {docs_dir}")
 
     broken, checked_files, checked_links, unreadable = _check_files(
-        docs_dir, project_root
+        docs_dir, project_root,
     )
 
-    logger.info(f"Checked {checked_files} files, {checked_links} internal links.")
+    logger.info("Checked %s files, %s internal links.", checked_files, checked_links)
 
     if unreadable:
         for entry in sorted(unreadable):
-            logger.error(f"Unreadable documentation file: {entry}")
+            logger.error("Unreadable documentation file: %s", entry)
         return r[int].fail(f"{len(unreadable)} unreadable documentation file(s)")
 
     if broken:
         logger.info(f"Found {len(broken)} broken internal links:")
         for fp, text, link, target in sorted(broken):
-            logger.info(f"  {fp}: [{text}]({link}) -> {target} (missing)")
+            logger.info("  %s: [%s](%s) -> %s (missing)", fp, text, link, target)
         return r[int].fail(f"{len(broken)} broken internal link(s) found")
 
     logger.info("No broken internal links found.")
@@ -119,7 +123,7 @@ def run(settings: CheckLinksSettings) -> p.Result[int]:
 
 def main() -> None:
     app = cli.create_app_with_common_params(
-        name="check-links", help_text="Check broken internal links in docs."
+        name="check-links", help_text="Check broken internal links in docs.",
     )
     cli.register_result_command(
         app,

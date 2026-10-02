@@ -29,7 +29,11 @@ class AnalysisReport:
     issues: list[SarifIssue] = field(default_factory=list)
 
     def generate_summary(self) -> str:
-        """Generate human-readable summary."""
+        """Generate human-readable summary.
+
+        Returns:
+            The resulting ``str``.
+        """
         lines: list[str] = []
         lines.extend((
             "━" * 72,
@@ -106,8 +110,9 @@ class AnalysisReport:
             lines.append(f"| `{file_path}` | {count} |")
         lines.append("")
 
+    @staticmethod
     def _generate_rule_section(
-        self, lines: list[str], rule: str, rule_issues: list[SarifIssue]
+        lines: list[str], rule: str, rule_issues: list[SarifIssue],
     ) -> None:
         lines.extend((f"### {rule} ({len(rule_issues)} issues)", ""))
 
@@ -155,12 +160,16 @@ class AnalysisReport:
             return len(item[1])
 
         for rule, rule_issues in sorted(
-            by_rule.items(), key=_issue_count, reverse=True
+            by_rule.items(), key=_issue_count, reverse=True,
         ):
             self._generate_rule_section(lines, rule, rule_issues)
 
     def generate_markdown(self, title: str = "Quality Analysis Report") -> str:
-        """Generate detailed markdown report."""
+        """Generate detailed markdown report.
+
+        Returns:
+            The resulting ``str``.
+        """
         lines: list[str] = []
         lines.extend((f"# {title}", "", f"**Total Issues:** {self.total_issues}", ""))
 
@@ -181,7 +190,7 @@ def _populate_severity_counts(report: AnalysisReport, issues: list[SarifIssue]) 
 
 
 def _populate_category_and_rule_counts(
-    report: AnalysisReport, issues: list[SarifIssue]
+    report: AnalysisReport, issues: list[SarifIssue],
 ) -> None:
     for issue in issues:
         report.by_rule[issue.rule_id] += 1
@@ -194,7 +203,11 @@ def _populate_file_counts(report: AnalysisReport, issues: list[SarifIssue]) -> N
 
 
 def analyze_issues(issues: list[SarifIssue]) -> p.Result[AnalysisReport]:
-    """Generate statistical analysis of issues."""
+    """Generate statistical analysis of issues.
+
+    Returns:
+        The resulting ``p.Result[AnalysisReport]``.
+    """
     report = AnalysisReport()
     report.total_issues = len(issues)
     report.issues = issues

@@ -13,20 +13,24 @@ from pydantic import BaseModel
 
 from flext_core import p
 from mcb_scripts.core import McbResult, McbService, configure_logging, get_logger, r, s
-
-from ._utilities.matchers import tm
-from .conftest import SettingsFactory
+from tests.python.scripts_lib._utilities.matchers import tm
+from tests.python.scripts_lib.conftest import SettingsFactory
 
 
 class TestResult:
-    def test_ok_is_ok(self) -> None:
+    """Define ``TestResult``."""
+    @staticmethod
+    def test_ok_is_ok() -> None:
+        """Test ok is ok."""
         result: p.Result[int] = r[int].ok(42)
         tm.ok(result, 42)
         assert result.value == 42
         assert bool(result)
         assert repr(result) == "r[T].ok(42)"
 
-    def test_err_is_err(self) -> None:
+    @staticmethod
+    def test_err_is_err() -> None:
+        """Test err is err."""
         result: p.Result[int] = r[int].fail("boom", error_code="E001")
         tm.fail(result)
         assert not bool(result)
@@ -34,34 +38,48 @@ class TestResult:
         assert result.error_code == "E001"
         assert repr(result) == "r[T].fail('boom')"
 
-    def test_unwrap_raises_runtime_error(self) -> None:
+    @staticmethod
+    def test_unwrap_raises_runtime_error() -> None:
+        """Test unwrap raises runtime error."""
         result: p.Result[int] = r[int].fail("boom")
         with pytest.raises(RuntimeError, match="boom"):
             result.unwrap()
 
-    def test_or_operator(self) -> None:
+    @staticmethod
+    def test_or_operator() -> None:
+        """Test or operator."""
         assert (r[int].ok(42) | 0) == 42
         assert (r[int].fail("boom") | 0) == 0
 
-    def test_context_manager(self) -> None:
+    @staticmethod
+    def test_context_manager() -> None:
+        """Test context manager."""
         with r[int].ok(42) as value:
             tm.ok(value, 42)
 
-    def test_unwrap_or(self) -> None:
+    @staticmethod
+    def test_unwrap_or() -> None:
+        """Test unwrap or."""
         fallback = 0
         assert r[int].ok(42).unwrap_or(fallback) == 42
         assert r[int].fail("boom").unwrap_or(fallback) == fallback
 
-    def test_unwrap_or_else(self) -> None:
+    @staticmethod
+    def test_unwrap_or_else() -> None:
+        """Test unwrap or else."""
         assert r[int].ok(42).unwrap_or_else(lambda: 0) == 42
         assert r[int].fail("boom").unwrap_or_else(lambda: 4) == 4
 
-    def test_map(self) -> None:
+    @staticmethod
+    def test_map() -> None:
+        """Test map."""
         assert r[int].ok(21).map(lambda x: x * 2).unwrap() == 42
         mapped = r[int].fail("boom").map(lambda x: x * 2)
         tm.fail(mapped)
 
-    def test_flat_map(self) -> None:
+    @staticmethod
+    def test_flat_map() -> None:
+        """Test flat map."""
         def double(x: int) -> p.Result[int]:
             return r[int].ok(x * 2)
 
@@ -72,7 +90,9 @@ class TestResult:
         failed = r[int].fail("boom").flat_map(double)
         tm.fail(failed)
 
-    def test_map_catches_exceptions_as_failure(self) -> None:
+    @staticmethod
+    def test_map_catches_exceptions_as_failure() -> None:
+        """Test map catches exceptions as failure."""
         def _boom(_: int) -> int:
             msg = "map must catch"
             raise ZeroDivisionError(msg)
@@ -81,29 +101,39 @@ class TestResult:
         tm.fail(result)
         assert result.error == "map must catch"
 
-    def test_fold(self) -> None:
+    @staticmethod
+    def test_fold() -> None:
+        """Test fold."""
         ok_result = r[int].ok(21)
         assert ok_result.fold(lambda _: -1, lambda v: v * 2) == 42
 
         err_result = r[int].fail("boom")
         assert err_result.fold(len, lambda _: 0) == 4
 
-    def test_recover(self) -> None:
+    @staticmethod
+    def test_recover() -> None:
+        """Test recover."""
         assert r[int].ok(42).recover(lambda _: 0).unwrap() == 42
         assert r[int].fail("boom").recover(lambda _: 7).unwrap() == 7
 
-    def test_lash(self) -> None:
+    @staticmethod
+    def test_lash() -> None:
+        """Test lash."""
         assert r[int].ok(42).lash(lambda _: r[int].ok(99)).unwrap() == 42
         recovered = r[int].fail("boom").lash(lambda _: r[int].ok(7))
         tm.ok(recovered, 7)
 
-    def test_filter(self) -> None:
+    @staticmethod
+    def test_filter() -> None:
+        """Test filter."""
         assert r[int].ok(42).filter(lambda x: x > 10).unwrap() == 42
         filtered = r[int].ok(5).filter(lambda x: x > 10)
         tm.fail(filtered)
         assert r[int].fail("boom").filter(lambda x: x > 10).failure
 
-    def test_flow_through(self) -> None:
+    @staticmethod
+    def test_flow_through() -> None:
+        """Test flow through."""
         def add_one(x: int) -> p.Result[int]:
             return r[int].ok(x + 1)
 
@@ -116,7 +146,9 @@ class TestResult:
         halted = r[int].ok(1).flow_through(add_one, fail, add_one)
         tm.fail(halted)
 
-    def test_tap(self) -> None:
+    @staticmethod
+    def test_tap() -> None:
+        """Test tap."""
         side_effect: list[int] = []
         result = r[int].ok(42).tap(side_effect.append)
         tm.ok(result, 42)
@@ -125,7 +157,9 @@ class TestResult:
         r[int].fail("boom").tap(side_effect.append)
         assert side_effect == [42]
 
-    def test_tap_error(self) -> None:
+    @staticmethod
+    def test_tap_error() -> None:
+        """Test tap error."""
         side_effect: list[str] = []
         result = r[int].fail("boom").tap_error(side_effect.append)
         tm.fail(result)
@@ -134,14 +168,18 @@ class TestResult:
         r[int].ok(42).tap_error(side_effect.append)
         assert side_effect == ["boom"]
 
-    def test_map_error(self) -> None:
+    @staticmethod
+    def test_map_error() -> None:
+        """Test map error."""
         result = r[int].fail("boom").map_error(lambda e: e.upper())
         assert result.error == "BOOM"
 
         unchanged = r[int].ok(42).map_error(lambda e: e.upper())
         tm.ok(unchanged, 42)
 
-    def test_map_or(self) -> None:
+    @staticmethod
+    def test_map_or() -> None:
+        """Test map or."""
         assert r[int].ok(42).map_or(0) == 42
         assert r[int].fail("boom").map_or(0) == 0
 
@@ -151,7 +189,9 @@ class TestResult:
         assert r[int].ok(21).map_or(0, _double) == 42
         assert r[int].fail("boom").map_or(0, _double) == 0
 
-    def test_fail_op(self) -> None:
+    @staticmethod
+    def test_fail_op() -> None:
+        """Test fail op."""
         result = r[int].fail_op("load")
         tm.fail(result, "load failed")
 
@@ -159,7 +199,9 @@ class TestResult:
         tm.fail(with_exception, "load failed: missing")
         assert isinstance(with_exception.exception, ValueError)
 
-    def test_from_validation(self) -> None:
+    @staticmethod
+    def test_from_validation() -> None:
+        """Test from validation."""
         class User(BaseModel):
             name: str
             age: int
@@ -171,7 +213,9 @@ class TestResult:
         invalid = McbResult.from_validation({"name": "Ada"}, User)
         tm.fail(invalid)
 
-    def test_accumulate_errors(self) -> None:
+    @staticmethod
+    def test_accumulate_errors() -> None:
+        """Test accumulate errors."""
         results = [r[int].ok(1), r[int].ok(2), r[int].ok(3)]
         combined = McbResult.accumulate_errors(*results)
         tm.ok(combined)
@@ -182,7 +226,9 @@ class TestResult:
         tm.fail(combined, "a")
         tm.fail(combined, "b")
 
-    def test_safe_decorator(self) -> None:
+    @staticmethod
+    def test_safe_decorator() -> None:
+        """Test safe decorator."""
         @McbResult.safe
         def double(x: int) -> int:
             return x * 2
@@ -199,61 +245,82 @@ class TestResult:
 
 
 class TestSettings:
+    """Define ``TestSettings``."""
+    @staticmethod
     def test_base_settings_read_env_with_prefix(
-        self, monkeypatch: pytest.MonkeyPatch, settings_factory: SettingsFactory
+        monkeypatch: pytest.MonkeyPatch, settings_factory: SettingsFactory,
     ) -> None:
+        """Test base settings read env with prefix."""
         monkeypatch.setenv("MCB_LOG_LEVEL", "debug")
         settings = settings_factory(log_level="info")
         assert settings.log_level == "debug"
 
+    @staticmethod
     def test_base_settings_ignore_extra_env(
-        self, monkeypatch: pytest.MonkeyPatch, settings_factory: SettingsFactory
+        monkeypatch: pytest.MonkeyPatch, settings_factory: SettingsFactory,
     ) -> None:
+        """Test base settings ignore extra env."""
         monkeypatch.setenv("MCB_UNKNOWN_VAR", "ignored")
         settings = settings_factory(log_level="info")
         assert settings.log_level == "info"
 
-    def test_singleton_fetch_global(self, settings_factory: SettingsFactory) -> None:
+    @staticmethod
+    def test_singleton_fetch_global(settings_factory: SettingsFactory) -> None:
+        """Test singleton fetch global."""
         settings = settings_factory(name="default")
         first = settings.fetch_global()
         second = settings.fetch_global()
         assert first is second
 
-    def test_clone_is_isolated(self, settings_factory: SettingsFactory) -> None:
+    @staticmethod
+    def test_clone_is_isolated(settings_factory: SettingsFactory) -> None:
+        """Test clone is isolated."""
         settings = settings_factory(name="default")
         global_settings = settings.fetch_global()
         clone = global_settings.clone(name="cloned")
         assert clone.model_dump()["name"] == "cloned"
         assert global_settings.model_dump()["name"] == "default"
 
-    def test_update_global_propagates(self, settings_factory: SettingsFactory) -> None:
+    @staticmethod
+    def test_update_global_propagates(settings_factory: SettingsFactory) -> None:
+        """Test update global propagates."""
         settings = settings_factory(name="default")
         settings.update_global(name="updated")
         assert settings.fetch_global().model_dump()["name"] == "updated"
 
+    @staticmethod
     def test_validate_overrides_rejects_unknown(
-        self, settings_factory: SettingsFactory
+        settings_factory: SettingsFactory,
     ) -> None:
+        """Test validate overrides rejects unknown."""
         settings = settings_factory(name="default")
         with pytest.raises(ValueError, match="Unknown settings override"):
             settings.clone(unknown="value")
 
 
 class TestLogging:
-    def test_configure_logging_runs(self) -> None:
+    """Define ``TestLogging``."""
+    @staticmethod
+    def test_configure_logging_runs() -> None:
+        """Test configure logging runs."""
         configure_logging(json_format=False)
         logger = get_logger(__name__)
         log_result = logger.info("test.event", key="value")
         assert log_result.success
 
-    def test_logger_bind(self) -> None:
+    @staticmethod
+    def test_logger_bind() -> None:
+        """Test logger bind."""
         configure_logging(json_format=False)
         logger = get_logger(__name__).bind(request_id="abc")
         assert logger.info("bound.event").success
 
 
 class TestService:
-    def test_service_singleton(self) -> None:
+    """Define ``TestService``."""
+    @staticmethod
+    def test_service_singleton() -> None:
+        """Test service singleton."""
         class DemoService(McbService):
             pass
 
@@ -263,7 +330,9 @@ class TestService:
         assert first is second
         DemoService.reset_for_testing()
 
-    def test_service_execute_not_implemented(self) -> None:
+    @staticmethod
+    def test_service_execute_not_implemented() -> None:
+        """Test service execute not implemented."""
         class DemoService(McbService):
             pass
 
@@ -273,7 +342,9 @@ class TestService:
             service.execute()
         DemoService.reset_for_testing()
 
-    def test_service_alias(self) -> None:
+    @staticmethod
+    def test_service_alias() -> None:
+        """Test service alias."""
         class SettingsService(s):
             pass
 
@@ -281,7 +352,9 @@ class TestService:
         assert isinstance(SettingsService.fetch_global(), McbService)
         SettingsService.reset_for_testing()
 
-    def test_service_with_settings(self, settings_factory: SettingsFactory) -> None:
+    @staticmethod
+    def test_service_with_settings(settings_factory: SettingsFactory) -> None:
+        """Test service with settings."""
         settings = settings_factory(name="default")
 
         class DemoService(McbService):

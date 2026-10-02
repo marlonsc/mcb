@@ -24,7 +24,7 @@
   `McbResult`, `McbScriptsService`, `McbService`, `McbSettings`, `configure_logging`,
   `get_logger`
 - Exported module shortcuts: `docs`, `qlty`
-- Generated module pages: `8`
+- Generated module pages: `9`
 
 ## Next Pages
 

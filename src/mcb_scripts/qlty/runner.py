@@ -25,12 +25,19 @@ def _resolve_qlty() -> str | None:
     Passing a bare name lets PATH order decide which binary runs; resolving
     it here pins the decision and turns a missing tool into a typed failure
     instead of an OSError raised from deep inside subprocess.
+
+    Returns:
+        The resulting ``str | None``.
     """
     return shutil.which("qlty")
 
 
 def run_qlty_check(output_file: Path | None = None) -> p.Result[list[SarifIssue]]:
-    """Run qlty check --all --sarif, save to file, and parse SARIF output."""
+    """Run qlty check --all --sarif, save to file, and parse SARIF output.
+
+    Returns:
+        The resulting ``p.Result[list[SarifIssue]]``.
+    """
     output_file = output_file or McbSettings().qlty_check_sarif
     logger.info("Running qlty check --all --sarif...")
 
@@ -50,7 +57,7 @@ def run_qlty_check(output_file: Path | None = None) -> p.Result[list[SarifIssue]
         return r[list[SarifIssue]].fail("qlty check timed out after 300s")
     except (OSError, subprocess.SubprocessError) as exc:
         return r[list[SarifIssue]].fail(
-            f"error running qlty check: {exc}", exception=exc
+            f"error running qlty check: {exc}", exception=exc,
         )
 
     if not result.stdout.strip():
@@ -59,7 +66,7 @@ def run_qlty_check(output_file: Path | None = None) -> p.Result[list[SarifIssue]
         return r[list[SarifIssue]].ok(issues)
 
     output_file.write_text(result.stdout, encoding="utf-8")
-    logger.info(f"Saved SARIF to {output_file}")
+    logger.info("Saved SARIF to %s", output_file)
 
     parsed = parse_sarif_file(output_file)
     if parsed.failure:
@@ -70,7 +77,11 @@ def run_qlty_check(output_file: Path | None = None) -> p.Result[list[SarifIssue]
 
 
 def run_qlty_smells(output_file: Path | None = None) -> p.Result[list[SarifIssue]]:
-    """Run qlty smells --all --sarif, save to file, and parse SARIF output."""
+    """Run qlty smells --all --sarif, save to file, and parse SARIF output.
+
+    Returns:
+        The resulting ``p.Result[list[SarifIssue]]``.
+    """
     output_file = output_file or McbSettings().qlty_smells_sarif
     logger.info("Running qlty smells --all --sarif...")
 
@@ -90,7 +101,7 @@ def run_qlty_smells(output_file: Path | None = None) -> p.Result[list[SarifIssue
         return r[list[SarifIssue]].fail("qlty smells timed out after 300s")
     except (OSError, subprocess.SubprocessError) as exc:
         return r[list[SarifIssue]].fail(
-            f"error running qlty smells: {exc}", exception=exc
+            f"error running qlty smells: {exc}", exception=exc,
         )
 
     if not result.stdout.strip():
@@ -99,7 +110,7 @@ def run_qlty_smells(output_file: Path | None = None) -> p.Result[list[SarifIssue
         return r[list[SarifIssue]].ok(issues)
 
     output_file.write_text(result.stdout, encoding="utf-8")
-    logger.info(f"Saved SARIF to {output_file}")
+    logger.info("Saved SARIF to %s", output_file)
 
     parsed = parse_sarif_file(output_file)
     if parsed.failure:

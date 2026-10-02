@@ -43,11 +43,11 @@ class QltyParams(m.BaseModel):
 
 
 def _load_checks_from_file(
-    checks_file: Path, all_issues: list[SarifIssue]
+    checks_file: Path, all_issues: list[SarifIssue],
 ) -> p.Result[None]:
     if not checks_file.exists():
         return r[None].ok(None)
-    logger.info(f"📖 Reading checks from {checks_file}")
+    logger.info("📖 Reading checks from %s", checks_file)
     checks_result = parse_sarif_file(checks_file)
     if checks_result.failure:
         return r[None].from_failure(checks_result)
@@ -60,7 +60,7 @@ def _load_checks_from_file(
 
 
 def _collect_smells_issues(
-    params: QltyParams, all_issues: list[SarifIssue]
+    params: QltyParams, all_issues: list[SarifIssue],
 ) -> p.Result[None]:
     if params.smells_file.exists() and not params.scan:
         logger.info(f"📖 Reading smells from {params.smells_file}")
@@ -74,7 +74,7 @@ def _collect_smells_issues(
         logger.info(f"   Found {len(smells)} code smells")
     elif params.scan:
         smells_result = run_qlty_smells(
-            params.smells_file or McbSettings().qlty_smells_sarif
+            params.smells_file or McbSettings().qlty_smells_sarif,
         )
         if smells_result.failure:
             return r[None].from_failure(smells_result)
@@ -86,7 +86,7 @@ def _collect_smells_issues(
 
 
 def _collect_checks_issues(
-    params: QltyParams, all_issues: list[SarifIssue]
+    params: QltyParams, all_issues: list[SarifIssue],
 ) -> p.Result[None]:
     if params.scan:
         outfile = params.checks_file or McbSettings().qlty_check_sarif
@@ -148,7 +148,7 @@ def _collect_all_issues(params: QltyParams) -> p.Result[list[SarifIssue]]:
 
 
 def _apply_severity_filter(
-    severity: str | None, filtered: list[SarifIssue]
+    severity: str | None, filtered: list[SarifIssue],
 ) -> list[SarifIssue]:
     if severity:
         target_sev = Severity.from_str(severity)
@@ -158,7 +158,7 @@ def _apply_severity_filter(
 
 
 def _apply_rule_filter(
-    rule: str | None, filtered: list[SarifIssue]
+    rule: str | None, filtered: list[SarifIssue],
 ) -> list[SarifIssue]:
     if rule:
         filtered = [i for i in filtered if rule in i.rule_id]
@@ -167,7 +167,7 @@ def _apply_rule_filter(
 
 
 def _apply_category_filter(
-    category: str | None, filtered: list[SarifIssue]
+    category: str | None, filtered: list[SarifIssue],
 ) -> list[SarifIssue]:
     if category:
         filtered = [i for i in filtered if category in i.rule_category]
@@ -176,40 +176,40 @@ def _apply_category_filter(
 
 
 def _apply_file_filter(
-    file_pattern: str | None, filtered: list[SarifIssue]
+    file_pattern: str | None, filtered: list[SarifIssue],
 ) -> list[SarifIssue]:
     if file_pattern:
         filtered = [i for i in filtered if fnmatch.fnmatch(i.file_path, file_pattern)]
         logger.info(
-            f"🔍 Filtered to {len(filtered)} issues in files matching '{file_pattern}'"
+            f"🔍 Filtered to {len(filtered)} issues in files matching '{file_pattern}'",
         )
     return filtered
 
 
 def _apply_exclude_rule_filter(
-    exclude_rules: list[str], filtered: list[SarifIssue]
+    exclude_rules: list[str], filtered: list[SarifIssue],
 ) -> list[SarifIssue]:
     for rule in exclude_rules:
         filtered = [i for i in filtered if rule not in i.rule_id]
-        logger.info(f"🔍 Excluded issues matching rule '{rule}'")
+        logger.info("🔍 Excluded issues matching rule '%s'", rule)
     return filtered
 
 
 def _apply_exclude_category_filter(
-    exclude_categories: list[str], filtered: list[SarifIssue]
+    exclude_categories: list[str], filtered: list[SarifIssue],
 ) -> list[SarifIssue]:
     for cat in exclude_categories:
         filtered = [i for i in filtered if cat not in i.rule_category]
-        logger.info(f"🔍 Excluded issues in category '{cat}'")
+        logger.info("🔍 Excluded issues in category '%s'", cat)
     return filtered
 
 
 def _apply_exclude_file_filter(
-    exclude_files: list[str], filtered: list[SarifIssue]
+    exclude_files: list[str], filtered: list[SarifIssue],
 ) -> list[SarifIssue]:
     for pattern in exclude_files:
         filtered = [i for i in filtered if not fnmatch.fnmatch(i.file_path, pattern)]
-        logger.info(f"🔍 Excluded issues in files matching '{pattern}'")
+        logger.info("🔍 Excluded issues in files matching '%s'", pattern)
     return filtered
 
 
@@ -221,6 +221,9 @@ def analyze(params: QltyParams) -> p.Result[str]:
     Counter and dataclass members that are not JSON values. The full report is
     still emitted through the logger and, unless --summary-only, written to the
     report file.
+
+    Returns:
+        The resulting ``p.Result[str]``.
     """
     issues_result = _collect_all_issues(params)
     if issues_result.failure:
@@ -261,9 +264,13 @@ def analyze(params: QltyParams) -> p.Result[str]:
 
 
 def main() -> None:
-    """Entry point for the qlty SARIF analysis command."""
+    """Entry point for the qlty SARIF analysis command.
+
+    Raises:
+        SystemExit: If ``result.failure``.
+    """
     app = cli.create_app_with_common_params(
-        name="qlty", help_text="Analyze SARIF quality reports."
+        name="qlty", help_text="Analyze SARIF quality reports.",
     )
     cli.register_result_command(
         app,

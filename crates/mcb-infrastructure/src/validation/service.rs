@@ -269,5 +269,7 @@ fn build_validation_service_from_registry(
 
 mcb_domain::register_service!(
     mcb_utils::constants::SERVICE_NAME_VALIDATION,
-    mcb_domain::registry::services::ServiceBuilder::Validation(build_validation_service_from_registry),
+    mcb_domain::registry::services::ServiceBuilder::Validation(
+        build_validation_service_from_registry
+    ),
 );

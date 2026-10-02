@@ -1,4 +1,8 @@
-"""Validate optimizer process selection through its command surface."""
+"""Validate optimizer process selection through its command surface.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -20,6 +24,7 @@ def _write_command(bin_dir: Path, name: str, body: str) -> None:
 def test_optimizer_reports_and_selects_only_project_owned_processes(
     tmp_path: Path,
 ) -> None:
+    """Test optimizer reports and selects only project owned processes."""
     project_root = tmp_path / "project"
     foreign_root = tmp_path / "foreign"
     proc_root = tmp_path / "proc"
@@ -105,6 +110,7 @@ fi""",
 def test_optimizer_canonicalizes_configured_project_root_symlink(
     tmp_path: Path,
 ) -> None:
+    """Test optimizer canonicalizes configured project root symlink."""
     project_root = tmp_path / "project"
     project_link = tmp_path / "project-link"
     proc_root = tmp_path / "proc"

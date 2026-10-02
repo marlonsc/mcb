@@ -35,11 +35,12 @@ def _run_make(*args: str) -> subprocess.CompletedProcess[str]:
     for name in ("MAKEFLAGS", "MFLAGS", "MAKELEVEL"):
         env.pop(name, None)
     return subprocess.run(
-        ["make", *args], cwd=ROOT, check=False, capture_output=True, text=True, env=env
+        ["make", *args], cwd=ROOT, check=False, capture_output=True, text=True, env=env,
     )
 
 
 def test_help_lists_flext_public_verbs() -> None:
+    """Test help lists flext public verbs."""
     result = _run_make("help", "WHAT=usage")
     combined = result.stdout + result.stderr
 
@@ -58,6 +59,7 @@ def test_help_lists_flext_public_verbs() -> None:
 def test_gitops_check_executes_registered_run_command() -> None:
     # gitops is a project-owned script verb (scripts/gitops/all.sh); WHAT=all
     # answers the whole-surface selector.
+    """Test gitops check executes registered run command."""
     result = _run_make("gitops", "WHAT=all")
     combined = result.stdout + result.stderr
 
@@ -66,6 +68,7 @@ def test_gitops_check_executes_registered_run_command() -> None:
 
 
 def test_default_check_runs_conflict_marker_guard() -> None:
+    """Test default check runs conflict marker guard."""
     default_check = _run_make("-n", "check")
     pre_check = _run_make("-n", "pre-check")
     combined = (
@@ -90,6 +93,7 @@ def test_tree_is_at_generator_fixed_point() -> None:
     # canonical render. Running the full apply inside a test paid the whole
     # generation cost (60s+) for a property the check mode proves in
     # seconds — slowness is a defect, not a budget problem.
+    """Test tree is at generator fixed point."""
     result = _run_make("gen", "WHAT=check")
     combined = result.stdout + result.stderr
     assert result.returncode == 0, combined[-2000:]
@@ -97,7 +101,7 @@ def test_tree_is_at_generator_fixed_point() -> None:
 
 def _assert_make_fails(command: list[str], *, expect_unsupported: bool) -> None:
     result = subprocess.run(
-        command, cwd=ROOT, check=False, capture_output=True, text=True
+        command, cwd=ROOT, check=False, capture_output=True, text=True,
     )
     combined = result.stdout + result.stderr
     assert result.returncode != 0, (
@@ -116,8 +120,9 @@ def _assert_make_fails(command: list[str], *, expect_unsupported: bool) -> None:
 # split surface behavior.
 @pytest.mark.slow
 def test_invalid_release_selector_fails() -> None:
+    """Test invalid release selector fails."""
     _assert_make_fails(
-        ["make", "release", "WHAT=__invalid__"], expect_unsupported=False
+        ["make", "release", "WHAT=__invalid__"], expect_unsupported=False,
     )
 
 
@@ -138,8 +143,8 @@ def test_generated_gitignore_keeps_declared_project_exceptions() -> None:
         str(pattern)
         for pattern in _json_list(
             _json_dict(
-                _json_dict(manifest.get("ManagedArtifacts")).get("Gitignore")
-            ).get("patterns")
+                _json_dict(manifest.get("ManagedArtifacts")).get("Gitignore"),
+            ).get("patterns"),
         )
     ]
 
@@ -212,7 +217,7 @@ def test_git_hooks_have_exactly_one_owner(tmp_path: Path) -> None:
             foreign.append(f"{stage}: {lines[1] if len(lines) > 1 else head!r}")
 
     assert not foreign, "installed git hooks are not owned by beads:\n" + "\n".join(
-        foreign
+        foreign,
     )
 
 

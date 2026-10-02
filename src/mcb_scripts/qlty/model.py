@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from enum import IntEnum, StrEnum
 
-from flext_core import c, m, t
+from flext_core import m, t
 
 
 class QltyCategory(StrEnum):
@@ -34,7 +34,11 @@ class Severity(IntEnum):
 
     @classmethod
     def from_str(cls, s: str) -> Severity:
-        """Parse a SARIF severity token into a Severity."""
+        """Parse a SARIF severity token into a Severity.
+
+        Returns:
+            The resulting ``Severity``.
+        """
         mapping = {"error": cls.ERROR, "warning": cls.WARNING, "note": cls.INFO}
         return mapping.get(s.lower(), cls.NONE)
 
@@ -48,7 +52,7 @@ class Severity(IntEnum):
 class SarifArtifactLocation(m.BaseModel):
     """SARIF artifactLocation object."""
 
-    model_config = c.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True)
 
     uri: str = m.Field(default="unknown", alias="uri")
 
@@ -56,7 +60,7 @@ class SarifArtifactLocation(m.BaseModel):
 class SarifRegion(m.BaseModel):
     """SARIF region object."""
 
-    model_config = c.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True)
 
     start_line: int = m.Field(default=0, alias="startLine")
     end_line: int | None = m.Field(default=None, alias="endLine")
@@ -65,10 +69,10 @@ class SarifRegion(m.BaseModel):
 class SarifPhysicalLocation(m.BaseModel):
     """SARIF physicalLocation object."""
 
-    model_config = c.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True)
 
     artifact_location: SarifArtifactLocation = m.Field(
-        default_factory=SarifArtifactLocation, alias="artifactLocation"
+        default_factory=SarifArtifactLocation, alias="artifactLocation",
     )
     region: SarifRegion | None = m.Field(default=None, alias="region")
 
@@ -76,17 +80,17 @@ class SarifPhysicalLocation(m.BaseModel):
 class SarifLocation(m.BaseModel):
     """SARIF location object."""
 
-    model_config = c.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True)
 
     physical_location: SarifPhysicalLocation | None = m.Field(
-        default=None, alias="physicalLocation"
+        default=None, alias="physicalLocation",
     )
 
 
 class SarifMessage(m.BaseModel):
     """SARIF message object."""
 
-    model_config = c.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True)
 
     text: str = m.Field(default="", alias="text")
 
@@ -94,7 +98,7 @@ class SarifMessage(m.BaseModel):
 class SarifRun(m.BaseModel):
     """SARIF run object."""
 
-    model_config = c.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True)
 
     results: list[SarifResult] = m.Field(default_factory=list, alias="results")
 
@@ -102,17 +106,17 @@ class SarifRun(m.BaseModel):
 class SarifResult(m.BaseModel):
     """SARIF result object."""
 
-    model_config = c.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True)
 
     rule_id: str = m.Field(default="unknown", alias="ruleId")
     level: str = m.Field(default="note", alias="level")
     message: SarifMessage = m.Field(default_factory=SarifMessage, alias="message")
     locations: list[SarifLocation] = m.Field(default_factory=list, alias="locations")
     properties: dict[str, t.JsonValue] = m.Field(
-        default_factory=dict, alias="properties"
+        default_factory=dict, alias="properties",
     )
     partial_fingerprints: dict[str, str] = m.Field(
-        default_factory=dict, alias="partialFingerprints"
+        default_factory=dict, alias="partialFingerprints",
     )
     fingerprints: dict[str, str] = m.Field(default_factory=dict, alias="fingerprints")
 
@@ -120,7 +124,7 @@ class SarifResult(m.BaseModel):
 class SarifIssue(m.BaseModel):
     """Unified representation of a SARIF result (check or smell)."""
 
-    model_config = c.ConfigDict(populate_by_name=True, extra="ignore")
+    model_config = m.ConfigDict(populate_by_name=True, extra="ignore")
 
     rule_id: str
     level: Severity

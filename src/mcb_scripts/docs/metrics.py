@@ -1,4 +1,8 @@
-"""Generate the deterministic project metrics page from declared source roots."""
+"""Generate the deterministic project metrics page from declared source roots.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -15,7 +19,16 @@ _ADR = re.compile(r"^[0-9]{3}-[a-z0-9-]+\.md$")
 
 
 def _declared_dir(root: Path, value: object) -> Path:
-    """Resolve only a declared directory inside this repository."""
+    """Resolve only a declared directory inside this repository.
+
+    Returns:
+        The resulting ``Path``.
+
+    Raises:
+        FileNotFoundError: If ``not directory.is_dir()``.
+        TypeError: If Docs metrics source path must be a string.
+        ValueError: If Docs metrics source path escapes the repository.
+    """
     if not isinstance(value, str):
         msg = "Docs metrics source path must be a string"
         raise TypeError(msg)
@@ -30,7 +43,14 @@ def _declared_dir(root: Path, value: object) -> Path:
 
 
 def _category(root: Path, raw: dict[str, object]) -> tuple[str, ...]:
-    """Resolve one configured code category without inventing missing sources."""
+    """Resolve one configured code category without inventing missing sources.
+
+    Returns:
+        The resulting ``tuple[str, ...]``.
+
+    Raises:
+        TypeError: If Invalid docs metrics category; or if Invalid docs metrics labels.
+    """
     relative = raw["root"]
     excludes = raw["exclude"]
     labels = raw.get("labels", {})
@@ -55,7 +75,17 @@ def _category(root: Path, raw: dict[str, object]) -> tuple[str, ...]:
 
 
 def render_metrics(root: Path) -> str:
-    """Render the complete metrics document from live Rust and docs sources."""
+    """Render the complete metrics document from live Rust and docs sources.
+
+    Returns:
+        The resulting ``str``.
+
+    Raises:
+        TypeError: If Invalid docs metrics categories; or if Workspace version must be a
+            nonempty string.
+        ValueError: If No Rust source files under; or if No Rust tests found in the
+            declared source root.
+    """
     config_path = root / "config/docs-metrics.toml"
     with config_path.open("rb") as source:
         config = tomllib.load(source)
@@ -139,7 +169,11 @@ def render_metrics(root: Path) -> str:
 
 
 def generate_metrics(root: Path) -> tuple[Path, bool]:
-    """Publish changed bytes atomically and report whether output changed."""
+    """Publish changed bytes atomically and report whether output changed.
+
+    Returns:
+        The resulting ``tuple[Path, bool]``.
+    """
     destination = root / "docs/generated/METRICS.md"
     content = render_metrics(root)
     before = destination.read_text(encoding="utf-8") if destination.exists() else None
@@ -147,7 +181,7 @@ def generate_metrics(root: Path) -> tuple[Path, bool]:
         return destination, False
     destination.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(
-        mode="w", encoding="utf-8", dir=destination.parent, prefix=".metrics-stage-"
+        mode="w", encoding="utf-8", dir=destination.parent, prefix=".metrics-stage-",
     ) as staged:
         staged.write(content)
         staged.flush()

@@ -181,7 +181,8 @@ pub async fn store_execution(
     let metadata = build_execution_metadata(&validated, data);
     let content = format_execution_content(&validated);
     let tags = build_execution_tags(&validated, &metadata);
-    let observation = build_execution_observation(args, data, metadata, content, tags, vcs_context)?;
+    let observation =
+        build_execution_observation(args, data, metadata, content, tags, vcs_context)?;
     persist_execution_observation(memory_service, observation).await
 }
 

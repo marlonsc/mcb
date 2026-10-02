@@ -122,8 +122,12 @@ macro_rules! impl_from_str {
 
 /// List-doc wording: `"List all "` when the list takes no params.
 macro_rules! port_list_doc {
-    () => { "List all " };
-    ($($p:ident),+) => { "List " };
+    () => {
+        "List all "
+    };
+    ($($p:ident),+) => {
+        "List "
+    };
 }
 
 /// Define a simple CRUD port trait (create, get, list, update, delete).

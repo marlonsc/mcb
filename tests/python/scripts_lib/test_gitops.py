@@ -21,8 +21,7 @@ from mcb_scripts.gitops import (
     rendered_issues,
     summarize,
 )
-
-from ._utilities.matchers import tm
+from tests.python.scripts_lib._utilities.matchers import tm
 
 ROOT = Path(__file__).resolve().parents[3]
 SCRIPTS = ROOT / "scripts"
@@ -36,6 +35,7 @@ def _write_k8s_file(root: Path, rel_path: str, content: str) -> Path:
 
 
 def test_readme_only_k8s_tree_is_clean_skip(temp_dir: Path) -> None:
+    """Test readme only k8s tree is clean skip."""
     _write_k8s_file(temp_dir, "k8s/README.md", "# placeholder\n")
 
     summary_result = summarize(temp_dir / "k8s")
@@ -48,6 +48,7 @@ def test_readme_only_k8s_tree_is_clean_skip(temp_dir: Path) -> None:
 
 
 def test_discovers_helm_and_kustomize_targets(temp_dir: Path) -> None:
+    """Test discovers helm and kustomize targets."""
     _write_k8s_file(temp_dir, "k8s/chart/Chart.yaml", "apiVersion: v2\nname: sample\n")
     _write_k8s_file(temp_dir, "k8s/overlay/kustomization.yaml", "resources: []\n")
 
@@ -60,6 +61,7 @@ def test_discovers_helm_and_kustomize_targets(temp_dir: Path) -> None:
 
 
 def test_policy_issues_reuse_qlty_report_model(temp_dir: Path) -> None:
+    """Test policy issues reuse qlty report model."""
     _write_k8s_file(
         temp_dir,
         "k8s/workload.yaml",
@@ -89,6 +91,7 @@ spec:
 def test_policy_issue_line_points_to_image_key_not_first_matching_value(
     temp_dir: Path,
 ) -> None:
+    """Test policy issue line points to image key not first matching value."""
     _write_k8s_file(
         temp_dir,
         "k8s/workload.yaml",
@@ -115,6 +118,7 @@ spec:
 
 
 def test_command_skips_without_using_cluster_clis() -> None:
+    """Test command skips without using cluster clis."""
     command = SCRIPTS / "check" / "gitops.py"
 
     result = subprocess.run(
@@ -133,6 +137,7 @@ def test_command_skips_without_using_cluster_clis() -> None:
 
 
 def test_command_fails_on_latest_image_policy_issue(temp_dir: Path) -> None:
+    """Test command fails on latest image policy issue."""
     command = SCRIPTS / "check" / "gitops.py"
     _write_k8s_file(
         temp_dir,
@@ -161,6 +166,7 @@ spec:
 
 
 def test_render_cache_key_is_stable_for_same_inputs(temp_dir: Path) -> None:
+    """Test render cache key is stable for same inputs."""
     _write_k8s_file(temp_dir, "k8s/chart/Chart.yaml", "apiVersion: v2\nname: sample\n")
     target = GitOpsTarget(kind="helm", path=temp_dir / "k8s" / "chart")
 
@@ -168,6 +174,7 @@ def test_render_cache_key_is_stable_for_same_inputs(temp_dir: Path) -> None:
 
 
 def test_render_cache_key_changes_when_input_changes(temp_dir: Path) -> None:
+    """Test render cache key changes when input changes."""
     chart_dir = temp_dir / "k8s" / "chart"
     _write_k8s_file(temp_dir, "k8s/chart/Chart.yaml", "apiVersion: v2\nname: sample\n")
     target = GitOpsTarget(kind="helm", path=chart_dir)
@@ -179,8 +186,9 @@ def test_render_cache_key_changes_when_input_changes(temp_dir: Path) -> None:
 
 
 def test_cached_render_writes_and_reuses_cache(
-    temp_dir: Path, monkeypatch: pytest.MonkeyPatch
+    temp_dir: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Test cached render writes and reuses cache."""
     chart_dir = temp_dir / "k8s" / "chart"
     _write_k8s_file(temp_dir, "k8s/chart/Chart.yaml", "apiVersion: v2\nname: sample\n")
     target = GitOpsTarget(kind="helm", path=chart_dir)
@@ -189,11 +197,11 @@ def test_cached_render_writes_and_reuses_cache(
     calls: list[list[str]] = []
 
     def fake_run(
-        cmd: list[str], **_subprocess_kwargs: object
+        cmd: list[str], **_subprocess_kwargs: object,
     ) -> subprocess.CompletedProcess[str]:
         calls.append(cmd)
         return subprocess.CompletedProcess(
-            args=cmd, returncode=0, stdout=rendered, stderr=""
+            args=cmd, returncode=0, stdout=rendered, stderr="",
         )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
@@ -212,8 +220,9 @@ def _helm_target(temp_dir: Path) -> GitOpsTarget:
 
 
 def test_missing_renderer_cli_is_a_red_issue(
-    temp_dir: Path, monkeypatch: pytest.MonkeyPatch
+    temp_dir: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Test missing renderer cli is a red issue."""
     _helm_target(temp_dir)
 
     def fake_which(_tool: str) -> str | None:
@@ -228,8 +237,9 @@ def test_missing_renderer_cli_is_a_red_issue(
 
 
 def test_render_timeout_is_a_red_issue(
-    temp_dir: Path, monkeypatch: pytest.MonkeyPatch
+    temp_dir: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Test render timeout is a red issue."""
     _helm_target(temp_dir)
 
     def fake_which(tool: str) -> str | None:
@@ -238,7 +248,7 @@ def test_render_timeout_is_a_red_issue(
     monkeypatch.setattr("mcb_scripts.gitops.shutil.which", fake_which, raising=True)
 
     def fake_run(
-        cmd: list[str], **_subprocess_kwargs: object
+        cmd: list[str], **_subprocess_kwargs: object,
     ) -> subprocess.CompletedProcess[str]:
         raise subprocess.TimeoutExpired(cmd=cmd, timeout=60)
 
@@ -251,8 +261,9 @@ def test_render_timeout_is_a_red_issue(
 
 
 def test_failed_render_is_a_red_issue(
-    temp_dir: Path, monkeypatch: pytest.MonkeyPatch
+    temp_dir: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    """Test failed render is a red issue."""
     _helm_target(temp_dir)
 
     def fake_which(tool: str) -> str | None:
@@ -261,10 +272,10 @@ def test_failed_render_is_a_red_issue(
     monkeypatch.setattr("mcb_scripts.gitops.shutil.which", fake_which, raising=True)
 
     def fake_run(
-        cmd: list[str], **_subprocess_kwargs: object
+        cmd: list[str], **_subprocess_kwargs: object,
     ) -> subprocess.CompletedProcess[str]:
         return subprocess.CompletedProcess(
-            args=cmd, returncode=1, stdout="", stderr="chart not found"
+            args=cmd, returncode=1, stdout="", stderr="chart not found",
         )
 
     monkeypatch.setattr(subprocess, "run", fake_run)
