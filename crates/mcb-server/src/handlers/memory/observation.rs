@@ -8,6 +8,8 @@ use mcb_domain::value_objects::ObservationId;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 
+use mcb_utils::utils::vcs_context::VcsContext;
+
 use super::common::{
     MemoryOriginOptions, build_observation_metadata, require_data_map, require_str,
     resolve_memory_origin_context, str_vec,
@@ -24,6 +26,7 @@ use mcb_utils::constants::keys::{
 #[tracing::instrument(skip_all)]
 pub async fn store_observation(
     memory_service: &Arc<dyn MemoryServiceInterface>,
+    vcs_context: &VcsContext,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
     let data = extract_field!(require_data_map(
@@ -44,6 +47,7 @@ pub async fn store_observation(
             file_path_payload: data.get("file_path").and_then(|v| v.as_str()),
             timestamp: None,
         },
+        vcs_context,
     )?;
 
     let metadata = build_observation_metadata(

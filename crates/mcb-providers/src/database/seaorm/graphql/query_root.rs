@@ -1,8 +1,6 @@
 //! Seaography auto-generated GraphQL schema for all MCB entities.
 
-use seaography::{
-    Builder, BuilderContext, LifecycleHooks, MultiLifecycleHooks, async_graphql, lazy_static,
-};
+use seaography::{Builder, BuilderContext, LifecycleHooks, MultiLifecycleHooks, async_graphql};
 
 use async_graphql::dynamic::{Schema, SchemaError};
 use sea_orm::DatabaseConnection;
@@ -13,15 +11,6 @@ use std::sync::Arc;
 use mcb_domain::ports::GraphQLSchemaProvider;
 use mcb_domain::registry::graphql::GraphQLSchemaProviderConfig;
 
-lazy_static::lazy_static! {
-    static ref CONTEXT: BuilderContext = {
-        BuilderContext {
-            hooks: LifecycleHooks::new(MultiLifecycleHooks::default()),
-            ..Default::default()
-        }
-    };
-}
-
 /// Builds the Seaography GraphQL schema wiring all MCB entity modules.
 ///
 /// The schema is intended to be built once at startup and stored in
@@ -31,11 +20,12 @@ lazy_static::lazy_static! {
 ///
 /// Returns [`SchemaError`] if the GraphQL schema fails to build.
 pub fn schema(
+    context: &'static BuilderContext,
     database: DatabaseConnection,
     depth: Option<usize>,
     complexity: Option<usize>,
 ) -> Result<Schema, SchemaError> {
-    let builder = Builder::new(&CONTEXT, database.clone());
+    let builder = Builder::new(context, database.clone());
     let builder = crate::database::seaorm::entities::register_entity_modules(builder);
     builder
         .set_depth_limit(depth)
@@ -50,7 +40,25 @@ pub fn schema(
 // ============================================================================
 
 /// Seaography GraphQL schema provider implementing the domain port.
-struct SeaographyGraphQLSchemaProvider;
+///
+/// The [`BuilderContext`] is owned by this provider instance (injected at
+/// construction) instead of a process-wide `lazy_static`. seaography's
+/// `Builder::new` requires a `&'static BuilderContext`, so the owned context
+/// is pinned once per provider — one provider instance resolves per process
+/// through the registry factory.
+struct SeaographyGraphQLSchemaProvider {
+    context: &'static BuilderContext,
+}
+
+impl SeaographyGraphQLSchemaProvider {
+    fn new() -> Self {
+        let context = Box::leak(Box::new(BuilderContext {
+            hooks: LifecycleHooks::new(MultiLifecycleHooks::default()),
+            ..Default::default()
+        }));
+        Self { context }
+    }
+}
 
 impl GraphQLSchemaProvider for SeaographyGraphQLSchemaProvider {
     fn build_schema(
@@ -64,7 +72,7 @@ impl GraphQLSchemaProvider for SeaographyGraphQLSchemaProvider {
                 "GraphQL: expected DatabaseConnection, got wrong type".to_owned(),
             )
         })?;
-        let s = schema(*database, depth, complexity).map_err(|e| {
+        let s = schema(self.context, *database, depth, complexity).map_err(|e| {
             mcb_domain::error::Error::configuration(format!("GraphQL schema build failed: {e}"))
         })?;
         Ok(Box::new(s))
@@ -75,7 +83,7 @@ impl GraphQLSchemaProvider for SeaographyGraphQLSchemaProvider {
 fn seaography_factory(
     _config: &GraphQLSchemaProviderConfig,
 ) -> mcb_domain::error::Result<Arc<dyn GraphQLSchemaProvider>> {
-    Ok(Arc::new(SeaographyGraphQLSchemaProvider))
+    Ok(Arc::new(SeaographyGraphQLSchemaProvider::new()))
 }
 
 mcb_domain::register_graphql_schema_provider!(

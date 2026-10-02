@@ -18,6 +18,7 @@ use crate::error_mapping::to_contextual_tool_error;
 use crate::formatter::ResponseFormatter;
 use crate::utils::mcp::resolve_org_id;
 use mcb_utils::utils::id as domain_id;
+use mcb_utils::utils::vcs_context::VcsContext;
 
 use mcb_utils::constants::keys::{FIELD_MESSAGE, FIELD_OBSERVATION_ID};
 use mcb_utils::constants::values::TAG_QUALITY_GATE;
@@ -56,6 +57,7 @@ fn build_quality_gate_observation(
     quality_gate: QualityGateResult,
     content: String,
     tags: Vec<String>,
+    vcs_context: &VcsContext,
 ) -> Result<QualityGateObservationStore, McpError> {
     let origin = resolve_memory_origin_context(
         args,
@@ -66,6 +68,7 @@ fn build_quality_gate_observation(
             file_path_payload: None,
             timestamp: Some(quality_gate.timestamp),
         },
+        vcs_context,
     )?;
     let observation_metadata = build_observation_metadata(
         origin.canonical_session_id,
@@ -86,6 +89,7 @@ fn build_quality_gate_observation(
 #[tracing::instrument(skip_all)]
 pub async fn store_quality_gate(
     memory_service: &Arc<dyn MemoryServiceInterface>,
+    vcs_context: &VcsContext,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
     let data = extract_field!(require_data_map(
@@ -104,7 +108,7 @@ pub async fn store_quality_gate(
         TAG_QUALITY_GATE.to_owned(),
         quality_gate.status.as_str().to_owned(),
     ];
-    let observation = build_quality_gate_observation(args, data, quality_gate, content, tags)?;
+    let observation = build_quality_gate_observation(args, data, quality_gate, content, tags, vcs_context)?;
     persist_quality_gate_observation(memory_service, observation).await
 }
 

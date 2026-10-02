@@ -29,38 +29,32 @@ impl VcsContext {
 // ---------------------------------------------------------------------------
 
 use std::process::Command;
-use std::sync::OnceLock;
 
 use crate::constants::vcs;
 
-static VCS_CONTEXT: OnceLock<VcsContext> = OnceLock::new();
-
 /// Capture VCS context (branch, commit, repo) from the git environment.
 ///
-/// Result is cached after the first call via `OnceLock`.
+/// Pure function: state is owned by the caller, which should capture once
+/// at its composition/entry point and inject the resulting value where needed.
 #[must_use]
 pub fn capture_vcs_context() -> VcsContext {
-    VCS_CONTEXT
-        .get_or_init(|| {
-            let git_output = |args: &[&str]| {
-                Command::new(vcs::GIT_COMMAND)
-                    .args(args)
-                    .output()
-                    .ok()
-                    .and_then(|o| {
-                        if o.status.success() {
-                            Some(String::from_utf8_lossy(&o.stdout).trim().to_owned())
-                        } else {
-                            None
-                        }
-                    })
-            };
+    let git_output = |args: &[&str]| {
+        Command::new(vcs::GIT_COMMAND)
+            .args(args)
+            .output()
+            .ok()
+            .and_then(|o| {
+                if o.status.success() {
+                    Some(String::from_utf8_lossy(&o.stdout).trim().to_owned())
+                } else {
+                    None
+                }
+            })
+    };
 
-            let branch = git_output(&["rev-parse", "--abbrev-ref", vcs::GIT_REF_HEAD]);
-            let commit = git_output(&["rev-parse", vcs::GIT_REF_HEAD]);
-            let repo_id = git_output(&["config", "--get", "remote.origin.url"]);
+    let branch = git_output(&["rev-parse", "--abbrev-ref", vcs::GIT_REF_HEAD]);
+    let commit = git_output(&["rev-parse", vcs::GIT_REF_HEAD]);
+    let repo_id = git_output(&["config", "--get", "remote.origin.url"]);
 
-            VcsContext::new(branch, commit, repo_id)
-        })
-        .clone()
+    VcsContext::new(branch, commit, repo_id)
 }

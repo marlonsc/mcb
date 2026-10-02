@@ -10,8 +10,11 @@ mod language_id;
 mod types;
 /// Validator trait for implementing codebase validation rules.
 mod validator;
+/// Centralized validation thresholds injected via ValidationConfig.
+mod thresholds;
 
 pub use config::*;
 pub use language_id::*;
 pub use types::*;
+pub use thresholds::*;
 pub use validator::*;
