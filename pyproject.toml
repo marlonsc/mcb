@@ -22,7 +22,7 @@ dependencies = [
   "flext-core @ git+https://github.com/flext-sh/flext-core.git@0.12.0-dev",
   "flext-infra @ git+https://github.com/flext-sh/flext-infra.git@0.12.0-dev",
   "pydantic>=2.13.5",
-  "pydantic-settings>=2.15,<3",
+  "pydantic-settings>=2.15.0",
   "structlog>=26.1.0,<27",
 ]
 description = "Repository-local automation helpers for MCB"
@@ -82,6 +82,7 @@ dev = [
   "mkdocstrings>=1.0.6",
   "mkdocstrings-python>=2.0.8",
   "mypy>=2.3.1",
+  "platformdirs>=4.12.0",
   "pre-commit>=4.6.2",
   "pymdown-extensions",
   "pyrefly>=1.2.0",
@@ -157,30 +158,15 @@ package_name = "mcb_scripts"
 allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/mcb_scripts"]
+include = ["/src/mcb_scripts/**"]
 
-[tool.hatch.build.targets.wheel.force-include]
-config = "mcb_scripts/config"
+[tool.hatch.build.targets.wheel.sources]
+"src/mcb_scripts" = "mcb_scripts"
 
 [tool.hatch.build.targets.sdist]
-only-include = ["src/mcb_scripts", "config"]
+include = ["/src/mcb_scripts/**"]
 
 [tool.mypy]
-disable_error_code = [
-  "arg-type",
-  "assignment",
-  "attr-defined",
-  "call-arg",
-  "misc",
-  "name-defined",
-  "no-any-return",
-  "no-redef",
-  "prop-decorator",
-  "type-var",
-  "unreachable",
-  "valid-type",
-]
-exclude = "^legado(?:/|$)"
 mypy_path = ["src"]
 plugins = ["pydantic.mypy"]
 python_version = "3.13"
@@ -202,7 +188,6 @@ follow_imports = "normal"
 
 [[tool.mypy.overrides]]
 module = ["rope.*"]
-disable_error_code = []
 follow_untyped_imports = true
 
 [tool.pydantic-mypy]
@@ -329,8 +314,6 @@ exclude = [
   "**/node_modules",
   "**/site-packages",
   "**/site-packages/**",
-  "**/tests/fixtures",
-  "**/tests/fixtures/**",
   "**/venv",
   "**/venv/**",
   ".git",
@@ -342,30 +325,15 @@ include = ["src", "tests"]
 extraPaths = ["src", "."]
 pythonPlatform = "Linux"
 pythonVersion = "3.13"
-reportArgumentType = "none"
-reportAttributeAccessIssue = "none"
-reportCallIssue = "none"
 reportConstantRedefinition = "error"
 reportIncompatibleMethodOverride = "error"
-reportIncompatibleVariableOverride = "none"
 reportInconsistentConstructor = "error"
-reportInvalidTypeForm = "none"
 reportMissingImports = "error"
 reportMissingModuleSource = "error"
-reportMissingTypeStubs = "none"
-reportPrivateUsage = "warning"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
+reportPrivateUsage = "error"
 reportUnnecessaryCast = "error"
-reportUnnecessaryComparison = "warning"
-reportUnnecessaryIsInstance = "warning"
-reportUnreachable = "none"
-reportUnsupportedDunderAll = "none"
-reportUntypedBaseClass = "none"
-reportUntypedFunctionDecorator = "none"
+reportUnnecessaryComparison = "error"
+reportUnnecessaryIsInstance = "error"
 reportUnusedClass = "error"
 reportUnusedFunction = "error"
 reportUnusedImport = "error"
@@ -375,37 +343,12 @@ typeCheckingMode = "strict"
 [[tool.pyright.executionEnvironments]]
 root = "src"
 extraPaths = ["src"]
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
 reportPrivateUsage = "error"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
 
 [[tool.pyright.executionEnvironments]]
 root = "tests"
 extraPaths = [".", "src"]
-reportArgumentType = "none"
-reportAssignmentType = "none"
-reportAttributeAccessIssue = "none"
-reportGeneralTypeIssues = "none"
-reportInvalidTypeForm = "none"
-reportPrivateImportUsage = "none"
-reportPrivateUsage = "none"
-reportReturnType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownLambdaType = "none"
-reportUnknownMemberType = "none"
-reportUnknownParameterType = "none"
-reportUnknownVariableType = "none"
-reportUnusedImport = "none"
+reportPrivateUsage = "error"
 
 [tool.pytest.ini_options]
 addopts = [
@@ -415,7 +358,7 @@ addopts = [
   "--durations=10",
   "--timeout=10",
 ]
-flext_slow_timeout_seconds = "60"
+flext_slow_timeout_seconds = "30"
 asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
   "error",
@@ -444,46 +387,14 @@ python_files = ["*_test.py", "*_tests.py", "test_*.py"]
 testpaths = ["tests"]
 
 [tool.ruff]
-exclude = [
-  "**/.archive/**",
-  "**/__pyrefly_virtual__/**",
-  ".agents/aihub-hooks",
-  ".agents/aihub-hooks/**",
-  ".archive",
-  ".archive/**",
-  ".claude/aihub-hooks",
-  ".claude/aihub-hooks/**",
-  ".codex/aihub-hooks",
-  ".codex/aihub-hooks/**",
-  ".cursor/aihub-hooks",
-  ".cursor/aihub-hooks/**",
-  ".gemini/aihub-hooks",
-  ".gemini/aihub-hooks/**",
-  ".git",
-  ".github/hooks",
-  ".github/hooks/**",
-  ".mypy_cache",
-  ".pytest_cache",
-  ".ruff_cache",
-  ".venv",
-  "__pycache__",
-  "archive",
-  "backup",
-  "build",
-  "dist",
-  "htmlcov",
-  "temp-backup",
-  "typings",
-  "vendor",
-  "venv",
-]
+extend-exclude = []
 fix = false
 line-length = 88
 namespace-packages = ["tests", "examples", "scripts"]
 preview = true
 respect-gitignore = true
 show-fixes = true
-src = ["examples", "scripts", "src", "tests"]
+src = ["scripts", "src", "tests"]
 target-version = "py313"
 
 [tool.ruff.format]
@@ -491,43 +402,33 @@ docstring-code-format = true
 indent-style = "space"
 line-ending = "lf"
 quote-style = "double"
-skip-magic-trailing-comma = true
+skip-magic-trailing-comma = false
 
 [tool.ruff.lint]
+extend-safe-fixes = ["camelcase-imported-as-lowercase", "relative-imports"]
 ignore = [
-  "ambiguous-unicode-character-comment",
-  "ambiguous-unicode-character-docstring",
-  "ambiguous-unicode-character-string",
-  "boolean-positional-value-in-call",
   "camelcase-imported-as-lowercase",
-  "complex-structure",
-  "docstring-missing-exception",
-  "docstring-missing-returns",
-  "docstring-missing-yields",
-  "import-outside-top-level",
-  "incorrect-blank-line-before-class",
-  "line-too-long",
-  "logging-f-string",
-  "missing-copyright-notice",
-  "missing-trailing-comma",
-  "multi-line-summary-second-line",
-  "no-self-use",
-  "non-imperative-mood",
-  "pytest-fixture-autouse",
-  "relative-imports",
-  "too-many-arguments",
-  "too-many-branches",
-  "too-many-locals",
-  "too-many-nested-blocks",
-  "too-many-positional-arguments",
-  "too-many-public-methods",
-  "too-many-return-statements",
-  "too-many-statements",
-  "typing-only-first-party-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
 ]
 select = ["ALL"]
+unfixable = [
+  "duplicate-value",
+  "multi-value-repeated-key-literal",
+  "multi-value-repeated-key-variable",
+  "outdated-version-block",
+  "p-print",
+  "print",
+  "pytest-duplicate-parametrize-test-cases",
+  "redefined-while-unused",
+  "unused-variable",
+]
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "Copyright \\(c\\) \\d{4} \\S[^\\n]*\\. All rights reserved\\."
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"
 
 [tool.ruff.lint.flake8-tidy-imports.banned-api.argparse]
 msg = "Use cli.register_result_command + Pydantic model from flext_cli."
@@ -538,6 +439,9 @@ msg = "Use flext_cli.cli application, registration, execution, and invocation me
 [tool.ruff.lint.flake8-tidy-imports.banned-api.rich]
 msg = "Use cli.print / cli.display_message / cli.render_panel / cli.render_table."
 
+[tool.ruff.lint.flake8-tidy-imports.banned-api.tabulate]
+msg = "Use cli.render_table from flext_cli."
+
 [tool.ruff.lint.flake8-tidy-imports.banned-api.typer]
 msg = "Use cli.create_app_with_common_params / cli.register_command from flext_cli."
 
@@ -546,6 +450,72 @@ combine-as-imports = true
 force-single-line = false
 known-first-party = ["flext_core", "mcb_scripts"]
 split-on-trailing-comma = false
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = [
+  "non-empty-init-module",
+  "runtime-import-in-type-checking-block",
+  "typing-only-first-party-import",
+  "unused-import",
+]
+"scripts/**" = [
+  "any-type",
+  "avoidable-escaped-quote",
+  "banned-api",
+  "blank-line-after-function",
+  "boolean-default-value-positional-argument",
+  "boolean-type-hint-positional-argument",
+  "builtin-open",
+  "commented-out-code",
+  "error-instead-of-exception",
+  "f-string-in-exception",
+  "if-exp-instead-of-or-operator",
+  "import-private-name",
+  "invalid-module-name",
+  "literal-membership",
+  "logging-string-concat",
+  "magic-value-comparison",
+  "manual-list-comprehension",
+  "manual-list-copy",
+  "missing-blank-line-after-summary",
+  "missing-maxsplit-arg",
+  "multi-line-summary-first-line",
+  "multiple-starts-ends-with",
+  "non-lowercase-variable-in-function",
+  "noqa-comments",
+  "os-path-abspath",
+  "os-path-dirname",
+  "os-path-exists",
+  "os-path-join",
+  "path-constructor-current-directory",
+  "print",
+  "raise-vanilla-args",
+  "raw-string-in-exception",
+  "read-whole-file",
+  "relative-imports",
+  "repeated-append",
+  "runtime-cast-value",
+  "shebang-not-executable",
+  "start-process-with-partial-path",
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
+  "undocumented-public-class",
+  "undocumented-public-function",
+  "undocumented-public-init",
+  "undocumented-public-method",
+  "unnecessary-multiline-docstring",
+  "unsorted-dunder-all",
+  "unspecified-encoding",
+  "unused-function-argument",
+  "unused-noqa",
+  "used-dummy-variable",
+  "verbose-raise",
+  "write-whole-file",
+]
+"tests/**/*.py" = ["assert"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.tomlsort]
 all = true
@@ -567,5 +537,4 @@ whitelines = 1
 
 [tool.uv]
 link-mode = "copy"
-constraint-dependencies = ["structlog>=26.1.0,<27"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]

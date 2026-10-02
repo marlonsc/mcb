@@ -58,6 +58,7 @@ jobs:
         run: >-
           docker build
           -f tests/fixtures/ci/docker/${{ matrix.distro }}.Dockerfile
+          --build-context git=.git
           --secret id=github_token,env=GITHUB_TOKEN
           -t ci-matrix-${{ matrix.distro }}
           .
@@ -67,7 +68,14 @@ jobs:
         run: |
           docker run --rm -e CI=Y -e GITHUB_TOKEN ci-matrix-${{ matrix.distro }} make help
           docker run --rm -e CI=Y -e GITHUB_TOKEN ci-matrix-${{ matrix.distro }} make check
-          # ci-matrix proves bootstrap + check across distros; it never runs make test.
+      - name: Upgrade, regenerate, and validate on Linux
+        if: ${{ matrix.distro == 'ubuntu' }}
+        run: >-
+          docker run --rm
+          -e CI=Y
+          -e GITHUB_TOKEN
+          ci-matrix-ubuntu
+          bash -ec 'make upg && make setup && make gen && make gen && make check && make test && make build'
   # End SECTION: distro-matrix
 
   # === SECTION: macos (managed) ===
@@ -86,13 +94,19 @@ jobs:
           persist-credentials: false
       - name: Bootstrap
         run: CI=Y make setup
-      - name: Verb surface
-        run: CI=Y make help
-      # The canonical gate, not just the verb surface: this matrix exists to
-      # catch platform-specific failures, and `make help` exercises none of
-      # the gates. The linux job already runs it.
-      - name: Canonical check
-        run: CI=Y make check
+      - name: Upgrade and frozen bootstrap
+        run: |
+          CI=Y make upg
+          CI=Y make setup
+      - name: Generate twice
+        run: |
+          CI=Y make gen
+          CI=Y make gen
+      - name: Native gates
+        run: |
+          CI=Y make check
+          CI=Y make test
+          CI=Y make build
   # End SECTION: macos
 
   # === SECTION: windows (managed) ===
@@ -112,13 +126,20 @@ jobs:
       - name: Bootstrap
         shell: bash
         run: CI=Y make setup
-      - name: Verb surface
+      - name: Upgrade and frozen bootstrap
         shell: bash
-        run: CI=Y make help
-      # The canonical gate, not just the verb surface: this matrix exists to
-      # catch platform-specific failures, and `make help` exercises none of
-      # the gates. The linux job already runs it.
-      - name: Canonical check
+        run: |
+          CI=Y make upg
+          CI=Y make setup
+      - name: Generate twice
         shell: bash
-        run: CI=Y make check
+        run: |
+          CI=Y make gen
+          CI=Y make gen
+      - name: Native gates
+        shell: bash
+        run: |
+          CI=Y make check
+          CI=Y make test
+          CI=Y make build
 # End SECTION: windows

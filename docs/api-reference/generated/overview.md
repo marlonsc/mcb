@@ -8,14 +8,25 @@
 
 <!-- AUTO-GENERATED — DO NOT EDIT MANUALLY -->
 
+- Package: `mcb_scripts`
 - Version: `0.4.0`
 - Description: Repository-local automation helpers for MCB
-- Governed projects: `0`
-- Project classes: _none_
-
-Generated from workspace discovery, `pyproject.toml`, public exports, and docstrings.
+- Doc summary: Mcb Scripts package.
+- Classifiers: Development Status :: 4 - Beta, Intended Audience :: Developers,
+  Operating System :: OS Independent, Programming Language :: Python :: 3 :: Only,
+  Programming Language :: Python :: 3.13, Topic :: Software Development :: Libraries ::
+  Python Modules, Typing :: Typed
+- Project class: `domain`
+- Keywords: `clean-architecture`, `flext`, `integration`, `typed`
+- Main facades: `McbScriptsService`
+- Alias exports: `c`, `r`, `s`
+- Public symbol exports: `BaseCommandSettings`, `BaseMcbSettings`, `McbConstants`,
+  `McbResult`, `McbScriptsService`, `McbService`, `McbSettings`, `configure_logging`,
+  `get_logger`
+- Exported module shortcuts: `docs`, `qlty`
+- Generated module pages: `8`
 
 ## Next Pages
 
-- [Workspace Module Pages](projects/index.md)
-- [Project Catalog](../../projects/generated/catalog.md)
+- [Public API](public-api.md)
+- [Module Index](modules/index.md)

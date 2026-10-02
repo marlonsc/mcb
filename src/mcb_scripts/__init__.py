@@ -1,5 +1,9 @@
 # AUTO-GENERATED FILE — Regenerate with: make gen
-"""Mcb Scripts package."""
+"""Mcb Scripts package.
+
+Copyright (c) 2026 Marlon Costa. All rights reserved.
+SPDX-License-Identifier: MIT
+"""
 
 from __future__ import annotations
 
@@ -9,9 +13,9 @@ from typing import TYPE_CHECKING
 from flext_core.lazy import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
-    from . import docs, qlty
-    from .constants import McbConstants
-    from .core import (
+    from mcb_scripts import docs, qlty
+    from mcb_scripts.constants import McbConstants
+    from mcb_scripts.core import (
         BaseCommandSettings,
         BaseMcbSettings,
         McbService,
@@ -20,9 +24,9 @@ if TYPE_CHECKING:
         get_logger,
         r,
     )
-    from .result import McbResult
-    from .service import McbScriptsService, McbScriptsService as s
-    from .settings import McbSettings
+    from mcb_scripts.result import McbResult
+    from mcb_scripts.service import McbScriptsService, s
+    from mcb_scripts.settings import McbSettings
 
 
 __all__: tuple[str, ...] = (
@@ -63,7 +67,7 @@ _LAZY_IMPORTS = MappingProxyType(
         }),
         alias_groups=MappingProxyType({}),
         sort_keys=False,
-    )
+    ),
 )
 
 install_lazy_exports(__name__, globals(), _LAZY_IMPORTS, public_exports=__all__)
