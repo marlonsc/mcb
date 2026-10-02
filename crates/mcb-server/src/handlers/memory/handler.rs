@@ -21,6 +21,7 @@ use crate::utils::json;
 use crate::utils::mcp::{resolve_identifier_precedence, resolve_org_id, tool_error};
 use mcb_utils::constants::keys::FIELD_COUNT;
 use mcb_utils::constants::limits::DEFAULT_MEMORY_LIST_LIMIT;
+use mcb_utils::utils::vcs_context::VcsContext;
 
 /// Handler for memory-related MCP tool operations.
 ///
@@ -29,10 +30,13 @@ use mcb_utils::constants::limits::DEFAULT_MEMORY_LIST_LIMIT;
 #[derive(Clone)]
 pub struct MemoryHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
+    /// VCS context captured once at the composition root and injected here.
+    vcs_context: VcsContext,
 }
 
 handler_new!(MemoryHandler {
     memory_service: Arc<dyn MemoryServiceInterface>,
+    vcs_context: VcsContext,
 });
 
 impl MemoryHandler {
@@ -78,13 +82,14 @@ impl MemoryHandler {
             resource = args.resource,
             {
             (MemoryResourceAction::Store, MemoryResource::Observation) => {
-                observation::store_observation(&self.memory_service, args).await
+                observation::store_observation(&self.memory_service, &self.vcs_context, args).await
             }
             (MemoryResourceAction::Store, MemoryResource::Execution) => {
-                execution::store_execution(&self.memory_service, args).await
+                execution::store_execution(&self.memory_service, &self.vcs_context, args).await
             }
             (MemoryResourceAction::Store, MemoryResource::QualityGate) => {
-                quality_gate::store_quality_gate(&self.memory_service, args).await
+                quality_gate::store_quality_gate(&self.memory_service, &self.vcs_context, args)
+                    .await
             }
             (MemoryResourceAction::Store, MemoryResource::Session) => {
                 session::store_session(&self.memory_service, args).await
@@ -203,7 +208,7 @@ impl MemoryHandler {
     }
 
     async fn handle_inject(&self, args: &MemoryArgs) -> Result<CallToolResult, McpError> {
-        inject::inject_context(&self.memory_service, args).await
+        inject::inject_context(&self.memory_service, &self.vcs_context, args).await
     }
 }
 

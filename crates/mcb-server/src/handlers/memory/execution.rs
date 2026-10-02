@@ -10,6 +10,8 @@ use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::Value;
 
+use mcb_utils::utils::vcs_context::VcsContext;
+
 use super::common::{
     MemoryOriginOptions, SearchMemoriesJsonSpec, build_observation_metadata, opt_str, require_bool,
     require_data_map, require_i32, require_i64, require_str, resolve_memory_origin_context,
@@ -128,6 +130,7 @@ fn build_execution_observation(
     metadata: ExecutionMetadata,
     content: String,
     tags: Vec<String>,
+    vcs_context: &VcsContext,
 ) -> Result<ExecutionObservationStore, McpError> {
     let payload_execution_id = opt_str(data, "execution_id");
     let generated_execution_id = metadata.id.clone();
@@ -140,6 +143,7 @@ fn build_execution_observation(
             file_path_payload: None,
             timestamp: None,
         },
+        vcs_context,
     )
     .map_err(|err| {
         McpError::invalid_params(
@@ -166,6 +170,7 @@ fn build_execution_observation(
 #[tracing::instrument(skip_all)]
 pub async fn store_execution(
     memory_service: &Arc<dyn MemoryServiceInterface>,
+    vcs_context: &VcsContext,
     args: &MemoryArgs,
 ) -> Result<CallToolResult, McpError> {
     let data = extract_field!(require_data_map(
@@ -176,7 +181,7 @@ pub async fn store_execution(
     let metadata = build_execution_metadata(&validated, data);
     let content = format_execution_content(&validated);
     let tags = build_execution_tags(&validated, &metadata);
-    let observation = build_execution_observation(args, data, metadata, content, tags)?;
+    let observation = build_execution_observation(args, data, metadata, content, tags, vcs_context)?;
     persist_execution_observation(memory_service, observation).await
 }
 

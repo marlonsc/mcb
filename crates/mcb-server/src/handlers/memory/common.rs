@@ -9,7 +9,7 @@ use mcb_domain::{
     ports::MemoryServiceInterface,
 };
 use mcb_utils::utils::id as domain_id;
-use mcb_utils::utils::vcs_context::{VcsContext, capture_vcs_context};
+use mcb_utils::utils::vcs_context::VcsContext;
 use rmcp::ErrorData as McpError;
 use rmcp::model::CallToolResult;
 use serde_json::{Map, Value};
@@ -46,8 +46,8 @@ pub(super) fn resolve_memory_origin_context(
     args: &MemoryArgs,
     data: &Map<String, Value>,
     opts: &MemoryOriginOptions<'_>,
+    vcs_context: &VcsContext,
 ) -> Result<MemoryOriginResolution, McpError> {
-    let vcs_context = capture_vcs_context();
     let canonical_session_id = args.session_id.map(|id| {
         let id_str = id.to_string();
         domain_id::correlate_id("session", &id_str)
@@ -71,7 +71,6 @@ pub(super) fn resolve_memory_origin_context(
     let mut origin_context = resolve_origin_context(&input)?;
 
     overlay_vcs_context(&mut origin_context, vcs_context);
-
     origin_context.session_id = None;
     origin_context.session_id_correlation = canonical_session_id.clone();
     origin_context.parent_session_id = None;
@@ -92,16 +91,16 @@ pub(super) fn resolve_memory_origin_context(
 /// Fill any unset repo/branch/commit fields on `origin_context` from the captured VCS context.
 fn overlay_vcs_context(
     origin_context: &mut mcb_domain::entities::memory::OriginContext,
-    vcs_context: VcsContext,
+    vcs_context: &VcsContext,
 ) {
     if origin_context.repo_id.is_none() {
-        origin_context.repo_id = vcs_context.repo_id;
+        origin_context.repo_id = vcs_context.repo_id.clone();
     }
     if origin_context.branch.is_none() {
-        origin_context.branch = vcs_context.branch;
+        origin_context.branch = vcs_context.branch.clone();
     }
     if origin_context.commit.is_none() {
-        origin_context.commit = vcs_context.commit;
+        origin_context.commit = vcs_context.commit.clone();
     }
 }
 

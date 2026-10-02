@@ -12,7 +12,6 @@ use rust_code_analysis::SpaceKind;
 
 use crate::ast::rca_helpers;
 use crate::scan::for_each_scan_file;
-use crate::thresholds::thresholds;
 use crate::{Result, Severity};
 use mcb_utils::utils::regex::compile_regex;
 
@@ -194,7 +193,7 @@ impl KissValidator {
                 .any(|s| struct_name.contains(s));
 
         let max_fields = if is_di_container {
-            thresholds().max_di_container_fields
+            self.config.thresholds.max_di_container_fields
         } else {
             self.max_struct_fields
         };

@@ -38,7 +38,6 @@
 //! ```
 
 // === Centralized Thresholds (Phase 2 DRY) ===
-pub mod thresholds;
 
 /// Crate-local provenance sentinels for report fields.
 pub mod sentinels;

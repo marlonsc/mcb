@@ -2,7 +2,6 @@
 
 use crate::ValidationConfig;
 use crate::config::KISSRulesConfig;
-use crate::thresholds::thresholds;
 
 use super::KissValidator;
 
@@ -12,7 +11,7 @@ impl KissValidator {
     /// Creates a new KISS validator with explicit configuration and rules.
     #[must_use]
     pub fn with_config(config: ValidationConfig, rules: &KISSRulesConfig) -> Self {
-        let t = thresholds();
+        let t = config.thresholds.clone();
         Self {
             config,
             rules: rules.clone(),

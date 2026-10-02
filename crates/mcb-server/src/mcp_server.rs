@@ -319,7 +319,10 @@ fn build_tool_handlers(services: &McpServices) -> ToolHandlers {
             Arc::clone(&services.indexing),
         )),
         validate: Arc::new(ValidateHandler::new(Arc::clone(&services.validation))),
-        memory: Arc::new(MemoryHandler::new(Arc::clone(&services.memory))),
+        memory: Arc::new(MemoryHandler::new(
+            Arc::clone(&services.memory),
+            mcb_utils::utils::vcs_context::capture_vcs_context(),
+        )),
         session: Arc::new(SessionHandler::new(
             Arc::clone(&services.agent_session),
             Arc::clone(&services.memory),

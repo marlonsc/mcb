@@ -1,11 +1,10 @@
-//!
-//! **Documentation**: [docs/modules/validate.md](../../../docs/modules/validate.md)
-//!
-//! Centralized validation thresholds
+//! Centralized validation thresholds.
 //!
 //! All numeric limits used by validators are defined here.
 //! This provides a single source of truth for configuration values,
-//! following the DRY principle.
+//! following the DRY principle. The struct is carried inside
+//! [`super::ValidationConfig`] and injected into every validator —
+//! no process-wide singleton.
 
 use serde::{Deserialize, Serialize};
 
@@ -58,7 +57,7 @@ pub struct ValidationThresholds {
     pub max_function_lines: usize,
 
     // ========================================================================
-    // Complexity Thresholds
+    // Complexity
     // ========================================================================
     /// Maximum cyclomatic complexity per function
     pub max_cyclomatic_complexity: u32,
@@ -100,20 +99,4 @@ impl ValidationThresholds {
     pub fn new() -> Self {
         Self::default()
     }
-}
-
-// ============================================================================
-// Global Singleton (Thread-Safe)
-// ============================================================================
-
-use std::sync::OnceLock;
-
-static THRESHOLDS: OnceLock<ValidationThresholds> = OnceLock::new();
-
-/// Get the global validation thresholds
-///
-/// Returns a reference to the global thresholds singleton.
-/// Initializes with defaults on first access.
-pub fn thresholds() -> &'static ValidationThresholds {
-    THRESHOLDS.get_or_init(ValidationThresholds::default)
 }

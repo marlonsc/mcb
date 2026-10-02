@@ -2,6 +2,16 @@
 //!
 //! Provides `set_log_fn` + `dispatch` (OnceLock-based), plus a built-in
 //! implementation: `stderr_log_fn` (pure std).
+//!
+//! ## DI exception (mcb-7tg1)
+//!
+//! `LOG_FN` is a documented exception to the composition-root injection
+//! pattern: the log macros (`mcb_domain::error!` etc.) dispatch through this
+//! accessor from hundreds of call sites, so threading a logger handle through
+//! every layer is not feasible. The implementation is still injected — entry
+//! points (`mcb/src/cli/validate.rs`, `mcb/src/initializers/mcp_server.rs`)
+//! explicitly register it via `set_log_fn` at startup, and `dispatch` is a
+//! no-op until then.
 
 use std::io::Write;
 use std::sync::OnceLock;
