@@ -31,8 +31,6 @@ The following queries should return relevant results:
 
 ## Usage in Golden Tests
 
-This fixture is used by tests in `tests/golden/`:
-
-- `test_index_repository.rs` - Indexes this repo
-- `test_search_validation.rs` - Searches with known queries
-- `test_end_to_end.rs` - Complete workflow test
+This fixture is retained as sample repository data (see the
+`tests/fixtures/test_repo` exclusion in `config/workspace.yaml`). It is not
+referenced by any compiled test target.

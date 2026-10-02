@@ -2,7 +2,15 @@ import { test, expect, Page } from '@playwright/test';
 import * as path from 'path';
 import { callMcpTool, ensureE2eAdminAuth } from './helpers/mcp-auth';
 
-const fixturePath = path.resolve(process.cwd(), 'fixtures', 'sample_codebase');
+const fixturePath = path.resolve(
+  process.cwd(),
+  '..',
+  'crates',
+  'mcb-server',
+  'tests',
+  'fixtures',
+  'sample_codebase',
+);
 const browseCollection = `playwright-browse-${process.pid}`;
 const browseUrl = `/ui/browse?collection=${encodeURIComponent(browseCollection)}`;
 const sampleFiles = ['src/handlers.rs', 'src/main.rs', 'src/di.rs'];
