@@ -31,9 +31,11 @@ project management, and entity workflows. They run with the real DI stack
 content.
 
 **Locations:** `crates/mcb-server/tests/e2e/` (`golden_e2e_complete.rs`,
-`golden_tools_e2e.rs`, `test_project_operations.rs`),
-`crates/mcb-server/tests/integration/` (`golden_acceptance_integration.rs`), and
-`tests/golden/` for fixture data only (non-executable).
+`golden_tools_e2e.rs`, `test_project_operations.rs`) and
+`crates/mcb-server/tests/integration/` (`golden_acceptance_integration.rs`).
+Fixture data lives in `tests/fixtures/` (shared) and
+`crates/mcb-domain/src/utils/tests/fixtures/` (canonical `sample_codebase`,
+`golden_queries.json`).
 
 **Run:** `make test WHAT=golden`
 

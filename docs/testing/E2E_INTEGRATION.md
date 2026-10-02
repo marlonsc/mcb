@@ -72,7 +72,8 @@ The Playwright config in `tests/playwright.config.ts` starts the real server wit
 
 ## Browse Workflow Contract
 
-`browse-ui.spec.ts` indexes `tests/fixtures/sample_codebase` through real MCP calls
+`browse-ui.spec.ts` indexes the canonical `crates/mcb-server/tests/fixtures/sample_codebase`
+through real MCP calls
 before opening the UI. The UI and chunk API support an optional collection filter:
 
 ```text

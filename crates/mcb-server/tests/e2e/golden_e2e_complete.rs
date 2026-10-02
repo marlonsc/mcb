@@ -1,6 +1,5 @@
 //! Included by mcb-server test binary; contract: `docs/testing/GOLDEN_TESTS_CONTRACT.md`.
 
-use std::path::Path;
 use std::time::Duration;
 
 use mcb_server::args::{IndexAction, IndexArgs, SearchArgs, SearchResource};
@@ -9,7 +8,7 @@ use rstest::rstest;
 use serde::Deserialize;
 
 use mcb_domain::utils::tests::collection::unique_collection;
-use mcb_domain::utils::tests::fixtures::sample_codebase_path;
+use mcb_domain::utils::tests::fixtures::{golden_queries_path, sample_codebase_path};
 use mcb_domain::utils::tests::mcp_assertions::{
     extract_text as extract_result_text, golden_count_result_entries, golden_parse_results_found,
 };
@@ -49,10 +48,6 @@ fn search_args(query: &str, collection: Option<String>, limit: Option<u32>) -> S
         repo_id: None,
         repo_path: None,
     }
-}
-
-fn golden_queries_path() -> std::path::PathBuf {
-    Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/golden_queries.json")
 }
 
 #[derive(Debug, Deserialize)]
