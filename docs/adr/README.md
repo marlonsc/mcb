@@ -142,8 +142,8 @@ master plan.
   — Tenant identity and vector-store boundary — **Proposed**
 - [ADR 057: Multi-Agent Coordination and SSOT Consolidation](057-multi-agent-coordination-ssot-consolidation.md)
   — Generated pointers and rule ownership — **Accepted**
-- [ADR 058: Gas Town Workflow Adoption](058-gastown-workflow-adoption.md) — Beads +
-  PR closure workflow (Gas City runtime) — **Accepted**
+- [ADR 058: Gas Town Workflow Adoption](058-gastown-workflow-adoption.md) — Beads + PR
+  closure workflow (Gas City runtime) — **Accepted**
 
 ### Security Advisory Triage
 

@@ -26,7 +26,7 @@ documentation.
 ### ADR Template
 
 - **[ADR template](adr-template.md)** - Architecture Decision Record template
-- **Usage**: `make build WHAT=docs ACT=adr-new` to create new ADR interactively
+- **Usage**: `mcb-scripts adr --title "Decision Title"` to create a new ADR
 
 ### Document Standards
 
@@ -91,10 +91,10 @@ See [Contributing Guide](../developer/CONTRIBUTING.md) for guidelines.
    - `architecture/` - Technical architecture
    - `operations/` - Deployment & operations
 
-2. **Copy appropriate template**:
+2. **Use the ADR renderer**:
 
    ```bash
-   cp docs/templates/adr-template.md docs/adr/048-your-decision-title.md
+   mcb-scripts adr --title "Your Decision Title" --status Proposed
    ```
 
 3. **Follow naming conventions**
@@ -102,7 +102,7 @@ See [Contributing Guide](../developer/CONTRIBUTING.md) for guidelines.
 4. **Validate before committing**:
 
    ```bash
-   make build WHAT=docs ACT=validate
+   make docs
    ```
 
 ## 📊 Quality Standards
@@ -135,16 +135,9 @@ See [Contributing Guide](../developer/CONTRIBUTING.md) for guidelines.
 Templates are integrated with the build system:
 
 ```bash
-# Create new ADR
-make build WHAT=docs ACT=adr-new
+# Create a new ADR
+mcb-scripts adr --title "Your Decision Title" --status Proposed
 
-# Validate all documentation (ADRs, structure, links)
-make build WHAT=docs ACT=validate
-
-# Lint markdown (FIX=1 to auto-fix)
-make build WHAT=docs ACT=lint
-
-# Build / serve documentation
-make build WHAT=docs
-make build WHAT=docs ACT=serve
+# Generate and validate documentation
+make docs
 ```

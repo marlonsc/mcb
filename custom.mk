@@ -31,6 +31,11 @@ pre-check:
 	@# source: scripts/rust/lint.sh (also the `rust WHAT=lint` handler).
 	@bash scripts/rust/lint.sh
 
+# The generated docs lifecycle invokes this repository's data-derived metrics
+# renderer before validating every documentation artifact.
+pre-docs:
+	@$(UV_RUN) mcb-scripts metrics
+
 # Why: the generated `build` builtin owns the Python wheel (uv build); the
 # Rust workspace binary is this project's artifact, so it builds here as a
 # pre-build hook.
