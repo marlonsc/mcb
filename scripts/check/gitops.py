@@ -64,11 +64,11 @@ def run(settings: GitopsSettings) -> p.Result[str]:
         logger.error(summary_result.error or "gitops discovery failed")
         return r[str].from_failure(summary_result)
     summary = summary_result.unwrap()
-    logger.info(f"GITOPS {summary.status}: {summary.message}")
+    logger.info("GITOPS %s: %s", summary.status, summary.message)
     if summary.report.total_issues:
         logger.info(summary.report.generate_summary())
     for target in summary.targets:
-        logger.info(f"{target.kind}\t{target.path}")
+        logger.info("%s\t%s", target.kind, target.path)
     if summary.status not in {"OK", "SKIP"}:
         return r[str].fail(summary.message)
     return r[str].ok(summary.status)

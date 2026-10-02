@@ -8,10 +8,13 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from flext_core import p
 from mcb_scripts.core import get_logger, r
 from mcb_scripts.qlty.model import SarifIssue, SarifResult, SarifRun, Severity
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 logger = get_logger(__name__)
 

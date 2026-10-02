@@ -119,7 +119,7 @@ def run(settings: CheckOutdatedSettings) -> p.Result[int]:
         return r[int].fail(f"{len(unreadable)} unreadable documentation file(s)")
 
     if issues:
-        logger.info(f"Found {len(issues)} potential outdated references:")
+        logger.info("Found %s potential outdated references:", len(issues))
         for fp, lineno, desc, content in sorted(issues):
             logger.info("  %s:%s [%s] %s", fp, lineno, desc, content)
         # Return 0 for now as these are often false positives or acceptable history

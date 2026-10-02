@@ -8,11 +8,14 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
-from flext_core import p
 from mcb_scripts.core import r
 from mcb_scripts.qlty.model import SarifIssue, Severity
 from mcb_scripts.qlty.strategies import get_strategy
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 
 @dataclass

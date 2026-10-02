@@ -112,7 +112,7 @@ def run(settings: CheckLinksSettings) -> p.Result[int]:
         return r[int].fail(f"{len(unreadable)} unreadable documentation file(s)")
 
     if broken:
-        logger.info(f"Found {len(broken)} broken internal links:")
+        logger.info("Found %s broken internal links:", len(broken))
         for fp, text, link, target in sorted(broken):
             logger.info("  %s: [%s](%s) -> %s (missing)", fp, text, link, target)
         return r[int].fail(f"{len(broken)} broken internal link(s) found")

@@ -7,14 +7,17 @@ SPDX-License-Identifier: MIT
 from __future__ import annotations
 
 import shutil
-import subprocess  # nosec B404 -- qlty runner: executes the pinned qlty CLI
+import subprocess  # ruff: ignore [suspicious-subprocess-import] -- pinned-binary runner
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from flext_core import p
 from mcb_scripts.core import get_logger, r
 from mcb_scripts.qlty.model import QltyCategory, SarifIssue
 from mcb_scripts.qlty.parser import parse_sarif_file
 from mcb_scripts.settings import McbSettings
+
+if TYPE_CHECKING:
+    from flext_core import p
 
 logger = get_logger(__name__)
 
@@ -46,12 +49,13 @@ def run_qlty_check(output_file: Path | None = None) -> p.Result[list[SarifIssue]
         return r[list[SarifIssue]].fail("qlty executable not found on PATH")
 
     try:
-        result = subprocess.run(
-            [executable, "check", "--all", "--sarif"],  # nosec B603 -- executable is the mise-pinned qlty binary
+        result = subprocess.run(  # ruff: ignore [subprocess-without-shell-equals-true] -- argv is the mise-pinned qlty binary plus literals
+            [executable, "check", "--all", "--sarif"],
             capture_output=True,
             text=True,
             timeout=300,
             check=False,
+            shell=False,
         )
     except subprocess.TimeoutExpired:
         return r[list[SarifIssue]].fail("qlty check timed out after 300s")
@@ -72,7 +76,7 @@ def run_qlty_check(output_file: Path | None = None) -> p.Result[list[SarifIssue]
     if parsed.failure:
         return parsed
     issues = parsed.unwrap()
-    logger.info(f"Found {len(issues)} issues")
+    logger.info("Found %s issues", len(issues))
     return r[list[SarifIssue]].ok(issues)
 
 
@@ -90,12 +94,13 @@ def run_qlty_smells(output_file: Path | None = None) -> p.Result[list[SarifIssue
         return r[list[SarifIssue]].fail("qlty executable not found on PATH")
 
     try:
-        result = subprocess.run(
-            [executable, "smells", "--all", "--sarif"],  # nosec B603 -- executable is the mise-pinned qlty binary
+        result = subprocess.run(  # ruff: ignore [subprocess-without-shell-equals-true] -- argv is the mise-pinned qlty binary plus literals
+            [executable, "smells", "--all", "--sarif"],
             capture_output=True,
             text=True,
             timeout=300,
             check=False,
+            shell=False,
         )
     except subprocess.TimeoutExpired:
         return r[list[SarifIssue]].fail("qlty smells timed out after 300s")
@@ -121,5 +126,5 @@ def run_qlty_smells(output_file: Path | None = None) -> p.Result[list[SarifIssue
         if not issue.category:
             issue.category = QltyCategory.SMELL
 
-    logger.info(f"Found {len(issues)} smells")
+    logger.info("Found %s smells", len(issues))
     return r[list[SarifIssue]].ok(issues)

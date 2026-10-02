@@ -89,7 +89,7 @@ def run(settings: CheckSourceRefsSettings) -> p.Result[int]:
         return r[int].fail(f"{len(unreadable)} unreadable documentation file(s)")
 
     if issues:
-        logger.info(f"Found {len(issues)} broken source references:")
+        logger.info("Found %s broken source references:", len(issues))
         for fp, ref in sorted(set(issues)):
             logger.info("  %s: `%s` -> Not found", fp, ref)
         return r[int].fail(f"{len(issues)} broken source reference(s) found")

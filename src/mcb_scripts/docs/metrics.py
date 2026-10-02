@@ -74,17 +74,14 @@ def _category(root: Path, raw: dict[str, object]) -> tuple[str, ...]:
     return tuple(str(name) for name in names)
 
 
-def render_metrics(root: Path) -> str:
-    """Render the complete metrics document from live Rust and docs sources.
+def _metrics_inputs(root: Path) -> tuple[dict[str, object], Path, Path, Path]:
+    """Load the declared metrics config and resolve its directories.
 
     Returns:
-        The resulting ``str``.
+        The resulting ``tuple[dict[str, object], Path, Path, Path]``.
 
     Raises:
-        TypeError: If Invalid docs metrics categories; or if Workspace version must be a
-            nonempty string.
-        ValueError: If No Rust source files under; or if No Rust tests found in the
-            declared source root.
+        TypeError: If Invalid docs metrics categories.
     """
     config_path = root / "config/docs-metrics.toml"
     with config_path.open("rb") as source:
@@ -93,9 +90,26 @@ def render_metrics(root: Path) -> str:
     if not isinstance(categories, dict):
         msg = "Invalid docs metrics categories"
         raise TypeError(msg)
-    source_root = _declared_dir(root, config["source_root"])
-    adr_dir = _declared_dir(root, config["adr_dir"])
-    module_docs_dir = _declared_dir(root, config["module_docs_dir"])
+    return (
+        categories,
+        _declared_dir(root, config["source_root"]),
+        _declared_dir(root, config["adr_dir"]),
+        _declared_dir(root, config["module_docs_dir"]),
+    )
+
+
+def _rust_stats(
+    source_root: Path,
+) -> tuple[tuple[Path, ...], tuple[Path, ...], int, int]:
+    """Collect Rust source files, test files, test count, and source lines.
+
+    Returns:
+        The resulting ``tuple[tuple[Path, ...], tuple[Path, ...], int, int]``.
+
+    Raises:
+        ValueError: If No Rust source files under; or if No Rust tests found in
+            the declared source root.
+    """
     source_files = tuple(sorted(source_root.rglob("*.rs")))
     if not source_files:
         msg = f"No Rust source files under {source_root}"
@@ -112,7 +126,18 @@ def render_metrics(root: Path) -> str:
     if test_count == 0:
         msg = "No Rust tests found in the declared source root"
         raise ValueError(msg)
+    return source_files, test_files, test_count, source_lines
 
+
+def _workspace_version(root: Path) -> str:
+    """Read the workspace package version from Cargo.toml.
+
+    Returns:
+        The resulting ``str``.
+
+    Raises:
+        TypeError: If Workspace version must be a nonempty string.
+    """
     with (root / "Cargo.toml").open("rb") as cargo_source:
         cargo = tomllib.load(cargo_source)
     workspace = cargo["workspace"]
@@ -120,15 +145,59 @@ def render_metrics(root: Path) -> str:
     if not isinstance(version, str) or not version:
         msg = "Workspace version must be a nonempty string"
         raise TypeError(msg)
+    return version
 
-    environment = Environment(
+
+def _template_environment(root: Path) -> Environment:
+    """Build the strict Jinja environment for the metrics template.
+
+    Returns:
+        The resulting ``Environment``.
+    """
+    return Environment(
         loader=FileSystemLoader(root / "docs/templates"),
         undefined=StrictUndefined,
         trim_blocks=True,
         lstrip_blocks=True,
         autoescape=True,
     )
-    template = environment.get_template("metrics.md.j2")
+
+
+def _metric_table_lines(values: tuple[tuple[str, str], ...]) -> list[str]:
+    """Render the aligned markdown metric table body.
+
+    Returns:
+        The resulting ``list[str]``.
+    """
+    label_width = max(len(label) for label, _ in values)
+    value_width = max(5, *(len(value) for _, value in values))
+    return [
+        f"| {'Metric':<{label_width}} | {'Value':>{value_width}} |",
+        f"| {'-' * label_width} | {'-' * (value_width - 1)}: |",
+        *(
+            f"| {label:<{label_width}} | {value:>{value_width}} |"
+            for label, value in values
+        ),
+    ]
+
+
+def render_metrics(root: Path) -> str:
+    """Render the complete metrics document from live Rust and docs sources.
+
+    Returns:
+        The resulting ``str``.
+
+    Raises:
+        TypeError: If Invalid docs metrics categories; or if Workspace version
+            must be a nonempty string.
+        ValueError: If No Rust source files under; or if No Rust tests found in
+            the declared source root.
+    """
+    categories, source_root, adr_dir, module_docs_dir = _metrics_inputs(root)
+    source_files, test_files, test_count, source_lines = _rust_stats(source_root)
+    version = _workspace_version(root)
+
+    template = _template_environment(root).get_template("metrics.md.j2")
     languages = _category(root, categories["language"])
     embeddings = _category(root, categories["embedding"])
     vector_stores = _category(root, categories["vector_store"])
@@ -147,20 +216,10 @@ def render_metrics(root: Path) -> str:
         ("Test Files", str(len(test_files))),
         ("Module Docs", str(len(tuple(module_docs_dir.glob("*.md"))))),
     )
-    label_width = max(len(label) for label, _ in values)
-    value_width = max(5, *(len(value) for _, value in values))
-    table_lines = [
-        f"| {'Metric':<{label_width}} | {'Value':>{value_width}} |",
-        f"| {'-' * label_width} | {'-' * (value_width - 1)}: |",
-        *(
-            f"| {label:<{label_width}} | {value:>{value_width}} |"
-            for label, value in values
-        ),
-    ]
     content = template.render(
         version=version,
         version_anchor="v" + re.sub(r"[^a-z0-9]", "", version.lower()),
-        table="\n".join(table_lines),
+        table="\n".join(_metric_table_lines(values)),
         language_list="\n".join(f"- {name}" for name in languages),
         embedding_list="\n".join(f"- {name}" for name in embeddings),
         vector_store_list="\n".join(f"- {name}" for name in vector_stores),

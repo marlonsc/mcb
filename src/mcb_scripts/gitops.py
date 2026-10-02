@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import shutil
-import subprocess  # nosec B404 -- tool runner: executes the declared gitops CLI
+import subprocess  # ruff: ignore [suspicious-subprocess-import] -- tool runner: executes the declared gitops CLI
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
@@ -163,7 +163,8 @@ def policy_issues(root: Path) -> list[SarifIssue]:
             issues.extend(
                 _issue(
                     "gitops:no-latest-image",
-                    f"Container image must not use the mutable latest tag: {image.value}",
+                    "Container image must not use the mutable latest tag: "
+                    f"{image.value}",
                     path,
                     image.line,
                 )
@@ -326,12 +327,13 @@ def _render_target(target: GitOpsTarget) -> RenderOutcome:
     cmd = [executable, *args]
 
     try:
-        result = subprocess.run(
-            cmd,  # nosec B603 -- cmd is built from the repository's own declared targets
+        result = subprocess.run(  # ruff: ignore [subprocess-without-shell-equals-true] -- cmd is built from the repository's own declared targets
+            cmd,
             capture_output=True,
             text=True,
             check=False,
             timeout=60,
+            shell=False,
         )
     except FileNotFoundError:
         return RenderOutcome(

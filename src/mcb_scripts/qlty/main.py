@@ -55,7 +55,7 @@ def _load_checks_from_file(
     for check in checks:
         check.category = QltyCategory.CHECK
     all_issues.extend(checks)
-    logger.info(f"   Found {len(checks)} check issues")
+    logger.info("   Found %s check issues", len(checks))
     return r[None].ok(None)
 
 
@@ -63,7 +63,7 @@ def _collect_smells_issues(
     params: QltyParams, all_issues: list[SarifIssue],
 ) -> p.Result[None]:
     if params.smells_file.exists() and not params.scan:
-        logger.info(f"📖 Reading smells from {params.smells_file}")
+        logger.info("📖 Reading smells from %s", params.smells_file)
         smells_result = parse_sarif_file(params.smells_file)
         if smells_result.failure:
             return r[None].from_failure(smells_result)
@@ -71,7 +71,7 @@ def _collect_smells_issues(
         for smell in smells:
             smell.category = QltyCategory.SMELL
         all_issues.extend(smells)
-        logger.info(f"   Found {len(smells)} code smells")
+        logger.info("   Found %s code smells", len(smells))
     elif params.scan:
         smells_result = run_qlty_smells(
             params.smells_file or McbSettings().qlty_smells_sarif,
@@ -81,7 +81,7 @@ def _collect_smells_issues(
         smells = smells_result.unwrap()
         all_issues.extend(smells)
     else:
-        logger.error(f"⚠️  Smells file not found: {params.smells_file}")
+        logger.error("⚠️  Smells file not found: %s", params.smells_file)
     return r[None].ok(None)
 
 
@@ -153,7 +153,7 @@ def _apply_severity_filter(
     if severity:
         target_sev = Severity.from_str(severity)
         filtered = [i for i in filtered if i.level == target_sev]
-        logger.info(f"🔍 Filtered to {len(filtered)} {severity} issues")
+        logger.info("🔍 Filtered to %s %s issues", len(filtered), severity)
     return filtered
 
 
@@ -162,7 +162,7 @@ def _apply_rule_filter(
 ) -> list[SarifIssue]:
     if rule:
         filtered = [i for i in filtered if rule in i.rule_id]
-        logger.info(f"🔍 Filtered to {len(filtered)} issues matching rule '{rule}'")
+        logger.info("🔍 Filtered to %s issues matching rule '%s'", len(filtered), rule)
     return filtered
 
 
@@ -171,7 +171,7 @@ def _apply_category_filter(
 ) -> list[SarifIssue]:
     if category:
         filtered = [i for i in filtered if category in i.rule_category]
-        logger.info(f"🔍 Filtered to {len(filtered)} issues in category '{category}'")
+        logger.info("🔍 Filtered to %s issues in category '%s'", len(filtered), category)
     return filtered
 
 
@@ -181,7 +181,9 @@ def _apply_file_filter(
     if file_pattern:
         filtered = [i for i in filtered if fnmatch.fnmatch(i.file_path, file_pattern)]
         logger.info(
-            f"🔍 Filtered to {len(filtered)} issues in files matching '{file_pattern}'",
+            "🔍 Filtered to %s issues in files matching '%s'",
+            len(filtered),
+            file_pattern,
         )
     return filtered
 
@@ -253,12 +255,12 @@ def analyze(params: QltyParams) -> p.Result[str]:
         return r[str].from_failure(report_result)
     report = report_result.unwrap()
 
-    logger.info(f"\n{report.generate_summary()}")
+    logger.info("\n%s", report.generate_summary())
 
     if not params.summary_only:
         md_content = report.generate_markdown()
         params.report_file.write_text(md_content, encoding="utf-8")
-        logger.info(f"\n📝 Detailed report written to {params.report_file}")
+        logger.info("\n📝 Detailed report written to %s", params.report_file)
 
     return r[str].ok(f"{report.total_issues} issues analyzed")
 
