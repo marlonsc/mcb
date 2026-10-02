@@ -47,7 +47,7 @@ go = "latest"
 make = "latest"
 [tools."github:qltysh/qlty"]
 version = "0.642.0"
-github_attestations = true
+github_attestations = false
 [tools."github:kucherenko/jscpd"]
 version = "latest"
 [tools."github:kucherenko/jscpd".platforms]
