@@ -5,6 +5,44 @@
 //!
 //! Used by `ports/` modules for admin interfaces, enum parsing, and metrics.
 
+// ── Internal shared trait builder ────────────────────────────────────────
+
+/// Full port-trait builder: emits the `#[async_trait]` trait with literal
+/// `async fn` items; update and delete are optional clauses.
+macro_rules! crud_port_trait {
+    (
+        $(#[$meta:meta])*
+        $vis:vis trait $trait_name:ident {
+            entity: $entity:ty,
+            create: $create_fn:ident,
+            get: $get_fn:ident($($get_param:ident),+),
+            list_doc: $list_doc:expr,
+            list: $list_fn:ident($($list_param:ident),*),
+            $(update: $upd_fn:ident,)?
+            $(delete: $del_fn:ident($($del_param:ident),+),)?
+        }
+    ) => {
+        $(#[$meta])*
+        #[async_trait::async_trait]
+        $vis trait $trait_name: Send + Sync {
+            #[doc = concat!("Create a ", stringify!($entity), ".")]
+            async fn $create_fn(&self, item: &$entity) -> $crate::error::Result<()>;
+            #[doc = concat!("Get a ", stringify!($entity), " by ID.")]
+            async fn $get_fn(&self, $($get_param: &str),+) -> $crate::error::Result<$entity>;
+            #[doc = concat!($list_doc, stringify!($entity), " items.")]
+            async fn $list_fn(&self, $($list_param: &str),*) -> $crate::error::Result<Vec<$entity>>;
+            $(
+                #[doc = concat!("Update a ", stringify!($entity), ".")]
+                async fn $upd_fn(&self, item: &$entity) -> $crate::error::Result<()>;
+            )?
+            $(
+                #[doc = concat!("Delete a ", stringify!($entity), ".")]
+                async fn $del_fn(&self, $($del_param: &str),+) -> $crate::error::Result<()>;
+            )?
+        }
+    };
+}
+
 /// Define an admin service interface trait for a provider type.
 ///
 /// Generates an async trait with `list_providers`, `switch_provider`,
@@ -82,6 +120,12 @@ macro_rules! impl_from_str {
     };
 }
 
+/// List-doc wording: `"List all "` when the list takes no params.
+macro_rules! port_list_doc {
+    () => { "List all " };
+    ($($p:ident),+) => { "List " };
+}
+
 /// Define a simple CRUD port trait (create, get, list, update, delete).
 ///
 /// Generates an `#[async_trait]` trait with standard CRUD methods.
@@ -119,91 +163,28 @@ macro_rules! impl_from_str {
 /// ```
 #[macro_export]
 macro_rules! define_crud_port {
-    // ── Scoped variant: get/delete take (scope_id, id) ──
     (
         $(#[$meta:meta])*
         $vis:vis trait $trait_name:ident {
             entity: $entity:ty,
             create: $create_fn:ident,
-            get: $get_fn:ident($scope_param:ident, $get_id:ident),
-            list: $list_fn:ident($list_p1:ident, $list_p2:ident),
+            get: $get_fn:ident($($get_param:ident),+),
+            list: $list_fn:ident($($list_param:ident),*),
             $(update: $upd_fn:ident,)?
-            delete: $del_fn:ident($del_p1:ident, $del_p2:ident) $(,)?
+            delete: $del_fn:ident($($del_param:ident),+) $(,)?
         }
     ) => {
-        $(#[$meta])*
-        #[async_trait::async_trait]
-        $vis trait $trait_name: Send + Sync {
-            #[doc = concat!("Create a ", stringify!($entity), ".")]
-            async fn $create_fn(&self, item: &$entity) -> $crate::error::Result<()>;
-            #[doc = concat!("Get a ", stringify!($entity), " by ID.")]
-            async fn $get_fn(&self, $scope_param: &str, $get_id: &str) -> $crate::error::Result<$entity>;
-            #[doc = concat!("List ", stringify!($entity), " items.")]
-            async fn $list_fn(&self, $list_p1: &str, $list_p2: &str) -> $crate::error::Result<Vec<$entity>>;
-            $(
-                #[doc = concat!("Update a ", stringify!($entity), ".")]
-                async fn $upd_fn(&self, item: &$entity) -> $crate::error::Result<()>;
-            )?
-            #[doc = concat!("Delete a ", stringify!($entity), ".")]
-            async fn $del_fn(&self, $del_p1: &str, $del_p2: &str) -> $crate::error::Result<()>;
-        }
-    };
-    // ── Simple variant: get/delete take (id) only ──
-    (
-        $(#[$meta:meta])*
-        $vis:vis trait $trait_name:ident {
-            entity: $entity:ty,
-            create: $create_fn:ident,
-            get: $get_fn:ident($get_id:ident),
-            list: $list_fn:ident($($list_param:ident),+),
-            $(update: $upd_fn:ident,)?
-            delete: $del_fn:ident($del_id:ident) $(,)?
-        }
-    ) => {
-        $(#[$meta])*
-        #[async_trait::async_trait]
-        $vis trait $trait_name: Send + Sync {
-            #[doc = concat!("Create a ", stringify!($entity), ".")]
-            async fn $create_fn(&self, item: &$entity) -> $crate::error::Result<()>;
-            #[doc = concat!("Get a ", stringify!($entity), " by ID.")]
-            async fn $get_fn(&self, $get_id: &str) -> $crate::error::Result<$entity>;
-            #[doc = concat!("List ", stringify!($entity), " items.")]
-            async fn $list_fn(&self, $($list_param: &str),+) -> $crate::error::Result<Vec<$entity>>;
-            $(
-                #[doc = concat!("Update a ", stringify!($entity), ".")]
-                async fn $upd_fn(&self, item: &$entity) -> $crate::error::Result<()>;
-            )?
-            #[doc = concat!("Delete a ", stringify!($entity), ".")]
-            async fn $del_fn(&self, $del_id: &str) -> $crate::error::Result<()>;
-        }
-    };
-    // ── Unfiltered list variant: list takes no params ──
-    (
-        $(#[$meta:meta])*
-        $vis:vis trait $trait_name:ident {
-            entity: $entity:ty,
-            create: $create_fn:ident,
-            get: $get_fn:ident($get_id:ident),
-            list: $list_fn:ident(),
-            $(update: $upd_fn:ident,)?
-            delete: $del_fn:ident($del_id:ident) $(,)?
-        }
-    ) => {
-        $(#[$meta])*
-        #[async_trait::async_trait]
-        $vis trait $trait_name: Send + Sync {
-            #[doc = concat!("Create a ", stringify!($entity), ".")]
-            async fn $create_fn(&self, item: &$entity) -> $crate::error::Result<()>;
-            #[doc = concat!("Get a ", stringify!($entity), " by ID.")]
-            async fn $get_fn(&self, $get_id: &str) -> $crate::error::Result<$entity>;
-            #[doc = concat!("List all ", stringify!($entity), " items.")]
-            async fn $list_fn(&self) -> $crate::error::Result<Vec<$entity>>;
-            $(
-                #[doc = concat!("Update a ", stringify!($entity), ".")]
-                async fn $upd_fn(&self, item: &$entity) -> $crate::error::Result<()>;
-            )?
-            #[doc = concat!("Delete a ", stringify!($entity), ".")]
-            async fn $del_fn(&self, $del_id: &str) -> $crate::error::Result<()>;
+        crud_port_trait! {
+            $(#[$meta])*
+            $vis trait $trait_name {
+                entity: $entity,
+                create: $create_fn,
+                get: $get_fn($($get_param),+),
+                list_doc: port_list_doc!($($list_param),*),
+                list: $list_fn($($list_param),*),
+                $(update: $upd_fn,)?
+                delete: $del_fn($($del_param),+),
+            }
         }
     };
 }
@@ -234,15 +215,15 @@ macro_rules! define_readonly_port {
             list: $list_fn:ident($($list_param:ident),+) $(,)?
         }
     ) => {
-        $(#[$meta])*
-        #[async_trait::async_trait]
-        $vis trait $trait_name: Send + Sync {
-            #[doc = concat!("Create a ", stringify!($entity), ".")]
-            async fn $create_fn(&self, item: &$entity) -> $crate::error::Result<()>;
-            #[doc = concat!("Get a ", stringify!($entity), " by ID.")]
-            async fn $get_fn(&self, $get_id: &str) -> $crate::error::Result<$entity>;
-            #[doc = concat!("List ", stringify!($entity), " items.")]
-            async fn $list_fn(&self, $($list_param: &str),+) -> $crate::error::Result<Vec<$entity>>;
+        crud_port_trait! {
+            $(#[$meta])*
+            $vis trait $trait_name {
+                entity: $entity,
+                create: $create_fn,
+                get: $get_fn($get_id),
+                list_doc: "List ",
+                list: $list_fn($($list_param),+),
+            }
         }
     };
 }
