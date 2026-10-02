@@ -28,9 +28,15 @@ use mcb_domain::registry::services::{
 };
 use mcb_domain::registry::vcs::{VcsProviderConfig, resolve_vcs_provider};
 
+use crate::handlers::{
+    AgentHandler, EntityHandler, IndexHandler, IssueEntityHandler, MemoryHandler, OrgEntityHandler,
+    PlanEntityHandler, ProjectHandler, SearchHandler, SessionHandler, ValidateHandler,
+    VcsEntityHandler, VcsHandler,
+};
+use crate::hooks::HookProcessor;
 use crate::mcp_server::{McpEntityRepositories, McpServer, McpServices};
 use crate::state::McpServerBootstrap;
-use crate::tools::ExecutionFlow;
+use crate::tools::{ExecutionFlow, ToolHandlers};
 use mcb_utils::constants::{
     DEFAULT_DATABASE_PROVIDER, DEFAULT_LANGUAGE_PROVIDER, DEFAULT_NAMESPACE, DEFAULT_VCS_PROVIDER,
 };
@@ -81,8 +87,10 @@ pub fn build_mcp_server_bootstrap(
     let mcp_services = build_mcp_services(registry_ctx, &repos, providers.hybrid_search)?;
 
     let vcs_for_defaults = Arc::clone(&mcp_services.vcs);
+    let handlers = build_tool_handlers(&mcp_services);
     let mcp_server = Arc::new(McpServer::new(
         mcp_services,
+        handlers,
         &vcs_for_defaults,
         Some(providers.execution_flow),
     ));
@@ -140,4 +148,49 @@ fn build_mcp_services(
             org: Arc::clone(&repos.org_entity),
         },
     })
+}
+
+/// Build the full set of tool handlers from resolved services.
+///
+/// This is the single composition point for handler wiring: every handler
+/// `Arc` is constructed exactly here, receiving already-built dependencies.
+fn build_tool_handlers(services: &McpServices) -> ToolHandlers {
+    let hook_processor = HookProcessor::new(Some(Arc::clone(&services.memory)));
+    let vcs_entity_handler = Arc::new(VcsEntityHandler::new(Arc::clone(&services.entities.vcs)));
+    let plan_entity_handler = Arc::new(PlanEntityHandler::new(Arc::clone(&services.entities.plan)));
+    let issue_entity_handler = Arc::new(IssueEntityHandler::new(Arc::clone(
+        &services.entities.issue,
+    )));
+    let org_entity_handler = Arc::new(OrgEntityHandler::new(Arc::clone(&services.entities.org)));
+    let entity_handler = Arc::new(EntityHandler::new(
+        Arc::clone(&vcs_entity_handler),
+        Arc::clone(&plan_entity_handler),
+        Arc::clone(&issue_entity_handler),
+        Arc::clone(&org_entity_handler),
+    ));
+
+    ToolHandlers {
+        index: Arc::new(IndexHandler::new(Arc::clone(&services.indexing))),
+        search: Arc::new(SearchHandler::new(
+            Arc::clone(&services.search),
+            Arc::clone(&services.memory),
+            Arc::clone(&services.hybrid_search),
+            Arc::clone(&services.indexing),
+        )),
+        validate: Arc::new(ValidateHandler::new(Arc::clone(&services.validation))),
+        memory: Arc::new(MemoryHandler::new(Arc::clone(&services.memory))),
+        session: Arc::new(SessionHandler::new(
+            Arc::clone(&services.agent_session),
+            Arc::clone(&services.memory),
+        )),
+        agent: Arc::new(AgentHandler::new(Arc::clone(&services.agent_session))),
+        project: Arc::new(ProjectHandler::new(Arc::clone(&services.project_workflow))),
+        vcs: Arc::new(VcsHandler::new(Arc::clone(&services.vcs))),
+        vcs_entity: vcs_entity_handler,
+        plan_entity: plan_entity_handler,
+        issue_entity: issue_entity_handler,
+        org_entity: org_entity_handler,
+        entity: entity_handler,
+        hook_processor: Arc::new(hook_processor),
+    }
 }
