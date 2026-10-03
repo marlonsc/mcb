@@ -408,6 +408,7 @@ skip-magic-trailing-comma = false
 extend-safe-fixes = ["camelcase-imported-as-lowercase", "relative-imports"]
 ignore = [
   "camelcase-imported-as-lowercase",
+  "missing-required-import",
   "typing-only-standard-library-import",
   "typing-only-third-party-import",
 ]
@@ -457,6 +458,12 @@ split-on-trailing-comma = false
   "runtime-import-in-type-checking-block",
   "typing-only-first-party-import",
   "unused-import",
+]
+"**/tests/python/**" = [
+  "raise-vanilla-args",
+  "start-process-with-partial-path",
+  "subprocess-without-shell-equals-true",
+  "suspicious-subprocess-import",
 ]
 "scripts/**" = [
   "any-type",
@@ -542,4 +549,5 @@ whitelines = 1
 
 [tool.uv]
 link-mode = "copy"
+constraint-dependencies = ["mypy<2.4.0"]
 environments = ["sys_platform == 'linux'", "sys_platform == 'darwin'"]

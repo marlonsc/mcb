@@ -11,6 +11,9 @@
       "check_changed_projects",
       "text_rules.yml",
       "scripts/hooks"
+    ],
+    "machine_path_exempt_paths": [
+      "docs/plans/"
     ]
   }
 }
