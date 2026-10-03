@@ -19,11 +19,13 @@
 - Project class: `domain`
 - Keywords: `clean-architecture`, `flext`, `integration`, `typed`
 - Main facades: `McbScriptsBaseCommandSettings`, `McbScriptsBaseSettings`,
-  `McbScriptsConstants`, `McbScriptsService`, `McbScriptsSettings`
+  `McbScriptsConstants`, `McbScriptsQltyCategory`, `McbScriptsService`,
+  `McbScriptsSettings`, `McbScriptsSeverity`
 - Alias exports: `c`, `r`, `s`
 - Public symbol exports: `McbResult`, `McbScriptsBaseCommandSettings`,
-  `McbScriptsBaseSettings`, `McbScriptsConstants`, `McbScriptsService`,
-  `McbScriptsSettings`, `McbService`, `configure_logging`, `get_logger`
+  `McbScriptsBaseSettings`, `McbScriptsConstants`, `McbScriptsQltyCategory`,
+  `McbScriptsService`, `McbScriptsSettings`, `McbScriptsSeverity`, `McbService`,
+  `configure_logging` (+1 more)
 - Exported module shortcuts: `docs`, `qlty`
 - Generated module pages: `9`
 

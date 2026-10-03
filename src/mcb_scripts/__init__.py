@@ -14,12 +14,16 @@ from flext_core import build_lazy_import_map, install_lazy_exports
 
 if TYPE_CHECKING:
     from mcb_scripts import docs, qlty
-    from mcb_scripts.constants import McbScriptsConstants
+    from mcb_scripts.constants import (
+        McbScriptsConstants,
+        McbScriptsQltyCategory,
+        McbScriptsSeverity,
+        c,
+    )
     from mcb_scripts.core import (
         McbScriptsBaseCommandSettings,
         McbScriptsBaseSettings,
         McbService,
-        c,
         configure_logging,
         get_logger,
         r,
@@ -34,8 +38,10 @@ __all__: tuple[str, ...] = (
     "McbScriptsBaseCommandSettings",
     "McbScriptsBaseSettings",
     "McbScriptsConstants",
+    "McbScriptsQltyCategory",
     "McbScriptsService",
     "McbScriptsSettings",
+    "McbScriptsSeverity",
     "McbService",
     "c",
     "configure_logging",
@@ -49,12 +55,16 @@ __all__: tuple[str, ...] = (
 _LAZY_IMPORTS = MappingProxyType(
     build_lazy_import_map(
         MappingProxyType({
-            ".constants": ("McbScriptsConstants",),
+            ".constants": (
+                "McbScriptsConstants",
+                "McbScriptsQltyCategory",
+                "McbScriptsSeverity",
+                "c",
+            ),
             ".core": (
                 "McbScriptsBaseCommandSettings",
                 "McbScriptsBaseSettings",
                 "McbService",
-                "c",
                 "configure_logging",
                 "get_logger",
                 "r",

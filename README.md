@@ -56,8 +56,8 @@ verification).
   by `flext-*`. The FLEXT cascade is encoded in the inheritance lists of the facade
   classes listed under Module Map above.
 - Public extensions exposed by this project: `McbScriptsBaseCommandSettings`,
-  `McbScriptsBaseSettings`, `McbScriptsConstants`, `McbScriptsService`,
-  `McbScriptsSettings`.
+  `McbScriptsBaseSettings`, `McbScriptsConstants`, `McbScriptsQltyCategory`,
+  `McbScriptsService`, `McbScriptsSettings` (+1 more).
 - Library abstraction boundaries: see AGENTS.md §2.7.
 
 ## Quality Gates
