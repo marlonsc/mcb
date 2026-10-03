@@ -8,7 +8,7 @@ use regex::Regex;
 use super::violation::OrganizationViolation;
 use crate::filters::LanguageId;
 use crate::scan::{for_each_scan_file, is_test_path};
-use crate::{Result, McbScriptsSeverity, ValidationConfig};
+use crate::{Result, Severity, ValidationConfig};
 use mcb_utils::constants::validate::{
     DOMAIN_ALLOWED_METHODS, DOMAIN_ALLOWED_PREFIXES, DOMAIN_CRATE_PATH, PORTS_DIR,
 };
@@ -127,6 +127,6 @@ fn disallowed_domain_method(
         line: line_num,
         impl_type: "method".to_owned(),
         type_name: format!("{impl_name}::{method_name}"),
-        severity: McbScriptsSeverity::Info,
+        severity: Severity::Info,
     })
 }

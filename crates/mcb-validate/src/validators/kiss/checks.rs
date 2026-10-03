@@ -12,7 +12,7 @@ use rust_code_analysis::SpaceKind;
 
 use crate::ast::rca_helpers;
 use crate::scan::for_each_scan_file;
-use crate::{Result, McbScriptsSeverity};
+use crate::{Result, Severity};
 use mcb_utils::utils::regex::compile_regex;
 
 use super::{KissValidator, KissViolation};
@@ -205,7 +205,7 @@ impl KissValidator {
             struct_name: struct_name.to_owned(),
             field_count,
             max_allowed: max_fields,
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         })
     }
 
@@ -227,7 +227,7 @@ impl KissValidator {
                     function_name: space.name.as_deref().unwrap_or("").to_owned(),
                     param_count,
                     max_allowed: self.max_function_params,
-                    severity: McbScriptsSeverity::Warning,
+                    severity: Severity::Warning,
                 })
             } else {
                 None
@@ -261,7 +261,7 @@ impl KissValidator {
                             builder_name: builder_name.to_owned(),
                             optional_field_count: optional_count,
                             max_allowed: self.max_builder_fields,
-                            severity: McbScriptsSeverity::Warning,
+                            severity: Severity::Warning,
                         });
                     }
                 }
@@ -360,7 +360,7 @@ impl KissValidator {
             nesting_level: state.nesting_depth,
             max_allowed: self.max_nesting_depth,
             context: trimmed.chars().take(SHORT_PREVIEW_LENGTH).collect(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         });
         state.reported_lines.insert(line_num);
     }
@@ -383,7 +383,7 @@ impl KissValidator {
                     function_name: space.name.as_deref().unwrap_or("").to_owned(),
                     line_count,
                     max_allowed: self.max_function_lines,
-                    severity: McbScriptsSeverity::Warning,
+                    severity: Severity::Warning,
                 })
             } else {
                 None

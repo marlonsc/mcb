@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use super::violation::PatternViolation;
-use mcb_domain::ports::validation::McbScriptsSeverity;
+use mcb_domain::ports::validation::Severity;
 use mcb_utils::constants::validate::COMMENT_PREFIX;
 use mcb_utils::utils::regex::compile_regex;
 
@@ -38,7 +38,7 @@ pub fn check_result_types(path: &Path, content: &str) -> crate::Result<Vec<Patte
                 line: line_num + 1,
                 context,
                 suggestion: "crate::Result or domain Result alias".to_owned(),
-                severity: McbScriptsSeverity::Warning,
+                severity: Severity::Warning,
             });
         }
     }

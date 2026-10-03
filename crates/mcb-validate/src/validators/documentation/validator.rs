@@ -8,7 +8,7 @@ use super::helpers::{
 };
 use crate::define_violations;
 use crate::scan::for_each_crate_file;
-use crate::{Result, McbScriptsSeverity, ValidationConfig};
+use crate::{Result, Severity, ValidationConfig};
 use mcb_domain::ports::validation::ViolationCategory;
 use mcb_utils::constants::validate::{
     ATTR_REGEX, DI_MODULES_PATH, DOC_COMMENT_CAPTURE_REGEX, DOC_COMMENT_REGEX,
@@ -88,7 +88,7 @@ define_violations! {
         )]
         MissingModuleDoc {
             file: PathBuf,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Missing documentation on public item
         #[violation(
@@ -102,7 +102,7 @@ define_violations! {
             line: usize,
             item_name: String,
             item_kind: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Missing example code in documentation
         #[violation(
@@ -116,7 +116,7 @@ define_violations! {
             line: usize,
             item_name: String,
             item_kind: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 }
@@ -162,7 +162,7 @@ impl DocumentationValidator {
                 if !has_module_doc {
                     violations.push(DocumentationViolation::MissingModuleDoc {
                         file: path.clone(),
-                        severity: McbScriptsSeverity::Warning,
+                        severity: Severity::Warning,
                     });
                 }
 
@@ -320,7 +320,7 @@ impl DocumentationValidator {
                 &item_ctx,
                 &MissingDocSpec {
                     item_kind: spec.item_kind,
-                    severity: McbScriptsSeverity::Warning,
+                    severity: Severity::Warning,
                 },
                 regex_ctx,
             );
@@ -368,7 +368,7 @@ impl DocumentationValidator {
                 item_ctx,
                 &MissingDocSpec {
                     item_kind: ITEM_KIND_TRAIT,
-                    severity: McbScriptsSeverity::Warning,
+                    severity: Severity::Warning,
                 },
                 regex_ctx,
             );
@@ -396,7 +396,7 @@ impl DocumentationValidator {
             line: item_ctx.line_num + 1,
             item_name: item_ctx.item_name.to_owned(),
             item_kind: ITEM_KIND_TRAIT.to_owned(),
-            severity: McbScriptsSeverity::Info,
+            severity: Severity::Info,
         });
     }
 
@@ -415,7 +415,7 @@ impl DocumentationValidator {
             item_ctx,
             &MissingDocSpec {
                 item_kind: ITEM_KIND_FUNCTION,
-                severity: McbScriptsSeverity::Info,
+                severity: Severity::Info,
             },
             regex_ctx,
         );

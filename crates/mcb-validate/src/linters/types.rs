@@ -5,7 +5,7 @@
 use std::path::PathBuf;
 
 use derive_more::Display;
-use mcb_domain::ports::validation::{McbScriptsSeverity, Violation, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
 use mcb_utils::constants::validate::{
     LINTER_CMD_CARGO, LINTER_CMD_RUFF, SEVERITY_ERROR, SEVERITY_INFO,
 };
@@ -41,11 +41,11 @@ impl LintViolation {
         }
     }
 
-    fn parsed_severity(&self) -> McbScriptsSeverity {
+    fn parsed_severity(&self) -> Severity {
         match self.severity.to_ascii_lowercase().as_str() {
-            SEVERITY_ERROR => McbScriptsSeverity::Error,
-            SEVERITY_INFO => McbScriptsSeverity::Info,
-            _ => McbScriptsSeverity::Warning,
+            SEVERITY_ERROR => Severity::Error,
+            SEVERITY_INFO => Severity::Info,
+            _ => Severity::Warning,
         }
     }
 
@@ -63,7 +63,7 @@ impl Violation for LintViolation {
         self.parsed_category()
     }
 
-    fn severity(&self) -> McbScriptsSeverity {
+    fn severity(&self) -> Severity {
         self.parsed_severity()
     }
 

@@ -8,7 +8,7 @@ mod integration_metrics_tests {
     use rstest::rstest;
     use std::path::Path;
 
-    use mcb_domain::ports::validation::McbScriptsSeverity;
+    use mcb_domain::ports::validation::Severity;
     use mcb_validate::metrics::{MetricThresholds, MetricType, RcaAnalyzer};
     use rust_code_analysis::LANG;
     use tempfile::TempDir;
@@ -42,7 +42,7 @@ fn add(a: i32, b: i32) -> i32 {
     #[case(
         MetricType::CognitiveComplexity,
         5,
-        McbScriptsSeverity::Warning,
+        Severity::Warning,
         b"
 fn complex(x: i32) -> i32 {
     if x > 0 {
@@ -66,7 +66,7 @@ fn complex(x: i32) -> i32 {
     #[case(
         MetricType::CyclomaticComplexity,
         3,
-        McbScriptsSeverity::Error,
+        Severity::Error,
         b"
 fn branchy(x: i32) -> i32 {
     if x > 0 {
@@ -83,12 +83,12 @@ fn branchy(x: i32) -> i32 {
 " as &[u8],
         "branchy.rs",
         Some("branchy"),
-        Some(McbScriptsSeverity::Error)
+        Some(Severity::Error)
     )]
     #[case(
         MetricType::FunctionLength,
         5,
-        McbScriptsSeverity::Warning,
+        Severity::Warning,
         b"
 fn long_function() {
     let a = 1;
@@ -108,11 +108,11 @@ fn long_function() {
     fn detects_metric_violations(
         #[case] metric: MetricType,
         #[case] max: u32,
-        #[case] severity: McbScriptsSeverity,
+        #[case] severity: Severity,
         #[case] content: &[u8],
         #[case] file_name: &str,
         #[case] expected_item_name: Option<&str>,
-        #[case] expected_violation_severity: Option<McbScriptsSeverity>,
+        #[case] expected_violation_severity: Option<Severity>,
     ) {
         let thresholds = MetricThresholds::new().with_threshold(metric, max, severity);
         let analyzer = RcaAnalyzer::with_thresholds(thresholds);
@@ -144,7 +144,7 @@ fn long_function() {
         let thresholds = MetricThresholds::new().with_threshold(
             MetricType::CognitiveComplexity,
             3,
-            McbScriptsSeverity::Warning,
+            Severity::Warning,
         );
 
         let analyzer = RcaAnalyzer::with_thresholds(thresholds);
@@ -239,7 +239,7 @@ fn complex(x: i32) {
         let thresholds = MetricThresholds::new().with_threshold(
             MetricType::CognitiveComplexity,
             3,
-            McbScriptsSeverity::Warning,
+            Severity::Warning,
         );
 
         let analyzer = RcaAnalyzer::with_thresholds(thresholds);
@@ -275,15 +275,15 @@ fn complex(x: i32) {
 
         let cc = thresholds.get(MetricType::CognitiveComplexity).unwrap();
         assert_eq!(cc.max_value, 10);
-        assert_eq!(cc.severity, McbScriptsSeverity::Error);
+        assert_eq!(cc.severity, Severity::Error);
 
         let fl = thresholds.get(MetricType::FunctionLength).unwrap();
         assert_eq!(fl.max_value, 30);
-        assert_eq!(fl.severity, McbScriptsSeverity::Warning);
+        assert_eq!(fl.severity, Severity::Warning);
 
         let nd = thresholds.get(MetricType::NestingDepth).unwrap();
         assert_eq!(nd.max_value, 3);
-        assert_eq!(nd.severity, McbScriptsSeverity::Warning); // Default
+        assert_eq!(nd.severity, Severity::Warning); // Default
     }
 
     /// Test violation message format
@@ -294,7 +294,7 @@ fn complex(x: i32) {
         let thresholds = MetricThresholds::new().with_threshold(
             MetricType::CognitiveComplexity,
             0,
-            McbScriptsSeverity::Warning,
+            Severity::Warning,
         );
 
         let analyzer = RcaAnalyzer::with_thresholds(thresholds);
@@ -335,7 +335,7 @@ fn with_if(x: i32) {
         let thresholds = MetricThresholds::new().with_threshold(
             MetricType::CyclomaticComplexity,
             1,
-            McbScriptsSeverity::Warning,
+            Severity::Warning,
         );
 
         let analyzer = RcaAnalyzer::with_thresholds(thresholds);

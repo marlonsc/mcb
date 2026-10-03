@@ -4,7 +4,7 @@
 use rust_code_analysis::SpaceKind;
 
 use crate::Result;
-use crate::McbScriptsSeverity;
+use crate::Severity;
 use crate::ValidationConfig;
 use crate::ValidationConfigExt;
 use crate::ast::rca_helpers;
@@ -92,7 +92,7 @@ fn scan_srp_file(
                 line_count: sloc,
                 max_allowed: max_struct_lines,
                 suggestion: "Consider splitting into smaller, focused impl blocks".to_owned(),
-                severity: McbScriptsSeverity::Warning,
+                severity: Severity::Warning,
             });
         }
     }
@@ -107,7 +107,7 @@ fn scan_srp_file(
             file: file.to_path_buf(),
             struct_names,
             suggestion: "Consider splitting into separate modules".to_owned(),
-            severity: McbScriptsSeverity::Info,
+            severity: Severity::Info,
         });
     }
 }
@@ -153,7 +153,7 @@ fn scan_impl_method_counts(
                 suggestion:
                     "Consider splitting into smaller, focused impl blocks or extracting to traits"
                         .to_owned(),
-                severity: McbScriptsSeverity::Warning,
+                severity: Severity::Warning,
             });
         }
     }

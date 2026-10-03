@@ -6,7 +6,7 @@ use std::path::Path;
 use regex::Regex;
 
 use crate::Result;
-use crate::McbScriptsSeverity;
+use crate::Severity;
 use crate::ValidationConfig;
 use crate::pattern_registry::required_pattern;
 use crate::utils::source::{count_match_arms, count_matches_in_block, for_each_rust_file};
@@ -63,7 +63,7 @@ fn excessive_match_violation(
             max_recommended: max_match_arms,
             suggestion: "Consider using visitor pattern, enum dispatch, or trait objects"
                 .to_owned(),
-            severity: McbScriptsSeverity::Info,
+            severity: Severity::Info,
         }),
     )
 }
@@ -111,7 +111,7 @@ fn string_dispatch_violation(
             line: line_num + 1,
             match_expression: trimmed.chars().take(SHORT_PREVIEW_LENGTH).collect(),
             suggestion: "Consider using enum types with FromStr or a registry pattern".to_owned(),
-            severity: McbScriptsSeverity::Info,
+            severity: Severity::Info,
         }
     })
 }

@@ -8,7 +8,7 @@ use regex::Regex;
 use super::super::violation::ImplementationViolation;
 use crate::Result;
 use crate::utils::source::{compile_pattern_pairs, source_lines, track_fn_name};
-use mcb_domain::ports::validation::McbScriptsSeverity;
+use mcb_domain::ports::validation::Severity;
 
 /// Detect empty method bodies
 pub fn validate_empty_methods(
@@ -60,7 +60,7 @@ fn collect_empty_method_bodies(
                     line: line_num,
                     method_name: current_fn_name.clone(),
                     pattern: (*desc).to_owned(),
-                    severity: McbScriptsSeverity::Warning,
+                    severity: Severity::Warning,
                 });
             }
         }

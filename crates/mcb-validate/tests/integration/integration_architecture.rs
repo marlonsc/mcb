@@ -27,7 +27,7 @@ mod architecture_integration_tests {
     use crate::utils::run_named_validator;
     use mcb_domain::ports::validation::ValidationConfig;
     use mcb_domain::ports::validation::Validator;
-    use mcb_domain::ports::validation::{McbScriptsSeverity, Violation, ViolationCategory};
+    use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
     use mcb_validate::config::NamingRulesConfig;
     use mcb_validate::{CleanArchitectureValidator, CleanArchitectureViolation};
     use tempfile::TempDir;
@@ -364,13 +364,13 @@ impl Server {
             line: 42,
             service_name: "SearchService".to_owned(),
             context: "SearchService::new()".to_owned(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         };
 
         // Test Violation trait methods
         assert_eq!(violation.id(), "CA002");
         assert_eq!(violation.category(), ViolationCategory::Architecture);
-        assert_eq!(violation.severity(), McbScriptsSeverity::Warning);
+        assert_eq!(violation.severity(), Severity::Warning);
         assert_eq!(
             violation.file(),
             Some(&PathBuf::from("src/handlers/search.rs"))
@@ -399,7 +399,7 @@ impl Server {
             file: PathBuf::new(),
             line: 1,
             impl_type: "struct".to_owned(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         },
         "CA001"
     )]
@@ -409,7 +409,7 @@ impl Server {
             line: 1,
             service_name: "Svc".to_owned(),
             context: String::new(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         },
         "CA002"
     )]
@@ -419,7 +419,7 @@ impl Server {
             line: 1,
             struct_name: "Port".to_owned(),
             trait_name: "Trait".to_owned(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         },
         "CA003"
     )]
@@ -428,7 +428,7 @@ impl Server {
             file: PathBuf::new(),
             line: 1,
             entity_name: "Entity".to_owned(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         },
         "CA004"
     )]
@@ -438,7 +438,7 @@ impl Server {
             line: 1,
             vo_name: "VO".to_owned(),
             method_name: "set".to_owned(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         },
         "CA005"
     )]
@@ -447,7 +447,7 @@ impl Server {
             file: PathBuf::new(),
             line: 1,
             import_path: "mcb_providers::x".to_owned(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         },
         "CA006"
     )]

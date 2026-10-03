@@ -13,7 +13,7 @@ use std::path::PathBuf;
 
 use serde::Serialize;
 
-use crate::McbScriptsSeverity;
+use crate::Severity;
 use mcb_domain::ports::validation::Violation;
 
 /// Report containing all violations with summary
@@ -111,9 +111,9 @@ impl GenericReporter {
             violations
                 .iter()
                 .fold((0, 0, 0), |(e, w, i), v| match v.severity() {
-                    McbScriptsSeverity::Error => (e + 1, w, i),
-                    McbScriptsSeverity::Warning => (e, w + 1, i),
-                    McbScriptsSeverity::Info => (e, w, i + 1),
+                    Severity::Error => (e + 1, w, i),
+                    Severity::Warning => (e, w + 1, i),
+                    Severity::Info => (e, w, i + 1),
                 });
 
         // Group by category
@@ -230,9 +230,9 @@ impl GenericReporter {
 
         for v in violations {
             let level = match v.severity() {
-                McbScriptsSeverity::Error => "error",
-                McbScriptsSeverity::Warning => "warning",
-                McbScriptsSeverity::Info => continue, // Info messages are not reported in CI
+                Severity::Error => "error",
+                Severity::Warning => "warning",
+                Severity::Info => continue, // Info messages are not reported in CI
             };
 
             let _ = writeln!(output, "{}", ci_line(v.as_ref(), level));

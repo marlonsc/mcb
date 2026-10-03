@@ -5,7 +5,7 @@ use super::{QualityValidator, QualityViolation};
 use crate::ast::UnwrapDetector;
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
-use crate::{Result, McbScriptsSeverity};
+use crate::{Result, Severity};
 use mcb_utils::constants::validate::TEST_PATH_PATTERNS;
 use mcb_utils::constants::validate::{
     COMMENT_SEARCH_RADIUS, IGNORE_HINT_KEYWORDS, LOCK_POISONING_STRINGS, SAFETY_COMMENT_MARKERS,
@@ -72,7 +72,7 @@ fn push_violation(
                 file: file.to_path_buf(),
                 line: detection.line,
                 context: detection.context,
-                severity: McbScriptsSeverity::Warning,
+                severity: Severity::Warning,
             });
         }
         "expect" => {
@@ -80,7 +80,7 @@ fn push_violation(
                 file: file.to_path_buf(),
                 line: detection.line,
                 context: detection.context,
-                severity: McbScriptsSeverity::Warning,
+                severity: Severity::Warning,
             });
         }
         other => {

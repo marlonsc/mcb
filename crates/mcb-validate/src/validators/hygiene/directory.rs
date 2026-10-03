@@ -5,7 +5,7 @@ use super::violation::HygieneViolation;
 use crate::ValidationConfigExt;
 use crate::filters::LanguageId;
 use crate::run_context::ValidationRunContext;
-use crate::{Result, McbScriptsSeverity, ValidationConfig};
+use crate::{Result, Severity, ValidationConfig};
 
 /// Validates that tests are properly organized in subdirectories (unit/, integration/, e2e/).
 ///
@@ -79,7 +79,7 @@ fn check_missing_test_subdirs(
         violations.push(HygieneViolation::BadTestFileName {
             file: tests_dir.to_path_buf(),
             suggestion: "Create tests/unit/ or tests/integration/ directory".to_owned(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         });
     }
 }
@@ -104,7 +104,7 @@ fn check_misplaced_root_test_files(
             file: path.clone(),
             suggestion: "Move to tests/unit/, tests/integration/, or tests/e2e/ directory"
                 .to_owned(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         });
     }
 }

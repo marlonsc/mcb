@@ -5,7 +5,7 @@
 
 use std::path::PathBuf;
 
-use crate::McbScriptsSeverity;
+use crate::Severity;
 use crate::define_violations;
 use mcb_domain::ports::validation::ViolationCategory;
 
@@ -24,7 +24,7 @@ define_violations! {
             value: String,
             context: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a string literal that is duplicated across multiple files.
@@ -37,7 +37,7 @@ define_violations! {
             value: String,
             occurrences: Vec<(PathBuf, usize)>,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a constant that is defined in an inappropriate module and should be centralized.
@@ -51,7 +51,7 @@ define_violations! {
             line: usize,
             constant_name: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a type definition placed in a layer that violates architectural rules.
@@ -67,7 +67,7 @@ define_violations! {
             type_name: String,
             current_layer: String,
             expected_layer: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a file located in a directory that does not match its architectural responsibility.
@@ -82,7 +82,7 @@ define_violations! {
             current_location: String,
             expected_location: String,
             reason: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates multiple declarations with the same name, causing ambiguity or collisions.
@@ -95,7 +95,7 @@ define_violations! {
         DeclarationCollision {
             name: String,
             locations: Vec<(PathBuf, usize, String)>, // (file, line, type)
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a trait definition found outside the designated ports directory.
@@ -109,7 +109,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             trait_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates an adapter implementation found outside the infrastructure layer.
@@ -123,7 +123,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             impl_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a constants file that has exceeded the maximum allowed size.
@@ -137,7 +137,7 @@ define_violations! {
             file: PathBuf,
             line_count: usize,
             max_allowed: usize,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a recurring magic number pattern that suggests a missing shared constant.
@@ -152,7 +152,7 @@ define_violations! {
             value: String,
             pattern_type: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a large file that lacks proper module decomposition.
@@ -166,7 +166,7 @@ define_violations! {
             line_count: usize,
             max_allowed: usize,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a type or service defined in multiple layers, violating separation of concerns.
@@ -179,7 +179,7 @@ define_violations! {
         DualLayerDefinition {
             type_name: String,
             locations: Vec<(PathBuf, String)>, // (file, layer)
-            severity: McbScriptsSeverity,
+            severity: Severity,
             // no file/line mapping in macro for vectors of tuples easily,
             // but we can rely on manual or default implementation if macro supports it.
             // Actually, define_violations! automatically implements `file()` and `line()` via helpers.
@@ -198,7 +198,7 @@ define_violations! {
             line: usize,
             service_name: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates the application layer is importing from the server layer, violating dependency rules.
@@ -212,7 +212,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             import_statement: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a component placed in a directory that strictly contradicts its type.
@@ -227,7 +227,7 @@ define_violations! {
             component_type: crate::ComponentType,
             current_directory: String,
             expected_directory: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates an implementation block in the domain layer that contains business logic (should be trait-only).
@@ -242,7 +242,7 @@ define_violations! {
             line: usize,
             impl_type: String,
             type_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a handler implementation found outside the handlers directory.
@@ -256,7 +256,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             handler_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// Indicates a port trait definition found outside the ports directory.
@@ -270,7 +270,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             trait_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 }

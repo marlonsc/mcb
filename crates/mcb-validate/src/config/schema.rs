@@ -11,7 +11,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::McbScriptsSeverity;
+use crate::Severity;
 
 /// General configuration settings
 #[derive(Debug, Clone, Deserialize, Serialize)]
@@ -100,7 +100,7 @@ pub struct ArchitectureRulesConfig {
     pub enabled: bool,
 
     /// Default severity for architecture violations
-    pub severity: McbScriptsSeverity,
+    pub severity: Severity,
 
     /// Layer boundary rules
     pub layer_boundaries: LayerBoundariesConfig,

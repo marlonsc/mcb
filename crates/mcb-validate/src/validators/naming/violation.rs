@@ -4,7 +4,7 @@
 use std::path::PathBuf;
 
 use crate::define_violations;
-use mcb_domain::ports::validation::{McbScriptsSeverity, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
 
 define_violations! {
     dynamic_severity,
@@ -22,7 +22,7 @@ define_violations! {
             line: usize,
             name: String,
             expected_case: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Bad function/method name (should be `snake_case`)
         #[violation(
@@ -36,7 +36,7 @@ define_violations! {
             line: usize,
             name: String,
             expected_case: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Bad constant name (should be `SCREAMING_SNAKE_CASE`)
         #[violation(
@@ -50,7 +50,7 @@ define_violations! {
             line: usize,
             name: String,
             expected_case: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Bad module/file name (should be `snake_case`)
         #[violation(
@@ -62,7 +62,7 @@ define_violations! {
         BadModuleName {
             path: PathBuf,
             expected_case: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// File suffix doesn't match component type
@@ -77,7 +77,7 @@ define_violations! {
             component_type: String,
             current_suffix: String,
             expected_suffix: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// File name doesn't follow CA naming convention
@@ -92,7 +92,7 @@ define_violations! {
             detected_type: String,
             issue: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 }

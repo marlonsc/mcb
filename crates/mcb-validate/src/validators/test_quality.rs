@@ -14,7 +14,7 @@ use crate::config::TestQualityRulesConfig;
 use crate::define_violations;
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
-use crate::{Result, McbScriptsSeverity, ValidationConfig};
+use crate::{Result, Severity, ValidationConfig};
 use mcb_domain::ports::validation::ViolationCategory;
 use mcb_utils::constants::validate::{
     FORWARD_SEARCH_LINES, FUNCTION_NAME_SEARCH_LINES, MAX_BLOCK_SEARCH_OFFSET, TEST_DIR_FRAGMENT,
@@ -36,7 +36,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             test_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// `todo` macro in test fixture without proper stub marker
         #[violation(
@@ -49,7 +49,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             function_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Test function with empty body
         #[violation(
@@ -62,7 +62,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             test_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Test missing documentation comment
         #[violation(
@@ -75,7 +75,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             test_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Test with only assert!(true) or similar stub
         #[violation(
@@ -88,7 +88,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             test_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 }
@@ -258,7 +258,7 @@ impl TestQualityValidator {
                     file: file.to_path_buf(),
                     line: i + 1,
                     test_name,
-                    severity: McbScriptsSeverity::Warning,
+                    severity: Severity::Warning,
                 });
             }
         }
@@ -287,7 +287,7 @@ impl TestQualityValidator {
                     file: file.to_path_buf(),
                     line: i + 1,
                     function_name,
-                    severity: McbScriptsSeverity::Error,
+                    severity: Severity::Error,
                 });
             }
         }
@@ -322,7 +322,7 @@ impl TestQualityValidator {
                     file: file.to_path_buf(),
                     line: fn_line_idx + 1,
                     test_name: test_name.as_str().to_owned(),
-                    severity: McbScriptsSeverity::Error,
+                    severity: Severity::Error,
                 });
             }
         }
@@ -348,7 +348,7 @@ impl TestQualityValidator {
                     file: file.to_path_buf(),
                     line: i + offset + 1,
                     test_name,
-                    severity: McbScriptsSeverity::Warning,
+                    severity: Severity::Warning,
                 });
             }
         }

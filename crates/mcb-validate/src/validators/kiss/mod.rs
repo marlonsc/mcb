@@ -14,7 +14,7 @@ mod counting;
 use std::path::PathBuf;
 
 use crate::config::KISSRulesConfig;
-use crate::{McbScriptsSeverity, ValidationConfig};
+use crate::{Severity, ValidationConfig};
 use mcb_domain::ports::validation::ViolationCategory;
 
 crate::define_validator! {
@@ -59,7 +59,7 @@ crate::define_validator! {
             struct_name: String,
             field_count: usize,
             max_allowed: usize,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Function has too many parameters, suggesting a need for a config struct.
         #[violation(
@@ -74,7 +74,7 @@ crate::define_validator! {
             function_name: String,
             param_count: usize,
             max_allowed: usize,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Builder struct has too many optional fields.
         #[violation(
@@ -89,7 +89,7 @@ crate::define_validator! {
             builder_name: String,
             optional_field_count: usize,
             max_allowed: usize,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Code block has excessive nesting depth.
         #[violation(
@@ -104,7 +104,7 @@ crate::define_validator! {
             nesting_level: usize,
             max_allowed: usize,
             context: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Function body exceeds maximum allowed line count.
         #[violation(
@@ -119,7 +119,7 @@ crate::define_validator! {
             function_name: String,
             line_count: usize,
             max_allowed: usize,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 

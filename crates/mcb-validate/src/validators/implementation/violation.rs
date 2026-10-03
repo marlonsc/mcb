@@ -12,7 +12,7 @@
 
 use std::path::PathBuf;
 
-use crate::McbScriptsSeverity;
+use crate::Severity;
 use crate::define_violations;
 use mcb_domain::ports::validation::ViolationCategory;
 
@@ -32,7 +32,7 @@ define_violations! {
             line: usize,
             method_name: String,
             pattern: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Method returns hardcoded value bypassing logic
         #[violation(
@@ -46,7 +46,7 @@ define_violations! {
             line: usize,
             method_name: String,
             return_value: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Wrapper that just delegates without adding value
         #[violation(
@@ -61,7 +61,7 @@ define_violations! {
             struct_name: String,
             method_name: String,
             delegated_to: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Method body only contains logging/tracing
         #[violation(
@@ -74,7 +74,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             method_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Stub implementation using todo!/unimplemented!
         #[violation(
@@ -88,7 +88,7 @@ define_violations! {
             line: usize,
             method_name: String,
             macro_type: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Match arm with empty catch-all
         #[violation(
@@ -101,7 +101,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             context: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 }

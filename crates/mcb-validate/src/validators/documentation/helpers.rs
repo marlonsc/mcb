@@ -19,7 +19,7 @@ pub(super) struct DocRegexContext<'a> {
 
 pub(super) struct MissingDocSpec<'a> {
     pub(super) item_kind: &'a str,
-    pub(super) severity: crate::McbScriptsSeverity,
+    pub(super) severity: crate::Severity,
 }
 
 pub(super) struct SimplePubItemSpec<'a> {

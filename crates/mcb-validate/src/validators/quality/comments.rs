@@ -4,7 +4,7 @@
 use super::{QualityValidator, QualityViolation};
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
-use crate::{Result, McbScriptsSeverity};
+use crate::{Result, Severity};
 use mcb_utils::constants::validate::{
     PENDING_LABEL_FIXME, PENDING_LABEL_HACK, PENDING_LABEL_TODO, PENDING_LABEL_XXX,
 };
@@ -42,7 +42,7 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                         file: entry.absolute_path.clone(),
                         line: line_num + 1,
                         content: format!("{}: {}", todo_type.to_uppercase(), message),
-                        severity: McbScriptsSeverity::Info,
+                        severity: Severity::Info,
                     });
                 }
             }

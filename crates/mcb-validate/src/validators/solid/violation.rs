@@ -12,7 +12,7 @@
 
 use std::path::PathBuf;
 
-use crate::McbScriptsSeverity;
+use crate::Severity;
 use crate::define_violations;
 use mcb_domain::ports::validation::ViolationCategory;
 
@@ -35,7 +35,7 @@ define_violations! {
             line_count: usize,
             max_allowed: usize,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// OCP: Large match statement that may need extension pattern
@@ -51,7 +51,7 @@ define_violations! {
             arm_count: usize,
             max_recommended: usize,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// ISP: Trait has too many methods
@@ -68,7 +68,7 @@ define_violations! {
             method_count: usize,
             max_allowed: usize,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// DIP: Module depends on concrete implementation
@@ -84,7 +84,7 @@ define_violations! {
             dependency: String,
             layer: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// SRP: File has multiple unrelated structs
@@ -98,7 +98,7 @@ define_violations! {
             file: PathBuf,
             struct_names: Vec<String>,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// LSP: Trait method not implemented (only panic/todo)
@@ -113,7 +113,7 @@ define_violations! {
             line: usize,
             impl_name: String,
             method_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// SRP: Impl block has too many methods
@@ -130,7 +130,7 @@ define_violations! {
             method_count: usize,
             max_allowed: usize,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
 
         /// OCP: String-based type dispatch instead of polymorphism
@@ -145,7 +145,7 @@ define_violations! {
             line: usize,
             match_expression: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 }

@@ -3,7 +3,7 @@
 //!
 use std::path::PathBuf;
 
-use crate::McbScriptsSeverity;
+use crate::Severity;
 use crate::define_violations;
 use mcb_domain::ports::validation::ViolationCategory;
 
@@ -23,7 +23,7 @@ define_violations! {
             line: usize,
             blocking_call: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// `block_on()` used in async context
         #[violation(
@@ -36,7 +36,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             context: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// `std::sync::Mutex` used in async code (should use `tokio::sync::Mutex`)
         #[violation(
@@ -50,7 +50,7 @@ define_violations! {
             line: usize,
             mutex_type: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Spawn without awaiting `JoinHandle`
         #[violation(
@@ -63,7 +63,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             context: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 }

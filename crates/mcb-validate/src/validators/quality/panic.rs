@@ -4,7 +4,7 @@
 use super::{QualityValidator, QualityViolation};
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
-use crate::{Result, McbScriptsSeverity};
+use crate::{Result, Severity};
 use mcb_utils::constants::validate::PANIC_REGEX;
 use mcb_utils::constants::validate::{CFG_TEST_MARKER, COMMENT_PREFIX};
 use mcb_utils::utils::regex::compile_regex;
@@ -42,7 +42,7 @@ pub fn validate(validator: &QualityValidator) -> Result<Vec<QualityViolation>> {
                         file: entry.absolute_path.clone(),
                         line: line_num + 1,
                         context: trimmed.to_owned(),
-                        severity: McbScriptsSeverity::Warning,
+                        severity: Severity::Warning,
                     });
                 }
             }

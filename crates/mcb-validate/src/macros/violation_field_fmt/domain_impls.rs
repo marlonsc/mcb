@@ -3,7 +3,7 @@
 //!
 use super::impl_violation_field_fmt;
 
-impl_violation_field_fmt!(crate::McbScriptsSeverity, crate::ComponentType);
+impl_violation_field_fmt!(crate::Severity, crate::ComponentType);
 
 impl_violation_field_fmt!(
     crate::validators::dependency::DependencyCycle =>

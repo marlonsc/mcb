@@ -16,7 +16,7 @@ use regex::Regex;
 use crate::define_violations;
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
-use crate::{Result, McbScriptsSeverity, ValidationConfig};
+use crate::{Result, Severity, ValidationConfig};
 use mcb_domain::ports::validation::{Violation, ViolationCategory};
 use mcb_utils::constants::validate::ARCH_PATH_CONFIG;
 use mcb_utils::constants::validate::{COMMENT_PREFIX, DOC_COMMENT_PREFIX};
@@ -38,7 +38,7 @@ define_violations! {
             line: usize,
             string_value: String,
             context: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Magic number in code outside constants module
         #[violation(
@@ -52,7 +52,7 @@ define_violations! {
             line: usize,
             number: String,
             context: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Default implementation without documentation
         #[violation(
@@ -65,7 +65,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             struct_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Configuration field without documentation
         #[violation(
@@ -78,7 +78,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             field_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Hardcoded namespace or prefix that should be configurable
         #[violation(
@@ -91,7 +91,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             namespace: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 }
@@ -201,7 +201,7 @@ impl ConfigQualityValidator {
                         file: file.to_path_buf(),
                         line: i + 1,
                         namespace: namespace_str.to_owned(),
-                        severity: McbScriptsSeverity::Warning,
+                        severity: Severity::Warning,
                     });
                 }
             }
@@ -226,7 +226,7 @@ impl ConfigQualityValidator {
                         line: i + 1,
                         string_value: client_name_str.to_owned(),
                         context: "client_name".to_owned(),
-                        severity: McbScriptsSeverity::Info,
+                        severity: Severity::Info,
                     });
                 }
             }
@@ -254,7 +254,7 @@ impl ConfigQualityValidator {
                         line: i + 1,
                         string_value: header_str.to_owned(),
                         context: "HTTP header".to_owned(),
-                        severity: McbScriptsSeverity::Warning,
+                        severity: Severity::Warning,
                     });
                 }
             }
@@ -282,7 +282,7 @@ impl ConfigQualityValidator {
                         file: file.to_path_buf(),
                         line: i + 1,
                         struct_name: struct_name.as_str().to_owned(),
-                        severity: McbScriptsSeverity::Info,
+                        severity: Severity::Info,
                     });
                 }
             }

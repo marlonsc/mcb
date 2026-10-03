@@ -255,7 +255,7 @@ macro_rules! define_violations {
                 $category
             }
 
-            fn severity(&self) -> $crate::McbScriptsSeverity {
+            fn severity(&self) -> $crate::Severity {
                 define_violations!(@severity $severity_mode, self, $( $severity => $variant ),*)
             }
 
@@ -280,8 +280,8 @@ macro_rules! define_violations {
 
     };
 
-    // McbScriptsSeverity match generator: dynamic variants store `severity` as a field;
-    // static variants use a compile-time `McbScriptsSeverity::$severity` enum variant.
+    // Severity match generator: dynamic variants store `severity` as a field;
+    // static variants use a compile-time `Severity::$severity` enum variant.
     (@severity dynamic_severity, $self:expr, $( $severity:ident => $variant:ident ),*) => {
         match $self {
             $(
@@ -292,7 +292,7 @@ macro_rules! define_violations {
     (@severity static_severity, $self:expr, $( $severity:ident => $variant:ident ),*) => {
         match $self {
             $(
-                Self::$variant { .. } => $crate::McbScriptsSeverity::$severity
+                Self::$variant { .. } => $crate::Severity::$severity
             ),*
         }
     };

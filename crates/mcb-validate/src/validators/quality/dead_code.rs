@@ -6,7 +6,7 @@ use std::path::Path;
 use super::{QualityValidator, QualityViolation};
 use crate::filters::LanguageId;
 use crate::scan::for_each_scan_file;
-use crate::{Result, McbScriptsSeverity};
+use crate::{Result, Severity};
 use mcb_utils::constants::validate::{FORWARD_SEARCH_LINES, TEST_DIR_FRAGMENT};
 use mcb_utils::utils::regex::compile_regex;
 use regex::Regex;
@@ -85,7 +85,7 @@ fn collect_dead_code_allows(
             file: path.to_path_buf(),
             line: i + 1,
             item_name,
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         });
     }
 }

@@ -5,7 +5,7 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
-use crate::McbScriptsSeverity;
+use crate::Severity;
 use crate::define_violations;
 use mcb_domain::ports::validation::ViolationCategory;
 
@@ -34,7 +34,7 @@ define_violations! {
             crate_name: String,
             forbidden_dep: String,
             location: PathBuf,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Forbidden use statement in source code
         #[violation(
@@ -49,7 +49,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             context: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Circular dependency detected
         #[violation(
@@ -60,7 +60,7 @@ define_violations! {
         )]
         CircularDependency {
             cycle: DependencyCycle,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Admin surface imports repository ports outside approved composition roots.
         #[violation(
@@ -73,7 +73,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             context: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// CLI code bypasses unified execution by calling validate crate directly.
         #[violation(
@@ -86,7 +86,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             context: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 }

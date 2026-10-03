@@ -32,7 +32,7 @@ pub struct AstQuery {
     pub conditions: Vec<QueryCondition>,
     /// Violation message if query matches
     pub message: String,
-    /// McbScriptsSeverity level if query matches
+    /// Severity level if query matches
     pub severity: String,
 }
 

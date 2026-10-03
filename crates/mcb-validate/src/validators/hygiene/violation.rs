@@ -3,7 +3,7 @@
 //!
 use std::path::PathBuf;
 
-use crate::McbScriptsSeverity;
+use crate::Severity;
 use crate::define_violations;
 use mcb_domain::ports::validation::ViolationCategory;
 
@@ -20,7 +20,7 @@ define_violations! {
         InlineTestModule {
             file: PathBuf,
             line: usize,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Test file with incorrect naming
         #[violation(
@@ -32,7 +32,7 @@ define_violations! {
         BadTestFileName {
             file: PathBuf,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Test without assertion
         #[violation(
@@ -45,7 +45,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             function_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Trivial assertion that always passes
         #[violation(
@@ -59,7 +59,7 @@ define_violations! {
             line: usize,
             function_name: String,
             assertion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Test only uses `.unwrap()` as assertion
         #[violation(
@@ -72,7 +72,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             function_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Test body is only comments
         #[violation(
@@ -85,7 +85,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             function_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Mock type usage in tests is forbidden
         #[violation(
@@ -98,7 +98,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             token: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Skip branch that bypasses real implementation setup
         #[violation(
@@ -110,7 +110,7 @@ define_violations! {
         SkipBranchUsage {
             file: PathBuf,
             line: usize,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Stub macro in tests outside fixture paths
         #[violation(
@@ -123,7 +123,7 @@ define_violations! {
             file: PathBuf,
             line: usize,
             macro_name: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 }

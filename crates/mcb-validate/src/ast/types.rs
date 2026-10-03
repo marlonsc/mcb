@@ -18,6 +18,6 @@ pub struct AstViolation {
     pub node: AstNode,
     /// Detailed error message
     pub message: String,
-    /// McbScriptsSeverity level
+    /// Severity level
     pub severity: String,
 }

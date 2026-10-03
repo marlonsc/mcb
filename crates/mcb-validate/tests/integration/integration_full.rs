@@ -18,7 +18,7 @@ mod full_integration_tests {
     use std::path::{Path, PathBuf};
 
     use mcb_domain::ports::validation::ValidationConfig;
-    use mcb_domain::ports::validation::{McbScriptsSeverity, Violation, ViolationCategory};
+    use mcb_domain::ports::validation::{Severity, Violation, ViolationCategory};
     use mcb_validate::generic_reporter::{GenericReport, GenericReporter, GenericSummary};
     use tempfile::TempDir;
 
@@ -359,7 +359,7 @@ impl MutableValueObject {
     #[rstest]
     #[test]
     fn test_severity_levels() {
-        let severities = [McbScriptsSeverity::Error, McbScriptsSeverity::Warning, McbScriptsSeverity::Info];
+        let severities = [Severity::Error, Severity::Warning, Severity::Info];
 
         // Each severity should have unique representation
         let strings: Vec<String> = severities.iter().map(|s| format!("{s:?}")).collect();

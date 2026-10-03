@@ -2,7 +2,7 @@
 //! **Documentation**: [docs/modules/validate.md](../../../../../docs/modules/validate.md)
 //!
 use crate::Result;
-use crate::McbScriptsSeverity;
+use crate::Severity;
 use crate::ValidationConfig;
 use crate::pattern_registry::required_pattern;
 use crate::utils::source::{DeclScanConfig, count_matches_in_block, scan_decl_blocks};
@@ -81,7 +81,7 @@ pub fn make_member_count_violation(
             method_count,
             max_allowed,
             suggestion: "Consider splitting into smaller, focused traits".to_owned(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         },
         MemberCountKind::Impl => SolidViolation::ImplTooManyMethods {
             file,
@@ -92,7 +92,7 @@ pub fn make_member_count_violation(
             suggestion:
                 "Consider splitting into smaller, focused impl blocks or extracting to traits"
                     .to_owned(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         },
     }
 }

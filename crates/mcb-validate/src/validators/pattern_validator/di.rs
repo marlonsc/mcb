@@ -6,7 +6,7 @@ use std::path::Path;
 use regex::Regex;
 
 use super::violation::PatternViolation;
-use mcb_domain::ports::validation::McbScriptsSeverity;
+use mcb_domain::ports::validation::Severity;
 use mcb_utils::constants::validate::{COMMENT_PREFIX, DI_IMPL_SUFFIXES, VALIDATE_IGNORE_PREFIX};
 
 /// Checks for Arc<Concrete> usage in a single file.
@@ -85,7 +85,7 @@ fn collect_arc_violations(
                 line: line_num + 1,
                 concrete_type: format!("Arc<{type_name}>"),
                 suggestion: format!("Arc<dyn {trait_name}>"),
-                severity: McbScriptsSeverity::Warning,
+                severity: Severity::Warning,
             });
         }
     }

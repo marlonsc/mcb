@@ -14,7 +14,7 @@ use serde_json::Value;
 
 use crate::Result;
 use crate::engines::hybrid_engine::{RuleContext, RuleEngine, RuleViolation};
-use mcb_domain::ports::validation::{McbScriptsSeverity, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
 use mcb_utils::constants::validate::{
     ASYNC_FN_PREFIX, DEFAULT_EXPR_MESSAGE, DEFAULT_EXPR_RULE_ID, EXPECT_CALL, SEVERITY_ERROR,
     SEVERITY_WARNING, TEST_DIR_FRAGMENT, TEST_FILE_SUFFIX, UNWRAP_CALL, YAML_FIELD_CATEGORY,
@@ -43,7 +43,7 @@ pub struct ExpressionRuleInput<'a> {
     /// Violation message
     pub message: &'a str,
     /// Violation severity
-    pub severity: McbScriptsSeverity,
+    pub severity: Severity,
     /// Violation category
     pub category: ViolationCategory,
 }
@@ -218,7 +218,7 @@ impl ExpressionEngine {
                     RuleViolation::new(
                         rule_id,
                         ViolationCategory::Configuration,
-                        McbScriptsSeverity::Warning,
+                        Severity::Warning,
                         format!("Expression evaluation failed: {e}"),
                     )
                     .with_context(format!("Expression: {expression}")),
@@ -259,10 +259,10 @@ impl RuleEngine for ExpressionEngine {
         let severity = rule_definition
             .get(YAML_FIELD_SEVERITY)
             .and_then(|v| v.as_str())
-            .map_or(McbScriptsSeverity::Warning, |s| match s {
-                SEVERITY_ERROR => McbScriptsSeverity::Error,
-                SEVERITY_WARNING => McbScriptsSeverity::Warning,
-                _ => McbScriptsSeverity::Info,
+            .map_or(Severity::Warning, |s| match s {
+                SEVERITY_ERROR => Severity::Error,
+                SEVERITY_WARNING => Severity::Warning,
+                _ => Severity::Info,
             });
 
         let category = rule_definition

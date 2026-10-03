@@ -263,7 +263,7 @@ pub enum ValidationError {
     },
 }
 
-pub(crate) use mcb_domain::ports::validation::McbScriptsSeverity;
+pub(crate) use mcb_domain::ports::validation::Severity;
 
 /// Component type for strict directory validation
 ///

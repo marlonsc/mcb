@@ -20,7 +20,7 @@
 
 use std::path::PathBuf;
 
-use mcb_domain::ports::validation::McbScriptsSeverity;
+use mcb_domain::ports::validation::Severity;
 use mcb_domain::ports::validation::Violation;
 use rstest::rstest;
 
@@ -34,7 +34,7 @@ fn file_selection_standard_file_field() {
         file: PathBuf::from("src/main.rs"),
         line: 10,
         context: "x.unwrap()".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/main.rs")));
 }
@@ -48,7 +48,7 @@ fn file_selection_path_field() {
     let v = mcb_validate::NamingViolation::BadModuleName {
         path: PathBuf::from("src/Foo.rs"),
         expected_case: "snake_case".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/Foo.rs")));
 }
@@ -60,7 +60,7 @@ fn file_selection_path_field_with_other_fields() {
         component_type: "Service".to_owned(),
         current_suffix: String::new(),
         expected_suffix: "_service".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/handler.rs")));
 }
@@ -75,7 +75,7 @@ fn file_selection_location_field() {
         crate_name: "mcb-server".to_owned(),
         forbidden_dep: "tokio-console".to_owned(),
         location: PathBuf::from("crates/mcb-server/Cargo.toml"),
-        severity: McbScriptsSeverity::Error,
+        severity: Severity::Error,
     };
     assert_eq!(
         v.file(),
@@ -92,7 +92,7 @@ fn file_selection_source_file_field() {
     let v = mcb_validate::RefactoringViolation::MissingTestFile {
         source_file: PathBuf::from("src/service.rs"),
         expected_test: PathBuf::from("tests/service_test.rs"),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/service.rs")));
 }
@@ -107,7 +107,7 @@ fn file_selection_referencing_file_field() {
         referencing_file: PathBuf::from("src/lib.rs"),
         line: 5,
         deleted_module: "old_mod".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/lib.rs")));
 }
@@ -125,7 +125,7 @@ fn file_selection_locations_vec_returns_first() {
             PathBuf::from("src/b/config.rs"),
         ],
         suggestion: "Consolidate".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/a/config.rs")));
 }
@@ -136,7 +136,7 @@ fn file_selection_locations_vec_empty_returns_none() {
         type_name: "Config".to_owned(),
         locations: vec![],
         suggestion: "Consolidate".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.file(), None);
 }
@@ -153,7 +153,7 @@ fn file_selection_no_file_field_returns_none() {
             "b".to_owned(),
             "a".to_owned(),
         ]),
-        severity: McbScriptsSeverity::Error,
+        severity: Severity::Error,
     };
     assert_eq!(v.file(), None);
 }
@@ -169,7 +169,7 @@ fn line_selection_standard_line_field() {
         line: 99,
         error_type: "std::io::Error".to_owned(),
         layer: "domain".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.line(), Some(99));
 }
@@ -181,7 +181,7 @@ fn line_selection_line_not_first_field() {
         referencing_file: PathBuf::from("src/lib.rs"),
         line: 77,
         deleted_module: "gone".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.line(), Some(77));
 }
@@ -196,7 +196,7 @@ fn line_selection_no_line_field_returns_none() {
     let v = mcb_validate::NamingViolation::BadModuleName {
         path: PathBuf::from("src/BadName.rs"),
         expected_case: "snake_case".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.line(), None);
 }
@@ -208,7 +208,7 @@ fn line_selection_no_line_circular_dep() {
             "x".to_owned(),
             "y".to_owned(),
         ]),
-        severity: McbScriptsSeverity::Error,
+        severity: Severity::Error,
     };
     assert_eq!(v.line(), None);
 }
@@ -223,7 +223,7 @@ fn suggestion_from_literal_attribute() {
         file: PathBuf::from("src/lib.rs"),
         line: 1,
         context: "x.unwrap()".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(
         v.suggestion(),
@@ -237,7 +237,7 @@ fn suggestion_from_literal_with_field_interpolation() {
     let v = mcb_validate::RefactoringViolation::MissingTestFile {
         source_file: PathBuf::from("src/foo.rs"),
         expected_test: PathBuf::from("tests/foo_test.rs"),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     let suggestion = v.suggestion().expect("should have suggestion");
     assert!(
@@ -262,7 +262,7 @@ fn suggestion_from_string_field() {
         line: 10,
         import_path: "use crate::old::Thing".to_owned(),
         suggestion: "Remove the orphan import".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.suggestion(), Some("Remove the orphan import".to_owned()));
 }
@@ -275,7 +275,7 @@ fn suggestion_from_string_field_naming() {
         detected_type: "handler".to_owned(),
         issue: "missing suffix".to_owned(),
         suggestion: "Rename to bad_handler.rs".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.suggestion(), Some("Rename to bad_handler.rs".to_owned()));
 }
@@ -291,7 +291,7 @@ fn suggestion_circular_dependency_literal() {
             "a".to_owned(),
             "b".to_owned(),
         ]),
-        severity: McbScriptsSeverity::Error,
+        severity: Severity::Error,
     };
     assert_eq!(
         v.suggestion(),
@@ -311,7 +311,7 @@ fn all_three_methods_on_kiss_violation() {
         struct_name: "Monolith".to_owned(),
         field_count: 25,
         max_allowed: 10,
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.file(), Some(&PathBuf::from("src/big.rs")));
     assert_eq!(v.line(), Some(42));
@@ -333,7 +333,7 @@ fn all_three_methods_on_no_file_no_line_variant() {
             "a".to_owned(),
             "b".to_owned(),
         ]),
-        severity: McbScriptsSeverity::Error,
+        severity: Severity::Error,
     };
     assert_eq!(v.file(), None);
     assert_eq!(v.line(), None);
@@ -351,9 +351,9 @@ fn severity_dynamic_reads_field_value() {
         file: PathBuf::from("src/lib.rs"),
         line: 1,
         context: "x".to_owned(),
-        severity: McbScriptsSeverity::Info, // Override: attribute says Warning, but field says Info
+        severity: Severity::Info, // Override: attribute says Warning, but field says Info
     };
-    assert_eq!(v.severity(), McbScriptsSeverity::Info);
+    assert_eq!(v.severity(), Severity::Info);
 }
 
 // ============================================================================
@@ -368,7 +368,7 @@ fn id_and_category_correct() {
         nesting_level: 8,
         max_allowed: 4,
         context: "if { if { if { ... } } }".to_owned(),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     };
     assert_eq!(v.id(), "KISS004");
     assert_eq!(

@@ -3,7 +3,7 @@
 //!
 use crate::filters::LanguageId;
 use crate::scan::for_each_file_under_root;
-use crate::{Result, McbScriptsSeverity};
+use crate::{Result, Severity};
 use mcb_utils::constants::validate::CFG_TEST_MARKER;
 use std::collections::HashSet;
 use std::path::Path;
@@ -157,6 +157,6 @@ fn missing_test_file_violation(
     Ok(Some(RefactoringViolation::MissingTestFile {
         source_file: path.to_path_buf(),
         expected_test: tests_dir.join(format!("{file_name}_test.rs")),
-        severity: McbScriptsSeverity::Warning,
+        severity: Severity::Warning,
     }))
 }

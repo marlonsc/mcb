@@ -20,7 +20,7 @@
 //! - **providers/** - External service provider ports (embeddings, vector stores, search)
 //! - **repositories/** - Repository ports for data persistence
 //! - **services** - Application service ports (validation, etc.)
-//! - **validation** - Validation abstractions (Validator, Violation, McbScriptsSeverity, etc.)
+//! - **validation** - Validation abstractions (Validator, Violation, Severity, etc.)
 
 /// Administrative interfaces for system management and monitoring
 pub mod admin;
@@ -32,7 +32,7 @@ pub mod providers;
 pub mod repositories;
 /// Application service ports
 pub mod services;
-/// Validation abstractions (Validator, Violation, McbScriptsSeverity, `LanguageId`, `ValidationConfig`)
+/// Validation abstractions (Validator, Violation, Severity, `LanguageId`, `ValidationConfig`)
 pub mod validation;
 
 // ============================================================================
@@ -95,6 +95,6 @@ pub use services::{
 
 // --- Validation abstractions ---
 pub use validation::{
-    CheckFn, LanguageId, NamedCheck, McbScriptsSeverity, ValidationConfig, Validator, ValidatorError,
+    CheckFn, LanguageId, NamedCheck, Severity, ValidationConfig, Validator, ValidatorError,
     ValidatorResult, Violation, ViolationCategory, run_checks,
 };

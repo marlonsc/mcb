@@ -4,7 +4,7 @@
 use std::path::Path;
 
 use super::super::violation::NamingViolation;
-use mcb_domain::ports::validation::McbScriptsSeverity;
+use mcb_domain::ports::validation::Severity;
 use mcb_utils::constants::validate::{ARCH_PATH_HANDLERS, ARCH_PATH_SERVICES};
 use mcb_utils::constants::validate::{
     FACTORY_FILE_SUFFIX, REPOSITORY_FILE_SUFFIX, SERVICE_FILE_SUFFIX,
@@ -52,7 +52,7 @@ fn check_repository_suffix(
             component_type: "Repository".to_owned(),
             current_suffix: get_suffix(file_name).to_owned(),
             expected_suffix: REPOSITORY_FILE_SUFFIX.to_owned(),
-            severity: McbScriptsSeverity::Warning,
+            severity: Severity::Warning,
         }
     })
 }
@@ -72,7 +72,7 @@ fn check_handler_suffix(
         component_type: "Handler".to_owned(),
         current_suffix: "_handler".to_owned(),
         expected_suffix: "<tool_name> (no _handler suffix in handlers/ dir)".to_owned(),
-        severity: McbScriptsSeverity::Info,
+        severity: Severity::Info,
     })
 }
 
@@ -108,7 +108,7 @@ fn check_service_suffix(
             component_type: "Service".to_owned(),
             current_suffix: get_suffix(file_name).to_owned(),
             expected_suffix: SERVICE_FILE_SUFFIX.to_owned(),
-            severity: McbScriptsSeverity::Info,
+            severity: Severity::Info,
         })
 }
 
@@ -123,6 +123,6 @@ fn check_factory_suffix(path: &Path, file_name: &str) -> Option<NamingViolation>
             component_type: "Factory".to_owned(),
             current_suffix: get_suffix(file_name).to_owned(),
             expected_suffix: FACTORY_FILE_SUFFIX.to_owned(),
-            severity: McbScriptsSeverity::Info,
+            severity: Severity::Info,
         })
 }

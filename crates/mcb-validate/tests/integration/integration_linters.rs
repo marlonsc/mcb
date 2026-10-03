@@ -180,7 +180,7 @@ fn test_clippy_requires_primary_span() {
     );
 }
 
-// ==================== McbScriptsSeverity Mapping Tests ====================
+// ==================== Severity Mapping Tests ====================
 
 #[rstest]
 #[case("F401", "error")]
@@ -372,7 +372,7 @@ def example():
         assert!(!v.rule.is_empty(), "Rule should not be empty");
         assert!(!v.file.is_empty(), "File should not be empty");
         assert!(v.line > 0, "Line should be positive");
-        assert!(!v.severity.is_empty(), "McbScriptsSeverity should not be empty");
+        assert!(!v.severity.is_empty(), "Severity should not be empty");
     }
 
     // Should have F401 violations
@@ -433,7 +433,7 @@ fn test_clippy_real_execution() {
         assert!(!v.rule.is_empty(), "Rule should not be empty");
         assert!(!v.file.is_empty(), "File should not be empty");
         assert!(v.line > 0, "Line should be positive");
-        assert!(!v.severity.is_empty(), "McbScriptsSeverity should not be empty");
+        assert!(!v.severity.is_empty(), "Severity should not be empty");
         assert!(
             v.rule.starts_with("clippy::"),
             "Clippy rules should start with 'clippy::'"

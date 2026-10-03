@@ -3,7 +3,7 @@
 //!
 use std::path::PathBuf;
 
-use crate::McbScriptsSeverity;
+use crate::Severity;
 use crate::define_violations;
 use mcb_domain::ports::validation::ViolationCategory;
 
@@ -23,7 +23,7 @@ define_violations! {
             line: usize,
             context: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Vec/String allocation inside a loop
         #[violation(
@@ -37,7 +37,7 @@ define_violations! {
             line: usize,
             allocation_type: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// `Arc<Mutex<T>>` where simpler patterns would work
         #[violation(
@@ -51,7 +51,7 @@ define_violations! {
             line: usize,
             pattern: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Inefficient iterator pattern
         #[violation(
@@ -65,7 +65,7 @@ define_violations! {
             line: usize,
             pattern: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
         /// Inefficient string handling
         #[violation(
@@ -79,7 +79,7 @@ define_violations! {
             line: usize,
             pattern: String,
             suggestion: String,
-            severity: McbScriptsSeverity,
+            severity: Severity,
         },
     }
 }

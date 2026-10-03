@@ -16,7 +16,7 @@ use crate::engines::hybrid_engine::RuleViolation;
 use crate::engines::rusty_cargo_deps::{
     dependency_matches, workspace_has_forbidden_cargo_dependency,
 };
-use mcb_domain::ports::validation::{McbScriptsSeverity, ViolationCategory};
+use mcb_domain::ports::validation::{Severity, ViolationCategory};
 use mcb_utils::constants::validate::{
     DEFAULT_MAX_FILE_LINES, DEFAULT_VIOLATION_MESSAGE, GENERIC, NOT_EXISTS,
     RUSTY_AST_PATTERN_VIOLATION_ID, RUSTY_CARGO_DEP_FORBIDDEN_MSG, RUSTY_CARGO_DEP_MISSING_MSG,
@@ -77,7 +77,7 @@ pub enum Action {
         /// The violation message.
         message: String,
         /// The severity of the violation.
-        severity: McbScriptsSeverity,
+        severity: Severity,
     },
     /// Execute a custom action string.
     Custom(String),
@@ -133,7 +133,7 @@ impl RustyRulesEngineWrapper {
         definition.get(YAML_FIELD_ACTION).map_or(
             Action::Violation {
                 message: DEFAULT_VIOLATION_MESSAGE.to_owned(),
-                severity: McbScriptsSeverity::Warning,
+                severity: Severity::Warning,
             },
             Self::parse_action,
         )
@@ -192,7 +192,7 @@ impl RustyRulesEngineWrapper {
                 json_str(violation, YAML_FIELD_MESSAGE, DEFAULT_VIOLATION_MESSAGE).to_owned();
 
             let severity = json_opt_str(violation, YAML_FIELD_SEVERITY)
-                .map_or(McbScriptsSeverity::Warning, Self::parse_severity);
+                .map_or(Severity::Warning, Self::parse_severity);
 
             return Action::Violation { message, severity };
         }
@@ -200,11 +200,11 @@ impl RustyRulesEngineWrapper {
         Action::Custom(RUSTY_CUSTOM_ACTION_DEFAULT.to_owned())
     }
 
-    fn parse_severity(raw: &str) -> McbScriptsSeverity {
+    fn parse_severity(raw: &str) -> Severity {
         match raw {
-            SEVERITY_ERROR => McbScriptsSeverity::Error,
-            SEVERITY_INFO => McbScriptsSeverity::Info,
-            _ => McbScriptsSeverity::Warning,
+            SEVERITY_ERROR => Severity::Error,
+            SEVERITY_INFO => Severity::Info,
+            _ => Severity::Warning,
         }
     }
 
@@ -295,7 +295,7 @@ impl RustyRulesEngineWrapper {
             RuleViolation::new(
                 RUSTY_CARGO_DEP_VIOLATION_ID,
                 ViolationCategory::Architecture,
-                McbScriptsSeverity::Error,
+                Severity::Error,
                 message,
             )
             .with_context(format!("Pattern: {forbidden_pattern}")),
@@ -377,7 +377,7 @@ fn file_size_violation(
     RuleViolation::new(
         "QUAL006",
         ViolationCategory::Quality,
-        McbScriptsSeverity::Warning,
+        Severity::Warning,
         format!("{message}: {line_count} lines (max: {max_lines})"),
     )
     .with_file(std::path::PathBuf::from(file_path))
@@ -415,7 +415,7 @@ fn ast_pattern_violations(context: &RuleContext, pattern: &str) -> Vec<RuleViola
             RuleViolation::new(
                 RUSTY_AST_PATTERN_VIOLATION_ID,
                 ViolationCategory::Quality,
-                McbScriptsSeverity::Error,
+                Severity::Error,
                 format!("Found forbidden pattern: {pattern}"),
             )
             .with_file(std::path::PathBuf::from(file_path))
