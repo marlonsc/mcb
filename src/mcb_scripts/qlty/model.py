@@ -6,149 +6,160 @@ SPDX-License-Identifier: MIT
 
 from __future__ import annotations
 
-from enum import IntEnum, StrEnum
+from collections.abc import Mapping
+from types import MappingProxyType
 
 from flext_core import m, t
+from mcb_scripts._constants import McbScriptsQltyCategory, McbScriptsSeverity
+
+__all__ = ["McbScriptsQltyCategory", "McbScriptsSeverity"]
 
 
-class McbScriptsQltyCategory(StrEnum):
-    """Quality-report categories (SSOT for the closed vocabulary).
+def _empty_str_mapping() -> Mapping[str, str]:
+    """Return an immutable empty string mapping.
 
-    ``check`` and ``smell`` come from the qlty runners; ``security``,
-    ``format`` and the rest name the remaining report buckets.
+    Returns:
+        The resulting ``Mapping[str, str]``.
     """
-
-    CHECK = "check"
-    SMELL = "smell"
-    SECURITY = "security"
-    FORMAT = "format"
+    return MappingProxyType({})
 
 
-class McbScriptsSeverity(IntEnum):
-    """McbScriptsSeverity levels mapped from SARIF."""
+def _empty_json_mapping() -> t.JsonMapping:
+    """Return an immutable empty JSON mapping.
 
-    ERROR = 3
-    WARNING = 2
-    INFO = 1
-    NONE = 0
-
-    @classmethod
-    def from_str(cls, s: str) -> McbScriptsSeverity:
-        """Parse a SARIF severity token into a McbScriptsSeverity.
-
-        Returns:
-            The resulting ``McbScriptsSeverity``.
-        """
-        mapping = {"error": cls.ERROR, "warning": cls.WARNING, "note": cls.INFO}
-        return mapping.get(s.lower(), cls.NONE)
-
-    def to_emoji(self) -> str:
-        """Return the display glyph for this severity."""
-        return {self.ERROR: "🔴", self.WARNING: "🟠", self.INFO: "🔵", self.NONE: "⚪"}[
-            self
-        ]
+    Returns:
+        The resulting ``t.JsonMapping``.
+    """
+    return MappingProxyType({})
 
 
 class McbScriptsSarifArtifactLocation(m.BaseModel):
     """SARIF artifactLocation object."""
 
-    model_config = m.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True, extra="forbid")
 
-    uri: str = m.Field(default="unknown", alias="uri")
+    uri: str = m.Field(default="unknown", alias="uri", description="Artifact URI")
 
 
 class McbScriptsSarifRegion(m.BaseModel):
     """SARIF region object."""
 
-    model_config = m.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True, extra="forbid")
 
-    start_line: int = m.Field(default=0, alias="startLine")
-    end_line: int | None = m.Field(default=None, alias="endLine")
+    start_line: int = m.Field(
+        default=0, alias="startLine", description="First line of the region",
+    )
+    end_line: int | None = m.Field(
+        default=None, alias="endLine", description="Last line of the region",
+    )
 
 
 class McbScriptsSarifPhysicalLocation(m.BaseModel):
     """SARIF physicalLocation object."""
 
-    model_config = m.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True, extra="forbid")
 
     artifact_location: McbScriptsSarifArtifactLocation = m.Field(
         default_factory=McbScriptsSarifArtifactLocation,
         alias="artifactLocation",
+        description="Artifact referenced by this location",
     )
-    region: McbScriptsSarifRegion | None = m.Field(default=None, alias="region")
+    region: McbScriptsSarifRegion | None = m.Field(
+        default=None, alias="region", description="Region inside the artifact",
+    )
 
 
 class McbScriptsSarifLocation(m.BaseModel):
     """SARIF location object."""
 
-    model_config = m.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True, extra="forbid")
 
     physical_location: McbScriptsSarifPhysicalLocation | None = m.Field(
         default=None,
         alias="physicalLocation",
+        description="Physical location of the finding",
     )
 
 
 class McbScriptsSarifMessage(m.BaseModel):
     """SARIF message object."""
 
-    model_config = m.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True, extra="forbid")
 
-    text: str = m.Field(default="", alias="text")
+    text: str = m.Field(default="", alias="text", description="Message text")
 
 
 class McbScriptsSarifRun(m.BaseModel):
     """SARIF run object."""
 
-    model_config = m.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True, extra="forbid")
 
-    results: list[McbScriptsSarifResult] = m.Field(
-        default_factory=list, alias="results",
+    results: tuple[McbScriptsSarifResult, ...] = m.Field(
+        default=(), alias="results", description="Results in this run",
     )
 
 
 class McbScriptsSarifResult(m.BaseModel):
     """SARIF result object."""
 
-    model_config = m.ConfigDict(populate_by_name=True)
+    model_config = m.ConfigDict(populate_by_name=True, extra="forbid")
 
-    rule_id: str = m.Field(default="unknown", alias="ruleId")
-    level: str = m.Field(default="note", alias="level")
+    rule_id: str = m.Field(
+        default="unknown", alias="ruleId", description="Identifier of the rule",
+    )
+    level: str = m.Field(
+        default="note", alias="level", description="SARIF severity level token",
+    )
     message: McbScriptsSarifMessage = m.Field(
-        default_factory=McbScriptsSarifMessage, alias="message",
+        default_factory=McbScriptsSarifMessage,
+        alias="message",
+        description="Human-readable message",
     )
-    locations: list[McbScriptsSarifLocation] = m.Field(
-        default_factory=list, alias="locations",
+    locations: tuple[McbScriptsSarifLocation, ...] = m.Field(
+        default=(), alias="locations", description="Locations of the finding",
     )
-    properties: dict[str, t.JsonValue] = m.Field(
-        default_factory=dict,
+    properties: t.JsonMapping = m.Field(
+        default_factory=_empty_json_mapping,
         alias="properties",
+        description="Tool properties",
     )
-    partial_fingerprints: dict[str, str] = m.Field(
-        default_factory=dict,
+    partial_fingerprints: Mapping[str, str] = m.Field(
+        default_factory=_empty_str_mapping,
         alias="partialFingerprints",
+        description="Partial fingerprints of the finding",
     )
-    fingerprints: dict[str, str] = m.Field(default_factory=dict, alias="fingerprints")
+    fingerprints: Mapping[str, str] = m.Field(
+        default_factory=_empty_str_mapping,
+        description="Stable fingerprints of the finding",
+    )
 
 
 class McbScriptsSarifIssue(m.BaseModel):
     """Unified representation of a SARIF result (check or smell)."""
 
-    model_config = m.ConfigDict(populate_by_name=True, extra="ignore")
+    model_config = m.ConfigDict(populate_by_name=True, extra="forbid")
 
-    rule_id: str
-    level: McbScriptsSeverity
-    message: str
-    file_path: str
-    start_line: int
-    end_line: int | None = None
+    rule_id: str = m.Field(description="Identifier of the rule")
+    level: McbScriptsSeverity = m.Field(description="Normalized severity")
+    message: str = m.Field(description="Human-readable message")
+    file_path: str = m.Field(description="File the finding refers to")
+    start_line: int = m.Field(description="First line of the finding")
+    end_line: int | None = m.Field(
+        default=None, description="Last line of the finding",
+    )
     # Open vocabulary: external tools name their own categories (gitops,
     # rustfmt, zizmor, ...). McbScriptsQltyCategory is the SSOT only for the values OUR
     # runners assign (check/smell); never turn this field into a closed enum.
-    category: str = ""
-    help_uri: str = ""
-    metadata: dict[str, t.JsonValue] = m.Field(default_factory=dict)
-    fingerprints: dict[str, str] = m.Field(default_factory=dict)
+    category: str = m.Field(default="", description="Report bucket of the finding")
+    help_uri: str = m.Field(default="", description="Documentation URI for the rule")
+    metadata: t.JsonMapping = m.Field(
+        default_factory=_empty_json_mapping,
+        description="Tool-provided metadata",
+    )
+    fingerprints: Mapping[str, str] = m.Field(
+        default_factory=_empty_str_mapping,
+        description="Stable fingerprints of the finding",
+    )
 
     @property
     def location_str(self) -> str:

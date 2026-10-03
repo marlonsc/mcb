@@ -10,15 +10,29 @@ import os
 import re
 import tempfile
 import tomllib
+from collections.abc import Mapping
 from pathlib import Path
+from types import MappingProxyType
 
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
+
+from flext_core import m
+
+
+def _empty_str_mapping() -> Mapping[str, str]:
+    """Return an immutable empty string mapping.
+
+    Returns:
+        The resulting ``Mapping[str, str]``.
+    """
+    return MappingProxyType({})
+
 
 _TEST = re.compile(r"#\[\s*(?:tokio::)?test\s*\]")
 _ADR = re.compile(r"^[0-9]{3}-[a-z0-9-]+\.md$")
 
 
-def _declared_dir(root: Path, value: object) -> Path:
+def _declared_dir(root: Path, value: str) -> Path:
     """Resolve only a declared directory inside this repository.
 
     Returns:
@@ -26,12 +40,8 @@ def _declared_dir(root: Path, value: object) -> Path:
 
     Raises:
         FileNotFoundError: If ``not directory.is_dir()``.
-        TypeError: If Docs metrics source path must be a string.
         ValueError: If Docs metrics source path escapes the repository.
     """
-    if not isinstance(value, str):
-        msg = "Docs metrics source path must be a string"
-        raise TypeError(msg)
     relative = Path(value)
     if relative.is_absolute() or ".." in relative.parts:
         msg = f"Docs metrics source path escapes the repository: {value!r}"
@@ -42,90 +52,63 @@ def _declared_dir(root: Path, value: object) -> Path:
     return directory
 
 
-def _string_list(value: object) -> list[str] | None:
-    """Narrow an untrusted value into a list of strings.
+class McbScriptsMetricsCategory(m.BaseModel):
+    """One declared docs-metrics code category."""
 
-    Returns:
-        The resulting ``list[str] | None``.
-    """
-    if not isinstance(value, list):
-        return None
-    names: list[str] = []
-    for name in value:
-        if not isinstance(name, str):
-            return None
-        names.append(name)
-    return names
+    model_config = m.ConfigDict(extra="forbid")
 
-
-def _string_map(value: object) -> dict[str, str] | None:
-    """Narrow an untrusted value into a string-to-string mapping.
-
-    Returns:
-        The resulting ``dict[str, str] | None``.
-    """
-    if not isinstance(value, dict):
-        return None
-    labels: dict[str, str] = {}
-    for name, label in value.items():
-        if not isinstance(name, str) or not isinstance(label, str):
-            return None
-        labels[name] = label
-    return labels
+    root: str = m.Field(description="Declared source directory of the category")
+    exclude: tuple[str, ...] = m.Field(
+        default_factory=tuple, description="File stems excluded from the category",
+    )
+    labels: Mapping[str, str] = m.Field(
+        default_factory=_empty_str_mapping,
+        description="Display-label overrides keyed by file stem",
+    )
 
 
-def _category(root: Path, raw: dict[str, object]) -> tuple[str, ...]:
+class McbScriptsMetricsConfig(m.BaseModel):
+    """The docs-metrics configuration contract."""
+
+    model_config = m.ConfigDict(extra="forbid")
+
+    categories: Mapping[str, McbScriptsMetricsCategory] = m.Field(
+        description="Declared code categories",
+    )
+    source_root: str = m.Field(description="Rust source root")
+    adr_dir: str = m.Field(description="ADR directory")
+    module_docs_dir: str = m.Field(description="Module docs directory")
+
+
+def _category(root: Path, raw: McbScriptsMetricsCategory) -> tuple[str, ...]:
     """Resolve one configured code category without inventing missing sources.
 
     Returns:
         The resulting ``tuple[str, ...]``.
-
-    Raises:
-        TypeError: If Invalid docs metrics category; or if Invalid docs metrics labels.
     """
-    excludes = _string_list(raw["exclude"])
-    labels = _string_map(raw.get("labels", {}))
-    if excludes is None or labels is None:
-        msg = "Invalid docs metrics category"
-        raise TypeError(msg)
-    directory = _declared_dir(root, raw["root"])
+    directory = _declared_dir(root, raw.root)
     names = (
-        labels.get(path.stem, path.stem.replace("_", " ").title())
+        raw.labels.get(path.stem, path.stem.replace("_", " ").title())
         for path in sorted(directory.glob("*.rs"))
-        if path.stem not in excludes
+        if path.stem not in raw.exclude
     )
     return tuple(names)
 
 
-def _metrics_inputs(
-    root: Path,
-) -> tuple[dict[str, dict[str, object]], Path, Path, Path]:
+def _metrics_inputs(root: Path) -> tuple[McbScriptsMetricsConfig, Path, Path, Path]:
     """Load the declared metrics config and resolve its directories.
 
     Returns:
-        The resulting ``tuple[dict[str, dict[str, object]], Path, Path, Path]``.
-
-    Raises:
-        TypeError: If Invalid docs metrics categories.
+        The resulting ``tuple[McbScriptsMetricsConfig, Path, Path, Path]``.
     """
     config_path = root / "config/docs-metrics.toml"
     with config_path.open("rb") as source:
-        config: dict[str, object] = tomllib.load(source)
-    categories: dict[str, dict[str, object]] = {}
-    declared = config.get("categories")
-    if not isinstance(declared, dict):
-        msg = "Invalid docs metrics categories"
-        raise TypeError(msg)
-    for key, value in declared.items():
-        if not isinstance(key, str) or not isinstance(value, dict):
-            msg = "Invalid docs metrics categories"
-            raise TypeError(msg)
-        categories[key] = value
+        config = McbScriptsMetricsConfig.model_validate(tomllib.load(source))
     return (
-        categories,
-        _declared_dir(root, config["source_root"]),
-        _declared_dir(root, config["adr_dir"]),
-        _declared_dir(root, config["module_docs_dir"]),
+        config,
+        _declared_dir(root, config.source_root),
+        _declared_dir(root, config.adr_dir),
+        _declared_dir(root, config.module_docs_dir),
     )
 
 
@@ -170,7 +153,7 @@ def _workspace_version(root: Path) -> str:
         TypeError: If Workspace version must be a nonempty string.
     """
     with (root / "Cargo.toml").open("rb") as cargo_source:
-        cargo = tomllib.load(cargo_source)
+        cargo: dict[str, object] = tomllib.load(cargo_source)
     workspace = cargo["workspace"]
     version = workspace["package"]["version"]
     if not isinstance(version, str) or not version:
@@ -218,14 +201,14 @@ def render_metrics(root: Path) -> str:
     Returns:
         The resulting ``str``.
     """
-    categories, source_root, adr_dir, module_docs_dir = _metrics_inputs(root)
+    config, source_root, adr_dir, module_docs_dir = _metrics_inputs(root)
     source_files, test_files, test_count, source_lines = _rust_stats(source_root)
     version = _workspace_version(root)
 
     template = _template_environment(root).get_template("metrics.md.j2")
-    languages = _category(root, categories["language"])
-    embeddings = _category(root, categories["embedding"])
-    vector_stores = _category(root, categories["vector_store"])
+    languages = _category(root, config.categories["language"])
+    embeddings = _category(root, config.categories["embedding"])
+    vector_stores = _category(root, config.categories["vector_store"])
     values = (
         ("Version", version),
         ("Languages", str(len(languages))),

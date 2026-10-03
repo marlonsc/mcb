@@ -29,24 +29,40 @@ logger = get_logger(__name__)
 class McbScriptsQltyParams(m.BaseModel):
     """Command parameters for the qlty analysis verb."""
 
-    scan: bool = False
-    checks_file: Path | None = None
+    model_config = m.ConfigDict(extra="forbid")
+
+    scan: bool = m.Field(default=False, description="Run the qlty scan first")
+    checks_file: Path | None = m.Field(
+        default=None, description="Optional checks SARIF input file",
+    )
     smells_file: Path = m.Field(
         default_factory=lambda: McbScriptsSettings().qlty_smells_sarif,
+        description="Smells SARIF input file",
     )
-    type: str = "both"
-    check: bool = False
-    smells: bool = False
-    severity: str | None = None
-    rule: str | None = None
-    category: str | None = None
-    file: str | None = None
-    exclude_rule: list[str] = m.Field(default_factory=list)
-    exclude_category: list[str] = m.Field(default_factory=list)
-    exclude_file: list[str] = m.Field(default_factory=list)
-    summary_only: bool = False
+    type: str = m.Field(default="both", description="Which report types to analyze")
+    check: bool = m.Field(default=False, description="Include the checks report")
+    smells: bool = m.Field(default=False, description="Include the smells report")
+    severity: str | None = m.Field(
+        default=None, description="Minimum severity filter",
+    )
+    rule: str | None = m.Field(default=None, description="Rule id filter")
+    category: str | None = m.Field(default=None, description="Category filter")
+    file: str | None = m.Field(default=None, description="File pattern filter")
+    exclude_rule: tuple[str, ...] = m.Field(
+        default_factory=tuple, description="Rules to exclude",
+    )
+    exclude_category: tuple[str, ...] = m.Field(
+        default_factory=tuple, description="Categories to exclude",
+    )
+    exclude_file: tuple[str, ...] = m.Field(
+        default_factory=tuple, description="File patterns to exclude",
+    )
+    summary_only: bool = m.Field(
+        default=False, description="Print only the summary",
+    )
     report_file: Path = m.Field(
         default_factory=lambda: McbScriptsSettings().qlty_report_md,
+        description="Markdown report output file",
     )
 
 
@@ -210,7 +226,7 @@ def _apply_file_filter(
 
 
 def _apply_exclude_rule_filter(
-    exclude_rules: list[str],
+    exclude_rules: tuple[str, ...],
     filtered: list[McbScriptsSarifIssue],
 ) -> list[McbScriptsSarifIssue]:
     for rule in exclude_rules:
@@ -220,7 +236,7 @@ def _apply_exclude_rule_filter(
 
 
 def _apply_exclude_category_filter(
-    exclude_categories: list[str],
+    exclude_categories: tuple[str, ...],
     filtered: list[McbScriptsSarifIssue],
 ) -> list[McbScriptsSarifIssue]:
     for cat in exclude_categories:
@@ -230,7 +246,7 @@ def _apply_exclude_category_filter(
 
 
 def _apply_exclude_file_filter(
-    exclude_files: list[str],
+    exclude_files: tuple[str, ...],
     filtered: list[McbScriptsSarifIssue],
 ) -> list[McbScriptsSarifIssue]:
     for pattern in exclude_files:
